@@ -18,7 +18,7 @@
 <form [formGroup]="uploadImageFormGroup" (ngSubmit)="upload()" style="width: 560px;">
   <mat-toolbar color="primary">
     <h2>{{ ( uploadImage ? (isScada ? 'scada.upload-symbol' : 'image.upload-image') : (isScada ? 'scada.update-symbol' : 'image.update-image') ) | translate }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -50,7 +50,7 @@
       </mat-form-field>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayout="row" fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex flex-row items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

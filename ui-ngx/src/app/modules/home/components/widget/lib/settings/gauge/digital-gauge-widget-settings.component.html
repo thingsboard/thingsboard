@@ -43,7 +43,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showMinMax">
         {{ 'widgets.gauge.min-and-max-label' | translate }}
       </mat-slide-toggle>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <tb-font-settings formControlName="minMaxFont"
                           disabledLineHeight
                           [previewText]="previewFn">
@@ -57,7 +57,7 @@
 
     <div class="tb-form-row space-between column-xs">
       <div class="fixed-title-width">{{ 'widgets.gauge.min-and-max-value' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <div class="tb-small-label" translate>widgets.gauge.min-value-short</div>
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="minValue" type="number" step="1" placeholder="{{ 'widget-config.set' | translate }}">
@@ -81,7 +81,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showValue">
         {{ 'widgets.gauge.value' | translate }}
       </mat-slide-toggle>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <tb-font-settings formControlName="valueFont"
                           disabledLineHeight
                           [previewText]="valuePreviewFn">
@@ -97,7 +97,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitle">
         {{ 'widgets.gauge.label' | translate }}
       </mat-slide-toggle>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
@@ -126,12 +126,12 @@
         <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTimestamp">
           {{ 'widgets.gauge.show-timestamp' | translate }}
         </mat-slide-toggle>
-        <tb-date-format-select fxFlex excludeLastUpdateAgo formControlName="timestampFormat"></tb-date-format-select>
+        <tb-date-format-select class="flex-1" excludeLastUpdateAgo formControlName="timestampFormat"></tb-date-format-select>
       </div>
 
       <div class="tb-form-row space-between column-xs">
         <div class="fixed-title-width">{{ 'widgets.gauge.font' | translate }}</div>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="flex flex-row items-center justify-start gap-2">
           <tb-font-settings formControlName="labelFont"
                             disabledLineHeight
                             [previewText]="valuePreviewFn">
@@ -200,21 +200,20 @@
 
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="digitalGaugeWidgetSettingsForm.get('showTicks').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="showTicks" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showTicks" (click)="$event.stopPropagation()">
             {{ 'widgets.gauge.ticks' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxFlex="40" fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="flex max-w-40% flex-full items-center justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <div class="tb-form-row space-between column-xs">
           <div class="fixed-title-width">{{ 'widgets.gauge.tick-width-and-color' | translate }}</div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div class="flex flex-row items-center justify-start gap-2">
             <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
               <input matInput type="number" min="0" formControlName="tickWidth" placeholder="{{ 'widget-config.set' | translate }}">
             </mat-form-field>
@@ -228,17 +227,16 @@
           <div class="tb-form-panel-title" translate>widgets.gauge.tick-values</div>
           <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
                (cdkDropListDropped)="tickValueDrop($event)">
-            <div cdkDrag class="tb-draggable" *ngFor="let tickValueControl of tickValuesFormArray().controls; trackBy: trackByTickValue;
-              let $index = index; last as isLast;" fxLayout="row" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
-                <tb-tick-value fxFlex
+            <div cdkDrag class="tb-draggable flex flex-row" *ngFor="let tickValueControl of tickValuesFormArray().controls; trackBy: trackByTickValue;
+              let $index = index; last as isLast;" [class.pb-2]="!isLast">
+                <tb-tick-value class="flex-1"
                                [formControl]="tickValueControl"
                                [aliasController]="aliasController"
                                [dataKeyCallbacks]="dataKeyCallbacks"
                                [datasource]="datasource"
                                (removeTickValue)="removeTickValue($index)">
                 </tb-tick-value>
-                <button class="tb-box-button"
-                        fxHide.lt-lg
+                <button class="tb-box-button lt-lg:!hidden"
                         mat-icon-button
                         type="button"
                         cdkDragHandle
@@ -249,7 +247,7 @@
             </div>
           </div>
           <div *ngIf="!tickValuesFormArray().controls.length">
-            <span translate fxLayoutAlign="center center" class="tb-prompt">widgets.gauge.no-tick-values</span>
+            <span translate class="tb-prompt flex items-center justify-center">widgets.gauge.no-tick-values</span>
           </div>
           <div style="padding-top: 16px;">
             <button mat-stroked-button color="primary"
@@ -266,21 +264,20 @@
 
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="digitalGaugeWidgetSettingsForm.get('animation').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="animation" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="animation" (click)="$event.stopPropagation()">
             {{ 'widgets.gauge.enable-animation' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxFlex="40" fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="flex max-w-40% flex-full items-center justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <div class="tb-form-row space-between">
           <div translate>widgets.gauge.animation-duration-rule</div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div class="flex flex-row items-center justify-start gap-2">
             <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
               <input matInput type="number" min="0" formControlName="animationDuration" placeholder="{{ 'widget-config.set' | translate }}">
             </mat-form-field>

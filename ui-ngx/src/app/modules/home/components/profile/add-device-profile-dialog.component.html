@@ -17,7 +17,7 @@
 -->
 <mat-toolbar color="primary">
   <h2 translate>device-profile.add</h2>
-  <span fxFlex></span>
+  <span class="flex-1"></span>
   <div [tb-help]="'deviceProfiles'"></div>
   <button mat-icon-button
           (click)="cancel()"
@@ -27,7 +27,7 @@
 </mat-toolbar>
 <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
 </mat-progress-bar>
-<div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+<div style="height: 4px;" *ngIf="(isLoading$ | async) === false"></div>
 <div mat-dialog-content>
   <mat-horizontal-stepper [linear]="true"
                           #addDeviceProfileStepper
@@ -67,7 +67,7 @@
             [ruleChainType]="edgeRuleChainType">
             <span tb-hint>{{'device-profile.default-edge-rule-chain-hint' | translate}}</span>
           </tb-rule-chain-autocomplete>
-          <mat-form-field fxHide class="mat-block">
+          <mat-form-field class="mat-block !hidden">
             <mat-label translate>device-profile.type</mat-label>
             <mat-select formControlName="type" required>
               <mat-option *ngFor="let type of deviceProfileTypes" [value]="type">
@@ -78,7 +78,7 @@
               {{ 'device-profile.type-required' | translate }}
             </mat-error>
           </mat-form-field>
-          <tb-gallery-image-input fxFlex
+          <tb-gallery-image-input class="flex-1"
                           label="{{'device-profile.image' | translate}}"
                           formControlName="image">
           </tb-gallery-image-input>
@@ -134,11 +134,11 @@
   </mat-horizontal-stepper>
 </div>
 <div mat-dialog-actions style="padding: 0">
-  <div class="dialog-actions-row" fxFlex fxLayout="row" fxLayoutAlign="end center">
+  <div class="dialog-actions-row flex flex-1 flex-row items-center justify-end">
     <button mat-stroked-button *ngIf="selectedIndex > 0"
             [disabled]="(isLoading$ | async)"
             (click)="previousStep()">{{ 'action.back' | translate }}</button>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-stroked-button
             color="primary"
             *ngIf="showNext"
@@ -146,7 +146,7 @@
             (click)="nextStep()">{{ 'action.next-with-label' | translate:{label: (getFormLabel(this.selectedIndex+1) | translate)} }}</button>
   </div>
   <mat-divider style="width: 100%"></mat-divider>
-  <div class="dialog-actions-row" fxFlex fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="end center">
+  <div class="dialog-actions-row flex flex-1 flex-row items-center justify-end gap-2">
     <button mat-button
             [disabled]="(isLoading$ | async)"
             (click)="cancel()">{{ 'action.cancel' | translate }}</button>

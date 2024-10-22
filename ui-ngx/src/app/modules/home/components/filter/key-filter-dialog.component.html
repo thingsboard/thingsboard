@@ -18,7 +18,7 @@
 <form [formGroup]="keyFilterFormGroup" (ngSubmit)="save()" style="width: 1200px;">
   <mat-toolbar color="primary">
     <h2>{{(data.isAdd ? 'filter.add-key-filter' : (data.readonly ? 'filter.key-filter' : 'filter.edit-key-filter')) | translate}}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -26,10 +26,15 @@
     </button>
   </mat-toolbar>
   <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async" fxLayout="column">
-      <section fxLayout="row" fxLayoutGap="8px" class="entity-key">
-        <section [fxFlex]="isConstantKeyType ? 45 : 70" fxLayout="row" formGroupName="key" fxLayoutGap="8px">
-          <mat-form-field fxFlex="40" class="mat-block">
+    <fieldset [disabled]="isLoading$ | async" class="flex flex-col">
+      <section class="entity-key flex flex-row gap-2">
+        <section class="flex flex-full flex-row gap-2"
+                 [class]="{
+                    'max-w-45%': isConstantKeyType,
+                    'max-w-70%': !isConstantKeyType
+                 }"
+                 formGroupName="key">
+          <mat-form-field class="mat-block max-w-40% flex-full">
             <mat-label translate>filter.key-type.key-type</mat-label>
             <mat-select required formControlName="type">
               <mat-option *ngFor="let type of entityKeyTypes" [value]="type">
@@ -37,7 +42,7 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <mat-form-field fxFlex="60" class="mat-block">
+          <mat-form-field class="mat-block max-w-60% flex-full">
             <mat-label translate>filter.key-name</mat-label>
             <input matInput required formControlName="key"
                    #keyNameInput
@@ -60,7 +65,11 @@
             </mat-error>
           </mat-form-field>
         </section>
-        <mat-form-field [fxFlex]="isConstantKeyType ? 20 : 30" class="mat-block tb-value-type">
+        <mat-form-field class="mat-block tb-value-type flex-full"
+                        [class]="{
+                          'max-w-20%': isConstantKeyType,
+                          'max-w-30%': !isConstantKeyType
+                        }">
           <mat-label translate>filter.value-type.value-type</mat-label>
           <mat-select formControlName="valueType">
             <mat-select-trigger>
@@ -76,8 +85,8 @@
             {{ 'filter.value-type-required' | translate }}
           </mat-error>
         </mat-form-field>
-        <div fxFlex *ngIf="isConstantKeyType">
-          <div fxLayout="column" [ngSwitch]="keyFilterFormGroup.get('valueType').value">
+        <div class="flex-1" *ngIf="isConstantKeyType">
+          <div class="flex flex-col" [ngSwitch]="keyFilterFormGroup.get('valueType').value">
             <ng-template [ngSwitchCase]="entityKeyValueTypeEnum.STRING">
               <mat-form-field class="mat-block">
                 <mat-label translate>filter.value</mat-label>
@@ -114,7 +123,7 @@
       </tb-filter-predicate-list>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

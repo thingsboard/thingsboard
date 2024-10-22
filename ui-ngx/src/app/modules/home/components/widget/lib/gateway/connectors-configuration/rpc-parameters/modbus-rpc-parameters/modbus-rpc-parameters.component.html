@@ -16,26 +16,26 @@
 
 -->
 <ng-container [formGroup]="rpcParametersFormGroup">
-  <div class="tb-form-hint tb-primary-fill tb-flex no-padding-top hint-container">
+  <div class="tb-form-hint tb-primary-fill no-padding-top hint-container">
     {{ 'gateway.rpc.hint.modbus-response-reading' | translate }}<br>
     {{ 'gateway.rpc.hint.modbus-writing-functions' | translate }}
   </div>
-  <div fxFlex fxLayout="row" fxLayoutGap="10px">
-    <mat-form-field fxFlex="50" class="mat-block">
+  <div class="flex flex-1 flex-row gap-2.5">
+    <mat-form-field class="flex-1">
       <mat-label>{{ 'gateway.rpc.type' | translate }}</mat-label>
       <mat-select formControlName="type">
         <mat-option *ngFor="let type of modbusDataTypes" [value]="type">{{ type }}</mat-option>
       </mat-select>
     </mat-form-field>
-    <mat-form-field fxFlex="50" class="mat-block">
+    <mat-form-field class="flex-1">
       <mat-label>{{ 'gateway.rpc.functionCode' | translate }}</mat-label>
       <mat-select formControlName="functionCode">
         <mat-option *ngFor="let code of functionCodes" [value]="code">{{ ModbusFunctionCodeTranslationsMap.get(code) | translate}}</mat-option>
       </mat-select>
     </mat-form-field>
   </div>
-  <div fxFlex fxLayout="row" fxLayoutGap="10px">
-    <mat-form-field fxFlex="50">
+  <div class="flex flex-1 flex-row gap-2.5">
+    <mat-form-field class="flex-1">
       <mat-label>{{ 'gateway.rpc.address' | translate }}</mat-label>
       <input matInput type="number" min="0" max="50000" name="value" formControlName="address" placeholder="{{ 'gateway.set' | translate }}"/>
       <mat-icon matSuffix
@@ -48,7 +48,7 @@
         warning
       </mat-icon>
     </mat-form-field>
-    <mat-form-field fxFlex="50">
+    <mat-form-field class="flex-1">
       <mat-label>{{ 'gateway.rpc.objectsCount' | translate }}</mat-label>
       <input
         matInput
@@ -62,8 +62,8 @@
       />
     </mat-form-field>
   </div>
-  <div *ngIf="writeFunctionCodes.includes(rpcParametersFormGroup.get('functionCode').value)" fxFlex fxLayout="row">
-    <mat-form-field fxFlex="100">
+  <div *ngIf="writeFunctionCodes.includes(rpcParametersFormGroup.get('functionCode').value)" class="flex">
+    <mat-form-field class="flex-1">
       <mat-label>{{ 'gateway.rpc.value' | translate }}</mat-label>
       <input matInput name="value" formControlName="value" placeholder="{{ 'gateway.set' | translate }}"/>
       <mat-icon matSuffix

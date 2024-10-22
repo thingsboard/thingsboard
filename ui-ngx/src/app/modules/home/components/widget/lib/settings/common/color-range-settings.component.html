@@ -21,7 +21,7 @@
         [disabled]="disabled"
         #matButton
         (click)="openColorRangeSettingsPopup($event, matButton)">
-  <div class="tb-color-preview box" [ngClass]="{'disabled': disabled}">
+  <div class="tb-color-preview box" [class.disabled]="disabled">
     <div class="tb-color-result" [style]="colorStyle"></div>
   </div>
 </button>

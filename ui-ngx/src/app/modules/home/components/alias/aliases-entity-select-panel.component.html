@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" class="mat-content mat-padding">
-  <div fxLayout="row" *ngFor="let alias of entityAliasesInfo | keyvalue">
-    <tb-aliases-entity-autocomplete fxFlex
+<div class="mat-content mat-padding flex flex-col">
+  <div class="flex flex-row" *ngFor="let alias of entityAliasesInfo | keyvalue">
+    <tb-aliases-entity-autocomplete class="flex-1"
       required
       [alias]="alias.value.alias"
       [entityFilter]="alias.value.entityFilter"

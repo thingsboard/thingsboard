@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-select fxHide.lt-lg
+<mat-select class="lt-lg:!hidden"
             [required]="required"
             [disabled]="disabled"
             [(ngModel)]="dashboardId"
@@ -24,7 +24,7 @@
     {{dashboard.title}}
   </mat-option>
 </mat-select>
-<section fxHide.gt-md class="tb-dashboard-select">
+<section class="tb-dashboard-select gt-md:!hidden">
   <button mat-icon-button
           cdkOverlayOrigin #dashboardSelectPanelOrigin="cdkOverlayOrigin"
           (click)="openDashboardSelectPanel()"

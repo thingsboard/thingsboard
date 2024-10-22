@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="doughnutChartWidgetSettingsForm" fxLayout="column">
+<section class="tb-widget-settings flex flex-col" [formGroup]="doughnutChartWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.chart.common-settings</legend>
     <mat-slide-toggle formControlName="showTooltip" class="slide-block">
@@ -24,12 +24,12 @@
   </fieldset>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.chart.border-settings</legend>
-    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-      <mat-form-field fxFlex class="mat-block">
+    <section class="flex flex-row xs:flex-col gt-xs:gap-2">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.chart.border-width</mat-label>
         <input matInput type="number" min="0" formControlName="borderWidth">
       </mat-form-field>
-      <tb-color-input fxFlex
+      <tb-color-input class="flex-1"
                       formControlName="borderColor"
                       icon="format_color_fill"
                       label="{{ 'widgets.chart.border-color' | translate }}" openOnInput colorClearButton>
@@ -39,20 +39,20 @@
   <fieldset class="fields-group fields-group-slider" formGroupName="legend">
     <legend class="group-title" translate>widgets.chart.legend-settings</legend>
     <mat-expansion-panel class="tb-settings" [expanded]="doughnutChartWidgetSettingsForm.get('legend.display').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
           <mat-slide-toggle formControlName="display" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+                            class="flex items-stretch justify-center">
             {{ 'widgets.chart.display-legend' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="flex items-center justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <section fxLayout="column">
-          <tb-color-input fxFlex
+        <section class="flex flex-col">
+          <tb-color-input class="flex-1"
                           formControlName="labelsFontColor"
                           icon="format_color_fill"
                           label="{{ 'widgets.chart.labels-font-color' | translate }}" openOnInput colorClearButton>

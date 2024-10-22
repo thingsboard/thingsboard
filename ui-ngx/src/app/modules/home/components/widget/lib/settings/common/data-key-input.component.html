@@ -21,7 +21,7 @@
     <mat-chip-row class="tb-datakey-chip" *ngIf="modelValue?.type"
                   [removable]="removable"
                   (removed)="removeKey()">
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="4px" class="tb-attribute-chip">
+      <div class="tb-attribute-chip flex flex-row items-center justify-start gap-1">
         <div class="tb-chip-labels">
           <div class="tb-chip-label tb-chip-text tb-chip-icon">
             <ng-container *ngIf="isEntityDatasource">
@@ -65,7 +65,7 @@
            [required]="required"
            [formControl]="keyFormControl"
            matAutocompleteOrigin
-           [fxHide]="!!modelValue?.type"
+           [class.!hidden]="!!modelValue?.type"
            [readonly]="!!modelValue?.type"
            #origin="matAutocompleteOrigin"
            [matAutocompleteConnectedTo]="origin"

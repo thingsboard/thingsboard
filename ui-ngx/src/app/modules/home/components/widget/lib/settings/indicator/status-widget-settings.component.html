@@ -20,7 +20,7 @@
     <div class="tb-form-panel-title" translate>widgets.status-widget.behavior</div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.initial-state-hint' | translate}}" translate>widgets.rpc-state.initial-state</div>
-      <tb-get-value-action-settings fxFlex
+      <tb-get-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.rpc-state.initial-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
                                     trueLabel="{{ 'widgets.rpc-state.on' | translate }}"
@@ -33,7 +33,7 @@
     </div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.disabled-state-hint' | translate}}" translate>widgets.rpc-state.disabled-state</div>
-      <tb-get-value-action-settings fxFlex
+      <tb-get-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.rpc-state.disabled-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
                                     stateLabel="{{ 'widgets.rpc-state.disabled' | translate }}"
@@ -60,7 +60,7 @@
     </tb-image-cards-select>
   </div>
   <div class="tb-form-panel">
-    <div fxLayout="row" fxLayoutAlign="space-between center">
+    <div class="flex flex-row items-center justify-between">
       <div class="tb-form-panel-title" translate>widget-config.card-style</div>
       <tb-toggle-select [(ngModel)]="cardStyleMode"
                         [ngModelOptions]="{ standalone: true }">

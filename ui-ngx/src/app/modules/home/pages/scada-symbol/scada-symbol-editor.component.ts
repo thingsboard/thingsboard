@@ -110,6 +110,11 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   ngOnInit(): void {
+    if (this.readonly) {
+      this.svgContentFormControl.disable({emitEvent: false});
+    } else {
+      this.svgContentFormControl.enable({emitEvent: false});
+    }
     this.svgContentFormControl.valueChanges.subscribe((svgContent) => {
       if (this.svgContent !== svgContent) {
         this.svgContent = svgContent;

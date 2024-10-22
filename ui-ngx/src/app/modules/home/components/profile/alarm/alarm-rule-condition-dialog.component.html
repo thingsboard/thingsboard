@@ -18,7 +18,7 @@
 <form [formGroup]="conditionFormGroup" (ngSubmit)="save()" style="width: 900px;">
   <mat-toolbar color="primary">
     <h2>{{ (readonly ? 'device-profile.alarm-rule-condition' : 'device-profile.edit-alarm-rule-condition') | translate }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -29,7 +29,7 @@
   </mat-progress-bar>
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
-      <div fxFlex fxLayout="column">
+      <div class="flex flex-1 flex-col">
         <tb-key-filter-list
           [displayUserParameters]="false"
           [allowUserDynamicSource]="false"
@@ -49,13 +49,14 @@
               {{ 'device-profile.condition-type-required' | translate }}
             </mat-error>
           </mat-form-field>
-          <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px" *ngIf="conditionFormGroup.get('spec.type').value != AlarmConditionType.SIMPLE">
+          <div class="flex flex-row xs:flex-col gt-xs:gap-4" *ngIf="conditionFormGroup.get('spec.type').value != AlarmConditionType.SIMPLE">
             <tb-alarm-duration-predicate-value
-              fxLayout="row" fxFlex formControlName="predicate"
+              class="flex flex-1 flex-row"
+              formControlName="predicate"
               [alarmConditionType]="conditionFormGroup.get('spec.type').value"
             >
             </tb-alarm-duration-predicate-value>
-            <div fxFlex="23" *ngIf="conditionFormGroup.get('spec.type').value == AlarmConditionType.DURATION">
+            <div class="max-w-23% flex-full" *ngIf="conditionFormGroup.get('spec.type').value == AlarmConditionType.DURATION">
               <mat-form-field class="mat-block" subscriptSizing="dynamic">
                 <mat-select formControlName="unit" required
                             placeholder="{{ 'device-profile.condition-duration-time-unit' | translate }}">
@@ -73,7 +74,7 @@
       </div>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

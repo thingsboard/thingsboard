@@ -15,32 +15,29 @@
     limitations under the License.
 
 -->
-<div class="tb-dashboard-page mat-content" [ngClass]="{'mobile-app': isMobileApp && !isEdit}" tb-toast
-     fxFlex tb-fullscreen [fullscreenElement]="elRef.nativeElement" [fullscreen]="widgetEditMode || iframeMode || forceFullscreen || isFullscreen">
+<div class="tb-dashboard-page mat-content flex-1" [class.mobile-app]="isMobileApp && !isEdit" tb-toast
+     tb-fullscreen [fullscreenElement]="elRef.nativeElement" [fullscreen]="widgetEditMode || iframeMode || forceFullscreen || isFullscreen">
   <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
   <section class="tb-dashboard-toolbar"
-           [ngClass]="{ 'tb-dashboard-toolbar-opened': toolbarOpened,
-                        'tb-dashboard-toolbar-closed': !toolbarOpened }">
-    <tb-dashboard-toolbar [fxShow]="!widgetEditMode && !hideToolbar" [forceFullscreen]="forceFullscreen"
+           [class.tb-dashboard-toolbar-opened]="toolbarOpened"
+           [class.tb-dashboard-toolbar-closed]="!toolbarOpened">
+    <tb-dashboard-toolbar [class.!hidden]="widgetEditMode || hideToolbar" [forceFullscreen]="forceFullscreen"
                           [toolbarOpened]="toolbarOpened" (triggerClick)="openToolbar()">
-      <div class="tb-dashboard-action-panels" fxLayout="column" fxLayout.gt-sm="row"
-           fxLayoutAlign="center stretch" fxLayoutAlign.gt-sm="space-between center">
-        <div class="tb-dashboard-action-panel tb-left-panel" [fxHide]="isMobileApp && !isEdit">
-          <tb-user-menu *ngIf="!isPublicUser() && forceFullscreen" fxHide.gt-sm displayUserInfo="true">
+      <div class="tb-dashboard-action-panels flex flex-col items-stretch justify-center gt-sm:flex-row gt-sm:items-center gt-sm:justify-between">
+        <div class="tb-dashboard-action-panel tb-left-panel" [class.!hidden]="isMobileApp && !isEdit">
+          <tb-user-menu *ngIf="!isPublicUser() && forceFullscreen" class="gt-sm:!hidden" displayUserInfo="true">
           </tb-user-menu>
           <ng-container *ngIf="isEdit">
-            <div style="flex: 1 1 100%" fxHide.gt-sm></div>
-            <div fxFlex.lt-md fxLayout="row"
-                 fxLayoutAlign.gt-sm="start center"
-                 fxLayoutAlign="end center" fxLayoutGap.lt-lg="3px" fxLayoutGap.lg="6px" fxLayoutGap.gt-lg="12px">
+            <div style="flex: 1 1 100%" class="gt-sm:!hidden"></div>
+            <div class="flex flex-row items-center justify-end lg:gap-1.5 lt-md:flex-1 lt-lg:gap-0.75 gt-sm:items-center gt-sm:justify-start gt-lg:gap-3">
               <mat-divider class="tb-toolbar-divider" vertical></mat-divider>
-              <button fxHide.gt-md mat-icon-button
+              <button class="gt-md:!hidden" mat-icon-button
                       matTooltip="{{'layout.manage' | translate}}"
                       matTooltipPosition="below"
                       (click)="manageDashboardLayouts($event)">
                 <mat-icon>view_compact</mat-icon>
               </button>
-              <button fxHide.lt-lg mat-button
+              <button class="lt-lg:!hidden" mat-button
                       matTooltip="{{'layout.manage' | translate}}"
                       matTooltipPosition="below"
                       (click)="manageDashboardLayouts($event)">
@@ -52,7 +49,7 @@
               </tb-select-dashboard-breakpoint>
             </div>
           </ng-container>
-          <tb-states-component fxFlex.lt-md
+          <tb-states-component class="lt-md:flex-1"
                                [statesControllerId]="isEdit ? 'default' : dashboardConfiguration.settings.stateControllerId"
                                [dashboardCtrl]="this"
                                [dashboardId]="setStateDashboardId ? dashboard.id.id : ''"
@@ -63,13 +60,13 @@
                                [states]="dashboardConfiguration.states">
           </tb-states-component>
           <ng-container *ngIf="isEdit">
-            <button fxHide.gt-md mat-icon-button
+            <button class="gt-md:!hidden" mat-icon-button
                     matTooltip="{{'dashboard.manage-states' | translate}}"
                     matTooltipPosition="below"
                     (click)="manageDashboardStates($event)">
               <mat-icon>layers</mat-icon>
             </button>
-            <button fxHide.lt-lg mat-button
+            <button class="lt-lg:!hidden" mat-button
                     matTooltip="{{'dashboard.manage-states' | translate}}"
                     matTooltipPosition="below"
                     (click)="manageDashboardStates($event)">
@@ -81,65 +78,65 @@
                aria-label="dashboard_logo" class="dashboard_logo"/>
         </div>
         <div class="tb-dashboard-action-panel">
-          <button [fxShow]="showCloseToolbar()" mat-icon-button class="close-action"
+          <button [class.!hidden]="!showCloseToolbar()" mat-icon-button class="close-action"
                   matTooltip="{{ 'dashboard.close-toolbar' | translate }}"
                   matTooltipPosition="below"
                   (click)="closeToolbar()">
             <mat-icon>arrow_forward</mat-icon>
           </button>
-          <tb-user-menu *ngIf="!isPublicUser() && forceFullscreen" fxHide.lt-md displayUserInfo="true">
+          <tb-user-menu *ngIf="!isPublicUser() && forceFullscreen" class="lt-md:!hidden" displayUserInfo="true">
           </tb-user-menu>
-          <button [fxShow]="showRightLayoutSwitch()" mat-icon-button
+          <button [class.!hidden]="!showRightLayoutSwitch()" mat-icon-button
                   matTooltip="{{ (isRightLayoutOpened ? 'dashboard.hide-details' : 'dashboard.show-details') | translate }}"
                   matTooltipPosition="below"
                   (click)="toggleLayouts()">
             <mat-icon>{{isRightLayoutOpened ? 'arrow_back' : 'menu'}}</mat-icon>
           </button>
-          <button [fxShow]="!hideFullscreenButton()" mat-icon-button fxHide.xs
+          <button [class.!hidden]="hideFullscreenButton()" class="xs:!hidden" mat-icon-button
                   matTooltip="{{(isFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
                   matTooltipPosition="below"
                   (click)="isFullscreen = !isFullscreen">
             <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
           </button>
-          <button [fxShow]="currentDashboardId && !isMobileApp && displayExport() && !isEdit" mat-icon-button
+          <button [class.!hidden]="!currentDashboardId || isMobileApp || !displayExport() || isEdit" mat-icon-button
                   matTooltip="{{'dashboard.export' | translate}}"
                   matTooltipPosition="below"
                   (click)="exportDashboard($event)">
             <mat-icon>file_download</mat-icon>
           </button>
           <ng-container *ngIf="!readonly && !isEdit">
-            <button fxHide.gt-md mat-icon-button (click)="toggleDashboardEditMode()"
+            <button class="gt-md:!hidden" mat-icon-button (click)="toggleDashboardEditMode()"
                     matTooltip="{{'dashboard.edit-mode' | translate}}"
                     matTooltipPosition="below">
               <mat-icon>edit</mat-icon></button>
-            <button fxHide.lt-lg mat-stroked-button (click)="toggleDashboardEditMode()">
+            <button class="lt-lg:!hidden" mat-stroked-button (click)="toggleDashboardEditMode()">
               <mat-icon>edit</mat-icon>{{'dashboard.edit-mode' | translate}}</button>
           </ng-container>
           <ng-container *ngIf="isEdit">
-            <button fxHide.gt-md mat-icon-button (click)="saveDashboard()" [disabled]="isLoading$ | async"
+            <button class="gt-md:!hidden" mat-icon-button (click)="saveDashboard()" [disabled]="isLoading$ | async"
                     matTooltip="{{'action.save' | translate}}"
                     matTooltipPosition="below">
               <mat-icon>done</mat-icon></button>
-            <button fxHide.lt-lg mat-stroked-button [disabled]="isLoading$ | async" (click)="saveDashboard()">
+            <button class="lt-lg:!hidden" mat-stroked-button [disabled]="isLoading$ | async" (click)="saveDashboard()">
               <mat-icon>done</mat-icon>{{ 'action.save' | translate }}</button>
-            <button fxHide.gt-md mat-icon-button (click)="toggleDashboardEditMode()"
+            <button class="gt-md:!hidden" mat-icon-button (click)="toggleDashboardEditMode()"
                     matTooltip="{{'action.cancel' | translate}}"
                     [disabled]="isLoading$ | async"
                     matTooltipPosition="below">
               <mat-icon>close</mat-icon></button>
-            <button fxHide.lt-lg mat-button (click)="toggleDashboardEditMode()" [disabled]="isLoading$ | async">
+            <button class="lt-lg:!hidden" mat-button (click)="toggleDashboardEditMode()" [disabled]="isLoading$ | async">
               <mat-icon>close</mat-icon>{{ 'action.cancel' | translate }}</button>
             <mat-divider class="tb-toolbar-divider" vertical></mat-divider>
           </ng-container>
           <ng-container *ngIf="currentDashboardId && isEdit && isTenantAdmin()">
-            <button fxHide.lt-lg fxHide.gt-lg mat-icon-button
+            <button class="lt-lg:!hidden gt-lg:!hidden" mat-icon-button
                     #versionControlIconButton
                     matTooltip="{{'version-control.version-control' | translate}}"
                     matTooltipPosition="below"
                     (click)="toggleVersionControl($event, versionControlIconButton)">
               <mat-icon>history</mat-icon>
             </button>
-            <button fxHide.lt-xl mat-button
+            <button class="lt-xl:!hidden" mat-button
                     #versionControlButton
                     matTooltip="{{'version-control.version-control' | translate}}"
                     matTooltipPosition="below"
@@ -149,13 +146,13 @@
             </button>
           </ng-container>
           <ng-container *ngIf="isEdit">
-            <button fxHide.gt-lg mat-icon-button
+            <button class="gt-lg:!hidden" mat-icon-button
                     matTooltip="{{ 'filter.filters' | translate }}"
                     matTooltipPosition="below"
                     (click)="openFilters($event)">
               <mat-icon>filter_list</mat-icon>
             </button>
-            <button fxHide.lt-xl mat-button
+            <button class="lt-xl:!hidden" mat-button
                     matTooltip="{{ 'filter.filters' | translate }}"
                     matTooltipPosition="below"
                     (click)="openFilters($event)">
@@ -164,13 +161,13 @@
             </button>
           </ng-container>
           <ng-container *ngIf="isEdit">
-            <button fxHide.gt-lg mat-icon-button
+            <button class="gt-lg:!hidden" mat-icon-button
                     matTooltip="{{ 'entity.aliases' | translate }}"
                     matTooltipPosition="below"
                     (click)="openEntityAliases($event)">
               <mat-icon>devices_other</mat-icon>
             </button>
-            <button fxHide.lt-xl mat-button
+            <button class="lt-xl:!hidden" mat-button
                     matTooltip="{{ 'entity.aliases' | translate }}"
                     matTooltipPosition="below"
                     (click)="openEntityAliases($event)">
@@ -179,13 +176,13 @@
             </button>
           </ng-container>
           <ng-container *ngIf="isEdit">
-            <button fxHide.gt-lg mat-icon-button
+            <button class="gt-lg:!hidden" mat-icon-button
                     matTooltip="{{ 'dashboard.settings' | translate }}"
                     matTooltipPosition="below"
                     (click)="openDashboardSettings($event)">
               <mat-icon>settings</mat-icon>
             </button>
-            <button fxHide.lt-xl mat-button
+            <button class="lt-xl:!hidden" mat-button
                     matTooltip="{{ 'dashboard.settings' | translate }}"
                     matTooltipPosition="below"
                     (click)="openDashboardSettings($event)">
@@ -193,14 +190,14 @@
               {{ 'dashboard.settings' | translate }}
             </button>
           </ng-container>
-          <button [fxShow]="currentDashboardId && !isEdit && !isMobileApp && isTenantAdmin() && displayUpdateDashboardImage()" mat-icon-button
+          <button [class.!hidden]="!currentDashboardId || isEdit || isMobileApp || !isTenantAdmin() || !displayUpdateDashboardImage()" mat-icon-button
                   matTooltip="{{'dashboard.update-image' | translate}}"
                   matTooltipPosition="below"
                   (click)="updateDashboardImage($event)">
             <mat-icon>wallpaper</mat-icon>
           </button>
           <ng-container *ngIf="isEdit; else timewindowTemplate">
-            <tb-timewindow fxHide.lt-xl asButton
+            <tb-timewindow class="lt-xl:!hidden" asButton
                            flatButton
                            [displayTimewindowValue]="false"
                            [isEdit]="true"
@@ -209,7 +206,7 @@
                            timezone="true"
                            [(ngModel)]="dashboardCtx.dashboardTimewindow">
             </tb-timewindow>
-            <tb-timewindow fxHide.gt-lg
+            <tb-timewindow class="gt-lg:!hidden"
                            hideLabel
                            [isEdit]="true"
                            tooltipPosition="below"
@@ -220,7 +217,7 @@
           </ng-container>
           <ng-template #timewindowTemplate>
             <ng-container *ngIf="displayDashboardTimewindow()">
-              <tb-timewindow fxHide.gt-md
+              <tb-timewindow class="gt-md:!hidden"
                              [isEdit]="false"
                              hideLabel
                              tooltipPosition="below"
@@ -228,7 +225,7 @@
                              timezone="true"
                              [(ngModel)]="dashboardCtx.dashboardTimewindow">
               </tb-timewindow>
-              <tb-timewindow fxHide.lt-lg
+              <tb-timewindow class="lt-lg:!hidden"
                              [isEdit]="false"
                              tooltipPosition="below"
                              aggregation="true"
@@ -238,13 +235,13 @@
             </ng-container>
           </ng-template>
           <ng-container *ngIf="isEdit">
-            <button fxHide.gt-md mat-icon-button
+            <button class="gt-md:!hidden" mat-icon-button
                     matTooltip="{{ 'dashboard.add-widget-button-text' | translate }}"
                     matTooltipPosition="below"
                     (click)="addWidget($event)">
               <mat-icon>add</mat-icon>
             </button>
-            <button fxHide.lt-lg mat-stroked-button
+            <button class="lt-lg:!hidden" mat-stroked-button
                     matTooltip="{{ 'dashboard.add-widget-button-text' | translate }}"
                     matTooltipPosition="below"
                     (click)="addWidget($event)">
@@ -252,11 +249,11 @@
               {{ 'dashboard.add-widget-button-text' | translate }}
             </button>
           </ng-container>
-          <tb-filters-edit [fxShow]="!isEdit && displayFilters()"
+          <tb-filters-edit [class.!hidden]="isEdit || !displayFilters()"
                            tooltipPosition="below"
                            [aliasController]="dashboardCtx.aliasController">
           </tb-filters-edit>
-          <tb-aliases-entity-select [fxShow]="!isEdit && displayEntitiesSelect()"
+          <tb-aliases-entity-select [class.!hidden]="isEdit || !displayEntitiesSelect()"
                                     tooltipPosition="below"
                                     [aliasController]="dashboardCtx.aliasController">
           </tb-aliases-entity-select>
@@ -273,30 +270,30 @@
   <section class="tb-dashboard-container tb-absolute-fill"
            tb-toast toastTarget="dashboardRoot"
            #dashboardContainer
-           [ngClass]="{ 'is-fullscreen': forceFullscreen,
-           'tb-dashboard-toolbar-opened': toolbarOpened,
-           'tb-dashboard-toolbar-animated': isToolbarOpenedAnimate,
-           'tb-dashboard-toolbar-closed': !toolbarOpened }">
+           [class.is-fullscreen]="forceFullscreen"
+           [class.tb-dashboard-toolbar-opened]="toolbarOpened"
+           [class.tb-dashboard-toolbar-animated]="isToolbarOpenedAnimate"
+           [class.tb-dashboard-toolbar-closed]="!toolbarOpened">
     <mat-drawer-container hasBackdrop="false" class="tb-absolute-fill tb-dashboard-drawer-container">
-      <mat-drawer-content #dashboardContent fxLayout="column" fxLayoutAlign="center start">
+      <mat-drawer-content #dashboardContent class="flex flex-col items-start justify-center">
         <section *ngIf="!widgetEditMode" class="tb-dashboard-title"
-                 [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">
-          <h3 [fxShow]="!isEdit && displayTitle()">{{ translatedDashboardTitle }}</h3>
-          <mat-form-field [fxShow]="isEdit" class="mat-block tb-appearance-transparent" subscriptSizing="dynamic">
-            <mat-label translate [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">dashboard.title</mat-label>
+                 [style.color]="dashboard.configuration.settings.titleColor">
+          <h3 [class.!hidden]="isEdit || !displayTitle()">{{ translatedDashboardTitle }}</h3>
+          <mat-form-field [class.!hidden]="!isEdit" class="mat-block tb-appearance-transparent" subscriptSizing="dynamic">
+            <mat-label translate [style.color]="dashboard.configuration.settings.titleColor">dashboard.title</mat-label>
             <input matInput class="tb-dashboard-title"
-                   [ngStyle]="{'color': dashboard.configuration.settings.titleColor}"
+                   [style.color]="dashboard.configuration.settings.titleColor"
                    required name="title" [(ngModel)]="dashboard.title">
           </mat-form-field>
         </section>
-        <mat-drawer-container class="tb-dashboard-layouts" fxFlex
-                              [class]="{'tb-shrinked' : isEditingWidget}">
+        <mat-drawer-container class="tb-dashboard-layouts flex-1"
+                              [class.tb-shrinked]="isEditingWidget">
           <mat-drawer *ngIf="layouts.right.show"
                       id="tb-right-layout"
-                      [ngStyle]="{minWidth: rightLayoutSize.width,
-                                  maxWidth: rightLayoutSize.width,
-                                  height: rightLayoutSize.height,
-                                  borderLeft: 'none'}"
+                      style="border-left: none"
+                      [style.min-width]="rightLayoutSize.width"
+                      [style.max-width]="rightLayoutSize.width"
+                      [style.height]="rightLayoutSize.height"
               disableClose="true"
               [@.disabled]="!isMobile"
               position="end"
@@ -314,10 +311,10 @@
               [popoverComponent]="popoverComponent">
             </tb-dashboard-layout>
           </mat-drawer>
-          <mat-drawer-content [fxShow]="layouts.main.show"
+          <mat-drawer-content [class.!hidden]="!layouts.main.show"
                               id="tb-main-layout"
-                              [style]="{width: mainLayoutSize.width,
-                                        height: mainLayoutSize.height}">
+                              [style.width]="mainLayoutSize.width"
+                              [style.height]="mainLayoutSize.height">
             <tb-dashboard-layout
               [style.max-width]="mainLayoutSize.maxWidth"
               [style.min-width]="mainLayoutSize.minWidth"
@@ -333,13 +330,13 @@
             </tb-dashboard-layout>
             <div class="layout-filler"
                  *ngIf="isEdit"
-                 [fxShow]="showMainLayoutFiller">
+                 [class.!hidden]="!showMainLayoutFiller">
               {{ 'dashboard.breakpoint-value' | translate : {value: currentBreakpointValue } }}
             </div>
           </mat-drawer-content>
         </mat-drawer-container>
-        <section data-html2canvas-ignore fxLayout="row" class="layout-wrap tb-header-buttons tb-enter-edit-mode" fxLayoutAlign="start end" *ngIf="!readonly && (hideToolbar || widgetEditMode)">
-          <button [fxShow]="!isEdit"
+        <section data-html2canvas-ignore class="tb-header-buttons tb-enter-edit-mode flex flex-row flex-wrap items-end justify-start" *ngIf="!readonly && (hideToolbar || widgetEditMode)">
+          <button [class.!hidden]="isEdit"
                   color="primary"
                   mat-mini-fab
                   class="tb-btn-header tb-btn-edit"
@@ -348,7 +345,7 @@
                   matTooltipPosition="above">
             <mat-icon>edit</mat-icon>
           </button>
-          <button [fxShow]="isEdit"
+          <button [class.!hidden]="!isEdit"
                   color="primary"
                   mat-mini-fab
                   class="tb-btn-header tb-btn-edit"
@@ -357,7 +354,7 @@
                   matTooltip="{{'action.save' | translate}}"
                   matTooltipPosition="below">
             <mat-icon>done</mat-icon></button>
-          <button [fxShow]="isEdit"
+          <button [class.!hidden]="!isEdit"
                   color="primary"
                   mat-mini-fab
                   class="tb-btn-header tb-btn-edit"
@@ -367,7 +364,7 @@
                   matTooltipPosition="below">
             <mat-icon>close</mat-icon></button>
         </section>
-        <section *ngIf="!embedded" data-html2canvas-ignore class="tb-powered-by-footer" [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">
+        <section *ngIf="!embedded" data-html2canvas-ignore class="tb-powered-by-footer" [style.color]="dashboard.configuration.settings.titleColor">
           <span>Powered by <a href="https://thingsboard.io" target="_blank">Thingsboard v.{{ thingsboardVersion }}</a></span>
         </section>
       </mat-drawer-content>
@@ -378,12 +375,12 @@
                   disableClose
                   mode="over"
                   position="end">
-        <tb-details-panel *ngIf="!isEditingWidgetClosed" fxFlex
+        <tb-details-panel *ngIf="!isEditingWidgetClosed" class="flex-1"
                           headerTitle="{{editingWidget?.config.title}}"
                           headerSubtitle="{{ editingWidgetSubtitle }}"
                           [isReadOnly]="true"
                           (closeDetails)="onEditWidgetClosed()">
-          <div class="details-buttons" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+          <div class="details-buttons flex flex-row items-center justify-start gap-4">
             <tb-toggle-select *ngIf="tbEditWidget.widgetConfig?.hasBasicMode" appearance="fill-invert" selectMediaBreakpoint="xs" [(ngModel)]="tbEditWidget.widgetConfigMode">
               <tb-toggle-option value="basic">{{ 'widget.basic-mode' | translate }}</tb-toggle-option>
               <tb-toggle-option value="advanced">{{ 'widget.advanced-mode' | translate }}</tb-toggle-option>
@@ -403,7 +400,7 @@
                           (applyWidgetConfig)="saveWidget()">
           </tb-edit-widget>
         </tb-details-panel>
-        <tb-details-panel *ngIf="!isAddingWidgetClosed && !widgetEditMode" fxFlex
+        <tb-details-panel *ngIf="!isAddingWidgetClosed && !widgetEditMode" class="flex-1"
                           headerTitle="{{ isAddingWidget ?
                             ((dashboardWidgetSelectComponent?.selectWidgetMode === 'allWidgets' ? ('dashboard.select-widget-value' | translate: { title: ('widget.all-widgets' | translate) }) :
                                (!dashboardWidgetSelectComponent?.widgetsBundle ?
@@ -416,19 +413,19 @@
                           backgroundColor="#cfd8dc"
                           (closeDetails)="onAddWidgetClosed()"
                           (closeSearch)="dashboardWidgetSelectComponent.search = ''">
-          <div class="prefix-title-buttons" [fxShow]="!!(isAddingWidget && (dashboardWidgetSelectComponent?.widgetsBundle || dashboardWidgetSelectComponent?.selectWidgetMode === 'allWidgets'))" style="height: 28px; margin-right: 12px">
+          <div class="prefix-title-buttons" [class.!hidden]="!(isAddingWidget && (dashboardWidgetSelectComponent?.widgetsBundle || dashboardWidgetSelectComponent?.selectWidgetMode === 'allWidgets'))" style="height: 28px; margin-right: 12px">
             <button class="tb-mat-28" mat-icon-button type="button" (click)="clearSelectedWidgetBundle()">
               <mat-icon>arrow_back</mat-icon>
             </button>
           </div>
-          <div class="search-pane" *ngIf="isAddingWidget && dashboardWidgetSelectComponent" fxLayout="row">
-            <tb-widgets-bundle-search fxFlex
+          <div class="search-pane flex flex-row" *ngIf="isAddingWidget && dashboardWidgetSelectComponent">
+            <tb-widgets-bundle-search class="flex-1"
                                       [(ngModel)]="dashboardWidgetSelectComponent.search"
                                       placeholder="{{ ((!dashboardWidgetSelectComponent.widgetsBundle && dashboardWidgetSelectComponent.selectWidgetMode === 'bundles')
                                                         ? 'widgets-bundle.search' : 'widget.search') | translate }}">
             </tb-widgets-bundle-search>
           </div>
-          <div class="details-buttons" *ngIf="isAddingWidget" fxLayout="row" fxLayoutAlign="start center">
+          <div class="details-buttons flex flex-row items-center justify-start" *ngIf="isAddingWidget">
             <button mat-button type="button" (click)="importWidget($event)"
                     *ngIf="dashboardWidgetSelectComponent?.selectWidgetMode === 'bundles' && !dashboardWidgetSelectComponent?.widgetsBundle">
               <mat-icon>file_upload</mat-icon>{{ 'dashboard.import-widget' | translate }}</button>

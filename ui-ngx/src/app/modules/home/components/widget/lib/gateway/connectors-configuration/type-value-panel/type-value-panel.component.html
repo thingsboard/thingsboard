@@ -22,38 +22,36 @@
       <div class="tb-form-panel stroked tb-flex">
         <ng-container [formGroup]="keyControl">
           <mat-expansion-panel class="tb-settings" [expanded]="last">
-            <mat-expansion-panel-header fxLayout="row wrap">
+            <mat-expansion-panel-header class="flex-wrap">
               <mat-panel-title>
                 <div class="title-container" tbTruncateWithTooltip>{{ valueTitle(keyControl.get(keyControl.get('type').value).value) }}</div>
               </mat-panel-title>
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
-                <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                <div class="tb-form-row column-xs">
                   <div class="fixed-title-width tb-required" translate>gateway.type</div>
-                  <div class="tb-flex no-gap">
-                    <mat-form-field class="tb-flex no-gap fill-width" appearance="outline" subscriptSizing="dynamic">
-                      <mat-select formControlName="type">
-                        <mat-select-trigger>
-                          <div class="tb-flex align-center">
-                            <mat-icon class="tb-mat-18" [svgIcon]="valueTypes.get(keyControl.get('type').value)?.icon">
-                            </mat-icon>
-                            <span>
-                              {{ valueTypes.get(keyControl.get('type').value)?.name | translate}}
-                            </span>
-                          </div>
-                        </mat-select-trigger>
-                        <mat-option *ngFor="let valueType of valueTypeKeys" [value]="valueType">
-                          <mat-icon class="tb-mat-20" svgIcon="{{ valueTypes.get(valueType).icon }}">
+                  <mat-form-field class="tb-flex no-gap fill-width" appearance="outline" subscriptSizing="dynamic">
+                    <mat-select formControlName="type">
+                      <mat-select-trigger>
+                        <div class="tb-flex align-center">
+                          <mat-icon class="tb-mat-18" [svgIcon]="valueTypes.get(keyControl.get('type').value)?.icon">
                           </mat-icon>
-                          <span>{{ valueTypes.get(valueType).name | translate }}</span>
-                        </mat-option>
-                      </mat-select>
-                    </mat-form-field>
-                  </div>
+                          <span>
+                            {{ valueTypes.get(keyControl.get('type').value)?.name | translate}}
+                          </span>
+                        </div>
+                      </mat-select-trigger>
+                      <mat-option *ngFor="let valueType of valueTypeKeys" [value]="valueType">
+                        <mat-icon class="tb-mat-20" svgIcon="{{ valueTypes.get(valueType).icon }}">
+                        </mat-icon>
+                        <span>{{ valueTypes.get(valueType).name | translate }}</span>
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
                 </div>
-                <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                <div class="tb-form-row column-xs">
                   <div class="fixed-title-width tb-required" translate>gateway.value</div>
-                  <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic" class="tb-inline-field flex tb-suffix-absolute">
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute flex flex-1">
                     <ng-container [ngSwitch]="keyControl.get('type').value">
                       <input *ngSwitchCase="MappingValueType.STRING" matInput required formControlName="string"
                              placeholder="{{ 'gateway.set' | translate }}" />

@@ -18,7 +18,7 @@
 <form (ngSubmit)="move()">
   <mat-toolbar color="primary">
     <h2 translate>dashboard.move-all-widgets</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -30,7 +30,7 @@
   <div mat-dialog-content class="tb-form-panel no-border no-padding" [formGroup]="moveWidgetsFormGroup">
     <div class="tb-form-row space-between column-xs">
       <div translate>dashboard.move-by</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input required matInput formControlName="cols"
                  type="number" step="1" placeholder="{{ 'widget-config.set' | translate }}">
@@ -44,7 +44,7 @@
       </div>
     </div>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

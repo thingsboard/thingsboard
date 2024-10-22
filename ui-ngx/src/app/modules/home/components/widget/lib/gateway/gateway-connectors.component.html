@@ -16,10 +16,9 @@
 
 -->
 <div class="connector-container tb-form-panel no-border">
-  <section class="table-section tb-form-panel no-padding flex section-container">
-    <mat-toolbar class="mat-mdc-table-toolbar">
+  <section class="table-section tb-form-panel no-padding section-container flex">
+    <mat-toolbar class="mat-mdc-table-toolbar justify-between">
       <h2>{{ 'gateway.connectors' | translate }}</h2>
-      <span fxFlex></span>
       <button *ngIf="dataSource?.data?.length"
               mat-icon-button
               [disabled]="isLoading$ | async"
@@ -30,8 +29,8 @@
       </button>
     </mat-toolbar>
     <div class="table-container">
-      <section *ngIf="!dataSource?.data?.length" fxLayoutAlign="center center"
-               class="mat-headline-5 tb-absolute-fill tb-add-new">
+      <section *ngIf="!dataSource?.data?.length"
+               class="mat-headline-5 tb-absolute-fill tb-add-new items-center justify-center">
         <button mat-button class="connector"
         (click)="onAddConnector($event)">
           <mat-icon class="tb-mat-96">add</mat-icon>
@@ -89,13 +88,12 @@
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>
-          <mat-header-cell *matHeaderCellDef
-                           [ngStyle.gt-md]="{ minWidth: '144px', maxWidth: '144px', width: '144px', textAlign: 'center'}">
-            {{ 'gateway.connectors-table-actions' | translate }}
+          <mat-header-cell *matHeaderCellDef>
+            <div class="gt-md:!hidden" style="width: 48px; min-width: 48px; max-width: 48px;"></div>
+            <div class="lt-lg:!hidden" [style]="{ minWidth: '144px', maxWidth: '144px', textAlign: 'center'}">{{ 'gateway.connectors-table-actions' | translate }}</div>
           </mat-header-cell>
-          <mat-cell *matCellDef="let attribute"
-                    [ngStyle.gt-md]="{ minWidth: '144px', maxWidth: '144px', width: '144px'}">
-            <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
+          <mat-cell *matCellDef="let attribute">
+            <div class="flex-row justify-end lt-md:!hidden" [style]="{ minWidth: '144px', maxWidth: '144px', width: '144px', textAlign: 'center'}">
               <button mat-icon-button
                       matTooltip="RPC"
                       matTooltipPosition="above"
@@ -115,7 +113,7 @@
                 <mat-icon>delete</mat-icon>
               </button>
             </div>
-            <div fxHide fxShow.lt-lg>
+            <div class="gt-sm:!hidden">
               <button mat-icon-button
                       (click)="$event.stopPropagation()"
                       [matMenuTriggerFor]="cellActionsMenu">
@@ -168,9 +166,8 @@
         </tb-toggle-option>
       </tb-toggle-select>
     </div>
-    <span [fxShow]="!initialConnector"
-          fxLayoutAlign="center center"
-          class="no-data-found" translate>
+    <span [class.!hidden]="initialConnector"
+          class="no-data-found items-center justify-center" translate>
       gateway.select-connector
     </span>
     <section class="tb-form-panel section-container no-border no-padding tb-flex space-between" *ngIf="initialConnector">
@@ -230,9 +227,7 @@
           </mat-tab>
           <mat-tab label="{{ 'gateway.configuration' | translate }}*">
             <tb-json-object-edit
-              fillHeight="true"
-              class="tb-flex fill-height"
-              fxLayout="column"
+              [fillHeight]="true"
               jsonRequired
               label="{{ 'gateway.configuration' | translate }}"
               formControlName="configurationJson">
@@ -240,7 +235,7 @@
           </mat-tab>
         </mat-tab-group>
       </ng-template>
-      <div fxLayoutAlign="end center">
+      <div class="flex justify-end">
         <button mat-raised-button color="primary"
                 type="button"
                 [disabled]="!connectorForm.dirty || connectorForm.invalid"
@@ -253,7 +248,7 @@
 </div>
 <ng-template #generalTabContent>
   <section [formGroup]="connectorForm" class="tb-form-panel no-border no-padding padding-top section-container flex">
-    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center" >
+    <div class="tb-form-row column-xs">
       <div class="fixed-title-width tb-required" translate>gateway.name</div>
       <div class="tb-flex no-gap">
         <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -271,7 +266,7 @@
         </mat-form-field>
       </div>
     </div>
-    <div *ngIf="connectorForm.get('type').value === ConnectorType.CUSTOM" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div *ngIf="connectorForm.get('type').value === ConnectorType.CUSTOM" class="tb-form-row column-xs">
       <div class="fixed-title-width" translate>gateway.connectors-table-class</div>
       <div class="tb-flex no-gap">
         <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -279,7 +274,7 @@
         </mat-form-field>
       </div>
     </div>
-    <div *ngIf="connectorForm.get('type').value === ConnectorType.GRPC" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div *ngIf="connectorForm.get('type').value === ConnectorType.GRPC" class="tb-form-row column-xs">
       <div class="fixed-title-width" translate>gateway.connectors-table-key</div>
       <div class="tb-flex no-gap">
         <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -289,14 +284,14 @@
     </div>
     <div class="tb-form-panel stroked">
       <div class="tb-form-panel-title" translate>gateway.logs-configuration</div>
-      <div class="tb-form-row" fxLayoutAlign="space-between center">
+      <div class="tb-form-row">
         <mat-slide-toggle class="mat-slide" formControlName="enableRemoteLogging">
           <mat-label>
             {{ 'gateway.enable-remote-logging' | translate }}
           </mat-label>
         </mat-slide-toggle>
       </div>
-      <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+      <div class="tb-form-row column-xs">
         <div class="fixed-title-width" translate>gateway.remote-logging-level</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -307,7 +302,7 @@
         </div>
       </div>
     </div>
-    <div *ngIf="connectorForm.get('type').value === ConnectorType.MQTT" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div *ngIf="connectorForm.get('type').value === ConnectorType.MQTT" class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="sendDataOnlyOnChange">
         <mat-label tb-hint-tooltip-icon="{{ 'gateway.send-change-data-hint' | translate }}">
           {{ 'gateway.send-change-data' | translate }}
