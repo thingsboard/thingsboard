@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile.layout;
+:host {
+  width: 600px;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100vh;
+  display: grid;
+  grid-template-rows: min-content minmax(auto, 1fr) min-content;
 
-public enum DefaultPageId {
-
-    HOME,
-    ALARMS,
-    DEVICES,
-    CUSTOMERS,
-    ASSETS,
-    AUDIT_LOGS,
-    NOTIFICATIONS,
-    DEVICE_LIST,
-    DASHBOARDS
+  .mobile-page-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
 }

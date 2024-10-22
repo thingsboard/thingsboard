@@ -460,8 +460,19 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         list: 'entity.list-of-mobile-apps',
         details: 'admin.oauth2.mobile-app-details',
         add: 'mobile.add-application',
-        noEntities: 'mobile.no=application',
+        noEntities: 'mobile.no-application',
         search: 'mobile.search-application'
+      }
+    ],
+    [
+      EntityType.MOBILE_APP_BUNDLE,
+      {
+        type: 'entity.type-mobile-app-bundle',
+        typePlural: 'entity.type-mobile-app-bundles',
+        list: 'entity.list-of-mobile-app-bundles',
+        add: 'mobile.add-bundle',
+        noEntities: 'mobile.no-bundles',
+        search: 'mobile.search-bundles'
       }
     ]
   ]
@@ -588,6 +599,12 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       {
         helpLinkId: 'oauth2Settings'
       }
+    ],
+    [
+      EntityType.MOBILE_APP_BUNDLE,
+      {
+        helpLinkId: 'mobileBundles'
+      }
     ]
   ]
 );
@@ -612,7 +629,7 @@ export const baseDetailsPageByEntityType = new Map<EntityType, string>([
   [EntityType.WIDGET_TYPE, '/resources/widgets-library/widget-types/details'],
   [EntityType.OAUTH2_CLIENT, '/security-settings/oauth2/clients/details'],
   [EntityType.DOMAIN, '/security-settings/oauth2/clients/details'],
-  [EntityType.MOBILE_APP, '/security-settings/oauth2/clients/details']
+  [EntityType.MOBILE_APP, '/mobile-center/applications']
 ]);
 
 export interface EntitySubtype {

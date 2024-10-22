@@ -33,6 +33,12 @@
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
+  <button mat-button color="primary" matSuffix
+          type="button"
+          *ngIf="allowCreateNew && !selectEntityFormGroup.get('entity').value && !disabled"
+          (click)="createNewEntity($event)">
+    <span style="white-space: nowrap">{{ 'entity.create-new' | translate }}</span>
+  </button>
   <mat-autocomplete class="tb-autocomplete"
                     #entityAutocomplete="matAutocomplete"
                     [displayWith]="displayEntityFn">

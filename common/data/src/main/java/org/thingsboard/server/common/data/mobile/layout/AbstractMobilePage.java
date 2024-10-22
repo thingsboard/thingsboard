@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.Views;
 @Data
 public abstract class AbstractMobilePage implements MobilePage {
 
-    @Schema(description = "Page label", example = "Air quality", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Page label", example = "Air quality")
     @JsonView(Views.Public.class)
     protected String label;
     @Schema(description = "Indicates if page is visible", example = "true", requiredMode = Schema.RequiredMode.REQUIRED)

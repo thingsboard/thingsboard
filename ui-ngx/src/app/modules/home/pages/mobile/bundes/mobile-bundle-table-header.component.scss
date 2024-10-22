@@ -13,17 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile.layout;
+:host{
+  width: 100000px;
 
-public enum DefaultPageId {
-
-    HOME,
-    ALARMS,
-    DEVICES,
-    CUSTOMERS,
-    ASSETS,
-    AUDIT_LOGS,
-    NOTIFICATIONS,
-    DEVICE_LIST,
-    DASHBOARDS
+  .tb-entity-title-container {
+    display: flex;
+    align-items: center;
+  }
 }

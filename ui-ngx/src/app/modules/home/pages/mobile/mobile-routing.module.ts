@@ -23,6 +23,7 @@ import { MobileAppTableConfigResolver } from '@home/pages/mobile/applications/mo
 import { MobileAppSettingsComponent } from '@home/pages/admin/mobile-app-settings.component';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { applicationsRoutes } from '@home/pages/mobile/applications/applications-routing.module';
+import { bundlesRoutes } from '@home/pages/mobile/bundes/bundles-routing.module';
 
 const routes: Routes = [
   {
@@ -44,6 +45,7 @@ const routes: Routes = [
         }
       },
       ...applicationsRoutes,
+      ...bundlesRoutes,
       {
         path: 'mobile-app',
         component: MobileAppSettingsComponent,

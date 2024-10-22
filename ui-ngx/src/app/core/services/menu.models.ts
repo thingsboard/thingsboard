@@ -67,6 +67,7 @@ export enum MenuId {
   notification_rules = 'notification_rules',
   mobile_center = 'mobile_center',
   mobile_apps = 'mobile_apps',
+  mobile_bundles = 'mobile_bundles',
   mobile_app_settings = 'mobile_app_settings',
   settings = 'settings',
   general = 'general',
@@ -290,6 +291,16 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       type: 'link',
       path: '/mobile-center/applications',
       icon: 'list'
+    }
+  ],
+  [
+    MenuId.mobile_bundles,
+    {
+      id: MenuId.mobile_bundles,
+      name: 'mobile.bundles',
+      type: 'link',
+      path: '/mobile-center/bundles',
+      icon: 'mdi:package'
     }
   ],
   [
@@ -702,6 +713,7 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
         id: MenuId.mobile_center,
         pages: [
           {id: MenuId.mobile_apps},
+          {id: MenuId.mobile_bundles},
           {id: MenuId.mobile_app_settings}
         ]
       },
@@ -850,7 +862,7 @@ const defaultHomeSectionMap = new Map<Authority, HomeSectionReference[]>([
       {
         name: 'admin.system-settings',
         places: [MenuId.general, MenuId.mail_server,
-          MenuId.notification_settings, MenuId.security_settings, MenuId.oauth2, MenuId.domains, MenuId.mobile_apps,
+          MenuId.notification_settings, MenuId.security_settings, MenuId.oauth2, MenuId.domains,
           MenuId.clients, MenuId.two_fa, MenuId.resources_library, MenuId.queues]
       }
     ]

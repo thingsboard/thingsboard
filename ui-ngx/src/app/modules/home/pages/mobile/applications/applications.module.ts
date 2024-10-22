@@ -22,18 +22,23 @@ import { SharedModule } from '@shared/shared.module';
 import { HomeComponentsModule } from '@home/components/home-components.module';
 import { ApplicationsRoutingModule } from '@home/pages/mobile/applications/applications-routing.module';
 import { ReleaseNotesPanelComponent } from '@home/pages/mobile/applications/release-notes-panel.component';
+import { MobileAppDialogComponent } from '@home/pages/mobile/applications/mobile-app-dialog.component';
 
 @NgModule({
   declarations: [
     MobileAppComponent,
     MobileAppTableHeaderComponent,
-    ReleaseNotesPanelComponent
+    ReleaseNotesPanelComponent,
+    MobileAppDialogComponent,
   ],
   imports: [
     CommonModule,
     SharedModule,
     HomeComponentsModule,
-    ApplicationsRoutingModule
+    ApplicationsRoutingModule,
+  ],
+  exports: [
+    MobileAppDialogComponent,
   ]
 })
-export class ApplicationModule { }
+export class MobileApplicationModule { }

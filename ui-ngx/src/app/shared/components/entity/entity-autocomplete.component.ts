@@ -131,8 +131,15 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   @coerceBoolean()
   disabled: boolean;
 
+  @Input()
+  @coerceBoolean()
+  allowCreateNew: boolean;
+
   @Output()
   entityChanged = new EventEmitter<BaseData<EntityId>>();
+
+  @Output()
+  createNew = new EventEmitter<void>();
 
   @ViewChild('entityInput', {static: true}) entityInput: ElementRef;
 
@@ -265,6 +272,12 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           this.noEntitiesMatchingText = 'queue-statistics.no-queue-statistics-matching';
           this.entityRequiredText = 'queue-statistics.queue-statistics-required';
           this.notFoundEntities = 'queue-statistics.no-queue-statistics-text';
+          break;
+        case EntityType.MOBILE_APP:
+          this.entityText = 'mobile.applications';
+          this.noEntitiesMatchingText = 'mobile.no-application-matching';
+          this.entityRequiredText = 'mobile.application-required';
+          this.notFoundEntities = 'mobile.no-application-text';
           break;
         case AliasEntityType.CURRENT_CUSTOMER:
           this.entityText = 'customer.default-customer';
@@ -416,5 +429,10 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       }
     }
     return entityType;
+  }
+
+  createNewEntity($event: Event) {
+    $event.stopPropagation();
+    this.createNew.emit();
   }
 }

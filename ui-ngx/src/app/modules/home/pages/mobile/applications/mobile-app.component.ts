@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Inject, Renderer2, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, Optional, Renderer2, ViewContainerRef } from '@angular/core';
 import { EntityComponent } from '@home/components/entity/entity.component';
 import { AppState } from '@core/core.state';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
@@ -51,8 +51,8 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
-              @Inject('entity') protected entityValue: MobileApp,
-              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<MobileApp>,
+              @Optional() @Inject('entity') protected entityValue: MobileApp,
+              @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<MobileApp>,
               protected cd: ChangeDetectorRef,
               public fb: FormBuilder,
               private popoverService: TbPopoverService,
