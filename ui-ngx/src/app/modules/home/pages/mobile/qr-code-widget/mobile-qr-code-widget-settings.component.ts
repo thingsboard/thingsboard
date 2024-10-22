@@ -28,6 +28,7 @@ import {
   QrCodeSettings
 } from '@shared/models/mobile-app.models';
 import { ActionUpdateMobileQrCodeEnabled } from '@core/auth/auth.actions';
+import { EntityType } from '@shared/models/entity-type.models';
 
 @Component({
   selector: 'tb-mobile-qr-code-widget',
@@ -37,12 +38,12 @@ import { ActionUpdateMobileQrCodeEnabled } from '@core/auth/auth.actions';
 export class MobileQrCodeWidgetSettingsComponent extends PageComponent implements HasConfirmForm, OnDestroy {
 
   mobileAppSettingsForm: FormGroup;
-
   mobileAppSettings: QrCodeSettings;
 
-  private readonly destroy$ = new Subject<void>();
+  readonly badgePositionTranslationsMap = badgePositionTranslationsMap;
+  readonly entityType = EntityType;
 
-  badgePositionTranslationsMap = badgePositionTranslationsMap;
+  private readonly destroy$ = new Subject<void>();
 
   constructor(protected store: Store<AppState>,
               private mobileAppService: MobileApplicationService,
@@ -55,33 +56,36 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
       takeUntil(this.destroy$)
     ).subscribe(value => {
       if (value) {
-        this.mobileAppSettingsForm.get('androidConfig.appPackage').disable({emitEvent: false});
-        this.mobileAppSettingsForm.get('androidConfig.sha256CertFingerprints').disable({emitEvent: false});
-        this.mobileAppSettingsForm.get('androidConfig.storeLink').disable({emitEvent: false});
-        this.mobileAppSettingsForm.get('iosConfig.appId').disable({emitEvent: false});
-        this.mobileAppSettingsForm.get('iosConfig.storeLink').disable({emitEvent: false});
+        this.mobileAppSettingsForm.get('mobileAppBundleId').disable({emitEvent: false});
+        // this.mobileAppSettingsForm.get('androidConfig.appPackage').disable({emitEvent: false});
+        // this.mobileAppSettingsForm.get('androidConfig.sha256CertFingerprints').disable({emitEvent: false});
+        // this.mobileAppSettingsForm.get('androidConfig.storeLink').disable({emitEvent: false});
+        // this.mobileAppSettingsForm.get('iosConfig.appId').disable({emitEvent: false});
+        // this.mobileAppSettingsForm.get('iosConfig.storeLink').disable({emitEvent: false});
       } else {
-        if (this.mobileAppSettingsForm.get('androidConfig.enabled').value) {
-          this.mobileAppSettingsForm.get('androidConfig.appPackage').enable({emitEvent: false});
-          this.mobileAppSettingsForm.get('androidConfig.sha256CertFingerprints').enable({emitEvent: false});
-          this.mobileAppSettingsForm.get('androidConfig.storeLink').enable({emitEvent: false});
-        }
-        if (this.mobileAppSettingsForm.get('iosConfig.enabled').value) {
-          this.mobileAppSettingsForm.get('iosConfig.appId').enable({emitEvent: false});
-          this.mobileAppSettingsForm.get('iosConfig.storeLink').enable({emitEvent: false});
-        }
+        this.mobileAppSettingsForm.get('mobileAppBundleId').enable({emitEvent: false});
+
+        // if (this.mobileAppSettingsForm.get('androidConfig.enabled').value) {
+        //   this.mobileAppSettingsForm.get('androidConfig.appPackage').enable({emitEvent: false});
+        //   this.mobileAppSettingsForm.get('androidConfig.sha256CertFingerprints').enable({emitEvent: false});
+        //   this.mobileAppSettingsForm.get('androidConfig.storeLink').enable({emitEvent: false});
+        // }
+        // if (this.mobileAppSettingsForm.get('iosConfig.enabled').value) {
+        //   this.mobileAppSettingsForm.get('iosConfig.appId').enable({emitEvent: false});
+        //   this.mobileAppSettingsForm.get('iosConfig.storeLink').enable({emitEvent: false});
+        // }
       }
     });
-    this.mobileAppSettingsForm.get('androidConfig.enabled').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe(value => {
-      this.androidEnableChanged(value);
-    });
-    this.mobileAppSettingsForm.get('iosConfig.enabled').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe(value => {
-      this.iosEnableChanged(value);
-    });
+    // this.mobileAppSettingsForm.get('androidConfig.enabled').valueChanges.pipe(
+    //   takeUntil(this.destroy$)
+    // ).subscribe(value => {
+    //   this.androidEnableChanged(value);
+    // });
+    // this.mobileAppSettingsForm.get('iosConfig.enabled').valueChanges.pipe(
+    //   takeUntil(this.destroy$)
+    // ).subscribe(value => {
+    //   this.iosEnableChanged(value);
+    // });
     this.mobileAppSettingsForm.get('qrCodeConfig.showOnHomePage').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(value => {
@@ -98,13 +102,13 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
       takeUntil(this.destroy$)
     ).subscribe(value => {
       if (value) {
-        if (this.mobileAppSettingsForm.get('androidConfig.enabled').value || this.mobileAppSettingsForm.get('iosConfig.enabled').value) {
-          this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').enable({emitEvent: false});
-          this.mobileAppSettingsForm.get('qrCodeConfig.badgePosition').enable({emitEvent: false});
-        } else {
-          this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').disable({emitEvent: false});
-          this.mobileAppSettingsForm.get('qrCodeConfig.badgePosition').disable({emitEvent: false});
-        }
+        // if (this.mobileAppSettingsForm.get('androidConfig.enabled').value || this.mobileAppSettingsForm.get('iosConfig.enabled').value) {
+        //   this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').enable({emitEvent: false});
+        //   this.mobileAppSettingsForm.get('qrCodeConfig.badgePosition').enable({emitEvent: false});
+        // } else {
+        //   this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').disable({emitEvent: false});
+        //   this.mobileAppSettingsForm.get('qrCodeConfig.badgePosition').disable({emitEvent: false});
+        // }
       } else {
         this.mobileAppSettingsForm.get('qrCodeConfig.badgePosition').disable({emitEvent: false});
       }
@@ -129,17 +133,18 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
   private buildMobileAppSettingsForm() {
     this.mobileAppSettingsForm = this.fb.group({
       useDefaultApp: [true],
-      androidConfig: this.fb.group({
-        enabled: [true],
-        appPackage: [{value: '', disabled: true}, [Validators.required]],
-        sha256CertFingerprints: [{value: '', disabled: true}, [Validators.required]],
-        storeLink: ['', [Validators.required]]
-      }),
-      iosConfig: this.fb.group({
-        enabled: [true],
-        appId: [{value: '', disabled: true}, [Validators.required]],
-        storeLink: ['', [Validators.required]]
-      }),
+      mobileAppBundleId: [{value: null, disabled: true}, Validators.required],
+      // androidConfig: this.fb.group({
+      //   enabled: [true],
+      //   appPackage: [{value: '', disabled: true}, [Validators.required]],
+      //   sha256CertFingerprints: [{value: '', disabled: true}, [Validators.required]],
+      //   storeLink: ['', [Validators.required]]
+      // }),
+      // iosConfig: this.fb.group({
+      //   enabled: [true],
+      //   appId: [{value: '', disabled: true}, [Validators.required]],
+      //   storeLink: ['', [Validators.required]]
+      // }),
       qrCodeConfig: this.fb.group({
         showOnHomePage: [true],
         badgeEnabled: [true],
@@ -155,33 +160,33 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
     this.mobileAppSettingsForm.reset(this.mobileAppSettings);
   }
 
-  private androidEnableChanged(value: boolean): void {
-    if (value) {
-      if (!this.mobileAppSettingsForm.get('useDefaultApp').value) {
-        this.mobileAppSettingsForm.get('androidConfig.appPackage').enable({emitEvent: false});
-        this.mobileAppSettingsForm.get('androidConfig.sha256CertFingerprints').enable({emitEvent: false});
-        this.mobileAppSettingsForm.get('androidConfig.storeLink').enable({emitEvent: false});
-      }
-    } else {
-      this.mobileAppSettingsForm.get('androidConfig.appPackage').disable({emitEvent: false});
-      this.mobileAppSettingsForm.get('androidConfig.sha256CertFingerprints').disable({emitEvent: false});
-      this.mobileAppSettingsForm.get('androidConfig.storeLink').disable({emitEvent: false});
-    }
-    this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').updateValueAndValidity({onlySelf: true});
-  }
-
-  private iosEnableChanged(value: boolean): void {
-    if (value) {
-      if (!this.mobileAppSettingsForm.get('useDefaultApp').value) {
-        this.mobileAppSettingsForm.get('iosConfig.appId').enable({emitEvent: false});
-        this.mobileAppSettingsForm.get('iosConfig.storeLink').enable({emitEvent: false});
-      }
-    } else {
-      this.mobileAppSettingsForm.get('iosConfig.appId').disable({emitEvent: false});
-      this.mobileAppSettingsForm.get('iosConfig.storeLink').disable({emitEvent: false});
-    }
-    this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').updateValueAndValidity({onlySelf: true});
-  }
+  // private androidEnableChanged(value: boolean): void {
+  //   if (value) {
+  //     if (!this.mobileAppSettingsForm.get('useDefaultApp').value) {
+  //       this.mobileAppSettingsForm.get('androidConfig.appPackage').enable({emitEvent: false});
+  //       this.mobileAppSettingsForm.get('androidConfig.sha256CertFingerprints').enable({emitEvent: false});
+  //       this.mobileAppSettingsForm.get('androidConfig.storeLink').enable({emitEvent: false});
+  //     }
+  //   } else {
+  //     this.mobileAppSettingsForm.get('androidConfig.appPackage').disable({emitEvent: false});
+  //     this.mobileAppSettingsForm.get('androidConfig.sha256CertFingerprints').disable({emitEvent: false});
+  //     this.mobileAppSettingsForm.get('androidConfig.storeLink').disable({emitEvent: false});
+  //   }
+  //   this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').updateValueAndValidity({onlySelf: true});
+  // }
+  //
+  // private iosEnableChanged(value: boolean): void {
+  //   if (value) {
+  //     if (!this.mobileAppSettingsForm.get('useDefaultApp').value) {
+  //       this.mobileAppSettingsForm.get('iosConfig.appId').enable({emitEvent: false});
+  //       this.mobileAppSettingsForm.get('iosConfig.storeLink').enable({emitEvent: false});
+  //     }
+  //   } else {
+  //     this.mobileAppSettingsForm.get('iosConfig.appId').disable({emitEvent: false});
+  //     this.mobileAppSettingsForm.get('iosConfig.storeLink').disable({emitEvent: false});
+  //   }
+  //   this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').updateValueAndValidity({onlySelf: true});
+  // }
 
   save(): void {
     const showOnHomePagePreviousValue = this.mobileAppSettings.qrCodeConfig.showOnHomePage;
@@ -199,5 +204,4 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
   confirmForm(): FormGroup {
     return this.mobileAppSettingsForm;
   }
-
 }

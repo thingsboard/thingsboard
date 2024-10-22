@@ -4071,6 +4071,7 @@
         "application-package": "Application Package",
         "application-secret": "Application Secret",
         "application-secret-required": "Application Secret is required",
+        "application": "Application",
         "applications": "Applications",
         "copy-app-id": "Copy App ID",
         "copy-app-store-link": "Copy App Store link",
@@ -4111,6 +4112,7 @@
         "version-information": "Version information",
         "min-version-release-notes": "Min version release notes",
         "latest-version-release-notes": "Latest version release notes",
+        "bundle": "Bundle",
         "bundles": "Bundles",
         "add-bundle": "Add bundle",
         "title": "Title",
@@ -4126,8 +4128,11 @@
         "description": "Description",
         "basic-settings": "Basic settings",
         "no-application-matching": "No application matching '{{entity}}' were found.",
+        "no-bundle-matching": "No bundle matching '{{entity}}' were found.",
         "application-required": "Application is required.",
+        "bundle-required": "Bundle is required.",
         "no-application-text": "No applications found",
+        "no-bundle-text": "No bundle found",
         "layout": "Layout",
         "pages": "Pages",
         "hide-all-pages": "Hide all pages",
@@ -4152,7 +4157,8 @@
         "custom-page": "Custom page",
         "edit-page": "Edit page",
         "edit-custom-page": "Edit custom page",
-        "delete-page": "Delete page"
+        "delete-page": "Delete page",
+        "qr-code-widget": "QR code widget"
     },
     "notification": {
         "action-button": "Action button",

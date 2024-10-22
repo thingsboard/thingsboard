@@ -25,7 +25,7 @@ import {
   Output,
   ViewChild
 } from '@angular/core';
-import { MatFormFieldAppearance } from '@angular/material/form-field';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { merge, Observable, of, Subject } from 'rxjs';
 import { catchError, debounceTime, map, share, switchMap, tap } from 'rxjs/operators';
@@ -39,7 +39,7 @@ import { EntityService } from '@core/http/entity.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { getEntityDetailsPageURL, isDefinedAndNotNull, isEqual } from '@core/utils';
-import { coerceBoolean } from '@shared/decorators/coercion';
+import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-entity-autocomplete',
@@ -134,6 +134,13 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   @Input()
   @coerceBoolean()
   allowCreateNew: boolean;
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
+
+  @Input()
+  @coerceArray()
+  additionalClasses: Array<string>;
 
   @Output()
   entityChanged = new EventEmitter<BaseData<EntityId>>();
@@ -274,10 +281,16 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           this.notFoundEntities = 'queue-statistics.no-queue-statistics-text';
           break;
         case EntityType.MOBILE_APP:
-          this.entityText = 'mobile.applications';
+          this.entityText = 'mobile.application';
           this.noEntitiesMatchingText = 'mobile.no-application-matching';
           this.entityRequiredText = 'mobile.application-required';
           this.notFoundEntities = 'mobile.no-application-text';
+          break;
+        case EntityType.MOBILE_APP_BUNDLE:
+          this.entityText = 'mobile.bundle';
+          this.noEntitiesMatchingText = 'mobile.no-bundle-matching';
+          this.entityRequiredText = 'mobile.bundle-required';
+          this.notFoundEntities = 'mobile.no-bundle-text';
           break;
         case AliasEntityType.CURRENT_CUSTOMER:
           this.entityText = 'customer.default-customer';

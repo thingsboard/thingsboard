@@ -24,8 +24,8 @@ import { deepClone, isNotEmptyStr } from '@core/utils';
 export interface QrCodeSettings extends HasTenantId {
   useDefaultApp: boolean;
   mobileAppBundleId: MobileAppBundleId
-  androidConfig: AndroidConfig; //TODO: need remove
-  iosConfig: IosConfig; //TODO: need remove
+  androidConfig: any; //TODO: need remove
+  iosConfig: any; //TODO: need remove
   qrCodeConfig: QRCodeConfig;
   defaultGooglePlayLink: string;
   defaultAppStoreLink: string;
@@ -34,30 +34,12 @@ export interface QrCodeSettings extends HasTenantId {
   }
 }
 
-export interface AndroidConfig {
-  enabled: boolean;
-  appPackage: string;
-  sha256CertFingerprints: string;
-  storeLink: string;
-}
-
-export interface IosConfig {
-  enabled: boolean;
-  appId: string;
-  storeLink: string;
-}
-
 export interface QRCodeConfig {
   showOnHomePage: boolean;
   badgeEnabled: boolean;
   badgePosition: BadgePosition;
   qrCodeLabelEnabled: boolean;
   qrCodeLabel: string;
-}
-
-export interface MobileOSBadgeURL {
-  iOS: string;
-  android: string;
 }
 
 export enum BadgePosition {
@@ -69,8 +51,6 @@ export const badgePositionTranslationsMap = new Map<BadgePosition, string>([
   [BadgePosition.RIGHT, 'admin.mobile-app.right'],
   [BadgePosition.LEFT, 'admin.mobile-app.left']
 ]);
-
-export type QrCodeConfig = AndroidConfig & IosConfig;
 
 export enum MobileAppStatus {
   DRAFT = 'DRAFT',
