@@ -30,11 +30,11 @@ import {
 import { ActionUpdateMobileQrCodeEnabled } from '@core/auth/auth.actions';
 
 @Component({
-  selector: 'tb-mobile-app-settings',
-  templateUrl: './mobile-app-settings.component.html',
-  styleUrls: ['mobile-app-settings.component.scss', '../../admin/settings-card.scss']
+  selector: 'tb-mobile-qr-code-widget',
+  templateUrl: './mobile-qr-code-widget-settings.component.html',
+  styleUrls: ['mobile-qr-code-widget-settings.component.scss', '../../admin/settings-card.scss']
 })
-export class MobileAppSettingsComponent extends PageComponent implements HasConfirmForm, OnDestroy {
+export class MobileQrCodeWidgetSettingsComponent extends PageComponent implements HasConfirmForm, OnDestroy {
 
   mobileAppSettingsForm: FormGroup;
 
