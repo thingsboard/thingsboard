@@ -128,7 +128,6 @@ public class OAuth2Controller extends BaseController {
                                                                   @RequestParam(required = false) String sortProperty,
                                                                   @Parameter(description = SORT_ORDER_DESCRIPTION)
                                                                   @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        accessControlService.checkPermission(getCurrentUser(), Resource.OAUTH2_CLIENT, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return oAuth2ClientService.findOAuth2ClientInfosByTenantId(getTenantId(), pageLink);
     }
@@ -168,8 +167,7 @@ public class OAuth2Controller extends BaseController {
             "as 'SECURITY_OAUTH2_LOGIN_PROCESSING_URL' env variable. By default it is '/login/oauth2/code/'" + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/oauth2/loginProcessingUrl")
-    public String getLoginProcessingUrl() throws ThingsboardException {
-        accessControlService.checkPermission(getCurrentUser(), Resource.OAUTH2_CLIENT, Operation.READ);
+    public String getLoginProcessingUrl() {
         return "\"" + oAuth2Configuration.getLoginProcessingUrl() + "\"";
     }
 
