@@ -126,9 +126,9 @@ public class QrCodeSettingsController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @PostMapping(value = "/api/mobile/qr/settings")
     public QrCodeSettings saveQrCodeSettings(@Parameter(description = "A JSON value representing the mobile apps configuration")
-                                                @RequestBody QrCodeSettings qrCodeSettings) throws ThingsboardException {
+                                             @RequestBody QrCodeSettings qrCodeSettings) throws ThingsboardException {
         SecurityUser currentUser = getCurrentUser();
-        accessControlService.checkPermission(currentUser, Resource.QR_CODE_SETTINGS, Operation.WRITE);
+        accessControlService.checkPermission(currentUser, Resource.MOBILE_APP_SETTINGS, Operation.WRITE);
         qrCodeSettings.setTenantId(getTenantId());
         return qrCodeSettingService.saveQrCodeSettings(currentUser.getTenantId(), qrCodeSettings);
     }
@@ -137,9 +137,9 @@ public class QrCodeSettingsController extends BaseController {
             notes = "The response payload contains configuration for android/iOS applications and platform qr code widget settings." + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/api/mobile/qr/settings")
-    public QrCodeSettings getQrAppSettings() throws ThingsboardException {
+    public QrCodeSettings getQrCodeSettings() throws ThingsboardException {
         SecurityUser currentUser = getCurrentUser();
-        accessControlService.checkPermission(currentUser, Resource.QR_CODE_SETTINGS, Operation.READ);
+        accessControlService.checkPermission(currentUser, Resource.MOBILE_APP_SETTINGS, Operation.READ);
         return qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID);
     }
 

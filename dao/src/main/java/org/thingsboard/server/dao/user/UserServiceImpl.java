@@ -468,7 +468,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     public void saveMobileSession(TenantId tenantId, UserId userId, String mobileToken, MobileSessionInfo sessionInfo) {
         removeMobileSession(tenantId, mobileToken); // unassigning fcm token from other users, in case we didn't clean up it on log out or mobile app uninstall
 
-        UserMobileSessionInfo mobileInfo = findMobileInfo(tenantId, userId).orElseGet(() -> {
+        UserMobileSessionInfo mobileInfo = findMobileSessionInfo(tenantId, userId).orElseGet(() -> {
             UserMobileSessionInfo newMobileInfo = new UserMobileSessionInfo();
             newMobileInfo.setSessions(new HashMap<>());
             return newMobileInfo;
@@ -479,12 +479,12 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
 
     @Override
     public Map<String, MobileSessionInfo> findMobileSessions(TenantId tenantId, UserId userId) {
-        return findMobileInfo(tenantId, userId).map(UserMobileSessionInfo::getSessions).orElse(Collections.emptyMap());
+        return findMobileSessionInfo(tenantId, userId).map(UserMobileSessionInfo::getSessions).orElse(Collections.emptyMap());
     }
 
     @Override
     public MobileSessionInfo findMobileSession(TenantId tenantId, UserId userId, String mobileToken) {
-        return findMobileInfo(tenantId, userId).map(mobileInfo -> mobileInfo.getSessions().get(mobileToken)).orElse(null);
+        return findMobileSessionInfo(tenantId, userId).map(mobileInfo -> mobileInfo.getSessions().get(mobileToken)).orElse(null);
     }
 
     @Override
@@ -495,7 +495,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
         }
     }
 
-    private Optional<UserMobileSessionInfo> findMobileInfo(TenantId tenantId, UserId userId) {
+    private Optional<UserMobileSessionInfo> findMobileSessionInfo(TenantId tenantId, UserId userId) {
         return Optional.ofNullable(userSettingsService.findUserSettings(tenantId, userId, UserSettingsType.MOBILE))
                 .map(UserSettings::getSettings).map(settings -> JacksonUtil.treeToValue(settings, UserMobileSessionInfo.class));
     }
