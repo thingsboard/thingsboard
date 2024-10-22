@@ -179,12 +179,12 @@ public class QrCodeSettingsController extends BaseController {
         QrCodeSettings qrCodeSettings = qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID);
         boolean useDefaultApp = qrCodeSettings.isUseDefaultApp();
         if (userAgent.contains("Android")) {
-            String googlePlayLink = useDefaultApp ? qrCodeSettings.getDefaultGooglePlayLink() : getStoreLink(qrCodeSettings.getMobileAppBundleId(), ANDROID);
+            String googlePlayLink = useDefaultApp ? qrCodeSettings.getGooglePlayLink() : getStoreLink(qrCodeSettings.getMobileAppBundleId(), ANDROID);
             return ResponseEntity.status(HttpStatus.FOUND)
                     .header("Location", googlePlayLink)
                     .build();
         } else if (userAgent.contains("iPhone") || userAgent.contains("iPad")) {
-            String appStoreLink = useDefaultApp ? qrCodeSettings.getDefaultAppStoreLink() : getStoreLink(qrCodeSettings.getMobileAppBundleId(), IOS);
+            String appStoreLink = useDefaultApp ? qrCodeSettings.getAppStoreLink() : getStoreLink(qrCodeSettings.getMobileAppBundleId(), IOS);
             return ResponseEntity.status(HttpStatus.FOUND)
                     .header("Location", appStoreLink)
                     .build();
