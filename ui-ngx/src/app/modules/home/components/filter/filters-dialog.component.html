@@ -44,7 +44,7 @@
            formArrayName="filters"
            *ngFor="let filterControl of filtersFormArray().controls; let $index = index">
         <span class="max-w-5% flex-full">{{$index + 1}}.</span>
-        <div class="mat-elevation-z4 tb-filter flex max-w-5% flex-full flex-row items-center justify-start">
+        <div class="mat-elevation-z4 tb-filter flex max-w-95% flex-full flex-row items-center justify-start">
           <mat-label class="flex-1">{{filterControl.get('filter').value}}</mat-label>
           <section style="padding-left: 10px;"
                    class="tb-editable-switch flex min-w-20 max-w-20 flex-1 basis-20 flex-col items-center justify-center">
