@@ -22,7 +22,7 @@
   <fieldset [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value" class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.general-settings</legend>
     <section class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
-      <mat-form-field class="mat-block max-w-50% flex-full">
+      <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
         <mat-label translate>widgets.input-widgets.datakey-type</mat-label>
         <mat-select formControlName="dataKeyType">
           <mat-option [value]="'server'">
@@ -36,7 +36,7 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field class="mat-block max-w-50% flex-full">
+      <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
         <mat-label translate>widgets.input-widgets.datakey-value-type</mat-label>
         <mat-select formControlName="dataKeyValueType">
           <mat-option [value]="'string'">
@@ -79,7 +79,7 @@
       {{ 'widgets.input-widgets.value-is-required' | translate }}
     </mat-checkbox>
     <section class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
-      <mat-form-field class="mat-block max-w-50% flex-full">
+      <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
         <mat-label translate>widgets.input-widgets.ability-to-edit-attribute</mat-label>
         <mat-select formControlName="isEditable">
           <mat-option [value]="'editable'">
@@ -93,14 +93,14 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('isEditable').value !== 'editable'" class="mat-block max-w-50% flex-full">
+      <mat-form-field [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('isEditable').value !== 'editable'" class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
         <mat-label translate>widgets.input-widgets.disable-on-datakey-name</mat-label>
         <input matInput formControlName="disabledOnDataKey">
       </mat-form-field>
     </section>
     <section *ngIf="!['booleanSwitch', 'booleanCheckbox'].includes(updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value)"
              class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
-      <mat-form-field class="mat-block max-w-50% flex-full">
+      <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
         <mat-label translate>widgets.input-widgets.field-appearance</mat-label>
         <mat-select formControlName="appearance">
           <mat-option [value]="'fill'">
@@ -111,7 +111,7 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field class="mat-block max-w-50% flex-full">
+      <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
         <mat-label translate>widgets.input-widgets.subscript-sizing</mat-label>
         <mat-select formControlName="subscriptSizing">
           <mat-option [value]="'fixed'">

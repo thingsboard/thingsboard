@@ -16,13 +16,13 @@
 
 -->
 <div class="tb-round-switch flex flex-col" [style.pointer-events]="ctx.isEdit ? 'none' : 'all'">
-  <div #switchTitleContainer class="title-container flex max-w-20% flex-full flex-row items-center justify-center" [class.!hidden]="!showTitle">
+  <div #switchTitleContainer class="title-container flex max-h-20% flex-full flex-row items-center justify-center" [class.!hidden]="!showTitle">
     <span #switchTitle class="switch-title">{{title}}</span>
   </div>
   <div #switchContainer class="flex flex-full flex-col items-center justify-center"
        [class]="{
-          'max-w-80%': showTitle,
-          'max-w-100%': !showTitle
+          'max-h-80%': showTitle,
+          'max-h-100%': !showTitle
        }"
        [style.padding-top]="showTitle ? '5px': '10px'" id="switch-container">
     <div #switch class="switch">

@@ -65,7 +65,7 @@
   <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit" class="flex flex-col">
       <div class="flex flex-row xs:flex-col gt-xs:gap-2">
-        <mat-form-field class="mat-block max-w-45% flex-full">
+        <mat-form-field class="mat-block flex-full gt-xs:max-w-45%">
           <mat-label translate>ota-update.title</mat-label>
           <input matInput formControlName="title" type="text" required [readonly]="!isAdd">
           <mat-error *ngIf="entityForm.get('title').hasError('required')">
@@ -131,7 +131,7 @@
         </section>
         <div class="flex flex-row xs:flex-col sm:gap-2 md:flex-col gt-xs:gap-2"
              *ngIf="!(isAdd && this.entityForm.get('generateChecksum').value)">
-          <mat-form-field class="mat-block max-w-33% flex-full">
+          <mat-form-field class="mat-block flex-full gt-xs:max-w-33%">
             <mat-label translate>ota-update.checksum-algorithm</mat-label>
             <mat-select formControlName="checksumAlgorithm">
               <mat-option *ngFor="let checksumAlgorithm of checksumAlgorithms" [value]="checksumAlgorithm">
@@ -147,7 +147,7 @@
         </div>
         <section *ngIf="!isAdd">
           <div class="flex flex-row xs:flex-col sm:gap-2 md:flex-col gt-md:gap-2">
-            <mat-form-field class="mat-block max-w-33% flex-full">
+            <mat-form-field class="mat-block flex-full gt-xs:max-w-33%">
               <mat-label translate>ota-update.file-name</mat-label>
               <input matInput formControlName="fileName" type="text">
             </mat-form-field>

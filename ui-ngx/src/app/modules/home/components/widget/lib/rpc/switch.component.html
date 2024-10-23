@@ -19,13 +19,13 @@
   <div #switchErrorContainer class="error-container flex flex-row items-center justify-center" [style.background]="error?.length ? 'rgba(255,255,255,0.25)' : 'none'">
     <span #switchError class="switch-error">{{ error }}</span>
   </div>
-  <div #switchTitleContainer class="title-container flex max-w-30% flex-full flex-row items-center justify-center" [class.!hidden]="!showTitle">
+  <div #switchTitleContainer class="title-container flex max-h-30% flex-full flex-row items-center justify-center" [class.!hidden]="!showTitle">
     <span #switchTitle class="switch-title">{{title}}</span>
   </div>
   <div #switchContainer class="flex flex-full flex-col items-center justify-center"
        [class]="{
-          'max-w-70%': showTitle,
-          'max-w-100%': !showTitle
+          'max-h-70%': showTitle,
+          'max-h-100%': !showTitle
        }"
        id="switch-container">
     <div #switch class="switch">
