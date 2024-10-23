@@ -516,7 +516,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'gateway.gateways',
       type: 'link',
       path: '/entities/gateways',
-      icon: 'mdi:hub'
+      icon: 'tb_gateway'
     }
   ],
   [
