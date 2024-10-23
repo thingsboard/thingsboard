@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplat
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
@@ -58,7 +59,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -210,14 +213,91 @@ public class InstallScripts {
 
     public void loadSystemWidgets() throws Exception {
         log.info("Loading system widgets");
-
+        Map<Path, JsonNode> widgetsBundlesMap = new HashMap<>();
         Path widgetBundlesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_BUNDLES_DIR);
-        Stream<String> bundles = listDir(widgetBundlesDir).filter(path -> path.toString().endsWith(JSON_EXT)).map(this::getContent);
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(widgetBundlesDir, path -> path.toString().endsWith(JSON_EXT))) {
+            dirStream.forEach(
+                    path -> {
+                        JsonNode widgetsBundleDescriptorJson;
+                        try {
+                            widgetsBundleDescriptorJson = JacksonUtil.toJsonNode(path.toFile());
+                        } catch (Exception e) {
+                            log.error("Unable to parse widgets bundle from json: [{}]", path);
+                            throw new RuntimeException("Unable to parse widgets bundle from json", e);
+                        }
+                        if (widgetsBundleDescriptorJson == null || !widgetsBundleDescriptorJson.has("widgetsBundle")) {
+                            log.error("Invalid widgets bundle json: [{}]", path);
+                            throw new RuntimeException("Invalid widgets bundle json: [" + path + "]");
+                        }
+                        widgetsBundlesMap.put(path, widgetsBundleDescriptorJson);
+                        JsonNode bundleAliasNode = widgetsBundleDescriptorJson.get("widgetsBundle").get("alias");
+                        if (bundleAliasNode == null || !bundleAliasNode.isTextual()) {
+                            log.error("Invalid widgets bundle json: [{}]", path);
+                            throw new RuntimeException("Invalid widgets bundle json: [" + path + "]");
+                        }
+                        String bundleAlias = bundleAliasNode.asText();
+                        try {
+                            this.deleteSystemWidgetBundle(bundleAlias);
+                        } catch (Exception e) {
+                            log.error("Failed to delete system widgets bundle: [{}]", bundleAlias);
+                            throw new RuntimeException("Failed to delete system widgets bundle: [" + bundleAlias + "]", e);
+                        }
+                    }
+            );
+        }
         Path widgetTypesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_TYPES_DIR);
-        Stream<String> widgets = listDir(widgetTypesDir).filter(path -> path.toString().endsWith(JSON_EXT)).map(this::getContent);
-        widgetsBundleService.updateSystemWidgets(bundles, widgets);
-
-        loadSystemScadaSymbols();
+        if (Files.exists(widgetTypesDir)) {
+            try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(widgetTypesDir, path -> path.toString().endsWith(JSON_EXT))) {
+                dirStream.forEach(
+                        path -> {
+                            try {
+                                JsonNode widgetTypeJson = JacksonUtil.toJsonNode(path.toFile());
+                                WidgetTypeDetails widgetTypeDetails = JacksonUtil.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
+                                widgetTypeService.saveWidgetType(widgetTypeDetails);
+                            } catch (Exception e) {
+                                log.error("Unable to load widget type from json: [{}]", path.toString());
+                                throw new RuntimeException("Unable to load widget type from json", e);
+                            }
+                        }
+                );
+            }
+        }
+        this.loadSystemScadaSymbols();
+        for (var widgetsBundleDescriptorEntry : widgetsBundlesMap.entrySet()) {
+            Path path = widgetsBundleDescriptorEntry.getKey();
+            try {
+                JsonNode widgetsBundleDescriptorJson = widgetsBundleDescriptorEntry.getValue();
+                JsonNode widgetsBundleJson = widgetsBundleDescriptorJson.get("widgetsBundle");
+                WidgetsBundle widgetsBundle = JacksonUtil.treeToValue(widgetsBundleJson, WidgetsBundle.class);
+                WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
+                List<String> widgetTypeFqns = new ArrayList<>();
+                if (widgetsBundleDescriptorJson.has("widgetTypes")) {
+                    JsonNode widgetTypesArrayJson = widgetsBundleDescriptorJson.get("widgetTypes");
+                    widgetTypesArrayJson.forEach(
+                            widgetTypeJson -> {
+                                try {
+                                    WidgetTypeDetails widgetTypeDetails = JacksonUtil.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
+                                    var savedWidgetType = widgetTypeService.saveWidgetType(widgetTypeDetails);
+                                    widgetTypeFqns.add(savedWidgetType.getFqn());
+                                } catch (Exception e) {
+                                    log.error("Unable to load widget type from json: [{}]", path.toString());
+                                    throw new RuntimeException("Unable to load widget type from json", e);
+                                }
+                            }
+                    );
+                }
+                if (widgetsBundleDescriptorJson.has("widgetTypeFqns")) {
+                    JsonNode widgetFqnsArrayJson = widgetsBundleDescriptorJson.get("widgetTypeFqns");
+                    widgetFqnsArrayJson.forEach(fqnJson -> {
+                        widgetTypeFqns.add(fqnJson.asText());
+                    });
+                }
+                widgetTypeService.updateWidgetsBundleWidgetFqns(TenantId.SYS_TENANT_ID, savedWidgetsBundle.getId(), widgetTypeFqns);
+            } catch (Exception e) {
+                log.error("Unable to load widgets bundle from json: [{}]", path.toString());
+                throw new RuntimeException("Unable to load widgets bundle from json", e);
+            }
+        }
     }
 
     private void loadSystemScadaSymbols() throws Exception {
@@ -306,6 +386,14 @@ public class InstallScripts {
         controllerScript = controllerScript.replaceAll("previewHeight: '\\d*px'", "previewHeight: '" + (metadata.getWidgetSizeY() * 100 + 20) + "px'");
         ((ObjectNode) descriptor).put("controllerScript", controllerScript);
         return widgetTypeService.saveWidgetType(scadaSymbolWidget);
+    }
+
+    private void deleteSystemWidgetBundle(String bundleAlias) {
+        WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(TenantId.SYS_TENANT_ID, bundleAlias);
+        if (widgetsBundle != null) {
+            widgetTypeService.deleteWidgetTypesByBundleId(TenantId.SYS_TENANT_ID, widgetsBundle.getId());
+            widgetsBundleService.deleteWidgetsBundle(TenantId.SYS_TENANT_ID, widgetsBundle.getId());
+        }
     }
 
     public void updateImages() {
