@@ -102,7 +102,7 @@ $$
         qrCodeRecord RECORD;
     BEGIN
         -- in case of running the upgrade script a second time
-        IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = 'qr_code_settings' and column_name = 'android_config') THEN
+        IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = 'qr_code_settings' AND column_name = 'android_config') THEN
             FOR qrCodeRecord IN SELECT * FROM qr_code_settings
             LOOP
                 generatedBundleId := NULL;
@@ -124,7 +124,7 @@ $$
 
                 -- migrate ios config
                 iosPkgName := substring(qrCodeRecord.ios_config::jsonb ->> 'appId', strpos(qrCodeRecord.ios_config::jsonb ->> 'appId', '.') + 1);
-                SELECT id into iosAppId FROM mobile_app WHERE pkg_name = iosPkgName AND platform_type = 'IOS';
+                SELECT id INTO iosAppId FROM mobile_app WHERE pkg_name = iosPkgName AND platform_type = 'IOS';
                 IF iosAppId IS NULL THEN
                     iosAppId := uuid_generate_v4();
                     INSERT INTO mobile_app(id, created_time, tenant_id, pkg_name, platform_type, status, store_info)
