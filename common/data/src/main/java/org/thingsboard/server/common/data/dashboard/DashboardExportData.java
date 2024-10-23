@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.util;
+package org.thingsboard.server.common.data.dashboard;
 
-import org.thingsboard.server.common.data.exception.ThingsboardException;
+import lombok.Data;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.ResourceExportData;
 
-@FunctionalInterface
-public interface ThrowingSupplier<T> {
+import java.util.List;
 
-    T get() throws ThingsboardException;
-
+@Data
+public class DashboardExportData {
+    private Dashboard dashboard;
+    private List<ResourceExportData> resources;
 }

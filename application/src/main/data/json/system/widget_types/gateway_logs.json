@@ -8,7 +8,15 @@
     "type": "timeseries",
     "sizeX": 7.5,
     "sizeY": 3,
-    "resources": [],
+    "resources": [
+      {
+        "url": {
+          "entityType": "TB_RESOURCE",
+          "id": "${RESOURCE:gateway-management-extension.js}"
+        },
+        "isModule": true
+      }
+    ],
     "templateHtml": "<tb-gateway-logs [ctx]=\"ctx\">\n    \n</tb-gateway-logs>",
     "templateCss": "#container {\n    overflow: auto;\n}\n\n.tbDatasource-container {\n    margin: 5px;\n    padding: 8px;\n}\n\n.tbDatasource-title {\n    font-size: 1.200rem;\n    font-weight: 500;\n    padding-bottom: 10px;\n}\n\n.tbDatasource-table {\n    width: 100%;\n    box-shadow: 0 0 10px #ccc;\n    border-collapse: collapse;\n    white-space: nowrap;\n    font-size: 1.000rem;\n    color: #757575;\n}\n\n.tbDatasource-table td {\n    position: relative;\n    border-top: 1px solid rgba(0, 0, 0, 0.12);\n    border-bottom: 1px solid rgba(0, 0, 0, 0.12);\n    padding: 0px 18px;\n    box-sizing: border-box;\n}",
     "controllerScript": "self.onInit = function() {\n};\n\nself.typeParameters  = function() {\n    return {\n        dataKeysOptional: true,\n        singleEntity: true\n    };\n}",

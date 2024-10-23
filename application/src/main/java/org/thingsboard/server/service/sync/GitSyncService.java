@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.util;
+package org.thingsboard.server.service.sync;
 
-import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.service.sync.vc.GitRepository.FileType;
+import org.thingsboard.server.service.sync.vc.GitRepository.RepoFile;
 
-@FunctionalInterface
-public interface ThrowingSupplier<T> {
+import java.util.List;
 
-    T get() throws ThingsboardException;
+public interface GitSyncService {
+
+    void registerSync(String key, String repoUri, String branch, long fetchFrequencyMs, Runnable onUpdate);
+
+    List<RepoFile> listFiles(String key, String path, int depth, FileType type);
+
+    String getFileContent(String key, String path);
+
+    String getGithubRawContentUrl(String key, String path);
 
 }

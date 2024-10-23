@@ -65,4 +65,6 @@ public interface WidgetTypeService extends EntityDaoService {
 
     void deleteWidgetTypesByTenantId(TenantId tenantId);
 
+    void deleteWidgetTypesByBundleId(TenantId tenantId, WidgetsBundleId bundleId);
+
 }

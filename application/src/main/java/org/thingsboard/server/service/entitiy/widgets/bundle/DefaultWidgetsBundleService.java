@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.entitiy.widgets.bundle;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
@@ -34,6 +35,7 @@ import java.util.List;
 @Service
 @TbCoreComponent
 @AllArgsConstructor
+@Slf4j
 public class DefaultWidgetsBundleService extends AbstractTbEntityService implements TbWidgetsBundleService {
 
     private final WidgetsBundleService widgetsBundleService;
@@ -79,4 +81,5 @@ public class DefaultWidgetsBundleService extends AbstractTbEntityService impleme
         widgetTypeService.updateWidgetsBundleWidgetFqns(user.getTenantId(), widgetsBundleId, widgetFqns);
         autoCommit(user, widgetsBundleId);
     }
+
 }

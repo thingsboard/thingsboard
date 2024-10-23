@@ -8,7 +8,15 @@
     "type": "latest",
     "sizeX": 11,
     "sizeY": 8,
-    "resources": [],
+    "resources": [
+      {
+        "url": {
+          "entityType": "TB_RESOURCE",
+          "id": "${RESOURCE:gateway-management-extension.js}"
+        },
+        "isModule": true
+      }
+    ],
     "templateHtml": "<tb-gateway-configuration [device]=\"entityId\" *ngIf=\"entityId\"></tb-gateway-configuration>",
     "templateCss": "",
     "controllerScript": "self.onInit = function() {\n    if (self.ctx.datasources && self.ctx.datasources.length) {\n        self.ctx.$scope.entityId = self.ctx.datasources[0].entity.id;\n    }\n};\n\nself.typeParameters  = function() {\n    return {\n        dataKeysOptional: true,\n        singleEntity: true\n    };\n}",
