@@ -167,7 +167,11 @@ module.exports = {
   },
   safelist: [
     'lt-md:gap-3',
-    'md:!hidden'
+    'md:!hidden',
+    'gap-6',
+    'gap-7',
+    'gap-10',
+    'gt-md:justify-center'
   ],
   corePlugins: {
     preflight: false

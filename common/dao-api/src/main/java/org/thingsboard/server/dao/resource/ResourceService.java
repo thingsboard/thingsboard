@@ -64,7 +64,7 @@ public interface ResourceService extends EntityDaoService {
 
     long sumDataSizeByTenantId(TenantId tenantId);
 
-    TbResource updateSystemResource(ResourceType resourceType, String resourceKey, String data);
+    TbResource createOrUpdateSystemResource(ResourceType resourceType, String resourceKey, String data);
 
     String checkSystemResourcesUsage(String content, ResourceType... usedResourceTypes);
 

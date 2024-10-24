@@ -70,8 +70,12 @@ public class DefaultGitSyncService implements GitSyncService {
 
             try {
                 log.debug("[{}] Fetching repository", key);
-                repository.fetch();
-                onUpdate(key);
+                boolean updated = repository.fetch();
+                if (updated) {
+                    onUpdate(key);
+                } else {
+                    log.debug("[{}] No changes in the repository", key);
+                }
             } catch (Throwable e) {
                 log.error("[{}] Failed to fetch repository", key, e);
             }
