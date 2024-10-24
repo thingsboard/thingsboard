@@ -523,7 +523,7 @@ public class InstallScripts {
             String resourceKey = resourceFile.getFileName().toString();
             try {
                 String data = getContent(resourceFile);
-                TbResource resource = resourceService.updateSystemResource(resourceType, resourceKey, data);
+                TbResource resource = resourceService.createOrUpdateSystemResource(resourceType, resourceKey, data);
                 log.info("{} resource {}", (resource.getId() == null ? "Created" : "Updated"), resourceKey);
             } catch (Exception e) {
                 throw new RuntimeException("Unable to load system resource " + resourceFile, e);
