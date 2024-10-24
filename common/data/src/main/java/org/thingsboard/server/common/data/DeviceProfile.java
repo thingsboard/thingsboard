@@ -25,6 +25,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.device.data.TableInfo;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -99,6 +100,9 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
     private DeviceProfileId externalId;
     private Long version;
 
+    // for tdengine
+    private transient TableInfo tableInfo;
+
     public DeviceProfile() {
         super();
     }
@@ -124,6 +128,8 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
         this.defaultEdgeRuleChainId = deviceProfile.getDefaultEdgeRuleChainId();
         this.externalId = deviceProfile.getExternalId();
         this.version = deviceProfile.getVersion();
+        // for tdengine
+        this.tableInfo = deviceProfile.getTableInfo();
     }
 
     @Schema(description = "JSON object with the device profile Id. " +

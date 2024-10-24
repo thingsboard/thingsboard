@@ -20,6 +20,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.Customer;
@@ -37,10 +40,13 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.dao.device.claim.ReclaimResult;
+import org.thingsboard.server.dao.tdengine.BaseTDengine;
+import org.thingsboard.server.dao.util.TDengineTsDao;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
@@ -54,12 +60,48 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
     private final DeviceCredentialsService deviceCredentialsService;
     private final ClaimDevicesService claimDevicesService;
 
+    // for tdengine
+    @Autowired(required = false)
+    @Qualifier("TDengineTemplate")
+    @TDengineTsDao
+    protected JdbcTemplate jdbcTemplate;
+
+    // for tdengine
+    @Autowired(required = false)
+    @TDengineTsDao
+    private BaseTDengine baseTDengine;
+
+    // for tdengine
+    @Autowired
+    protected DeviceProfileService deviceProfileService;
+
     @Override
     public Device save(Device device, String accessToken, User user) throws Exception {
         ActionType actionType = device.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = device.getTenantId();
         try {
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
+            /* for tdengine, start */
+            if (useStable) {
+                if (actionType == ActionType.ADDED) {
+                    String deviceProfileId = device.getDeviceProfileId().toString();
+                    jdbcTemplate.execute("create table if not exists `" + savedDevice.getId() + "` using `" + deviceProfileId + "` (device_name) tags ('" + device.getName() + "') comment '" + device.getName() + "'");
+                    baseTDengine.setTableMetaCache(savedDevice.getId().toString(), deviceProfileId);
+                } else {
+                    jdbcTemplate.query("select device_name from `" + savedDevice.getId() + "`", rs -> {
+                        String name = rs.getString("device_name");
+                        if (!savedDevice.getName().equals(name)) {
+                            jdbcTemplate.execute("alter table `" + savedDevice.getId() + "` set tag device_name=" + savedDevice.getName());
+                            jdbcTemplate.execute("alter table `" + savedDevice.getId() + "` comment '" + savedDevice.getName() + "'");
+                        }
+                    });
+                }
+            } else {
+                if (actionType == ActionType.ADDED && null != baseTDengine) {
+                    baseTDengine.creatEmptyTable(savedDevice.getId().getId().toString());
+                }
+            }
+            /* for tdengine, end */
             autoCommit(user, savedDevice.getId());
             logEntityActionService.logEntityAction(tenantId, savedDevice.getId(), savedDevice, savedDevice.getCustomerId(),
                     actionType, user);
