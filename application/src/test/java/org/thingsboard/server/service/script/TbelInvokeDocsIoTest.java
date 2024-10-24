@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DaoSqlTest
@@ -432,7 +433,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 msgList.put("splice2List", list.clone());
                 msgList.put("splice1_4", list.splice(1, 4, "start", 5, "end"));
                 msgList.put("splice1_4List", list.clone());
-                return msgList
+                return msgList;
                 """;
         ArrayList list = new ArrayList<>(List.of("A", "B", "C", "B", "C", "hello", 34567));
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
@@ -486,7 +487,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 msgList.put("listChangeIndex1List", list.clone());
                 list[0] = 2096;
                 msgList.put("listChangeIndex0List", list.clone());
-                return msgList
+                return msgList;
                 """;
         ArrayList list = new ArrayList<>(List.of("r", "start", 5, "end"));
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
@@ -524,7 +525,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 msgList.put("fill4List", list.clone());
                 msgList.put("fill4_6", list.fill(2, 1, 4));
                 msgList.put("fill4_6List", list.clone());
-                return msgList
+                return msgList;
                 """;
         ArrayList list = new ArrayList<>(List.of(2096, "98", 5, "65"));
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
@@ -584,7 +585,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 msgList.put("toSpliced2_2List", list.clone());
                 msgList.put("toSpliced4_5", list.toSpliced(2, 4, "start", 5, "end"));
                 msgList.put("toSpliced4_5List", list.clone());
-                return msgList
+                return msgList;
                 """;
         ArrayList list = new ArrayList<>(List.of(67, 2, 2, 2));
         ArrayList oldList = (ArrayList) list.clone();
@@ -665,7 +666,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 msgList.put("indOf1", list.indexOf("B", 1));
                 msgList.put("indOf2", list.indexOf(2, 2));
                 msgList.put("sStr", list.validateClazzInArrayIsOnlyString());
-                return msgList
+                return msgList;
                 """;
         ArrayList list = new ArrayList<>(List.of(67, 2, 2, 2));
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
@@ -678,6 +679,65 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
     }
+
+    // Arrays
+    @Test
+    public void arrays_Test() throws ExecutionException, InterruptedException {
+        String str = "My String";
+        msgStr = String.format("""
+            {"str": "%s"}
+            """, str);
+        decoderStr = """
+                var msgArray = {};
+                // Create new array
+                var array = new int[3];
+                array[0] = 1;
+                array[1] = 2;
+                array[2] = 3;
+                msgArray.put("array", array);        
+                var str = msg.str;
+                msgArray.put("str", msg.str);
+                msgArray.put("str0", str[0]);
+                function sum(list){
+                    var result = 0;
+                    for(var i = 0; i < list.length; i++){
+                        result += list[i];
+                    }
+                    return result;
+                };  
+                msgArray.put("sum", sum(array));              
+//                array[3] = 4; // Will cause ArrayIndexOutOfBoundsException
+                return msgArray;
+                """;
+        ArrayList list = new ArrayList<>(List.of(1, 2, 3));
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("array", list);
+        expected.put("str", str);
+        expected.put("str0", str.toCharArray()[0]);
+        expected.put("sum", 6);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+    @Test
+    public void arraysWillCauseArrayIndexOutOfBoundsException_Test() throws ExecutionException, InterruptedException {
+        msgStr = """
+            {}
+            """;
+        decoderStr = """
+                var array = new int[3];
+                array[0] = 1;
+                array[1] = 2;
+                array[2] = 3;
+                array[3] = 4;
+                return array;
+                """;
+        assertThatThrownBy(() -> {
+            invokeScript(evalScript(decoderStr), msgStr);
+        }).hasMessageContaining("Invalid statement: 4")
+          .hasMessageContaining("[Line: 5, Column: 12]");
+    }
+
+
 
     private List splice(List oldList, int start, int deleteCount, Object... values) {
         start = initStartIndex(oldList, start);
