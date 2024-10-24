@@ -15,13 +15,11 @@
  */
 package org.thingsboard.server.common.data.mobile;
 
-import lombok.Data;
+import org.thingsboard.server.common.data.HomeDashboardInfo;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.mobile.layout.MobilePage;
 
-import java.util.Map;
+import java.util.List;
 
-@Data
-public class UserMobileInfo {
-
-    private Map<String, MobileSessionInfo> sessions;
-
+public record UserMobileInfo(User user, HomeDashboardInfo homeDashboardInfo, List<MobilePage> pages) {
 }

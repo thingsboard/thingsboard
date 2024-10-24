@@ -1,0 +1,74 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "../../../../../../scss/constants";
+
+:host {
+  width: 850px;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100vh;
+  display: grid;
+  grid-template-rows: min-content 4px minmax(auto, 1fr) min-content;
+  --mdc-outlined-text-field-outline-color: rgba(0,0,0,0.12);
+
+  .mat-mdc-slide-toggle {
+    margin-bottom: 16px;
+  }
+
+  form.layout-form {
+    display: block;
+    height: 100%;
+    max-height: 100%;
+  }
+
+  ::ng-deep {
+
+    .mat-mdc-dialog-content {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 0 !important;
+      color: rgba(0, 0, 0, 0.87);
+
+      .mat-stepper-horizontal {
+        display: flex;
+        height: 100%;
+        overflow: hidden;
+
+        .mat-horizontal-stepper-wrapper {
+          flex: 1 1 100%;
+          max-width: 100%;
+        }
+
+        .mat-horizontal-content-container {
+          height: 700px;
+          max-height: 100%;
+          width: 100%;;
+          overflow-y: auto;
+          scrollbar-gutter: stable;
+          @media #{$mat-gt-sm} {
+            min-width: 500px;
+          }
+          .mat-horizontal-stepper-content:not(.mat-horizontal-stepper-content-inactive):nth-child(3) {
+            height: 100%;
+            max-height: 100%;
+            overflow: hidden;
+          }
+        }
+      }
+    }
+  }
+}

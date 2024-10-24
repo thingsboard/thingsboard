@@ -26,6 +26,8 @@ export * from './entity-id';
 export * from './entity-view-id';
 export * from './event-id';
 export * from './has-uuid';
+export * from './mobile-app-bundle-id';
+export * from './mobile-app-id';
 export * from './notification-id';
 export * from './notification-request-id';
 export * from './notification-rule-id';

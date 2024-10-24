@@ -38,7 +38,6 @@ import { widgetsLibraryRoutes } from '@home/pages/widget/widget-library-routing.
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { auditLogsRoutes } from '@home/pages/audit-log/audit-log-routing.module';
 import { ImageGalleryComponent } from '@shared/components/image/image-gallery.component';
-import { MobileAppSettingsComponent } from '@home/pages/admin/mobile-app-settings.component';
 import { oAuth2Routes } from '@home/pages/admin/oauth2/oauth2-routing.module';
 import { ImageResourceType, IMAGES_URL_PREFIX, ResourceSubType } from '@shared/models/resource.models';
 import { ScadaSymbolComponent } from '@home/pages/scada-symbol/scada-symbol.component';
@@ -309,18 +308,6 @@ const routes: Routes = [
           title: 'admin.auto-commit-settings',
           breadcrumb: {
             menuId: MenuId.auto_commit_settings
-          }
-        }
-      },
-      {
-        path: 'mobile-app',
-        component: MobileAppSettingsComponent,
-        canDeactivate: [ConfirmOnExitGuard],
-        data: {
-          auth: [Authority.SYS_ADMIN],
-          title: 'admin.mobile-app.mobile-app',
-          breadcrumb: {
-            menuId: MenuId.mobile_app_settings
           }
         }
       },

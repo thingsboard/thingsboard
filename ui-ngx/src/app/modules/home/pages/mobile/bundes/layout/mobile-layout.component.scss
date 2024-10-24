@@ -1,0 +1,184 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import './../scss/constants';
+
+:host{
+  .mobile-layout-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .header {
+      .title-section {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 24px;
+        min-width: 0;
+        .title-container {
+          font-size: 20px;
+          letter-spacing: .1px;
+        }
+      }
+    }
+
+    .tb-mobile-items-container {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-height: 0;
+      overflow: auto;
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+  }
+
+  .tb-mobile-layout-button.mdc-button {
+    min-width: 120px;
+    tb-icon {
+      min-width: 18px;
+    }
+    .mdc-button__label {
+      overflow: hidden;
+    }
+  }
+
+  ::ng-deep {
+    .mat-mdc-button.mat-mdc-button-base.tb-add-mobile-item-button {
+      height: 24px;
+      opacity: 0;
+      transition: all 200ms;
+      &.divider {
+        opacity: 1;
+        .mat-mdc-button-persistent-ripple {
+          border-bottom-style: dashed;
+          border-bottom-width: 1px;
+        }
+        .tb-add-mobile-label-container {
+          vertical-align: middle;
+          .mat-icon {
+            display: none;
+          }
+        }
+        &:hover {
+          .mat-mdc-button-persistent-ripple {
+            border-bottom-style: inherit;
+            border-bottom-width: inherit;
+          }
+          .tb-add-mobile-label-container {
+            vertical-align: sub;
+            .mat-icon {
+              display: inline-block;
+            }
+            .tb-mobile-divider-label {
+              display: none;
+            }
+          }
+        }
+        .mat-mdc-button-persistent-ripple {
+          top: 11px;
+          bottom: 11px;
+          &:before {
+            opacity: 0.32;
+          }
+        }
+      }
+      &:hover {
+        opacity: 1;
+      }
+      .mat-mdc-button-persistent-ripple {
+        top: 11px;
+        bottom: 11px;
+        &:before {
+          opacity: 0.32;
+        }
+      }
+      &:active {
+        .mat-mdc-button-persistent-ripple {
+          &:before {
+            opacity: 0.48;
+          }
+        }
+        .tb-add-mobile-label-container {
+          &:after {
+            opacity: 0.48;
+          }
+        }
+      }
+      .tb-add-mobile-label-container {
+        display: inline-flex;
+        padding: 3px;
+        vertical-align: sub;
+        border-radius: 6px;
+        background: #fff;
+        .mat-icon {
+          margin: 0;
+        }
+        .tb-mobile-divider-label {
+          line-height: 12px;
+          font-size: 10px;
+          font-weight: 400;
+          padding: 0 6px;
+        }
+        &:after {
+          display: block;
+          height: auto;
+          content: "";
+          position: absolute;
+          inset: 0;
+          opacity: 0.32;
+          border-radius: 6px;
+          border: 1px solid $tb-primary-color;
+          pointer-events: none;
+        }
+      }
+    }
+  }
+}
+
+.tb-mobile-item-row-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tb-mobile-item-row {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 12px 12px 12px 0;
+  background: #fff;
+  gap: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 5px 16px 0 rgba(0, 0, 0, 0.04);
+  .tb-mobile-item-label {
+    position: absolute;
+    left: 8px;
+    top: -8px;
+    padding-left: 8px;
+    padding-right: 8px;
+    background: #fff;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+    letter-spacing: 0.4px;
+    color: rgba(0, 0, 0, 0.54);
+  }
+
+}
