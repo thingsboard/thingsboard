@@ -104,7 +104,7 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
 
         this.mainConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<ToEdgeMsg>, EdgeQueueConfig>builder()
                 .queueKey(new QueueKey(ServiceType.TB_CORE).withQueueName(DataConstants.EDGE_QUEUE_NAME))
-                .config(EdgeQueueConfig.of(consumerPerPartition, (int) pollInterval))
+                .config(EdgeQueueConfig.of(consumerPerPartition, pollInterval))
                 .msgPackProcessor(this::processMsgs)
                 .consumerCreator((config, partitionId) -> queueFactory.createEdgeMsgConsumer())
                 .consumerExecutor(consumersExecutor)

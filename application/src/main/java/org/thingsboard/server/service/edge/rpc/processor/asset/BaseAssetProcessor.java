@@ -16,17 +16,22 @@
 package org.thingsboard.server.service.edge.rpc.processor.asset;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 @Slf4j
 public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
+
+    @Autowired
+    private DataValidator<Asset> assetValidator;
 
     protected Pair<Boolean, Boolean> saveOrUpdateAsset(TenantId tenantId, AssetId assetId, AssetUpdateMsg assetUpdateMsg) {
         boolean created = false;
@@ -37,7 +42,7 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
             if (asset == null) {
                 throw new RuntimeException("[{" + tenantId + "}] assetUpdateMsg {" + assetUpdateMsg + " } cannot be converted to asset");
             }
-            Asset assetById = assetService.findAssetById(tenantId, assetId);
+            Asset assetById = edgeCtx.getAssetService().findAssetById(tenantId, assetId);
             if (assetById == null) {
                 created = true;
                 asset.setId(null);
@@ -45,7 +50,7 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
                 asset.setId(assetId);
             }
             String assetName = asset.getName();
-            Asset assetByName = assetService.findAssetByTenantIdAndName(tenantId, assetName);
+            Asset assetByName = edgeCtx.getAssetService().findAssetByTenantIdAndName(tenantId, assetName);
             if (assetByName != null && !assetByName.getId().equals(assetId)) {
                 assetName = assetName + "_" + StringUtils.randomAlphanumeric(15);
                 log.warn("[{}] Asset with name {} already exists. Renaming asset name to {}",
@@ -59,7 +64,7 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
             if (created) {
                 asset.setId(assetId);
             }
-            assetService.saveAsset(asset, false);
+            edgeCtx.getAssetService().saveAsset(asset, false);
         } catch (Exception e) {
             log.error("[{}] Failed to process asset update msg [{}]", tenantId, assetUpdateMsg, e);
             throw e;

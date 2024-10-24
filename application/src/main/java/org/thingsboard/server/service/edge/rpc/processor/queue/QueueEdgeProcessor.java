@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.edge.rpc.processor.queue;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -27,6 +28,7 @@ import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.constructor.queue.QueueMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.queue.QueueMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 @Slf4j
@@ -34,32 +36,33 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 @TbCoreComponent
 public class QueueEdgeProcessor extends BaseEdgeProcessor {
 
+    @Autowired
+    private QueueMsgConstructorFactory queueMsgConstructorFactory;
+
     public DownlinkMsg convertQueueEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         QueueId queueId = new QueueId(edgeEvent.getEntityId());
-        DownlinkMsg downlinkMsg = null;
+        var msgConstructor = (QueueMsgConstructor) queueMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion);
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED -> {
-                Queue queue = queueService.findQueueById(edgeEvent.getTenantId(), queueId);
+                Queue queue = edgeCtx.getQueueService().findQueueById(edgeEvent.getTenantId(), queueId);
                 if (queue != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    QueueUpdateMsg queueUpdateMsg = ((QueueMsgConstructor)
-                            queueMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructQueueUpdatedMsg(msgType, queue);
-                    downlinkMsg = DownlinkMsg.newBuilder()
+                    QueueUpdateMsg queueUpdateMsg = msgConstructor.constructQueueUpdatedMsg(msgType, queue);
+                    return DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addQueueUpdateMsg(queueUpdateMsg)
                             .build();
                 }
             }
             case DELETED -> {
-                QueueUpdateMsg queueDeleteMsg = ((QueueMsgConstructor)
-                        queueMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructQueueDeleteMsg(queueId);
-                downlinkMsg = DownlinkMsg.newBuilder()
+                QueueUpdateMsg queueDeleteMsg = msgConstructor.constructQueueDeleteMsg(queueId);
+                return DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addQueueUpdateMsg(queueDeleteMsg)
                         .build();
             }
         }
-        return downlinkMsg;
+        return null;
     }
 
 }

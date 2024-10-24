@@ -125,7 +125,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     protected EdgeImitator edgeImitator;
     protected Edge edge;
 
-    private Random random = new Random();
+    private final Random random = new Random();
 
     @Autowired
     protected EdgeEventService edgeEventService;

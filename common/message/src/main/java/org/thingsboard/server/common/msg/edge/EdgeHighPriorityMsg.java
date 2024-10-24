@@ -20,8 +20,13 @@ import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 
+import java.io.Serial;
+
 @Data
 public class EdgeHighPriorityMsg implements EdgeSessionMsg {
+
+    @Serial
+    private static final long serialVersionUID = 2703437686242033551L;
 
     private final TenantId tenantId;
     private final EdgeEvent edgeEvent;
