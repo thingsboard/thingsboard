@@ -68,6 +68,7 @@ import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.sync.vc.BranchInfo;
 import org.thingsboard.server.common.data.sync.vc.RepositoryAuthMethod;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -184,9 +185,9 @@ public class GitRepository {
         }
     }
 
-    public void fetch() throws GitAPIException {
+    public boolean fetch() throws GitAPIException {
         if (settings.isLocalOnly()) {
-            return;
+            return false;
         }
         log.debug("Executing fetch [{}]", settings.getRepositoryUri());
         FetchResult result = execute(git.fetch()
@@ -195,6 +196,7 @@ public class GitRepository {
         if (head != null) {
             this.headId = head.getObjectId();
         }
+        return CollectionsUtil.isNotEmpty(result.getTrackingRefUpdates());
     }
 
     public void deleteLocalBranchIfExists(String branch) throws GitAPIException {

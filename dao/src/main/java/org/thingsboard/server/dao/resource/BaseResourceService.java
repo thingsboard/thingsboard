@@ -240,7 +240,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     @Override
-    public TbResource updateSystemResource(ResourceType resourceType, String resourceKey, String data) {
+    public TbResource createOrUpdateSystemResource(ResourceType resourceType, String resourceKey, String data) {
         if (resourceType == ResourceType.DASHBOARD) {
             data = checkSystemResourcesUsage(data, ResourceType.JS_MODULE);
         }
