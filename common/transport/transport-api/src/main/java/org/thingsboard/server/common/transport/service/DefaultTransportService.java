@@ -1105,7 +1105,7 @@ public class DefaultTransportService extends TransportActivityManager implements
         try {
             tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
         } catch (Exception e) {
-            log.trace("Failed to send message to core. Tenant with ID [{}], entityType [{}], entityId [{}], routingKey [{}], \nmsg [{}].\n Message delivery aborted.", tenantId, entityId.getEntityType(),  entityId.toString(), routingKey, msg, e);
+            log.warn("Failed to send message to core. Tenant with ID [{}], routingKey [{}], msg [{}]. Message delivery aborted.", tenantId, routingKey, msg, e);
             if (callback != null) {
                 callback.onError(e);
             }
