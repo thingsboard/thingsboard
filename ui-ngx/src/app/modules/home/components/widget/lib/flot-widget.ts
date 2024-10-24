@@ -1498,7 +1498,7 @@ export class TbFlot {
         if (series.stack || (series.curvedLines && series.curvedLines.apply)) {
           hoverIndex = this.findHoverIndexFromDataPoints(posx, series, hoverIndex);
         }
-        if (!this.hideZeros || value) {
+        if ((!this.hideZeros || value) && this.hideStateFirstLast(hoverIndex, series)) {
           hoverData = {
             value,
             hoverIndex,
@@ -1628,6 +1628,10 @@ export class TbFlot {
       const entityLabel = datasource ? datasource.entityLabel : null;
       this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, item, entityLabel);
     }
+  }
+
+  private hideStateFirstLast(hoverIndex: number, series: TbFlotPlotDataSeries): boolean {
+    return !(this.chartType === 'state' && (hoverIndex === 0 || hoverIndex === series.data.length - 1));
   }
 
 }
