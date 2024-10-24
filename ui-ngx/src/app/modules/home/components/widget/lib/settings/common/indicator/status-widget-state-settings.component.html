@@ -20,7 +20,7 @@
     <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showLabel">
       {{ 'widgets.status-widget.label' | translate }}
     </mat-slide-toggle>
-    <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+    <div class="flex flex-1 flex-row items-center justify-start gap-2">
       <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
         <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
@@ -33,7 +33,7 @@
     <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showStatus">
       {{ 'widgets.status-widget.status' | translate }}
     </mat-slide-toggle>
-    <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+    <div class="flex flex-1 flex-row items-center justify-start gap-2">
       <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
         <input matInput formControlName="status" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
@@ -46,11 +46,11 @@
     <div class="fixed-title-width">
       {{ 'widgets.status-widget.icon' | translate }}
     </div>
-    <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-      <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+    <div class="flex flex-1 flex-row items-center justify-start gap-2">
+      <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
         <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
-      <tb-css-unit-select fxFlex formControlName="iconSizeUnit"></tb-css-unit-select>
+      <tb-css-unit-select class="flex-1" formControlName="iconSizeUnit"></tb-css-unit-select>
       <tb-material-icon-select asBoxInput
                                formControlName="icon">
       </tb-material-icon-select>
@@ -58,24 +58,24 @@
   </div>
   <div class="tb-form-row space-between" [class]="{'column-xs': layout === StatusWidgetLayout.icon, 'column-lt-md': layout !== StatusWidgetLayout.icon}">
     <div>{{ 'widgets.status-widget.color-palette' | translate }}</div>
-    <div fxLayout="row wrap" fxLayoutAlign="start center" fxLayoutAlign.lt-sm="space-between center"
-         [fxLayoutAlign.lt-md]="layout !== StatusWidgetLayout.icon ? 'space-between center': 'start center'"
-         style="gap: 12px;">
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+    <div class="flex flex-row flex-wrap items-center justify-start gap-3 lt-sm:justify-between"
+         [class.lt-md:justify-start]="layout === StatusWidgetLayout.icon"
+         [class.lt-md:justify-between]="layout !== StatusWidgetLayout.icon">
+      <div class="flex flex-row items-center justify-start gap-2">
         <div tb-hint-tooltip-icon="{{'widgets.status-widget.primary-color-hint' | translate}}" translate>widgets.status-widget.primary</div>
         <tb-color-input asBoxInput
                         formControlName="primaryColor">
         </tb-color-input>
       </div>
-      <mat-divider *ngIf="layout !== StatusWidgetLayout.icon" vertical fxHide.lt-md></mat-divider>
-      <div *ngIf="layout !== StatusWidgetLayout.icon" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <mat-divider *ngIf="layout !== StatusWidgetLayout.icon" vertical class="lt-md:!hidden"></mat-divider>
+      <div *ngIf="layout !== StatusWidgetLayout.icon" class="flex flex-row items-center justify-start gap-2">
         <div tb-hint-tooltip-icon="{{'widgets.status-widget.secondary-color-hint' | translate}}" translate>widgets.status-widget.secondary</div>
         <tb-color-input asBoxInput
                         formControlName="secondaryColor">
         </tb-color-input>
       </div>
-      <mat-divider vertical fxHide.lt-sm [fxHide.lt-md]="layout !== StatusWidgetLayout.icon"></mat-divider>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <mat-divider vertical class="lt-sm:!hidden" [class.lt-md:!hidden]="layout !== StatusWidgetLayout.icon"></mat-divider>
+      <div class="flex flex-row items-center justify-start gap-2">
         <div translate>widgets.status-widget.background</div>
         <tb-background-settings formControlName="background">
         </tb-background-settings>
@@ -84,24 +84,24 @@
   </div>
   <div class="tb-form-row space-between" [class]="{'column-xs': layout === StatusWidgetLayout.icon, 'column-lt-md': layout !== StatusWidgetLayout.icon}">
     <div>{{ 'widgets.status-widget.disabled-color-palette' | translate }}</div>
-    <div fxLayout="row wrap" fxLayoutAlign="start center" fxLayoutAlign.lt-sm="space-between center"
-         [fxLayoutAlign.lt-md]="layout !== StatusWidgetLayout.icon ? 'space-between center': 'start center'"
-         style="gap: 12px;">
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+    <div class="flex flex-row flex-wrap items-center justify-start gap-3 lt-sm:justify-between"
+         [class.lt-md:justify-start]="layout === StatusWidgetLayout.icon"
+         [class.lt-md:justify-between]="layout !== StatusWidgetLayout.icon">
+      <div class="flex flex-row items-center justify-start gap-2">
         <div tb-hint-tooltip-icon="{{'widgets.status-widget.primary-color-hint' | translate}}" translate>widgets.status-widget.primary</div>
         <tb-color-input asBoxInput
                         formControlName="primaryColorDisabled">
         </tb-color-input>
       </div>
-      <mat-divider *ngIf="layout !== StatusWidgetLayout.icon" vertical fxHide.lt-md></mat-divider>
-      <div *ngIf="layout !== StatusWidgetLayout.icon" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <mat-divider *ngIf="layout !== StatusWidgetLayout.icon" vertical class="lt-md:!hidden"></mat-divider>
+      <div *ngIf="layout !== StatusWidgetLayout.icon" class="flex flex-row items-center justify-start gap-2">
         <div tb-hint-tooltip-icon="{{'widgets.status-widget.secondary-color-hint' | translate}}" translate>widgets.status-widget.secondary</div>
         <tb-color-input asBoxInput
                         formControlName="secondaryColorDisabled">
         </tb-color-input>
       </div>
-      <mat-divider vertical fxHide.lt-sm [fxHide.lt-md]="layout !== StatusWidgetLayout.icon"></mat-divider>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <mat-divider vertical class="lt-sm:!hidden" [class.lt-md:!hidden]="layout !== StatusWidgetLayout.icon"></mat-divider>
+      <div class="flex flex-row items-center justify-start gap-2">
         <div translate>widgets.status-widget.background</div>
         <tb-background-settings formControlName="backgroundDisabled">
         </tb-background-settings>

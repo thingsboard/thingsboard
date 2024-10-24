@@ -20,10 +20,6 @@ import * as AngularAnimations from '@angular/animations';
 import * as AngularCore from '@angular/core';
 import * as AngularCommon from '@angular/common';
 import * as AngularForms from '@angular/forms';
-import * as AngularFlexLayout from '@angular/flex-layout';
-import * as AngularFlexLayoutFlex from '@angular/flex-layout/flex';
-import * as AngularFlexLayoutGrid from '@angular/flex-layout/grid';
-import * as AngularFlexLayoutExtended from '@angular/flex-layout/extended';
 import * as AngularPlatformBrowser from '@angular/platform-browser';
 import * as AngularPlatformBrowserAnimations from '@angular/platform-browser/animations';
 import * as AngularRouter from '@angular/router';
@@ -196,6 +192,8 @@ import * as HintTooltipIconComponent from '@shared/components/hint-tooltip-icon.
 import * as ScrollGridComponent from '@shared/components/grid/scroll-grid.component';
 import * as GalleryImageInputComponent from '@shared/components/image/gallery-image-input.component';
 import * as MultipleGalleryImageInputComponent from '@shared/components/image/multiple-gallery-image-input.component';
+import * as TbPopoverService from '@shared/components/popover.service';
+
 
 import * as CssUnitSelectComponent from '@home/components/widget/lib/settings/common/css-unit-select.component';
 import * as WidgetActionsPanelComponent from '@home/components/widget/config/basic/common/widget-actions-panel.component';
@@ -247,6 +245,7 @@ import * as CustomActionPrettyEditorComponent from '@home/components/widget/lib/
 import * as MobileActionEditorComponent from '@home/components/widget/lib/settings/common/action/mobile-action-editor.component';
 import * as CustomDialogService from '@home/components/widget/dialog/custom-dialog.service';
 import * as CustomDialogContainerComponent from '@home/components/widget/dialog/custom-dialog-container.component';
+import * as ImportExportService from '@shared/import-export/import-export.service';
 import * as ImportDialogComponent from '@shared/import-export/import-dialog.component';
 import * as AddWidgetToDashboardDialogComponent from '@home/components/attribute/add-widget-to-dashboard-dialog.component';
 import * as ImportDialogCsvComponent from '@shared/import-export/import-dialog-csv.component';
@@ -338,6 +337,8 @@ import { IModulesMap } from '@modules/common/modules-map.models';
 import { TimezoneComponent } from '@shared/components/time/timezone.component';
 import { TimezonePanelComponent } from '@shared/components/time/timezone-panel.component';
 import { DatapointsLimitComponent } from '@shared/components/time/datapoints-limit.component';
+import { Observable, map, of } from 'rxjs';
+import { getFlexLayout } from '@shared/legacy/flex-layout.models';
 
 class ModulesMap implements IModulesMap {
 
@@ -349,10 +350,10 @@ class ModulesMap implements IModulesMap {
     '@angular/common': AngularCommon,
     '@angular/common/http': HttpClientModule,
     '@angular/forms': AngularForms,
-    '@angular/flex-layout': AngularFlexLayout,
-    '@angular/flex-layout/flex': AngularFlexLayoutFlex,
-    '@angular/flex-layout/grid': AngularFlexLayoutGrid,
-    '@angular/flex-layout/extended': AngularFlexLayoutExtended,
+    '@angular/flex-layout': {},
+    '@angular/flex-layout/flex': {},
+    '@angular/flex-layout/grid': {},
+    '@angular/flex-layout/extended': {},
     '@angular/platform-browser': AngularPlatformBrowser,
     '@angular/platform-browser/animations': AngularPlatformBrowserAnimations,
     '@angular/router': AngularRouter,
@@ -433,6 +434,7 @@ class ModulesMap implements IModulesMap {
     '@shared/decorators/enumerable': enumerable,
     '@shared/decorators/tb-inject': TbInject,
 
+    '@shared/import-export/import-export.service': ImportExportService,
     '@shared/import-export/import-dialog.component': ImportDialogComponent,
     '@shared/import-export/import-dialog-csv.component': ImportDialogCsvComponent,
     '@shared/import-export/table-columns-assignment.component': TableColumnsAssignmentComponent,
@@ -531,6 +533,8 @@ class ModulesMap implements IModulesMap {
     '@shared/components/grid/scroll-grid.component': ScrollGridComponent,
     '@shared/components/image/gallery-image-input.component': GalleryImageInputComponent,
     '@shared/components/image/multiple-gallery-image-input.component': MultipleGalleryImageInputComponent,
+    '@shared/components/popover.service': TbPopoverService,
+
 
     '@home/components/alarm/alarm-filter-config.component': AlarmFilterConfigComponent,
     '@home/components/alarm/alarm-comment-dialog.component': AlarmCommentDialogComponent,
@@ -669,30 +673,40 @@ class ModulesMap implements IModulesMap {
     '@home/components/queue/queue-form.component': QueueFormComponent
   };
 
-  init() {
+  init(): Observable<any> {
     if (!this.initialized) {
-      System.constructor.prototype.resolve = (id: string) => {
-        try {
-          if (this.modulesMap[id]) {
-            return 'app:' + id;
-          } else {
-            return id;
+      return getFlexLayout().pipe(
+        map((flexLayout) => {
+          this.modulesMap['@angular/flex-layout'] = flexLayout;
+          this.modulesMap['@angular/flex-layout/flex'] = flexLayout;
+          this.modulesMap['@angular/flex-layout/grid'] = flexLayout;
+          this.modulesMap['@angular/flex-layout/extended'] = flexLayout;
+          System.constructor.prototype.resolve = (id: string) => {
+            try {
+              if (this.modulesMap[id]) {
+                return 'app:' + id;
+              } else {
+                return id;
+              }
+            } catch (err) {
+              return id;
+            }
+          };
+          for (const moduleId of Object.keys(this.modulesMap)) {
+            System.set('app:' + moduleId, this.modulesMap[moduleId]);
           }
-        } catch (err) {
-          return id;
-        }
-      };
-      for (const moduleId of Object.keys(this.modulesMap)) {
-        System.set('app:' + moduleId, this.modulesMap[moduleId]);
-      }
-      System.constructor.prototype.shouldFetch = (url: string) => url.endsWith('/download');
-      System.constructor.prototype.fetch = (url: string, options: RequestInit & {meta?: any}) => {
-        if (options?.meta?.additionalHeaders) {
-          options.headers = { ...options.headers, ...options.meta.additionalHeaders };
-        }
-        return fetch(url, options);
-      };
-      this.initialized = true;
+          System.constructor.prototype.shouldFetch = (url: string) => url.endsWith('/download');
+          System.constructor.prototype.fetch = (url: string, options: RequestInit & {meta?: any}) => {
+            if (options?.meta?.additionalHeaders) {
+              options.headers = { ...options.headers, ...options.meta.additionalHeaders };
+            }
+            return fetch(url, options);
+          };
+          this.initialized = true;
+        })
+      );
+    } else {
+      return of(null);
     }
   }
 }

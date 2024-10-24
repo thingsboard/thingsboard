@@ -27,8 +27,10 @@
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-form-field>
-  <cdk-virtual-scroll-viewport [fxShow]="!notFound" #iconsPanel
-                               [itemSize]="iconsRowHeight" class="tb-material-icons-viewport" [ngStyle]="{width: iconsPanelWidth, height: iconsPanelHeight}">
+  <cdk-virtual-scroll-viewport [class.!hidden]="notFound" #iconsPanel
+                               [itemSize]="iconsRowHeight" class="tb-material-icons-viewport"
+                               [style.width]="iconsPanelWidth"
+                               [style.height]="iconsPanelHeight">
     <div *cdkVirtualFor="let iconRow of iconRows$ | async" class="tb-material-icons-row">
       <ng-container *ngFor="let icon of iconRow">
         <button *ngIf="icon.name === selectedIcon"
@@ -54,7 +56,7 @@
     </div>
   </cdk-virtual-scroll-viewport>
   <ng-container *ngIf="notFound">
-    <div class="tb-no-data-available" [ngStyle]="{width: iconsPanelWidth}">
+    <div class="tb-no-data-available" [style.width]="iconsPanelWidth">
       <div class="tb-no-data-bg"></div>
       <div class="tb-no-data-text">{{ 'icon.no-icons-found' | translate:{iconSearch: searchIconControl.value} }}</div>
     </div>
@@ -68,7 +70,7 @@
             [disabled]="!selectedIcon">
       {{ 'action.clear' | translate }}
     </button>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button *ngIf="!showAllSubject.value" class="tb-material-icons-show-more" mat-button color="primary" (click)="showAllSubject.next(true)">
       {{ 'action.show-more' | translate }}
     </button>

@@ -16,7 +16,7 @@
 
 -->
 <div [formGroup]="timewindowConfig" class="tb-form-panel">
-  <div fxLayout="row" fxLayoutAlign="space-between center">
+  <div class="flex flex-row items-center justify-between">
     <div class="tb-form-panel-title" translate>timewindow.timewindow</div>
     <tb-toggle-select formControlName="useDashboardTimewindow" selectMediaBreakpoint="xs">
       <tb-toggle-option [value]="true">{{ 'widget-config.use-dashboard-timewindow' | translate }}</tb-toggle-option>
@@ -27,7 +27,7 @@
     <mat-slide-toggle class="mat-slide" formControlName="displayTimewindow">
       {{ 'widget-config.display-timewindow' | translate }}
     </mat-slide-toggle>
-    <div fxFlex fxLayout="row" fxLayoutAlign="space-between center">
+    <div class="flex flex-1 flex-row items-center justify-between">
       <tb-timewindow asButton="true"
                      strokedButton
                      noMargin

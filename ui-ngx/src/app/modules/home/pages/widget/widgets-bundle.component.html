@@ -15,33 +15,33 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons" fxLayout.xs="column" *ngIf="!standalone">
+<div class="tb-details-buttons xs:flex xs:flex-col" *ngIf="!standalone">
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'open')"
-          [fxShow]="!isEdit">
+          [class.!hidden]="isEdit">
     {{'widgets-bundle.open-widgets-bundle' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'openDetails')"
-          [fxShow]="!isEdit && !isDetailsPage">
+          [class.!hidden]="isEdit || isDetailsPage">
     {{'common.open-details-page' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'export')"
-          [fxShow]="!isEdit">
+          [class.!hidden]="isEdit">
     {{'widgets-bundle.export' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
-          [fxShow]="!hideDelete() && !isEdit">
+          [class.!hidden]="hideDelete() || isEdit">
     {{'widgets-bundle.delete' | translate }}
   </button>
 </div>
-<div class="mat-padding" fxLayout="column">
+<div class="mat-padding flex flex-col">
   <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block">
@@ -54,7 +54,7 @@
           {{ 'widgets-bundle.title-max-length' | translate }}
         </mat-error>
       </mat-form-field>
-      <tb-gallery-image-input fxFlex
+      <tb-gallery-image-input class="flex-1"
                               label="{{'widgets-bundle.image-preview' | translate}}"
                               formControlName="image">
       </tb-gallery-image-input>

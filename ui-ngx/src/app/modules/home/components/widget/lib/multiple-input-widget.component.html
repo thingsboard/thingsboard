@@ -20,7 +20,7 @@
       tb-toast toastTarget="{{ toastTargetId }}"
       (ngSubmit)="saveForm()" novalidate autocomplete="off">
   <div class="tb-multiple-input-container" *ngIf="entityDetected && isAllParametersValid">
-    <fieldset *ngFor="let source of sources" [ngClass]="{'fields-group': settings.showGroupTitle}">
+    <fieldset *ngFor="let source of sources" [class.fields-group]="settings.showGroupTitle">
       <legend class="group-title" *ngIf="settings.showGroupTitle">{{ getGroupTitle(source.datasource) }}
       </legend>
       <div class="tb-multiple-input-layout"
@@ -198,10 +198,10 @@
     </button>
   </div>
   <div class="tb-multiple-input--errors-container" *ngIf="(!entityDetected || !isAllParametersValid) && datasourceDetected">
-    <div class="tb-multiple-input--errors-container__error" [fxHide]="entityDetected">
+    <div class="tb-multiple-input--errors-container__error" [class.!hidden]="entityDetected">
       {{ 'widgets.input-widgets.no-entity-selected' | translate }}
     </div>
-    <div class="tb-multiple-input--errors-container__error" [fxShow]="entityDetected && !isAllParametersValid">
+    <div class="tb-multiple-input--errors-container__error" [class.!hidden]="!entityDetected || isAllParametersValid">
       {{ 'widgets.input-widgets.not-allowed-entity' | translate }}
     </div>
   </div>

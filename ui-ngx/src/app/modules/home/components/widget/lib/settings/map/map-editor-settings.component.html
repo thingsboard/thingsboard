@@ -25,14 +25,13 @@
       {{ 'widgets.maps.init-draggable-mode' | translate }}
     </mat-slide-toggle>
     <mat-expansion-panel class="tb-settings" [expanded]="!mapEditorSettingsFormGroup.get('hideAllControlButton').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle formControlName="hideAllControlButton" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle formControlName="hideAllControlButton" (click)="$event.stopPropagation()">
             {{ 'widgets.maps.hide-all-edit-buttons' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>

@@ -16,9 +16,9 @@
 
 -->
 <form>
-  <mat-toolbar fxLayout="row" color="primary">
+  <mat-toolbar class="flex flex-row" color="primary">
     <h2 translate>{{ importTitle }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <div [tb-help]="'entitiesImport'"></div>
     <button mat-icon-button
             (click)="cancel()"
@@ -44,7 +44,7 @@
             </tb-file-input>
           </fieldset>
         </form>
-        <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="20px">
+        <div class="flex flex-row items-center justify-end gap-5">
           <button mat-button
                   [disabled]="(isLoading$ | async)"
                   (click)="cancel()">{{ 'action.cancel' | translate }}</button>
@@ -57,7 +57,7 @@
       <mat-step [stepControl]="importParametersFormGroup">
         <form [formGroup]="importParametersFormGroup">
           <ng-template matStepLabel>{{ 'import.stepper-text.configuration' | translate }}</ng-template>
-          <fieldset [disabled]="isLoading$ | async" fxLayout="column">
+          <fieldset [disabled]="isLoading$ | async" class="flex flex-col">
             <mat-form-field class="mat-block">
               <mat-label translate>import.csv-delimiter</mat-label>
               <mat-select required formControlName="delim">
@@ -66,7 +66,7 @@
                 </mat-option>
               </mat-select>
             </mat-form-field>
-            <div fxLayout="column" fxLayoutGap="12px">
+            <div class="flex flex-col gap-3">
               <mat-checkbox formControlName="isHeader">
                 {{ 'import.csv-first-line-header' | translate }}
               </mat-checkbox>
@@ -76,11 +76,11 @@
             </div>
           </fieldset>
         </form>
-        <div fxLayout="row wrap" fxLayoutAlign="space-between center">
+        <div class="flex flex-row flex-wrap items-center justify-between">
           <button mat-button
                   [disabled]="(isLoading$ | async)"
                   (click)="previousStep()">{{ 'action.back' | translate }}</button>
-          <div fxLayout="row wrap" fxLayoutGap="20px">
+          <div class="flex flex-row flex-wrap gap-5">
             <button mat-button
                     [disabled]="(isLoading$ | async)"
                     (click)="cancel()">{{ 'action.cancel' | translate }}</button>
@@ -96,11 +96,11 @@
           <ng-template matStepLabel>{{ 'import.stepper-text.column-type' | translate }}</ng-template>
           <tb-table-columns-assignment #columnsAssignmentComponent formControlName="columnsParam" [entityType]="entityType"></tb-table-columns-assignment>
         </form>
-        <div fxLayout="row wrap" fxLayoutAlign="space-between center">
+        <div class="flex flex-row flex-wrap items-center justify-between">
           <button mat-button
                   [disabled]="(isLoading$ | async)"
                   (click)="previousStep()">{{ 'action.back' | translate }}</button>
-          <div fxLayout="row wrap" fxLayoutGap="20px">
+          <div class="flex flex-row flex-wrap gap-5">
             <button mat-button
                     [disabled]="(isLoading$ | async)"
                     (click)="cancel()">{{ 'action.cancel' | translate }}</button>
@@ -118,7 +118,7 @@
       </mat-step>
       <mat-step>
         <ng-template matStepLabel>{{ 'action.done' | translate }}</ng-template>
-        <div fxLayout="column">
+        <div class="flex flex-col">
           <p class="mat-body-2" *ngIf="this.statistical?.created">
             {{ translate.instant('import.message.create-entities', {count: this.statistical.created}) }}
           </p>
@@ -140,7 +140,7 @@
             <div #failureDetailsEditor class="tb-failure-details"></div>
           </mat-expansion-panel>
         </div>
-        <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="20px">
+        <div class="flex flex-row items-center justify-end gap-5">
           <button mat-raised-button
                   [disabled]="(isLoading$ | async)"
                   color="primary"

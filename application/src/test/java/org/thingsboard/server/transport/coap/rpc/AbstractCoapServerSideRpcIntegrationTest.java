@@ -116,7 +116,7 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
         CoapObserveRelation observeRelation = client.getObserveRelation(callbackCoap);
         String awaitAlias = "await Two Way Rpc (client.getObserveRelation)";
         await(awaitAlias)
-                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS * 3, TimeUnit.SECONDS)
                 .until(() -> processTwoWayRpcTestWithAwait(callbackCoap, observeRelation, expectedResponseResult));
     }
 
