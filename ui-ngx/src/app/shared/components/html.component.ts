@@ -126,7 +126,17 @@ export class HtmlComponent implements OnInit, OnDestroy, ControlValueAccessor, V
         });
         // @ts-ignore
         this.htmlEditor.session.on('changeAnnotation', () => {
-          const annotations = this.htmlEditor.session.getAnnotations();
+          const annotations = this.htmlEditor.session.getAnnotations() || [];
+          const length = annotations.length;
+          let i = length;
+          while (i--) {
+            if(annotations[i].text.includes('Named entity expected')) {
+              annotations.splice(i, 1);
+            }
+          }
+          if (length > annotations.length) {
+            this.htmlEditor.session.setAnnotations(annotations);
+          }
           const hasErrors = annotations.filter(annotation => annotation.type === 'error').length > 0;
           if (this.hasErrors !== hasErrors) {
             this.hasErrors = hasErrors;
