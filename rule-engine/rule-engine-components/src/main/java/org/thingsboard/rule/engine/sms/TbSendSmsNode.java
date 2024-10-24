@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.sms;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -61,10 +62,7 @@ public class TbSendSmsNode extends TbAbstractExternalNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         var tbMsg = ackIfNeeded(ctx, msg);
         try {
-            withCallback(ctx.getSmsExecutor().executeAsync(() -> {
-                        sendSms(ctx, tbMsg);
-                        return null;
-                    }),
+            withCallback(sendSms(ctx, tbMsg),
                     ok -> tellSuccess(ctx, tbMsg),
                     fail -> tellFailure(ctx, tbMsg, fail));
         } catch (Exception ex) {
@@ -72,16 +70,14 @@ public class TbSendSmsNode extends TbAbstractExternalNode {
         }
     }
 
-    private void sendSms(TbContext ctx, TbMsg msg) throws Exception {
+    private ListenableFuture<Void> sendSms(TbContext ctx, TbMsg msg) {
         String numbersTo = TbNodeUtils.processPattern(this.config.getNumbersToTemplate(), msg);
         String message = TbNodeUtils.processPattern(this.config.getSmsMessageTemplate(), msg);
         String[] numbersToList = numbersTo.split(",");
         if (this.config.isUseSystemSmsSettings()) {
-            ctx.getSmsService().sendSms(ctx.getTenantId(), msg.getCustomerId(), numbersToList, message);
+            return ctx.getSmsService().sendSms(ctx.getTenantId(), msg.getCustomerId(), numbersToList, message);
         } else {
-            for (String numberTo : numbersToList) {
-                this.smsSender.sendSms(numberTo, message);
-            }
+            return ctx.getSmsService().sendSms(this.smsSender, numbersToList, message);
         }
     }
 
