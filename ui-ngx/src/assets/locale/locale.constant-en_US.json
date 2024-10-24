@@ -2837,13 +2837,9 @@
         "function": "Function"
     },
     "gateway": {
-        "gateway-exists": "Device with same name is already exists.",
         "gateway-name": "Gateway name",
         "gateway-name-required": "Gateway name is required.",
-        "gateway-saved": "Gateway configuration successfully saved.",
-        "gateway": "Gateway",
-        "launch-gateway": "Launch gateway",
-        "launch-command": "Launch command",
+        "gateways": "Gateways",
         "create-new-gateway": "Create a new gateway",
         "create-new-gateway-text": "Are you sure you want create a new gateway with name: '{{gatewayName}}'?",
         "no-gateway-found": "No gateway found.",
