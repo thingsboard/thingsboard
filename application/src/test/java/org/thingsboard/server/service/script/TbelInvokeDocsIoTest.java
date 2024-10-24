@@ -16,12 +16,6 @@
 package org.thingsboard.server.service.script;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.script.api.ScriptType;
-import org.thingsboard.script.api.tbel.TbelInvokeService;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
@@ -30,18 +24,13 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @DaoSqlTest
-class TbelInvokeDocsIoTest extends AbstractControllerTest {
-
-    @Autowired
-    private TbelInvokeService invokeService;
+class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
 
     private String decoderStr;
     private String msgStr;
@@ -635,16 +624,6 @@ class TbelInvokeDocsIoTest extends AbstractControllerTest {
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
     }
-
-    private UUID evalScript(String script) throws ExecutionException, InterruptedException {
-        return invokeService.eval(TenantId.SYS_TENANT_ID, ScriptType.RULE_NODE_SCRIPT, script, "msg", "metadata", "msgType").get();
-    }
-
-    private Object invokeScript(UUID scriptId, String str) throws ExecutionException, InterruptedException {
-        var msg = JacksonUtil.fromString(str, Map.class);
-        return invokeService.invokeScript(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", POST_TELEMETRY_REQUEST.name()).get();
-    }
-
     private List splice(List oldList, int start, int deleteCount, Object... values) {
         start = initStartIndex(oldList, start);
         deleteCount = deleteCount < 0 ? 0 : Math.min(deleteCount, (oldList.size() - start));
