@@ -67,6 +67,9 @@ public class TbMailSender extends JavaMailSenderImpl {
         if (jsonConfig.has("password")) {
             setPassword(jsonConfig.get("password").asText());
         }
+        if (jsonConfig.has("mailFrom")) {
+            setUsername(jsonConfig.get("mailFrom").asText());
+        }
         setJavaMailProperties(createJavaMailProperties(jsonConfig));
     }
 
