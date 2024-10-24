@@ -56,8 +56,11 @@ import java.util.concurrent.TimeUnit;
         version = 1,
         configClazz = TbDeviceProfileNodeConfiguration.class,
         nodeDescription = "Process device messages based on device profile settings",
-        nodeDetails = "Create and clear alarms based on alarm rules defined in device profile. The output relation type is either " +
-                "'Alarm Created', 'Alarm Updated', 'Alarm Severity Updated' and 'Alarm Cleared' or simply 'Success' if no alarms were affected.",
+        nodeDetails = "Create and clear alarms based on alarm rules defined in device profile.<br><br>" +
+                "Output connections: <code>Alarm Created</code>, <code>Alarm Updated</code>, <code>Alarm Severity Updated</code> " +
+                " - when an alarm is created, updated, or its severity is changed based on the alarm creation conditions defined in the alarm rules." +
+                "<code>Alarm Cleared</code> - when the alarm is cleared based on the alarm clear conditions defined in the alarm rules." +
+                "<code>Failure</code> - if an unexpected error occurs during message processing.<code>Success</code> - if no alarms were affected.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbDeviceProfileConfig"
 )

@@ -43,7 +43,8 @@ import java.util.concurrent.TimeUnit;
         nodeDetails = "Delays messages for a configurable period. " +
                 "Please note, this node acknowledges the message from the current queue (message will be removed from queue). " +
                 "Deprecated because the acknowledged message still stays in memory (to be delayed) and this " +
-                "does not guarantee that message will be processed even if the \"retry failures and timeouts\" processing strategy will be chosen.",
+                "does not guarantee that message will be processed even if the \"retry failures and timeouts\" processing strategy will be chosen.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         icon = "pause",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeMsgDelayConfig"
