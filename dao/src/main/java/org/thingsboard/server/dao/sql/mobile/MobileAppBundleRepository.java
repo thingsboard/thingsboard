@@ -33,8 +33,8 @@ public interface MobileAppBundleRepository extends JpaRepository<MobileAppBundle
     @Query("SELECT new org.thingsboard.server.dao.model.sql.MobileAppBundleInfoEntity(b, andApp.pkgName, iosApp.pkgName, " +
             "((andApp.status IS NOT NULL AND andApp.status = 'PUBLISHED') OR (iosApp.status IS NOT NULL AND iosApp.status = 'PUBLISHED'))) " +
             "FROM MobileAppBundleEntity b " +
-            "LEFT JOIN MobileAppEntity andApp on b.androidAppId = andApp.id " +
-            "LEFT JOIN MobileAppEntity iosApp on b.iosAppID = iosApp.id " +
+            "LEFT JOIN MobileAppEntity andApp ON b.androidAppId = andApp.id " +
+            "LEFT JOIN MobileAppEntity iosApp ON b.iosAppID = iosApp.id " +
             "WHERE b.tenantId = :tenantId AND " +
             "(:searchText is NULL OR ilike(b.title, concat('%', :searchText, '%')) = true)")
     Page<MobileAppBundleInfoEntity> findInfoByTenantId(@Param("tenantId") UUID tenantId,
@@ -51,7 +51,7 @@ public interface MobileAppBundleRepository extends JpaRepository<MobileAppBundle
 
     @Query("SELECT b " +
             "FROM MobileAppBundleEntity b " +
-            "LEFT JOIN MobileAppEntity a on b.androidAppId = a.id or b.iosAppID = a.id " +
+            "LEFT JOIN MobileAppEntity a ON b.androidAppId = a.id OR b.iosAppID = a.id " +
             "WHERE a.pkgName = :pkgName AND a.platformType = :platformType")
     MobileAppBundleEntity findByPkgNameAndPlatformType(@Param("pkgName") String pkgName,
                                                        @Param("platformType") PlatformType platformType);
