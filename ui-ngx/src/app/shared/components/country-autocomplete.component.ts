@@ -28,7 +28,7 @@ import {
 import { isNotEmptyStr } from '@core/utils';
 import { Observable, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
-import { SubscriptSizing } from '@angular/material/form-field';
+import { SubscriptSizing, MatFormFieldAppearance } from '@angular/material/form-field';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -70,6 +70,9 @@ export class CountryAutocompleteComponent implements OnInit, ControlValueAccesso
   @Input()
   @coerceBoolean()
   required = false;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @Input()
   subscriptSizing: SubscriptSizing = 'fixed';
