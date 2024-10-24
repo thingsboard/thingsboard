@@ -32,5 +32,6 @@ public class TbEmail {
     private final String body;
     private final Map<String, String> images;
     private final boolean html;
+    private final boolean addFileName;
 
 }
