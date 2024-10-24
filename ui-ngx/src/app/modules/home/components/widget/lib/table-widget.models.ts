@@ -25,6 +25,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
+import { EntityType } from '@shared/models/entity-type.models';
 
 type ColumnVisibilityOptions = 'visible' | 'hidden' | 'hidden-mobile';
 
@@ -65,7 +66,7 @@ export interface EntityData {
   id: EntityId;
   entityName: string;
   entityLabel?: string;
-  entityType?: string;
+  entityType?: EntityType;
   actionCellButtons?: TableCellButtonActionDescriptor[];
   hasActions?: boolean;
   [key: string]: any;
@@ -461,6 +462,12 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
     'color: ' + mdDarkSecondary + ';\n' +
     '}\n' +
     '.mat-mdc-table .mat-mdc-cell button.mat-mdc-icon-button[disabled][disabled] mat-icon {\n' +
+    'color: ' + mdDarkDisabled + ';\n' +
+    '}\n' +
+    '.mat-mdc-table .mat-mdc-cell button.mat-mdc-icon-button tb-icon {\n' +
+    'color: ' + mdDarkSecondary + ';\n' +
+    '}\n' +
+    '.mat-mdc-table .mat-mdc-cell button.mat-mdc-icon-button[disabled][disabled] tb-icon {\n' +
     'color: ' + mdDarkDisabled + ';\n' +
     '}\n' +
     '.mat-divider {\n' +

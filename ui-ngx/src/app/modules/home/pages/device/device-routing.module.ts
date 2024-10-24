@@ -24,16 +24,14 @@ import { EntityDetailsPageComponent } from '@home/components/entity/entity-detai
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
 import { BreadCrumbConfig } from '@shared/components/breadcrumb';
-import { assetRoutes } from '@home/pages/asset/asset-routing.module';
-import { entityViewRoutes } from '@home/pages/entity-view/entity-view-routing.module';
+import { MenuId } from '@core/services/menu.models';
 
 export const deviceRoutes: Routes = [
   {
     path: 'devices',
     data: {
       breadcrumb: {
-        label: 'device.devices',
-        icon: 'devices_other'
+        menuId: MenuId.devices
       }
     },
     children: [

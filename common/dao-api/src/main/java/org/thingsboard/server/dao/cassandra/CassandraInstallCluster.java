@@ -15,11 +15,10 @@
  */
 package org.thingsboard.server.dao.cassandra;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.dao.util.NoSqlAnyDao;
-
-import jakarta.annotation.PostConstruct;
 
 @Component("CassandraInstallCluster")
 @NoSqlAnyDao

@@ -15,23 +15,23 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="dateRangeNavigatorWidgetSettingsForm" fxLayout="column">
+<section class="tb-widget-settings flex flex-col" [formGroup]="dateRangeNavigatorWidgetSettingsForm">
   <fieldset class="fields-group fields-group-slider">
     <legend class="group-title" translate>widgets.date-range-navigator.date-range-picker-settings</legend>
     <mat-expansion-panel class="tb-settings" [expanded]="!dateRangeNavigatorWidgetSettingsForm.get('hidePicker').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
           <mat-slide-toggle formControlName="hidePicker" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+                            class="flex items-stretch justify-center">
             {{ 'widgets.date-range-navigator.hide-date-range-picker' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="flex items-center justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <section fxLayout="column" fxFlex>
+        <section class="flex flex-1 flex-col">
           <mat-checkbox formControlName="onePanel">
             {{ 'widgets.date-range-navigator.picker-one-panel' | translate }}
           </mat-checkbox>
@@ -41,7 +41,7 @@
           <mat-checkbox formControlName="showTemplate">
             {{ 'widgets.date-range-navigator.picker-show-template' | translate }}
           </mat-checkbox>
-          <mat-form-field fxFlex class="mat-block">
+          <mat-form-field class="mat-block flex-1">
             <mat-label translate>widgets.date-range-navigator.first-day-of-week</mat-label>
             <input matInput type="number" min="1" max="7" step="1" formControlName="firstDayOfWeek">
           </mat-form-field>
@@ -52,19 +52,19 @@
   <fieldset class="fields-group fields-group-slider">
     <legend class="group-title" translate>widgets.date-range-navigator.interval-settings</legend>
     <mat-expansion-panel class="tb-settings" [expanded]="!dateRangeNavigatorWidgetSettingsForm.get('hideInterval').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
           <mat-slide-toggle formControlName="hideInterval" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+                            class="flex items-stretch justify-center">
             {{ 'widgets.date-range-navigator.hide-interval' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="flex items-center justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <mat-form-field fxFlex class="mat-block">
+        <mat-form-field class="mat-block flex-1">
           <mat-label translate>widgets.date-range-navigator.initial-interval</mat-label>
           <mat-select formControlName="initialInterval">
             <mat-option [value]="'hour'">
@@ -96,19 +96,19 @@
   <fieldset class="fields-group fields-group-slider">
     <legend class="group-title" translate>widgets.date-range-navigator.step-settings</legend>
     <mat-expansion-panel class="tb-settings" [expanded]="!dateRangeNavigatorWidgetSettingsForm.get('hideStepSize').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
           <mat-slide-toggle formControlName="hideStepSize" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+                            class="flex items-stretch justify-center">
             {{ 'widgets.date-range-navigator.hide-step-size' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="flex items-center justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <mat-form-field fxFlex class="mat-block">
+        <mat-form-field class="mat-block flex-1">
           <mat-label translate>widgets.date-range-navigator.initial-step-size</mat-label>
           <mat-select formControlName="stepSize">
             <mat-option [value]="'hour'">

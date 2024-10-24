@@ -19,6 +19,7 @@ import { Authority } from '@shared/models/authority.enum';
 import { NgModule } from '@angular/core';
 import { deviceProfilesRoutes } from '@home/pages/device-profile/device-profile-routing.module';
 import { assetProfilesRoutes } from '@home/pages/asset-profile/asset-profile-routing.module';
+import { MenuId } from '@core/services/menu.models';
 
 const routes: Routes = [
   {
@@ -26,8 +27,7 @@ const routes: Routes = [
     data: {
       auth: [Authority.TENANT_ADMIN],
       breadcrumb: {
-        label: 'profiles.profiles',
-        icon: 'badge'
+        menuId: MenuId.profiles
       }
     },
     children: [

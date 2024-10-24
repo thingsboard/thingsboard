@@ -91,6 +91,10 @@ export const HelpLinks = {
     slackSettings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/slack-settings`,
     securitySettings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/security-settings`,
     oauth2Settings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/oauth-2-support/`,
+    oauth2Apple: 'https://developer.apple.com/sign-in-with-apple/get-started/',
+    oauth2Facebook: 'https://developers.facebook.com/docs/facebook-login/web#logindialog',
+    oauth2Github: 'https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app',
+    oauth2Google: 'https://developers.google.com/google-ads/api/docs/start',
     ruleEngine: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/overview/`,
     ruleNodeCheckRelation: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/filter-nodes/#check-relation-filter-node`,
     ruleNodeCheckExistenceFields: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/filter-nodes/#check-existence-fields-node`,
@@ -133,6 +137,7 @@ export const HelpLinks = {
     ruleNodeSaveToCustomTable: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#save-to-custom-table`,
     ruleNodeRuleChain: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/flow-nodes/#rule-chain-node`,
     ruleNodeOutputNode: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/flow-nodes/#output-node`,
+    ruleNodeAwsLambda: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/external-nodes/#aws-lambda-node`,
     ruleNodeAwsSns: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/external-nodes/#aws-sns-node`,
     ruleNodeAwsSqs: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/external-nodes/#aws-sqs-node`,
     ruleNodeKafka: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/external-nodes/#kafka-node`,
@@ -156,7 +161,7 @@ export const HelpLinks = {
     assetProfiles: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/asset-profiles`,
     edges: `${helpBaseUrl}/docs/edge/getting-started-guides/what-is-edge`,
     assets: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/assets`,
-    entityViews: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/entity-views`,
+    entityViews: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/entity-views`,
     entitiesImport: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/bulk-provisioning`,
     rulechains: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/rule-chains`,
     lwm2mResourceLibrary: `${helpBaseUrl}/docs${docPlatformPrefix}/reference/lwm2m-api`,
@@ -178,8 +183,11 @@ export const HelpLinks = {
     templateNotifications: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/notifications/#templates`,
     recipientNotifications: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/notifications/#recipients`,
     ruleNotifications: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/notifications/#rules`,
-    jwtSecuritySettings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/jwt-security-settings/`,
-    gatewayInstall: `${helpBaseUrl}/docs/iot-gateway/install/docker-installation/`,
+    jwtSecuritySettings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/jwt-security-settings`,
+    gatewayInstall: `${helpBaseUrl}/docs/iot-gateway/install/docker-installation`,
+    scada: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada`,
+    scadaSymbolDev: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/symbols-dev-guide`,
+    scadaSymbolDevAnimation: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/#scadasymbolanimation`
   }
 };
 /* eslint-enable max-len */

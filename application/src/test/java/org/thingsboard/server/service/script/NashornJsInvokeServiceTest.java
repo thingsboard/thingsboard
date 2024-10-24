@@ -39,12 +39,13 @@ import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
         "js.evaluator=local",
-        "js.max_script_body_size=50",
+        "js.max_script_body_size=10000",
         "js.max_total_args_size=50",
         "js.max_result_size=50",
         "js.local.max_errors=2",
@@ -87,7 +88,7 @@ class NashornJsInvokeServiceTest extends AbstractControllerTest {
 
     @Test
     void givenSimpleScriptMultiThreadTestPerformance() throws ExecutionException, InterruptedException, TimeoutException {
-        int iterations = 1000*4;
+        int iterations = 1000 * 4;
         List<ListenableFuture<Object>> futures = new ArrayList<>(iterations);
         UUID scriptId = evalScript("return msg.temperature > 20 ;");
         // warmup
@@ -125,7 +126,7 @@ class NashornJsInvokeServiceTest extends AbstractControllerTest {
 
     @Test
     void givenTooBigScriptForEval_thenReturnError() {
-        String hugeScript = "var a = 'qwertyqwertywertyqwabababer'; return {a: a};";
+        String hugeScript = "var a = '" + "a".repeat(10000) + "'; return {a: a};";
 
         assertThatThrownBy(() -> {
             evalScript(hugeScript);
@@ -157,6 +158,46 @@ class NashornJsInvokeServiceTest extends AbstractControllerTest {
             }).hasMessageContaining("result exceeds maximum allowed size");
         }
         assertThatScriptIsBlocked(scriptId);
+    }
+
+    @Test
+    void givenComplexScript_testCompile() {
+        String script = """
+                function(data) {
+                  if (data.get("propertyA") == "a special value 1" || data.get("propertyA") == "a special value 2") {
+                    return "a special value 1";
+                  } else if (data.get("propertyB") == "a special value 3" && (data.get("propertyC") == "a special value 1" || data.get("propertyJ") == "a special value 1" || data.get("propertyV") == "a special value 1")) {
+                    return "a special value 1";
+                  } else if (data.get("propertyB") == "4" && (data.get("propertyD") == "a special value 1" || data.get("propertyV") == "a special value 1" || data.get("propertyW") == "a special value 1")) {
+                    return "a special value 1";
+                  } else if (data.get("propertyB") == "a special value 2" && (data.get("propertyE") == "a special value 1" || data.get("propertyF") == "a special value 1" || data.get("propertyL") == "a special value 1")) {
+                    return "a special value 1";
+                  } else if (data.get("propertyB") == "a special value 3" && (data.get("propertyE") == "a special value 1" || data.get("propertyF") == "a special value 1" || data.get("propertyL") == "a special value 1")) {
+                    return "a special value 1";
+                  } else if (data.get("propertyB") == "a special value 3" && (data.get("propertyM") == "a special value 1" || data.get("propertyY") == "a special value 1" || data.get("propertyH") == "a special value 1")) {
+                    return "a special value 1";
+                  } else if (data.get("propertyB") == "a special value 3" && (data.get("propertyM") == "a special value 1" || data.get("propertyY") == "a special value 1" || data.get("propertyH") == "a special value 1")) {
+                    return "a special value 1";
+                  } else if (data.get("propertyB") == "a special value 3" && (data.get("propertyM") == "a special value 1" || data.get("propertyY") == "a special value 1" || data.get("propertyH") == "a special value 1")) {
+                    return "a special value 1";
+                  } else if (data.get("propertyB") == "a special value 3" && (data.get("propertyM") == "a special value 1" || data.get("propertyY") == "a special value 1" || data.get("propertyH") == "a special value 1")) {
+                    return "a special value 1";
+                  } else if (data.get("propertyB") == "a special value 3" && (data.get("propertyM") == "a special value 1" || data.get("propertyY") == "a special value 1" || data.get("propertyH") == "a special value 1")) {
+                    return "a special value 1";
+                  }  else if (data.get("propertyB") == "a special value 3" && (data.get("propertyM") == "a special value 1" || data.get("propertyY") == "a special value 1" || data.get("propertyH") == "a special value 1")) {
+                    return "a special value 1";
+                  } else if (data.get("propertyB") == "a special value 3" && (data.get("propertyM") == "a special value 1" || data.get("propertyY") == "a special value 1" || data.get("propertyH") == "a special value 1")) {
+                    return "a special value 1";
+                  } else {
+                     return "0"
+                  };
+                }
+                """;
+
+        // with delight-nashorn-sandbox 0.4.2, this would throw delight.nashornsandbox.exceptions.ScriptCPUAbuseException: Regular expression running for too many iterations. The operation could NOT be gracefully interrupted.
+        assertDoesNotThrow(() -> {
+            evalScript(script);
+        });
     }
 
     private void assertThatScriptIsBlocked(UUID scriptId) {

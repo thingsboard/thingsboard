@@ -25,6 +25,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpEntity;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
@@ -85,8 +86,12 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.notification.channels.MicrosoftTeamsNotificationChannel;
+import org.thingsboard.server.service.notification.channels.TeamsAdaptiveCard;
+import org.thingsboard.server.service.notification.channels.TeamsMessageCard;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsUpdate;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -208,6 +213,88 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
         checkPartialNotificationsUpdate(wsClient.getLastDataUpdate(), notificationText, 1);
         checkPartialNotificationsUpdate(otherWsClient.getLastDataUpdate(), notificationText, 1);
+    }
+
+    @Test
+    public void testNotificationUpdates_typesFilter_multipleSubs() {
+        int generalSub = wsClient.subscribeForUnreadNotificationsAndWait(10, NotificationType.GENERAL);
+        int alarmSub = wsClient.subscribeForUnreadNotificationsAndWait(10, NotificationType.ALARM, NotificationType.GENERAL);
+        int entityActionSub = wsClient.subscribeForUnreadNotificationsAndWait(10, NotificationType.ENTITY_ACTION, NotificationType.GENERAL);
+        NotificationTarget notificationTarget = createNotificationTarget(customerUserId);
+
+        String generalNotificationText1 = "General notification 1";
+        submitNotificationRequest(NotificationType.GENERAL, notificationTarget.getId(), generalNotificationText1);
+        // expecting all 3 subs to received update
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(wsClient.getLastUpdates()).extractingByKeys(generalSub, alarmSub, entityActionSub)
+                    .allMatch(update -> update.getUpdate().getText().equals(generalNotificationText1)
+                            && update.getTotalUnreadCount() == 1);
+        });
+        Notification generalNotification1 = wsClient.getLastDataUpdate().getUpdate();
+
+        String generalNotificationText2 = "General notification 2";
+        submitNotificationRequest(NotificationType.GENERAL, notificationTarget.getId(), generalNotificationText2);
+        // expecting all 3 subs to received update
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(wsClient.getLastUpdates()).extractingByKeys(generalSub, alarmSub, entityActionSub)
+                    .allMatch(update -> update.getUpdate().getText().equals(generalNotificationText2)
+                            && update.getTotalUnreadCount() == 2);
+        });
+        Notification generalNotification2 = wsClient.getLastDataUpdate().getUpdate();
+
+        // marking as read, expecting all 3 subs to received update
+        wsClient.markNotificationAsRead(generalNotification1.getUuidId());
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(wsClient.getLastUpdates()).extractingByKeys(generalSub, alarmSub, entityActionSub)
+                    .allMatch(update -> update.getTotalUnreadCount() == 1 && update.getNotifications().size() == 1
+                            && update.getNotifications().get(0).getText().equals(generalNotificationText2));
+        });
+        wsClient.getLastUpdates().clear();
+
+        String alarmNotificationText1 = "Alarm notification 1";
+        submitNotificationRequest(NotificationType.ALARM, notificationTarget.getId(), alarmNotificationText1);
+        // expecting only 1 sub to received update
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(wsClient.getLastUpdates()).extractingByKey(alarmSub)
+                    .matches(update -> update.getUpdate().getText().equals(alarmNotificationText1)
+                            && update.getTotalUnreadCount() == 2);
+        });
+        Notification alarmNotification1 = wsClient.getLastDataUpdate().getUpdate();
+
+        String alarmNotificationText2 = "Alarm notification 2";
+        submitNotificationRequest(NotificationType.ALARM, notificationTarget.getId(), alarmNotificationText2);
+        // expecting only 1 sub to received update
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(wsClient.getLastUpdates()).extractingByKey(alarmSub)
+                    .matches(update -> update.getUpdate().getText().equals(alarmNotificationText2)
+                            && update.getTotalUnreadCount() == 3);
+        });
+        await().during(3, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    assertThat(wsClient.getLastUpdates()).extractingByKeys(generalSub, entityActionSub)
+                            .containsOnlyNulls();
+                });
+
+        // marking as read, expecting only 1 sub to receive update
+        wsClient.markNotificationAsRead(alarmNotification1.getUuidId());
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(wsClient.getLastUpdates()).extractingByKey(alarmSub)
+                    .matches(update -> update.getTotalUnreadCount() == 2 && update.getNotifications().size() == 2);
+        });
+        await().during(3, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(wsClient.getLastUpdates()).extractingByKeys(generalSub, entityActionSub)
+                    .containsOnlyNulls();
+        });
+
+        // marking as read, expecting general and entity action subs with 0 unread, and alarm with 1 unread
+        wsClient.markNotificationAsRead(generalNotification2.getUuidId());
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(wsClient.getLastUpdates()).extractingByKeys(generalSub, entityActionSub)
+                    .allMatch(update -> update.getTotalUnreadCount() == 0 && update.getNotifications().isEmpty());
+            assertThat(wsClient.getLastUpdates()).extractingByKey(alarmSub)
+                    .matches(update -> update.getTotalUnreadCount() == 1 && update.getNotifications().size() == 1
+                            && update.getNotifications().get(0).getText().equals(alarmNotificationText2));
+        });
     }
 
     @Test
@@ -670,7 +757,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     }
 
     @Test
-    public void testMicrosoftTeamsNotifications() throws Exception {
+    public void testMicrosoftTeamsNotificationsWithOfficeConnector() throws URISyntaxException {
         RestTemplate restTemplate = mock(RestTemplate.class);
         microsoftTeamsNotificationChannel.setRestTemplate(restTemplate);
 
@@ -678,6 +765,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         var targetConfig = new MicrosoftTeamsNotificationTargetConfig();
         targetConfig.setWebhookUrl(webhookUrl);
         targetConfig.setChannelName("My channel");
+        targetConfig.setUseOldApi(true);
         NotificationTarget target = new NotificationTarget();
         target.setName("Microsoft Teams channel");
         target.setConfiguration(targetConfig);
@@ -688,7 +776,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         String templateParams = "${recipientTitle} - ${entityType}";
         template.setSubject("Subject: " + templateParams);
         template.setBody("Body: " + templateParams);
-        template.setThemeColor("ff0000");
+        template.setThemeColor("#ff0000");
         var button = new MicrosoftTeamsDeliveryMethodNotificationTemplate.Button();
         button.setEnabled(true);
         button.setText("Button: " + templateParams);
@@ -721,17 +809,87 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         assertThat(preview.getRecipientsCountByTarget().get(target.getName())).isEqualTo(1);
         assertThat(preview.getRecipientsPreview()).containsOnly(targetConfig.getChannelName());
 
-        var messageCaptor = ArgumentCaptor.forClass(MicrosoftTeamsNotificationChannel.Message.class);
+        ArgumentCaptor<HttpEntity<String>> messageCaptor = ArgumentCaptor.forClass(HttpEntity.class);
         notificationCenter.processNotificationRequest(tenantId, notificationRequest, null);
-        verify(restTemplate, timeout(20000)).postForEntity(eq(webhookUrl), messageCaptor.capture(), any());
+        verify(restTemplate, timeout(20000)).postForEntity(eq(new URI(webhookUrl)), messageCaptor.capture(), any());
 
-        var message = messageCaptor.getValue();
+        HttpEntity<String> value = messageCaptor.getValue();
+        TeamsMessageCard message = JacksonUtil.fromString(value.getBody(), TeamsMessageCard.class);
+
         String expectedParams = "My channel - Device";
         assertThat(message.getThemeColor()).isEqualTo(template.getThemeColor());
         assertThat(message.getSections().get(0).getActivityTitle()).isEqualTo("Subject: " + expectedParams);
         assertThat(message.getSections().get(0).getActivitySubtitle()).isEqualTo("Body: " + expectedParams);
         assertThat(message.getPotentialAction().get(0).getName()).isEqualTo("Button: " + expectedParams);
         assertThat(message.getPotentialAction().get(0).getTargets().get(0).getUri()).isEqualTo("https://" + expectedParams);
+    }
+
+    @Test
+    public void testMicrosoftTeamsNotificationsWithWorkflow() throws Exception {
+        RestTemplate restTemplate = mock(RestTemplate.class);
+        microsoftTeamsNotificationChannel.setRestTemplate(restTemplate);
+
+        String webhookUrl = "https://webhook.com/webhookb2/9628fa60-d873-11ed-913c-a196b1f9b445";
+        var targetConfig = new MicrosoftTeamsNotificationTargetConfig();
+        targetConfig.setWebhookUrl(webhookUrl);
+        targetConfig.setChannelName("My channel");
+        targetConfig.setUseOldApi(false);
+        NotificationTarget target = new NotificationTarget();
+        target.setName("Microsoft Teams channel");
+        target.setConfiguration(targetConfig);
+        target = saveNotificationTarget(target);
+
+        var template = new MicrosoftTeamsDeliveryMethodNotificationTemplate();
+        template.setEnabled(true);
+        String templateParams = "${recipientTitle} - ${entityType}";
+        template.setSubject("Subject: " + templateParams);
+        template.setBody("Body: " + templateParams);
+        template.setThemeColor("#ff0000");
+        var button = new MicrosoftTeamsDeliveryMethodNotificationTemplate.Button();
+        button.setEnabled(true);
+        button.setText("Button: " + templateParams);
+        button.setLinkType(LinkType.LINK);
+        button.setLink("https://" + templateParams);
+        template.setButton(button);
+        NotificationTemplate notificationTemplate = new NotificationTemplate();
+        notificationTemplate.setName("Notification to Teams");
+        notificationTemplate.setNotificationType(NotificationType.GENERAL);
+        NotificationTemplateConfig templateConfig = new NotificationTemplateConfig();
+        templateConfig.setDeliveryMethodsTemplates(Map.of(
+                NotificationDeliveryMethod.MICROSOFT_TEAMS, template
+        ));
+        notificationTemplate.setConfiguration(templateConfig);
+        notificationTemplate = saveNotificationTemplate(notificationTemplate);
+
+        NotificationRequest notificationRequest = NotificationRequest.builder()
+                .tenantId(tenantId)
+                .originatorEntityId(tenantAdminUserId)
+                .templateId(notificationTemplate.getId())
+                .targets(List.of(target.getUuidId()))
+                .info(EntityActionNotificationInfo.builder()
+                        .entityId(new DeviceId(UUID.randomUUID()))
+                        .actionType(ActionType.ADDED)
+                        .userId(tenantAdminUserId.getId())
+                        .build())
+                .build();
+
+        NotificationRequestPreview preview = doPost("/api/notification/request/preview", notificationRequest, NotificationRequestPreview.class);
+        assertThat(preview.getRecipientsCountByTarget().get(target.getName())).isEqualTo(1);
+        assertThat(preview.getRecipientsPreview()).containsOnly(targetConfig.getChannelName());
+
+        ArgumentCaptor<HttpEntity<String>> messageCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+        notificationCenter.processNotificationRequest(tenantId, notificationRequest, null);
+        verify(restTemplate, timeout(20000)).postForEntity(eq(new URI(webhookUrl)), messageCaptor.capture(), any());
+
+        HttpEntity<String> value = messageCaptor.getValue();
+        TeamsAdaptiveCard message = JacksonUtil.fromString(value.getBody(), TeamsAdaptiveCard.class);
+        String expectedParams = "My channel - Device";
+        assertThat(message).isNotNull();
+        assertThat(message.getAttachments().get(0).getContent().getBackgroundImage().getUrl()).isNotEmpty();
+        assertThat(message.getAttachments().get(0).getContent().getTextBlocks().get(0).getText()).isEqualTo("Subject: " + expectedParams);
+        assertThat(message.getAttachments().get(0).getContent().getTextBlocks().get(1).getText()).isEqualTo("Body: " + expectedParams);
+        assertThat(message.getAttachments().get(0).getContent().getActions().get(0).getTitle()).isEqualTo("Button: " + expectedParams);
+        assertThat(message.getAttachments().get(0).getContent().getActions().get(0).getUrl()).isEqualTo("https://" + expectedParams);
     }
 
     @Test
@@ -822,7 +980,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         String expectedSubject = "Comment on 'test' alarm";
         String expectedBody = TENANT_ADMIN_EMAIL + " added comment: text";
         ArgumentCaptor<Map<String, String>> msgCaptor = ArgumentCaptor.forClass(Map.class);
-        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
                     eq(TEST_MOBILE_TOKEN), eq(expectedSubject),
                     eq(expectedBody),
@@ -877,7 +1035,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     }
 
     private NotificationRequestStats awaitNotificationRequest(NotificationRequestId requestId) {
-        return await().atMost(30, TimeUnit.SECONDS)
+        return await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> getStats(requestId), Objects::nonNull);
     }
 

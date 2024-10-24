@@ -56,13 +56,13 @@ sudo yum update
 sudo yum -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 # Install packages
 sudo yum -y install epel-release yum-utils
-sudo yum-config-manager --enable pgdg15
-sudo yum install postgresql15-server postgresql15
+sudo yum-config-manager --enable pgdg16
+sudo yum install postgresql16-server postgresql16 postgresql16-contrib
 # Initialize your PostgreSQL DB
-sudo /usr/pgsql-15/bin/postgresql-15-setup initdb
-sudo systemctl start postgresql-15
+sudo /usr/pgsql-16/bin/postgresql-16-setup initdb
+sudo systemctl start postgresql-16
 # Optional: Configure PostgreSQL to start on boot
-sudo systemctl enable --now postgresql-15
+sudo systemctl enable --now postgresql-16
 
 {:copy-code}
 ```
@@ -74,12 +74,12 @@ sudo systemctl enable --now postgresql-15
 sudo yum -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 # Install packages
 sudo dnf -qy module disable postgresql
-sudo dnf -y install postgresql15 postgresql15-server
+sudo dnf -y install postgresql16 postgresql16-server postgresql16-contrib
 # Initialize your PostgreSQL DB
-sudo /usr/pgsql-15/bin/postgresql-15-setup initdb
-sudo systemctl start postgresql-15
+sudo /usr/pgsql-16/bin/postgresql-16-setup initdb
+sudo systemctl start postgresql-16
 # Optional: Configure PostgreSQL to start on boot
-sudo systemctl enable --now postgresql-15
+sudo systemctl enable --now postgresql-16
 
 {:copy-code}
 ```
@@ -101,7 +101,7 @@ After configuring the password, edit the pg_hba.conf to use MD5 authentication w
 Edit pg_hba.conf file:
 
 ```bash
-sudo nano /var/lib/pgsql/15/data/pg_hba.conf
+sudo nano /var/lib/pgsql/16/data/pg_hba.conf
 {:copy-code}
 ```
 
@@ -121,7 +121,7 @@ host    all             all             127.0.0.1/32            md5
 Finally, you should restart the PostgreSQL service to initialize the new configuration:
 
 ```bash
-sudo systemctl restart postgresql-15.service
+sudo systemctl restart postgresql-16.service
 {:copy-code}
 ```
 

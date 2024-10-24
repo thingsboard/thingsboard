@@ -21,31 +21,33 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlarmCommentService } from '@core/http/alarm-comment.service';
 import { AbstractControl, FormBuilder, FormGroup } from '@angular/forms';
 import { DialogService } from '@core/services/dialog.service';
-import { AuthUser, User } from '@shared/models/user.model';
+import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser, selectUserDetails } from '@core/auth/auth.selectors';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MAX_SAFE_PAGE_SIZE, PageLink } from '@shared/models/page/page-link';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
 import { map } from 'rxjs/operators';
-import { AlarmComment, AlarmCommentInfo, AlarmCommentType } from '@shared/models/alarm.models';
+import { AlarmComment, AlarmCommentType, getUserDisplayName } from '@shared/models/alarm.models';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { DatePipe } from '@angular/common';
 import { ImportExportService } from '@shared/import-export/import-export.service';
+import { isNotEmptyStr } from '@core/utils';
 
 interface AlarmCommentsDisplayData {
-  commentId?: string,
-  displayName?: string,
-  createdTime: string,
-  createdDateAgo?: string,
-  edit?: boolean,
-  isEdited?: boolean,
+  commentId?: string;
+  displayName?: string;
+  createdTime: string;
+  createdDateAgo?: string;
+  edit?: boolean;
+  isEdited?: boolean;
   editedTime?: string;
-  editedDateAgo?: string,
-  showActions?: boolean,
-  commentText?: string,
-  isSystemComment?: boolean,
-  avatarBgColor?: string
+  editedDateAgo?: string;
+  showActions?: boolean;
+  commentText?: string;
+  isSystemComment?: boolean;
+  avatarBgColor?: string;
+  userExists?: boolean;
 }
 
 @Component({
@@ -58,7 +60,7 @@ export class AlarmCommentComponent implements OnInit {
   alarmId: string;
 
   @Input()
-  alarmActivityOnly: boolean = false;
+  alarmActivityOnly = false;
 
   authUser: AuthUser;
 
@@ -73,11 +75,11 @@ export class AlarmCommentComponent implements OnInit {
     direction: Direction.DESC
   };
 
-  editMode: boolean = false;
+  editMode = false;
 
   userDisplayName$ = this.store.pipe(
     select(selectUserDetails),
-    map((user) => this.getUserDisplayName(user))
+    map((user) => getUserDisplayName(user))
   );
 
   currentUserDisplayName: string;
@@ -115,15 +117,18 @@ export class AlarmCommentComponent implements OnInit {
       (pagedData) => {
         this.alarmComments = pagedData.data;
         this.displayData.length = 0;
-        for (let alarmComment of pagedData.data) {
-          let displayDataElement = {} as AlarmCommentsDisplayData;
+        for (const alarmComment of pagedData.data) {
+          const displayDataElement = {} as AlarmCommentsDisplayData;
           displayDataElement.createdTime = this.datePipe.transform(alarmComment.createdTime, 'yyyy-MM-dd HH:mm:ss');
           displayDataElement.createdDateAgo = this.dateAgoPipe.transform(alarmComment.createdTime);
           displayDataElement.commentText = alarmComment.comment.text;
           displayDataElement.isSystemComment = alarmComment.type === AlarmCommentType.SYSTEM;
           if (alarmComment.type === AlarmCommentType.OTHER) {
             displayDataElement.commentId = alarmComment.id.id;
-            displayDataElement.displayName = this.getUserDisplayName(alarmComment);
+            displayDataElement.userExists = isNotEmptyStr(alarmComment.firstName) || isNotEmptyStr(alarmComment.lastName) ||
+              isNotEmptyStr(alarmComment.email);
+            displayDataElement.displayName = displayDataElement.userExists ? getUserDisplayName(alarmComment) :
+              this.translate.instant('alarm.user-deleted');
             displayDataElement.edit = false;
             displayDataElement.isEdited = alarmComment.comment.edited;
             displayDataElement.editedTime = this.datePipe.transform(alarmComment.comment.editedOn, 'yyyy-MM-dd HH:mm:ss');
@@ -136,17 +141,17 @@ export class AlarmCommentComponent implements OnInit {
           this.displayData.push(displayDataElement);
         }
       }
-    )
+    );
   }
 
   changeSortDirection() {
-    let currentDirection = this.alarmCommentSortOrder.direction;
+    const currentDirection = this.alarmCommentSortOrder.direction;
     this.alarmCommentSortOrder.direction = currentDirection === Direction.DESC ? Direction.ASC : Direction.DESC;
     this.loadAlarmComments();
   }
 
   exportAlarmActivity() {
-    let fileName = this.translate.instant('alarm.alarm') + '_' + this.translate.instant('alarm-activity.activity');
+    const fileName = this.translate.instant('alarm.alarm') + '_' + this.translate.instant('alarm-activity.activity');
     this.importExportService.exportCsv(this.getDataForExport(), fileName.toLowerCase());
   }
 
@@ -162,7 +167,7 @@ export class AlarmCommentComponent implements OnInit {
         comment: {
           text: commentInputValue
         }
-      }
+      };
       this.doSave(comment);
       this.clearCommentInput();
     }
@@ -185,7 +190,7 @@ export class AlarmCommentComponent implements OnInit {
       () => {
         this.loadAlarmComments();
       }
-    )
+    );
   }
 
   editComment(commentId: string): void {
@@ -217,18 +222,18 @@ export class AlarmCommentComponent implements OnInit {
             .subscribe(() => {
                 this.loadAlarmComments();
               }
-          )
+            );
         }
       }
-    )
+    );
   }
 
   getSortDirectionIcon() {
-    return this.alarmCommentSortOrder.direction === Direction.DESC ? 'mdi:sort-descending' : 'mdi:sort-ascending'
+    return this.alarmCommentSortOrder.direction === Direction.DESC ? 'mdi:sort-descending' : 'mdi:sort-ascending';
   }
 
   getSortDirectionTooltipText() {
-    let text = this.alarmCommentSortOrder.direction === Direction.DESC ? 'alarm-activity.newest-first' :
+    const text = this.alarmCommentSortOrder.direction === Direction.DESC ? 'alarm-activity.newest-first' :
       'alarm-activity.oldest-first';
     return this.translate.instant(text);
   }
@@ -264,25 +269,6 @@ export class AlarmCommentComponent implements OnInit {
     return this.utilsService.stringToHslColor(userDisplayName, 40, 60);
   }
 
-  private getUserDisplayName(alarmCommentInfo: AlarmCommentInfo | User): string {
-    let name = '';
-    if ((alarmCommentInfo.firstName && alarmCommentInfo.firstName.length > 0) ||
-      (alarmCommentInfo.lastName && alarmCommentInfo.lastName.length > 0)) {
-      if (alarmCommentInfo.firstName) {
-        name += alarmCommentInfo.firstName;
-      }
-      if (alarmCommentInfo.lastName) {
-        if (name.length > 0) {
-          name += ' ';
-        }
-        name += alarmCommentInfo.lastName;
-      }
-    } else {
-      name = alarmCommentInfo.email;
-    }
-    return name;
-  }
-
   getAlarmCommentFormControl(): AbstractControl {
     return this.alarmCommentFormGroup.get('alarmComment');
   }
@@ -308,16 +294,16 @@ export class AlarmCommentComponent implements OnInit {
   }
 
   private getDataForExport() {
-    let dataToExport = [];
-    for (let row of this.displayData) {
-      let exportRow = {
+    const dataToExport = [];
+    for (const row of this.displayData) {
+      const exportRow = {
         [this.translate.instant('alarm-activity.author')]: row.isSystemComment ?
           this.translate.instant('alarm-activity.system') : row.displayName,
         [this.translate.instant('alarm-activity.created-date')]: row.createdTime,
         [this.translate.instant('alarm-activity.edited-date')]: row.editedTime,
         [this.translate.instant('alarm-activity.text')]: row.commentText
-      }
-      dataToExport.push(exportRow)
+      };
+      dataToExport.push(exportRow);
     }
     return dataToExport;
   }

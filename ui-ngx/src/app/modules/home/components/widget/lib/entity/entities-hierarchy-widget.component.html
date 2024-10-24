@@ -16,15 +16,15 @@
 
 -->
 <div class="tb-entities-hierarchy tb-absolute-fill" tb-toast toastTarget="{{ toastTargetId }}">
-  <div fxFlex fxLayout="column" class="tb-absolute-fill">
-    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode">
+  <div class="tb-absolute-fill flex flex-1 flex-col">
+    <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
                 matTooltip="{{ 'action.search' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>search</mat-icon>
         </button>
-        <mat-form-field fxFlex>
+        <mat-form-field class="flex-1">
           <mat-label>&nbsp;</mat-label>
           <input #searchInput matInput
                  [formControl]="textSearch"
@@ -37,7 +37,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <div fxFlex class="tb-entities-nav-tree-panel">
+    <div class="tb-entities-nav-tree-panel flex-1">
       <tb-nav-tree
         [loadNodes]="loadNodes"
         [onNodeSelected]="onNodeSelected"

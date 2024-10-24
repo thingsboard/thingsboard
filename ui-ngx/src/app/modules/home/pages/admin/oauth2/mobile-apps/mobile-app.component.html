@@ -1,0 +1,76 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-form-panel no-border" [class.no-padding]="isAdd" [formGroup]="entityForm">
+  <div class="tb-form-row tb-standard-fields no-border no-padding">
+    <mat-form-field class="flex" floatLabel="always" subscriptSizing="dynamic">
+      <mat-label translate>admin.oauth2.mobile-package</mat-label>
+      <input matInput formControlName="pkgName"
+             placeholder="{{ 'admin.oauth2.mobile-package-placeholder' | translate }}" required>
+      <mat-hint translate>admin.oauth2.mobile-package-hint</mat-hint>
+      <mat-error *ngIf="entityForm.hasError('unique')">
+        {{ 'admin.oauth2.mobile-package-unique' | translate }}
+      </mat-error>
+      <mat-error *ngIf="entityForm.get('pkgName').hasError('maxlength')">
+        {{ 'admin.oauth2.mobile-package-max-length' | translate }}
+      </mat-error>
+      <mat-error *ngIf="entityForm.get('pkgName').hasError('pattern')">
+        {{ 'admin.oauth2.mobile-package-spaces' | translate }}
+      </mat-error>
+    </mat-form-field>
+  </div>
+  <div class="tb-form-row tb-standard-fields no-border no-padding">
+    <mat-form-field class="flex" floatLabel="always" subscriptSizing="dynamic">
+      <mat-label translate>admin.oauth2.mobile-app-secret</mat-label>
+      <input matInput formControlName="appSecret" required>
+      <tb-copy-button
+        matSuffix
+        miniButton="false"
+        color="primary"
+        [copyText]="entityForm.get('appSecret').value"
+        tooltipText="{{ 'admin.oauth2.copy-mobile-app-secret' | translate }}"
+        tooltipPosition="above"
+        icon="content_copy">
+      </tb-copy-button>
+      <mat-hint translate>admin.oauth2.mobile-app-secret-hint</mat-hint>
+      <mat-error *ngIf="entityForm.get('appSecret').hasError('required')">
+        {{ 'admin.oauth2.mobile-app-secret-required' | translate }}
+      </mat-error>
+      <mat-error *ngIf="entityForm.get('appSecret').hasError('base64')">
+        {{ 'admin.oauth2.mobile-app-secret-min-length' | translate }}
+      </mat-error>
+      <mat-error *ngIf="entityForm.get('appSecret').hasError('minLength')">
+        {{ 'admin.oauth2.mobile-app-secret-base64' | translate }}
+      </mat-error>
+    </mat-form-field>
+  </div>
+  <div class="tb-form-row no-border no-padding">
+    <mat-slide-toggle class="mat-slide" formControlName="oauth2Enabled">
+      {{ 'admin.oauth2.enable' | translate }}
+    </mat-slide-toggle>
+  </div>
+  <tb-entity-list [entityType]="entityType.OAUTH2_CLIENT" formControlName="oauth2ClientInfos"
+                  labelText="{{ 'admin.oauth2.clients' | translate }}"
+                  placeholderText="{{ 'admin.oauth2.add-client' | translate }}">
+    <button mat-button color="primary" matSuffix
+            [disabled]="!isEdit"
+            (click)="createClient($event)">
+      <span style="white-space: nowrap">{{ 'admin.oauth2.create-new' | translate }}</span>
+    </button>
+  </tb-entity-list>
+</section>
+

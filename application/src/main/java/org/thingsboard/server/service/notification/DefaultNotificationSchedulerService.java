@@ -16,6 +16,8 @@
 package org.thingsboard.server.service.notification;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,8 +42,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.partition.AbstractPartitionBasedService;
 
-import jakarta.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -75,9 +75,7 @@ public class DefaultNotificationSchedulerService extends AbstractPartitionBasedS
 
     @Override
     protected Map<TopicPartitionInfo, List<ListenableFuture<?>>> onAddedPartitions(Set<TopicPartitionInfo> addedPartitions) {
-        PageDataIterable<NotificationRequest> notificationRequests = new PageDataIterable<>(pageLink -> {
-            return notificationRequestService.findScheduledNotificationRequests(pageLink);
-        }, 1000);
+        PageDataIterable<NotificationRequest> notificationRequests = new PageDataIterable<>(notificationRequestService::findScheduledNotificationRequests, 1000);
         for (NotificationRequest notificationRequest : notificationRequests) {
             TopicPartitionInfo requestPartition = partitionService.resolve(ServiceType.TB_CORE, notificationRequest.getTenantId(), notificationRequest.getId());
             if (addedPartitions.contains(requestPartition)) {

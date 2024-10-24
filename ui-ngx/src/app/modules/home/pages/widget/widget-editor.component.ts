@@ -59,12 +59,12 @@ import {
   SaveWidgetTypeAsDialogComponent,
   SaveWidgetTypeAsDialogResult
 } from '@home/pages/widget/save-widget-type-as-dialog.component';
-import { forkJoin, mergeMap, of, Subscription } from 'rxjs';
-import { ResizeObserver } from '@juggle/resize-observer';
+import { forkJoin, mergeMap, of, Subscription, throwError } from 'rxjs';
 import { widgetEditorCompleter } from '@home/pages/widget/widget-editor.models';
 import { Observable } from 'rxjs/internal/Observable';
-import { map, tap } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import { beautifyCss, beautifyHtml, beautifyJs } from '@shared/models/beautify.models';
+import { HttpStatusCode } from '@angular/common/http';
 import Timeout = NodeJS.Timeout;
 
 // @dynamic
@@ -569,9 +569,12 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
 
   private commitSaveWidget() {
     const id = (this.widgetTypeDetails && this.widgetTypeDetails.id) ? this.widgetTypeDetails.id : undefined;
+    const version = this.widgetTypeDetails?.version ?? null;
     const createdTime = (this.widgetTypeDetails && this.widgetTypeDetails.createdTime) ? this.widgetTypeDetails.createdTime : undefined;
-    this.widgetService.saveWidgetTypeDetails(this.widget, id, createdTime).pipe(
+    this.saveWidgetPending = false;
+    this.widgetService.saveWidgetTypeDetails(this.widget, id, createdTime, version).pipe(
       mergeMap((widgetTypeDetails) => {
+        this.saveWidgetPending = true;
         const widgetsBundleId = this.route.snapshot.params.widgetsBundleId as string;
         if (widgetsBundleId && !id) {
           return this.widgetService.addWidgetFqnToWidgetBundle(widgetsBundleId, widgetTypeDetails.fqn).pipe(
@@ -579,7 +582,13 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
           );
         }
         return of(widgetTypeDetails);
-      })
+      }),
+      catchError((err) => {
+        if (id && err.status === HttpStatusCode.Conflict) {
+          return this.widgetService.getWidgetTypeById(id.id);
+        }
+        return throwError(() => err);
+      }),
     ).subscribe({
       next: (widgetTypeDetails) => {
         this.saveWidgetPending = false;
@@ -612,7 +621,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
           config.title = this.widget.widgetName;
           this.widget.defaultConfig = JSON.stringify(config);
           this.isDirty = false;
-          this.widgetService.saveWidgetTypeDetails(this.widget, undefined, undefined).pipe(
+          this.widgetService.saveWidgetTypeDetails(this.widget, undefined, undefined, undefined).pipe(
             mergeMap((widget) => {
               if (saveWidgetAsData.widgetBundleId) {
                 return this.widgetService.addWidgetFqnToWidgetBundle(saveWidgetAsData.widgetBundleId, widget.fqn).pipe(

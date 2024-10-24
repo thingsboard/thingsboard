@@ -15,99 +15,167 @@
  */
 package org.thingsboard.server.edge;
 
-import com.google.common.collect.Lists;
 import com.google.protobuf.AbstractMessage;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.domain.Domain;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.MapperType;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
-import org.thingsboard.server.common.data.oauth2.OAuth2DomainInfo;
-import org.thingsboard.server.common.data.oauth2.OAuth2Info;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
-import org.thingsboard.server.common.data.oauth2.OAuth2ParamsInfo;
-import org.thingsboard.server.common.data.oauth2.OAuth2RegistrationInfo;
-import org.thingsboard.server.common.data.oauth2.SchemeType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.gen.edge.v1.OAuth2UpdateMsg;
+import org.thingsboard.server.gen.edge.v1.OAuth2ClientUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.OAuth2DomainUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.UUID;
 
 @DaoSqlTest
 public class OAuth2EdgeTest extends AbstractEdgeTest {
 
     @Test
-    public void testOAuth2Support() throws Exception {
+    public void testOAuth2DomainSupport() throws Exception {
         loginSysAdmin();
 
-        // enable oauth
+        // enable oauth and save domain
         edgeImitator.allowIgnoredTypes();
         edgeImitator.expectMessageAmount(1);
-        OAuth2Info oAuth2Info = createDefaultOAuth2Info();
-        oAuth2Info = doPost("/api/oauth2/config", oAuth2Info, OAuth2Info.class);
+
+        Domain savedDomain = doPost("/api/domain", constructDomain(), Domain.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof OAuth2UpdateMsg);
-        OAuth2UpdateMsg oAuth2UpdateMsg = (OAuth2UpdateMsg) latestMessage;
-        OAuth2Info result = JacksonUtil.fromString(oAuth2UpdateMsg.getEntity(), OAuth2Info.class, true);
-        Assert.assertEquals(oAuth2Info, result);
+        Assert.assertTrue(latestMessage instanceof OAuth2DomainUpdateMsg);
+        OAuth2DomainUpdateMsg oAuth2DomainUpdateMsg = (OAuth2DomainUpdateMsg) latestMessage;
+        Domain result = JacksonUtil.fromString(oAuth2DomainUpdateMsg.getEntity(), Domain.class, true);
+        Assert.assertEquals(savedDomain, result);
 
-        // disable oauth support
+        // disable oauth support: no update of domain events is sending to Edge
         edgeImitator.expectMessageAmount(1);
-        oAuth2Info.setEnabled(false);
-        oAuth2Info.setEdgeEnabled(false);
-        doPost("/api/oauth2/config", oAuth2Info, OAuth2Info.class);
+        savedDomain.setPropagateToEdge(false);
+        doPost("/api/domain", savedDomain, Domain.class);
+        Assert.assertFalse(edgeImitator.waitForMessages(5));
+
+        // delete domain
+        edgeImitator.expectMessageAmount(1);
+        doDelete("/api/domain/" + savedDomain.getId().getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
         latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof OAuth2UpdateMsg);
-        oAuth2UpdateMsg = (OAuth2UpdateMsg) latestMessage;
-        result = JacksonUtil.fromString(oAuth2UpdateMsg.getEntity(), OAuth2Info.class, true);
-        Assert.assertEquals(oAuth2Info, result);
+        Assert.assertTrue(latestMessage instanceof OAuth2DomainUpdateMsg);
+        oAuth2DomainUpdateMsg = (OAuth2DomainUpdateMsg) latestMessage;
+        Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, oAuth2DomainUpdateMsg.getMsgType());
+        Assert.assertEquals(savedDomain.getUuidId().getMostSignificantBits(), oAuth2DomainUpdateMsg.getIdMSB());
+        Assert.assertEquals(savedDomain.getUuidId().getLeastSignificantBits(), oAuth2DomainUpdateMsg.getIdLSB());
 
-        edgeImitator.ignoreType(OAuth2UpdateMsg.class);
+        edgeImitator.ignoreType(OAuth2DomainUpdateMsg.class);
+        edgeImitator.ignoreType(OAuth2ClientUpdateMsg.class);
         loginTenantAdmin();
     }
 
-    private OAuth2Info createDefaultOAuth2Info() {
-        return new OAuth2Info(true, true, Lists.newArrayList(
-                OAuth2ParamsInfo.builder()
-                        .domainInfos(Lists.newArrayList(
-                                OAuth2DomainInfo.builder().name("domain").scheme(SchemeType.MIXED).build()
-                        ))
-                        .mobileInfos(Collections.emptyList())
-                        .clientRegistrations(Lists.newArrayList(
-                                validRegistrationInfo()
-                        ))
-                        .build()
-        ));
+    @Test
+    public void testOAuth2ClientSupport() throws Exception {
+        loginSysAdmin();
+
+        // enable oauth and save domain
+        edgeImitator.allowIgnoredTypes();
+
+        edgeImitator.expectMessageAmount(2);
+        OAuth2Client savedOAuth2Client = validClientInfo(TenantId.SYS_TENANT_ID, "test edge google client");
+        savedOAuth2Client = doPost("/api/oauth2/client", savedOAuth2Client, OAuth2Client.class);
+        Domain savedDomain = doPost("/api/domain?oauth2ClientIds=" + savedOAuth2Client.getId().getId(), constructDomain(), Domain.class);
+
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        Optional<OAuth2DomainUpdateMsg> oAuth2DomainUpdateMsgOpt = edgeImitator.findMessageByType(OAuth2DomainUpdateMsg.class);
+        Assert.assertTrue(oAuth2DomainUpdateMsgOpt.isPresent());
+        Domain result = JacksonUtil.fromString(oAuth2DomainUpdateMsgOpt.get().getEntity(), Domain.class, true);
+        Assert.assertEquals(savedDomain, result);
+
+        Optional<OAuth2ClientUpdateMsg> oAuth2ClientUpdateMsgOpt = edgeImitator.findMessageByType(OAuth2ClientUpdateMsg.class);
+        Assert.assertTrue(oAuth2ClientUpdateMsgOpt.isPresent());
+        OAuth2Client clientResult = JacksonUtil.fromString(oAuth2ClientUpdateMsgOpt.get().getEntity(), OAuth2Client.class, true);
+        Assert.assertEquals(savedOAuth2Client, clientResult);
+
+        // disable oauth support: no update of domain events and client events are sending to Edge
+        edgeImitator.expectMessageAmount(1);
+        savedDomain.setPropagateToEdge(false);
+        doPost("/api/domain", savedDomain, Domain.class);
+        Assert.assertFalse(edgeImitator.waitForMessages(5));
+
+        edgeImitator.expectMessageAmount(1);
+        savedOAuth2Client.setTitle("Updated title");
+        doPost("/api/oauth2/client", savedOAuth2Client, OAuth2Client.class);
+        Assert.assertFalse(edgeImitator.waitForMessages(5));
+
+        // delete oauth2Client
+        edgeImitator.expectMessageAmount(1);
+        doDelete("/api/oauth2/client/" + savedOAuth2Client.getId().getId());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof OAuth2ClientUpdateMsg);
+        OAuth2ClientUpdateMsg oAuth2ClientUpdateMsg = (OAuth2ClientUpdateMsg) latestMessage;
+        Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, oAuth2ClientUpdateMsg.getMsgType());
+        Assert.assertEquals(savedOAuth2Client.getUuidId().getMostSignificantBits(), oAuth2ClientUpdateMsg.getIdMSB());
+        Assert.assertEquals(savedOAuth2Client.getUuidId().getLeastSignificantBits(), oAuth2ClientUpdateMsg.getIdLSB());
+
+        // delete domain
+        edgeImitator.expectMessageAmount(1);
+        doDelete("/api/domain/" + savedDomain.getId().getId());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof OAuth2DomainUpdateMsg);
+        OAuth2DomainUpdateMsg oAuth2DomainUpdateMsg = (OAuth2DomainUpdateMsg) latestMessage;
+        Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, oAuth2DomainUpdateMsg.getMsgType());
+        Assert.assertEquals(savedDomain.getUuidId().getMostSignificantBits(), oAuth2DomainUpdateMsg.getIdMSB());
+        Assert.assertEquals(savedDomain.getUuidId().getLeastSignificantBits(), oAuth2DomainUpdateMsg.getIdLSB());
+
+        edgeImitator.ignoreType(OAuth2DomainUpdateMsg.class);
+        edgeImitator.ignoreType(OAuth2ClientUpdateMsg.class);
+        loginTenantAdmin();
     }
 
-    private OAuth2RegistrationInfo validRegistrationInfo() {
-        return OAuth2RegistrationInfo.builder()
-                .clientId(UUID.randomUUID().toString())
-                .clientSecret(UUID.randomUUID().toString())
-                .authorizationUri(UUID.randomUUID().toString())
-                .accessTokenUri(UUID.randomUUID().toString())
-                .scope(Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString()))
-                .platforms(Collections.emptyList())
-                .userInfoUri(UUID.randomUUID().toString())
-                .userNameAttributeName(UUID.randomUUID().toString())
-                .jwkSetUri(UUID.randomUUID().toString())
-                .clientAuthenticationMethod(UUID.randomUUID().toString())
-                .loginButtonLabel(UUID.randomUUID().toString())
-                .mapperConfig(
-                        OAuth2MapperConfig.builder()
-                                .type(MapperType.CUSTOM)
-                                .custom(
-                                        OAuth2CustomMapperConfig.builder()
-                                                .url(UUID.randomUUID().toString())
-                                                .build()
-                                )
-                                .build()
-                )
-                .build();
+    private OAuth2Client validClientInfo(TenantId tenantId, String title) {
+        OAuth2Client oAuth2Client = new OAuth2Client();
+        oAuth2Client.setTenantId(tenantId);
+        oAuth2Client.setTitle(title);
+        oAuth2Client.setClientId(UUID.randomUUID().toString());
+        oAuth2Client.setClientSecret(UUID.randomUUID().toString());
+        oAuth2Client.setAuthorizationUri(UUID.randomUUID().toString());
+        oAuth2Client.setAccessTokenUri(UUID.randomUUID().toString());
+        oAuth2Client.setScope(Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+        oAuth2Client.setPlatforms(Collections.emptyList());
+        oAuth2Client.setUserInfoUri(UUID.randomUUID().toString());
+        oAuth2Client.setUserNameAttributeName(UUID.randomUUID().toString());
+        oAuth2Client.setJwkSetUri(UUID.randomUUID().toString());
+        oAuth2Client.setClientAuthenticationMethod(UUID.randomUUID().toString());
+        oAuth2Client.setLoginButtonLabel(UUID.randomUUID().toString());
+        oAuth2Client.setLoginButtonIcon(UUID.randomUUID().toString());
+        oAuth2Client.setAdditionalInfo(JacksonUtil.newObjectNode().put(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+        oAuth2Client.setMapperConfig(
+                OAuth2MapperConfig.builder()
+                        .allowUserCreation(true)
+                        .activateUser(true)
+                        .type(MapperType.CUSTOM)
+                        .custom(
+                                OAuth2CustomMapperConfig.builder()
+                                        .url(UUID.randomUUID().toString())
+                                        .build()
+                        )
+                        .build());
+        return oAuth2Client;
+    }
+
+    private Domain constructDomain() {
+        Domain domain = new Domain();
+        domain.setTenantId(TenantId.SYS_TENANT_ID);
+        domain.setName("my.edge.domain");
+        domain.setOauth2Enabled(true);
+        domain.setPropagateToEdge(true);
+        return domain;
     }
 
 }

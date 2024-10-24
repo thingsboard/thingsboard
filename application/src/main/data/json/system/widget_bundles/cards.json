@@ -23,6 +23,7 @@
     "cards.html_card",
     "cards.html_value_card",
     "cards.markdown_card",
-    "cards.simple_card"
+    "cards.simple_card",
+    "unread_notifications"
   ]
 }

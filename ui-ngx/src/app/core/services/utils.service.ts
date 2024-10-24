@@ -41,7 +41,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { customTranslationsPrefix, i18nPrefix } from '@app/shared/models/constants';
 import { DataKey, Datasource, DatasourceType, KeyInfo } from '@shared/models/widget.models';
 import { DataKeyType } from '@app/shared/models/telemetry/telemetry.models';
-import { alarmFields, alarmSeverityTranslations, alarmStatusTranslations } from '@shared/models/alarm.models';
+import {
+  alarmFields,
+  alarmSeverityTranslations,
+  alarmStatusTranslations
+} from '@shared/models/alarm.models';
 import { materialColors } from '@app/shared/models/material.models';
 import { WidgetInfo } from '@home/models/widget-component.models';
 import jsonSchemaDefaults from 'json-schema-defaults';
@@ -454,6 +458,10 @@ export class UtilsService {
 
   public isDefined(value: any): boolean {
     return isDefined(value);
+  }
+
+  public isDefinedAndNotNull(value: any): boolean {
+    return isDefinedAndNotNull(value);
   }
 
   public defaultValue(value: any, defaultValue: any): any {

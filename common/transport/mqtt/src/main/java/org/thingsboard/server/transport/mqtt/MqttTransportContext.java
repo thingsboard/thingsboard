@@ -16,18 +16,19 @@
 package org.thingsboard.server.transport.mqtt;
 
 import io.netty.handler.ssl.SslHandler;
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
+import org.thingsboard.server.common.transport.TransportTenantProfileCache;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
+import org.thingsboard.server.transport.mqtt.gateway.GatewayMetricsService;
 
-import jakarta.annotation.PostConstruct;
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -36,7 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Slf4j
 @Component
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.mqtt.enabled}'=='true')")
+@TbMqttTransportComponent
 public class MqttTransportContext extends TransportContext {
 
     @Getter
@@ -50,6 +51,14 @@ public class MqttTransportContext extends TransportContext {
     @Getter
     @Autowired
     private ProtoMqttAdaptor protoMqttAdaptor;
+
+    @Getter
+    @Autowired
+    private TransportTenantProfileCache tenantProfileCache;
+
+    @Getter
+    @Autowired
+    private GatewayMetricsService gatewayMetricsService;
 
     @Getter
     @Value("${transport.mqtt.netty.max_payload_size}")

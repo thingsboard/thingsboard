@@ -19,10 +19,9 @@
   <div class="tb-form-panel stroked tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [(expanded)]="settingsExpanded"
                          [disabled]="!gridSettingsFormGroup.get('show').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="show" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="show" (click)="$event.stopPropagation()">
             {{ 'widgets.time-series-chart.grid.grid' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
@@ -37,7 +36,7 @@
         </div>
         <div class="tb-form-row space-between">
           <div>{{ 'widgets.time-series-chart.grid.border' | translate }}</div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div class="flex flex-row items-center justify-start gap-2">
             <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
               <input matInput formControlName="borderWidth" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
               <span matSuffix>px</span>

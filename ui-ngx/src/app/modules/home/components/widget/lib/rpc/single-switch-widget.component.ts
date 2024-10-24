@@ -36,10 +36,10 @@ import {
   ComponentStyle,
   iconStyle,
   overlayStyle,
+  resolveCssSize,
   textStyle
 } from '@shared/models/widget-settings.models';
 import { Observable } from 'rxjs';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ValueType } from '@shared/models/constants';
@@ -74,6 +74,7 @@ export class SingleSwitchWidgetComponent extends
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  padding: string;
   overlayInset = '12px';
 
   value = false;
@@ -123,6 +124,7 @@ export class SingleSwitchWidgetComponent extends
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
+    this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
 
     this.layout = this.settings.layout;
 
@@ -231,11 +233,15 @@ export class SingleSwitchWidgetComponent extends
   }
 
   private onResize() {
-    const height = this.singleSwitchPanel.nativeElement.getBoundingClientRect().height;
+    const widgetBoundingClientRect = this.singleSwitchPanel.nativeElement.getBoundingClientRect();
+    const height = widgetBoundingClientRect.height;
     const switchScale = height / initialSwitchHeight;
     const paddingScale = Math.min(switchScale, 1);
-    const panelWidth = this.singleSwitchPanel.nativeElement.getBoundingClientRect().width - (horizontalLayoutPadding * paddingScale);
-    const panelHeight = this.singleSwitchPanel.nativeElement.getBoundingClientRect().height - (verticalLayoutPadding * paddingScale);
+    const computedStyle = getComputedStyle(this.singleSwitchPanel.nativeElement);
+    const [pLeft, pRight, pTop, pBottom] = ['paddingLeft', 'paddingRight', 'paddingTop', 'paddingBottom']
+      .map(side => resolveCssSize(computedStyle[side])[0]);
+    const panelWidth = widgetBoundingClientRect.width - ((pLeft + pRight) || horizontalLayoutPadding * paddingScale);
+    const panelHeight = widgetBoundingClientRect.height - ((pTop + pBottom) || verticalLayoutPadding * paddingScale);
     this.renderer.setStyle(this.singleSwitchContent.nativeElement, 'transform', `scale(1)`);
     this.renderer.setStyle(this.singleSwitchContent.nativeElement, 'width', 'auto');
     let contentWidth = this.singleSwitchToggleRow.nativeElement.getBoundingClientRect().width;

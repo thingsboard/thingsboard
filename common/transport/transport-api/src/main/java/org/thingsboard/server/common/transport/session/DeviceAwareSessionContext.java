@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
@@ -39,6 +40,8 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
     protected final UUID sessionId;
     @Getter
     private volatile DeviceId deviceId;
+    @Getter
+    private volatile TenantId tenantId;
     @Getter
     protected volatile TransportDeviceInfo deviceInfo;
     @Getter
@@ -58,6 +61,7 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
     public void setDeviceInfo(TransportDeviceInfo deviceInfo) {
         this.deviceInfo = deviceInfo;
         this.deviceId = deviceInfo.getDeviceId();
+        this.tenantId = deviceInfo.getTenantId();
     }
 
     @Override
@@ -65,7 +69,6 @@ public abstract class DeviceAwareSessionContext implements SessionContext {
         this.sessionInfo = sessionInfo;
         this.deviceProfile = deviceProfile;
         this.deviceInfo.setDeviceType(deviceProfile.getName());
-
     }
 
     @Override

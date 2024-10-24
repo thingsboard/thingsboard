@@ -22,7 +22,6 @@ import lombok.ToString;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Information about the local websocket subscriptions.
@@ -50,7 +49,7 @@ public class TbSubscriptionsInfo {
     }
 
     protected TbSubscriptionsInfo copy(int seqNumber) {
-        return new TbSubscriptionsInfo(notifications, alarms, tsAllKeys, tsKeys, attrAllKeys, attrKeys, seqNumber);
+        return new TbSubscriptionsInfo(notifications, alarms, tsAllKeys, tsKeys != null ? new HashSet<>(tsKeys) : null, attrAllKeys, attrKeys != null ? new HashSet<>(attrKeys) : null, seqNumber);
     }
 
 }

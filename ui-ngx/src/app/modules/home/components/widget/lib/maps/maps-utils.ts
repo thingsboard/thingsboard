@@ -87,14 +87,14 @@ export function isJSON(data: string): boolean {
   }
 }
 
-interface labelSettings {
+export interface LabelSettings {
   showLabel: boolean;
   useLabelFunction: boolean;
   parsedLabelFunction: GenericFunction;
   label: string;
 }
 
-export function entitiesParseName(entities: FormattedData[], labelSettings: labelSettings):  FormattedData[] {
+export function entitiesParseName(entities: FormattedData[], labelSettings: LabelSettings):  FormattedData[] {
   const div = document.createElement('div');
   for (const entity of entities) {
     if (labelSettings?.showLabel) {

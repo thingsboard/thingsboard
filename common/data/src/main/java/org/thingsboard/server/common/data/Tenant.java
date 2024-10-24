@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.validation.Length;
@@ -27,7 +29,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 @Schema
 @EqualsAndHashCode(callSuper = true)
-public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTitle {
+public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTitle, HasVersion {
 
     private static final long serialVersionUID = 8057243243859922101L;
 
@@ -43,6 +45,9 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTi
     @Schema(description = "JSON object with Tenant Profile Id")
     private TenantProfileId tenantProfileId;
 
+    @Getter @Setter
+    private Long version;
+
     public Tenant() {
         super();
     }
@@ -56,6 +61,7 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTi
         this.title = tenant.getTitle();
         this.region = tenant.getRegion();
         this.tenantProfileId = tenant.getTenantProfileId();
+        this.version = tenant.getVersion();
     }
 
     public String getTitle() {
@@ -98,7 +104,7 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTi
     @Schema(description = "JSON object with the tenant Id. " +
             "Specify this field to update the tenant. " +
             "Referencing non-existing tenant Id will cause error. " +
-            "Omit this field to create new tenant." )
+            "Omit this field to create new tenant.")
     @Override
     public TenantId getId() {
         return super.getId();
@@ -158,7 +164,7 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTi
         return super.getEmail();
     }
 
-    @Schema(description = "Additional parameters of the device",implementation = com.fasterxml.jackson.databind.JsonNode.class)
+    @Schema(description = "Additional parameters of the device", implementation = com.fasterxml.jackson.databind.JsonNode.class)
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();

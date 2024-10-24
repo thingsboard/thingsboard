@@ -17,7 +17,6 @@
 import {
   ChangeDetectorRef,
   Component,
-  ComponentFactoryResolver,
   ComponentRef,
   forwardRef,
   Input,
@@ -38,7 +37,7 @@ import {
   JsonSchema,
   JsonSettingsSchema,
   TargetDevice,
-  TargetDeviceType, targetDeviceValid,
+  targetDeviceValid,
   Widget,
   WidgetConfigMode,
   widgetType
@@ -63,7 +62,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
-import { Observable, of, Subject, Subscription } from 'rxjs';
+import { merge, Observable, of, Subject, Subscription } from 'rxjs';
 import {
   IBasicWidgetConfigComponent,
   WidgetConfigCallbacks
@@ -84,8 +83,8 @@ import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { basicWidgetConfigComponentsMap } from '@home/components/widget/config/basic/basic-widget-config.module';
 import { TimewindowConfigData } from '@home/components/widget/config/timewindow-config-panel.component';
-import Timeout = NodeJS.Timeout;
 import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import Timeout = NodeJS.Timeout;
 
 const emptySettingsSchema: JsonSchema = {
   type: 'object',
@@ -150,6 +149,14 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   @coerceBoolean()
   isAdd = false;
 
+  @Input()
+  @coerceBoolean()
+  showLayoutConfig = true;
+
+  @Input()
+  @coerceBoolean()
+  isDefaultBreakpoint = true;
+
   @Input() disabled: boolean;
 
   widgetConfigMode = WidgetConfigMode.advanced;
@@ -204,7 +211,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
               private entityService: EntityService,
               private dialog: MatDialog,
               public translate: TranslateService,
-              private cfr: ComponentFactoryResolver,
               private fb: UntypedFormBuilder,
               private cd: ChangeDetectorRef) {
     super(store);
@@ -240,19 +246,24 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       noDataDisplayMessage: [null, []]
     });
 
-    this.widgetSettings.get('showTitle').valueChanges.subscribe(() => {
-      this.updateWidgetSettingsEnabledState();
-    });
-    this.widgetSettings.get('showTitleIcon').valueChanges.subscribe(() => {
+    merge(this.widgetSettings.get('showTitle').valueChanges,
+          this.widgetSettings.get('showTitleIcon').valueChanges).subscribe(() => {
       this.updateWidgetSettingsEnabledState();
     });
 
     this.layoutSettings = this.fb.group({
+      resizable: [true],
+      preserveAspectRatio: [false],
       mobileOrder: [null, [Validators.pattern(/^-?[0-9]+$/)]],
       mobileHeight: [null, [Validators.min(1), Validators.pattern(/^\d*$/)]],
       mobileHide: [false],
       desktopHide: [false]
     });
+
+    this.layoutSettings.get('resizable').valueChanges.subscribe(() => {
+      this.updateLayoutEnabledState();
+    });
+
     this.actionsSettings = this.fb.group({
       actions: [null, []]
     });
@@ -343,8 +354,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     );
     this.headerOptions.push(
       {
-        name: this.translate.instant('widget-config.mobile'),
-        value: 'mobile'
+        name: this.translate.instant('widget-config.layout'),
+        value: 'layout'
       }
     );
     if (!this.selectedOption || !this.headerOptions.find(o => o.value === this.selectedOption)) {
@@ -431,10 +442,9 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       this.basicModeDirectiveError = this.translate.instant('widget-config.settings-component-not-found',
         {selector: this.modelValue.basicModeDirective});
     } else {
-      const factory = this.cfr.resolveComponentFactory(componentType);
       this.createBasicModeComponentTimeout = setTimeout(() => {
         this.createBasicModeComponentTimeout = null;
-        this.basicModeComponentRef = this.basicModeContainer.createComponent(factory);
+        this.basicModeComponentRef = this.basicModeContainer.createComponent(componentType);
         this.basicModeComponent = this.basicModeComponentRef.instance;
         this.basicModeComponent.isAdd = isAdd;
         this.basicModeComponent.widgetConfig = this.modelValue;
@@ -557,6 +567,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       if (layout) {
         this.layoutSettings.patchValue(
           {
+            resizable: isDefined(layout.resizable) ? layout.resizable : true,
+            preserveAspectRatio: layout.preserveAspectRatio,
             mobileOrder: layout.mobileOrder,
             mobileHeight: layout.mobileHeight,
             mobileHide: layout.mobileHide,
@@ -567,6 +579,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       } else {
         this.layoutSettings.patchValue(
           {
+            resizable: true,
+            preserveAspectRatio: false,
             mobileOrder: null,
             mobileHeight: null,
             mobileHide: false,
@@ -575,6 +589,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           {emitEvent: false}
         );
       }
+      this.updateLayoutEnabledState();
     }
     this.createChangeSubscriptions();
   }
@@ -605,6 +620,15 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       this.widgetSettings.get('titleIcon').disable({emitEvent: false});
       this.widgetSettings.get('iconColor').disable({emitEvent: false});
       this.widgetSettings.get('iconSize').disable({emitEvent: false});
+    }
+  }
+
+  private updateLayoutEnabledState() {
+    const resizable: boolean = this.layoutSettings.get('resizable').value;
+    if (resizable) {
+      this.layoutSettings.get('preserveAspectRatio').enable({emitEvent: false});
+    } else {
+      this.layoutSettings.get('preserveAspectRatio').disable({emitEvent: false});
     }
   }
 
@@ -962,7 +986,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     if (this.modelValue) {
       const config = this.modelValue.config;
       if (this.widgetType === widgetType.rpc && this.modelValue.isDataEnabled) {
-        if (!this.widgetEditMode && !targetDeviceValid(config.targetDevice)) {
+        if ((!this.widgetEditMode && !this.modelValue?.typeParameters.targetDeviceOptional) && !targetDeviceValid(config.targetDevice)) {
           return {
             targetDevice: {
               valid: false

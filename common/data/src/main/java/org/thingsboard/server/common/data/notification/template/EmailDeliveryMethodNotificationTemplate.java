@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.notification.template;
 
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -23,7 +24,6 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
 @Data

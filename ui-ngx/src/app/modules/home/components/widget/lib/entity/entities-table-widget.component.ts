@@ -49,7 +49,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { BehaviorSubject, fromEvent, merge, Observable, Subject } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
-import { entityTypeTranslations } from '@shared/models/entity-type.models';
+import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { debounceTime, distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, SortDirection } from '@angular/material/sort';
@@ -102,7 +102,6 @@ import { sortItems } from '@shared/models/page/page-link';
 import { entityFields } from '@shared/models/entity.models';
 import { DatePipe } from '@angular/common';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { AggregationType } from '@shared/models/time/time.models';
 import { FormBuilder } from '@angular/forms';
@@ -221,11 +220,13 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.ctx.updateWidgetParams();
     if (this.displayPagination) {
       this.widgetResize$ = new ResizeObserver(() => {
-        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
-        if (showHidePageSize !== this.hidePageSize) {
-          this.hidePageSize = showHidePageSize;
-          this.cd.markForCheck();
-        }
+        this.ngZone.run(() => {
+          const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+          if (showHidePageSize !== this.hidePageSize) {
+            this.hidePageSize = showHidePageSize;
+            this.cd.markForCheck();
+          }
+        });
       });
       this.widgetResize$.observe(this.elementRef.nativeElement);
     }
@@ -408,7 +409,9 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         } as EntityColumn
       );
       this.contentsInfo.entityType = {
-        useCellContentFunction: false
+        useCellContentFunction: true,
+        cellContentFunction: (entityType: EntityType) =>
+          entityType ? this.translate.instant(entityTypeTranslations.get(entityType).type) : ''
       };
       this.stylesInfo.entityType = {
         useCellStyleFunction: false
@@ -869,9 +872,9 @@ class EntityDatasource implements DataSource<EntityData> {
     }
     if (datasource.entityType) {
       entity.id.entityType = datasource.entityType;
-      entity.entityType = this.translate.instant(entityTypeTranslations.get(datasource.entityType).type);
+      entity.entityType = datasource.entityType;
     } else {
-      entity.entityType = '';
+      entity.entityType = null;
     }
     this.dataKeys.forEach((dataKey, index) => {
       const keyData = data[index].data;

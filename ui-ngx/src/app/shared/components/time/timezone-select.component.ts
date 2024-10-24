@@ -15,8 +15,8 @@
 ///
 
 import { AfterViewInit, Component, forwardRef, Input, NgZone, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { MatFormFieldAppearance } from '@angular/material/form-field';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { Observable, of } from 'rxjs';
 import { map, mergeMap, share, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -26,6 +26,8 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { getDefaultTimezoneInfo, getTimezoneInfo, getTimezones, TimezoneInfo } from '@shared/models/time/time.models';
 import { deepClone } from '@core/utils';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { TimeService } from '@core/services/time.service';
 
 @Component({
   selector: 'tb-timezone-select',
@@ -46,14 +48,21 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
   defaultTimezoneId: string = null;
 
   @Input()
-  appearance: MatFormFieldAppearance = 'fill';
-
-  @Input()
   set defaultTimezone(timezone: string) {
     if (this.defaultTimezoneId !== timezone) {
       this.defaultTimezoneId = timezone;
     }
   }
+
+  @Input()
+  @coerceBoolean()
+  displayLabel = true;
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -95,7 +104,7 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
 
   private dirty = false;
 
-  private localBrowserTimezoneInfoPlaceholder: TimezoneInfo;
+  private localBrowserTimezoneInfoPlaceholder: TimezoneInfo = this.timeService.getLocalBrowserTimezoneInfoPlaceholder();
 
   private timezones: Array<TimezoneInfo>;
 
@@ -104,7 +113,8 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
   constructor(private store: Store<AppState>,
               public translate: TranslateService,
               private ngZone: NgZone,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private timeService: TimeService) {
     this.selectTimezoneFormGroup = this.fb.group({
       timezone: [null]
     });
@@ -165,7 +175,7 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
     } else {
       this.modelValue = null;
       if (this.localBrowserTimezonePlaceholderOnEmptyValue) {
-        this.selectTimezoneFormGroup.get('timezone').patchValue(this.getLocalBrowserTimezoneInfoPlaceholder(), {emitEvent: false});
+        this.selectTimezoneFormGroup.get('timezone').patchValue(this.localBrowserTimezoneInfoPlaceholder, {emitEvent: false});
       } else {
         this.selectTimezoneFormGroup.get('timezone').patchValue('', {emitEvent: false});
       }
@@ -194,7 +204,7 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
           }
         } else if (this.localBrowserTimezonePlaceholderOnEmptyValue) {
           this.ngZone.run(() => {
-            this.selectTimezoneFormGroup.get('timezone').reset(this.getLocalBrowserTimezoneInfoPlaceholder(), {emitEvent: true});
+            this.selectTimezoneFormGroup.get('timezone').reset(this.localBrowserTimezoneInfoPlaceholder, {emitEvent: true});
           });
         }
       }
@@ -232,19 +242,11 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
     if (!this.timezones) {
       this.timezones = [];
       if (this.localBrowserTimezonePlaceholderOnEmptyValue) {
-        this.timezones.push(this.getLocalBrowserTimezoneInfoPlaceholder());
+        this.timezones.push(this.localBrowserTimezoneInfoPlaceholder);
       }
       this.timezones.push(...getTimezones());
     }
     return this.timezones;
   }
 
-  private getLocalBrowserTimezoneInfoPlaceholder(): TimezoneInfo {
-    if (!this.localBrowserTimezoneInfoPlaceholder) {
-      this.localBrowserTimezoneInfoPlaceholder = deepClone(getDefaultTimezoneInfo());
-      this.localBrowserTimezoneInfoPlaceholder.id = null;
-      this.localBrowserTimezoneInfoPlaceholder.name = this.translate.instant('timezone.browser-time');
-    }
-    return this.localBrowserTimezoneInfoPlaceholder;
-  }
 }

@@ -15,7 +15,7 @@
 ///
 
 import { Injectable, NgModule } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterModule, Routes } from '@angular/router';
+import { ActivatedRouteSnapshot, RouterModule, Routes } from '@angular/router';
 
 import { EntitiesTableComponent } from '../../components/entity/entities-table.component';
 import { Authority } from '@shared/models/authority.enum';
@@ -33,9 +33,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
+import { MenuId } from '@core/services/menu.models';
 
 @Injectable()
-export class DashboardResolver implements Resolve<Dashboard> {
+export class DashboardResolver  {
 
   constructor(private store: Store<AppState>,
               private dashboardService: DashboardService,
@@ -66,8 +67,7 @@ const routes: Routes = [
     path: 'dashboards',
     data: {
       breadcrumb: {
-        label: 'dashboard.dashboards',
-        icon: 'dashboard'
+        menuId: MenuId.dashboards
       }
     },
     children: [

@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.common.data.notification.targets.platform;
 
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 
-import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.UUID;
 

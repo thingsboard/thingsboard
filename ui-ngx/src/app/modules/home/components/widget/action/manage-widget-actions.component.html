@@ -16,11 +16,11 @@
 
 -->
 <div class="tb-entity-table tb-absolute-fill">
-  <div fxFlex fxLayout="column" class="tb-entity-table-content">
-    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="!textSearchMode">
+  <div class="tb-entity-table-content flex flex-1 flex-col">
+    <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="textSearchMode">
       <div class="mat-toolbar-tools">
         <span class="tb-entity-table-title" translate>widget-config.actions</span>
-        <span fxFlex></span>
+        <span class="flex-1"></span>
         <button mat-icon-button [disabled]="isLoading$ | async"
                 type="button"
                 (click)="addAction($event)"
@@ -36,7 +36,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode">
+    <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
                 type="button"
@@ -44,7 +44,7 @@
                 matTooltipPosition="above">
           <mat-icon>search</mat-icon>
         </button>
-        <mat-form-field fxFlex>
+        <mat-form-field class="flex-1">
           <mat-label>&nbsp;</mat-label>
           <input #searchInput matInput
                  [(ngModel)]="pageLink.textSearch"
@@ -58,7 +58,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <div fxFlex class="table-container">
+    <div class="table-container flex-1">
       <table mat-table
              [dataSource]="dataSource"
              matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear
@@ -109,7 +109,7 @@
           <mat-header-cell *matHeaderCellDef style="min-width: 80px; max-width: 80px; width: 80px">
           </mat-header-cell>
           <mat-cell *matCellDef="let action">
-            <div fxFlex fxLayout="row" fxLayoutAlign="end">
+            <div class="flex flex-1 flex-row items-stretch justify-end">
               <button mat-icon-button [disabled]="isLoading$ | async"
                       type="button"
                       matTooltip="{{ 'widget-config.edit-action' | translate }}"
@@ -132,9 +132,8 @@
                  *matRowDef="let action; columns: displayedColumns;"
                  cdkDrag [cdkDragData]="action"></mat-row>
       </table>
-      <span [fxShow]="dataSource.isEmpty() | async"
-            fxLayoutAlign="center center"
-            class="no-data-found" translate>{{ 'widget-config.no-actions-text' }}</span>
+      <span [class.!hidden]="(dataSource.isEmpty() | async) === false"
+            class="no-data-found flex items-center justify-center" translate>{{ 'widget-config.no-actions-text' }}</span>
     </div>
     <mat-divider></mat-divider>
     <mat-paginator [length]="dataSource.total() | async"

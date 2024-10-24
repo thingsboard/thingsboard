@@ -126,8 +126,7 @@ export class StatesComponentDirective implements OnInit, OnDestroy, OnChanges {
     }
     const stateControllerInstanceId = this.dashboardCtrl.dashboardCtx.instanceId + '_' +  this.statesControllerId;
     const preservedState = this.statesControllerService.withdrawStateControllerState(stateControllerInstanceId);
-    const stateControllerFactory = stateControllerData.factory;
-    this.stateControllerComponentRef = this.viewContainerRef.createComponent(stateControllerFactory);
+    this.stateControllerComponentRef = this.viewContainerRef.createComponent(stateControllerData.component);
     this.stateControllerComponent = this.stateControllerComponentRef.instance;
     this.dashboardCtrl.dashboardCtx.stateController = this.stateControllerComponent;
     this.dashboardCtrl.dashboardCtx.stateChanged = this.stateChangedSubject.asObservable();

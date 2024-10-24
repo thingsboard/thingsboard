@@ -22,7 +22,9 @@ import { DisplayColumnsPanelComponent } from '@home/components/widget/lib/displa
 import { AlarmsTableWidgetComponent } from '@home/components/widget/lib/alarm/alarms-table-widget.component';
 import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 import { TimeseriesTableWidgetComponent } from '@home/components/widget/lib/timeseries-table-widget.component';
-import { EntitiesHierarchyWidgetComponent } from '@home/components/widget/lib/entity/entities-hierarchy-widget.component';
+import {
+  EntitiesHierarchyWidgetComponent
+} from '@home/components/widget/lib/entity/entities-hierarchy-widget.component';
 import { RpcWidgetsModule } from '@home/components/widget/lib/rpc/rpc-widgets.module';
 import {
   DateRangeNavigatorPanelComponent,
@@ -31,7 +33,6 @@ import {
 import { MultipleInputWidgetComponent } from '@home/components/widget/lib/multiple-input-widget.component';
 import { TripAnimationComponent } from '@home/components/widget/lib/trip-animation/trip-animation.component';
 import { PhotoCameraInputWidgetComponent } from '@home/components/widget/lib/photo-camera-input.component';
-import { GatewayFormComponent } from '@home/components/widget/lib/gateway/gateway-form.component';
 import { NavigationCardsWidgetComponent } from '@home/components/widget/lib/navigation-cards-widget.component';
 import { NavigationCardWidgetComponent } from '@home/components/widget/lib/navigation-card-widget.component';
 import { EdgesOverviewWidgetComponent } from '@home/components/widget/lib/edges-overview-widget.component';
@@ -43,21 +44,6 @@ import { HomePageWidgetsModule } from '@home/components/widget/lib/home-page/hom
 import { WIDGET_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 import { FlotWidgetComponent } from '@home/components/widget/lib/flot-widget.component';
 import { LegendComponent } from '@home/components/widget/lib/legend.component';
-import { GatewayConnectorComponent } from '@home/components/widget/lib/gateway/gateway-connectors.component';
-import { GatewayLogsComponent } from '@home/components/widget/lib/gateway/gateway-logs.component';
-import { GatewayStatisticsComponent } from '@home/components/widget/lib/gateway/gateway-statistics.component';
-import { GatewayServiceRPCComponent } from '@home/components/widget/lib/gateway/gateway-service-rpc.component';
-import {
-  GatewayServiceRPCConnectorComponent
-} from '@home/components/widget/lib/gateway/gateway-service-rpc-connector.component';
-import {
-  GatewayServiceRPCConnectorTemplatesComponent
-} from '@home/components/widget/lib/gateway/gateway-service-rpc-connector-templates.component';
-import { DeviceGatewayCommandComponent } from '@home/components/widget/lib/gateway/device-gateway-command.component';
-import { GatewayConfigurationComponent } from '@home/components/widget/lib/gateway/gateway-configuration.component';
-import {
-  GatewayRemoteConfigurationDialogComponent
-} from '@home/components/widget/lib/gateway/gateway-remote-configuration-dialog';
 import { ValueCardWidgetComponent } from '@home/components/widget/lib/cards/value-card-widget.component';
 import {
   AggregatedValueCardWidgetComponent
@@ -76,9 +62,6 @@ import { RangeChartWidgetComponent } from '@home/components/widget/lib/chart/ran
 import {
   BarChartWithLabelsWidgetComponent
 } from '@home/components/widget/lib/chart/bar-chart-with-labels-widget.component';
-import {
-  GatewayServiceRPCConnectorTemplateDialogComponent
-} from '@home/components/widget/lib/gateway/gateway-service-rpc-connector-template-dialog';
 import { SingleSwitchWidgetComponent } from '@home/components/widget/lib/rpc/single-switch-widget.component';
 import { ActionButtonWidgetComponent } from '@home/components/widget/lib/button/action-button-widget.component';
 import { CommandButtonWidgetComponent } from '@home/components/widget/lib/button/command-button-widget.component';
@@ -86,13 +69,6 @@ import { PowerButtonWidgetComponent } from '@home/components/widget/lib/rpc/powe
 import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-widget.component';
 import { ToggleButtonWidgetComponent } from '@home/components/widget/lib/button/toggle-button-widget.component';
 import { TimeSeriesChartWidgetComponent } from '@home/components/widget/lib/chart/time-series-chart-widget.component';
-import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
-import { MappingTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table.component';
-import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dialog/mapping-dialog.component';
-import { DeviceInfoTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/device-info-table.component';
-import { MappingDataKeysPanelComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-data-keys-panel.component';
-import { BrokerSecurityComponent } from '@home/components/widget/lib/gateway/connectors-configuration/broker-security.component';
-import { EllipsisChipListDirective } from '@home/components/widget/lib/gateway/connectors-configuration/ellipsis-chip-list.directive';
 import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/status-widget.component';
 import { LatestChartComponent } from '@home/components/widget/lib/chart/latest-chart.component';
 import { PieChartWidgetComponent } from '@home/components/widget/lib/chart/pie-chart-widget.component';
@@ -100,152 +76,133 @@ import { BarChartWidgetComponent } from '@home/components/widget/lib/chart/bar-c
 import { PolarAreaWidgetComponent } from '@home/components/widget/lib/chart/polar-area-widget.component';
 import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/radar-chart-widget.component';
 import { MobileAppQrcodeWidgetComponent } from '@home/components/widget/lib/mobile-app-qrcode-widget.component';
+import { KeyValueIsNotEmptyPipe } from '@shared/pipe/key-value-not-empty.pipe';
 import { LabelCardWidgetComponent } from '@home/components/widget/lib/cards/label-card-widget.component';
 import { LabelValueCardWidgetComponent } from '@home/components/widget/lib/cards/label-value-card-widget.component';
+import {
+  UnreadNotificationWidgetComponent
+} from '@home/components/widget/lib/cards/unread-notification-widget.component';
+import {
+  NotificationTypeFilterPanelComponent
+} from '@home/components/widget/lib/cards/notification-type-filter-panel.component';
+import { EllipsisChipListDirective } from '@shared/directives/ellipsis-chip-list.directive';
+import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/scada-symbol-widget.component';
 
 @NgModule({
-  declarations:
-    [
-      DisplayColumnsPanelComponent,
-      EntitiesTableWidgetComponent,
-      AlarmsTableWidgetComponent,
-      TimeseriesTableWidgetComponent,
-      EntitiesHierarchyWidgetComponent,
-      EdgesOverviewWidgetComponent,
-      DateRangeNavigatorWidgetComponent,
-      DateRangeNavigatorPanelComponent,
-      JsonInputWidgetComponent,
-      MultipleInputWidgetComponent,
-      TripAnimationComponent,
-      PhotoCameraInputWidgetComponent,
-      GatewayFormComponent,
-      NavigationCardsWidgetComponent,
-      NavigationCardWidgetComponent,
-      QrCodeWidgetComponent,
-      MobileAppQrcodeWidgetComponent,
-      MarkdownWidgetComponent,
-      SelectEntityDialogComponent,
-      LegendComponent,
-      FlotWidgetComponent,
-      GatewayConnectorComponent,
-      AddConnectorDialogComponent,
-      MappingTableComponent,
-      MappingDialogComponent,
-      DeviceInfoTableComponent,
-      MappingDataKeysPanelComponent,
-      BrokerSecurityComponent,
-      GatewayLogsComponent,
-      GatewayStatisticsComponent,
-      GatewayServiceRPCComponent,
-      GatewayServiceRPCConnectorComponent,
-      GatewayServiceRPCConnectorTemplatesComponent,
-      DeviceGatewayCommandComponent,
-      GatewayConfigurationComponent,
-      GatewayRemoteConfigurationDialogComponent,
-      GatewayServiceRPCConnectorTemplateDialogComponent,
-      EllipsisChipListDirective,
-      ValueCardWidgetComponent,
-      AggregatedValueCardWidgetComponent,
-      CountWidgetComponent,
-      BatteryLevelWidgetComponent,
-      WindSpeedDirectionWidgetComponent,
-      SignalStrengthWidgetComponent,
-      ValueChartCardWidgetComponent,
-      ProgressBarWidgetComponent,
-      LiquidLevelWidgetComponent,
-      DoughnutWidgetComponent,
-      RangeChartWidgetComponent,
-      BarChartWithLabelsWidgetComponent,
-      SingleSwitchWidgetComponent,
-      ActionButtonWidgetComponent,
-      CommandButtonWidgetComponent,
-      PowerButtonWidgetComponent,
-      SliderWidgetComponent,
-      ToggleButtonWidgetComponent,
-      TimeSeriesChartWidgetComponent,
-      StatusWidgetComponent,
-      LatestChartComponent,
-      PieChartWidgetComponent,
-      BarChartWidgetComponent,
-      PolarAreaWidgetComponent,
-      RadarChartWidgetComponent,
-      LabelCardWidgetComponent,
-      LabelValueCardWidgetComponent
-    ],
+  declarations: [
+    DisplayColumnsPanelComponent,
+    EntitiesTableWidgetComponent,
+    AlarmsTableWidgetComponent,
+    TimeseriesTableWidgetComponent,
+    EntitiesHierarchyWidgetComponent,
+    EdgesOverviewWidgetComponent,
+    DateRangeNavigatorWidgetComponent,
+    DateRangeNavigatorPanelComponent,
+    JsonInputWidgetComponent,
+    MultipleInputWidgetComponent,
+    TripAnimationComponent,
+    PhotoCameraInputWidgetComponent,
+    NavigationCardsWidgetComponent,
+    NavigationCardWidgetComponent,
+    QrCodeWidgetComponent,
+    MobileAppQrcodeWidgetComponent,
+    MarkdownWidgetComponent,
+    SelectEntityDialogComponent,
+    LegendComponent,
+    FlotWidgetComponent,
+    ValueCardWidgetComponent,
+    AggregatedValueCardWidgetComponent,
+    CountWidgetComponent,
+    BatteryLevelWidgetComponent,
+    WindSpeedDirectionWidgetComponent,
+    SignalStrengthWidgetComponent,
+    ValueChartCardWidgetComponent,
+    ProgressBarWidgetComponent,
+    LiquidLevelWidgetComponent,
+    DoughnutWidgetComponent,
+    RangeChartWidgetComponent,
+    BarChartWithLabelsWidgetComponent,
+    SingleSwitchWidgetComponent,
+    ActionButtonWidgetComponent,
+    CommandButtonWidgetComponent,
+    PowerButtonWidgetComponent,
+    SliderWidgetComponent,
+    ToggleButtonWidgetComponent,
+    TimeSeriesChartWidgetComponent,
+    StatusWidgetComponent,
+    LatestChartComponent,
+    PieChartWidgetComponent,
+    BarChartWidgetComponent,
+    PolarAreaWidgetComponent,
+    RadarChartWidgetComponent,
+    LabelCardWidgetComponent,
+    LabelValueCardWidgetComponent,
+    UnreadNotificationWidgetComponent,
+    NotificationTypeFilterPanelComponent,
+    ScadaSymbolWidgetComponent
+  ],
   imports: [
     CommonModule,
     SharedModule,
     RpcWidgetsModule,
     HomePageWidgetsModule,
-    SharedHomeComponentsModule
+    SharedHomeComponentsModule,
+    KeyValueIsNotEmptyPipe,
+    EllipsisChipListDirective,
   ],
-    exports: [
-        EntitiesTableWidgetComponent,
-        AlarmsTableWidgetComponent,
-        TimeseriesTableWidgetComponent,
-        EntitiesHierarchyWidgetComponent,
-        EdgesOverviewWidgetComponent,
-        RpcWidgetsModule,
-        HomePageWidgetsModule,
-        DateRangeNavigatorWidgetComponent,
-        JsonInputWidgetComponent,
-        MultipleInputWidgetComponent,
-        TripAnimationComponent,
-        PhotoCameraInputWidgetComponent,
-        GatewayFormComponent,
-        NavigationCardsWidgetComponent,
-        NavigationCardWidgetComponent,
-        QrCodeWidgetComponent,
-        MobileAppQrcodeWidgetComponent,
-        MarkdownWidgetComponent,
-        LegendComponent,
-        FlotWidgetComponent,
-        GatewayConnectorComponent,
-        AddConnectorDialogComponent,
-        MappingTableComponent,
-        MappingDialogComponent,
-        DeviceInfoTableComponent,
-        MappingDataKeysPanelComponent,
-        BrokerSecurityComponent,
-        GatewayLogsComponent,
-        GatewayServiceRPCConnectorComponent,
-        GatewayServiceRPCConnectorTemplatesComponent,
-        EllipsisChipListDirective,
-        GatewayStatisticsComponent,
-        GatewayServiceRPCComponent,
-        DeviceGatewayCommandComponent,
-        GatewayConfigurationComponent,
-        GatewayRemoteConfigurationDialogComponent,
-        GatewayServiceRPCConnectorTemplateDialogComponent,
-        ValueCardWidgetComponent,
-        AggregatedValueCardWidgetComponent,
-        CountWidgetComponent,
-        BatteryLevelWidgetComponent,
-        WindSpeedDirectionWidgetComponent,
-        SignalStrengthWidgetComponent,
-        ValueChartCardWidgetComponent,
-        ProgressBarWidgetComponent,
-        LiquidLevelWidgetComponent,
-        DoughnutWidgetComponent,
-        RangeChartWidgetComponent,
-        BarChartWithLabelsWidgetComponent,
-        SingleSwitchWidgetComponent,
-        ActionButtonWidgetComponent,
-        CommandButtonWidgetComponent,
-        PowerButtonWidgetComponent,
-        SliderWidgetComponent,
-        ToggleButtonWidgetComponent,
-        TimeSeriesChartWidgetComponent,
-        StatusWidgetComponent,
-        PieChartWidgetComponent,
-        BarChartWidgetComponent,
-        PolarAreaWidgetComponent,
-        RadarChartWidgetComponent,
-        LabelCardWidgetComponent,
-        LabelValueCardWidgetComponent
-    ],
+  exports: [
+    EntitiesTableWidgetComponent,
+    AlarmsTableWidgetComponent,
+    TimeseriesTableWidgetComponent,
+    EntitiesHierarchyWidgetComponent,
+    EdgesOverviewWidgetComponent,
+    RpcWidgetsModule,
+    HomePageWidgetsModule,
+    DateRangeNavigatorWidgetComponent,
+    JsonInputWidgetComponent,
+    MultipleInputWidgetComponent,
+    TripAnimationComponent,
+    PhotoCameraInputWidgetComponent,
+    NavigationCardsWidgetComponent,
+    NavigationCardWidgetComponent,
+    QrCodeWidgetComponent,
+    MobileAppQrcodeWidgetComponent,
+    MarkdownWidgetComponent,
+    LegendComponent,
+    FlotWidgetComponent,
+    EllipsisChipListDirective,
+    ValueCardWidgetComponent,
+    AggregatedValueCardWidgetComponent,
+    CountWidgetComponent,
+    BatteryLevelWidgetComponent,
+    WindSpeedDirectionWidgetComponent,
+    SignalStrengthWidgetComponent,
+    ValueChartCardWidgetComponent,
+    ProgressBarWidgetComponent,
+    LiquidLevelWidgetComponent,
+    DoughnutWidgetComponent,
+    RangeChartWidgetComponent,
+    BarChartWithLabelsWidgetComponent,
+    SingleSwitchWidgetComponent,
+    ActionButtonWidgetComponent,
+    CommandButtonWidgetComponent,
+    PowerButtonWidgetComponent,
+    SliderWidgetComponent,
+    ToggleButtonWidgetComponent,
+    TimeSeriesChartWidgetComponent,
+    StatusWidgetComponent,
+    PieChartWidgetComponent,
+    BarChartWidgetComponent,
+    PolarAreaWidgetComponent,
+    RadarChartWidgetComponent,
+    LabelCardWidgetComponent,
+    LabelValueCardWidgetComponent,
+    UnreadNotificationWidgetComponent,
+    NotificationTypeFilterPanelComponent,
+    ScadaSymbolWidgetComponent
+  ],
   providers: [
-    {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }
+    {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule},
   ]
 })
 export class WidgetComponentsModule {

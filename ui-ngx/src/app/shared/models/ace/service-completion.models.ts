@@ -16,101 +16,101 @@
 
 import { FunctionArg, FunctionArgType, TbEditorCompletions } from '@shared/models/ace/completion.models';
 
-export const entityIdHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/id/entity-id.ts#L20">EntityId</a>';
+export const entityIdHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/id/entity-id.ts#L20" target="_blank">EntityId</a>';
 
-export const baseDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/base-data.ts#L22">Base data</a>';
+export const baseDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/base-data.ts#L22" target="_blank">Base data</a>';
 
-export const alarmDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L573">Alarm data</a>';
+export const alarmDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L573" target="_blank">Alarm data</a>';
 
-export const alarmDataQueryHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L558">Alarm data query</a>';
+export const alarmDataQueryHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L558" target="_blank">Alarm data query</a>';
 
-export const attributeScopeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L37">Attribute scope</a>';
+export const attributeScopeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L37" target="_blank">Attribute scope</a>';
 
-export const entityTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-type.models.ts#L36">EntityType</a>';
+export const entityTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-type.models.ts#L36" target="_blank">EntityType</a>';
 
-export const pageDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/page/page-data.ts#L17">PageData</a>';
+export const pageDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/page/page-data.ts#L17" target="_blank">PageData</a>';
 
-export const deviceInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/device.models.ts#L33">DeviceInfo</a>';
+export const deviceInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/device.models.ts#L33" target="_blank">DeviceInfo</a>';
 
-export const assetInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/asset.models.ts#L32">AssetInfo</a>';
+export const assetInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/asset.models.ts#L32" target="_blank">AssetInfo</a>';
 
-export const entityViewInfoHref = '<a href = "https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-view.models.ts#L47">EntityViewInfo</a>';
+export const entityViewInfoHref = '<a href = "https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-view.models.ts#L47" target="_blank">EntityViewInfo</a>';
 
-export const entityRelationsQueryHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/relation.models.ts#L69">EntityRelationsQuery</a>';
+export const entityRelationsQueryHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/relation.models.ts#L69" target="_blank">EntityRelationsQuery</a>';
 
-export const entityRelationInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/relation.models.ts#L87">EntityRelationInfo</a>';
+export const entityRelationInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/relation.models.ts#L87" target="_blank">EntityRelationInfo</a>';
 
-export const dashboardInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/dashboard.models.ts#L25">DashboardInfo</a>';
+export const dashboardInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/dashboard.models.ts#L25" target="_blank">DashboardInfo</a>';
 
-export const deviceHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/device.models.ts#L24">Device</a>';
+export const deviceHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/device.models.ts#L24" target="_blank">Device</a>';
 
-export const assetHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/asset.models.ts#L23">Asset</a>';
+export const assetHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/asset.models.ts#L23" target="_blank">Asset</a>';
 
-export const entityViewHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-view.models.ts#L35">entityView</a>';
+export const entityViewHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-view.models.ts#L35" target="_blank">entityView</a>';
 
-export const entityRelationHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/relation.models.ts#L79">Entity relation</a>';
+export const entityRelationHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/relation.models.ts#L79" target="_blank">Entity relation</a>';
 
-export const dashboardHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/dashboard.models.ts#L102">Dashboard</a>';
+export const dashboardHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/dashboard.models.ts#L102" target="_blank">Dashboard</a>';
 
-export const customerHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/customer.model.ts#L21">Customer</a>';
+export const customerHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/customer.model.ts#L21" target="_blank">Customer</a>';
 
-export const attributeDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L76">Attribute Data</a>';
+export const attributeDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L76" target="_blank">Attribute Data</a>';
 
-export const timeseriesDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/627c0577b08452308f925cecb3860e35292c649e/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L91">Timeseries Data</a>';
+export const timeseriesDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/627c0577b08452308f925cecb3860e35292c649e/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L91" target="_blank">Timeseries Data</a>';
 
-export const aggregationTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/a8ea887eacf7729e603ace13ce2d7d89dae82931/ui-ngx/src/app/shared/models/time/time.models.ts#L54">Aggregation Type</a>';
+export const aggregationTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/a8ea887eacf7729e603ace13ce2d7d89dae82931/ui-ngx/src/app/shared/models/time/time.models.ts#L54" target="_blank">Aggregation Type</a>';
 
-export const dataSortOrderHref = '<a href="https://github.com/thingsboard/thingsboard/blob/627c0577b08452308f925cecb3860e35292c649e/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L95">Data Sort Order</a>';
+export const dataSortOrderHref = '<a href="https://github.com/thingsboard/thingsboard/blob/627c0577b08452308f925cecb3860e35292c649e/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L95" target="_blank">Data Sort Order</a>';
 
-export const userHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/user.model.ts#L23">User</a>';
+export const userHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/user.model.ts#L23" target="_blank">User</a>';
 
-export const entityDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L567">Entity data</a>';
+export const entityDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L567" target="_blank">Entity data</a>';
 
-export const entityDataQueryHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L555">Entity Data Query</a>';
+export const entityDataQueryHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L555" target="_blank">Entity Data Query</a>';
 
-export const deviceCredentialsHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/device.models.ts#L50">DeviceCredentials</a>';
+export const deviceCredentialsHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/device.models.ts#L50" target="_blank">DeviceCredentials</a>';
 
-export const entityFilterHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L487">Entity filter</a>';
+export const entityFilterHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L487" target="_blank">Entity filter</a>';
 
-export const entityInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity.models.ts#L20">Entity info</a>';
+export const entityInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity.models.ts#L20" target="_blank">Entity info</a>';
 
-export const aliasEntityTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity-type.models.ts#L51">Alias Entity Type</a>';
+export const aliasEntityTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity-type.models.ts#L51" target="_blank">Alias Entity Type</a>';
 
-export const aliasFilterTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity-type.models.ts#L51">Alias filter type</a>';
+export const aliasFilterTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity-type.models.ts#L51" target="_blank">Alias filter type</a>';
 
-export const entityAliasHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/alias.models.ts#L150">Entity alias</a>';
+export const entityAliasHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/alias.models.ts#L150" target="_blank">Entity alias</a>';
 
-export const dataKeyTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L27">Data key type</a>';
+export const dataKeyTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L27" target="_blank">Data key type</a>';
 
-export const subscriptionInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/core/api/widget-api.models.ts#L155">Subscription info</a>';
+export const subscriptionInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/core/api/widget-api.models.ts#L155" target="_blank">Subscription info</a>';
 
-export const dataSourceHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/widget.models.ts#L257">Datasource</a>';
+export const dataSourceHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/widget.models.ts#L257" target="_blank">Datasource</a>';
 
-export const stateParamsHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/core/api/widget-api.models.ts#L129">State params</a>';
+export const stateParamsHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/core/api/widget-api.models.ts#L129" target="_blank">State params</a>';
 
-export const aliasInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/core/api/widget-api.models.ts#L88">Alias info</a>';
+export const aliasInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/core/api/widget-api.models.ts#L88" target="_blank">Alias info</a>';
 
-export const entityAliasFilterHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/alias.models.ts#L134">Entity alias filter</a>';
+export const entityAliasFilterHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/alias.models.ts#L134" target="_blank">Entity alias filter</a>';
 
-export const entityAliasFilterResultHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/alias.models.ts#L158">Entity alias filter result</a>';
+export const entityAliasFilterResultHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/alias.models.ts#L158" target="_blank">Entity alias filter result</a>';
 
-export const importEntityDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity.models.ts#L28">Import entity data</a>';
+export const importEntityDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity.models.ts#L28" target="_blank">Import entity data</a>';
 
-export const importEntitiesResultInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity.models.ts#L42">Import entities result info</a>';
+export const importEntitiesResultInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity.models.ts#L42" target="_blank">Import entities result info</a>';
 
-export const customDialogComponentHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/modules/home/components/widget/dialog/custom-dialog.component.ts#L48">CustomDialogComponent</a>';
+export const customDialogComponentHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/modules/home/components/widget/dialog/custom-dialog.component.ts#L48" target="_blank">CustomDialogComponent</a>';
 
-export const resourceInfoHref = '<a https://github.com/thingsboard/thingsboard/blob/b033b51712244d08e0f5e0beb8be60c9f8fa4cd2/ui-ngx/src/app/shared/models/resource.models.ts#L51">Resource info</a>';
+export const resourceInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/b033b51712244d08e0f5e0beb8be60c9f8fa4cd2/ui-ngx/src/app/shared/models/resource.models.ts#L51" target="_blank">Resource info</a>';
 
 export const pageLinkArg: FunctionArg = {
   name: 'pageLink',
-  type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/page/page-link.ts#L68">PageLink</a>',
+  type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/page/page-link.ts#L68" target="_blank">PageLink</a>',
   description: 'Page link object used to perform paginated request.'
 };
 
 export const requestConfigArg: FunctionArg = {
   name: 'config',
-  type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/http-utils.ts#L21">RequestConfig</a>',
+  type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/http-utils.ts#L21" target="_blank">RequestConfig</a>',
   description: 'HTTP request configuration.',
   optional: true
 };
@@ -167,9 +167,9 @@ export function observablePageDataReturnType(objectType: string): FunctionArgTyp
 export const serviceCompletions: TbEditorCompletions = {
   deviceService: {
     description: 'Device Service API<br>' +
-      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/device.service.ts#L37">DeviceService</a> for API reference.',
+      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/device.service.ts#L37" target="_blank">DeviceService</a> for API reference.',
     meta: 'service',
-    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/device.service.ts#L37">DeviceService</a>',
+    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/device.service.ts#L37" target="_blank">DeviceService</a>',
     children: {
       getTenantDeviceInfos: {
         description: 'Get tenant devices',
@@ -243,7 +243,7 @@ export const serviceCompletions: TbEditorCompletions = {
         args: [
           requestConfigArg
         ],
-        return: observableArrayReturnType('<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-type.models.ts#L295">EntitySubtype</a>')
+        return: observableArrayReturnType('<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-type.models.ts#L295" target="_blank">EntitySubtype</a>')
       },
       getDeviceCredentials: {
         description: 'Get device credentials by device id',
@@ -322,7 +322,7 @@ export const serviceCompletions: TbEditorCompletions = {
         description: 'Find devices by search query',
         meta: 'function',
         args: [
-          { name: 'query', type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/device.models.ts#L57">DeviceSearchQuery</a>',
+          { name: 'query', type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/device.models.ts#L57" target="_blank">DeviceSearchQuery</a>',
             description: 'Device search query object'},
           requestConfigArg
         ],
@@ -346,7 +346,7 @@ export const serviceCompletions: TbEditorCompletions = {
             description: 'Claiming device name'},
           requestConfigArg
         ],
-        return: observableReturnType('<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/device.models.ts#L71">ClaimResult</a>')
+        return: observableReturnType('<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/device.models.ts#L71" target="_blank">ClaimResult</a>')
       },
       unclaimDevice: {
         description: 'Send un-claim device request',
@@ -362,9 +362,9 @@ export const serviceCompletions: TbEditorCompletions = {
   },
   assetService: {
     description: 'Asset Service API<br>' +
-      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/asset.service.ts#L29">AssetService</a> for API reference.',
+      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/asset.service.ts#L29" target="_blank">AssetService</a> for API reference.',
     meta: 'service',
-    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/asset.service.ts#L29">AssetService</a>',
+    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/asset.service.ts#L29" target="_blank">AssetService</a>',
     children: {
       getTenantAssetInfos: {
         description: 'Get tenant assets',
@@ -438,7 +438,7 @@ export const serviceCompletions: TbEditorCompletions = {
         args: [
           requestConfigArg
         ],
-        return: observableArrayReturnType('<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-type.models.ts#L295">EntitySubtype</a>')
+        return: observableArrayReturnType('<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-type.models.ts#L295" target="_blank">EntitySubtype</a>')
       },
       makeAssetPublic: {
         description: 'Make asset public (available from public dashboard)',
@@ -474,7 +474,7 @@ export const serviceCompletions: TbEditorCompletions = {
         args: [
           {
             name: 'query',
-            type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/asset.models.ts#L37">AssetSearchQuery</a>',
+            type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/asset.models.ts#L37" target="_blank">AssetSearchQuery</a>',
             description: 'Asset search query object'
           },
           requestConfigArg
@@ -497,9 +497,9 @@ export const serviceCompletions: TbEditorCompletions = {
   },
   entityViewService: {
     description: 'EntityView Service API<br>' +
-      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/entity-view.service.ts#L29">EntityViewService</a> for API reference.',
+      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/entity-view.service.ts#L29" target="_blank">EntityViewService</a> for API reference.',
     meta: 'service',
-    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/entity-view.service.ts#L29">EntityViewService</a>',
+    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/entity-view.service.ts#L29" target="_blank">EntityViewService</a>',
     children: {
       getTenantEntityViewInfos: {
         description: 'Get tenant entity view infos',
@@ -564,7 +564,7 @@ export const serviceCompletions: TbEditorCompletions = {
         args: [
           requestConfigArg
         ],
-        return: observableArrayReturnType('<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-type.models.ts#L295">EntitySubtype</a>')
+        return: observableArrayReturnType('<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-type.models.ts#L295" target="_blank">EntitySubtype</a>')
       },
       makeEntityViewPublic: {
         description: 'Make entity view public (available from public dashboard)',
@@ -600,7 +600,7 @@ export const serviceCompletions: TbEditorCompletions = {
         args: [
           {
             name: 'query',
-            type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/asset.models.ts#L37">AssetSearchQuery</a>',
+            type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/asset.models.ts#L37" target="_blank">AssetSearchQuery</a>',
             description: 'Entity view search query object'
           },
           requestConfigArg
@@ -611,9 +611,9 @@ export const serviceCompletions: TbEditorCompletions = {
   },
   customerService: {
     description: 'Customer Service API<br>' +
-      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/customer.service.ts#L28">CustomerService</a> for API reference.',
+      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/customer.service.ts#L28" target="_blank">CustomerService</a> for API reference.',
     meta: 'service',
-    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/customer.service.ts#L28">CustomerService</a>',
+    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/customer.service.ts#L28" target="_blank">CustomerService</a>',
     children: {
       getCustomer: {
         description: 'Get customer by id',
@@ -655,9 +655,9 @@ export const serviceCompletions: TbEditorCompletions = {
   },
   dashboardService: {
     description: 'Dashboard Service API<br>' +
-      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/dashboard.service.ts#L32">DashboardService</a> for API reference.',
+      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/dashboard.service.ts#L32" target="_blank">DashboardService</a> for API reference.',
     meta: 'service',
-    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/dashboard.service.ts#L32">DashboardService</a>',
+    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/dashboard.service.ts#L32" target="_blank">DashboardService</a>',
     children: {
       getTenantDashboards: {
         description: 'Get tenant dashboards',
@@ -814,9 +814,9 @@ export const serviceCompletions: TbEditorCompletions = {
   },
   userService: {
     description: 'User Service API<br>' +
-      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/user.service.ts#L29">UserService</a> for API reference.',
+      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/user.service.ts#L29" target="_blank">UserService</a> for API reference.',
     meta: 'service',
-    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/user.service.ts#L29">UserService</a>',
+    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/user.service.ts#L29" target="_blank">UserService</a>',
     children: {
       getUsers: {
         description: 'Get  users',
@@ -907,9 +907,9 @@ export const serviceCompletions: TbEditorCompletions = {
   },
   entityRelationService: {
     description: 'Entity Relation Service API<br>' +
-      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/entity-relation.service.ts#L27">EntityRelationService</a> for API reference.',
+      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/entity-relation.service.ts#L27" target="_blank">EntityRelationService</a> for API reference.',
     meta: 'service',
-    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/entity-relation.service.ts#L27">EntityRelationService</a>',
+    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/entity-relation.service.ts#L27" target="_blank">EntityRelationService</a>',
     children: {
       saveRelation: {
         description: 'Save relation',
@@ -1029,9 +1029,9 @@ export const serviceCompletions: TbEditorCompletions = {
   },
   attributeService: {
     description: 'Attribute Service API<br>' +
-      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/attribute.service.ts#L28">AttributeService</a> for API reference.',
+      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/attribute.service.ts#L28" target="_blank">AttributeService</a> for API reference.',
     meta: 'service',
-    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/attribute.service.ts#L28">AttributeService</a>',
+    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/attribute.service.ts#L28" target="_blank">AttributeService</a>',
     children: {
       getEntityAttributes: {
         description: 'Get entity attributes by id',
@@ -1109,9 +1109,9 @@ export const serviceCompletions: TbEditorCompletions = {
   },
   entityService: {
     description: 'Entity Service API<br>' +
-      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/entity.service.ts#L64">EntityService</a> for API reference.',
+      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/entity.service.ts#L64" target="_blank">EntityService</a> for API reference.',
     meta: 'service',
-    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/entity.service.ts#L64">EntityService</a>',
+    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/entity.service.ts#L64" target="_blank">EntityService</a>',
     children: {
       getEntity: {
         description: 'Get entity by id',
@@ -1304,9 +1304,9 @@ export const serviceCompletions: TbEditorCompletions = {
   },
   resourceService: {
     description: 'Resource Service API<br>' +
-      'See <a href="https://github.com/thingsboard/thingsboard/blob/b033b51712244d08e0f5e0beb8be60c9f8fa4cd2/ui-ngx/src/app/core/http/resource.service.ts#L29">ResourceService</a> for API reference.',
+      'See <a href="https://github.com/thingsboard/thingsboard/blob/b033b51712244d08e0f5e0beb8be60c9f8fa4cd2/ui-ngx/src/app/core/http/resource.service.ts#L29" target="_blank">ResourceService</a> for API reference.',
     meta: 'service',
-    type: '<a href="https://github.com/thingsboard/thingsboard/blob/b033b51712244d08e0f5e0beb8be60c9f8fa4cd2/ui-ngx/src/app/core/http/resource.service.ts#L29">ResourceService</a>',
+    type: '<a href="https://github.com/thingsboard/thingsboard/blob/b033b51712244d08e0f5e0beb8be60c9f8fa4cd2/ui-ngx/src/app/core/http/resource.service.ts#L29" target="_blank">ResourceService</a>',
     children: {
       getResources: {
         description: 'Find resources by search text',
@@ -1321,9 +1321,9 @@ export const serviceCompletions: TbEditorCompletions = {
   },
   dialogs: {
     description: 'Dialogs Service API<br>' +
-      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/services/dialog.service.ts#L39">DialogService</a> for API reference.',
+      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/services/dialog.service.ts#L39" target="_blank">DialogService</a> for API reference.',
     meta: 'service',
-    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/services/dialog.service.ts#L39">DialogService</a>',
+    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/services/dialog.service.ts#L39" target="_blank">DialogService</a>',
     children: {
       confirm: {
         description: 'Confirm',
@@ -1382,9 +1382,9 @@ export const serviceCompletions: TbEditorCompletions = {
   },
   customDialog: {
     description: 'Custom Dialog Service API<br>' +
-      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/modules/home/components/widget/dialog/custom-dialog.service.ts#L33">CustomDialogService</a> for API reference.',
+      'See <a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/modules/home/components/widget/dialog/custom-dialog.service.ts#L33" target="_blank">CustomDialogService</a> for API reference.',
     meta: 'service',
-    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/modules/home/components/widget/dialog/custom-dialog.service.ts#L33">CustomDialogService</a>',
+    type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/modules/home/components/widget/dialog/custom-dialog.service.ts#L33" target="_blank">CustomDialogService</a>',
     children: {
       customDialog: {
         description: 'Custom Dialog',
@@ -1400,32 +1400,32 @@ export const serviceCompletions: TbEditorCompletions = {
   },
   date: {
     description: 'Date Pipe<br>Formats a date value according to locale rules.<br>' +
-      'See <a href="https://angular.io/api/common/DatePipe">DatePipe</a> for API reference.',
+      'See <a href="https://angular.io/api/common/DatePipe" target="_blank">DatePipe</a> for API reference.',
     meta: 'service',
-    type: '<a href="https://angular.io/api/common/DatePipe">DatePipe</a>'
+    type: '<a href="https://angular.io/api/common/DatePipe" target="_blank">DatePipe</a>'
   },
   translate: {
     description: 'Translate Service API<br>' +
-      'See <a href="https://github.com/ngx-translate/core#translateservice">TranslateService</a> for API reference.',
+      'See <a href="https://github.com/ngx-translate/core#translateservice" target="_blank">TranslateService</a> for API reference.',
     meta: 'service',
-    type: '<a href="https://github.com/ngx-translate/core#translateservice">TranslateService</a>'
+    type: '<a href="https://github.com/ngx-translate/core#translateservice" target="_blank">TranslateService</a>'
   },
   http: {
     description: 'HTTP Client Service<br>' +
-      'See <a href="https://angular.io/api/common/http/HttpClient">HttpClient</a> for API reference.',
+      'See <a href="https://angular.io/api/common/http/HttpClient" target="_blank">HttpClient</a> for API reference.',
     meta: 'service',
-    type: '<a href="https://angular.io/api/common/http/HttpClient">HttpClient</a>'
+    type: '<a href="https://angular.io/api/common/http/HttpClient" target="_blank">HttpClient</a>'
   },
   sanitizer: {
     description: 'DomSanitizer Service<br>' +
-      'See <a href="https://angular.io/api/platform-browser/DomSanitizer">DomSanitizer</a> for API reference.',
+      'See <a href="https://angular.io/api/platform-browser/DomSanitizer" target="_blank">DomSanitizer</a> for API reference.',
     meta: 'service',
-    type: '<a href="https://angular.io/api/platform-browser/DomSanitizer">DomSanitizer</a>'
+    type: '<a href="https://angular.io/api/platform-browser/DomSanitizer" target="_blank">DomSanitizer</a>'
   },
   router: {
     description: 'Router Service<br>' +
-      'See <a href="https://angular.io/api/router/Router">Router</a> for API reference.',
+      'See <a href="https://angular.io/api/router/Router" target="_blank">Router</a> for API reference.',
     meta: 'service',
-    type: '<a href="https://angular.io/api/router/Router">Router</a>'
+    type: '<a href="https://angular.io/api/router/Router" target="_blank">Router</a>'
   }
 };

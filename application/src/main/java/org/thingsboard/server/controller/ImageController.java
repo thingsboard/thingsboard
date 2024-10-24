@@ -41,6 +41,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.thingsboard.server.common.data.ImageDescriptor;
 import org.thingsboard.server.common.data.ImageExportData;
+import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbImageDeleteResult;
 import org.thingsboard.server.common.data.TbResource;
@@ -65,6 +66,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_IMAGE_SUB_TYPE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_INCLUDE_SYSTEM_IMAGES_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
@@ -96,7 +98,8 @@ public class ImageController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @PostMapping(value = "/api/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public TbResourceInfo uploadImage(@RequestPart MultipartFile file,
-                                      @RequestPart(required = false) String title) throws Exception {
+                                      @RequestPart(required = false) String title,
+                                      @RequestPart(required = false) String imageSubType) throws Exception {
         SecurityUser user = getCurrentUser();
         TbResource image = new TbResource();
         image.setTenantId(user.getTenantId());
@@ -109,7 +112,14 @@ public class ImageController extends BaseController {
         } else {
             image.setTitle(file.getOriginalFilename());
         }
+
+        ResourceSubType subType = ResourceSubType.IMAGE;
+        if (StringUtils.isNotEmpty(imageSubType)) {
+            subType = ResourceSubType.valueOf(imageSubType);
+        }
+
         image.setResourceType(ResourceType.IMAGE);
+        image.setResourceSubType(subType);
         ImageDescriptor descriptor = new ImageDescriptor();
         descriptor.setMediaType(file.getContentType());
         image.setDescriptorValue(descriptor);
@@ -194,6 +204,7 @@ public class ImageController extends BaseController {
                 .mediaType(descriptor.getMediaType())
                 .fileName(imageInfo.getFileName())
                 .title(imageInfo.getTitle())
+                .subType(imageInfo.getResourceSubType().name())
                 .resourceKey(imageInfo.getResourceKey())
                 .isPublic(imageInfo.isPublic())
                 .publicResourceKey(imageInfo.getPublicResourceKey())
@@ -214,6 +225,11 @@ public class ImageController extends BaseController {
             image.setTitle(imageData.getTitle());
         } else {
             image.setTitle(imageData.getFileName());
+        }
+        if (StringUtils.isNotEmpty(imageData.getSubType())) {
+            image.setResourceSubType(ResourceSubType.valueOf(imageData.getSubType()));
+        } else {
+            image.setResourceSubType(ResourceSubType.IMAGE);
         }
         image.setResourceType(ResourceType.IMAGE);
         image.setResourceKey(imageData.getResourceKey());
@@ -251,6 +267,8 @@ public class ImageController extends BaseController {
                                               @RequestParam int pageSize,
                                               @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
                                               @RequestParam int page,
+                                              @Parameter(description = RESOURCE_IMAGE_SUB_TYPE_DESCRIPTION, schema = @Schema(allowableValues = {"IMAGE", "SCADA_SYMBOL"}))
+                                              @RequestParam(required = false) String imageSubType,
                                               @Parameter(description = RESOURCE_INCLUDE_SYSTEM_IMAGES_DESCRIPTION)
                                               @RequestParam(required = false) boolean includeSystemImages,
                                               @Parameter(description = RESOURCE_TEXT_SEARCH_DESCRIPTION)
@@ -262,10 +280,14 @@ public class ImageController extends BaseController {
         // PE: generic permission
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         TenantId tenantId = getTenantId();
+        ResourceSubType subType = ResourceSubType.IMAGE;
+        if (StringUtils.isNotEmpty(imageSubType)) {
+            subType = ResourceSubType.valueOf(imageSubType);
+        }
         if (getCurrentUser().getAuthority() == Authority.SYS_ADMIN || !includeSystemImages) {
-            return checkNotNull(imageService.getImagesByTenantId(tenantId, pageLink));
+            return checkNotNull(imageService.getImagesByTenantId(tenantId, subType, pageLink));
         } else {
-            return checkNotNull(imageService.getAllImagesByTenantId(tenantId, pageLink));
+            return checkNotNull(imageService.getAllImagesByTenantId(tenantId, subType, pageLink));
         }
     }
 
@@ -290,7 +312,7 @@ public class ImageController extends BaseController {
         if (StringUtils.isNotEmpty(etag)) {
             etag = StringUtils.remove(etag, '\"'); // etag is wrapped in double quotes due to HTTP specification
             if (etag.equals(tbImageService.getETag(cacheKey))) {
-                return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+                return response(HttpStatus.NOT_MODIFIED);
             }
         }
 

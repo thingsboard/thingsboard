@@ -1,0 +1,611 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="400" height="400" fill="none" version="1.1" viewBox="0 0 400 400"><tb:metadata xmlns=""><![CDATA[{
+  "title": "Centrifugal pump",
+  "description": "Centrifugal pump with configurable connectors, running animation and various states.",
+  "searchTags": [
+    "pump",
+    "centrifugal"
+  ],
+  "widgetSizeX": 2,
+  "widgetSizeY": 2,
+  "tags": [
+    {
+      "tag": "background",
+      "stateRenderFunction": "var color = ctx.properties.stoppedColor;\nif (ctx.values.critical) {\n    color = ctx.properties.criticalColor;\n} else if (ctx.values.warning) {\n    color = ctx.properties.warningColor;\n} else if (ctx.values.running) {\n    color = ctx.properties.runningColor;\n}\nelement.attr({fill: color});\n\nvar elementCriticalAnimation = element.remember('criticalAnimation');\nvar criticalAnimation = ctx.values.critical && ctx.values.criticalAnimation;\n\nif (elementCriticalAnimation !== criticalAnimation) {\n    element.remember('criticalAnimation', criticalAnimation);\n    if (criticalAnimation) {\n        ctx.api.cssAnimate(element, 500).attr({opacity: 0.15}).loop(0, true);\n    } else {\n        ctx.api.resetCssAnimation(element);\n    }\n}",
+      "actions": null
+    },
+    {
+      "tag": "center",
+      "stateRenderFunction": "var running = ctx.values.running;\nvar speed = ctx.values.rotationAnimationSpeed;\nvar centerRotate = ctx.api.cssAnimation(element);\nif (running) {\n    if (!centerRotate) {\n        centerRotate = ctx.api.cssAnimate(element, 2000)\n                                      .rotate(360).loop().speed(speed);\n    } else {\n        centerRotate.speed(speed).play();\n    }\n} else {\n    if (centerRotate) {\n        centerRotate.pause();\n    }\n}\n",
+      "actions": null
+    },
+    {
+      "tag": "clickArea",
+      "stateRenderFunction": null,
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'click');"
+        }
+      }
+    },
+    {
+      "tag": "leftBottomConnector",
+      "stateRenderFunction": "if (ctx.properties.leftBottomConnector) {\n    element.show();\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
+      "tag": "leftTopConnector",
+      "stateRenderFunction": "if (ctx.properties.leftTopConnector) {\n    element.show();\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
+      "tag": "rightBottomConnector",
+      "stateRenderFunction": "if (ctx.properties.rightBottomConnector) {\n    element.show();\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
+      "tag": "rightTopConnector",
+      "stateRenderFunction": "if (ctx.properties.rightTopConnector) {\n    element.show();\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
+      "tag": "topLeftConnector",
+      "stateRenderFunction": "if (ctx.properties.topLeftConnector) {\n    element.show();\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
+      "tag": "topRightConnector",
+      "stateRenderFunction": "if (ctx.properties.topRightConnector) {\n    element.show();\n} else {\n    element.hide();\n}",
+      "actions": null
+    }
+  ],
+  "behavior": [
+    {
+      "id": "running",
+      "name": "{i18n:scada.symbol.running}",
+      "hint": "{i18n:scada.symbol.running-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.running}",
+      "defaultGetValueSettings": {
+        "action": "GET_ATTRIBUTE",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "running"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "warning",
+      "name": "{i18n:scada.symbol.warning-state}",
+      "hint": "{i18n:scada.symbol.warning-state-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.warning}",
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "critical",
+      "name": "{i18n:scada.symbol.critical-state}",
+      "hint": "{i18n:scada.symbol.critical-state-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.critical}",
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "criticalAnimation",
+      "name": "{i18n:scada.symbol.critical-state-animation}",
+      "hint": "{i18n:scada.symbol.critical-state-animation-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.animation}",
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "rotationAnimationSpeed",
+      "name": "{i18n:scada.symbol.rotation-animation-speed}",
+      "hint": "{i18n:scada.symbol.rotation-animation-speed-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "DOUBLE",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": 1,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "click",
+      "name": "{i18n:scada.symbol.on-click}",
+      "hint": "{i18n:scada.symbol.on-click-hint}",
+      "group": null,
+      "type": "widgetAction",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "openInSeparateDialog": false,
+        "openInPopover": false
+      }
+    }
+  ],
+  "properties": [
+    {
+      "id": "rightTopConnector",
+      "name": "{i18n:scada.symbol.right-top-connector}",
+      "type": "switch",
+      "default": true,
+      "required": null,
+      "subLabel": "",
+      "divider": true,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "rightBottomConnector",
+      "name": "{i18n:scada.symbol.right-bottom-connector}",
+      "type": "switch",
+      "default": false,
+      "required": null,
+      "subLabel": "",
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "leftTopConnector",
+      "name": "{i18n:scada.symbol.left-top-connector}",
+      "type": "switch",
+      "default": false,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "leftBottomConnector",
+      "name": "{i18n:scada.symbol.left-bottom-connector}",
+      "type": "switch",
+      "default": true,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "topLeftConnector",
+      "name": "{i18n:scada.symbol.top-left-connector}",
+      "type": "switch",
+      "default": false,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "topRightConnector",
+      "name": "{i18n:scada.symbol.top-right-connector}",
+      "type": "switch",
+      "default": false,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "runningColor",
+      "name": "{i18n:scada.symbol.running-color}",
+      "type": "color",
+      "default": "#1C943E",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "stoppedColor",
+      "name": "{i18n:scada.symbol.stopped-color}",
+      "type": "color",
+      "default": "#696969",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "warningColor",
+      "name": "{i18n:scada.symbol.warning-color}",
+      "type": "color",
+      "default": "#FAA405",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "criticalColor",
+      "name": "{i18n:scada.symbol.critical-color}",
+      "type": "color",
+      "default": "#D12730",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    }
+  ]
+}]]></tb:metadata>
+<rect x="50" y="371" width="300" height="29" rx="7" fill="#fff"/><rect x="50" y="371" width="300" height="29" rx="7" fill="url(#paint0_linear_1481_75415)"/><rect x="51.5" y="372.5" width="297" height="26" rx="5.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><path d="m103 274h194l32 100h-258l32-100z" fill="#fff"/><path d="m103 274h194l32 100h-258l32-100z" fill="url(#paint1_linear_1481_75415)"/><path d="m73.055 372.5 31.04-97h191.81l31.04 97h-253.89z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><g tb:tag="rightTopConnector">
+  <rect x="200" y="64" width="186" height="72" fill="#fff"/>
+  <rect x="200" y="64" width="186" height="72" fill="url(#paint2_linear_1481_75415)"/>
+  <rect x="201.5" y="65.5" width="183" height="69" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
+  <rect x="387.5" y="51.5" width="11" height="97" rx="5.5" fill="#D9D9D9" stroke="#727171" stroke-width="3"/>
+ </g><g style="display: none;" tb:tag="rightBottomConnector">
+  <rect x="200" y="264" width="186" height="72" fill="#fff" style=""/>
+  <rect x="200" y="264" width="186" height="72" fill="url(#paint3_linear_1481_75415)" style=""/>
+  <rect x="201.5" y="265.5" width="183" height="69" stroke="#000" stroke-opacity=".12" stroke-width="3" style=""/>
+  <rect x="387.5" y="251.5" width="11" height="97" rx="5.5" fill="#D9D9D9" stroke="#727171" stroke-width="3" style=""/>
+ </g><g style="display: none;" tb:tag="topRightConnector">
+  <rect transform="rotate(-90 264 200)" x="264" y="200" width="186" height="72" fill="#fff" style=""/>
+  <rect transform="rotate(-90 264 200)" x="264" y="200" width="186" height="72" fill="url(#paint4_linear_1481_75415)" style=""/>
+  <rect transform="rotate(-90 265.5 198.5)" x="265.5" y="198.5" width="183" height="69" stroke="#000" stroke-opacity=".12" stroke-width="3" style=""/>
+  <rect transform="rotate(-90 251.5 12.5)" x="251.5" y="12.5" width="11" height="97" rx="5.5" fill="#D9D9D9" stroke="#727171" stroke-width="3" style=""/>
+ </g><g style="display: none;" tb:tag="topLeftConnector">
+  <rect transform="rotate(-90 64 200)" x="64" y="200" width="186" height="72" fill="#fff" style=""/>
+  <rect transform="rotate(-90 64 200)" x="64" y="200" width="186" height="72" fill="url(#paint5_linear_1481_75415)" style=""/>
+  <rect transform="rotate(-90 65.5 198.5)" x="65.5" y="198.5" width="183" height="69" stroke="#000" stroke-opacity=".12" stroke-width="3" style=""/>
+  <rect transform="rotate(-90 51.5 12.5)" x="51.5" y="12.5" width="11" height="97" rx="5.5" fill="#D9D9D9" stroke="#727171" stroke-width="3" style=""/>
+ </g><g style="display: none;" tb:tag="leftTopConnector">
+  <rect x="14" y="64" width="186" height="72" fill="#fff" style=""/>
+  <rect x="14" y="64" width="186" height="72" fill="url(#paint6_linear_1481_75415)" style=""/>
+  <rect x="15.5" y="65.5" width="183" height="69" stroke="#000" stroke-opacity=".12" stroke-width="3" style=""/>
+  <rect x="1.5" y="51.5" width="11" height="97" rx="5.5" fill="#D9D9D9" stroke="#727171" stroke-width="3" style=""/>
+ </g><g tb:tag="leftBottomConnector">
+  <rect x="14" y="264" width="186" height="72" fill="#fff"/>
+  <rect x="14" y="264" width="186" height="72" fill="url(#paint7_linear_1481_75415)"/>
+  <rect x="15.5" y="265.5" width="183" height="69" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
+  <rect x="1.5" y="251.5" width="11" height="97" rx="5.5" fill="#D9D9D9" stroke="#727171" stroke-width="3"/>
+ </g><circle cx="200" cy="186" r="178" fill="#fff"/><circle cx="200" cy="186" r="178" fill="url(#paint8_linear_1481_75415)"/><circle cx="200" cy="186" r="176" stroke="#000" stroke-opacity=".12" stroke-width="4"/><path d="m308 186c0 59.647-48.353 108-108 108s-108-48.353-108-108 48.353-108 108-108 108 48.353 108 108z" fill="#1C943E" tb:tag="background"/><path d="m308 186c0 59.647-48.353 108-108 108s-108-48.353-108-108 48.353-108 108-108 108 48.353 108 108z" fill="url(#paint9_radial_1481_75415)" fill-opacity=".8"/><path d="m306.5 186c0 58.818-47.681 106.5-106.5 106.5-58.818 0-106.5-47.682-106.5-106.5s47.682-106.5 106.5-106.5c58.819 0 106.5 47.682 106.5 106.5z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><circle cx="200" cy="186" r="54" fill="url(#paint10_radial_1481_75415)" fill-opacity=".8"/><circle cx="200" cy="186" r="52.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><g tb:tag="center">
+  <rect x="196" y="81" width="8" height="51" rx="4" fill="url(#paint11_linear_1481_75415)" style="fill:url(#paint11_linear_1481_75415)"/>
+  <rect x="197.5" y="82.5" width="5" height="48" rx="2.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
+  <rect transform="rotate(-45 122 115.66)" x="122" y="115.66" width="8" height="51" rx="4" fill="url(#paint12_linear_1481_75415)" style="fill:url(#paint12_linear_1481_75415)"/>
+  <rect transform="rotate(-45 124.12 115.66)" x="124.12" y="115.66" width="5" height="48" rx="2.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
+  <rect transform="matrix(.70711 .70711 .70711 -.70711 122 256.06)" width="8" height="51" rx="4" fill="url(#paint13_linear_1481_75415)" style="fill:url(#paint13_linear_1481_75415)"/>
+  <rect transform="matrix(.70711 .70711 .70711 -.70711 122.62 254.56)" x="2.1213" width="5" height="48" rx="2.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
+  <rect transform="matrix(-.70711 -.70711 -.70711 .70711 277.72 115.66)" width="8" height="51" rx="4" fill="url(#paint13_linear_1481_75415)" style="fill:url(#paint13_linear_1481_75415)"/>
+  <rect transform="matrix(-.70711 -.70711 -.70711 .70711 274.1 114.16)" x="-2.1213" width="5" height="48" rx="2.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
+  <rect transform="rotate(135 277.72 256.06)" x="277.72" y="256.06" width="8" height="51" rx="4" fill="url(#paint15_linear_1481_75415)" style="fill:url(#paint15_linear_1481_75415)"/>
+  <rect transform="rotate(135 275.6 256.06)" x="275.6" y="256.06" width="5" height="48" rx="2.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
+  <rect x="196" y="240" width="8" height="51" rx="4" fill="url(#paint16_linear_1481_75415)" style="fill:url(#paint16_linear_1481_75415)"/>
+  <rect x="197.5" y="241.5" width="5" height="48" rx="2.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
+  <rect transform="rotate(-90,254,190)" x="254" y="190" width="8" height="51" rx="4" fill="url(#paint17_linear_1481_75415)" style="fill:url(#paint17_linear_1481_75415)"/>
+  <rect transform="rotate(-90,255.5,188.5)" x="255.5" y="188.5" width="5" height="48" rx="2.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
+  <rect transform="rotate(-90 95 190)" x="95" y="190" width="8" height="51" rx="4" fill="url(#paint18_linear_1481_75415)" style="fill:url(#paint18_linear_1481_75415)"/>
+  <rect transform="rotate(-90 96.5 188.5)" x="96.5" y="188.5" width="5" height="48" rx="2.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
+ </g><path d="m314 186c0 62.96-51.039 114-114 114-62.96 0-114-51.04-114-114s51.04-114 114-114c62.961 0 114 51.04 114 114zm-222.02 0c0 59.659 48.363 108.02 108.02 108.02 59.659 0 108.02-48.363 108.02-108.02s-48.363-108.02-108.02-108.02c-59.658 0-108.02 48.363-108.02 108.02z" fill="url(#paint19_linear_1481_75415)"/><path d="m314 186c0 62.96-51.039 114-114 114-62.96 0-114-51.04-114-114s51.04-114 114-114c62.961 0 114 51.04 114 114zm-222.02 0c0 59.659 48.363 108.02 108.02 108.02 59.659 0 108.02-48.363 108.02-108.02s-48.363-108.02-108.02-108.02c-59.658 0-108.02 48.363-108.02 108.02z" fill="url(#paint19_linear_1481_75415)"/><circle cx="200" cy="40" r="12" fill="url(#paint21_linear_1481_75415)" fill-opacity=".8"/><circle cx="200" cy="40" r="10.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><circle cx="200" cy="332" r="12" fill="url(#paint22_linear_1481_75415)" fill-opacity=".8"/><circle cx="200" cy="332" r="10.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><circle cx="346" cy="186" r="12" fill="url(#paint23_linear_1481_75415)" fill-opacity=".8"/><circle cx="346" cy="186" r="10.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><circle cx="305" cy="84" r="12" fill="url(#paint24_linear_1481_75415)" fill-opacity=".8"/><circle cx="305" cy="84" r="10.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><circle cx="303" cy="287" r="12" fill="url(#paint25_linear_1481_75415)" fill-opacity=".8"/><circle cx="303" cy="287" r="10.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><circle cx="98" cy="84" r="12" fill="url(#paint26_linear_1481_75415)" fill-opacity=".8"/><circle cx="98" cy="84" r="10.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><circle cx="98" cy="287" r="12" fill="url(#paint27_linear_1481_75415)" fill-opacity=".8"/><circle cx="98" cy="287" r="10.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><circle cx="54" cy="186" r="12" fill="url(#paint28_linear_1481_75415)" fill-opacity=".8"/><circle cx="54" cy="186" r="10.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><defs>
+  <linearGradient id="paint0_linear_1481_75415" x1="56.818" x2="67.377" y1="385.5" y2="439.46" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" stop-opacity=".2" offset="0"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint1_linear_1481_75415" x1="329" x2="71.146" y1="324.62" y2="318.06" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" offset="0"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".26388"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".41759"/>
+   <stop stop-color="#fff" stop-opacity="0" offset=".49829"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".58094"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".71855"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint2_linear_1481_75415" x1="248.36" x2="248.18" y1="64" y2="136.01" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" offset="0"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".26388"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".41759"/>
+   <stop stop-color="#fff" stop-opacity="0" offset=".49829"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".58094"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".71855"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint3_linear_1481_75415" x1="248.36" x2="248.18" y1="264" y2="336.01" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" offset="0"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".26388"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".41759"/>
+   <stop stop-color="#fff" stop-opacity="0" offset=".49829"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".58094"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".71855"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint4_linear_1481_75415" x1="312.36" x2="312.18" y1="200" y2="272.01" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" offset="0"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".26388"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".41759"/>
+   <stop stop-color="#fff" stop-opacity="0" offset=".49829"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".58094"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".71855"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint5_linear_1481_75415" x1="112.36" x2="112.18" y1="200" y2="272.01" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" offset="0"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".26388"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".41759"/>
+   <stop stop-color="#fff" stop-opacity="0" offset=".49829"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".58094"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".71855"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint6_linear_1481_75415" x1="62.36" x2="62.184" y1="64" y2="136.01" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" offset="0"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".26388"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".41759"/>
+   <stop stop-color="#fff" stop-opacity="0" offset=".49829"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".58094"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".71855"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint7_linear_1481_75415" x1="62.36" x2="62.184" y1="264" y2="336.01" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" offset="0"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".26388"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".41759"/>
+   <stop stop-color="#fff" stop-opacity="0" offset=".49829"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".58094"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".71855"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint8_linear_1481_75415" x1="79.85" x2="329.05" y1="52.5" y2="323.95" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" stop-opacity=".4" offset="0"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+  <radialGradient id="paint9_radial_1481_75415" cx="0" cy="0" r="1" gradientTransform="translate(200 186) rotate(55.856) scale(105.12)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#020202" stop-opacity="0" offset="0"/>
+   <stop stop-color="#fff" stop-opacity=".15" offset=".73347"/>
+   <stop stop-color="#020202" stop-opacity=".2" offset="1"/>
+  </radialGradient>
+  <radialGradient id="paint10_radial_1481_75415" cx="0" cy="0" r="1" gradientTransform="translate(200 186) rotate(44.226) scale(52.331)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" stop-opacity=".35" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".15" offset="1"/>
+  </radialGradient>
+  <linearGradient id="paint11_linear_1481_75415" x1="200.06" x2="212.53" y1="81" y2="84.259" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#727171" stop-opacity=".65" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint12_linear_1481_75415" x1="126.06" x2="138.53" y1="115.66" y2="118.92" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#727171" stop-opacity=".65" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint13_linear_1481_75415" x1="4.0579" x2="16.532" y1=".00011564" y2="3.2593" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#727171" stop-opacity=".65" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint15_linear_1481_75415" x1="281.78" x2="294.25" y1="256.06" y2="259.32" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#727171" stop-opacity=".65" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint16_linear_1481_75415" x1="200.06" x2="212.53" y1="240" y2="243.26" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" stop-opacity=".65" offset="0"/>
+   <stop stop-color="#fff" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint17_linear_1481_75415" x1="258.06" x2="270.53" y1="190" y2="193.26" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" stop-opacity=".65" offset="0"/>
+   <stop stop-color="#fff" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint18_linear_1481_75415" x1="99.058" x2="111.53" y1="190" y2="193.26" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#727171" stop-opacity=".65" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint19_linear_1481_75415" x1="86" x2="314" y1="186" y2="186" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#F4F4F4" offset="0"/>
+   <stop stop-color="#EBE7E7" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint21_linear_1481_75415" x1="191.44" x2="206.56" y1="32" y2="49.667" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" stop-opacity=".35" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".15" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint22_linear_1481_75415" x1="191.44" x2="206.56" y1="324" y2="341.67" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" stop-opacity=".35" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".15" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint23_linear_1481_75415" x1="337.44" x2="352.56" y1="178" y2="195.67" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" stop-opacity=".35" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".15" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint24_linear_1481_75415" x1="296.44" x2="311.56" y1="76" y2="93.667" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" stop-opacity=".35" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".15" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint25_linear_1481_75415" x1="294.44" x2="309.56" y1="279" y2="296.67" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" stop-opacity=".35" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".15" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint26_linear_1481_75415" x1="89.445" x2="104.56" y1="76" y2="93.667" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" stop-opacity=".35" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".15" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint27_linear_1481_75415" x1="89.445" x2="104.56" y1="279" y2="296.67" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" stop-opacity=".35" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".15" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint28_linear_1481_75415" x1="45.445" x2="60.556" y1="178" y2="195.67" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" stop-opacity=".35" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".15" offset="1"/>
+  </linearGradient>
+ </defs><circle cx="200" cy="186" r="178" fill="#000" fill-opacity="0" tb:tag="clickArea"/>
+</svg>

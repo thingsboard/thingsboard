@@ -14,14 +14,17 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TimeService } from '@core/services/time.service';
 import { coerceNumberProperty } from '@angular/cdk/coercion';
-import { SubscriptSizing } from '@angular/material/form-field';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { Interval, IntervalMath, TimeInterval } from '@shared/models/time/time.models';
 import { isDefined } from '@core/utils';
+import { IntervalType } from '@shared/models/telemetry/telemetry.models';
+import { takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'tb-timeinterval',
@@ -35,10 +38,12 @@ import { isDefined } from '@core/utils';
     }
   ]
 })
-export class TimeintervalComponent implements OnInit, ControlValueAccessor {
+export class TimeintervalComponent implements OnInit, ControlValueAccessor, OnDestroy {
 
   minValue: number;
   maxValue: number;
+
+  disabledAdvancedState = false;
 
   @Input()
   set min(min: number) {
@@ -68,32 +73,36 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
 
   @Input()
   @coerceBoolean()
-  hideFlag = false;
-
-  @Input()
-  @coerceBoolean()
-  disabledAdvanced = false;
+  set disabledAdvanced(disabledAdvanced: boolean) {
+    if (this.disabledAdvancedState !== disabledAdvanced) {
+      this.disabledAdvancedState = disabledAdvanced;
+      this.updateIntervalValue(true);
+    }
+  }
 
   @Input()
   @coerceBoolean()
   useCalendarIntervals = false;
-
-  @Output() hideFlagChange = new EventEmitter<boolean>();
 
   @Input() disabled: boolean;
 
   @Input()
   subscriptSizing: SubscriptSizing = 'fixed';
 
-  days = 0;
-  hours = 0;
-  mins = 1;
-  secs = 0;
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
-  interval: Interval = 0;
   intervals: Array<TimeInterval>;
 
   advanced = false;
+
+  timeintervalFormGroup: FormGroup;
+
+  customTimeInterval: TimeInterval = {
+    name: 'timeinterval.custom',
+    translateParams: {},
+    value: IntervalType.CUSTOM
+  };
 
   private modelValue: Interval;
   private rendered = false;
@@ -103,7 +112,43 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
     this.propagateChangeValue = value;
   };
 
-  constructor(private timeService: TimeService) {
+  private destroy$ = new Subject<void>();
+
+  constructor(private timeService: TimeService,
+              private fb: FormBuilder) {
+    this.timeintervalFormGroup = this.fb.group({
+      interval: [ 1 ],
+      customInterval: this.fb.group({
+        days: [ 0 ],
+        hours: [ 0 ],
+        mins: [ 1 ],
+        secs: [ 0 ]
+      })
+    });
+
+    this.timeintervalFormGroup.get('interval').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.onIntervalChange());
+
+    this.timeintervalFormGroup.get('customInterval').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.updateView());
+
+    this.timeintervalFormGroup.get('customInterval.secs').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((secs) => this.onSecsChange(secs));
+
+    this.timeintervalFormGroup.get('customInterval.mins').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((mins) => this.onMinsChange(mins));
+
+    this.timeintervalFormGroup.get('customInterval.hours').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((hours) => this.onHoursChange(hours));
+
+    this.timeintervalFormGroup.get('customInterval.days').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((days) => this.onDaysChange(days));
   }
 
   ngOnInit(): void {
@@ -122,17 +167,36 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    if (this.disabled) {
+      this.timeintervalFormGroup.disable({emitEvent: false});
+    } else {
+      this.timeintervalFormGroup.enable({emitEvent: false});
+    }
   }
 
   writeValue(interval: Interval): void {
     this.modelValue = interval;
     this.rendered = true;
+    this.updateIntervalValue();
+  }
+
+  private updateIntervalValue(forceBoundInterval = false) {
     if (typeof this.modelValue !== 'undefined') {
       const min = this.timeService.boundMinInterval(this.minValue);
       const max = this.timeService.boundMaxInterval(this.maxValue);
       if (IntervalMath.numberValue(this.modelValue) >= min && IntervalMath.numberValue(this.modelValue) <= max) {
-        this.advanced = !this.timeService.matchesExistingInterval(this.minValue, this.maxValue, this.modelValue, this.useCalendarIntervals);
-        this.setInterval(this.modelValue);
+        const advanced = !this.timeService.matchesExistingInterval(this.minValue, this.maxValue, this.modelValue,
+          this.useCalendarIntervals);
+        if (advanced && this.disabledAdvancedState) {
+          this.advanced = false;
+          this.boundInterval();
+        } else {
+          this.advanced = advanced;
+          this.setInterval(this.modelValue);
+          if (forceBoundInterval) {
+            this.boundInterval();
+          }
+        }
       } else {
         this.boundInterval();
       }
@@ -141,19 +205,30 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
 
   private setInterval(interval: Interval) {
     if (!this.advanced) {
-      this.interval = interval;
+      this.timeintervalFormGroup.get('interval').patchValue(interval, {emitEvent: false});
+    } else {
+      this.timeintervalFormGroup.get('interval').patchValue(IntervalType.CUSTOM, {emitEvent: false});
+      this.setCustomInterval(interval);
     }
+  }
+
+  private setCustomInterval(interval: Interval) {
     const intervalSeconds = Math.floor(IntervalMath.numberValue(interval) / 1000);
-    this.days = Math.floor(intervalSeconds / 86400);
-    this.hours = Math.floor((intervalSeconds % 86400) / 3600);
-    this.mins = Math.floor(((intervalSeconds % 86400) % 3600) / 60);
-    this.secs = intervalSeconds % 60;
+    this.timeintervalFormGroup.get('customInterval').patchValue({
+      days: Math.floor(intervalSeconds / 86400),
+      hours: Math.floor((intervalSeconds % 86400) / 3600),
+      mins: Math.floor(((intervalSeconds % 86400) % 3600) / 60),
+      secs: intervalSeconds % 60
+    }, {emitEvent: false});
   }
 
   private boundInterval(updateToPreferred = false) {
     const min = this.timeService.boundMinInterval(this.minValue);
     const max = this.timeService.boundMaxInterval(this.maxValue);
     this.intervals = this.timeService.getIntervals(this.minValue, this.maxValue, this.useCalendarIntervals);
+    if (!this.disabledAdvancedState) {
+      this.intervals.push(this.customTimeInterval);
+    }
     if (this.rendered) {
       let newInterval = this.modelValue;
       const newIntervalMs = IntervalMath.numberValue(newInterval);
@@ -179,7 +254,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
     let value: Interval = null;
     let interval: Interval;
     if (!this.advanced) {
-      interval = this.interval;
+      interval = this.timeintervalFormGroup.get('interval').value;
       if (!interval || typeof interval === 'number' && isNaN(interval)) {
         interval = this.calculateIntervalMs();
       }
@@ -195,118 +270,90 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
   }
 
   private calculateIntervalMs(): number {
-    return (this.days * 86400 +
-      this.hours * 3600 +
-      this.mins * 60 +
-      this.secs) * 1000;
+    const customInterval = this.timeintervalFormGroup.get('customInterval').value;
+    return (customInterval.days * 86400 +
+      customInterval.hours * 3600 +
+      customInterval.mins * 60 +
+      customInterval.secs) * 1000;
   }
 
   onIntervalChange() {
-    this.updateView();
-  }
-
-  onAdvancedChange() {
-    if (!this.advanced) {
-      this.interval = this.calculateIntervalMs();
-    } else {
-      let interval = this.interval;
-      if (!interval || typeof interval === 'number' && isNaN(interval)) {
-        interval = this.calculateIntervalMs();
+    const customIntervalSelected = this.timeintervalFormGroup.get('interval').value === IntervalType.CUSTOM;
+    if (customIntervalSelected !== this.advanced) {
+      this.advanced = customIntervalSelected;
+      if (this.advanced) {
+        this.setCustomInterval(this.modelValue);
       }
-      this.setInterval(interval);
     }
     this.updateView();
   }
 
-  onHideFlagChange() {
-    this.hideFlagChange.emit(this.hideFlag);
-  }
-
-  onTimeInputChange(type: string) {
-    switch (type) {
-      case 'secs':
-        setTimeout(() => this.onSecsChange(), 0);
-        break;
-      case 'mins':
-        setTimeout(() => this.onMinsChange(), 0);
-        break;
-      case 'hours':
-        setTimeout(() => this.onHoursChange(), 0);
-        break;
-      case 'days':
-        setTimeout(() => this.onDaysChange(), 0);
-        break;
-    }
-  }
-
-  private onSecsChange() {
-    if (typeof this.secs === 'undefined') {
+  private onSecsChange(secs: number) {
+    const customInterval = this.timeintervalFormGroup.get('customInterval').value;
+    if (typeof secs === 'undefined') {
       return;
     }
-    if (this.secs < 0) {
-      if ((this.days + this.hours + this.mins) > 0) {
-        this.secs = this.secs + 60;
-        this.mins--;
-        this.onMinsChange();
+    if (secs < 0) {
+      if ((customInterval.days + customInterval.hours + customInterval.mins) > 0) {
+        this.timeintervalFormGroup.get('customInterval.secs').patchValue(secs + 60, {emitEvent: false});
+        this.timeintervalFormGroup.get('customInterval.mins').patchValue(customInterval.mins - 1, {emitEvent: true});
       } else {
-        this.secs = 0;
+        this.timeintervalFormGroup.get('customInterval.secs').patchValue(0, {emitEvent: false});
       }
-    } else if (this.secs >= 60) {
-      this.secs = this.secs - 60;
-      this.mins++;
-      this.onMinsChange();
+    } else if (secs >= 60) {
+      this.timeintervalFormGroup.get('customInterval.secs').patchValue(secs - 60, {emitEvent: false});
+      this.timeintervalFormGroup.get('customInterval.mins').patchValue(customInterval.mins + 1, {emitEvent: true});
     }
-    this.updateView();
   }
 
-  private onMinsChange() {
-    if (typeof this.mins === 'undefined') {
+  private onMinsChange(mins: number) {
+    const customInterval = this.timeintervalFormGroup.get('customInterval').value;
+    if (typeof mins === 'undefined') {
       return;
     }
-    if (this.mins < 0) {
-      if ((this.days + this.hours) > 0) {
-        this.mins = this.mins + 60;
-        this.hours--;
-        this.onHoursChange();
+    if (mins < 0) {
+      if ((customInterval.days + customInterval.hours) > 0) {
+        this.timeintervalFormGroup.get('customInterval.mins').patchValue(mins + 60, {emitEvent: false});
+        this.timeintervalFormGroup.get('customInterval.hours').patchValue(customInterval.hours - 1, {emitEvent: true});
       } else {
-        this.mins = 0;
+        this.timeintervalFormGroup.get('customInterval.mins').patchValue(0, {emitEvent: false});
       }
-    } else if (this.mins >= 60) {
-      this.mins = this.mins - 60;
-      this.hours++;
-      this.onHoursChange();
+    } else if (mins >= 60) {
+      this.timeintervalFormGroup.get('customInterval.mins').patchValue(mins - 60, {emitEvent: false});
+      this.timeintervalFormGroup.get('customInterval.hours').patchValue(customInterval.hours + 1, {emitEvent: true});
     }
-    this.updateView();
   }
 
-  private onHoursChange() {
-    if (typeof this.hours === 'undefined') {
+  private onHoursChange(hours: number) {
+    const customInterval = this.timeintervalFormGroup.get('customInterval').value;
+    if (typeof hours === 'undefined') {
       return;
     }
-    if (this.hours < 0) {
-      if (this.days > 0) {
-        this.hours = this.hours + 24;
-        this.days--;
-        this.onDaysChange();
+    if (hours < 0) {
+      if (customInterval.days > 0) {
+        this.timeintervalFormGroup.get('customInterval.hours').patchValue(hours + 24, {emitEvent: false});
+        this.timeintervalFormGroup.get('customInterval.days').patchValue(customInterval.days - 1, {emitEvent: true});
       } else {
-        this.hours = 0;
+        this.timeintervalFormGroup.get('customInterval.hours').patchValue(0, {emitEvent: false});
       }
-    } else if (this.hours >= 24) {
-      this.hours = this.hours - 24;
-      this.days++;
-      this.onDaysChange();
+    } else if (hours >= 24) {
+      this.timeintervalFormGroup.get('customInterval.hours').patchValue(hours - 24, {emitEvent: false});
+      this.timeintervalFormGroup.get('customInterval.days').patchValue(customInterval.days + 1, {emitEvent: true});
     }
-    this.updateView();
   }
 
-  private onDaysChange() {
-    if (typeof this.days === 'undefined') {
+  private onDaysChange(days: number) {
+    if (typeof days === 'undefined') {
       return;
     }
-    if (this.days < 0) {
-      this.days = 0;
+    if (days < 0) {
+      this.timeintervalFormGroup.get('customInterval.days').patchValue(0, {emitEvent: false});
     }
-    this.updateView();
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
 }

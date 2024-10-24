@@ -1,0 +1,128 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="unreadNotificationWidgetConfigForm">
+
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widget-config.appearance</div>
+    <div class="tb-form-row column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitle">
+        {{ 'widget-config.title' | translate }}
+      </mat-slide-toggle>
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-font-settings formControlName="titleFont"
+                          clearButton
+                          [previewText]="unreadNotificationWidgetConfigForm.get('title').value"
+                          [initialPreviewStyle]="widgetConfig.config.titleStyle">
+        </tb-font-settings>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="titleColor">
+        </tb-color-input>
+      </div>
+    </div>
+    <div class="tb-form-row column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showIcon">
+        {{ 'widgets.notification.icon' | translate }}
+      </mat-slide-toggle>
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+          <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-css-unit-select class="flex-1" formControlName="iconSizeUnit"></tb-css-unit-select>
+        <tb-material-icon-select asBoxInput
+                                 iconClearButton
+                                 [color]="unreadNotificationWidgetConfigForm.get('iconColor').value"
+                                 formControlName="icon">
+        </tb-material-icon-select>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="iconColor">
+        </tb-color-input>
+      </div>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.notification.max-notification-display' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput type="number" min="1" formControlName="maxNotificationDisplay" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+  </div>
+
+  <div class="tb-form-panel">
+    <div class="tb-form-row no-padding no-border">
+      <mat-slide-toggle class="mat-slide" formControlName="showCounter">
+        {{ 'widgets.notification.counter' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.notification.counter-value' | translate }}</div>
+      <div class="flex flex-row items-center justify-start gap-2">
+        <tb-font-settings formControlName="counterValueFont"
+                          clearButton
+                          [previewText]="countPreviewFn"
+                          [initialPreviewStyle]="widgetConfig.config.titleStyle">
+        </tb-font-settings>
+        <tb-color-input asBoxInput
+                        formControlName="counterValueColor">
+        </tb-color-input>
+      </div>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.notification.counter-color' | translate }}</div>
+      <tb-color-input asBoxInput
+                      formControlName="counterColor">
+      </tb-color-input>
+    </div>
+  </div>
+
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.background.background' | translate }}</div>
+      <tb-background-settings formControlName="background">
+      </tb-background-settings>
+    </div>
+    <div class="tb-form-row space-between column-lt-md">
+      <div translate>widget-config.show-card-buttons</div>
+      <mat-chip-listbox multiple formControlName="cardButtons">
+        <mat-chip-option value="viewAll">{{ 'widgets.notification.button-view-all' | translate }}</mat-chip-option>
+        <mat-chip-option value="filter">{{ 'widgets.notification.button-filter' | translate }}</mat-chip-option>
+        <mat-chip-option value="markAsRead">{{ 'widgets.notification.button-mark-read' | translate }}</mat-chip-option>
+        <mat-chip-option value="fullscreen">{{ 'fullscreen.fullscreen' | translate }}</mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widget-config.card-border-radius' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="borderRadius" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widget-config.card-padding' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="padding" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+  </div>
+  <tb-widget-actions-panel
+    formControlName="actions">
+  </tb-widget-actions-panel>
+</ng-container>

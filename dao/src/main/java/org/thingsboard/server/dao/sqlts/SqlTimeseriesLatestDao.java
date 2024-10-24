@@ -46,6 +46,7 @@ import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
+import org.thingsboard.server.dao.sql.TbSqlQueueElement;
 import org.thingsboard.server.dao.sqlts.insert.latest.InsertLatestTsRepository;
 import org.thingsboard.server.dao.sqlts.latest.SearchTsKvLatestRepository;
 import org.thingsboard.server.dao.sqlts.latest.TsKvLatestRepository;
@@ -81,7 +82,7 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     @Autowired
     private InsertLatestTsRepository insertLatestTsRepository;
 
-    private TbSqlBlockingQueueWrapper<TsKvLatestEntity> tsLatestQueue;
+    private TbSqlBlockingQueueWrapper<TsKvLatestEntity, Long> tsLatestQueue;
 
     @Value("${sql.ts_latest.batch_size:1000}")
     private int tsLatestBatchSize;
@@ -115,25 +116,26 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
                 .maxDelay(tsLatestMaxDelay)
                 .statsPrintIntervalMs(tsLatestStatsPrintIntervalMs)
                 .statsNamePrefix("ts.latest")
-                .batchSortEnabled(false)
+                .batchSortEnabled(batchSortEnabled)
+                .withResponse(true)
                 .build();
 
         java.util.function.Function<TsKvLatestEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
         tsLatestQueue = new TbSqlBlockingQueueWrapper<>(tsLatestParams, hashcodeFunction, tsLatestBatchThreads, statsFactory);
 
-        tsLatestQueue.init(logExecutor, v -> {
-            Map<TsKey, TsKvLatestEntity> trueLatest = new HashMap<>();
-            v.forEach(ts -> {
-                TsKey key = new TsKey(ts.getEntityId(), ts.getKey());
-                trueLatest.merge(key, ts, (oldTs, newTs) -> oldTs.getTs() <= newTs.getTs() ? newTs : oldTs);
-            });
-            List<TsKvLatestEntity> latestEntities = new ArrayList<>(trueLatest.values());
-            if (batchSortEnabled) {
-                latestEntities.sort(Comparator.comparing((Function<TsKvLatestEntity, UUID>) AbstractTsKvEntity::getEntityId)
-                        .thenComparingInt(AbstractTsKvEntity::getKey));
-            }
-            insertLatestTsRepository.saveOrUpdate(latestEntities);
-        }, (l, r) -> 0);
+        tsLatestQueue.init(logExecutor,
+                v -> insertLatestTsRepository.saveOrUpdate(v),
+                Comparator.comparing((Function<TsKvLatestEntity, UUID>) AbstractTsKvEntity::getEntityId)
+                        .thenComparingInt(AbstractTsKvEntity::getKey),
+                v -> {
+                    Map<TsKey, TbSqlQueueElement<TsKvLatestEntity, Long>> trueLatest = new HashMap<>();
+                    v.forEach(element -> {
+                        var entity = element.getEntity();
+                        TsKey key = new TsKey(entity.getEntityId(), entity.getKey());
+                        trueLatest.merge(key, element, (oldElement, newElement) -> oldElement.getEntity().getTs() <= newElement.getEntity().getTs() ? newElement : oldElement);
+                    });
+                    return new ArrayList<>(trueLatest.values());
+                });
     }
 
     @PreDestroy
@@ -144,7 +146,7 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     }
 
     @Override
-    public ListenableFuture<Void> saveLatest(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry) {
+    public ListenableFuture<Long> saveLatest(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry) {
         return getSaveLatestFuture(entityId, tsKvEntry);
     }
 
@@ -155,12 +157,13 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
 
     @Override
     public ListenableFuture<Optional<TsKvEntry>> findLatestOpt(TenantId tenantId, EntityId entityId, String key) {
-        return service.submit(() -> Optional.ofNullable(doFindLatest(entityId, key)));
+        return service.submit(() -> Optional.ofNullable(doFindLatestSync(entityId, key)));
     }
 
     @Override
     public ListenableFuture<TsKvEntry> findLatest(TenantId tenantId, EntityId entityId, String key) {
-        return service.submit(() -> getLatestTsKvEntry(entityId, key));
+        log.trace("findLatest [{}][{}][{}]", tenantId, entityId, key);
+        return service.submit(() -> wrapNullTsKvEntry(key, doFindLatestSync(entityId, key)));
     }
 
     @Override
@@ -187,7 +190,7 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
         return Futures.transformAsync(future, entryList -> {
             if (entryList.size() == 1) {
                 TsKvEntry entry = entryList.get(0);
-                return Futures.transform(getSaveLatestFuture(entityId, entry), v -> new TsKvLatestRemovingResult(entry), MoreExecutors.directExecutor());
+                return Futures.transform(getSaveLatestFuture(entityId, entry), v -> new TsKvLatestRemovingResult(entry, v), MoreExecutors.directExecutor());
             } else {
                 log.trace("Could not find new latest value for [{}], key - {}", entityId, query.getKey());
             }
@@ -204,7 +207,7 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
                 ReadTsKvQueryResult::getData, MoreExecutors.directExecutor());
     }
 
-    protected TsKvEntry doFindLatest(EntityId entityId, String key) {
+   protected TsKvEntry doFindLatestSync(EntityId entityId, String key) {
         TsKvLatestCompositeKey compositeKey =
                 new TsKvLatestCompositeKey(
                         entityId.getId(),
@@ -220,24 +223,24 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     }
 
     protected ListenableFuture<TsKvLatestRemovingResult> getRemoveLatestFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
-        ListenableFuture<TsKvEntry> latestFuture = service.submit(() -> doFindLatest(entityId, query.getKey()));
+        ListenableFuture<TsKvEntry> latestFuture = service.submit(() -> doFindLatestSync(entityId, query.getKey()));
         return Futures.transformAsync(latestFuture, latest -> {
             if (latest == null) {
                 return Futures.immediateFuture(new TsKvLatestRemovingResult(query.getKey(), false));
             }
             boolean isRemoved = false;
+            Long version = null;
             long ts = latest.getTs();
             if (ts >= query.getStartTs() && ts < query.getEndTs()) {
-                TsKvLatestEntity latestEntity = new TsKvLatestEntity();
-                latestEntity.setEntityId(entityId.getId());
-                latestEntity.setKey(keyDictionaryDao.getOrSaveKeyId(query.getKey()));
-                tsKvLatestRepository.delete(latestEntity);
+                version = transactionTemplate.execute(status -> jdbcTemplate.query("DELETE FROM ts_kv_latest WHERE entity_id = ? " +
+                                "AND key = ? RETURNING nextval('ts_kv_latest_version_seq')",
+                        rs -> rs.next() ? rs.getLong(1) : null, entityId.getId(), keyDictionaryDao.getOrSaveKeyId(query.getKey())));
                 isRemoved = true;
                 if (query.getRewriteLatestIfDeleted()) {
                     return getNewLatestEntryFuture(tenantId, entityId, query);
                 }
             }
-            return Futures.immediateFuture(new TsKvLatestRemovingResult(query.getKey(), isRemoved));
+            return Futures.immediateFuture(new TsKvLatestRemovingResult(query.getKey(), isRemoved, version));
         }, MoreExecutors.directExecutor());
     }
 
@@ -247,7 +250,7 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
                         searchTsKvLatestRepository.findAllByEntityId(entityId.getId()))));
     }
 
-    protected ListenableFuture<Void> getSaveLatestFuture(EntityId entityId, TsKvEntry tsKvEntry) {
+    protected ListenableFuture<Long> getSaveLatestFuture(EntityId entityId, TsKvEntry tsKvEntry) {
         TsKvLatestEntity latestEntity = new TsKvLatestEntity();
         latestEntity.setEntityId(entityId.getId());
         latestEntity.setTs(tsKvEntry.getTs());
@@ -261,10 +264,9 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
         return tsLatestQueue.add(latestEntity);
     }
 
-    private TsKvEntry getLatestTsKvEntry(EntityId entityId, String key) {
-        TsKvEntry latest = doFindLatest(entityId, key);
+    protected TsKvEntry wrapNullTsKvEntry(final String key, final TsKvEntry latest) {
         if (latest == null) {
-            latest = new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(key, null));
+            return new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(key, null));
         }
         return latest;
     }

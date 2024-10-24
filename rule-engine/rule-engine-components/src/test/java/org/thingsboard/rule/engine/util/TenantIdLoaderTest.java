@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -51,10 +52,12 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
+import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.QueueStats;
 import org.thingsboard.server.common.data.rpc.Rpc;
@@ -66,12 +69,15 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.domain.DomainService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.mobile.MobileAppService;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
+import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.queue.QueueStatsService;
@@ -139,6 +145,12 @@ public class TenantIdLoaderTest {
     private NotificationRuleService notificationRuleService;
     @Mock
     private QueueStatsService queueStatsService;
+    @Mock
+    private OAuth2ClientService oAuth2ClientService;
+    @Mock
+    private DomainService domainService;
+    @Mock
+    private MobileAppService mobileAppService;
 
     private TenantId tenantId;
     private TenantProfileId tenantProfileId;
@@ -361,6 +373,24 @@ public class TenantIdLoaderTest {
                 queueStats.setTenantId(tenantId);
                 when(ctx.getQueueStatsService()).thenReturn(queueStatsService);
                 doReturn(queueStats).when(queueStatsService).findQueueStatsById(eq(tenantId), any());
+                break;
+            case OAUTH2_CLIENT:
+                OAuth2Client oAuth2Client = new OAuth2Client();
+                oAuth2Client.setTenantId(tenantId);
+                when(ctx.getOAuth2ClientService()).thenReturn(oAuth2ClientService);
+                doReturn(oAuth2Client).when(oAuth2ClientService).findOAuth2ClientById(eq(tenantId), any());
+                break;
+            case DOMAIN:
+                Domain domain = new Domain();
+                domain.setTenantId(tenantId);
+                when(ctx.getDomainService()).thenReturn(domainService);
+                doReturn(domain).when(domainService).findDomainById(eq(tenantId), any());
+                break;
+            case MOBILE_APP:
+                MobileApp mobileApp = new MobileApp();
+                mobileApp.setTenantId(tenantId);
+                when(ctx.getMobileAppService()).thenReturn(mobileAppService);
+                doReturn(mobileApp).when(mobileAppService).findMobileAppById(eq(tenantId), any());
                 break;
             default:
                 throw new RuntimeException("Unexpected originator EntityType " + entityType);

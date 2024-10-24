@@ -1,0 +1,77 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form class="mat-content mat-padding flex flex-1 flex-col" (ngSubmit)="update()">
+  <div class="tb-form-panel no-padding">
+    <div class="tb-form-row column-xs">
+      <div class="fixed-title-width" translate>widgets.notification.notification-types</div>
+      <mat-form-field floatLabel="auto" appearance="outline" subscriptSizing="dynamic" class="fb-chips flex">
+        <mat-chip-grid #chipList>
+          <mat-chip-row
+            *ngFor="let type of selectedNotificationTypes"
+            removable
+            (removed)="remove(type)">
+            {{ notificationTypesTranslateMap.get(type).name | translate }}
+            <mat-icon matChipRemove>close</mat-icon>
+          </mat-chip-row>
+          <input matInput type="text"
+                 placeholder="{{ ( selectedNotificationTypes.length ? 'widgets.notification.notification-type' : 'widgets.notification.any-type' ) | translate }}"
+                 style="max-width: 200px;"
+                 [formControl]="searchControlName"
+                 #notificationTypeInput
+                 (focusin)="onFocus()"
+                 matAutocompleteOrigin
+                 #origin="matAutocompleteOrigin"
+                 [matAutocompleteConnectedTo]="origin"
+                 [matAutocomplete]="NotificationTypeAutocomplete"
+                 [matChipInputFor]="chipList"
+                 [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                 (matChipInputTokenEnd)="chipAdd($event)">
+        </mat-chip-grid>
+        <mat-autocomplete #NotificationTypeAutocomplete="matAutocomplete"
+                          class="tb-autocomplete"
+                          (optionSelected)="selected($event)"
+                          [displayWith]="displayTypeFn">
+          <mat-option *ngFor="let type of filteredNotificationTypesList | async" [value]="type">
+            <span [innerHTML]="notificationTypesTranslateMap.get(type).name | translate | highlight:searchText"></span>
+          </mat-option>
+        </mat-autocomplete>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <div class="tb-panel-actions flex flex-row items-center justify-end">
+    <button type="button"
+            mat-button
+            (click)="reset()"
+            color="primary">
+      {{ 'action.reset' | translate }}
+    </button>
+    <span class="flex-1"></span>
+    <button type="button"
+            (click)="cancel()"
+            mat-button>
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button type="submit"
+            mat-raised-button
+            color="primary">
+      {{ 'action.update' | translate }}
+    </button>
+  </div>
+</form>
+

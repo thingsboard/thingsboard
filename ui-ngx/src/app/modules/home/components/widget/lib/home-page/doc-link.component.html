@@ -15,36 +15,36 @@
     limitations under the License.
 
 -->
-<div fxLayout="row" *ngIf="addMode || editMode; else docLinkTemplate">
-  <div fxFlex class="tb-edit-link" [ngClass]="{'edit-mode': editMode}" [formGroup]="editDocLinkFormGroup" fxLayout="column">
+<div class="flex flex-row" *ngIf="addMode || editMode; else docLinkTemplate">
+  <div class="tb-edit-link flex flex-1 flex-col" [class.edit-mode]="editMode" [formGroup]="editDocLinkFormGroup">
     <tb-material-icon-select required formControlName="icon"></tb-material-icon-select>
-    <mat-form-field fxFlex class="mat-block">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>widgets.documentation.name</mat-label>
       <input required matInput formControlName="name">
       <mat-error *ngIf="editDocLinkFormGroup.get('name').hasError('required')">
         {{ 'widgets.documentation.name-required' | translate }}
       </mat-error>
     </mat-form-field>
-    <mat-form-field fxFlex class="mat-block">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>widgets.documentation.link</mat-label>
       <input required matInput formControlName="link">
       <mat-error *ngIf="editDocLinkFormGroup.get('link').hasError('required')">
         {{ 'widgets.documentation.link-required' | translate }}
       </mat-error>
     </mat-form-field>
-    <div *ngIf="addMode" fxLayout="row" fxLayoutAlign="end" fxLayoutGap="8px">
+    <div *ngIf="addMode" class="flex flex-row items-stretch justify-end gap-2">
       <button *ngIf="!addOnly" mat-button color="primary" (click)="cancelAdd()">{{ 'action.cancel' | translate }}</button>
       <button mat-raised-button color="primary" (click)="add()">{{ 'action.add' | translate }}</button>
     </div>
   </div>
-  <div *ngIf="editMode" fxLayout="row" class="tb-edit-buttons">
+  <div *ngIf="editMode" class="tb-edit-buttons flex flex-row">
     <button mat-icon-button (click)="apply()"><tb-icon>check</tb-icon></button>
     <button mat-icon-button (click)="cancelEdit()"><tb-icon>close</tb-icon></button>
   </div>
 </div>
 <ng-template #docLinkTemplate>
-  <div fxLayout="row">
-    <div fxFlex class="tb-link">
+  <div class="flex flex-row">
+    <div class="tb-link flex-1">
       <div class="tb-link-container">
         <div class="tb-link-icon-container">
           <tb-icon color="primary">{{ docLink.icon }}</tb-icon>
@@ -52,7 +52,7 @@
         <div class="tb-link-text">{{ docLink.name }}</div>
       </div>
     </div>
-    <div fxLayout="row" fxLayoutAlign="start center" class="tb-edit-buttons">
+    <div class="tb-edit-buttons flex flex-row items-center justify-start">
       <button mat-icon-button
               matTooltip="{{ 'action.edit' | translate }}"
               matTooltipPosition="above"

@@ -38,17 +38,16 @@ import {
   getSingleTsValue,
   iconStyle,
   overlayStyle,
+  resolveCssSize,
   textStyle
 } from '@shared/models/widget-settings.models';
 import { valueCardDefaultSettings, ValueCardLayout, ValueCardWidgetSettings } from './value-card-widget.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { Observable } from 'rxjs';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 
 const squareLayoutSize = 160;
-const squareLayoutPadding = 48;
 const horizontalLayoutHeight = 80;
 
 @Component({
@@ -96,6 +95,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  padding: string;
 
   private panelResize$: ResizeObserver;
 
@@ -148,6 +148,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
+    this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
   }
 
   public ngAfterViewInit() {
@@ -199,8 +200,13 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   private onResize() {
-    const panelWidth = this.valueCardPanel.nativeElement.getBoundingClientRect().width - squareLayoutPadding;
-    const panelHeight = this.valueCardPanel.nativeElement.getBoundingClientRect().height - (this.horizontal ? 0 : squareLayoutPadding);
+    const computedStyle = getComputedStyle(this.valueCardPanel.nativeElement);
+    const [pLeft, pRight, pTop, pBottom] = ['paddingLeft', 'paddingRight', 'paddingTop', 'paddingBottom']
+      .map(side => resolveCssSize(computedStyle[side])[0]);
+
+    const widgetBoundingClientRect = this.valueCardPanel.nativeElement.getBoundingClientRect();
+    const panelWidth = widgetBoundingClientRect.width - (pLeft + pRight);
+    const panelHeight = widgetBoundingClientRect.height - (pTop + pBottom);
     let scale: number;
     if (!this.horizontal) {
       const size = Math.min(panelWidth, panelHeight);

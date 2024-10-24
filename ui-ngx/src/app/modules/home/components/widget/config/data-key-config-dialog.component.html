@@ -18,7 +18,7 @@
 <form [formGroup]="dataKeyFormGroup" (ngSubmit)="save()" style="width: 900px;">
   <mat-toolbar color="primary">
     <h2>{{ 'datakey.configuration' | translate }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <tb-toggle-select *ngIf="hasAdvanced"
                       appearance="fill-invert" selectMediaBreakpoint="xs" [options]="dataKeyConfigHeaderOptions"
                       [(ngModel)]="dataKeyConfigMode" [ngModelOptions]="{ standalone: true }">
@@ -53,7 +53,7 @@
       formControlName="dataKey">
     </tb-data-key-config>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
