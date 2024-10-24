@@ -27,6 +27,9 @@ import java.util.function.BiConsumer;
 @AllArgsConstructor
 public abstract class TbSubscription<T> {
 
+    /** Cache the hash code */
+    private transient int hash; // Default to 0. The hash code calculated for this object likely never be zero
+
     private final String serviceId;
     private final String sessionId;
     private final int subscriptionId;
@@ -49,7 +52,10 @@ public abstract class TbSubscription<T> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(sessionId, subscriptionId, tenantId, entityId, type);
+        if (hash == 0) {
+            hash = Objects.hash(sessionId, subscriptionId, tenantId, entityId, type);
+        }
+        return hash;
     }
 
 }

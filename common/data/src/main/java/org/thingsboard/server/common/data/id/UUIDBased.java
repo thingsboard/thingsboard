@@ -25,6 +25,9 @@ public abstract class UUIDBased implements HasUUID, Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    /** Cache the hash code */
+    private transient int hash; // Default to 0. The hash code calculated for this object likely never be zero
+
     private final UUID id;
 
     public UUIDBased() {
@@ -43,10 +46,12 @@ public abstract class UUIDBased implements HasUUID, Serializable {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((id == null) ? 0 : id.hashCode());
-        return result;
+        if (hash == 0) {
+            final int prime = 31;
+            int result = 1;
+            hash = prime * result + ((id == null) ? 0 : id.hashCode());
+        }
+        return hash;
     }
 
     @Override
