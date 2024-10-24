@@ -44,8 +44,8 @@
       <mat-slide-toggle class="mat-slide" formControlName="showLabel">
         {{ 'widgets.time-series-chart.threshold.label' | translate }}
       </mat-slide-toggle>
-      <div fxLayout="row" fxFlex.lt-md fxLayoutAlign="start center" fxLayoutGap="8px">
-        <mat-form-field class="medium-width" fxFlex.lt-md appearance="outline" subscriptSizing="dynamic">
+      <div class="flex lt-md:flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field class="medium-width lt-md:flex-1" appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="labelPosition">
             <mat-option *ngFor="let position of timeSeriesThresholdLabelPositions" [value]="position">
               {{ timeSeriesThresholdLabelPositionTranslations.get(position) | translate }}
@@ -101,7 +101,7 @@
       <div class="tb-form-row column-xs">
         <div translate>widgets.time-series-chart.threshold.start-symbol</div>
         <div class="tb-flex row flex-end">
-          <mat-form-field class="medium-width" fxFlex.lt-md appearance="outline" subscriptSizing="dynamic">
+          <mat-form-field class="medium-width lt-md:flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="startSymbol">
               <mat-option *ngFor="let shape of chartShapes" [value]="shape">
                 {{ chartShapeTranslations.get(shape) | translate }}
@@ -118,7 +118,7 @@
       <div class="tb-form-row column-xs">
         <div translate>widgets.time-series-chart.threshold.end-symbol</div>
         <div class="tb-flex row flex-end">
-          <mat-form-field class="medium-width" fxFlex.lt-md appearance="outline" subscriptSizing="dynamic">
+          <mat-form-field class="medium-width lt-md:flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="endSymbol">
               <mat-option *ngFor="let shape of chartShapes" [value]="shape">
                 {{ chartShapeTranslations.get(shape) | translate }}

@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section fxLayout="column" [formGroup]="keyFilterListFormGroup">
+<section class="flex flex-col" [formGroup]="keyFilterListFormGroup">
   <mat-accordion [multi]="true">
     <mat-expansion-panel [expanded]="true">
       <mat-expansion-panel-header>
@@ -23,27 +23,27 @@
           <div translate>filter.key-filters</div>
         </mat-panel-title>
       </mat-expansion-panel-header>
-      <div fxLayout="row">
-        <span fxFlex="8"></span>
-        <div fxLayout="row" fxLayoutAlign="start center" fxFlex="92">
-          <label fxFlex translate class="tb-title no-padding">filter.key-name</label>
-          <label fxFlex translate class="tb-title no-padding">filter.key-type.key-type</label>
-          <span [fxShow]="!disabled" style="min-width: 80px;">&nbsp;</span>
-          <span [fxShow]="disabled" style="min-width: 40px;">&nbsp;</span>
+      <div class="flex flex-row">
+        <span class="max-w-8% flex-full"></span>
+        <div class="flex max-w-92% flex-full flex-row items-center justify-start">
+          <label translate class="tb-title no-padding flex-1">filter.key-name</label>
+          <label translate class="tb-title no-padding flex-1">filter.key-type.key-type</label>
+          <span [class.!hidden]="disabled" style="min-width: 80px;">&nbsp;</span>
+          <span [class.!hidden]="!disabled" style="min-width: 40px;">&nbsp;</span>
         </div>
       </div>
       <mat-divider></mat-divider>
       <div class="key-filter-list">
-        <div fxLayout="row" fxLayoutAlign="start" style="max-height: 76px;"
+        <div class="flex flex-row items-stretch justify-start" style="max-height: 76px;"
              formArrayName="keyFilters"
              *ngFor="let keyFilterControl of keyFiltersFormArray.controls; let $index = index">
-          <div fxFlex="8" class="filters-operation">
+          <div class="filters-operation max-w-8% flex-full">
             <span *ngIf="$index > 0" translate>filter.operation.and</span>
           </div>
-          <div fxLayout="column" fxFlex="92">
-            <div fxLayout="row" fxLayoutAlign="start center">
-              <div fxFlex>{{ keyFilterControl.value.key.key }}</div>
-              <div fxFlex>{{ entityKeyTypeTranslations.get(keyFilterControl.value.key.type) | translate }}</div>
+          <div class="flex max-w-92% flex-full flex-col">
+            <div class="flex flex-row items-center justify-start">
+              <div class="flex-1">{{ keyFilterControl.value.key.key }}</div>
+              <div class="flex-1">{{ entityKeyTypeTranslations.get(keyFilterControl.value.key.type) | translate }}</div>
               <button mat-icon-button color="primary"
                       type="button"
                       (click)="editKeyFilter($index)"
@@ -52,7 +52,7 @@
                 <mat-icon>{{disabled ? 'more_vert' : 'edit'}}</mat-icon>
               </button>
               <button mat-icon-button color="primary"
-                      [fxShow]="!disabled"
+                      [class.!hidden]="disabled"
                       type="button"
                       (click)="removeKeyFilter($index)"
                       matTooltip="{{ 'filter.remove-key-filter' | translate }}"
@@ -63,13 +63,13 @@
             <mat-divider></mat-divider>
           </div>
         </div>
-        <span [fxShow]="!keyFiltersFormArray.length"
-              fxLayoutAlign="center center" [ngClass]="{'disabled': disabled}"
-              class="no-data-found" translate>filter.no-key-filters</span>
+        <span [class.!hidden]="!!keyFiltersFormArray.length"
+              [class.disabled]="disabled"
+              class="no-data-found flex items-center justify-center" translate>filter.no-key-filters</span>
       </div>
       <div style="margin-top: 16px;">
         <button mat-button mat-raised-button color="primary"
-                [fxShow]="!disabled"
+                [class.!hidden]="disabled"
                 (click)="addKeyFilter()"
                 type="button"
                 matTooltip="{{ 'filter.add-key-filter' | translate }}"

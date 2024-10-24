@@ -22,6 +22,6 @@
 <ng-template #htmlMode>
   <div mat-dialog-content [innerHTML]="data.message | safe:'html'"></div>
 </ng-template>
-<div mat-dialog-actions fxLayoutAlign="end center">
+<div mat-dialog-actions class="flex items-center justify-end">
   <button mat-button color="primary" [mat-dialog-close]="true" cdkFocusInitial>{{data.ok}}</button>
 </div>

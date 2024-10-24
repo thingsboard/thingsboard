@@ -18,7 +18,7 @@
 <form [formGroup]="assignToCustomerFormGroup" (ngSubmit)="assign()">
   <mat-toolbar color="primary">
     <h2>{{ assignToCustomerTitle | translate }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -38,7 +38,7 @@
       </tb-entity-autocomplete>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayout="row" fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex flex-row items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

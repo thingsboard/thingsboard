@@ -17,12 +17,11 @@
 -->
 <div class="tb-json-input" tb-toast toastTarget="{{ toastTargetId }}">
   <form *ngIf="attributeUpdateFormGroup"
-        fxLayout="column"
-        class="tb-json-input__form"
+        class="tb-json-input__form flex flex-col"
         [formGroup]="attributeUpdateFormGroup"
         (ngSubmit)="save()">
-      <div fxLayout="column" fxLayoutGap="10px" fxFlex *ngIf="datasourceDetected && !errorMessage; else errorContainer">
-        <fieldset fxFlex>
+      <div class="flex flex-1 flex-col gap-2.5" *ngIf="datasourceDetected && !errorMessage; else errorContainer">
+        <fieldset class="flex-1">
           <tb-json-object-edit
             [editorStyle]="{minHeight: '100px'}"
             fillHeight="true"
@@ -33,7 +32,7 @@
             (focusout)="isFocused = false;"
           ></tb-json-object-edit>
         </fieldset>
-        <div class="tb-json-input__actions" fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="20px">
+        <div class="tb-json-input__actions flex flex-row items-center justify-end gap-5">
           <button mat-button color="primary"
                   type="button"
                   [disabled]="!attributeUpdateFormGroup.dirty"
@@ -51,7 +50,7 @@
       </div>
 
     <ng-template #errorContainer>
-      <div class="tb-json-input__error" fxLayout="column" fxLayoutAlign="center center" fxFlex>
+      <div class="tb-json-input__error flex flex-1 flex-col items-center justify-center">
         {{ errorMessage | translate }}
       </div>
     </ng-template>

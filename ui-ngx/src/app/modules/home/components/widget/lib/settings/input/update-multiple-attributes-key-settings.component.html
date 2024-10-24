@@ -19,10 +19,10 @@
   <mat-slide-toggle formControlName="dataKeyHidden" class="slide-block">
     {{ 'widgets.input-widgets.hide-input-field' | translate }}
   </mat-slide-toggle>
-  <fieldset [fxShow]="!updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value" class="fields-group">
+  <fieldset [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value" class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.general-settings</legend>
-    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
-      <mat-form-field fxFlex="50" class="mat-block">
+    <section class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
+      <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
         <mat-label translate>widgets.input-widgets.datakey-type</mat-label>
         <mat-select formControlName="dataKeyType">
           <mat-option [value]="'server'">
@@ -36,7 +36,7 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field fxFlex="50" class="mat-block">
+      <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
         <mat-label translate>widgets.input-widgets.datakey-value-type</mat-label>
         <mat-select formControlName="dataKeyValueType">
           <mat-option [value]="'string'">
@@ -78,8 +78,8 @@
     <mat-checkbox formControlName="required" style="margin-bottom: 8px;">
       {{ 'widgets.input-widgets.value-is-required' | translate }}
     </mat-checkbox>
-    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
-      <mat-form-field fxFlex="50" class="mat-block">
+    <section class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
+      <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
         <mat-label translate>widgets.input-widgets.ability-to-edit-attribute</mat-label>
         <mat-select formControlName="isEditable">
           <mat-option [value]="'editable'">
@@ -93,14 +93,14 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field [fxShow]="updateMultipleAttributesKeySettingsForm.get('isEditable').value === 'editable'" fxFlex="50" class="mat-block">
+      <mat-form-field [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('isEditable').value !== 'editable'" class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
         <mat-label translate>widgets.input-widgets.disable-on-datakey-name</mat-label>
         <input matInput formControlName="disabledOnDataKey">
       </mat-form-field>
     </section>
     <section *ngIf="!['booleanSwitch', 'booleanCheckbox'].includes(updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value)"
-             fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
-      <mat-form-field fxFlex="50" class="mat-block">
+             class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
+      <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
         <mat-label translate>widgets.input-widgets.field-appearance</mat-label>
         <mat-select formControlName="appearance">
           <mat-option [value]="'fill'">
@@ -111,7 +111,7 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field fxFlex="50" class="mat-block">
+      <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
         <mat-label translate>widgets.input-widgets.subscript-sizing</mat-label>
         <mat-select formControlName="subscriptSizing">
           <mat-option [value]="'fixed'">
@@ -124,10 +124,10 @@
       </mat-form-field>
     </section>
   </fieldset>
-  <fieldset [fxShow]="!updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value &&
-                       updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value === 'booleanSwitch'" class="fields-group">
+  <fieldset [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value ||
+                             updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'booleanSwitch'" class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.slide-toggle-settings</legend>
-    <mat-form-field fxFlex class="mat-block">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>widgets.input-widgets.slide-toggle-label-position</mat-label>
       <mat-select formControlName="slideToggleLabelPosition">
         <mat-option [value]="'after'">
@@ -139,15 +139,15 @@
       </mat-select>
     </mat-form-field>
   </fieldset>
-  <fieldset [fxShow]="!updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value &&
-                       updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value === 'select'" class="fields-group">
+  <fieldset [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value ||
+                             updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'select'" class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.select-options</legend>
-    <div fxLayout="column">
+    <div class="flex flex-col">
       <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
            (cdkDropListDropped)="selectOptionDrop($event)">
         <div cdkDrag class="tb-draggable" *ngFor="let selectOptionControl of selectOptionsFormArray().controls; trackBy: trackBySelectOption;
                  let $index = index; last as isLast;"
-             fxLayout="column" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+             class="flex flex-col" [class.pb-2]="!isLast">
           <tb-datakey-select-option [formControl]="selectOptionControl"
                                     [expanded]="selectOptionControl.new"
                                     (removeSelectOption)="removeSelectOption($index)">
@@ -155,8 +155,8 @@
         </div>
       </div>
       <div *ngIf="!selectOptionsFormArray().controls.length">
-            <span translate fxLayoutAlign="center center"
-                  class="tb-prompt">widgets.input-widgets.no-select-options</span>
+            <span translate
+                  class="tb-prompt flex items-center justify-center">widgets.input-widgets.no-select-options</span>
       </div>
       <div style="padding-top: 16px;">
         <button mat-raised-button color="primary"
@@ -167,102 +167,102 @@
       </div>
     </div>
   </fieldset>
-  <fieldset [fxShow]="!updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value &&
-                       (updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value === 'integer' ||
-                        updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value === 'double')" class="fields-group">
+  <fieldset [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value ||
+                             (updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'integer' &&
+                             updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'double')" class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.numeric-field-settings</legend>
-    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
-      <mat-form-field fxFlex class="mat-block">
+    <section class="flex flex-col gt-xs:flex-row gt-xs:gap-2">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.input-widgets.step-interval</mat-label>
         <input matInput type="number" min="0" formControlName="step">
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.input-widgets.min-value</mat-label>
         <input matInput type="number" formControlName="minValue">
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.input-widgets.max-value</mat-label>
         <input matInput type="number" formControlName="maxValue">
       </mat-form-field>
     </section>
   </fieldset>
-  <fieldset [fxShow]="displayErrorMessagesSection()" class="fields-group">
+  <fieldset [class.!hidden]="!displayErrorMessagesSection()" class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.error-messages</legend>
-    <mat-form-field [fxShow]="updateMultipleAttributesKeySettingsForm.get('required').value" fxFlex class="mat-block">
+    <mat-form-field [class.!hidden]="!updateMultipleAttributesKeySettingsForm.get('required').value" class="mat-block flex-1">
       <mat-label translate>widgets.input-widgets.required-error-message</mat-label>
       <input matInput formControlName="requiredErrorMessage">
     </mat-form-field>
-    <section [fxShow]="updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value === 'integer' ||
-                       updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value === 'double'"
-             fxLayout="row" fxLayoutGap="8px">
-      <mat-form-field fxFlex class="mat-block">
+    <section [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'integer' &&
+                              updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'double'"
+             class="flex flex-row gap-2">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.input-widgets.min-value-error-message</mat-label>
         <input matInput formControlName="minValueErrorMessage">
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.input-widgets.max-value-error-message</mat-label>
         <input matInput formControlName="maxValueErrorMessage">
       </mat-form-field>
     </section>
-    <mat-form-field [fxShow]="updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value === 'dateTime' ||
-                              updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value === 'date' ||
-                              updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value === 'time'" fxFlex class="mat-block">
+    <mat-form-field [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'dateTime' &&
+                                     updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'date' &&
+                                     updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'time'" class="mat-block flex-1">
       <mat-label translate>widgets.input-widgets.invalid-date-error-message</mat-label>
       <input matInput formControlName="invalidDateErrorMessage">
     </mat-form-field>
-    <mat-form-field [fxShow]="updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value === 'JSON'" fxFlex class="mat-block">
+    <mat-form-field [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'JSON'" class="mat-block flex-1">
       <mat-label translate>widgets.input-widgets.invalid-JSON-error-message</mat-label>
       <input matInput formControlName="invalidJsonErrorMessage">
     </mat-form-field>
   </fieldset>
-  <fieldset [fxShow]="!updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value &&
-                      updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value === 'JSON'" class="fields-group">
+  <fieldset [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value ||
+                             updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'JSON'"class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.dialog-editor-settings</legend>
-    <mat-form-field fxFlex class="mat-block">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>widgets.input-widgets.title</mat-label>
       <input matInput formControlName="dialogTitle">
     </mat-form-field>
-    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
-      <mat-form-field fxFlex class="mat-block">
+    <section class="flex flex-row xs:flex-col gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.input-widgets.save-button-label</mat-label>
         <input matInput formControlName="saveButtonLabel">
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.input-widgets.cancel-button-label</mat-label>
         <input matInput formControlName="cancelButtonLabel">
       </mat-form-field>
     </section>
   </fieldset>
-  <fieldset [fxShow]="!updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value &&
-                      !['date', 'dateTime', 'time'].includes(updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value)"
+  <fieldset [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value ||
+                             ['date', 'dateTime', 'time'].includes(updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value)"
             class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.icon-settings</legend>
     <mat-slide-toggle formControlName="useCustomIcon" class="slide-block">
       {{ 'widgets.input-widgets.use-custom-icon' | translate }}
     </mat-slide-toggle>
-    <tb-material-icon-select [fxShow]="!updateMultipleAttributesKeySettingsForm.get('useCustomIcon').value"
+    <tb-material-icon-select [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('useCustomIcon').value"
                              label="{{ 'widgets.input-widgets.input-cell-icon' | translate }}"
                              iconClearButton
                              formControlName="icon">
     </tb-material-icon-select>
-    <tb-gallery-image-input [fxShow]="updateMultipleAttributesKeySettingsForm.get('useCustomIcon').value"
+    <tb-gallery-image-input [class.!hidden]="!updateMultipleAttributesKeySettingsForm.get('useCustomIcon').value"
                     label="{{ 'widgets.input-widgets.input-cell-icon' | translate }}"
                     formControlName="customIcon">
     </tb-gallery-image-input>
   </fieldset>
-  <fieldset [fxShow]="!updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value" class="fields-group">
+  <fieldset [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value" class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.value-conversion-settings</legend>
     <fieldset class="fields-group fields-group-slider">
       <legend class="group-title" translate>widgets.input-widgets.get-value-settings</legend>
       <mat-expansion-panel class="tb-settings" [expanded]="updateMultipleAttributesKeySettingsForm.get('useGetValueFunction').value">
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
           <mat-panel-title>
             <mat-slide-toggle formControlName="useGetValueFunction" (click)="$event.stopPropagation()"
-                              fxLayoutAlign="center">
+                              class="flex items-stretch justify-center">
               {{ 'widgets.input-widgets.use-get-value-function' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>
-          <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+          <mat-panel-description class="flex items-center justify-end xs:!hidden" translate>
             widget-config.advanced-settings
           </mat-panel-description>
         </mat-expansion-panel-header>
@@ -278,14 +278,14 @@
     <fieldset class="fields-group fields-group-slider">
       <legend class="group-title" translate>widgets.input-widgets.set-value-settings</legend>
       <mat-expansion-panel class="tb-settings" [expanded]="updateMultipleAttributesKeySettingsForm.get('useSetValueFunction').value">
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
           <mat-panel-title>
             <mat-slide-toggle formControlName="useSetValueFunction" (click)="$event.stopPropagation()"
-                              fxLayoutAlign="center">
+                              class="flex items-stretch justify-center">
               {{ 'widgets.input-widgets.use-set-value-function' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>
-          <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+          <mat-panel-description class="flex items-center justify-end xs:!hidden" translate>
             widget-config.advanced-settings
           </mat-panel-description>
         </mat-expansion-panel-header>
