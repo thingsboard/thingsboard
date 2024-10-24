@@ -32,7 +32,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class AbstractGeofencingNode<T extends TbGpsGeofencingFilterNodeConfiguration> implements TbNode {
+public abstract class AbstractGeofencingNode<T extends AbstractTbGpsGeofencingNodeConfiguration<T>> implements TbNode {
 
     protected T config;
     protected JtsSpatialContext jtsCtx;
@@ -48,11 +48,7 @@ public abstract class AbstractGeofencingNode<T extends TbGpsGeofencingFilterNode
     abstract protected Class<T> getConfigClazz();
 
     protected boolean checkMatches(TbMsg msg) throws TbNodeException {
-        JsonElement msgDataElement = JsonParser.parseString(msg.getData());
-        if (!msgDataElement.isJsonObject()) {
-            throw new TbNodeException("Incoming Message is not a valid JSON object!");
-        }
-        JsonObject msgDataObj = msgDataElement.getAsJsonObject();
+        JsonObject msgDataObj = getMsgDataAsJsonObject(msg);
         double latitude = getValueFromMessageByName(msg, msgDataObj, config.getLatitudeKeyName());
         double longitude = getValueFromMessageByName(msg, msgDataObj, config.getLongitudeKeyName());
         List<Perimeter> perimeters = getPerimeters(msg);
@@ -64,6 +60,14 @@ public abstract class AbstractGeofencingNode<T extends TbGpsGeofencingFilterNode
             }
         }
         return matches;
+    }
+
+    protected JsonObject getMsgDataAsJsonObject(TbMsg msg) throws TbNodeException {
+        JsonElement msgDataElement = JsonParser.parseString(msg.getData());
+        if (!msgDataElement.isJsonObject()) {
+            throw new TbNodeException("Incoming Message is not a valid JSON object!");
+        }
+        return msgDataElement.getAsJsonObject();
     }
 
     protected boolean checkMatches(Perimeter perimeter, double latitude, double longitude) throws TbNodeException {

@@ -18,22 +18,13 @@ package org.thingsboard.rule.engine.geo;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-/**
- * Created by ashvayka on 19.01.18.
- */
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class TbGpsGeofencingFilterNodeConfiguration extends AbstractTbGpsGeofencingNodeConfiguration<TbGpsGeofencingFilterNodeConfiguration> {
+public abstract class AbstractTbGpsGeofencingActionNodeConfiguration<T extends AbstractTbGpsGeofencingActionNodeConfiguration<T>> extends AbstractTbGpsGeofencingNodeConfiguration<T> {
 
-    @Override
-    public TbGpsGeofencingFilterNodeConfiguration defaultConfiguration() {
-        TbGpsGeofencingFilterNodeConfiguration configuration = new TbGpsGeofencingFilterNodeConfiguration();
-        configuration.setLatitudeKeyName("latitude");
-        configuration.setLongitudeKeyName("longitude");
-        configuration.setPerimeterType(PerimeterType.POLYGON);
-        configuration.setFetchPerimeterInfoFromMessageMetadata(true);
-        configuration.setPerimeterKeyName("ss_perimeter");
-        return configuration;
-    }
+    private int minInsideDuration;
+    private int minOutsideDuration;
+    private String minInsideDurationTimeUnit;
+    private String minOutsideDurationTimeUnit;
 
 }
