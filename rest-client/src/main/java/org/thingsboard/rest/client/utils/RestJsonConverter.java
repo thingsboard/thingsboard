@@ -28,10 +28,7 @@ import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class RestJsonConverter {
@@ -51,6 +48,18 @@ public class RestJsonConverter {
             ).collect(Collectors.toList());
         } else {
             return Collections.emptyList();
+        }
+    }
+
+    public static  Map<String, List<TsKvEntry>> toMultiTimeseries(Map<String, Map<String, List<JsonNode>>> timeseries) {
+        if (!CollectionUtils.isEmpty(timeseries)) {
+            Map<String, List<TsKvEntry>> result = new HashMap<>();
+            timeseries.forEach((key, values) ->
+                    result.put(key, toTimeseries(values))
+            );
+            return result;
+        } else {
+            return Collections.emptyMap();
         }
     }
 
