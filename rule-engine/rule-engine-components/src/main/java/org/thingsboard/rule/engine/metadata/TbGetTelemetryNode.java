@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "originator telemetry",
         configClazz = TbGetTelemetryNodeConfiguration.class,
-        version = 1,
+        version = 2,
         nodeDescription = "Adds message originator telemetry for selected time range into message metadata",
         nodeDetails = "Useful when you need to get telemetry data set from the message originator for a specific time range " +
                 "instead of fetching just the latest telemetry or if you need to get the closest telemetry to the fetch interval start or end. " +
@@ -232,21 +232,21 @@ public class TbGetTelemetryNode implements TbNode {
     public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
         boolean hasChanges = false;
         switch (fromVersion) {
-            case 0 -> {
+            case 0: {
                 if (oldConfiguration.hasNonNull("fetchMode")) {
                     String fetchMode = oldConfiguration.get("fetchMode").asText();
                     switch (fetchMode) {
-                        case "FIRST":
+                        case "FIRST" -> {
                             ((ObjectNode) oldConfiguration).put("orderBy", Direction.ASC.name());
                             ((ObjectNode) oldConfiguration).put("aggregation", Aggregation.NONE.name());
                             hasChanges = true;
-                            break;
-                        case "LAST":
+                        }
+                        case "LAST" -> {
                             ((ObjectNode) oldConfiguration).put("orderBy", Direction.DESC.name());
                             ((ObjectNode) oldConfiguration).put("aggregation", Aggregation.NONE.name());
                             hasChanges = true;
-                            break;
-                        case "ALL":
+                        }
+                        case "ALL" -> {
                             if (oldConfiguration.has("orderBy") &&
                                     (oldConfiguration.get("orderBy").isNull() || oldConfiguration.get("orderBy").asText().isEmpty())) {
                                 ((ObjectNode) oldConfiguration).put("orderBy", Direction.ASC.name());
@@ -257,15 +257,32 @@ public class TbGetTelemetryNode implements TbNode {
                                 ((ObjectNode) oldConfiguration).put("aggregation", Aggregation.NONE.name());
                                 hasChanges = true;
                             }
-                            break;
-                        default:
+                        }
+                        default -> {
                             ((ObjectNode) oldConfiguration).put("fetchMode", FetchMode.LAST.name());
                             ((ObjectNode) oldConfiguration).put("orderBy", Direction.DESC.name());
                             ((ObjectNode) oldConfiguration).put("aggregation", Aggregation.NONE.name());
                             hasChanges = true;
-                            break;
+                        }
                     }
                 }
+            }
+            case 1: {
+                if (!oldConfiguration.hasNonNull("limit")) {
+                    ((ObjectNode) oldConfiguration).put("limit", 1000);
+                    hasChanges = true;
+                }
+                if (oldConfiguration.has("fetchMode") && oldConfiguration.get("fetchMode").asText().equals("ALL")) {
+                    if (!oldConfiguration.hasNonNull("aggregation")) {
+                        ((ObjectNode) oldConfiguration).put("aggregation", Aggregation.NONE.name());
+                        hasChanges = true;
+                    }
+                    if (!oldConfiguration.hasNonNull("orderBy")) {
+                        ((ObjectNode) oldConfiguration).put("orderBy", Direction.ASC.name());
+                        hasChanges = true;
+                    }
+                }
+                break;
             }
         }
         return new TbPair<>(hasChanges, oldConfiguration);
