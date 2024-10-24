@@ -372,6 +372,14 @@ public class DefaultNotifications {
                     .build())
             .build();
 
+    public static final DefaultNotification queueTypeDeprecation = DefaultNotification.builder()
+            .name("Queue type deprecation")
+            .type(NotificationType.GENERAL)
+            .subject("WARNING: ${queueType} deprecation")
+            .text("${queueType} queue type is deprecated and will be removed in ThingsBoard 4.0. Please migrate to Apache Kafka")
+            .icon("warning").color(RED_COLOR)
+            .build();
+
     private final NotificationTemplateService templateService;
     private final NotificationRuleService ruleService;
 
