@@ -3405,8 +3405,10 @@
         "copy-application-secret": "Copy application secret",
         "copy-google-play-link": "Copy Google Play link",
         "copy-sha256-certificate-fingerprints": "Copy SHA256 certificate fingerprints",
-        "delete-applications-text": "Be careful, after the confirmation the mobile application and all related data will become unrecoverable.",
-        "delete-applications-title": "Are you sure you want to delete the mobile application '{{applicationName}}'?",
+        "delete-application": "Delete application",
+        "delete-application-button-text": "I understand consequences, delete application",
+        "delete-application-text": "This action can not be undone. This will permanently delete your application.<br/>If you don’t want to delete it permanently you can <b>suspend</b> application temporary.<br/><b>To delete</b> the application anyway please type <b>\"{{phrase}}\"</b> to confirm.",
+        "delete-application-phrase": "delete application",
         "delete-applications-bundle-text": "Be careful, after the confirmation the mobile bundle and all related data will become unrecoverable.",
         "delete-applications-bundle-title": "Are you sure you want to delete the mobile bundle '{{bundleName}}'?",
         "generate-application-secret": "Generate application secret",
@@ -3484,7 +3486,10 @@
         "edit-page": "Edit page",
         "edit-custom-page": "Edit custom page",
         "delete-page": "Delete page",
-        "qr-code-widget": "QR code widget"
+        "qr-code-widget": "QR code widget",
+        "type-here": "Type hero",
+        "configuration-dialog": "Configuration dialog",
+        "configuration-app": "Configuration app"
     },
     "notification": {
         "action-button": "Action button",

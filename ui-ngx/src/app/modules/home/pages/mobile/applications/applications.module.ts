@@ -23,6 +23,10 @@ import { HomeComponentsModule } from '@home/components/home-components.module';
 import { ApplicationsRoutingModule } from '@home/pages/mobile/applications/applications-routing.module';
 import { ReleaseNotesPanelComponent } from '@home/pages/mobile/applications/release-notes-panel.component';
 import { MobileAppDialogComponent } from '@home/pages/mobile/applications/mobile-app-dialog.component';
+import { RemoveAppDialogComponent } from '@home/pages/mobile/applications/remove-app-dialog.component';
+import {
+  MobileAppConfigurationDialogComponent
+} from '@home/pages/mobile/applications/mobile-app-configuration-dialog.component';
 
 @NgModule({
   declarations: [
@@ -30,6 +34,8 @@ import { MobileAppDialogComponent } from '@home/pages/mobile/applications/mobile
     MobileAppTableHeaderComponent,
     ReleaseNotesPanelComponent,
     MobileAppDialogComponent,
+    RemoveAppDialogComponent,
+    MobileAppConfigurationDialogComponent,
   ],
   imports: [
     CommonModule,

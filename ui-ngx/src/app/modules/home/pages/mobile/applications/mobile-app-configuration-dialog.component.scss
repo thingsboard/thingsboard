@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host{
-  --mdc-outlined-text-field-outline-color: rgba(0,0,0,0.12);
-
-  .mobile-page-form {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
+:host {
+  height: 100%;
+  max-height: 100vh;
+  display: grid;
+  width: 800px;
+  grid-template-rows: min-content minmax(auto, 1fr) min-content;
 }

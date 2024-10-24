@@ -17,6 +17,7 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import {
+  CellActionDescriptor,
   CellActionDescriptorType,
   DateEntityTableColumn,
   EntityTableColumn,
@@ -29,9 +30,28 @@ import { Direction } from '@app/shared/models/page/sort-order';
 import { MobileAppService } from '@core/http/mobile-app.service';
 import { MobileAppComponent } from '@home/pages/mobile/applications/mobile-app.component';
 import { MobileAppTableHeaderComponent } from '@home/pages/mobile/applications/mobile-app-table-header.component';
-import { MobileApp, MobileAppStatus, mobileAppStatusTranslations } from '@shared/models/mobile-app.models';
+import {
+  MobileApp,
+  MobileAppBundleInfo,
+  MobileAppStatus,
+  mobileAppStatusTranslations
+} from '@shared/models/mobile-app.models';
 import { platformTypeTranslations } from '@shared/models/oauth2.models';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
+import { NotificationTemplate } from '@shared/models/notification.models';
+import { BaseData, HasId } from '@shared/models/base-data';
+import {
+  MobileBundleDialogComponent,
+  MobileBundleDialogData
+} from '@home/pages/mobile/bundes/mobile-bundle-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
+import {
+  MobileAppDeleteDialogData,
+  RemoveAppDialogComponent
+} from '@home/pages/mobile/applications/remove-app-dialog.component';
+import {
+  MobileAppConfigurationDialogComponent, MobileAppConfigurationDialogData
+} from '@home/pages/mobile/applications/mobile-app-configuration-dialog.component';
 
 @Injectable()
 export class MobileAppTableConfigResolver  {
@@ -41,10 +61,12 @@ export class MobileAppTableConfigResolver  {
   constructor(private translate: TranslateService,
               private datePipe: DatePipe,
               private mobileAppService: MobileAppService,
-              private truncatePipe: TruncatePipe) {
+              private truncatePipe: TruncatePipe,
+              private dialog: MatDialog,) {
     this.config.selectionEnabled = false;
     this.config.entityType = EntityType.MOBILE_APP;
     this.config.addEnabled = false;
+    this.config.entitiesDeleteEnabled = false;
     this.config.rowPointer = true;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.MOBILE_APP);
     this.config.entityResources = entityTypeResources.get(EntityType.MOBILE_APP);
@@ -97,16 +119,71 @@ export class MobileAppTableConfigResolver  {
         (entity) => entity.versionInfo?.latestVersion ?? '', () => ({}), false),
     );
 
-    this.config.deleteEntityTitle = (app) => this.translate.instant('mobile.delete-applications-title', {applicationName: app.pkgName});
-    this.config.deleteEntityContent = () => this.translate.instant('mobile.delete-applications-text');
     this.config.entitiesFetchFunction = pageLink => this.mobileAppService.getTenantMobileAppInfos(pageLink);
     this.config.loadEntity = id => this.mobileAppService.getMobileAppInfoById(id.id);
     this.config.saveEntity = (mobileApp) => this.mobileAppService.saveMobileApp(mobileApp);
     this.config.deleteEntity = id => this.mobileAppService.deleteMobileApp(id.id);
+
+    this.config.cellActionDescriptors = this.configureCellActions();
   }
 
   resolve(_route: ActivatedRouteSnapshot): EntityTableConfig<MobileApp> {
     return this.config;
+  }
+
+  private configureCellActions(): Array<CellActionDescriptor<MobileApp>> {
+    return [
+      {
+        name: this.translate.instant('mobile.configuration-app'),
+        icon: 'code',
+        isEnabled: () => true,
+        onAction: ($event, entity) => this.configurationApp($event, entity)
+      },
+      {
+        name: this.translate.instant('action.delete'),
+        icon: 'delete',
+        isEnabled: () => true,
+        onAction: ($event, entity) => this.deleteEntity($event, entity)
+      }
+    ];
+  }
+
+  private deleteEntity($event: Event, entity: MobileApp) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialog.open<RemoveAppDialogComponent, MobileAppDeleteDialogData,
+      MobileAppBundleInfo>(RemoveAppDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        id: entity.id.id
+      }
+    }).afterClosed()
+      .subscribe((res) => {
+        if (res) {
+          this.config.updateData();
+        }
+      });
+  }
+
+  private configurationApp($event: Event, entity: MobileApp, afterAdd = false) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialog.open<MobileAppConfigurationDialogComponent, MobileAppConfigurationDialogData,
+      MobileAppBundleInfo>(MobileAppConfigurationDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        afterAdd
+      }
+    }).afterClosed()
+      .subscribe(() => {
+        if (afterAdd) {
+          this.config.updateData();
+        }
+      });
   }
 
   private mobileStatus(status: MobileAppStatus): string {
