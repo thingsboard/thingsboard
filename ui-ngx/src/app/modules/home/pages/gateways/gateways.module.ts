@@ -18,14 +18,14 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@app/shared/shared.module';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
-import { ApiUsageRoutingModule } from '@home/pages/api-usage/api-usage-routing.module';
+import { GatewaysRoutingModule } from '@home/pages/gateways/gateways-routing.module';
 
 @NgModule({
   imports: [
     CommonModule,
     SharedModule,
     HomeComponentsModule,
-    ApiUsageRoutingModule
+    GatewaysRoutingModule
   ]
 })
-export class ApiUsageModule { }
+export class GatewaysModule { }
