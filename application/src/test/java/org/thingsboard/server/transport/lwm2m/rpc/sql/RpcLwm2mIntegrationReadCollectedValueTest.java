@@ -62,7 +62,7 @@ public class RpcLwm2mIntegrationReadCollectedValueTest extends AbstractRpcLwM2MI
         AtomicReference<ObjectNode> actualValues = new AtomicReference<>();
         await().atMost(40, SECONDS).until(() -> {
             actualValues.set(doGetAsync(
-                    "/api/plugins/telemetry/DEVICE/" + deviceId + "/values/timeseries?keys="
+                    "/api/plugins/telemetry/DEVICE/" + lwM2MTestClient.getDeviceIdStr() + "/values/timeseries?keys="
                             + RESOURCE_ID_NAME_3303_12_5700
                             + "&startTs=" + (RESOURCE_ID_3303_12_5700_TS_0 - RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS)
                             + "&endTs=" + (RESOURCE_ID_3303_12_5700_TS_1 + RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS)
@@ -93,6 +93,6 @@ public class RpcLwm2mIntegrationReadCollectedValueTest extends AbstractRpcLwM2MI
 
     private String sendRPCById(String path) throws Exception {
         String setRpcRequest = "{\"method\": \"Read\", \"params\": {\"id\": \"" + path + "\"}}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
     }
 }
