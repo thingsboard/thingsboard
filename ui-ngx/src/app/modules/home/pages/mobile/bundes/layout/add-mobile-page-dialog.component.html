@@ -15,20 +15,19 @@
     limitations under the License.
 
 -->
-<mat-toolbar color="primary">
+<mat-toolbar color="primary" class="justify-between">
   <h2 translate>mobile.add-specific-page</h2>
-  <span fxFlex></span>
   <button mat-icon-button
           (click)="cancel()"
           type="button">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
 </mat-toolbar>
-<div mat-dialog-content fxLayout="column">
+<div mat-dialog-content>
   <tb-mobile-page-item [formControl]="customMobilePage">
   </tb-mobile-page-item>
 </div>
-<div mat-dialog-actions fxLayoutAlign="end center">
+<div mat-dialog-actions class="justify-end">
   <button mat-button color="primary"
           type="button"
           [disabled]="(isLoading$ | async)"

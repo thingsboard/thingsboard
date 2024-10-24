@@ -37,7 +37,7 @@
         <div class="tb-form-row column-xs" *ngIf="!mobileAppSettingsForm.get('useDefaultApp').value">
           <div class="fixed-title-width-230">{{ 'mobile.bundle' | translate }}</div>
           <tb-entity-autocomplete
-            fxFlex
+            class="flex-1"
             useFullEntityId
             appearance="outline"
             subscriptSizing="dynamic"

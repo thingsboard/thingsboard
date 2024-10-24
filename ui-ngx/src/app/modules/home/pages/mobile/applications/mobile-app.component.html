@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section class="mat-padding" [formGroup]="entityForm" fxLayout="column">
+<section class="mat-padding flex flex-col" [formGroup]="entityForm">
   <mat-form-field appearance="outline" subscriptSizing="dynamic">
     <mat-label translate>mobile.mobile-package</mat-label>
     <input matInput required formControlName="pkgName">
@@ -82,9 +82,9 @@
   </mat-form-field>
   <section class="tb-form-panel stroked no-padding-bottom" formGroupName="versionInfo" style="margin-bottom: 21px;">
     <div class="tb-form-panel-title" translate>mobile.version-information</div>
-    <section fxLayout="column">
-      <section fxLayout="row" fxLayoutAlign="start start">
-        <mat-form-field fxFlex appearance="outline">
+    <section class="flex flex-col">
+      <section class="flex flex-row">
+        <mat-form-field class="flex-1" appearance="outline">
           <mat-label translate>mobile.min-version</mat-label>
           <input matInput formControlName="minVersion">
         </mat-form-field>
@@ -98,8 +98,8 @@
           <tb-icon>mdi:text-box-edit</tb-icon>
         </button>
       </section>
-      <section fxLayout="row" fxLayoutAlign="start start">
-        <mat-form-field fxFlex appearance="outline">
+      <section class="flex flex-row">
+        <mat-form-field class="flex-1" appearance="outline">
           <mat-label translate>mobile.latest-version</mat-label>
           <input matInput formControlName="latestVersion">
         </mat-form-field>
@@ -117,7 +117,7 @@
   </section>
   <section class="tb-form-panel stroked no-padding-bottom" formGroupName="storeInfo">
     <div class="tb-form-panel-title" translate>mobile.store-information</div>
-    <section fxLayout="column">
+    <section class="flex flex-col">
       <mat-form-field appearance="outline">
         <mat-label>{{
             (entityForm.get('platformType').value === PlatformType.ANDROID ? 'mobile.google-play-link' : 'mobile.app-store-link') | translate

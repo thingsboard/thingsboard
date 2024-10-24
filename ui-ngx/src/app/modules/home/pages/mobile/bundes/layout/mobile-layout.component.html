@@ -16,21 +16,19 @@
 
 -->
 <div class="mobile-layout-container">
-  <div class="header">
+  <div class="header flex items-center gap-2">
     <div class="title-section">
       <span tbTruncateWithTooltip class="title-container" translate>mobile.pages</span>
     </div>
-    <span fxFlex></span>
-    <button *ngIf="!readonly" class="tb-mobile-layout-button"
-            fxHide.lt-lg
+    <span class="flex-1"></span>
+    <button *ngIf="!readonly" class="tb-mobile-layout-button lt-lg:!hidden"
             mat-stroked-button
             color="primary"
             (click)="hideAll()">
       <tb-icon matButtonIcon>visibility_off</tb-icon>
       <div tbTruncateWithTooltip>{{ 'mobile.hide-all-pages' | translate }}</div>
     </button>
-    <button *ngIf="!readonly" class="tb-mobile-layout-button"
-            fxHide.lt-lg
+    <button *ngIf="!readonly" class="tb-mobile-layout-button lt-lg:!hidden"
             mat-stroked-button
             color="primary"
             (click)="resetToDefault()">
@@ -38,20 +36,18 @@
       <div tbTruncateWithTooltip>{{ 'mobile.reset-to-default-pages' | translate }}</div>
     </button>
     <button *ngIf="!readonly"
-            fxHide.gt-md
             type="button"
             mat-stroked-button
-            class="tb-box-button"
+            class="tb-box-button gt-md:!hidden"
             matTooltip="{{ 'mobile.hide-all-pages' | translate }}"
             matTooltipPosition="above"
             (click)="hideAll()">
       <tb-icon color="primary" matButtonIcon>visibility_off</tb-icon>
     </button>
     <button *ngIf="!readonly"
-            fxHide.gt-md
             type="button"
             mat-stroked-button
-            class="tb-box-button"
+            class="tb-box-button gt-md:!hidden"
             matTooltip="{{ 'mobile.reset-to-default-pages' | translate }}"
             matTooltipPosition="above"
             (click)="resetToDefault()">

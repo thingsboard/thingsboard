@@ -31,8 +31,8 @@
           <div tbTruncateWithTooltip> {{ itemName }} </div>
         </div>
       </div>
-      <div fxHide.xs class="tb-mobile-page-item-input-block">
-        <mat-form-field class="flex tb-suffix-absolute" appearance="outline" subscriptSizing="dynamic">
+      <div class="tb-mobile-page-item-input-block xs:!hidden">
+        <mat-form-field class="tb-suffix-absolute flex" appearance="outline" subscriptSizing="dynamic">
           <input matInput [required]="isCustomMenuItem" formControlName="label" placeholder="{{ itemNamePlaceholder }}">
           <mat-icon matSuffix
                     matTooltipPosition="above"
@@ -44,7 +44,7 @@
           </mat-icon>
         </mat-form-field>
         <mat-form-field *ngIf="isCustomMenuItem"
-                        class="flex tb-mobile-page-item-info" appearance="outline" subscriptSizing="dynamic">
+                        class="tb-mobile-page-item-info flex" appearance="outline" subscriptSizing="dynamic">
           <input matInput readonly [placeholder]="itemInfo">
         </mat-form-field>
       </div>

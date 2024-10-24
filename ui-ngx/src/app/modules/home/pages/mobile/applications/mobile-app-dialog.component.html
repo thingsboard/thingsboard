@@ -18,7 +18,7 @@
 <form (ngSubmit)="save()" style="width: 850px;max-height: 100vh;display: grid;grid-template-rows: min-content 4px minmax(auto, 1fr) min-content;">
   <mat-toolbar color="primary">
     <h2>{{ 'mobile.add-application' | translate }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <div tb-help="mobileApplication"></div>
     <button mat-icon-button
             (click)="cancel()"
@@ -29,10 +29,10 @@
   <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
   </mat-progress-bar>
   <div *ngIf="!(isLoading$ | async)"></div>
-  <div mat-dialog-content style="padding: 0">
+  <div mat-dialog-content class="!p-0">
     <tb-mobile-app #mobileAppComponent></tb-mobile-app>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="justify-end">
     <button mat-button color="primary"
             type="button"
             cdkFocusInitial

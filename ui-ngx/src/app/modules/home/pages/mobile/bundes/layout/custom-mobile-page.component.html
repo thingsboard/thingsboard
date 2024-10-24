@@ -21,13 +21,13 @@
       {{ 'mobile.visible' | translate }}
     </mat-slide-toggle>
   </div>
-  <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="center center">
+  <div class="flex items-center justify-center gap-2">
     <tb-material-icon-select asBoxInput
                              required
                              color="#305680"
                              formControlName="icon">
     </tb-material-icon-select>
-    <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-label translate>mobile.page-name</mat-label>
       <input required matInput formControlName="label">
     </mat-form-field>
@@ -41,7 +41,7 @@
     </mat-select>
   </mat-form-field>
   <ng-container *ngIf="customMobilePageForm.get('type').value === MobilePageType.DASHBOARD">
-    <tb-dashboard-autocomplete fxFlex
+    <tb-dashboard-autocomplete class="flex-1"
                                formControlName="dashboardId"
                                required
                                label="{{ 'dashboard.dashboard' | translate }}"
@@ -54,13 +54,13 @@
     ></tb-dashboard-autocomplete>
   </ng-container>
   <ng-container *ngIf="customMobilePageForm.get('type').value === MobilePageType.WEB_VIEW">
-    <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-label translate>mobile.url</mat-label>
       <input required matInput formControlName="url">
     </mat-form-field>
   </ng-container>
   <ng-container *ngIf="customMobilePageForm.get('type').value === MobilePageType.CUSTOM">
-    <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-label translate>mobile.path</mat-label>
       <input required matInput formControlName="path">
     </mat-form-field>
