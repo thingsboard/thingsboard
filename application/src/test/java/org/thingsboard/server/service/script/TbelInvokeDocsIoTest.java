@@ -35,13 +35,17 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     private String decoderStr;
     private String msgStr;
 
-    private final String msgMapStr = "{\"temperature\": 42, \"nested\" : \"508\"};\n";
+    private final String msgMapStr = """
+            {"temperature": 42, "nested" : "508"};
+            """;
     private final LinkedHashMap<String, Object> expectedMap = new LinkedHashMap<>(Map.of("temperature", 42, "nested", "508"));
 
     // Simple Property Expression
     @Test
     void simplePropertyBooleanExpression_Test() throws ExecutionException, InterruptedException {
-        msgStr = "{\"temperature\": 15, \"humidity\" : 30}";
+        msgStr = """
+                {"temperature": 15, "humidity" : 30}
+                """;
         decoderStr = "return (msg.temperature > 10 && msg.temperature < 20) || (msg.humidity > 10 && msg.humidity < 60);";
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         boolean expected = true;
@@ -52,9 +56,11 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     @Test
     public void multipleStatements_Test() throws ExecutionException, InterruptedException {
         msgStr = "{}";
-        decoderStr = "var  a = 2;\n" +
-                "var b = 2;\n" +
-                "return a + b;";
+        decoderStr = """
+                var a = 2;
+                var b = 2;
+                return a + b;
+                """;
         Integer expected = 4;
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
@@ -64,8 +70,10 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     @Test
     public void mapsChangeValueKey_Test() throws ExecutionException, InterruptedException {
         msgStr = msgMapStr;
-        decoderStr = "msg.temperature = 0;\n" +
-                "return msg;";
+        decoderStr = """
+                msg.temperature = 0;
+                return msg;
+                """;
         LinkedHashMap<String, Object> expected = expectedMap;
         expected.put("temperature", 0);
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
@@ -76,10 +84,12 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     @Test
     public void mapsCheckExistenceKey_Test() throws ExecutionException, InterruptedException {
         msgStr = msgMapStr;
-        decoderStr = "if(msg.temperature != null){\n" +
-                "    msg.temperature = 2;\n" +
-                "}\n" +
-                "return msg;";
+        decoderStr = """
+                if(msg.temperature != null){
+                    msg.temperature = 2;
+                }
+                return msg;
+                """;
         LinkedHashMap<String, Object> expected = expectedMap;
         expected.put("temperature", 2);
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
@@ -89,15 +99,17 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     @Test
     public void mapsNullSafeExpressionsUsing_Test() throws ExecutionException, InterruptedException {
         msgStr = msgMapStr;
-        decoderStr = "msg.existingKey = {};\n" +
-                "msg.existingKey.smth = 20;\n" +
-                "if(msg.?nonExistingKey.smth > 10){\n" +
-                "    msg.temperature = 2;\n" +
-                "}\n" +
-                "if(msg.?existingKey.smth > 10){\n" +
-                "    msg.nested = \"100\";\n" +
-                "}\n" +
-                "return msg;";
+        decoderStr = """
+                msg.existingKey = {};
+                msg.existingKey.smth = 20;
+                if(msg.?nonExistingKey.smth > 10){
+                    msg.temperature = 2;
+                }
+                if(msg.?existingKey.smth > 10){
+                    msg.nested = "100";
+                }
+                return msg;
+                """;
         LinkedHashMap<String, Object> expected = expectedMap;
         expected.put("nested", "100");
         LinkedHashMap<String, Object> existingKey = new LinkedHashMap<>(Map.of("smth", 20));
@@ -109,21 +121,23 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     @Test
     public void mapsIterateThrough_Test() throws ExecutionException, InterruptedException {
         msgStr = msgMapStr;
-        decoderStr = "foreach(element : msg.entrySet()){\n" +
-                "  if(element.getKey() == null){\n" +
-                "    return raiseError(\"Bad getKey\");\n" +
-                "  }\n" +
-                "  if(element.key == null){\n" +
-                "    return raiseError(\"Bad key\");\n" +
-                "  }\n" +
-                "  if(element.getValue() == null){\n" +
-                "    return raiseError(\"Bad getValue\");\n" +
-                "  }\n" +
-                "  if(element.value == null){\n" +
-                "    return raiseError(\"Bad value\");\n" +
-                "  }\n" +
-                "}\n" +
-                "return msg;";
+        decoderStr = """
+                foreach(element : msg.entrySet()){
+                  if(element.getKey() == null){
+                    return raiseError("Bad getKey");
+                  }
+                  if(element.key == null){
+                    return raiseError("Bad key");
+                  }
+                  if(element.getValue() == null){
+                    return raiseError("Bad getValue");
+                  }
+                  if(element.value == null){
+                    return raiseError("Bad value");
+                  }
+                }
+                return msg;
+                """;
         LinkedHashMap<String, Object> expected = expectedMap;
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
@@ -132,8 +146,10 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     @Test
     public void mapsGetInfoSize_Test() throws ExecutionException, InterruptedException {
         msgStr = msgMapStr;
-        decoderStr = "var size = msg.size();\n" +
-                "return size;";
+        decoderStr = """
+                var size = msg.size();
+                return size;
+                """;
         Integer expected = 2;
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
@@ -142,9 +158,10 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     @Test
     public void mapsGetInfoMemorySize_Test() throws ExecutionException, InterruptedException {
         msgStr = msgMapStr;
-        decoderStr =
-                "var memorySize = msg.memorySize();\n" +
-                        "return memorySize;";
+        decoderStr = """
+                var memorySize = msg.memorySize();
+                return memorySize;
+                """;
         Long expected = 24L;
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
@@ -153,10 +170,12 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     @Test
     public void mapsGetInfoPut_Test() throws ExecutionException, InterruptedException {
         msgStr = msgMapStr;
-        decoderStr = "msg.humidity = 73;\n" +
-                "msg.put(\"humidity\", 74); \n" +
-                "msg.putIfAbsent(\"temperature1\", 73);\n" +
-                "return msg;";
+        decoderStr = """
+                msg.humidity = 73;
+                msg.put("humidity", 74);
+                msg.putIfAbsent("temperature1", 73);
+                return msg;
+                """;
         LinkedHashMap<String, Object> expected = expectedMap;
         expected.put("humidity", 74);
         expected.putIfAbsent("temperature1", 73);
@@ -167,16 +186,17 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     @Test
     public void mapsChangeValuePut_Test() throws ExecutionException, InterruptedException {
         msgStr = msgMapStr;
-        decoderStr =
-                "msg.temperature = 73;\n" +
-                        "msg.putIfAbsent(\"temperature1\", 73);\n" +
-                        "var put1 = msg.put(\"temperature\", 74);\n" +
-                        "msg.putIfAbsent(\"humidity\", 73); \n" +
-                        "var putIfAbsent1 = msg.putIfAbsent(\"humidity\", 74); \n" +
-                        "return {map: msg,\n" +
-                        "             put1: put1,\n" +
-                        "             putIfAbsent1: putIfAbsent1\n" +
-                        "        }";
+        decoderStr = """
+            msg.temperature = 73;
+            msg.putIfAbsent("temperature1", 73);
+            var put1 = msg.put("temperature", 74);
+            msg.putIfAbsent("humidity", 73);
+            var putIfAbsent1 = msg.putIfAbsent("humidity", 74);
+            return {map: msg,
+                    put1: put1,
+                    putIfAbsent1: putIfAbsent1
+                   };
+            """;
         LinkedHashMap<String, Object> expectedMapChangeValue = expectedMap;
         expectedMapChangeValue.replace("temperature", 42, 74);
         expectedMapChangeValue.put("humidity", 73);
@@ -192,16 +212,18 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     @Test
     public void mapsChangeValueReplace_Test() throws ExecutionException, InterruptedException {
         msgStr = msgMapStr;
-        decoderStr = "msg.put(\"humidity\", 73); \n" +
-                "msg.putIfAbsent(\"temperature1\", 73);\n" +
-                "var replace = msg.replace(\"temperature\", 56);\n" +
-                "var replace1 = msg.replace(\"temperature\", 56, 45);\n" +
-                "var replace2 = msg.replace(\"temperature\", 48, 56);\n" +
-                "return {map: msg,\n" +
-                "        replace: replace,\n" +
-                "        replace1: replace1,\n" +
-                "        replace2: replace2\n" +
-                "       }";
+        decoderStr = """
+                msg.put("humidity", 73);
+                msg.putIfAbsent("temperature1", 73);
+                var replace = msg.replace("temperature", 56);
+                var replace1 = msg.replace("temperature", 56, 45);
+                var replace2 = msg.replace("temperature", 48, 56);
+                return {map: msg,
+                        replace: replace,
+                        replace1: replace1,
+                        replace2: replace2
+                       }
+                """;
         LinkedHashMap<String, Object> expectedMapReplaceValue = expectedMap;
         expectedMapReplaceValue.replace("temperature", 42, 45);
         expectedMapReplaceValue.put("humidity", 73);
@@ -218,10 +240,12 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     @Test
     public void mapsRemoveEntryFromMapByKey_Test() throws ExecutionException, InterruptedException {
         msgStr = msgMapStr;
-        decoderStr = "msg.put(\"humidity\", 73); \n" +
-                "msg.putIfAbsent(\"temperature1\", 73);\n" +
-                "msg.remove(\"temperature\");\n" +
-                "return msg;";
+        decoderStr = """
+                msg.put("humidity", 73);
+                msg.putIfAbsent("temperature1", 73);
+                msg.remove("temperature");
+                return msg;
+                """;
         LinkedHashMap<String, Object> expected = expectedMap;
         expected.put("humidity", 73);
         expected.putIfAbsent("temperature1", 73);
@@ -233,14 +257,16 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     @Test
     public void mapsGetKeysValues_Test() throws ExecutionException, InterruptedException {
         msgStr = msgMapStr;
-        decoderStr = "msg.put(\"humidity\", 73); \n" +
-                "msg.putIfAbsent(\"temperature1\", 73);\n" +
-                "msg.remove(\"temperature\");\n" +
-                "var keys = msg.keys();\n" +
-                "var values = msg.values();\n" +
-                "return {keys: keys,\n" +
-                "        values: values\n" +
-                "       }";
+        decoderStr = """
+                msg.put("humidity", 73); 
+                msg.putIfAbsent("temperature1", 73);
+                msg.remove("temperature");
+                var keys = msg.keys();
+                var values = msg.values();
+                return {keys: keys,
+                        values: values
+                       }
+                """;
         LinkedHashMap<String, Object> expectedMapKeysValues = expectedMap;
         expectedMapKeysValues.put("humidity", 73);
         expectedMapKeysValues.putIfAbsent("temperature1", 73);
@@ -255,16 +281,18 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     @Test
     public void mapsSort_Test() throws ExecutionException, InterruptedException {
         msgStr = msgMapStr;
-        decoderStr = "msg.put(\"humidity\", 73); \n" +
-                "msg.putIfAbsent(\"temperature1\", 73);\n" +
-                "msg.remove(\"temperature\");\n" +
-                "msg.sortByKey();\n" +
-                "var mapSortByKey = msg.clone();\n" +
-                "var sortByValue = msg.sortByValue(); \n" +
-                "return {mapSortByKey: mapSortByKey,\n" +
-                "        sortByValue: sortByValue,\n" +
-                "        mapSortByValue: msg\n" +
-                "       }";
+        decoderStr = """
+                msg.put("humidity", 73);
+                msg.putIfAbsent("temperature1", 73);
+                msg.remove("temperature");
+                msg.sortByKey();
+                var mapSortByKey = msg.clone();
+                var sortByValue = msg.sortByValue(); 
+                return {mapSortByKey: mapSortByKey,
+                        sortByValue: sortByValue,
+                        mapSortByValue: msg
+                       }
+                """;
         LinkedHashMap<String, Object> expectedMapSortByKey = new LinkedHashMap<>();
         expectedMapSortByKey.put("humidity", 73);
         expectedMapSortByKey.put("nested", "508");
@@ -291,12 +319,14 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     @Test
     public void mapsAddNewEntry_Test() throws ExecutionException, InterruptedException {
         msgStr = msgMapStr;
-        decoderStr = "msg.put(\"humidity\", 73); \n" +
-                "msg.putIfAbsent(\"temperature1\", 73);\n" +
-                "msg.remove(\"temperature\");\n" +
-                "var mapAdd = {\"test\": 12, \"input\" : {\"http\": 130}};\n" +
-                "msg.putAll(mapAdd);\n" +
-                "return msg;";
+        decoderStr = """
+                msg.put("humidity", 73);
+                msg.putIfAbsent("temperature1", 73);
+                msg.remove("temperature");
+                var mapAdd = {"test": 12, "input" : {"http": 130}};
+                msg.putAll(mapAdd);
+                return msg;
+                """;
         LinkedHashMap<String, Object> expected = expectedMap;
         expected.put("humidity", 73);
         expected.putIfAbsent("temperature1", 73);
@@ -314,24 +344,28 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     // Lists
     @Test
     public void listsCreateNewList_Test() throws ExecutionException, InterruptedException {
-        msgStr = "{\"list\": [\"A\", \"B\", \"C\"]}";
-        decoderStr = "var list = msg.list;\n" +
-                "var list0 = list[0];\n" +
-                "var listSize = list.size();\n" +
-                "var smthForeach = \"\";\n" +
-                "foreach (item : list) {\n" +
-                "  smthForeach += item;\n" +
-                "}\n" +
-                "var smthForLoop= \"\";\n" +
-                "for (var i =0; i < list.size; i++) {\n" +
-                "  smthForLoop += list[i];\n" +
-                "}\n" +
-                "return {list: list,\n" +
-                "        list0: list0,\n" +
-                "        listSize: listSize,\n" +
-                "        smthForeach: smthForeach,\n" +
-                "        smthForLoop: smthForLoop\n" +
-                "       }\n";
+        msgStr = """
+            {"list": ["A", "B", "C"]}
+            """;
+        decoderStr = """
+                var list = msg.list;
+                var list0 = list[0];
+                var listSize = list.size();
+                var smthForeach = "";
+                foreach (item : list) {
+                  smthForeach += item;
+                }
+                var smthForLoop= "";
+                for (var i =0; i < list.size; i++) {
+                  smthForLoop += list[i];
+                }
+                return {list: list,
+                        list0: list0,
+                        listSize: listSize,
+                        smthForeach: smthForeach,
+                        smthForLoop: smthForLoop
+                       }
+                """;
         List expectedList = new ArrayList<>(List.of("A", "B", "C"));
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
         expected.put("list", expectedList);
@@ -351,51 +385,55 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
      */
     @Test
     public void listAddPushDelete_Test() throws ExecutionException, InterruptedException {
-        msgStr = "{\"list\": [\"A\", \"B\", \"C\", \"B\", \"C\", \"hello\", 34567]}";
-        decoderStr = "var list = msg.list;\n" +
-                "var msgList = {};\n" +
-                "// add/push\n" +
-                "msgList.put(\"list\", list.clone());\n" +
-                "var listAdd = [\"thigsboard\", 4, 67];\n" +
-                "var addAll = list.addAll(listAdd);\n" +
-                "msgList.put(\"addAll\", addAll);\n" +
-                "msgList.put(\"addAllList\", list.clone());\n" +
-                "var addAllIndex = list.addAll(2, listAdd);\n" +
-                "msgList.put(\"addAllIndex\", addAllIndex);\n" +
-                "msgList.put(\"addAllIndexList\", list.clone());\n" +
-                "var addIndex = list.add(3, \"thigsboard\");\n" +
-                "if(addIndex != null) {\n" +
-                "  msgList.put(\"addIndex\", addIndex);\n" +
-                "};\n" +
-                "msgList.put(\"addIndexList\", list.clone());\n" +
-                "var push = list.push(\"thigsboard\");\n" +
-                "msgList.put(\"push\", push);\n" +
-                "if(push != null) {\n" +
-                "  msgList.put(\"push\", push);\n" +
-                "}\n" +
-                "msgList.put(\"pushList\", list.clone());\n" +
-                "var unshift = list.unshift(\"r\");\n" +
-                "msgList.put(\"unshift\", unshift);\n" +
-                "msgList.put(\"unshiftList\", list.clone());\n" +
-                "var unshiftQ = [\"Q\", 4];\n" +
-                "msgList.put(\"unshift\", list.unshift(unshiftQ));\n" +
-                "msgList.put(\"unshiftQunList\", list.clone());\n" +
-                "// delete\n" +
-                "msgList.put(\"removeIndex2\", list.remove(2));\n" +
-                "msgList.put(\"removeIndex2List\", list.clone());\n" +
-                "msgList.put(\"removeValueC\", list.remove(\"C\"));\n" +
-                "msgList.put(\"removeValueCList\", list.clone());\n" +
-                "msgList.put(\"shift\", list.shift());\n" +
-                "msgList.put(\"shiftList\", list.clone());\n" +
-                "msgList.put(\"pop\", list.pop());\n" +
-                "msgList.put(\"popList\", list.clone());\n" +
-                "msgList.put(\"splice3\", list.splice(3));\n" +
-                "msgList.put(\"splice3List\", list.clone());\n" +
-                "msgList.put(\"splice2\", list.splice(2, 2));\n" +
-                "msgList.put(\"splice2List\", list.clone());\n" +
-                "msgList.put(\"splice1_4\", list.splice(1, 4, \"start\", 5, \"end\"));\n" +
-                "msgList.put(\"splice1_4List\", list.clone());\n" +
-                "return msgList";
+        msgStr = """
+            {"list": ["A", "B", "C", "B", "C", "hello", 34567]}
+            """;
+        decoderStr = """
+                var list = msg.list;
+                var msgList = {};
+                // add/push
+                msgList.put("list", list.clone());
+                var listAdd = ["thigsboard", 4, 67];
+                var addAll = list.addAll(listAdd);
+                msgList.put("addAll", addAll);
+                msgList.put("addAllList", list.clone());
+                var addAllIndex = list.addAll(2, listAdd);
+                msgList.put("addAllIndex", addAllIndex);
+                msgList.put("addAllIndexList", list.clone());
+                var addIndex = list.add(3, "thigsboard");
+                if(addIndex != null) {
+                  msgList.put("addIndex", addIndex);
+                };
+                msgList.put("addIndexList", list.clone());
+                var push = list.push("thigsboard");
+                msgList.put("push", push);
+                if(push != null) {
+                  msgList.put("push", push);
+                }
+                msgList.put("pushList", list.clone());
+                var unshift = list.unshift("r");
+                msgList.put("unshift", unshift);
+                msgList.put("unshiftList", list.clone());
+                var unshiftQ = ["Q", 4];
+                msgList.put("unshift", list.unshift(unshiftQ));
+                msgList.put("unshiftQunList", list.clone());
+                // delete
+                msgList.put("removeIndex2", list.remove(2));
+                msgList.put("removeIndex2List", list.clone());
+                msgList.put("removeValueC", list.remove("C"));
+                msgList.put("removeValueCList", list.clone());
+                msgList.put("shift", list.shift());
+                msgList.put("shiftList", list.clone());
+                msgList.put("pop", list.pop());
+                msgList.put("popList", list.clone());
+                msgList.put("splice3", list.splice(3));
+                msgList.put("splice3List", list.clone());
+                msgList.put("splice2", list.splice(2, 2));
+                msgList.put("splice2List", list.clone());
+                msgList.put("splice1_4", list.splice(1, 4, "start", 5, "end"));
+                msgList.put("splice1_4List", list.clone());
+                return msgList
+                """;
         ArrayList list = new ArrayList<>(List.of("A", "B", "C", "B", "C", "hello", 34567));
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
         // add/push
@@ -435,17 +473,21 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
 
     @Test
     public void listChange_Test() throws ExecutionException, InterruptedException {
-        msgStr = "{\"list\": [\"r\", \"start\", 5, \"end\"]}";
-        decoderStr = "var list = msg.list;\n" +
-                "var msgList = {};\n" +
-                "msgList.put(\"list\", list.clone());\n" +
-                "msgList.put(\"set\", list.set(3, \"65\"));\n" +
-                "msgList.put(\"setList\", list.clone());\n" +
-                "list[1] = \"98\";\n" +
-                "msgList.put(\"listChangeIndex1List\", list.clone());\n" +
-                "list[0] = 2096;\n" +
-                "msgList.put(\"listChangeIndex0List\", list.clone());\n" +
-                "return msgList";
+        msgStr = """
+            {"list": ["r", "start", 5, "end"]}
+            """;
+        decoderStr = """
+                var list = msg.list;
+                var msgList = {};
+                msgList.put("list", list.clone());
+                msgList.put("set", list.set(3, "65"));
+                msgList.put("setList", list.clone());
+                list[1] = "98";
+                msgList.put("listChangeIndex1List", list.clone());
+                list[0] = 2096;
+                msgList.put("listChangeIndex0List", list.clone());
+                return msgList
+                """;
         ArrayList list = new ArrayList<>(List.of("r", "start", 5, "end"));
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
         expected.put("list", list.clone());
@@ -461,25 +503,29 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
 
     @Test
     public void listSort_Test() throws ExecutionException, InterruptedException {
-        msgStr = "{\"list\": [2096, \"98\", 5, \"65\"]}";
-        decoderStr = "var list = msg.list;\n" +
-                "var msgList = {};\n" +
-                "msgList.put(\"list\", list.clone());\n" +
-                "msgList.put(\"sort\", list.sort());\n" +
-                "msgList.put(\"sortList\", list.clone());\n" +
-                "msgList.put(\"sortTrue\", list.sort(true));\n" +
-                "msgList.put(\"sortTrueList\", list.clone());\n" +
-                "msgList.put(\"sortFalse\", list.sort(false));\n" +
-                "msgList.put(\"sortFalseList\", list.clone());\n" +
-                "msgList.put(\"reverse\", list.reverse());\n" +
-                "msgList.put(\"reverseList\", list.clone());\n" +
-                "msgList.put(\"fill\", list.fill(67));\n" +
-                "msgList.put(\"fillList\", list.clone());\n" +
-                "msgList.put(\"fill4\", list.fill(4, 1));\n" +
-                "msgList.put(\"fill4List\", list.clone());\n" +
-                "msgList.put(\"fill4_6\", list.fill(2, 1, 4));\n" +
-                "msgList.put(\"fill4_6List\", list.clone());\n" +
-                "return msgList";
+        msgStr = """
+            {"list": [2096, "98", 5, "65"]}
+            """;
+        decoderStr = """
+                var list = msg.list;
+                var msgList = {};
+                msgList.put("list", list.clone());
+                msgList.put("sort", list.sort());
+                msgList.put("sortList", list.clone());
+                msgList.put("sortTrue", list.sort(true));
+                msgList.put("sortTrueList", list.clone());
+                msgList.put("sortFalse", list.sort(false));
+                msgList.put("sortFalseList", list.clone());
+                msgList.put("reverse", list.reverse());
+                msgList.put("reverseList", list.clone());
+                msgList.put("fill", list.fill(67));
+                msgList.put("fillList", list.clone());
+                msgList.put("fill4", list.fill(4, 1));
+                msgList.put("fill4List", list.clone());
+                msgList.put("fill4_6", list.fill(2, 1, 4));
+                msgList.put("fill4_6List", list.clone());
+                return msgList
+                """;
         ArrayList list = new ArrayList<>(List.of(2096, "98", 5, "65"));
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
         expected.put("list", list.clone());
@@ -490,11 +536,11 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         expected.put("sortFalseList", list.clone());
         Collections.reverse(list);
         expected.put("reverseList", list.clone());
-        expected.put("fill", fill(list,67));
+        expected.put("fill", fill(list, 67));
         expected.put("fillList", list.clone());
-        expected.put("fill4", fill(list,4, 1));
+        expected.put("fill4", fill(list, 4, 1));
         expected.put("fill4List", list.clone());
-        expected.put("fill4_6", fill(list,2, 1, 4));
+        expected.put("fill4_6", fill(list, 2, 1, 4));
         expected.put("fill4_6List", list.clone());
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
@@ -502,40 +548,44 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
 
     @Test
     public void listNewListOrStringSort_Test() throws ExecutionException, InterruptedException {
-        msgStr = "{\"list\": [67, 2, 2, 2]}";
-        decoderStr = "var list = msg.list;\n" +
-                "var listAdd = [\"thigsboard\", 4, 67];\n" +
-                "var msgList = {};\n" +
-                "msgList.put(\"list\", list.clone());\n" +
-                "msgList.put(\"toSorted\", list.toSorted());\n" +
-                "msgList.put(\"toSortedList\", list.clone());\n" +
-                "msgList.put(\"toSortedTrue\", list.toSorted(true));\n" +
-                "msgList.put(\"toSortedTrueList\", list.clone());\n" +
-                "msgList.put(\"toSortedFalse\", list.toSorted(false));\n" +
-                "msgList.put(\"toSortedFalseList\", list.clone());\n" +
-                "msgList.put(\"toReversed\", list.toReversed());\n" +
-                "msgList.put(\"toReversedList\", list.clone());\n" +
-                "msgList.put(\"slice\", list.slice());\n" +
-                "msgList.put(\"sliceList\", list.clone());\n" +
-                "msgList.put(\"slice4\", list.slice(3));\n" +
-                "msgList.put(\"slice4List\", list.clone());\n" +
-                "msgList.put(\"slice1_5\", list.slice(0,2));\n" +
-                "msgList.put(\"slice1_5List\", list.clone());\n" +
-                "msgList.put(\"with1\", list.with(1, 69));\n" +
-                "msgList.put(\"with1List\", list.clone());\n" +
-                "msgList.put(\"concat\", list.concat(listAdd));\n" +
-                "msgList.put(\"concatList\", list.clone());\n" +
-                "msgList.put(\"join\", list.join());\n" +
-                "msgList.put(\"joinList\", list.clone());\n" +
-                "msgList.put(\"toSpliced2\", list.toSpliced(1, 0, \"Feb\"));\n" +
-                "msgList.put(\"toSpliced2List\", list.clone());\n" +
-                "msgList.put(\"toSpliced0_2\", list.toSpliced(0, 2));\n" +
-                "msgList.put(\"toSpliced0_2List\", list.clone());\n" +
-                "msgList.put(\"toSpliced2_2\", list.toSpliced(2, 2));\n" +
-                "msgList.put(\"toSpliced2_2List\", list.clone());\n" +
-                "msgList.put(\"toSpliced4_5\", list.toSpliced(2, 4, \"start\", 5, \"end\"));\n" +
-                "msgList.put(\"toSpliced4_5List\", list.clone());\n" +
-                "return msgList";
+        msgStr = """
+            {"list": [67, 2, 2, 2]}
+            """;
+        decoderStr = """
+                var list = msg.list;
+                var listAdd = ["thigsboard", 4, 67];
+                var msgList = {};
+                msgList.put("list", list.clone());
+                msgList.put("toSorted", list.toSorted());
+                msgList.put("toSortedList", list.clone());
+                msgList.put("toSortedTrue", list.toSorted(true));
+                msgList.put("toSortedTrueList", list.clone());
+                msgList.put("toSortedFalse", list.toSorted(false));
+                msgList.put("toSortedFalseList", list.clone());
+                msgList.put("toReversed", list.toReversed());
+                msgList.put("toReversedList", list.clone());
+                msgList.put("slice", list.slice());
+                msgList.put("sliceList", list.clone());
+                msgList.put("slice4", list.slice(3));
+                msgList.put("slice4List", list.clone());
+                msgList.put("slice1_5", list.slice(0,2));
+                msgList.put("slice1_5List", list.clone());
+                msgList.put("with1", list.with(1, 69));
+                msgList.put("with1List", list.clone());
+                msgList.put("concat", list.concat(listAdd));
+                msgList.put("concatList", list.clone());
+                msgList.put("join", list.join());
+                msgList.put("joinList", list.clone());
+                msgList.put("toSpliced2", list.toSpliced(1, 0, "Feb"));
+                msgList.put("toSpliced2List", list.clone());
+                msgList.put("toSpliced0_2", list.toSpliced(0, 2));
+                msgList.put("toSpliced0_2List", list.clone());
+                msgList.put("toSpliced2_2", list.toSpliced(2, 2));
+                msgList.put("toSpliced2_2List", list.clone());
+                msgList.put("toSpliced4_5", list.toSpliced(2, 4, "start", 5, "end"));
+                msgList.put("toSpliced4_5List", list.clone());
+                return msgList
+                """;
         ArrayList list = new ArrayList<>(List.of(67, 2, 2, 2));
         ArrayList oldList = (ArrayList) list.clone();
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
@@ -571,7 +621,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         expected.put("concat", list);
         expected.put("concatList", oldList);
         list = (ArrayList) oldList.clone();
-        String join = list.toString().substring(1, list.toString().length()-1).replaceAll(" ", "");
+        String join = list.toString().substring(1, list.toString().length() - 1).replaceAll(" ", "");
         expected.put("join", join);
         expected.put("joinList", oldList);
         list.set(1, "Feb");
@@ -602,17 +652,21 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
 
     @Test
     public void listGetInfo_Test() throws ExecutionException, InterruptedException {
-        msgStr = "{\"list\": [67, 2, 2, 2]}";
-        decoderStr = "var list = msg.list;\n" +
-                "var listAdd = [\"thigsboard\", 4, 67];\n" +
-                "var msgList = {};\n" +
-                "msgList.put(\"list\", list.clone());\n" +
-                "msgList.put(\"length\", list.length());\n" +
-                "msgList.put(\"memorySize\", list.memorySize());\n" +
-                "msgList.put(\"indOf1\", list.indexOf(\"B\", 1));\n" +
-                "msgList.put(\"indOf2\", list.indexOf(2, 2));\n" +
-                "msgList.put(\"sStr\", list.validateClazzInArrayIsOnlyString());\n" +
-                "return msgList";
+        msgStr = """
+            {"list": [67, 2, 2, 2]}
+            """;
+        decoderStr = """
+                var list = msg.list;
+                var listAdd = ["thigsboard", 4, 67];
+                var msgList = {};
+                msgList.put("list", list.clone());
+                msgList.put("length", list.length());
+                msgList.put("memorySize", list.memorySize());
+                msgList.put("indOf1", list.indexOf("B", 1));
+                msgList.put("indOf2", list.indexOf(2, 2));
+                msgList.put("sStr", list.validateClazzInArrayIsOnlyString());
+                return msgList
+                """;
         ArrayList list = new ArrayList<>(List.of(67, 2, 2, 2));
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
         expected.put("list", list);
@@ -624,6 +678,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
     }
+
     private List splice(List oldList, int start, int deleteCount, Object... values) {
         start = initStartIndex(oldList, start);
         deleteCount = deleteCount < 0 ? 0 : Math.min(deleteCount, (oldList.size() - start));
@@ -650,6 +705,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     private List fill(List oldList, Object value, int start) {
         return fill(oldList, value, start, oldList.size());
     }
+
     private List fill(List oldList, Object value, int start, int end) {
         start = initStartIndex(oldList, start);
         end = initEndIndex(oldList, end);
@@ -673,6 +729,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 end < 0 ? end + oldList.size() :
                         Math.min(end, oldList.size());
     }
+
     private static final Comparator numericCompAsc = new Comparator() {
         public int compare(Object o1, Object o2) {
             Double first = Double.parseDouble(String.valueOf(o1));
