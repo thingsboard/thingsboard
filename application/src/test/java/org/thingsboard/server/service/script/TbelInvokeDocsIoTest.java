@@ -18,7 +18,9 @@ package org.thingsboard.server.service.script;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -1022,6 +1024,72 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         assertEquals(expected, actual);
     }
 
+    // Helper functions
+    @Test
+    public void atobBtoa_Test() throws ExecutionException, InterruptedException {
+        String str = "Hello, world";
+        msgStr = String.format("""
+                {"str": "%s"}
+                """, str);
+        decoderStr = """
+                    var encodedData = btoa(msg.str);
+                    var decodedData = atob(encodedData);
+                    return{
+                       "btoa": encodedData,
+                       "atob": decodedData
+                      }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("btoa", Base64.getEncoder().encodeToString(str.getBytes()));
+        expected.put("atob", str);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void toFixed_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    return{
+                       toFixed1: toFixed(0.345, 1),
+                       toFixed2: toFixed(0.345, 2)
+                      }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("toFixed1", 0.3);
+        expected.put("toFixed2", 0.35);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void stringToBytes_Test() throws ExecutionException, InterruptedException {
+        String base64Str = "eyJoZWxsbyI6ICJ3b3JsZCJ9";
+        String inputStr = "hello, world";
+        msgStr = String.format("""
+                {
+                 "base64Str": "%s",
+                 "inputStr": "%s"
+                }
+                """, base64Str, inputStr);
+        decoderStr = """
+                    var bytesStr = atob(msg.base64Str);
+                    var charsetStr = "UTF8";
+                    return{
+                       bytesStr: stringToBytes(bytesStr),
+                       inputStr: stringToBytes(msg.inputStr),
+                       inputStrUTF8: stringToBytes(msg.inputStr, charsetStr)
+                      }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("bytesStr", bytesToList(Base64.getDecoder().decode(base64Str)));
+        expected.put("inputStr", bytesToList(inputStr.getBytes()));
+        expected.put("inputStrUTF8", bytesToList(inputStr.getBytes(StandardCharsets.UTF_8)));
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+
     private List splice(List oldList, int start, int deleteCount, Object... values) {
         start = initStartIndex(oldList, start);
         deleteCount = deleteCount < 0 ? 0 : Math.min(deleteCount, (oldList.size() - start));
@@ -1088,5 +1156,13 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
             return second.compareTo(first);
         }
     };
+
+    private static List<Byte> bytesToList(byte[] bytes) {
+        List<Byte> list = new ArrayList<>();
+        for (byte aByte : bytes) {
+            list.add(aByte);
+        }
+        return list;
+    }
 }
 
