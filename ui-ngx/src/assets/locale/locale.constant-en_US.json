@@ -4545,7 +4545,9 @@
         "disable-custom-interval": "Disable custom interval selection",
         "edit-aggregation-functions-list": "Edit aggregation functions list",
         "edit-aggregation-functions-list-hint": "List of available options can be specified.",
-        "allowed-aggregation-functions": "Allowed aggregation functions"
+        "allowed-aggregation-functions": "Allowed aggregation functions",
+        "edit-intervals-list": "Edit intervals list",
+        "edit-intervals-list-hint": "List of available interval options can be specified. It is possible to configure the grouping intervals list and default grouping interval."
     },
     "tooltip": {
         "trigger": "Trigger",

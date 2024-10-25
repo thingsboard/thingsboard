@@ -381,6 +381,16 @@
         }
       }
     }
+    &.mat-mdc-form-field-has-icon-suffix {
+      .mat-mdc-form-field-icon-suffix:empty {
+        padding: 0;
+      }
+      .mat-mdc-text-field-wrapper:has(.mat-mdc-form-field-icon-suffix:empty) {
+        &.mdc-text-field--outlined, &:not(.mdc-text-field--outlined) {
+          padding-right: 12px;
+        }
+      }
+    }
     .mat-mdc-text-field-wrapper {
       &.mdc-text-field--outlined, &:not(.mdc-text-field--outlined) {
         &:not(.mdc-text-field--focused):not(.mdc-text-field--disabled):not(.mdc-text-field--invalid):not(:hover) {

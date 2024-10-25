@@ -337,6 +337,7 @@ import * as TimezonePanelComponent from '@shared/components/time/timezone-panel.
 import * as DatapointsLimitComponent from '@shared/components/time/datapoints-limit.component';
 import * as AggregationTypeSelectComponent from '@shared/components/aggregation/aggregation-type-select.component';
 import * as AggregationOptionsConfigComponent from '@shared/components/aggregation/aggregation-options-config-panel.component';
+import * as IntervalOptionsConfigPanelComponent from '@shared/components/time/interval-options-config-panel.component';
 
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { Observable, map, of } from 'rxjs';
@@ -476,6 +477,7 @@ class ModulesMap implements IModulesMap {
     '@shared/components/time/datapoints-limit.component': DatapointsLimitComponent,
     '@shared/components/aggregation/aggregation-type-select.component': AggregationTypeSelectComponent,
     '@shared/components/aggregation/aggregation-options-config-panel.component': AggregationOptionsConfigComponent,
+    '@shared/components/time/interval-options-config-panel.component': IntervalOptionsConfigPanelComponent,
     '@shared/components/value-input.component': ValueInputComponent,
     '@shared/components/dashboard-autocomplete.component': DashboardAutocompleteComponent,
     '@shared/components/entity/entity-subtype-autocomplete.component': EntitySubTypeAutocompleteComponent,

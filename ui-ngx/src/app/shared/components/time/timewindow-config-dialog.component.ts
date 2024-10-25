@@ -41,6 +41,7 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import {
   AggregationOptionsConfigPanelComponent
 } from '@shared/components/aggregation/aggregation-options-config-panel.component';
+import { IntervalOptionsConfigPanelComponent } from '@shared/components/time/interval-options-config-panel.component';
 
 export interface TimewindowConfigDialogData {
   quickIntervalOnly: boolean;
@@ -456,4 +457,50 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     this.cd.detectChanges();
   }
 
+  configureRealtimeLastIntervalOptions($event: Event) {
+    const resFn = (res) => {};
+    this.openIntervalOptionsConfig($event, [], resFn, RealtimeWindowType.LAST_INTERVAL);
+  }
+
+  configureRealtimeQuickIntervalOptions($event: Event) {
+    const resFn = (res) => {};
+    this.openIntervalOptionsConfig($event, [], resFn, RealtimeWindowType.INTERVAL, TimewindowType.REALTIME);
+  }
+
+  configureHistoryLastIntervalOptions($event: Event) {
+    const resFn = (res) => {};
+    this.openIntervalOptionsConfig($event, [], resFn, HistoryWindowType.LAST_INTERVAL);
+  }
+
+  configureHistoryQuickIntervalOptions($event: Event) {
+    const resFn = (res) => {};
+    this.openIntervalOptionsConfig($event, [], resFn, HistoryWindowType.INTERVAL, TimewindowType.HISTORY);
+  }
+
+  private openIntervalOptionsConfig($event: Event, allowedIntervals: Array<any>, resFn: (res) => void,
+                                    intervalType: RealtimeWindowType | HistoryWindowType, timewindowType?: TimewindowType) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = ($event.target || $event.srcElement || $event.currentTarget) as Element;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const intervalsConfigPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, IntervalOptionsConfigPanelComponent, ['left', 'leftTop', 'leftBottom'], true, null,
+        {
+          allowedIntervals: deepClone(allowedIntervals),
+          intervalType: intervalType,
+          timewindowType: timewindowType,
+          onClose: (result: Array<any> | null) => {
+            intervalsConfigPopover.hide();
+            resFn(result);
+          }
+        },
+        {maxHeight: '90vh', height: '100%'},
+        {}, {}, true, () => {}, {padding: 0});
+      intervalsConfigPopover.tbComponentRef.instance.popoverComponent = intervalsConfigPopover;
+    }
+    this.cd.detectChanges();
+  }
 }

@@ -14,16 +14,31 @@
  * limitations under the License.
  */
 :host {
-  .mat-mdc-form-field {
-    width: 100%;
+  .tb-interval-options-form {
+    height: 100%;
+    max-width: 600px;
+
+    .tb-form-table {
+      overflow: hidden;
+    }
+
+    .tb-form-table-body {
+      overflow-y: auto;
+    }
+
+    .tb-form-hint {
+      flex-shrink: 0;
+    }
+
+    .mdc-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .mat-mdc-list-item.mdc-list-item--with-leading-checkbox.mdc-list-item--with-one-line {
+        height: 40px;
+      }
+    }
   }
 }
 
-:host ::ng-deep {
-  .mat-mdc-form-field-infix {
-     width: 100%;
-  }
-  .mat-mdc-select-value {
-    min-width: 100px;
-  }
-}

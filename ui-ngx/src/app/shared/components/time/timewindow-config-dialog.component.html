@@ -65,6 +65,12 @@
             [disabledAdvanced]="timewindowForm.get('realtime.disableCustomInterval').value"
             [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
                             timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
+            <button *ngIf="!(timewindowForm.get('realtime.hideLastInterval').value ||
+                            timewindowForm.get('realtime.hideInterval').value)"
+                    matSuffix mat-icon-button type="button" class="tb-mat-24"
+                    (click)="configureRealtimeLastIntervalOptions($event)">
+              <mat-icon>edit</mat-icon>
+            </button>
           </tb-timeinterval>
         </div>
       </ng-container>
@@ -85,6 +91,12 @@
           appearance="outline"
           [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
                           timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
+          <button *ngIf="!(timewindowForm.get('realtime.hideQuickInterval').value ||
+                            timewindowForm.get('realtime.hideInterval').value)"
+                  matSuffix mat-icon-button type="button" class="tb-mat-24"
+                  (click)="configureRealtimeQuickIntervalOptions($event)">
+            <mat-icon>edit</mat-icon>
+          </button>
         </tb-quick-time-interval>
       </div>
     </section>
@@ -120,6 +132,12 @@
             [disabledAdvanced]="timewindowForm.get('history.disableCustomInterval').value"
             [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
                           timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
+            <button *ngIf="!(timewindowForm.get('history.hideLastInterval').value ||
+                            timewindowForm.get('history.hideInterval').value)"
+                    matSuffix mat-icon-button type="button" class="tb-mat-24"
+                    (click)="configureHistoryLastIntervalOptions($event)">
+              <mat-icon>edit</mat-icon>
+            </button>
           </tb-timeinterval>
         </div>
       </ng-container>
@@ -153,6 +171,12 @@
             appearance="outline"
             [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
                         timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
+            <button *ngIf="!(timewindowForm.get('history.hideQuickInterval').value ||
+                            timewindowForm.get('history.hideInterval').value)"
+                    matSuffix mat-icon-button type="button" class="tb-mat-24"
+                    (click)="configureHistoryQuickIntervalOptions($event)">
+              <mat-icon>edit</mat-icon>
+            </button>
           </tb-quick-time-interval>
         </div>
     </section>

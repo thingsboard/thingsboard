@@ -220,6 +220,7 @@ import { SvgXmlComponent } from '@shared/components/svg-xml.component';
 import { DatapointsLimitComponent } from '@shared/components/time/datapoints-limit.component';
 import { AggregationTypeSelectComponent } from '@shared/components/aggregation/aggregation-type-select.component';
 import { AggregationOptionsConfigPanelComponent } from '@shared/components/aggregation/aggregation-options-config-panel.component';
+import { IntervalOptionsConfigPanelComponent } from '@shared/components/time/interval-options-config-panel.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -311,6 +312,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     DatapointsLimitComponent,
     AggregationTypeSelectComponent,
     AggregationOptionsConfigPanelComponent,
+    IntervalOptionsConfigPanelComponent,
     DashboardSelectComponent,
     DashboardSelectPanelComponent,
     DatetimePeriodComponent,
@@ -520,6 +522,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     DatapointsLimitComponent,
     AggregationTypeSelectComponent,
     AggregationOptionsConfigPanelComponent,
+    IntervalOptionsConfigPanelComponent,
     DashboardSelectComponent,
     DatetimePeriodComponent,
     DatetimeComponent,

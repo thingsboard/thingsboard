@@ -23,5 +23,8 @@
         {{ timeIntervalTranslationMap.get(interval) | translate}}
       </mat-option>
     </mat-select>
+    <ng-container matSuffix>
+      <ng-content select="[matSuffix]"></ng-content>
+    </ng-container>
   </mat-form-field>
 </section>
