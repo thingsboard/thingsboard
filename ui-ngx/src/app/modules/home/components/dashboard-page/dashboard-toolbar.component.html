@@ -16,7 +16,8 @@
 
 -->
 <mat-fab-toolbar [isOpen]="toolbarOpened" color="primary" direction="left"
-                 [ngClass]="{'is-fullscreen': forceFullscreen, 'mat-elevation-z1': forceFullscreen && toolbarOpened }">
+                 [class.is-fullscreen]="forceFullscreen"
+                 [class.mat-elevation-z1]="forceFullscreen && toolbarOpened">
   <mat-fab-trigger>
     <button mat-fab color="primary"
             [matTooltip]="!toolbarOpened ? ('dashboard.open-toolbar' | translate) : ''"

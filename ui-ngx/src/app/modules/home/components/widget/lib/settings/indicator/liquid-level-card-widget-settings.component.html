@@ -18,7 +18,7 @@
 <ng-container *ngIf="levelCardWidgetSettingsForm"  [formGroup]="levelCardWidgetSettingsForm">
   <div class="tb-form-panel no-padding no-border">
     <div class="tb-form-panel">
-      <div fxFlex fxLayout="column" class="tb-form-row space-between">
+      <div class="tb-form-row space-between flex flex-1 flex-col">
         <div class="tb-flex row space-between align-center no-gap fill-width">
           <div class="fixed-title-width" translate>widgets.liquid-level-card.shape</div>
           <tb-toggle-select formControlName="tankSelectionType">
@@ -28,7 +28,7 @@
           </tb-toggle-select>
         </div>
         <tb-image-cards-select #shapesImageCardsSelect
-                               [fxShow]="levelCardWidgetSettingsForm.get('tankSelectionType').value === DataSourceType.static"
+                               [class.!hidden]="levelCardWidgetSettingsForm.get('tankSelectionType').value !== DataSourceType.static"
                                rowHeight="1:1"
                                [cols]="{columns: 5,
                                     breakpoints: {
@@ -122,7 +122,7 @@
             </mat-select>
           </mat-form-field>
           <mat-form-field *ngIf="levelCardWidgetSettingsForm.get('volumeSource').value ===  DataSourceType.static; else volumeAttributes"
-                          appearance="outline" class="flex number" subscriptSizing="dynamic">
+                          appearance="outline" class="number flex" subscriptSizing="dynamic">
             <input matInput formControlName="volumeConstant" type="number"
                    min="0.1" step="1" placeholder="{{ 'widget-config.set' | translate }}">
             <mat-icon matSuffix
@@ -143,7 +143,7 @@
           </ng-template>
         </div>
       </div>
-      <div class="tb-form-row space-between column-xs" [fxShow]="volumeInput">
+      <div class="tb-form-row space-between column-xs" [class.!hidden]="!volumeInput">
         <div class="fixed-title-width tb-required" translate>widgets.liquid-level-card.total-volume-units</div>
         <div class="tb-flex row flex-start align-center">
           <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic" style="max-width: 25%">
@@ -225,10 +225,9 @@
       <mat-expansion-panel class="tb-settings"
                            [expanded]="levelCardWidgetSettingsForm.get('showTooltip').value"
                            [disabled]="!levelCardWidgetSettingsForm.get('showTooltip').value">
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
           <mat-panel-title>
-            <mat-slide-toggle class="mat-slide" formControlName="showTooltip" (click)="$event.stopPropagation()"
-                              fxLayoutAlign="center">
+            <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showTooltip" (click)="$event.stopPropagation()">
               {{ 'widget-config.tooltip' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>
@@ -242,10 +241,10 @@
               <tb-unit-input [tagFilter]="unitsType.capacity"
                              required class="flex" formControlName="tooltipUnits">
               </tb-unit-input>
-              <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+              <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
                 <input matInput formControlName="tooltipLevelDecimals" type="number" min="0"
                        max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
-                <div matSuffix fxHide.lt-md translate>widget-config.decimals-suffix</div>
+                <div matSuffix class="lt-md:!hidden" translate>widget-config.decimals-suffix</div>
               </mat-form-field>
               <tb-font-settings formControlName="tooltipLevelFont"
                                 [previewText]="tooltipValuePreviewFn">
@@ -259,7 +258,7 @@
               {{ 'widgets.value-card.date' | translate }}
             </mat-slide-toggle>
             <div class="tb-flex row flex-start align-center">
-              <tb-date-format-select fxFlex formControlName="tooltipDateFormat"></tb-date-format-select>
+              <tb-date-format-select class="flex-1" formControlName="tooltipDateFormat"></tb-date-format-select>
               <tb-font-settings formControlName="tooltipDateFont"
                                 [previewText]="datePreviewFn">
               </tb-font-settings>

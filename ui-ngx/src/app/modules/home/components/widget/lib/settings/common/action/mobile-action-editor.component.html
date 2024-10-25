@@ -18,7 +18,7 @@
 <div class="tb-form-panel no-padding no-border" [formGroup]="mobileActionFormGroup">
   <div class="tb-form-row">
     <div class="fixed-title-width">{{ 'widget-action.mobile.action-type' | translate }}*</div>
-    <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-select required formControlName="type" placeholder="{{ 'widget-action.mobile.select-action-type' | translate }}">
         <mat-option *ngFor="let actionType of mobileActionTypes" [value]="actionType">
           {{ mobileActionTypeTranslations.get(mobileActionType[actionType]) | translate }}

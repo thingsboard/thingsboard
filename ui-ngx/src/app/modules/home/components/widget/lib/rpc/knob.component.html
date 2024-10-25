@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<div #knobContainer class="tb-knob" fxLayout="column" [ngStyle]="{'pointerEvents': ctx.isEdit ? 'none' : 'all'}">
-  <div fxFlex fxLayout="column" fxLayoutAlign="center center">
+<div #knobContainer class="tb-knob flex flex-col" [style.pointer-events]="ctx.isEdit ? 'none' : 'all'">
+  <div class="flex flex-1 flex-col items-center justify-center">
     <div #knob class="knob">
-      <div #knobValueContainer class="value-container" fxLayout="row" fxLayoutAlign="center center">
+      <div #knobValueContainer class="value-container flex flex-row items-center justify-center">
         <span #knobValue class="knob-value">{{ value }}</span>
       </div>
       <div class="canvas-background"></div>
@@ -27,16 +27,15 @@
         <div #knobTopPointer class="top-pointer"></div>
       </div>
       <div class="top"></div>
-      <div #knobErrorContainer class="error-container" [ngStyle]="{'background': error?.length ? 'rgba(255,255,255,0.25)' : 'none'}"
-           fxLayout="row" fxLayoutAlign="center center">
+      <div #knobErrorContainer class="error-container flex flex-row items-center justify-center" [style.background]="error?.length ? 'rgba(255,255,255,0.25)' : 'none'">
         <span #knobError class="knob-error" [innerHTML]="error"></span>
       </div>
-      <div #knobTitleContainer class="title-container" fxLayout="row" fxLayoutAlign="center center">
+      <div #knobTitleContainer class="title-container flex flex-row items-center justify-center">
         <span #knobTitle class="knob-title">{{ title }}</span>
       </div>
-      <div #knobMinmaxContainer class="minmax-container" fxLayout="row" fxLayoutAlign="start center">
+      <div #knobMinmaxContainer class="minmax-container flex flex-row items-center justify-start">
         <span class="minmax-label">min</span>
-        <span fxFlex></span>
+        <span class="flex-1"></span>
         <span class="minmax-label">max</span>
       </div>
       <div #textMeasure id="text-measure"></div>

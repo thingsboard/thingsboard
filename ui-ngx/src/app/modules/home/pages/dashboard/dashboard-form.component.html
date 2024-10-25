@@ -15,75 +15,75 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons" fxLayout.xs="column">
+<div class="tb-details-buttons xs:flex xs:flex-col">
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'open')"
-          [fxShow]="!isEdit">
+          [class.!hidden]="isEdit">
     {{'dashboard.open-dashboard' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'export')"
-          [fxShow]="!isEdit && dashboardScope === 'tenant'">
+          [class.!hidden]="isEdit || dashboardScope !== 'tenant'">
     {{'dashboard.export' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'makePublic')"
-          [fxShow]="!isEdit && dashboardScope === 'tenant' && !isPublic(entity)">
+          [class.!hidden]="isEdit || dashboardScope !== 'tenant' || isPublic(entity)">
     {{'dashboard.make-public' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'makePrivate')"
-          [fxShow]="!isEdit && (dashboardScope === 'tenant' && isPublic(entity)
+          [class.!hidden]="isEdit || !(dashboardScope === 'tenant' && isPublic(entity)
                                 || dashboardScope === 'customer' && isCurrentPublicCustomer(entity))">
     {{'dashboard.make-private' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'manageAssignedCustomers')"
-          [fxShow]="!isEdit && dashboardScope === 'tenant'">
+          [class.!hidden]="isEdit || dashboardScope !== 'tenant'">
     {{'dashboard.manage-assigned-customers' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'unassignFromCustomer')"
-          [fxShow]="!isEdit && dashboardScope === 'customer' && !isCurrentPublicCustomer(entity)">
+          [class.!hidden]="isEdit || dashboardScope !== 'customer' || isCurrentPublicCustomer(entity)">
     {{ 'dashboard.unassign-from-customer' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'unassignFromEdge')"
-          [fxShow]="!isEdit && dashboardScope === 'edge'">
+          [class.!hidden]="isEdit || dashboardScope !== 'edge'">
     {{ 'edge.unassign-from-edge' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
-          [fxShow]="!hideDelete() && !isEdit">
+          [class.!hidden]="hideDelete() || isEdit">
     {{'dashboard.delete' | translate }}
   </button>
-  <div fxLayout="row">
+  <div class="flex flex-row">
     <button mat-raised-button
             ngxClipboard
             (cbOnSuccess)="onDashboardIdCopied($event)"
             [cbContent]="entity?.id?.id"
-            [fxShow]="!isEdit">
+            [class.!hidden]="isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>dashboard.copyId</span>
     </button>
   </div>
 </div>
-<div class="mat-padding" fxLayout="column">
+<div class="mat-padding flex flex-col">
   <mat-form-field class="mat-block"
-                  [fxShow]="!isEdit && assignedCustomersText?.length
-                              && dashboardScope === 'tenant'">
+                  [class.!hidden]="isEdit || !assignedCustomersText?.length
+                              || dashboardScope !== 'tenant'">
     <mat-label translate>dashboard.assignedToCustomers</mat-label>
     <input matInput disabled [ngModel]="assignedCustomersText">
   </mat-form-field>
-  <div fxLayout="column" [fxShow]="!isEdit && (dashboardScope === 'tenant' && isPublic(entity)
+  <div class="flex flex-col" [class.!hidden]="isEdit || !(dashboardScope === 'tenant' && isPublic(entity)
                                 || dashboardScope === 'customer' && isCurrentPublicCustomer(entity))">
     <tb-social-share-panel style="padding-bottom: 1.25em;"
                            shareTitle="{{ 'dashboard.socialshare-title' | translate:{dashboardTitle: entity?.title} }}"
@@ -91,8 +91,8 @@
                            shareLink="{{ publicLink }}"
                            shareHashTags="thingsboard, iot">
     </tb-social-share-panel>
-    <div fxLayout="row">
-      <mat-form-field class="mat-block" fxFlex>
+    <div class="flex flex-row">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>dashboard.public-link</mat-label>
         <input matInput disabled [ngModel]="publicLink">
       </mat-form-field>
@@ -118,7 +118,7 @@
           {{ 'dashboard.title-max-length' | translate }}
         </mat-error>
       </mat-form-field>
-      <div formGroupName="configuration" fxLayout="column">
+      <div formGroupName="configuration" class="flex flex-col">
         <mat-form-field class="mat-block">
           <mat-label translate>dashboard.description</mat-label>
           <textarea matInput formControlName="description" rows="2"></textarea>
@@ -139,7 +139,7 @@
           <mat-label translate>dashboard.mobile-order</mat-label>
           <input matInput formControlName="mobileOrder" type="number" step="1">
         </mat-form-field>
-        <tb-gallery-image-input fxFlex
+        <tb-gallery-image-input class="flex-1"
                                 label="{{'dashboard.image' | translate}}"
                                 formControlName="image">
         </tb-gallery-image-input>

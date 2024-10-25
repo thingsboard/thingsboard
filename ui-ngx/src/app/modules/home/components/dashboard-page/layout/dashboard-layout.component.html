@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" class="tb-progress-cover" fxLayoutAlign="center center"
+<div class="tb-progress-cover flex flex-col items-center justify-center"
   *ngIf="layoutCtx.widgets.isLoading()">
   <mat-spinner color="warn" mode="indeterminate" diameter="100">
   </mat-spinner>
@@ -23,11 +23,11 @@
 <div class="mat-content"
           style="position: relative; width: 100%; height: 100%;" [tb-hotkeys]="hotKeys"
           [cheatSheet]="dashboardCheatSheet"
-          [style.backgroundImage]="backgroundImage$ | async"
-          [ngStyle]="dashboardStyle">
-  <section *ngIf="layoutCtx.widgets.isEmpty()" fxLayoutAlign="center center"
-           style="display: flex; z-index: 1; pointer-events: none;"
-           class="mat-headline-5 tb-absolute-fill">
+          [style.background-image]="backgroundImage$ | async"
+          [style]="dashboardStyle">
+  <section *ngIf="layoutCtx.widgets.isEmpty()"
+           style="z-index: 1; pointer-events: none;"
+           class="mat-headline-5 tb-absolute-fill flex items-center justify-center">
     <span *ngIf="!isEdit" style="text-align: center;">
       {{'dashboard.no-widgets' | translate}}
     </span>

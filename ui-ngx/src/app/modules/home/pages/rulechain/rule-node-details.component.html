@@ -23,7 +23,7 @@
 </div>
 <form [formGroup]="ruleNodeFormGroup" class="mat-padding">
   <section class="title-row">
-    <mat-form-field fxFlex class="mat-block">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>rulenode.name</mat-label>
       <input matInput formControlName="name" required>
       <mat-error *ngIf="ruleNodeFormGroup.get('name').hasError('required')

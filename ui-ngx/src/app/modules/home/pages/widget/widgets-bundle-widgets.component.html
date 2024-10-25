@@ -26,7 +26,7 @@
           <mat-icon>arrow_back</mat-icon>
         </button>
         <span class="mat-headline-5">{{ widgetsBundle.title }}: {{ 'widget.widgets' | translate }}</span>
-        <span fxFlex></span>
+        <span class="flex-1"></span>
         <button mat-icon-button [disabled]="isLoading$ | async"
                 *ngIf="!isReadOnly"
                 matTooltip="{{ 'widget.add-new-widget' | translate }}"
@@ -90,7 +90,7 @@
           <mat-icon>delete</mat-icon>
         </button>
         <button cdkDragHandle *ngIf="editMode"
-                [fxShow]="widgets?.length > 1"
+                [class.!hidden]="!widgets || widgets.length <= 1"
                 mat-icon-button
                 matTooltip="{{ 'action.drag' | translate }}"
                 matTooltipPosition="above"
