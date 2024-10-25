@@ -760,6 +760,268 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         assertEquals(expected, actual);
     }
 
+    // Convert Number to Hexadecimal/Octal/Binary String
+    @Test
+    public void byteIntegerToString_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    var b16 = Integer.toString(0x1A, 16);
+                    var b10 = Integer.toString(0x1A, 10);
+                    var b8 = Integer.toString(0x1A, 8);
+                    var b2 = Integer.toString(0x1A, 2);
+                    return{
+                       b16: b16,
+                       b10: b10,
+                       b8: b8,
+                       b2: b2
+                      }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("b16", "1a");
+        expected.put("b10", "26");
+        expected.put("b8", "32");
+        expected.put("b2", "11010");
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void integerIntegerToString_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    var i16 = Integer.toString(-255, 16);
+                    var i10 = Integer.toString(-255, 10);
+                    var i8 = Integer.toString(-255, 8);
+                    var i2 = Integer.toString(-255, 2);
+                    return{
+                       i16: i16,
+                       i10: i10,
+                       i8: i8,
+                       i2: i2
+                      }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("i16", "-ff");
+        expected.put("i10", "-255");
+        expected.put("i8", "-377");
+        expected.put("i2", "-11111111");
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void floatToString_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    var f0 =7823764.8374;
+                    var f16 = Float.toHexString(f0);
+                    var f10 = f0.toString();
+                    return{
+                       f16: f16,
+                       f10: f10
+                      }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("f16", "0x1.dd8654p22");
+        expected.put("f10", "7823764.8374");
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void longToString_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                        var l16 = Long.toString(9223372036854775807, 16);
+                        var l10 = Long.toString(9223372036854775807, 10);
+                        var l8 = Long.toString(9223372036854775807, 8);
+                        var l2 = Long.toString(9223372036854775807, 2);
+                    return{
+                       l16: l16,
+                       l10: l10,
+                       l8: l8,
+                       l2: l2
+                      }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("l16", "7fffffffffffffff");
+        expected.put("l10", "9223372036854775807");
+        expected.put("l8", "777777777777777777777");
+        expected.put("l2", "111111111111111111111111111111111111111111111111111111111111111");
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void dpubleToString_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    var dd0 = 99993219.156013e-002;
+                    var dd16 = Double.toHexString(dd0);
+                    var dd10 = String.format("%.8f",dd0);
+                    return{
+                       dd16: dd16,
+                       dd10: dd10
+                      }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("dd16", "0x1.e83f862142b5bp19");
+        expected.put("dd10", "999932,19156013");
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    // Flow Control
+    @Test
+    public void ifTthenElseBlocks_Test() throws ExecutionException, InterruptedException {
+        msgStr = """
+                {"temperature": 20}
+                """;
+        decoderStr = """
+                if (msg.temperature > 0) {
+                   return "Greater than zero!";
+                } else if (msg.temperature == -1) {
+                   return "Minus one!";
+                } else {
+                   return "Something else!";
+                }
+                """;
+        String expected = "Greater than zero!";
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void ternarySstatements_Test() throws ExecutionException, InterruptedException {
+        msgStr = """
+                {"temperature": 20}
+                """;
+        decoderStr = """
+                return msg.temperature > 0 ? "Yes" : "No";
+                """;
+        String expected = "Yes";
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void foreach_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    var numbers = [1, 2, 3];
+                    var sum = 0;
+                    foreach (n : numbers) {
+                       sum+=n;
+                    }
+                    return sum;
+                """;
+        Integer expected = 6;
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void foreachStringsIiterable_Test() throws ExecutionException, InterruptedException {
+        String str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        msgStr = String.format("""
+                {"str": "%s"}
+                """, str);
+        decoderStr = """
+                    int l = msg.str.length();
+                    var array = new int[l];
+                    var i = 0;
+                    foreach (c : msg.str) {
+                       array[i] = (int)c;
+                       i++;
+                    }
+                    return array;
+                """;
+        List expected = new ArrayList<>(List.of(str.chars().boxed().toArray(Integer[]::new)));
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void forLoop_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    var sum = 0;
+                    for (var i =0; i < 100; i++) {\s
+                       sum += i;
+                    }
+                    return sum;
+                """;
+        Integer expected = 4950;
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void doWhile_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    var x = "doWhile";
+                    var a = null;
+                    do {
+                       x = a;
+                    }
+                    while (x != null);
+                    return x;
+                """;
+        String expected = null;
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void doUntil_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    var x = "doWhile";
+                    var a = null;
+                    do {
+                       x = a;
+                    }
+                    until (x == null);
+                    return x;
+                """;
+        String expected = null;
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void standardWhile_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    var x = "doWhile";
+                    var a = null;
+                    while (x != null) {
+                       x = a;
+                    }
+                    return x;
+                """;
+        String expected = null;
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void standardUntil_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    var x = "doWhile";
+                    var a = null;
+                    until (x == null) {
+                       x = a;
+                    }
+                    return x;
+                """;
+        String expected = null;
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
     private List splice(List oldList, int start, int deleteCount, Object... values) {
         start = initStartIndex(oldList, start);
         deleteCount = deleteCount < 0 ? 0 : Math.min(deleteCount, (oldList.size() - start));
