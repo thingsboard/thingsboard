@@ -26,7 +26,12 @@
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <mat-card-content style="padding-top: 16px">
     <div class="tb-form-panel no-border no-padding" [formGroup]="mobileAppSettingsForm">
-      <div class="tb-form-panel">
+      <div class="tb-form-row no-border no-padding-bottom" *ngIf="isTenantAdmin()">
+        <mat-slide-toggle class="mat-slide" formControlName="useSystemSettings">
+          {{ 'admin.mobile-app.use-system-settings' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div class="tb-form-panel" *ngIf="!mobileAppSettingsForm.get('useSystemSettings').value">
         <div class="tb-form-row column-xs no-border no-padding space-between">
           <div class="tb-form-panel-title" translate>admin.mobile-app.applications</div>
           <tb-toggle-select formControlName="useDefaultApp">
@@ -151,7 +156,7 @@
 <!--          </div>-->
 <!--        </div>-->
       </div>
-      <div class="tb-form-panel" formGroupName="qrCodeConfig">
+      <div class="tb-form-panel" formGroupName="qrCodeConfig" *ngIf="!mobileAppSettingsForm.get('useSystemSettings').value">
         <div class="tb-form-row column-xs no-border no-padding space-between">
           <div class="tb-form-panel-title" translate>admin.mobile-app.appearance-on-home-page</div>
           <tb-toggle-select formControlName="showOnHomePage">

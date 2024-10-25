@@ -35,6 +35,8 @@ public class QrCodeSettings extends BaseData<QrCodeSettingsId> implements HasTen
 
     @Schema(description = "JSON object with Tenant Id.", accessMode = Schema.AccessMode.READ_ONLY)
     private TenantId tenantId;
+    @Schema(description = "Use settings from system level", example = "true")
+    private boolean useSystemSettings;
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of application: true means use default Thingsboard app", example = "true")
     private boolean useDefaultApp;
     @Schema(description = "Mobile app bundle.")

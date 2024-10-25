@@ -14,28 +14,26 @@
 /// limitations under the License.
 ///
 
-import { Component, OnDestroy } from '@angular/core';
+import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
-import { Subject, takeUntil } from 'rxjs';
 import { MobileApplicationService } from '@core/http/mobile-application.service';
-import {
-  BadgePosition,
-  badgePositionTranslationsMap,
-  QrCodeSettings
-} from '@shared/models/mobile-app.models';
+import { BadgePosition, badgePositionTranslationsMap, QrCodeSettings } from '@shared/models/mobile-app.models';
 import { ActionUpdateMobileQrCodeEnabled } from '@core/auth/auth.actions';
 import { EntityType } from '@shared/models/entity-type.models';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { Authority } from '@shared/models/authority.enum';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-mobile-qr-code-widget',
   templateUrl: './mobile-qr-code-widget-settings.component.html',
   styleUrls: ['mobile-qr-code-widget-settings.component.scss', '../../admin/settings-card.scss']
 })
-export class MobileQrCodeWidgetSettingsComponent extends PageComponent implements HasConfirmForm, OnDestroy {
+export class MobileQrCodeWidgetSettingsComponent extends PageComponent implements HasConfirmForm {
 
   mobileAppSettingsForm: FormGroup;
   mobileAppSettings: QrCodeSettings;
@@ -43,7 +41,7 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
   readonly badgePositionTranslationsMap = badgePositionTranslationsMap;
   readonly entityType = EntityType;
 
-  private readonly destroy$ = new Subject<void>();
+  private authUser = getCurrentAuthUser(this.store);
 
   constructor(protected store: Store<AppState>,
               private mobileAppService: MobileApplicationService,
@@ -52,8 +50,23 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
     this.buildMobileAppSettingsForm();
     this.mobileAppService.getMobileAppSettings()
       .subscribe(settings => this.processMobileAppSettings(settings));
+    if (this.isTenantAdmin()) {
+      // this.mobileAppSettingsForm.get('useSystemSettings').valueChanges.pipe(
+      //   takeUntilDestroyed()
+      // ).subscribe(value => {
+      //   if (value) {
+      //     this.mobileAppSettingsForm.get('androidConfig.enabled').disable();
+      //     this.mobileAppSettingsForm.get('iosConfig.enabled').disable();
+      //     this.mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabelEnabled').disable();
+      //   } else {
+      //     this.mobileAppSettingsForm.get('androidConfig.enabled').enable();
+      //     this.mobileAppSettingsForm.get('iosConfig.enabled').enable();
+      //     this.mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabelEnabled').enable();
+      //   }
+      // });
+    }
     this.mobileAppSettingsForm.get('useDefaultApp').valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed()
     ).subscribe(value => {
       if (value) {
         this.mobileAppSettingsForm.get('mobileAppBundleId').disable({emitEvent: false});
@@ -77,17 +90,17 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
       }
     });
     // this.mobileAppSettingsForm.get('androidConfig.enabled').valueChanges.pipe(
-    //   takeUntil(this.destroy$)
+    //   takeUntilDestroyed()
     // ).subscribe(value => {
     //   this.androidEnableChanged(value);
     // });
     // this.mobileAppSettingsForm.get('iosConfig.enabled').valueChanges.pipe(
-    //   takeUntil(this.destroy$)
+    //   takeUntilDestroyed()
     // ).subscribe(value => {
     //   this.iosEnableChanged(value);
     // });
     this.mobileAppSettingsForm.get('qrCodeConfig.showOnHomePage').valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed()
     ).subscribe(value => {
       if (value) {
         this.mobileAppSettingsForm.get('qrCodeConfig').enable({emitEvent: false});
@@ -99,7 +112,7 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
       this.mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabelEnabled').updateValueAndValidity({onlySelf: true});
     });
     this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed()
     ).subscribe(value => {
       if (value) {
         // if (this.mobileAppSettingsForm.get('androidConfig.enabled').value || this.mobileAppSettingsForm.get('iosConfig.enabled').value) {
@@ -114,7 +127,7 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
       }
     });
     this.mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabelEnabled').valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed()
     ).subscribe(value => {
       if (value && this.mobileAppSettingsForm.get('qrCodeConfig.showOnHomePage').value) {
         this.mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').enable({emitEvent: false});
@@ -124,14 +137,13 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
     });
   }
 
-  ngOnDestroy() {
-    super.ngOnDestroy();
-    this.destroy$.next();
-    this.destroy$.complete();
+  public isTenantAdmin(): boolean {
+    return this.authUser.authority === Authority.TENANT_ADMIN;
   }
 
   private buildMobileAppSettingsForm() {
     this.mobileAppSettingsForm = this.fb.group({
+      useSystemSettings: [false],
       useDefaultApp: [true],
       mobileAppBundleId: [{value: null, disabled: true}, Validators.required],
       // androidConfig: this.fb.group({
@@ -157,6 +169,9 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
 
   private processMobileAppSettings(mobileAppSettings: QrCodeSettings): void {
     this.mobileAppSettings = {...mobileAppSettings};
+    if (!this.isTenantAdmin()) {
+      this.mobileAppSettings.useSystemSettings = false;
+    }
     this.mobileAppSettingsForm.reset(this.mobileAppSettings);
   }
 

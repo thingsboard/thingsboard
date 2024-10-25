@@ -22,6 +22,7 @@ import { MobileAppBundleId } from '@shared/models/id/mobile-app-bundle-id';
 import { deepClone, isNotEmptyStr } from '@core/utils';
 
 export interface QrCodeSettings extends HasTenantId {
+  useSystemSettings: boolean;
   useDefaultApp: boolean;
   mobileAppBundleId: MobileAppBundleId
   androidConfig: any; //TODO: need remove

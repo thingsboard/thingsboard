@@ -52,6 +52,10 @@ import {
 import {
   MobileAppConfigurationDialogComponent, MobileAppConfigurationDialogData
 } from '@home/pages/mobile/applications/mobile-app-configuration-dialog.component';
+import { select, Store } from '@ngrx/store';
+import { selectUserSettingsProperty } from '@core/auth/auth.selectors';
+import { take } from 'rxjs/operators';
+import { AppState } from '@core/core.state';
 
 @Injectable()
 export class MobileAppTableConfigResolver  {
@@ -62,7 +66,9 @@ export class MobileAppTableConfigResolver  {
               private datePipe: DatePipe,
               private mobileAppService: MobileAppService,
               private truncatePipe: TruncatePipe,
-              private dialog: MatDialog,) {
+              private dialog: MatDialog,
+              private store: Store<AppState>,
+              ) {
     this.config.selectionEnabled = false;
     this.config.entityType = EntityType.MOBILE_APP;
     this.config.addEnabled = false;
@@ -124,6 +130,18 @@ export class MobileAppTableConfigResolver  {
     this.config.saveEntity = (mobileApp) => this.mobileAppService.saveMobileApp(mobileApp);
     this.config.deleteEntity = id => this.mobileAppService.deleteMobileApp(id.id);
 
+    this.config.entityAdded = (mobileApp) => {
+      this.store.pipe(select(selectUserSettingsProperty( 'notDisplayConfigurationAfterAddMobileApp'))).pipe(
+        take(1)
+      ).subscribe((settings: boolean) => {
+        if(!settings) {
+          this.configurationApp(null, mobileApp, true);
+        } else {
+          this.config.updateData();
+        }
+      });
+    }
+
     this.config.cellActionDescriptors = this.configureCellActions();
   }
 
@@ -176,7 +194,8 @@ export class MobileAppTableConfigResolver  {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        afterAdd
+        afterAdd,
+        appSecret: entity.appSecret
       }
     }).afterClosed()
       .subscribe(() => {

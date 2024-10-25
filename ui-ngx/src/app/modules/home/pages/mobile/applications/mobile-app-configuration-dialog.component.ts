@@ -20,9 +20,11 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
 
 export interface MobileAppConfigurationDialogData {
   afterAdd: boolean;
+  appSecret: string;
 }
 
 @Component({
@@ -36,6 +38,12 @@ export class MobileAppConfigurationDialogComponent extends DialogComponent<Mobil
 
   showDontShowAgain: boolean;
 
+  gitRepositoryLink = 'git clone -b master https://github.com/thingsboard/flutter_thingsboard_app.git';
+  pathToConstants = 'lib/constants/app_constants.dart';
+  flutterRunCommand = 'flutter run';
+
+  configureApi: string[] = [];
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) private data: MobileAppConfigurationDialogData,
@@ -45,14 +53,33 @@ export class MobileAppConfigurationDialogComponent extends DialogComponent<Mobil
 
     this.showDontShowAgain = this.data.afterAdd;
 
+    this.configureApi.push(`static final thingsBoardApiEndpoint = '${window.location.origin}';`);
+    this.configureApi.push(`static const thingsboardOAuth2AppSecret = '${this.data.appSecret}';`);
   }
 
   close(): void {
     if (this.notShowAgain && this.showDontShowAgain) {
-      // this.store.dispatch(new ActionPreferencesPutUserSettings({ notDisplayConnectivityAfterAddDevice: true }));
+      this.store.dispatch(new ActionPreferencesPutUserSettings({ notDisplayConfigurationAfterAddMobileApp: true }));
       this.dialogRef.close(null);
     } else {
       this.dialogRef.close(null);
     }
+  }
+
+  createMarkDownCommand(commands: string | string[]): string {
+    if (Array.isArray(commands)) {
+      const formatCommands: Array<string> = [];
+      commands.forEach(command => formatCommands.push(this.createMarkDownSingleCommand(command)));
+      return formatCommands.join(`\n<br />\n\n`);
+    } else {
+      return this.createMarkDownSingleCommand(commands);
+    }
+  }
+
+  private createMarkDownSingleCommand(command: string): string {
+    return '```bash\n' +
+      command +
+      '{:copy-code}\n' +
+      '```';
   }
 }

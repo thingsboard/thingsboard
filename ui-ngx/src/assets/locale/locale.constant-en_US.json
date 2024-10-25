@@ -3489,7 +3489,20 @@
         "qr-code-widget": "QR code widget",
         "type-here": "Type hero",
         "configuration-dialog": "Configuration dialog",
-        "configuration-app": "Configuration app"
+        "configuration-app": "Configuration app",
+        "configuration-step": {
+            "prepare-environment-title": "Prepare development environment",
+            "prepare-environment-text": "Flutter ThingsBoard Mobile Application requires Flutter SDK. Follow instructions to set up Flutter SDK.",
+            "get-source-code-title": "Get app source code",
+            "get-source-code-text": "You can get Flutter ThingsBoard Mobile Application source code by cloning it from the GitHub repository:",
+            "configure-api-title": "Configure ThingsBoard API endpoint",
+            "configure-api-text": "Open the flutter_thingsboard_app project in your editor/IDE. Edit:",
+            "configure-api-hint": "Set the value of the thingsBoardApiEndpoint constant to match the API endpoint of your ThingsBoard server instance. Do not use “localhost” or “127.0.0.1” hostnames.",
+            "run-app-title": "Run the app",
+            "run-app-text": "Run the app as described in your IDE.\nIf using the terminal, run the app with the following command:",
+            "more-information": "Detailed information may be found in our Getting Started documentation.",
+            "getting-started": "Getting Started"
+        }
     },
     "notification": {
         "action-button": "Action button",
