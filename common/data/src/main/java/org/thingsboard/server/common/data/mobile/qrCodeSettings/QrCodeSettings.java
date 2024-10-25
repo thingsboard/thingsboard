@@ -44,10 +44,12 @@ public class QrCodeSettings extends BaseData<QrCodeSettingsId> implements HasTen
     @Valid
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "QR code config configuration.")
     private QRCodeConfig qrCodeConfig;
-
+    @Schema(description = "Indicates if google play link is available", example = "true")
+    private boolean androidEnabled;
+    @Schema(description = "Indicates if apple store link is available", example = "true")
+    private boolean iosEnabled;
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String googlePlayLink;
-
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String appStoreLink;
 

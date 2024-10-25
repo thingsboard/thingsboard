@@ -126,6 +126,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.mobile.app.MobileApp;
 import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundle;
+import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundleInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
@@ -2108,12 +2109,12 @@ public class RestClient implements Closeable {
                 }, params).getBody();
     }
 
-    public List<OAuth2ClientInfo> getTenantOAuth2Clients() {
+    public PageData<OAuth2ClientInfo> getTenantOAuth2Clients() {
         return restTemplate.exchange(
                 baseURL + "/api/oauth2/client/infos",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<List<OAuth2ClientInfo>>() {
+                new ParameterizedTypeReference<PageData<OAuth2ClientInfo>>() {
                 }).getBody();
     }
 
@@ -2138,12 +2139,12 @@ public class RestClient implements Closeable {
         restTemplate.delete(baseURL + "/api/oauth2/client/{id}", oAuth2ClientId.getId());
     }
 
-    public List<DomainInfo> getTenantDomainInfos() {
+    public PageData<DomainInfo> getTenantDomainInfos() {
         return restTemplate.exchange(
                 baseURL + "/api/domain/infos",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<List<DomainInfo>>() {
+                new ParameterizedTypeReference<PageData<DomainInfo>>() {
                 }).getBody();
     }
 
@@ -2172,12 +2173,12 @@ public class RestClient implements Closeable {
         restTemplate.postForLocation(baseURL + "/api/domain/{id}/oauth2Clients", oauth2ClientIds, domainId.getId());
     }
 
-    public List<DomainInfo> getTenantMobileApps() {
+    public PageData<MobileApp> getTenantMobileApps() {
         return restTemplate.exchange(
                 baseURL + "/api/mobile/app",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<List<DomainInfo>>() {
+                new ParameterizedTypeReference<PageData<MobileApp>>() {
                 }).getBody();
     }
 
@@ -2202,18 +2203,18 @@ public class RestClient implements Closeable {
         restTemplate.delete(baseURL + "/api/mobile/app/{id}", mobileAppId.getId());
     }
 
-    public List<DomainInfo> getTenantMobileBundleInfos() {
+    public PageData<MobileAppBundleInfo> getTenantMobileBundleInfos() {
         return restTemplate.exchange(
                 baseURL + "/api/mobile/bundle/infos",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<List<DomainInfo>>() {
+                new ParameterizedTypeReference<PageData<MobileAppBundleInfo>>() {
                 }).getBody();
     }
 
     public Optional<MobileAppBundle> getMobileBundleById(MobileAppBundleId mobileAppBundleId) {
         try {
-            ResponseEntity<MobileAppBundle> mobileApp = restTemplate.getForEntity(baseURL + "/api/mobile/app/{id}", MobileAppBundle.class, mobileAppBundleId.getId());
+            ResponseEntity<MobileAppBundle> mobileApp = restTemplate.getForEntity(baseURL + "/api/mobile/bundle/{id}", MobileAppBundle.class, mobileAppBundleId.getId());
             return Optional.ofNullable(mobileApp.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {

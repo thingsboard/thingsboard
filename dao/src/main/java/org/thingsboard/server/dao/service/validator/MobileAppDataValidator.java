@@ -31,12 +31,12 @@ public class MobileAppDataValidator extends DataValidator<MobileApp> {
     @Override
     protected void validateDataImpl(TenantId tenantId, MobileApp mobileApp) {
         if (mobileApp.getPlatformType() == PlatformType.ANDROID) {
-            if (mobileApp.getStoreInfo() != null && mobileApp.getStoreInfo().isEnabled() &&
+            if (mobileApp.getStoreInfo() != null &&
                     (mobileApp.getStoreInfo().getSha256CertFingerprints() == null || mobileApp.getStoreInfo().getStoreLink() == null)) {
                 throw new DataValidationException("Sha256CertFingerprints and store link are required");
             }
         } else if (mobileApp.getPlatformType() == PlatformType.IOS) {
-            if (mobileApp.getStoreInfo() != null && mobileApp.getStoreInfo().isEnabled() &&
+            if (mobileApp.getStoreInfo() != null &&
                     (mobileApp.getStoreInfo().getAppId() == null || mobileApp.getStoreInfo().getStoreLink() == null)) {
                 throw new DataValidationException("AppId and store link are required");
             }

@@ -701,6 +701,8 @@ public class ModelConstants {
      */
     public static final String QR_CODE_SETTINGS_TABLE_NAME = "qr_code_settings";
     public static final String QR_CODE_SETTINGS_USE_DEFAULT_APP_PROPERTY = "use_default_app";
+    public static final String QR_CODE_SETTINGS_ANDROID_ENABLED_PROPERTY = "android_enabled";
+    public static final String QR_CODE_SETTINGS_IOS_ENABLED_PROPERTY = "ios_enabled";
     public static final String QR_CODE_SETTINGS_BUNDLE_ID_PROPERTY = "mobile_app_bundle_id";
     public static final String QR_CODE_SETTINGS_CONFIG_PROPERTY = "qr_code_config";
 

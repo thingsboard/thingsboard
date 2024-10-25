@@ -119,10 +119,10 @@ public class QrCodeSettingServiceImpl extends AbstractCachedEntityService<Tenant
         } else {
             MobileApp androidApp = mobileAppService.findByBundleIdAndPlatformType(qrCodeSettings.getTenantId(), qrCodeSettings.getMobileAppBundleId(), ANDROID);
             MobileApp iosApp = mobileAppService.findByBundleIdAndPlatformType(qrCodeSettings.getTenantId(), qrCodeSettings.getMobileAppBundleId(), IOS);
-            if (androidApp != null && androidApp.getStoreInfo() != null && androidApp.getStoreInfo().isEnabled()) {
+            if (androidApp != null && androidApp.getStoreInfo() != null) {
                 qrCodeSettings.setGooglePlayLink(androidApp.getStoreInfo().getStoreLink());
             }
-            if (iosApp != null && iosApp.getStoreInfo() != null && iosApp.getStoreInfo().isEnabled()) {
+            if (iosApp != null && iosApp.getStoreInfo() != null) {
                 qrCodeSettings.setAppStoreLink(iosApp.getStoreInfo().getStoreLink());
             }
         }

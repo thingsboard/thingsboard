@@ -70,7 +70,6 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
         StoreInfo androidStoreInfo = StoreInfo.builder()
                 .sha256CertFingerprints(ANDROID_APP_SHA256)
                 .storeLink(ANDROID_STORE_LINK)
-                .enabled(true)
                 .build();
         androidApp.setStoreInfo(androidStoreInfo);
         MobileApp savedAndroidApp = doPost("/api/mobile/app", androidApp, MobileApp.class);
@@ -78,7 +77,6 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
         MobileApp iosApp = validMobileApp( "my.ios.package", PlatformType.IOS);
         StoreInfo iosQrCodeConfig = StoreInfo.builder()
                 .appId(APPLE_APP_ID)
-                .enabled(true)
                 .storeLink(IOS_STORE_LINK)
                 .build();
         iosApp.setStoreInfo(iosQrCodeConfig);
