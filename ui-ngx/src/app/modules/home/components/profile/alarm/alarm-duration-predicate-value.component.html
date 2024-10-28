@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" [formGroup]="alarmDurationPredicateValueFormGroup">
-  <div fxFlex fxLayout="column" [fxShow]="!dynamicMode">
+<div class="flex flex-1 flex-row items-center justify-start gap-2" [formGroup]="alarmDurationPredicateValueFormGroup">
+  <div class="flex flex-1 flex-col" [class.!hidden]="dynamicMode">
     <mat-form-field class="mat-block" subscriptSizing="dynamic">
       <input required type="number" matInput
              step="1" min="1" max="2147483647"
@@ -36,9 +36,9 @@
       </mat-error>
     </mat-form-field>
   </div>
-  <div fxFlex fxLayout="column" [fxShow]="dynamicMode">
-    <div formGroupName="dynamicValue" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-      <div fxFlex="40" fxLayout="column">
+  <div class="flex flex-1 flex-col" [class.!hidden]="!dynamicMode">
+    <div formGroupName="dynamicValue" class="flex flex-row items-center justify-start gap-2">
+      <div class="flex max-w-40% flex-full flex-col">
         <mat-form-field class="mat-block" subscriptSizing="dynamic">
           <mat-select formControlName="sourceType" placeholder="{{'filter.dynamic-source-type' | translate}}">
             <mat-option [value]="null">
@@ -50,13 +50,13 @@
           </mat-select>
         </mat-form-field>
       </div>
-      <div fxFlex fxLayout="column">
+      <div class="flex flex-1 flex-col">
         <mat-form-field class="mat-block source-attribute" subscriptSizing="dynamic">
           <input matInput formControlName="sourceAttribute" placeholder="{{'filter.source-attribute' | translate}}">
         </mat-form-field>
       </div>
       <div *ngIf="inheritMode"
-           fxLayout="column"
+           class="flex flex-col"
            style="padding-top: 6px">
         <mat-checkbox formControlName="inherit">
           {{ 'filter.inherit-owner' | translate}}

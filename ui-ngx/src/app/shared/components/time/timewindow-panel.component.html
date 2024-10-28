@@ -31,7 +31,8 @@
     <ng-container *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME">
       <section class="tb-form-panel stroked" *ngIf="realtimeIntervalSelectionAvailable; else timezoneSelectionPanel">
         <div class="tb-flex space-between"
-             [ngClass]="{'align-end': realtimeTypeSelectionAvailable, 'align-center': !realtimeTypeSelectionAvailable }">
+             [class.align-end]="realtimeTypeSelectionAvailable"
+             [class.align-center]="!realtimeTypeSelectionAvailable">
           <div class="tb-flex-xs column">
             <div class="tb-form-panel-title">{{ 'timewindow.timewindow' | translate }}</div>
             <ng-container formGroupName="realtime" *ngIf="realtimeTypeSelectionAvailable">
@@ -72,7 +73,8 @@
     <ng-container *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY">
       <section class="tb-form-panel stroked" *ngIf="historyIntervalSelectionAvailable; else timezoneSelectionPanel">
         <div class="tb-flex space-between"
-             [ngClass]="{'align-end': historyTypeSelectionAvailable, 'align-center': !historyTypeSelectionAvailable }">
+             [class.align-end]="historyTypeSelectionAvailable"
+             [class.align-center]="!historyTypeSelectionAvailable">
           <div class="tb-flex-xs column">
             <div class="tb-form-panel-title">{{ 'timewindow.timewindow' | translate }}</div>
             <ng-container formGroupName="history" *ngIf="historyTypeSelectionAvailable">
@@ -143,8 +145,8 @@
         </section>
       </ng-container>
 
-      <section class="tb-form-row column-xs same-padding" [fxShow]="(isEdit || !timewindow.hideAggInterval)
-       && timewindowForm.get('aggregation.type').value !== aggregationTypes.NONE">
+      <section class="tb-form-row column-xs same-padding" [class.!hidden]="!(isEdit || !timewindow.hideAggInterval)
+                 || timewindowForm.get('aggregation.type').value === aggregationTypes.NONE">
         <ng-container formGroupName="realtime" *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME">
           <tb-timeinterval
             formControlName="interval"

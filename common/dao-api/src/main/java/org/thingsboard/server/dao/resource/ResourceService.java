@@ -79,7 +79,7 @@ public interface ResourceService extends EntityDaoService {
 
     void processResourcesForImport(WidgetTypeDetails widgetTypeDetails, Map<TbResourceId, TbResourceId> importedResources);
 
-    TbResource updateSystemResource(ResourceType resourceType, String resourceKey, String data);
+    TbResource createOrUpdateSystemResource(ResourceType resourceType, String resourceKey, String data);
 
     String checkSystemResourcesUsage(String content, ResourceType... usedResourceTypes);
 

@@ -18,7 +18,7 @@
 <section class="tb-widget-settings" [formGroup]="providerSettingsFormGroup">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.maps.map-provider-settings</legend>
-    <mat-form-field fxFlex class="mat-block">
+    <mat-form-field>
       <mat-label translate>widgets.maps.map-provider</mat-label>
       <mat-select required formControlName="provider">
         <mat-option *ngFor="let provider of mapProviders" [value]="provider">
@@ -27,24 +27,24 @@
       </mat-select>
     </mat-form-field>
     <tb-google-map-provider-settings
-      [fxShow]="providerSettingsFormGroup.get('provider').value === mapProvider.google"
+      [class.!hidden]="providerSettingsFormGroup.get('provider').value !== mapProvider.google"
       formControlName="googleProviderSettings">
     </tb-google-map-provider-settings>
     <tb-openstreet-map-provider-settings
-      [fxShow]="providerSettingsFormGroup.get('provider').value === mapProvider.openstreet"
+      [class.!hidden]="providerSettingsFormGroup.get('provider').value !== mapProvider.openstreet"
       formControlName="openstreetProviderSettings">
     </tb-openstreet-map-provider-settings>
     <tb-here-map-provider-settings
-      [fxShow]="providerSettingsFormGroup.get('provider').value === mapProvider.here"
+      [class.!hidden]="providerSettingsFormGroup.get('provider').value !== mapProvider.here"
       formControlName="hereProviderSettings">
     </tb-here-map-provider-settings>
     <tb-image-map-provider-settings
-      [fxShow]="providerSettingsFormGroup.get('provider').value === mapProvider.image"
+      [class.!hidden]="providerSettingsFormGroup.get('provider').value !== mapProvider.image"
       [aliasController]="aliasController"
       formControlName="imageMapProviderSettings">
     </tb-image-map-provider-settings>
     <tb-tencent-map-provider-settings
-      [fxShow]="providerSettingsFormGroup.get('provider').value === mapProvider.tencent"
+      [class.!hidden]="providerSettingsFormGroup.get('provider').value !== mapProvider.tencent"
       formControlName="tencentMapProviderSettings">
     </tb-tencent-map-provider-settings>
   </fieldset>

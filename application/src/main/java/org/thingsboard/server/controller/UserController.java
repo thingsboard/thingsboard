@@ -78,7 +78,6 @@ import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
-import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -123,7 +122,6 @@ public class UserController extends BaseController {
 
     private final MailService mailService;
     private final JwtTokenFactory tokenFactory;
-    private final SystemSecurityService systemSecurityService;
     private final ApplicationEventPublisher eventPublisher;
     private final TbUserService tbUserService;
     private final EntityQueryService entityQueryService;
@@ -219,7 +217,11 @@ public class UserController extends BaseController {
         accessControlService.checkPermission(securityUser, Resource.USER, Operation.READ, user.getId(), user);
 
         UserActivationLink activationLink = tbUserService.getActivationLink(securityUser.getTenantId(), securityUser.getCustomerId(), user.getId(), request);
-        mailService.sendActivationEmail(activationLink.value(), activationLink.ttlMs(), email);
+        try {
+            mailService.sendActivationEmail(activationLink.value(), activationLink.ttlMs(), email);
+        } catch (Exception e) {
+            throw new ThingsboardException("Couldn't send user activation email", ThingsboardErrorCode.GENERAL);
+        }
     }
 
     @ApiOperation(value = "Get activation link (getActivationLink)",

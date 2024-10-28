@@ -171,6 +171,7 @@ public class ThingsboardInstallService {
                 log.info("Installing DataBase schema for entities...");
 
                 entityDatabaseSchemaService.createDatabaseSchema();
+                entityDatabaseSchemaService.createSchemaVersion();
 
                 entityDatabaseSchemaService.createOrUpdateViewsAndFunctions();
                 entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);

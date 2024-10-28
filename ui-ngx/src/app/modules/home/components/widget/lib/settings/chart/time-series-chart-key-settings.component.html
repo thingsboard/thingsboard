@@ -42,17 +42,17 @@
     </div>
   </div>
   <div class="tb-form-panel">
-    <div *ngIf="chartType === TimeSeriesChartType.default; else chartTypeTitle" fxLayout="row" fxLayoutAlign="space-between center">
+    <div *ngIf="chartType === TimeSeriesChartType.default; else chartTypeTitle" class="flex flex-row items-center justify-between">
       <div class="tb-form-panel-title" translate>widgets.time-series-chart.series.series-type</div>
       <tb-toggle-select formControlName="type">
         <tb-toggle-option *ngFor="let type of timeSeriesChartSeriesTypes" [value]="type">{{ timeSeriesChartSeriesTypeTranslations.get(type) | translate }}</tb-toggle-option>
       </tb-toggle-select>
     </div>
-    <tb-time-series-chart-line-settings [fxShow]="timeSeriesChartKeySettingsForm.get('type').value === TimeSeriesChartSeriesType.line"
+    <tb-time-series-chart-line-settings [class.!hidden]="timeSeriesChartKeySettingsForm.get('type').value !== TimeSeriesChartSeriesType.line"
                                         [chartType]="chartType"
                                         formControlName="lineSettings">
     </tb-time-series-chart-line-settings>
-    <tb-chart-bar-settings [fxShow]="timeSeriesChartKeySettingsForm.get('type').value === TimeSeriesChartSeriesType.bar"
+    <tb-chart-bar-settings [class.!hidden]="timeSeriesChartKeySettingsForm.get('type').value !== TimeSeriesChartSeriesType.bar"
                                      formControlName="barSettings">
     </tb-chart-bar-settings>
   </div>
@@ -70,10 +70,9 @@
     <div class="tb-form-panel-title" translate>widgets.time-series-chart.comparison.settings</div>
     <mat-expansion-panel class="tb-settings" [expanded]="timeSeriesChartKeySettingsForm.get('comparisonSettings.showValuesForComparison').value"
                          [disabled]="!timeSeriesChartKeySettingsForm.get('comparisonSettings.showValuesForComparison').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="showValuesForComparison" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showValuesForComparison" (click)="$event.stopPropagation()">
             {{ 'widgets.time-series-chart.comparison.show-values-for-comparison' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
@@ -81,7 +80,7 @@
       <ng-template matExpansionPanelContent>
         <div class="tb-form-row">
           <div class="fixed-title-width" translate>widgets.time-series-chart.comparison.comparison-values-label</div>
-          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="comparisonValuesLabel" placeholder="{{ 'widgets.time-series-chart.comparison.comparison-values-label-auto' | translate }}">
           </mat-form-field>
         </div>

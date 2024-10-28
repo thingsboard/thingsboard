@@ -74,7 +74,7 @@ public class DashboardSyncService {
         List<RepoFile> resources = listFiles("resources");
         for (RepoFile resourceFile : resources) {
             String data = getFileContent(resourceFile.path());
-            resourceService.updateSystemResource(ResourceType.JS_MODULE, resourceFile.name(), data);
+            resourceService.createOrUpdateSystemResource(ResourceType.JS_MODULE, resourceFile.name(), data);
         }
 
         Stream<String> widgetsBundles = listFiles("widget_bundles").stream()
@@ -85,7 +85,7 @@ public class DashboardSyncService {
 
         RepoFile dashboardFile = listFiles("dashboards").get(0);
         String dashboardJson = getFileContent(dashboardFile.path());
-        resourceService.updateSystemResource(ResourceType.DASHBOARD, GATEWAYS_DASHBOARD_KEY, dashboardJson);
+        resourceService.createOrUpdateSystemResource(ResourceType.DASHBOARD, GATEWAYS_DASHBOARD_KEY, dashboardJson);
 
         log.info("Gateways dashboard sync completed");
     }
