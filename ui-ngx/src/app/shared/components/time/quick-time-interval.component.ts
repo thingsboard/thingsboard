@@ -14,11 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Component, forwardRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { QuickTimeInterval, QuickTimeIntervalTranslationMap } from '@shared/models/time/time.models';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-quick-time-interval',
@@ -32,7 +34,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
     }
   ]
 })
-export class QuickTimeIntervalComponent implements OnInit, ControlValueAccessor {
+export class QuickTimeIntervalComponent implements OnInit, ControlValueAccessor, OnChanges, OnDestroy {
 
   private allIntervals = Object.values(QuickTimeInterval);
 
@@ -50,24 +52,59 @@ export class QuickTimeIntervalComponent implements OnInit, ControlValueAccessor 
   @Input() onlyCurrentInterval = false;
 
   @Input()
+  allowedIntervals: Array<QuickTimeInterval>
+
+  @Input()
   subscriptSizing: SubscriptSizing = 'fixed';
 
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
 
+  intervals: Array<QuickTimeInterval>;
+
+  private allAvailableIntervals: Array<QuickTimeInterval>;
+
+  quickIntervalFormGroup: FormGroup;
+
   private propagateChange = (_: any) => {};
 
-  constructor() {
-  }
+  private destroy$ = new Subject<void>();
 
-  get intervals() {
-    if (this.onlyCurrentInterval) {
-      return this.allIntervals.filter(interval => interval.startsWith('CURRENT_'));
-    }
-    return this.allIntervals;
+  constructor(private fb: FormBuilder) {
+    this.quickIntervalFormGroup = this.fb.group({
+      interval: [ null ]
+    });
+    this.quickIntervalFormGroup.get('interval').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
+      let modelValue;
+      if (!value) {
+        modelValue = null;
+      } else {
+        modelValue = value;
+      }
+      this.updateView(modelValue);
+    });
   }
 
   ngOnInit(): void {
+    this.allAvailableIntervals = this.getAllAvailableIntervals();
+    this.intervals = this.allowedIntervals?.length ? this.allowedIntervals : this.allAvailableIntervals;
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (!change.firstChange && change.currentValue !== change.previousValue) {
+        if (propName === 'allowedIntervals') {
+          this.intervals = this.allowedIntervals?.length ? this.allowedIntervals : this.allAvailableIntervals;
+          const currentInterval: QuickTimeInterval = this.quickIntervalFormGroup.get('interval').value;
+          if (currentInterval && !this.intervals.includes(currentInterval)) {
+            this.quickIntervalFormGroup.get('interval').patchValue(this.intervals[0], {emitEvent: true});
+          }
+        }
+      }
+    }
   }
 
   registerOnChange(fn: any): void {
@@ -79,13 +116,39 @@ export class QuickTimeIntervalComponent implements OnInit, ControlValueAccessor 
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    if (this.disabled) {
+      this.quickIntervalFormGroup.disable({emitEvent: false});
+    } else {
+      this.quickIntervalFormGroup.enable({emitEvent: false});
+    }
   }
 
   writeValue(interval: QuickTimeInterval): void {
-    this.modelValue = interval;
+    if (interval != null) {
+      this.modelValue = interval;
+      this.quickIntervalFormGroup.get('interval').patchValue(interval, {emitEvent: true});
+    } else {
+      this.modelValue = null;
+      this.quickIntervalFormGroup.get('interval').patchValue(null, {emitEvent: true});
+    }
   }
 
-  onIntervalChange() {
-    this.propagateChange(this.modelValue);
+  updateView(value: QuickTimeInterval | null) {
+    if (this.modelValue !== value) {
+      this.modelValue = value;
+      this.propagateChange(this.modelValue);
+    }
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private getAllAvailableIntervals() {
+    if (this.onlyCurrentInterval) {
+      return this.allIntervals.filter(interval => interval.startsWith('CURRENT_'));
+    }
+    return this.allIntervals;
   }
 }

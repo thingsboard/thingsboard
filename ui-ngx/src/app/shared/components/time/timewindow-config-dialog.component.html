@@ -89,6 +89,7 @@
           onlyCurrentInterval="true"
           subscriptSizing="dynamic"
           appearance="outline"
+          [allowedIntervals]="timewindowForm.get('realtime.allowedQuickIntervals').value"
           [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
                           timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
           <button *ngIf="!(timewindowForm.get('realtime.hideQuickInterval').value ||
@@ -169,6 +170,7 @@
             formControlName="quickInterval"
             subscriptSizing="dynamic"
             appearance="outline"
+            [allowedIntervals]="timewindowForm.get('history.allowedQuickIntervals').value"
             [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
                         timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
             <button *ngIf="!(timewindowForm.get('history.hideQuickInterval').value ||

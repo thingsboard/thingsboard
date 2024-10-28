@@ -14,12 +14,14 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, forwardRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { aggregationTranslations, AggregationType } from '@shared/models/time/time.models';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-aggregation-type-select',
@@ -31,7 +33,7 @@ import { aggregationTranslations, AggregationType } from '@shared/models/time/ti
     multi: true
   }]
 })
-export class AggregationTypeSelectComponent implements ControlValueAccessor, OnInit, OnChanges {
+export class AggregationTypeSelectComponent implements ControlValueAccessor, OnInit, OnChanges, OnDestroy {
 
   aggregationTypeFormGroup: FormGroup;
 
@@ -75,6 +77,8 @@ export class AggregationTypeSelectComponent implements ControlValueAccessor, OnI
 
   private propagateChange = (v: any) => { };
 
+  private destroy$ = new Subject<void>();
+
   constructor(private translate: TranslateService,
               private fb: FormBuilder) {
     this.aggregationTypeFormGroup = this.fb.group({
@@ -91,10 +95,12 @@ export class AggregationTypeSelectComponent implements ControlValueAccessor, OnI
 
   ngOnInit() {
     this.aggregationTypes = this.allowedAggregationTypes?.length ? this.allowedAggregationTypes : this.allAggregationTypes;
-    this.aggregationTypeFormGroup.get('aggregationType').valueChanges.subscribe(
+    this.aggregationTypeFormGroup.get('aggregationType').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(
       (value) => {
         let modelValue;
-        if (!value || value === '') {
+        if (!value) {
           modelValue = null;
         } else {
           modelValue = value;
@@ -151,5 +157,10 @@ export class AggregationTypeSelectComponent implements ControlValueAccessor, OnI
     } else {
       return '';
     }
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
