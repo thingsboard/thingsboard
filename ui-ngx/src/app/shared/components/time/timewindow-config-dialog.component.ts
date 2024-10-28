@@ -20,6 +20,8 @@ import {
   DAY,
   HistoryWindowType,
   historyWindowTypeTranslations,
+  Interval,
+  QuickTimeInterval,
   quickTimeIntervalPeriod,
   RealtimeWindowType,
   realtimeWindowTypeTranslations,
@@ -148,6 +150,10 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
         timewindowMs: [ isDefined(realtime?.timewindowMs) ? this.timewindow.realtime.timewindowMs : null ],
         interval: [ isDefined(realtime?.interval) ? this.timewindow.realtime.interval : null ],
         quickInterval: [ isDefined(realtime?.quickInterval) ? this.timewindow.realtime.quickInterval : null ],
+        allowedLastIntervals: [ isDefinedAndNotNull(this.timewindow.realtime?.allowedLastIntervals)
+          ? this.timewindow.realtime?.allowedLastIntervals : null ],
+        allowedQuickIntervals: [ isDefinedAndNotNull(this.timewindow.realtime?.allowedQuickIntervals)
+          ? this.timewindow.realtime?.allowedQuickIntervals : null ],
         disableCustomInterval: [ isDefinedAndNotNull(this.timewindow.realtime?.disableCustomInterval)
           ? this.timewindow.realtime?.disableCustomInterval : false ],
         disableCustomGroupInterval: [ isDefinedAndNotNull(this.timewindow.realtime?.disableCustomGroupInterval)
@@ -171,6 +177,10 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
         interval: [ isDefined(history?.interval) ? this.timewindow.history.interval : null ],
         fixedTimewindow: [ isDefined(history?.fixedTimewindow) ? this.timewindow.history.fixedTimewindow : null ],
         quickInterval: [ isDefined(history?.quickInterval) ? this.timewindow.history.quickInterval : null ],
+        allowedLastIntervals: [ isDefinedAndNotNull(this.timewindow.history?.allowedLastIntervals)
+          ? this.timewindow.history?.allowedLastIntervals : null ],
+        allowedQuickIntervals: [ isDefinedAndNotNull(this.timewindow.realtime?.allowedQuickIntervals)
+          ? this.timewindow.realtime?.allowedQuickIntervals : null ],
         disableCustomInterval: [ isDefinedAndNotNull(this.timewindow.history?.disableCustomInterval)
           ? this.timewindow.history?.disableCustomInterval : false ],
         disableCustomGroupInterval: [ isDefinedAndNotNull(this.timewindow.history?.disableCustomGroupInterval)
@@ -450,7 +460,7 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
             }
           }
         },
-        {maxHeight: '90vh', height: '100%'},
+        {maxHeight: '500px', height: '100%'},
         {}, {}, true, () => {}, {padding: 0});
       aggregationConfigPopover.tbComponentRef.instance.popoverComponent = aggregationConfigPopover;
     }
@@ -458,26 +468,38 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
   }
 
   configureRealtimeLastIntervalOptions($event: Event) {
-    const resFn = (res) => {};
-    this.openIntervalOptionsConfig($event, [], resFn, RealtimeWindowType.LAST_INTERVAL);
+    const resFn = (res) => {
+      this.timewindowForm.get('realtime.allowedLastIntervals').patchValue(res);
+    };
+    this.openIntervalOptionsConfig($event, this.timewindowForm.get('realtime.allowedLastIntervals').value,
+      resFn, RealtimeWindowType.LAST_INTERVAL);
   }
 
   configureRealtimeQuickIntervalOptions($event: Event) {
-    const resFn = (res) => {};
-    this.openIntervalOptionsConfig($event, [], resFn, RealtimeWindowType.INTERVAL, TimewindowType.REALTIME);
+    const resFn = (res) => {
+      this.timewindowForm.get('realtime.allowedQuickIntervals').patchValue(res);
+    };
+    this.openIntervalOptionsConfig($event, this.timewindowForm.get('realtime.allowedQuickIntervals').value,
+      resFn, RealtimeWindowType.INTERVAL, TimewindowType.REALTIME);
   }
 
   configureHistoryLastIntervalOptions($event: Event) {
-    const resFn = (res) => {};
-    this.openIntervalOptionsConfig($event, [], resFn, HistoryWindowType.LAST_INTERVAL);
+    const resFn = (res) => {
+      this.timewindowForm.get('history.allowedLastIntervals').patchValue(res);
+    };
+    this.openIntervalOptionsConfig($event, this.timewindowForm.get('history.allowedLastIntervals').value,
+      resFn, HistoryWindowType.LAST_INTERVAL);
   }
 
   configureHistoryQuickIntervalOptions($event: Event) {
-    const resFn = (res) => {};
-    this.openIntervalOptionsConfig($event, [], resFn, HistoryWindowType.INTERVAL, TimewindowType.HISTORY);
+    const resFn = (res) => {
+      this.timewindowForm.get('history.allowedQuickIntervals').patchValue(res);
+    };
+    this.openIntervalOptionsConfig($event, this.timewindowForm.get('history.allowedQuickIntervals').value,
+      resFn, HistoryWindowType.INTERVAL, TimewindowType.HISTORY);
   }
 
-  private openIntervalOptionsConfig($event: Event, allowedIntervals: Array<any>, resFn: (res) => void,
+  private openIntervalOptionsConfig($event: Event, allowedIntervals: Array<Interval | QuickTimeInterval>, resFn: (res) => void,
                                     intervalType: RealtimeWindowType | HistoryWindowType, timewindowType?: TimewindowType) {
     if ($event) {
       $event.stopPropagation();
@@ -489,6 +511,7 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
       const intervalsConfigPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, IntervalOptionsConfigPanelComponent, ['left', 'leftTop', 'leftBottom'], true, null,
         {
+          aggregation: this.aggregation,
           allowedIntervals: deepClone(allowedIntervals),
           intervalType: intervalType,
           timewindowType: timewindowType,
@@ -497,7 +520,7 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
             resFn(result);
           }
         },
-        {maxHeight: '90vh', height: '100%'},
+        {maxHeight: '500px', height: '100%'},
         {}, {}, true, () => {}, {padding: 0});
       intervalsConfigPopover.tbComponentRef.instance.popoverComponent = intervalsConfigPopover;
     }

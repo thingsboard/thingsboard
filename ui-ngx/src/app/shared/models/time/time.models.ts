@@ -88,6 +88,8 @@ export interface IntervalWindow {
   interval?: Interval;
   timewindowMs?: number;
   quickInterval?: QuickTimeInterval;
+  allowedLastIntervals? : Array<Interval>;
+  allowedQuickIntervals? : Array<QuickTimeInterval>;
   disableCustomInterval?: boolean;
   disableCustomGroupInterval?: boolean;
   hideInterval?: boolean;
@@ -174,6 +176,12 @@ export interface WidgetTimewindow {
   timezone?: string;
   tsOffset?: number;
   stDiff?: number;
+}
+
+export interface TimewindowIntervalOption {
+  name: string;
+  translateParams?: {[key: string]: any};
+  value: Interval | QuickTimeInterval;
 }
 
 export enum QuickTimeInterval {

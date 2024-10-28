@@ -15,22 +15,32 @@
     limitations under the License.
 
 -->
-<form [formGroup]="intervalOptionsConfigForm" class="tb-interval-options-form tb-form-panel no-border">
+<form [formGroup]="intervalOptionsConfigForm" class="tb-interval-options-form tb-form-panel no-border"
+      [style]="aggregation ? {maxWidth: '600px'} : {maxWidth: '350px'}">
   <div class="tb-form-panel-title">{{ 'timewindow.edit-intervals-list' | translate }}</div>
-  <div class="tb-form-hint tb-primary-fill">{{ 'timewindow.edit-intervals-list-hint' | translate }}</div>
+  <div class="tb-form-hint tb-primary-fill">
+    {{ 'timewindow.edit-intervals-list-hint' | translate }} {{ aggregation ? ('timewindow.edit-grouping-intervals-list-hint' | translate) : '' }}
+  </div>
   <div class="tb-form-table no-gap no-padding">
     <div class="tb-form-table-header">
       <div class="tb-form-table-header-cell">{{"timewindow.interval" | translate }}</div>
     </div>
     <div class="tb-form-table-body">
       <mat-selection-list formControlName="allowedIntervals">
-        <mat-list-option *ngFor="let interval of intervals" [value]="interval.value" togglePosition="before">
+        <mat-list-option *ngFor="let interval of allIntervals" [value]="interval.value" togglePosition="before">
           {{ interval.name | translate:interval.translateParams }}
         </mat-list-option>
       </mat-selection-list>
     </div>
   </div>
-  <div class="tb-flex flex-end no-gap">
+  <div class="flex flex-row gap-2 items-center">
+    <button type="button"
+            mat-button
+            color="primary"
+            (click)="reset()">
+      {{ 'action.reset' | translate }}
+    </button>
+    <span class="flex-1"></span>
     <button type="button"
             mat-button
             (click)="cancel()">

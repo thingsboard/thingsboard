@@ -15,9 +15,18 @@
 ///
 
 import { Component, Input, OnInit } from '@angular/core';
-import { HistoryWindowType, RealtimeWindowType, TimewindowType } from '@shared/models/time/time.models';
+import {
+  HistoryWindowType,
+  QuickTimeInterval,
+  QuickTimeIntervalTranslationMap,
+  RealtimeWindowType,
+  TimewindowIntervalOption,
+  TimewindowType
+} from '@shared/models/time/time.models';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { TimeService } from '@core/services/time.service';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-interval-options-config-panel',
@@ -25,6 +34,10 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
   styleUrls: ['./interval-options-config-panel.component.scss']
 })
 export class IntervalOptionsConfigPanelComponent implements OnInit {
+
+  @Input()
+  @coerceBoolean()
+  aggregation = false;
 
   @Input()
   allowedIntervals: Array<any>;
@@ -43,11 +56,25 @@ export class IntervalOptionsConfigPanelComponent implements OnInit {
 
   intervalOptionsConfigForm: FormGroup;
 
-  intervals = [];
+  allIntervals: Array<TimewindowIntervalOption>;
 
-  constructor(private fb: FormBuilder) {}
+  private timeIntervalTranslationMap = QuickTimeIntervalTranslationMap;
+
+  constructor(private fb: FormBuilder,
+              private timeService: TimeService) {}
 
   ngOnInit(): void {
+    if (this.intervalType === RealtimeWindowType.LAST_INTERVAL ||
+        this.intervalType === HistoryWindowType.LAST_INTERVAL) {
+      this.allIntervals = this.timeService.getIntervals(undefined, undefined, false);
+    } else {
+      const quickIntervals = this.getQuickIntervals();
+      this.allIntervals = quickIntervals.map(interval => ({
+        name: this.timeIntervalTranslationMap.get(interval),
+        value: interval
+      }));
+    }
+
     this.intervalOptionsConfigForm = this.fb.group({
       allowedIntervals: [this.allowedIntervals]
     });
@@ -55,7 +82,9 @@ export class IntervalOptionsConfigPanelComponent implements OnInit {
 
   update() {
     if (this.onClose) {
-      this.onClose([]);
+      const allowedIntervals = this.intervalOptionsConfigForm.get('allowedIntervals').value;
+      // if full list selected returns empty for optimization
+      this.onClose(allowedIntervals?.length < this.allIntervals.length ? allowedIntervals : []);
     }
   }
 
@@ -63,6 +92,19 @@ export class IntervalOptionsConfigPanelComponent implements OnInit {
     if (this.onClose) {
       this.onClose(null);
     }
+  }
+
+  reset() {
+    this.intervalOptionsConfigForm.reset();
+    this.intervalOptionsConfigForm.markAsDirty();
+  }
+
+  private getQuickIntervals() {
+    const allQuickIntervals = Object.values(QuickTimeInterval);
+    if (this.timewindowType === TimewindowType.REALTIME) {
+      return allQuickIntervals.filter(interval => interval.startsWith('CURRENT_'));
+    }
+    return allQuickIntervals;
   }
 
 }
