@@ -1203,6 +1203,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
             invokeScript(evalScript(decoderStr), msgStr);
         }).hasMessageContaining(message);
     }
+
     @Test
     public void printUnsignedBytes_Test() throws ExecutionException, InterruptedException {
         msgStr = "{}";
@@ -1224,6 +1225,249 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         assertEquals(expected, actual);
     }
 
+    @Test
+    public void pad_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        // padStart
+        decoderStr = """
+                    var str1 = "010011";
+                    var str2 ="1001010011";
+                    var fullNumber = "203439900FFCD5581";
+                    var last4Digits = fullNumber.substring(11);
+                    return {
+                        padStart1: padStart(str1, 8, '0'),
+                        padStart2: padStart(str2, 8, '0'),
+                        padStart16: padStart(str2, 16, '*'),
+                        padStartFullNumber: padStart(last4Digits, fullNumber.length(), '*')
+                    }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("padStart1", "00010011");
+        expected.put("padStart2", "1001010011");
+        expected.put("padStart16", "******1001010011");
+        expected.put("padStartFullNumber", "***********CD5581");
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+        // padEnd
+        decoderStr = """
+                    var str1 = "010011";
+                    var str2 ="1001010011";
+                    var fullNumber = "203439900FFCD5581";
+                    var last4Digits = fullNumber.substring(0, 11);
+                    return {
+                        padEnd1: padEnd(str1, 8, '0'),
+                        padEnd2: padEnd(str2, 8, '0'),
+                        padEnd16: padEnd(str2, 16, '*'),
+                        padEndFullNumber: padEnd(last4Digits, fullNumber.length(), '*')
+                    }
+                """;
+        expected = new LinkedHashMap<>();
+        expected.put("padEnd1", "01001100");
+        expected.put("padEnd2", "1001010011");
+        expected.put("padEnd16", "1001010011******");
+        expected.put("padEndFullNumber", "203439900FF******");
+        actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void numberToRadixStringIntLongFloatDouble_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    var i = 0x7FFFFFFF;
+                    return {
+                        "intToHex1": intToHex(i, true, true),
+                        "intToHex2": intToHex(171, true, false),
+                        "intToHex3": intToHex(0xABCDEF, false, true, 4),
+                        "intToHex4": intToHex(0xABCD, false, false, 2),
+                        "longToHex1": longToHex(9223372036854775807, true, true),
+                        "longToHex2": longToHex(0x7A12BCD3, true, true, 4),
+                        "longToHex3": longToHex(0x7A12BCD3, false, false, 4),
+                        "floatToHex1": floatToHex(123456789.00),
+                        "floatToHex2": floatToHex(123456789.00, false),
+                        "doubleToHex1": doubleToHex(1729.1729d),
+                        "doubleToHex2": doubleToHex(1729.1729d, false)
+                    }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("intToHex1", "0x7FFFFFFF");
+        expected.put("intToHex2", "AB");
+        expected.put("intToHex3", "0xCDAB");
+        expected.put("intToHex4", "AB");
+        expected.put("longToHex1", "0x7FFFFFFFFFFFFFFF");
+        expected.put("longToHex2", "0xBCD3");
+        expected.put("longToHex3", "127A");
+        expected.put("floatToHex1", "0x4CEB79A3");
+        expected.put("floatToHex2", "0xA379EB4C");
+        expected.put("doubleToHex1", "0x409B04B10CB295EA");
+        expected.put("doubleToHex2", "0xEA95B20CB1049B40");
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void intLongToRadixString_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    return {
+                        "bin1": intLongToRadixString(58, 2),
+                        "bin2": intLongToRadixString(9223372036854775807, 2),
+                        "octal1": intLongToRadixString(13158, 8),
+                        "octal2": intLongToRadixString(-13158, 8),
+                        "decimal": intLongToRadixString(-13158, 10),
+                        "hexDecimal1": intLongToRadixString(13158, 16),
+                        "hexDecimal2": intLongToRadixString(-13158, 16),
+                        "hexDecimal3": intLongToRadixString(9223372036854775807, 16),
+                        "hexDecimal4": intLongToRadixString(-13158, 16, true, true)
+                    }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("bin1", "00111010");
+        expected.put("bin2", "0111111111111111111111111111111111111111111111111111111111111111");
+        expected.put("octal1", "31546");
+        expected.put("octal2", "1777777777777777746232");
+        expected.put("decimal", "-13158");
+        expected.put("hexDecimal1", "3366");
+        expected.put("hexDecimal2", "FFCC9A");
+        expected.put("hexDecimal3", "7FFFFFFFFFFFFFFF");
+        expected.put("hexDecimal4", "0xFFCC9A");
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void parseHex_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    return {
+                        "hexToInt1": parseHexToInt("BBAA"),
+                        "hexToInt2": parseHexToInt("BBAA", true),
+                        "hexToInt3": parseHexToInt("AABB", false),
+                        "hexToInt4": parseHexToInt("BBAA", false),
+                        "hexToFloat1": parseHexToFloat("41EA62CC"),
+                        "hexToFloat2": parseHexToFloat("41EA62CC", true),
+                        "hexToFloat3": parseHexToFloat("41EA62CC", false),
+                        "hexToFloat4": parseHexToFloat("CC62EA41", false),
+                        "hexIntLongToFloat1": parseHexIntLongToFloat("0x0A", true),
+                        "hexIntLongToFloat2": parseHexIntLongToFloat("0x0A", false),
+                        "hexIntLongToFloat3": parseHexIntLongToFloat("0x00000A", true),
+                        "hexIntLongToFloat4": parseHexIntLongToFloat("0x0A0000", false),
+                        "hexIntLongToFloat5": parseHexIntLongToFloat("0x000A0A", true),
+                        "hexIntLongToFloat6": parseHexIntLongToFloat("0x0A0A00", false),
+                        "hexToDouble1": parseHexToDouble("409B04B10CB295EA"),
+                        "hexToDouble2": parseHexToDouble("409B04B10CB295EA", false),
+                        "hexToDouble3": parseHexToDouble("409B04B10CB295EA", true),
+                        "hexToDouble4": parseHexToDouble("EA95B20CB1049B40", false)
+                    }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("hexToInt1", 48042);
+        expected.put("hexToInt2", 48042);
+        expected.put("hexToInt3", 48042);
+        expected.put("hexToInt4", 43707);
+        expected.put("hexToFloat1", 29.29824f);
+        expected.put("hexToFloat2", 29.29824f);
+        expected.put("hexToFloat3", -5.948442E7f);
+        expected.put("hexToFloat4", 29.29824f);
+        expected.put("hexIntLongToFloat1", 10.0f);
+        expected.put("hexIntLongToFloat2", 10.0f);
+        expected.put("hexIntLongToFloat3", 10.0f);
+        expected.put("hexIntLongToFloat4", 10.0f);
+        expected.put("hexIntLongToFloat5", 2570.0f);
+        expected.put("hexIntLongToFloat6", 2570.0f);
+        expected.put("hexToDouble1", 1729.1729);
+        expected.put("hexToDouble2", -2.7208640774822924E205);
+        expected.put("hexToDouble3", 1729.1729);
+        expected.put("hexToDouble4", 1729.1729);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void parseBytes_Test() throws ExecutionException, InterruptedException {
+        byte[] bytesExecutionArrayList = new byte[]{(byte) 0xAA, (byte) 0xBB, (byte) 0xCC, (byte) 0xDD};
+        msgStr = "{}";
+        decoderStr = """
+                    var bytes = [0xBB, 0xAA];
+                    var list = [-69, 83];
+                    var intValByte = [0xAA, 0xBB, 0xCC, 0xDD];
+                    var longValByte = [64, -101, 4, -79, 12, -78, -107, -22];
+                    var bytesFloat = [0x0A];
+                    var floatValByte = [0x41, 0xEA, 0x62, 0xCC];
+                    var floatValList = [65, -22, 98, -52];
+                    var intValByteFromInt = [0x00, 0x00, 0x00, 0x0A];
+                    var dataAT101 = "0x01756403671B01048836BF7701F000090722050000";
+                    var byteAT101 = hexToBytes(dataAT101);
+                    var offsetLatInt = 9;
+                    var coordinatesAsHex = "0x32D009423F23B300B0106E08D96B6C00";
+                    var coordinatesasBytes = hexToBytes(coordinatesAsHex);
+                    var offsetLatLong = 0;
+                    var factor = 1e15;
+                    var bytesExecutionArrayList = [0xAA, 0xBB, 0xCC, 0xDD];
+                    return {
+                        "bytesToHex1": bytesToHex(bytes),
+                        "bytesToHex2": bytesToHex(list),
+                        "bytesToInt1": parseBytesToInt(intValByte, 0, 3),
+                        "bytesToInt2": parseBytesToInt(intValByte, 0, 3, true),
+                        "bytesToInt3": parseBytesToInt(intValByte, 0, 3, false),
+                        "bytesToLong1": parseBytesToLong(longValByte, 0, 8),
+                        "bytesToLong2": parseBytesToLong(longValByte, 0, 8, false),
+                        "bytesToFloat1": parseBytesToFloat(bytesFloat),
+                        "bytesToFloat2": parseBytesToFloat(floatValByte, 0),
+                        "bytesToFloat3": parseBytesToFloat(floatValByte, 0, 2, false),
+                        "bytesToFloat4": parseBytesToFloat(floatValByte, 0, 2, true),
+                        "bytesToFloat5": parseBytesToFloat(floatValByte, 0, 3, false),
+                        "bytesToFloat6": parseBytesToFloat(floatValByte, 0, 3, true),
+                        "bytesToFloat7": parseBytesToFloat(floatValByte, 0, 4, false),
+                        "bytesToFloat8": parseBytesToFloat(floatValList, 0),
+                        "bytesToFloat9": parseBytesToFloat(floatValList, 0, 4, false),
+                        "bytesIntToFloat1": parseBytesIntToFloat(intValByteFromInt, 3, 1, true),
+                        "bytesIntToFloat2": parseBytesIntToFloat(intValByteFromInt, 3, 1, false),
+                        "bytesIntToFloat3": parseBytesIntToFloat(intValByteFromInt, 2, 2, true),
+                        "bytesIntToFloat4": parseBytesIntToFloat(intValByteFromInt, 2, 2, false),
+                        "bytesIntToFloat5": parseBytesIntToFloat(intValByteFromInt, 0, 4, true),
+                        "bytesIntToFloat6": parseBytesIntToFloat(intValByteFromInt, 0, 4, false),
+                        "bytesIntToFloat7": parseBytesIntToFloat(byteAT101, offsetLatInt, 4, false) / 1000000,
+                        "bytesIntToFloat8": parseBytesIntToFloat(byteAT101, offsetLatInt + 4, 4, false) / 1000000,
+                        "bytesLongToDouble1": parseBytesLongToDouble(coordinatesasBytes, offsetLatLong, 8, false) / factor,
+                        "bytesLongToDouble2": parseBytesLongToDouble(coordinatesasBytes, offsetLatLong + 8, 8, false) / factor,
+                        "bytesLongToExecutionArrayList": bytesToExecutionArrayList(bytesExecutionArrayList)
+
+                    }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("bytesToHex1", "BBAA");
+        expected.put("bytesToHex2", "BB53");
+        expected.put("bytesToInt1", 11189196);
+        expected.put("bytesToInt2", 11189196);
+        expected.put("bytesToInt3", 13417386);
+        expected.put("bytesToLong1", 4655319798286292458L);
+        expected.put("bytesToLong2", -1543131529725306048L);
+        expected.put("bytesToFloat1", 1.4E-44f);
+        expected.put("bytesToFloat2", 29.29824f);
+        expected.put("bytesToFloat3", 8.4034E-41f);
+        expected.put("bytesToFloat4", 2.3646E-41f);
+        expected.put("bytesToFloat5", 9.083913E-39f);
+        expected.put("bytesToFloat6", 6.053388E-39f);
+        expected.put("bytesToFloat7", -5.948442E7f);
+        expected.put("bytesToFloat8", 29.29824f);
+        expected.put("bytesToFloat9", -5.948442E7f);
+        expected.put("bytesIntToFloat1", 10.0f);
+        expected.put("bytesIntToFloat2", 10.0f);
+        expected.put("bytesIntToFloat3", 10.0f);
+        expected.put("bytesIntToFloat4", 2560.0f);
+        expected.put("bytesIntToFloat5", 10.0f);
+        expected.put("bytesIntToFloat6", 1.6777216E8f);
+        expected.put("bytesIntToFloat7", 24.62495f);
+        expected.put("bytesIntToFloat8", 118.030576f);
+        expected.put("bytesLongToDouble1", 50.422775429058610d);
+        expected.put("bytesLongToDouble2", 30.517877378257072d);
+        expected.put("bytesLongToExecutionArrayList", bytesToList(bytesExecutionArrayList));
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    // parseBinaryArray
 
     private List splice(List oldList, int start, int deleteCount, Object... values) {
         start = initStartIndex(oldList, start);
