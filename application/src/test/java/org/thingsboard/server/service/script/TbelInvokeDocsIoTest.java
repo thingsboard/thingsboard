@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.script;
 
 import org.junit.jupiter.api.Test;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.nio.charset.StandardCharsets;
@@ -1063,7 +1064,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     }
 
     @Test
-    public void stringToBytes_Test() throws ExecutionException, InterruptedException {
+    public void stringToBytesBinaryString_Test() throws ExecutionException, InterruptedException {
         String base64Str = "eyJoZWxsbyI6ICJ3b3JsZCJ9";
         String inputStr = "hello, world";
         msgStr = String.format("""
@@ -1086,6 +1087,140 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         expected.put("inputStr", bytesToList(inputStr.getBytes()));
         expected.put("inputStrUTF8", bytesToList(inputStr.getBytes(StandardCharsets.UTF_8)));
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void stringToBytesObjectFromJsonAsString_Test() throws ExecutionException, InterruptedException {
+        String inputStr = "hello, world";
+        msgStr = "{}";
+        decoderStr = String.format("""
+                    var dataMap = {};
+                    dataMap.inputStr = "%s";
+                    var dataJsonStr = JSON.stringify(dataMap);
+                    var dataJson = JSON.parse(dataJsonStr);
+                    return stringToBytes(dataJson.inputStr);
+                """, inputStr);
+        List expected = bytesToList(inputStr.getBytes());
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void bytesToString_Test() throws ExecutionException, InterruptedException {
+        byte[] inputBytes = new byte[]{0x48, 0x45, 0x4C, 0x4C, 0x4F};
+        msgStr = "{}";
+        decoderStr = """
+                var bytes = [0x48,0x45,0x4C,0x4C,0x4F];
+                return bytesToString(bytes);
+                """;
+        String expected = new String(inputBytes);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void decodeToJson_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    var base64Str = "eyJoZWxsbyI6ICJ3b3JsZCJ9";
+                    var bytesStr = atob(base64Str);
+                    var bytes = stringToBytes(bytesStr);
+                    return decodeToJson(bytes);
+                """;
+        String expected = "{\"hello\":\"world\"}";
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, JacksonUtil.toString(actual));
+    }
+
+    @Test
+    public void isTypeInValue_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    return{
+                       "binary": isBinary("1100110"),
+                       "notBinary": isBinary("2100110"),
+                       "octal": isOctal("4567734"),
+                       "notOctal": isOctal("8100110"),
+                       "decimal": isDecimal("4567039"),
+                       "notDecimal": isDecimal("C100110"),
+                       "hexadecimal": isHexadecimal("F5D7039"),
+                       "notHexadecimal": isHexadecimal("K100110")
+                      }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("binary", 2);
+        expected.put("notBinary", -1);
+        expected.put("octal", 8);
+        expected.put("notOctal", -1);
+        expected.put("decimal", 10);
+        expected.put("notDecimal", -1);
+        expected.put("hexadecimal", 16);
+        expected.put("notHexadecimal", -1);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void encodeDecodeUri_Test() throws ExecutionException, InterruptedException {
+        String uriOriginal = "-_.!~*'();/?:@&=+$,#ht://example.ж д a/path with spaces/?param1=Київ 1&param2=Україна2";
+        String uriEncode = "-_.!~*'();/?:@&=+$,#ht://example.%D0%B6%20%D0%B4%20a/path%20with%20spaces/?param1=%D0%9A%D0%B8%D1%97%D0%B2%201&param2=%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D0%B02";
+        msgStr = "{}";
+        decoderStr = String.format("""
+                    var uriOriginal = "%s";
+                    var uriEncode = "%s";
+                    return{
+                       "encodeURI": encodeURI(uriOriginal),
+                       "decodeURI": decodeURI(uriEncode)
+                      }
+                """, uriOriginal, uriEncode);
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("encodeURI", uriEncode);
+        expected.put("decodeURI", uriOriginal);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void raiseError_Test() throws ExecutionException, InterruptedException {
+        String message = "frequency_weighting_type must be 0, 1 or 2.";
+        msgStr = "{}";
+        decoderStr = String.format("""
+                    var message = "%s";
+                    return raiseError(message);
+                """, message);
+        assertThatThrownBy(() -> {
+            invokeScript(evalScript(decoderStr), msgStr);
+        }).hasMessageContaining(message);
+
+        Integer value = 4;
+        message = "frequency_weighting_type must be 0, 1 or 2. A value of " + value + " is invalid.";
+        decoderStr = String.format("""
+                    var message = "%s";
+                    return raiseError(message);
+                """, message);
+        assertThatThrownBy(() -> {
+            invokeScript(evalScript(decoderStr), msgStr);
+        }).hasMessageContaining(message);
+    }
+    @Test
+    public void printUnsignedBytes_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    var hexStrBe = "D8FF";
+                    var listBe = hexToBytes(hexStrBe);
+                    return printUnsignedBytes(listBe);
+                """;
+        ArrayList expected = new ArrayList<>(List.of(216, 255));
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+        decoderStr = """
+                    var hexStrLe = "FFD8";
+                    var listLe = hexToBytes(hexStrLe);
+                    return printUnsignedBytes(listLe);
+                """;
+        expected = new ArrayList<>(List.of(255, 216));
+        actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
     }
 
