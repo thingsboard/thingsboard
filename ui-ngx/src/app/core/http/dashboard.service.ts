@@ -72,7 +72,7 @@ export class DashboardService {
   }
 
   public exportDashboard(dashboardId: string, config?: RequestConfig): Observable<Dashboard> {
-    return this.http.get<Dashboard>(`/api/dashboard/${dashboardId}?inlineImages=true`, defaultHttpOptionsFromConfig(config));
+    return this.http.get<Dashboard>(`/api/dashboard/${dashboardId}?includeResources=true`, defaultHttpOptionsFromConfig(config));
   }
 
   public getDashboardInfo(dashboardId: string, config?: RequestConfig): Observable<DashboardInfo> {
