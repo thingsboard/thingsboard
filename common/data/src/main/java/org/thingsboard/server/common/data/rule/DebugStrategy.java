@@ -39,10 +39,6 @@ public enum DebugStrategy {
         return isAllEventsStrategyAndMsgTsWithinDebugDuration(lastUpdateTs, msgTs, debugModeDurationMinutes);
     }
 
-    public boolean shouldPersistDebugForFailureEventOnly(long lastUpdateTs, long msgTs, int debugModeDurationMinutes) {
-        return shouldPersistDebugOutputForAllEvents(lastUpdateTs, msgTs, debugModeDurationMinutes) || isFailureOnlyStrategy();
-    }
-
     public boolean shouldPersistDebugForFailureEventOnly(Set<String> nodeConnections) {
         return isFailureOnlyStrategy() && nodeConnections.contains(TbNodeConnectionType.FAILURE);
     }

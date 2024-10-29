@@ -69,6 +69,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
@@ -161,7 +162,7 @@ class DefaultTbContextTest {
         // THEN
         then(nodeCtxMock).should().getChainActor();
         then(nodeCtxMock).shouldHaveNoMoreInteractions();
-        then(mainCtxMock).should().persistDebugOutput(TENANT_ID, RULE_NODE_ID, msg, TbNodeConnectionType.FAILURE);
+        then(mainCtxMock).should().persistDebugOutput(TENANT_ID, RULE_NODE_ID, msg, TbNodeConnectionType.FAILURE, null, null);
         then(mainCtxMock).shouldHaveNoMoreInteractions();
         checkTellNextCommonLogic(callbackMock, connections, msg);
     }
@@ -226,7 +227,7 @@ class DefaultTbContextTest {
         then(nodeCtxMock).shouldHaveNoMoreInteractions();
         then(mainCtxMock).should().getTenantProfileCache();
         then(mainCtxMock).should().getMaxRuleNodeDebugModeDurationMinutes();
-        then(mainCtxMock).should().persistDebugOutput(TENANT_ID, RULE_NODE_ID, msg, connection);
+        then(mainCtxMock).should().persistDebugOutput(TENANT_ID, RULE_NODE_ID, msg, connection, null, null);
         then(mainCtxMock).shouldHaveNoMoreInteractions();
         checkTellNextCommonLogic(callbackMock, connection, msg);
     }
@@ -260,7 +261,7 @@ class DefaultTbContextTest {
         then(mainCtxMock).should().getMaxRuleNodeDebugModeDurationMinutes();
         var nodeConnectionsCaptor = ArgumentCaptor.forClass(String.class);
         int wantedNumberOfInvocations = connections.size();
-        then(mainCtxMock).should(times(wantedNumberOfInvocations)).persistDebugOutput(eq(TENANT_ID), eq(RULE_NODE_ID), eq(msg), nodeConnectionsCaptor.capture());
+        then(mainCtxMock).should(times(wantedNumberOfInvocations)).persistDebugOutput(eq(TENANT_ID), eq(RULE_NODE_ID), eq(msg), nodeConnectionsCaptor.capture(), nullable(Throwable.class), nullable(String.class));
         then(mainCtxMock).shouldHaveNoMoreInteractions();
         assertThat(nodeConnectionsCaptor.getAllValues()).hasSize(wantedNumberOfInvocations);
         assertThat(nodeConnectionsCaptor.getAllValues()).containsExactlyInAnyOrderElementsOf(connections);
@@ -288,7 +289,7 @@ class DefaultTbContextTest {
 
         // THEN
         checkOutputCommonLogic(msgMock, TbNodeConnectionType.FAILURE);
-        then(mainCtxMock).should().persistDebugOutput(TENANT_ID, RULE_NODE_ID, msgMock, TbNodeConnectionType.FAILURE);
+        then(mainCtxMock).should().persistDebugOutput(TENANT_ID, RULE_NODE_ID, msgMock, TbNodeConnectionType.FAILURE, null, null);
         then(mainCtxMock).shouldHaveNoMoreInteractions();
         then(nodeCtxMock).shouldHaveNoMoreInteractions();
     }
@@ -355,7 +356,7 @@ class DefaultTbContextTest {
         checkOutputCommonLogic(msgMock, nodeConnection);
         then(mainCtxMock).should().getTenantProfileCache();
         then(mainCtxMock).should().getMaxRuleNodeDebugModeDurationMinutes();
-        then(mainCtxMock).should().persistDebugOutput(TENANT_ID, RULE_NODE_ID, msgMock, nodeConnection);
+        then(mainCtxMock).should().persistDebugOutput(TENANT_ID, RULE_NODE_ID, msgMock, nodeConnection, null, null);
         then(mainCtxMock).shouldHaveNoMoreInteractions();
         then(nodeCtxMock).shouldHaveNoMoreInteractions();
     }
@@ -405,7 +406,7 @@ class DefaultTbContextTest {
         then(callbackMock).should().onProcessingEnd(RULE_NODE_ID);
         then(callbackMock).should().onSuccess();
         then(nodeCtxMock).should(never()).getChainActor();
-        then(mainCtxMock).should().persistDebugOutput(TENANT_ID, RULE_NODE_ID, msgMock, TbNodeConnectionType.ACK);
+        then(mainCtxMock).should().persistDebugOutput(TENANT_ID, RULE_NODE_ID, msgMock, TbNodeConnectionType.ACK, null, null);
     }
 
     @Test
@@ -644,7 +645,7 @@ class DefaultTbContextTest {
         if (DebugStrategy.ALL_EVENTS.equals(debugStrategy)) {
             then(mainCtxMock).should().getTenantProfileCache();
             then(mainCtxMock).should().getMaxRuleNodeDebugModeDurationMinutes();
-            then(mainCtxMock).should().persistDebugOutput(eq(TENANT_ID), eq(RULE_NODE_ID), eq(msg), eq(TbNodeConnectionType.TO_ROOT_RULE_CHAIN));
+            then(mainCtxMock).should().persistDebugOutput(eq(TENANT_ID), eq(RULE_NODE_ID), eq(msg), eq(TbNodeConnectionType.TO_ROOT_RULE_CHAIN), nullable(Throwable.class), nullable(String.class));
         }
         then(mainCtxMock).should().getClusterService();
         then(mainCtxMock).shouldHaveNoMoreInteractions();
@@ -676,7 +677,7 @@ class DefaultTbContextTest {
         then(chainActorMock).should().tell(expectedRuleNodeToRuleChainTellNextMsg);
         then(chainActorMock).shouldHaveNoMoreInteractions();
         then(nodeCtxMock).should().getChainActor();
-        then(mainCtxMock).should().persistDebugOutput(TENANT_ID, RULE_NODE_ID, msg, TbNodeConnectionType.FAILURE, EXCEPTION);
+        then(mainCtxMock).should().persistDebugOutput(TENANT_ID, RULE_NODE_ID, msg, TbNodeConnectionType.FAILURE, EXCEPTION, null);
         then(mainCtxMock).shouldHaveNoMoreInteractions();
         then(nodeCtxMock).shouldHaveNoMoreInteractions();
     }
@@ -736,7 +737,7 @@ class DefaultTbContextTest {
         then(chainActorMock).should().tell(expectedRuleNodeToRuleChainTellNextMsg);
         then(chainActorMock).shouldHaveNoMoreInteractions();
         then(nodeCtxMock).should().getChainActor();
-        then(mainCtxMock).should().persistDebugOutput(TENANT_ID, RULE_NODE_ID, msg, TbNodeConnectionType.FAILURE, EXCEPTION);
+        then(mainCtxMock).should().persistDebugOutput(TENANT_ID, RULE_NODE_ID, msg, TbNodeConnectionType.FAILURE, EXCEPTION, null);
         then(mainCtxMock).should().getTenantProfileCache();
         then(mainCtxMock).should().getMaxRuleNodeDebugModeDurationMinutes();
         then(mainCtxMock).shouldHaveNoMoreInteractions();
