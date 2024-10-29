@@ -133,7 +133,7 @@ public class OAuth2Controller extends BaseController {
     }
 
     @ApiOperation(value = "Get OAuth2 Client infos By Ids (findTenantOAuth2ClientInfosByIds)",
-            notes = "Fetch OAuth2 Client info objects based on the provided ids. ")
+            notes = "Fetch OAuth2 Client info objects based on the provided ids. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/oauth2/client/infos", params = {"clientIds"})
     public List<OAuth2ClientInfo> findTenantOAuth2ClientInfosByIds(
@@ -164,7 +164,7 @@ public class OAuth2Controller extends BaseController {
     @ApiOperation(value = "Get OAuth2 log in processing URL (getLoginProcessingUrl)", notes = "Returns the URL enclosed in " +
             "double quotes. After successful authentication with OAuth2 provider, it makes a redirect to this path so that the platform can do " +
             "further log in processing. This URL may be configured as 'security.oauth2.loginProcessingUrl' property in yml configuration file, or " +
-            "as 'SECURITY_OAUTH2_LOGIN_PROCESSING_URL' env variable. By default it is '/login/oauth2/code/'" + SYSTEM_AUTHORITY_PARAGRAPH)
+            "as 'SECURITY_OAUTH2_LOGIN_PROCESSING_URL' env variable. By default it is '/login/oauth2/code/'" + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/oauth2/loginProcessingUrl")
     public String getLoginProcessingUrl() {

@@ -45,9 +45,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.dao.service.Validator.checkNotNull;
+
 @Slf4j
 @Service
 public class MobileAppBundleServiceImpl extends AbstractEntityService implements MobileAppBundleService {
+
+    private static final String PLATFORM_TYPE_IS_REQUIRED = "Platform type is required if package name is specified";
 
     @Autowired
     private OAuth2ClientDao oauth2ClientDao;
@@ -136,6 +140,7 @@ public class MobileAppBundleServiceImpl extends AbstractEntityService implements
     @Override
     public MobileAppBundle findMobileAppBundleByPkgNameAndPlatform(TenantId tenantId, String pkgName, PlatformType platform) {
         log.trace("Executing findMobileAppBundleByPkgNameAndPlatform, tenantId [{}], pkgName [{}], platform [{}]", tenantId, pkgName, platform);
+        checkNotNull(platform, PLATFORM_TYPE_IS_REQUIRED);
         return mobileAppBundleDao.findByPkgNameAndPlatform(tenantId, pkgName, platform);
     }
 
