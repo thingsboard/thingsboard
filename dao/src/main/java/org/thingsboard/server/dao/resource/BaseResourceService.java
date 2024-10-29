@@ -18,10 +18,12 @@ package org.thingsboard.server.dao.resource;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -68,7 +70,7 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service("TbResourceDaoService")
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Primary
 public class BaseResourceService extends AbstractCachedEntityService<ResourceInfoCacheKey, TbResourceInfo, ResourceInfoEvictEvent> implements ResourceService {
 
@@ -76,6 +78,8 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     protected final TbResourceDao resourceDao;
     protected final TbResourceInfoDao resourceInfoDao;
     protected final ResourceDataValidator resourceValidator;
+    @Autowired @Lazy
+    private ImageService imageService;
 
     private static final Map<String, String> DASHBOARD_RESOURCES_MAPPING = Map.of(
             "widgets.*.config.actions.*.*.customResources.*.url.id", ""
@@ -390,6 +394,11 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     public TbResource createOrUpdateSystemResource(ResourceType resourceType, String resourceKey, String data) {
         if (resourceType == ResourceType.DASHBOARD) {
             data = checkSystemResourcesUsage(data, ResourceType.JS_MODULE);
+
+            Dashboard dashboard = JacksonUtil.fromString(data, Dashboard.class);
+            dashboard.setTenantId(TenantId.SYS_TENANT_ID);
+            imageService.replaceBase64WithImageUrl(dashboard);
+            data = JacksonUtil.toString(dashboard);
         }
 
         TbResource resource = findResourceByTenantIdAndKey(TenantId.SYS_TENANT_ID, resourceType, resourceKey);
