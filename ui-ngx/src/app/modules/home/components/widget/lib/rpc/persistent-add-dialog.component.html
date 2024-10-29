@@ -18,7 +18,7 @@
 <form [formGroup]="persistentFormGroup" (ngSubmit)="save()" style="min-width: 480px; max-width: 600px;">
   <mat-toolbar color="primary">
     <h2>{{ 'widgets.persistent-table.add-title' | translate }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="close()"
             type="button">
@@ -30,13 +30,13 @@
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content class="add-dialog">
     <fieldset [disabled]="isLoading$ | async">
-      <div fxLayout="row" fxLayoutGap="6px">
-        <mat-slide-toggle fxFlex class="mat-block" formControlName="oneWayElseTwoWay">
+      <div class="flex flex-row gap-1.5">
+        <mat-slide-toggle class="mat-block flex-1" formControlName="oneWayElseTwoWay">
           {{ rpcMessageTypeText }}
         </mat-slide-toggle>
       </div>
-      <div fxLayout="row wrap" fxLayout.xs="column" fxLayoutGap="6px">
-        <mat-form-field fxFlex class="mat-block">
+      <div class="flex flex-row flex-wrap gap-1.5 xs:flex-col">
+        <mat-form-field class="mat-block flex-1">
           <mat-label translate>widgets.persistent-table.method</mat-label>
           <input matInput formControlName="method" required>
           <mat-error *ngIf="this.persistentFormGroup.get('method').hasError('required')">
@@ -46,7 +46,7 @@
             {{'widgets.persistent-table.white-space-error' | translate}}
           </mat-error>
         </mat-form-field>
-        <mat-form-field fxFlex class="mat-block">
+        <mat-form-field class="mat-block flex-1">
           <mat-label translate>widgets.persistent-table.retries</mat-label>
           <input matInput type="number" formControlName="retries">
         </mat-form-field>
@@ -72,15 +72,15 @@
     </fieldset>
   </div>
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
-  <div mat-dialog-actions fxLayout="row">
+  <div mat-dialog-actions class="flex flex-row">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="close()">
       {{ 'action.close' | translate }}
     </button>
-    <span fxFlex></span>
-    <div fxLayout="row" fxLayoutGap="8px">
+    <span class="flex-1"></span>
+    <div class="flex flex-row gap-2">
       <button mat-raised-button
               color="primary"
               type="submit"

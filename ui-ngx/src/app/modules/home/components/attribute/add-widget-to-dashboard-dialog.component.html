@@ -18,7 +18,7 @@
 <form [formGroup]="addWidgetFormGroup" (ngSubmit)="add()" style="min-width: 400px;">
   <mat-toolbar color="primary">
     <h2 translate>attribute.add-widget-to-dashboard</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -27,11 +27,11 @@
   </mat-toolbar>
   <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
   </mat-progress-bar>
-  <div mat-dialog-content fxLayout="column">
+  <div mat-dialog-content class="flex flex-col">
     <fieldset [disabled]="isLoading$ | async">
       <mat-radio-group formControlName="addToDashboardType">
         <mat-radio-button [value]="0" color="primary">
-          <section fxLayout="column" style="width: 300px;">
+          <section class="flex flex-col" style="width: 300px;">
             <span translate>dashboard.select-existing</span>
             <tb-dashboard-autocomplete formControlName="dashboardId"
                                        [required]="addWidgetFormGroup.get('addToDashboardType').value === 0"
@@ -40,7 +40,7 @@
           </section>
         </mat-radio-button>
         <mat-radio-button [value]="1" color="primary">
-          <section fxLayout="column" style="width: 300px;">
+          <section class="flex flex-col" style="width: 300px;">
             <span translate>dashboard.create-new</span>
             <mat-form-field class="mat-block">
               <mat-label translate>dashboard.new-dashboard-title</mat-label>
@@ -55,12 +55,12 @@
       </mat-radio-group>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayout="row">
+  <div mat-dialog-actions class="flex flex-row">
     <mat-checkbox formControlName="openDashboard"
                   style="margin-bottom: 0;">
       {{ 'dashboard.open-dashboard' | translate }}
     </mat-checkbox>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

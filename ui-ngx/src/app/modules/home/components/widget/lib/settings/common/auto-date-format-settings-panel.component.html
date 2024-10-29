@@ -20,14 +20,13 @@
   <div class="tb-auto-date-format-settings-panel-content">
     <div class="tb-form-row" *ngFor="let unit of formatTimeUnits">
       <div class="fixed-title-width">{{ formatTimeUnitTranslations.get(unit) | translate }}</div>
-      <div fxFlex fxLayout="column" fxLayoutGap="8px"
-                  fxLayout.gt-xs="row" fxLayoutAlign.gt-xs="start center" fxLayoutGap.gt-xs="16px">
+      <div class="flex flex-1 flex-col gap-2 gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-4">
         <mat-form-field class="tb-date-format-input flex" appearance="outline" subscriptSizing="dynamic">
           <input required matInput [formControlName]="unit" placeholder="{{ 'widget-config.set' | translate }}">
           <div matIconSuffix tb-help-popup="date/date-format" [tb-help-popup-style]="{width: '800px'}"></div>
         </mat-form-field>
-        <mat-divider fxHide fxShow.gt-xs vertical></mat-divider>
-        <div class="preview-text" fxFlex>{{ previewText[unit] }}</div>
+        <mat-divider class="lt-sm:!hidden" vertical></mat-divider>
+        <div class="preview-text flex-1">{{ previewText[unit] }}</div>
       </div>
     </div>
   </div>

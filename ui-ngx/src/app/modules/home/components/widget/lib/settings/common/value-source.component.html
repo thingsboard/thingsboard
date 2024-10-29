@@ -17,7 +17,7 @@
 -->
 
 <div class="tb-form-row no-border no-padding column-xs" style="gap: 10px;" [formGroup]="valueSourceFormGroup">
-  <mat-form-field fxFlex="33" fxFlex.xs appearance="outline" subscriptSizing="dynamic">
+  <mat-form-field class="gt-xs:max-w-33% gt-xs:flex-full xs:flex-1" appearance="outline" subscriptSizing="dynamic">
     <mat-select formControlName="valueSource">
       <mat-option [value]="'predefinedValue'">
         {{ 'widgets.value-source.predefined-value' | translate }}
@@ -27,13 +27,13 @@
       </mat-option>
     </mat-select>
   </mat-form-field>
-  <mat-form-field [fxShow]="valueSourceFormGroup.get('valueSource').value === 'predefinedValue'"
+  <mat-form-field [class.!hidden]="valueSourceFormGroup.get('valueSource').value !== 'predefinedValue'"
                   appearance="outline"
                   class="number flex"
                   subscriptSizing="dynamic">
     <input matInput formControlName="value" type="number" placeholder="{{ 'widgets.value-source.value' | translate }}">
   </mat-form-field>
-  <mat-form-field [fxShow]="valueSourceFormGroup.get('valueSource').value === 'entityAttribute'"
+  <mat-form-field [class.!hidden]="valueSourceFormGroup.get('valueSource').value !== 'entityAttribute'"
                   appearance="outline"
                   class="flex"
                   subscriptSizing="dynamic">
@@ -53,7 +53,7 @@
       </mat-option>
     </mat-autocomplete>
   </mat-form-field>
-  <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic" [fxShow]="valueSourceFormGroup.get('valueSource').value === 'entityAttribute'">
+  <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic" [class.!hidden]="valueSourceFormGroup.get('valueSource').value !== 'entityAttribute'">
     <input matInput type="text" placeholder="{{ entityAttributePlaceholder | translate }}"
            #keyInput
            formControlName="attribute"

@@ -54,7 +54,7 @@ public class Ota9LwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + this.CLIENT_ENDPOINT_OTA9, transportConfiguration);
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(this.CLIENT_ENDPOINT_OTA9));
         final Device device = createLwm2mDevice(deviceCredentials, this.CLIENT_ENDPOINT_OTA9, deviceProfile.getId());
-        createNewClient(SECURITY_NO_SEC, null, false, this.CLIENT_ENDPOINT_OTA9);
+        createNewClient(SECURITY_NO_SEC, null, false, this.CLIENT_ENDPOINT_OTA9, device.getId().getId().toString());
         awaitObserveReadAll(4, device.getId().getId().toString());
 
         device.setSoftwareId(createSoftware(deviceProfile.getId()).getId());

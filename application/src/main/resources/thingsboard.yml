@@ -1262,6 +1262,17 @@ transport:
     enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
     # Interval of transport statistics logging
     print-interval-ms: "${TB_TRANSPORT_STATS_PRINT_INTERVAL_MS:60000}"
+  gateway:
+    dashboard:
+      sync:
+        # Enable/disable gateways dashboard sync with git repository
+        enabled: "${TB_GATEWAY_DASHBOARD_SYNC_ENABLED:true}"
+        # URL of gateways dashboard repository
+        repository_url: "${TB_GATEWAY_DASHBOARD_SYNC_REPOSITORY_URL:https://github.com/thingsboard/gateway-management-extensions-dist.git}"
+        # Branch of gateways dashboard repository to work with
+        branch: "${TB_GATEWAY_DASHBOARD_SYNC_BRANCH:main}"
+        # Fetch frequency in hours for gateways dashboard repository
+        fetch_frequency: "${TB_GATEWAY_DASHBOARD_SYNC_FETCH_FREQUENCY:24}"
 
 # CoAP server parameters
 coap:

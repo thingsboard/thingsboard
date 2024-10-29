@@ -16,10 +16,10 @@
 
 -->
 <div class="tb-edges-overview tb-absolute-fill" tb-toast toastTarget="{{ toastTargetId }}">
-  <div fxFlex fxLayout="column" class="tb-absolute-fill">
-    <span class="mat-subheader" *ngIf="customerTitle" fxLayout="row">{{ customerTitle }}</span>
-    <span class="mat-subheader" *ngIf="!edgeIsDatasource" fxLayout="row" translate>edge.widget-datasource-error</span>
-    <div fxFlex class="tb-entities-nav-tree-panel">
+  <div class="tb-absolute-fill flex flex-1 flex-col">
+    <span class="mat-subheader flex flex-row" *ngIf="customerTitle">{{ customerTitle }}</span>
+    <span class="mat-subheader flex flex-row" *ngIf="!edgeIsDatasource" translate>edge.widget-datasource-error</span>
+    <div class="tb-entities-nav-tree-panel flex-1">
       <tb-nav-tree
         [loadNodes]="loadNodes"
       ></tb-nav-tree>

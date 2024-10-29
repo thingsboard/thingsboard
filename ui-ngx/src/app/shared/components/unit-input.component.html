@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field fxFlex appearance="outline" class="tb-inline-field tb-suffix-show-on-hover" subscriptSizing="dynamic" style="width: 100%;">
+<mat-form-field appearance="outline" class="tb-inline-field tb-suffix-show-on-hover flex-1" subscriptSizing="dynamic" style="width: 100%;">
   <input matInput #unitInput [formControl]="unitsFormControl"
          placeholder="{{ 'widget-config.set' | translate }}"
          (focusin)="onFocus()"
@@ -40,7 +40,7 @@
     panelWidth="fit-content"
     [displayWith]="displayUnitFn">
     <mat-option *ngFor="let unit of filteredUnits | async" [value]="unit">
-      <span class="tb-unit-name" fxFlex [innerHTML]="unit.name | highlight:searchText:true:'ig'"></span>
+      <span class="tb-unit-name flex-1" [innerHTML]="unit.name | highlight:searchText:true:'ig'"></span>
       <span class="tb-unit-symbol" [innerHTML]="unit.symbol | highlight:searchText:true:'ig'"></span>
     </mat-option>
   </mat-autocomplete>

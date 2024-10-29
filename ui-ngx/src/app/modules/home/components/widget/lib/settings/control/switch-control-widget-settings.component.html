@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="switchControlWidgetSettingsForm" fxLayout="column">
+<section class="tb-widget-settings flex flex-col" [formGroup]="switchControlWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.rpc.common-settings</legend>
-    <mat-form-field fxFlex class="mat-block">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>widgets.rpc.switch-title</mat-label>
       <input matInput formControlName="title">
     </mat-form-field>

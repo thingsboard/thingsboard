@@ -20,7 +20,7 @@
     <div class="tb-form-panel-title" translate>widgets.toggle-button.behavior</div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.initial-state-hint' | translate}}" translate>widgets.rpc-state.initial-state</div>
-      <tb-get-value-action-settings fxFlex
+      <tb-get-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.rpc-state.initial-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
                                     trueLabel="{{ 'widgets.toggle-button.checked' | translate }}"
@@ -33,7 +33,7 @@
     </div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.toggle-button.check-hint' | translate}}" translate>widgets.toggle-button.check</div>
-      <tb-set-value-action-settings fxFlex
+      <tb-set-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.toggle-button.check' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
@@ -42,7 +42,7 @@
     </div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.toggle-button.uncheck-hint' | translate}}" translate>widgets.toggle-button.uncheck</div>
-      <tb-set-value-action-settings fxFlex
+      <tb-set-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.toggle-button.uncheck' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
@@ -51,7 +51,7 @@
     </div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.disabled-state-hint' | translate}}" translate>widgets.rpc-state.disabled-state</div>
-      <tb-get-value-action-settings fxFlex
+      <tb-get-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.rpc-state.disabled-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
                                     stateLabel="{{ 'widgets.rpc-state.disabled' | translate }}"
@@ -65,10 +65,9 @@
     <div class="tb-form-panel-title" translate>widget-config.appearance</div>
     <div class="tb-form-panel stroked tb-slide-toggle">
       <mat-expansion-panel class="tb-settings" [expanded]="!toggleButtonWidgetSettingsForm.get('autoScale').value" disabled>
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
           <mat-panel-title>
-            <mat-slide-toggle class="mat-slide" formControlName="autoScale" (click)="$event.stopPropagation()"
-                              fxLayoutAlign="center">
+            <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="autoScale" (click)="$event.stopPropagation()">
               {{ 'widgets.toggle-button.auto-scale' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>
@@ -100,7 +99,7 @@
     </div>
   </div>
   <div class="tb-form-panel">
-    <div fxLayout="row" fxLayoutAlign="space-between center">
+    <div class="flex flex-row items-center justify-between">
       <div class="tb-form-panel-title" translate>widgets.toggle-button.button-appearance</div>
       <tb-toggle-select [(ngModel)]="buttonAppearanceType" [ngModelOptions]="{standalone: true}">
         <tb-toggle-option value="checked">{{ 'widgets.toggle-button.checked' | translate }}</tb-toggle-option>
@@ -108,14 +107,14 @@
       </tb-toggle-select>
     </div>
     <tb-widget-button-appearance
-        [fxShow]="buttonAppearanceType === 'checked'"
+        [class.!hidden]="buttonAppearanceType !== 'checked'"
         withBorderRadius
         [withAutoScale]="false"
         [autoScale]="toggleButtonWidgetSettingsForm.get('autoScale').value"
         formControlName="checkedAppearance">
     </tb-widget-button-appearance>
     <tb-widget-button-appearance
-        [fxShow]="buttonAppearanceType === 'unchecked'"
+        [class.!hidden]="buttonAppearanceType !== 'unchecked'"
         withBorderRadius
         [withAutoScale]="false"
         [autoScale]="toggleButtonWidgetSettingsForm.get('autoScale').value"

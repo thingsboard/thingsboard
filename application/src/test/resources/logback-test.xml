@@ -17,7 +17,9 @@
     <logger name="org.eclipse.leshan" level="INFO"/>
     <logger name="org.thingsboard.server.controller.AbstractWebTest" level="INFO"/>
     <logger name="org.thingsboard.server.service.script" level="INFO"/>
-
+    <logger name="org.thingsboard.server.service.entitiy.dashboard" level="TRACE"/>
+    <logger name="org.thingsboard.server.service.entitiy.widgets" level="TRACE"/>
+    <logger name="org.thingsboard.server.service.sync" level="TRACE"/>
     <!-- mute TelemetryEdgeSqlTest that causes a lot of randomly generated errors -->
     <logger name="org.thingsboard.server.service.edge.rpc.EdgeGrpcSession" level="OFF"/>
 
