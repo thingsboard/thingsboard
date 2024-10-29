@@ -1468,6 +1468,234 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     }
 
     // parseBinaryArray
+    @Test
+    public void parseBinaryArray_Test() throws ExecutionException, InterruptedException {
+        byte[] value = new byte[]{1, 0, 0, 1, 1, 1};
+        msgStr = "{}";
+        decoderStr = """
+                    // parseByteToBinaryArray
+                    var byteVal = 0x39;
+                    var value = parseByteToBinaryArray(byteVal, 6, false);
+                    var actualLowCurrent1Alarm = value[0];
+                    var actualHighCurrent1Alarm = value[1];
+                    var actualLowCurrent2Alarm = value[2];
+                    var actualHighCurrent2Alarm = value[3];
+                    var actualLowCurrent3Alarm = value[4];
+                    var actualHighCurrent3Alarm = value[5];
+                    // parseBytesToBinaryArray
+                    var bytesVal = [0xCE, 0xB2];
+                    // parseLongToBinaryArray
+                    var longValue = 52914L;
+                    return {
+                        // parseByteToBinaryArray
+                        "parseByteToBinaryArray_All": parseByteToBinaryArray(byteVal),
+                        "parseByteToBinaryArray_1": parseByteToBinaryArray(byteVal, 3),
+                        "parseByteToBinaryArray_2": parseByteToBinaryArray(byteVal, 8, false),
+                        "parseByteToBinaryArray_3": parseByteToBinaryArray(byteVal, 5, false),
+                        "parseByteToBinaryArray_4": parseByteToBinaryArray(byteVal, 4, false),
+                        "parseByteToBinaryArray_5": parseByteToBinaryArray(byteVal, 3, false),
+                        "parseByteToBinaryArray_value":  parseByteToBinaryArray(byteVal, 6, false),
+                        "parseByteToBinaryArray_value0": value[0],
+                        "parseByteToBinaryArray_value1": value[1],
+                        "parseByteToBinaryArray_value2": value[2],
+                        "parseByteToBinaryArray_value3": value[3],
+                        "parseByteToBinaryArray_value4": value[4],
+                        "parseByteToBinaryArray_value5": value[5],
+                        //  parseBytesToBinaryArray
+                        "parseBytesToBinaryArray_All": parseBytesToBinaryArray(bytesVal),
+                        "parseBytesToBinaryArray_1": parseBytesToBinaryArray(bytesVal, 15),
+                        "parseBytesToBinaryArray_2": parseBytesToBinaryArray(bytesVal, 14),
+                        "parseBytesToBinaryArray_3": parseBytesToBinaryArray(bytesVal, 2),
+                        // parseLongToBinaryArray
+                        "parseLongToBinaryArray_1": parseLongToBinaryArray(longValue),
+                        "parseLongToBinaryArray_2": parseLongToBinaryArray(longValue, 16),
+                        // parseBinaryArrayToInt
+                        "parseBinaryArrayToIn_1": parseBinaryArrayToInt([1, 0, 0, 1, 1, 1, 1, 1]),
+                        "parseBinaryArrayToIn_2": parseBinaryArrayToInt([1, 0, 0, 1, 1, 1, 1, 1], 1, 7)
+                    }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        // parseByteToBinaryArray
+        expected.put("parseByteToBinaryArray_All", bytesToList(new byte[]{0, 0, 1, 1, 1, 0, 0, 1}));
+        expected.put("parseByteToBinaryArray_1", bytesToList(new byte[]{0, 0, 1}));
+        expected.put("parseByteToBinaryArray_2", bytesToList(new byte[]{1, 0, 0, 1, 1, 1, 0, 0}));
+        expected.put("parseByteToBinaryArray_3", bytesToList(new byte[]{1, 0, 0, 1, 1}));
+        expected.put("parseByteToBinaryArray_4", bytesToList(new byte[]{1, 0, 0, 1}));
+        expected.put("parseByteToBinaryArray_5", bytesToList(new byte[]{1, 0, 0}));
+        expected.put("parseByteToBinaryArray_value", bytesToList(value));
+        expected.put("parseByteToBinaryArray_value0", value[0]);
+        expected.put("parseByteToBinaryArray_value1", value[1]);
+        expected.put("parseByteToBinaryArray_value2", value[2]);
+        expected.put("parseByteToBinaryArray_value3", value[3]);
+        expected.put("parseByteToBinaryArray_value4", value[4]);
+        expected.put("parseByteToBinaryArray_value5", value[5]);
+        //  parseBytesToBinaryArray
+        expected.put("parseBytesToBinaryArray_All", bytesToList(new byte[]{1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0}));
+        expected.put("parseBytesToBinaryArray_1", bytesToList(new byte[]{1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0}));
+        expected.put("parseBytesToBinaryArray_2", bytesToList(new byte[]{0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0}));
+        expected.put("parseBytesToBinaryArray_3", bytesToList(new byte[]{1, 0}));
+        // parseLongToBinaryArray
+        expected.put("parseLongToBinaryArray_1", bytesToList(new byte[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0}));
+        expected.put("parseLongToBinaryArray_2", bytesToList(new byte[]{1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0}));
+        // parseBinaryArrayToInt
+        expected.put("parseBinaryArrayToIn_1", -97);
+        expected.put("parseBinaryArrayToIn_2", 31);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    // parseNumber
+    @Test
+    public void parseInt_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """                    
+                    return {
+                        "parseInt_01": parseInt("0"),
+                        "parseInt_02": parseInt("473"),
+                        "parseInt_03": parseInt("+42"),
+                        "parseInt_04": parseInt("-0", 10),
+                        "parseInt_05": parseInt("-0xFF"),
+                        "parseInt_06": parseInt("-FF", 16),
+                        "parseInt_07": parseInt("1100110", 2),
+                        "parseInt_08": parseInt("2147483647", 10),
+                        "parseInt_09": parseInt("-2147483648", 10),
+                        "parseInt_10": parseInt("Kona", 27)
+                    }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("parseInt_01", 0);
+        expected.put("parseInt_02", 473);
+        expected.put("parseInt_03", 42);
+        expected.put("parseInt_04", 0);
+        expected.put("parseInt_05", -255);
+        expected.put("parseInt_06", -255);
+        expected.put("parseInt_07", 102);
+        expected.put("parseInt_08", 2147483647);
+        expected.put("parseInt_09",-2147483648);
+        expected.put("parseInt_10", 411787);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+
+        decoderStr = """
+                    return parseInt("2147483648", 10);
+                """;
+        assertThatThrownBy(() -> {
+            invokeScript(evalScript(decoderStr), msgStr);
+        }).hasMessageContaining("Error: parseInt(\"2147483648\", 10): For input string: \"2147483648\"")
+                .hasMessageContaining("[Line: 1, Column: 12]");
+
+        decoderStr = """
+                    return parseInt("99", 8);
+                """;
+        assertThatThrownBy(() -> {
+            invokeScript(evalScript(decoderStr), msgStr);
+        }).hasMessageContaining("Error: parseInt(\"99\", 8): Failed radix [8] for value: \"99\"")
+                .hasMessageContaining("[Line: 1, Column: 12]");
+
+        decoderStr = """
+                    return parseInt("Kona", 10);
+                """;
+        assertThatThrownBy(() -> {
+            invokeScript(evalScript(decoderStr), msgStr);
+        }).hasMessageContaining("Error: parseInt(\"Kona\", 10): Failed radix [10] for value: \"Kona\"")
+                .hasMessageContaining("[Line: 1, Column: 12]");
+    }
+
+   @Test
+    public void parseLong_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """                    
+                    return {
+                        "parseLong_01": parseLong("0"),
+                        "parseLong_02": parseLong("473"),
+                        "parseLong_03": parseLong("+42"),
+                        "parseLong_04": parseLong("-0", 10),
+                        "parseLong_05": parseLong("-0xFFFF"), 
+                        "parseLong_06": parseLong("-FFFF", 16),
+                        "parseLong_07": parseLong("11001101100110", 2),
+                        "parseLong_08": parseLong("777777777777777777777", 8),
+                        "parseLong_09": parseLong("KonaLong", 27),
+                        "parseLong_10": parseLong("9223372036854775807", 10),
+                        "parseLong_11": parseLong("-9223372036854775808", 10),
+                    }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("parseLong_01", 0L);
+        expected.put("parseLong_02", 473L);
+        expected.put("parseLong_03", 42L);
+        expected.put("parseLong_04", 0L);
+        expected.put("parseLong_05", -65535L);
+        expected.put("parseLong_06", -65535L);
+        expected.put("parseLong_07", 13158L);
+        expected.put("parseLong_08", 9223372036854775807L);
+        expected.put("parseLong_09", 218840926543L);
+        expected.put("parseLong_10", 9223372036854775807L);
+        expected.put("parseLong_11", -9223372036854775808L);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+
+        decoderStr = """
+                    return parseLong("9223372036854775808", 10);
+                """;
+        assertThatThrownBy(() -> {
+            invokeScript(evalScript(decoderStr), msgStr);
+        }).hasMessageContaining("Error: parseLong(\"9223372036854775808\", 10): For input string: \"9223372036854775808\"")
+                .hasMessageContaining("[Line: 1, Column: 12]");
+
+        decoderStr = """
+                    return parseLong("0xFGFFFFFF", 16);
+                """;
+        assertThatThrownBy(() -> {
+            invokeScript(evalScript(decoderStr), msgStr);
+        }).hasMessageContaining("Error: parseLong(\"0xFGFFFFFF\", 16): Failed radix [16] for value: \"0xFGFFFFFF\"")
+                .hasMessageContaining("[Line: 1, Column: 12]");
+
+        decoderStr = """
+                    return parseLong("FFFFFFFFF", 16);
+                """;
+        assertThatThrownBy(() -> {
+            invokeScript(evalScript(decoderStr), msgStr);
+        }).hasMessageContaining("Error: parseLong(\"FFFFFFFFF\", 16): The hexadecimal value: \"FFFFFFFFF\"")
+                .hasMessageContaining("[Line: 1, Column: 12]");
+
+       decoderStr = """
+                    return parseLong("1787", 8);
+                """;
+       assertThatThrownBy(() -> {
+           invokeScript(evalScript(decoderStr), msgStr);
+       }).hasMessageContaining("Error: parseLong(\"1787\", 8): Failed radix [8] for value: \"1787\"")
+               .hasMessageContaining("[Line: 1, Column: 12]");
+
+        decoderStr = """
+                    return parseLong("KonaLong", 10);
+                """;
+        assertThatThrownBy(() -> {
+            invokeScript(evalScript(decoderStr), msgStr);
+        }).hasMessageContaining("Error: parseLong(\"KonaLong\", 10): Failed radix [10] for value: \"KonaLong\"")
+                .hasMessageContaining("[Line: 1, Column: 12]");
+    }
+
+    @Test
+    public void parseFloat_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """                    
+                    return parseFloat("4.2");
+                """;
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(4.2f, actual);
+    }
+
+    @Test
+    public void parseDouble_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """                    
+                    return parseDouble("4.2");
+                """;
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(4.2d, actual);
+    }
+
+    // base64
 
     private List splice(List oldList, int start, int deleteCount, Object... values) {
         start = initStartIndex(oldList, start);
