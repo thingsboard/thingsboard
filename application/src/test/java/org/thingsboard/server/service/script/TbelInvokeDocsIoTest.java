@@ -17,9 +17,11 @@ package org.thingsboard.server.service.script;
 
 import org.junit.jupiter.api.Test;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.script.api.tbel.TbDate;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.nio.charset.StandardCharsets;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -1571,7 +1573,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         expected.put("parseInt_06", -255);
         expected.put("parseInt_07", 102);
         expected.put("parseInt_08", 2147483647);
-        expected.put("parseInt_09",-2147483648);
+        expected.put("parseInt_09", -2147483648);
         expected.put("parseInt_10", 411787);
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
@@ -1601,7 +1603,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 .hasMessageContaining("[Line: 1, Column: 12]");
     }
 
-   @Test
+    @Test
     public void parseLong_Test() throws ExecutionException, InterruptedException {
         msgStr = "{}";
         decoderStr = """                    
@@ -1658,13 +1660,13 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         }).hasMessageContaining("Error: parseLong(\"FFFFFFFFF\", 16): The hexadecimal value: \"FFFFFFFFF\"")
                 .hasMessageContaining("[Line: 1, Column: 12]");
 
-       decoderStr = """
+        decoderStr = """
                     return parseLong("1787", 8);
                 """;
-       assertThatThrownBy(() -> {
-           invokeScript(evalScript(decoderStr), msgStr);
-       }).hasMessageContaining("Error: parseLong(\"1787\", 8): Failed radix [8] for value: \"1787\"")
-               .hasMessageContaining("[Line: 1, Column: 12]");
+        assertThatThrownBy(() -> {
+            invokeScript(evalScript(decoderStr), msgStr);
+        }).hasMessageContaining("Error: parseLong(\"1787\", 8): Failed radix [8] for value: \"1787\"")
+                .hasMessageContaining("[Line: 1, Column: 12]");
 
         decoderStr = """
                     return parseLong("KonaLong", 10);
@@ -1696,6 +1698,259 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     }
 
     // base64
+    @Test
+    public void base64_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """                    
+                    return {
+                        "base64ToHex": base64ToHex("Kkk="),
+                        "bytesToBase64": bytesToBase64([42, 73]),
+                        "base64ToBytes": base64ToBytes("Kkk=")                    
+                    }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("base64ToHex", "2A49");
+        expected.put("bytesToBase64", "Kkk=");
+        expected.put("base64ToBytes", bytesToList(new byte[]{42, 73}));
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    // toFlatMap
+    @Test
+    public void toFlatMap_Test() throws ExecutionException, InterruptedException {
+        msgStr = """
+                    {
+                        "key1": "value1",
+                        "key2": 12,
+                        "key3": {
+                            "key4": "value4",
+                            "key5": 34,
+                            "key6": [{
+                                    "key7": "value7"
+                                },
+                                {
+                                    "key8": "value8"
+                                },
+                                "just_string_value_in_array",
+                                56
+                            ],
+                            "key9": {
+                                "key10": ["value10_1", "value10_2", "value10_3"]
+                            }
+                        },
+                        "key_to_overwrite": "root_value",
+                        "key11": {
+                            "key_to_overwrite": "second_level_value"
+                        }
+                    };
+                """;
+        decoderStr = """                    
+                    return {
+                        "toFlatMap": toFlatMap(msg),
+                        "toFlatMapFalse": toFlatMap(msg, false),
+                        "toFlatMapExcludeList": toFlatMap(msg, ["key1", "key3"]),
+                        "toFlatMapExcludeListFalse": toFlatMap(msg, ["key2", "key4"], false)
+                    }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        LinkedHashMap<String, Object> expectedJson = new LinkedHashMap<>();
+        expectedJson.put("key1", "value1");
+        expectedJson.put("key2", 12);
+        expectedJson.put("key3.key4", "value4");
+        expectedJson.put("key3.key5", 34);
+        expectedJson.put("key3.key6.0.key7", "value7");
+        expectedJson.put("key3.key6.1.key8", "value8");
+        expectedJson.put("key3.key6.2", "just_string_value_in_array");
+        expectedJson.put("key3.key6.3", 56);
+        expectedJson.put("key3.key9.key10.0", "value10_1");
+        expectedJson.put("key3.key9.key10.1", "value10_2");
+        expectedJson.put("key3.key9.key10.2", "value10_3");
+        expectedJson.put("key_to_overwrite", "root_value");
+        expectedJson.put("key11.key_to_overwrite", "second_level_value");
+        expected.put("toFlatMap", expectedJson);
+        LinkedHashMap<String, Object> expectedJsonFalse = new LinkedHashMap<>();
+        expectedJsonFalse.put("key1", "value1");
+        expectedJsonFalse.put("key2", 12);
+        expectedJsonFalse.put("key4", "value4");
+        expectedJsonFalse.put("key5", 34);
+        expectedJsonFalse.put("key7", "value7");
+        expectedJsonFalse.put("key8", "value8");
+        expectedJsonFalse.put("key6.2", "just_string_value_in_array");
+        expectedJsonFalse.put("key6.3", 56);
+        expectedJsonFalse.put("key10.0", "value10_1");
+        expectedJsonFalse.put("key10.1", "value10_2");
+        expectedJsonFalse.put("key10.2", "value10_3");
+        expectedJsonFalse.put("key_to_overwrite", "second_level_value");
+        expected.put("toFlatMapFalse", expectedJsonFalse);
+        LinkedHashMap<String, Object> expectedJsonExcludeList = new LinkedHashMap<>();
+        expectedJsonExcludeList.put("key2", 12);
+        expectedJsonExcludeList.put("key_to_overwrite", "root_value");
+        expectedJsonExcludeList.put("key11.key_to_overwrite", "second_level_value");
+        expected.put("toFlatMapExcludeList", expectedJsonExcludeList);
+        LinkedHashMap<String, Object> expectedJsonExcludeListFalse = new LinkedHashMap<>();
+        expectedJsonExcludeListFalse.put("key1", "value1");
+        expectedJsonExcludeListFalse.put("key5", 34);
+        expectedJsonExcludeListFalse.put("key7", "value7");
+        expectedJsonExcludeListFalse.put("key8", "value8");
+        expectedJsonExcludeListFalse.put("key6.2", "just_string_value_in_array");
+        expectedJsonExcludeListFalse.put("key6.3", 56);
+        expectedJsonExcludeListFalse.put("key10.0", "value10_1");
+        expectedJsonExcludeListFalse.put("key10.1", "value10_2");
+        expectedJsonExcludeListFalse.put("key10.2", "value10_3");
+        expectedJsonExcludeListFalse.put("key_to_overwrite", "second_level_value");
+        expected.put("toFlatMapExcludeListFalse", expectedJsonExcludeListFalse);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    // tbDate
+    @Test
+    public void tbDateStringTZ_Test() throws ExecutionException, InterruptedException {
+        int h = 12;
+        String s2 = String.format("2023-08-06T%s:04:05.123", String.format("%02d", h));
+        msgStr = "{}";
+        decoderStr = String.format("""
+                    var d1 = new Date("2023-08-06T04:04:05.123Z");
+                    var d2 = new Date("%s");
+                    var d3 = new Date("2023-08-06T04:04:05.00-04");
+                    var d4 = new Date("2023-08-06T04:04:05.00+02:00");
+                    var d5 = new Date("2023-08-06T04:04:05.00+03:00:00");
+                    var d6 = new Date("Tue, 3 Jun 2008 11:05:30 GMT");
+                    var d7 = new Date("Tue, 3 Jun 2008 11:05:30 +043056");
+                    return {
+                        "dIso_1": d1.toISOString(),
+                        "dIso_2": d2.toISOString(),
+                        "dIso_3": d3.toISOString(),
+                        "dIso_4": d4.toISOString(),
+                        "dIso_5": d5.toISOString(),
+                        "dIso_6": d6.toISOString(),
+                        "dIso_7": d7.toISOString()
+                    }
+                """, s2);
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("dIso_1", "2023-08-06T04:04:05.123Z");
+        TbDate d2 = new TbDate(s2);
+        int localOffsetHrs = ZoneId.systemDefault().getRules().getOffset(d2.getInstant()).getTotalSeconds() / 60 / 60;
+        int hrs2 = h - localOffsetHrs;
+        String expected_dIso_2 = String.format("2023-08-06T%s:04:05.123Z", String.format("%02d", hrs2));
+        expected.put("dIso_2", expected_dIso_2);
+        expected.put("dIso_3", "2023-08-06T08:04:05Z");
+        expected.put("dIso_4", "2023-08-06T02:04:05Z");
+        expected.put("dIso_5", "2023-08-06T01:04:05Z");
+        expected.put("dIso_6", "2008-06-03T11:05:30Z");
+        expected.put("dIso_7", "2008-06-03T06:34:34Z");
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void tbDateStringPattern_Test() throws ExecutionException, InterruptedException {
+        int h = 12;
+        String s3 = String.format("2023-08-06 %s:04:05.000", String.format("%02d", h));
+        String pattern3 = "yyyy-MM-dd HH:mm:ss.SSS";
+        msgStr = "{}";
+        decoderStr = String.format("""
+                    var pattern = "yyyy-MM-dd HH:mm:ss.SSSXXX";
+                    var d1 = new Date("2023-08-06 04:04:05.000Z", pattern);
+                    var d2 = new Date("2023-08-06 04:04:05.000-04:00", pattern);
+                    var d3 = new Date("%s","%s");
+                    return {
+                        "dIso_1": d1.toISOString(),
+                        "dIso_2": d2.toISOString(),
+                        "dIso_3": d3.toISOString()
+                    }
+                """, s3, pattern3);
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("dIso_1", "2023-08-06T04:04:05Z");
+        expected.put("dIso_2", "2023-08-06T08:04:05Z");
+        TbDate d3 = new TbDate(s3, pattern3);
+        int localOffsetHrs = ZoneId.systemDefault().getRules().getOffset(d3.getInstant()).getTotalSeconds() / 60 / 60;
+        int hrs3 = h - localOffsetHrs;
+        String expected_dIso_3 = String.format("2023-08-06T%s:04:05Z", String.format("%02d", hrs3));
+        expected.put("dIso_3", expected_dIso_3);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void tbDateStringPatternLocale_Test() throws ExecutionException, InterruptedException {
+        int h = 12;
+        String sDe = String.format("%s:15:30 PM, So. 10/09/2022", String.format("%02d", h));
+        String sUs = String.format("%s:15:30 PM, Sun 10/09/2022", String.format("%02d", h));
+        var pattern = "hh:mm:ss a, EEE M/d/uuuu";
+        msgStr = "{}";
+        decoderStr = String.format("""
+                    var pattern = "%s";
+                    var d1 = new Date("%s", pattern, "de");
+                    var d2 = new Date("%s", pattern, "en-US");
+                    return {
+                        "dIso_1": d1.toISOString(),
+                        "dLocal_1": d1.toLocaleString("de"),
+                        "dIso_2": d2.toISOString(),
+                        "dLocal_2": d2.toLocaleString("en-US")
+                    }
+                """, pattern, sDe, sUs);
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        TbDate d1 = new TbDate(sDe, pattern, "de");
+        int localOffsetHrs1 = ZoneId.systemDefault().getRules().getOffset(d1.getInstant()).getTotalSeconds() / 60 / 60;
+        int hrs1 = h - localOffsetHrs1;
+        String expected_dIso_1 = String.format("2022-10-09T%s:15:30Z", String.format("%02d", hrs1));
+        String expected_dLocal_1 = String.format("09.10.22, %s:15:30", String.format("%02d", h));
+        expected.put("dIso_1", expected_dIso_1);
+        expected.put("dLocal_1", expected_dLocal_1);
+        TbDate d2 = new TbDate(sUs, pattern, "en-US");
+        int localOffsetHrs2 = ZoneId.systemDefault().getRules().getOffset(d2.getInstant()).getTotalSeconds() / 60 / 60;
+        int hrs2 = h - localOffsetHrs2;
+        String expected_dIso_2 = String.format("2022-10-09T%s:15:30Z", String.format("%02d", hrs2));
+        String expected_dLocal_2 = String.format("10/9/22, %s:15:30 PM", String.format("%02d", h));
+        expected.put("dIso_2", expected_dIso_2);
+        expected.put("dLocal_2", expected_dLocal_2);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+
+        decoderStr = String.format("""
+                   var pattern = "%s";
+                   var d = new Date("02:15:30 PM, Sun 10/09/2022", pattern, "de");
+                   return d;
+                """, pattern);
+        assertThatThrownBy(() -> {
+            invokeScript(evalScript(decoderStr), msgStr);
+        }).hasMessageContaining("[Error: could not create constructor")
+                .hasMessageContaining("[Line: 2, Column: 16]");
+    }
+
+    @Test
+    public void tbDateInstantYearMonthDateHrsMinSecond_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    var d1 = new Date(2023, 8, 6, 4, 4, 5, "Europe/Kyiv");
+                    var d2 = new Date(2023, 8, 6, 4, 4, 5, "Europe/Berlin");;
+                    return {
+                        "dLocal_1": d1.toLocaleString(),
+                        "dIso_1": d1.toISOString(),
+                        "date_1": d1.toString(),
+                        "dLocal_2": d2.toLocaleString(),
+                        "dLocal_2_us": d2.toLocaleString("en-us", "America/New_York"),
+                        "dIso_2": d2.toISOString(),
+                        "date_2": d2.toString()
+                    }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("dLocal_1", "2023-08-06 04:04:05");
+        expected.put("dIso_1", "2023-08-06T01:04:05Z");
+        TbDate d1 = new TbDate(2023, 8, 6, 4, 4, 5, "Europe/Kyiv");
+        expected.put("date_1", d1.toString());
+        expected.put("dLocal_2", "2023-08-06 05:04:05");
+        expected.put("dLocal_2_us", "8/5/23, 10:04:05 PM");
+        expected.put("dIso_2", "2023-08-06T02:04:05Z");
+        TbDate d2 = new TbDate(2023, 8, 6, 4, 4, 5, "Europe/Berlin");
+        expected.put("date_2", d2.toString());
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    // locale
 
     private List splice(List oldList, int start, int deleteCount, Object... values) {
         start = initStartIndex(oldList, start);
