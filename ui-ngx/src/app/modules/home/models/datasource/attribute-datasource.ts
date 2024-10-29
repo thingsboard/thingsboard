@@ -25,7 +25,7 @@ import {
   AttributeData,
   AttributeScope,
   isClientSideTelemetryType,
-  TelemetrySubscriber,
+  SharedTelemetrySubscriber,
   TelemetryType
 } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
@@ -42,7 +42,7 @@ export class AttributeDatasource implements DataSource<AttributeData> {
   public selection = new SelectionModel<AttributeData>(true, []);
 
   private allAttributes: Observable<Array<AttributeData>>;
-  private telemetrySubscriber: TelemetrySubscriber;
+  private telemetrySubscriber: SharedTelemetrySubscriber;
 
   constructor(private attributeService: AttributeService,
               private telemetryWsService: TelemetryWebsocketService,
@@ -99,10 +99,10 @@ export class AttributeDatasource implements DataSource<AttributeData> {
     if (!this.allAttributes) {
       let attributesObservable: Observable<Array<AttributeData>>;
       if (isClientSideTelemetryType.get(attributesScope)) {
-        this.telemetrySubscriber = TelemetrySubscriber.createEntityAttributesSubscription(
+        this.telemetrySubscriber = SharedTelemetrySubscriber.createEntityAttributesSubscription(
           this.telemetryWsService, entityId, attributesScope, this.zone);
         this.telemetrySubscriber.subscribe();
-        attributesObservable = this.telemetrySubscriber.attributeData$();
+        attributesObservable = this.telemetrySubscriber.attributeData$;
       } else {
         attributesObservable = this.attributeService.getEntityAttributes(entityId, attributesScope as AttributeScope);
       }

@@ -17,8 +17,7 @@
 import {
   AttributeData,
   AttributeScope,
-  LatestTelemetry,
-  TelemetrySubscriber,
+  LatestTelemetry, SharedTelemetrySubscriber,
   TelemetryType,
   telemetryTypeTranslationsShort
 } from '@shared/models/telemetry/telemetry.models';
@@ -436,7 +435,7 @@ export class ExecuteRpcValueGetter<V> extends ValueGetter<V> {
 export abstract class TelemetryValueGetter<V, S extends TelemetryValueSettings> extends ValueGetter<V> {
 
   protected targetEntityId: EntityId;
-  private telemetrySubscriber: TelemetrySubscriber;
+  private telemetrySubscriber: SharedTelemetrySubscriber;
 
   protected constructor(protected ctx: WidgetContext,
                         protected settings: GetValueSettings<V>,
@@ -470,10 +469,10 @@ export abstract class TelemetryValueGetter<V, S extends TelemetryValueSettings> 
 
   private subscribeForTelemetryValue(): Observable<V> {
     this.telemetrySubscriber =
-      TelemetrySubscriber.createEntityAttributesSubscription(this.ctx.telemetryWsService, this.targetEntityId,
+      SharedTelemetrySubscriber.createEntityAttributesSubscription(this.ctx.telemetryWsService, this.targetEntityId,
         this.scope(), this.ctx.ngZone, [this.getTelemetryValueSettings().key]);
     this.telemetrySubscriber.subscribe();
-    return this.telemetrySubscriber.attributeData$().pipe(
+    return this.telemetrySubscriber.attributeData$.pipe(
       map((data) => {
         let value: V = null;
         const entry = data.find(attr => attr.key === this.getTelemetryValueSettings().key);
