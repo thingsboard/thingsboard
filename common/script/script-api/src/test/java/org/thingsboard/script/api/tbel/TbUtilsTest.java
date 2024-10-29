@@ -213,6 +213,7 @@ public class TbUtilsTest {
 
         Assertions.assertEquals((Integer) 0, TbUtils.parseInt("0"));
         Assertions.assertEquals((Integer) 0, TbUtils.parseInt("-0"));
+        Assertions.assertEquals((Integer) 0, TbUtils.parseInt("+0"));
         Assertions.assertEquals(java.util.Optional.of(473).get(), TbUtils.parseInt("473"));
         Assertions.assertEquals(java.util.Optional.of(-255).get(), TbUtils.parseInt("-0xFF"));
         Assertions.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt("-0xFF123"));
