@@ -899,6 +899,8 @@ CREATE TABLE IF NOT EXISTS qr_code_settings (
     created_time bigint NOT NULL,
     tenant_id uuid NOT NULL,
     use_default_app boolean,
+    android_enabled boolean,
+    ios_enabled boolean,
     mobile_app_bundle_id uuid,
     qr_code_config VARCHAR(100000),
     CONSTRAINT qr_code_settings_tenant_id_unq_key UNIQUE (tenant_id)
