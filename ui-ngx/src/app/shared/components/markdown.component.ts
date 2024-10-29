@@ -113,7 +113,7 @@ export class TbMarkdownComponent implements OnChanges {
     if (this.markdownClass) {
       markdownClass += ` ${this.markdownClass}`;
     }
-    let template = `<div [ngStyle]="style" class="${markdownClass}">${compiled}</div>`;
+    let template = `<div [style]="style" class="${markdownClass}">${compiled}</div>`;
     if (this.containerClass) {
       template = `<div class="${this.containerClass}" style="width: 100%; height: 100%;">${template}</div>`;
     }

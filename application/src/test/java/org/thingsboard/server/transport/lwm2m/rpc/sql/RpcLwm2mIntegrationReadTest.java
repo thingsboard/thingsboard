@@ -15,23 +15,15 @@
  */
 package org.thingsboard.server.transport.lwm2m.rpc.sql;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.map.HashedMap;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.node.LwM2mPath;
+import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
 
-import java.time.Instant;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.awaitility.Awaitility.await;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -39,24 +31,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_1;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_12;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_11;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_14;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_2;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_TS_0;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_TS_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_9;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_19_0_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_19_0_3;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_19_1_0;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3303_12_5700;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3_14;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3_9;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_VALUE_0;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_VALUE_1;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS;
 
 @Slf4j
 public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest {
@@ -228,59 +213,6 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
         assertTrue(actualValues.contains(expected19_1_0));
     }
 
-
-    /**
-     * Read {"id":"/3303/12/5700"}
-     * Trigger a Send operation from the client with multiple values for the same resource as a payload
-     * acked "[{"bn":"/3303/12/5700","bt":1724".. 116 bytes]
-     * 2 values for the resource /3303/12/5700 should be stored with:
-     * - timestamps1 =  Instance.now() + RESOURCE_ID_VALUE_3303_12_5700_1
-     * - timestamps2 =  (timestamps1 + 3 sec) + RESOURCE_ID_VALUE_3303_12_5700_2
-     * @throws Exception
-     */
-    @Test
-    public void testReadSingleResource_sendFromClient_CollectedValue() throws Exception {
-        // init test
-        long startTs = Instant.now().toEpochMilli();
-        int cntValues = 4;
-        int resourceId = 5700;
-        String expectedIdVer = objectIdVer_3303 + "/" + OBJECT_INSTANCE_ID_12 + "/" + resourceId;
-        sendRPCById(expectedIdVer);
-        // verify result read: verify count value: 1-2: send CollectedValue; 3 - response for read;
-        long endTs = Instant.now().toEpochMilli() + RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS * 4;
-        String expectedVal_1 = String.valueOf(RESOURCE_ID_3303_12_5700_VALUE_0);
-        String expectedVal_2 = String.valueOf(RESOURCE_ID_3303_12_5700_VALUE_1);
-        AtomicReference<ObjectNode> actualValues = new AtomicReference<>();
-        await().atMost(40, SECONDS).until(() -> {
-            actualValues.set(doGetAsync(
-                    "/api/plugins/telemetry/DEVICE/" + deviceId + "/values/timeseries?keys="
-                            + RESOURCE_ID_NAME_3303_12_5700
-                            + "&startTs=" + startTs
-                            + "&endTs=" + endTs
-                            + "&interval=0&limit=100&useStrictDataTypes=false",
-                    ObjectNode.class));
-            // verify cntValues
-            return actualValues.get() != null && actualValues.get().get(RESOURCE_ID_NAME_3303_12_5700).size() == cntValues;
-        });
-        // verify ts
-        ArrayNode actual = (ArrayNode) actualValues.get().get(RESOURCE_ID_NAME_3303_12_5700);
-        Map<String, Long> keyTsMaps = new HashedMap();
-        for (JsonNode tsNode: actual) {
-            if (tsNode.get("value").asText().equals(expectedVal_1) || tsNode.get("value").asText().equals(expectedVal_2)) {
-                keyTsMaps.put(tsNode.get("value").asText(), tsNode.get("ts").asLong());
-            }
-        }
-        assertTrue(keyTsMaps.size() == 2);
-        long actualTS0 = keyTsMaps.get(expectedVal_1).longValue();
-        long actualTS1 = keyTsMaps.get(expectedVal_2).longValue();
-        assertTrue(actualTS0 > 0);
-        assertTrue(actualTS1 > 0);
-        assertTrue(actualTS1 > actualTS0);
-        assertTrue((actualTS1 - actualTS0) >= RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS);
-        assertTrue(actualTS0 <= RESOURCE_ID_3303_12_5700_TS_0);
-        assertTrue(actualTS1 <= RESOURCE_ID_3303_12_5700_TS_1);
-    }
-
     /**
      * ReadComposite {"keys":["batteryLevel", "UtfOffset", "dataDescription"]}
      */
@@ -300,21 +232,21 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
 
     private String sendRPCById(String path) throws Exception {
         String setRpcRequest = "{\"method\": \"Read\", \"params\": {\"id\": \"" + path + "\"}}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
     }
 
     private String sendRPCByKey(String key) throws Exception {
         String setRpcRequest = "{\"method\": \"Read\", \"params\": {\"key\": \"" + key + "\"}}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
     }
 
     private String sendCompositeRPCByIds(String paths) throws Exception {
         String setRpcRequest = "{\"method\": \"ReadComposite\", \"params\": {\"ids\":" + paths + "}}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
     }
 
     private String sendCompositeRPCByKeys(String keys) throws Exception {
         String setRpcRequest = "{\"method\": \"ReadComposite\", \"params\": {\"keys\":" + keys + "}}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
     }
 }

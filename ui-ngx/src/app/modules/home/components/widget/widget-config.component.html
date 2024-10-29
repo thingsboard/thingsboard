@@ -26,13 +26,13 @@
     </div>
   </div>
   <div *ngIf="widgetConfigMode === widgetConfigModes.advanced; else basicMode" class="tb-widget-config-content">
-    <div *ngIf="widgetType !== widgetTypes.static" [fxShow]="selectedOption === 'data'" class="mat-content">
+    <div *ngIf="widgetType !== widgetTypes.static" [class.!hidden]="selectedOption !== 'data'" class="mat-content">
       <ng-container *ngTemplateOutlet="data"></ng-container>
     </div>
-    <div [fxShow]="selectedOption === 'appearance'" class="mat-content">
+    <div [class.!hidden]="selectedOption !== 'appearance'" class="mat-content">
       <ng-container *ngTemplateOutlet="appearance"></ng-container>
     </div>
-    <div [fxShow]="selectedOption === 'card'" [formGroup]="widgetSettings" class="mat-content">
+    <div [class.!hidden]="selectedOption !== 'card'" [formGroup]="widgetSettings" class="mat-content">
       <div class="tb-form-panel">
         <div class="tb-form-panel-title" translate>widget-config.card-title</div>
         <mat-slide-toggle class="mat-slide" formControlName="showTitle">
@@ -40,8 +40,8 @@
         </mat-slide-toggle>
         <div class="tb-form-row">
           <div class="fixed-title-width" translate>widget-config.title</div>
-          <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-            <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+          <div class="flex flex-1 flex-row items-center justify-start gap-2">
+            <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
               <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
             </mat-form-field>
             <tb-font-settings formControlName="titleFont"
@@ -57,7 +57,7 @@
         </div>
         <div class="tb-form-row">
           <div class="fixed-title-width" translate>widget-config.title-tooltip</div>
-          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="titleTooltip" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
@@ -65,7 +65,7 @@
           <mat-slide-toggle class="mat-slide"  formControlName="showTitleIcon">
             {{ 'widget-config.display-icon' | translate }}
           </mat-slide-toggle>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div class="flex flex-row items-center justify-start gap-2">
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <input matInput formControlName="iconSize">
             </mat-form-field>
@@ -82,7 +82,7 @@
         </div>
         <mat-expansion-panel class="tb-settings">
           <mat-expansion-panel-header>
-            <mat-panel-description fxLayoutAlign="start" translate>
+            <mat-panel-description class="flex items-stretch justify-start" translate>
               widget-config.advanced-title-style
             </mat-panel-description>
           </mat-expansion-panel-header>
@@ -134,7 +134,7 @@
         </mat-slide-toggle>
         <mat-expansion-panel class="tb-settings">
           <mat-expansion-panel-header>
-            <mat-panel-description fxLayoutAlign="start" translate>
+            <mat-panel-description class="flex items-stretch justify-start" translate>
               widget-config.advanced-widget-style
             </mat-panel-description>
           </mat-expansion-panel-header>
@@ -158,7 +158,7 @@
         </mat-slide-toggle>
       </div>
     </div>
-    <div [fxShow]="selectedOption === 'actions'" [formGroup]="actionsSettings" class="mat-content" style="height: 100%;">
+    <div [class.!hidden]="selectedOption !== 'actions'" [formGroup]="actionsSettings" class="mat-content" style="height: 100%;">
       <div class="tb-form-panel" style="height: 100%;">
         <tb-manage-widget-actions
           [callbacks]="widgetConfigCallbacks"
@@ -168,7 +168,7 @@
         </tb-manage-widget-actions>
       </div>
     </div>
-    <div [fxShow]="selectedOption === 'layout'" [formGroup]="layoutSettings" class="mat-content">
+    <div [class.!hidden]="selectedOption !== 'layout'" [formGroup]="layoutSettings" class="mat-content">
       <div class="tb-form-panel" *ngIf="!showLayoutConfig || isDefaultBreakpoint">
         <div class="tb-form-panel-title" translate>widget-config.resize-options</div>
         <div class="tb-form-row">
@@ -236,7 +236,7 @@
       </tb-timewindow-config-panel>
     </ng-container>
     <div *ngIf="widgetType === widgetTypes.alarm" [formGroup]="dataSettings" class="tb-form-panel">
-      <div fxLayout="row" fxLayoutAlign="space-between center">
+      <div class="flex flex-row items-center justify-between">
         <div class="tb-form-panel-title" translate>alarm.filter</div>
         <button mat-button color="primary"
                 (click)="alarmFilterConfig.reset()">
@@ -294,7 +294,7 @@
       </div>
       <div *ngIf="displayNoDataDisplayMessageConfig" class="tb-form-row column-xs">
         <div class="fixed-title-width" translate>widget-config.no-data-display-message</div>
-        <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="noDataDisplayMessage" placeholder="{{ 'widget-config.set-message' | translate }}">
         </mat-form-field>
       </div>

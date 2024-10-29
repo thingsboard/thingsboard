@@ -15,63 +15,63 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons" fxLayout.xs="column">
+<div class="tb-details-buttons xs:flex xs:flex-col">
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'open')"
-          [fxShow]="!isEdit && !isDetailsPage">
+          [class.!hidden]="isEdit || isDetailsPage">
     {{'common.open-details-page' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'makePublic')"
-          [fxShow]="!isEdit && entityViewScope === 'tenant' && !isAssignedToCustomer(entity) && !entity?.customerIsPublic">
+          [class.!hidden]="isEdit || entityViewScope !== 'tenant' || isAssignedToCustomer(entity) || entity?.customerIsPublic">
     {{'entity-view.make-public' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'assignToCustomer')"
-          [fxShow]="!isEdit && entityViewScope === 'tenant' && !isAssignedToCustomer(entity)">
+          [class.!hidden]="isEdit || entityViewScope !== 'tenant' || isAssignedToCustomer(entity)">
     {{'entity-view.assign-to-customer' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'unassignFromCustomer')"
-          [fxShow]="!isEdit && (entityViewScope === 'customer' || entityViewScope === 'tenant') && isAssignedToCustomer(entity)">
+          [class.!hidden]="isEdit || (entityViewScope !== 'customer' && entityViewScope !== 'tenant') || !isAssignedToCustomer(entity)">
     {{ (entity?.customerIsPublic ? 'entity-view.make-private' : 'entity-view.unassign-from-customer') | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'unassignFromEdge')"
-          [fxShow]="!isEdit && entityViewScope === 'edge'">
+          [class.!hidden]="isEdit || entityViewScope !== 'edge'">
     {{ 'edge.unassign-from-edge' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
-          [fxShow]="!hideDelete() && !isEdit">
+          [class.!hidden]="hideDelete() || isEdit">
     {{'entity-view.delete' | translate }}
   </button>
-  <div fxLayout="row" fxLayout.xs="column">
+  <div class="flex flex-row xs:flex-col">
     <button mat-raised-button
             ngxClipboard
             (cbOnSuccess)="onEntityViewIdCopied($event)"
             [cbContent]="entity?.id?.id"
-            [fxShow]="!isEdit">
+            [class.!hidden]="isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>entity-view.copyId</span>
     </button>
   </div>
 </div>
-<div class="mat-padding" fxLayout="column">
+<div class="mat-padding flex flex-col">
   <mat-form-field class="mat-block"
-                  [fxShow]="!isEdit && isAssignedToCustomer(entity)
-                              && !entity?.customerIsPublic && entityViewScope === 'tenant'">
+                  [class.!hidden]="isEdit || !isAssignedToCustomer(entity)
+                              || entity?.customerIsPublic || entityViewScope !== 'tenant'">
     <mat-label translate>entity-view.assignedToCustomer</mat-label>
     <input matInput disabled [ngModel]="entity?.customerTitle">
   </mat-form-field>
   <div class="tb-small" style="padding-bottom: 10px; padding-left: 2px;"
-       [fxShow]="!isEdit && entity?.customerIsPublic && (entityViewScope === 'customer' || entityViewScope === 'tenant')">
+       [class.!hidden]="isEdit || !entity?.customerIsPublic || (entityViewScope !== 'customer' && entityViewScope !== 'tenant')">
     {{ 'entity-view.entity-view-public' | translate }}
   </div>
   <form [formGroup]="entityForm">
@@ -92,9 +92,9 @@
         [entityType]="entityType.ENTITY_VIEW"
       >
       </tb-entity-subtype-autocomplete>
-      <section fxLayout="column">
+      <section class="flex flex-col">
         <label translate class="tb-title no-padding">entity-view.target-entity</label>
-        <tb-entity-select fxFlex
+        <tb-entity-select class="flex-1"
                           [required]="true"
                           [allowedEntityTypes]="allowedEntityTypes"
                           formControlName="entityId">

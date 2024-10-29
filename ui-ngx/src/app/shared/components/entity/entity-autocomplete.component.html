@@ -23,7 +23,7 @@
          (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="entityAutocomplete"
-         [fxShow]="!disabled || !selectEntityFormGroup.get('entity').value">
+         [class.!hidden]="disabled && selectEntityFormGroup.get('entity').value">
   <a *ngIf="selectEntityFormGroup.get('entity').value && disabled" aria-label="Open device profile" [routerLink]=entityURL>
     {{ displayEntityFn(selectEntityFormGroup.get('entity').value) }}
   </a>

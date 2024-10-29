@@ -50,14 +50,17 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
     private double maxMeasuredValue = currentTemp;
 
     private LeshanClient leshanClient;
-    private int cntRead_5700;
     private int cntIdentitySystem;
 
     protected static final Random RANDOM = new Random();
     private static final List<Integer> supportedResources = Arrays.asList(5601, 5602, 5700, 5701);
 
-    public LwM2mTemperatureSensor() {
+    private LwM2mServer registeredServer;
+    private ManualDataSender sender;
 
+    private int resourceIdForSendCollected = 5700;
+
+    public LwM2mTemperatureSensor() {
     }
 
     public LwM2mTemperatureSensor(ScheduledExecutorService executorService, Integer id) {
@@ -72,26 +75,33 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
 
     @Override
     public synchronized ReadResponse read(LwM2mServer identity, int resourceId) {
-        log.info("Read on Temperature resource /[{}]/[{}]/[{}]", getModel().id, getId(), resourceId);
+        log.trace("Read on Temperature resource /[{}]/[{}]/[{}]", getModel().id, getId(), resourceId);
+        if (this.registeredServer == null && this.leshanClient != null && getId() == 12) {
+            try {
+                Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_TS_0 = Instant.now().toEpochMilli();
+                this.registeredServer = this.leshanClient.getRegisteredServers().values().iterator().next();
+                this.sender = (ManualDataSender) this.leshanClient.getSendService().getDataSender(ManualDataSender.DEFAULT_NAME);
+                this.sender.collectData(Arrays.asList(getPathForCollectedValue(resourceIdForSendCollected)));
+            } catch (Exception e) {
+                log.error("[{}] Sender for SendCollected", e.toString());
+                e.printStackTrace();
+            }
+        }
         switch (resourceId) {
             case 5601:
                 return ReadResponse.success(resourceId, getTwoDigitValue(minMeasuredValue));
             case 5602:
                 return ReadResponse.success(resourceId, getTwoDigitValue(maxMeasuredValue));
             case 5700:
-                if (identity == LwM2mServer.SYSTEM) { // return value for ForCollectedValue
+                if (identity == LwM2mServer.SYSTEM) {
+                    double val5700 = cntIdentitySystem == 0 ? RESOURCE_ID_3303_12_5700_VALUE_0 : RESOURCE_ID_3303_12_5700_VALUE_1;
                     cntIdentitySystem++;
-                    return ReadResponse.success(resourceId, cntIdentitySystem == 1 ?
-                            RESOURCE_ID_3303_12_5700_VALUE_0 : RESOURCE_ID_3303_12_5700_VALUE_1);
-                }
-                cntRead_5700++;
-                if (cntRead_5700 == 1) {            // read value after start
-                    return ReadResponse.success(resourceId, getTwoDigitValue(currentTemp));
+                    return ReadResponse.success(resourceId, val5700);
                 } else {
-                    if (this.getId() == 12 && this.leshanClient != null) {
+                    if (cntIdentitySystem == 1 && this.getId() == 12 && this.leshanClient != null) {
                         sendCollected();
                     }
-                    return ReadResponse.success(resourceId, getTwoDigitValue(currentTemp));
+                    return super.read(identity, resourceId);
                 }
             case 5701:
                 return ReadResponse.success(resourceId, UNIT_CELSIUS);
@@ -163,14 +173,10 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
 
     private void sendCollected() {
         try {
-            int resourceId = 5700;
-            LwM2mServer registeredServer = this.leshanClient.getRegisteredServers().values().iterator().next();
-            ManualDataSender sender = this.leshanClient.getSendService().getDataSender(ManualDataSender.DEFAULT_NAME,
-                    ManualDataSender.class);
-            sender.collectData(Arrays.asList(getPathForCollectedValue(resourceId)));
-            Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_TS_0 = Instant.now().toEpochMilli();
-            Thread.sleep(RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS);
-            sender.collectData(Arrays.asList(getPathForCollectedValue(resourceId)));
+            if ((Instant.now().toEpochMilli() - Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_TS_0) < RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS) {
+                Thread.sleep(RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS);
+            }
+            sender.collectData(Arrays.asList(getPathForCollectedValue(resourceIdForSendCollected)));
             Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_TS_1 = Instant.now().toEpochMilli();
             sender.sendCollectedData(registeredServer, ContentFormat.SENML_JSON, 1000, false);
         } catch (InterruptedException e) {

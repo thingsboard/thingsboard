@@ -25,7 +25,7 @@
   <div *ngIf="keysFormArray().controls.length; else noKeys" class="tb-form-table-body">
     <div *ngFor="let keyControl of keysFormArray().controls; trackBy: trackByKey; let $index = index;">
       <tb-comparison-key-row
-          fxFlex
+          class="flex-1"
           [datasourceType]="datasourceType"
           [formControl]="keyControl">
       </tb-comparison-key-row>
@@ -33,6 +33,5 @@
   </div>
 </div>
 <ng-template #noKeys>
-  <span fxLayoutAlign="center center"
-        class="tb-prompt">{{ 'widgets.chart.no-series' | translate }}</span>
+  <span class="tb-prompt flex items-center justify-center">{{ 'widgets.chart.no-series' | translate }}</span>
 </ng-template>

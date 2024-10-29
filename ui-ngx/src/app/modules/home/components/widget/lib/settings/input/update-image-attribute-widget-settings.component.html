@@ -18,7 +18,7 @@
 <section class="tb-widget-settings" [formGroup]="updateImageAttributeWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.general-settings</legend>
-    <mat-form-field fxFlex class="mat-block">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>widgets.input-widgets.widget-title</mat-label>
       <input matInput formControlName="widgetTitle">
     </mat-form-field>
@@ -28,7 +28,7 @@
   </fieldset>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.image-input-settings</legend>
-    <section fxLayout="column">
+    <section class="flex flex-col">
       <mat-slide-toggle formControlName="displayPreview" class="slide-block">
         {{ 'widgets.input-widgets.display-preview' | translate }}
       </mat-slide-toggle>

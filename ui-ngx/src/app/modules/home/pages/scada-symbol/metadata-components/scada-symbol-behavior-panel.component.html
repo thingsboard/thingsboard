@@ -54,7 +54,7 @@
     </div>
     <div *ngIf="[ScadaSymbolBehaviorType.value, ScadaSymbolBehaviorType.action].includes(behaviorFormGroup.get('type').value)" class="tb-form-row">
       <div class="fixed-title-width" translate>scada.behavior.value-type</div>
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="flex tb-value-type">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-value-type flex">
         <mat-select formControlName="valueType">
           <mat-select-trigger *ngIf="behaviorFormGroup.get('valueType').value">
             <div class="tb-value-type-row">
@@ -92,7 +92,7 @@
       </ng-container>
       <div class="tb-form-row">
         <div class="fixed-title-width" translate>scada.behavior.default-settings</div>
-        <tb-get-value-action-settings fxFlex
+        <tb-get-value-action-settings class="flex-1"
                                       panelTitle="{{ behaviorFormGroup.get('name').value | customTranslate }}"
                                       [valueType]="behaviorFormGroup.get('valueType').value"
                                       [trueLabel]="behaviorFormGroup.get('trueLabel').value | customTranslate"
@@ -107,7 +107,7 @@
     <ng-container *ngIf="behaviorFormGroup.get('type').value === ScadaSymbolBehaviorType.action">
       <div class="tb-form-row">
         <div class="fixed-title-width" translate>scada.behavior.default-settings</div>
-        <tb-set-value-action-settings fxFlex
+        <tb-set-value-action-settings class="flex-1"
                                       panelTitle="{{ behaviorFormGroup.get('name').value | customTranslate }}"
                                       [valueType]="behaviorFormGroup.get('valueType').value"
                                       [aliasController]="aliasController"
@@ -119,7 +119,7 @@
     <ng-container *ngIf="behaviorFormGroup.get('type').value === ScadaSymbolBehaviorType.widgetAction">
       <div class="tb-form-row">
         <div class="fixed-title-width" translate>scada.behavior.default-settings</div>
-        <tb-widget-action-settings fxFlex
+        <tb-widget-action-settings class="flex-1"
                                    panelTitle="{{ behaviorFormGroup.get('name').value | customTranslate }}"
                                    [callbacks]="callbacks"
                                    [widgetType]="widgetType.rpc"
