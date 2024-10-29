@@ -114,11 +114,12 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getLink() {
+        String scope = (tenantId != null && tenantId.isSysTenantId()) ? "system" : "tenant"; // tenantId is null in case of export to git
         if (resourceType == ResourceType.IMAGE) {
-            String type = (tenantId != null && tenantId.isSysTenantId()) ? "system" : "tenant"; // tenantId is null in case of export to git
-            return "/api/images/" + type + "/" + resourceKey;
+            return "/api/images/" + scope + "/" + resourceKey;
+        } else {
+            return "/api/resource/" + resourceType.name().toLowerCase() + "/" + scope + "/" + resourceKey;
         }
-        return null;
     }
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)

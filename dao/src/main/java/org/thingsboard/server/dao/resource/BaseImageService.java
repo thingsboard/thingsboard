@@ -56,7 +56,6 @@ import org.thingsboard.server.dao.util.ImageUtils.ProcessedImage;
 import org.thingsboard.server.dao.widget.WidgetTypeDao;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -566,24 +565,6 @@ public class BaseImageService extends BaseResourceService implements ImageServic
             }
         }
         return null;
-    }
-
-    private String encode(String data) {
-        return encode(data.getBytes(StandardCharsets.UTF_8));
-    }
-
-    private String encode(byte[] data) {
-        if (data == null || data.length == 0) {
-            return "";
-        }
-        return Base64.getEncoder().encodeToString(data);
-    }
-
-    private String decode(String value) {
-        if (value == null) {
-            return null;
-        }
-        return new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8);
     }
 
     @Data(staticConstructor = "of")

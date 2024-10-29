@@ -16,38 +16,27 @@
 package org.thingsboard.server.service.entitiy.dashboard;
 
 import lombok.AllArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.ResourceExportData;
-import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
-import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.dashboard.DashboardExportData;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.dashboard.DashboardService;
-import org.thingsboard.server.dao.resource.ImageService;
-import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-import org.thingsboard.server.service.resource.TbImageService;
 import org.thingsboard.server.service.resource.TbResourceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -56,15 +45,17 @@ import java.util.Set;
 public class DefaultTbDashboardService extends AbstractTbEntityService implements TbDashboardService {
 
     private final DashboardService dashboardService;
-    private final ImageService imageService;
-    private final TbImageService tbImageService;
-    private final ResourceService resourceService;
     private final TbResourceService tbResourceService;
 
     @Override
-    public Dashboard save(Dashboard dashboard, User user) throws Exception {
+    public Dashboard save(Dashboard dashboard, SecurityUser user) throws Exception {
         ActionType actionType = dashboard.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = dashboard.getTenantId();
+        
+        if (CollectionUtils.isNotEmpty(dashboard.getResources())) {
+            tbResourceService.importResources(dashboard.getResources(), user);
+        }
+
         try {
             Dashboard savedDashboard = checkNotNull(dashboardService.saveDashboard(dashboard));
             autoCommit(user, savedDashboard.getId());
@@ -299,52 +290,6 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.DASHBOARD), actionType, user, e, dashboardId.toString());
             throw e;
         }
-    }
-
-    @Override
-    public DashboardExportData exportDashboard(TenantId tenantId, Dashboard dashboard, SecurityUser user) throws ThingsboardException {
-        Map<TbResourceId, TbResourceInfo> resources = new HashMap<>();
-        for (TbResourceInfo imageInfo : imageService.inlineImages(dashboard)) {
-            resources.putIfAbsent(imageInfo.getId(), imageInfo);
-        }
-        for (TbResourceInfo resourceInfo : resourceService.processResourcesForExport(dashboard)) {
-            resources.putIfAbsent(resourceInfo.getId(), resourceInfo);
-        }
-        for (TbResourceInfo resourceInfo : resources.values()) {
-            accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.READ, resourceInfo.getId(), resourceInfo);
-        }
-
-        DashboardExportData exportData = new DashboardExportData();
-        exportData.setDashboard(dashboard);
-        exportData.setResources(resources.values().stream()
-                .map(resourceInfo -> {
-                    if (resourceInfo.getResourceType() == ResourceType.IMAGE) {
-                        ResourceExportData imageExportData = tbImageService.exportImage(resourceInfo);
-                        imageExportData.setResourceKey(null); // so that the image is not updated by resource key on import
-                        return imageExportData;
-                    } else {
-                        return tbResourceService.exportResource(resourceInfo);
-                    }
-                })
-                .toList());
-        return exportData;
-    }
-
-    @Override
-    public Dashboard importDashboard(DashboardExportData exportData, SecurityUser user) throws Exception {
-        Map<TbResourceId, TbResourceId> importedResources = new HashMap<>();
-        for (ResourceExportData resourceExportData : exportData.getResources()) {
-            if (resourceExportData.getType() == ResourceType.IMAGE) {
-                tbImageService.importImage(resourceExportData, true, user);
-            } else {
-                TbResourceInfo importedResource = tbResourceService.importResource(resourceExportData, true, user);
-                importedResources.put(resourceExportData.getId(), importedResource.getId());
-            }
-        }
-
-        Dashboard dashboard = exportData.getDashboard();
-        resourceService.processResourcesForImport(dashboard, importedResources);
-        return save(dashboard, user);
     }
 
 }

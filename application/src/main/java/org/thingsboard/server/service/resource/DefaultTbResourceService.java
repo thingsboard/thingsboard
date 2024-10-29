@@ -18,6 +18,7 @@ package org.thingsboard.server.service.resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.ResourceSubType;
@@ -32,6 +33,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
@@ -41,7 +44,10 @@ import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.Base64;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -58,9 +64,11 @@ import static org.thingsboard.server.utils.LwM2mObjectModelUtils.toLwm2mResource
 public class DefaultTbResourceService extends AbstractTbEntityService implements TbResourceService {
 
     private final ResourceService resourceService;
+    private final ImageService imageService;
+    private final TbImageService tbImageService;
 
     @Override
-    public TbResource save(TbResource resource, User user) throws ThingsboardException {
+    public TbResource save(TbResource resource, SecurityUser user) throws ThingsboardException {
         if (resource.getResourceType() == ResourceType.IMAGE) {
             throw new IllegalArgumentException("Image resource type is not supported");
         }
@@ -124,10 +132,57 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     }
 
     @Override
-    public ResourceExportData exportResource(TbResourceInfo resourceInfo) {
+    public List<ResourceExportData> exportResources(Dashboard dashboard, SecurityUser user) throws ThingsboardException {
+        return exportResources(dashboard, imageService::inlineImages, resourceService::replaceResourcesUrlsWithTags, user);
+    }
+
+    @Override
+    public List<ResourceExportData> exportResources(WidgetTypeDetails widgetTypeDetails, SecurityUser user) throws ThingsboardException {
+        return exportResources(widgetTypeDetails, imageService::inlineImages, resourceService::replaceResourcesUrlsWithTags, user);
+    }
+
+    @Override
+    public void importResources(List<ResourceExportData> resources, SecurityUser user) throws Exception {
+        for (ResourceExportData resourceExportData : resources) {
+            if (resourceExportData.getType() == ResourceType.IMAGE) {
+                tbImageService.importImage(resourceExportData, true, user);
+            } else {
+                importResource(resourceExportData, true, user);
+            }
+        }
+    }
+
+    private <T> List<ResourceExportData> exportResources(T entity,
+                                                         Function<T, List<TbResourceInfo>> imagesProcessor,
+                                                         Function<T, List<TbResourceInfo>> resourcesProcessor,
+                                                         SecurityUser user) throws ThingsboardException {
+        Map<TbResourceId, TbResourceInfo> resources = new HashMap<>();
+        for (TbResourceInfo imageInfo : imagesProcessor.apply(entity)) {
+            resources.putIfAbsent(imageInfo.getId(), imageInfo);
+        }
+        for (TbResourceInfo resourceInfo : resourcesProcessor.apply(entity)) {
+            resources.putIfAbsent(resourceInfo.getId(), resourceInfo);
+        }
+        for (TbResourceInfo resourceInfo : resources.values()) {
+            accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.READ, resourceInfo.getId(), resourceInfo);
+        }
+
+        return resources.values().stream()
+                .map(resourceInfo -> {
+                    if (resourceInfo.getResourceType() == ResourceType.IMAGE) {
+                        ResourceExportData imageExportData = tbImageService.exportImage(resourceInfo);
+                        imageExportData.setResourceKey(null); // so that the image is not updated by resource key on import
+                        return imageExportData;
+                    } else {
+                        return exportResource(resourceInfo);
+                    }
+                })
+                .toList();
+    }
+
+    private ResourceExportData exportResource(TbResourceInfo resourceInfo) {
         byte[] data = resourceService.getResourceData(resourceInfo.getTenantId(), resourceInfo.getId());
         return ResourceExportData.builder()
-                .id(resourceInfo.getId())
                 .mediaType(resourceInfo.getResourceType().getMediaType())
                 .fileName(resourceInfo.getFileName())
                 .title(resourceInfo.getTitle())
@@ -138,8 +193,7 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
                 .build();
     }
 
-    @Override
-    public TbResourceInfo importResource(ResourceExportData exportData, boolean checkExisting, SecurityUser user) throws ThingsboardException {
+    private TbResourceInfo importResource(ResourceExportData exportData, boolean checkExisting, SecurityUser user) throws ThingsboardException {
         if (exportData.getType() == ResourceType.IMAGE || exportData.getSubType() == ResourceSubType.IMAGE
                 || exportData.getSubType() == ResourceSubType.SCADA_SYMBOL) {
             throw new IllegalArgumentException("Image import not supported");

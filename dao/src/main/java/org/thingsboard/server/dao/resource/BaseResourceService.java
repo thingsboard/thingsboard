@@ -30,6 +30,7 @@ import org.thingsboard.common.util.RegexUtils;
 import org.thingsboard.server.cache.resourceInfo.ResourceInfoCacheKey;
 import org.thingsboard.server.cache.resourceInfo.ResourceInfoEvictEvent;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
@@ -52,12 +53,15 @@ import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.UnaryOperator;
 
 import static org.thingsboard.server.dao.device.DeviceServiceImpl.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -282,63 +286,103 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     @Override
-    public List<TbResourceInfo> processResourcesForExport(Dashboard dashboard) {
-        return processResourcesForExport(dashboard.getTenantId(), dashboard.getConfiguration(), DASHBOARD_RESOURCES_MAPPING);
+    public boolean replaceResourcesUsageWithUrls(Dashboard dashboard) {
+        return replaceResourcesUsageWithUrls(dashboard.getTenantId(), dashboard.getConfiguration(), DASHBOARD_RESOURCES_MAPPING);
     }
 
     @Override
-    public List<TbResourceInfo> processResourcesForExport(WidgetTypeDetails widgetTypeDetails) {
-        return processResourcesForExport(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor(), WIDGET_RESOURCES_MAPPING);
+    public boolean replaceResourcesUsageWithUrls(WidgetTypeDetails widgetTypeDetails) {
+        return replaceResourcesUsageWithUrls(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor(), WIDGET_RESOURCES_MAPPING);
     }
 
-    private List<TbResourceInfo> processResourcesForExport(TenantId tenantId, JsonNode jsonNode, Map<String, String> mapping) {
-        List<TbResourceInfo> resources = new ArrayList<>();
-        JacksonUtil.replaceAllByMapping(jsonNode, mapping, Collections.emptyMap(), (name, value) -> {
-            if (StringUtils.isBlank(value)) {
+    private boolean replaceResourcesUsageWithUrls(TenantId tenantId, JsonNode jsonNode, Map<String, String> mapping) {
+        AtomicBoolean updated = new AtomicBoolean(false);
+        processResources(jsonNode, mapping, value -> {
+            if (value.startsWith(DataConstants.TB_RESOURCE_PREFIX + "/api/resource")) { // already a link, ignoring
                 return value;
             }
 
-            TbResourceId resourceId;
-            try {
-                resourceId = new TbResourceId(UUID.fromString(value));
-            } catch (IllegalArgumentException e) {
+            TbResourceInfo resourceInfo;
+            if (value.startsWith("tb-resource:")) { // tag with metadata, probably importing
+                String[] metadata = StringUtils.removeStart(value, "tb-resource:").split(":");
+                if (metadata.length < 2) {
+                    return value;
+                }
+                ResourceType resourceType = ResourceType.valueOf(decode(metadata[0]));
+                String etag = metadata[1];
+
+                resourceInfo = findSystemOrTenantResourceByEtag(tenantId, resourceType, etag);
+                if (resourceInfo == null) {
+                    return value;
+                }
+            } else { // probably importing an old dashboard json where resources are referenced by ids
+                TbResourceId resourceId;
+                try {
+                    resourceId = new TbResourceId(UUID.fromString(value));
+                } catch (IllegalArgumentException e) {
+                    return value;
+                }
+                resourceInfo = findResourceInfoById(tenantId, resourceId);
+                if (resourceInfo == null) {
+                    updated.set(true);
+                    return "";
+                }
+            }
+
+            updated.set(true);
+            return DataConstants.TB_RESOURCE_PREFIX + resourceInfo.getLink();
+        });
+        return updated.get();
+    }
+
+    @Override
+    public List<TbResourceInfo> replaceResourcesUrlsWithTags(Dashboard dashboard) {
+        return replaceResourcesUrlsWithTags(dashboard.getTenantId(), dashboard.getConfiguration(), DASHBOARD_RESOURCES_MAPPING);
+    }
+
+    @Override
+    public List<TbResourceInfo> replaceResourcesUrlsWithTags(WidgetTypeDetails widgetTypeDetails) {
+        return replaceResourcesUrlsWithTags(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor(), WIDGET_RESOURCES_MAPPING);
+    }
+
+    private List<TbResourceInfo> replaceResourcesUrlsWithTags(TenantId tenantId, JsonNode jsonNode, Map<String, String> mapping) {
+        List<TbResourceInfo> resources = new ArrayList<>();
+        processResources(jsonNode, mapping, value -> {
+            if (!value.startsWith(DataConstants.TB_RESOURCE_PREFIX + "/api/resource/")) {
                 return value;
             }
-            TbResourceInfo resourceInfo = findResourceInfoById(tenantId, resourceId);
-            resources.add(resourceInfo);
-            return value;
+
+            ResourceType resourceType;
+            String resourceKey;
+            TenantId resourceTenantId;
+            try {
+                String[] parts = StringUtils.removeStart(value, DataConstants.TB_RESOURCE_PREFIX + "/api/resource/").split("/");
+                resourceType = ResourceType.valueOf(parts[0].toUpperCase());
+                String scope = parts[1];
+                resourceKey = parts[2];
+                resourceTenantId = scope.equals("system") ? TenantId.SYS_TENANT_ID : tenantId;
+            } catch (Exception e) {
+                log.warn("[{}] Invalid resource link '{}'", tenantResourcesRemover, value);
+                return value;
+            }
+
+            TbResourceInfo resourceInfo = findResourceInfoByTenantIdAndKey(resourceTenantId, resourceType, resourceKey);
+            if (resourceInfo != null) {
+                resources.add(resourceInfo);
+                return "tb-resource:" + String.join(":", encode(resourceType.name()), resourceInfo.getEtag());
+            } else {
+                return value;
+            }
         });
         return resources;
     }
 
-    @Override
-    public void processResourcesForImport(Dashboard dashboard, Map<TbResourceId, TbResourceId> importedResources) {
-        processResourcesForImport(dashboard.getConfiguration(), DASHBOARD_RESOURCES_MAPPING, importedResources);
-    }
-
-    @Override
-    public void processResourcesForImport(WidgetTypeDetails widgetTypeDetails, Map<TbResourceId, TbResourceId> importedResources) {
-        processResourcesForImport(widgetTypeDetails.getDescriptor(), WIDGET_RESOURCES_MAPPING, importedResources);
-    }
-
-    private void processResourcesForImport(JsonNode jsonNode, Map<String, String> mapping, Map<TbResourceId, TbResourceId> importedResources) {
+    private void processResources(JsonNode jsonNode, Map<String, String> mapping, UnaryOperator<String> processor) {
         JacksonUtil.replaceAllByMapping(jsonNode, mapping, Collections.emptyMap(), (name, value) -> {
             if (StringUtils.isBlank(value)) {
                 return value;
             }
-
-            TbResourceId oldResourceId;
-            try {
-                oldResourceId = new TbResourceId(UUID.fromString(value));
-            } catch (IllegalArgumentException e) {
-                return value;
-            }
-            TbResourceId importedResourceId = importedResources.get(oldResourceId);
-            if (importedResourceId != null) {
-                return importedResourceId.toString();
-            } else {
-                return value;
-            }
+            return processor.apply(value);
         });
     }
 
@@ -389,6 +433,24 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         }
         log.trace("Executing findSystemOrTenantResourceByEtag [{}] [{}] [{}]", tenantId, resourceType, etag);
         return resourceInfoDao.findSystemOrTenantResourceByEtag(tenantId, resourceType, etag);
+    }
+
+    protected String encode(String data) {
+        return encode(data.getBytes(StandardCharsets.UTF_8));
+    }
+
+    protected String encode(byte[] data) {
+        if (data == null || data.length == 0) {
+            return "";
+        }
+        return Base64.getEncoder().encodeToString(data);
+    }
+
+    protected String decode(String value) {
+        if (value == null) {
+            return null;
+        }
+        return new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8);
     }
 
     private final PaginatedRemover<TenantId, TbResourceId> tenantResourcesRemover = new PaginatedRemover<>() {

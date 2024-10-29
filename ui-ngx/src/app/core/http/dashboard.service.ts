@@ -20,7 +20,7 @@ import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
-import { Dashboard, DashboardExportData, DashboardInfo, HomeDashboard, HomeDashboardInfo } from '@shared/models/dashboard.models';
+import { Dashboard, DashboardInfo, HomeDashboard, HomeDashboardInfo } from '@shared/models/dashboard.models';
 import { WINDOW } from '@core/services/window.service';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter, map, publishReplay, refCount } from 'rxjs/operators';
@@ -71,8 +71,8 @@ export class DashboardService {
     return this.http.get<Dashboard>(`/api/dashboard/${dashboardId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public exportDashboard(dashboardId: string, config?: RequestConfig): Observable<DashboardExportData> {
-    return this.http.get<DashboardExportData>(`/api/dashboard/${dashboardId}/export`, defaultHttpOptionsFromConfig(config));
+  public exportDashboard(dashboardId: string, config?: RequestConfig): Observable<Dashboard> {
+    return this.http.get<Dashboard>(`/api/dashboard/${dashboardId}?inlineImages=true`, defaultHttpOptionsFromConfig(config));
   }
 
   public getDashboardInfo(dashboardId: string, config?: RequestConfig): Observable<DashboardInfo> {

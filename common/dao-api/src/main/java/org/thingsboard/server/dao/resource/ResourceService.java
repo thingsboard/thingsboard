@@ -29,7 +29,6 @@ import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
-import java.util.Map;
 
 public interface ResourceService extends EntityDaoService {
 
@@ -71,13 +70,13 @@ public interface ResourceService extends EntityDaoService {
 
     TbResourceInfo findSystemOrTenantResourceByEtag(TenantId tenantId, ResourceType resourceType, String etag);
 
-    List<TbResourceInfo> processResourcesForExport(Dashboard dashboard);
+    boolean replaceResourcesUsageWithUrls(Dashboard dashboard);
 
-    List<TbResourceInfo> processResourcesForExport(WidgetTypeDetails widgetTypeDetails);
+    boolean replaceResourcesUsageWithUrls(WidgetTypeDetails widgetTypeDetails);
 
-    void processResourcesForImport(Dashboard dashboard, Map<TbResourceId, TbResourceId> importedResources);
+    List<TbResourceInfo> replaceResourcesUrlsWithTags(Dashboard dashboard);
 
-    void processResourcesForImport(WidgetTypeDetails widgetTypeDetails, Map<TbResourceId, TbResourceId> importedResources);
+    List<TbResourceInfo> replaceResourcesUrlsWithTags(WidgetTypeDetails widgetTypeDetails);
 
     TbResource createOrUpdateSystemResource(ResourceType resourceType, String resourceKey, String data);
 

@@ -37,6 +37,7 @@ public class WidgetTypeExportService extends BaseEntityExportService<WidgetTypeI
             throw new IllegalArgumentException("Export of system Widget Type is not allowed");
         }
         imageService.inlineImages(widgetTypeDetails);
+        resourceService.replaceResourcesUrlsWithTags(widgetTypeDetails);
     }
 
     @Override

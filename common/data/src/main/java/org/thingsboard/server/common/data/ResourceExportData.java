@@ -22,7 +22,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.id.TbResourceId;
 
 @Schema
 @Slf4j
@@ -33,7 +32,6 @@ import org.thingsboard.server.common.data.id.TbResourceId;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ResourceExportData {
 
-    private TbResourceId id;
     private String title;
     private ResourceType type;
     private ResourceSubType subType;

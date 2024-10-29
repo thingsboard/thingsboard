@@ -194,6 +194,7 @@ export interface DashboardConfiguration {
 export interface Dashboard extends DashboardInfo {
   configuration?: DashboardConfiguration;
   dialogRef?: MatDialogRef<any>;
+  resources?: Array<any>;
 }
 
 export interface HomeDashboard extends Dashboard {
@@ -207,11 +208,6 @@ export interface HomeDashboardInfo {
 
 export interface DashboardSetup extends Dashboard {
   assignedCustomerIds?: Array<string>;
-}
-
-export interface DashboardExportData {
-  dashboard?: Dashboard;
-  resources: any;
 }
 
 export const isPublicDashboard = (dashboard: DashboardInfo): boolean => {

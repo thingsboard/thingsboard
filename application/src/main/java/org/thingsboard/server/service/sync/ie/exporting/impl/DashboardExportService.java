@@ -49,6 +49,7 @@ public class DashboardExportService extends BaseEntityExportService<DashboardId,
             replaceUuidsRecursively(ctx, JacksonUtil.getSafely(widgetConfig, "config", "actions"), Collections.emptySet(), WIDGET_CONFIG_PROCESSED_FIELDS_PATTERN);
         }
         imageService.inlineImages(dashboard);
+        resourceService.replaceResourcesUrlsWithTags(dashboard);
     }
 
     @Override

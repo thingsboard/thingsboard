@@ -50,6 +50,7 @@ import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.resource.ImageService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -82,6 +83,9 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     @Autowired
     private ImageService imageService;
+
+    @Autowired
+    private ResourceService resourceService;
 
     @Autowired
     private DataValidator<Dashboard> dashboardValidator;
@@ -158,6 +162,8 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
         try {
             imageService.replaceBase64WithImageUrl(dashboard);
+            resourceService.replaceResourcesUsageWithUrls(dashboard);
+
             var saved = dashboardDao.save(dashboard.getTenantId(), dashboard);
             publishEvictEvent(new DashboardTitleEvictEvent(saved.getId()));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(saved.getTenantId())
@@ -388,6 +394,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     @Override
     public boolean existsById(TenantId tenantId, DashboardId dashboardId) {
         return dashboardDao.existsById(tenantId, dashboardId.getId());
+    }
+
+    @Override
+    public PageData<DashboardId> findAllDashboardsIds(PageLink pageLink) {
+        return dashboardDao.findAllIds(pageLink);
     }
 
     private final PaginatedRemover<TenantId, DashboardId> tenantDashboardsRemover = new PaginatedRemover<>() {

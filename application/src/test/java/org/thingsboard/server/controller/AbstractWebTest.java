@@ -1173,11 +1173,17 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected <R> TbResourceInfo uploadImage(HttpMethod httpMethod, String url, String subType, String filename, String mediaType, byte[] content) throws Exception {
+        return uploadResource(httpMethod, url, filename, mediaType, content, StringUtils.isNotEmpty(subType) ?
+                List.of(new MockPart("imageSubType", subType.getBytes(StandardCharsets.UTF_8))) : null);
+    }
+
+    protected <R> TbResourceInfo uploadResource(HttpMethod httpMethod, String url, String filename, String mediaType, byte[] content, List<MockPart> otherParts) throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", filename, mediaType, content);
         var request = MockMvcRequestBuilders.multipart(httpMethod, url).file(file);
-        if (StringUtils.isNotEmpty(subType)) {
-            var imageSubTypePart = new MockPart("imageSubType", subType.getBytes(StandardCharsets.UTF_8));
-            request.part(imageSubTypePart);
+        if (otherParts != null && !otherParts.isEmpty()) {
+            for (MockPart otherPart : otherParts) {
+                request.part(otherPart);
+            }
         }
         setJwtToken(request);
         return readResponse(mockMvc.perform(request).andExpect(status().isOk()), TbResourceInfo.class);

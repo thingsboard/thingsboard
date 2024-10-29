@@ -25,6 +25,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.server.common.data.id.DashboardId;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -40,6 +41,10 @@ public class Dashboard extends DashboardInfo implements ExportableEntity<Dashboa
     @Getter
     @Setter
     private DashboardId externalId;
+
+    @Getter
+    @Setter
+    private List<ResourceExportData> resources;
 
     public Dashboard() {
         super();
@@ -57,6 +62,7 @@ public class Dashboard extends DashboardInfo implements ExportableEntity<Dashboa
         super(dashboard);
         this.configuration = dashboard.getConfiguration();
         this.externalId = dashboard.getExternalId();
+        this.resources = dashboard.getResources() != null ? new ArrayList<>(dashboard.getResources()) : null;
     }
 
     @Schema(description = "JSON object with main configuration of the dashboard: layouts, widgets, aliases, etc. " +

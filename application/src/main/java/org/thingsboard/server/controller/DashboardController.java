@@ -45,7 +45,6 @@ import org.thingsboard.server.common.data.HomeDashboard;
 import org.thingsboard.server.common.data.HomeDashboardInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.dashboard.DashboardExportData;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -55,9 +54,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.config.annotations.ApiOperation;
-import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.dashboard.TbDashboardService;
+import org.thingsboard.server.service.resource.TbResourceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -78,6 +77,8 @@ import static org.thingsboard.server.controller.ControllerConstants.EDGE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.INCLUDE_RESOURCES;
+import static org.thingsboard.server.controller.ControllerConstants.INCLUDE_RESOURCES_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -97,7 +98,8 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 public class DashboardController extends BaseController {
 
     private final TbDashboardService tbDashboardService;
-    private final ImageService imageService;
+    private final TbResourceService tbResourceService;
+
     public static final String DASHBOARD_ID = "dashboardId";
 
     private static final String HOME_DASHBOARD_ID = "homeDashboardId";
@@ -149,19 +151,16 @@ public class DashboardController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/dashboard/{dashboardId}")
     public Dashboard getDashboardById(@Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
-                                      @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
+                                      @PathVariable(DASHBOARD_ID) String strDashboardId,
+                                      @Parameter(description = INCLUDE_RESOURCES_DESCRIPTION)
+                                      @RequestParam(value = INCLUDE_RESOURCES, required = false) boolean includeResources) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-        return checkDashboardId(dashboardId, Operation.READ);
-    }
-
-    @GetMapping(value = "/dashboard/{dashboardId}/export")
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    public DashboardExportData exportDashboard(@Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
-                                               @PathVariable(DASHBOARD_ID) UUID id) throws ThingsboardException {
-        DashboardId dashboardId = new DashboardId(id);
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.READ);
-        return tbDashboardService.exportDashboard(getTenantId(), dashboard, getCurrentUser());
+        if (includeResources) {
+            dashboard.setResources(tbResourceService.exportResources(dashboard, getCurrentUser()));
+        }
+        return dashboard;
     }
 
     @ApiOperation(value = "Create Or Update Dashboard (saveDashboard)",
@@ -178,16 +177,6 @@ public class DashboardController extends BaseController {
         dashboard.setTenantId(getTenantId());
         checkEntity(dashboard.getId(), dashboard, Resource.DASHBOARD);
         return tbDashboardService.save(dashboard, getCurrentUser());
-    }
-
-    @PostMapping(value = "/dashboard/import")
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    public Dashboard importDashboard(@RequestBody DashboardExportData exportData) throws Exception {
-        Dashboard dashboard = exportData.getDashboard();
-        dashboard.setTenantId(getTenantId());
-        dashboard.setId(null);
-        checkEntity(dashboard.getId(), dashboard, Resource.DASHBOARD);
-        return tbDashboardService.importDashboard(exportData, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete the Dashboard (deleteDashboard)",
