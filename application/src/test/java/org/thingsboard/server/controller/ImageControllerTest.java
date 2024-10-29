@@ -200,7 +200,7 @@ public class ImageControllerTest extends AbstractControllerTest {
         assertThat(exportData.getMediaType()).isEqualTo("image/png");
         assertThat(exportData.getFileName()).isEqualTo(filename);
         assertThat(exportData.getTitle()).isEqualTo(filename);
-        assertThat(exportData.getSubType()).isEqualTo(ResourceSubType.IMAGE.name());
+        assertThat(exportData.getSubType()).isEqualTo(ResourceSubType.IMAGE);
         assertThat(exportData.getResourceKey()).isEqualTo(filename);
         assertThat(exportData.getData()).isEqualTo(Base64.getEncoder().encodeToString(PNG_IMAGE));
         assertThat(exportData.isPublic()).isTrue();
@@ -210,7 +210,7 @@ public class ImageControllerTest extends AbstractControllerTest {
 
         TbResourceInfo importedImageInfo = doPut("/api/image/import", exportData, TbResourceInfo.class);
         assertThat(importedImageInfo.getTitle()).isEqualTo(filename);
-        assertThat(exportData.getSubType()).isEqualTo(ResourceSubType.IMAGE.name());
+        assertThat(exportData.getSubType()).isEqualTo(ResourceSubType.IMAGE);
         assertThat(importedImageInfo.getResourceKey()).isEqualTo(filename);
         assertThat(importedImageInfo.getFileName()).isEqualTo(filename);
         assertThat(importedImageInfo.isPublic()).isTrue();
@@ -233,14 +233,14 @@ public class ImageControllerTest extends AbstractControllerTest {
         String systemImageName = "my_system_png_image.png";
         TbResourceInfo systemImage = uploadImage(HttpMethod.POST, "/api/image", systemImageName, "image/png", PNG_IMAGE);
 
-        String systemScadaSymbolName  = "my_system_scada_symbol_image.svg";
+        String systemScadaSymbolName = "my_system_scada_symbol_image.svg";
         TbResourceInfo systemScadaSymbol = uploadImage(HttpMethod.POST, "/api/image", ResourceSubType.SCADA_SYMBOL.name(), systemScadaSymbolName, "image/svg+xml", SVG_IMAGE);
 
         loginTenantAdmin();
         String tenantImageName = "my_jpeg_image.jpg";
         TbResourceInfo tenantImage = uploadImage(HttpMethod.POST, "/api/image", tenantImageName, "image/jpeg", JPEG_IMAGE);
 
-        String tenantScadaSymbolName  = "my_scada_symbol_image.svg";
+        String tenantScadaSymbolName = "my_scada_symbol_image.svg";
         TbResourceInfo tenantScadaSymbol = uploadImage(HttpMethod.POST, "/api/image", ResourceSubType.SCADA_SYMBOL.name(), tenantScadaSymbolName, "image/svg+xml", SVG_IMAGE);
 
         List<TbResourceInfo> tenantImages = getImages(null, false, 10);
@@ -262,7 +262,7 @@ public class ImageControllerTest extends AbstractControllerTest {
 
         assertThat(getImages("my_system_scada_symbol", ResourceSubType.SCADA_SYMBOL.name(), true, 10))
                 .containsOnly(systemScadaSymbol);
-        assertThat(getImages("my_scada_symbol", ResourceSubType.SCADA_SYMBOL.name(),true, 10))
+        assertThat(getImages("my_scada_symbol", ResourceSubType.SCADA_SYMBOL.name(), true, 10))
                 .containsOnly(tenantScadaSymbol);
     }
 
@@ -370,7 +370,7 @@ public class ImageControllerTest extends AbstractControllerTest {
     private List<TbResourceInfo> getImages(String searchText, String imageSubType, boolean includeSystemImages, int limit) throws Exception {
         var url = "/api/images?includeSystemImages=" + includeSystemImages + "&";
         if (StringUtils.isNotEmpty(imageSubType)) {
-            url += "imageSubType=" + imageSubType+ "&";
+            url += "imageSubType=" + imageSubType + "&";
         }
         PageData<TbResourceInfo> images = doGetTypedWithPageLink(url, new TypeReference<>() {}, new PageLink(limit, 0, searchText));
         return images.getData();

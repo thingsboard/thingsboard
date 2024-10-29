@@ -247,10 +247,8 @@ public class InstallScripts {
                 dirStream.forEach(
                         path -> {
                             try {
-                                String widgetTypeJson = Files.readString(path);
-                                widgetTypeJson = resourceService.checkSystemResourcesUsage(widgetTypeJson, ResourceType.JS_MODULE);
-
-                                WidgetTypeDetails widgetTypeDetails = JacksonUtil.fromString(widgetTypeJson, WidgetTypeDetails.class);
+                                JsonNode widgetTypeJson = JacksonUtil.toJsonNode(path.toFile());
+                                WidgetTypeDetails widgetTypeDetails = JacksonUtil.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
                                 widgetTypeService.saveWidgetType(widgetTypeDetails);
                             } catch (Exception e) {
                                 log.error("Unable to load widget type from json: [{}]", path.toString());

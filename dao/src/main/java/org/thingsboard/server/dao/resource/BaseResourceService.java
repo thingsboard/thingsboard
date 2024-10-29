@@ -28,7 +28,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.RegexUtils;
 import org.thingsboard.server.cache.resourceInfo.ResourceInfoCacheKey;
 import org.thingsboard.server.cache.resourceInfo.ResourceInfoEvictEvent;
 import org.thingsboard.server.common.data.Dashboard;
@@ -86,12 +85,15 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     );
 
     private static final Map<String, String> WIDGET_RESOURCES_MAPPING = Map.of(
-            "descriptor.resources.*.url.id", ""
+            "resources.*.url.id", ""
     );
 
     @Override
     public TbResource saveResource(TbResource resource, boolean doValidate) {
         log.trace("Executing saveResource [{}]", resource);
+        if (resource.getTenantId() == null) {
+            resource.setTenantId(TenantId.SYS_TENANT_ID);
+        }
         if (resource.getId() == null) {
             resource.setResourceKey(getUniqueKey(resource.getTenantId(), resource.getResourceType(), StringUtils.defaultIfEmpty(resource.getResourceKey(), resource.getFileName())));
         }
@@ -317,6 +319,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
 
                 resourceInfo = findSystemOrTenantResourceByEtag(tenantId, resourceType, etag);
                 if (resourceInfo == null) {
+                    log.warn("[{}] Couldn't find resource referenced as '{}'", tenantId, value);
                     return value;
                 }
             } else { // probably importing an old dashboard json where resources are referenced by ids
@@ -329,6 +332,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
                 resourceInfo = findResourceInfoById(tenantId, resourceId);
                 if (resourceInfo == null) {
                     updated.set(true);
+                    log.warn("[{}] Couldn't find resource referenced as '{}'", tenantId, value);
                     return "";
                 }
             }
@@ -386,18 +390,21 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
             if (StringUtils.isBlank(value)) {
                 return value;
             }
-            return processor.apply(value);
+            String newValue = processor.apply(value);
+            log.trace("Replaced '{}' with '{}'", value, newValue);
+            return newValue;
         });
     }
 
     @Override
     public TbResource createOrUpdateSystemResource(ResourceType resourceType, String resourceKey, String data) {
         if (resourceType == ResourceType.DASHBOARD) {
-            data = checkSystemResourcesUsage(data, ResourceType.JS_MODULE);
-
             Dashboard dashboard = JacksonUtil.fromString(data, Dashboard.class);
             dashboard.setTenantId(TenantId.SYS_TENANT_ID);
+
             imageService.replaceBase64WithImageUrl(dashboard);
+            replaceResourcesUsageWithUrls(dashboard);
+
             data = JacksonUtil.toString(dashboard);
         }
 
@@ -413,21 +420,6 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         resource.setData(data.getBytes(StandardCharsets.UTF_8));
         log.debug("{} system resource {}", (resource.getId() == null ? "Creating" : "Updating"), resourceKey);
         return saveResource(resource);
-    }
-
-    @Override
-    public String checkSystemResourcesUsage(String content, ResourceType... usedResourceTypes) {
-        return RegexUtils.replace(content, "\\$\\{RESOURCE:(.+)}", matchResult -> {
-            String resourceKey = matchResult.group(1);
-            for (ResourceType resourceType : usedResourceTypes) {
-                TbResourceInfo resource = findResourceInfoByTenantIdAndKey(TenantId.SYS_TENANT_ID, resourceType, resourceKey);
-                if (resource != null) {
-                    log.trace("Replaced '{}' with resource id {}", matchResult.group(), resource.getUuidId());
-                    return resource.getUuidId().toString();
-                }
-            }
-            return "";
-        });
     }
 
     @Override

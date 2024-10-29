@@ -40,6 +40,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -59,13 +60,16 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
 
     private final TbClusterService clusterService;
     private final ImageService imageService;
+    private final AccessControlService accessControlService;
     private final Cache<ImageCacheKey, String> etagCache;
 
     public DefaultTbImageService(TbClusterService clusterService, ImageService imageService,
+                                 AccessControlService accessControlService,
                                  @Value("${cache.image.etag.timeToLiveInMinutes:44640}") int cacheTtl,
                                  @Value("${cache.image.etag.maxSize:10000}") int cacheMaxSize) {
         this.clusterService = clusterService;
         this.imageService = imageService;
+        this.accessControlService = accessControlService;
         this.etagCache = Caffeine.newBuilder()
                 .expireAfterAccess(cacheTtl, TimeUnit.MINUTES)
                 .maximumSize(cacheMaxSize)

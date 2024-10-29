@@ -54,20 +54,39 @@ public class DashboardSyncServiceTest extends AbstractControllerTest {
         resourceRepository.deleteAll();
     }
 
+    /*
+    * TODO - DISCUSS
+    *  we can't use etag in the image/resource tag (image and resource can be updated) (OR CAN? - on export we convert urls to tags automatically.
+    *  if don't want to update all resource's usages - just use link)
+    *  but also cannot use key - it can be changed if resource/image with such key already exists.
+    *  store resources alongside all system widgets/dashboards - same structure when exporting.
+    *  for gateways dashboard repository - use link instead of tag, not to update ref each time the resource is updated.
+    *
+    *
+    *  TODO:
+    *   update system widgets with the new structure
+    * */
+
+//    FIXME: need to update resource key all the time???? because etag is changed. same for images....
+
+//    @Ignore
+    // TODO: update gateway dashboard repository; for now the test will fail because gateway-management-extension.js is referenced by id instead of tb-resource
     @Test
     public void testGatewaysDashboardSync() throws Exception {
         loginTenantAdmin();
-        await().atMost(60, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(45, TimeUnit.SECONDS).untilAsserted(() -> {
             MockHttpServletResponse response = doGet("/api/resource/dashboard/system/gateways_dashboard.json")
                     .andExpect(status().isOk())
                     .andReturn().getResponse();
             String dashboardJson = response.getContentAsString();
-            String etag = response.getHeader("ETag");
 
+            assertThat(dashboardJson).contains("tb-resource;/api/resource/js_module/system/gateway-management-extension.js"); // checking that resource link is used
+            assertThat(dashboardJson).doesNotContain("${RESOURCE");
             Dashboard dashboard = JacksonUtil.fromString(dashboardJson, Dashboard.class);
             assertThat(dashboard).isNotNull();
             assertThat(dashboard.getTitle()).containsIgnoringCase("gateway");
-            assertThat(etag).isNotBlank();
+            assertThat(dashboard.getImage()).startsWith("tb-image;/api/images/system/gateway");
+            assertThat(response.getHeader("ETag")).isNotBlank();
         });
     }
 

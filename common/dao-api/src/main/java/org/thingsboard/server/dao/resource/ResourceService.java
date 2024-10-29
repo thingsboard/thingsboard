@@ -80,6 +80,4 @@ public interface ResourceService extends EntityDaoService {
 
     TbResource createOrUpdateSystemResource(ResourceType resourceType, String resourceKey, String data);
 
-    String checkSystemResourcesUsage(String content, ResourceType... usedResourceTypes);
-
 }

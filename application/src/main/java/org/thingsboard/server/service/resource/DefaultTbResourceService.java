@@ -39,6 +39,7 @@ import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -66,6 +67,7 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     private final ResourceService resourceService;
     private final ImageService imageService;
     private final TbImageService tbImageService;
+    private final AccessControlService accessControlService;
 
     @Override
     public TbResource save(TbResource resource, SecurityUser user) throws ThingsboardException {

@@ -27,19 +27,26 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
+import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceConnectivityConfiguration;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
+import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.component.RuleNodeClassInfo;
 import org.thingsboard.server.utils.TbNodeUpgradeUtils;
@@ -81,6 +88,15 @@ public class DefaultDataUpdateService implements DataUpdateService {
     @Autowired
     private TenantProfileService tenantProfileService;
 
+    @Autowired
+    private ResourceService resourceService;
+
+    @Autowired
+    private DashboardService dashboardService;
+
+    @Autowired
+    private WidgetTypeService widgetTypeService;
+
     @Override
     public void updateData(String fromVersion) throws Exception {
         switch (fromVersion) {
@@ -93,6 +109,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 updateCustomersWithTheSameTitle();
                 updateMaxRuleNodeExecsPerMessage();
                 updateGatewayRateLimits();
+                break;
+            case "3.8.1":
+                updateResourcesUsage();
                 break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
@@ -339,6 +358,46 @@ public class DefaultDataUpdateService implements DataUpdateService {
             }
         }
         return false;
+    }
+
+    private void updateResourcesUsage() {
+        log.info("Updating resources usage in dashboards");
+        var dashboards = new PageDataIterable<>(dashboardService::findAllDashboardsIds, 512);
+        int totalCount = 0;
+        int updatedCount = 0;
+        for (DashboardId dashboardId : dashboards) {
+            Dashboard dashboard = dashboardService.findDashboardById(TenantId.SYS_TENANT_ID, dashboardId);
+            boolean updated = resourceService.replaceResourcesUsageWithUrls(dashboard);
+            if (updated) {
+                dashboardService.saveDashboard(dashboard);
+                updatedCount++;
+            }
+            totalCount++;
+
+            if (totalCount % 1000 == 0) {
+                log.info("Processed {} dashboards, updated {}", totalCount, updatedCount);
+            }
+        }
+        log.info("Updated {} dashboards", updatedCount);
+
+        log.info("Updating resources usage in widgets");
+        totalCount = 0;
+        updatedCount = 0;
+        var widgets = new PageDataIterable<>(widgetTypeService::findAllWidgetTypesIds, 512);
+        for (WidgetTypeId widgetTypeId : widgets) {
+            WidgetTypeDetails widgetTypeDetails = widgetTypeService.findWidgetTypeDetailsById(TenantId.SYS_TENANT_ID, widgetTypeId);
+            boolean updated = resourceService.replaceResourcesUsageWithUrls(widgetTypeDetails);
+            if (updated) {
+                widgetTypeService.saveWidgetType(widgetTypeDetails);
+                updatedCount++;
+            }
+            totalCount++;
+
+            if (totalCount % 200 == 0) {
+                log.info("Processed {} widgets, updated {}", totalCount, updatedCount);
+            }
+        }
+        log.info("Updated {} widgets", updatedCount);
     }
 
     public static boolean getEnv(String name, boolean defaultValue) {
