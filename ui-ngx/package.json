@@ -103,7 +103,7 @@
     "split.js": "^1.6.5",
     "systemjs": "6.15.1",
     "tinycolor2": "^1.6.0",
-    "tinymce": "~6.8.4",
+    "tinymce": "~6.8.5",
     "tooltipster": "^4.2.8",
     "ts-transformer-keys": "^0.4.4",
     "tslib": "^2.7.0",
@@ -144,13 +144,13 @@
     "@types/systemjs": "6.15.1",
     "@types/tinycolor2": "^1.4.6",
     "@types/tooltipster": "^0.0.35",
-    "@typescript-eslint/eslint-plugin": "^8.7.0",
-    "@typescript-eslint/parser": "^8.7.0",
-    "@typescript-eslint/utils": "^8.7.0",
+    "@typescript-eslint/eslint-plugin": "^8.11.0",
+    "@typescript-eslint/parser": "^8.11.0",
+    "@typescript-eslint/utils": "^8.11.0",
     "autoprefixer": "^10.4.20",
     "compression-webpack-plugin": "^11.1.0",
     "directory-tree": "^3.5.2",
-    "eslint": "~8.57.1",
+    "eslint": "~9.13.0",
     "eslint-plugin-import": "latest",
     "eslint-plugin-jsdoc": "latest",
     "eslint-plugin-prefer-arrow": "latest",
@@ -169,6 +169,6 @@
     "@types/react": "18.3.10",
     "rc-virtual-list": "3.5.2",
     "ace-builds": "1.36.2",
-    "tinymce": "6.8.4"
+    "tinymce": "6.8.5"
   }
 }
