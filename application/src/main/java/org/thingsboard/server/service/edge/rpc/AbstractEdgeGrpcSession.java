@@ -76,6 +76,7 @@ import org.thingsboard.server.gen.edge.v1.UserCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetBundleTypesRequestMsg;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.edge.rpc.fetch.EdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.GeneralEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.processor.alarm.AlarmProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.asset.AssetProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.asset.profile.AssetProfileProcessor;
@@ -146,8 +147,6 @@ public abstract class AbstractEdgeGrpcSession<T extends AbstractEdgeGrpcSession<
         this.maxHighPriorityQueueSizePerSession = maxHighPriorityQueueSizePerSession;
         initInputStream();
     }
-
-    protected abstract ListenableFuture<Boolean> processEdgeEvents() throws Exception;
 
     public void initInputStream() {
         this.inputStream = new StreamObserver<>() {

@@ -53,8 +53,10 @@ import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.RelationActionEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.tenant.TenantService;
-import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.discovery.TopicService;
+import org.thingsboard.server.queue.kafka.TbKafkaAdmin;
+import org.thingsboard.server.queue.kafka.TbKafkaSettings;
+import org.thingsboard.server.queue.kafka.TbKafkaTopicConfigs;
 
 /**
  * This event listener does not support async event processing because relay on ThreadLocal
@@ -77,10 +79,13 @@ import org.thingsboard.server.queue.discovery.TopicService;
 public class EdgeEventSourcingListener {
 
     private final TopicService topicService;
-    private final TbQueueAdmin tbQueueAdmin;
-    private final TenantService tenantService;
     private final TbClusterService tbClusterService;
+
+    private final TenantService tenantService;
     private final EdgeSynchronizationManager edgeSynchronizationManager;
+
+    private final TbKafkaSettings kafkaSettings;
+    private final TbKafkaTopicConfigs kafkaTopicConfigs;
 
     @Value("#{'${queue.type:null}' == 'kafka'}")
     private boolean isKafkaSupported;
@@ -117,15 +122,11 @@ public class EdgeEventSourcingListener {
             return;
         }
         try {
-            if (EntityType.EDGE.equals(entityType)) {
-                if (isKafkaSupported) {
-                    String topic = topicService.buildEdgeEventNotificationsTopicPartitionInfo(tenantId, (EdgeId) event.getEntityId()).getTopic();
-                    tbQueueAdmin.deleteTopic(topic);
-                } else {
-                    return;
-                }
-            }
             if (EntityType.TENANT.equals(entityType)) {
+                return;
+            }
+            if (EntityType.EDGE.equals(entityType)) {
+                handleEdgeEntityDeletion((EdgeId) event.getEntityId(), tenantId);
                 return;
             }
             log.trace("[{}] DeleteEntityEvent called: {}", tenantId, event);
@@ -136,6 +137,14 @@ public class EdgeEventSourcingListener {
                     edgeSynchronizationManager.getEdgeId().get());
         } catch (Exception e) {
             log.error("[{}] failed to process DeleteEntityEvent: {}", tenantId, event, e);
+        }
+    }
+
+    private void handleEdgeEntityDeletion(EdgeId edgeId, TenantId tenantId) {
+        if (isKafkaSupported) {
+            String topic = topicService.buildEdgeEventNotificationsTopicPartitionInfo(tenantId, edgeId).getTopic();
+            TbKafkaAdmin kafkaAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdgeEventConfigs());
+            kafkaAdmin.deleteTopic(topic);
         }
     }
 

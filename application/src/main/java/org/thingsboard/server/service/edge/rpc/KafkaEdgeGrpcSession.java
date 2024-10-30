@@ -17,33 +17,38 @@ package org.thingsboard.server.service.edge.rpc;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.stub.StreamObserver;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.ResponseMsg;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeEventNotificationMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.common.consumer.QueueConsumerManager;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 @Slf4j
 public class KafkaEdgeGrpcSession extends AbstractEdgeGrpcSession<KafkaEdgeGrpcSession> {
 
-    private TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> edgeEventsConsumer;
+    private ExecutorService consumerExecutor;
+
+    private QueueConsumerManager<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumer;
 
     public KafkaEdgeGrpcSession(EdgeContextComponent ctx, StreamObserver<ResponseMsg> outputStream,
                                 BiConsumer<EdgeId, KafkaEdgeGrpcSession> sessionOpenListener,
@@ -53,75 +58,65 @@ public class KafkaEdgeGrpcSession extends AbstractEdgeGrpcSession<KafkaEdgeGrpcS
         super(ctx, outputStream, sessionOpenListener, sessionCloseListener, sendDownlinkExecutorService, maxInboundMessageSize, maxHighPriorityQueueSizePerSession);
     }
 
-    @Override
-    protected ListenableFuture<Boolean> processEdgeEvents() {
+    protected void initConsumer(Supplier<TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>>> edgeEventsConsumer, long schedulerPoolSize) {
+        this.consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("edge-event-consumer"));
+        this.consumer = QueueConsumerManager.<TbProtoQueueMsg<ToEdgeEventNotificationMsg>>builder()
+                .name("TB Edge events")
+                .msgPackProcessor(this::processMsgs)
+                .pollInterval(schedulerPoolSize)
+                .consumerCreator(edgeEventsConsumer)
+                .consumerExecutor(consumerExecutor)
+                .threadPrefix("edge-events")
+                .build();
+    }
+
+    private void processMsgs(List<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumer) {
         log.trace("[{}][{}] starting processing edge events", this.tenantId, this.sessionId);
         if (isConnected() && isSyncCompleted()) {
 
             if (!highPriorityQueue.isEmpty()) {
                 processHighPriorityEvents();
             } else {
-                return processKafkaEvents();
+                List<EdgeEvent> edgeEvents = new ArrayList<>();
+                for (TbProtoQueueMsg<ToEdgeEventNotificationMsg> msg : msgs) {
+                    EdgeEvent edgeEvent = ProtoUtils.fromProto(msg.getValue().getEdgeEventMsg());
+                    edgeEvents.add(edgeEvent);
+                }
+                List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(edgeEvents);
+                Futures.addCallback(sendDownlinkMsgsPack(downlinkMsgsPack), new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(@Nullable Boolean isInterrupted) {
+                        if (Boolean.TRUE.equals(isInterrupted)) {
+                            log.debug("[{}][{}][{}] Send downlink messages task was interrupted", tenantId, edge.getId(), sessionId);
+                        } else {
+                            consumer.commit();
+                        }
+                    }
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.error("[{}] Failed to send downlink msgs pack", sessionId, t);
+                    }
+                }, ctx.getGrpcCallbackExecutorService());
             }
         } else {
             log.trace("[{}][{}] edge is not connected or sync is not completed. Skipping iteration", tenantId, sessionId);
         }
-        return null;
     }
 
-    private ListenableFuture<Boolean> processKafkaEvents() {
-        List<EdgeEvent> edgeEvents = new ArrayList<>();
-        try {
-            edgeEventsConsumer.subscribe();
-            List<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> messages = edgeEventsConsumer.poll(100);
-
-            if (messages.isEmpty()) {
-                return Futures.immediateFuture(Boolean.FALSE);
-            }
-
-            for (TbProtoQueueMsg<ToEdgeEventNotificationMsg> msg : messages) {
-                EdgeEvent edgeEvent = ProtoUtils.fromProto(msg.getValue().getEdgeEventMsg());
-                edgeEvents.add(edgeEvent);
-            }
-
-            List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(edgeEvents);
-            Futures.addCallback(sendDownlinkMsgsPack(downlinkMsgsPack), new FutureCallback<>() {
-                @Override
-                public void onSuccess(@Nullable Boolean isInterrupted) {
-                    if (Boolean.TRUE.equals(isInterrupted)) {
-                        log.debug("[{}][{}][{}] Send downlink messages task was interrupted", tenantId, edge.getId(), sessionId);
-                    } else {
-                        edgeEventsConsumer.commit();
-                        processEdgeEvents();
-                    }
-                }
-                @Override
-                public void onFailure(Throwable t) {
-                    log.error("[{}] Failed to send downlink msgs pack", sessionId, t);
-                }
-            }, ctx.getGrpcCallbackExecutorService());
-            return Futures.immediateFuture(Boolean.TRUE);
-        } catch (Exception e) {
-            log.error("[{}][{}] Error occurred while polling edge events from Kafka: {}", tenantId, edge.getId(), e.getMessage());
-            return Futures.immediateFailedFuture(e);
-        }
-    }
-
-    protected void initConsumer(TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToEdgeEventNotificationMsg>> edgeEventsConsumer) {
-        this.edgeEventsConsumer = edgeEventsConsumer;
+    public void startConsumers() {
+        consumer.subscribe();
+        consumer.launch();
     }
 
     @PreDestroy
     private void destroy() {
-        if (edgeEventsConsumer != null) {
-            edgeEventsConsumer.unsubscribe();
-        }
+        consumer.stop();
+        consumerExecutor.shutdown();
     }
 
     public void stopConsumer() {
-        if (edgeEventsConsumer != null) {
-            edgeEventsConsumer.stop();
-        }
+        consumer.stop();
+        consumerExecutor.shutdown();
     }
 
 }

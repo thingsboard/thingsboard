@@ -89,7 +89,7 @@ import java.util.function.Consumer;
 @TbCoreComponent
 public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase implements EdgeRpcService {
 
-    private final ConcurrentMap<EdgeId, AbstractEdgeGrpcSession> sessions = new ConcurrentHashMap<>();
+    private final ConcurrentMap<EdgeId, AbstractEdgeGrpcSession<?>> sessions = new ConcurrentHashMap<>();
     private final ConcurrentMap<EdgeId, Lock> sessionNewEventsLocks = new ConcurrentHashMap<>();
     private final Map<EdgeId, Boolean> sessionNewEvents = new HashMap<>();
     private final ConcurrentMap<EdgeId, ScheduledFuture<?>> sessionEdgeEventChecks = new ConcurrentHashMap<>();
@@ -212,22 +212,16 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     @Override
     public StreamObserver<RequestMsg> handleMsgs(StreamObserver<ResponseMsg> outputStream) {
-        if (isKafkaSupported) {
-            return new KafkaEdgeGrpcSession(ctx,
-                    outputStream,
-                    this::onEdgeConnect,
-                    this::onEdgeDisconnect,
-                    sendDownlinkExecutorService,
-                    this.maxInboundMessageSize,
-                    this.maxHighPriorityQueueSizePerSession).getInputStream();
-        }
-        return new PostgresEdgeGrpcSession(ctx,
-                outputStream,
-                this::onEdgeConnect,
-                this::onEdgeDisconnect,
-                sendDownlinkExecutorService,
-                this.maxInboundMessageSize,
-                this.maxHighPriorityQueueSizePerSession).getInputStream();
+        AbstractEdgeGrpcSession<?> session = createEdgeGrpcSession(outputStream);
+        return session.getInputStream();
+    }
+
+    private AbstractEdgeGrpcSession<?> createEdgeGrpcSession(StreamObserver<ResponseMsg> outputStream) {
+        return isKafkaSupported
+                ? new KafkaEdgeGrpcSession(ctx, outputStream, this::onEdgeConnect, this::onEdgeDisconnect,
+                sendDownlinkExecutorService, maxInboundMessageSize, maxHighPriorityQueueSizePerSession)
+                : new PostgresEdgeGrpcSession(ctx, outputStream, this::onEdgeConnect, this::onEdgeDisconnect,
+                sendDownlinkExecutorService, maxInboundMessageSize, maxHighPriorityQueueSizePerSession);
     }
 
     @Override
@@ -258,7 +252,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     @Override
     public void updateEdge(TenantId tenantId, Edge edge) {
-        AbstractEdgeGrpcSession session = sessions.get(edge.getId());
+        AbstractEdgeGrpcSession<?> session = sessions.get(edge.getId());
         if (session != null && session.isConnected()) {
             log.debug("[{}] Updating configuration for edge [{}] [{}]", tenantId, edge.getName(), edge.getId());
             session.onConfigurationUpdate(edge);
@@ -269,7 +263,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     @Override
     public void deleteEdge(TenantId tenantId, EdgeId edgeId) {
-        AbstractEdgeGrpcSession session = sessions.get(edgeId);
+        AbstractEdgeGrpcSession<?> session = sessions.get(edgeId);
         if (session != null && session.isConnected()) {
             log.info("[{}] Closing and removing session for edge [{}]", tenantId, edgeId);
             session.close();
@@ -286,7 +280,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     }
 
     private void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId) {
-        AbstractEdgeGrpcSession session = sessions.get(edgeId);
+        AbstractEdgeGrpcSession<?> session = sessions.get(edgeId);
         if (session != null && session.isConnected()) {
             log.trace("[{}] onEdgeEventUpdate [{}]", tenantId, edgeId.getId());
             updateSessionEventsFlag(tenantId, edgeId);
@@ -297,7 +291,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         TenantId tenantId = msg.getTenantId();
         EdgeEvent edgeEvent = msg.getEdgeEvent();
         EdgeId edgeId = edgeEvent.getEdgeId();
-        AbstractEdgeGrpcSession session = sessions.get(edgeId);
+        AbstractEdgeGrpcSession<?> session = sessions.get(edgeId);
         if (session != null && session.isConnected()) {
             log.trace("[{}] onEdgeEvent [{}]", tenantId, edgeId);
             session.addEventToHighPriorityQueue(edgeEvent);
@@ -318,7 +312,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         }
     }
 
-    private void onEdgeConnect(EdgeId edgeId, AbstractEdgeGrpcSession edgeGrpcSession) {
+    private void onEdgeConnect(EdgeId edgeId, AbstractEdgeGrpcSession<?> edgeGrpcSession) {
         Edge edge = edgeGrpcSession.getEdge();
         TenantId tenantId = edge.getTenantId();
         log.info("[{}][{}] edge [{}] connected successfully.", tenantId, edgeGrpcSession.getSessionId(), edgeId);
@@ -334,17 +328,24 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         long lastConnectTs = System.currentTimeMillis();
         save(tenantId, edgeId, DefaultDeviceStateService.LAST_CONNECT_TIME, lastConnectTs);
         edgeIdServiceIdCache.put(edgeId, serviceInfoProvider.getServiceId());
-        if (isKafkaSupported) {
-            TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumer = tbCoreQueueFactory.createEdgeEventMsgConsumer(tenantId, edgeId);
-            ((KafkaEdgeGrpcSession) edgeGrpcSession).initConsumer(consumer);
+        if (edgeGrpcSession instanceof KafkaEdgeGrpcSession) {
+            initializeKafkaConsumer((KafkaEdgeGrpcSession) edgeGrpcSession, tenantId, edgeId);
         }
         pushRuleEngineMessage(tenantId, edge, lastConnectTs, TbMsgType.CONNECT_EVENT);
         cancelScheduleEdgeEventsCheck(edgeId);
-        scheduleEdgeEventsCheck(edgeGrpcSession);
+        if (edgeGrpcSession instanceof PostgresEdgeGrpcSession) {
+            scheduleEdgeEventsCheck((PostgresEdgeGrpcSession) edgeGrpcSession);
+        }
+    }
+
+    private void initializeKafkaConsumer(KafkaEdgeGrpcSession kafkaEdgeGrpcSession, TenantId tenantId, EdgeId edgeId) {
+        TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumer = tbCoreQueueFactory.createEdgeEventMsgConsumer(tenantId, edgeId);
+        kafkaEdgeGrpcSession.initConsumer(() -> consumer, schedulerPoolSize);
+        kafkaEdgeGrpcSession.startConsumers();
     }
 
     private void startSyncProcess(TenantId tenantId, EdgeId edgeId, UUID requestId, String requestServiceId) {
-        AbstractEdgeGrpcSession session = sessions.get(edgeId);
+        AbstractEdgeGrpcSession<?> session = sessions.get(edgeId);
         if (session != null) {
             if (!session.isSyncCompleted()) {
                 clusterService.pushEdgeSyncResponseToCore(new FromEdgeSyncResponse(requestId, tenantId, edgeId, false, "Sync process is active at the moment"), requestServiceId);
@@ -364,7 +365,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         ToEdgeSyncRequest request = new ToEdgeSyncRequest(UUID.randomUUID(), tenantId, edgeId, serviceInfoProvider.getServiceId());
 
         UUID requestId = request.getId();
-        AbstractEdgeGrpcSession session = sessions.get(request.getEdgeId());
+        AbstractEdgeGrpcSession<?> session = sessions.get(request.getEdgeId());
         if (session != null && !session.isSyncCompleted()) {
             responseConsumer.accept(new FromEdgeSyncResponse(requestId, request.getTenantId(), request.getEdgeId(), false, "Sync process is active at the moment"));
         } else {
@@ -398,7 +399,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         }
     }
 
-    private void scheduleEdgeEventsCheck(AbstractEdgeGrpcSession session) {
+    private void scheduleEdgeEventsCheck(PostgresEdgeGrpcSession session) {
         EdgeId edgeId = session.getEdge().getId();
         UUID tenantId = session.getEdge().getTenantId().getId();
         if (sessions.containsKey(edgeId)) {
@@ -410,7 +411,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                         if (Boolean.TRUE.equals(sessionNewEvents.get(edgeId))) {
                             log.trace("[{}][{}] Set session new events flag to false", tenantId, edgeId.getId());
                             sessionNewEvents.put(edgeId, false);
-                            Futures.addCallback(session.processEdgeEvents(), new FutureCallback<Boolean>() {
+                            Futures.addCallback(session.processEdgeEvents(), new FutureCallback<>() {
                                 @Override
                                 public void onSuccess(Boolean newEventsAdded) {
                                     if (Boolean.TRUE.equals(newEventsAdded)) {
@@ -418,6 +419,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                                     }
                                     scheduleEdgeEventsCheck(session);
                                 }
+
                                 @Override
                                 public void onFailure(Throwable t) {
                                     log.warn("[{}] Failed to process edge events for edge [{}]!", tenantId, session.getEdge().getId().getId(), t);
@@ -456,7 +458,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void onEdgeDisconnect(Edge edge, UUID sessionId) {
         EdgeId edgeId = edge.getId();
         log.info("[{}][{}] edge disconnected!", edgeId, sessionId);
-        AbstractEdgeGrpcSession toRemove = sessions.get(edgeId);
+        AbstractEdgeGrpcSession<?> toRemove = sessions.get(edgeId);
         if (toRemove.getSessionId().equals(sessionId)) {
             toRemove = sessions.remove(edgeId);
             final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
@@ -506,6 +508,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     }
 
     private static class AttributeSaveCallback implements FutureCallback<Void> {
+
         private final TenantId tenantId;
         private final EdgeId edgeId;
         private final String key;
@@ -527,6 +530,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         public void onFailure(Throwable t) {
             log.warn("[{}][{}] Failed to update attribute [{}] with value [{}]", tenantId, edgeId, key, value, t);
         }
+
     }
 
     private void pushRuleEngineMessage(TenantId tenantId, Edge edge, long ts, TbMsgType msgType) {

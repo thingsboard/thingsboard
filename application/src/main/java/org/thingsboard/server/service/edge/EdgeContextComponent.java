@@ -17,6 +17,7 @@ package org.thingsboard.server.service.edge;
 
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.cache.limits.RateLimitService;
@@ -141,7 +142,7 @@ public class EdgeContextComponent {
     @Autowired
     private EdgeRequestsService edgeRequestsService;
 
-    @Autowired
+    @Autowired(required = false)
     private EdgeRpcService edgeRpcService;
 
     @Autowired

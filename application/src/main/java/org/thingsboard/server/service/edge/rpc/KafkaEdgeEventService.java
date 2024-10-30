@@ -35,7 +35,6 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.edge.EdgeEventService;
-import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeEventNotificationMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -51,7 +50,6 @@ import java.util.UUID;
 public class KafkaEdgeEventService implements EdgeEventService {
 
     private final RateLimitService rateLimitService;
-    private final ApplicationEventPublisher eventPublisher;
     private final DataValidator<EdgeEvent> edgeEventValidator;
     @Lazy
     private final TbQueueProducerProvider producerProvider;
@@ -71,7 +69,6 @@ public class KafkaEdgeEventService implements EdgeEventService {
         ToEdgeEventNotificationMsg msg = ToEdgeEventNotificationMsg.newBuilder().setEdgeEventMsg(ProtoUtils.toProto(edgeEvent)).build();
         producerProvider.getTbEdgeEventsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);
 
-        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(edgeEvent.getTenantId()).entity(edgeEvent).entityId(edgeEvent.getEdgeId()).build());
         return Futures.immediateFuture(null);
     }
 

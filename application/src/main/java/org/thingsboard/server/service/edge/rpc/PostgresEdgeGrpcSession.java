@@ -63,7 +63,6 @@ public class PostgresEdgeGrpcSession extends AbstractEdgeGrpcSession<PostgresEdg
         initInputStream();
     }
 
-    @Override
     protected ListenableFuture<Boolean> processEdgeEvents() throws Exception {
         SettableFuture<Boolean> result = SettableFuture.create();
         log.trace("[{}][{}] starting processing edge events", this.tenantId, this.sessionId);
