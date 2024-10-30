@@ -2025,15 +2025,15 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         msgStr = "{}";
         decoderStr = String.format("""
                     var d1 = new Date("%s");         // TZ => "UTC"
-                    var options1 = {"timeZone":"America/New_York"};       // TZ = "-04:00"
+                    var options1 = {"timeZone":"America/New_York"};         // TZ = "-04:00"
                     var options1Str = JSON.stringify(options1);
-                    var d2 = new Date("%s");         // TZ => Default = ZoneId.systemDefault
+                    var d2 = new Date("%s");                                // TZ => Default = ZoneId.systemDefault
                     var options2 = {"timeZone":"America/New_York"};
                     var options2Str = JSON.stringify(options2);
-                    var d3 = new Date(2023, 8, 6, 4, 4, 5);               // TZ => Default = ZoneId.systemDefault
+                    var d3 = new Date(2023, 8, 6, 4, 4, 5);                 // TZ => Default = ZoneId.systemDefault
                     var options3 = {"timeZone":"America/New_York", "pattern": "M-d/yyyy, h:mm=ss a"};
                     var options3Str = JSON.stringify(options3);
-                    var d4 = new Date(2023, 8, 6, 4, 4, 5, "UTC");        // TZ => "UTC"
+                    var d4 = new Date(2023, 8, 6, 4, 4, 5, "UTC");          // TZ => "UTC"
                     var options4 = {"timeZone":"America/New_York","dateStyle":"full","timeStyle":"full"};
                     var options4Str = JSON.stringify(options4);
                     return {
@@ -2056,11 +2056,13 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         expected.put("dLocal_1", d1.toLocaleString());
         expected.put("dLocal_1_options", "8/6/23, 12:04:05 AM");
         TbDate d2 = new TbDate(s2);
+        String options2Str = "{\"timeZone\":\"America/New_York\"}";
         expected.put("dIso_2", d2.toISOString());
-        expected.put("dLocal_2_options", "8/5/23, 9:04:05 PM");
+        expected.put("dLocal_2_options", d2.toLocaleString("en-US", options2Str));
         TbDate d3 = new TbDate(2023, 8, 6, 4, 4, 5);
+        String options3Str = "{\"timeZone\":\"America/New_York\", \"pattern\": \"M-d/yyyy, h:mm=ss a\"}";
         expected.put("dIso_3", d3.toISOString());
-        expected.put("dLocal_3_options", "8-5/2023, 9:04=05 PM");
+        expected.put("dLocal_3_options", d3.toLocaleString("en-US", options3Str));
         TbDate d4 = new TbDate(2023, 8, 6, 4, 4, 5, "UTC");
         String options4Str = "{\"timeZone\":\"America/New_York\",\"dateStyle\":\"full\",\"timeStyle\":\"full\"}";
         expected.put("dIso_4", "2023-08-06T04:04:05Z");
