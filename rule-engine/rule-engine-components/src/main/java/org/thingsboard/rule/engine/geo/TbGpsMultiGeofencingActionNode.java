@@ -20,12 +20,14 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.transform.MultipleTbMsgsCallbackWrapper;
+import org.thingsboard.rule.engine.transform.TbMsgCallbackWrapper;
 import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
 import org.thingsboard.rule.engine.util.GpsGeofencingEvents;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -35,6 +37,8 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.queue.RuleEngineException;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,7 +77,6 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
 
         withCallback(geofenceResponseFuture, geofenceResponse -> {
             processGeofenceResponse(ctx, msg, msg.getOriginator(), geofenceResponse);
-            ctx.tellSuccess(msg);
         }, t -> {
             log.error("Failed to process geofencing", t);
             ctx.tellFailure(msg, t);
@@ -84,19 +87,34 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
         TbMsgMetaData metaData = originalMsg.getMetaData().copy();
         metaData.putValue("originatorId", originatorId.toString());
 
-        processGeofenceEvents(ctx, originalMsg, metaData, geofenceResponse.getEnteredGeofences(), GpsGeofencingEvents.ENTERED);
-        processGeofenceEvents(ctx, originalMsg, metaData, geofenceResponse.getLeftGeofences(), GpsGeofencingEvents.LEFT);
-        processGeofenceEvents(ctx, originalMsg, metaData, geofenceResponse.getInsideGeofences(), GpsGeofencingEvents.INSIDE);
-        processGeofenceEvents(ctx, originalMsg, metaData, geofenceResponse.getOutsideGeofences(), GpsGeofencingEvents.OUTSIDE);
+        List<TbPair<TbMsg, String>> messages = new ArrayList<>();
+        addGeofenceMessages(messages, originalMsg, metaData, geofenceResponse.getEnteredGeofences(), GpsGeofencingEvents.ENTERED);
+        addGeofenceMessages(messages, originalMsg, metaData, geofenceResponse.getLeftGeofences(), GpsGeofencingEvents.LEFT);
+        addGeofenceMessages(messages, originalMsg, metaData, geofenceResponse.getInsideGeofences(), GpsGeofencingEvents.INSIDE);
+        addGeofenceMessages(messages, originalMsg, metaData, geofenceResponse.getOutsideGeofences(), GpsGeofencingEvents.OUTSIDE);
+
+        TbMsgCallbackWrapper wrapper = new MultipleTbMsgsCallbackWrapper(messages.size(), new TbMsgCallback() {
+            @Override
+            public void onSuccess() {
+                ctx.tellSuccess(originalMsg);
+            }
+
+            @Override
+            public void onFailure(RuleEngineException e) {
+                ctx.tellFailure(originalMsg, e);
+            }
+        });
+
+        messages.forEach(msgPair -> ctx.enqueueForTellNext(msgPair.getFirst(), msgPair.getSecond(), wrapper::onSuccess, wrapper::onFailure));
     }
 
-    private void processGeofenceEvents(TbContext ctx, TbMsg originalMsg, TbMsgMetaData metaData, List<EntityId> geofences, String relationType) {
-        if (CollectionUtils.isEmpty(geofences)) {
-            return;
-        }
-        for (EntityId geofence : geofences) {
-            TbMsg tbMsg = TbMsg.newMsg(originalMsg.getInternalType(), geofence, metaData, originalMsg.getData());
-            ctx.enqueueForTellNext(tbMsg, relationType);
+    private void addGeofenceMessages(List<TbPair<TbMsg, String>> messages, TbMsg originalMsg, TbMsgMetaData metaData,
+                                     List<EntityId> geofences, String event) {
+        if (CollectionUtils.isNotEmpty(geofences)) {
+            geofences.forEach(geofence -> {
+                TbMsg tbMsg = TbMsg.newMsg(originalMsg.getInternalType(), geofence, metaData, originalMsg.getData());
+                messages.add(new TbPair<>(tbMsg, event));
+            });
         }
     }
 

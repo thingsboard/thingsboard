@@ -48,7 +48,6 @@ public class GeofencingProcessor {
 
     private static final String GEOFENCE_STATES_KEY = "geofenceStates";
     private static final String GEOFENCE_STATE_ATTRIBUTE_KEY_PREFIX = "geofenceState_%s";
-    private static final String DURATION_CONFIG_METADATA_KEY = "durationConfig";
 
     public GeofencingProcessor(TbContext context, TbGpsMultiGeofencingActionNodeConfiguration nodeConfiguration) {
         this.nodeConfiguration = nodeConfiguration;
@@ -69,7 +68,7 @@ public class GeofencingProcessor {
 
             createNewGeofenceStates(geofenceStates, matchedGeofences);
 
-            Optional<GeofenceDurationConfig> geofenceDurationConfig = getGeofenceDurationConfig(msg);
+            Optional<GeofenceDurationConfig> geofenceDurationConfig = getGeofenceDurationConfig(nodeConfiguration.getMetadataDurationConfigKey(), msg);
 
             for (GeofenceState state : geofenceStates) {
                 state.updateStatus(nodeConfiguration, geofenceDurationConfig, msg, matchedGeofences);
@@ -123,8 +122,8 @@ public class GeofencingProcessor {
         return String.format(GEOFENCE_STATE_ATTRIBUTE_KEY_PREFIX, ruleNodeId.getId().toString());
     }
 
-    private Optional<GeofenceDurationConfig> getGeofenceDurationConfig(TbMsg msg) {
-        GeofenceDurationConfig geofenceDurationConfig = JacksonUtil.convertValue(msg.getMetaData().getValue(DURATION_CONFIG_METADATA_KEY), new TypeReference<>() {
+    private Optional<GeofenceDurationConfig> getGeofenceDurationConfig(String durationConfigMetadataKey, TbMsg msg) {
+        GeofenceDurationConfig geofenceDurationConfig = JacksonUtil.convertValue(msg.getMetaData().getValue(durationConfigMetadataKey), new TypeReference<>() {
         });
         if (geofenceDurationConfig == null) {
             return Optional.empty();

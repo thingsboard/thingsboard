@@ -29,6 +29,7 @@ import java.util.List;
 public class TbGpsMultiGeofencingActionNodeConfiguration extends AbstractTbGpsGeofencingActionNodeConfiguration<TbGpsMultiGeofencingActionNodeConfiguration> {
 
     private RelationsQuery relationsQuery;
+    private String metadataDurationConfigKey;
 
     @Override
     public TbGpsMultiGeofencingActionNodeConfiguration defaultConfiguration() {
@@ -46,6 +47,7 @@ public class TbGpsMultiGeofencingActionNodeConfiguration extends AbstractTbGpsGe
         configuration.setMinInsideDurationTimeUnit("MINUTES");
         configuration.setMinOutsideDuration(1);
         configuration.setMinOutsideDurationTimeUnit("MINUTES");
+        configuration.setMetadataDurationConfigKey("durationConfig");
         return configuration;
     }
 }
