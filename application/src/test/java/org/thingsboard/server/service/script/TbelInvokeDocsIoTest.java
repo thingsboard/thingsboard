@@ -21,7 +21,6 @@ import org.thingsboard.script.api.tbel.TbDate;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.nio.charset.StandardCharsets;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -1807,17 +1806,16 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     // tbDate
     @Test
     public void tbDateStringTZ_Test() throws ExecutionException, InterruptedException {
-        int h = 12;
-        String s2 = String.format("2023-08-06T%s:04:05.123", String.format("%02d", h));
+        String s2 = "2023-08-06T12:04:05.123";
         msgStr = "{}";
         decoderStr = String.format("""
-                    var d1 = new Date("2023-08-06T04:04:05.123Z");
-                    var d2 = new Date("%s");
-                    var d3 = new Date("2023-08-06T04:04:05.00-04");
-                    var d4 = new Date("2023-08-06T04:04:05.00+02:00");
-                    var d5 = new Date("2023-08-06T04:04:05.00+03:00:00");
-                    var d6 = new Date("Tue, 3 Jun 2008 11:05:30 GMT");
-                    var d7 = new Date("Tue, 3 Jun 2008 11:05:30 +043056");
+                    var d1 = new Date("2023-08-06T04:04:05.123Z");          // TZ => "UTC"
+                    var d2 = new Date("%s");                                // TZ = ZoneId.systemDefault() instant
+                    var d3 = new Date("2023-08-06T04:04:05.00-04");         // TZ => "-04"
+                    var d4 = new Date("2023-08-06T04:04:05.00+02:00");      // TZ => "+02:00"
+                    var d5 = new Date("2023-08-06T04:04:05.00+03:00:00");   // TZ => "+03:00:00"
+                    var d6 = new Date("Tue, 3 Jun 2008 11:05:30 GMT");      // TZ => "GMT"
+                    var d7 = new Date("Tue, 3 Jun 2008 11:05:30 +043056");  // TZ => "+043056"
                     return {
                         "dIso_1": d1.toISOString(),
                         "dIso_2": d2.toISOString(),
@@ -1831,10 +1829,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
         expected.put("dIso_1", "2023-08-06T04:04:05.123Z");
         TbDate d2 = new TbDate(s2);
-        int localOffsetHrs = ZoneId.systemDefault().getRules().getOffset(d2.getInstant()).getTotalSeconds() / 60 / 60;
-        int hrs2 = h - localOffsetHrs;
-        String expected_dIso_2 = String.format("2023-08-06T%s:04:05.123Z", String.format("%02d", hrs2));
-        expected.put("dIso_2", expected_dIso_2);
+        expected.put("dIso_2", d2.toISOString());
         expected.put("dIso_3", "2023-08-06T08:04:05Z");
         expected.put("dIso_4", "2023-08-06T02:04:05Z");
         expected.put("dIso_5", "2023-08-06T01:04:05Z");
@@ -1846,15 +1841,14 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
 
     @Test
     public void tbDateStringPattern_Test() throws ExecutionException, InterruptedException {
-        int h = 12;
-        String s3 = String.format("2023-08-06 %s:04:05.000", String.format("%02d", h));
+        String s3 = "2023-08-06 12:04:05.000";
         String pattern3 = "yyyy-MM-dd HH:mm:ss.SSS";
         msgStr = "{}";
         decoderStr = String.format("""
                     var pattern = "yyyy-MM-dd HH:mm:ss.SSSXXX";
-                    var d1 = new Date("2023-08-06 04:04:05.000Z", pattern);
-                    var d2 = new Date("2023-08-06 04:04:05.000-04:00", pattern);
-                    var d3 = new Date("%s","%s");
+                    var d1 = new Date("2023-08-06 04:04:05.000Z", pattern);         // Pattern without TZ => ZoneId "UTC"
+                    var d2 = new Date("2023-08-06 04:04:05.000-04:00", pattern);    // Pattern with TZ => "-04:00"
+                    var d3 = new Date("%s","%s");                                   // Pattern without TZ, TZ = ZoneId.systemDefault() instant
                     return {
                         "dIso_1": d1.toISOString(),
                         "dIso_2": d2.toISOString(),
@@ -1865,25 +1859,21 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         expected.put("dIso_1", "2023-08-06T04:04:05Z");
         expected.put("dIso_2", "2023-08-06T08:04:05Z");
         TbDate d3 = new TbDate(s3, pattern3);
-        int localOffsetHrs = ZoneId.systemDefault().getRules().getOffset(d3.getInstant()).getTotalSeconds() / 60 / 60;
-        int hrs3 = h - localOffsetHrs;
-        String expected_dIso_3 = String.format("2023-08-06T%s:04:05Z", String.format("%02d", hrs3));
-        expected.put("dIso_3", expected_dIso_3);
+        expected.put("dIso_3", d3.toISOString());
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
     }
 
     @Test
     public void tbDateStringPatternLocale_Test() throws ExecutionException, InterruptedException {
-        int h = 12;
-        String sDe = String.format("%s:15:30 PM, So. 10/09/2022", String.format("%02d", h));
-        String sUs = String.format("%s:15:30 PM, Sun 10/09/2022", String.format("%02d", h));
+        String sDe = "12:15:30 PM, So. 10/09/2022";
+        String sUs = "12:15:30 PM, Sun 10/09/2022";
         var pattern = "hh:mm:ss a, EEE M/d/uuuu";
         msgStr = "{}";
         decoderStr = String.format("""
                     var pattern = "%s";
-                    var d1 = new Date("%s", pattern, "de");
-                    var d2 = new Date("%s", pattern, "en-US");
+                    var d1 = new Date("%s", pattern, "de");     // Pattern without TZ, TZ = ZoneId.systemDefault() instant
+                    var d2 = new Date("%s", pattern, "en-US");  // Pattern without TZ, TZ = ZoneId.systemDefault() instant
                     return {
                         "dIso_1": d1.toISOString(),
                         "dLocal_1": d1.toLocaleString("de"),
@@ -1893,19 +1883,11 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 """, pattern, sDe, sUs);
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
         TbDate d1 = new TbDate(sDe, pattern, "de");
-        int localOffsetHrs1 = ZoneId.systemDefault().getRules().getOffset(d1.getInstant()).getTotalSeconds() / 60 / 60;
-        int hrs1 = h - localOffsetHrs1;
-        String expected_dIso_1 = String.format("2022-10-09T%s:15:30Z", String.format("%02d", hrs1));
-        String expected_dLocal_1 = String.format("09.10.22, %s:15:30", String.format("%02d", h));
-        expected.put("dIso_1", expected_dIso_1);
-        expected.put("dLocal_1", expected_dLocal_1);
+        expected.put("dIso_1", d1.toISOString());
+        expected.put("dLocal_1",d1.toLocaleString("de"));
         TbDate d2 = new TbDate(sUs, pattern, "en-US");
-        int localOffsetHrs2 = ZoneId.systemDefault().getRules().getOffset(d2.getInstant()).getTotalSeconds() / 60 / 60;
-        int hrs2 = h - localOffsetHrs2;
-        String expected_dIso_2 = String.format("2022-10-09T%s:15:30Z", String.format("%02d", hrs2));
-        String expected_dLocal_2 = String.format("10/9/22, %s:15:30 PM", String.format("%02d", h));
-        expected.put("dIso_2", expected_dIso_2);
-        expected.put("dLocal_2", expected_dLocal_2);
+        expected.put("dIso_2", d2.toISOString());
+        expected.put("dLocal_2", d2.toLocaleString("en-US"));
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
 
@@ -1920,12 +1902,35 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 .hasMessageContaining("[Line: 2, Column: 16]");
     }
 
+
     @Test
+    public void tbDateStringPatternLocaleTZ_Test() throws ExecutionException, InterruptedException {
+        String s = "2023-08-06 04:04:05.000-04:00";
+        var pattern = "yyyy-MM-dd HH:mm:ss.SSSXXX";
+        msgStr = "{}";
+        decoderStr = String.format("""
+                    var d = new Date("%s", "%s", "de", "Europe/Kyiv"); // Pattern with TZ => "-04:00" but `Time Zone` as parameter = "Europe/Kyiv" = "+03:00"
+                    return {
+                        "dIso": d.toISOString(),
+                        "dLocal_de": d.toLocaleString("de"),
+                        "dLocal_us": d.toLocaleString("en-US")
+                    }
+                """, s, pattern);
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        TbDate d = new TbDate(s, pattern, "de", "Europe/Kyiv");
+        expected.put("dIso", d.toISOString());
+        expected.put("dLocal_de", d.toLocaleString("de"));
+        expected.put("dLocal_us", d.toLocaleString("en-US"));
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+        @Test
     public void tbDateInstantYearMonthDateHrsMinSecond_Test() throws ExecutionException, InterruptedException {
         msgStr = "{}";
         decoderStr = """
                     var d1 = new Date(2023, 8, 6, 4, 4, 5, "Europe/Kyiv");
-                    var d2 = new Date(2023, 8, 6, 4, 4, 5, "Europe/Berlin");;
+                    var d2 = new Date(2023, 8, 6, 4, 4, 5, "Europe/Berlin");
                     return {
                         "dLocal_1": d1.toLocaleString(),
                         "dIso_1": d1.toISOString(),
@@ -1937,20 +1942,133 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                     }
                 """;
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
-        expected.put("dLocal_1", "2023-08-06 04:04:05");
-        expected.put("dIso_1", "2023-08-06T01:04:05Z");
         TbDate d1 = new TbDate(2023, 8, 6, 4, 4, 5, "Europe/Kyiv");
+        expected.put("dLocal_1", d1.toLocaleString());
+        expected.put("dIso_1", "2023-08-06T01:04:05Z");
         expected.put("date_1", d1.toString());
-        expected.put("dLocal_2", "2023-08-06 05:04:05");
+        TbDate d2 = new TbDate(2023, 8, 6, 4, 4, 5, "Europe/Berlin");
+        expected.put("dLocal_2", d2.toLocaleString());
         expected.put("dLocal_2_us", "8/5/23, 10:04:05 PM");
         expected.put("dIso_2", "2023-08-06T02:04:05Z");
-        TbDate d2 = new TbDate(2023, 8, 6, 4, 4, 5, "Europe/Berlin");
         expected.put("date_2", d2.toString());
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
     }
 
-    // locale
+    @Test
+    public void tbDateLocale_Test() throws ExecutionException, InterruptedException {
+        String s2 = "2023-08-06T04:04:05.000";
+        msgStr = "{}";
+        decoderStr = String.format("""
+                    // Input date Without TZ (TZ Default = ZoneId.systemDefault())
+                    var d1 = new Date(2023, 8, 6, 4, 4, 5);                     // Parameters (int year, int month, int dayOfMonth, int hours, int minutes, int seconds) => TZ Default = ZoneId.systemDefault()
+                    var d2 = new Date("%s");                                    // Parameter (String 'yyyy-MM-ddThh:mm:ss.ms') => TZ Default = ZoneId.systemDefault()
+                    // Input date With TZ (TZ = parameter TZ or 'Z' equals 'UTC')
+                    var d3 = new Date(2023, 8, 6, 4, 4, 5, "Europe/Berlin");    // Parameters (int year, int month, int dayOfMonth, int hours, int minutes, int seconds, TZ) => TZ "Europe/Berlin"
+                    return {
+                        "dLocal_1_us": d1.toLocaleString("en-US"),
+                        "dIso_1": d1.toISOString(),
+                        "d1": d1.toString(),
+                        "dIso_2": d2.toISOString(),
+                        "dLocal_2_de": d2.toLocaleString("de"),
+                        "dLocal_2_utc": d2.toLocaleString("UTC"),
+                        "dIso_3": d3.toISOString(),
+                        "dLocal_3_utc": d3.toLocaleString("UTC"),
+                        "dLocal_3_us": d3.toLocaleString("en-us"),
+                        "dLocal_3_de": d3.toLocaleString("de")
+                    }
+               """, s2);
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        TbDate d1 = new TbDate(2023, 8, 6, 4, 4, 5);
+        expected.put("dLocal_1_us", "8/6/23, 4:04:05 AM");
+        expected.put("dIso_1", d1.toISOString());
+        expected.put("d1", d1.toString());
+        TbDate d2 = new TbDate(s2);
+        expected.put("dIso_2", d2.toISOString());
+        expected.put("dLocal_2_de", "06.08.23, 04:04:05");
+        expected.put("dLocal_2_utc", "2023-08-06 04:04:05");
+        TbDate d3 = new TbDate(2023, 8, 6, 4, 4, 5, "Europe/Berlin");
+        expected.put("dIso_3", d3.toISOString());
+        expected.put("dLocal_3_utc", "2023-08-06 05:04:05");
+        expected.put("dLocal_3_us", "8/6/23, 5:04:05 AM");
+        expected.put("dLocal_3_de", "06.08.23, 05:04:05");
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void tbDateLocaleTZ_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    var d = new Date(2023, 8, 6, 4, 4, 5, "Europe/Berlin"); // Parameters (int year, int month, int dayOfMonth, int hours, int minutes, int seconds, TZ) => TZ "Europe/Berlin";
+                    return {
+                        "dIso": d.toISOString(),
+                        "dLocal_utc": d.toLocaleString("UTC"),
+                        "dLocal_us": d.toLocaleString("en-us", "America/New_York"),
+                        "dLocal_de": d.toLocaleString("de", "Europe/Berlin")
+                    }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        TbDate d = new TbDate(2023, 8, 6, 4, 4, 5, "Europe/Berlin");
+        expected.put("dIso", d.toISOString());
+        expected.put("dLocal_utc", d.toLocaleString("UTC"));
+        expected.put("dLocal_us", "8/5/23, 10:04:05 PM");
+        expected.put("dLocal_de", "06.08.23, 04:04:05");
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void tbDateLocalPatternMap_Test() throws ExecutionException, InterruptedException {
+        String s1 = "2023-08-06T04:04:05.00Z";
+        msgStr = "{}";
+        decoderStr = String.format("""
+                    var d1 = new Date("%s");         // TZ => "UTC"
+                    var options1 = {"timeZone":"America/New_York"};       // TZ = "-04:00"
+                    var options1Str = JSON.stringify(options1);
+                    var d2 = new Date("2023-08-06T04:04:05.000");         // TZ => Default = ZoneId.systemDefault
+                    var options2 = {"timeZone":"America/New_York"};
+                    var options2Str = JSON.stringify(options2);
+                    var d3 = new Date(2023, 8, 6, 4, 4, 5);               // TZ => Default = ZoneId.systemDefault
+                    var options3 = {"timeZone":"America/New_York", "pattern": "M-d/yyyy, h:mm=ss a"};
+                    var options3Str = JSON.stringify(options3);
+                    var d4 = new Date(2023, 8, 6, 4, 4, 5, "UTC");        // TZ => "UTC"
+                    var options4 = {"timeZone":"America/New_York","dateStyle":"full","timeStyle":"full"};
+                    var options4Str = JSON.stringify(options4);
+                    return {
+                        "dIso_1": d1.toISOString(),
+                        "dLocal_1": d1.toLocaleString(),
+                        "dLocal_1_options": d1.toLocaleString("en-US", options1Str),
+                        "dIso_2": d2.toISOString(),
+                        "dLocal_2_options": d2.toLocaleString("en-US", options2Str);,
+                        "dIso_3": d3.toISOString(),
+                        "dLocal_3_options": d3.toLocaleString("en-US", options3Str),
+                        "dIso_4": d4.toISOString(),
+                        "dLocal_4_options_ua": d4.toLocaleString("uk-UA", options4Str),
+                        "dLocal_4_options_us": d4.toLocaleString("en-US", options4Str),
+                        "dLocal_4_options_de": d4.toLocaleString("de", options4Str)
+                    }
+                """, s1);
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        TbDate d1 = new TbDate(s1);
+        expected.put("dIso_1", "2023-08-06T04:04:05Z");
+        expected.put("dLocal_1", d1.toLocaleString());
+        expected.put("dLocal_1_options", "8/6/23, 12:04:05 AM");
+        expected.put("dIso_2", "2023-08-06T01:04:05Z");
+        expected.put("dLocal_2_options", "8/5/23, 9:04:05 PM");
+        TbDate d3 = new TbDate(2023, 8, 6, 4, 4, 5);
+        expected.put("dIso_3", d3.toISOString());
+        expected.put("dLocal_3_options", "8-5/2023, 9:04=05 PM");
+        TbDate d4 = new TbDate(2023, 8, 6, 4, 4, 5, "UTC");
+        String options4Str = "{\"timeZone\":\"America/New_York\",\"dateStyle\":\"full\",\"timeStyle\":\"full\"}";
+        expected.put("dIso_4", "2023-08-06T04:04:05Z");
+        expected.put("dLocal_4_options_ua", d4.toLocaleString("uk-UA", options4Str));
+        expected.put("dLocal_4_options_us", d4.toLocaleString("en-US", options4Str));
+        expected.put("dLocal_4_options_de", d4.toLocaleString("de", options4Str));
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
 
     private List splice(List oldList, int start, int deleteCount, Object... values) {
         start = initStartIndex(oldList, start);
