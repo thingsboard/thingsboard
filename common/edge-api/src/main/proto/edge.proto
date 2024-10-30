@@ -636,10 +636,6 @@ message ProcessingStrategyProto {
   int64 maxPauseBetweenRetries = 5;
 }
 
-message EdgeEvent {
-
-}
-
 /**
  * Main Messages;
  */

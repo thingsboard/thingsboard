@@ -32,7 +32,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_TABLE_N
 @TbCoreComponent
 @Slf4j
 @Service
-@ConditionalOnExpression("${sql.ttl.edge_events.enabled:true} && ${sql.ttl.edge_events.edge_events_ttl:0} > 0")
+@ConditionalOnExpression("${edges.enabled:true} && ${sql.ttl.edge_events.edge_events_ttl:0} > 0")
 public class EdgeEventsCleanUpService extends AbstractCleanUpService {
 
     public static final String RANDOM_DELAY_INTERVAL_MS_EXPRESSION =

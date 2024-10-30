@@ -283,7 +283,7 @@ public class ServiceBusMonolithQueueFactory implements TbCoreQueueFactory, TbRul
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> createEdgeEventMsgConsumer(TenantId tenantId, EdgeId edgeId, String serviceId) {
+    public TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> createEdgeEventMsgConsumer(TenantId tenantId, EdgeId edgeId) {
         return null;
     }
 

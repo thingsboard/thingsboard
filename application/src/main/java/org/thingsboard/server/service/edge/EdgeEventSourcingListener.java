@@ -20,6 +20,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
@@ -37,6 +39,7 @@ import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -50,6 +53,8 @@ import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.RelationActionEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.discovery.TopicService;
 
 /**
  * This event listener does not support async event processing because relay on ThreadLocal
@@ -65,14 +70,20 @@ import org.thingsboard.server.dao.tenant.TenantService;
  *     future.addCallback(eventPublisher.publishEvent(...))
  *   }
  * */
+@Slf4j
 @Component
 @RequiredArgsConstructor
-@Slf4j
+@ConditionalOnExpression("${edges.enabled:true}")
 public class EdgeEventSourcingListener {
 
+    private final TopicService topicService;
+    private final TbQueueAdmin tbQueueAdmin;
+    private final TenantService tenantService;
     private final TbClusterService tbClusterService;
     private final EdgeSynchronizationManager edgeSynchronizationManager;
-    private final TenantService tenantService;
+
+    @Value("#{'${queue.type:null}' == 'kafka'}")
+    private boolean isKafkaSupported;
 
     @PostConstruct
     public void init() {
@@ -106,7 +117,15 @@ public class EdgeEventSourcingListener {
             return;
         }
         try {
-            if (EntityType.EDGE.equals(entityType) || EntityType.TENANT.equals(entityType)) {
+            if (EntityType.EDGE.equals(entityType)) {
+                if (isKafkaSupported) {
+                    String topic = topicService.buildEdgeEventNotificationsTopicPartitionInfo(tenantId, (EdgeId) event.getEntityId()).getTopic();
+                    tbQueueAdmin.deleteTopic(topic);
+                } else {
+                    return;
+                }
+            }
+            if (EntityType.TENANT.equals(entityType)) {
                 return;
             }
             log.trace("[{}] DeleteEntityEvent called: {}", tenantId, event);

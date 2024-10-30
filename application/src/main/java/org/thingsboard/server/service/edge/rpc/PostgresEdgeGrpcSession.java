@@ -46,6 +46,15 @@ import java.util.function.BiConsumer;
 @Slf4j
 public class PostgresEdgeGrpcSession extends AbstractEdgeGrpcSession<PostgresEdgeGrpcSession> {
 
+    private static final String QUEUE_START_TS_ATTR_KEY = "queueStartTs";
+    private static final String QUEUE_START_SEQ_ID_ATTR_KEY = "queueStartSeqId";
+
+    private Long newStartTs;
+    private Long previousStartTs;
+    private Long newStartSeqId;
+    private Long previousStartSeqId;
+    private Long seqIdEnd;
+
     PostgresEdgeGrpcSession(EdgeContextComponent ctx, StreamObserver<ResponseMsg> outputStream,
                             BiConsumer<EdgeId, PostgresEdgeGrpcSession> sessionOpenListener,
                             BiConsumer<Edge, UUID> sessionCloseListener, ScheduledExecutorService sendDownlinkExecutorService,

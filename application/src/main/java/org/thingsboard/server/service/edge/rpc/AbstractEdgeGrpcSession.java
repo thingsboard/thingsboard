@@ -102,40 +102,34 @@ import java.util.function.BiConsumer;
 @Data
 public abstract class AbstractEdgeGrpcSession<T extends AbstractEdgeGrpcSession<T>> implements EdgeGrpcSession, Closeable {
 
-    protected static final ReentrantLock downlinkMsgLock = new ReentrantLock();
-    protected static final ConcurrentLinkedQueue<EdgeEvent> highPriorityQueue = new ConcurrentLinkedQueue<>();
+    private static final int MAX_DOWNLINK_ATTEMPTS = 10;
+    private static final String RATE_LIMIT_REACHED = "Rate limit reached";
 
-    protected static final int MAX_DOWNLINK_ATTEMPTS = 10;
-    protected static final String QUEUE_START_TS_ATTR_KEY = "queueStartTs";
-    protected static final String QUEUE_START_SEQ_ID_ATTR_KEY = "queueStartSeqId";
-    protected static final String RATE_LIMIT_REACHED = "Rate limit reached";
+    protected static final ConcurrentLinkedQueue<EdgeEvent> highPriorityQueue = new ConcurrentLinkedQueue<>();
 
     protected UUID sessionId;
     protected BiConsumer<EdgeId, T> sessionOpenListener;
     protected BiConsumer<Edge, UUID> sessionCloseListener;
 
-    protected final EdgeSessionState sessionState = new EdgeSessionState();
+    private final EdgeSessionState sessionState = new EdgeSessionState();
+    private final ReentrantLock downlinkMsgLock = new ReentrantLock();
 
     protected EdgeContextComponent ctx;
     protected Edge edge;
     protected TenantId tenantId;
+
     protected StreamObserver<RequestMsg> inputStream;
     protected StreamObserver<ResponseMsg> outputStream;
+
     protected boolean connected;
     protected volatile boolean syncCompleted;
 
-    protected Long newStartTs;
-    protected Long previousStartTs;
-    protected Long newStartSeqId;
-    protected Long previousStartSeqId;
-    protected Long seqIdEnd;
+    private EdgeVersion edgeVersion;
+    private int maxInboundMessageSize;
+    private int clientMaxInboundMessageSize;
+    private int maxHighPriorityQueueSizePerSession;
 
-    protected EdgeVersion edgeVersion;
-    protected int maxInboundMessageSize;
-    protected int clientMaxInboundMessageSize;
-    protected int maxHighPriorityQueueSizePerSession;
-
-    protected ScheduledExecutorService sendDownlinkExecutorService;
+    private ScheduledExecutorService sendDownlinkExecutorService;
 
     public AbstractEdgeGrpcSession(EdgeContextComponent ctx, StreamObserver<ResponseMsg> outputStream,
                                    BiConsumer<EdgeId, T> sessionOpenListener,

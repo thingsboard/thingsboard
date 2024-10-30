@@ -170,7 +170,16 @@ public class TbKafkaAdmin implements TbQueueAdmin {
             log.info("[{}] altered new consumer groupId {}", tp, newGroupId);
             break;
         }
+    }
 
+    public boolean isTopicEmpty(String topic) {
+        try {
+            Map<TopicPartition, OffsetAndMetadata> offsets = settings.getAdminClient().listConsumerGroupOffsets("__consumer_offsets").partitionsToOffsetAndMetadata().get();
+            return offsets.entrySet().stream().noneMatch(entry -> entry.getKey().topic().equals(topic));
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Failed to check if topic [{}] is empty.", topic, e);
+            return false;
+        }
     }
 
 }

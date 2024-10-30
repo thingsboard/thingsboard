@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.service.edge.rpc;
 
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.stub.StreamObserver;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -83,8 +85,21 @@ public class KafkaEdgeGrpcSession extends AbstractEdgeGrpcSession<KafkaEdgeGrpcS
             }
 
             List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(edgeEvents);
-            sendDownlinkMsgsPack(downlinkMsgsPack).get();
-            edgeEventsConsumer.commit();
+            Futures.addCallback(sendDownlinkMsgsPack(downlinkMsgsPack), new FutureCallback<>() {
+                @Override
+                public void onSuccess(@Nullable Boolean isInterrupted) {
+                    if (Boolean.TRUE.equals(isInterrupted)) {
+                        log.debug("[{}][{}][{}] Send downlink messages task was interrupted", tenantId, edge.getId(), sessionId);
+                    } else {
+                        edgeEventsConsumer.commit();
+                        processEdgeEvents();
+                    }
+                }
+                @Override
+                public void onFailure(Throwable t) {
+                    log.error("[{}] Failed to send downlink msgs pack", sessionId, t);
+                }
+            }, ctx.getGrpcCallbackExecutorService());
             return Futures.immediateFuture(Boolean.TRUE);
         } catch (Exception e) {
             log.error("[{}][{}] Error occurred while polling edge events from Kafka: {}", tenantId, edge.getId(), e.getMessage());

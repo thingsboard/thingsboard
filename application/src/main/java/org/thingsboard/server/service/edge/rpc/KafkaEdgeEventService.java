@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,7 +23,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -38,12 +37,11 @@ import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeEventNotificationMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -59,7 +57,6 @@ public class KafkaEdgeEventService implements EdgeEventService {
     private final TbQueueProducerProvider producerProvider;
     @Lazy
     private final TopicService topicService;
-    private final TbTransactionalCache<EdgeId, String> edgeIdServiceIdCache;
 
     @Override
     public ListenableFuture<Void> saveAsync(EdgeEvent edgeEvent) {
@@ -70,9 +67,8 @@ public class KafkaEdgeEventService implements EdgeEventService {
             throw new TbRateLimitsException(EntityType.EDGE);
         }
         edgeEventValidator.validate(edgeEvent, EdgeEvent::getTenantId);
-        var serviceIdOpt = Optional.ofNullable(edgeIdServiceIdCache.get(edgeEvent.getEdgeId()));
-        TopicPartitionInfo tpi = topicService.getEdgeEventNotificationsTopic(edgeEvent.getTenantId(), edgeEvent.getEdgeId(), serviceIdOpt.get().get());
-        TransportProtos.ToEdgeEventNotificationMsg msg = TransportProtos.ToEdgeEventNotificationMsg.newBuilder().setEdgeEventMsg(ProtoUtils.toProto(edgeEvent)).build();
+        TopicPartitionInfo tpi = topicService.getEdgeEventNotificationsTopic(edgeEvent.getTenantId(), edgeEvent.getEdgeId());
+        ToEdgeEventNotificationMsg msg = ToEdgeEventNotificationMsg.newBuilder().setEdgeEventMsg(ProtoUtils.toProto(edgeEvent)).build();
         producerProvider.getTbEdgeEventsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);
 
         eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(edgeEvent.getTenantId()).entity(edgeEvent).entityId(edgeEvent.getEdgeId()).build());
@@ -85,8 +81,6 @@ public class KafkaEdgeEventService implements EdgeEventService {
     }
 
     @Override
-    public void cleanupEvents(long ttl) {
-
-    }
+    public void cleanupEvents(long ttl) {}
 
 }

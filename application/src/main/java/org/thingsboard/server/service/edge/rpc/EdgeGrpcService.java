@@ -122,7 +122,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     @Value("${edges.max_high_priority_queue_size_per_session:10000}")
     private int maxHighPriorityQueueSizePerSession;
 
-    @Value("#{ '${queue.type:null}' == 'kafka' }")
+    @Value("#{'${queue.type:null}' == 'kafka'}")
     private boolean isKafkaSupported;
 
     @Autowired
@@ -335,7 +335,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         save(tenantId, edgeId, DefaultDeviceStateService.LAST_CONNECT_TIME, lastConnectTs);
         edgeIdServiceIdCache.put(edgeId, serviceInfoProvider.getServiceId());
         if (isKafkaSupported) {
-            TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumer = tbCoreQueueFactory.createEdgeEventMsgConsumer(tenantId, edgeId, serviceInfoProvider.getServiceId());
+            TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumer = tbCoreQueueFactory.createEdgeEventMsgConsumer(tenantId, edgeId);
             ((KafkaEdgeGrpcSession) edgeGrpcSession).initConsumer(consumer);
         }
         pushRuleEngineMessage(tenantId, edge, lastConnectTs, TbMsgType.CONNECT_EVENT);
