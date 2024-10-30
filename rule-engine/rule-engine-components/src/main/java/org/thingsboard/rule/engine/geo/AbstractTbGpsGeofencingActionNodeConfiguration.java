@@ -22,8 +22,8 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public abstract class AbstractTbGpsGeofencingActionNodeConfiguration<T extends AbstractTbGpsGeofencingActionNodeConfiguration<T>> extends AbstractTbGpsGeofencingNodeConfiguration<T> {
 
-    private int minInsideDuration;
-    private int minOutsideDuration;
+    private long minInsideDuration;
+    private long minOutsideDuration;
     private String minInsideDurationTimeUnit;
     private String minOutsideDurationTimeUnit;
 

@@ -37,7 +37,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -63,18 +62,11 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
         if (config.getRelationsQuery() == null) {
             throw new TbNodeException("Relations query should be specified");
         }
-
         geofencingProcessor = new GeofencingProcessor(ctx, this.config);
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        if (config.getRelationsQuery() == null) {
-            log.warn("Geofencing relations query is not configured!");
-            ctx.ack(msg);
-            return;
-        }
-
         ListenableFuture<List<EntityId>> matchedZonesFuture = findMatchedZones(ctx, msg);
 
         ListenableFuture<GeofenceResponse> geofenceResponseFuture = Futures.transformAsync(matchedZonesFuture, matchedZones -> geofencingProcessor.process(ctx.getSelfId(), msg, msg.getOriginator(), matchedZones), MoreExecutors.directExecutor());
@@ -112,10 +104,6 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
         JsonObject msgDataObj = getMsgDataAsJsonObject(tbMsg);
         double latitude = getValueFromMessageByName(tbMsg, msgDataObj, config.getLatitudeKeyName());
         double longitude = getValueFromMessageByName(tbMsg, msgDataObj, config.getLongitudeKeyName());
-
-        if (config.getRelationsQuery() == null) {
-            return Futures.immediateFuture(Collections.emptyList());
-        }
 
         ListenableFuture<List<EntityId>> entityIdsFuture = EntitiesRelatedEntityIdAsyncLoader.findEntitiesAsync(tbContext, tbMsg.getOriginator(), config.getRelationsQuery());
 

@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2024 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -50,6 +51,7 @@ public class GeofencingProcessor {
 
     private static final String GEOFENCE_STATES_KEY = "geofenceStates";
     private static final String GEOFENCE_STATE_ATTRIBUTE_KEY_PREFIX = "geofenceState_%s";
+    private static final String DURATION_CONFIG_METADATA_KEY = "durationConfig";
 
     public GeofencingProcessor(TbContext context, TbGpsMultiGeofencingActionNodeConfiguration nodeConfiguration) {
         this.nodeConfiguration = nodeConfiguration;
@@ -64,10 +66,12 @@ public class GeofencingProcessor {
             List<EntityId> leftGeofences = null;
             List<EntityId> insideGeofences = null;
 
+            Optional<GeofenceDurationConfig> geofenceDurationConfig = getGeofenceDurationConfig(msg);
+
             if (isEmpty(matchedGeofences)) {
                 leftGeofences = getLeftGeofences(msg.getMetaDataTs(), emptyList(), geofenceStates);
             } else if (hasEnteredGeofence(matchedGeofences, geofenceStates)) {
-                insideGeofences = getInsideGeofences(msg.getMetaDataTs(), matchedGeofences, geofenceStates);
+                insideGeofences = getInsideGeofences(msg.getMetaDataTs(), geofenceDurationConfig, matchedGeofences, geofenceStates);
             } else if (hasEnteredNotMatchedGeofence(matchedGeofences, geofenceStates)) {
                 leftGeofences = getLeftGeofences(msg.getMetaDataTs(), matchedGeofences, geofenceStates);
                 enteredGeofences = getEnteredGeofences(msg.getMetaDataTs(), matchedGeofences, geofenceStates);
@@ -75,7 +79,7 @@ public class GeofencingProcessor {
                 enteredGeofences = getEnteredGeofences(msg.getMetaDataTs(), matchedGeofences, geofenceStates);
             }
 
-            List<EntityId> outsideGeofences = getOutsideGeofences(msg.getMetaDataTs(), matchedGeofences, geofenceStates);
+            List<EntityId> outsideGeofences = getOutsideGeofences(msg.getMetaDataTs(), geofenceDurationConfig, matchedGeofences, geofenceStates);
 
             persistState(entityId, ruleNodeId, geofenceStates);
 
@@ -118,7 +122,7 @@ public class GeofencingProcessor {
         return List.of(geofenceState.getGeofenceId());
     }
 
-    private List<EntityId> getInsideGeofences(Long currentTs, List<EntityId> matchedGeofences, Set<GeofenceState> geofenceStates) {
+    private List<EntityId> getInsideGeofences(Long currentTs, Optional<GeofenceDurationConfig> optionalDurationConfig, List<EntityId> matchedGeofences, Set<GeofenceState> geofenceStates) {
         Optional<GeofenceState> optionalGeofenceState = geofenceStates.stream().filter(state -> state.isEntered() && state.getInsideTs() == null && matchedGeofences.contains(state.getGeofenceId())).findFirst();
 
         if (optionalGeofenceState.isEmpty()) {
@@ -128,8 +132,8 @@ public class GeofencingProcessor {
         GeofenceState geofenceState = optionalGeofenceState.get();
 
         long diff = currentTs - geofenceState.getEnterTs();
-        boolean isOver = diff >= TimeUnit.valueOf(nodeConfiguration.getMinInsideDurationTimeUnit()).toMillis(nodeConfiguration.getMinInsideDuration());
-        if (isOver) {
+
+        if (isOverMinInside(optionalDurationConfig, geofenceState.getGeofenceId().getId(), diff)) {
             geofenceState.setInsideTs(currentTs);
             return List.of(geofenceState.getGeofenceId());
         }
@@ -137,7 +141,7 @@ public class GeofencingProcessor {
         return emptyList();
     }
 
-    private List<EntityId> getOutsideGeofences(Long currentTs, List<EntityId> matchedGeofences, Set<GeofenceState> geofenceStates) {
+    private List<EntityId> getOutsideGeofences(Long currentTs, Optional<GeofenceDurationConfig> optionalDurationConfig, List<EntityId> matchedGeofences, Set<GeofenceState> geofenceStates) {
         Set<GeofenceState> candidatesForOutside = geofenceStates.stream().filter(state -> state.isLeft() && !matchedGeofences.contains(state.getGeofenceId())).collect(Collectors.toSet());
 
         if (isEmpty(candidatesForOutside)) {
@@ -148,8 +152,8 @@ public class GeofencingProcessor {
 
         for (GeofenceState candidate : candidatesForOutside) {
             long diff = currentTs - candidate.getLeftTs();
-            boolean isTimeForOutside = diff >= TimeUnit.valueOf(nodeConfiguration.getMinOutsideDurationTimeUnit()).toMillis(nodeConfiguration.getMinOutsideDuration());
-            if (isTimeForOutside) {
+
+            if (isOverMinOutside(optionalDurationConfig, candidate.getGeofenceId().getId(), diff)) {
                 outsideGeofences.add(candidate);
             }
         }
@@ -201,6 +205,37 @@ public class GeofencingProcessor {
 
     private String getGeofenceStateAttributeKey(RuleNodeId ruleNodeId) {
         return String.format(GEOFENCE_STATE_ATTRIBUTE_KEY_PREFIX, ruleNodeId.getId().toString());
+    }
+
+    private Optional<GeofenceDurationConfig> getGeofenceDurationConfig(TbMsg msg) {
+        GeofenceDurationConfig geofenceDurationConfig = JacksonUtil.convertValue(msg.getMetaData().getValue(DURATION_CONFIG_METADATA_KEY), new TypeReference<>() {
+        });
+        if (geofenceDurationConfig == null) {
+            return Optional.empty();
+        }
+        return Optional.of(geofenceDurationConfig);
+    }
+
+    public boolean isOverMinInside(Optional<GeofenceDurationConfig> optionalDurationConfig, UUID geofenceId, long time) {
+        long duration = optionalDurationConfig
+                .map(config -> config.getGeofenceDurationMap().get(geofenceId)).filter(geofenceDuration -> geofenceDuration.getMinInsideDuration() != null).map(GeofenceDuration::getMinInsideDuration).orElse(nodeConfiguration.getMinInsideDuration());
+
+        TimeUnit timeUnit = optionalDurationConfig
+                .map(GeofenceDurationConfig::getTimeUnit)
+                .orElse(TimeUnit.valueOf(nodeConfiguration.getMinInsideDurationTimeUnit()));
+
+        return time >= timeUnit.toMillis(duration);
+    }
+
+    public boolean isOverMinOutside(Optional<GeofenceDurationConfig> optionalDurationConfig, UUID geofenceId, long time) {
+        long duration = optionalDurationConfig
+                .map(config -> config.getGeofenceDurationMap().get(geofenceId)).filter(geofenceDuration -> geofenceDuration.getMinOutsideDuration() != null).map(GeofenceDuration::getMinOutsideDuration).orElse(nodeConfiguration.getMinOutsideDuration());  // Default to configured outside duration
+
+        TimeUnit timeUnit = optionalDurationConfig
+                .map(GeofenceDurationConfig::getTimeUnit)
+                .orElse(TimeUnit.valueOf(nodeConfiguration.getMinOutsideDurationTimeUnit()));
+
+        return time >= timeUnit.toMillis(duration);
     }
 
 }
