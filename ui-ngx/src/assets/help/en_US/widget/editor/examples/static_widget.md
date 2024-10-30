@@ -10,7 +10,7 @@ The **Widget Editor** will be opened pre-populated with the content of default *
  - Put the following HTML code inside the HTML tab of "Resources" section:
 
 ```html
-  <div fxFlex fxLayout="column" style="height: 100%;" fxLayoutAlign="space-around stretch">
+  <div class="flex h-full flex-1 flex-col items-stretch justify-around">
     <h3 style="text-align: center;">My first static widget.</h3>
     <button mat-raised-button color="primary" (click)="showAlert()">Click me</button>
   </div>

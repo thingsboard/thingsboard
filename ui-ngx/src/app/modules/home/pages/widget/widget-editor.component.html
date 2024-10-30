@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<div fxFlex fxLayout="column">
-  <div fxFlex fxLayout="column" tb-fullscreen [fullscreen]="fullscreen" [tb-hotkeys]="hotKeys" [cheatSheet]="cheatSheetComponent">
+<div class="flex flex-1 flex-col">
+  <div class="flex flex-1 flex-col" tb-fullscreen [fullscreen]="fullscreen" [tb-hotkeys]="hotKeys" [cheatSheet]="cheatSheetComponent">
     <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
-    <mat-toolbar class="mat-elevation-z1 tb-edit-toolbar mat-hue-3" fxLayoutGap="16px" fxLayoutGap.lt-xl="8px">
+    <mat-toolbar class="mat-elevation-z1 tb-edit-toolbar mat-hue-3 gap-4 lt-xl:gap-2">
       <mat-form-field class="tb-widget-title tb-appearance-transparent">
         <input [disabled]="isReadOnly" matInput required maxlength="255"
                [(ngModel)]="widget.widgetName" (ngModelChange)="isDirty = true"
@@ -32,8 +32,8 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
-      <span fxFlex></span>
-      <button mat-button fxHide.lt-md [disabled]="!iframeWidgetEditModeInited"
+      <span class="flex-1"></span>
+      <button mat-button class="lt-md:!hidden" [disabled]="!iframeWidgetEditModeInited"
               (click)="applyWidgetScript()"
               matTooltip="{{ 'widget.run' | translate }} (CTRL + Return)"
               matTooltipPosition="below">
@@ -41,7 +41,7 @@
         <span translate>action.run</span>
       </button>
       <button mat-raised-button
-              fxHide.lt-md [disabled]="(isLoading$ | async) || undoDisabled()"
+              class="lt-md:!hidden" [disabled]="(isLoading$ | async) || undoDisabled()"
               (click)="undoWidget()"
               matTooltip="{{ 'widget.undo' | translate }} (CTRL + Q)"
               matTooltipPosition="below">
@@ -49,7 +49,7 @@
         <span translate>action.undo</span>
       </button>
       <button *ngIf="!isReadOnly" mat-raised-button
-              fxHide.lt-md [disabled]="(isLoading$ | async) || saveDisabled()"
+              class="lt-md:!hidden" [disabled]="(isLoading$ | async) || saveDisabled()"
               (click)="saveWidget()"
               [tb-circular-progress]="saveWidgetPending"
               matTooltip="{{ 'widget.save' | translate }} (CTRL + S)"
@@ -58,7 +58,7 @@
         <span translate>action.save</span>
       </button>
       <button mat-raised-button
-              fxHide.lt-md [disabled]="(isLoading$ | async) || saveAsDisabled()"
+              class="lt-md:!hidden" [disabled]="(isLoading$ | async) || saveAsDisabled()"
               (click)="saveWidgetAs()"
               [tb-circular-progress]="saveWidgetAsPending"
               matTooltip="{{ 'widget.saveAs' | translate }} (Shift + CTRL + S)"
@@ -67,20 +67,20 @@
         <span translate>action.saveAs</span>
       </button>
       <button mat-button
-              fxHide.lt-lg
+              class="lt-lg:!hidden"
               (click)="fullscreen = !fullscreen"
               matTooltip="{{ 'widget.toggle-fullscreen' | translate }} (Shift + CTRL + F)"
               matTooltipPosition="below">
         <mat-icon>{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
         <span translate>widget.toggle-fullscreen</span>
       </button>
-      <button mat-icon-button fxHide fxShow.md
+      <button mat-icon-button class="lt-md:!hidden gt-md:!hidden"
               (click)="fullscreen = !fullscreen"
               matTooltip="{{ 'widget.toggle-fullscreen' | translate }} (Shift + CTRL + F)"
               matTooltipPosition="below">
         <mat-icon>{{ fullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
       </button>
-      <button mat-icon-button fxHide.gt-sm
+      <button mat-icon-button class="gt-md:!hidden"
               [matMenuTriggerFor]="widgetEditMenu">
         <mat-icon>more_vert</mat-icon>
       </button>
@@ -111,7 +111,7 @@
         </button>
       </mat-menu>
     </mat-toolbar>
-    <div fxFlex style="position: relative;">
+    <div class="flex-1" style="position: relative;">
       <div class="tb-editor tb-absolute-fill">
         <div #topPanel class="tb-split tb-split-vertical">
           <div #topLeftPanel class="tb-split tb-content">
@@ -119,10 +119,9 @@
               <mat-tab label="{{ 'widget.resources' | translate }}">
                 <div class="tb-resize-container" style="background-color: #fff;">
                   <div class="mat-padding">
-                    <div fxFlex fxLayout="row" style="max-height: 40px;"
-                         fxLayoutAlign="start center"
+                    <div class="flex flex-1 flex-row items-center justify-start" style="max-height: 40px;"
                          *ngFor="let resource of widget.resources; let i = index" >
-                      <tb-resource-autocomplete fxFlex class="mat-block resource-field"
+                      <tb-resource-autocomplete class="mat-block resource-field flex-1"
                                                 hideRequiredMarker required
                                                 subscriptSizing="dynamic"
                                                 [allowAutocomplete]="resource.isModule"
@@ -240,7 +239,7 @@
               <mat-tab label="{{ 'widget.widget-settings' | translate }}">
                 <div class="tb-resize-container" style="background-color: #fff;">
                   <div class="mat-padding">
-                    <tb-gallery-image-input fxFlex label="{{'widget.image-preview' | translate}}"
+                    <tb-gallery-image-input class="flex-1" label="{{'widget.image-preview' | translate}}"
                                     [(ngModel)]="widget.image"
                                     (ngModelChange)="isDirty = true" >
                     </tb-gallery-image-input>
@@ -257,7 +256,7 @@
                       [(ngModel)]="widget.tags"
                       (ngModelChange)="isDirty = true">
                     </tb-string-items-list>
-                    <div fxLayout="column" fxLayoutGap="16px" style="padding-bottom: 16px;">
+                    <div class="flex flex-col gap-4" style="padding-bottom: 16px;">
                       <mat-slide-toggle class="mat-block"
                                         [(ngModel)]="widget.scada"
                                         (ngModelChange)="isDirty = true">
@@ -324,7 +323,7 @@
             </div>
           </div>
           <div #framePanel class="tb-split tb-content" style="overflow-y: hidden; position: relative;">
-            <div class="mat-content tb-progress-cover" fxFlex fxLayout="column" fxLayoutAlign="center center"
+            <div class="mat-content tb-progress-cover flex flex-1 flex-col items-center justify-center"
                  *ngIf="!iframeWidgetEditModeInited">
               <mat-spinner diameter="100" mode="indeterminate" color="warn"></mat-spinner>
             </div>

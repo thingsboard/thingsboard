@@ -25,6 +25,7 @@ import { merge, Observable } from 'rxjs';
 import { MenuSection } from '@core/services/menu.models';
 import { ActiveComponentService } from '@core/services/active-component.service';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 
 @Component({
   selector: 'tb-router-tabs',
@@ -115,9 +116,20 @@ export class RouterTabsComponent extends PageComponent implements OnInit {
 
   private buildTabsForRoutes(activatedRoute: ActivatedRoute): Array<MenuSection> {
     const sectionPath = this.getSectionPath(activatedRoute);
-    if (activatedRoute.routeConfig.children.length) {
-      const activeRouterChildren = activatedRoute.routeConfig.children.filter(page => page.path !== '');
-      return activeRouterChildren.map(tab => ({
+    const authority = getCurrentAuthUser(this.store).authority;
+    const children = activatedRoute.routeConfig.children.filter(page => {
+      if (page.path !== '') {
+        if (page.data?.auth) {
+          return page.data?.auth.includes(authority);
+        } else {
+          return true;
+        }
+      } else {
+        return false;
+      }
+    });
+    if (children.length) {
+      return children.map(tab => ({
         id: tab.component.name,
         type: 'link',
         name: tab.data?.breadcrumb?.label ?? '',

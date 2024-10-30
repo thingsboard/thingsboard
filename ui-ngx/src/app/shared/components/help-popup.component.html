@@ -44,7 +44,7 @@
           <span [style]="triggerStyle" [innerHTML]="triggerSafeHtml"></span>
         </ng-container>
         <mat-icon *ngIf="(!popoverVisible || popoverReady)"
-                  [ngClass]="hintMode ? 'tb-mat-12' : 'tb-mat-16'">open_in_new</mat-icon>
+                  [class]="hintMode ? 'tb-mat-12' : 'tb-mat-16'">open_in_new</mat-icon>
         <mat-spinner *ngIf="popoverVisible && !popoverReady" mode="indeterminate" [diameter]="hintMode ? 12 : 16" strokeWidth="2"></mat-spinner>
       </span>
     </button>

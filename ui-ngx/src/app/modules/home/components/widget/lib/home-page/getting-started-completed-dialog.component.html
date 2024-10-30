@@ -15,19 +15,19 @@
     limitations under the License.
 
 -->
-<div class="tb-getting-started-completed-dialog-container" fxLayout="column">
-  <div fxLayout="row" fxLayoutAlign="start center" style="height: 64px; padding: 8px;">
-    <span fxFlex></span>
+<div class="tb-getting-started-completed-dialog-container flex flex-col">
+  <div class="flex flex-row items-center justify-start" style="height: 64px; padding: 8px;">
+    <span class="flex-1"></span>
     <button mat-icon-button (click)="close()" type="button">
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </div>
-  <div fxLayout="row" fxLayoutAlign="center center" style="height: 70px;">
-    <div class="tb-done-container" fxLayout="row" fxLayoutAlign="center center">
+  <div class="flex flex-row items-center justify-center" style="height: 70px;">
+    <div class="tb-done-container flex flex-row items-center justify-center">
       <mat-icon class="tb-done-icon" color="primary">done</mat-icon>
     </div>
   </div>
-  <div fxLayout="column" fxLayoutAlign="start center" style="padding-top: 30px;">
+  <div class="flex flex-col items-center justify-start" style="padding-top: 30px;">
     <div class="tb-done-welcome-title" translate>widgets.getting-started.done-welcome-title</div>
     <div class="tb-done-welcome-text" translate>widgets.getting-started.done-welcome-text</div>
   </div>

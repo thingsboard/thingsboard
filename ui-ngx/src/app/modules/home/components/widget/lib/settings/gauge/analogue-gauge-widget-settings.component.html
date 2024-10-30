@@ -29,7 +29,7 @@
     <div class="tb-form-panel-title" translate>widgets.gauge.ticks-settings</div>
     <div class="tb-form-row space-between column-xs">
       <div translate>widgets.gauge.ticks</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <div class="tb-small-label" translate>widgets.gauge.min-value-short</div>
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="minValue" type="number" step="1" placeholder="{{ 'widget-config.set' | translate }}">
@@ -50,7 +50,7 @@
 
     <div class="tb-form-row space-between column-xs">
       <div translate>widgets.gauge.major-ticks-count</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="majorTicksCount" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
@@ -63,7 +63,7 @@
 
     <div class="tb-form-row space-between column-xs">
       <div translate>widgets.gauge.minor-ticks-count</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="minorTicks" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
@@ -81,7 +81,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showUnitTitle">
         {{ 'widgets.gauge.units-title' | translate }}
       </mat-slide-toggle>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="unitTitle" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
@@ -98,7 +98,7 @@
 
     <div class="tb-form-row space-between">
       <div translate>widget-config.units-short</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <tb-font-settings formControlName="unitsFont"
                           disabledLineHeight>
         </tb-font-settings>
@@ -112,14 +112,13 @@
 
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="analogueGaugeWidgetSettingsForm.get('valueBox').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="valueBox" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="valueBox" (click)="$event.stopPropagation()">
             {{ 'widgets.gauge.value-box' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxFlex="40" fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="flex max-w-40% flex-full items-center justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
@@ -134,7 +133,7 @@
           <div class="tb-form-panel-title" translate>widgets.gauge.value-text</div>
           <div class="tb-form-row space-between">
             <div translate>widgets.gauge.value-text</div>
-            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <div class="flex flex-row items-center justify-start gap-2">
               <tb-font-settings formControlName="valueFont"
                                 disabledLineHeight>
               </tb-font-settings>
@@ -245,7 +244,7 @@
     <div class="tb-form-panel-title" translate>widgets.gauge.scale-settings</div>
     <div class="tb-form-row space-between">
       <div translate>widgets.gauge.scale</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput type="number" min="0" formControlName="highlightsWidth">
         </mat-form-field>
@@ -257,21 +256,20 @@
 
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="analogueGaugeWidgetSettingsForm.get('animation').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="animation" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="animation" (click)="$event.stopPropagation()">
             {{ 'widgets.gauge.enable-animation' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxFlex="40" fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="flex max-w-40% flex-full items-center justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <div class="tb-form-row space-between">
           <div translate>widgets.gauge.animation-duration-rule</div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div class="flex flex-row items-center justify-start gap-2">
             <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
               <input matInput type="number" min="0" formControlName="animationDuration" placeholder="{{ 'widget-config.set' | translate }}">
             </mat-form-field>
@@ -350,7 +348,7 @@
     <div class="tb-form-panel-title" translate>widgets.gauge.linear-gauge-settings</div>
     <div class="tb-form-row space-between">
       <div translate>widgets.gauge.bar-stroke</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput type="number" min="0" formControlName="barStrokeWidth" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
