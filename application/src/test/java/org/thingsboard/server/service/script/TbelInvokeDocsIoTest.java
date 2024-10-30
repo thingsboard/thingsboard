@@ -1944,12 +1944,12 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
         TbDate d1 = new TbDate(2023, 8, 6, 4, 4, 5, "Europe/Kyiv");
         expected.put("dLocal_1", d1.toLocaleString());
-        expected.put("dIso_1", "2023-08-06T01:04:05Z");
+        expected.put("dIso_1", d1.toISOString());
         expected.put("date_1", d1.toString());
         TbDate d2 = new TbDate(2023, 8, 6, 4, 4, 5, "Europe/Berlin");
         expected.put("dLocal_2", d2.toLocaleString());
         expected.put("dLocal_2_us", "8/5/23, 10:04:05 PM");
-        expected.put("dIso_2", "2023-08-06T02:04:05Z");
+        expected.put("dIso_2", d2.toISOString());
         expected.put("date_2", d2.toString());
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
@@ -2021,12 +2021,13 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     @Test
     public void tbDateLocalPatternMap_Test() throws ExecutionException, InterruptedException {
         String s1 = "2023-08-06T04:04:05.00Z";
+        String s2 = "2023-08-06T04:04:05.000";
         msgStr = "{}";
         decoderStr = String.format("""
                     var d1 = new Date("%s");         // TZ => "UTC"
                     var options1 = {"timeZone":"America/New_York"};       // TZ = "-04:00"
                     var options1Str = JSON.stringify(options1);
-                    var d2 = new Date("2023-08-06T04:04:05.000");         // TZ => Default = ZoneId.systemDefault
+                    var d2 = new Date("%s");         // TZ => Default = ZoneId.systemDefault
                     var options2 = {"timeZone":"America/New_York"};
                     var options2Str = JSON.stringify(options2);
                     var d3 = new Date(2023, 8, 6, 4, 4, 5);               // TZ => Default = ZoneId.systemDefault
@@ -2048,13 +2049,14 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                         "dLocal_4_options_us": d4.toLocaleString("en-US", options4Str),
                         "dLocal_4_options_de": d4.toLocaleString("de", options4Str)
                     }
-                """, s1);
+                """, s1, s2);
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
         TbDate d1 = new TbDate(s1);
         expected.put("dIso_1", "2023-08-06T04:04:05Z");
         expected.put("dLocal_1", d1.toLocaleString());
         expected.put("dLocal_1_options", "8/6/23, 12:04:05 AM");
-        expected.put("dIso_2", "2023-08-06T01:04:05Z");
+        TbDate d2 = new TbDate(s2);
+        expected.put("dIso_2", d2.toISOString());
         expected.put("dLocal_2_options", "8/5/23, 9:04:05 PM");
         TbDate d3 = new TbDate(2023, 8, 6, 4, 4, 5);
         expected.put("dIso_3", d3.toISOString());
