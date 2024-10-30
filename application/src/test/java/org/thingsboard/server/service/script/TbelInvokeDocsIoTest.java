@@ -857,7 +857,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     }
 
     @Test
-    public void dpubleToString_Test() throws ExecutionException, InterruptedException {
+    public void doubleToString_Test() throws ExecutionException, InterruptedException {
         msgStr = "{}";
         decoderStr = """
                     var dd0 = 99993219.156013e-002;
@@ -869,10 +869,11 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                       }
                 """;
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        Double dd0 = 99993219.156013e-002d;
         expected.put("dd16", "0x1.e83f862142b5bp19");
-        expected.put("dd10", "999932,19156013");
+        expected.put("dd10", String.format("%.8f", dd0));
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
-        assertEquals(expected, actual);
+        assertEquals(expected.toString(), actual.toString());
     }
 
     // Flow Control
@@ -1884,7 +1885,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
         TbDate d1 = new TbDate(sDe, pattern, "de");
         expected.put("dIso_1", d1.toISOString());
-        expected.put("dLocal_1",d1.toLocaleString("de"));
+        expected.put("dLocal_1", d1.toLocaleString("de"));
         TbDate d2 = new TbDate(sUs, pattern, "en-US");
         expected.put("dIso_2", d2.toISOString());
         expected.put("dLocal_2", d2.toLocaleString("en-US"));
@@ -1925,7 +1926,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         assertEquals(expected, actual);
     }
 
-        @Test
+    @Test
     public void tbDateInstantYearMonthDateHrsMinSecond_Test() throws ExecutionException, InterruptedException {
         msgStr = "{}";
         decoderStr = """
@@ -1960,24 +1961,24 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         String s2 = "2023-08-06T04:04:05.000";
         msgStr = "{}";
         decoderStr = String.format("""
-                    // Input date Without TZ (TZ Default = ZoneId.systemDefault())
-                    var d1 = new Date(2023, 8, 6, 4, 4, 5);                     // Parameters (int year, int month, int dayOfMonth, int hours, int minutes, int seconds) => TZ Default = ZoneId.systemDefault()
-                    var d2 = new Date("%s");                                    // Parameter (String 'yyyy-MM-ddThh:mm:ss.ms') => TZ Default = ZoneId.systemDefault()
-                    // Input date With TZ (TZ = parameter TZ or 'Z' equals 'UTC')
-                    var d3 = new Date(2023, 8, 6, 4, 4, 5, "Europe/Berlin");    // Parameters (int year, int month, int dayOfMonth, int hours, int minutes, int seconds, TZ) => TZ "Europe/Berlin"
-                    return {
-                        "dLocal_1_us": d1.toLocaleString("en-US"),
-                        "dIso_1": d1.toISOString(),
-                        "d1": d1.toString(),
-                        "dIso_2": d2.toISOString(),
-                        "dLocal_2_de": d2.toLocaleString("de"),
-                        "dLocal_2_utc": d2.toLocaleString("UTC"),
-                        "dIso_3": d3.toISOString(),
-                        "dLocal_3_utc": d3.toLocaleString("UTC"),
-                        "dLocal_3_us": d3.toLocaleString("en-us"),
-                        "dLocal_3_de": d3.toLocaleString("de")
-                    }
-               """, s2);
+                     // Input date Without TZ (TZ Default = ZoneId.systemDefault())
+                     var d1 = new Date(2023, 8, 6, 4, 4, 5);                     // Parameters (int year, int month, int dayOfMonth, int hours, int minutes, int seconds) => TZ Default = ZoneId.systemDefault()
+                     var d2 = new Date("%s");                                    // Parameter (String 'yyyy-MM-ddThh:mm:ss.ms') => TZ Default = ZoneId.systemDefault()
+                     // Input date With TZ (TZ = parameter TZ or 'Z' equals 'UTC')
+                     var d3 = new Date(2023, 8, 6, 4, 4, 5, "Europe/Berlin");    // Parameters (int year, int month, int dayOfMonth, int hours, int minutes, int seconds, TZ) => TZ "Europe/Berlin"
+                     return {
+                         "dLocal_1_us": d1.toLocaleString("en-US"),
+                         "dIso_1": d1.toISOString(),
+                         "d1": d1.toString(),
+                         "dIso_2": d2.toISOString(),
+                         "dLocal_2_de": d2.toLocaleString("de"),
+                         "dLocal_2_utc": d2.toLocaleString("UTC"),
+                         "dIso_3": d3.toISOString(),
+                         "dLocal_3_utc": d3.toLocaleString("UTC"),
+                         "dLocal_3_us": d3.toLocaleString("en-us"),
+                         "dLocal_3_de": d3.toLocaleString("de")
+                     }
+                """, s2);
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
         TbDate d1 = new TbDate(2023, 8, 6, 4, 4, 5);
         expected.put("dLocal_1_us", "8/6/23, 4:04:05 AM");
