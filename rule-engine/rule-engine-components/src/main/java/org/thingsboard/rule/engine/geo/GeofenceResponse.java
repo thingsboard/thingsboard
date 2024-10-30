@@ -15,16 +15,20 @@
  */
 package org.thingsboard.rule.engine.geo;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.List;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class GeofenceResponse {
-    private final List<EntityId> enteredGeofences;
-    private final List<EntityId> leftGeofences;
-    private final List<EntityId> insideGeofences;
-    private final List<EntityId> outsideGeofences;
+    private List<EntityId> enteredGeofences;
+    private List<EntityId> leftGeofences;
+    private List<EntityId> insideGeofences;
+    private List<EntityId> outsideGeofences;
 
 }
