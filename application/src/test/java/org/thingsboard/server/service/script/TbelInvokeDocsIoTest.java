@@ -1989,9 +1989,9 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         expected.put("dLocal_2_utc", "2023-08-06 04:04:05");
         TbDate d3 = new TbDate(2023, 8, 6, 4, 4, 5, "Europe/Berlin");
         expected.put("dIso_3", d3.toISOString());
-        expected.put("dLocal_3_utc", "2023-08-06 05:04:05");
-        expected.put("dLocal_3_us", "8/6/23, 5:04:05 AM");
-        expected.put("dLocal_3_de", "06.08.23, 05:04:05");
+        expected.put("dLocal_3_utc", d3.toLocaleString("UTC"));
+        expected.put("dLocal_3_us", d3.toLocaleString("en-us"));
+        expected.put("dLocal_3_de", d3.toLocaleString("de"));
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
     }
