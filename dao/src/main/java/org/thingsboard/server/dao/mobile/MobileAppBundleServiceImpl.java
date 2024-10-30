@@ -80,14 +80,8 @@ public class MobileAppBundleServiceImpl extends AbstractEntityService implements
     @Override
     public void deleteMobileAppBundleById(TenantId tenantId, MobileAppBundleId mobileAppBundleId) {
         log.trace("Executing deleteMobileAppBundleById [{}]", mobileAppBundleId.getId());
-        try {
-            mobileAppBundleDao.removeById(tenantId, mobileAppBundleId.getId());
-            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(mobileAppBundleId).build());
-        } catch (Exception e) {
-            checkConstraintViolation(e, "fk_android_app_id", "The mobile app referenced by the mobile bundle cannot be deleted!",
-                    "fk_ios_app_id", "The mobile app referenced by the mobile bundle cannot be deleted!");
-            throw e;
-        }
+        mobileAppBundleDao.removeById(tenantId, mobileAppBundleId.getId());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(mobileAppBundleId).build());
     }
 
     @Override
