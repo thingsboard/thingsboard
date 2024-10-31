@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.mobile.app.MobileApp;
+import org.thingsboard.server.common.data.mobile.app.MobileAppStatus;
 import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundle;
 import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundleInfo;
 import org.thingsboard.server.common.data.mobile.qrCodeSettings.QRCodeConfig;
@@ -143,14 +144,14 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
 
         doPost("/api/mobile/qr/settings", qrCodeSettings)
                 .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Validation error: qrCodeConfig must not be null")));
+
+        qrCodeSettings.setQrCodeConfig(QRCodeConfig.builder().showOnHomePage(false).build());
+        doPost("/api/mobile/qr/settings", qrCodeSettings)
+                .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Mobile app bundle is required to use custom application!")));
 
         qrCodeSettings.setMobileAppBundleId(mobileAppBundle.getId());
-        doPost("/api/mobile/qr/settings", qrCodeSettings)
-                .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Qr code configuration is required!")));
-
-        qrCodeSettings.setQrCodeConfig(QRCodeConfig.builder().showOnHomePage(false).build());
         doPost("/api/mobile/qr/settings", qrCodeSettings)
                 .andExpect(status().isOk());
     }
@@ -247,6 +248,7 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
     private MobileApp validMobileApp(String mobileAppName, PlatformType platformType) {
         MobileApp mobileApp = new MobileApp();
         mobileApp.setTenantId(tenantId);
+        mobileApp.setStatus(MobileAppStatus.DRAFT);
         mobileApp.setPkgName(mobileAppName);
         mobileApp.setPlatformType(platformType);
         mobileApp.setAppSecret(StringUtils.randomAlphanumeric(24));
