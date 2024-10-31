@@ -75,9 +75,7 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
 
         ListenableFuture<GeofenceResponse> geofenceResponseFuture = Futures.transformAsync(matchedZonesFuture, matchedZones -> geofencingProcessor.process(ctx.getSelfId(), msg, matchedZones), MoreExecutors.directExecutor());
 
-        withCallback(geofenceResponseFuture, geofenceResponse -> {
-            processGeofenceResponse(ctx, msg, msg.getOriginator(), geofenceResponse);
-        }, t -> ctx.tellFailure(msg, t), MoreExecutors.directExecutor());
+        withCallback(geofenceResponseFuture, geofenceResponse -> processGeofenceResponse(ctx, msg, msg.getOriginator(), geofenceResponse), t -> ctx.tellFailure(msg, t), MoreExecutors.directExecutor());
     }
 
     private void processGeofenceResponse(TbContext ctx, TbMsg originalMsg, EntityId originatorId, GeofenceResponse geofenceResponse) {
