@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -34,8 +35,10 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
@@ -47,6 +50,7 @@ public class GeofencingProcessor {
 
     private static final String GEOFENCE_STATES_KEY = "geofenceStates";
     private static final String GEOFENCE_STATE_ATTRIBUTE_KEY_PREFIX = "geofenceState_%s";
+    private static final String METADATA_DURATION_CONFIG_KEY = "durationConfig";
 
     public GeofencingProcessor(TbContext context, TbGpsMultiGeofencingActionNodeConfiguration nodeConfiguration) {
         this.nodeConfiguration = nodeConfiguration;
@@ -65,7 +69,7 @@ public class GeofencingProcessor {
 
             createNewGeofenceStates(geofenceStates, matchedGeofences);
 
-            Optional<GeofenceDurationConfig> geofenceDurationConfig = getGeofenceDurationConfig(nodeConfiguration.getMetadataDurationConfigKey(), msg);
+            Optional<GeofenceDurationConfig> geofenceDurationConfig = getGeofenceDurationConfig(resolveDurationConfigKey(), msg);
 
             for (GeofenceState state : geofenceStates) {
                 state.updateStatus(nodeConfiguration, geofenceDurationConfig, msg, matchedGeofences);
@@ -119,13 +123,19 @@ public class GeofencingProcessor {
         return String.format(GEOFENCE_STATE_ATTRIBUTE_KEY_PREFIX, ruleNodeId.getId().toString());
     }
 
+    private String resolveDurationConfigKey() {
+        return Optional.ofNullable(nodeConfiguration.getMetadataDurationConfigKey())
+                .filter(StringUtils::isNotEmpty)
+                .orElse(METADATA_DURATION_CONFIG_KEY);
+    }
+
     private Optional<GeofenceDurationConfig> getGeofenceDurationConfig(String durationConfigMetadataKey, TbMsg msg) {
-        GeofenceDurationConfig geofenceDurationConfig = JacksonUtil.convertValue(msg.getMetaData().getValue(durationConfigMetadataKey), new TypeReference<>() {
+        Map<UUID, GeofenceDuration> geofenceDurationMap = JacksonUtil.fromString(msg.getMetaData().getValue(durationConfigMetadataKey), new TypeReference<>() {
         });
-        if (geofenceDurationConfig == null) {
+        if (geofenceDurationMap == null) {
             return Optional.empty();
         }
-        return Optional.of(geofenceDurationConfig);
+        return Optional.of(new GeofenceDurationConfig(geofenceDurationMap));
     }
 
     private void createNewGeofenceStates(Set<GeofenceState> geofenceStates, List<EntityId> matchedGeofences) {
