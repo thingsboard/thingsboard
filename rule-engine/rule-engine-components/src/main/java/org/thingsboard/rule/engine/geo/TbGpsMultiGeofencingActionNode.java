@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -29,7 +28,6 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.transform.MultipleTbMsgsCallbackWrapper;
 import org.thingsboard.rule.engine.transform.TbMsgCallbackWrapper;
 import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
-import org.thingsboard.rule.engine.util.GpsGeofencingEvents;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -46,6 +44,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import static org.springframework.util.CollectionUtils.isEmpty;
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
@@ -82,23 +81,15 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
         TbMsgMetaData metaData = originalMsg.getMetaData().copy();
         metaData.putValue("originatorId", originalMsg.getOriginator().toString());
 
-        List<TbPair<TbMsg, String>> messages = collectGeofenceMessages(originalMsg, metaData, geofenceResponse);
-
-        if (messages.isEmpty()) {
+        if (isEmpty(geofenceResponse.getChangedStates())) {
             ctx.tellSuccess(originalMsg);
         } else {
-            TbMsgCallbackWrapper wrapper = createCallbackWrapper(ctx, originalMsg, messages.size());
-            messages.forEach(msgPair -> ctx.enqueueForTellNext(msgPair.getFirst(), msgPair.getSecond(), wrapper::onSuccess, wrapper::onFailure));
+            TbMsgCallbackWrapper wrapper = createCallbackWrapper(ctx, originalMsg, geofenceResponse.getChangedStates().size());
+            geofenceResponse.getChangedStates().forEach(geofenceState -> {
+                TbMsg tbMsg = TbMsg.newMsg(originalMsg.getInternalType(), geofenceState.getGeofenceId(), metaData, originalMsg.getData());
+                ctx.enqueueForTellNext(tbMsg, geofenceState.getGeofenceStateStatus().getRuleNodeConnection(), wrapper::onSuccess, wrapper::onFailure);
+            });
         }
-    }
-
-    private List<TbPair<TbMsg, String>> collectGeofenceMessages(TbMsg originalMsg, TbMsgMetaData metaData, GeofenceResponse geofenceResponse) {
-        List<TbPair<TbMsg, String>> messages = new ArrayList<>();
-        addGeofenceMessages(messages, originalMsg, metaData, geofenceResponse.getEnteredGeofences(), GpsGeofencingEvents.ENTERED);
-        addGeofenceMessages(messages, originalMsg, metaData, geofenceResponse.getLeftGeofences(), GpsGeofencingEvents.LEFT);
-        addGeofenceMessages(messages, originalMsg, metaData, geofenceResponse.getInsideGeofences(), GpsGeofencingEvents.INSIDE);
-        addGeofenceMessages(messages, originalMsg, metaData, geofenceResponse.getOutsideGeofences(), GpsGeofencingEvents.OUTSIDE);
-        return messages;
     }
 
     private TbMsgCallbackWrapper createCallbackWrapper(TbContext ctx, TbMsg originalMsg, int messageCount) {
@@ -113,16 +104,6 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
                 ctx.tellFailure(originalMsg, e);
             }
         });
-    }
-
-    private void addGeofenceMessages(List<TbPair<TbMsg, String>> messages, TbMsg originalMsg, TbMsgMetaData metaData,
-                                     List<EntityId> geofences, String event) {
-        if (CollectionUtils.isNotEmpty(geofences)) {
-            geofences.forEach(geofence -> {
-                TbMsg tbMsg = TbMsg.newMsg(originalMsg.getInternalType(), geofence, metaData, originalMsg.getData());
-                messages.add(new TbPair<>(tbMsg, event));
-            });
-        }
     }
 
     private ListenableFuture<List<EntityId>> findMatchedZones(TbContext tbContext, TbMsg tbMsg) throws TbNodeException {

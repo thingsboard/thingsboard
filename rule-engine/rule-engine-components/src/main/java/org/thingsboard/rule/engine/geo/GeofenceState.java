@@ -19,8 +19,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -35,10 +33,9 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 @NoArgsConstructor
 public class GeofenceState {
 
-    private static final Logger log = LoggerFactory.getLogger(GeofenceState.class);
     @EqualsAndHashCode.Include
     private EntityId geofenceId;
-    private Status status;
+    private GeofenceStateStatus geofenceStateStatus;
     private Long enterTs;
     private Long insideTs;
     private Long leftTs;
@@ -62,27 +59,27 @@ public class GeofenceState {
     }
 
     private void handleOutsideTransition(TbGpsMultiGeofencingActionNodeConfiguration nodeConfiguration, Optional<GeofenceDurationConfig> optionalDurationConfig, long currentTime) {
-        if (Status.LEFT.equals(status)) {
+        if (GeofenceStateStatus.LEFT.equals(geofenceStateStatus)) {
             if (hasExceededOutsideDuration(currentTime - leftTs, nodeConfiguration, optionalDurationConfig)) {
-                status = Status.OUTSIDE;
+                geofenceStateStatus = GeofenceStateStatus.OUTSIDE;
                 setStatusChanged(true);
             }
         }
-        if (Status.ENTERED.equals(status) || Status.INSIDE.equals(status)) {
-            status = Status.LEFT;
+        if (GeofenceStateStatus.ENTERED.equals(geofenceStateStatus) || GeofenceStateStatus.INSIDE.equals(geofenceStateStatus)) {
+            geofenceStateStatus = GeofenceStateStatus.LEFT;
             leftTs = currentTime;
             setStatusChanged(true);
         }
     }
 
     private void handleInsideTransition(TbGpsMultiGeofencingActionNodeConfiguration nodeConfiguration, Optional<GeofenceDurationConfig> optionalDurationConfig, long currentTime) {
-        if (Status.ENTERED.equals(status)) {
+        if (GeofenceStateStatus.ENTERED.equals(geofenceStateStatus)) {
             if (hasExceededInsideDuration(currentTime - enterTs, nodeConfiguration, optionalDurationConfig)) {
-                status = Status.INSIDE;
+                geofenceStateStatus = GeofenceStateStatus.INSIDE;
                 setStatusChanged(true);
             }
-        } else if (status == null) {
-            status = Status.ENTERED;
+        } else if (geofenceStateStatus == null) {
+            geofenceStateStatus = GeofenceStateStatus.ENTERED;
             enterTs = currentTime;
             setStatusChanged(true);
         }
@@ -106,12 +103,8 @@ public class GeofenceState {
         return elapsedTime >= TimeUnit.valueOf(nodeConfiguration.getMinInsideDurationTimeUnit()).toMillis(insideDuration);
     }
 
-    public boolean isStatus(Status status) {
-        return this.status != null && this.status.equals(status);
-    }
-
-    public enum Status {
-        ENTERED, INSIDE, LEFT, OUTSIDE
+    public boolean isStatus(GeofenceStateStatus geofenceStateStatus) {
+        return this.geofenceStateStatus != null && this.geofenceStateStatus.equals(geofenceStateStatus);
     }
 
 }

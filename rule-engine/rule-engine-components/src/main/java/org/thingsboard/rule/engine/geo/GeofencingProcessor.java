@@ -75,8 +75,7 @@ public class GeofencingProcessor {
 
         updateGeofenceStates(geofenceStates, geofenceDurationConfig, msg, matchedGeofences);
 
-        Set<GeofenceState> changedStates = getChangedStates(geofenceStates);
-        GeofenceResponse geofenceResponse = buildGeofenceResponse(changedStates);
+        GeofenceResponse geofenceResponse = new GeofenceResponse(getChangedStates(geofenceStates));
 
         Set<GeofenceState> aliveStates = getAliveStates(geofenceStates);
         persistState(msg.getOriginator(), ruleNodeId, aliveStates);
@@ -100,20 +99,8 @@ public class GeofencingProcessor {
 
     private Set<GeofenceState> getAliveStates(Set<GeofenceState> geofenceStates) {
         return geofenceStates.stream()
-                .filter(geofenceState -> !geofenceState.isStatus(GeofenceState.Status.OUTSIDE))
+                .filter(geofenceState -> !geofenceState.isStatus(GeofenceStateStatus.OUTSIDE))
                 .collect(Collectors.toSet());
-    }
-
-    private GeofenceResponse buildGeofenceResponse(Set<GeofenceState> geofenceStates) {
-        List<EntityId> enteredGeofences = geofenceStates.stream().filter(geofenceState -> geofenceState.isStatus(GeofenceState.Status.ENTERED)).map(GeofenceState::getGeofenceId).
-                toList();
-        List<EntityId> leftGeofences = geofenceStates.stream().filter(geofenceState -> geofenceState.isStatus(GeofenceState.Status.LEFT)).map(GeofenceState::getGeofenceId).
-                toList();
-        List<EntityId> insideGeofences = geofenceStates.stream().filter(geofenceState -> geofenceState.isStatus(GeofenceState.Status.INSIDE)).map(GeofenceState::getGeofenceId).
-                toList();
-        List<EntityId> outsideGeofences = geofenceStates.stream().filter(geofenceState -> geofenceState.isStatus(GeofenceState.Status.OUTSIDE)).map(GeofenceState::getGeofenceId).
-                toList();
-        return new GeofenceResponse(enteredGeofences, leftGeofences, insideGeofences, outsideGeofences);
     }
 
     private void persistState(EntityId entityId, RuleNodeId ruleNodeId, Set<GeofenceState> geofenceStates) {

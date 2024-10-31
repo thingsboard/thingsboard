@@ -16,16 +16,14 @@
 package org.thingsboard.rule.engine.geo;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
-import java.util.Set;
-
-@Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class GeofenceResponse {
+@Getter
+public enum GeofenceStateStatus {
 
-    private Set<GeofenceState> changedStates;
+    ENTERED("Entered"), INSIDE("Inside"), LEFT("Left"), OUTSIDE("Outside");
+
+    private final String ruleNodeConnection;
 
 }
