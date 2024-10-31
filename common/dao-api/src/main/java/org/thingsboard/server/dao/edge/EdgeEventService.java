@@ -33,4 +33,5 @@ public interface EdgeEventService {
      * @param ttl the ttl for edge events in seconds
      */
     void cleanupEvents(long ttl);
+
 }

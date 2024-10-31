@@ -89,7 +89,7 @@ public class KafkaEdgeGrpcSession extends AbstractEdgeGrpcSession<KafkaEdgeGrpcS
                         if (Boolean.TRUE.equals(isInterrupted)) {
                             log.debug("[{}][{}][{}] Send downlink messages task was interrupted", tenantId, edge.getId(), sessionId);
                         } else {
-                            consumer.commit();
+                            consumerExecutor.submit(consumer::commit);
                         }
                     }
                     @Override

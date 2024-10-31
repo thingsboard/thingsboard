@@ -46,7 +46,7 @@ import java.util.concurrent.Executors;
 @Service
 @RequiredArgsConstructor
 @ConditionalOnExpression("'${queue.type:null}'!='kafka'")
-public class BaseEdgeEventService implements EdgeEventService {
+public class PostgresEdgeEventService implements EdgeEventService {
 
     private final EdgeEventDao edgeEventDao;
     private final RateLimitService rateLimitService;
@@ -82,8 +82,11 @@ public class BaseEdgeEventService implements EdgeEventService {
         Futures.addCallback(saveFuture, new FutureCallback<>() {
             @Override
             public void onSuccess(Void result) {
-                eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(edgeEvent.getTenantId())
-                        .entity(edgeEvent).entityId(edgeEvent.getEdgeId()).build());
+                eventPublisher.publishEvent(SaveEntityEvent.builder()
+                        .tenantId(edgeEvent.getTenantId())
+                        .entityId(edgeEvent.getEdgeId())
+                        .entity(edgeEvent)
+                        .build());
             }
 
             @Override

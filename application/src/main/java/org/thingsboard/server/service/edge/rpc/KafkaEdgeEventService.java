@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.limits.RateLimitService;
@@ -65,6 +64,7 @@ public class KafkaEdgeEventService implements EdgeEventService {
             throw new TbRateLimitsException(EntityType.EDGE);
         }
         edgeEventValidator.validate(edgeEvent, EdgeEvent::getTenantId);
+
         TopicPartitionInfo tpi = topicService.getEdgeEventNotificationsTopic(edgeEvent.getTenantId(), edgeEvent.getEdgeId());
         ToEdgeEventNotificationMsg msg = ToEdgeEventNotificationMsg.newBuilder().setEdgeEventMsg(ProtoUtils.toProto(edgeEvent)).build();
         producerProvider.getTbEdgeEventsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);
@@ -78,6 +78,7 @@ public class KafkaEdgeEventService implements EdgeEventService {
     }
 
     @Override
-    public void cleanupEvents(long ttl) {}
+    public void cleanupEvents(long ttl) {
+    }
 
 }

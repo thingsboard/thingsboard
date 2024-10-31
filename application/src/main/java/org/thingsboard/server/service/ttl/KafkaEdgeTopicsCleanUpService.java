@@ -66,7 +66,11 @@ public class KafkaEdgeTopicsCleanUpService {
 
     private final ExecutorService executorService = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("kafka-edge-topic-cleanup"));
 
-    @Scheduled(initialDelayString = "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${sql.ttl.edge_events.checking_interval})}", fixedDelayString = "${sql.ttl.edge_events.checking_interval}")
+    //    @Scheduled(initialDelayString = "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${sql.ttl.edge_events.execution_interval_ms})}", fixedDelayString = "${sql.ttl.edge_events.execution_interval_ms}")
+    @Scheduled(
+            initialDelay = 60000, // 1 minute delay after startup
+            fixedDelayString = "${sql.ttl.edge_events.execution_interval_ms}"
+    )
     public void cleanUp() {
         executorService.submit(() -> {
             PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 10_000);
@@ -101,6 +105,12 @@ public class KafkaEdgeTopicsCleanUpService {
                     }
                 }
             }
+//            String topic = topicService.buildEdgeEventNotificationsTopicPartitionInfo(tenantId, edge.getId()).getTopic();
+//            TbKafkaAdmin kafkaAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdgeEventConfigs());
+//            if (kafkaAdmin.isTopicEmpty(topic)) {
+//                kafkaAdmin.deleteTopic(topic);
+//                log.info("Removed outdated topic for tenant {} and edge {} older than {}", tenantId, edge.getName(), Date.from(Instant.ofEpochMilli(currentTimeMillis - ONE_MONTH_MILLIS)));
+//            }
         }
     }
 

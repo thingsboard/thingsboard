@@ -20,8 +20,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
@@ -84,8 +86,12 @@ public class EdgeEventSourcingListener {
     private final TenantService tenantService;
     private final EdgeSynchronizationManager edgeSynchronizationManager;
 
-    private final TbKafkaSettings kafkaSettings;
-    private final TbKafkaTopicConfigs kafkaTopicConfigs;
+    @Autowired(required = false)
+    @Lazy
+    private TbKafkaSettings kafkaSettings;
+    @Autowired(required = false)
+    @Lazy
+    private TbKafkaTopicConfigs kafkaTopicConfigs;
 
     @Value("#{'${queue.type:null}' == 'kafka'}")
     private boolean isKafkaSupported;
