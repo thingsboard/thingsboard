@@ -64,7 +64,7 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         super.init(ctx, configuration);
         if (config.getRelationsQuery() == null) {
-            throw new TbNodeException("Relations query should be specified", false);
+            throw new TbNodeException("Relations query should be specified", true);
         }
         geofencingProcessor = new GeofencingProcessor(ctx, this.config);
     }
