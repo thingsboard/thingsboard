@@ -48,7 +48,9 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.relation.RelationService;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -96,6 +98,8 @@ public class TbGpsMultiGeofencingActionNodeTest {
     private static final int VERIFY_TIMEOUT_MS = 5000;
     private static final int MIN_INSIDE_DURATION_MS = 500;
     private static final int MIN_OUTSIDE_DURATION_MS = 500;
+    private static final long MIN_INSIDE_DURATION_METADATA_CONFIG_MS = 3000L;
+    private static final long MIN_OUTSIDE_DURATION_METADATA_CONFIG_MS = 3000L;
 
     private TbGpsMultiGeofencingActionNode node;
     private TbContext ctx;
@@ -141,27 +145,79 @@ public class TbGpsMultiGeofencingActionNodeTest {
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<String> connectionCaptor = ArgumentCaptor.forClass(String.class);
 
-        testEvents("Entered", latInside, longInside, msgCaptor, connectionCaptor);
+        TbMsg insideMsg = createTbMsgWithCoordinates(latInside, longInside);
+
+        testEvents("Entered", insideMsg, msgCaptor, connectionCaptor);
 
         msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         connectionCaptor = ArgumentCaptor.forClass(String.class);
         clearInvocations(ctx);
 
         sleep(MIN_INSIDE_DURATION_MS);
-        testEvents("Inside", latInside, longInside, msgCaptor, connectionCaptor);
+        insideMsg = createTbMsgWithCoordinates(latInside, longInside);
+
+        testEvents("Inside", insideMsg, msgCaptor, connectionCaptor);
 
         msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         connectionCaptor = ArgumentCaptor.forClass(String.class);
         clearInvocations(ctx);
 
-        testEvents("Left", latOutside, longOutside, msgCaptor, connectionCaptor);
+        TbMsg outsideMsg = createTbMsgWithCoordinates(latOutside, longOutside);
+
+        testEvents("Left", outsideMsg, msgCaptor, connectionCaptor);
 
         msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         connectionCaptor = ArgumentCaptor.forClass(String.class);
         clearInvocations(ctx);
 
         sleep(MIN_OUTSIDE_DURATION_MS);
-        testEvents("Outside", latOutside, longOutside, msgCaptor, connectionCaptor);
+        outsideMsg = createTbMsgWithCoordinates(latOutside, longOutside);
+
+        testEvents("Outside", outsideMsg, msgCaptor, connectionCaptor);
+    }
+
+    @Test
+    public void testGeofenceEventsWithDurationConfig() throws Exception {
+        double latInside = 48.8566;
+        double longInside = 2.3522;
+        double latOutside = 40.7128;
+        double longOutside = -74.0060;
+
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        metaData.putValue("durationConfig", JacksonUtil.toString(createGeofenceDurationConfig().getGeofenceDurationMap()));
+
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        ArgumentCaptor<String> connectionCaptor = ArgumentCaptor.forClass(String.class);
+
+        TbMsg insideMsg = createTbMsgWithCoordinates(latInside, longInside, metaData);
+
+        testEvents("Entered", insideMsg, msgCaptor, connectionCaptor);
+
+        msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        connectionCaptor = ArgumentCaptor.forClass(String.class);
+        clearInvocations(ctx);
+
+        sleep(MIN_INSIDE_DURATION_METADATA_CONFIG_MS);
+        insideMsg = createTbMsgWithCoordinates(latInside, longInside, metaData);
+
+        testEvents("Inside", insideMsg, msgCaptor, connectionCaptor);
+
+        msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        connectionCaptor = ArgumentCaptor.forClass(String.class);
+        clearInvocations(ctx);
+
+        TbMsg outsideMsg = createTbMsgWithCoordinates(latOutside, longOutside, metaData);
+
+        testEvents("Left", outsideMsg, msgCaptor, connectionCaptor);
+
+        msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        connectionCaptor = ArgumentCaptor.forClass(String.class);
+        clearInvocations(ctx);
+
+        sleep(MIN_OUTSIDE_DURATION_METADATA_CONFIG_MS);
+        outsideMsg = createTbMsgWithCoordinates(latOutside, longOutside, metaData);
+
+        testEvents("Outside", outsideMsg, msgCaptor, connectionCaptor);
     }
 
     @Test
@@ -179,14 +235,23 @@ public class TbGpsMultiGeofencingActionNodeTest {
         verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(1)).tellSuccess(msg);
     }
 
-    private void testEvents(String connectionType, double lat, double lon, ArgumentCaptor<TbMsg> msgCaptor, ArgumentCaptor<String> connectionCaptor) throws Exception {
-        TbMsg msg = createTbMsgWithCoordinates(lat, lon);
+    private GeofenceDurationConfig createGeofenceDurationConfig() {
+        Map<UUID, GeofenceDuration> durationMap = new HashMap<>();
+        GeofenceDuration duration = new GeofenceDuration();
+        duration.setMinInsideDuration(MIN_INSIDE_DURATION_METADATA_CONFIG_MS);
+        duration.setMinOutsideDuration(MIN_OUTSIDE_DURATION_METADATA_CONFIG_MS);
+        durationMap.put(ZONE_ID_1.getId(), duration);
+        durationMap.put(ZONE_ID_2.getId(), duration);
+        return new GeofenceDurationConfig(durationMap);
+    }
+
+    private void testEvents(String expectedConnectionType, TbMsg msg, ArgumentCaptor<TbMsg> msgCaptor, ArgumentCaptor<String> connectionCaptor) throws Exception {
         node.onMsg(ctx, msg);
 
         verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(2))
                 .enqueueForTellNext(msgCaptor.capture(), connectionCaptor.capture(), any(), any());
 
-        assertEquals(Arrays.asList(connectionType, connectionType), connectionCaptor.getAllValues());
+        assertEquals(Arrays.asList(expectedConnectionType, expectedConnectionType), connectionCaptor.getAllValues());
 
         for (AssetId zoneId : Arrays.asList(ZONE_ID_1, ZONE_ID_2)) {
             assertMessageForZone(msgCaptor.getAllValues(), zoneId);
@@ -224,6 +289,16 @@ public class TbGpsMultiGeofencingActionNodeTest {
 
         String data = objectMapper.writeValueAsString(jsonNode);
         TbMsgMetaData metaData = new TbMsgMetaData();
+        return TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, data);
+    }
+
+    private TbMsg createTbMsgWithCoordinates(double latitude, double longitude, TbMsgMetaData metaData) throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode jsonNode = objectMapper.createObjectNode();
+        jsonNode.put("latitude", latitude);
+        jsonNode.put("longitude", longitude);
+
+        String data = objectMapper.writeValueAsString(jsonNode);
         return TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, data);
     }
 
