@@ -60,31 +60,48 @@ public class GeofencingProcessor {
     public ListenableFuture<GeofenceResponse> process(RuleNodeId ruleNodeId, TbMsg msg, List<EntityId> matchedGeofences) {
         ListenableFuture<Set<GeofenceState>> geofenceStatesFuture = fetchGeofenceStatesForEntity(msg.getOriginator(), ruleNodeId);
 
-        return Futures.transform(geofenceStatesFuture, geofenceStates -> {
-            if (isEmpty(geofenceStates) && isEmpty(matchedGeofences)) {
-                return new GeofenceResponse();
-            }
+        return Futures.transform(geofenceStatesFuture, geofenceStates -> processGeofenceStates(ruleNodeId, msg, matchedGeofences, geofenceStates), MoreExecutors.directExecutor());
+    }
 
-            geofenceStates = geofenceStates == null ? new HashSet<>() : geofenceStates;
+    private GeofenceResponse processGeofenceStates(RuleNodeId ruleNodeId, TbMsg msg, List<EntityId> matchedGeofences, Set<GeofenceState> geofenceStates) {
+        if (isEmpty(geofenceStates) && isEmpty(matchedGeofences)) {
+            return new GeofenceResponse();
+        }
 
-            createNewGeofenceStates(geofenceStates, matchedGeofences);
+        geofenceStates = ensureNonNullGeofenceStates(geofenceStates);
+        createNewGeofenceStates(geofenceStates, matchedGeofences);
 
-            Optional<GeofenceDurationConfig> geofenceDurationConfig = getGeofenceDurationConfig(resolveDurationConfigKey(), msg);
+        Optional<GeofenceDurationConfig> geofenceDurationConfig = getGeofenceDurationConfig(resolveDurationConfigKey(), msg);
 
-            for (GeofenceState state : geofenceStates) {
-                state.updateStatus(nodeConfiguration, geofenceDurationConfig, msg, matchedGeofences);
-            }
+        updateGeofenceStates(geofenceStates, geofenceDurationConfig, msg, matchedGeofences);
 
-            Set<GeofenceState> changedStates = geofenceStates.stream().filter(GeofenceState::isStatusChanged).collect(Collectors.toSet());
+        Set<GeofenceState> changedStates = getChangedStates(geofenceStates);
+        GeofenceResponse geofenceResponse = buildGeofenceResponse(changedStates);
 
-            GeofenceResponse geofenceResponse = buildGeofenceResponse(changedStates);
+        Set<GeofenceState> aliveStates = getAliveStates(geofenceStates);
+        persistState(msg.getOriginator(), ruleNodeId, aliveStates);
 
-            Set<GeofenceState> aliveStates = geofenceStates.stream().filter(geofenceState -> !geofenceState.isStatus(GeofenceState.Status.OUTSIDE)).collect(Collectors.toSet());
+        return geofenceResponse;
+    }
 
-            persistState(msg.getOriginator(), ruleNodeId, aliveStates);
+    private Set<GeofenceState> ensureNonNullGeofenceStates(Set<GeofenceState> geofenceStates) {
+        return geofenceStates == null ? new HashSet<>() : geofenceStates;
+    }
 
-            return geofenceResponse;
-        }, MoreExecutors.directExecutor());
+    private void updateGeofenceStates(Set<GeofenceState> geofenceStates, Optional<GeofenceDurationConfig> geofenceDurationConfig, TbMsg msg, List<EntityId> matchedGeofences) {
+        geofenceStates.forEach(geofenceState -> geofenceState.updateStatus(nodeConfiguration, geofenceDurationConfig, msg, matchedGeofences));
+    }
+
+    private Set<GeofenceState> getChangedStates(Set<GeofenceState> geofenceStates) {
+        return geofenceStates.stream()
+                .filter(GeofenceState::isStatusChanged)
+                .collect(Collectors.toSet());
+    }
+
+    private Set<GeofenceState> getAliveStates(Set<GeofenceState> geofenceStates) {
+        return geofenceStates.stream()
+                .filter(geofenceState -> !geofenceState.isStatus(GeofenceState.Status.OUTSIDE))
+                .collect(Collectors.toSet());
     }
 
     private GeofenceResponse buildGeofenceResponse(Set<GeofenceState> geofenceStates) {
