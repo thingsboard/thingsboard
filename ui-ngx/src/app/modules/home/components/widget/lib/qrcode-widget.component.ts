@@ -28,7 +28,7 @@ import {
   isNumber,
   isObject,
   parseFunction,
-  safeExecute
+  safeExecute, unwrapModule
 } from '@core/utils';
 
 interface QrCodeWidgetSettings {
@@ -124,7 +124,7 @@ export class QrCodeWidgetComponent extends PageComponent implements OnInit, Afte
   private updateCanvas() {
     if (this.viewInited) {
       import('qrcode').then((QRCode) => {
-        QRCode.toCanvas(this.canvasRef.nativeElement, this.qrCodeText);
+        unwrapModule(QRCode).toCanvas(this.canvasRef.nativeElement, this.qrCodeText);
         this.canvasRef.nativeElement.style.width = 'auto';
         this.canvasRef.nativeElement.style.height = 'auto';
       });

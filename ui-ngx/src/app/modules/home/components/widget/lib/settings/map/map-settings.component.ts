@@ -41,7 +41,7 @@ import {
   UnitedMapSettings
 } from '@home/components/widget/lib/maps/map-models';
 import { extractType } from '@core/utils';
-import { keys } from 'ts-transformer-keys';
+// import { keys } from 'ts-transformer-keys';
 import { IAliasController } from '@core/api/widget-api.models';
 import { Widget } from '@shared/models/widget.models';
 
@@ -140,7 +140,8 @@ export class MapSettingsComponent extends PageComponent implements OnInit, Contr
 
   writeValue(value: UnitedMapSettings): void {
     this.modelValue = value;
-    const mapProviderSettings = extractType<MapProviderSettings>(value, keys<MapProviderSettings>());
+    // TODO: ts-transformer
+    /* const mapProviderSettings = extractType<MapProviderSettings>(value, keys<MapProviderSettings>());
     const commonMapSettings = extractType<CommonMapSettings>(value, keys<CommonMapSettings>());
     const markersSettings = extractType<MarkersSettings>(value, keys<MarkersSettings>());
     const polygonSettings = extractType<PolygonSettings>(value, keys<PolygonSettings>());
@@ -159,7 +160,7 @@ export class MapSettingsComponent extends PageComponent implements OnInit, Contr
     } else {
       formValue.markerClusteringSettings = extractType<MarkerClusteringSettings>(value, keys<MarkerClusteringSettings>());
     }
-    this.mapSettingsFormGroup.patchValue( formValue, {emitEvent: false} );
+    this.mapSettingsFormGroup.patchValue( formValue, {emitEvent: false} ); */
     this.updateValidators(false);
   }
 

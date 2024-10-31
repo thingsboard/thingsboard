@@ -30,7 +30,7 @@ import {
   TripAnimationMarkerSettings
 } from 'src/app/modules/home/components/widget/lib/maps/map-models';
 import { extractType } from '@core/utils';
-import { keys } from 'ts-transformer-keys';
+// import { keys } from 'ts-transformer-keys';
 
 @Component({
   selector: 'tb-trip-animation-widget-settings',
@@ -69,21 +69,22 @@ export class TripAnimationWidgetSettingsComponent extends WidgetSettingsComponen
   }
 
   protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
-    const mapProviderSettings = extractType<MapProviderSettings>(settings, keys<MapProviderSettings>());
+    // TODO: ts-transformer
+    /*const mapProviderSettings = extractType<MapProviderSettings>(settings, keys<MapProviderSettings>());
     const commonMapSettings = extractType<TripAnimationCommonSettings>(settings, keys<TripAnimationCommonSettings>());
     const markersSettings = extractType<TripAnimationMarkerSettings>(settings, keys<TripAnimationMarkerSettings>());
     const pathSettings = extractType<PolylineSettings>(settings, keys<PolylineSettings>());
     const pointSettings = extractType<PointsSettings>(settings, keys<PointsSettings>());
     const polygonSettings = extractType<PolygonSettings>(settings, keys<PolygonSettings>());
-    const circleSettings = extractType<CircleSettings>(settings, keys<CircleSettings>());
+    const circleSettings = extractType<CircleSettings>(settings, keys<CircleSettings>());*/
     return {
-      mapProviderSettings,
+      /*mapProviderSettings,
       commonMapSettings,
       markersSettings,
       pathSettings,
       pointSettings,
       polygonSettings,
-      circleSettings
+      circleSettings*/
     };
   }
 

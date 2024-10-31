@@ -46,6 +46,7 @@ import { from } from 'rxjs';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
+import { tap } from 'rxjs/operators';
 
 export enum WidgetComponentActionType {
   MOUSE_DOWN,
