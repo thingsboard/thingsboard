@@ -90,6 +90,11 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
         addGeofenceMessages(messages, originalMsg, metaData, geofenceResponse.getInsideGeofences(), GpsGeofencingEvents.INSIDE);
         addGeofenceMessages(messages, originalMsg, metaData, geofenceResponse.getOutsideGeofences(), GpsGeofencingEvents.OUTSIDE);
 
+        if (messages.isEmpty()) {
+            ctx.tellSuccess(originalMsg);
+            return;
+        }
+
         TbMsgCallbackWrapper wrapper = new MultipleTbMsgsCallbackWrapper(messages.size(), new TbMsgCallback() {
             @Override
             public void onSuccess() {
