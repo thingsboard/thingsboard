@@ -77,10 +77,7 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
 
         withCallback(geofenceResponseFuture, geofenceResponse -> {
             processGeofenceResponse(ctx, msg, msg.getOriginator(), geofenceResponse);
-        }, t -> {
-            log.error("Failed to process geofencing", t);
-            ctx.tellFailure(msg, t);
-        }, MoreExecutors.directExecutor());
+        }, t -> ctx.tellFailure(msg, t), MoreExecutors.directExecutor());
     }
 
     private void processGeofenceResponse(TbContext ctx, TbMsg originalMsg, EntityId originatorId, GeofenceResponse geofenceResponse) {

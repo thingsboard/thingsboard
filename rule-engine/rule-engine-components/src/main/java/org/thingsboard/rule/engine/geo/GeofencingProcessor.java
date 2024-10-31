@@ -61,9 +61,7 @@ public class GeofencingProcessor {
                 return new GeofenceResponse();
             }
 
-            if (geofenceStates == null) {
-                geofenceStates = new HashSet<>();
-            }
+            geofenceStates = geofenceStates == null ? new HashSet<>() : geofenceStates;
 
             createNewGeofenceStates(geofenceStates, matchedGeofences);
 
