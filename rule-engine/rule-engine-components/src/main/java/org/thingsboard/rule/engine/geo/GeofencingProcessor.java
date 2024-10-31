@@ -75,7 +75,9 @@ public class GeofencingProcessor {
                 state.updateStatus(nodeConfiguration, geofenceDurationConfig, msg, matchedGeofences);
             }
 
-            GeofenceResponse geofenceResponse = buildGeofenceResponse(geofenceStates);
+            Set<GeofenceState> changedStates = geofenceStates.stream().filter(GeofenceState::isStatusChanged).collect(Collectors.toSet());
+
+            GeofenceResponse geofenceResponse = buildGeofenceResponse(changedStates);
 
             Set<GeofenceState> aliveStates = geofenceStates.stream().filter(geofenceState -> !geofenceState.isStatus(GeofenceState.Status.OUTSIDE)).collect(Collectors.toSet());
 
