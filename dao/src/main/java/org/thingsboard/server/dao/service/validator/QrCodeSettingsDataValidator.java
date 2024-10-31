@@ -42,17 +42,18 @@ public class QrCodeSettingsDataValidator extends DataValidator<QrCodeSettings> {
         if (!qrCodeSettings.isUseDefaultApp() && (mobileAppBundleId == null)) {
             throw new DataValidationException("Mobile app bundle is required to use custom application!");
         }
-        if (!qrCodeSettings.isUseDefaultApp()){
-            MobileApp androidApp = mobileAppDao.findByBundleIdAndPlatformType(tenantId, mobileAppBundleId, PlatformType.ANDROID);
-            StoreInfo androidStoreInfo = androidApp.getStoreInfo();
-            if (androidStoreInfo == null) {
-                throw new DataValidationException("Android app store info is empty! ");
+        if (!qrCodeSettings.isUseDefaultApp()) {
+            if (qrCodeSettings.isAndroidEnabled()) {
+                MobileApp androidApp = mobileAppDao.findByBundleIdAndPlatformType(tenantId, mobileAppBundleId, PlatformType.ANDROID);
+                if (androidApp != null && androidApp.getStoreInfo() == null) {
+                    throw new DataValidationException("Android app store info is empty! ");
+                }
             }
-
-            MobileApp iosApp = mobileAppDao.findByBundleIdAndPlatformType(tenantId, mobileAppBundleId, PlatformType.IOS);
-            StoreInfo iosStoreInfo = iosApp.getStoreInfo();
-            if (iosStoreInfo == null) {
-                throw new DataValidationException("IOS app store info is empty! ");
+            if (qrCodeSettings.isIosEnabled()) {
+                MobileApp iosApp = mobileAppDao.findByBundleIdAndPlatformType(tenantId, mobileAppBundleId, PlatformType.IOS);
+                if (iosApp != null && iosApp.getStoreInfo() == null) {
+                    throw new DataValidationException("IOS app store info is empty! ");
+                }
             }
         }
     }
