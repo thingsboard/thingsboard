@@ -82,18 +82,27 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
         TbMsgMetaData metaData = originalMsg.getMetaData().copy();
         metaData.putValue("originatorId", originatorId.toString());
 
+        List<TbPair<TbMsg, String>> messages = collectGeofenceMessages(originalMsg, metaData, geofenceResponse);
+
+        if (messages.isEmpty()) {
+            ctx.tellSuccess(originalMsg);
+        } else {
+            TbMsgCallbackWrapper wrapper = createCallbackWrapper(ctx, originalMsg, messages.size());
+            messages.forEach(msgPair -> ctx.enqueueForTellNext(msgPair.getFirst(), msgPair.getSecond(), wrapper::onSuccess, wrapper::onFailure));
+        }
+    }
+
+    private List<TbPair<TbMsg, String>> collectGeofenceMessages(TbMsg originalMsg, TbMsgMetaData metaData, GeofenceResponse geofenceResponse) {
         List<TbPair<TbMsg, String>> messages = new ArrayList<>();
         addGeofenceMessages(messages, originalMsg, metaData, geofenceResponse.getEnteredGeofences(), GpsGeofencingEvents.ENTERED);
         addGeofenceMessages(messages, originalMsg, metaData, geofenceResponse.getLeftGeofences(), GpsGeofencingEvents.LEFT);
         addGeofenceMessages(messages, originalMsg, metaData, geofenceResponse.getInsideGeofences(), GpsGeofencingEvents.INSIDE);
         addGeofenceMessages(messages, originalMsg, metaData, geofenceResponse.getOutsideGeofences(), GpsGeofencingEvents.OUTSIDE);
+        return messages;
+    }
 
-        if (messages.isEmpty()) {
-            ctx.tellSuccess(originalMsg);
-            return;
-        }
-
-        TbMsgCallbackWrapper wrapper = new MultipleTbMsgsCallbackWrapper(messages.size(), new TbMsgCallback() {
+    private TbMsgCallbackWrapper createCallbackWrapper(TbContext ctx, TbMsg originalMsg, int messageCount) {
+        return new MultipleTbMsgsCallbackWrapper(messageCount, new TbMsgCallback() {
             @Override
             public void onSuccess() {
                 ctx.tellSuccess(originalMsg);
@@ -104,8 +113,6 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
                 ctx.tellFailure(originalMsg, e);
             }
         });
-
-        messages.forEach(msgPair -> ctx.enqueueForTellNext(msgPair.getFirst(), msgPair.getSecond(), wrapper::onSuccess, wrapper::onFailure));
     }
 
     private void addGeofenceMessages(List<TbPair<TbMsg, String>> messages, TbMsg originalMsg, TbMsgMetaData metaData,
