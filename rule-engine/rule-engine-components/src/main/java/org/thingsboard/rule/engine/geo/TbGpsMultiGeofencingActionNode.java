@@ -73,7 +73,7 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         ListenableFuture<List<EntityId>> matchedZonesFuture = findMatchedZones(ctx, msg);
 
-        ListenableFuture<GeofenceResponse> geofenceResponseFuture = Futures.transformAsync(matchedZonesFuture, matchedZones -> geofencingProcessor.process(ctx.getSelfId(), msg, msg.getOriginator(), matchedZones), MoreExecutors.directExecutor());
+        ListenableFuture<GeofenceResponse> geofenceResponseFuture = Futures.transformAsync(matchedZonesFuture, matchedZones -> geofencingProcessor.process(ctx.getSelfId(), msg, matchedZones), MoreExecutors.directExecutor());
 
         withCallback(geofenceResponseFuture, geofenceResponse -> {
             processGeofenceResponse(ctx, msg, msg.getOriginator(), geofenceResponse);

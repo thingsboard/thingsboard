@@ -57,8 +57,8 @@ public class GeofencingProcessor {
         this.context = context;
     }
 
-    public ListenableFuture<GeofenceResponse> process(RuleNodeId ruleNodeId, TbMsg msg, EntityId entityId, List<EntityId> matchedGeofences) {
-        ListenableFuture<Set<GeofenceState>> geofenceStatesFuture = fetchGeofenceStatesForEntity(entityId, ruleNodeId);
+    public ListenableFuture<GeofenceResponse> process(RuleNodeId ruleNodeId, TbMsg msg, List<EntityId> matchedGeofences) {
+        ListenableFuture<Set<GeofenceState>> geofenceStatesFuture = fetchGeofenceStatesForEntity(msg.getOriginator(), ruleNodeId);
 
         return Futures.transform(geofenceStatesFuture, geofenceStates -> {
             if (isEmpty(geofenceStates) && isEmpty(matchedGeofences)) {
@@ -79,7 +79,7 @@ public class GeofencingProcessor {
 
             Set<GeofenceState> aliveStates = geofenceStates.stream().filter(geofenceState -> !geofenceState.isStatus(GeofenceState.Status.OUTSIDE)).collect(Collectors.toSet());
 
-            persistState(entityId, ruleNodeId, aliveStates);
+            persistState(msg.getOriginator(), ruleNodeId, aliveStates);
 
             return geofenceResponse;
         }, MoreExecutors.directExecutor());
