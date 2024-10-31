@@ -115,95 +115,95 @@ public class TbGpsMultiGeofencingActionNodeTest {
 
     @Test
     public void testEnteredEvent() throws Exception {
-        TbMsg msg = createTbMsgWithCoordinates(DEVICE_ID, 48.8566, 2.3522);
+        TbMsg msg = createTbMsgWithCoordinates(48.8566, 2.3522);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<String> labelCaptor = ArgumentCaptor.forClass(String.class);
 
         node.onMsg(ctx, msg);
 
-        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(1)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
+        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(1)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture(), any(), any());
 
         assertCapturedEvent(msgCaptor, labelCaptor, "Entered");
     }
 
     @Test
     public void testInsideEvent() throws Exception {
-        TbMsg msgEntered = createTbMsgWithCoordinates(DEVICE_ID, 48.8566, 2.3522);
+        TbMsg msgEntered = createTbMsgWithCoordinates(48.8566, 2.3522);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<String> labelCaptor = ArgumentCaptor.forClass(String.class);
 
         node.onMsg(ctx, msgEntered);
 
-        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(1)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
+        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(1)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture(), any(), any());
 
         BaseAttributeKvEntry attributeKvEntry = captureStateAttribute();
         when(attributesService.find(any(), any(), any(AttributeScope.class), eq(ASSET_GEOFENCE_STATE_KEY_ATTR))).thenReturn(Futures.immediateFuture(Optional.of(attributeKvEntry)));
 
         sleep(MIN_INSIDE_DURATION_MS);
 
-        TbMsg msgInside = createTbMsgWithCoordinates(DEVICE_ID, 48.8566, 2.3522);
+        TbMsg msgInside = createTbMsgWithCoordinates(48.8566, 2.3522);
 
         node.onMsg(ctx, msgInside);
 
-        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(2)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
+        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(2)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture(), any(), any());
 
         assertCapturedEvent(msgCaptor, labelCaptor, "Inside");
     }
 
     @Test
     public void testLeftEvent() throws Exception {
-        TbMsg msgEntered = createTbMsgWithCoordinates(DEVICE_ID, 48.8566, 2.3522);
-        TbMsg msgLeft = createTbMsgWithCoordinates(DEVICE_ID, 40.7128, -74.0060);
+        TbMsg msgEntered = createTbMsgWithCoordinates(48.8566, 2.3522);
+        TbMsg msgLeft = createTbMsgWithCoordinates(40.7128, -74.0060);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<String> labelCaptor = ArgumentCaptor.forClass(String.class);
 
         node.onMsg(ctx, msgEntered);
 
-        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(1)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
+        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(1)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture(), any(), any());
 
         BaseAttributeKvEntry attributeKvEntry = captureStateAttribute();
         when(attributesService.find(any(), any(), any(AttributeScope.class), eq(ASSET_GEOFENCE_STATE_KEY_ATTR))).thenReturn(Futures.immediateFuture(Optional.of(attributeKvEntry)));
 
         node.onMsg(ctx, msgLeft);
 
-        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(2)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
+        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(2)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture(), any(), any());
 
         assertCapturedEvent(msgCaptor, labelCaptor, "Left");
     }
 
     @Test
     public void testOutsideEvent() throws Exception {
-        TbMsg msgInside = createTbMsgWithCoordinates(DEVICE_ID, 48.8566, 2.3522);
+        TbMsg msgInside = createTbMsgWithCoordinates(48.8566, 2.3522);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<String> labelCaptor = ArgumentCaptor.forClass(String.class);
 
         node.onMsg(ctx, msgInside);
 
-        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(1)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
+        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(1)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture(), any(), any());
 
         BaseAttributeKvEntry attributeKvEntry = captureStateAttribute();
         when(attributesService.find(any(), any(), any(AttributeScope.class), eq(ASSET_GEOFENCE_STATE_KEY_ATTR))).thenReturn(Futures.immediateFuture(Optional.of(attributeKvEntry)));
 
-        TbMsg msgLeft = createTbMsgWithCoordinates(DEVICE_ID, 40.7128, -74.0060);
+        TbMsg msgLeft = createTbMsgWithCoordinates(40.7128, -74.0060);
 
         node.onMsg(ctx, msgLeft);
 
-        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(2)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
+        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(2)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture(), any(), any());
 
         sleep(MIN_OUTSIDE_DURATION_MS);
 
         attributeKvEntry = captureStateAttribute();
         when(attributesService.find(any(), any(), any(AttributeScope.class), eq(ASSET_GEOFENCE_STATE_KEY_ATTR))).thenReturn(Futures.immediateFuture(Optional.of(attributeKvEntry)));
 
-        TbMsg msgOutside = createTbMsgWithCoordinates(DEVICE_ID, 40.7128, -74.0060);
+        TbMsg msgOutside = createTbMsgWithCoordinates(40.7128, -74.0060);
 
         node.onMsg(ctx, msgOutside);
 
-        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(3)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
+        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(3)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture(), any(), any());
 
         assertCapturedEvent(msgCaptor, labelCaptor, "Outside");
     }
@@ -214,7 +214,7 @@ public class TbGpsMultiGeofencingActionNodeTest {
         return (BaseAttributeKvEntry) attributeCaptor.getValue();
     }
 
-    private TbMsg createTbMsgWithCoordinates(DeviceId deviceId, double latitude, double longitude) throws Exception {
+    private TbMsg createTbMsgWithCoordinates(double latitude, double longitude) throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode jsonNode = objectMapper.createObjectNode();
         jsonNode.put("latitude", latitude);
@@ -222,8 +222,7 @@ public class TbGpsMultiGeofencingActionNodeTest {
 
         String data = objectMapper.writeValueAsString(jsonNode);
         TbMsgMetaData metaData = new TbMsgMetaData();
-        TbMsg tbMsg = TbMsg.newMsg(TbMsgType.NA, deviceId, metaData, data);
-        return tbMsg;
+        return TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, data);
     }
 
     private void assertCapturedEvent(ArgumentCaptor<TbMsg> msgCaptor, ArgumentCaptor<String> relationTypeCaptor, String expectedRelationType) {
@@ -256,6 +255,7 @@ public class TbGpsMultiGeofencingActionNodeTest {
         geoConfig.setMinInsideDurationTimeUnit(TimeUnit.MILLISECONDS.name());
         geoConfig.setMinOutsideDurationTimeUnit(TimeUnit.MILLISECONDS.name());
         geoConfig.setRelationsQuery(relationsQuery);
+        geoConfig.setMetadataDurationConfigKey("durationConfig");
         return geoConfig;
     }
 
