@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.mobile.qrCodeSettings;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
@@ -37,12 +38,13 @@ public class QrCodeSettings extends BaseData<QrCodeSettingsId> implements HasTen
     private TenantId tenantId;
     @Schema(description = "Use settings from system level", example = "true")
     private boolean useSystemSettings;
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of application: true means use default Thingsboard app", example = "true")
+    @Schema(description = "Type of application: true means use default Thingsboard app", example = "true")
     private boolean useDefaultApp;
     @Schema(description = "Mobile app bundle.")
     private MobileAppBundleId mobileAppBundleId;
-    @Valid
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "QR code config configuration.")
+    @Valid
+    @NotNull
     private QRCodeConfig qrCodeConfig;
     @Schema(description = "Indicates if google play link is available", example = "true")
     private boolean androidEnabled;

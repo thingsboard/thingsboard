@@ -39,7 +39,6 @@ public class QrCodeSettingsDataValidator extends DataValidator<QrCodeSettings> {
     @Override
     protected void validateDataImpl(TenantId tenantId, QrCodeSettings qrCodeSettings) {
         MobileAppBundleId mobileAppBundleId = qrCodeSettings.getMobileAppBundleId();
-        QRCodeConfig qrCodeConfig = qrCodeSettings.getQrCodeConfig();
         if (!qrCodeSettings.isUseDefaultApp() && (mobileAppBundleId == null)) {
             throw new DataValidationException("Mobile app bundle is required to use custom application!");
         }
@@ -55,9 +54,6 @@ public class QrCodeSettingsDataValidator extends DataValidator<QrCodeSettings> {
             if (iosStoreInfo == null) {
                 throw new DataValidationException("IOS app store info is empty! ");
             }
-        }
-        if (qrCodeConfig == null) {
-            throw new DataValidationException("Qr code configuration is required!");
         }
     }
 }
