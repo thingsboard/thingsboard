@@ -32,7 +32,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class AbstractGeofencingNode<T extends AbstractTbGpsGeofencingNodeConfiguration<T>> implements TbNode {
+public abstract class AbstractGeofencingNode<T extends TbGpsGeofencingFilterNodeConfiguration> implements TbNode {
 
     protected T config;
     protected JtsSpatialContext jtsCtx;

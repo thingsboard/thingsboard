@@ -25,7 +25,13 @@ import java.util.concurrent.TimeUnit;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class TbGpsGeofencingActionNodeConfiguration extends AbstractTbGpsGeofencingActionNodeConfiguration<TbGpsGeofencingActionNodeConfiguration> {
+public class TbGpsGeofencingActionNodeConfiguration extends TbGpsGeofencingFilterNodeConfiguration {
+
+    private long minInsideDuration;
+    private long minOutsideDuration;
+
+    private String minInsideDurationTimeUnit;
+    private String minOutsideDurationTimeUnit;
 
     private boolean reportPresenceStatusOnEachMessage;
 

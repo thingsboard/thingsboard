@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.geo;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.data.RelationsQuery;
@@ -26,7 +27,8 @@ import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class TbGpsMultiGeofencingActionNodeConfiguration extends AbstractTbGpsGeofencingActionNodeConfiguration<TbGpsMultiGeofencingActionNodeConfiguration> {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class TbGpsMultiGeofencingActionNodeConfiguration extends TbGpsGeofencingActionNodeConfiguration {
 
     private RelationsQuery relationsQuery;
     private String metadataDurationConfigKey;
