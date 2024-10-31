@@ -27,6 +27,10 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.springframework.util.CollectionUtils.isEmpty;
+import static org.thingsboard.rule.engine.geo.GeofenceStateStatus.ENTERED;
+import static org.thingsboard.rule.engine.geo.GeofenceStateStatus.INSIDE;
+import static org.thingsboard.rule.engine.geo.GeofenceStateStatus.LEFT;
+import static org.thingsboard.rule.engine.geo.GeofenceStateStatus.OUTSIDE;
 
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -59,30 +63,31 @@ public class GeofenceState {
     }
 
     private void handleOutsideTransition(TbGpsMultiGeofencingActionNodeConfiguration nodeConfiguration, Optional<GeofenceDurationConfig> optionalDurationConfig, long currentTime) {
-        if (GeofenceStateStatus.LEFT.equals(geofenceStateStatus)) {
+        if (LEFT.equals(geofenceStateStatus)) {
             if (hasExceededOutsideDuration(currentTime - leftTs, nodeConfiguration, optionalDurationConfig)) {
-                geofenceStateStatus = GeofenceStateStatus.OUTSIDE;
-                setStatusChanged(true);
+                updateStatus(OUTSIDE);
             }
         }
-        if (GeofenceStateStatus.ENTERED.equals(geofenceStateStatus) || GeofenceStateStatus.INSIDE.equals(geofenceStateStatus)) {
-            geofenceStateStatus = GeofenceStateStatus.LEFT;
+        if (ENTERED.equals(geofenceStateStatus) || INSIDE.equals(geofenceStateStatus)) {
+            updateStatus(LEFT);
             leftTs = currentTime;
-            setStatusChanged(true);
         }
     }
 
     private void handleInsideTransition(TbGpsMultiGeofencingActionNodeConfiguration nodeConfiguration, Optional<GeofenceDurationConfig> optionalDurationConfig, long currentTime) {
-        if (GeofenceStateStatus.ENTERED.equals(geofenceStateStatus)) {
+        if (ENTERED.equals(geofenceStateStatus)) {
             if (hasExceededInsideDuration(currentTime - enterTs, nodeConfiguration, optionalDurationConfig)) {
-                geofenceStateStatus = GeofenceStateStatus.INSIDE;
-                setStatusChanged(true);
+                updateStatus(INSIDE);
             }
         } else if (geofenceStateStatus == null) {
-            geofenceStateStatus = GeofenceStateStatus.ENTERED;
+            updateStatus(ENTERED);
             enterTs = currentTime;
-            setStatusChanged(true);
         }
+    }
+
+    private void updateStatus(GeofenceStateStatus geofenceStateStatus) {
+        this.geofenceStateStatus = geofenceStateStatus;
+        statusChanged = true;
     }
 
     private boolean hasExceededOutsideDuration(long elapsedTime, TbGpsMultiGeofencingActionNodeConfiguration nodeConfiguration, Optional<GeofenceDurationConfig> optionalDurationConfig) {
