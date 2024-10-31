@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2024 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,6 +47,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.relation.RelationService;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,8 +55,10 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.Thread.sleep;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
@@ -64,7 +67,7 @@ import static org.mockito.Mockito.when;
 
 public class TbGpsMultiGeofencingActionNodeTest {
 
-    private static final String PERIMETER_DEFINITION_JSON = """
+    private static final String PERIMETER_DEFINITION_JSON_1 = """
             {
               "perimeterType": "CIRCLE",
               "centerLatitude": 48.8566,
@@ -73,10 +76,22 @@ public class TbGpsMultiGeofencingActionNodeTest {
               "rangeUnit": "KILOMETER"
             }
             """;
+    private static final String PERIMETER_DEFINITION_JSON_2 = """
+            {
+              "perimeterType": "CIRCLE",
+              "centerLatitude": 48.8510,
+              "centerLongitude": 2.3470,
+              "range": 5,
+              "rangeUnit": "KILOMETER"
+            }
+            """;
+
     private static final RuleNodeId RULE_NODE_ID = new RuleNodeId(RuleNodeId.NULL_UUID);
     private static final String ASSET_GEOFENCE_STATE_KEY_ATTR = "geofenceState_" + RULE_NODE_ID;
     private static final DeviceId DEVICE_ID = new DeviceId(DeviceId.NULL_UUID);
-    private static final AssetId ZONE_ID = new AssetId(AssetId.NULL_UUID);
+    private static final AssetId ZONE_ID_1 = new AssetId(UUID.randomUUID());
+    private static final AssetId ZONE_ID_2 = new AssetId(UUID.randomUUID());
+
     private static final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
     private static final int VERIFY_TIMEOUT_MS = 5000;
     private static final int MIN_INSIDE_DURATION_MS = 500;
@@ -105,107 +120,94 @@ public class TbGpsMultiGeofencingActionNodeTest {
 
         when(ctx.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
-        EntityRelation entityRelation = new EntityRelation(DEVICE_ID, ZONE_ID, "DeviceToZone", RelationTypeGroup.COMMON);
-        when(relationService.findByQuery(any(), any())).thenReturn(Futures.immediateFuture(List.of(entityRelation)));
+        EntityRelation toZoneRelation1 = new EntityRelation(DEVICE_ID, ZONE_ID_1, "DeviceToZone", RelationTypeGroup.COMMON);
+        EntityRelation toZoneRelation2 = new EntityRelation(DEVICE_ID, ZONE_ID_2, "DeviceToZone", RelationTypeGroup.COMMON);
+        when(relationService.findByQuery(any(), any())).thenReturn(Futures.immediateFuture(List.of(toZoneRelation1, toZoneRelation2)));
 
-        BaseAttributeKvEntry perimeterAttribute = new BaseAttributeKvEntry(new JsonDataEntry(geoConfig.getPerimeterKeyName(), PERIMETER_DEFINITION_JSON), System.currentTimeMillis());
-        when(attributesService.find(any(), any(), any(AttributeScope.class), eq(geoConfig.getPerimeterKeyName()))).thenReturn(Futures.immediateFuture(Optional.of(perimeterAttribute)));
+        BaseAttributeKvEntry perimeterAttribute1 = new BaseAttributeKvEntry(new JsonDataEntry(geoConfig.getPerimeterKeyName(), PERIMETER_DEFINITION_JSON_1), System.currentTimeMillis());
+        BaseAttributeKvEntry perimeterAttribute2 = new BaseAttributeKvEntry(new JsonDataEntry(geoConfig.getPerimeterKeyName(), PERIMETER_DEFINITION_JSON_2), System.currentTimeMillis());
+        when(attributesService.find(any(), eq(ZONE_ID_1), any(AttributeScope.class), eq(geoConfig.getPerimeterKeyName()))).thenReturn(Futures.immediateFuture(Optional.of(perimeterAttribute1)));
+        when(attributesService.find(any(), eq(ZONE_ID_2), any(AttributeScope.class), eq(geoConfig.getPerimeterKeyName()))).thenReturn(Futures.immediateFuture(Optional.of(perimeterAttribute2)));
         when(attributesService.find(any(), any(), any(AttributeScope.class), eq(ASSET_GEOFENCE_STATE_KEY_ATTR))).thenReturn(Futures.immediateFuture(Optional.empty()));
     }
 
     @Test
-    public void testEnteredEvent() throws Exception {
-        TbMsg msg = createTbMsgWithCoordinates(48.8566, 2.3522);
+    public void testGeofenceEvents() throws Exception {
+        double latInside = 48.8566;
+        double longInside = 2.3522;
+        double latOutside = 40.7128;
+        double longOutside = -74.0060;
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        ArgumentCaptor<String> labelCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> connectionCaptor = ArgumentCaptor.forClass(String.class);
+
+        testEvents("Entered", latInside, longInside, msgCaptor, connectionCaptor);
+
+        msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        connectionCaptor = ArgumentCaptor.forClass(String.class);
+        clearInvocations(ctx);
+
+        sleep(MIN_INSIDE_DURATION_MS);
+        testEvents("Inside", latInside, longInside, msgCaptor, connectionCaptor);
+
+        msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        connectionCaptor = ArgumentCaptor.forClass(String.class);
+        clearInvocations(ctx);
+
+        testEvents("Left", latOutside, longOutside, msgCaptor, connectionCaptor);
+
+        msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        connectionCaptor = ArgumentCaptor.forClass(String.class);
+        clearInvocations(ctx);
+
+        sleep(MIN_OUTSIDE_DURATION_MS);
+        testEvents("Outside", latOutside, longOutside, msgCaptor, connectionCaptor);
+    }
+
+    @Test
+    public void testNoEventsWhenOutsideZone() throws Exception {
+        TbMsg msg = createTbMsgWithCoordinates(20.8566, 21.3522);
+
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        ArgumentCaptor<String> connectionCaptor = ArgumentCaptor.forClass(String.class);
 
         node.onMsg(ctx, msg);
 
-        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(1)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture(), any(), any());
+        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(0))
+                .enqueueForTellNext(msgCaptor.capture(), connectionCaptor.capture(), any(), any());
 
-        assertCapturedEvent(msgCaptor, labelCaptor, "Entered");
+        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(1)).tellSuccess(msg);
     }
 
-    @Test
-    public void testInsideEvent() throws Exception {
-        TbMsg msgEntered = createTbMsgWithCoordinates(48.8566, 2.3522);
+    private void testEvents(String connectionType, double lat, double lon, ArgumentCaptor<TbMsg> msgCaptor, ArgumentCaptor<String> connectionCaptor) throws Exception {
+        TbMsg msg = createTbMsgWithCoordinates(lat, lon);
+        node.onMsg(ctx, msg);
 
-        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        ArgumentCaptor<String> labelCaptor = ArgumentCaptor.forClass(String.class);
+        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(2))
+                .enqueueForTellNext(msgCaptor.capture(), connectionCaptor.capture(), any(), any());
 
-        node.onMsg(ctx, msgEntered);
+        assertEquals(Arrays.asList(connectionType, connectionType), connectionCaptor.getAllValues());
 
-        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(1)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture(), any(), any());
+        for (AssetId zoneId : Arrays.asList(ZONE_ID_1, ZONE_ID_2)) {
+            assertMessageForZone(msgCaptor.getAllValues(), zoneId);
+        }
 
-        BaseAttributeKvEntry attributeKvEntry = captureStateAttribute();
-        when(attributesService.find(any(), any(), any(AttributeScope.class), eq(ASSET_GEOFENCE_STATE_KEY_ATTR))).thenReturn(Futures.immediateFuture(Optional.of(attributeKvEntry)));
-
-        sleep(MIN_INSIDE_DURATION_MS);
-
-        TbMsg msgInside = createTbMsgWithCoordinates(48.8566, 2.3522);
-
-        node.onMsg(ctx, msgInside);
-
-        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(2)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture(), any(), any());
-
-        assertCapturedEvent(msgCaptor, labelCaptor, "Inside");
+        updateStateAttribute();
     }
 
-    @Test
-    public void testLeftEvent() throws Exception {
-        TbMsg msgEntered = createTbMsgWithCoordinates(48.8566, 2.3522);
-        TbMsg msgLeft = createTbMsgWithCoordinates(40.7128, -74.0060);
-
-        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        ArgumentCaptor<String> labelCaptor = ArgumentCaptor.forClass(String.class);
-
-        node.onMsg(ctx, msgEntered);
-
-        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(1)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture(), any(), any());
-
+    private void updateStateAttribute() {
         BaseAttributeKvEntry attributeKvEntry = captureStateAttribute();
-        when(attributesService.find(any(), any(), any(AttributeScope.class), eq(ASSET_GEOFENCE_STATE_KEY_ATTR))).thenReturn(Futures.immediateFuture(Optional.of(attributeKvEntry)));
-
-        node.onMsg(ctx, msgLeft);
-
-        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(2)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture(), any(), any());
-
-        assertCapturedEvent(msgCaptor, labelCaptor, "Left");
+        when(attributesService.find(any(), any(), any(AttributeScope.class), eq(ASSET_GEOFENCE_STATE_KEY_ATTR)))
+                .thenReturn(Futures.immediateFuture(Optional.of(attributeKvEntry)));
     }
 
-    @Test
-    public void testOutsideEvent() throws Exception {
-        TbMsg msgInside = createTbMsgWithCoordinates(48.8566, 2.3522);
-
-        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        ArgumentCaptor<String> labelCaptor = ArgumentCaptor.forClass(String.class);
-
-        node.onMsg(ctx, msgInside);
-
-        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(1)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture(), any(), any());
-
-        BaseAttributeKvEntry attributeKvEntry = captureStateAttribute();
-        when(attributesService.find(any(), any(), any(AttributeScope.class), eq(ASSET_GEOFENCE_STATE_KEY_ATTR))).thenReturn(Futures.immediateFuture(Optional.of(attributeKvEntry)));
-
-        TbMsg msgLeft = createTbMsgWithCoordinates(40.7128, -74.0060);
-
-        node.onMsg(ctx, msgLeft);
-
-        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(2)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture(), any(), any());
-
-        sleep(MIN_OUTSIDE_DURATION_MS);
-
-        attributeKvEntry = captureStateAttribute();
-        when(attributesService.find(any(), any(), any(AttributeScope.class), eq(ASSET_GEOFENCE_STATE_KEY_ATTR))).thenReturn(Futures.immediateFuture(Optional.of(attributeKvEntry)));
-
-        TbMsg msgOutside = createTbMsgWithCoordinates(40.7128, -74.0060);
-
-        node.onMsg(ctx, msgOutside);
-
-        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(3)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture(), any(), any());
-
-        assertCapturedEvent(msgCaptor, labelCaptor, "Outside");
+    private void assertMessageForZone(List<TbMsg> messages, AssetId zoneId) {
+        TbMsg zoneMsg = messages.stream()
+                .filter(msg -> msg.getOriginator().equals(zoneId))
+                .findFirst()
+                .orElse(null);
+        assertNotNull(zoneMsg, "Message for zone ID " + zoneId + " should not be null");
+        assertEquals(DEVICE_ID.toString(), zoneMsg.getMetaData().getValue("originatorId"));
     }
 
     private BaseAttributeKvEntry captureStateAttribute() {
@@ -223,12 +225,6 @@ public class TbGpsMultiGeofencingActionNodeTest {
         String data = objectMapper.writeValueAsString(jsonNode);
         TbMsgMetaData metaData = new TbMsgMetaData();
         return TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, data);
-    }
-
-    private void assertCapturedEvent(ArgumentCaptor<TbMsg> msgCaptor, ArgumentCaptor<String> relationTypeCaptor, String expectedRelationType) {
-        assertEquals(expectedRelationType, relationTypeCaptor.getValue());
-        assertEquals(ZONE_ID, msgCaptor.getValue().getOriginator());
-        assertEquals(DEVICE_ID, new DeviceId(UUID.fromString(msgCaptor.getValue().getMetaData().getValue("originatorId"))));
     }
 
     private TbNodeConfiguration createNodeConfiguration(TbGpsMultiGeofencingActionNodeConfiguration geoConfig) {
