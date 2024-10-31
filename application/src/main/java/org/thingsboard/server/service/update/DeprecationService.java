@@ -55,7 +55,8 @@ public class DeprecationService {
             }
         }
 
-        log.warn("WARNING: {} queue type is deprecated and will be removed in ThingsBoard 4.0. Please migrate to Apache Kafka", queueTypeName);
+        log.warn("WARNING: Starting with ThingsBoard 4.0, {} will no longer be supported as a message queue for microservices. " +
+                "Please migrate to Apache Kafka. This change will not impact any rule nodes", queueTypeName);
         notificationCenter.sendGeneralWebNotification(TenantId.SYS_TENANT_ID, new SystemAdministratorsFilter(),
                 DefaultNotifications.queueTypeDeprecation.toTemplate(), new GeneralNotificationInfo(Map.of(
                         "queueType", queueTypeName
