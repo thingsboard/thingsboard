@@ -46,13 +46,13 @@ public class QrCodeSettingsDataValidator extends DataValidator<QrCodeSettings> {
             if (qrCodeSettings.isAndroidEnabled()) {
                 MobileApp androidApp = mobileAppDao.findByBundleIdAndPlatformType(tenantId, mobileAppBundleId, PlatformType.ANDROID);
                 if (androidApp != null && androidApp.getStoreInfo() == null) {
-                    throw new DataValidationException("Android app store info is empty! ");
+                    throw new DataValidationException("The mobile app bundle references an Android app that has not been published!");
                 }
             }
             if (qrCodeSettings.isIosEnabled()) {
                 MobileApp iosApp = mobileAppDao.findByBundleIdAndPlatformType(tenantId, mobileAppBundleId, PlatformType.IOS);
                 if (iosApp != null && iosApp.getStoreInfo() == null) {
-                    throw new DataValidationException("IOS app store info is empty! ");
+                    throw new DataValidationException("The mobile app bundle references an iOS app that has not been published!");
                 }
             }
         }
