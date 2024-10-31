@@ -36,6 +36,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
+@Deprecated(forRemoval = true, since = "3.9") // for removal in 4.0
 public class TbAwsSqsAdmin implements TbQueueAdmin {
 
     private final Map<String, String> attributes;

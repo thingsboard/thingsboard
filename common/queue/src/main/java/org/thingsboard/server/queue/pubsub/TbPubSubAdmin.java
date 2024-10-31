@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
+@Deprecated(forRemoval = true, since = "3.9") // for removal in 4.0
 public class TbPubSubAdmin implements TbQueueAdmin {
     private static final String ACK_DEADLINE = "ackDeadlineInSec";
     private static final String MESSAGE_RETENTION = "messageRetentionInSec";
