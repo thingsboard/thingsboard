@@ -43,11 +43,11 @@ import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -135,41 +135,40 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
 
     @Override
     public List<ResourceExportData> exportResources(Dashboard dashboard, SecurityUser user) throws ThingsboardException {
-        return exportResources(dashboard, imageService::inlineImages, resourceService::replaceResourcesUrlsWithTags, user);
+        return exportResources(dashboard, imageService::getUsedImages, resourceService::getUsedResources, user);
     }
 
     @Override
     public List<ResourceExportData> exportResources(WidgetTypeDetails widgetTypeDetails, SecurityUser user) throws ThingsboardException {
-        return exportResources(widgetTypeDetails, imageService::inlineImages, resourceService::replaceResourcesUrlsWithTags, user);
+        return exportResources(widgetTypeDetails, imageService::getUsedImages, resourceService::getUsedResources, user);
     }
 
     @Override
     public void importResources(List<ResourceExportData> resources, SecurityUser user) throws Exception {
-        for (ResourceExportData resourceExportData : resources) {
-            if (resourceExportData.getType() == ResourceType.IMAGE) {
-                tbImageService.importImage(resourceExportData, true, user);
+        for (ResourceExportData resourceData : resources) {
+            TbResourceInfo resourceInfo;
+            if (resourceData.getType() == ResourceType.IMAGE) {
+                resourceInfo = tbImageService.importImage(resourceData, true, user);
             } else {
-                importResource(resourceExportData, true, user);
+                resourceInfo = importResource(resourceData, true, user);
             }
+            resourceData.setNewLink(resourceInfo.getLink());
         }
     }
 
     private <T> List<ResourceExportData> exportResources(T entity,
-                                                         Function<T, List<TbResourceInfo>> imagesProcessor,
-                                                         Function<T, List<TbResourceInfo>> resourcesProcessor,
+                                                         Function<T, Collection<TbResourceInfo>> imagesProcessor,
+                                                         Function<T, Collection<TbResourceInfo>> resourcesProcessor,
                                                          SecurityUser user) throws ThingsboardException {
-        Map<TbResourceId, TbResourceInfo> resources = new HashMap<>();
-        for (TbResourceInfo imageInfo : imagesProcessor.apply(entity)) {
-            resources.putIfAbsent(imageInfo.getId(), imageInfo);
-        }
-        for (TbResourceInfo resourceInfo : resourcesProcessor.apply(entity)) {
-            resources.putIfAbsent(resourceInfo.getId(), resourceInfo);
-        }
-        for (TbResourceInfo resourceInfo : resources.values()) {
+        List<TbResourceInfo> resources = new ArrayList<>();
+        resources.addAll(imagesProcessor.apply(entity));
+        resources.addAll(resourcesProcessor.apply(entity));
+
+        for (TbResourceInfo resourceInfo : resources) {
             accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.READ, resourceInfo.getId(), resourceInfo);
         }
 
-        return resources.values().stream()
+        return resources.stream()
                 .map(resourceInfo -> {
                     if (resourceInfo.getResourceType() == ResourceType.IMAGE) {
                         ResourceExportData imageExportData = imageService.exportImage(resourceInfo);

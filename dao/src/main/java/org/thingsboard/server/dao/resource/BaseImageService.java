@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.resource;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.SneakyThrows;
@@ -57,8 +56,8 @@ import org.thingsboard.server.dao.util.ImageUtils.ProcessedImage;
 import org.thingsboard.server.dao.widget.WidgetTypeDao;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
-import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -236,6 +235,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
         byte[] data = getImageData(imageInfo.getTenantId(), imageInfo.getId());
         return ResourceExportData.builder()
+                .link(imageInfo.getLink())
                 .mediaType(descriptor.getMediaType())
                 .fileName(imageInfo.getFileName())
                 .title(imageInfo.getTitle())
@@ -245,7 +245,6 @@ public class BaseImageService extends BaseResourceService implements ImageServic
                 .isPublic(imageInfo.isPublic())
                 .publicResourceKey(imageInfo.getPublicResourceKey())
                 .data(Base64.getEncoder().encodeToString(data))
-                .etag(descriptor.getEtag())
                 .build();
     }
 
@@ -298,51 +297,59 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         }
         imageName = imageName + type + " image";
 
-        UpdateResult result = base64ToImageUrl(entity.getTenantId(), imageName, entity.getImage());
+        UpdateResult result = convertToImageUrl(entity.getTenantId(), imageName, entity.getImage(), Collections.emptyMap());
         entity.setImage(result.getValue());
         return result.isUpdated();
     }
 
     @Transactional(noRollbackFor = Exception.class) // we don't want transaction to rollback in case of an image processing failure
     @Override
-    public boolean replaceBase64WithImageUrl(WidgetTypeDetails entity) {
-        log.trace("Executing replaceBase64WithImageUrl [{}] [WidgetTypeDetails] [{}]", entity.getTenantId(), entity.getId());
-        String prefix = "\"" + entity.getName() + "\" ";
-        if (entity.getTenantId() == null || entity.getTenantId().isSysTenantId()) {
+    public boolean updateImagesUsage(WidgetTypeDetails widgetTypeDetails) {
+        TenantId tenantId = widgetTypeDetails.getTenantId();
+        log.trace("Executing updateImagesUsage [{}] [WidgetTypeDetails] [{}]", tenantId, widgetTypeDetails.getId());
+        String prefix = "\"" + widgetTypeDetails.getName() + "\" ";
+        if (tenantId == null || tenantId.isSysTenantId()) {
             prefix += "system ";
         }
         prefix += "widget";
-        UpdateResult result = base64ToImageUrl(entity.getTenantId(), prefix + " image", entity.getImage());
-        entity.setImage(result.getValue());
+        Map<String, String> imagesLinks = getResourcesLinks(widgetTypeDetails.getResources());
+
+        UpdateResult result = convertToImageUrl(tenantId, prefix + " image", widgetTypeDetails.getImage(), imagesLinks);
         boolean updated = result.isUpdated();
-        if (entity.getDescriptor().isObject()) {
-            JsonNode defaultConfig = entity.getDefaultConfig();
+        widgetTypeDetails.setImage(result.getValue());
+
+        if (widgetTypeDetails.getDescriptor().isObject()) {
+            JsonNode defaultConfig = widgetTypeDetails.getDefaultConfig();
             if (defaultConfig != null) {
-                updated |= base64ToImageUrlUsingMapping(entity.getTenantId(), WIDGET_TYPE_BASE64_MAPPING, Collections.singletonMap("prefix", prefix), defaultConfig);
-                entity.setDefaultConfig(defaultConfig);
+                updated |= convertToImageUrlsByMapping(tenantId, WIDGET_TYPE_BASE64_MAPPING, Collections.singletonMap("prefix", prefix), defaultConfig, imagesLinks);
+                widgetTypeDetails.setDefaultConfig(defaultConfig);
             }
         }
-        updated |= base64ToImageUrlRecursively(entity.getTenantId(), prefix, entity.getDescriptor());
+        updated |= convertToImageUrls(tenantId, prefix, widgetTypeDetails.getDescriptor(), imagesLinks);
         return updated;
     }
 
     @Transactional(noRollbackFor = Exception.class) // we don't want transaction to rollback in case of an image processing failure
     @Override
-    public boolean replaceBase64WithImageUrl(Dashboard entity) {
-        log.trace("Executing replaceBase64WithImageUrl [{}] [Dashboard] [{}]", entity.getTenantId(), entity.getId());
-        String prefix = "\"" + entity.getTitle() + "\" dashboard";
-        var result = base64ToImageUrl(entity.getTenantId(), prefix + " image", entity.getImage());
+    public boolean updateImagesUsage(Dashboard dashboard) {
+        TenantId tenantId = dashboard.getTenantId();
+        log.trace("Executing updateImagesUsage [{}] [Dashboard] [{}]", tenantId, dashboard.getId());
+        String prefix = "\"" + dashboard.getTitle() + "\" dashboard";
+        Map<String, String> imagesLinks = getResourcesLinks(dashboard.getResources());
+
+        var result = convertToImageUrl(tenantId, prefix + " image", dashboard.getImage(), imagesLinks);
         boolean updated = result.isUpdated();
-        entity.setImage(result.getValue());
-        updated |= base64ToImageUrlUsingMapping(entity.getTenantId(), DASHBOARD_BASE64_MAPPING, Collections.singletonMap("prefix", prefix), entity.getConfiguration());
-        updated |= base64ToImageUrlRecursively(entity.getTenantId(), prefix, entity.getConfiguration());
+        dashboard.setImage(result.getValue());
+
+        updated |= convertToImageUrlsByMapping(tenantId, DASHBOARD_BASE64_MAPPING, Collections.singletonMap("prefix", prefix), dashboard.getConfiguration(), imagesLinks);
+        updated |= convertToImageUrls(tenantId, prefix, dashboard.getConfiguration(), imagesLinks);
         return updated;
     }
 
-    private boolean base64ToImageUrlUsingMapping(TenantId tenantId, Map<String, String> mapping, Map<String, String> templateParams, JsonNode configuration) {
+    private boolean convertToImageUrlsByMapping(TenantId tenantId, Map<String, String> mapping, Map<String, String> templateParams, JsonNode configuration, Map<String, String> links) {
         AtomicBoolean updated = new AtomicBoolean(false);
         JacksonUtil.replaceAllByMapping(configuration, mapping, templateParams, (name, value) -> {
-            UpdateResult result = base64ToImageUrl(tenantId, name, value);
+            UpdateResult result = convertToImageUrl(tenantId, name, value, links);
             if (result.isUpdated()) {
                 updated.set(true);
             }
@@ -351,22 +358,32 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         return updated.get();
     }
 
-    private UpdateResult base64ToImageUrl(TenantId tenantId, String name, String data) {
-        return base64ToImageUrl(tenantId, name, data, false);
+    private UpdateResult convertToImageUrl(TenantId tenantId, String name, String data, Map<String, String> links) {
+        return convertToImageUrl(tenantId, name, data, false, links);
     }
 
     public static final Pattern TB_IMAGE_METADATA_PATTERN = Pattern.compile("^tb-image:([^;]+);data:(.*);.*");
 
-    private UpdateResult base64ToImageUrl(TenantId tenantId, String name, String data, boolean strict) {
+    private UpdateResult convertToImageUrl(TenantId tenantId, String name, String data, boolean strict, Map<String, String> imagesLinks) {
         if (StringUtils.isBlank(data)) {
             return UpdateResult.of(false, data);
+        }
+
+        String link = getImageLink(data);
+        if (link != null) {
+            String newLink = imagesLinks.get(link);
+            if (newLink == null || newLink.equals(link)) {
+                return UpdateResult.of(false, data);
+            } else {
+                return UpdateResult.of(true, DataConstants.TB_IMAGE_PREFIX + newLink);
+            }
         }
 
         String resourceKey = null;
         String resourceName = null;
         String resourceSubType = null;
         String etag = null;
-        String mediaType = null;
+        String mediaType;
         var matcher = TB_IMAGE_METADATA_PATTERN.matcher(data);
         if (matcher.matches()) {
             String[] metadata = matcher.group(1).split(":");
@@ -375,8 +392,6 @@ public class BaseImageService extends BaseResourceService implements ImageServic
             resourceSubType = decode(get(metadata, 2));
             etag = get(metadata, 3);
             mediaType = matcher.group(2);
-        } else if (data.startsWith("tb-image:")) {
-            etag = StringUtils.substringAfter(data, "tb-image:");
         } else if (data.startsWith(DataConstants.TB_IMAGE_PREFIX + "data:image/") || (!strict && data.startsWith("data:image/"))) {
             mediaType = StringUtils.substringBetween(data, "data:", ";base64");
         } else {
@@ -386,9 +401,6 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         String base64Data = StringUtils.substringAfter(data, "base64,");
         byte[] imageData = StringUtils.isNotEmpty(base64Data) ? Base64.getDecoder().decode(base64Data) : null;
         if (StringUtils.isBlank(etag)) {
-            if (imageData == null) {
-                return UpdateResult.of(false, data);
-            }
             etag = calculateEtag(imageData);
         }
         var imageInfo = findSystemOrTenantImageByEtag(tenantId, etag);
@@ -439,10 +451,10 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         return UpdateResult.of(true, DataConstants.TB_IMAGE_PREFIX + imageInfo.getLink());
     }
 
-    private boolean base64ToImageUrlRecursively(TenantId tenantId, String title, JsonNode root) {
+    private boolean convertToImageUrls(TenantId tenantId, String title, JsonNode root, Map<String, String> links) {
         AtomicBoolean updated = new AtomicBoolean(false);
         JacksonUtil.replaceAll(root, title, (path, value) -> {
-            UpdateResult result = base64ToImageUrl(tenantId, path, value, true);
+            UpdateResult result = convertToImageUrl(tenantId, path, value, true, links);
             if (result.isUpdated()) {
                 updated.set(true);
             }
@@ -454,101 +466,116 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     @Override
     public void inlineImage(HasImage entity) {
         log.trace("Executing inlineImage [{}] [{}] [{}]", entity.getTenantId(), entity.getClass().getSimpleName(), entity.getName());
-        inlineImage(entity, null);
+        entity.setImage(inlineImage(entity.getTenantId(), "image", entity.getImage(), true));
     }
 
     @Override
-    public List<TbResourceInfo> inlineImages(Dashboard dashboard) {
-        log.trace("Executing inlineImage [{}] [Dashboard] [{}]", dashboard.getTenantId(), dashboard.getId());
-        List<TbResourceInfo> images = new ArrayList<>();
-        inlineImage(dashboard, images);
-        inlineIntoJson(dashboard.getTenantId(), dashboard.getConfiguration(), images);
-        return images;
+    public Collection<TbResourceInfo> getUsedImages(Dashboard dashboard) {
+        TenantId tenantId = dashboard.getTenantId();
+        log.trace("Executing getUsedImages [{}] [Dashboard] [{}]", tenantId, dashboard.getId());
+        Map<TbResourceId, TbResourceInfo> images = new HashMap<>();
+        processImage(tenantId, "image", dashboard.getImage(), (key, imageInfo) -> {
+            images.putIfAbsent(imageInfo.getId(), imageInfo);
+            return null; // leaving the url as is
+        });
+        processImages(tenantId, dashboard.getConfiguration(), (key, imageInfo) -> {
+            images.putIfAbsent(imageInfo.getId(), imageInfo);
+            return null; // leaving the url as is
+        });
+        return images.values();
     }
 
     @Override
-    public List<TbResourceInfo> inlineImages(WidgetTypeDetails widgetTypeDetails) {
-        log.trace("Executing inlineImage [{}] [WidgetTypeDetails] [{}]", widgetTypeDetails.getTenantId(), widgetTypeDetails.getId());
-        List<TbResourceInfo> images = new ArrayList<>();
-        inlineImage(widgetTypeDetails, images);
-        ObjectNode descriptor = (ObjectNode) widgetTypeDetails.getDescriptor();
-        inlineIntoJson(widgetTypeDetails.getTenantId(), descriptor, images);
+    public Collection<TbResourceInfo> getUsedImages(WidgetTypeDetails widgetTypeDetails) {
+        TenantId tenantId = widgetTypeDetails.getTenantId();
+        log.trace("Executing getUsedImages [{}] [WidgetTypeDetails] [{}]", tenantId, widgetTypeDetails.getId());
+        Map<TbResourceId, TbResourceInfo> images = new HashMap<>();
+        processImage(tenantId, "image", widgetTypeDetails.getImage(), (key, imageInfo) -> {
+            images.putIfAbsent(imageInfo.getId(), imageInfo);
+            return null; // leaving the url as is
+        });
+        processImages(tenantId, widgetTypeDetails.getDescriptor(), (key, imageInfo) -> {
+            images.putIfAbsent(imageInfo.getId(), imageInfo);
+            return null; // leaving the url as is
+        });
         JsonNode defaultConfig = widgetTypeDetails.getDefaultConfig();
         if (defaultConfig != null) {
-            inlineIntoJson(widgetTypeDetails.getTenantId(), defaultConfig, images);
-            widgetTypeDetails.setDefaultConfig(defaultConfig);
+            processImages(tenantId, defaultConfig, (key, imageInfo) -> {
+                images.putIfAbsent(imageInfo.getId(), imageInfo);
+                return null; // leaving the url as is
+            });
         }
-        return images;
+        return images.values();
     }
 
     @Override
     public void inlineImageForEdge(HasImage entity) {
         log.trace("Executing inlineImageForEdge [{}] [{}] [{}]", entity.getTenantId(), entity.getClass().getSimpleName(), entity.getName());
-        entity.setImage(inlineImage(entity.getTenantId(), "image", entity.getImage(), false, null));
+        entity.setImage(inlineImage(entity.getTenantId(), "image", entity.getImage(), false));
     }
 
     @Override
     public void inlineImagesForEdge(Dashboard dashboard) {
         log.trace("Executing inlineImagesForEdge [{}] [Dashboard] [{}]", dashboard.getTenantId(), dashboard.getId());
         inlineImageForEdge(dashboard);
-        inlineIntoJson(dashboard.getTenantId(), dashboard.getConfiguration(), false, null);
+        inlineImages(dashboard.getTenantId(), dashboard.getConfiguration(), false);
     }
 
     @Override
     public void inlineImagesForEdge(WidgetTypeDetails widgetTypeDetails) {
         log.trace("Executing inlineImage [{}] [WidgetTypeDetails] [{}]", widgetTypeDetails.getTenantId(), widgetTypeDetails.getId());
         inlineImageForEdge(widgetTypeDetails);
-        inlineIntoJson(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor(), false, null);
+        inlineImages(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor(), false);
     }
 
-    private void inlineImage(HasImage entity, List<TbResourceInfo> processedImages) {
-        log.trace("Executing inlineImage [{}] [{}] [{}]", entity.getTenantId(), entity.getClass().getSimpleName(), entity.getName());
-        entity.setImage(inlineImage(entity.getTenantId(), "image", entity.getImage(), true, processedImages));
-    }
-
-    private void inlineIntoJson(TenantId tenantId, JsonNode root, List<TbResourceInfo> processedImages) {
-        inlineIntoJson(tenantId, root, true, processedImages);
-    }
-
-    private void inlineIntoJson(TenantId tenantId, JsonNode root, boolean addTbImagePrefix, List<TbResourceInfo> processedImages) {
-        JacksonUtil.replaceAll(root, "", (path, value) -> inlineImage(tenantId, path, value, addTbImagePrefix, processedImages));
-    }
-
-    private String inlineImage(TenantId tenantId, String path, String url, boolean addTbImagePrefix, List<TbResourceInfo> processedImages) {
-        return inlineImage(tenantId, path, url, (key, imageInfo) -> {
-            ImageDescriptor descriptor = getImageDescriptor(imageInfo, key.isPreview());
-            String value = "";
-            if (addTbImagePrefix) {
-                value = "tb-image:";
-
-                if (processedImages != null && !key.isPreview()) { // images are stored separately
-                    processedImages.add(imageInfo);
-                    value += descriptor.getEtag();
-                    return value;
-                }
-
-                value += encode(imageInfo.getResourceKey()) + ":"
-                        + encode(imageInfo.getName()) + ":"
-                        + encode(imageInfo.getResourceSubType().name()) + ":"
-                        + imageInfo.getEtag() + ";";
-            }
-
-            byte[] data = key.isPreview() ? getImagePreview(tenantId, imageInfo.getId()) : getImageData(tenantId, imageInfo.getId());
-            return value + "data:" + descriptor.getMediaType() + ";base64," + encode(data);
+    private void inlineImages(TenantId tenantId, JsonNode root, boolean addTbImagePrefix) {
+        processImages(tenantId, root, (key, imageInfo) -> {
+            return inlineImage(key, imageInfo, addTbImagePrefix);
         });
     }
 
-    private String inlineImage(TenantId tenantId, String path, String imageUrl, BiFunction<ImageCacheKey, TbResourceInfo, String> inliner) {
+    private String inlineImage(TenantId tenantId, String path, String url, boolean addTbImagePrefix) {
+        return processImage(tenantId, path, url, (key, imageInfo) -> {
+            return inlineImage(key, imageInfo, addTbImagePrefix);
+        });
+    }
+
+    private String inlineImage(ImageCacheKey key, TbResourceInfo imageInfo, boolean addTbImagePrefix) {
+        String value = "";
+        if (addTbImagePrefix) {
+            value = "tb-image:" + encode(imageInfo.getResourceKey()) + ":"
+                    + encode(imageInfo.getName()) + ":"
+                    + encode(imageInfo.getResourceSubType().name()) + ";";
+        }
+
+        ImageDescriptor descriptor = getImageDescriptor(imageInfo, key.isPreview());
+        byte[] data = key.isPreview() ? getImagePreview(key.getTenantId(), imageInfo.getId()) : getImageData(key.getTenantId(), imageInfo.getId());
+        return value + "data:" + descriptor.getMediaType() + ";base64," + encode(data);
+    }
+
+    private void processImages(TenantId tenantId, JsonNode node, BiFunction<ImageCacheKey, TbResourceInfo, String> processor) {
+        JacksonUtil.replaceAll(node, "", (path, value) -> {
+            return processImage(tenantId, path, value, processor);
+        });
+    }
+
+    private String processImage(TenantId tenantId, String path, String imageUrl, BiFunction<ImageCacheKey, TbResourceInfo, String> processor) {
         try {
             ImageCacheKey key = getKeyFromUrl(tenantId, imageUrl);
             if (key != null) {
                 var imageInfo = getImageInfoByTenantIdAndKey(key.getTenantId(), key.getResourceKey());
-                if (imageInfo != null && !(TenantId.SYS_TENANT_ID.equals(imageInfo.getTenantId()) && ResourceSubType.SCADA_SYMBOL.equals(imageInfo.getResourceSubType()))) {
-                    return inliner.apply(key, imageInfo);
+                // TODO: maybe export scada too?
+                if (imageInfo == null || (TenantId.SYS_TENANT_ID.equals(imageInfo.getTenantId()) && ResourceSubType.SCADA_SYMBOL.equals(imageInfo.getResourceSubType()))) {
+                    return imageUrl;
+                } else {
+                    String result = processor.apply(key, imageInfo);
+                    if (result != null) {
+                        return result;
+                    }
                 }
             }
         } catch (Exception e) {
-            log.warn("[{}][{}][{}] Failed to inline image.", tenantId, path, imageUrl, e);
+            log.warn("[{}][{}][{}] Failed to process image", tenantId, path, imageUrl, e);
         }
         return imageUrl;
     }
@@ -562,10 +589,15 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         if (StringUtils.isBlank(url)) {
             return null;
         }
+        String link = getImageLink(url);
+        if (link == null) {
+            return null;
+        }
+
         TenantId imageTenantId = null;
-        if (url.startsWith(DataConstants.TB_IMAGE_PREFIX + "/api/images/tenant/")) {
+        if (link.startsWith("/api/images/tenant/")) {
             imageTenantId = tenantId;
-        } else if (url.startsWith(DataConstants.TB_IMAGE_PREFIX + "/api/images/system/")) {
+        } else if (link.startsWith("/api/images/system/")) {
             imageTenantId = TenantId.SYS_TENANT_ID;
         }
         if (imageTenantId != null) {
@@ -579,10 +611,19 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         return null;
     }
 
+    private String getImageLink(String value) {
+        if (value.startsWith(DataConstants.TB_IMAGE_PREFIX + "/api/images")) {
+            return StringUtils.removeStart(value, DataConstants.TB_IMAGE_PREFIX);
+        } else {
+            return null;
+        }
+    }
+
     @Data(staticConstructor = "of")
     private static class UpdateResult {
         private final boolean updated;
         private final String value;
+
     }
 
 }

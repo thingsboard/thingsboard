@@ -161,8 +161,8 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             dashboardValidator.validate(dashboard, DashboardInfo::getTenantId);
         }
         try {
-            imageService.replaceBase64WithImageUrl(dashboard);
-            resourceService.replaceResourcesUsageWithUrls(dashboard);
+            imageService.updateImagesUsage(dashboard);
+            resourceService.updateResourcesUsage(dashboard);
 
             var saved = dashboardDao.save(dashboard.getTenantId(), dashboard);
             publishEvictEvent(new DashboardTitleEvictEvent(saved.getId()));

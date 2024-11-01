@@ -59,17 +59,18 @@ public class ImagesUpdater {
     public void updateWidgetTypesImages() {
         log.info("Updating widget types images...");
         var widgetTypesIds = new PageDataIterable<>(widgetTypeDao::findAllWidgetTypesIds, 1024);
-        updateImages(widgetTypesIds, "widget type", imageService::replaceBase64WithImageUrl, widgetTypeDao);
+        updateImages(widgetTypesIds, "widget type", imageService::updateImagesUsage, widgetTypeDao);
     }
 
     public void updateDashboardsImages() {
         log.info("Updating dashboards images...");
-        updateImages("dashboard", dashboardDao::findIdsByTenantId, imageService::replaceBase64WithImageUrl, dashboardDao);
+        updateImages("dashboard", dashboardDao::findIdsByTenantId, imageService::updateImagesUsage, dashboardDao);
     }
 
     public void createSystemImages(Dashboard defaultDashboard) {
         defaultDashboard.setTenantId(TenantId.SYS_TENANT_ID);
-        boolean created = imageService.replaceBase64WithImageUrl(defaultDashboard);
+        // TODO: test! also update dashboards
+        boolean created = imageService.updateImagesUsage(defaultDashboard);
         if (created) {
             log.debug("Created system images for default dashboard '{}'", defaultDashboard.getTitle());
         }

@@ -51,7 +51,7 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
     public Dashboard save(Dashboard dashboard, SecurityUser user) throws Exception {
         ActionType actionType = dashboard.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = dashboard.getTenantId();
-        
+
         if (CollectionUtils.isNotEmpty(dashboard.getResources())) {
             tbResourceService.importResources(dashboard.getResources(), user);
         }

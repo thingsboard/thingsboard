@@ -80,6 +80,8 @@ public class DashboardSyncService {
                 .map(widgetTypeFile -> getFileContent(widgetTypeFile.path()));
         widgetsBundleService.updateSystemWidgets(widgetsBundles, widgetTypes);
 
+        // TODO: read images folder and save images
+
         RepoFile dashboardFile = listFiles("dashboards").get(0);
         String dashboardJson = getFileContent(dashboardFile.path());
         resourceService.createOrUpdateSystemResource(ResourceType.DASHBOARD, GATEWAYS_DASHBOARD_KEY, dashboardJson);

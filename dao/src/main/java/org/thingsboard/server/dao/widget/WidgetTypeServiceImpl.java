@@ -98,8 +98,8 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
         log.trace("Executing saveWidgetType [{}]", widgetTypeDetails);
         widgetTypeValidator.validate(widgetTypeDetails, WidgetType::getTenantId);
         try {
-            imageService.replaceBase64WithImageUrl(widgetTypeDetails);
-            resourceService.replaceResourcesUsageWithUrls(widgetTypeDetails);
+            imageService.updateImagesUsage(widgetTypeDetails);
+            resourceService.updateResourcesUsage(widgetTypeDetails);
 
             WidgetTypeDetails result = widgetTypeDao.save(widgetTypeDetails.getTenantId(), widgetTypeDetails);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getTenantId())

@@ -28,9 +28,13 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.ResourceExportData;
+import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
@@ -41,6 +45,7 @@ import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceConnectivityConfiguration;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
@@ -51,8 +56,13 @@ import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.component.RuleNodeClassInfo;
 import org.thingsboard.server.utils.TbNodeUpgradeUtils;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
@@ -90,6 +100,8 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     @Autowired
     private ResourceService resourceService;
+    @Autowired
+    private ImageService imageService;
 
     @Autowired
     private DashboardService dashboardService;
@@ -367,7 +379,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
         int updatedCount = 0;
         for (DashboardId dashboardId : dashboards) {
             Dashboard dashboard = dashboardService.findDashboardById(TenantId.SYS_TENANT_ID, dashboardId);
-            boolean updated = resourceService.replaceResourcesUsageWithUrls(dashboard);
+            boolean updated = resourceService.updateResourcesUsage(dashboard);
             if (updated) {
                 dashboardService.saveDashboard(dashboard);
                 updatedCount++;
@@ -386,7 +398,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
         var widgets = new PageDataIterable<>(widgetTypeService::findAllWidgetTypesIds, 512);
         for (WidgetTypeId widgetTypeId : widgets) {
             WidgetTypeDetails widgetTypeDetails = widgetTypeService.findWidgetTypeDetailsById(TenantId.SYS_TENANT_ID, widgetTypeId);
-            boolean updated = resourceService.replaceResourcesUsageWithUrls(widgetTypeDetails);
+            boolean updated = resourceService.updateResourcesUsage(widgetTypeDetails);
             if (updated) {
                 widgetTypeService.saveWidgetType(widgetTypeDetails);
                 updatedCount++;

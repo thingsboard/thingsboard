@@ -28,7 +28,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 
-import java.util.List;
+import java.util.Collection;
 
 public interface ImageService {
 
@@ -58,15 +58,15 @@ public interface ImageService {
 
     boolean replaceBase64WithImageUrl(HasImage entity, String type);
 
-    boolean replaceBase64WithImageUrl(Dashboard dashboard);
+    boolean updateImagesUsage(Dashboard dashboard);
 
-    boolean replaceBase64WithImageUrl(WidgetTypeDetails widgetType);
+    boolean updateImagesUsage(WidgetTypeDetails widgetType);
 
     void inlineImage(HasImage entity);
 
-    List<TbResourceInfo> inlineImages(Dashboard dashboard);
+    Collection<TbResourceInfo> getUsedImages(Dashboard dashboard);
 
-    List<TbResourceInfo> inlineImages(WidgetTypeDetails widgetTypeDetails);
+    Collection<TbResourceInfo> getUsedImages(WidgetTypeDetails widgetTypeDetails);
 
     void inlineImageForEdge(HasImage entity);
 

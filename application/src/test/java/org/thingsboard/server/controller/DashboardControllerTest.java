@@ -587,7 +587,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
     @Test
     public void testExportImportDashboardWithResources() throws Exception {
-        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", "image12.png", "image/png", ImageControllerTest.PNG_IMAGE);
+        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", "image12", "image/png", ImageControllerTest.PNG_IMAGE);
         TbResource resource = new TbResource();
         resource.setResourceKey("gateway-management-extension.js");
         resource.setFileName(resource.getResourceKey());
@@ -613,42 +613,42 @@ public class DashboardControllerTest extends AbstractControllerTest {
         Dashboard exportedDashboard = doGet("/api/dashboard/" + dashboard.getUuidId() + "?includeResources=true", Dashboard.class);
         exportedDashboard.setId(null);
         String imageRef = exportedDashboard.getConfiguration().get("someImage").asText();
-        assertThat(imageRef).isEqualTo("tb-image:" + Base64.getEncoder().encodeToString(imageInfo.getResourceKey().getBytes()) + ":"
-                + Base64.getEncoder().encodeToString(imageInfo.getName().getBytes()) + ":"
-                + Base64.getEncoder().encodeToString(imageInfo.getResourceSubType().name().getBytes()) + ":"
-                + imageInfo.getEtag() + ";data:image/png;base64,");
+        assertThat(imageRef).isEqualTo("tb-image;/api/images/tenant/image12");
         String resourceRef = exportedDashboard.getConfiguration().get("widgets").get("xxx").get("config")
                 .get("actions").get("elementClick").get(0).get("customResources").get(0).get("url").asText();
-        assertThat(resourceRef).isEqualTo("tb-resource:" + Base64.getEncoder().encodeToString(resourceInfo.getResourceType().name().getBytes())
-                + ":" + resourceInfo.getEtag());
+        assertThat(resourceRef).isEqualTo("tb-resource;/api/resource/js_module/tenant/gateway-management-extension.js");
 
         Map<ResourceType, List<ResourceExportData>> resources = exportedDashboard.getResources().stream()
                 .collect(Collectors.groupingBy(ResourceExportData::getType));
         assertThat(resources.get(ResourceType.IMAGE)).singleElement().satisfies(exportedImage -> {
             assertThat(exportedImage.getFileName()).isEqualTo(imageInfo.getResourceKey());
             assertThat(exportedImage.getData()).isEqualTo(Base64.getEncoder().encodeToString(ImageControllerTest.PNG_IMAGE));
-            assertThat(exportedImage.getEtag()).isEqualTo(imageInfo.getEtag());
         });
         assertThat(resources.get(ResourceType.JS_MODULE)).singleElement().satisfies(exportedJsModule -> {
-            assertThat(exportedJsModule.getFileName()).isEqualTo(resource.getResourceKey());
+            assertThat(exportedJsModule.getFileName()).isEqualTo(resourceInfo.getResourceKey());
             assertThat(exportedJsModule.getData()).isEqualTo(Base64.getEncoder().encodeToString(resourceData));
-            assertThat(exportedJsModule.getEtag()).isEqualTo(resourceInfo.getEtag());
         });
 
         doDelete("/api/dashboard/" + dashboard.getId()).andExpect(status().isOk());
         doDelete("/api/images/tenant/" + imageInfo.getResourceKey()).andExpect(status().isOk());
-        doDelete("/api/resource/" + resourceInfo.getId()).andExpect(status().isOk());
+        resource = new TbResource(resourceInfo);
+        resource.setData(new byte[]{1, 2, 3}); // updating resource data to check that a new resource will be created
+        doPost("/api/resource", resource, TbResourceInfo.class);
 
         Dashboard importedDashboard = doPost("/api/dashboard", exportedDashboard, Dashboard.class);
-        assertThat(importedDashboard.getConfiguration().get("someImage").asText()).isEqualTo("tb-image;/api/images/tenant/" + imageInfo.getResourceKey());
+        imageRef = importedDashboard.getConfiguration().get("someImage").asText();
+        assertThat(imageRef).isEqualTo("tb-image;/api/images/tenant/" + imageInfo.getResourceKey());
+        resourceRef = importedDashboard.getConfiguration().get("widgets").get("xxx").get("config")
+                .get("actions").get("elementClick").get(0).get("customResources").get(0).get("url").asText();
+        String newResourceKey = "gateway-management-extension_(1).js";
+        assertThat(resourceRef).isEqualTo("tb-resource;/api/resource/js_module/tenant/" + newResourceKey);
 
         TbResourceInfo importedImageInfo = doGet("/api/images/tenant/" + imageInfo.getResourceKey() + "/info", TbResourceInfo.class);
         assertThat(importedImageInfo.getEtag()).isEqualTo(imageInfo.getEtag());
         assertThat(importedImageInfo.getResourceKey()).isEqualTo(imageInfo.getResourceKey());
 
-        TbResourceInfo importedResourceInfo = doGet(resourceInfo.getLink() + "/info", TbResourceInfo.class);
+        TbResourceInfo importedResourceInfo = doGet("/api/resource/js_module/tenant/" + newResourceKey + "/info", TbResourceInfo.class);
         assertThat(importedResourceInfo.getEtag()).isEqualTo(resourceInfo.getEtag());
-        assertThat(importedResourceInfo.getResourceKey()).isEqualTo(resourceInfo.getResourceKey());
     }
 
     private Dashboard createDashboard(String title) {
