@@ -70,6 +70,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
 
     /**
      * Observe "3_1.2/0"
+     * idResources_3_1.2/0/9 => updateAttrTelemetry >= 3 times
      * @throws Exception
      */
     @Test
