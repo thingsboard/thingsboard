@@ -21,7 +21,7 @@
     <ng-container *ngFor="let behaviorGroup of behaviorGroups">
       <div *ngIf="behaviorGroup.title" class="tb-form-panel stroked">
         <mat-expansion-panel class="tb-settings" expanded>
-          <mat-expansion-panel-header fxLayout="row wrap">
+          <mat-expansion-panel-header class="flex flex-row flex-wrap">
             <mat-panel-title>
               <div class="tb-form-panel-title">{{ behaviorGroup.title | customTranslate }}</div>
             </mat-panel-title>
@@ -36,7 +36,7 @@
       </ng-container>
     </ng-container>
   </div>
-  <div [fxShow]="propertyRows?.length || appearanceProperties.children.length" class="tb-form-panel" formGroupName="properties">
+  <div [class.!hidden]="!propertyRows?.length && !appearanceProperties.children.length" class="tb-form-panel" formGroupName="properties">
     <div class="tb-form-panel-title" translate>widget-config.appearance</div>
     <div #appearanceProperties><ng-content select=".tb-scada-symbol-appearance-properties"></ng-content></div>
     <div *ngFor="let propertyRow of propertyRows" class="tb-form-row space-between flex-wrap overflow-auto" [class]="propertyRow.rowClass">
@@ -49,7 +49,7 @@
           <div *ngIf="property.subLabel" class="tb-small-label">{{ property.subLabel | customTranslate }}</div>
           <mat-form-field  *ngIf="property.type === ScadaSymbolPropertyType.text" [class]="property.fieldClass" appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="{{ property.id }}" [required]="property.required" placeholder="{{ 'widget-config.set' | translate }}">
-            <div fxHide.lt-md matSuffix *ngIf="property.fieldSuffix">{{ property.fieldSuffix | customTranslate }}</div>
+            <div class="lt-md:!hidden" matSuffix *ngIf="property.fieldSuffix">{{ property.fieldSuffix | customTranslate }}</div>
           </mat-form-field>
           <tb-color-input *ngIf="property.type === ScadaSymbolPropertyType.color"
                           [required]="property.required"
@@ -67,7 +67,7 @@
             <input matInput formControlName="{{ property.id }}" [required]="property.required"
                    [min]="property.min" [max]="property.max" [step]="property.step"
                    type="number" placeholder="{{ 'widget-config.set' | translate }}">
-            <div fxHide.lt-md matSuffix *ngIf="property.fieldSuffix">{{ property.fieldSuffix | customTranslate }}</div>
+            <div class="lt-md:!hidden" matSuffix *ngIf="property.fieldSuffix">{{ property.fieldSuffix | customTranslate }}</div>
           </mat-form-field>
           <tb-font-settings *ngIf="property.type === ScadaSymbolPropertyType.font"
                             [class]="property.fieldClass"

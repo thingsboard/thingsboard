@@ -16,7 +16,7 @@
 
 -->
 <div class="tb-container">
-  <label class="tb-title" *ngIf="label" [ngClass]="{'tb-error': !disabled && (required && !safeImageUrl), 'tb-required': !disabled && required}">{{label}}</label>
+  <label class="tb-title" *ngIf="label" [class]="{'tb-error': !disabled && (required && !safeImageUrl), 'tb-required': !disabled && required}">{{label}}</label>
   <ng-container #flow="flow"
                 [flowConfig]="{singleFile: true, allowDuplicateUploads: true}">
     <div class="tb-image-select-container">

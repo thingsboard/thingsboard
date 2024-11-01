@@ -16,10 +16,10 @@
 
 -->
 <div class="mat-padding tb-entity-table tb-absolute-fill">
-  <div fxFlex fxLayout="column" class="tb-entity-table-content tb-outlined-border">
-    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="!textSearchMode && dataSource.selection.isEmpty()">
+  <div class="tb-entity-table-content tb-outlined-border flex flex-1 flex-col">
+    <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="textSearchMode || !dataSource.selection.isEmpty()">
       <div class="mat-toolbar-tools">
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
+        <div class="title-container flex flex-row items-center justify-start xs:flex-col xs:items-start xs:justify-center">
           <span class="tb-entity-table-title">
             {{(direction == directions.FROM ? 'relation.from-relations' : 'relation.to-relations') | translate}}
           </span>
@@ -33,7 +33,7 @@
             </mat-select>
           </mat-form-field>
         </div>
-        <span fxFlex></span>
+        <span class="flex-1"></span>
         <button mat-icon-button [disabled]="isLoading$ | async"
                 (click)="addRelation($event)"
                 matTooltip="{{ 'action.add' | translate }}"
@@ -52,14 +52,14 @@
         </button>
       </div>
     </mat-toolbar>
-    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode && dataSource.selection.isEmpty()">
+    <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode || !dataSource.selection.isEmpty()">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
                 matTooltip="{{ 'action.search' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>search</mat-icon>
         </button>
-        <mat-form-field fxFlex>
+        <mat-form-field class="flex-1">
           <mat-label>&nbsp;</mat-label>
           <input #searchInput matInput
                  [formControl]="textSearch"
@@ -72,8 +72,8 @@
         </button>
       </div>
     </mat-toolbar>
-    <mat-toolbar class="mat-mdc-table-toolbar" color="primary" [fxShow]="!dataSource.selection.isEmpty()">
-      <div class="mat-toolbar-tools" fxLayoutAlign="space-between center">
+    <mat-toolbar class="mat-mdc-table-toolbar" color="primary" [class.!hidden]="dataSource.selection.isEmpty()">
+      <div class="mat-toolbar-tools flex items-center justify-between">
         <span class="tb-entity-table-info">
           {{ 'relation.selected-relations' | translate:{count: dataSource.selection.selected.length} }}
         </span>
@@ -85,7 +85,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <div fxFlex class="table-container">
+    <div class="table-container flex-1">
       <table mat-table [dataSource]="dataSource"
                  matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
         <ng-container matColumnDef="select" sticky>
@@ -140,7 +140,7 @@
           <mat-header-cell *matHeaderCellDef style="min-width: 80px; max-width: 80px; width: 80px">
           </mat-header-cell>
           <mat-cell *matCellDef="let relation">
-            <div fxFlex fxLayout="row" fxLayoutAlign="end">
+            <div class="flex flex-1 flex-row items-stretch justify-end">
               <button mat-icon-button [disabled]="isLoading$ | async"
                       matTooltip="{{ 'relation.edit' | translate }}"
                       matTooltipPosition="above"
@@ -156,14 +156,13 @@
             </div>
           </mat-cell>
         </ng-container>
-        <mat-header-row [ngClass]="{'mat-row-select': true}" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
-        <mat-row [ngClass]="{'mat-row-select': true,
-                             'mat-selected': dataSource.selection.isSelected(relation)}"
+        <mat-header-row class="mat-row-select" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+        <mat-row class="mat-row-select"
+                 [class.mat-selected]="dataSource.selection.isSelected(relation)"
                  *matRowDef="let relation; columns: displayedColumns;" (click)="dataSource.selection.toggle(relation)"></mat-row>
       </table>
-      <span [fxShow]="dataSource.isEmpty() | async"
-            fxLayoutAlign="center center"
-            class="no-data-found" translate>{{ 'relation.no-relations-text' }}</span>
+      <span [class.!hidden]="(dataSource.isEmpty() | async) === false"
+            class="no-data-found flex items-center justify-center" translate>{{ 'relation.no-relations-text' }}</span>
     </div>
     <mat-divider></mat-divider>
     <mat-paginator [length]="dataSource.total() | async"

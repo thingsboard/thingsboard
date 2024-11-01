@@ -310,7 +310,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
           }
         }),
         filter((value) => typeof value === 'string'),
-        map((value) => value ? (typeof value === 'string' ? value : value.name) : ''),
+        map((value) => value ? value : ''),
         mergeMap(name => this.fetchKeys(name) ),
         share()
       );

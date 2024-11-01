@@ -57,7 +57,7 @@
                         </goals>
                         <configuration>
                             <nodeVersion>v20.11.1</nodeVersion>
-                            <yarnVersion>v1.22.17</yarnVersion>
+                            <yarnVersion>v1.22.22</yarnVersion>
                         </configuration>
                     </execution>
                     <execution>

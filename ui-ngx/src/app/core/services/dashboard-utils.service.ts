@@ -636,7 +636,7 @@ export class DashboardUtilsService {
                            targetLayout: DashboardLayoutId,
                            widget: Widget,
                            originalColumns?: number,
-                           originalSize?: {sizeX: number; sizeY: number},
+                           originalSize?: WidgetSize,
                            row?: number,
                            column?: number,
                            breakpoint = 'default'): void {
@@ -661,8 +661,8 @@ export class DashboardUtilsService {
       mobileHeight: widget.config.mobileHeight,
       mobileHide: widget.config.mobileHide,
       desktopHide: widget.config.desktopHide,
-      preserveAspectRatio: widget.config.preserveAspectRatio,
-      resizable: widget.config.resizable
+      preserveAspectRatio: originalSize ? originalSize.preserveAspectRatio : widget.config.preserveAspectRatio,
+      resizable: originalSize ? originalSize.resizable : widget.config.resizable
     };
     if (isUndefined(originalColumns)) {
       originalColumns = 24;
@@ -749,12 +749,57 @@ export class DashboardUtilsService {
         widget.sizeY = 1;
       }
     }
+    const widgets: WidgetLayout[] = [];
     for (const w of Object.keys(layout.widgets)) {
       const widget = layout.widgets[w];
       widget.row = Math.round(widget.row * ratio);
       widget.col = Math.round(widget.col * ratio);
-      widget.sizeX = Math.round(widget.sizeX * ratio);
-      widget.sizeY = Math.round(widget.sizeY * ratio);
+      widget.sizeX = Math.max(1, Math.round(widget.sizeX * ratio));
+      widget.sizeY = Math.max(1, Math.round(widget.sizeY * ratio));
+      widgets.push(widget);
+    }
+    widgets.sort((w1, w2) => {
+      let res = w1.col - w2.col;
+      if (res === 0) {
+        res = w1.row - w2.row;
+      }
+      return res;
+    });
+    for (const widget of widgets) {
+      for (const widget2 of widgets) {
+        if (widget !== widget2) {
+          const left = widget.col;
+          const right = widget.col + widget.sizeX;
+          const top = widget.row;
+          const bottom = widget.row + widget.sizeY;
+          const left2 = widget2.col;
+          const right2 = widget2.col + widget2.sizeX;
+          const top2 = widget2.row;
+          const bottom2 = widget2.row + widget2.sizeY;
+          if (left < right2 && right > left2 &&
+            top < bottom2 && bottom > top2 ) {
+            let horizontalOverlapFixed = false;
+            if (right - left2 === 1) {
+              if (widget.sizeX > 1) {
+                widget.sizeX--;
+                horizontalOverlapFixed = true;
+              } else if (widget2.sizeX > 1) {
+                widget2.col++;
+                widget2.sizeX--;
+                horizontalOverlapFixed = true;
+              }
+            }
+            if (!horizontalOverlapFixed && (bottom - top2) === 1) {
+              if (widget.sizeY > 1) {
+                widget.sizeY--;
+              } else if (widget2.sizeY > 1) {
+                widget2.row++;
+                widget2.sizeY--;
+              }
+            }
+          }
+        }
+      }
     }
   }
 
@@ -1020,7 +1065,9 @@ export class DashboardUtilsService {
     const widgetLayout = layout.widgets[widget.id];
     return {
       sizeX: widgetLayout.sizeX,
-      sizeY: widgetLayout.sizeY
+      sizeY: widgetLayout.sizeY,
+      preserveAspectRatio: widgetLayout.preserveAspectRatio,
+      resizable: widgetLayout.resizable
     };
   }
 

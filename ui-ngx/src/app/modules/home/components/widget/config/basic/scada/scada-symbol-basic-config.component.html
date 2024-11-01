@@ -34,7 +34,7 @@
         <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitle">
           {{ 'widget-config.title' | translate }}
         </mat-slide-toggle>
-        <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="flex flex-1 flex-row items-center justify-start gap-2">
           <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
@@ -53,11 +53,11 @@
         <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showIcon">
           {{ 'widget-config.card-icon' | translate }}
         </mat-slide-toggle>
-        <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-          <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+        <div class="flex flex-1 flex-row items-center justify-start gap-2">
+          <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
             <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
-          <tb-css-unit-select fxFlex formControlName="iconSizeUnit"></tb-css-unit-select>
+          <tb-css-unit-select class="flex-1" formControlName="iconSizeUnit"></tb-css-unit-select>
           <tb-material-icon-select asBoxInput
                                    iconClearButton
                                    [color]="scadaSymbolWidgetConfigForm.get('iconColor').value"

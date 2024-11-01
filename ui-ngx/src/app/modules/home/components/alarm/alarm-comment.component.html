@@ -15,10 +15,11 @@
     limitations under the License.
 
 -->
-<div [formGroup]="alarmCommentFormGroup" class="tb-alarm-comments" fxLayout="column">
-  <div class="header"  [ngClass]="{'activity-only': alarmActivityOnly}">
-    <div class="header-container" fxLayout="row" fxLayoutAlign="space-between center"
-         [ngClass]="{'asc': isDirectionAscending(), 'activity-only': alarmActivityOnly}">
+<div [formGroup]="alarmCommentFormGroup" class="tb-alarm-comments flex flex-col">
+  <div class="header" [class.activity-only]="alarmActivityOnly">
+    <div class="header-container flex flex-row items-center justify-between"
+         [class.asc]="isDirectionAscending()"
+         [class.activity-only]="alarmActivityOnly">
       <span class="header-title" translate>
         alarm-activity.activity
       </span>
@@ -47,13 +48,14 @@
       </div>
     </div>
   </div>
-  <div fxLayout="column">
+  <div class="flex flex-col">
     <ng-container *ngIf="!isDirectionAscending()">
       <ng-container *ngTemplateOutlet="commentInput"></ng-container>
     </ng-container>
-    <div class="comments-container" fxLayout="column" fxLayoutGap="12px" style="padding: 24px"
-         [ngClass]="{'asc': isDirectionAscending(), 'activity-only': alarmActivityOnly}">
-      <div fxFlex *ngFor="let displayDataElement of displayData; index as i">
+    <div class="comments-container flex flex-col gap-3" style="padding: 24px"
+         [class.asc]="isDirectionAscending()"
+         [class.activity-only]="alarmActivityOnly">
+      <div class="flex-1" *ngFor="let displayDataElement of displayData; index as i">
         <div class="system-comment" *ngIf="displayDataElement.isSystemComment; else userComment">
           <span class="system-text" style="margin-right: 8px">
             {{ displayDataElement.commentText }}
@@ -65,20 +67,20 @@
           </span>
         </div>
         <ng-template #userComment>
-          <div class="user-comment" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px"
+          <div class="user-comment flex flex-row items-center justify-start gap-2"
                *ngIf="!displayDataElement.edit; else commentEditing"
                (mouseenter)="onCommentMouseEnter(displayDataElement.commentId, i)"
                (mouseleave)="onCommentMouseLeave(i)">
-            <div *ngIf="displayDataElement.userExists; else userDeleted" class="user-avatar"
-                 fxLayout="row" fxLayoutAlign="center center" fxFlexAlign="start" fxHide.xs
+            <div *ngIf="displayDataElement.userExists; else userDeleted"
+                 class="user-avatar flex flex-row items-center justify-center self-start xs:!hidden"
                  [style.background-color]="displayDataElement.avatarBgColor">
               {{ getUserInitials(displayDataElement.displayName) }}
             </div>
             <ng-template #userDeleted>
-              <mat-icon class="mat-icon tb-mat-28" fxHide.xs>no_accounts</mat-icon>
+              <mat-icon class="mat-icon tb-mat-28 xs:!hidden">no_accounts</mat-icon>
             </ng-template>
-            <div fxFlex fxLayout="column" fxLayoutGap="5px">
-              <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+            <div class="flex flex-1 flex-col" style="gap: 5px">
+              <div class="flex flex-row items-center justify-start gap-2">
                 <span class="user-name">{{ displayDataElement.displayName }}</span>
                 <span class="time"
                       [matTooltip]="displayDataElement.createdTime"
@@ -93,8 +95,8 @@
               </div>
               <span class="text">{{ displayDataElement.commentText }}</span>
             </div>
-            <div fxLayout="row" fxLayout.xs="column"  class="action-buttons"
-                 [ngClass]="{ 'show-buttons': displayDataElement.showActions }">
+            <div class="action-buttons flex flex-row xs:flex-col"
+                 [class.show-buttons]="displayDataElement.showActions">
               <button mat-icon-button
                       type="button"
                       (click)="editComment(displayDataElement.commentId)">
@@ -108,13 +110,12 @@
             </div>
           </div>
           <ng-template #commentEditing>
-            <div fxLayoutAlign="row center" fxLayoutGap="8px">
-              <div fxLayout="row" fxLayoutAlign="center center"
-                   class="user-avatar"
+            <div class="flex flex-row items-center justify-start gap-2">
+              <div class="user-avatar flex flex-row items-center justify-center"
                    [style.background-color]="displayDataElement.avatarBgColor">
                 {{ getUserInitials(displayDataElement.displayName) }}
               </div>
-              <mat-form-field fxFlex class="mat-block tb-appearance-transparent">
+              <mat-form-field class="mat-block tb-appearance-transparent flex-1">
                 <textarea matInput
                           type="text"
                           placeholder="{{ 'alarm-activity.add' | translate }}"
@@ -125,7 +126,7 @@
                           (keyup.enter)="saveEditedComment(displayDataElement.commentId)"
                           (keydown.enter)="$event.preventDefault()">
                 </textarea>
-                <div matSuffix fxLayout="row">
+                <div matSuffix class="flex flex-row">
                   <button mat-icon-button
                           (click)="cancelEdit(displayDataElement.commentId)"
                           type="button">
@@ -149,15 +150,16 @@
   </div>
   <ng-template #commentInput>
     <div style="background-color: white" class="comment-input"
-         [ngClass]="{'newest-first': !isDirectionAscending(), 'oldest-first': isDirectionAscending(), 'activity-only': alarmActivityOnly}">
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" class="inner-wrap">
-        <div fxLayout="row" fxLayoutAlign="center center"
-             class="user-avatar"
+         [class.newest-first]="!isDirectionAscending()"
+         [class.oldest-first]="isDirectionAscending()"
+         [class.activity-only]="alarmActivityOnly">
+      <div class="inner-wrap flex flex-row items-center justify-start gap-2">
+        <div class="user-avatar flex flex-row items-center justify-center"
              *ngIf="userDisplayName$ | async; let userDisplayName"
              [style.background-color]="getCurrentUserBgColor(userDisplayName)">
           {{ getUserInitials(userDisplayName) }}
         </div>
-        <mat-form-field fxFlex class="mat-block tb-appearance-transparent">
+        <mat-form-field class="mat-block tb-appearance-transparent flex-1">
           <textarea matInput
                     type="text"
                     placeholder="{{ 'alarm-activity.add' | translate }}"
@@ -171,7 +173,7 @@
           <button mat-icon-button
                   type="button"
                   matSuffix
-                  *ngIf="getAlarmCommentFormControl().value"
+                  *ngIf="getAlarmCommentValue()"
                   (click)="saveComment()">
             <mat-icon color="primary">
               send

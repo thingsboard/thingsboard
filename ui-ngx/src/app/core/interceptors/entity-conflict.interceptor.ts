@@ -15,15 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import {
-  HttpErrorResponse,
-  HttpEvent,
-  HttpHandler,
-  HttpInterceptor,
-  HttpParams,
-  HttpRequest,
-  HttpStatusCode
-} from '@angular/common/http';
+import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpParams, HttpRequest, HttpStatusCode } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';

@@ -16,12 +16,12 @@
 
 -->
 <section class="tb-rate-limits-form" [formGroup]="rateLimitsListFormGroup">
-  <div fxFlex [formGroup]="rateLimit" *ngFor="let rateLimit of rateLimitsFormArray.controls; let $index = index">
+  <div class="flex-1" [formGroup]="rateLimit" *ngFor="let rateLimit of rateLimitsFormArray.controls; let $index = index">
     <div class="tb-rate-limits-operation" *ngIf="$index > 0 && rateLimitsFormArray.controls.length > 1" translate>
       tenant-profile.rate-limits.but-less-than
     </div>
-    <div fxFlex fxLayout="row" fxLayoutGap="8px">
-      <mat-form-field fxFlex hideRequiredMarker appearance="fill" class="mat-block">
+    <div class="flex flex-1 flex-row gap-2">
+      <mat-form-field hideRequiredMarker appearance="fill" class="mat-block flex-1">
         <mat-label translate>tenant-profile.rate-limits.number-of-messages</mat-label>
         <input matInput placeholder="{{ 'tenant-profile.rate-limits.number-of-messages' | translate }}"
                type="number" min="1" step="1" formControlName="value" required>
@@ -32,7 +32,7 @@
           {{ 'tenant-profile.rate-limits.number-of-messages-min' | translate }}
         </mat-error>
       </mat-form-field>
-      <mat-form-field fxFlex hideRequiredMarker appearance="fill" class="mat-block">
+      <mat-form-field hideRequiredMarker appearance="fill" class="mat-block flex-1">
         <mat-label translate>tenant-profile.rate-limits.per-seconds</mat-label>
         <input matInput placeholder="{{ 'tenant-profile.rate-limits.per-seconds' | translate }}"
                type="number" min="1" step="1" formControlName="time" required>
@@ -59,7 +59,7 @@
           [matTooltip]="'tenant-profile.rate-limits.add-limit' | translate" matTooltipPosition="above">
     <span translate>tenant-profile.rate-limits.add-limit</span>
   </button>
-  <div fxFlex fxLayoutGap="8px" fxLayout="column" class="tb-rate-limits-preview" [ngClass]="{'tb-rate-limits-preview-short': !disabled}">
+  <div class="tb-rate-limits-preview flex flex-1 flex-col gap-2" [class.tb-rate-limits-preview-short]="!disabled">
     <span translate>tenant-profile.rate-limits.preview</span>
     <tb-rate-limits-text [rateLimitsArray]="rateLimitsArray" [disabled]="disabled"></tb-rate-limits-text>
   </div>

@@ -15,30 +15,34 @@
     limitations under the License.
 
 -->
-<div class="tb-switch" fxLayout="column" [ngStyle]="{'pointerEvents': ctx.isEdit ? 'none' : 'all'}" *ngIf="switchType === 'switch'; else slideToggle">
-  <div #switchErrorContainer class="error-container" [ngStyle]="{'background': error?.length ? 'rgba(255,255,255,0.25)' : 'none'}"
-       fxLayout="row" fxLayoutAlign="center center">
+<div class="tb-switch flex flex-col" [style.pointer-events]="ctx.isEdit ? 'none' : 'all'" *ngIf="switchType === 'switch'; else slideToggle">
+  <div #switchErrorContainer class="error-container flex flex-row items-center justify-center" [style.background]="error?.length ? 'rgba(255,255,255,0.25)' : 'none'">
     <span #switchError class="switch-error">{{ error }}</span>
   </div>
-  <div #switchTitleContainer fxFlex="30" class="title-container" fxLayout="row" fxLayoutAlign="center center" [fxShow]="showTitle">
+  <div #switchTitleContainer class="title-container flex max-h-30% flex-full flex-row items-center justify-center" [class.!hidden]="!showTitle">
     <span #switchTitle class="switch-title">{{title}}</span>
   </div>
-  <div #switchContainer fxFlex="{{showTitle ? 70 : 100}}" id="switch-container" fxLayout="column" fxLayoutAlign="center center">
+  <div #switchContainer class="flex flex-full flex-col items-center justify-center"
+       [class]="{
+          'max-h-70%': showTitle,
+          'max-h-100%': !showTitle
+       }"
+       id="switch-container">
     <div #switch class="switch">
       <mat-slide-toggle #matSlideToggle [(ngModel)]="value" (change)="onValue()">
       </mat-slide-toggle>
     </div>
-    <div #onoffContainer class="onoff-container" fxLayout="row" fxLayoutAlign="center start" [fxShow]="showOnOffLabels">
-      <span #offLabel fxFlex class="off-label" [fxShow]="!value" style="text-align: center;">OFF</span>
-      <span fxFlex [fxShow]="value"></span>
-      <span #onLabel fxFlex class="on-label" [fxShow]="value" style="text-align: center;">ON</span>
-      <span fxFlex [fxShow]="!value"></span>
+    <div #onoffContainer class="onoff-container flex flex-row items-start justify-center" [class.!hidden]="!showOnOffLabels">
+      <span #offLabel class="off-label flex-1" [class.!hidden]="value" style="text-align: center;">OFF</span>
+      <span class="flex-1" [class.!hidden]="!value"></span>
+      <span #onLabel class="on-label flex-1" [class.!hidden]="!value" style="text-align: center;">ON</span>
+      <span class="flex-1" [class.!hidden]="value"></span>
     </div>
   </div>
   <div #textMeasure id="text-measure"></div>
 </div>
 <ng-template #slideToggle>
-  <div class="tb-absolute-fill" fxLayout="column" [ngStyle]="{'pointerEvents': ctx.isEdit ? 'none' : 'all'}" fxLayoutAlign="center center">
+  <div class="tb-absolute-fill flex flex-col items-center justify-center" [style.pointer-events]="ctx.isEdit ? 'none' : 'all'">
     <div>
       <mat-slide-toggle [disabled]="executingUpdateValue" [labelPosition]="labelPosition" [color]="sliderColor" [(ngModel)]="value" (change)="onValue()">{{title}}</mat-slide-toggle>
       <mat-progress-bar style="height: 2px;" [color]="sliderColor" mode="indeterminate" *ngIf="executingUpdateValue"></mat-progress-bar>

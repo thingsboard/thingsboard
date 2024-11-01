@@ -78,7 +78,6 @@ import {
   SaveWidgetTypeAsDialogResult
 } from '@home/pages/widget/save-widget-type-as-dialog.component';
 import { WidgetService } from '@core/http/widget.service';
-import { de } from 'date-fns/locale';
 
 @Component({
   selector: 'tb-scada-symbol',

@@ -15,15 +15,15 @@
     limitations under the License.
 
 -->
-<div fxFlex fxLayout="column" class="tb-progress-cover" fxLayoutAlign="center center"
+<div class="tb-progress-cover flex flex-1 flex-col items-center justify-center"
      [style]="dashboardStyle"
-     [style.backgroundImage]="backgroundImage"
-     [fxShow]="(isLoading$ | async) && !ignoreLoading && !isEdit">
+     [style.background-image]="backgroundImage"
+     [class.!hidden]="(isLoading$ | async) === false || ignoreLoading || isEdit">
   <mat-spinner color="warn" mode="indeterminate" diameter="100">
   </mat-spinner>
 </div>
 <div id="gridster-parent"
-     fxFlex class="tb-dashboard-content" [class.autofill-height]="isAutofillHeight()"
+     class="tb-dashboard-content flex-1" [class.autofill-height]="isAutofillHeight()"
                 [class.center-vertical]="centerVertical"
                 [class.center-horizontal]="centerHorizontal"
                 (mousedown)="onDashboardMouseDown($event)"

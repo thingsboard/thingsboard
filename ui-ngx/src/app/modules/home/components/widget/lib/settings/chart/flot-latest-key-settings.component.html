@@ -20,10 +20,9 @@
     <div class="tb-form-panel-title" translate>widgets.chart.threshold-settings</div>
     <mat-expansion-panel class="tb-settings" [expanded]="flotLatestKeySettingsForm.get('useAsThreshold').value"
                          [disabled]="!flotLatestKeySettingsForm.get('useAsThreshold').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="useAsThreshold" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="useAsThreshold" (click)="$event.stopPropagation()">
             {{ 'widgets.chart.use-as-threshold' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>

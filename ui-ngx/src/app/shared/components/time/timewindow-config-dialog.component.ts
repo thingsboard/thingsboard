@@ -56,8 +56,6 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
 
   aggregation = false;
 
-  timewindow: Timewindow;
-
   timewindowForm: FormGroup;
 
   historyTypes = HistoryWindowType;
@@ -108,6 +106,8 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
   ];
 
   realtimeTypeSelectionAvailable: boolean;
+
+  private timewindow: Timewindow;
 
   private destroy$ = new Subject<void>();
 
