@@ -13,18 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import "constants";
-
 :host {
   .mat-mdc-dialog-content {
     padding: 0 24px 24px;
-  }
-
-  .dialog-title {
-    max-width: 80vw;
-
-    @media #{$mat-lt-sm} {
-      max-width: 100%;
-    }
   }
 }
