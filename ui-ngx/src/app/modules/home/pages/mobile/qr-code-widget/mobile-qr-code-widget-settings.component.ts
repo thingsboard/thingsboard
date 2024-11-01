@@ -70,9 +70,11 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
           this.mobileAppSettingsForm.get('mobileAppBundleId').disable({emitEvent: false});
           this.mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').disable({emitEvent: false});
         } else {
-          this.mobileAppSettingsForm.get('mobileAppBundleId').enable({emitEvent: false});
-          if (this.mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabelEnabled').value &&
-            this.mobileAppSettingsForm.get('qrCodeConfig.showOnHomePage').value) {
+          const formValue = this.mobileAppSettingsForm.value;
+          if (!formValue.useDefaultApp) {
+            this.mobileAppSettingsForm.get('mobileAppBundleId').enable({emitEvent: false});
+          }
+          if (formValue.qrCodeConfig.qrCodeLabelEnabled && formValue.qrCodeConfig.showOnHomePage) {
             this.mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').enable({emitEvent: false});
           }
         }
