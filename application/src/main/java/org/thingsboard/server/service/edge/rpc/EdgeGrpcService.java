@@ -94,6 +94,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private final Map<EdgeId, Boolean> sessionNewEvents = new HashMap<>();
     private final ConcurrentMap<EdgeId, ScheduledFuture<?>> sessionEdgeEventChecks = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, Consumer<FromEdgeSyncResponse>> localSyncEdgeRequests = new ConcurrentHashMap<>();
+    private final ConcurrentMap<EdgeId, Boolean> edgeEventsProcessed = new ConcurrentHashMap<>();
 
     @Value("${edges.rpc.port}")
     private int rpcPort;
@@ -328,13 +329,18 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         long lastConnectTs = System.currentTimeMillis();
         save(tenantId, edgeId, DefaultDeviceStateService.LAST_CONNECT_TIME, lastConnectTs);
         edgeIdServiceIdCache.put(edgeId, serviceInfoProvider.getServiceId());
-        if (edgeGrpcSession instanceof KafkaEdgeGrpcSession) {
-            initializeKafkaConsumer((KafkaEdgeGrpcSession) edgeGrpcSession, tenantId, edgeId);
-        }
         pushRuleEngineMessage(tenantId, edge, lastConnectTs, TbMsgType.CONNECT_EVENT);
         cancelScheduleEdgeEventsCheck(edgeId);
+        edgeEventsProcessed.putIfAbsent(edgeId, Boolean.FALSE);
+        if (edgeGrpcSession instanceof KafkaEdgeGrpcSession session) {
+            Boolean isChecked = edgeEventsProcessed.get(edgeId);
+            if (Boolean.FALSE.equals(isChecked)) {
+                scheduleEdgeEventsCheck(session);
+            }
+            initializeKafkaConsumer(session, tenantId, edgeId);
+        }
         if (edgeGrpcSession instanceof PostgresEdgeGrpcSession) {
-            scheduleEdgeEventsCheck((PostgresEdgeGrpcSession) edgeGrpcSession);
+            scheduleEdgeEventsCheck(edgeGrpcSession);
         }
     }
 
@@ -399,7 +405,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         }
     }
 
-    private void scheduleEdgeEventsCheck(PostgresEdgeGrpcSession session) {
+    private void scheduleEdgeEventsCheck(AbstractEdgeGrpcSession<?> session) {
         EdgeId edgeId = session.getEdge().getId();
         UUID tenantId = session.getEdge().getTenantId().getId();
         if (sessions.containsKey(edgeId)) {
@@ -408,7 +414,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                     final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
                     newEventLock.lock();
                     try {
-                        if (Boolean.TRUE.equals(sessionNewEvents.get(edgeId))) {
+                        if (Boolean.TRUE.equals(sessionNewEvents.get(edgeId)) && Boolean.FALSE.equals(edgeEventsProcessed.get(edgeId))) {
                             log.trace("[{}][{}] Set session new events flag to false", tenantId, edgeId.getId());
                             sessionNewEvents.put(edgeId, false);
                             Futures.addCallback(session.processEdgeEvents(), new FutureCallback<>() {
@@ -417,7 +423,11 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                                     if (Boolean.TRUE.equals(newEventsAdded)) {
                                         sessionNewEvents.put(edgeId, true);
                                     }
-                                    scheduleEdgeEventsCheck(session);
+                                    if (isKafkaSupported) {
+                                        edgeEventsProcessed.put(edgeId, true);
+                                    } else {
+                                        scheduleEdgeEventsCheck(session);
+                                    }
                                 }
 
                                 @Override
@@ -427,7 +437,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                                 }
                             }, ctx.getGrpcCallbackExecutorService());
                         } else {
-                            scheduleEdgeEventsCheck(session);
+                            if (!isKafkaSupported) {
+                                scheduleEdgeEventsCheck(session);
+                            }
                         }
                     } finally {
                         newEventLock.unlock();

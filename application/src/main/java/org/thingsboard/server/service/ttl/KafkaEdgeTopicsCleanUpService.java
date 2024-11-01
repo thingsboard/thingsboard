@@ -22,7 +22,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.page.PageDataIterable;
@@ -85,19 +85,19 @@ public class KafkaEdgeTopicsCleanUpService {
             return;
         }
 
-        PageDataIterable<Edge> edges = new PageDataIterable<>(link -> edgeService.findEdgesByTenantId(tenantId, link), 1024);
+        PageDataIterable<EdgeId> edgeIds = new PageDataIterable<>(link -> edgeService.findEdgeIdsByTenantId(tenantId, link), 1024);
         long currentTimeMillis = System.currentTimeMillis();
 
-        for (Edge edge : edges) {
-            Optional<AttributeKvEntry> attributeOpt = attributesService.find(tenantId, edge.getId(), AttributeScope.SERVER_SCOPE, DefaultDeviceStateService.LAST_CONNECT_TIME).get();
+        for (EdgeId edgeId : edgeIds) {
+            Optional<AttributeKvEntry> attributeOpt = attributesService.find(tenantId, edgeId, AttributeScope.SERVER_SCOPE, DefaultDeviceStateService.LAST_CONNECT_TIME).get();
             if (attributeOpt.isPresent()) {
                 Optional<Long> lastConnectTimeOpt = attributeOpt.get().getLongValue();
                 if (lastConnectTimeOpt.isPresent() && isTopicExpired(lastConnectTimeOpt.get(), currentTimeMillis)) {
-                    String topic = topicService.buildEdgeEventNotificationsTopicPartitionInfo(tenantId, edge.getId()).getTopic();
+                    String topic = topicService.buildEdgeEventNotificationsTopicPartitionInfo(tenantId, edgeId).getTopic();
                     TbKafkaAdmin kafkaAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdgeEventConfigs());
                     if (kafkaAdmin.isTopicEmpty(topic)) {
                         kafkaAdmin.deleteTopic(topic);
-                        log.info("Removed outdated topic for tenant {} and edge {} older than {}", tenantId, edge.getName(), Date.from(Instant.ofEpochMilli(currentTimeMillis - ONE_MONTH_MILLIS)));
+                        log.info("Removed outdated topic for tenant {} and edge with id {} older than {}", tenantId, edgeId, Date.from(Instant.ofEpochMilli(currentTimeMillis - ONE_MONTH_MILLIS)));
                     }
                 }
             }
