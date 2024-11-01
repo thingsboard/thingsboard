@@ -21,18 +21,17 @@ import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { HomeComponentsModule } from '@home/components/home-components.module';
 import { ApplicationsRoutingModule } from '@home/pages/mobile/applications/applications-routing.module';
-import { ReleaseNotesPanelComponent } from '@home/pages/mobile/applications/release-notes-panel.component';
 import { MobileAppDialogComponent } from '@home/pages/mobile/applications/mobile-app-dialog.component';
 import { RemoveAppDialogComponent } from '@home/pages/mobile/applications/remove-app-dialog.component';
 import {
   MobileAppConfigurationDialogComponent
 } from '@home/pages/mobile/applications/mobile-app-configuration-dialog.component';
+import { CommMobileModule } from '@home/pages/mobile/common/comm-mobile.module';
 
 @NgModule({
   declarations: [
     MobileAppComponent,
     MobileAppTableHeaderComponent,
-    ReleaseNotesPanelComponent,
     MobileAppDialogComponent,
     RemoveAppDialogComponent,
     MobileAppConfigurationDialogComponent,
@@ -41,6 +40,7 @@ import {
     CommonModule,
     SharedModule,
     HomeComponentsModule,
+    CommMobileModule,
     ApplicationsRoutingModule,
   ],
   exports: [

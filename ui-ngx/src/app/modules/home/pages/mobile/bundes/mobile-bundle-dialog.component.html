@@ -18,7 +18,7 @@
 <mat-toolbar color="primary">
   <h2>{{ dialogTitle | translate }}</h2>
   <span class="flex-1"></span>
-  <div tb-help="ruleNotifications"></div>
+  <div tb-help="mobileBundle"></div>
   <button mat-icon-button
           (click)="cancel()"
           type="button">
@@ -49,7 +49,7 @@
           allowCreateNew
           useFullEntityId
           appearance="outline"
-          labelText="{{ 'mobile.android-application' | translate }}"
+          labelText="mobile.android-application"
           [entityType]="entityType.MOBILE_APP"
           [entitySubtype]="platformType.ANDROID"
           (createNew)="createApplication('androidAppId', platformType.ANDROID)"
@@ -59,7 +59,7 @@
           allowCreateNew
           useFullEntityId
           appearance="outline"
-          labelText="{{ 'mobile.ios-application' | translate }}"
+          labelText="mobile.ios-application"
           [entityType]="entityType.MOBILE_APP"
           [entitySubtype]="platformType.IOS"
           (createNew)="createApplication('iosAppId', platformType.IOS)"

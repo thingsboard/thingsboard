@@ -597,13 +597,13 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
     [
       EntityType.MOBILE_APP,
       {
-        helpLinkId: 'oauth2Settings'
+        helpLinkId: 'mobileApplication'
       }
     ],
     [
       EntityType.MOBILE_APP_BUNDLE,
       {
-        helpLinkId: 'mobileBundles'
+        helpLinkId: 'mobileBundle'
       }
     ]
   ]

@@ -20,30 +20,28 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
 
 @Component({
   selector: 'tb-release-notes-panel',
-  templateUrl: './release-notes-panel.component.html',
-  styleUrls: ['./release-notes-panel.component.scss'],
+  templateUrl: './editor-panel.component.html',
+  styleUrls: ['./editor-panel.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class ReleaseNotesPanelComponent implements OnInit {
+export class EditorPanelComponent implements OnInit {
 
   @Input()
   disabled: boolean;
 
   @Input()
-  releaseNotes: string;
+  content: string;
 
   @Input()
-  isLatest: boolean;
-
-  @Input()
-  popover: TbPopoverComponent<ReleaseNotesPanelComponent>;
-
-  @Output()
-  releaseNotesApplied = new EventEmitter<string>();
-
   title: string;
 
-  releaseNotesControl: FormControl<string>;
+  @Input()
+  popover: TbPopoverComponent<EditorPanelComponent>;
+
+  @Output()
+  editorContentApplied = new EventEmitter<string>();
+
+  editorControl: FormControl<string>;
 
   tinyMceOptions: Record<string, any> = {
     base_url: '/assets/tinymce',
@@ -63,10 +61,9 @@ export class ReleaseNotesPanelComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.releaseNotesControl = this.fb.control(this.releaseNotes);
-    this.title = this.isLatest ? 'mobile.latest-version-release-notes' : 'mobile.min-version-release-notes';
+    this.editorControl = this.fb.control(this.content);
     if (this.disabled) {
-      this.releaseNotesControl.disable({emitEvent: false});
+      this.editorControl.disable({emitEvent: false});
     }
   }
 
@@ -75,8 +72,8 @@ export class ReleaseNotesPanelComponent implements OnInit {
   }
 
   apply() {
-    if (this.releaseNotesControl.valid) {
-      this.releaseNotesApplied.emit(this.releaseNotesControl.value);
+    if (this.editorControl.valid) {
+      this.editorContentApplied.emit(this.editorControl.value);
     }
   }
 }

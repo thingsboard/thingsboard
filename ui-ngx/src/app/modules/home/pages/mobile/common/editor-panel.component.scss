@@ -15,7 +15,7 @@
  */
 @import '../../../../../../scss/constants';
 
-.tb-release-notes-panel {
+.tb-editor-panel {
   width: 600px;
   display: flex;
   flex-direction: column;
@@ -23,14 +23,17 @@
   @media #{$mat-lt-md} {
     width: 90vw;
   }
-  .tb-release-notes-title {
+  .tb-editor-title {
     font-size: 16px;
     font-weight: 500;
     line-height: 24px;
     letter-spacing: 0.25px;
     color: rgba(0, 0, 0, 0.87);
   }
-  .tb-release-notes-panel-buttons {
+  .tb-editor {
+    height: 400px;
+  }
+  .tb-editor-buttons {
     height: 40px;
     display: flex;
     flex-direction: row;

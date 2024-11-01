@@ -25,11 +25,11 @@ export interface QrCodeSettings extends HasTenantId {
   useSystemSettings: boolean;
   useDefaultApp: boolean;
   mobileAppBundleId: MobileAppBundleId
-  androidConfig: any; //TODO: need remove
-  iosConfig: any; //TODO: need remove
+  androidEnabled: boolean;
+  iosEnabled: boolean;
   qrCodeConfig: QRCodeConfig;
-  defaultGooglePlayLink: string;
-  defaultAppStoreLink: string;
+  readonly googlePlayLink: string;
+  readonly appStoreLink: string;
   id: {
     id: string;
   }

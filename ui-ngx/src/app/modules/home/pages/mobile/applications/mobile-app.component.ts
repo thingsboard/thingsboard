@@ -28,7 +28,7 @@ import { PlatformType, platformTypeTranslations } from '@shared/models/oauth2.mo
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { ReleaseNotesPanelComponent } from '@home/pages/mobile/applications/release-notes-panel.component';
+import { EditorPanelComponent } from '@home/pages/mobile/common/editor-panel.component';
 
 @Component({
   selector: 'tb-mobile-app',
@@ -155,18 +155,18 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
     } else {
       const ctx: any = {
         disabled: !(this.isAdd || this.isEdit),
-        isLatest: isLatest,
-        releaseNotes: isLatest
+        title: isLatest ? 'mobile.latest-version-release-notes' : 'mobile.min-version-release-notes',
+        content: isLatest
           ? this.entityForm.get('versionInfo.latestVersionReleaseNotes').value
           : this.entityForm.get('versionInfo.minVersionReleaseNotes').value
       };
       const releaseNotesPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, ReleaseNotesPanelComponent, ['leftOnly', 'leftBottomOnly', 'leftTopOnly'], true, null,
+        this.viewContainerRef, EditorPanelComponent, ['leftOnly', 'leftBottomOnly', 'leftTopOnly'], true, null,
         ctx,
         {},
         {}, {}, false, () => {}, {padding: '16px 24px'});
       releaseNotesPanelPopover.tbComponentRef.instance.popover = releaseNotesPanelPopover;
-      releaseNotesPanelPopover.tbComponentRef.instance.releaseNotesApplied.subscribe((releaseNotes) => {
+      releaseNotesPanelPopover.tbComponentRef.instance.editorContentApplied.subscribe((releaseNotes) => {
         releaseNotesPanelPopover.hide();
         if (isLatest) {
           this.entityForm.get('versionInfo.latestVersionReleaseNotes').setValue(releaseNotes);

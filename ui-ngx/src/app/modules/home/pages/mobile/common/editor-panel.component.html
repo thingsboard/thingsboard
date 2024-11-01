@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<div class="tb-release-notes-panel">
-  <div class="tb-release-notes-title">{{ title | translate }}</div>
-  <editor [init]="tinyMceOptions" [formControl]="releaseNotesControl"></editor>
-  <div class="tb-release-notes-panel-buttons">
+<div class="tb-editor-panel">
+  <div class="tb-editor-title">{{ title | translate }}</div>
+  <editor class="tb-editor" [init]="tinyMceOptions" [formControl]="editorControl"></editor>
+  <div class="tb-editor-buttons">
     <button mat-button
             color="primary"
             type="button"
@@ -29,7 +29,7 @@
             color="primary"
             type="button"
             (click)="apply()"
-            [disabled]="releaseNotesControl.invalid || !releaseNotesControl.dirty">
+            [disabled]="editorControl.invalid || !editorControl.dirty">
       {{ 'action.apply' | translate }}
     </button>
   </div>

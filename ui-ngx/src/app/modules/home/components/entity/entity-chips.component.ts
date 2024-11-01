@@ -18,7 +18,7 @@ import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { BaseData } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { baseDetailsPageByEntityType, EntityType } from '@app/shared/public-api';
-import { isObject } from '@core/utils';
+import { isEqual, isObject } from '@core/utils';
 
 @Component({
   selector: 'tb-entity-chips',
@@ -53,10 +53,14 @@ export class EntityChipsComponent implements OnChanges {
         entitiesList = [entitiesList];
       }
       if (Array.isArray(entitiesList)) {
-        this.subEntities = entitiesList;
-        if (this.subEntities.length) {
-          this.entityDetailsPrefixUrl = baseDetailsPageByEntityType.get(this.subEntities[0].id.entityType as EntityType);
+        if (entitiesList.length) {
+          this.entityDetailsPrefixUrl = baseDetailsPageByEntityType.get(entitiesList[0].id.entityType as EntityType);
         }
+      } else {
+        entitiesList = [];
+      }
+      if (!isEqual(entitiesList, this.subEntities)) {
+        this.subEntities = entitiesList;
       }
     }
   }
