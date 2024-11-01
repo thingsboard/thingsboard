@@ -31,4 +31,4 @@ import { SharedModule } from '@shared/shared.module';
     EditorPanelComponent
   ]
 })
-export class CommMobileModule {}
+export class CommonMobileModule {}
