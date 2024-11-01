@@ -172,27 +172,14 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
         return resources.values().stream()
                 .map(resourceInfo -> {
                     if (resourceInfo.getResourceType() == ResourceType.IMAGE) {
-                        ResourceExportData imageExportData = tbImageService.exportImage(resourceInfo);
+                        ResourceExportData imageExportData = imageService.exportImage(resourceInfo);
                         imageExportData.setResourceKey(null); // so that the image is not updated by resource key on import
                         return imageExportData;
                     } else {
-                        return exportResource(resourceInfo);
+                        return resourceService.exportResource(resourceInfo);
                     }
                 })
                 .toList();
-    }
-
-    private ResourceExportData exportResource(TbResourceInfo resourceInfo) {
-        byte[] data = resourceService.getResourceData(resourceInfo.getTenantId(), resourceInfo.getId());
-        return ResourceExportData.builder()
-                .mediaType(resourceInfo.getResourceType().getMediaType())
-                .fileName(resourceInfo.getFileName())
-                .title(resourceInfo.getTitle())
-                .type(resourceInfo.getResourceType())
-                .subType(resourceInfo.getResourceSubType())
-                .resourceKey(resourceInfo.getResourceKey())
-                .data(Base64.getEncoder().encodeToString(data))
-                .build();
     }
 
     private TbResourceInfo importResource(ResourceExportData exportData, boolean checkExisting, SecurityUser user) throws ThingsboardException {

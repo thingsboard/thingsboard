@@ -65,6 +65,10 @@ public class DashboardSyncServiceTest extends AbstractControllerTest {
     *
     *  TODO:
     *   update system widgets with the new structure
+    *
+    *  TODO CONSIDER
+    *   leave image/resource link as is. when importing - keep track of imported resources (if the resource key changed) (map of resourceKey -> importedResourceKey).
+    *   then resolve and update resource links if resource key is new (idx added)
     * */
 
 //    FIXME: need to update resource key all the time???? because etag is changed. same for images....

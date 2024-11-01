@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -469,6 +470,22 @@ public class JacksonUtil {
     }
 
     public static void replaceAllByMapping(JsonNode jsonNode, Map<String, String> mapping, Map<String, String> templateParams, BiFunction<String, String, String> processor) {
+        replaceByMapping(jsonNode, mapping, templateParams, (name, value) -> {
+            if (value.isTextual()) {
+                return new TextNode(processor.apply(name, value.asText()));
+            } else if (value.isArray()) {
+                ArrayNode array = (ArrayNode) value;
+                for (int i = 0; i < array.size(); i++) {
+                    String arrayElementName = name.replace("$index", Integer.toString(i));
+                    array.set(i, processor.apply(arrayElementName, array.get(i).asText()));
+                }
+                return array;
+            }
+            return value;
+        });
+    }
+
+    public static void replaceByMapping(JsonNode jsonNode, Map<String, String> mapping, Map<String, String> templateParams, BiFunction<String, JsonNode, JsonNode> processor) {
         for (var entry : mapping.entrySet()) {
             String expression = entry.getValue();
             Queue<JsonPathProcessingTask> tasks = new LinkedList<>();
@@ -515,15 +532,7 @@ public class JacksonUtil {
                             for (var replacement : task.getVariables().entrySet()) {
                                 name = name.replace("$" + replacement.getKey(), Strings.nullToEmpty(replacement.getValue()));
                             }
-                            if (node.isObject() && value.isTextual()) {
-                                ((ObjectNode) node).put(token, processor.apply(name, value.asText()));
-                            } else if (value.isArray()) {
-                                ArrayNode array = (ArrayNode) value;
-                                for (int i = 0; i < array.size(); i++) {
-                                    String arrayElementName = name.replace("$index", Integer.toString(i));
-                                    array.set(i, processor.apply(arrayElementName, array.get(i).asText()));
-                                }
-                            }
+                            ((ObjectNode) node).set(token, processor.apply(name, value));
                         } else {
                             if (StringUtils.isNotEmpty(variableName)) {
                                 tasks.add(task.next(value, variableName, variableValue));

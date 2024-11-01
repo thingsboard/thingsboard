@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.resource;
 
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.HasImage;
+import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.TbImageDeleteResult;
 import org.thingsboard.server.common.data.TbResource;
@@ -46,6 +47,8 @@ public interface ImageService {
     byte[] getImageData(TenantId tenantId, TbResourceId imageId);
 
     byte[] getImagePreview(TenantId tenantId, TbResourceId imageId);
+
+    ResourceExportData exportImage(TbResourceInfo imageInfo);
 
     TbImageDeleteResult deleteImage(TbResourceInfo imageInfo, boolean force);
 

@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.ImageDescriptor;
+import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbImageDeleteResult;
@@ -62,7 +63,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
@@ -75,7 +75,6 @@ import static org.apache.commons.lang3.ArrayUtils.get;
 public class BaseImageService extends BaseResourceService implements ImageService {
 
     private static final int MAX_ENTITIES_TO_FIND = 10;
-    private static final String DEFAULT_CONFIG_TAG = "defaultConfig";
 
     public static Map<String, String> DASHBOARD_BASE64_MAPPING = new HashMap<>();
     public static Map<String, String> WIDGET_TYPE_BASE64_MAPPING = new HashMap<>();
@@ -233,6 +232,24 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     }
 
     @Override
+    public ResourceExportData exportImage(TbResourceInfo imageInfo) {
+        ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
+        byte[] data = getImageData(imageInfo.getTenantId(), imageInfo.getId());
+        return ResourceExportData.builder()
+                .mediaType(descriptor.getMediaType())
+                .fileName(imageInfo.getFileName())
+                .title(imageInfo.getTitle())
+                .type(ResourceType.IMAGE)
+                .subType(imageInfo.getResourceSubType())
+                .resourceKey(imageInfo.getResourceKey())
+                .isPublic(imageInfo.isPublic())
+                .publicResourceKey(imageInfo.getPublicResourceKey())
+                .data(Base64.getEncoder().encodeToString(data))
+                .etag(descriptor.getEtag())
+                .build();
+    }
+
+    @Override
     public TbImageDeleteResult deleteImage(TbResourceInfo imageInfo, boolean force) {
         var tenantId = imageInfo.getTenantId();
         var imageId = imageInfo.getId();
@@ -299,13 +316,10 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         entity.setImage(result.getValue());
         boolean updated = result.isUpdated();
         if (entity.getDescriptor().isObject()) {
-            ObjectNode descriptor = (ObjectNode) entity.getDescriptor();
-            JsonNode defaultConfig = Optional.ofNullable(descriptor.get(DEFAULT_CONFIG_TAG))
-                    .filter(JsonNode::isTextual).map(JsonNode::asText)
-                    .map(JacksonUtil::toJsonNode).orElse(null);
+            JsonNode defaultConfig = entity.getDefaultConfig();
             if (defaultConfig != null) {
                 updated |= base64ToImageUrlUsingMapping(entity.getTenantId(), WIDGET_TYPE_BASE64_MAPPING, Collections.singletonMap("prefix", prefix), defaultConfig);
-                descriptor.put(DEFAULT_CONFIG_TAG, defaultConfig.toString());
+                entity.setDefaultConfig(defaultConfig);
             }
         }
         updated |= base64ToImageUrlRecursively(entity.getTenantId(), prefix, entity.getDescriptor());
@@ -341,7 +355,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         return base64ToImageUrl(tenantId, name, data, false);
     }
 
-    private static final Pattern TB_IMAGE_METADATA_PATTERN = Pattern.compile("^tb-image:([^;]+);data:(.*);.*");
+    public static final Pattern TB_IMAGE_METADATA_PATTERN = Pattern.compile("^tb-image:([^;]+);data:(.*);.*");
 
     private UpdateResult base64ToImageUrl(TenantId tenantId, String name, String data, boolean strict) {
         if (StringUtils.isBlank(data)) {
@@ -352,7 +366,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         String resourceName = null;
         String resourceSubType = null;
         String etag = null;
-        String mediaType;
+        String mediaType = null;
         var matcher = TB_IMAGE_METADATA_PATTERN.matcher(data);
         if (matcher.matches()) {
             String[] metadata = matcher.group(1).split(":");
@@ -361,6 +375,8 @@ public class BaseImageService extends BaseResourceService implements ImageServic
             resourceSubType = decode(get(metadata, 2));
             etag = get(metadata, 3);
             mediaType = matcher.group(2);
+        } else if (data.startsWith("tb-image:")) {
+            etag = StringUtils.substringAfter(data, "tb-image:");
         } else if (data.startsWith(DataConstants.TB_IMAGE_PREFIX + "data:image/") || (!strict && data.startsWith("data:image/"))) {
             mediaType = StringUtils.substringBetween(data, "data:", ";base64");
         } else {
@@ -370,6 +386,9 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         String base64Data = StringUtils.substringAfter(data, "base64,");
         byte[] imageData = StringUtils.isNotEmpty(base64Data) ? Base64.getDecoder().decode(base64Data) : null;
         if (StringUtils.isBlank(etag)) {
+            if (imageData == null) {
+                return UpdateResult.of(false, data);
+            }
             etag = calculateEtag(imageData);
         }
         var imageInfo = findSystemOrTenantImageByEtag(tenantId, etag);
@@ -454,14 +473,10 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         inlineImage(widgetTypeDetails, images);
         ObjectNode descriptor = (ObjectNode) widgetTypeDetails.getDescriptor();
         inlineIntoJson(widgetTypeDetails.getTenantId(), descriptor, images);
-        if (descriptor.has(DEFAULT_CONFIG_TAG) && descriptor.get(DEFAULT_CONFIG_TAG).isTextual()) {
-            try {
-                var defaultConfig = JacksonUtil.toJsonNode(descriptor.get(DEFAULT_CONFIG_TAG).asText());
-                inlineIntoJson(widgetTypeDetails.getTenantId(), defaultConfig, images);
-                descriptor.put(DEFAULT_CONFIG_TAG, JacksonUtil.toString(defaultConfig));
-            } catch (Exception e) {
-                log.debug("[{}][{}] Failed to process default config: ", widgetTypeDetails.getTenantId(), widgetTypeDetails.getId(), e);
-            }
+        JsonNode defaultConfig = widgetTypeDetails.getDefaultConfig();
+        if (defaultConfig != null) {
+            inlineIntoJson(widgetTypeDetails.getTenantId(), defaultConfig, images);
+            widgetTypeDetails.setDefaultConfig(defaultConfig);
         }
         return images;
     }
@@ -501,28 +516,25 @@ public class BaseImageService extends BaseResourceService implements ImageServic
 
     private String inlineImage(TenantId tenantId, String path, String url, boolean addTbImagePrefix, List<TbResourceInfo> processedImages) {
         return inlineImage(tenantId, path, url, (key, imageInfo) -> {
-            String tbImagePrefix = "";
-            boolean addData = true;
+            ImageDescriptor descriptor = getImageDescriptor(imageInfo, key.isPreview());
+            String value = "";
             if (addTbImagePrefix) {
-                tbImagePrefix = "tb-image:" + encode(imageInfo.getResourceKey()) + ":"
+                value = "tb-image:";
+
+                if (processedImages != null && !key.isPreview()) { // images are stored separately
+                    processedImages.add(imageInfo);
+                    value += descriptor.getEtag();
+                    return value;
+                }
+
+                value += encode(imageInfo.getResourceKey()) + ":"
                         + encode(imageInfo.getName()) + ":"
                         + encode(imageInfo.getResourceSubType().name()) + ":"
                         + imageInfo.getEtag() + ";";
-
-                if (processedImages != null && !key.isPreview()) {
-                    addData = false;
-                    processedImages.add(imageInfo);
-                }
             }
 
-            byte[] data;
-            if (addData) {
-                data = key.isPreview() ? getImagePreview(tenantId, imageInfo.getId()) : getImageData(tenantId, imageInfo.getId());
-            } else {
-                data = null;
-            }
-            ImageDescriptor descriptor = getImageDescriptor(imageInfo, key.isPreview());
-            return tbImagePrefix + "data:" + descriptor.getMediaType() + ";base64," + encode(data);
+            byte[] data = key.isPreview() ? getImagePreview(tenantId, imageInfo.getId()) : getImageData(tenantId, imageInfo.getId());
+            return value + "data:" + descriptor.getMediaType() + ";base64," + encode(data);
         });
     }
 

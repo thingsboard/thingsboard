@@ -187,23 +187,6 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public ResourceExportData exportImage(TbResourceInfo imageInfo) {
-        ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
-        byte[] data = imageService.getImageData(imageInfo.getTenantId(), imageInfo.getId());
-        return ResourceExportData.builder()
-                .mediaType(descriptor.getMediaType())
-                .fileName(imageInfo.getFileName())
-                .title(imageInfo.getTitle())
-                .type(ResourceType.IMAGE)
-                .subType(imageInfo.getResourceSubType())
-                .resourceKey(imageInfo.getResourceKey())
-                .isPublic(imageInfo.isPublic())
-                .publicResourceKey(imageInfo.getPublicResourceKey())
-                .data(Base64.getEncoder().encodeToString(data))
-                .build();
-    }
-
-    @Override
     public TbResourceInfo importImage(ResourceExportData imageData, boolean checkExisting, SecurityUser user) throws Exception {
         TbResource image = new TbResource();
         image.setTenantId(user.getTenantId());

@@ -618,7 +618,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
                 + Base64.getEncoder().encodeToString(imageInfo.getResourceSubType().name().getBytes()) + ":"
                 + imageInfo.getEtag() + ";data:image/png;base64,");
         String resourceRef = exportedDashboard.getConfiguration().get("widgets").get("xxx").get("config")
-                .get("actions").get("elementClick").get(0).get("customResources").get(0).get("url").get("id").asText();
+                .get("actions").get("elementClick").get(0).get("customResources").get(0).get("url").asText();
         assertThat(resourceRef).isEqualTo("tb-resource:" + Base64.getEncoder().encodeToString(resourceInfo.getResourceType().name().getBytes())
                 + ":" + resourceInfo.getEtag());
 
@@ -627,10 +627,12 @@ public class DashboardControllerTest extends AbstractControllerTest {
         assertThat(resources.get(ResourceType.IMAGE)).singleElement().satisfies(exportedImage -> {
             assertThat(exportedImage.getFileName()).isEqualTo(imageInfo.getResourceKey());
             assertThat(exportedImage.getData()).isEqualTo(Base64.getEncoder().encodeToString(ImageControllerTest.PNG_IMAGE));
+            assertThat(exportedImage.getEtag()).isEqualTo(imageInfo.getEtag());
         });
         assertThat(resources.get(ResourceType.JS_MODULE)).singleElement().satisfies(exportedJsModule -> {
             assertThat(exportedJsModule.getFileName()).isEqualTo(resource.getResourceKey());
             assertThat(exportedJsModule.getData()).isEqualTo(Base64.getEncoder().encodeToString(resourceData));
+            assertThat(exportedJsModule.getEtag()).isEqualTo(resourceInfo.getEtag());
         });
 
         doDelete("/api/dashboard/" + dashboard.getId()).andExpect(status().isOk());

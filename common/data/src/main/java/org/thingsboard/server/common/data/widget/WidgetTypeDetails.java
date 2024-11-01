@@ -33,7 +33,7 @@ import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@JsonPropertyOrder({"fqn", "name", "deprecated", "image", "description", "descriptor", "externalId"})
+@JsonPropertyOrder({"fqn", "name", "deprecated", "image", "description", "descriptor", "externalId", "resources"})
 public class WidgetTypeDetails extends WidgetType implements HasName, HasTenantId, HasImage, ExportableEntity<WidgetTypeId> {
 
     @Schema(description = "Relative or external image URL. Replaced with image data URL (Base64) in case of relative URL and 'inlineImages' option enabled.")

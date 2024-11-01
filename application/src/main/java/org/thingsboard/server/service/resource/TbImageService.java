@@ -37,8 +37,6 @@ public interface TbImageService {
 
     void evictETags(ImageCacheKey imageCacheKey);
 
-    ResourceExportData exportImage(TbResourceInfo imageInfo);
-
     TbResourceInfo importImage(ResourceExportData imageData, boolean checkExisting, SecurityUser user) throws Exception;
 
 }

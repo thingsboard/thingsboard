@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.resource;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -41,6 +42,8 @@ public interface ResourceService extends EntityDaoService {
     TbResource findResourceById(TenantId tenantId, TbResourceId resourceId);
 
     byte[] getResourceData(TenantId tenantId, TbResourceId resourceId);
+
+    ResourceExportData exportResource(TbResourceInfo resourceInfo);
 
     TbResourceInfo findResourceInfoById(TenantId tenantId, TbResourceId resourceId);
 

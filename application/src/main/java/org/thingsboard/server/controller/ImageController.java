@@ -197,7 +197,7 @@ public class ImageController extends BaseController {
                                           @Parameter(description = IMAGE_KEY_PARAM_DESCRIPTION, required = true)
                                           @PathVariable String key) throws Exception {
         TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.READ);
-        return tbImageService.exportImage(imageInfo);
+        return imageService.exportImage(imageInfo);
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")

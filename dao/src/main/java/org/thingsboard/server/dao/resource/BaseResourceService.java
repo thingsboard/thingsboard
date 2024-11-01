@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.resource;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ import org.thingsboard.server.cache.resourceInfo.ResourceInfoEvictEvent;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -81,11 +83,13 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     private ImageService imageService;
 
     private static final Map<String, String> DASHBOARD_RESOURCES_MAPPING = Map.of(
-            "widgets.*.config.actions.*.*.customResources.*.url.id", ""
+            "widgets.*.config.actions.*.*.customResources.*.url", ""
     );
-
     private static final Map<String, String> WIDGET_RESOURCES_MAPPING = Map.of(
-            "resources.*.url.id", ""
+            "resources.*.url", ""
+    );
+    private static final Map<String, String> WIDGET_DEFAULT_CONFIG_RESOURCES_MAPPING = Map.of(
+            "actions.*.*.customResources.*.url", ""
     );
 
     @Override
@@ -178,6 +182,21 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     public byte[] getResourceData(TenantId tenantId, TbResourceId resourceId) {
         log.trace("Executing getResourceData [{}] [{}]", tenantId, resourceId);
         return resourceDao.getResourceData(tenantId, resourceId);
+    }
+
+    @Override
+    public ResourceExportData exportResource(TbResourceInfo resourceInfo) {
+        byte[] data = getResourceData(resourceInfo.getTenantId(), resourceInfo.getId());
+        return ResourceExportData.builder()
+                .mediaType(resourceInfo.getResourceType().getMediaType())
+                .fileName(resourceInfo.getFileName())
+                .title(resourceInfo.getTitle())
+                .type(resourceInfo.getResourceType())
+                .subType(resourceInfo.getResourceSubType())
+                .resourceKey(resourceInfo.getResourceKey())
+                .data(Base64.getEncoder().encodeToString(data))
+                .etag(resourceInfo.getEtag())
+                .build();
     }
 
     @Override
@@ -298,7 +317,13 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
 
     @Override
     public boolean replaceResourcesUsageWithUrls(WidgetTypeDetails widgetTypeDetails) {
-        return replaceResourcesUsageWithUrls(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor(), WIDGET_RESOURCES_MAPPING);
+        boolean updated = replaceResourcesUsageWithUrls(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor(), WIDGET_RESOURCES_MAPPING);
+        JsonNode defaultConfig = widgetTypeDetails.getDefaultConfig();
+        if (defaultConfig != null) {
+            updated |= replaceResourcesUsageWithUrls(widgetTypeDetails.getTenantId(), defaultConfig, WIDGET_DEFAULT_CONFIG_RESOURCES_MAPPING);
+            widgetTypeDetails.setDefaultConfig(defaultConfig);
+        }
+        return updated;
     }
 
     private boolean replaceResourcesUsageWithUrls(TenantId tenantId, JsonNode jsonNode, Map<String, String> mapping) {
@@ -314,7 +339,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
                 if (metadata.length < 2) {
                     return value;
                 }
-                ResourceType resourceType = ResourceType.valueOf(decode(metadata[0]));
+                ResourceType resourceType = ResourceType.valueOf(metadata[0]);
                 String etag = metadata[1];
 
                 resourceInfo = findSystemOrTenantResourceByEtag(tenantId, resourceType, etag);
@@ -350,7 +375,13 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
 
     @Override
     public List<TbResourceInfo> replaceResourcesUrlsWithTags(WidgetTypeDetails widgetTypeDetails) {
-        return replaceResourcesUrlsWithTags(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor(), WIDGET_RESOURCES_MAPPING);
+        List<TbResourceInfo> resources = replaceResourcesUrlsWithTags(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor(), WIDGET_RESOURCES_MAPPING);
+        JsonNode defaultConfig = widgetTypeDetails.getDefaultConfig();
+        if (defaultConfig != null) {
+            resources.addAll(replaceResourcesUrlsWithTags(widgetTypeDetails.getTenantId(), defaultConfig, WIDGET_DEFAULT_CONFIG_RESOURCES_MAPPING));
+            widgetTypeDetails.setDefaultConfig(defaultConfig);
+        }
+        return resources;
     }
 
     private List<TbResourceInfo> replaceResourcesUrlsWithTags(TenantId tenantId, JsonNode jsonNode, Map<String, String> mapping) {
@@ -377,7 +408,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
             TbResourceInfo resourceInfo = findResourceInfoByTenantIdAndKey(resourceTenantId, resourceType, resourceKey);
             if (resourceInfo != null) {
                 resources.add(resourceInfo);
-                return "tb-resource:" + String.join(":", encode(resourceType.name()), resourceInfo.getEtag());
+                return "tb-resource:" + String.join(":", resourceType.name(), resourceInfo.getEtag());
             } else {
                 return value;
             }
@@ -386,12 +417,25 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     private void processResources(JsonNode jsonNode, Map<String, String> mapping, UnaryOperator<String> processor) {
-        JacksonUtil.replaceAllByMapping(jsonNode, mapping, Collections.emptyMap(), (name, value) -> {
-            if (StringUtils.isBlank(value)) {
-                return value;
+        JacksonUtil.replaceByMapping(jsonNode, mapping, Collections.emptyMap(), (name, urlNode) -> {
+            String value = null;
+            if (urlNode.isTextual()) { // link is in the right place
+                value = urlNode.asText();
+            } else {
+                JsonNode id = urlNode.get("id"); // old structure is used
+                if (id != null && id.isTextual()) {
+                    value = id.asText();
+                }
             }
-            String newValue = processor.apply(value);
-            log.trace("Replaced '{}' with '{}'", value, newValue);
+
+            if (StringUtils.isNotBlank(value)) {
+                value = processor.apply(value);
+            } else {
+                value = "";
+            }
+
+            JsonNode newValue = new TextNode(value);
+            log.trace("Replaced '{}' with '{}'", urlNode, newValue);
             return newValue;
         });
     }

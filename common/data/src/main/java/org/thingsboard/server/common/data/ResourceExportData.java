@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ResourceExportData {
 
+    private String etag;
     private String title;
     private ResourceType type;
     private ResourceSubType subType;
