@@ -42,8 +42,9 @@ const resolveJQueryPlugin: Plugin = {
   name: 'tb-resolve-jquery-plugin',
   setup(build: PluginBuild) {
     if (isProduction()) {
-      build.onResolve({filter: /^(jquery|\$)$/}, (args) => {
-        return {path: require.resolve('jquery')};
+      const jQueryPath = require.resolve('jquery');
+      build.onResolve({filter: /^(jquery|\$)$/}, () => {
+        return {path: jQueryPath};
       })
     }
   }
@@ -63,7 +64,7 @@ const compressorPlugin: Plugin = {
         if (!compressFileTypes.some((ext) => ext === path.extname(file.path))) continue;
         if (file.contents.byteLength <= compressThreshold) continue;
         const compressedContent = await gzipContent(file.contents);
-        const compressedFilePath = `${file.path}${outputExt}`; //path.join(outputDir, `${path.basename(file.path)}${outputExt}`);
+        const compressedFilePath = `${file.path}${outputExt}`;
         gzippedFiles.push(
           {
             path: compressedFilePath,

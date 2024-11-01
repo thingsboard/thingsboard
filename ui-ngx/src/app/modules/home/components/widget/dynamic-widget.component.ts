@@ -16,8 +16,6 @@
 
 import { PageComponent } from '@shared/components/page.component';
 import { Directive, inject, Injector, OnDestroy, OnInit } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
 import {
   IDynamicWidgetComponent,
   widgetContextToken,
@@ -50,7 +48,6 @@ import { DatePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
-import { TbInject } from '@shared/decorators/tb-inject';
 import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
 import { UserSettingsService } from '@core/http/user-settings.service';
 import { ImagePipe } from '@shared/pipe/image.pipe';
@@ -76,8 +73,8 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
   public readonly errorMessages = inject(widgetErrorMessagesToken);
   public readonly widgetTitlePanel = inject(widgetTitlePanelToken);
 
-  constructor(@TbInject(Store) protected store: Store<AppState>) {
-    super(store);
+  constructor() {
+    super();
     this.ctx.$injector = this.$injector;
     this.ctx.deviceService = this.$injector.get(DeviceService);
     this.ctx.assetService = this.$injector.get(AssetService);

@@ -16,13 +16,10 @@
 
 import { MatDialogRef } from '@angular/material/dialog';
 import { Directive, inject, InjectionToken } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { PageComponent } from '@shared/components/page.component';
 import { CustomDialogContainerComponent } from './custom-dialog-container.component';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
-import { TbInject } from '@shared/decorators/tb-inject';
 
 export const CUSTOM_DIALOG_DATA = new InjectionToken<CustomDialogData>('ConfigDialogData');
 
@@ -42,8 +39,8 @@ export class CustomDialogComponent extends PageComponent {
   public data = inject(CUSTOM_DIALOG_DATA);
   public fb = inject(UntypedFormBuilder);
 
-  constructor(@TbInject(Store) protected store: Store<AppState>) {
-    super(store);
+  constructor() {
+    super();
     // @ts-ignore
     this.validators = Validators;
     this.data.controller(this);

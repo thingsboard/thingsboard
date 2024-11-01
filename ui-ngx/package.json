@@ -3,9 +3,9 @@
   "version": "3.9.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --configuration development --host 0.0.0.0 --open",
+    "start": "node --max_old_space_size=8048 ./node_modules/@angular/cli/bin/ng serve --configuration development --host 0.0.0.0 --open",
     "build": "ng build",
-    "build:prod": "ng build --configuration production",
+    "build:prod": "node --max_old_space_size=4096 ./node_modules/@angular/cli/bin/ng build --configuration production",
     "build:types": "node generate-types.js",
     "build:icon-metadata": "node generate-icon-metadata.js",
     "lint": "ng lint",
