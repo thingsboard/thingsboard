@@ -47,7 +47,7 @@ import {
   WidgetActionsApi,
   WidgetSubscriptionApi
 } from '@core/api/widget-api.models';
-import { ChangeDetectorRef, Injector, NgZone, Type } from '@angular/core';
+import { ChangeDetectorRef, InjectionToken, Injector, NgZone, TemplateRef, Type } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { RafService } from '@core/services/raf.service';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
@@ -537,6 +537,10 @@ export class LabelVariablePattern {
     this.labelSubject.complete();
   }
 }
+
+export const widgetContextToken = new InjectionToken<WidgetContext>('widgetContext');
+export const widgetErrorMessagesToken = new InjectionToken<string[]>('errorMessages');
+export const widgetTitlePanelToken = new InjectionToken<TemplateRef<any>>('widgetTitlePanel');
 
 export interface IDynamicWidgetComponent {
   readonly ctx: WidgetContext;

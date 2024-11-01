@@ -70,9 +70,9 @@ import {
   IDynamicWidgetComponent,
   ShowWidgetHeaderActionFunction,
   updateEntityParams,
-  WidgetContext,
+  WidgetContext, widgetContextToken, widgetErrorMessagesToken,
   WidgetHeaderAction,
-  WidgetInfo,
+  WidgetInfo, widgetTitlePanelToken,
   WidgetTypeInstance
 } from '@home/models/widget-component.models';
 import {
@@ -743,15 +743,15 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         {
           providers: [
             {
-              provide: 'widgetContext',
+              provide: widgetContextToken,
               useValue: this.widgetContext
             },
             {
-              provide: 'errorMessages',
+              provide: widgetErrorMessagesToken,
               useValue: this.errorMessages
             },
             {
-              provide: 'widgetTitlePanel',
+              provide: widgetTitlePanelToken,
               useValue: this.widgetTitlePanel
             }
           ],

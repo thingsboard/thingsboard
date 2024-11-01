@@ -129,11 +129,13 @@ export class WidgetComponentService {
       w.tinycolor = tinycolor;
       w.cssjs = cssjs;
       w.moment = moment;
-      w.$ = $;
-      w.jQuery = $;
 
       const widgetModulesTasks: Observable<any>[] = [];
-      widgetModulesTasks.push(from(import('jquery.terminal')));
+      widgetModulesTasks.push(from(import('jquery.terminal')).pipe(
+        tap((mod) => {
+          mod.default(window, $);
+        })
+      ));
 
       widgetModulesTasks.push(from(import('flot/src/jquery.flot.js')).pipe(
         mergeMap(() => {
