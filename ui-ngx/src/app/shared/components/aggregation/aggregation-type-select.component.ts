@@ -14,14 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { Component, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { aggregationTranslations, AggregationType } from '@shared/models/time/time.models';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-aggregation-type-select',
@@ -33,7 +32,7 @@ import { takeUntil } from 'rxjs/operators';
     multi: true
   }]
 })
-export class AggregationTypeSelectComponent implements ControlValueAccessor, OnInit, OnChanges, OnDestroy {
+export class AggregationTypeSelectComponent implements ControlValueAccessor, OnInit, OnChanges {
 
   aggregationTypeFormGroup: FormGroup;
 
@@ -77,26 +76,13 @@ export class AggregationTypeSelectComponent implements ControlValueAccessor, OnI
 
   private propagateChange = (v: any) => { };
 
-  private destroy$ = new Subject<void>();
-
   constructor(private translate: TranslateService,
               private fb: FormBuilder) {
     this.aggregationTypeFormGroup = this.fb.group({
       aggregationType: [null]
     });
-  }
-
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
-  }
-
-  registerOnTouched(fn: any): void {
-  }
-
-  ngOnInit() {
-    this.aggregationTypes = this.allowedAggregationTypes?.length ? this.allowedAggregationTypes : this.allAggregationTypes;
     this.aggregationTypeFormGroup.get('aggregationType').valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed()
     ).subscribe(
       (value) => {
         let modelValue;
@@ -110,17 +96,23 @@ export class AggregationTypeSelectComponent implements ControlValueAccessor, OnI
     );
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    for (const propName of Object.keys(changes)) {
-      const change = changes[propName];
-      if (!change.firstChange && change.currentValue !== change.previousValue) {
-        if (propName === 'allowedAggregationTypes') {
-          this.aggregationTypes = this.allowedAggregationTypes?.length ? this.allowedAggregationTypes : this.allAggregationTypes;
-          const currentAggregationType: AggregationType = this.aggregationTypeFormGroup.get('aggregationType').value;
-          if (currentAggregationType && !this.aggregationTypes.includes(currentAggregationType)) {
-            this.aggregationTypeFormGroup.get('aggregationType').patchValue(this.aggregationTypes[0], {emitEvent: true});
-          }
-        }
+  registerOnChange(fn: any): void {
+    this.propagateChange = fn;
+  }
+
+  registerOnTouched(fn: any): void {
+  }
+
+  ngOnInit() {
+    this.aggregationTypes = this.allowedAggregationTypes?.length ? this.allowedAggregationTypes : this.allAggregationTypes;
+  }
+
+  ngOnChanges({allowedAggregationTypes}: SimpleChanges): void {
+    if (!allowedAggregationTypes.firstChange && allowedAggregationTypes.currentValue !== allowedAggregationTypes.previousValue) {
+      this.aggregationTypes = this.allowedAggregationTypes?.length ? this.allowedAggregationTypes : this.allAggregationTypes;
+      const currentAggregationType: AggregationType = this.aggregationTypeFormGroup.get('aggregationType').value;
+      if (currentAggregationType && !this.aggregationTypes.includes(currentAggregationType)) {
+        this.aggregationTypeFormGroup.get('aggregationType').patchValue(this.aggregationTypes[0], {emitEvent: true});
       }
     }
   }
@@ -159,8 +151,4 @@ export class AggregationTypeSelectComponent implements ControlValueAccessor, OnI
     }
   }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
 }
