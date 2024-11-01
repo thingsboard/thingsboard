@@ -21,10 +21,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.thingsboard.server.common.data.BaseData;
-import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasTenantId;
-import org.thingsboard.server.common.data.HasVersion;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -34,7 +31,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class CalculatedField extends BaseData<CalculatedFieldId> implements HasName, HasTenantId, HasVersion {
+public class CalculatedField extends BaseData<CalculatedFieldId> implements HasName, HasTenantId, HasVersion, ExportableEntity<CalculatedFieldId> {
 
     private static final long serialVersionUID = 4491966747773381420L;
 
@@ -89,6 +86,23 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();
+    }
+
+    @Override
+    public String toString() {
+        return new StringBuilder()
+                .append("CalculatedField[")
+                .append("tenantId=").append(tenantId)
+                .append(", entityId=").append(entityId)
+                .append(", type='").append(type)
+                .append(", name='").append(name)
+                .append(", configurationVersion=").append(configurationVersion)
+                .append(", configuration=").append(configuration)
+                .append(", version=").append(version)
+                .append(", externalId=").append(externalId)
+                .append(", createdTime=").append(createdTime)
+                .append(", id=").append(id).append(']')
+                .toString();
     }
 
 }

@@ -39,7 +39,6 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
 
     private final CalculatedFieldDao calculatedFieldDao;
 
-
     @Override
     public CalculatedField save(CalculatedField calculatedField) {
         log.trace("Executing save, [{}]", calculatedField);

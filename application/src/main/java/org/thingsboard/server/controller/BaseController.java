@@ -653,6 +653,7 @@ public abstract class BaseController {
                     return;
                 case CALCULATED_FIELD:
                     checkCalculatedFieldId(new CalculatedFieldId(entityId.getId()), operation);
+                    return;
                 default:
                     checkEntityId(entityId, entitiesService::findEntityByTenantIdAndId, operation);
             }
