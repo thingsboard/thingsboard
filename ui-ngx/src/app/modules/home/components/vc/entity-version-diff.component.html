@@ -15,13 +15,12 @@
     limitations under the License.
 
 -->
-<section class="entity-version-diff-view" [ngClass]="{'content-ready': contentReady}"
+<section class="entity-version-diff-view flex flex-col" [class.content-ready]="contentReady"
          tb-fullscreen [fullscreen]="isFullscreen" (fullscreenChanged)="onFullscreenChanged($event)"
-         [ngStyle]="isFullscreen || !contentReady ? {} : {height: preferredDiffHeight}"
-         fxLayout="column">
+         [style]="isFullscreen || !contentReady ? {} : {height: preferredDiffHeight}">
   <mat-toolbar *ngIf="contentReady">
     <h2>{{ 'version-control.diff-entity-with-version' | translate: {versionName} }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             matTooltip="{{'version-control.previous-difference' | translate}}"
             matTooltipPosition="below"
@@ -54,14 +53,14 @@
       <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
     </button>
   </mat-toolbar>
-  <div fxLayout="row" *ngIf="contentReady">
-    <div class="version-title" fxFlex>{{ 'version-control.current' | translate }}</div>
+  <div class="flex flex-row" *ngIf="contentReady">
+    <div class="version-title flex-1">{{ 'version-control.current' | translate }}</div>
     <div style="width: 58px;"></div>
-    <div class="version-title" fxFlex>{{ versionIdContent() }}</div>
+    <div class="version-title flex-1">{{ versionIdContent() }}</div>
   </div>
   <mat-spinner *ngIf="!contentReady" mode="indeterminate" diameter="80"></mat-spinner>
-  <div fxFlex [fxShow]="contentReady" class="diff-viewer" #diffViewer></div>
-  <div class="bottom-panel" *ngIf="contentReady" fxLayoutAlign="end center" fxLayoutGap="8px">
+  <div [class.!hidden]="!contentReady" class="diff-viewer flex-1" #diffViewer></div>
+  <div class="bottom-panel flex items-center justify-end gap-2" *ngIf="contentReady">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

@@ -18,7 +18,7 @@
 <form [formGroup]="entityAliasFormGroup" (ngSubmit)="save()" style="width: 700px;">
   <mat-toolbar color="primary">
     <h2>{{ (isAdd ? 'alias.add' : 'alias.edit') | translate }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -55,7 +55,7 @@
                 ? translate.instant('alias.entity-filter-no-entity-matched') : ''"></tb-error>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

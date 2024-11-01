@@ -18,7 +18,7 @@
 <form (ngSubmit)="add()" style="min-width: 650px;">
   <mat-toolbar color="primary">
     <h2 translate>rulenode.create-nested-rulechain</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -30,7 +30,7 @@
   <div mat-dialog-content>
     <form [formGroup]="createNestedRuleChainFormGroup" class="mat-padding">
       <fieldset [disabled]="isLoading$ | async">
-        <mat-form-field fxFlex class="mat-block">
+        <mat-form-field class="mat-block flex-1">
           <mat-label translate>rulechain.name</mat-label>
           <input matInput formControlName="name" required>
           <mat-error *ngIf="createNestedRuleChainFormGroup.get('name').hasError('required')">
@@ -49,7 +49,7 @@
       </fieldset>
     </form>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="quickLinksWidgetSettingsForm" fxLayout="column">
-  <mat-form-field fxFlex class="mat-block">
+<section class="tb-widget-settings flex flex-col" [formGroup]="quickLinksWidgetSettingsForm">
+  <mat-form-field class="mat-block flex-1">
     <mat-label translate>widgets.quick-links.columns</mat-label>
     <input required matInput type="number" step="1" min="1" max="20" formControlName="columns">
   </mat-form-field>

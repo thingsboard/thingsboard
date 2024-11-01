@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequestConfig
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
+import org.thingsboard.server.common.data.notification.info.GeneralNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.settings.UserNotificationSettings;
@@ -187,7 +188,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     }
 
     @Override
-    public void sendGeneralWebNotification(TenantId tenantId, UsersFilter recipients, NotificationTemplate template) {
+    public void sendGeneralWebNotification(TenantId tenantId, UsersFilter recipients, NotificationTemplate template, GeneralNotificationInfo info) {
         NotificationTarget target = new NotificationTarget();
         target.setTenantId(tenantId);
         PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
@@ -198,6 +199,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 .tenantId(tenantId)
                 .template(template)
                 .targets(List.of(EntityId.NULL_UUID)) // this is temporary and will be removed when 'create from scratch' functionality is implemented for recipients
+                .info(info)
                 .status(NotificationRequestStatus.PROCESSING)
                 .build();
         try {

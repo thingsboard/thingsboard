@@ -17,7 +17,7 @@
 
 import { EntityType } from '@shared/models/entity-type.models';
 import { AggregationType } from '../time/time.models';
-import { BehaviorSubject, Observable, ReplaySubject } from 'rxjs';
+import { BehaviorSubject, connectable, Observable, ReplaySubject, Subscription } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
 import { map } from 'rxjs/operators';
 import { NgZone } from '@angular/core';
@@ -729,6 +729,91 @@ export class NotificationsUpdate extends CmdUpdate {
     this.update = msg.update;
     this.notifications = msg.notifications;
   }
+}
+
+interface SharedSubscriptionInfo {
+  key: string;
+  subscriber: TelemetrySubscriber;
+  subscribed: boolean;
+  sharedSubscribers: Set<SharedTelemetrySubscriber>;
+}
+
+export class SharedTelemetrySubscriber {
+
+  private static subscribersCache: {[key: string]: SharedSubscriptionInfo} = {};
+
+  private static createTelemetrySubscriberKey (entityId: EntityId, attributeScope: TelemetryType, keys: string[] = null): string  {
+      let key = entityId.entityType + '_' + entityId.id + '_' + attributeScope;
+      if (keys) {
+        key += '_' + keys.sort().join('_');
+      }
+      return key;
+  }
+
+  private subscribed = false;
+
+  private attributeDataSubject = connectable(this.sharedSubscriptionInfo.subscriber.attributeData$(),
+    { connector: () => new ReplaySubject<Array<AttributeData>>(1)});
+
+  private subscriptions = new Array<Subscription>();
+
+  public attributeData$: Observable<Array<AttributeData>> = this.attributeDataSubject; //this.attributeDataSubject.asObservable();
+
+  public static createEntityAttributesSubscription(telemetryService: TelemetryWebsocketService,
+                                                   entityId: EntityId, attributeScope: TelemetryType,
+                                                   zone: NgZone, keys: string[] = null): SharedTelemetrySubscriber {
+    const key = SharedTelemetrySubscriber.createTelemetrySubscriberKey(entityId, attributeScope, keys);
+    let info = SharedTelemetrySubscriber.subscribersCache[key];
+    if (!info) {
+      const subscriber = TelemetrySubscriber.createEntityAttributesSubscription(
+        telemetryService, entityId, attributeScope, zone, keys
+      );
+      info = {
+        key,
+        subscriber,
+        subscribed: false,
+        sharedSubscribers: new Set<SharedTelemetrySubscriber>()
+      };
+      SharedTelemetrySubscriber.subscribersCache[key] = info;
+    }
+    const sharedSubscriber = new SharedTelemetrySubscriber(info);
+    info.sharedSubscribers.add(sharedSubscriber);
+    return sharedSubscriber;
+  }
+
+  private constructor(private sharedSubscriptionInfo: SharedSubscriptionInfo) {
+  }
+
+  public subscribe() {
+    if (!this.subscribed) {
+      this.subscribed = true;
+      this.subscriptions.push(this.attributeDataSubject.connect());
+      if (!this.sharedSubscriptionInfo.subscribed) {
+        this.sharedSubscriptionInfo.subscriber.subscribe();
+        this.sharedSubscriptionInfo.subscribed = true;
+      }
+    }
+  }
+
+  public unsubscribe() {
+    if (this.subscribed) {
+      this.complete();
+    }
+    this.sharedSubscriptionInfo.sharedSubscribers.delete(this);
+    if (!this.sharedSubscriptionInfo.sharedSubscribers.size) {
+      if (this.sharedSubscriptionInfo.subscribed) {
+        this.sharedSubscriptionInfo.subscriber.unsubscribe();
+        this.sharedSubscriptionInfo.subscribed = false;
+      }
+      delete SharedTelemetrySubscriber.subscribersCache[this.sharedSubscriptionInfo.key];
+    }
+  }
+
+  private complete() {
+    this.subscriptions.forEach(subscription => subscription.unsubscribe());
+    this.subscriptions.length = 0;
+  }
+
 }
 
 export class TelemetrySubscriber extends WsSubscriber {

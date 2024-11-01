@@ -19,18 +19,18 @@
   <div class="tb-background-settings-title" translate>widgets.background.background-settings</div>
   <div class="tb-background-settings-panel-content">
     <div class="tb-form-panel tb-background-form-panel">
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+      <div class="flex flex-row items-center justify-start gap-4">
         <div class="tb-form-panel-title" translate>widgets.background.background</div>
-        <tb-toggle-select formControlName="type" fxFlex selectMediaBreakpoint="xs">
+        <tb-toggle-select formControlName="type" class="flex-1" selectMediaBreakpoint="xs">
           <tb-toggle-option *ngFor="let type of backgroundTypes"
                             [value]="type">
             {{ backgroundTypeTranslationsMap.get(type) | translate }}
           </tb-toggle-option>
         </tb-toggle-select>
       </div>
-      <tb-gallery-image-input [fxShow]="backgroundSettingsFormGroup.get('type').value === backgroundType.image"
+      <tb-gallery-image-input [class.!hidden]="backgroundSettingsFormGroup.get('type').value !== backgroundType.image"
                               formControlName="imageUrl"></tb-gallery-image-input>
-      <div [fxShow]="backgroundSettingsFormGroup.get('type').value === backgroundType.color"
+      <div [class.!hidden]="backgroundSettingsFormGroup.get('type').value !== backgroundType.color"
            class="tb-form-row space-between tb-background-color-field">
         <div translate>widgets.color.color</div>
         <tb-color-input asBoxInput

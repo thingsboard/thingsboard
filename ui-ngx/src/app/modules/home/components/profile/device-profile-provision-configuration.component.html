@@ -35,7 +35,7 @@
       <ng-container *ngTemplateOutlet="default"></ng-container>
     </ng-template>
     <ng-template [ngSwitchCase]="deviceProvisionType.X509_CERTIFICATE_CHAIN">
-      <div fxFlex fxLayoutAlign="start center" class="tb-hint">
+      <div class="tb-hint flex flex-1 items-center justify-start">
         <span [innerHTML]="'device-profile.provision-strategy-x509.certificate-chain-hint' | translate"></span>
         <span tb-help-popup="device-profile/x509-chain-hint"
              tb-help-popup-placement="top"
@@ -69,8 +69,8 @@
       </mat-form-field>
     </ng-template>
     <ng-template #default>
-      <section fxLayoutGap.gt-xs="8px" fxLayout="row" fxLayout.xs="column">
-        <mat-form-field fxFlex class="mat-block">
+      <section class="flex flex-row xs:flex-col gt-xs:gap-2">
+        <mat-form-field class="mat-block flex-1">
           <mat-label translate>device-profile.provision-device-key</mat-label>
           <input matInput formControlName="provisionDeviceKey" required/>
           <button matSuffix mat-icon-button
@@ -85,7 +85,7 @@
             {{ 'device-profile.provision-device-key-required' | translate }}
           </mat-error>
         </mat-form-field>
-        <mat-form-field fxFlex class="mat-block">
+        <mat-form-field class="mat-block flex-1">
           <mat-label translate>device-profile.provision-device-secret</mat-label>
           <input matInput formControlName="provisionDeviceSecret" required/>
           <button matSuffix mat-icon-button

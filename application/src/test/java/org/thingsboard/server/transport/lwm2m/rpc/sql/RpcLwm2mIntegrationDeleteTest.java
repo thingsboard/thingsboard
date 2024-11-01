@@ -90,7 +90,7 @@ public class RpcLwm2mIntegrationDeleteTest extends AbstractRpcLwM2MIntegrationTe
 
     private String sendRPCDeleteById(String path) throws Exception {
         String setRpcRequest = "{\"method\": \"Delete\", \"params\": {\"id\": \"" + path  + "\"}}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
     }
 
 }

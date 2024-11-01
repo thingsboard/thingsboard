@@ -55,7 +55,7 @@ public class Ota5LwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + this.CLIENT_ENDPOINT_WITHOUT_FW_INFO, transportConfiguration);
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(this.CLIENT_ENDPOINT_WITHOUT_FW_INFO));
         final Device device = createLwm2mDevice(deviceCredentials, this.CLIENT_ENDPOINT_WITHOUT_FW_INFO, deviceProfile.getId());
-        createNewClient(SECURITY_NO_SEC, null, false, this.CLIENT_ENDPOINT_WITHOUT_FW_INFO);
+        createNewClient(SECURITY_NO_SEC, null, false, this.CLIENT_ENDPOINT_WITHOUT_FW_INFO, device.getId().getId().toString());
         awaitObserveReadAll(0, device.getId().getId().toString());
 
         device.setFirmwareId(createFirmware("5.1", deviceProfile.getId()).getId());
@@ -90,7 +90,7 @@ public class Ota5LwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         DeviceProfile deviceProfile =  createLwm2mDeviceProfile("profileFor" + this.CLIENT_ENDPOINT_OTA5, transportConfiguration);
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(this.CLIENT_ENDPOINT_OTA5));
         final Device device = createLwm2mDevice(deviceCredentials, this.CLIENT_ENDPOINT_OTA5, deviceProfile.getId());
-        createNewClient(SECURITY_NO_SEC, null, false, this.CLIENT_ENDPOINT_OTA5);
+        createNewClient(SECURITY_NO_SEC, null, false, this.CLIENT_ENDPOINT_OTA5, device.getId().getId().toString());
         awaitObserveReadAll(5, device.getId().getId().toString());
 
         device.setFirmwareId(createFirmware("fw.v.1.5.0-update", deviceProfile.getId()).getId());

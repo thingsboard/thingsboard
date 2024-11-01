@@ -35,7 +35,6 @@ import { TbMissingTranslationHandler } from './translate/missing-translate-handl
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DEFAULT_OPTIONS, MatDialogConfig, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { FlexLayoutModule } from '@angular/flex-layout';
 import { TranslateDefaultCompiler } from '@core/translate/translate-default-compiler';
 import { WINDOW_PROVIDERS } from '@core/services/window.service';
 import { HotkeyModule } from 'angular2-hotkeys';
@@ -44,7 +43,6 @@ import { TranslateDefaultLoader } from '@core/translate/translate-default-loader
 import { EntityConflictInterceptor } from '@core/interceptors/entity-conflict.interceptor';
 
 @NgModule({ exports: [], imports: [CommonModule,
-        FlexLayoutModule.withConfig({ addFlexToParent: false }),
         MatDialogModule,
         MatButtonModule,
         MatSnackBarModule,

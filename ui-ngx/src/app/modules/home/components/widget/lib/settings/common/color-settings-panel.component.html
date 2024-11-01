@@ -17,8 +17,8 @@
 -->
 <div class="tb-color-settings-panel" [formGroup]="colorSettingsFormGroup">
   <div class="tb-color-settings-title" translate>widgets.color.color-settings</div>
-  <div fxLayout="row">
-    <tb-toggle-select formControlName="type" fxFlex.xs fxFlex="70%">
+  <div class="flex flex-row">
+    <tb-toggle-select formControlName="type" class="max-w-70% flex-full xs:flex-1">
       <tb-toggle-option *ngFor="let type of colorTypes"
                         [value]="type">
         {{ colorTypeTranslationsMap.get(type) | translate }}
@@ -31,9 +31,9 @@
                     formControlName="color">
     </tb-color-input>
   </div>
-  <div class="tb-color-settings-panel-body" [fxShow]="colorSettingsFormGroup.get('type').value === colorType.constant">
+  <div class="tb-color-settings-panel-body" [class.!hidden]="colorSettingsFormGroup.get('type').value !== colorType.constant">
   </div>
-  <div class="tb-color-settings-panel-body" [fxShow]="colorSettingsFormGroup.get('type').value === colorType.gradient">
+  <div class="tb-color-settings-panel-body" [class.!hidden]="colorSettingsFormGroup.get('type').value !== colorType.gradient">
     <tb-gradient class="tb-gradient-panel"
                  formControlName="gradient"
                  [minValue]="minValue"
@@ -45,7 +45,7 @@
                  [popover]="popover">
     </tb-gradient>
   </div>
-  <div class="tb-color-settings-panel-body" [fxShow]="colorSettingsFormGroup.get('type').value === colorType.range">
+  <div class="tb-color-settings-panel-body" [class.!hidden]="colorSettingsFormGroup.get('type').value !== colorType.range">
     <tb-color-range-list class="tb-color-ranges-panel"
                          formControlName="rangeList"
                          panelTitle="{{ 'widgets.color.value-range' | translate }}"
@@ -56,7 +56,7 @@
                          [popover]="popover">
     </tb-color-range-list>
   </div>
-  <div class="tb-color-settings-panel-body" [fxShow]="colorSettingsFormGroup.get('type').value === colorType.function">
+  <div class="tb-color-settings-panel-body" [class.!hidden]="colorSettingsFormGroup.get('type').value !== colorType.function">
     <ng-container *ngTemplateOutlet="function"></ng-container>
   </div>
   <div class="tb-color-settings-panel-buttons">
@@ -66,8 +66,8 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="settingsSourcesMenu" [matMenuTriggerData]="{menuWidth: copySettingsButton._elementRef.nativeElement.clientWidth}">
-      <span fxHide.xs>{{ 'widgets.color.copy-color-settings-from' | translate }}</span>
-      <span fxHide.gt-xs>{{ 'widgets.color.copy-from' | translate }}</span>
+      <span class="xs:!hidden">{{ 'widgets.color.copy-color-settings-from' | translate }}</span>
+      <span class="gt-xs:!hidden">{{ 'widgets.color.copy-from' | translate }}</span>
     </button>
     <mat-menu #settingsSourcesMenu="matMenu">
       <ng-template matMenuContent let-menuWidth="menuWidth">
@@ -76,7 +76,7 @@
         </div>
       </ng-template>
     </mat-menu>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-button
             color="primary"
             type="button"

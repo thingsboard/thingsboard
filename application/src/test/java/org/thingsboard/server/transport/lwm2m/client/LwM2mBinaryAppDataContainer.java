@@ -129,7 +129,7 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
                     fireResourceChange(resourceId);
                     return WriteResponse.success();
                 } else {
-                    WriteResponse.badRequest("Invalidate value ...");
+                    return WriteResponse.badRequest("Invalidate value ...");
                 }
             case 1:
                 setPriority((Integer) (value.getValue() instanceof Long ? ((Long) value.getValue()).intValue() : value.getValue()));
