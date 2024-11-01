@@ -21,6 +21,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { aggregationTranslations, AggregationType } from '@shared/models/time/time.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { isEqual } from '@core/utils';
 
 @Component({
   selector: 'tb-aggregation-type-select',
@@ -108,7 +109,7 @@ export class AggregationTypeSelectComponent implements ControlValueAccessor, OnI
   }
 
   ngOnChanges({allowedAggregationTypes}: SimpleChanges): void {
-    if (!allowedAggregationTypes.firstChange && allowedAggregationTypes.currentValue !== allowedAggregationTypes.previousValue) {
+    if (!allowedAggregationTypes.firstChange && !isEqual(allowedAggregationTypes.currentValue, allowedAggregationTypes.previousValue)) {
       this.aggregationTypes = this.allowedAggregationTypes?.length ? this.allowedAggregationTypes : this.allAggregationTypes;
       const currentAggregationType: AggregationType = this.aggregationTypeFormGroup.get('aggregationType').value;
       if (currentAggregationType && !this.aggregationTypes.includes(currentAggregationType)) {

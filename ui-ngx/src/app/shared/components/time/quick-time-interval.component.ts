@@ -20,6 +20,7 @@ import { QuickTimeInterval, QuickTimeIntervalTranslationMap } from '@shared/mode
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { isEqual } from '@core/utils';
 
 @Component({
   selector: 'tb-quick-time-interval',
@@ -90,7 +91,7 @@ export class QuickTimeIntervalComponent implements OnInit, ControlValueAccessor,
   }
 
   ngOnChanges({allowedIntervals}: SimpleChanges): void {
-    if (!allowedIntervals.firstChange && allowedIntervals.currentValue !== allowedIntervals.previousValue) {
+    if (!allowedIntervals.firstChange && !isEqual(allowedIntervals.currentValue, allowedIntervals.previousValue)) {
       this.intervals = this.allowedIntervals?.length ? this.allowedIntervals : this.allAvailableIntervals;
       const currentInterval: QuickTimeInterval = this.quickIntervalFormGroup.get('interval').value;
       if (currentInterval && !this.intervals.includes(currentInterval)) {
