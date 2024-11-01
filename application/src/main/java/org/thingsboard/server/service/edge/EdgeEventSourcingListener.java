@@ -77,7 +77,6 @@ import org.thingsboard.server.queue.kafka.TbKafkaTopicConfigs;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnExpression("${edges.enabled:true}")
 public class EdgeEventSourcingListener {
 
     private final TopicService topicService;

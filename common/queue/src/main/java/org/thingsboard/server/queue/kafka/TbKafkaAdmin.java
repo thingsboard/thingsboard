@@ -180,7 +180,6 @@ public class TbKafkaAdmin implements TbQueueAdmin {
             TopicDescription topicDescription = settings.getAdminClient().describeTopics(Collections.singletonList(topic)).topicNameValues().get(topic).get();
             TopicPartition topicPartition = new TopicPartition(topic, topicDescription.partitions().get(0).partition());
 
-            // Get the earliest and latest offsets
             Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> beginningOffsets =
                     settings.getAdminClient().listOffsets(Collections.singletonMap(topicPartition, OffsetSpec.earliest())).all().get();
             Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> endOffsets =
@@ -189,8 +188,7 @@ public class TbKafkaAdmin implements TbQueueAdmin {
             long beginningOffset = beginningOffsets.get(topicPartition).offset();
             long endOffset = endOffsets.get(topicPartition).offset();
 
-            // If beginning and end offsets are both 0, the topic is empty
-            return beginningOffset == 0 && endOffset == 0;
+            return beginningOffset == endOffset;
         } catch (InterruptedException | ExecutionException e) {
             log.error("Failed to check if topic [{}] is empty.", topic, e);
             return false;
