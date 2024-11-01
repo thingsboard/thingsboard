@@ -272,7 +272,7 @@ export class JsonFormComponent implements ControlValueAccessor, Validator, OnCha
       (modules) => {
         const react = unwrapModule(modules[0]);
         const reactDomClient =  unwrapModule(modules[2]);
-        const jsonFormReact = modules[3].default;
+        const jsonFormReact = unwrapModule(modules[3]);
         this.reactRoot = reactDomClient.createRoot(this.reactRootElmRef.nativeElement);
         this.reactRoot.render(react.createElement(jsonFormReact, this.formProps));
       }

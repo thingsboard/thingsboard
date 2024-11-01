@@ -12,7 +12,7 @@ index 625c621..4fc8bd8 100755
      }
      async diagnoseFiles(modes = DiagnosticModes.All) {
 diff --git a/node_modules/@angular/build/src/tools/esbuild/angular/compiler-plugin.js b/node_modules/@angular/build/src/tools/esbuild/angular/compiler-plugin.js
-index b1bb6ea..e946fd1 100755
+index b1bb6ea..c76b4c6 100755
 --- a/node_modules/@angular/build/src/tools/esbuild/angular/compiler-plugin.js
 +++ b/node_modules/@angular/build/src/tools/esbuild/angular/compiler-plugin.js
 @@ -79,7 +79,7 @@ function createCompilerPlugin(pluginOptions, styleOptions) {
@@ -24,3 +24,20 @@ index b1bb6ea..e946fd1 100755
              }, environment_options_1.maxWorkers, cacheStore?.createCache('jstransformer'));
              // Setup defines based on the values used by the Angular compiler-cli
              build.initialOptions.define ??= {};
+@@ -377,12 +377,14 @@ function createCompilerPlugin(pluginOptions, styleOptions) {
+             async function hasSideEffects(path) {
+                 if (!pluginOptions.advancedOptimizations) {
+                     return undefined;
++                } else {
++                    return true;
+                 }
+-                const { sideEffects } = await build.resolve(path, {
++                /*const { sideEffects } = await build.resolve(path, {
+                     kind: 'import-statement',
+                     resolveDir: build.initialOptions.absWorkingDir ?? '',
+                 });
+-                return sideEffects;
++                return sideEffects;*/
+             }
+         },
+     };
