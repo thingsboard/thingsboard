@@ -58,6 +58,7 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.Thread.sleep;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.clearInvocations;
@@ -133,6 +134,8 @@ public class TbGpsMultiGeofencingActionNodeTest {
         when(attributesService.find(any(), eq(ZONE_ID_1), any(AttributeScope.class), eq(geoConfig.getPerimeterKeyName()))).thenReturn(Futures.immediateFuture(Optional.of(perimeterAttribute1)));
         when(attributesService.find(any(), eq(ZONE_ID_2), any(AttributeScope.class), eq(geoConfig.getPerimeterKeyName()))).thenReturn(Futures.immediateFuture(Optional.of(perimeterAttribute2)));
         when(attributesService.find(any(), any(), any(AttributeScope.class), eq(ASSET_GEOFENCE_STATE_KEY_ATTR))).thenReturn(Futures.immediateFuture(Optional.empty()));
+        when(attributesService.save(any(), any(), any(AttributeScope.class), any(AttributeKvEntry.class))).thenReturn(Futures.immediateFuture("test"));
+        when(attributesService.save(any(), any(), any(AttributeScope.class), anyList())).thenReturn(Futures.immediateFuture(List.of("test")));
     }
 
     @Test
