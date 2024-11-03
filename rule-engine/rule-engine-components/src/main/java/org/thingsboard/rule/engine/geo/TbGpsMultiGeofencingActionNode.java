@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2024 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,6 +41,7 @@ import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -72,24 +73,24 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         ListenableFuture<List<EntityId>> matchedZonesFuture = findMatchedZones(ctx, msg);
 
-        ListenableFuture<GeofenceResponse> geofenceResponseFuture = Futures.transformAsync(matchedZonesFuture, matchedZones -> geofencingProcessor.process(ctx.getSelfId(), msg, matchedZones), MoreExecutors.directExecutor());
+        ListenableFuture<Set<GeofenceState>> changedGeofenceStatesFuture = Futures.transformAsync(matchedZonesFuture, matchedZones -> geofencingProcessor.process(ctx.getSelfId(), msg, matchedZones),
+                MoreExecutors.directExecutor());
 
-        withCallback(geofenceResponseFuture, geofenceResponse -> processGeofenceResponse(ctx, msg, geofenceResponse), t -> ctx.tellFailure(msg, t), MoreExecutors.directExecutor());
+        withCallback(changedGeofenceStatesFuture, geofenceResponse -> processGeofenceResponse(ctx, msg, geofenceResponse), t -> ctx.tellFailure(msg, t), MoreExecutors.directExecutor());
     }
 
-    private void processGeofenceResponse(TbContext ctx, TbMsg originalMsg, GeofenceResponse geofenceResponse) {
+    private void processGeofenceResponse(TbContext ctx, TbMsg originalMsg, Set<GeofenceState> changedGeofenceState) {
+        if (isEmpty(changedGeofenceState)) {
+            ctx.tellSuccess(originalMsg);
+            return;
+        }
         TbMsgMetaData metaData = originalMsg.getMetaData().copy();
         metaData.putValue("originatorId", originalMsg.getOriginator().toString());
-
-        if (isEmpty(geofenceResponse.getChangedStates())) {
-            ctx.tellSuccess(originalMsg);
-        } else {
-            TbMsgCallbackWrapper wrapper = createCallbackWrapper(ctx, originalMsg, geofenceResponse.getChangedStates().size());
-            geofenceResponse.getChangedStates().forEach(geofenceState -> {
-                TbMsg tbMsg = TbMsg.newMsg(originalMsg.getInternalType(), geofenceState.getGeofenceId(), metaData, originalMsg.getData());
-                ctx.enqueueForTellNext(tbMsg, geofenceState.getGeofenceStateStatus().getRuleNodeConnection(), wrapper::onSuccess, wrapper::onFailure);
-            });
-        }
+        TbMsgCallbackWrapper wrapper = createCallbackWrapper(ctx, originalMsg, changedGeofenceState.size());
+        changedGeofenceState.forEach(geofenceState -> {
+            TbMsg tbMsg = TbMsg.newMsg(originalMsg.getInternalType(), geofenceState.getGeofenceId(), metaData, originalMsg.getData());
+            ctx.enqueueForTellNext(tbMsg, geofenceState.getGeofenceStateStatus().getRuleNodeConnection(), wrapper::onSuccess, wrapper::onFailure);
+        });
     }
 
     private TbMsgCallbackWrapper createCallbackWrapper(TbContext ctx, TbMsg originalMsg, int messageCount) {

@@ -15,12 +15,24 @@
  */
 package org.thingsboard.rule.engine.geo;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.concurrent.TimeUnit;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class GeofenceDuration {
 
     private Long minInsideDuration;
     private Long minOutsideDuration;
+
+    public static GeofenceDuration fromRuleNodeConfig(TbGpsMultiGeofencingActionNodeConfiguration config) {
+        long minInsideDuration = TimeUnit.valueOf(config.getMinInsideDurationTimeUnit()).toMillis(config.getMinInsideDuration());
+        long minOutsideDuration = TimeUnit.valueOf(config.getMinOutsideDurationTimeUnit()).toMillis(config.getMinOutsideDuration());
+        return new GeofenceDuration(minInsideDuration, minOutsideDuration);
+    }
 
 }

@@ -33,12 +33,14 @@ import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
@@ -47,6 +49,7 @@ public class GeofencingProcessor {
 
     private final TbGpsMultiGeofencingActionNodeConfiguration nodeConfiguration;
     private final TbContext context;
+    private final GeofenceDuration defaultGeofenceDuration;
 
     private static final String GEOFENCE_STATES_KEY = "geofenceStates";
     private static final String GEOFENCE_STATE_ATTRIBUTE_KEY_PREFIX = "geofenceState_%s";
@@ -55,40 +58,63 @@ public class GeofencingProcessor {
     public GeofencingProcessor(TbContext context, TbGpsMultiGeofencingActionNodeConfiguration nodeConfiguration) {
         this.nodeConfiguration = nodeConfiguration;
         this.context = context;
+        this.defaultGeofenceDuration = GeofenceDuration.fromRuleNodeConfig(nodeConfiguration);
     }
 
-    public ListenableFuture<GeofenceResponse> process(RuleNodeId ruleNodeId, TbMsg msg, List<EntityId> matchedGeofences) {
+    public ListenableFuture<Set<GeofenceState>> process(RuleNodeId ruleNodeId, TbMsg msg, List<EntityId> matchedGeofences) {
         ListenableFuture<Set<GeofenceState>> geofenceStatesFuture = fetchGeofenceStatesForEntity(msg.getOriginator(), ruleNodeId);
 
-        return Futures.transform(geofenceStatesFuture, geofenceStates -> processGeofenceStates(ruleNodeId, msg, matchedGeofences, geofenceStates), MoreExecutors.directExecutor());
+        return Futures.transformAsync(geofenceStatesFuture, geofenceStates -> processGeofenceStates(ruleNodeId, msg, matchedGeofences, geofenceStates), MoreExecutors.directExecutor());
     }
 
-    private GeofenceResponse processGeofenceStates(RuleNodeId ruleNodeId, TbMsg msg, List<EntityId> matchedGeofences, Set<GeofenceState> geofenceStates) {
+    private ListenableFuture<Set<GeofenceState>> processGeofenceStates(RuleNodeId ruleNodeId, TbMsg msg, List<EntityId> matchedGeofences, Set<GeofenceState> geofenceStates) {
         if (isEmpty(geofenceStates) && isEmpty(matchedGeofences)) {
-            return new GeofenceResponse();
+            return Futures.immediateFuture(Collections.emptySet());
         }
 
         geofenceStates = ensureNonNullGeofenceStates(geofenceStates);
         createNewGeofenceStates(geofenceStates, matchedGeofences);
 
-        Optional<GeofenceDurationConfig> geofenceDurationConfig = getGeofenceDurationConfig(resolveDurationConfigKey(), msg);
+        updateGeofenceStates(geofenceStates, msg, matchedGeofences);
 
-        updateGeofenceStates(geofenceStates, geofenceDurationConfig, msg, matchedGeofences);
-
-        GeofenceResponse geofenceResponse = new GeofenceResponse(getChangedStates(geofenceStates));
-
+        Set<GeofenceState> changedStates = getChangedStates(geofenceStates);
         Set<GeofenceState> aliveStates = getAliveStates(geofenceStates);
-        persistState(msg.getOriginator(), ruleNodeId, aliveStates);
+        ListenableFuture<String> saveFuture = persistState(msg.getOriginator(), ruleNodeId, aliveStates);
 
-        return geofenceResponse;
+        return Futures.transform(saveFuture, saveResult -> changedStates, MoreExecutors.directExecutor());
     }
 
     private Set<GeofenceState> ensureNonNullGeofenceStates(Set<GeofenceState> geofenceStates) {
         return geofenceStates == null ? new HashSet<>() : geofenceStates;
     }
 
-    private void updateGeofenceStates(Set<GeofenceState> geofenceStates, Optional<GeofenceDurationConfig> geofenceDurationConfig, TbMsg msg, List<EntityId> matchedGeofences) {
-        geofenceStates.forEach(geofenceState -> geofenceState.updateStatus(nodeConfiguration, geofenceDurationConfig, msg, matchedGeofences));
+    private void updateGeofenceStates(Set<GeofenceState> geofenceStates, TbMsg msg, List<EntityId> matchedGeofences) {
+        Optional<GeofenceDurationConfig> optionalGeofenceDurationConfig = getGeofenceDurationConfig(resolveDurationConfigKey(), msg);
+        geofenceStates.forEach(geofenceState -> {
+            GeofenceDuration geofenceDuration = createGeofenceDuration(geofenceState.getGeofenceId().getId(), optionalGeofenceDurationConfig);
+            geofenceState.updateStatus(geofenceDuration, msg, matchedGeofences);
+        });
+    }
+
+    private GeofenceDuration createGeofenceDuration(UUID geofenceId, Optional<GeofenceDurationConfig> optionalGeofenceDurationConfig) {
+        if (optionalGeofenceDurationConfig.isEmpty()) {
+            return defaultGeofenceDuration;
+        }
+
+        long outsideDuration = optionalGeofenceDurationConfig
+                .map(config -> config.getGeofenceDurationMap().get(geofenceId))
+                .filter(duration -> duration.getMinOutsideDuration() != null)
+                .map(GeofenceDuration::getMinOutsideDuration)
+                .orElse(nodeConfiguration.getMinOutsideDuration());
+        outsideDuration = TimeUnit.valueOf(nodeConfiguration.getMinOutsideDurationTimeUnit()).toMillis(outsideDuration);
+
+        long insideDuration = optionalGeofenceDurationConfig
+                .map(config -> config.getGeofenceDurationMap().get(geofenceId))
+                .filter(duration -> duration.getMinInsideDuration() != null)
+                .map(GeofenceDuration::getMinInsideDuration)
+                .orElse(nodeConfiguration.getMinInsideDuration());
+        insideDuration = TimeUnit.valueOf(nodeConfiguration.getMinInsideDurationTimeUnit()).toMillis(insideDuration);
+        return new GeofenceDuration(insideDuration, outsideDuration);
     }
 
     private Set<GeofenceState> getChangedStates(Set<GeofenceState> geofenceStates) {
@@ -103,17 +129,18 @@ public class GeofencingProcessor {
                 .collect(Collectors.toSet());
     }
 
-    private void persistState(EntityId entityId, RuleNodeId ruleNodeId, Set<GeofenceState> geofenceStates) {
+    private ListenableFuture<String> persistState(EntityId entityId, RuleNodeId ruleNodeId, Set<GeofenceState> geofenceStates) {
         ObjectNode jsonNode = JacksonUtil.newObjectNode();
 
         jsonNode.set(GEOFENCE_STATES_KEY, JacksonUtil.valueToTree(geofenceStates));
 
         BaseAttributeKvEntry attributeKvEntry = new BaseAttributeKvEntry(new JsonDataEntry(getGeofenceStateAttributeKey(ruleNodeId), jsonNode.toString()), System.currentTimeMillis());
-        context.getAttributesService().save(context.getTenantId(), entityId, AttributeScope.SERVER_SCOPE, attributeKvEntry);
+        return context.getAttributesService().save(context.getTenantId(), entityId, AttributeScope.SERVER_SCOPE, attributeKvEntry);
     }
 
     private ListenableFuture<Set<GeofenceState>> fetchGeofenceStatesForEntity(EntityId entityId, RuleNodeId ruleNodeId) {
-        ListenableFuture<Optional<AttributeKvEntry>> optionalAttributeFuture = context.getAttributesService().find(context.getTenantId(), entityId, AttributeScope.SERVER_SCOPE, getGeofenceStateAttributeKey(ruleNodeId));
+        ListenableFuture<Optional<AttributeKvEntry>> optionalAttributeFuture = context.getAttributesService().
+                find(context.getTenantId(), entityId, AttributeScope.SERVER_SCOPE, getGeofenceStateAttributeKey(ruleNodeId));
         return Futures.transform(optionalAttributeFuture, optionalAttribute -> {
             if (optionalAttribute.isEmpty() || optionalAttribute.get().getJsonValue().isEmpty()) {
                 return null;
@@ -145,12 +172,7 @@ public class GeofencingProcessor {
     }
 
     private void createNewGeofenceStates(Set<GeofenceState> geofenceStates, List<EntityId> matchedGeofences) {
-        Set<EntityId> existingGeofenceIds = geofenceStates.stream()
-                .map(GeofenceState::getGeofenceId)
-                .collect(Collectors.toSet());
-
         matchedGeofences.stream()
-                .filter(matchedGeofence -> !existingGeofenceIds.contains(matchedGeofence))
                 .map(GeofenceState::new)
                 .forEach(geofenceStates::add);
     }

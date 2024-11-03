@@ -23,8 +23,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import static org.springframework.util.CollectionUtils.isEmpty;
 import static org.thingsboard.rule.engine.geo.GeofenceStateStatus.ENTERED;
@@ -50,21 +48,21 @@ public class GeofenceState {
         this.geofenceId = geofenceId;
     }
 
-    public void updateStatus(TbGpsMultiGeofencingActionNodeConfiguration nodeConfiguration, Optional<GeofenceDurationConfig> optionalDurationConfig, TbMsg tbMsg, List<EntityId> matchedGeofences) {
+    public void updateStatus(GeofenceDuration geofenceDuration, TbMsg tbMsg, List<EntityId> matchedGeofences) {
         long currentTime = tbMsg.getMetaDataTs();
 
         if (isEmpty(matchedGeofences)) {
-            handleOutsideTransition(nodeConfiguration, optionalDurationConfig, currentTime);
+            handleOutsideTransition(currentTime, geofenceDuration);
         } else if (matchedGeofences.contains(geofenceId)) {
-            handleInsideTransition(nodeConfiguration, optionalDurationConfig, currentTime);
+            handleInsideTransition(currentTime, geofenceDuration);
         } else {
-            handleOutsideTransition(nodeConfiguration, optionalDurationConfig, currentTime);
+            handleOutsideTransition(currentTime, geofenceDuration);
         }
     }
 
-    private void handleOutsideTransition(TbGpsMultiGeofencingActionNodeConfiguration nodeConfiguration, Optional<GeofenceDurationConfig> optionalDurationConfig, long currentTime) {
+    private void handleOutsideTransition(long currentTime, GeofenceDuration geofenceDuration) {
         if (LEFT.equals(geofenceStateStatus)) {
-            if (hasExceededOutsideDuration(currentTime - leftTs, nodeConfiguration, optionalDurationConfig)) {
+            if (hasExceededOutsideDuration(currentTime, geofenceDuration)) {
                 updateStatus(OUTSIDE);
             }
         }
@@ -74,9 +72,9 @@ public class GeofenceState {
         }
     }
 
-    private void handleInsideTransition(TbGpsMultiGeofencingActionNodeConfiguration nodeConfiguration, Optional<GeofenceDurationConfig> optionalDurationConfig, long currentTime) {
+    private void handleInsideTransition(long currentTime, GeofenceDuration geofenceDuration) {
         if (ENTERED.equals(geofenceStateStatus)) {
-            if (hasExceededInsideDuration(currentTime - enterTs, nodeConfiguration, optionalDurationConfig)) {
+            if (hasExceededInsideDuration(currentTime, geofenceDuration)) {
                 updateStatus(INSIDE);
             }
         } else if (geofenceStateStatus == null) {
@@ -90,22 +88,12 @@ public class GeofenceState {
         statusChanged = true;
     }
 
-    private boolean hasExceededOutsideDuration(long elapsedTime, TbGpsMultiGeofencingActionNodeConfiguration nodeConfiguration, Optional<GeofenceDurationConfig> optionalDurationConfig) {
-        Long outsideDuration = optionalDurationConfig
-                .map(config -> config.getGeofenceDurationMap().get(geofenceId.getId()))
-                .filter(duration -> duration.getMinOutsideDuration() != null)
-                .map(GeofenceDuration::getMinOutsideDuration)
-                .orElse(nodeConfiguration.getMinOutsideDuration());
-        return elapsedTime >= TimeUnit.valueOf(nodeConfiguration.getMinOutsideDurationTimeUnit()).toMillis(outsideDuration);
+    private boolean hasExceededOutsideDuration(long currentTime, GeofenceDuration geofenceDuration) {
+        return currentTime - leftTs >= geofenceDuration.getMinOutsideDuration();
     }
 
-    private boolean hasExceededInsideDuration(long elapsedTime, TbGpsMultiGeofencingActionNodeConfiguration nodeConfiguration, Optional<GeofenceDurationConfig> optionalDurationConfig) {
-        Long insideDuration = optionalDurationConfig
-                .map(config -> config.getGeofenceDurationMap().get(geofenceId.getId()))
-                .filter(duration -> duration.getMinInsideDuration() != null)
-                .map(GeofenceDuration::getMinInsideDuration)
-                .orElse(nodeConfiguration.getMinInsideDuration());
-        return elapsedTime >= TimeUnit.valueOf(nodeConfiguration.getMinInsideDurationTimeUnit()).toMillis(insideDuration);
+    private boolean hasExceededInsideDuration(long currentTime, GeofenceDuration geofenceDuration) {
+        return currentTime - enterTs >= geofenceDuration.getMinInsideDuration();
     }
 
     public boolean isStatus(GeofenceStateStatus geofenceStateStatus) {
