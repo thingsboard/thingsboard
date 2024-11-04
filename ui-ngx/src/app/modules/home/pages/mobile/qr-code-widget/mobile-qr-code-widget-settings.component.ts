@@ -24,8 +24,6 @@ import { MobileApplicationService } from '@core/http/mobile-application.service'
 import { BadgePosition, badgePositionTranslationsMap, QrCodeSettings } from '@shared/models/mobile-app.models';
 import { ActionUpdateMobileQrCodeEnabled } from '@core/auth/auth.actions';
 import { EntityType } from '@shared/models/entity-type.models';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
-import { Authority } from '@shared/models/authority.enum';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
@@ -39,7 +37,6 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
   readonly entityType = EntityType;
 
   mobileAppSettingsForm = this.fb.group({
-    useSystemSettings: [false],
     useDefaultApp: [true],
     mobileAppBundleId: [{value: null, disabled: true}, Validators.required],
     androidEnabled: [true],
@@ -53,7 +50,6 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
     })
   });
 
-  private authUser = getCurrentAuthUser(this.store);
   private mobileAppSettings: QrCodeSettings;
 
   constructor(protected store: Store<AppState>,
@@ -62,24 +58,6 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
     super(store);
     this.mobileAppService.getMobileAppSettings()
       .subscribe(settings => this.processMobileAppSettings(settings));
-    if (this.isTenantAdmin()) {
-      this.mobileAppSettingsForm.get('useSystemSettings').valueChanges.pipe(
-        takeUntilDestroyed()
-      ).subscribe(value => {
-        if (value) {
-          this.mobileAppSettingsForm.get('mobileAppBundleId').disable({emitEvent: false});
-          this.mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').disable({emitEvent: false});
-        } else {
-          const formValue = this.mobileAppSettingsForm.value;
-          if (!formValue.useDefaultApp) {
-            this.mobileAppSettingsForm.get('mobileAppBundleId').enable({emitEvent: false});
-          }
-          if (formValue.qrCodeConfig.qrCodeLabelEnabled && formValue.qrCodeConfig.showOnHomePage) {
-            this.mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').enable({emitEvent: false});
-          }
-        }
-      });
-    }
     this.mobileAppSettingsForm.get('useDefaultApp').valueChanges.pipe(
       takeUntilDestroyed()
     ).subscribe(value => {
@@ -138,15 +116,8 @@ export class MobileQrCodeWidgetSettingsComponent extends PageComponent implement
     });
   }
 
-  public isTenantAdmin(): boolean {
-    return this.authUser.authority === Authority.TENANT_ADMIN;
-  }
-
   private processMobileAppSettings(mobileAppSettings: QrCodeSettings): void {
     this.mobileAppSettings = {...mobileAppSettings};
-    if (!this.isTenantAdmin()) {
-      this.mobileAppSettings.useSystemSettings = false;
-    }
     this.mobileAppSettingsForm.reset(this.mobileAppSettings);
   }
 
