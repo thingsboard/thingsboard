@@ -565,6 +565,10 @@ public class ActorSystemContext {
     @Getter
     private String rpcSubmitStrategy;
 
+    @Value("${actors.rpc.close_session_on_rpc_delivery_timeout:false}")
+    @Getter
+    private boolean closeTransportSessionOnRpcDeliveryTimeout;
+
     @Value("${actors.rpc.response_timeout_ms:30000}")
     @Getter
     private long rpcResponseTimeout;

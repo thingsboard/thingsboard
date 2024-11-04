@@ -1304,18 +1304,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     public void onRemoteSessionCloseCommand(UUID sessionId, TransportProtos.SessionCloseNotificationProto sessionCloseNotification) {
         log.trace("[{}] Received the remote command to close the session: {}", sessionId, sessionCloseNotification.getMessage());
         transportService.deregisterSession(deviceSessionCtx.getSessionInfo());
-        MqttReasonCodes.Disconnect returnCode = MqttReasonCodes.Disconnect.IMPLEMENTATION_SPECIFIC_ERROR;
-        switch (sessionCloseNotification.getReason()) {
-            case CREDENTIALS_UPDATED:
-                returnCode = MqttReasonCodes.Disconnect.ADMINISTRATIVE_ACTION;
-                break;
-            case MAX_CONCURRENT_SESSIONS_LIMIT_REACHED:
-                returnCode = MqttReasonCodes.Disconnect.SESSION_TAKEN_OVER;
-                break;
-            case SESSION_TIMEOUT:
-                returnCode = MqttReasonCodes.Disconnect.MAXIMUM_CONNECT_TIME;
-                break;
-        }
+        MqttReasonCodes.Disconnect returnCode = switch (sessionCloseNotification.getReason()) {
+            case CREDENTIALS_UPDATED, RPC_DELIVERY_TIMEOUT -> MqttReasonCodes.Disconnect.ADMINISTRATIVE_ACTION;
+            case MAX_CONCURRENT_SESSIONS_LIMIT_REACHED -> MqttReasonCodes.Disconnect.SESSION_TAKEN_OVER;
+            case SESSION_TIMEOUT -> MqttReasonCodes.Disconnect.MAXIMUM_CONNECT_TIME;
+            default -> MqttReasonCodes.Disconnect.IMPLEMENTATION_SPECIFIC_ERROR;
+        };
         closeCtx(deviceSessionCtx.getChannel(), returnCode);
     }
 

@@ -132,6 +132,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     private final boolean rpcSequential;
     private final RpcSubmitStrategy rpcSubmitStrategy;
     private final ScheduledExecutorService scheduler;
+    private final boolean closeTransportSessionOnRpcDeliveryTimeout;
 
     private int rpcSeq = 0;
     private String deviceName;
@@ -145,6 +146,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         this.tenantId = tenantId;
         this.deviceId = deviceId;
         this.rpcSubmitStrategy = RpcSubmitStrategy.parse(systemContext.getRpcSubmitStrategy());
+        this.closeTransportSessionOnRpcDeliveryTimeout = systemContext.isCloseTransportSessionOnRpcDeliveryTimeout();
         this.rpcSequential = !rpcSubmitStrategy.equals(RpcSubmitStrategy.BURST);
         this.attributeSubscriptions = new HashMap<>();
         this.rpcSubscriptions = new HashMap<>();
@@ -223,7 +225,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                 log.error("[{}][{}][{}] Failed to save RPC request to edge queue {}", tenantId, deviceId, edgeId.getId(), request, e);
             }
         } else if (isSendNewRpcAvailable()) {
-            sent = rpcSubscriptions.size() > 0;
+            sent = !rpcSubscriptions.isEmpty();
             Set<UUID> syncSessionSet = new HashSet<>();
             rpcSubscriptions.forEach((sessionId, sessionInfo) -> {
                 log.debug("[{}][{}][{}][{}] send RPC request to transport ...", deviceId, sessionId, rpcId, requestId);
@@ -598,7 +600,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     }
 
     void processAttributesUpdate(DeviceAttributesEventNotificationMsg msg) {
-        if (attributeSubscriptions.size() > 0) {
+        if (!attributeSubscriptions.isEmpty()) {
             boolean hasNotificationData = false;
             AttributeUpdateNotificationMsg.Builder notification = AttributeUpdateNotificationMsg.newBuilder();
             if (msg.isDeleted()) {
@@ -613,7 +615,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             } else {
                 if (DataConstants.SHARED_SCOPE.equals(msg.getScope())) {
                     List<AttributeKvEntry> attributes = new ArrayList<>(msg.getValues());
-                    if (attributes.size() > 0) {
+                    if (!attributes.isEmpty()) {
                         List<TsKvProto> sharedUpdated = msg.getValues().stream().map(t -> KvProtoUtil.toTsKvProto(t.getLastUpdateTs(), t))
                                 .collect(Collectors.toList());
                         if (!sharedUpdated.isEmpty()) {
@@ -705,10 +707,19 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                 maxRpcRetries = maxRpcRetries == null ?
                         systemContext.getMaxRpcRetries() : Math.min(maxRpcRetries, systemContext.getMaxRpcRetries());
                 if (maxRpcRetries <= md.getRetries()) {
-                    toDeviceRpcPendingMap.remove(requestId);
-                    status = RpcStatus.FAILED;
-                    response = JacksonUtil.newObjectNode().put("error", "There was a Timeout and all retry " +
-                            "attempts have been exhausted. Retry attempts set: " + maxRpcRetries);
+                    if (closeTransportSessionOnRpcDeliveryTimeout) {
+                        md.setRetries(0);
+                        status = RpcStatus.QUEUED;
+                        sessions.forEach(this::notifyTransportAboutClosedSessionRpcDeliveryTimeout);
+                        attributeSubscriptions.clear();
+                        rpcSubscriptions.clear();
+                        dumpSessions();
+                    } else {
+                        toDeviceRpcPendingMap.remove(requestId);
+                        status = RpcStatus.FAILED;
+                        response = JacksonUtil.newObjectNode().put("error", "There was a Timeout and all retry " +
+                                                                            "attempts have been exhausted. Retry attempts set: " + maxRpcRetries);
+                    }
                 } else {
                     md.setRetries(md.getRetries() + 1);
                 }
@@ -855,8 +866,13 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         }
     }
 
+    private void notifyTransportAboutClosedSessionRpcDeliveryTimeout(UUID sessionId, SessionInfoMetaData sessionMd) {
+        log.debug("Close session due to RPC delivery failure. sessionId: [{}] sessionMd: [{}]", sessionId, sessionMd);
+        notifyTransportAboutClosedSession(sessionId, sessionMd, "RPC delivery failed!", SessionCloseReason.RPC_DELIVERY_TIMEOUT);
+    }
+
     private void notifyTransportAboutClosedSessionMaxSessionsLimit(UUID sessionId, SessionInfoMetaData sessionMd) {
-        log.debug("remove eldest session (max concurrent sessions limit reached per device) sessionId: [{}] sessionMd: [{}]", sessionId, sessionMd);
+        log.debug("Remove eldest session (max concurrent sessions limit reached per device) sessionId: [{}] sessionMd: [{}]", sessionId, sessionMd);
         notifyTransportAboutClosedSession(sessionId, sessionMd, "max concurrent sessions limit reached per device!", SessionCloseReason.MAX_CONCURRENT_SESSIONS_LIMIT_REACHED);
     }
 
