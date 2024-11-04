@@ -18,6 +18,7 @@ import { Ace } from 'ace-builds';
 import { Observable } from 'rxjs/internal/Observable';
 import { forkJoin, from, of } from 'rxjs';
 import { map, mergeMap, tap } from 'rxjs/operators';
+import { unwrapModule } from '@core/utils';
 
 let aceDependenciesLoaded = false;
 let aceModule: any;
@@ -67,10 +68,10 @@ export function getAce(): Observable<any> {
   if (aceModule) {
     return of(aceModule);
   } else {
-    return from(import('ace')).pipe(
+    return from(import('ace-builds/src-noconflict/ace')).pipe(
       mergeMap((module) => {
         return loadAceDependencies().pipe(
-         map(() => module)
+         map(() => unwrapModule(module))
         );
       }),
       tap((module) => {
@@ -86,7 +87,9 @@ export function getAceDiff(): Observable<any> {
   } else {
     return getAce().pipe(
       mergeMap((ace) => {
-        return from(import('ace-diff'));
+        return from(import('ace-diff')).pipe(
+          map((module) => unwrapModule(module))
+        );
       }),
       tap((module) => {
         aceDiffModule = module;

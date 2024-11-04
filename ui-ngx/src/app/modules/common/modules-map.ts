@@ -100,7 +100,6 @@ import * as TruncateWithTooltipDirective from '@shared/directives/truncate-with-
 
 import * as coercion from '@shared/decorators/coercion';
 import * as enumerable from '@shared/decorators/enumerable';
-import * as TbInject from '@shared/decorators/tb-inject';
 
 import * as FooterComponent from '@shared/components/footer.component';
 import * as LogoComponent from '@shared/components/logo.component';
@@ -432,7 +431,6 @@ class ModulesMap implements IModulesMap {
 
     '@shared/decorators/coercion': coercion,
     '@shared/decorators/enumerable': enumerable,
-    '@shared/decorators/tb-inject': TbInject,
 
     '@shared/import-export/import-export.service': ImportExportService,
     '@shared/import-export/import-dialog.component': ImportDialogComponent,

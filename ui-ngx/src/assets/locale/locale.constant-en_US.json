@@ -2836,6 +2836,7 @@
         "gateways": "Gateways",
         "create-new-gateway": "Create a new gateway",
         "create-new-gateway-text": "Are you sure you want create a new gateway with name: '{{gatewayName}}'?",
+        "launch-command": "Launch command",
         "no-gateway-found": "No gateway found.",
         "no-gateway-matching": " '{{item}}' not found."
     },
