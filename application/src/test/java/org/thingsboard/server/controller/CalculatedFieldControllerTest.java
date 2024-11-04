@@ -19,6 +19,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.calculated_field.CalculatedField;
@@ -26,18 +27,13 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
 public class CalculatedFieldControllerTest extends AbstractControllerTest {
 
-    private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("9e408b94-dc05-47e2-a21c-1a6c0d7bd90a"));
-
     private Tenant savedTenant;
-    private User tenantAdmin;
 
     @Before
     public void beforeTest() throws Exception {
@@ -48,14 +44,14 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         savedTenant = saveTenant(tenant);
         assertThat(savedTenant).isNotNull();
 
-        tenantAdmin = new User();
+        User tenantAdmin = new User();
         tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
         tenantAdmin.setTenantId(savedTenant.getId());
         tenantAdmin.setEmail("tenant2@thingsboard.org");
         tenantAdmin.setFirstName("Joe");
         tenantAdmin.setLastName("Downs");
 
-        tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
+        createUserAndLogin(tenantAdmin, "testPassword1");
     }
 
     @After
@@ -67,7 +63,8 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveCalculatedField() throws Exception {
-        CalculatedField calculatedField = getCalculatedField();
+        Device testDevice = createDevice("Test device", "1234567890");
+        CalculatedField calculatedField = getCalculatedField(testDevice.getId());
 
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
 
@@ -93,7 +90,8 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
 
     @Test
     public void testGetCalculatedFieldById() throws Exception {
-        CalculatedField calculatedField = getCalculatedField();
+        Device testDevice = createDevice("Test device", "1234567890");
+        CalculatedField calculatedField = getCalculatedField(testDevice.getId());
 
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
         CalculatedField fetchedCalculatedField = doGet("/api/calculatedField/" + savedCalculatedField.getId().getId(), CalculatedField.class);
@@ -107,7 +105,8 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
 
     @Test
     public void testDeleteCalculatedField() throws Exception {
-        CalculatedField calculatedField = getCalculatedField();
+        Device testDevice = createDevice("Test device", "1234567890");
+        CalculatedField calculatedField = getCalculatedField(testDevice.getId());
 
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
 
@@ -119,9 +118,9 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
 
     }
 
-    private CalculatedField getCalculatedField() {
+    private CalculatedField getCalculatedField(DeviceId deviceId) {
         CalculatedField calculatedField = new CalculatedField();
-        calculatedField.setEntityId(DEVICE_ID);
+        calculatedField.setEntityId(deviceId);
         calculatedField.setType("Simple");
         calculatedField.setName("Test Calculated Field");
         calculatedField.setConfigurationVersion(1);

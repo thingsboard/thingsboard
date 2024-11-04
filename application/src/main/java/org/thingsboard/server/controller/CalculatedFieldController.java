@@ -44,7 +44,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @RequestMapping("/api")
 @RequiredArgsConstructor
 @Slf4j
-public class CalculatedFieldController extends BaseController{
+public class CalculatedFieldController extends BaseController {
 
     private final CalculatedFieldService calculatedFieldService;
 
@@ -61,7 +61,7 @@ public class CalculatedFieldController extends BaseController{
     @RequestMapping(value = "/calculatedField", method = RequestMethod.POST)
     @ResponseBody
     public CalculatedField saveCalculatedField(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the calculated field.")
-                                                   @RequestBody CalculatedField calculatedField) throws Exception {
+                                               @RequestBody CalculatedField calculatedField) throws Exception {
         calculatedField.setTenantId(getTenantId());
         checkEntity(calculatedField.getId(), calculatedField, Resource.CALCULATED_FIELD);
         return calculatedFieldService.save(calculatedField);

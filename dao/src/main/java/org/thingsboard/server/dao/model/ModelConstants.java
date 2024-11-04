@@ -705,6 +705,16 @@ public class ModelConstants {
     public static final String CALCULATED_FIELD_VERSION = "version";
     public static final String CALCULATED_FIELD_EXTERNAL_ID = "external_id";
 
+    /**
+     * Calculated field links constants.
+     */
+    public static final String CALCULATED_FIELD_LINK_TABLE_NAME = "calculated_field_link";
+    public static final String CALCULATED_FIELD_LINK_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
+    public static final String CALCULATED_FIELD_LINK_ENTITY_TYPE = ENTITY_TYPE_COLUMN;
+    public static final String CALCULATED_FIELD_LINK_ENTITY_ID = ENTITY_ID_COLUMN;
+    public static final String CALCULATED_FIELD_LINK_CALCULATED_FIELD_ID = "calculated_field_id";
+    public static final String CALCULATED_FIELD_LINK_CONFIGURATION = "configuration";
+
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 
     protected static final String[] COUNT_AGGREGATION_COLUMNS = new String[]{count(LONG_VALUE_COLUMN), count(DOUBLE_VALUE_COLUMN), count(BOOLEAN_VALUE_COLUMN), count(STRING_VALUE_COLUMN), count(JSON_VALUE_COLUMN), max(TS_COLUMN)};

@@ -61,7 +61,8 @@ public enum EntityType {
     OAUTH2_CLIENT(35),
     DOMAIN(36),
     MOBILE_APP(37),
-    CALCULATED_FIELD(38);
+    CALCULATED_FIELD(38),
+    CALCULATED_FIELD_LINK(39);
 
     @Getter
     private final int protoNumber; // Corresponds to EntityTypeProto

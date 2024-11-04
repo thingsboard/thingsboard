@@ -23,22 +23,28 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.calculated_field.CalculatedField;
+import org.thingsboard.server.common.data.calculated_field.CalculatedFieldLink;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DaoSqlTest
 public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
-    private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("71c73816-361e-4e57-82ab-e1deaa8b7d66"));
-
     @Autowired
     private CalculatedFieldService calculatedFieldService;
+    @Autowired
+    private DeviceService deviceService;
 
     private ListeningExecutorService executor;
 
@@ -54,7 +60,8 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
     @Test
     public void testSaveCalculatedField() {
-        CalculatedField calculatedField = getCalculatedField();
+        Device device = createTestDevice();
+        CalculatedField calculatedField = getCalculatedField(device.getId());
         CalculatedField savedCalculatedField = calculatedFieldService.save(calculatedField);
 
         assertThat(savedCalculatedField).isNotNull();
@@ -77,10 +84,42 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testFindCalculatedFieldById() {
-        CalculatedField calculatedField = getCalculatedField();
-        CalculatedField savedCalculatedField = calculatedFieldService.save(calculatedField);
+    public void testSaveCalculatesFieldWithNonExistingDeviceId() {
+        CalculatedField calculatedField = getCalculatedField(new DeviceId(UUID.fromString("038f8668-c9fd-4f00-8501-ce20f2f93c22")));
 
+        assertThatThrownBy(() -> calculatedFieldService.save(calculatedField))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Device with id [" + calculatedField.getEntityId().getId() + "] does not exist.");
+    }
+
+    @Test
+    public void testSaveCalculatedFieldWithExistingName() {
+        Device device = createTestDevice();
+        CalculatedField calculatedField = getCalculatedField(device.getId());
+        calculatedFieldService.save(calculatedField);
+
+        assertThatThrownBy(() -> calculatedFieldService.save(calculatedField))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("Calculated Field with such name is already in exists!");
+    }
+
+    @Test
+    public void testSaveCalculatedFieldWithExistingExternalId() {
+        Device device = createTestDevice();
+        CalculatedField calculatedField = getCalculatedField(device.getId());
+        calculatedField.setExternalId(new CalculatedFieldId(UUID.fromString("2ef69d0a-89cf-4868-86f8-c50551d87ebe")));
+
+        calculatedFieldService.save(calculatedField);
+
+        calculatedField.setName("Test 2");
+        assertThatThrownBy(() -> calculatedFieldService.save(calculatedField))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("Calculated Field with such external id already exists!");
+    }
+
+    @Test
+    public void testFindCalculatedFieldById() {
+        CalculatedField savedCalculatedField = saveValidCalculatedField();
         CalculatedField fetchedCalculatedField = calculatedFieldService.findById(tenantId, savedCalculatedField.getId());
 
         assertThat(fetchedCalculatedField).isEqualTo(savedCalculatedField);
@@ -90,18 +129,33 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
     @Test
     public void testDeleteCalculatedField() {
-        CalculatedField calculatedField = getCalculatedField();
-        CalculatedField savedCalculatedField = calculatedFieldService.save(calculatedField);
+        CalculatedField savedCalculatedField = saveValidCalculatedField();
 
         calculatedFieldService.deleteCalculatedField(tenantId, savedCalculatedField.getId());
 
         assertThat(calculatedFieldService.findById(tenantId, savedCalculatedField.getId())).isNull();
     }
 
-    private CalculatedField getCalculatedField() {
+    @Test
+    public void testSaveCalculatedFieldLinkIfCalculatedFieldForSuchEntityExists() {
+        CalculatedField savedCalculatedField = saveValidCalculatedField();
+        CalculatedFieldLink calculatedFieldLink = getCalculatedFieldLink(savedCalculatedField);
+
+        assertThatThrownBy(() -> calculatedFieldService.saveCalculatedFieldLink(tenantId, calculatedFieldLink))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("Calculated Field for such entity id is already exists!");
+    }
+
+    private CalculatedField saveValidCalculatedField() {
+        Device device = createTestDevice();
+        CalculatedField calculatedField = getCalculatedField(device.getId());
+        return calculatedFieldService.save(calculatedField);
+    }
+
+    private CalculatedField getCalculatedField(DeviceId deviceId) {
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setTenantId(tenantId);
-        calculatedField.setEntityId(DEVICE_ID);
+        calculatedField.setEntityId(deviceId);
         calculatedField.setType("Simple");
         calculatedField.setName("Test Calculated Field");
         calculatedField.setConfigurationVersion(1);
@@ -118,6 +172,22 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
                 " }\n"));
         calculatedField.setVersion(1L);
         return calculatedField;
+    }
+
+    private CalculatedFieldLink getCalculatedFieldLink(CalculatedField calculatedField) {
+        CalculatedFieldLink calculatedFieldLink = new CalculatedFieldLink();
+        calculatedFieldLink.setTenantId(tenantId);
+        calculatedFieldLink.setEntityId(calculatedField.getEntityId());
+        calculatedFieldLink.setConfiguration(calculatedField.getConfiguration());
+        calculatedFieldLink.setCalculatedFieldId(calculatedField.getId());
+        return calculatedFieldLink;
+    }
+
+    private Device createTestDevice() {
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName("Test");
+        return deviceService.saveDevice(device);
     }
 
 }

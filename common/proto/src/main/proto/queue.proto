@@ -59,6 +59,7 @@ enum EntityTypeProto {
   DOMAIN                = 36;
   MOBILE_APP            = 37;
   CALCULATED_FIELD      = 38;
+  CALCULATED_FIELD_LINK = 39;
 }
 
 /**

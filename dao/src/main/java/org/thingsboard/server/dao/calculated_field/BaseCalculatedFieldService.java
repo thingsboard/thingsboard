@@ -20,13 +20,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.calculated_field.CalculatedField;
+import org.thingsboard.server.common.data.calculated_field.CalculatedFieldLink;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.service.DataValidator;
 
+import java.util.Objects;
 import java.util.Optional;
 
+import static org.thingsboard.server.dao.entity.AbstractEntityService.checkConstraintViolation;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service("CalculatedFieldDaoService")
@@ -38,11 +46,28 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
     public static final String INCORRECT_CALCULATED_FIELD_ID = "Incorrect calculatedFieldId ";
 
     private final CalculatedFieldDao calculatedFieldDao;
+    private final CalculatedFieldLinkDao calculatedFieldLinkDao;
+    private final DeviceService deviceService;
+    private final AssetService assetService;
+    private final DataValidator<CalculatedField> calculatedFieldDataValidator;
+    private final DataValidator<CalculatedFieldLink> calculatedFieldLinkDataValidator;
 
     @Override
     public CalculatedField save(CalculatedField calculatedField) {
-        log.trace("Executing save, [{}]", calculatedField);
-        return calculatedFieldDao.save(calculatedField.getTenantId(), calculatedField);
+        calculatedFieldDataValidator.validate(calculatedField, CalculatedField::getTenantId);
+        try {
+            TenantId tenantId = calculatedField.getTenantId();
+            checkEntityExistence(tenantId, calculatedField.getEntityId());
+            log.trace("Executing save calculated field, [{}]", calculatedField);
+            CalculatedField savedCalculatedField = calculatedFieldDao.save(tenantId, calculatedField);
+            createOrUpdateCalculatedFieldLink(tenantId, savedCalculatedField);
+            return savedCalculatedField;
+        } catch (Exception e) {
+            checkConstraintViolation(e,
+                    "calculated_field_unq_key", "Calculated Field with such name is already in exists!",
+                    "calculated_field_external_id_unq_key", "Calculated Field with such external id already exists!");
+            throw e;
+        }
     }
 
     @Override
@@ -62,6 +87,18 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
     }
 
     @Override
+    public CalculatedFieldLink saveCalculatedFieldLink(TenantId tenantId, CalculatedFieldLink calculatedFieldLink) {
+        calculatedFieldLinkDataValidator.validate(calculatedFieldLink, CalculatedFieldLink::getTenantId);
+        try {
+            log.trace("Executing save calculated field link, [{}]", calculatedFieldLink);
+            return calculatedFieldLinkDao.save(tenantId, calculatedFieldLink);
+        } catch (Exception e) {
+            checkConstraintViolation(e, "calculated_field_link_unq_key", "Calculated Field for such entity id is already exists!");
+            throw e;
+        }
+    }
+
+    @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findById(tenantId, new CalculatedFieldId(entityId.getId())));
     }
@@ -69,6 +106,31 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
     @Override
     public EntityType getEntityType() {
         return EntityType.CALCULATED_FIELD;
+    }
+
+    private void checkEntityExistence(TenantId tenantId, EntityId entityId) {
+        switch (entityId.getEntityType()) {
+            case ASSET -> Optional.ofNullable(assetService.findAssetById(tenantId, (AssetId) entityId))
+                    .orElseThrow(() -> new IllegalArgumentException("Asset with id [" + entityId.getId() + "] does not exist."));
+            case DEVICE -> Optional.ofNullable(deviceService.findDeviceById(tenantId, (DeviceId) entityId))
+                    .orElseThrow(() -> new IllegalArgumentException("Device with id [" + entityId.getId() + "] does not exist."));
+            default ->
+                    throw new IllegalArgumentException("Entity type '" + entityId.getEntityType() + "' is not supported.");
+        }
+    }
+
+    private void createOrUpdateCalculatedFieldLink(TenantId tenantId, CalculatedField calculatedField) {
+        CalculatedFieldLink calculatedFieldLink = calculatedFieldLinkDao.findCalculatedFieldLinkByEntityId(tenantId.getId(), calculatedField.getEntityId().getId());
+        saveCalculatedFieldLink(tenantId, Objects.requireNonNullElseGet(calculatedFieldLink, () -> createCalculatedFieldLink(tenantId, calculatedField)));
+    }
+
+    private CalculatedFieldLink createCalculatedFieldLink(TenantId tenantId, CalculatedField calculatedField) {
+        CalculatedFieldLink calculatedFieldLink = new CalculatedFieldLink();
+        calculatedFieldLink.setTenantId(tenantId);
+        calculatedFieldLink.setEntityId(calculatedField.getEntityId());
+        calculatedFieldLink.setCalculatedFieldId(calculatedField.getId());
+        calculatedFieldLink.setConfiguration(calculatedField.getConfiguration());
+        return calculatedFieldLink;
     }
 
 }

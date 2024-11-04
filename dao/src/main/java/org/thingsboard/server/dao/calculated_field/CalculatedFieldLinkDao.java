@@ -15,20 +15,13 @@
  */
 package org.thingsboard.server.dao.calculated_field;
 
-import org.thingsboard.server.common.data.calculated_field.CalculatedField;
 import org.thingsboard.server.common.data.calculated_field.CalculatedFieldLink;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.entity.EntityDaoService;
+import org.thingsboard.server.dao.Dao;
 
-public interface CalculatedFieldService extends EntityDaoService {
+import java.util.UUID;
 
-    CalculatedField save(CalculatedField calculatedField);
+public interface CalculatedFieldLinkDao extends Dao<CalculatedFieldLink> {
 
-    CalculatedField findById(TenantId tenantId, CalculatedFieldId calculatedFieldId);
-
-    void deleteCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId);
-
-    CalculatedFieldLink saveCalculatedFieldLink(TenantId tenantId, CalculatedFieldLink calculatedFieldLink);
+    CalculatedFieldLink findCalculatedFieldLinkByEntityId(UUID tenantId, UUID entityId);
 
 }
