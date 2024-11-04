@@ -49,7 +49,10 @@ public enum Resource {
     VERSION_CONTROL,
     NOTIFICATION(EntityType.NOTIFICATION_TARGET, EntityType.NOTIFICATION_TEMPLATE,
             EntityType.NOTIFICATION_REQUEST, EntityType.NOTIFICATION_RULE),
-    MOBILE_APP_SETTINGS;
+    MOBILE_APP_SETTINGS,
+    CALCULATED_FIELD(EntityType.CALCULATED_FIELD),
+    CALCULATED_FIELD_LINK(EntityType.CALCULATED_FIELD_LINK);
+
     private final Set<EntityType> entityTypes;
 
     Resource() {

@@ -1,4 +1,20 @@
 --
+-- Copyright © 2016-2024 The Thingsboard Authors
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+--
+
+--
 -- ThingsBoard, Inc. ("COMPANY") CONFIDENTIAL
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
@@ -891,6 +907,7 @@ CREATE TABLE IF NOT EXISTS calculated_field (
     id uuid NOT NULL CONSTRAINT calculated_field_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     tenant_id uuid NOT NULL,
+    entity_type VARCHAR(32),
     entity_id uuid NOT NULL,
     type varchar(32) NOT NULL,
     name varchar(255) NOT NULL,
@@ -899,18 +916,18 @@ CREATE TABLE IF NOT EXISTS calculated_field (
     version BIGINT DEFAULT 1,
     external_id UUID,
     CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, name),
-    CONSTRAINT device_external_id_unq_key UNIQUE (tenant_id, external_id)
+    CONSTRAINT calculated_field_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 
 CREATE TABLE IF NOT EXISTS calculated_field_link (
-    id uuid NOT NULL CONSTRAINT calculated_field_pkey PRIMARY KEY,
+    id uuid NOT NULL CONSTRAINT calculated_field_link_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     tenant_id uuid NOT NULL,
+    entity_type VARCHAR(32),
     entity_id uuid NOT NULL,
 --     target_id uuid NOT NULL,
     calculated_field_id uuid NOT NULL,
-    configuration varchar(10000),
+    configuration varchar(1000000),
     CONSTRAINT calculated_field_link_unq_key UNIQUE (entity_id, calculated_field_id),
-    CONSTRAINT device_external_id_unq_key UNIQUE (tenant_id, external_id),
     CONSTRAINT fk_calculated_field_id FOREIGN KEY (calculated_field_id) REFERENCES calculated_field(id) ON DELETE CASCADE
 );
