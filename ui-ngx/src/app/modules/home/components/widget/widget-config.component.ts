@@ -17,7 +17,6 @@
 import {
   ChangeDetectorRef,
   Component,
-  ComponentFactoryResolver,
   ComponentRef,
   forwardRef,
   Input,
@@ -212,7 +211,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
               private entityService: EntityService,
               private dialog: MatDialog,
               public translate: TranslateService,
-              private cfr: ComponentFactoryResolver,
               private fb: UntypedFormBuilder,
               private cd: ChangeDetectorRef) {
     super(store);
@@ -444,10 +442,9 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       this.basicModeDirectiveError = this.translate.instant('widget-config.settings-component-not-found',
         {selector: this.modelValue.basicModeDirective});
     } else {
-      const factory = this.cfr.resolveComponentFactory(componentType);
       this.createBasicModeComponentTimeout = setTimeout(() => {
         this.createBasicModeComponentTimeout = null;
-        this.basicModeComponentRef = this.basicModeContainer.createComponent(factory);
+        this.basicModeComponentRef = this.basicModeContainer.createComponent(componentType);
         this.basicModeComponent = this.basicModeComponentRef.instance;
         this.basicModeComponent.isAdd = isAdd;
         this.basicModeComponent.widgetConfig = this.modelValue;

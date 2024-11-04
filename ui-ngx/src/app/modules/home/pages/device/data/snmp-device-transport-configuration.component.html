@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<form [formGroup]="snmpDeviceTransportConfigurationFormGroup" style="padding-bottom: 16px;"  fxLayoutGap="8px" fxLayout="column">
-  <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column">
-    <mat-form-field fxFlex>
+<form [formGroup]="snmpDeviceTransportConfigurationFormGroup" class="flex flex-col gap-2 pb-4">
+  <div class="flex flex-row gap-2 xs:flex-col">
+    <mat-form-field class="flex-1">
       <mat-label translate>device-profile.snmp.host</mat-label>
       <input matInput formControlName="host" required>
       <mat-error *ngIf="snmpDeviceTransportConfigurationFormGroup.get('host').hasError('required') ||
@@ -25,7 +25,7 @@
         {{ 'device-profile.snmp.host-required' | translate }}
       </mat-error>
     </mat-form-field>
-    <mat-form-field fxFlex>
+    <mat-form-field class="flex-1">
       <mat-label translate>device-profile.snmp.port</mat-label>
       <input matInput formControlName="port" type="number" min="0" required>
       <mat-error *ngIf="snmpDeviceTransportConfigurationFormGroup.get('port').hasError('required')">
@@ -59,8 +59,8 @@
     </mat-form-field>
   </section>
   <section *ngIf="isV3protocolVersion()">
-    <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column">
-      <mat-form-field fxFlex>
+    <div class="flex flex-row gap-2 xs:flex-col">
+      <mat-form-field class="flex-1">
         <mat-label translate>device-profile.snmp.user-name</mat-label>
         <input matInput formControlName="username" required>
         <mat-error *ngIf="snmpDeviceTransportConfigurationFormGroup.get('username').hasError('required') ||
@@ -68,7 +68,7 @@
           {{ 'device-profile.snmp.user-name-required' | translate }}
         </mat-error>
       </mat-form-field>
-      <mat-form-field fxFlex>
+      <mat-form-field class="flex-1">
         <mat-label translate>device-profile.snmp.security-name</mat-label>
         <input matInput formControlName="securityName" required>
         <mat-error *ngIf="snmpDeviceTransportConfigurationFormGroup.get('securityName').hasError('required') ||
@@ -77,8 +77,8 @@
         </mat-error>
       </mat-form-field>
     </div>
-    <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column">
-      <mat-form-field fxFlex floatLabel="always" hideRequiredMarker>
+    <div class="flex flex-row gap-2 xs:flex-col">
+      <mat-form-field class="flex-1" floatLabel="always" hideRequiredMarker>
         <mat-label translate>device-profile.snmp.authentication-protocol</mat-label>
         <mat-select formControlName="authenticationProtocol" required>
           <mat-option *ngFor="let snmpAuthenticationProtocol of snmpAuthenticationProtocols" [value]="snmpAuthenticationProtocol">
@@ -89,7 +89,7 @@
           {{ 'device-profile.snmp.authentication-protocol-required' | translate }}
         </mat-error>
       </mat-form-field>
-      <mat-form-field fxFlex>
+      <mat-form-field class="flex-1">
         <mat-label translate>device-profile.snmp.authentication-passphrase</mat-label>
         <input matInput formControlName="authenticationPassphrase" required>
         <mat-error *ngIf="snmpDeviceTransportConfigurationFormGroup.get('authenticationPassphrase').hasError('required') ||
@@ -98,8 +98,8 @@
         </mat-error>
       </mat-form-field>
     </div>
-    <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column">
-      <mat-form-field fxFlex floatLabel="always" hideRequiredMarker>
+    <div class="flex flex-row gap-2 xs:flex-col">
+      <mat-form-field class="flex-1" floatLabel="always" hideRequiredMarker>
         <mat-label translate>device-profile.snmp.privacy-protocol</mat-label>
         <mat-select formControlName="privacyProtocol" required>
           <mat-option *ngFor="let snmpPrivacyProtocol of snmpPrivacyProtocols" [value]="snmpPrivacyProtocol">
@@ -110,7 +110,7 @@
           {{ 'device-profile.snmp.privacy-protocol-required' | translate }}
         </mat-error>
       </mat-form-field>
-      <mat-form-field fxFlex>
+      <mat-form-field class="flex-1">
         <mat-label translate>device-profile.snmp.privacy-passphrase</mat-label>
         <input matInput formControlName="privacyPassphrase" required>
         <mat-error *ngIf="snmpDeviceTransportConfigurationFormGroup.get('privacyPassphrase').hasError('required') ||
@@ -119,12 +119,12 @@
         </mat-error>
       </mat-form-field>
     </div>
-    <div fxLayout="row" fxLayoutGap="8px" fxLayout.xs="column">
-      <mat-form-field fxFlex>
+    <div class="flex flex-row gap-2 xs:flex-col">
+      <mat-form-field class="flex-1">
         <mat-label translate>device-profile.snmp.context-name</mat-label>
         <input matInput formControlName="contextName">
       </mat-form-field>
-      <mat-form-field fxFlex>
+      <mat-form-field class="flex-1">
         <mat-label translate>device-profile.snmp.engine-id</mat-label>
         <input matInput formControlName="engineId">
       </mat-form-field>

@@ -16,7 +16,7 @@
 
 -->
 <form #inputForm="ngForm">
-  <section [fxLayout]="computedLayout" fxLayoutGap="8px">
+  <section class="flex gap-2" [class]="computedLayout === 'row' ? 'flex-row' : 'flex-col'">
     <mat-form-field *ngIf="showValueType" appearance="outline" subscriptSizing="dynamic" class="tb-value-type tb-inline-field" [class]="computedLayout">
       <mat-select [disabled]="disabled" name="valueType" [(ngModel)]="valueType" (ngModelChange)="onValueTypeChanged()">
         <mat-select-trigger>
@@ -31,7 +31,7 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
-    <mat-form-field *ngIf="valueType === valueTypeEnum.STRING" fxFlex appearance="outline" subscriptSizing="dynamic" class="tb-inline-field flex tb-suffix-absolute">
+    <mat-form-field *ngIf="valueType === valueTypeEnum.STRING" appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute flex flex-1">
       <input [disabled]="disabled" matInput required name="value" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"
              placeholder="{{ 'value.string-value' | translate }}*"/>
       <mat-icon matSuffix
@@ -43,7 +43,7 @@
         warning
       </mat-icon>
     </mat-form-field>
-    <mat-form-field *ngIf="valueType === valueTypeEnum.INTEGER" fxFlex appearance="outline" subscriptSizing="dynamic" class="tb-inline-field flex tb-suffix-absolute number">
+    <mat-form-field *ngIf="valueType === valueTypeEnum.INTEGER" appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute number flex flex-1">
       <input [disabled]="disabled" matInput required name="value" type="number" step="1" pattern="^-?[0-9]+$" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"
              placeholder="{{ 'value.integer-value' | translate }}*"/>
       <mat-icon matSuffix
@@ -56,7 +56,7 @@
         warning
       </mat-icon>
     </mat-form-field>
-    <mat-form-field *ngIf="valueType === valueTypeEnum.DOUBLE" fxFlex appearance="outline" subscriptSizing="dynamic" class="tb-inline-field flex tb-suffix-absolute number">
+    <mat-form-field *ngIf="valueType === valueTypeEnum.DOUBLE" appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute number flex flex-1">
       <input [disabled]="disabled" matInput required name="value" type="number" step="any" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"
              placeholder="{{ 'value.double-value' | translate }}*"/>
       <mat-icon matSuffix
@@ -68,13 +68,13 @@
         warning
       </mat-icon>
     </mat-form-field>
-    <mat-chip-listbox *ngIf="valueType === valueTypeEnum.BOOLEAN" fxFlex class="tb-boolean-input center-stretch"
+    <mat-chip-listbox *ngIf="valueType === valueTypeEnum.BOOLEAN" class="tb-boolean-input center-stretch flex-1"
                       [disabled]="disabled" name="value" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()">
       <mat-chip-option [selectable]="!modelValue" [value]="true">{{ trueLabel }}</mat-chip-option>
       <mat-chip-option [selectable]="modelValue" [value]="false">{{ falseLabel }}</mat-chip-option>
     </mat-chip-listbox>
-    <div *ngIf="valueType === valueTypeEnum.JSON" fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-      <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic" class="tb-inline-field flex tb-suffix-absolute">
+    <div *ngIf="valueType === valueTypeEnum.JSON" class="flex flex-1 flex-row items-center justify-start gap-2">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute flex flex-1">
         <input [disabled]="disabled" matInput tb-json-to-string required name="value" #value="ngModel"
                [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()" placeholder="{{ 'value.json-value' | translate }}*"/>
         <mat-icon matSuffix

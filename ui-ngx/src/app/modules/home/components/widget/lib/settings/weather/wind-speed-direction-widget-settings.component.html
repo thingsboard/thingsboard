@@ -32,7 +32,7 @@
     </tb-image-cards-select>
     <div class="tb-form-row space-between">
       <div>{{ (hasCenterValue ? 'widgets.wind-speed-direction.center-value' : 'widgets.wind-speed-direction.wind-direction') | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <tb-font-settings formControlName="centerValueFont"
                           [autoScale]="true"
                           [initialPreviewStyle]="{ color: windSpeedDirectionWidgetSettingsForm.get('centerValueColor').value?.color }"
@@ -63,8 +63,8 @@
     </div>
     <div class="tb-form-row space-between">
       <div>{{ 'widgets.wind-speed-direction.major-ticks' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <tb-font-settings [fxShow]="majorTicksFontEnabled"
+      <div class="flex flex-row items-center justify-start gap-2">
+        <tb-font-settings [class.!hidden]="!majorTicksFontEnabled"
                           formControlName="majorTicksFont"
                           [initialPreviewStyle]="{ color: windSpeedDirectionWidgetSettingsForm.get('majorTicksColor').value }"
                           [autoScale]="true"
@@ -77,8 +77,8 @@
     </div>
     <div class="tb-form-row space-between">
       <div>{{ 'widgets.wind-speed-direction.minor-ticks' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <tb-font-settings [fxShow]="minorTicksFontEnabled"
+      <div class="flex flex-row items-center justify-start gap-2">
+        <tb-font-settings [class.!hidden]="!minorTicksFontEnabled"
                           formControlName="minorTicksFont"
                           [initialPreviewStyle]="{ color: windSpeedDirectionWidgetSettingsForm.get('minorTicksColor').value }"
                           [autoScale]="true"

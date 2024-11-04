@@ -17,7 +17,7 @@
 import { Component, ElementRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { Hotkey, HotkeysService } from 'angular2-hotkeys';
 import { MousetrapInstance } from 'mousetrap';
-import * as Mousetrap from 'mousetrap';
+import Mousetrap from 'mousetrap';
 
 @Component({
   selector : 'tb-hotkeys-cheatsheet',
@@ -114,7 +114,7 @@ import * as Mousetrap from 'mousetrap';
     font-size: 1.2em;
   }
 }  `],
-  template : `<div tabindex="-1" class="tb-hotkeys-container fade" [ngClass]="{'in': helpVisible}" style="display:none"><div class="tb-hotkeys">
+  template : `<div tabindex="-1" class="tb-hotkeys-container fade" [class.in]="helpVisible" style="display:none"><div class="tb-hotkeys">
   <h4 class="tb-hotkeys-title">{{ title }}</h4>
   <table *ngIf="helpVisible"><tbody>
     <tr *ngFor="let hotkey of hotkeysList">

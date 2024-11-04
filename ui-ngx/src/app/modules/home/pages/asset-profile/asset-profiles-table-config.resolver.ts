@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { Resolve, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import {
   checkBoxCell,
   DateEntityTableColumn,
@@ -37,7 +37,7 @@ import { AssetProfileComponent } from '@home/components/profile/asset-profile.co
 import { AssetProfileTabsComponent } from './asset-profile-tabs.component';
 
 @Injectable()
-export class AssetProfilesTableConfigResolver implements Resolve<EntityTableConfig<AssetProfile>> {
+export class AssetProfilesTableConfigResolver  {
 
   private readonly config: EntityTableConfig<AssetProfile> = new EntityTableConfig<AssetProfile>();
 

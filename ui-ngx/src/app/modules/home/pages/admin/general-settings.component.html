@@ -18,7 +18,7 @@
 <mat-card appearance="outlined" class="settings-card">
   <mat-card-header>
     <mat-card-title>
-      <div fxLayout="row">
+      <div class="flex flex-row">
         <span class="mat-headline-5" translate>admin.general-settings</span>
       </div>
     </mat-card-title>
@@ -44,7 +44,7 @@
           </div>
         </div>
       </fieldset>
-      <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px" class="layout-wrap">
+      <div class="flex flex-row flex-wrap items-center justify-end gap-2">
         <button mat-button color="primary"
                 [disabled]="generalSettings.pristine"
                 (click)="discardGeneralSettings()"
@@ -96,11 +96,11 @@
               {{ 'admin.device-connectivity.' + protocol | translate }}
             </mat-slide-toggle>
             <div class="tb-form-row column-xs no-border no-padding tb-standard-fields">
-              <mat-form-field fxFlex>
+              <mat-form-field class="flex-1">
                 <mat-label translate>admin.device-connectivity.host</mat-label>
                 <input matInput formControlName="host"/>
               </mat-form-field>
-              <mat-form-field fxFlex>
+              <mat-form-field class="flex-1">
                 <mat-label translate>admin.device-connectivity.port</mat-label>
                 <input matInput type="number" min="0" max="65535" formControlName="port"/>
                 <mat-error *ngIf="deviceConnectivitySettingsForm.get(protocol + '.port').hasError('pattern')">
@@ -114,7 +114,7 @@
             </div>
           </div>
         </ng-template>
-        <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px" class="layout-wrap">
+        <div class="flex flex-row flex-wrap items-center justify-end gap-2">
           <button mat-button color="primary"
                   [disabled]="deviceConnectivitySettingsForm.pristine"
                   (click)="discardDeviceConnectivitySettings()"

@@ -56,6 +56,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStatus
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.info.AlarmCommentNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.EntityActionNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.GeneralNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmCommentNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.settings.MobileAppNotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
@@ -84,6 +85,7 @@ import org.thingsboard.server.common.data.notification.template.WebDeliveryMetho
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.notification.DefaultNotifications;
+import org.thingsboard.server.dao.notification.DefaultNotifications.DefaultNotification;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.notification.channels.MicrosoftTeamsNotificationChannel;
 import org.thingsboard.server.service.notification.channels.TeamsAdaptiveCard;
@@ -746,14 +748,21 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
         getAnotherWsClient().registerWaitForUpdate();
 
-        DefaultNotifications.DefaultNotification expectedNotification = DefaultNotifications.maintenanceWork;
+        NotificationTemplate template = DefaultNotification.builder()
+                .name("Test")
+                .subject("Testing ${subjectVariable}")
+                .text("Testing ${bodyVariable}")
+                .build().toTemplate();
         notificationCenter.sendGeneralWebNotification(TenantId.SYS_TENANT_ID, new SystemAdministratorsFilter(),
-                expectedNotification.toTemplate());
+                template, new GeneralNotificationInfo(Map.of(
+                        "subjectVariable", "subject",
+                        "bodyVariable", "body"
+                )));
 
         getAnotherWsClient().waitForUpdate(true);
         Notification notification = getAnotherWsClient().getLastDataUpdate().getUpdate();
-        assertThat(notification.getSubject()).isEqualTo(expectedNotification.getSubject());
-        assertThat(notification.getText()).isEqualTo(expectedNotification.getText());
+        assertThat(notification.getSubject()).isEqualTo("Testing subject");
+        assertThat(notification.getText()).isEqualTo("Testing body");
     }
 
     @Test

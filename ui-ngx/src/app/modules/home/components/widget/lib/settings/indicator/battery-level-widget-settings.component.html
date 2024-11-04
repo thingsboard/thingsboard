@@ -40,7 +40,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showValue">
         {{ 'widgets.battery-level.value' | translate }}
       </mat-slide-toggle>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <mat-chip-listbox formControlName="autoScaleValueSize">
           <mat-chip-option [value]="true">{{ 'widgets.battery-level.auto-scale' | translate }}</mat-chip-option>
         </mat-chip-listbox>

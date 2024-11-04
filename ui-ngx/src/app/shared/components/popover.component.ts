@@ -19,8 +19,6 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  ComponentFactory,
-  ComponentFactoryResolver,
   ComponentRef,
   Directive,
   ElementRef,
@@ -35,6 +33,7 @@ import {
   Renderer2,
   SimpleChanges,
   TemplateRef,
+  Type,
   ViewChild,
   ViewContainerRef,
   ViewEncapsulation
@@ -44,7 +43,8 @@ import {
   CdkConnectedOverlay,
   CdkOverlayOrigin,
   ConnectedOverlayPositionChange,
-  ConnectionPositionPair, NoopScrollStrategy
+  ConnectionPositionPair,
+  NoopScrollStrategy
 } from '@angular/cdk/overlay';
 import { Subject, Subscription } from 'rxjs';
 import {
@@ -94,7 +94,6 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
   // eslint-disable-next-line @angular-eslint/no-output-rename
   @Output('tbPopoverVisibleChange') readonly visibleChange = new EventEmitter<boolean>();
 
-  componentFactory: ComponentFactory<TbPopoverComponent> = this.resolver.resolveComponentFactory(TbPopoverComponent);
   component?: TbPopoverComponent;
 
   private readonly destroy$ = new Subject<void>();
@@ -105,7 +104,6 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
   constructor(
     private elementRef: ElementRef,
     private hostView: ViewContainerRef,
-    private resolver: ComponentFactoryResolver,
     private renderer: Renderer2
   ) {}
 
@@ -150,7 +148,7 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
   }
 
   private createComponent(): void {
-    const componentRef = this.hostView.createComponent(this.componentFactory);
+    const componentRef = this.hostView.createComponent(TbPopoverComponent);
 
     this.component = componentRef.instance;
 
@@ -330,25 +328,25 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
           class="tb-popover"
           [class.strict-position]="strictPosition"
           [class.tb-popover-rtl]="dir === 'rtl'"
-          [ngClass]="classMap"
-          [ngStyle]="tbOverlayStyle"
+          [class]="classMap"
+          [style]="tbOverlayStyle"
         >
           <div class="tb-popover-content">
             <div class="tb-popover-arrow">
               <span class="tb-popover-arrow-content"></span>
             </div>
-            <div class="tb-popover-inner" [ngStyle]="tbPopoverInnerStyle" role="tooltip">
+            <div class="tb-popover-inner" [style]="tbPopoverInnerStyle" role="tooltip">
               <div *ngIf="tbShowCloseButton" class="tb-popover-close-button" (click)="closeButtonClick($event)">×</div>
               <div style="width: 100%; height: 100%;">
-                <div class="tb-popover-inner-content"  [ngStyle]="tbPopoverInnerContentStyle"
+                <div class="tb-popover-inner-content"  [style]="tbPopoverInnerContentStyle"
                      [class.strict-position]="strictPosition">
                   <ng-container *ngIf="tbContent">
                     <ng-container *tbStringTemplateOutlet="tbContent; context: tbComponentContext">
                       {{ tbContent }}
                     </ng-container>
                   </ng-container>
-                  <ng-container *ngIf="tbComponentFactory"
-                                [tbComponentOutlet]="tbComponentFactory"
+                  <ng-container *ngIf="tbComponent"
+                                [tbComponentOutlet]="tbComponent"
                                 [tbComponentInjector]="tbComponentInjector"
                                 [tbComponentOutletContext]="tbComponentContext"
                                 (componentChange)="onComponentChange($event)"
@@ -370,7 +368,7 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   @ViewChild('popover', { static: false }) popover!: ElementRef<HTMLElement>;
 
   tbContent: string | TemplateRef<void> | null = null;
-  tbComponentFactory: ComponentFactory<T> | null = null;
+  tbComponent: Type<T> | null = null;
   tbComponentRef: ComponentRef<T> | null = null;
   tbComponentContext: any;
   tbComponentInjector: Injector | null = null;
@@ -678,7 +676,7 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   }
 
   private isEmpty(): boolean {
-    return (this.tbComponentFactory instanceof ComponentFactory || this.tbContent instanceof TemplateRef)
+    return (this.tbComponent instanceof Type || this.tbContent instanceof TemplateRef)
       ? false : !isNotEmptyStr(this.tbContent);
   }
 }

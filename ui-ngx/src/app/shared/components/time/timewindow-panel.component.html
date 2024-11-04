@@ -16,7 +16,7 @@
 
 -->
 <form [formGroup]="timewindowForm" class="tb-timewindow-form">
-  <div class="tb-timewindow-form-header tb-form-panel no-border no-padding-bottom no-gap" *ngIf="!historyOnly">
+  <div class="tb-timewindow-form-header tb-form-panel no-border no-padding-bottom" *ngIf="!historyOnly">
     <tb-toggle-select class="tb-timewindow-form-type-options" appearance="fill"
                       [options]="timewindowTypeOptions" formControlName="selectedTab">
     </tb-toggle-select>
@@ -31,7 +31,8 @@
     <ng-container *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME">
       <section class="tb-form-panel stroked" *ngIf="realtimeIntervalSelectionAvailable; else timezoneSelectionPanel">
         <div class="tb-flex space-between"
-             [ngClass]="{'align-end': realtimeTypeSelectionAvailable, 'align-center': !realtimeTypeSelectionAvailable }">
+             [class.align-end]="realtimeTypeSelectionAvailable"
+             [class.align-center]="!realtimeTypeSelectionAvailable">
           <div class="tb-flex-xs column">
             <div class="tb-form-panel-title">{{ 'timewindow.timewindow' | translate }}</div>
             <ng-container formGroupName="realtime" *ngIf="realtimeTypeSelectionAvailable">
@@ -51,7 +52,7 @@
             subscriptSizing="dynamic"
             appearance="outline"
             [disabledAdvanced]="timewindow.realtime.disableCustomInterval"
-            [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
+            [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
                               timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
           </tb-timeinterval>
 
@@ -62,7 +63,7 @@
             onlyCurrentInterval="true"
             subscriptSizing="dynamic"
             appearance="outline"
-            [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
+            [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
                               timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
           </tb-quick-time-interval>
         </div>
@@ -72,7 +73,8 @@
     <ng-container *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY">
       <section class="tb-form-panel stroked" *ngIf="historyIntervalSelectionAvailable; else timezoneSelectionPanel">
         <div class="tb-flex space-between"
-             [ngClass]="{'align-end': historyTypeSelectionAvailable, 'align-center': !historyTypeSelectionAvailable }">
+             [class.align-end]="historyTypeSelectionAvailable"
+             [class.align-center]="!historyTypeSelectionAvailable">
           <div class="tb-flex-xs column">
             <div class="tb-form-panel-title">{{ 'timewindow.timewindow' | translate }}</div>
             <ng-container formGroupName="history" *ngIf="historyTypeSelectionAvailable">
@@ -94,7 +96,7 @@
             subscriptSizing="dynamic"
             appearance="outline"
             [disabledAdvanced]="timewindow.history.disableCustomInterval"
-            [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+            [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
                             timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
           </tb-timeinterval>
 
@@ -104,7 +106,7 @@
             subscriptSizing="dynamic"
             appearance="outline"
             class="history-time-input"
-            [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+            [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
                             timewindowForm.get('history.historyType').value === historyTypes.FIXED">
           </tb-datetime-period>
 
@@ -114,7 +116,7 @@
             formControlName="quickInterval"
             subscriptSizing="dynamic"
             appearance="outline"
-            [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+            [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
                           timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
           </tb-quick-time-interval>
         </div>
@@ -143,9 +145,9 @@
         </section>
       </ng-container>
 
-      <section class="tb-form-row column-xs same-padding" [fxShow]="(isEdit || !timewindow.hideAggInterval)
-       && timewindowForm.get('aggregation.type').value !== aggregationTypes.NONE">
-        <ng-container formGroupName="realtime" *ngIf="timewindow.selectedTab === timewindowTypes.REALTIME">
+      <section class="tb-form-row column-xs same-padding" [class.!hidden]="!(isEdit || !timewindow.hideAggInterval)
+                 || timewindowForm.get('aggregation.type').value === aggregationTypes.NONE">
+        <ng-container formGroupName="realtime" *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME">
           <tb-timeinterval
             formControlName="interval"
             [min]="minRealtimeAggInterval()" [max]="maxRealtimeAggInterval()"
@@ -156,7 +158,7 @@
             <div class="fixed-title-width-180">{{ 'aggregation.group-interval' | translate }}</div>
           </tb-timeinterval>
         </ng-container>
-        <ng-container formGroupName="history" *ngIf="timewindow.selectedTab === timewindowTypes.HISTORY">
+        <ng-container formGroupName="history" *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY">
           <tb-timeinterval
             formControlName="interval"
             [min]="minHistoryAggInterval()" [max]="maxHistoryAggInterval()"

@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,13 +36,9 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
-import org.thingsboard.server.common.data.widget.DeprecatedFilter;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
-import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -57,8 +52,9 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.service.install.update.ImagesUpdater;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -95,7 +91,7 @@ public class InstallScripts {
     public static final String OAUTH2_CONFIG_TEMPLATES_DIR = "oauth2_config_templates";
     public static final String DASHBOARDS_DIR = "dashboards";
     public static final String MODELS_LWM2M_DIR = "lwm2m-registry";
-    public static final String CREDENTIALS_DIR = "credentials";
+    public static final String RESOURCES_DIR = "resources";
 
     public static final String JSON_EXT = ".json";
     public static final String SVG_EXT = ".svg";
@@ -173,7 +169,6 @@ public class InstallScripts {
         loadRuleChainsFromPath(tenantId, edgeChainsDir);
     }
 
-    @SneakyThrows
     private void loadRuleChainsFromPath(TenantId tenantId, Path ruleChainsPath) {
         findRuleChainsFromPath(ruleChainsPath).forEach(path -> {
             try {
@@ -185,12 +180,10 @@ public class InstallScripts {
         });
     }
 
-    List<Path> findRuleChainsFromPath(Path ruleChainsPath) throws IOException {
-        List<Path> paths = new ArrayList<>();
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(ruleChainsPath, path -> path.toString().endsWith(InstallScripts.JSON_EXT))) {
-            dirStream.forEach(paths::add);
+    List<Path> findRuleChainsFromPath(Path ruleChainsPath) {
+        try (Stream<Path> files = listDir(ruleChainsPath).filter(path -> path.toString().endsWith(InstallScripts.JSON_EXT))) {
+            return files.toList();
         }
-        return paths;
     }
 
     public RuleChain createDefaultRuleChain(TenantId tenantId, String ruleChainName) {
@@ -214,11 +207,11 @@ public class InstallScripts {
         return ruleChain;
     }
 
-    public void loadSystemWidgets() throws Exception {
+    public void loadSystemWidgets() {
         log.info("Loading system widgets");
         Map<Path, JsonNode> widgetsBundlesMap = new HashMap<>();
         Path widgetBundlesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_BUNDLES_DIR);
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(widgetBundlesDir, path -> path.toString().endsWith(JSON_EXT))) {
+        try (Stream<Path> dirStream = listDir(widgetBundlesDir).filter(path -> path.toString().endsWith(JSON_EXT))) {
             dirStream.forEach(
                     path -> {
                         JsonNode widgetsBundleDescriptorJson;
@@ -250,12 +243,14 @@ public class InstallScripts {
         }
         Path widgetTypesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_TYPES_DIR);
         if (Files.exists(widgetTypesDir)) {
-            try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(widgetTypesDir, path -> path.toString().endsWith(JSON_EXT))) {
+            try (Stream<Path> dirStream = listDir(widgetTypesDir).filter(path -> path.toString().endsWith(JSON_EXT))) {
                 dirStream.forEach(
                         path -> {
                             try {
-                                JsonNode widgetTypeJson = JacksonUtil.toJsonNode(path.toFile());
-                                WidgetTypeDetails widgetTypeDetails = JacksonUtil.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
+                                String widgetTypeJson = Files.readString(path);
+                                widgetTypeJson = resourceService.checkSystemResourcesUsage(widgetTypeJson, ResourceType.JS_MODULE);
+
+                                WidgetTypeDetails widgetTypeDetails = JacksonUtil.fromString(widgetTypeJson, WidgetTypeDetails.class);
                                 widgetTypeService.saveWidgetType(widgetTypeDetails);
                             } catch (Exception e) {
                                 log.error("Unable to load widget type from json: [{}]", path.toString());
@@ -303,12 +298,12 @@ public class InstallScripts {
         }
     }
 
-    private void loadSystemScadaSymbols() throws Exception {
+    private void loadSystemScadaSymbols() {
         log.info("Loading system SCADA symbols");
         Path scadaSymbolsDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, SCADA_SYMBOLS_DIR);
         if (Files.exists(scadaSymbolsDir)) {
             WidgetTypeDetails scadaSymbolWidgetTemplate = widgetTypeService.findWidgetTypeDetailsByTenantIdAndFqn(TenantId.SYS_TENANT_ID, "scada_symbol");
-            try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(scadaSymbolsDir, path -> path.toString().endsWith(SVG_EXT))) {
+            try (Stream<Path> dirStream = listDir(scadaSymbolsDir).filter(path -> path.toString().endsWith(SVG_EXT))) {
                 dirStream.forEach(
                         path -> {
                             try {
@@ -355,7 +350,7 @@ public class InstallScripts {
     }
 
     private WidgetTypeDetails saveScadaSymbolWidget(WidgetTypeDetails template, TbResourceInfo scadaSymbol,
-                                         ImageUtils.ScadaSymbolMetadataInfo metadata) {
+                                                    ImageUtils.ScadaSymbolMetadataInfo metadata) {
         String symbolUrl = DataConstants.TB_IMAGE_PREFIX + scadaSymbol.getLink();
         WidgetTypeDetails scadaSymbolWidget = new WidgetTypeDetails();
         JsonNode descriptor = JacksonUtil.clone(template.getDescriptor());
@@ -375,34 +370,26 @@ public class InstallScripts {
         defaultConfig.put("title", metadata.getTitle());
         ObjectNode settings;
         if (defaultConfig.has("settings")) {
-            settings = (ObjectNode)defaultConfig.get("settings");
+            settings = (ObjectNode) defaultConfig.get("settings");
         } else {
             settings = JacksonUtil.newObjectNode();
             defaultConfig.set("settings", settings);
         }
         settings.put("scadaSymbolUrl", symbolUrl);
-        ((ObjectNode)descriptor).put("defaultConfig", JacksonUtil.toString(defaultConfig));
-        ((ObjectNode)descriptor).put("sizeX", metadata.getWidgetSizeX());
-        ((ObjectNode)descriptor).put("sizeY", metadata.getWidgetSizeY());
+        ((ObjectNode) descriptor).put("defaultConfig", JacksonUtil.toString(defaultConfig));
+        ((ObjectNode) descriptor).put("sizeX", metadata.getWidgetSizeX());
+        ((ObjectNode) descriptor).put("sizeY", metadata.getWidgetSizeY());
         String controllerScript = descriptor.get("controllerScript").asText();
         controllerScript = controllerScript.replaceAll("previewWidth: '\\d*px'", "previewWidth: '" + (metadata.getWidgetSizeX() * 100) + "px'");
         controllerScript = controllerScript.replaceAll("previewHeight: '\\d*px'", "previewHeight: '" + (metadata.getWidgetSizeY() * 100 + 20) + "px'");
-        ((ObjectNode)descriptor).put("controllerScript", controllerScript);
+        ((ObjectNode) descriptor).put("controllerScript", controllerScript);
         return widgetTypeService.saveWidgetType(scadaSymbolWidget);
     }
 
     private void deleteSystemWidgetBundle(String bundleAlias) {
         WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(TenantId.SYS_TENANT_ID, bundleAlias);
         if (widgetsBundle != null) {
-            PageData<WidgetTypeInfo> widgetTypes;
-            var pageLink = new PageLink(1024);
-            do {
-                widgetTypes = widgetTypeService.findWidgetTypesInfosByWidgetsBundleId(TenantId.SYS_TENANT_ID, widgetsBundle.getId(), false, DeprecatedFilter.ALL, null, pageLink);
-                for (var widgetType : widgetTypes.getData()) {
-                    widgetTypeService.deleteWidgetType(TenantId.SYS_TENANT_ID, widgetType.getId());
-                }
-                pageLink.nextPageLink();
-            } while (widgetTypes.hasNext());
+            widgetTypeService.deleteWidgetTypesByBundleId(TenantId.SYS_TENANT_ID, widgetsBundle.getId());
             widgetsBundleService.deleteWidgetsBundle(TenantId.SYS_TENANT_ID, widgetsBundle.getId());
         }
     }
@@ -415,11 +402,10 @@ public class InstallScripts {
         imagesUpdater.updateAssetProfilesImages();
     }
 
-    @SneakyThrows
     public void loadSystemImages() {
         log.info("Loading system images...");
-        Stream<Path> dashboardsFiles = Stream.concat(Files.list(Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, DASHBOARDS_DIR)),
-                                                     Files.list(Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, DASHBOARDS_DIR)));
+        Stream<Path> dashboardsFiles = Stream.concat(listDir(Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, DASHBOARDS_DIR)),
+                listDir(Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, DASHBOARDS_DIR)));
         try (dashboardsFiles) {
             dashboardsFiles.forEach(file -> {
                 try {
@@ -442,25 +428,22 @@ public class InstallScripts {
         loadDashboardsFromDir(tenantId, customerId, dashboardsDir);
     }
 
-    @SneakyThrows
     private void loadDashboardsFromDir(TenantId tenantId, CustomerId customerId, Path dashboardsDir) {
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dashboardsDir, path -> path.toString().endsWith(JSON_EXT))) {
-            dirStream.forEach(
-                    path -> {
-                        try {
-                            JsonNode dashboardJson = JacksonUtil.toJsonNode(path.toFile());
-                            Dashboard dashboard = JacksonUtil.treeToValue(dashboardJson, Dashboard.class);
-                            dashboard.setTenantId(tenantId);
-                            Dashboard savedDashboard = dashboardService.saveDashboard(dashboard);
-                            if (customerId != null && !customerId.isNullUid()) {
-                                dashboardService.assignDashboardToCustomer(TenantId.SYS_TENANT_ID, savedDashboard.getId(), customerId);
-                            }
-                        } catch (Exception e) {
-                            log.error("Unable to load dashboard from json: [{}]", path.toString());
-                            throw new RuntimeException("Unable to load dashboard from json", e);
-                        }
+        try (Stream<Path> dashboards = listDir(dashboardsDir).filter(path -> path.toString().endsWith(JSON_EXT))) {
+            dashboards.forEach(path -> {
+                try {
+                    JsonNode dashboardJson = JacksonUtil.toJsonNode(path.toFile());
+                    Dashboard dashboard = JacksonUtil.treeToValue(dashboardJson, Dashboard.class);
+                    dashboard.setTenantId(tenantId);
+                    Dashboard savedDashboard = dashboardService.saveDashboard(dashboard);
+                    if (customerId != null && !customerId.isNullUid()) {
+                        dashboardService.assignDashboardToCustomer(TenantId.SYS_TENANT_ID, savedDashboard.getId(), customerId);
                     }
-            );
+                } catch (Exception e) {
+                    log.error("Unable to load dashboard from json: [{}]", path.toString());
+                    throw new RuntimeException("Unable to load dashboard from json", e);
+                }
+            });
         }
     }
 
@@ -475,9 +458,9 @@ public class InstallScripts {
         }
     }
 
-    public void createOAuth2Templates() throws Exception {
+    public void createOAuth2Templates() {
         Path oauth2ConfigTemplatesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, OAUTH2_CONFIG_TEMPLATES_DIR);
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(oauth2ConfigTemplatesDir, path -> path.toString().endsWith(JSON_EXT))) {
+        try (Stream<Path> dirStream = listDir(oauth2ConfigTemplatesDir).filter(path -> path.toString().endsWith(JSON_EXT))) {
             dirStream.forEach(
                     path -> {
                         try {
@@ -500,7 +483,7 @@ public class InstallScripts {
 
     public void loadSystemLwm2mResources() {
         Path resourceLwm2mPath = Paths.get(getDataDir(), MODELS_LWM2M_DIR);
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(resourceLwm2mPath, path -> path.toString().endsWith(InstallScripts.XML_EXT))) {
+        try (Stream<Path> dirStream = listDir(resourceLwm2mPath).filter(path -> path.toString().endsWith(InstallScripts.XML_EXT))) {
             dirStream.forEach(
                     path -> {
                         try {
@@ -523,6 +506,43 @@ public class InstallScripts {
         }
     }
 
+    public void loadSystemResources() {
+        Path resourcesDir = Path.of(getDataDir(), RESOURCES_DIR);
+        loadSystemResources(resourcesDir.resolve("js_modules"), ResourceType.JS_MODULE);
+        loadSystemResources(resourcesDir.resolve("dashboards"), ResourceType.DASHBOARD);
+    }
+
+    private void loadSystemResources(Path dir, ResourceType resourceType) {
+        listDir(dir).forEach(resourceFile -> {
+            String resourceKey = resourceFile.getFileName().toString();
+            try {
+                String data = getContent(resourceFile);
+                TbResource resource = resourceService.createOrUpdateSystemResource(resourceType, resourceKey, data);
+                log.info("{} resource {}", (resource.getId() == null ? "Created" : "Updated"), resourceKey);
+            } catch (Exception e) {
+                throw new RuntimeException("Unable to load system resource " + resourceFile, e);
+            }
+        });
+    }
+
+    private String getContent(Path file) {
+        try {
+            return Files.readString(file);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private Stream<Path> listDir(Path dir) {
+        try {
+            return Files.list(dir);
+        } catch (NoSuchFileException e) {
+            return Stream.empty();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     private void doSaveLwm2mResource(TbResource resource) throws ThingsboardException {
         log.trace("Executing saveResource [{}]", resource);
         if (resource.getData() == null || resource.getData().length == 0) {
@@ -534,4 +554,5 @@ public class InstallScripts {
             resourceService.saveResource(resource);
         }
     }
+
 }

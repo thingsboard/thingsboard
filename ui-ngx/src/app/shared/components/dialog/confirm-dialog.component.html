@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<h2 mat-dialog-title>{{data.title}}</h2>
+<h2 mat-dialog-title tbTruncateWithTooltip>{{data.title}}</h2>
 <div mat-dialog-content [innerHTML]="data.message | safe: 'html'"></div>
-<div mat-dialog-actions fxLayoutAlign="end center">
+<div mat-dialog-actions class="flex items-center justify-end">
   <button mat-button color="primary" [mat-dialog-close]="false">{{data.cancel}}</button>
   <button mat-button color="primary" [mat-dialog-close]="true" cdkFocusInitial>{{data.ok}}</button>
 </div>

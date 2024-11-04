@@ -47,7 +47,7 @@ public class UserEdgeTest extends AbstractEdgeTest {
     @Test
     public void testCreateUpdateDeleteTenantUser() throws Exception {
         // create user
-        edgeImitator.expectMessageAmount(6);
+        edgeImitator.expectMessageAmount(3);
         User newTenantAdmin = new User();
         newTenantAdmin.setAuthority(Authority.TENANT_ADMIN);
         newTenantAdmin.setTenantId(tenantId);
@@ -55,9 +55,9 @@ public class UserEdgeTest extends AbstractEdgeTest {
         newTenantAdmin.setFirstName("Boris");
         newTenantAdmin.setLastName("Johnson");
         User savedTenantAdmin = createUser(newTenantAdmin, "tenant");
-        Assert.assertTrue(edgeImitator.waitForMessages()); // wait 6 messages - x2 user update msg and x4 user credentials update msgs (create + authenticate user)
-        Assert.assertEquals(2, edgeImitator.findAllMessagesByType(UserUpdateMsg.class).size());
-        Assert.assertEquals(4, edgeImitator.findAllMessagesByType(UserCredentialsUpdateMsg.class).size());
+        Assert.assertTrue(edgeImitator.waitForMessages()); // wait 3 messages - x1 user update msg and x2 user credentials update msgs (create + authenticate user)
+        Assert.assertEquals(1, edgeImitator.findAllMessagesByType(UserUpdateMsg.class).size());
+        Assert.assertEquals(2, edgeImitator.findAllMessagesByType(UserCredentialsUpdateMsg.class).size());
         Optional<UserUpdateMsg> userUpdateMsgOpt = edgeImitator.findMessageByType(UserUpdateMsg.class);
         Assert.assertTrue(userUpdateMsgOpt.isPresent());
         UserUpdateMsg userUpdateMsg = userUpdateMsgOpt.get();
@@ -133,7 +133,7 @@ public class UserEdgeTest extends AbstractEdgeTest {
         Assert.assertTrue(edgeImitator.waitForMessages());
 
         // create user
-        edgeImitator.expectMessageAmount(6);
+        edgeImitator.expectMessageAmount(3);
         User customerUser = new User();
         customerUser.setAuthority(Authority.CUSTOMER_USER);
         customerUser.setTenantId(tenantId);
@@ -142,9 +142,9 @@ public class UserEdgeTest extends AbstractEdgeTest {
         customerUser.setFirstName("John");
         customerUser.setLastName("Edwards");
         User savedCustomerUser = createUser(customerUser, "customer");
-        Assert.assertTrue(edgeImitator.waitForMessages());  // wait 6 messages - x2 user update msg and x4 user credentials update msgs (create + authenticate user)
-        Assert.assertEquals(2, edgeImitator.findAllMessagesByType(UserUpdateMsg.class).size());
-        Assert.assertEquals(4, edgeImitator.findAllMessagesByType(UserCredentialsUpdateMsg.class).size());
+        Assert.assertTrue(edgeImitator.waitForMessages());  // wait 3 messages - x1 user update msg and x2 user credentials update msgs (create + authenticate user)
+        Assert.assertEquals(1, edgeImitator.findAllMessagesByType(UserUpdateMsg.class).size());
+        Assert.assertEquals(2, edgeImitator.findAllMessagesByType(UserCredentialsUpdateMsg.class).size());
         Optional<UserUpdateMsg> userUpdateMsgOpt = edgeImitator.findMessageByType(UserUpdateMsg.class);
         Assert.assertTrue(userUpdateMsgOpt.isPresent());
         UserUpdateMsg userUpdateMsg = userUpdateMsgOpt.get();

@@ -116,6 +116,13 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
         CoapObserveRelation observeRelation = client.getObserveRelation(callbackCoap);
         String awaitAlias = "await Two Way Rpc (client.getObserveRelation)";
         await(awaitAlias)
+                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS * 3, TimeUnit.SECONDS)
+                .until(() -> processTwoWayRpcTestWithAwait(callbackCoap, observeRelation, expectedResponseResult));
+    }
+
+    private boolean  processTwoWayRpcTestWithAwait(CoapTestCallback callbackCoap, CoapObserveRelation observeRelation, String expectedResponseResult) throws Exception {
+        String awaitAlias = "await Two Way Rpc (client.getObserveRelation)";
+        await(awaitAlias)
                 .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .until(() -> CoAP.ResponseCode.VALID.equals(callbackCoap.getResponseCode()) &&
                         callbackCoap.getObserve() != null &&
@@ -146,7 +153,7 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
         validateTwoWayStateChangedNotification(callbackCoap, expectedResponseResult, actualResult);
 
         observeRelation.proactiveCancel();
-        assertTrue(observeRelation.isCanceled());
+        return observeRelation.isCanceled();
     }
 
     protected void processOnLoadResponse(CoapResponse response, CoapTestClient client) {

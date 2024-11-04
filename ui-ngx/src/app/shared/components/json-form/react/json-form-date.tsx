@@ -15,9 +15,10 @@
  */
 import * as React from 'react';
 import ThingsboardBaseComponent from './json-form-base-component';
-import DateFnsUtils from '@date-io/date-fns';
-import { KeyboardDatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers';
+import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment'
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
+import moment from 'moment';
 
 interface ThingsboardDateState extends JsonFormFieldState {
   currentValue: Date | null;
@@ -25,7 +26,7 @@ interface ThingsboardDateState extends JsonFormFieldState {
 
 class ThingsboardDate extends React.Component<JsonFormFieldProps, ThingsboardDateState> {
 
-    constructor(props) {
+    constructor(props: JsonFormFieldProps) {
         super(props);
         this.onDatePicked = this.onDatePicked.bind(this);
         let value: Date | null = null;
@@ -38,11 +39,11 @@ class ThingsboardDate extends React.Component<JsonFormFieldProps, ThingsboardDat
     }
 
 
-    onDatePicked(date: Date | null) {
+    onDatePicked(date: moment.Moment | null) {
         this.setState({
-          currentValue: date
+          currentValue: date?.toDate()
         });
-        this.props.onChangeValidate(date ? date.getTime() : null);
+        this.props.onChangeValidate(date ? date.valueOf() : null);
     }
 
     render() {
@@ -56,22 +57,25 @@ class ThingsboardDate extends React.Component<JsonFormFieldProps, ThingsboardDat
         }
 
         return (
-          <MuiPickersUtilsProvider utils={DateFnsUtils}>
+          <LocalizationProvider dateAdapter={AdapterMoment}>
             <div style={{width: '100%', display: 'block'}}>
-                <KeyboardDatePicker
-                    disableToolbar
-                    variant='inline'
-                    format='MM/dd/yyyy'
-                    margin='normal'
+                <DatePicker
+                    slotProps={{
+                      textField: {
+                        variant: 'standard'
+                      }
+                    }}
+                    format='MM/DD/YYYY'
                     className={fieldClass}
                     label={this.props.form.title}
-                    value={this.state.currentValue}
+                    value={moment(this.state.currentValue?.valueOf())}
                     onChange={this.onDatePicked}
                     disabled={this.props.form.readonly}
-                    style={this.props.form.style || {width: '100%'}}/>
+                    sx={this.props.form.style || {width: '100%'}}
+                />
 
             </div>
-          </MuiPickersUtilsProvider>
+          </LocalizationProvider>
         );
     }
 }

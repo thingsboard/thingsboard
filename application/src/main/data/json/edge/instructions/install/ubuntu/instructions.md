@@ -49,7 +49,7 @@ echo "deb http://apt.postgresql.org/pub/repos/apt/ ${RELEASE}"-pgdg main | sudo 
 
 # install and launch the postgresql service:
 sudo apt update
-sudo apt -y install postgresql-15
+sudo apt -y install postgresql-16
 sudo service postgresql start
 {:copy-code}
 ```

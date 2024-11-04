@@ -15,7 +15,7 @@
 ///
 
 import { Injectable, NgModule } from '@angular/core';
-import { Resolve, RouterModule, Routes } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
 import { Observable } from 'rxjs';
 import { OAuth2Service } from '@core/http/oauth2.service';
@@ -24,7 +24,7 @@ import { AlarmsMode } from '@shared/models/alarm.models';
 import { MenuId } from '@core/services/menu.models';
 
 @Injectable()
-export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
+export class OAuth2LoginProcessingUrlResolver  {
 
   constructor(private oauth2Service: OAuth2Service) {
   }

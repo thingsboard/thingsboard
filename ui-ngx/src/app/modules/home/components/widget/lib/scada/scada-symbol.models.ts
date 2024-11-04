@@ -220,8 +220,8 @@ export interface ScadaSymbolMetadata {
 
 export const emptyMetadata = (width?: number, height?: number): ScadaSymbolMetadata => ({
   title: '',
-  widgetSizeX: width ? width/100 : 3,
-  widgetSizeY: height ? height/100 : 3,
+  widgetSizeX: width ? Math.max(Math.round(width/100), 1) : 3,
+  widgetSizeY: height ? Math.max(Math.round(height/100), 1) : 3,
   tags: [],
   behavior: [],
   properties: []
@@ -1168,6 +1168,22 @@ class CssScadaSymbolAnimation implements ScadaSymbolAnimation {
               private element: Element,
               duration = 1000)  {
     this._duration = duration;
+    this.fixPatternAnimationForChrome();
+  }
+
+  private fixPatternAnimationForChrome(): void {
+    try {
+      const userAgent = window.navigator.userAgent;
+      if (+(/Chrome\/(\d+)/i.exec(userAgent)[1]) > 0) {
+        if (this.svgShape.defs().findOne('pattern')  && !this.svgShape.defs().findOne('pattern.empty-animation')) {
+          this.svgShape.defs().add(SVG('<pattern class="empty-animation"></pattern>'));
+          this.svgShape.style()
+            .rule('.' + 'empty-animation',
+              {'animation-name': 'empty-animation', 'animation-duration': '1000ms', 'animation-iteration-count': 'infinite'})
+            .addText('@keyframes empty-animation {0% {<!--opacity:1;-->}100% {<!--opacity:1;-->}}');
+        }
+      }
+    } catch (e) {}
   }
 
   public running(): boolean {

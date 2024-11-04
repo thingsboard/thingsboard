@@ -15,14 +15,12 @@
 ///
 
 import {
-  AfterViewInit,
   Component,
   ComponentRef,
   EventEmitter,
   forwardRef,
   Input,
   OnDestroy,
-  OnInit,
   Output,
   ViewChild,
   ViewContainerRef
@@ -42,7 +40,6 @@ import {
 import { Subscription } from 'rxjs';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { TranslateService } from '@ngx-translate/core';
 import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
 import { deepClone } from '@core/utils';
 import { RuleChainType } from '@shared/models/rule-chain.models';
@@ -57,7 +54,7 @@ import { RuleChainType } from '@shared/models/rule-chain.models';
     multi: true
   }]
 })
-export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, OnDestroy, AfterViewInit {
+export class RuleNodeConfigComponent implements ControlValueAccessor, OnDestroy {
 
   @ViewChild('definedConfigContent', {read: ViewContainerRef, static: true}) definedConfigContainer: ViewContainerRef;
 
@@ -121,10 +118,9 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
 
   private configuration: RuleNodeConfiguration;
 
-  private propagateChange = (v: any) => { };
+  private propagateChange = (_v: any) => { };
 
-  constructor(private translate: TranslateService,
-              private ruleChainService: RuleChainService,
+  constructor(private ruleChainService: RuleChainService,
               private fb: UntypedFormBuilder) {
     this.ruleNodeConfigFormGroup = this.fb.group({
       configuration: [null, Validators.required]
@@ -135,10 +131,7 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
-  }
-
-  ngOnInit(): void {
+  registerOnTouched(_fn: any): void {
   }
 
   ngOnDestroy(): void {
@@ -153,9 +146,6 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
       this.changeScriptSubscription.unsubscribe();
       this.changeScriptSubscription = null;
     }
-  }
-
-  ngAfterViewInit(): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -218,8 +208,8 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnInit, On
         this.changeSubscription = null;
       }
       this.definedConfigContainer.clear();
-      const factory = this.ruleChainService.getRuleNodeConfigFactory(this.nodeDefinition.configDirective);
-      this.definedConfigComponentRef = this.definedConfigContainer.createComponent(factory);
+      const component = this.ruleChainService.getRuleNodeConfigComponent(this.nodeDefinition.configDirective);
+      this.definedConfigComponentRef = this.definedConfigContainer.createComponent(component);
       this.definedConfigComponent = this.definedConfigComponentRef.instance;
       this.definedConfigComponent.ruleNodeId = this.ruleNodeId;
       this.definedConfigComponent.ruleChainId = this.ruleChainId;

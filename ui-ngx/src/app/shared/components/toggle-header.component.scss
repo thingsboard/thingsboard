@@ -97,6 +97,9 @@
           font-weight: 400;
           font-size: 14px;
           letter-spacing: 0.2px;
+          .mat-pseudo-checkbox {
+            display: none;
+          }
         }
       }
       &.mat-button-toggle-checked {

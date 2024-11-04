@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<div class="dashboard-state-dialog" [ngStyle]="dialogStyle" fxLayout="column">
+<div class="dashboard-state-dialog flex flex-col" [style]="dialogStyle">
   <mat-toolbar color="primary">
     <h2>{{title}}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button (click)="close()" type="button">
       <mat-icon class="material-icons">close</mat-icon>
     </button>
@@ -26,11 +26,11 @@
   <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
   </mat-progress-bar>
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
-  <div class="dashboard-state-dialog-content" mat-dialog-content fxFlex fxLayout="column" style="padding: 8px;">
+  <div class="dashboard-state-dialog-content flex flex-1 flex-col" mat-dialog-content style="padding: 8px;">
     <tb-dashboard-page [embedded]="true" [syncStateWithQueryParam]="false" [hideToolbar]="hideToolbar"
                        [currentState]="state" [dashboard]="dashboard" [parentDashboard]="parentDashboard" style="width: 100%; height: 100%;"></tb-dashboard-page>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

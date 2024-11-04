@@ -21,6 +21,7 @@ import com.google.common.collect.Streams;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -67,6 +68,7 @@ import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.sync.vc.BranchInfo;
 import org.thingsboard.server.common.data.sync.vc.RepositoryAuthMethod;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -75,6 +77,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.ArrayList;
@@ -136,6 +139,25 @@ public class GitRepository {
         return new GitRepository(git, settings, authHandler, directory.getAbsolutePath());
     }
 
+    public static GitRepository openOrClone(Path directory, RepositorySettings settings, boolean fetch) throws IOException, GitAPIException {
+        GitRepository repository;
+        if (GitRepository.exists(directory.toString())) {
+            repository = GitRepository.open(directory.toFile(), settings);
+            if (fetch) {
+                repository.fetch();
+            }
+        } else {
+            FileUtils.deleteDirectory(directory.toFile());
+            Files.createDirectories(directory);
+            if (settings.isLocalOnly()) {
+                repository = GitRepository.create(settings, directory.toFile());
+            } else {
+                repository = GitRepository.clone(settings, directory.toFile());
+            }
+        }
+        return repository;
+    }
+
     public static void test(RepositorySettings settings, File directory) throws Exception {
         if (settings.isLocalOnly()) {
             return;
@@ -163,9 +185,9 @@ public class GitRepository {
         }
     }
 
-    public void fetch() throws GitAPIException {
+    public boolean fetch() throws GitAPIException {
         if (settings.isLocalOnly()) {
-            return;
+            return false;
         }
         log.debug("Executing fetch [{}]", settings.getRepositoryUri());
         FetchResult result = execute(git.fetch()
@@ -174,6 +196,7 @@ public class GitRepository {
         if (head != null) {
             this.headId = head.getObjectId();
         }
+        return CollectionsUtil.isNotEmpty(result.getTrackingRefUpdates());
     }
 
     public void deleteLocalBranchIfExists(String branch) throws GitAPIException {
@@ -233,22 +256,29 @@ public class GitRepository {
         return iterableToPageData(commits, this::toCommit, pageLink, revCommitComparatorFunction);
     }
 
-    public List<String> listFilesAtCommit(String commitId) throws IOException {
-        return listFilesAtCommit(commitId, null);
+    public List<String> listFilesAtCommit(String commitId, String path) {
+        return listFilesAtCommit(commitId, path, -1).stream().map(RepoFile::path).toList();
     }
 
-    public List<String> listFilesAtCommit(String commitId, String path) throws IOException {
+    @SneakyThrows
+    public List<RepoFile> listFilesAtCommit(String commitId, String path, int depth) {
         log.debug("Executing listFilesAtCommit [{}][{}][{}]", settings.getRepositoryUri(), commitId, path);
-        List<String> files = new ArrayList<>();
+        List<RepoFile> files = new ArrayList<>();
         RevCommit revCommit = resolveCommit(commitId);
         try (TreeWalk treeWalk = new TreeWalk(git.getRepository())) {
             treeWalk.reset(revCommit.getTree().getId());
             if (StringUtils.isNotEmpty(path)) {
                 treeWalk.setFilter(PathFilter.create(path));
             }
-            treeWalk.setRecursive(true);
+            boolean fixedDepth = depth != -1;
+            treeWalk.setRecursive(!fixedDepth);
             while (treeWalk.next()) {
-                files.add(treeWalk.getPathString());
+                if (!fixedDepth || treeWalk.getDepth() == depth) {
+                    files.add(new RepoFile(treeWalk.getPathString(), treeWalk.getNameString(), treeWalk.isSubtree() ? FileType.DIRECTORY : FileType.FILE));
+                }
+                if (fixedDepth && treeWalk.getDepth() < depth) {
+                    treeWalk.enterSubtree();
+                }
             }
         }
         return files;
@@ -407,6 +437,12 @@ public class GitRepository {
             throw new IllegalArgumentException("Failed to parse git revision string: \"" + rev + "\"");
         }
         return result;
+    }
+
+    @SneakyThrows
+    public static boolean exists(String directory) {
+        File gitDirectory = Path.of(directory, ".git").toFile();
+        return FileUtils.isDirectory(gitDirectory) && !FileUtils.isEmptyDirectory(gitDirectory);
     }
 
     private <C extends GitCommand<T>, T> T execute(C command) throws GitAPIException {
@@ -582,6 +618,12 @@ public class GitRepository {
         private String fileContentAtCommit1;
         private String fileContentAtCommit2;
         private String diffStringValue;
+    }
+
+    public record RepoFile(String path, String name, FileType type) {}
+
+    public enum FileType {
+        FILE, DIRECTORY
     }
 
 }

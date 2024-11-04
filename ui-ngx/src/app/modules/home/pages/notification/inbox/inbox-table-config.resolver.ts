@@ -38,11 +38,11 @@ import {
   InboxNotificationDialogData
 } from '@home/pages/notification/inbox/inbox-notification-dialog.component';
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { UtilsService } from '@core/services/utils.service';
 
 @Injectable()
-export class InboxTableConfigResolver implements Resolve<EntityTableConfig<Notification>> {
+export class InboxTableConfigResolver  {
 
   private readonly config: EntityTableConfig<Notification> = new EntityTableConfig<Notification>();
 

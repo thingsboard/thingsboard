@@ -35,7 +35,7 @@
     <ng-container *ngIf="fillSettingsFormGroup.get('type').value === ChartFillType.gradient" formGroupName="gradient">
       <div class="tb-form-row space-between column-xs">
         <div translate>widgets.chart.gradient-stops</div>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="flex flex-row items-center justify-start gap-2">
           <div class="tb-small-label" translate>widgets.chart.gradient-start</div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="start" min="0" max="100" step="1"
