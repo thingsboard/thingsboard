@@ -38,7 +38,7 @@
   "devDependencies": {
     "@types/amqplib": "^0.10.5",
     "@types/config": "^3.3.5",
-    "@types/express": "^5.0.0",
+    "@types/express": "~4.17.21",
     "@types/node": "~20.17.6",
     "@types/uuid-parse": "^1.0.2",
     "fs-extra": "^11.2.0",

@@ -35,7 +35,7 @@
     "@types/compression": "^1.7.5",
     "@types/config": "^3.3.5",
     "@types/connect-history-api-fallback": "^1.5.4",
-    "@types/express": "^5.0.0",
+    "@types/express": "~4.17.21",
     "@types/http-proxy": "^1.17.15",
     "@types/node": "~20.17.6",
     "fs-extra": "^11.2.0",
