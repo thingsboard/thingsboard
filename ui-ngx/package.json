@@ -145,6 +145,7 @@
     "@types/tooltipster": "^0.0.35",
     "@typescript-eslint/eslint-plugin": "^8.12.2",
     "@typescript-eslint/parser": "^8.12.2",
+    "@typescript-eslint/types": "^8.12.2",
     "@typescript-eslint/utils": "^8.12.2",
     "autoprefixer": "^10.4.20",
     "directory-tree": "^3.5.2",
