@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.PostConstruct;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -69,6 +70,9 @@ public class SystemInfoController extends BaseController {
 
     @Value("${ui.dashboard.max_datapoints_limit}")
     private long maxDatapointsLimit;
+
+    @Value("${actors.rule.node.max_debug_mode_duration:60}")
+    private int maxRuleNodeDebugModeDurationMinutes;
 
     @Autowired(required = false)
     private BuildProperties buildProperties;
@@ -141,6 +145,7 @@ public class SystemInfoController extends BaseController {
         if (!currentUser.isSystemAdmin()) {
             DefaultTenantProfileConfiguration tenantProfileConfiguration = tenantProfileCache.get(tenantId).getDefaultProfileConfiguration();
             systemParams.setMaxResourceSize(tenantProfileConfiguration.getMaxResourceSize());
+            systemParams.setMaxRuleNodeDebugDurationMinutes(tenantProfileConfiguration.getMaxRuleNodeDebugModeDurationMinutes(maxRuleNodeDebugModeDurationMinutes));
         }
         systemParams.setMobileQrEnabled(Optional.ofNullable(mobileAppSettingsService.getMobileAppSettings(TenantId.SYS_TENANT_ID))
                 .map(MobileAppSettings::getQrCodeConfig).map(QRCodeConfig::isShowOnHomePage)
