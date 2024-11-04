@@ -337,7 +337,6 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             if (Boolean.FALSE.equals(isChecked)) {
                 scheduleEdgeEventsCheck(session);
             }
-            initializeKafkaConsumer(session, tenantId, edgeId);
         }
         if (edgeGrpcSession instanceof PostgresEdgeGrpcSession) {
             scheduleEdgeEventsCheck(edgeGrpcSession);
@@ -407,7 +406,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     private void scheduleEdgeEventsCheck(AbstractEdgeGrpcSession<?> session) {
         EdgeId edgeId = session.getEdge().getId();
-        UUID tenantId = session.getEdge().getTenantId().getId();
+        TenantId tenantId = session.getEdge().getTenantId();
         if (sessions.containsKey(edgeId)) {
             ScheduledFuture<?> edgeEventCheckTask = edgeEventProcessingExecutorService.schedule(() -> {
                 try {
@@ -423,8 +422,10 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                                     if (Boolean.TRUE.equals(newEventsAdded)) {
                                         sessionNewEvents.put(edgeId, true);
                                     }
-                                    if (isKafkaSupported) {
+                                    if (session instanceof KafkaEdgeGrpcSession kafkaEdgeGrpcSession && newEventsAdded != null) {
                                         edgeEventsProcessed.put(edgeId, true);
+                                        initializeKafkaConsumer(kafkaEdgeGrpcSession, tenantId, edgeId);
+                                        cancelScheduleEdgeEventsCheck(edgeId);
                                     } else {
                                         scheduleEdgeEventsCheck(session);
                                     }
@@ -437,7 +438,10 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                                 }
                             }, ctx.getGrpcCallbackExecutorService());
                         } else {
-                            if (!isKafkaSupported) {
+                            if (Boolean.TRUE.equals(edgeEventsProcessed.get(edgeId)) && session instanceof KafkaEdgeGrpcSession kafkaEdgeGrpcSession) {
+                                initializeKafkaConsumer(kafkaEdgeGrpcSession, tenantId, edgeId);
+                                cancelScheduleEdgeEventsCheck(edgeId);
+                            } else {
                                 scheduleEdgeEventsCheck(session);
                             }
                         }

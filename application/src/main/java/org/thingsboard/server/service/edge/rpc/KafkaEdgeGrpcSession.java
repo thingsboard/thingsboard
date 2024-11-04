@@ -71,7 +71,7 @@ public class KafkaEdgeGrpcSession extends AbstractEdgeGrpcSession<KafkaEdgeGrpcS
     }
 
     private void processMsgs(List<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumer) {
-        log.trace("[{}][{}] starting processing edge events", this.tenantId, this.sessionId);
+        log.trace("[{}][{}] starting processing edge events", tenantId, sessionId);
         if (isConnected() && isSyncCompleted()) {
 
             if (!highPriorityQueue.isEmpty()) {

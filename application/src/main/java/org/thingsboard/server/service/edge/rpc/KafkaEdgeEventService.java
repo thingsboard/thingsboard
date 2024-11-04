@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.util.ProtoUtils;
+import org.thingsboard.server.dao.edge.EdgeEventDao;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeEventNotificationMsg;
@@ -54,6 +55,7 @@ public class KafkaEdgeEventService implements EdgeEventService {
     private final TbQueueProducerProvider producerProvider;
     @Lazy
     private final TopicService topicService;
+    private final EdgeEventDao edgeEventDao;
 
     @Override
     public ListenableFuture<Void> saveAsync(EdgeEvent edgeEvent) {
@@ -74,11 +76,14 @@ public class KafkaEdgeEventService implements EdgeEventService {
 
     @Override
     public PageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, Long seqIdStart, Long seqIdEnd, TimePageLink pageLink) {
-        return null;
+        // To support fetching edge events on connect from postgres if there are any:
+        return edgeEventDao.findEdgeEvents(tenantId.getId(), edgeId, seqIdStart, seqIdEnd, pageLink);
     }
 
     @Override
     public void cleanupEvents(long ttl) {
+        // To delete deprecated events by ttl
+        edgeEventDao.cleanupEvents(ttl);
     }
 
 }
