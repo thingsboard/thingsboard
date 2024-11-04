@@ -62,6 +62,7 @@
             formControlName="timewindowMs"
             subscriptSizing="dynamic"
             appearance="outline"
+            [allowedIntervals]="timewindowForm.get('realtime.allowedLastIntervals').value"
             [disabledAdvanced]="timewindowForm.get('realtime.disableCustomInterval').value"
             [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
                             timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
@@ -130,6 +131,7 @@
             formControlName="timewindowMs"
             subscriptSizing="dynamic"
             appearance="outline"
+            [allowedIntervals]="timewindowForm.get('history.allowedLastIntervals').value"
             [disabledAdvanced]="timewindowForm.get('history.disableCustomInterval').value"
             [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
                           timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">

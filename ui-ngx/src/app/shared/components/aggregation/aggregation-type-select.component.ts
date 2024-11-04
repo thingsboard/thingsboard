@@ -109,7 +109,7 @@ export class AggregationTypeSelectComponent implements ControlValueAccessor, OnI
   }
 
   ngOnChanges({allowedAggregationTypes}: SimpleChanges): void {
-    if (!allowedAggregationTypes.firstChange && !isEqual(allowedAggregationTypes.currentValue, allowedAggregationTypes.previousValue)) {
+    if (allowedAggregationTypes && !allowedAggregationTypes.firstChange && !isEqual(allowedAggregationTypes.currentValue, allowedAggregationTypes.previousValue)) {
       this.aggregationTypes = this.allowedAggregationTypes?.length ? this.allowedAggregationTypes : this.allAggregationTypes;
       const currentAggregationType: AggregationType = this.aggregationTypeFormGroup.get('aggregationType').value;
       if (currentAggregationType && !this.aggregationTypes.includes(currentAggregationType)) {
@@ -128,13 +128,14 @@ export class AggregationTypeSelectComponent implements ControlValueAccessor, OnI
   }
 
   writeValue(value: AggregationType | null): void {
-    if (value != null) {
-      this.modelValue = value;
-      this.aggregationTypeFormGroup.get('aggregationType').patchValue(value, {emitEvent: true});
+    let aggregationType: AggregationType;
+    if (value && this.allowedAggregationTypes?.length && !this.allowedAggregationTypes.includes(value)) {
+      aggregationType = this.allowedAggregationTypes[0];
     } else {
-      this.modelValue = null;
-      this.aggregationTypeFormGroup.get('aggregationType').patchValue(null, {emitEvent: true});
+      aggregationType = value;
     }
+    this.modelValue = aggregationType;
+    this.aggregationTypeFormGroup.get('aggregationType').patchValue(aggregationType, {emitEvent: false});
   }
 
   updateView(value: AggregationType | null) {

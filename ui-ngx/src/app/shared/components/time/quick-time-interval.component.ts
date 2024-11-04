@@ -91,7 +91,7 @@ export class QuickTimeIntervalComponent implements OnInit, ControlValueAccessor,
   }
 
   ngOnChanges({allowedIntervals}: SimpleChanges): void {
-    if (!allowedIntervals.firstChange && !isEqual(allowedIntervals.currentValue, allowedIntervals.previousValue)) {
+    if (allowedIntervals && !allowedIntervals.firstChange && !isEqual(allowedIntervals.currentValue, allowedIntervals.previousValue)) {
       this.intervals = this.allowedIntervals?.length ? this.allowedIntervals : this.allAvailableIntervals;
       const currentInterval: QuickTimeInterval = this.quickIntervalFormGroup.get('interval').value;
       if (currentInterval && !this.intervals.includes(currentInterval)) {
@@ -116,14 +116,15 @@ export class QuickTimeIntervalComponent implements OnInit, ControlValueAccessor,
     }
   }
 
-  writeValue(interval: QuickTimeInterval): void {
-    if (interval != null) {
-      this.modelValue = interval;
-      this.quickIntervalFormGroup.get('interval').patchValue(interval, {emitEvent: true});
+  writeValue(value: QuickTimeInterval): void {
+    let interval: QuickTimeInterval;
+    if (value && this.allowedIntervals?.length && !this.allowedIntervals.includes(value)) {
+      interval = this.allowedIntervals[0];
     } else {
-      this.modelValue = null;
-      this.quickIntervalFormGroup.get('interval').patchValue(null, {emitEvent: true});
+      interval = value;
     }
+    this.modelValue = interval;
+    this.quickIntervalFormGroup.get('interval').patchValue(interval, {emitEvent: false});
   }
 
   updateView(value: QuickTimeInterval | null) {
