@@ -1005,19 +1005,19 @@ public class DefaultTbContext implements TbContext {
         DebugStrategy debugStrategy = ruleNode.getDebugStrategy();
         if (debugStrategy.shouldPersistDebugOutputForAllEvents(ruleNode.getLastUpdateTs(), msg.getTs(), getMaxRuleNodeDebugDurationMinutes())) {
             relationTypes.forEach(relationType -> mainCtx.persistDebugOutput(getTenantId(), ruleNode.getId(), msg, relationType, error, failureMessage));
-        } else if (debugStrategy.shouldPersistDebugForFailureEventOnly(relationTypes)) {
+        } else if (debugStrategy.shouldPersistDebugForFailureEvent(relationTypes)) {
             mainCtx.persistDebugOutput(getTenantId(), ruleNode.getId(), msg, TbNodeConnectionType.FAILURE, error, failureMessage);
         }
     }
 
     private int getMaxRuleNodeDebugDurationMinutes() {
-        if (!DebugStrategy.ALL_EVENTS.equals(nodeCtx.getSelf().getDebugStrategy())) {
-            return 0;
+        if (nodeCtx.getSelf().getDebugStrategy().isHasDuration()) {
+            var configuration = mainCtx.getTenantProfileCache()
+                    .get(getTenantId()).getProfileData().getConfiguration();
+            int systemMaxRuleNodeDebugModeDurationMinutes = mainCtx.getMaxRuleNodeDebugModeDurationMinutes();
+            return configuration.getMaxRuleNodeDebugModeDurationMinutes(systemMaxRuleNodeDebugModeDurationMinutes);
         }
-        var configuration = mainCtx.getTenantProfileCache()
-                .get(getTenantId()).getProfileData().getConfiguration();
-        int systemMaxRuleNodeDebugModeDurationMinutes = mainCtx.getMaxRuleNodeDebugModeDurationMinutes();
-        return configuration.getMaxRuleNodeDebugModeDurationMinutes(systemMaxRuleNodeDebugModeDurationMinutes);
+        return 0;
     }
 
 }

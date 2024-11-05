@@ -260,7 +260,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                 int maxRuleNodeDebugModeDurationMinutes = getTenantProfileConfiguration()
                         .getMaxRuleNodeDebugModeDurationMinutes(systemContext.getMaxRuleNodeDebugModeDurationMinutes());
                 boolean shouldPersistDebugOutput = debugStrategy.shouldPersistDebugOutputForAllEvents(ruleNode.getLastUpdateTs(), tbMsg.getTs(), maxRuleNodeDebugModeDurationMinutes) ||
-                                                   debugStrategy.shouldPersistDebugForFailureEventOnly(envelope.getRelationType());
+                                                   debugStrategy.shouldPersistDebugForFailureEvent(envelope.getRelationType());
                 if (shouldPersistDebugOutput) {
                     systemContext.persistDebugOutput(tenantId, originatorNodeId, tbMsg, envelope.getRelationType());
                 }

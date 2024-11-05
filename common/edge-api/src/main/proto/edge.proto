@@ -165,7 +165,8 @@ message RuleChainMetadataUpdateMsg {
 enum DebugStrategy {
   DISABLED = 0;
   ALL_EVENTS = 1;
-  ONLY_FAILURE_EVENTS = 2;
+  ALL_THEN_ONLY_FAILURE_EVENTS = 2;
+  ONLY_FAILURE_EVENTS = 3;
 }
 
 message RuleNodeProto {

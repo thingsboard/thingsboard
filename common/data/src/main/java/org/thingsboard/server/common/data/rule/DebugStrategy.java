@@ -23,12 +23,17 @@ import java.util.concurrent.TimeUnit;
 
 @Getter
 public enum DebugStrategy {
-    DISABLED(0), ALL_EVENTS(1), ONLY_FAILURE_EVENTS(2);
+    DISABLED(0, false),
+    ALL_EVENTS(1, true),
+    ALL_THEN_ONLY_FAILURE_EVENTS(2, true),
+    ONLY_FAILURE_EVENTS(3, false);
 
     private final int protoNumber;
+    private final boolean hasDuration;
 
-    DebugStrategy(int protoNumber) {
+    DebugStrategy(int protoNumber, boolean hasDuration) {
         this.protoNumber = protoNumber;
+        this.hasDuration = hasDuration;
     }
 
     public boolean shouldPersistDebugInput(long lastUpdateTs, long msgTs, int debugModeDurationMinutes) {
@@ -36,26 +41,23 @@ public enum DebugStrategy {
     }
 
     public boolean shouldPersistDebugOutputForAllEvents(long lastUpdateTs, long msgTs, int debugModeDurationMinutes) {
-        return isAllEventsStrategyAndMsgTsWithinDebugDuration(lastUpdateTs, msgTs, debugModeDurationMinutes);
+        return this.isAllEventsStrategyAndMsgTsWithinDebugDuration(lastUpdateTs, msgTs, debugModeDurationMinutes);
     }
 
-    public boolean shouldPersistDebugForFailureEventOnly(Set<String> nodeConnections) {
-        return isFailureOnlyStrategy() && nodeConnections.contains(TbNodeConnectionType.FAILURE);
+    public boolean shouldPersistDebugForFailureEvent(Set<String> nodeConnections) {
+        return isFailureStrategy() && nodeConnections.contains(TbNodeConnectionType.FAILURE);
     }
 
-    public boolean shouldPersistDebugForFailureEventOnly(String nodeConnection) {
-        return isFailureOnlyStrategy() && TbNodeConnectionType.FAILURE.equals(nodeConnection);
+    public boolean shouldPersistDebugForFailureEvent(String nodeConnection) {
+        return isFailureStrategy() && TbNodeConnectionType.FAILURE.equals(nodeConnection);
     }
 
-    private boolean isFailureOnlyStrategy() {
-        return DebugStrategy.ONLY_FAILURE_EVENTS.equals(this);
+    private boolean isFailureStrategy() {
+        return DebugStrategy.ONLY_FAILURE_EVENTS.equals(this) || DebugStrategy.ALL_THEN_ONLY_FAILURE_EVENTS.equals(this);
     }
 
     private boolean isAllEventsStrategyAndMsgTsWithinDebugDuration(long lastUpdateTs, long msgTs, int debugModeDurationMinutes) {
-        if (!DebugStrategy.ALL_EVENTS.equals(this)) {
-            return false;
-        }
-        return isMsgTsWithinDebugDuration(lastUpdateTs, msgTs, debugModeDurationMinutes);
+        return this.hasDuration && isMsgTsWithinDebugDuration(lastUpdateTs, msgTs, debugModeDurationMinutes);
     }
 
     private boolean isMsgTsWithinDebugDuration(long lastUpdateTs, long msgCreationTs, int debugModeDurationMinutes) {
