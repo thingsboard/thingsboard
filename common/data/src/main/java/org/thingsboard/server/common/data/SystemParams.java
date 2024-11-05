@@ -33,4 +33,5 @@ public class SystemParams {
     long maxResourceSize;
     boolean mobileQrEnabled;
     int maxRuleNodeDebugDurationMinutes;
+    String ruleChainDebugPerTenantLimitsConfiguration;
 }

@@ -74,6 +74,14 @@ public class SystemInfoController extends BaseController {
     @Value("${actors.rule.node.max_debug_mode_duration:60}")
     private int maxRuleNodeDebugModeDurationMinutes;
 
+    @Value("${actors.rule.chain.debug_mode_rate_limits_per_tenant.enabled:true}")
+    @Getter
+    private boolean ruleChainDebugPerTenantLimitsEnabled;
+
+    @Value("${actors.rule.chain.debug_mode_rate_limits_per_tenant.configuration:50000:3600}")
+    @Getter
+    private String ruleChainDebugPerTenantLimitsConfiguration;
+
     @Autowired(required = false)
     private BuildProperties buildProperties;
 
@@ -146,6 +154,9 @@ public class SystemInfoController extends BaseController {
             DefaultTenantProfileConfiguration tenantProfileConfiguration = tenantProfileCache.get(tenantId).getDefaultProfileConfiguration();
             systemParams.setMaxResourceSize(tenantProfileConfiguration.getMaxResourceSize());
             systemParams.setMaxRuleNodeDebugDurationMinutes(tenantProfileConfiguration.getMaxRuleNodeDebugModeDurationMinutes(maxRuleNodeDebugModeDurationMinutes));
+            if (ruleChainDebugPerTenantLimitsEnabled) {
+                systemParams.setRuleChainDebugPerTenantLimitsConfiguration(ruleChainDebugPerTenantLimitsConfiguration);
+            }
         }
         systemParams.setMobileQrEnabled(Optional.ofNullable(mobileAppSettingsService.getMobileAppSettings(TenantId.SYS_TENANT_ID))
                 .map(MobileAppSettings::getQrCodeConfig).map(QRCodeConfig::isShowOnHomePage)
