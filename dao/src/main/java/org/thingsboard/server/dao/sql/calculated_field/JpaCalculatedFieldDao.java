@@ -15,16 +15,21 @@
  */
 package org.thingsboard.server.dao.sql.calculated_field;
 
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.calculated_field.CalculatedField;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.calculated_field.CalculatedFieldDao;
 import org.thingsboard.server.dao.model.sql.CalculatedFieldEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -34,6 +39,17 @@ import java.util.UUID;
 public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity, CalculatedField> implements CalculatedFieldDao {
 
     private final CalculatedFieldRepository calculatedFieldRepository;
+
+    @Override
+    public boolean existsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId) {
+        return calculatedFieldRepository.existsByTenantIdAndEntityId(tenantId.getId(), entityId.getId());
+    }
+
+    @Override
+    @Transactional
+    public List<CalculatedField> removeAllByEntityId(TenantId tenantId, EntityId entityId) {
+        return DaoUtil.convertDataList(calculatedFieldRepository.removeAllByTenantIdAndEntityId(tenantId.getId(), entityId.getId()));
+    }
 
     @Override
     protected Class<CalculatedFieldEntity> getEntityClass() {

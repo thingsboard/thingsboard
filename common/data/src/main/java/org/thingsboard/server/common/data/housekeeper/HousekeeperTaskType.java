@@ -30,7 +30,8 @@ public enum HousekeeperTaskType {
     DELETE_ALARMS("alarms deletion"),
     UNASSIGN_ALARMS("alarms unassigning"),
     DELETE_TENANT_ENTITIES("tenant entities deletion"),
-    DELETE_ENTITIES("entities deletion");
+    DELETE_ENTITIES("entities deletion"),
+    DELETE_CALCULATED_FIELDS("calculated fields deletion");
 
     private final String description;
 

@@ -18,7 +18,13 @@ package org.thingsboard.server.dao.sql.calculated_field;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.thingsboard.server.dao.model.sql.CalculatedFieldEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface CalculatedFieldRepository extends JpaRepository<CalculatedFieldEntity, UUID> {
+
+    boolean existsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
+
+    List<CalculatedFieldEntity> removeAllByTenantIdAndEntityId(UUID tenantId, UUID entityId);
+
 }

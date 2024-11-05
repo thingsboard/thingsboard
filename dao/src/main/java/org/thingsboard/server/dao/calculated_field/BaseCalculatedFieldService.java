@@ -22,15 +22,20 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.calculated_field.CalculatedField;
 import org.thingsboard.server.common.data.calculated_field.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.service.DataValidator;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -49,6 +54,8 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
     private final CalculatedFieldLinkDao calculatedFieldLinkDao;
     private final DeviceService deviceService;
     private final AssetService assetService;
+    private final DeviceProfileService deviceProfileService;
+    private final AssetProfileService assetProfileService;
     private final DataValidator<CalculatedField> calculatedFieldDataValidator;
     private final DataValidator<CalculatedFieldLink> calculatedFieldLinkDataValidator;
 
@@ -72,7 +79,7 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
 
     @Override
     public CalculatedField findById(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
-        log.trace("Executing findById, tenantId [{}], rpcId [{}]", tenantId, calculatedFieldId);
+        log.trace("Executing findById, tenantId [{}], calculatedFieldId [{}]", tenantId, calculatedFieldId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validateId(calculatedFieldId, id -> INCORRECT_CALCULATED_FIELD_ID + id);
         return calculatedFieldDao.findById(tenantId, calculatedFieldId.getId());
@@ -80,10 +87,19 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
 
     @Override
     public void deleteCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
-        log.trace("Executing deleteRpc, tenantId [{}], rpcId [{}]", tenantId, calculatedFieldId);
+        log.trace("Executing deleteCalculatedField, tenantId [{}], calculatedFieldId [{}]", tenantId, calculatedFieldId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validateId(calculatedFieldId, id -> INCORRECT_CALCULATED_FIELD_ID + id);
         calculatedFieldDao.removeById(tenantId, calculatedFieldId.getId());
+    }
+
+    @Override
+    public int deleteAllCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId) {
+        log.trace("Executing deleteAllCalculatedFieldsByEntityId, tenantId [{}], entityId [{}]", tenantId, entityId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(entityId.getId(), id -> "Incorrect entityId " + id);
+        List<CalculatedField> calculatedFields = calculatedFieldDao.removeAllByEntityId(tenantId, entityId);
+        return calculatedFields.size();
     }
 
     @Override
@@ -96,6 +112,11 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
             checkConstraintViolation(e, "calculated_field_link_unq_key", "Calculated Field for such entity id is already exists!");
             throw e;
         }
+    }
+
+    @Override
+    public boolean existsByEntityId(TenantId tenantId, EntityId entityId) {
+        return calculatedFieldDao.existsByTenantIdAndEntityId(tenantId, entityId);
     }
 
     @Override
@@ -114,6 +135,12 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
                     .orElseThrow(() -> new IllegalArgumentException("Asset with id [" + entityId.getId() + "] does not exist."));
             case DEVICE -> Optional.ofNullable(deviceService.findDeviceById(tenantId, (DeviceId) entityId))
                     .orElseThrow(() -> new IllegalArgumentException("Device with id [" + entityId.getId() + "] does not exist."));
+            case ASSET_PROFILE ->
+                    Optional.ofNullable(assetProfileService.findAssetProfileById(tenantId, (AssetProfileId) entityId))
+                            .orElseThrow(() -> new IllegalArgumentException("Asset Profile with id [" + entityId.getId() + "] does not exist."));
+            case DEVICE_PROFILE ->
+                    Optional.ofNullable(deviceProfileService.findDeviceProfileById(tenantId, (DeviceProfileId) entityId))
+                            .orElseThrow(() -> new IllegalArgumentException("Device Profile with id [" + entityId.getId() + "] does not exist."));
             default ->
                     throw new IllegalArgumentException("Entity type '" + entityId.getEntityType() + "' is not supported.");
         }

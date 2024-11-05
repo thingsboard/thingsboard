@@ -192,8 +192,8 @@ public class AssetProfileServiceImpl extends CachedVersionedEntityService<AssetP
         if (assetProfile == null) {
             return;
         }
-        if (!force && assetProfile.isDefault()) {
-            throw new DataValidationException("Deletion of Default Asset Profile is prohibited!");
+        if (!force && (assetProfile.isDefault() || calculatedFieldService.existsByEntityId(tenantId, id))) {
+            throw new DataValidationException("Deletion of Asset Profile is prohibited!");
         }
         removeAssetProfile(tenantId, assetProfile);
     }

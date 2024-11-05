@@ -30,11 +30,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.calculated_field.CalculatedField;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.calculated_field.CalculatedFieldService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
@@ -63,7 +63,7 @@ public class CalculatedFieldController extends BaseController {
     public CalculatedField saveCalculatedField(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the calculated field.")
                                                @RequestBody CalculatedField calculatedField) throws Exception {
         calculatedField.setTenantId(getTenantId());
-        checkEntity(calculatedField.getId(), calculatedField, Resource.CALCULATED_FIELD);
+        checkEntityId(calculatedField.getEntityId(), Operation.WRITE_CALCULATED_FIELD);
         return calculatedFieldService.save(calculatedField);
     }
 
@@ -76,7 +76,10 @@ public class CalculatedFieldController extends BaseController {
     public CalculatedField getCalculatedFieldById(@Parameter @PathVariable(CALCULATED_FIELD_ID) String strCalculatedFieldId) throws ThingsboardException {
         checkParameter(CALCULATED_FIELD_ID, strCalculatedFieldId);
         CalculatedFieldId calculatedFieldId = new CalculatedFieldId(toUUID(strCalculatedFieldId));
-        return checkCalculatedFieldId(calculatedFieldId, Operation.READ);
+        CalculatedField calculatedField = calculatedFieldService.findById(getTenantId(), calculatedFieldId);
+        checkNotNull(calculatedField);
+        checkEntityId(calculatedField.getEntityId(), Operation.READ_CALCULATED_FIELD);
+        return calculatedField;
     }
 
 
@@ -88,7 +91,9 @@ public class CalculatedFieldController extends BaseController {
     public void deleteCalculatedField(@PathVariable(CALCULATED_FIELD_ID) String strCalculatedField) throws Exception {
         checkParameter(CALCULATED_FIELD_ID, strCalculatedField);
         CalculatedFieldId calculatedFieldId = new CalculatedFieldId(toUUID(strCalculatedField));
-        checkCalculatedFieldId(calculatedFieldId, Operation.DELETE);
+        TenantId tenantId = getTenantId();
+        CalculatedField calculatedField = calculatedFieldService.findById(tenantId, calculatedFieldId);
+        checkEntityId(calculatedField.getEntityId(), Operation.WRITE_CALCULATED_FIELD);
         calculatedFieldService.deleteCalculatedField(getTenantId(), calculatedFieldId);
     }
 

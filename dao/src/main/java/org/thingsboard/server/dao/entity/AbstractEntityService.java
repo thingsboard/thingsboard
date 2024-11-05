@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.calculated_field.CalculatedFieldService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -59,6 +60,10 @@ public abstract class AbstractEntityService {
     @Lazy
     @Autowired
     protected EntityViewService entityViewService;
+
+    @Lazy
+    @Autowired
+    protected CalculatedFieldService calculatedFieldService;
 
     @Lazy
     @Autowired(required = false)

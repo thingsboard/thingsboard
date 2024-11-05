@@ -34,8 +34,8 @@ public class CustomerUserPermissions extends AbstractPermissions {
     public CustomerUserPermissions() {
         super();
         put(Resource.ALARM, customerAlarmPermissionChecker);
-        put(Resource.ASSET, customerEntityPermissionChecker);
-        put(Resource.DEVICE, customerEntityPermissionChecker);
+        put(Resource.ASSET, customerEntityWithCalculatedFieldPermissionChecker);
+        put(Resource.DEVICE, customerEntityWithCalculatedFieldPermissionChecker);
         put(Resource.CUSTOMER, customerPermissionChecker);
         put(Resource.DASHBOARD, customerDashboardPermissionChecker);
         put(Resource.ENTITY_VIEW, customerEntityPermissionChecker);
@@ -67,6 +67,29 @@ public class CustomerUserPermissions extends AbstractPermissions {
             new PermissionChecker.GenericPermissionChecker(Operation.READ, Operation.READ_CREDENTIALS,
                     Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY, Operation.RPC_CALL, Operation.CLAIM_DEVICES,
                     Operation.WRITE, Operation.WRITE_ATTRIBUTES, Operation.WRITE_TELEMETRY) {
+
+                @Override
+                @SuppressWarnings("unchecked")
+                public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
+
+                    if (!super.hasPermission(user, operation, entityId, entity)) {
+                        return false;
+                    }
+                    if (!user.getTenantId().equals(entity.getTenantId())) {
+                        return false;
+                    }
+                    if (!(entity instanceof HasCustomerId)) {
+                        return false;
+                    }
+                    return operation.equals(Operation.CLAIM_DEVICES) || user.getCustomerId().equals(((HasCustomerId) entity).getCustomerId());
+                }
+            };
+
+    private static final PermissionChecker customerEntityWithCalculatedFieldPermissionChecker =
+            new PermissionChecker.GenericPermissionChecker(Operation.READ, Operation.READ_CREDENTIALS,
+                    Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY, Operation.RPC_CALL, Operation.CLAIM_DEVICES,
+                    Operation.WRITE, Operation.WRITE_ATTRIBUTES, Operation.WRITE_TELEMETRY, Operation.READ_CALCULATED_FIELD,
+                    Operation.WRITE_CALCULATED_FIELD) {
 
                 @Override
                 @SuppressWarnings("unchecked")
@@ -188,7 +211,8 @@ public class CustomerUserPermissions extends AbstractPermissions {
         }
     };
 
-    private static final PermissionChecker profilePermissionChecker = new PermissionChecker.GenericPermissionChecker(Operation.READ) {
+    private static final PermissionChecker profilePermissionChecker = new PermissionChecker.GenericPermissionChecker(
+            Operation.READ, Operation.READ_CALCULATED_FIELD, Operation.WRITE_CALCULATED_FIELD) {
 
         @Override
         @SuppressWarnings("unchecked")
@@ -202,4 +226,5 @@ public class CustomerUserPermissions extends AbstractPermissions {
             return user.getTenantId().equals(entity.getTenantId());
         }
     };
+
 }

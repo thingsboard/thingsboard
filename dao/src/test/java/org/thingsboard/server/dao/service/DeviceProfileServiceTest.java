@@ -31,9 +31,11 @@ import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.OtaPackage;
+import org.thingsboard.server.common.data.calculated_field.CalculatedField;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.calculated_field.CalculatedFieldService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -49,6 +51,7 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
 @DaoSqlTest
@@ -60,6 +63,9 @@ public class DeviceProfileServiceTest extends AbstractServiceTest {
     DeviceService deviceService;
     @Autowired
     OtaPackageService otaPackageService;
+    @Autowired
+    private CalculatedFieldService calculatedFieldService;
+
 
     private IdComparator<DeviceProfile> idComparator = new IdComparator<>();
     private IdComparator<DeviceProfileInfo> deviceProfileInfoIdComparator = new IdComparator<>();
@@ -397,7 +403,7 @@ public class DeviceProfileServiceTest extends AbstractServiceTest {
 
 
         var profileA = deviceProfileService.saveDeviceProfile(
-                    createDeviceProfile(tenantId, "profile A"));
+                createDeviceProfile(tenantId, "profile A"));
         deviceProfiles.add(deviceProfileService.saveDeviceProfile(profileA));
 
 
@@ -476,6 +482,23 @@ public class DeviceProfileServiceTest extends AbstractServiceTest {
         assertThat(deviceProfileInfos).isNotEmpty();
         assertThat(deviceProfileInfos).hasSize(3);
         assertThat(deviceProfileInfos).isEqualTo(expected);
+    }
+
+    @Test
+    public void testDeleteDeviceProfileIfCalculatedFieldExists() {
+        DeviceProfile deviceProfile = this.createDeviceProfile(tenantId, "Device Profile");
+        DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setTenantId(tenantId);
+        calculatedField.setName("Test CF");
+        calculatedField.setType("Simple");
+        calculatedField.setEntityId(savedDeviceProfile.getId());
+        calculatedFieldService.save(calculatedField);
+
+        assertThatThrownBy(() -> deviceProfileService.deleteDeviceProfile(tenantId, savedDeviceProfile.getId()))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("Deletion of Device Profile is prohibited!");
     }
 
 }

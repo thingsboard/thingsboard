@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.calculated_field.CalculatedField;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -50,6 +51,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.dao.calculated_field.CalculatedFieldService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
@@ -86,6 +88,8 @@ public class DeviceServiceTest extends AbstractServiceTest {
     OtaPackageService otaPackageService;
     @Autowired
     TenantProfileService tenantProfileService;
+    @Autowired
+    private CalculatedFieldService calculatedFieldService;
     @Autowired
     private PlatformTransactionManager platformTransactionManager;
     @SpyBean
@@ -1196,6 +1200,22 @@ public class DeviceServiceTest extends AbstractServiceTest {
                                         && d.getCustomerTitle().equals(savedCustomer.getTitle())
                         )
         );
+    }
+
+    @Test
+    public void testDeleteDeviceIfCalculatedFieldExists() {
+        Device device = saveDevice(tenantId, "Test");
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setTenantId(tenantId);
+        calculatedField.setName("Test CF");
+        calculatedField.setType("Simple");
+        calculatedField.setEntityId(device.getId());
+        calculatedFieldService.save(calculatedField);
+
+        assertThatThrownBy(() -> deviceService.deleteDevice(tenantId, device.getId()))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("Can't delete device that has entity views or calculated fields!");
     }
 
 }

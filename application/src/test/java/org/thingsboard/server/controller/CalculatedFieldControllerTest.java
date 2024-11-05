@@ -115,7 +115,6 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         doDelete("/api/calculatedField/" + savedCalculatedField.getId().getId().toString())
                 .andExpect(status().isOk());
         doGet("/api/calculatedField/" + savedCalculatedField.getId().getId()).andExpect(status().isNotFound());
-
     }
 
     private CalculatedField getCalculatedField(DeviceId deviceId) {

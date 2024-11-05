@@ -23,15 +23,15 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-@Component(value="tenantAdminPermissions")
+@Component(value = "tenantAdminPermissions")
 public class TenantAdminPermissions extends AbstractPermissions {
 
     public TenantAdminPermissions() {
         super();
         put(Resource.ADMIN_SETTINGS, PermissionChecker.allowAllPermissionChecker);
         put(Resource.ALARM, tenantEntityPermissionChecker);
-        put(Resource.ASSET, tenantEntityPermissionChecker);
-        put(Resource.DEVICE, tenantEntityPermissionChecker);
+        put(Resource.ASSET, tenantEntityWithCalculatedFieldPermissionChecker);
+        put(Resource.DEVICE, tenantEntityWithCalculatedFieldPermissionChecker);
         put(Resource.CUSTOMER, tenantEntityPermissionChecker);
         put(Resource.DASHBOARD, tenantEntityPermissionChecker);
         put(Resource.ENTITY_VIEW, tenantEntityPermissionChecker);
@@ -40,8 +40,8 @@ public class TenantAdminPermissions extends AbstractPermissions {
         put(Resource.USER, userPermissionChecker);
         put(Resource.WIDGETS_BUNDLE, widgetsPermissionChecker);
         put(Resource.WIDGET_TYPE, widgetsPermissionChecker);
-        put(Resource.DEVICE_PROFILE, tenantEntityPermissionChecker);
-        put(Resource.ASSET_PROFILE, tenantEntityPermissionChecker);
+        put(Resource.DEVICE_PROFILE, tenantEntityWithCalculatedFieldPermissionChecker);
+        put(Resource.ASSET_PROFILE, tenantEntityWithCalculatedFieldPermissionChecker);
         put(Resource.API_USAGE_STATE, tenantEntityPermissionChecker);
         put(Resource.TB_RESOURCE, tbResourcePermissionChecker);
         put(Resource.OTA_PACKAGE, tenantEntityPermissionChecker);
@@ -51,14 +51,23 @@ public class TenantAdminPermissions extends AbstractPermissions {
         put(Resource.VERSION_CONTROL, PermissionChecker.allowAllPermissionChecker);
         put(Resource.NOTIFICATION, tenantEntityPermissionChecker);
         put(Resource.MOBILE_APP_SETTINGS, new PermissionChecker.GenericPermissionChecker(Operation.READ));
-        put(Resource.CALCULATED_FIELD, tenantEntityPermissionChecker);
     }
 
     public static final PermissionChecker tenantEntityPermissionChecker = new PermissionChecker() {
 
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
+            if (!user.getTenantId().equals(entity.getTenantId())) {
+                return false;
+            }
+            return !Operation.READ_CALCULATED_FIELD.equals(operation) && !Operation.WRITE_CALCULATED_FIELD.equals(operation);
+        }
+    };
 
+    public static final PermissionChecker tenantEntityWithCalculatedFieldPermissionChecker = new PermissionChecker() {
+
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
             if (!user.getTenantId().equals(entity.getTenantId())) {
                 return false;
             }
