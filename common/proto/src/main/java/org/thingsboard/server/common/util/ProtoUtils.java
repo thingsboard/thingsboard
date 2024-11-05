@@ -190,6 +190,10 @@ public class ProtoUtils {
         builder.setEntityType(edgeEvent.getType().name());
         builder.setAction(edgeEvent.getAction().name());
 
+        if (edgeEvent.getEdgeId() != null) {
+            builder.setEdgeIdMSB(edgeEvent.getEdgeId().getId().getMostSignificantBits());
+            builder.setEdgeIdLSB(edgeEvent.getEdgeId().getId().getLeastSignificantBits());
+        }
         if (edgeEvent.getEntityId() != null) {
             builder.setEntityIdMSB(edgeEvent.getEntityId().getMostSignificantBits());
             builder.setEntityIdLSB(edgeEvent.getEntityId().getLeastSignificantBits());
@@ -208,10 +212,12 @@ public class ProtoUtils {
         edgeEvent.setType(EdgeEventType.valueOf(proto.getEntityType()));
         edgeEvent.setAction(EdgeEventActionType.valueOf(proto.getAction()));
 
+        if (proto.hasEdgeIdMSB() && proto.hasEdgeIdLSB()) {
+            edgeEvent.setEdgeId(new EdgeId(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB())));
+        }
         if (proto.hasEntityIdMSB() && proto.hasEntityIdLSB()) {
             edgeEvent.setEntityId(new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
         }
-
         if (proto.hasBody()) {
             edgeEvent.setBody(JacksonUtil.toJsonNode(proto.getBody()));
         }

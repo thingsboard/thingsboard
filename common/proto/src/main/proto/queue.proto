@@ -1131,9 +1131,11 @@ message EdgeEventMsgProto {
   int64 tenantIdLSB = 2;
   string entityType = 3;
   string action = 4;
-  optional int64 entityIdMSB = 5;
-  optional int64 entityIdLSB = 6;
-  optional string body = 7;
+  optional int64 edgeIdMSB = 5;
+  optional int64 edgeIdLSB = 6;
+  optional int64 entityIdMSB = 7;
+  optional int64 entityIdLSB = 8;
+  optional string body = 9;
 }
 
 message EdgeNotificationMsgProto {

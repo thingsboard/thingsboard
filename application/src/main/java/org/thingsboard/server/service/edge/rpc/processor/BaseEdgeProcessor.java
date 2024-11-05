@@ -119,8 +119,7 @@ public abstract class BaseEdgeProcessor {
                  UPDATED_COMMENT -> true;
             default -> switch (type) {
                 case ALARM, ALARM_COMMENT, RULE_CHAIN, RULE_CHAIN_METADATA, USER, CUSTOMER, TENANT, TENANT_PROFILE,
-                     WIDGETS_BUNDLE, WIDGET_TYPE,
-                     ADMIN_SETTINGS, OTA_PACKAGE, QUEUE, RELATION, NOTIFICATION_TEMPLATE, NOTIFICATION_TARGET,
+                     WIDGETS_BUNDLE, WIDGET_TYPE, ADMIN_SETTINGS, OTA_PACKAGE, QUEUE, RELATION, NOTIFICATION_TEMPLATE, NOTIFICATION_TARGET,
                      NOTIFICATION_RULE -> true;
                 default -> false;
             };
@@ -176,10 +175,8 @@ public abstract class BaseEdgeProcessor {
         return switch (actionType) {
             case UPDATED, CREDENTIALS_UPDATED, ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER, UPDATED_COMMENT ->
                     UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE;
-            case ADDED, ASSIGNED_TO_EDGE, RELATION_ADD_OR_UPDATE, ADDED_COMMENT ->
-                    UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE;
-            case DELETED, UNASSIGNED_FROM_EDGE, RELATION_DELETED, DELETED_COMMENT, ALARM_DELETE ->
-                    UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE;
+            case ADDED, ASSIGNED_TO_EDGE, RELATION_ADD_OR_UPDATE, ADDED_COMMENT -> UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE;
+            case DELETED, UNASSIGNED_FROM_EDGE, RELATION_DELETED, DELETED_COMMENT, ALARM_DELETE -> UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE;
             case ALARM_ACK -> UpdateMsgType.ALARM_ACK_RPC_MESSAGE;
             case ALARM_CLEAR -> UpdateMsgType.ALARM_CLEAR_RPC_MESSAGE;
             default -> throw new RuntimeException("Unsupported actionType [" + actionType + "]");
@@ -322,13 +319,10 @@ public abstract class BaseEdgeProcessor {
             case TENANT -> edgeCtx.getTenantService().findTenantById(tenantId) != null;
             case DEVICE -> edgeCtx.getDeviceService().findDeviceById(tenantId, new DeviceId(entityId.getId())) != null;
             case ASSET -> edgeCtx.getAssetService().findAssetById(tenantId, new AssetId(entityId.getId())) != null;
-            case ENTITY_VIEW ->
-                    edgeCtx.getEntityViewService().findEntityViewById(tenantId, new EntityViewId(entityId.getId())) != null;
-            case CUSTOMER ->
-                    edgeCtx.getCustomerService().findCustomerById(tenantId, new CustomerId(entityId.getId())) != null;
+            case ENTITY_VIEW -> edgeCtx.getEntityViewService().findEntityViewById(tenantId, new EntityViewId(entityId.getId())) != null;
+            case CUSTOMER -> edgeCtx.getCustomerService().findCustomerById(tenantId, new CustomerId(entityId.getId())) != null;
             case USER -> edgeCtx.getUserService().findUserById(tenantId, new UserId(entityId.getId())) != null;
-            case DASHBOARD ->
-                    edgeCtx.getDashboardService().findDashboardById(tenantId, new DashboardId(entityId.getId())) != null;
+            case DASHBOARD -> edgeCtx.getDashboardService().findDashboardById(tenantId, new DashboardId(entityId.getId())) != null;
             case EDGE -> edgeCtx.getEdgeService().findEdgeById(tenantId, new EdgeId(entityId.getId())) != null;
             default -> false;
         };
