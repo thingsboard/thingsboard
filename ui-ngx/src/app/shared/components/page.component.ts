@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Directive, OnDestroy } from '@angular/core';
+import { Directive, inject, OnDestroy } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Observable, Subscription } from 'rxjs';
@@ -25,13 +25,15 @@ import { AbstractControl } from '@angular/forms';
 @Directive()
 export abstract class PageComponent implements OnDestroy {
 
+  protected store: Store<AppState> = inject(Store<AppState>);
+
   isLoading$: Observable<boolean>;
   loadingSubscription: Subscription;
   disabledOnLoadFormControls: Array<AbstractControl> = [];
 
   showMainLoadingBar = true;
 
-  protected constructor(protected store: Store<AppState>) {
+  protected constructor(...args: unknown[]) {
     this.isLoading$ = this.store.pipe(delay(0), select(selectIsLoading), share());
   }
 
