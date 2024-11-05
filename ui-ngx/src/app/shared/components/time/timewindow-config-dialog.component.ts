@@ -349,23 +349,43 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     if (selectedTab === TimewindowType.REALTIME) {
       if (timewindowFormValue.history.historyType !== HistoryWindowType.FIXED
         && !(this.quickIntervalOnly && timewindowFormValue.history.historyType === HistoryWindowType.LAST_INTERVAL)) {
-
-        this.timewindowForm.get('realtime').patchValue({
-          realtimeType: Object.keys(RealtimeWindowType).includes(HistoryWindowType[timewindowFormValue.history.historyType]) ?
-            RealtimeWindowType[HistoryWindowType[timewindowFormValue.history.historyType]] :
-            timewindowFormValue.realtime.realtimeType,
-          timewindowMs: timewindowFormValue.history.timewindowMs,
-          quickInterval: timewindowFormValue.history.quickInterval.startsWith('CURRENT') ?
-            timewindowFormValue.history.quickInterval : timewindowFormValue.realtime.quickInterval
-        });
+        const allowedLastIntervals = timewindowFormValue.realtime.allowedLastIntervals;
+        const allowedQuickIntervals = timewindowFormValue.realtime.allowedQuickIntervals;
+        // this.timewindowForm.get('realtime').patchValue({
+        //   realtimeType: Object.keys(RealtimeWindowType).includes(HistoryWindowType[timewindowFormValue.history.historyType]) ?
+        //     RealtimeWindowType[HistoryWindowType[timewindowFormValue.history.historyType]] :
+        //     timewindowFormValue.realtime.realtimeType,
+        //   timewindowMs: timewindowFormValue.history.timewindowMs,
+        //   quickInterval: timewindowFormValue.history.quickInterval.startsWith('CURRENT') ?
+        //     timewindowFormValue.history.quickInterval : timewindowFormValue.realtime.quickInterval
+        // });
+        if (Object.keys(RealtimeWindowType).includes(HistoryWindowType[timewindowFormValue.history.historyType])) {
+          this.timewindowForm.get('realtime.realtimeType').patchValue(RealtimeWindowType[HistoryWindowType[timewindowFormValue.history.historyType]]);
+        }
+        if (!allowedLastIntervals?.length || allowedLastIntervals.includes(timewindowFormValue.history.timewindowMs)) {
+          this.timewindowForm.get('realtime.timewindowMs').patchValue(timewindowFormValue.history.timewindowMs);
+        }
+        if (allowedQuickIntervals?.includes(timewindowFormValue.history.quickInterval) ||
+            (!allowedQuickIntervals?.length && timewindowFormValue.history.quickInterval.startsWith('CURRENT'))) {
+          this.timewindowForm.get('realtime.quickInterval').patchValue(timewindowFormValue.history.quickInterval);
+        }
         setTimeout(() => this.timewindowForm.get('realtime.interval').patchValue(timewindowFormValue.history.interval));
       }
     } else {
-      this.timewindowForm.get('history').patchValue({
-        historyType: HistoryWindowType[RealtimeWindowType[timewindowFormValue.realtime.realtimeType]],
-        timewindowMs: timewindowFormValue.realtime.timewindowMs,
-        quickInterval: timewindowFormValue.realtime.quickInterval
-      });
+      const allowedLastIntervals = timewindowFormValue.history.allowedLastIntervals;
+      const allowedQuickIntervals = timewindowFormValue.history.allowedQuickIntervals;
+      // this.timewindowForm.get('history').patchValue({
+      //   historyType: HistoryWindowType[RealtimeWindowType[timewindowFormValue.realtime.realtimeType]],
+      //   timewindowMs: timewindowFormValue.realtime.timewindowMs,
+      //   quickInterval: timewindowFormValue.realtime.quickInterval
+      // });
+      this.timewindowForm.get('history.historyType').patchValue(HistoryWindowType[RealtimeWindowType[timewindowFormValue.realtime.realtimeType]]);
+      if (!allowedLastIntervals?.length || allowedLastIntervals?.includes(timewindowFormValue.realtime.timewindowMs)) {
+        this.timewindowForm.get('history.timewindowMs').patchValue(timewindowFormValue.realtime.timewindowMs);
+      }
+      if (!allowedQuickIntervals?.length || allowedQuickIntervals?.includes(timewindowFormValue.realtime.quickInterval)) {
+        this.timewindowForm.get('history.quickInterval').patchValue(timewindowFormValue.realtime.quickInterval);
+      }
       setTimeout(() => this.timewindowForm.get('history.interval').patchValue(timewindowFormValue.realtime.interval));
     }
     this.timewindowForm.patchValue({
