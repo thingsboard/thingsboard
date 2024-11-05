@@ -27,6 +27,10 @@ import { AddMobilePageDialogComponent } from '@home/pages/mobile/bundes/layout/a
 import { CustomMobilePageComponent } from '@home/pages/mobile/bundes/layout/custom-mobile-page.component';
 import { CustomMobilePagePanelComponent } from '@home/pages/mobile/bundes/layout/custom-mobile-page-panel.component';
 import { DefaultMobilePagePanelComponent } from '@home/pages/mobile/bundes/layout/default-mobile-page-panel.component';
+import {
+  MobileAppConfigurationDialogComponent
+} from '@home/pages/mobile/bundes/mobile-app-configuration-dialog.component';
+
 
 @NgModule({
   declarations: [
@@ -38,6 +42,7 @@ import { DefaultMobilePagePanelComponent } from '@home/pages/mobile/bundes/layou
     CustomMobilePageComponent,
     CustomMobilePagePanelComponent,
     DefaultMobilePagePanelComponent,
+    MobileAppConfigurationDialogComponent,
   ],
   imports: [
     CommonModule,

@@ -19,6 +19,7 @@
   <div class="header flex items-center gap-2">
     <div class="title-section">
       <span tbTruncateWithTooltip class="title-container" translate>mobile.pages</span>
+      <mat-slide-toggle class="whitespace-nowrap xs:!hidden" [formControl]="showHiddenPages">{{ 'mobile.show-hidden-pages' | translate }}</mat-slide-toggle>
     </div>
     <span class="flex-1"></span>
     <button *ngIf="!readonly" class="tb-mobile-layout-button lt-lg:!hidden"

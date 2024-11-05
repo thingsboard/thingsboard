@@ -38,24 +38,11 @@ import {
 } from '@shared/models/mobile-app.models';
 import { platformTypeTranslations } from '@shared/models/oauth2.models';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
-import { NotificationTemplate } from '@shared/models/notification.models';
-import { BaseData, HasId } from '@shared/models/base-data';
-import {
-  MobileBundleDialogComponent,
-  MobileBundleDialogData
-} from '@home/pages/mobile/bundes/mobile-bundle-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import {
   MobileAppDeleteDialogData,
   RemoveAppDialogComponent
 } from '@home/pages/mobile/applications/remove-app-dialog.component';
-import {
-  MobileAppConfigurationDialogComponent, MobileAppConfigurationDialogData
-} from '@home/pages/mobile/applications/mobile-app-configuration-dialog.component';
-import { select, Store } from '@ngrx/store';
-import { selectUserSettingsProperty } from '@core/auth/auth.selectors';
-import { take } from 'rxjs/operators';
-import { AppState } from '@core/core.state';
 
 @Injectable()
 export class MobileAppTableConfigResolver  {
@@ -66,8 +53,7 @@ export class MobileAppTableConfigResolver  {
               private datePipe: DatePipe,
               private mobileAppService: MobileAppService,
               private truncatePipe: TruncatePipe,
-              private dialog: MatDialog,
-              private store: Store<AppState>,
+              private dialog: MatDialog
               ) {
     this.config.selectionEnabled = false;
     this.config.entityType = EntityType.MOBILE_APP;
@@ -130,18 +116,6 @@ export class MobileAppTableConfigResolver  {
     this.config.saveEntity = (mobileApp) => this.mobileAppService.saveMobileApp(mobileApp);
     this.config.deleteEntity = id => this.mobileAppService.deleteMobileApp(id.id);
 
-    this.config.entityAdded = (mobileApp) => {
-      this.store.pipe(select(selectUserSettingsProperty( 'notDisplayConfigurationAfterAddMobileApp'))).pipe(
-        take(1)
-      ).subscribe((settings: boolean) => {
-        if(!settings) {
-          this.configurationApp(null, mobileApp, true);
-        } else {
-          this.config.updateData();
-        }
-      });
-    }
-
     this.config.cellActionDescriptors = this.configureCellActions();
   }
 
@@ -151,12 +125,6 @@ export class MobileAppTableConfigResolver  {
 
   private configureCellActions(): Array<CellActionDescriptor<MobileApp>> {
     return [
-      {
-        name: this.translate.instant('mobile.configuration-app'),
-        icon: 'code',
-        isEnabled: () => true,
-        onAction: ($event, entity) => this.configurationApp($event, entity)
-      },
       {
         name: this.translate.instant('action.delete'),
         icon: 'delete',
@@ -180,26 +148,6 @@ export class MobileAppTableConfigResolver  {
     }).afterClosed()
       .subscribe((res) => {
         if (res) {
-          this.config.updateData();
-        }
-      });
-  }
-
-  private configurationApp($event: Event, entity: MobileApp, afterAdd = false) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialog.open<MobileAppConfigurationDialogComponent, MobileAppConfigurationDialogData,
-      MobileAppBundleInfo>(MobileAppConfigurationDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        afterAdd,
-        appSecret: entity.appSecret
-      }
-    }).afterClosed()
-      .subscribe(() => {
-        if (afterAdd) {
           this.config.updateData();
         }
       });

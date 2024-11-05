@@ -64,20 +64,22 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
   buildForm(entity: MobileApp): FormGroup {
     const form = this.fb.group({
       pkgName: [entity?.pkgName ? entity.pkgName : '', [Validators.required, Validators.maxLength(255),
-        Validators.pattern(/^\S+$/)]],
+        Validators.pattern(/^[a-zA-Z][a-zA-Z\d_]*(?:\.[a-zA-Z][a-zA-Z\d_]*)+$/)]],
       platformType: [entity?.platformType ? entity.platformType : PlatformType.ANDROID],
       appSecret: [entity?.appSecret ? entity.appSecret : btoa(randomAlphanumeric(64)), [Validators.required, this.base64Format]],
       status: [entity?.status ? entity.status : MobileAppStatus.DRAFT],
       versionInfo: this.fb.group({
-        minVersion: [entity?.versionInfo?.minVersion ? entity.versionInfo.minVersion : ''],
+        minVersion: [entity?.versionInfo?.minVersion ? entity.versionInfo.minVersion : '', Validators.pattern(/^\d+\.\d+\.\d+(-[a-zA-Z\d-.]+)?(\+[a-zA-Z\d-.]+)?$/)],
         minVersionReleaseNotes: [entity?.versionInfo?.minVersionReleaseNotes ? entity.versionInfo.minVersionReleaseNotes : ''],
-        latestVersion: [entity?.versionInfo?.latestVersion ? entity.versionInfo.latestVersion : ''],
+        latestVersion: [entity?.versionInfo?.latestVersion ? entity.versionInfo.latestVersion : '', Validators.pattern(/^\d+\.\d+\.\d+(-[a-zA-Z\d-.]+)?(\+[a-zA-Z\d-.]+)?$/)],
         latestVersionReleaseNotes: [entity?.versionInfo?.latestVersionReleaseNotes ? entity.versionInfo.latestVersionReleaseNotes : ''],
       }),
       storeInfo: this.fb.group({
-        storeLink: [entity?.storeInfo?.storeLink ? entity.storeInfo.storeLink : ''],
-        sha256CertFingerprints: [entity?.storeInfo?.sha256CertFingerprints ? entity.storeInfo.sha256CertFingerprints : ''],
-        appId: [entity?.storeInfo?.appId ? entity.storeInfo.appId : ''],
+        storeLink: [entity?.storeInfo?.storeLink ? entity.storeInfo.storeLink : '',
+          Validators.pattern(/^https?:\/\/play\.google\.com\/store\/apps\/details\?id=[a-zA-Z0-9._]+$/)],
+        sha256CertFingerprints: [entity?.storeInfo?.sha256CertFingerprints ? entity.storeInfo.sha256CertFingerprints : '',
+          Validators.pattern(/^[A-Fa-f0-9]{2}(:[A-Fa-f0-9]{2}){1,31}$/)],
+        appId: [entity?.storeInfo?.appId ? entity.storeInfo.appId : '', Validators.pattern(/^\d{7,10}$/)],
       }),
     });
 
@@ -87,9 +89,11 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
       if (value === PlatformType.ANDROID) {
         form.get('storeInfo.sha256CertFingerprints').enable({emitEvent: false});
         form.get('storeInfo.appId').disable({emitEvent: false});
+        form.get('storeInfo.storeLink').setValidators(Validators.pattern(/^https?:\/\/play\.google\.com\/store\/apps\/details\?id=[a-zA-Z0-9._]+$/));
       } else if (value === PlatformType.IOS) {
         form.get('storeInfo.sha256CertFingerprints').disable({emitEvent: false});
         form.get('storeInfo.appId').enable({emitEvent: false});
+        form.get('storeInfo.storeLink').setValidators(Validators.pattern(/^https?:\/\/apps\.apple\.com\/[a-z]{2}\/app\/[\w-]+\/id\d{7,10}$/));
       }
       form.get('storeInfo.storeLink').setValue('', {emitEvent: false});
     });
@@ -99,12 +103,13 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
     ).subscribe((value: MobileAppStatus) => {
       if (value !== MobileAppStatus.DRAFT) {
         form.get('storeInfo.storeLink').addValidators(Validators.required);
-        form.get('storeInfo.sha256CertFingerprints').addValidators(Validators.required);
+        form.get('storeInfo.sha256CertFingerprints')
+          .addValidators(Validators.required);
         form.get('storeInfo.appId').addValidators(Validators.required);
       } else {
         form.get('storeInfo.storeLink').clearValidators();
-        form.get('storeInfo.sha256CertFingerprints').clearValidators();
-        form.get('storeInfo.appId').clearValidators();
+        form.get('storeInfo.sha256CertFingerprints').removeValidators(Validators.required);
+        form.get('storeInfo.appId').removeValidators(Validators.required);
       }
       form.get('storeInfo.storeLink').updateValueAndValidity({emitEvent: false});
       form.get('storeInfo.sha256CertFingerprints').updateValueAndValidity({emitEvent: false});

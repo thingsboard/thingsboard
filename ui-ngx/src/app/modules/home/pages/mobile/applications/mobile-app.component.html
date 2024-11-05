@@ -35,7 +35,7 @@
       {{ 'mobile.mobile-package-max-length' | translate }}
     </mat-error>
     <mat-error *ngIf="entityForm.get('pkgName').hasError('pattern')">
-      {{ 'mobile.mobile-package-spaces' | translate }}
+      {{ 'mobile.mobile-package-pattern' | translate }}
     </mat-error>
   </mat-form-field>
   <mat-form-field appearance="outline" class="flex">
@@ -84,9 +84,13 @@
     <div class="tb-form-panel-title" translate>mobile.version-information</div>
     <section class="flex flex-col">
       <section class="flex flex-row">
-        <mat-form-field class="flex-1" appearance="outline">
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
           <mat-label translate>mobile.min-version</mat-label>
           <input matInput formControlName="minVersion">
+          <mat-hint> </mat-hint>
+          <mat-error *ngIf="entityForm.get('versionInfo.minVersion').hasError('pattern')">
+            {{ 'mobile.invalid-version-pattern' | translate }}
+          </mat-error>
         </mat-form-field>
         <button mat-icon-button
                 style="margin-top: 4px; color:#00000061"
@@ -99,9 +103,13 @@
         </button>
       </section>
       <section class="flex flex-row">
-        <mat-form-field class="flex-1" appearance="outline">
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
           <mat-label translate>mobile.latest-version</mat-label>
           <input matInput formControlName="latestVersion">
+          <mat-hint> </mat-hint>
+          <mat-error *ngIf="entityForm.get('versionInfo.minVersion').hasError('pattern')">
+            {{ 'mobile.invalid-version-pattern' | translate }}
+          </mat-error>
         </mat-form-field>
         <button mat-icon-button
                 style="margin-top: 4px; color:#00000061"
@@ -134,6 +142,9 @@
         <mat-error *ngIf="entityForm.get('storeInfo.storeLink').hasError('required')">
           {{ (entityForm.get('platformType').value === PlatformType.ANDROID ? 'mobile.google-play-link-required' : 'mobile.app-store-link-required')  | translate }}
         </mat-error>
+        <mat-error *ngIf="entityForm.get('storeInfo.storeLink').hasError('pattern')">
+          {{ 'mobile.invalid-store-link' | translate }}
+        </mat-error>
       </mat-form-field>
       <mat-form-field appearance="outline" *ngIf="entityForm.get('platformType').value === PlatformType.ANDROID">
         <mat-label translate>mobile.sha256-certificate-fingerprints</mat-label>
@@ -149,6 +160,9 @@
         <mat-error *ngIf="entityForm.get('storeInfo.sha256CertFingerprints').hasError('required')">
           {{ 'mobile.sha256-certificate-fingerprints-required' | translate }}
         </mat-error>
+        <mat-error *ngIf="entityForm.get('storeInfo.sha256CertFingerprints').hasError('pattern')">
+          {{ 'mobile.sha256-certificate-fingerprints-pattern' | translate }}
+        </mat-error>
       </mat-form-field>
       <mat-form-field appearance="outline" *ngIf="entityForm.get('platformType').value === PlatformType.IOS">
         <mat-label translate>mobile.app-id</mat-label>
@@ -163,6 +177,9 @@
         </tb-copy-button>
         <mat-error *ngIf="entityForm.get('storeInfo.appId').hasError('required')">
           {{ 'mobile.app-id-required' | translate }}
+        </mat-error>
+        <mat-error *ngIf="entityForm.get('storeInfo.appId').hasError('pattern')">
+          {{ 'mobile.app-id-pattern' | translate }}
         </mat-error>
       </mat-form-field>
     </section>

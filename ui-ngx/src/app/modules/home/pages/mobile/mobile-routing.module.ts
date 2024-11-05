@@ -39,7 +39,7 @@ const routes: Routes = [
         children: [],
         data: {
           auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER, Authority.SYS_ADMIN],
-          redirectTo: '/mobile-center/applications'
+          redirectTo: '/mobile-center/bundles'
         }
       },
       ...applicationsRoutes,

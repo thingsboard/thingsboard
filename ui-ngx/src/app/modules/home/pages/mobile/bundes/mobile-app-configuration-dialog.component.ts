@@ -59,7 +59,7 @@ export class MobileAppConfigurationDialogComponent extends DialogComponent<Mobil
 
   close(): void {
     if (this.notShowAgain && this.showDontShowAgain) {
-      this.store.dispatch(new ActionPreferencesPutUserSettings({ notDisplayConfigurationAfterAddMobileApp: true }));
+      this.store.dispatch(new ActionPreferencesPutUserSettings({ notDisplayConfigurationAfterAddMobileBundle: true }));
       this.dialogRef.close(null);
     } else {
       this.dialogRef.close(null);

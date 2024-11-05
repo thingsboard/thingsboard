@@ -69,10 +69,12 @@ export class MobileLayoutComponent implements ControlValueAccessor, Validator {
   mobilePagesContainer: ElementRef<HTMLElement>;
 
   pagesForm = this.fb.group({
-    pages: this.fb.array([])
+    pages: this.fb.array<MobilePage>([])
   });
 
   maxIconNameBlockWidth = 256;
+
+  showHiddenPages = new FormControl(true);
 
   private hideItemsSubject = new Subject<void>();
   hideItems$ = this.hideItemsSubject.asObservable();
@@ -129,6 +131,9 @@ export class MobileLayoutComponent implements ControlValueAccessor, Validator {
 
   hideAll() {
     this.hideItemsSubject.next();
+    if (this.showHiddenPages.value) {
+      this.showHiddenPages.setValue(false);
+    }
   }
 
   resetToDefault() {
@@ -143,7 +148,7 @@ export class MobileLayoutComponent implements ControlValueAccessor, Validator {
   }
 
   visibleMobilePagesControls(): Array<AbstractControl> {
-    return this.pagesFormArray().controls;
+    return this.pagesFormArray().controls.filter(c => this.showHiddenPages.value || c.value.visible);
   }
 
   mobileItemDrop(event: CdkDragDrop<string[]>) {
@@ -215,8 +220,8 @@ export class MobileLayoutComponent implements ControlValueAccessor, Validator {
     return layout.pages;
   }
 
-  private prepareMobilePagesFormArray(items: MobilePage[]): FormArray {
-    const menuItemsControls: Array<AbstractControl> = [];
+  private prepareMobilePagesFormArray(items: MobilePage[]): FormArray<FormControl<MobilePage>> {
+    const menuItemsControls: Array<FormControl<MobilePage>> = [];
     items.forEach((item) => {
       menuItemsControls.push(this.fb.control(deepClone(item)));
     });
