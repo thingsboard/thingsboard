@@ -72,10 +72,6 @@ export class TimeService {
       IntervalMath.numberValue(interval.value) >= min && IntervalMath.numberValue(interval.value) <= max);
   }
 
-  public intervalValuesToTimeIntervals(intervalValues: Array<Interval>): Array<TimeInterval> {
-    return defaultTimeIntervals.filter(interval => intervalValues.includes(interval.value));
-  }
-
   public boundMinInterval(min: number): number {
     if (isDefined(min)) {
       min = Math.ceil(min / 1000) * 1000;

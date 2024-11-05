@@ -42,7 +42,7 @@ import { takeUntil } from 'rxjs/operators';
 import { TbPopoverService } from '@shared/components/popover.service';
 import {
   AggregationOptionsConfigPanelComponent
-} from '@shared/components/aggregation/aggregation-options-config-panel.component';
+} from '@shared/components/time/aggregation/aggregation-options-config-panel.component';
 import { IntervalOptionsConfigPanelComponent } from '@shared/components/time/interval-options-config-panel.component';
 
 export interface TimewindowConfigDialogData {

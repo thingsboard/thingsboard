@@ -1054,6 +1054,10 @@ export const defaultTimeIntervals = new Array<TimeInterval>(
   }
 );
 
+export const intervalValuesToTimeIntervals = (intervalValues: Array<Interval>): Array<TimeInterval> => {
+  return defaultTimeIntervals.filter(interval => intervalValues.includes(interval.value));
+}
+
 export enum TimeUnit {
   SECONDS = 'SECONDS',
   MINUTES = 'MINUTES',

@@ -335,8 +335,8 @@ import * as RuleChainSelectComponent from '@shared/components/rule-chain/rule-ch
 import * as TimezoneComponent from '@shared/components/time/timezone.component';
 import * as TimezonePanelComponent from '@shared/components/time/timezone-panel.component';
 import * as DatapointsLimitComponent from '@shared/components/time/datapoints-limit.component';
-import * as AggregationTypeSelectComponent from '@shared/components/aggregation/aggregation-type-select.component';
-import * as AggregationOptionsConfigComponent from '@shared/components/aggregation/aggregation-options-config-panel.component';
+import * as AggregationTypeSelectComponent from '@shared/components/time/aggregation/aggregation-type-select.component';
+import * as AggregationOptionsConfigComponent from '@shared/components/time/aggregation/aggregation-options-config-panel.component';
 import * as IntervalOptionsConfigPanelComponent from '@shared/components/time/interval-options-config-panel.component';
 
 import { IModulesMap } from '@modules/common/modules-map.models';
@@ -475,8 +475,8 @@ class ModulesMap implements IModulesMap {
     '@shared/components/time/timezone.component': TimezoneComponent,
     '@shared/components/time/timezone-panel.component': TimezonePanelComponent,
     '@shared/components/time/datapoints-limit.component': DatapointsLimitComponent,
-    '@shared/components/aggregation/aggregation-type-select.component': AggregationTypeSelectComponent,
-    '@shared/components/aggregation/aggregation-options-config-panel.component': AggregationOptionsConfigComponent,
+    '@shared/components/time/aggregation/aggregation-type-select.component': AggregationTypeSelectComponent,
+    '@shared/components/time/aggregation/aggregation-options-config-panel.component': AggregationOptionsConfigComponent,
     '@shared/components/time/interval-options-config-panel.component': IntervalOptionsConfigPanelComponent,
     '@shared/components/value-input.component': ValueInputComponent,
     '@shared/components/dashboard-autocomplete.component': DashboardAutocompleteComponent,
