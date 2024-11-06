@@ -57,7 +57,7 @@ public class CalculatedFieldController extends BaseController {
                     "Referencing non-existing Calculated Field Id will cause 'Not Found' error. " +
                     "Remove 'id', 'tenantId' from the request body example (below) to create new Calculated Field entity. "
                     + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/calculatedField", method = RequestMethod.POST)
     @ResponseBody
     public CalculatedField saveCalculatedField(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the calculated field.")
@@ -70,7 +70,7 @@ public class CalculatedFieldController extends BaseController {
     @ApiOperation(value = "Get Calculated Field (getCalculatedFieldById)",
             notes = "Fetch the Calculated Field object based on the provided Calculated Field Id."
     )
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/calculatedField/{calculatedFieldId}", method = RequestMethod.GET)
     @ResponseBody
     public CalculatedField getCalculatedFieldById(@Parameter @PathVariable(CALCULATED_FIELD_ID) String strCalculatedFieldId) throws ThingsboardException {

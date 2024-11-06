@@ -31,11 +31,9 @@ import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.OtaPackage;
-import org.thingsboard.server.common.data.calculated_field.CalculatedField;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.calculated_field.CalculatedFieldService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -51,7 +49,6 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
 @DaoSqlTest
@@ -400,7 +397,7 @@ public class DeviceProfileServiceTest extends AbstractServiceTest {
 
 
         var profileA = deviceProfileService.saveDeviceProfile(
-                createDeviceProfile(tenantId, "profile A"));
+                    createDeviceProfile(tenantId, "profile A"));
         deviceProfiles.add(deviceProfileService.saveDeviceProfile(profileA));
 
 

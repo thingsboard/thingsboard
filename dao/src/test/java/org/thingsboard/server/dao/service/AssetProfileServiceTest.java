@@ -380,4 +380,5 @@ public class AssetProfileServiceTest extends AbstractServiceTest {
         assertThat(assetProfileInfos).isEqualTo(expected);
     }
 
+
 }

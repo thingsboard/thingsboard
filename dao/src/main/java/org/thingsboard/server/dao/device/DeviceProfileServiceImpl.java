@@ -230,8 +230,8 @@ public class DeviceProfileServiceImpl extends CachedVersionedEntityService<Devic
         if (deviceProfile == null) {
             return;
         }
-        if (!force && entityViewService.existsByTenantIdAndEntityId(tenantId, id)) {
-            throw new DataValidationException("Can't delete device that has entity views!");
+        if (!force && deviceProfile.isDefault()) {
+            throw new DataValidationException("Deletion of Default Device Profile is prohibited!");
         }
         removeDeviceProfile(tenantId, deviceProfile);
     }
