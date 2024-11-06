@@ -1521,7 +1521,7 @@ queue:
         # Example of specific consumer properties value per topic for edge event
         - key: max.poll.records
           # Example of specific consumer properties value per topic for edge event
-          value: "${TB_QUEUE_KAFKA_EDGE_EVENT_MAX_POLL_INTERVAL_MS:50}"
+          value: "${TB_QUEUE_KAFKA_EDGE_EVENT_MAX_POLL_RECORDS:50}"
       tb_housekeeper:
         # Consumer properties for Housekeeper tasks topic
         - key: max.poll.records
