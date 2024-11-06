@@ -188,8 +188,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
         }
     };
 
-    private static final PermissionChecker profilePermissionChecker = new PermissionChecker.GenericPermissionChecker(
-            Operation.READ, Operation.READ_CALCULATED_FIELD, Operation.WRITE_CALCULATED_FIELD) {
+    private static final PermissionChecker profilePermissionChecker = new PermissionChecker.GenericPermissionChecker(Operation.READ) {
 
         @Override
         @SuppressWarnings("unchecked")
@@ -203,5 +202,4 @@ public class CustomerUserPermissions extends AbstractPermissions {
             return user.getTenantId().equals(entity.getTenantId());
         }
     };
-
 }
