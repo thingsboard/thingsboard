@@ -20,6 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.dao.calculated_field.CalculatedFieldService;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 import org.thingsboard.server.dao.entity.EntityServiceRegistry;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -44,4 +45,8 @@ public class EntityServiceRegistryTest extends AbstractServiceTest {
         Assert.assertTrue(entityServiceRegistry.getServiceByEntityType(EntityType.RULE_NODE) instanceof RuleChainService);
     }
 
+    @Test
+    public void givenCalculatedFieldLinkEntityType_whenGetServiceByEntityTypeCalled_thenReturnedCalculatedFieldService() {
+        Assert.assertTrue(entityServiceRegistry.getServiceByEntityType(EntityType.CALCULATED_FIELD_LINK) instanceof CalculatedFieldService);
+    }
 }
