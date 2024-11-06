@@ -78,10 +78,26 @@ public class MobileAppBundleServiceImpl extends AbstractEntityService implements
     }
 
     @Override
-    public void deleteMobileAppBundleById(TenantId tenantId, MobileAppBundleId mobileAppBundleId) {
-        log.trace("Executing deleteMobileAppBundleById [{}]", mobileAppBundleId.getId());
-        mobileAppBundleDao.removeById(tenantId, mobileAppBundleId.getId());
-        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(mobileAppBundleId).build());
+    public void updateOauth2Clients(TenantId tenantId, MobileAppBundleId mobileAppBundleId, List<OAuth2ClientId> oAuth2ClientIds) {
+        log.trace("Executing updateOauth2Clients, mobileAppId [{}], oAuth2ClientIds [{}]", mobileAppBundleId, oAuth2ClientIds);
+        Set<MobileAppBundleOauth2Client> newClientList = oAuth2ClientIds.stream()
+                .map(clientId -> new MobileAppBundleOauth2Client(mobileAppBundleId, clientId))
+                .collect(Collectors.toSet());
+
+        List<MobileAppBundleOauth2Client> existingClients = mobileAppBundleDao.findOauth2ClientsByMobileAppBundleId(tenantId, mobileAppBundleId);
+        List<MobileAppBundleOauth2Client> toRemoveList = existingClients.stream()
+                .filter(client -> !newClientList.contains(client))
+                .toList();
+        newClientList.removeIf(existingClients::contains);
+
+        for (MobileAppBundleOauth2Client client : toRemoveList) {
+            mobileAppBundleDao.removeOauth2Client(tenantId, client);
+        }
+        for (MobileAppBundleOauth2Client client : newClientList) {
+            mobileAppBundleDao.addOauth2Client(tenantId, client);
+        }
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
+                .entityId(mobileAppBundleId).created(false).build());
     }
 
     @Override
@@ -109,33 +125,23 @@ public class MobileAppBundleServiceImpl extends AbstractEntityService implements
     }
 
     @Override
-    public void updateOauth2Clients(TenantId tenantId, MobileAppBundleId mobileAppBundleId, List<OAuth2ClientId> oAuth2ClientIds) {
-        log.trace("Executing updateOauth2Clients, mobileAppId [{}], oAuth2ClientIds [{}]", mobileAppBundleId, oAuth2ClientIds);
-        Set<MobileAppBundleOauth2Client> newClientList = oAuth2ClientIds.stream()
-                .map(clientId -> new MobileAppBundleOauth2Client(mobileAppBundleId, clientId))
-                .collect(Collectors.toSet());
-
-        List<MobileAppBundleOauth2Client> existingClients = mobileAppBundleDao.findOauth2ClientsByMobileAppBundleId(tenantId, mobileAppBundleId);
-        List<MobileAppBundleOauth2Client> toRemoveList = existingClients.stream()
-                .filter(client -> !newClientList.contains(client))
-                .toList();
-        newClientList.removeIf(existingClients::contains);
-
-        for (MobileAppBundleOauth2Client client : toRemoveList) {
-            mobileAppBundleDao.removeOauth2Client(tenantId, client);
-        }
-        for (MobileAppBundleOauth2Client client : newClientList) {
-            mobileAppBundleDao.addOauth2Client(tenantId, client);
-        }
-        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
-                .entityId(mobileAppBundleId).created(false).build());
-    }
-
-    @Override
     public MobileAppBundle findMobileAppBundleByPkgNameAndPlatform(TenantId tenantId, String pkgName, PlatformType platform) {
         log.trace("Executing findMobileAppBundleByPkgNameAndPlatform, tenantId [{}], pkgName [{}], platform [{}]", tenantId, pkgName, platform);
         checkNotNull(platform, PLATFORM_TYPE_IS_REQUIRED);
         return mobileAppBundleDao.findByPkgNameAndPlatform(tenantId, pkgName, platform);
+    }
+
+    @Override
+    public void deleteMobileAppBundleById(TenantId tenantId, MobileAppBundleId mobileAppBundleId) {
+        log.trace("Executing deleteMobileAppBundleById [{}]", mobileAppBundleId.getId());
+        mobileAppBundleDao.removeById(tenantId, mobileAppBundleId.getId());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(mobileAppBundleId).build());
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        log.trace("Executing deleteMobileAppsByTenantId, tenantId [{}]", tenantId);
+        mobileAppBundleDao.deleteByTenantId(tenantId);
     }
 
     @Override
@@ -147,17 +153,6 @@ public class MobileAppBundleServiceImpl extends AbstractEntityService implements
     @Transactional
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
         deleteMobileAppBundleById(tenantId, (MobileAppBundleId) id);
-    }
-
-    @Override
-    public void deleteMobileAppBundlesByTenantId(TenantId tenantId) {
-        log.trace("Executing deleteMobileAppsByTenantId, tenantId [{}]", tenantId);
-        mobileAppBundleDao.deleteByTenantId(tenantId);
-    }
-
-    @Override
-    public void deleteByTenantId(TenantId tenantId) {
-        deleteMobileAppBundlesByTenantId(tenantId);
     }
 
     @Override

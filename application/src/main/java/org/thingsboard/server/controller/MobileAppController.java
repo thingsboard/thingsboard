@@ -16,7 +16,7 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -54,7 +54,6 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -77,7 +76,7 @@ public class MobileAppController extends BaseController {
     private final TbMobileAppService tbMobileAppService;
 
     @ApiOperation(value = "Get mobile app login info (getLoginMobileInfo)")
-    @GetMapping(value = "/api/noauth/mobile")
+    @GetMapping(value = "/noauth/mobile")
     public LoginMobileInfo getLoginMobileInfo(@Parameter(description = "Mobile application package name")
                                               @RequestParam String pkgName,
                                               @Parameter(description = "Platform type", schema = @Schema(allowableValues = {"ANDROID", "IOS"}))
@@ -89,7 +88,7 @@ public class MobileAppController extends BaseController {
 
     @ApiOperation(value = "Get user mobile app basic info (getUserMobileInfo)", notes = AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/api/mobile")
+    @GetMapping(value = "/mobile")
     public UserMobileInfo getUserMobileInfo(@Parameter(description = "Mobile application package name")
                                             @RequestParam String pkgName,
                                             @Parameter(description = "Platform type", schema = @Schema(allowableValues = {"ANDROID", "IOS"}))
@@ -102,7 +101,7 @@ public class MobileAppController extends BaseController {
     }
 
     @ApiOperation(value = "Get mobile app version info (getMobileVersionInfo)")
-    @GetMapping(value = "/api/mobile/versionInfo")
+    @GetMapping(value = "/mobile/versionInfo")
     public MobileAppVersionInfo getMobileVersionInfo(@Parameter(description = "Mobile application package name")
                                                      @RequestParam String pkgName,
                                                      @Parameter(description = "Platform type", schema = @Schema(allowableValues = {"ANDROID", "IOS"}))
@@ -164,15 +163,15 @@ public class MobileAppController extends BaseController {
         tbMobileAppService.delete(mobileApp, getCurrentUser());
     }
 
-    private List<MobilePage> getVisiblePages(MobileAppBundle mobileAppBundle) throws JsonProcessingException {
+    private JsonNode getVisiblePages(MobileAppBundle mobileAppBundle) throws JsonProcessingException {
         if (mobileAppBundle != null && mobileAppBundle.getLayoutConfig() != null) {
             List<MobilePage> mobilePages = mobileAppBundle.getLayoutConfig().getPages()
                     .stream()
                     .filter(MobilePage::isVisible)
                     .collect(Collectors.toList());
-            return JacksonUtil.readValue(JacksonUtil.writeValueAsViewIgnoringNullFields(mobilePages, Views.Public.class), new TypeReference<>() {});
+            return JacksonUtil.toJsonNode(JacksonUtil.writeValueAsViewIgnoringNullFields(mobilePages, Views.Public.class));
         } else {
-            return Collections.emptyList();
+            return JacksonUtil.newArrayNode();
         }
     }
 
