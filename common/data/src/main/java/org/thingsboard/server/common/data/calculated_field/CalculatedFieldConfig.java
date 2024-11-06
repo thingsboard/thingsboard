@@ -13,17 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.calculated_field;
+package org.thingsboard.server.common.data.calculated_field;
 
-import org.thingsboard.server.common.data.calculated_field.CalculatedFieldLink;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.Dao;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
 
-import java.util.UUID;
+import java.util.Map;
 
-public interface CalculatedFieldLinkDao extends Dao<CalculatedFieldLink> {
+@Data
+public class CalculatedFieldConfig {
 
-    CalculatedFieldLink findCalculatedFieldLinkByCalculatedFieldId(TenantId tenantId, CalculatedFieldId calculatedFieldId);
+    private Map<String, Argument> arguments;
+    private Output output;
+
+    @Data
+    public static class Argument {
+        private EntityId entityId;
+        private String key;
+        private String type;
+        private int defaultValue;
+    }
+
+    @Data
+    public static class Output {
+        private String type;
+        private String expression;
+    }
 
 }

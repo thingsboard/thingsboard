@@ -37,8 +37,8 @@ public class CalculatedFieldLink extends BaseData<CalculatedFieldLinkId> {
 
     @Schema(description = "JSON object with the Calculated Field Id. ", accessMode = Schema.AccessMode.READ_ONLY)
     private CalculatedFieldId calculatedFieldId;
-    @Schema(description = "JSON with the calculated field link configuration.", implementation = com.fasterxml.jackson.databind.JsonNode.class)
-    private transient JsonNode configuration;
+    @Schema
+    private transient CalculatedFieldConfig configuration;
 
     public CalculatedFieldLink() {
         super();
@@ -48,11 +48,11 @@ public class CalculatedFieldLink extends BaseData<CalculatedFieldLinkId> {
         super(id);
     }
 
-    public CalculatedFieldLink(TenantId tenantId, EntityId entityId, JsonNode configuration, CalculatedFieldId calculatedFieldId) {
+    public CalculatedFieldLink(TenantId tenantId, EntityId entityId, CalculatedFieldId calculatedFieldId, CalculatedFieldConfig configuration) {
         this.tenantId = tenantId;
         this.entityId = entityId;
-        this.configuration = configuration;
         this.calculatedFieldId = calculatedFieldId;
+        this.configuration = configuration;
     }
 
     @Override

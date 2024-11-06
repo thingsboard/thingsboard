@@ -34,6 +34,8 @@ import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.calculated_field.CalculatedFieldConfigUtil.calculatedFieldConfigToJson;
+import static org.thingsboard.server.dao.calculated_field.CalculatedFieldConfigUtil.toCalculatedFieldConfig;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_LINK_CALCULATED_FIELD_ID;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_LINK_CONFIGURATION;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_LINK_ENTITY_ID;
@@ -75,7 +77,7 @@ public class CalculatedFieldLinkEntity extends BaseSqlEntity<CalculatedFieldLink
         this.entityType = calculatedFieldLink.getEntityId().getEntityType();
         this.entityId = calculatedFieldLink.getEntityId().getId();
         this.calculatedFieldId = calculatedFieldLink.getCalculatedFieldId().getId();
-        this.configuration = calculatedFieldLink.getConfiguration();
+        this.configuration = calculatedFieldConfigToJson(calculatedFieldLink.getConfiguration(), entityType, entityId);
     }
 
     @Override
@@ -85,7 +87,7 @@ public class CalculatedFieldLinkEntity extends BaseSqlEntity<CalculatedFieldLink
         calculatedFieldLink.setTenantId(TenantId.fromUUID(tenantId));
         calculatedFieldLink.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
         calculatedFieldLink.setCalculatedFieldId(new CalculatedFieldId(calculatedFieldId));
-        calculatedFieldLink.setConfiguration(configuration);
+        calculatedFieldLink.setConfiguration(toCalculatedFieldConfig(configuration, entityType, entityId));
         return calculatedFieldLink;
     }
 

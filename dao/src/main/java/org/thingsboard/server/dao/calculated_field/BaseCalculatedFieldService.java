@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.calculated_field.CalculatedField;
+import org.thingsboard.server.common.data.calculated_field.CalculatedFieldConfig;
 import org.thingsboard.server.common.data.calculated_field.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -120,6 +121,16 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
     }
 
     @Override
+    public boolean referencedInAnyCalculatedField(TenantId tenantId, EntityId referencedEntityId) {
+        return calculatedFieldDao.findAllByTenantId(tenantId).stream()
+                .filter(calculatedField -> !referencedEntityId.equals(calculatedField.getEntityId()))
+                .map(CalculatedField::getConfiguration)
+                .map(CalculatedFieldConfig::getArguments)
+                .flatMap(arguments -> arguments.values().stream())
+                .anyMatch(argument -> referencedEntityId.equals(argument.getEntityId()));
+    }
+
+    @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findById(tenantId, new CalculatedFieldId(entityId.getId())));
     }
@@ -142,22 +153,26 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
                     Optional.ofNullable(deviceProfileService.findDeviceProfileById(tenantId, (DeviceProfileId) entityId))
                             .orElseThrow(() -> new IllegalArgumentException("Device Profile with id [" + entityId.getId() + "] does not exist."));
             default ->
-                    throw new IllegalArgumentException("Entity type '" + entityId.getEntityType() + "' is not supported.");
+                    throw new IllegalArgumentException("Entity type '" + entityId.getEntityType() + "' does not support calculated fields.");
         }
     }
 
     private void createOrUpdateCalculatedFieldLink(TenantId tenantId, CalculatedField calculatedField) {
-        CalculatedFieldLink calculatedFieldLink = calculatedFieldLinkDao.findCalculatedFieldLinkByEntityId(tenantId.getId(), calculatedField.getEntityId().getId());
-        saveCalculatedFieldLink(tenantId, Objects.requireNonNullElseGet(calculatedFieldLink, () -> createCalculatedFieldLink(tenantId, calculatedField)));
+        CalculatedFieldLink existingLink = (calculatedField.getId() != null)
+                ? calculatedFieldLinkDao.findCalculatedFieldLinkByCalculatedFieldId(tenantId, calculatedField.getId())
+                : null;
+
+        CalculatedFieldLink updatedLink = buildCalculatedFieldLink(tenantId, calculatedField, existingLink);
+        saveCalculatedFieldLink(tenantId, updatedLink);
     }
 
-    private CalculatedFieldLink createCalculatedFieldLink(TenantId tenantId, CalculatedField calculatedField) {
-        CalculatedFieldLink calculatedFieldLink = new CalculatedFieldLink();
-        calculatedFieldLink.setTenantId(tenantId);
-        calculatedFieldLink.setEntityId(calculatedField.getEntityId());
-        calculatedFieldLink.setCalculatedFieldId(calculatedField.getId());
-        calculatedFieldLink.setConfiguration(calculatedField.getConfiguration());
-        return calculatedFieldLink;
+    private CalculatedFieldLink buildCalculatedFieldLink(TenantId tenantId, CalculatedField calculatedField, CalculatedFieldLink existingLink) {
+        CalculatedFieldLink link = (existingLink != null) ? existingLink : new CalculatedFieldLink();
+        link.setTenantId(tenantId);
+        link.setEntityId(calculatedField.getEntityId());
+        link.setCalculatedFieldId(calculatedField.getId());
+        link.setConfiguration(calculatedField.getConfiguration());
+        return link;
     }
 
 }

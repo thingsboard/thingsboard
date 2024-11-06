@@ -21,17 +21,19 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.calculated_field.CalculatedField;
+import org.thingsboard.server.common.data.calculated_field.CalculatedFieldConfig;
 import org.thingsboard.server.common.data.calculated_field.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.dao.calculated_field.CalculatedFieldService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,7 +62,7 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
     @Test
     public void testSaveCalculatedField() {
         Device device = createTestDevice();
-        CalculatedField calculatedField = getCalculatedField(device.getId());
+        CalculatedField calculatedField = getCalculatedField(device.getId(), device.getId());
         CalculatedField savedCalculatedField = calculatedFieldService.save(calculatedField);
 
         assertThat(savedCalculatedField).isNotNull();
@@ -84,7 +86,8 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
     @Test
     public void testSaveCalculatesFieldWithNonExistingDeviceId() {
-        CalculatedField calculatedField = getCalculatedField(new DeviceId(UUID.fromString("038f8668-c9fd-4f00-8501-ce20f2f93c22")));
+        DeviceId deviceId = new DeviceId(UUID.fromString("038f8668-c9fd-4f00-8501-ce20f2f93c22"));
+        CalculatedField calculatedField = getCalculatedField(deviceId, deviceId);
 
         assertThatThrownBy(() -> calculatedFieldService.save(calculatedField))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -94,7 +97,7 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
     @Test
     public void testSaveCalculatedFieldWithExistingName() {
         Device device = createTestDevice();
-        CalculatedField calculatedField = getCalculatedField(device.getId());
+        CalculatedField calculatedField = getCalculatedField(device.getId(), device.getId());
         calculatedFieldService.save(calculatedField);
 
         assertThatThrownBy(() -> calculatedFieldService.save(calculatedField))
@@ -105,7 +108,7 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
     @Test
     public void testSaveCalculatedFieldWithExistingExternalId() {
         Device device = createTestDevice();
-        CalculatedField calculatedField = getCalculatedField(device.getId());
+        CalculatedField calculatedField = getCalculatedField(device.getId(), device.getId());
         calculatedField.setExternalId(new CalculatedFieldId(UUID.fromString("2ef69d0a-89cf-4868-86f8-c50551d87ebe")));
 
         calculatedFieldService.save(calculatedField);
@@ -147,28 +150,18 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
     private CalculatedField saveValidCalculatedField() {
         Device device = createTestDevice();
-        CalculatedField calculatedField = getCalculatedField(device.getId());
+        CalculatedField calculatedField = getCalculatedField(device.getId(), device.getId());
         return calculatedFieldService.save(calculatedField);
     }
 
-    private CalculatedField getCalculatedField(DeviceId deviceId) {
+    private CalculatedField getCalculatedField(EntityId entityId, EntityId referencedEntityId) {
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setTenantId(tenantId);
-        calculatedField.setEntityId(deviceId);
+        calculatedField.setEntityId(entityId);
         calculatedField.setType("Simple");
         calculatedField.setName("Test Calculated Field");
         calculatedField.setConfigurationVersion(1);
-        calculatedField.setConfiguration(JacksonUtil.toJsonNode("{\n" +
-                "    \"T\": {\n" +
-                "    \"key\": \"temperature\",\n" +
-                "    \"type\": \"TIME_SERIES\"\n" +
-                "    },\n" +
-                "    \"H\": {\n" +
-                "    \"key\": \"humidity\",\n" +
-                "    \"type\": \"TIME_SERIES\",\n" +
-                "    \"defaultValue\": 50\n" +
-                "    }\n" +
-                " }\n"));
+        calculatedField.setConfiguration(getCalculatedFieldConfig(referencedEntityId));
         calculatedField.setVersion(1L);
         return calculatedField;
     }
@@ -177,9 +170,28 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         CalculatedFieldLink calculatedFieldLink = new CalculatedFieldLink();
         calculatedFieldLink.setTenantId(tenantId);
         calculatedFieldLink.setEntityId(calculatedField.getEntityId());
-        calculatedFieldLink.setConfiguration(calculatedField.getConfiguration());
+//        calculatedFieldLink.setConfiguration(calculatedField.getConfiguration());
         calculatedFieldLink.setCalculatedFieldId(calculatedField.getId());
         return calculatedFieldLink;
+    }
+
+    private CalculatedFieldConfig getCalculatedFieldConfig(EntityId referencedEntityId) {
+        CalculatedFieldConfig config = new CalculatedFieldConfig();
+
+        CalculatedFieldConfig.Argument argument = new CalculatedFieldConfig.Argument();
+        argument.setEntityId(referencedEntityId);
+        argument.setType("TIME_SERIES");
+        argument.setKey("temperature");
+
+        config.setArguments(Map.of("T", argument));
+
+        CalculatedFieldConfig.Output output = new CalculatedFieldConfig.Output();
+        output.setType("TIME_SERIES");
+        output.setExpression("T - (100 - H) / 5");
+
+        config.setOutput(output);
+
+        return config;
     }
 
     private Device createTestDevice() {

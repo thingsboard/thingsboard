@@ -22,6 +22,6 @@ import java.util.UUID;
 
 public interface CalculatedFieldLinkRepository extends JpaRepository<CalculatedFieldLinkEntity, UUID> {
 
-    CalculatedFieldLinkEntity findByTenantIdAndEntityId(UUID tenantId, UUID entityId);
+    CalculatedFieldLinkEntity findByTenantIdAndCalculatedFieldId(UUID tenantId, UUID calculatedFieldId);
 
 }

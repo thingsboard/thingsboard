@@ -26,6 +26,8 @@ public interface CalculatedFieldDao extends Dao<CalculatedField> {
 
     boolean existsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId);
 
+    List<CalculatedField> findAllByTenantId(TenantId tenantId);
+
     List<CalculatedField> removeAllByEntityId(TenantId tenantId, EntityId entityId);
 
 }

@@ -20,6 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.calculated_field.CalculatedFieldLink;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.calculated_field.CalculatedFieldLinkDao;
 import org.thingsboard.server.dao.model.sql.CalculatedFieldLinkEntity;
@@ -37,8 +39,8 @@ public class JpaCalculatedFieldLinkDao extends JpaAbstractDao<CalculatedFieldLin
     private final CalculatedFieldLinkRepository calculatedFieldLinkRepository;
 
     @Override
-    public CalculatedFieldLink findCalculatedFieldLinkByEntityId(UUID tenantId, UUID entityId) {
-        return DaoUtil.getData(calculatedFieldLinkRepository.findByTenantIdAndEntityId(tenantId, entityId));
+    public CalculatedFieldLink findCalculatedFieldLinkByCalculatedFieldId(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
+        return DaoUtil.getData(calculatedFieldLinkRepository.findByTenantIdAndCalculatedFieldId(tenantId.getId(), calculatedFieldId.getId()));
     }
 
     @Override

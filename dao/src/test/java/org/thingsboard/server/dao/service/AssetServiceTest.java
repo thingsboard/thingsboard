@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.calculated_field.CalculatedField;
+import org.thingsboard.server.common.data.calculated_field.CalculatedFieldConfig;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -48,6 +49,7 @@ import org.thingsboard.server.dao.relation.RelationService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -247,7 +249,9 @@ public class AssetServiceTest extends AbstractServiceTest {
             Assert.assertEquals("typeB", assetTypes.get(1).getType());
             Assert.assertEquals("typeC", assetTypes.get(2).getType());
         } finally {
-            assets.forEach((asset) -> { assetService.deleteAsset(tenantId, asset.getId()); });
+            assets.forEach((asset) -> {
+                assetService.deleteAsset(tenantId, asset.getId());
+            });
         }
     }
 
@@ -854,23 +858,49 @@ public class AssetServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testDeleteAssetIfCalculatedFieldExists() {
+    public void testDeleteAssetIfReferencedInCalculatedField() {
         Asset asset = new Asset();
         asset.setTenantId(tenantId);
         asset.setName("My asset");
         asset.setType("default");
         Asset savedAsset = assetService.saveAsset(asset);
 
+        Asset assetWithCf = new Asset();
+        assetWithCf.setTenantId(tenantId);
+        assetWithCf.setName("Asset with CF");
+        assetWithCf.setType("default");
+        Asset savedAssetWithCf = assetService.saveAsset(assetWithCf);
+
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setTenantId(tenantId);
         calculatedField.setName("Test CF");
         calculatedField.setType("Simple");
-        calculatedField.setEntityId(savedAsset.getId());
-        calculatedFieldService.save(calculatedField);
+        calculatedField.setEntityId(savedAssetWithCf.getId());
+
+        CalculatedFieldConfig config = new CalculatedFieldConfig();
+
+        CalculatedFieldConfig.Argument argument = new CalculatedFieldConfig.Argument();
+        argument.setEntityId(savedAsset.getId());
+        argument.setType("TIME_SERIES");
+        argument.setKey("temperature");
+
+        config.setArguments(Map.of("T", argument));
+
+        CalculatedFieldConfig.Output output = new CalculatedFieldConfig.Output();
+        output.setType("TIME_SERIES");
+        output.setExpression("T - (100 - H) / 5");
+
+        config.setOutput(output);
+
+        calculatedField.setConfiguration(config);
+
+        CalculatedField savedCalculatedField = calculatedFieldService.save(calculatedField);
 
         assertThatThrownBy(() -> assetService.deleteAsset(tenantId, savedAsset.getId()))
                 .isInstanceOf(DataValidationException.class)
-                .hasMessage("Can't delete asset that has entity views or calculated fields!");
+                .hasMessage("Can't delete asset that has entity views or is referenced in calculated fields!");
+
+        calculatedFieldService.deleteCalculatedField(tenantId, savedCalculatedField.getId());
     }
 
 }
