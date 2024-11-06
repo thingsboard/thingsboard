@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.dashboard;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -161,6 +162,9 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             dashboardValidator.validate(dashboard, DashboardInfo::getTenantId);
         }
         try {
+            if (CollectionUtils.isNotEmpty(dashboard.getResources())) {
+                resourceService.importResources(dashboard.getTenantId(), dashboard.getResources());
+            }
             imageService.updateImagesUsage(dashboard);
             resourceService.updateResourcesUsage(dashboard);
 

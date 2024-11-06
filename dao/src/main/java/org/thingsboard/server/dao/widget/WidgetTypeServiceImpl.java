@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.widget;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -98,6 +99,9 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
         log.trace("Executing saveWidgetType [{}]", widgetTypeDetails);
         widgetTypeValidator.validate(widgetTypeDetails, WidgetType::getTenantId);
         try {
+            if (CollectionUtils.isNotEmpty(widgetTypeDetails.getResources())) {
+                resourceService.importResources(widgetTypeDetails.getTenantId(), widgetTypeDetails.getResources());
+            }
             imageService.updateImagesUsage(widgetTypeDetails);
             resourceService.updateResourcesUsage(widgetTypeDetails);
 

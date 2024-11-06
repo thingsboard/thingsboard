@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceExportData;
-import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -44,7 +43,6 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -52,7 +50,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.thingsboard.server.common.data.StringUtils.isNotEmpty;
 import static org.thingsboard.server.dao.device.DeviceServiceImpl.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.utils.LwM2mObjectModelUtils.toLwM2mObject;
@@ -146,11 +143,15 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     @Override
     public void importResources(List<ResourceExportData> resources, SecurityUser user) throws Exception {
         for (ResourceExportData resourceData : resources) {
+            TbResource resource = new TbResource();
+            resource.setTenantId(user.getTenantId());
+            accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.CREATE, null, resource);
+
             TbResourceInfo resourceInfo;
             if (resourceData.getType() == ResourceType.IMAGE) {
                 resourceInfo = tbImageService.importImage(resourceData, true, user);
             } else {
-                resourceInfo = importResource(resourceData, true, user);
+                resourceInfo = importResource(resourceData, user);
             }
             resourceData.setNewLink(resourceInfo.getLink());
         }
@@ -181,34 +182,16 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
                 .toList();
     }
 
-    private TbResourceInfo importResource(ResourceExportData exportData, boolean checkExisting, SecurityUser user) throws ThingsboardException {
-        if (exportData.getType() == ResourceType.IMAGE || exportData.getSubType() == ResourceSubType.IMAGE
-                || exportData.getSubType() == ResourceSubType.SCADA_SYMBOL) {
-            throw new IllegalArgumentException("Image import not supported");
-        }
+    private TbResourceInfo importResource(ResourceExportData resourceData, SecurityUser user) throws ThingsboardException {
         TbResource resource = new TbResource();
         resource.setTenantId(user.getTenantId());
         accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.CREATE, null, resource);
 
-        byte[] data = Base64.getDecoder().decode(exportData.getData());
-        if (checkExisting) {
-            String etag = resourceService.calculateEtag(data);
-            TbResourceInfo existingResource = resourceService.findSystemOrTenantResourceByEtag(user.getTenantId(), exportData.getType(), etag);
-            if (existingResource != null) {
-                return existingResource;
-            }
+        TbResourceInfo resourceInfo = resourceService.toResource(user.getTenantId(), resourceData);
+        if (resourceInfo.getId() != null) {
+            accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.READ, resourceInfo.getId(), resourceInfo);
+            return resourceInfo;
         }
-
-        resource.setFileName(exportData.getFileName());
-        if (isNotEmpty(exportData.getTitle())) {
-            resource.setTitle(exportData.getTitle());
-        } else {
-            resource.setTitle(exportData.getFileName());
-        }
-        resource.setResourceSubType(exportData.getSubType());
-        resource.setResourceType(exportData.getType());
-        resource.setResourceKey(exportData.getResourceKey());
-        resource.setData(data);
         return save(resource, user);
     }
 

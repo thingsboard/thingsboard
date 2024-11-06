@@ -45,6 +45,10 @@ public interface ResourceService extends EntityDaoService {
 
     ResourceExportData exportResource(TbResourceInfo resourceInfo);
 
+    TbResource toResource(TenantId tenantId, ResourceExportData exportData);
+
+    void importResources(TenantId tenantId, List<ResourceExportData> resources);
+
     TbResourceInfo findResourceInfoById(TenantId tenantId, TbResourceId resourceId);
 
     TbResourceInfo findResourceInfoByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceKey);

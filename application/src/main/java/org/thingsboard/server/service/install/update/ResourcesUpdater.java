@@ -15,38 +15,62 @@
  */
 package org.thingsboard.server.service.install.update;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.Iterators;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.HasImage;
+import org.thingsboard.server.common.data.ResourceExportData;
+import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.TbResourceInfo;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.asset.AssetProfileDao;
 import org.thingsboard.server.dao.dashboard.DashboardDao;
+import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.resource.ImageService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.widget.WidgetTypeDao;
+import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class ImagesUpdater {
+public class ResourcesUpdater {
     private final ImageService imageService;
+    private final ResourceService resourceService;
     private final WidgetsBundleDao widgetsBundleDao;
     private final WidgetTypeDao widgetTypeDao;
+    private final WidgetTypeService widgetTypeService;
     private final TenantDao tenantDao;
     private final DashboardDao dashboardDao;
+    private final DashboardService dashboardService;
     private final DeviceProfileDao deviceProfileDao;
     private final AssetProfileDao assetProfileDao;
 
@@ -67,12 +91,102 @@ public class ImagesUpdater {
         updateImages("dashboard", dashboardDao::findIdsByTenantId, imageService::updateImagesUsage, dashboardDao);
     }
 
-    public void createSystemImages(Dashboard defaultDashboard) {
+    public void createSystemImagesAndResources(Dashboard defaultDashboard) {
         defaultDashboard.setTenantId(TenantId.SYS_TENANT_ID);
-        // TODO: test! also update dashboards
-        boolean created = imageService.updateImagesUsage(defaultDashboard);
-        if (created) {
-            log.debug("Created system images for default dashboard '{}'", defaultDashboard.getTitle());
+        if (CollectionUtils.isNotEmpty(defaultDashboard.getResources())) {
+            resourceService.importResources(defaultDashboard.getTenantId(), defaultDashboard.getResources());
+        }
+        imageService.updateImagesUsage(defaultDashboard);
+        log.debug("Created/updated system images and resources for default dashboard '{}'", defaultDashboard.getTitle());
+    }
+
+    public void updateDashboardsResources() {
+        log.info("Updating resources usage in dashboards");
+        var dashboards = new PageDataIterable<>(dashboardService::findAllDashboardsIds, 512);
+        int totalCount = 0;
+        int updatedCount = 0;
+        for (DashboardId dashboardId : dashboards) {
+            Dashboard dashboard = dashboardService.findDashboardById(TenantId.SYS_TENANT_ID, dashboardId);
+            boolean updated = resourceService.updateResourcesUsage(dashboard); // will convert resources ids to new structure
+            if (updated) {
+                dashboardService.saveDashboard(dashboard);
+                updatedCount++;
+            }
+            totalCount++;
+
+            if (totalCount % 1000 == 0) {
+                log.info("Processed {} dashboards, updated {}", totalCount, updatedCount);
+            }
+        }
+        log.info("Updated {} dashboards", updatedCount);
+    }
+
+    public void updateWidgetsResources() {
+        log.info("Updating resources usage in widgets");
+        int totalCount = 0;
+        int updatedCount = 0;
+        var widgets = new PageDataIterable<>(widgetTypeService::findAllWidgetTypesIds, 512);
+        for (WidgetTypeId widgetTypeId : widgets) {
+            WidgetTypeDetails widgetTypeDetails = widgetTypeService.findWidgetTypeDetailsById(TenantId.SYS_TENANT_ID, widgetTypeId);
+            boolean updated = resourceService.updateResourcesUsage(widgetTypeDetails);
+            if (updated) {
+                widgetTypeService.saveWidgetType(widgetTypeDetails);
+                updatedCount++;
+            }
+            totalCount++;
+
+            if (totalCount % 200 == 0) {
+                log.info("Processed {} widgets, updated {}", totalCount, updatedCount);
+            }
+        }
+        log.info("Updated {} widgets", updatedCount);
+    }
+
+    public void updateFiles() {
+        Path widgetsDirectory = Path.of("/home/viacheslav/Desktop/thingsboard-ce/application/src/main/data/json/system/widget_types");
+        try {
+            Files.list(widgetsDirectory).forEach(path -> {
+                WidgetTypeDetails widgetTypeDetails = JacksonUtil.readValue(path.toFile(), WidgetTypeDetails.class);
+                widgetTypeDetails.setTenantId(TenantId.SYS_TENANT_ID);
+
+                imageService.updateImagesUsage(widgetTypeDetails);
+                resourceService.updateResourcesUsage(widgetTypeDetails);
+
+                Map<TbResourceId, TbResourceInfo> resources = new HashMap<>();
+                for (TbResourceInfo imageInfo : imageService.getUsedImages(widgetTypeDetails)) {
+                    resources.putIfAbsent(imageInfo.getId(), imageInfo);
+                }
+                for (TbResourceInfo resourceInfo : resourceService.getUsedResources(widgetTypeDetails)) {
+                    resources.putIfAbsent(resourceInfo.getId(), resourceInfo);
+                }
+
+                widgetTypeDetails.setResources(resources.values().stream()
+                        .map(resourceInfo -> {
+                            if (resourceInfo.getResourceType() == ResourceType.IMAGE) {
+                                ResourceExportData imageExportData = imageService.exportImage(resourceInfo);
+                                imageExportData.setResourceKey(null); // so that the image is not updated by resource key on import
+                                return imageExportData;
+                            } else {
+                                return resourceService.exportResource(resourceInfo);
+                            }
+                        })
+                        .toList());
+
+                ObjectNode json = (ObjectNode) JacksonUtil.valueToTree(widgetTypeDetails);
+                Iterators.removeIf(json.fields(), field -> field.getValue() == null
+                        || field.getValue().isNull());
+                json.remove(List.of("id", "createdTime", "tenantId", "externalId", "version", "scada"));
+                JsonNode resourcesNode = json.remove("resources");
+                json.set("resources", resourcesNode);
+                try {
+                    Files.writeString(path, json.toPrettyString());
+                    log.info("UPDATED {}: {} resources used", path, resources.size());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

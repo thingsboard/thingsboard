@@ -25,8 +25,6 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ImageDescriptor;
 import org.thingsboard.server.common.data.ResourceExportData;
-import org.thingsboard.server.common.data.ResourceSubType;
-import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbImageDeleteResult;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -45,7 +43,6 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -192,34 +189,11 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
         image.setTenantId(user.getTenantId());
         accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.CREATE, null, image);
 
-        byte[] data = Base64.getDecoder().decode(imageData.getData());
-        if (checkExisting) {
-            String etag = imageService.calculateImageEtag(data);
-            TbResourceInfo existingImage = imageService.findSystemOrTenantImageByEtag(user.getTenantId(), etag);
-            if (existingImage != null) {
-                return existingImage;
-            }
+        image = imageService.toImage(user.getTenantId(), imageData, checkExisting);
+        if (checkExisting && image.getId() != null) {
+            accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.READ, image.getId(), image);
+            return image;
         }
-
-        image.setFileName(imageData.getFileName());
-        if (isNotEmpty(imageData.getTitle())) {
-            image.setTitle(imageData.getTitle());
-        } else {
-            image.setTitle(imageData.getFileName());
-        }
-        if (imageData.getSubType() != null) {
-            image.setResourceSubType(imageData.getSubType());
-        } else {
-            image.setResourceSubType(ResourceSubType.IMAGE);
-        }
-        image.setResourceType(ResourceType.IMAGE);
-        image.setResourceKey(imageData.getResourceKey());
-        image.setPublic(imageData.isPublic());
-        image.setPublicResourceKey(imageData.getPublicResourceKey());
-        ImageDescriptor descriptor = new ImageDescriptor();
-        descriptor.setMediaType(imageData.getMediaType());
-        image.setDescriptorValue(descriptor);
-        image.setData(data);
         return save(image, user);
     }
 

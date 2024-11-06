@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceExportData;
+import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -68,6 +69,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.UnaryOperator;
 
+import static org.thingsboard.server.common.data.StringUtils.isNotEmpty;
 import static org.thingsboard.server.dao.device.DeviceServiceImpl.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -199,6 +201,74 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
                 .resourceKey(resourceInfo.getResourceKey())
                 .data(Base64.getEncoder().encodeToString(data))
                 .build();
+    }
+
+    @Override
+    public void importResources(TenantId tenantId, List<ResourceExportData> resources) {
+        for (ResourceExportData resourceData : resources) {
+            if (resourceData.getNewLink() != null) {
+                continue; // already imported
+            }
+
+            TbResource resource;
+            if (resourceData.getType() == ResourceType.IMAGE) {
+                resource = imageService.toImage(tenantId, resourceData, true);
+                if (resource.getData() != null) {
+                    imageService.saveImage(resource);
+                }
+            } else {
+                resource = toResource(tenantId, resourceData);
+                if (resource.getData() != null) {
+                    saveResource(resource);
+                }
+            }
+            resourceData.setNewLink(resource.getLink());
+        }
+    }
+
+    @Override
+    public TbResource toResource(TenantId tenantId, ResourceExportData exportData) {
+        if (exportData.getType() == ResourceType.IMAGE || exportData.getSubType() == ResourceSubType.IMAGE
+                || exportData.getSubType() == ResourceSubType.SCADA_SYMBOL) {
+            throw new IllegalArgumentException("Image import not supported");
+        }
+
+        byte[] data = Base64.getDecoder().decode(exportData.getData());
+        String etag = calculateEtag(data);
+
+        TbResourceInfo existingResource;
+        boolean updateData = false;
+        if (!tenantId.isSysTenantId()) {
+            existingResource = findSystemOrTenantResourceByEtag(tenantId, exportData.getType(), etag);
+        } else {
+            existingResource = findResourceInfoByTenantIdAndKey(tenantId, exportData.getType(), exportData.getResourceKey());
+            updateData = true; // we overwrite system resource instead of creating new
+        }
+        if (existingResource != null) {
+            TbResource resource = new TbResource(existingResource);
+            if (updateData && !etag.equals(resource.getEtag())) {
+                resource.setData(data);
+                log.info("[{}] Updating existing resource {}", tenantId, existingResource.getLink());
+            } else {
+                log.info("[{}] Using existing resource {}", tenantId, existingResource.getLink());
+            }
+            return resource;
+        }
+
+        TbResource resource = new TbResource();
+        resource.setTenantId(tenantId);
+        resource.setFileName(exportData.getFileName());
+        if (isNotEmpty(exportData.getTitle())) {
+            resource.setTitle(exportData.getTitle());
+        } else {
+            resource.setTitle(exportData.getFileName());
+        }
+        resource.setResourceSubType(exportData.getSubType());
+        resource.setResourceType(exportData.getType());
+        resource.setResourceKey(exportData.getResourceKey());
+        resource.setData(data);
+        log.info("[{}] Creating resource {}", tenantId, resource.getResourceKey());
+        return resource;
     }
 
     @Override
@@ -462,7 +532,9 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         if (resourceType == ResourceType.DASHBOARD) {
             Dashboard dashboard = JacksonUtil.fromString(data, Dashboard.class);
             dashboard.setTenantId(TenantId.SYS_TENANT_ID);
-
+            if (CollectionUtils.isNotEmpty(dashboard.getResources())) {
+                importResources(dashboard.getTenantId(), dashboard.getResources());
+            }
             imageService.updateImagesUsage(dashboard);
             updateResourcesUsage(dashboard);
 

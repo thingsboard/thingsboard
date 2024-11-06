@@ -68,6 +68,7 @@ import java.util.function.BiFunction;
 import java.util.regex.Pattern;
 
 import static org.apache.commons.lang3.ArrayUtils.get;
+import static org.thingsboard.server.common.data.StringUtils.isNotEmpty;
 
 @Service
 @Slf4j
@@ -246,6 +247,41 @@ public class BaseImageService extends BaseResourceService implements ImageServic
                 .publicResourceKey(imageInfo.getPublicResourceKey())
                 .data(Base64.getEncoder().encodeToString(data))
                 .build();
+    }
+
+    @Override
+    public TbResource toImage(TenantId tenantId, ResourceExportData imageData, boolean checkExisting) {
+        byte[] data = Base64.getDecoder().decode(imageData.getData());
+        if (checkExisting) {
+            String etag = calculateImageEtag(data);
+            TbResourceInfo existingImage = findSystemOrTenantImageByEtag(tenantId, etag);
+            if (existingImage != null) {
+                return new TbResource(existingImage);
+            }
+        }
+
+        TbResource image = new TbResource();
+        image.setTenantId(tenantId);
+        image.setFileName(imageData.getFileName());
+        if (isNotEmpty(imageData.getTitle())) {
+            image.setTitle(imageData.getTitle());
+        } else {
+            image.setTitle(imageData.getFileName());
+        }
+        if (imageData.getSubType() != null) {
+            image.setResourceSubType(imageData.getSubType());
+        } else {
+            image.setResourceSubType(ResourceSubType.IMAGE);
+        }
+        image.setResourceType(ResourceType.IMAGE);
+        image.setResourceKey(imageData.getResourceKey());
+        image.setPublic(imageData.isPublic());
+        image.setPublicResourceKey(imageData.getPublicResourceKey());
+        ImageDescriptor descriptor = new ImageDescriptor();
+        descriptor.setMediaType(imageData.getMediaType());
+        image.setDescriptorValue(descriptor);
+        image.setData(data);
+        return image;
     }
 
     @Override

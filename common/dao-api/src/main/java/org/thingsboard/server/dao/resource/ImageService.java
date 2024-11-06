@@ -50,6 +50,8 @@ public interface ImageService {
 
     ResourceExportData exportImage(TbResourceInfo imageInfo);
 
+    TbResource toImage(TenantId tenantId, ResourceExportData imageData, boolean checkExisting);
+
     TbImageDeleteResult deleteImage(TbResourceInfo imageInfo, boolean force);
 
     String calculateImageEtag(byte[] imageData);
