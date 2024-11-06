@@ -24,7 +24,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { UtilsService } from '@core/services/utils.service';
 import { Observable, Subject } from 'rxjs';
 import { MINUTE } from '@shared/models/time/time.models';
-import { isDefinedAndNotNull, mergeDeep } from '@core/utils';
+import { isDefinedAndNotNull, mergeDeep, unwrapModule } from '@core/utils';
 import { backgroundStyle, ComponentStyle, overlayStyle } from '@shared/models/widget-settings.models';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -157,7 +157,7 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
 
   private updateQRCode(link: string) {
     import('qrcode').then((QRCode) => {
-      QRCode.toString(link, (err, string) => {
+      unwrapModule(QRCode).toString(link, (err, string) => {
         this.qrCodeSVG = string;
         this.cd.markForCheck();
       })

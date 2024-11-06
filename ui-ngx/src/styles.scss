@@ -15,8 +15,8 @@
  */
 /* You can add global styles to this file, and also import other style files */
 
-@import '~typeface-roboto/index.css';
-@import '~font-awesome/css/font-awesome.min.css';
+@import 'typeface-roboto/index.css';
+@import 'font-awesome/css/font-awesome.min.css';
 @import 'theme.scss';
 @import './scss/constants';
 @import './scss/animations';
@@ -1046,6 +1046,9 @@ pre.tb-highlight {
       .mat-mdc-dialog-actions {
         margin-bottom: 0;
         padding: 8px;
+      }
+      .mdc-dialog__surface {
+        display: block;
       }
     }
   }
