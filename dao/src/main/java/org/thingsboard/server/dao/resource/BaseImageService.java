@@ -256,6 +256,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
             String etag = calculateImageEtag(data);
             TbResourceInfo existingImage = findSystemOrTenantImageByEtag(tenantId, etag);
             if (existingImage != null) {
+                log.info("[{}] Using existing image {}", tenantId, existingImage.getLink());
                 return new TbResource(existingImage);
             }
         }
@@ -281,6 +282,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         descriptor.setMediaType(imageData.getMediaType());
         image.setDescriptorValue(descriptor);
         image.setData(data);
+        log.info("[{}] Creating image {}", tenantId, image.getFileName());
         return image;
     }
 

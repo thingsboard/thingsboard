@@ -510,6 +510,10 @@ public class InstallScripts {
     public void updateResourcesUsage() {
         resourcesUpdater.updateDashboardsResources();
         resourcesUpdater.updateWidgetsResources();
+
+        /* TODO TMP remove */
+//        loadSystemResources(Path.of("/home/viacheslav/Desktop/thingsboard-ce/application/src/main/data/resources/js_modules"), ResourceType.JS_MODULE);
+//        resourcesUpdater.updateFiles();
     }
 
     private void loadSystemResources(Path dir, ResourceType resourceType) {

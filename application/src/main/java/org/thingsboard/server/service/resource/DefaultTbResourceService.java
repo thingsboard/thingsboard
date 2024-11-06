@@ -164,22 +164,11 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
         List<TbResourceInfo> resources = new ArrayList<>();
         resources.addAll(imagesProcessor.apply(entity));
         resources.addAll(resourcesProcessor.apply(entity));
-
         for (TbResourceInfo resourceInfo : resources) {
             accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.READ, resourceInfo.getId(), resourceInfo);
         }
 
-        return resources.stream()
-                .map(resourceInfo -> {
-                    if (resourceInfo.getResourceType() == ResourceType.IMAGE) {
-                        ResourceExportData imageExportData = imageService.exportImage(resourceInfo);
-                        imageExportData.setResourceKey(null); // so that the image is not updated by resource key on import
-                        return imageExportData;
-                    } else {
-                        return resourceService.exportResource(resourceInfo);
-                    }
-                })
-                .toList();
+        return resourceService.exportResources(user.getTenantId(), resources);
     }
 
     private TbResourceInfo importResource(ResourceExportData resourceData, SecurityUser user) throws ThingsboardException {
@@ -187,12 +176,13 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
         resource.setTenantId(user.getTenantId());
         accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.CREATE, null, resource);
 
-        TbResourceInfo resourceInfo = resourceService.toResource(user.getTenantId(), resourceData);
-        if (resourceInfo.getId() != null) {
-            accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.READ, resourceInfo.getId(), resourceInfo);
-            return resourceInfo;
+        resource = resourceService.toResource(user.getTenantId(), resourceData);
+        if (resource.getData() != null) {
+            return save(resource, user);
+        } else {
+            accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.READ, resource.getId(), resource);
+            return resource;
         }
-        return save(resource, user);
     }
 
     private Comparator<? super LwM2mObject> getComparator(String sortProperty, String sortOrder) {

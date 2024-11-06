@@ -59,6 +59,7 @@ import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -204,6 +205,21 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     @Override
+    public List<ResourceExportData> exportResources(TenantId tenantId, Collection<TbResourceInfo> resources) {
+        return resources.stream()
+                .map(resourceInfo -> {
+                    if (resourceInfo.getResourceType() == ResourceType.IMAGE) {
+                        ResourceExportData imageExportData = imageService.exportImage(resourceInfo);
+                        imageExportData.setResourceKey(null); // so that the image is not updated by resource key on import
+                        return imageExportData;
+                    } else {
+                        return exportResource(resourceInfo);
+                    }
+                })
+                .toList();
+    }
+
+    @Override
     public void importResources(TenantId tenantId, List<ResourceExportData> resources) {
         for (ResourceExportData resourceData : resources) {
             if (resourceData.getNewLink() != null) {
@@ -237,17 +253,18 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         String etag = calculateEtag(data);
 
         TbResourceInfo existingResource;
-        boolean updateData = false;
+        boolean update = false;
         if (!tenantId.isSysTenantId()) {
             existingResource = findSystemOrTenantResourceByEtag(tenantId, exportData.getType(), etag);
         } else {
             existingResource = findResourceInfoByTenantIdAndKey(tenantId, exportData.getType(), exportData.getResourceKey());
-            updateData = true; // we overwrite system resource instead of creating new
+            update = true; // we overwrite system resource instead of creating new
         }
         if (existingResource != null) {
             TbResource resource = new TbResource(existingResource);
-            if (updateData && !etag.equals(resource.getEtag())) {
+            if (update && !etag.equals(resource.getEtag())) {
                 resource.setData(data);
+                resource.setTitle(exportData.getTitle());
                 log.info("[{}] Updating existing resource {}", tenantId, existingResource.getLink());
             } else {
                 log.info("[{}] Using existing resource {}", tenantId, existingResource.getLink());
@@ -416,15 +433,13 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     private boolean updateResourcesUsage(TenantId tenantId, JsonNode jsonNode, Map<String, String> mapping, Map<String, String> links) {
-        AtomicBoolean updated = new AtomicBoolean(false);
-        processResources(jsonNode, mapping, value -> {
+        return processResources(jsonNode, mapping, value -> {
             String link = getResourceLink(value);
             if (link != null) {
                 String newLink = links.get(link);
                 if (newLink == null || newLink.equals(link)) {
                     return value; // leaving link as is
                 } else {
-                    updated.set(true);
                     return DataConstants.TB_RESOURCE_PREFIX + newLink;
                 }
             } else { // probably importing an old dashboard json where resources are referenced by ids
@@ -435,7 +450,6 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
                     return value;
                 }
                 TbResourceInfo resourceInfo = findResourceInfoById(tenantId, resourceId);
-                updated.set(true);
                 if (resourceInfo != null) {
                     return DataConstants.TB_RESOURCE_PREFIX + resourceInfo.getLink();
                 } else {
@@ -444,7 +458,6 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
                 }
             }
         });
-        return updated.get();
     }
 
     @Override
@@ -503,7 +516,8 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         }
     }
 
-    private void processResources(JsonNode jsonNode, Map<String, String> mapping, UnaryOperator<String> processor) {
+    private boolean processResources(JsonNode jsonNode, Map<String, String> mapping, UnaryOperator<String> processor) {
+        AtomicBoolean updated = new AtomicBoolean(false);
         JacksonUtil.replaceByMapping(jsonNode, mapping, Collections.emptyMap(), (name, urlNode) -> {
             String value = null;
             if (urlNode.isTextual()) { // link is in the right place
@@ -522,9 +536,13 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
             }
 
             JsonNode newValue = new TextNode(value);
-            log.trace("Replaced '{}' with '{}'", urlNode, newValue);
+            if (!newValue.toString().equals(urlNode.toString())) {
+                updated.set(true);
+                log.info("Replaced '{}' with '{}'", urlNode, newValue);
+            }
             return newValue;
         });
+        return updated.get();
     }
 
     @Override

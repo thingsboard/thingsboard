@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface ResourceService extends EntityDaoService {
@@ -44,6 +45,8 @@ public interface ResourceService extends EntityDaoService {
     byte[] getResourceData(TenantId tenantId, TbResourceId resourceId);
 
     ResourceExportData exportResource(TbResourceInfo resourceInfo);
+
+    List<ResourceExportData> exportResources(TenantId tenantId, Collection<TbResourceInfo> resources);
 
     TbResource toResource(TenantId tenantId, ResourceExportData exportData);
 
