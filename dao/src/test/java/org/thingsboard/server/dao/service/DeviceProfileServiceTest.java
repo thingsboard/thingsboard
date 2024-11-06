@@ -63,9 +63,6 @@ public class DeviceProfileServiceTest extends AbstractServiceTest {
     DeviceService deviceService;
     @Autowired
     OtaPackageService otaPackageService;
-    @Autowired
-    private CalculatedFieldService calculatedFieldService;
-
 
     private IdComparator<DeviceProfile> idComparator = new IdComparator<>();
     private IdComparator<DeviceProfileInfo> deviceProfileInfoIdComparator = new IdComparator<>();
@@ -482,23 +479,6 @@ public class DeviceProfileServiceTest extends AbstractServiceTest {
         assertThat(deviceProfileInfos).isNotEmpty();
         assertThat(deviceProfileInfos).hasSize(3);
         assertThat(deviceProfileInfos).isEqualTo(expected);
-    }
-
-    @Test
-    public void testDeleteDeviceProfileIfCalculatedFieldExists() {
-        DeviceProfile deviceProfile = this.createDeviceProfile(tenantId, "Device Profile");
-        DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
-
-        CalculatedField calculatedField = new CalculatedField();
-        calculatedField.setTenantId(tenantId);
-        calculatedField.setName("Test CF");
-        calculatedField.setType("Simple");
-        calculatedField.setEntityId(savedDeviceProfile.getId());
-        calculatedFieldService.save(calculatedField);
-
-        assertThatThrownBy(() -> deviceProfileService.deleteDeviceProfile(tenantId, savedDeviceProfile.getId()))
-                .isInstanceOf(DataValidationException.class)
-                .hasMessage("Deletion of Device Profile is prohibited!");
     }
 
 }

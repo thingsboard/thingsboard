@@ -28,12 +28,10 @@ import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.asset.AssetProfileInfo;
-import org.thingsboard.server.common.data.calculated_field.CalculatedField;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
-import org.thingsboard.server.dao.calculated_field.CalculatedFieldService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
@@ -45,7 +43,6 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DaoSqlTest
 public class AssetProfileServiceTest extends AbstractServiceTest {
@@ -57,8 +54,6 @@ public class AssetProfileServiceTest extends AbstractServiceTest {
     AssetProfileService assetProfileService;
     @Autowired
     AssetService assetService;
-    @Autowired
-    private CalculatedFieldService calculatedFieldService;
 
     @Test
     public void testSaveAssetProfile() {
@@ -383,23 +378,6 @@ public class AssetProfileServiceTest extends AbstractServiceTest {
         assertThat(assetProfileInfos).isNotEmpty();
         assertThat(assetProfileInfos).hasSize(3);
         assertThat(assetProfileInfos).isEqualTo(expected);
-    }
-
-    @Test
-    public void testDeleteAssetProfileIfCalculatedFieldExists() {
-        AssetProfile assetProfile = this.createAssetProfile(tenantId, "Asset Profile");
-        AssetProfile savedAssetProfile = assetProfileService.saveAssetProfile(assetProfile);
-
-        CalculatedField calculatedField = new CalculatedField();
-        calculatedField.setTenantId(tenantId);
-        calculatedField.setName("Test CF");
-        calculatedField.setType("Simple");
-        calculatedField.setEntityId(savedAssetProfile.getId());
-        calculatedFieldService.save(calculatedField);
-
-        assertThatThrownBy(() -> assetProfileService.deleteAssetProfile(tenantId, savedAssetProfile.getId()))
-                .isInstanceOf(DataValidationException.class)
-                .hasMessage("Deletion of Asset Profile is prohibited!");
     }
 
 }
