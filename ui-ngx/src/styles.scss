@@ -1267,6 +1267,23 @@ pre.tb-highlight {
   .no-wrap {
     white-space: nowrap;
   }
+
+  .tb-rounded-btn {
+    border-radius: 20px;
+    padding: 0 16px;
+
+    &.active:not(:disabled) {
+      border-color: $primary !important;
+    }
+
+    &:disabled, &:not(.active) {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    &:not(.active) {
+      color: rgba(0, 0, 0, 0.76);
+    }
+  }
 }
 
 /***************

@@ -29,7 +29,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { FcRuleNode, RuleNodeType } from '@shared/models/rule-node.models';
+import { DebugStrategy, FcRuleNode, RuleNodeType } from '@shared/models/rule-node.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { Subject } from 'rxjs';
 import { RuleNodeConfigComponent } from './rule-node-config.component';
@@ -92,7 +92,7 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
     if (this.ruleNode) {
       this.ruleNodeFormGroup = this.fb.group({
         name: [this.ruleNode.name, [Validators.required, Validators.pattern('(.|\\s)*\\S(.|\\s)*'), Validators.maxLength(255)]],
-        debugMode: [this.ruleNode.debugMode, []],
+        debugStrategy: [this.ruleNode.debugStrategy ?? DebugStrategy.DISABLED],
         singletonMode: [this.ruleNode.singletonMode, []],
         configuration: [this.ruleNode.configuration, [Validators.required]],
         additionalInfo: this.fb.group(
@@ -165,6 +165,13 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
 
   validate() {
     this.ruleNodeConfigComponent.validate();
+  }
+
+  onSingleModeChange($event: Event): void {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.ruleNodeFormGroup.get('singletonMode').patchValue(!this.ruleNodeFormGroup.get('singletonMode').value);
   }
 
   openRuleChain($event: Event) {

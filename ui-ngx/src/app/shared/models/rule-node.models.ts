@@ -37,7 +37,8 @@ export interface RuleNode extends BaseData<RuleNodeId> {
   ruleChainId?: RuleChainId;
   type: string;
   name: string;
-  debugMode: boolean;
+  debugStrategy: DebugStrategy;
+  lastUpdateTs?: number;
   singletonMode: boolean;
   queueName?: string;
   configurationVersion?: number;
@@ -345,11 +346,19 @@ export interface FcRuleNode extends FcRuleNodeType {
   ruleNodeId?: RuleNodeId;
   additionalInfo?: any;
   configuration?: RuleNodeConfiguration;
-  debugMode?: boolean;
+  debugStrategy?: DebugStrategy;
+  lastUpdateTs?: number;
   error?: string;
   highlighted?: boolean;
   componentClazz?: string;
   ruleChainType?: RuleChainType;
+}
+
+export enum DebugStrategy {
+  DISABLED = 'DISABLED',
+  ALL_EVENTS = 'ALL_EVENTS',
+  ONLY_FAILURE_EVENTS = 'ONLY_FAILURE_EVENTS',
+  ALL_WITH_FAILURES = 'ALL_WITH_FAILURES',
 }
 
 export interface FcRuleEdge extends FcEdge {

@@ -67,7 +67,7 @@ import { TenantProfileService } from '@core/http/tenant-profile.service';
 import { DeviceService } from '@core/http/device.service';
 import { AssetService } from '@core/http/asset.service';
 import { EdgeService } from '@core/http/edge.service';
-import { RuleNode } from '@shared/models/rule-node.models';
+import { DebugStrategy, RuleNode } from '@shared/models/rule-node.models';
 import { AssetProfileService } from '@core/http/asset-profile.service';
 import { AssetProfile } from '@shared/models/asset.models';
 import {
@@ -637,7 +637,7 @@ export class ImportExportService {
         if (ruleChainConnection.targetRuleChainId && ruleChainConnection.targetRuleChainId.id) {
           const ruleChainNode: RuleNode = {
             name: '',
-            debugMode: false,
+            debugStrategy: DebugStrategy.DISABLED,
             singletonMode: false,
             type: 'org.thingsboard.rule.engine.flow.TbRuleChainInputNode',
             configuration: {

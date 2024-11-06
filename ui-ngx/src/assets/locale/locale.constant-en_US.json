@@ -995,6 +995,19 @@
         "type-timeseries-deleted": "Telemetry deleted",
         "type-sms-sent": "SMS sent"
     },
+    "debug-strategy": {
+        "min": "min",
+        "label": "Debug strategy",
+        "on-failure": "Failures only (24/7)",
+        "all-messages": "All messages",
+        "failures": "Failures",
+        "all": "All",
+        "hint": {
+            "main": "All node debug messages rate limited with:",
+            "on-failure": "Save all failure debug events without time limit.",
+            "all-messages": "Save all debug events during time limit."
+        }
+    },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
         "html-message": "You have unsaved changes.<br/>Are you sure you want to leave this page?",
@@ -2071,6 +2084,7 @@
         "column": "Column",
         "row": "Row"
     },
+    "disabled": "Disabled",
     "edge": {
         "edge": "Edge",
         "edge-instances": "Edge instances",
@@ -4014,7 +4028,7 @@
         "deselect-all": "Deselect all",
         "rulenode-details": "Rule node details",
         "debug-mode": "Debug mode",
-        "singleton-mode": "Singleton mode",
+        "singleton": "Singleton",
         "configuration": "Configuration",
         "link": "Link",
         "link-details": "Rule node link details",
@@ -4292,6 +4306,9 @@
         "maximum-ota-packages-sum-data-size": "Maximum total size of OTA package files (bytes)",
         "maximum-ota-package-sum-data-size-required": "Maximum total size of OTA package files is required.",
         "maximum-ota-package-sum-data-size-range": "Maximum total size of OTA package files can't be negative",
+        "maximum-rule-node-debug-duration-min": "Maximum rule node debug duration (min)",
+        "maximum-rule-node-debug-duration-min-required": "Maximum rule node debug duration is required.",
+        "maximum-rule-node-debug-duration-min-range": "Maximum rule node debug duration can't be negative",
         "rest-requests-for-tenant": "REST requests for tenant",
         "transport-tenant-telemetry-msg-rate-limit": "Transport tenant telemetry messages",
         "transport-tenant-telemetry-data-points-rate-limit": "Transport tenant telemetry data points",
