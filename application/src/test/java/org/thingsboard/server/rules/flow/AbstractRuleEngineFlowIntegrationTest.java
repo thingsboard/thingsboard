@@ -333,7 +333,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         RuleChain finalRuleChain = rootRuleChain;
         RuleNode lastRuleNode = secondaryMetaData.getNodes().stream().filter(node -> !node.getId().equals(finalRuleChain.getFirstRuleNodeId())).findFirst().get();
 
-        Awaitility.await().atMost(3, TimeUnit.SECONDS)
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() ->
                     getDebugEvents(savedTenant.getId(), lastRuleNode.getId(), 1000)
                             .getData()
