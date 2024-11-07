@@ -137,10 +137,12 @@ public class LwM2MTestClient {
     private Map<LwM2MClientState, Integer> clientDtlsCid;
     private LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
     private LwM2mClientContext clientContext;
+    private LwM2mTemperatureSensor lwM2mTemperatureSensor12;
+    private String deviceIdStr;
 
     public void init(Security security, Security securityBs, int port, boolean isRpc,
                      LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandler,
-                     LwM2mClientContext clientContext, boolean isWriteAttribute, Integer cIdLength, boolean queueMode,
+                     LwM2mClientContext clientContext, Integer cIdLength, boolean queueMode,
                      boolean supportFormatOnly_SenMLJSON_SenMLCBOR) throws InvalidDDFFileException, IOException {
         Assert.assertNull("client already initialized", leshanClient);
         this.defaultLwM2mUplinkMsgHandlerTest = defaultLwM2mUplinkMsgHandler;
@@ -150,7 +152,7 @@ public class LwM2MTestClient {
             models.addAll(ObjectLoader.loadDdfFile(LwM2MTestClient.class.getClassLoader().getResourceAsStream("lwm2m/" + resourceName), resourceName));
         }
         LwM2mModel model = new StaticModel(models);
-        ObjectsInitializer initializer = isWriteAttribute ? new TbObjectsInitializer(model) : new ObjectsInitializer(model);
+        ObjectsInitializer initializer = new ObjectsInitializer(model);
         if (securityBs != null && security != null) {
             // SECURITY
             security.setId(serverId);
@@ -159,11 +161,11 @@ public class LwM2MTestClient {
             initializer.setClassForObject(SECURITY, Security.class);
             initializer.setInstancesForObject(SECURITY, instances);
             // SERVER
-           Server lwm2mServer = new Server(shortServerId, TimeUnit.MINUTES.toSeconds(60));
+            Server lwm2mServer = new Server(shortServerId, TimeUnit.MINUTES.toSeconds(60));
             lwm2mServer.setId(serverId);
-            Server  serverBs = new Server(shortServerIdBs0, TimeUnit.MINUTES.toSeconds(60));
+            Server serverBs = new Server(shortServerIdBs0, TimeUnit.MINUTES.toSeconds(60));
             serverBs.setId(serverIdBs);
-             instances = new LwM2mInstanceEnabler[]{serverBs, lwm2mServer};
+            instances = new LwM2mInstanceEnabler[]{serverBs, lwm2mServer};
             initializer.setClassForObject(SERVER, Server.class);
             initializer.setInstancesForObject(SERVER, instances);
         } else if (securityBs != null) {
@@ -177,7 +179,7 @@ public class LwM2MTestClient {
             // SERVER
             Server lwm2mServer = new Server(shortServerId, TimeUnit.MINUTES.toSeconds(60));
             lwm2mServer.setId(serverId);
-            initializer.setInstancesForObject(SERVER, lwm2mServer );
+            initializer.setInstancesForObject(SERVER, lwm2mServer);
         }
 
         initializer.setInstancesForObject(DEVICE, lwM2MDevice = new SimpleLwM2MDevice(executor));
@@ -190,7 +192,7 @@ public class LwM2MTestClient {
         locationParams.getPos();
         initializer.setInstancesForObject(LOCATION, new LwM2mLocation(locationParams.getLatitude(), locationParams.getLongitude(), locationParams.getScaleFactor(), executor, OBJECT_INSTANCE_ID_0));
         LwM2mTemperatureSensor lwM2mTemperatureSensor0 = new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_0);
-        LwM2mTemperatureSensor lwM2mTemperatureSensor12 = new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_12);
+        lwM2mTemperatureSensor12 = new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_12);
         initializer.setInstancesForObject(TEMPERATURE_SENSOR, lwM2mTemperatureSensor0, lwM2mTemperatureSensor12);
 
         List<LwM2mObjectEnabler> enablers = initializer.createAll();
@@ -239,11 +241,11 @@ public class LwM2MTestClient {
         boolean supportDeprecatedCiphers = false;
         clientCoapConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, !supportDeprecatedCiphers);
 
-        if (cIdLength!= null) {
+        if (cIdLength != null) {
             setDtlsConnectorConfigCidLength(clientCoapConfig, cIdLength);
         }
 
-        if (cIdLength!= null) {
+        if (cIdLength != null) {
             setDtlsConnectorConfigCidLength(clientCoapConfig, cIdLength);
         }
 
@@ -262,12 +264,12 @@ public class LwM2MTestClient {
 
         // Configure Registration Engine
         DefaultRegistrationEngineFactory engineFactory = new DefaultRegistrationEngineFactory();
-            // old
+        // old
         /**
          * Force reconnection/rehandshake on registration update.
          */
         int comPeriodInSec = 5;
-        if (comPeriodInSec > 0)   engineFactory.setCommunicationPeriod(comPeriodInSec * 1000);
+        if (comPeriodInSec > 0) engineFactory.setCommunicationPeriod(comPeriodInSec * 1000);
 //        engineFactory.setCommunicationPeriod(5000); // old
         /**
          * By default client will try to resume DTLS session by using abbreviated Handshake. This option force to always do a full handshake."
@@ -288,7 +290,7 @@ public class LwM2MTestClient {
         builder.setDataSenders(new ManualDataSender());
         builder.setRegistrationEngineFactory(engineFactory);
         Map<ContentFormat, NodeDecoder> decoders = new HashMap<>();
-        Map<ContentFormat, NodeEncoder> encoders =  new HashMap<>();
+        Map<ContentFormat, NodeEncoder> encoders = new HashMap<>();
         if (supportFormatOnly_SenMLJSON_SenMLCBOR) {
 //                decoders.put(ContentFormat.OPAQUE, new LwM2mNodeOpaqueDecoder());
             decoders.put(ContentFormat.CBOR, new LwM2mNodeCborDecoder());
@@ -316,7 +318,6 @@ public class LwM2MTestClient {
         clientDtlsCid = new HashMap<>();
         clientStates.add(ON_INIT);
         leshanClient = builder.build();
-        lwM2mTemperatureSensor12.setLeshanClient(leshanClient);
 
         LwM2mClientObserver observer = new LwM2mClientObserver() {
             @Override
@@ -453,6 +454,7 @@ public class LwM2MTestClient {
             if (isStartLw) {
                 this.awaitClientAfterStartConnectLw();
             }
+            lwM2mTemperatureSensor12.setLeshanClient(leshanClient);
         }
     }
 

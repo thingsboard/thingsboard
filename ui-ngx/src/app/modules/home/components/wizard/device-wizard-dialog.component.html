@@ -17,7 +17,7 @@
 -->
 <mat-toolbar color="primary">
   <h2 translate>device.add-device-text</h2>
-  <span fxFlex></span>
+  <span class="flex-1"></span>
   <div [tb-help]="'devices'"></div>
   <button mat-icon-button
           (click)="cancel()"
@@ -103,7 +103,7 @@
     <button mat-stroked-button *ngIf="selectedIndex > 0"
             [disabled]="(isLoading$ | async)"
             (click)="previousStep()">{{ 'action.back' | translate }}</button>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-stroked-button
             color="primary"
             *ngIf="showNext"

@@ -16,9 +16,9 @@
 
 -->
 <div class="tb-form-panel" (click)="manageWidgetActions()" style="cursor: pointer;">
-  <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+  <div class="flex flex-row items-center justify-start gap-4">
     <div class="tb-form-panel-title" translate style="padding-right: 48px;">widget-config.actions</div>
-    <mat-chip-listbox fxFlex>
+    <mat-chip-listbox class="flex-1">
       <ng-container *ngFor="let actionSourceId of widgetActionSourceIds">
         <mat-chip *ngFor="let widgetAction of widgetActionsByActionSourceId(actionSourceId)">
           <tb-icon matChipAvatar>{{ widgetAction.icon }}</tb-icon>

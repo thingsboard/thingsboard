@@ -47,8 +47,7 @@ public abstract class AbstractVersionedInsertRepository<T> extends AbstractInser
 
             List<Integer> toInsertIndexes = new ArrayList<>(notUpdatedCount);
             List<T> insertEntities = new ArrayList<>(notUpdatedCount);
-            int keyHolderIndex = 0;
-            for (int i = 0; i < updateResult.length; i++) {
+            for (int i = 0, keyHolderIndex = 0; i < updateResult.length; i++) {
                 if (updateResult[i] == 0) {
                     insertEntities.add(entities.get(i));
                     seqNumbers.add(null);
@@ -67,9 +66,10 @@ public abstract class AbstractVersionedInsertRepository<T> extends AbstractInser
 
             seqNumbersList = keyHolder.getKeyList();
 
-            for (int i = 0; i < insertResult.length; i++) {
+            for (int i = 0, keyHolderIndex = 0; i < insertResult.length; i++) {
                 if (insertResult[i] != 0) {
-                    seqNumbers.set(toInsertIndexes.get(i), (Long) seqNumbersList.get(i).get(VERSION_COLUMN));
+                    seqNumbers.set(toInsertIndexes.get(i), (Long) seqNumbersList.get(keyHolderIndex).get(VERSION_COLUMN));
+                    keyHolderIndex++;
                 }
             }
 

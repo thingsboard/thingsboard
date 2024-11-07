@@ -42,7 +42,6 @@ import { RafService } from '@core/services/raf.service';
 import { EntityAliases } from '@shared/models/alias.models';
 import { EntityInfo } from '@app/shared/models/entity.models';
 import { IDashboardComponent } from '@home/models/dashboard-component.models';
-import moment_ from 'moment';
 import {
   AlarmData,
   AlarmDataPageLink,
@@ -137,6 +136,7 @@ export interface IAliasController {
   resolveAlarmSource(alarmSource: Datasource): Observable<Datasource>;
   getEntityAliases(): EntityAliases;
   getFilters(): Filters;
+  getUserFilters(): Filters;
   getFilterInfo(filterId: string): FilterInfo;
   getKeyFilters(filterId: string): Array<KeyFilter>;
   updateCurrentAliasEntity(aliasId: string, currentEntity: EntityInfo): void;

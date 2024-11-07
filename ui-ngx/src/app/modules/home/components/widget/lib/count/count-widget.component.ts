@@ -41,7 +41,6 @@ import {
   CountWidgetSettings
 } from '@home/components/widget/lib/count/count-widget.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { UtilsService } from '@core/services/utils.service';
 
 const layoutHeight = 36;

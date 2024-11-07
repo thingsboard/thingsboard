@@ -145,6 +145,7 @@ import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
@@ -340,7 +341,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                 currentActivateToken = activationLink.split("=")[1];
                 return null;
             }
-        }).when(mailService).sendActivationEmail(anyString(), anyString());
+        }).when(mailService).sendActivationEmail(anyString(), anyLong(), anyString());
 
         Mockito.doAnswer(new Answer<Void>() {
             public Void answer(InvocationOnMock invocation) {
@@ -349,7 +350,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                 currentResetPasswordToken = passwordResetLink.split("=")[1];
                 return null;
             }
-        }).when(mailService).sendResetPasswordEmailAsync(anyString(), anyString());
+        }).when(mailService).sendResetPasswordEmailAsync(anyString(), anyLong(), anyString());
     }
 
     @After

@@ -47,7 +47,7 @@ import {
   WidgetActionsApi,
   WidgetSubscriptionApi
 } from '@core/api/widget-api.models';
-import { ChangeDetectorRef, Injector, NgModuleRef, NgZone, Type } from '@angular/core';
+import { ChangeDetectorRef, InjectionToken, Injector, NgZone, TemplateRef, Type } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { RafService } from '@core/services/raf.service';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
@@ -98,10 +98,11 @@ import * as RxJSOperators from 'rxjs/operators';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AlarmQuery, AlarmSearchStatus, AlarmStatus } from '@app/shared/models/alarm.models';
-import { ImagePipe, MillisecondsToTimeStringPipe, TelemetrySubscriber } from '@app/shared/public-api';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
+import { SharedTelemetrySubscriber, TelemetrySubscriber } from '@shared/models/telemetry/telemetry.models';
 import { UserId } from '@shared/models/id/user-id';
 import { UserSettingsService } from '@core/http/user-settings.service';
-import { DynamicComponentModule } from '@core/services/dynamic-component-factory.service';
 import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { UtilsService } from '@core/services/utils.service';
 
@@ -184,6 +185,10 @@ export class WidgetContext {
     return this.dashboard?.stateController?.dashboardCtrl?.elRef?.nativeElement;
   }
 
+  get dashboardContentElement(): HTMLElement {
+    return this.dashboard?.stateController?.dashboardCtrl?.dashboardContent?.nativeElement;
+  }
+
   authService: AuthService;
   deviceService: DeviceService;
   assetService: AssetService;
@@ -201,7 +206,7 @@ export class WidgetContext {
   userSettingsService: UserSettingsService;
   utilsService: UtilsService;
   telemetryWsService: TelemetryWebsocketService;
-  telemetrySubscribers?: TelemetrySubscriber[];
+  telemetrySubscribers?: Array<TelemetrySubscriber | SharedTelemetrySubscriber>;
   date: DatePipe;
   imagePipe: ImagePipe;
   milliSecondsToTimeString: MillisecondsToTimeStringPipe;
@@ -412,7 +417,13 @@ export class WidgetContext {
         this.dashboardWidget.updateWidgetParams();
       }
       try {
-        this.changeDetectorValue.detectChanges();
+        if (this.ngZone) {
+          this.ngZone.run(() => {
+            this.changeDetectorValue?.detectChanges();
+          });
+        } else {
+          this.changeDetectorValue?.detectChanges();
+        }
       } catch (e) {
         // console.log(e);
       }
@@ -422,7 +433,13 @@ export class WidgetContext {
   detectContainerChanges() {
     if (!this.destroyed) {
       try {
-        this.containerChangeDetectorValue.detectChanges();
+        if (this.ngZone) {
+          this.ngZone.run(() => {
+            this.containerChangeDetectorValue?.detectChanges();
+          });
+        } else {
+          this.containerChangeDetectorValue?.detectChanges();
+        }
       } catch (e) {
         // console.log(e);
       }
@@ -521,6 +538,10 @@ export class LabelVariablePattern {
   }
 }
 
+export const widgetContextToken = new InjectionToken<WidgetContext>('widgetContext');
+export const widgetErrorMessagesToken = new InjectionToken<string[]>('errorMessages');
+export const widgetTitlePanelToken = new InjectionToken<TemplateRef<any>>('widgetTitlePanel');
+
 export interface IDynamicWidgetComponent {
   readonly ctx: WidgetContext;
   readonly errorMessages: string[];
@@ -545,7 +566,6 @@ export interface WidgetInfo extends WidgetTypeDescriptor, WidgetControllerDescri
   description?: string;
   tags?: string[];
   componentType?: Type<IDynamicWidgetComponent>;
-  componentModuleRef?: NgModuleRef<DynamicComponentModule>;
 }
 
 export interface WidgetConfigComponentData {

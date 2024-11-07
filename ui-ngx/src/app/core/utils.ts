@@ -877,6 +877,15 @@ export const getOS = (): string => {
   return os;
 };
 
+export const isSafari = (): boolean => {
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  return /^((?!chrome|android).)*safari/i.test(userAgent);
+};
+
+export const isFirefox = (): boolean => {
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  return /^((?!seamonkey).)*firefox/i.test(userAgent);
+};
 
 export const camelCase = (str: string): string => {
   return _.camelCase(str);
@@ -884,4 +893,12 @@ export const camelCase = (str: string): string => {
 
 export const convertKeysToCamelCase = (obj: Record<string, any>): Record<string, any> => {
   return _.mapKeys(obj, (value, key) => _.camelCase(key));
+};
+
+export const unwrapModule = (module: any) : any => {
+  if ('default' in module && Object.keys(module).length === 1) {
+    return module.default;
+  } else {
+    return module;
+  }
 };

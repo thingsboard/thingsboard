@@ -16,7 +16,7 @@
 
 -->
 <div class="color-input-container">
-  <saturation-component class="saturation-component" [hue]="control.hue" [(color)]="control.value"></saturation-component>
+  <saturation-component class="saturation-component" [(color)]="control.value"></saturation-component>
 
   <div class="control-input-container">
     <div class="control-component">
@@ -25,7 +25,7 @@
                            [color]="control.value">
       </indicator-component>
       <div class="hue-alpha-range">
-        <hue-component [(hue)]="control.hue" [(color)]="control.value"></hue-component>
+        <hue-component [(color)]="control.value"></hue-component>
         <alpha-component [(color)]="control.value"></alpha-component>
       </div>
     </div>
@@ -38,9 +38,9 @@
       </mat-select>
       <div class="color-input" [ngSwitch]="presentations[presentationControl.value]">
         <rgba-input-component *ngSwitchCase="'rgba'" label
-                              [(color)]="control.value" [(hue)]="control.hue"></rgba-input-component>
+                              [(color)]="control.value"></rgba-input-component>
         <hsla-input-component *ngSwitchCase="'hsla'" label
-                              [(color)]="control.value" [(hue)]="control.hue"></hsla-input-component>
+                              [(color)]="control.value"></hsla-input-component>
         <tb-hex-input *ngSwitchCase="'hex'" [(color)]="control.value"></tb-hex-input>
       </div>
     </div>
@@ -48,5 +48,5 @@
 </div>
 
 <div class="color-presets-block">
-  <color-presets-component class="color-presets-component" [columns]="6" [colorPresets]="colorPresets" [(color)]="control.value" [(hue)]="control.hue"></color-presets-component>
+  <color-presets-component class="color-presets-component" [columns]="6" [colorPresets]="colorPresets" [(color)]="control.value"></color-presets-component>
 </div>

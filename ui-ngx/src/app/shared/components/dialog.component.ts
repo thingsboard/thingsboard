@@ -19,7 +19,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { MatDialogRef } from '@angular/material/dialog';
-import { NavigationStart, Router, RouterEvent } from '@angular/router';
+import { NavigationStart, Router, Event } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
@@ -34,7 +34,7 @@ export abstract class DialogComponent<T, R = any> extends PageComponent implemen
     super(store);
     this.routerSubscription = this.router.events
       .pipe(
-        filter((event: RouterEvent) => event instanceof NavigationStart),
+        filter((event: Event) => event instanceof NavigationStart),
         filter(() => !!this.dialogRef)
       )
       .subscribe(() => {

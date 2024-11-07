@@ -79,8 +79,11 @@ public class ModelConstants {
     public static final String USER_CREDENTIALS_ENABLED_PROPERTY = "enabled";
     public static final String USER_CREDENTIALS_PASSWORD_PROPERTY = "password"; //NOSONAR, the constant used to identify password column name (not password value itself)
     public static final String USER_CREDENTIALS_ACTIVATE_TOKEN_PROPERTY = "activate_token";
+    public static final String USER_CREDENTIALS_ACTIVATE_TOKEN_EXP_TIME_PROPERTY = "activate_token_exp_time";
     public static final String USER_CREDENTIALS_RESET_TOKEN_PROPERTY = "reset_token";
-    public static final String USER_CREDENTIALS_ADDITIONAL_PROPERTY = "additional_info";
+    public static final String USER_CREDENTIALS_RESET_TOKEN_EXP_TIME_PROPERTY = "reset_token_exp_time";
+    public static final String USER_CREDENTIALS_LAST_LOGIN_TS_PROPERTY = "last_login_ts";
+    public static final String USER_CREDENTIALS_FAILED_LOGIN_ATTEMPTS_PROPERTY = "failed_login_attempts";
 
     /**
      * User settings constants.

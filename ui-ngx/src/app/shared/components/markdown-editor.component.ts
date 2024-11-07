@@ -28,7 +28,6 @@ import {
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Ace } from 'ace-builds';
 import { getAce } from '@shared/models/ace/ace.models';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 

@@ -659,7 +659,7 @@ export interface CustomActionDescriptor {
   customResources?: Array<WidgetResource>;
   customHtml?: string;
   customCss?: string;
-  customModules?: Type<any>[];
+  customImports?: Type<any>[];
 }
 
 export interface WidgetAction extends CustomActionDescriptor {
@@ -836,6 +836,8 @@ export interface WidgetPosition {
 export interface WidgetSize {
   sizeX: number;
   sizeY: number;
+  preserveAspectRatio: boolean;
+  resizable: boolean;
 }
 
 export interface IWidgetSettingsComponent {

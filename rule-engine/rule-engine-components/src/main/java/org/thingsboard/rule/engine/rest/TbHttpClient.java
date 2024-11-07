@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.transport.ProxyProvider;
 
 import javax.net.ssl.SSLException;
@@ -95,7 +96,12 @@ public class TbHttpClient {
                 semaphore = new Semaphore(config.getMaxParallelRequestsCount());
             }
 
-            HttpClient httpClient = HttpClient.create()
+            ConnectionProvider connectionProvider = ConnectionProvider
+                    .builder("rule-engine-http-client")
+                    .maxConnections(getPoolMaxConnections())
+                    .build();
+
+            HttpClient httpClient = HttpClient.create(connectionProvider)
                     .runOn(getSharedOrCreateEventLoopGroup(eventLoopGroupShared))
                     .doOnConnected(c ->
                             c.addHandlerLast(new ReadTimeoutHandler(config.getReadTimeoutMs(), TimeUnit.MILLISECONDS)));
@@ -122,7 +128,7 @@ public class TbHttpClient {
                     SslContext sslContext = config.getCredentials().initSslContext();
                     httpClient = httpClient.secure(t -> t.sslContext(sslContext));
                 }
-            } else if (!config.isUseSimpleClientHttpFactory()) {
+            } else if (config.isUseSimpleClientHttpFactory()) {
                 if (CredentialsType.CERT_PEM == config.getCredentials().getType()) {
                     throw new TbNodeException("Simple HTTP Factory does not support CERT PEM credentials!");
                 }
@@ -135,13 +141,24 @@ public class TbHttpClient {
 
             this.webClient = WebClient.builder()
                     .clientConnector(new ReactorClientHttpConnector(httpClient))
-                    .defaultHeader(HttpHeaders.CONNECTION, "close") //In previous realization this header was present! (Added for hotfix "Connection reset")
                     .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(
                             (config.getMaxInMemoryBufferSizeInKb() > 0 ? config.getMaxInMemoryBufferSizeInKb() : 256) * 1024))
                     .build();
         } catch (SSLException e) {
             throw new TbNodeException(e);
         }
+    }
+
+    private int getPoolMaxConnections() {
+        String poolMaxConnectionsEnv = System.getenv("TB_RE_HTTP_CLIENT_POOL_MAX_CONNECTIONS");
+
+        int poolMaxConnections;
+        if (poolMaxConnectionsEnv != null) {
+            poolMaxConnections = Integer.parseInt(poolMaxConnectionsEnv);
+        } else {
+            poolMaxConnections = ConnectionProvider.DEFAULT_POOL_MAX_CONNECTIONS;
+        }
+        return poolMaxConnections;
     }
 
     private void validateMaxInMemoryBufferSize(TbRestApiCallNodeConfiguration config) throws TbNodeException {
@@ -347,8 +364,7 @@ public class TbHttpClient {
         Properties properties = System.getProperties();
         if (properties.containsKey(HTTP_PROXY_HOST) || properties.containsKey(HTTPS_PROXY_HOST)) {
             createHttpProxyFrom(option, properties);
-        }
-        if (properties.containsKey(SOCKS_PROXY_HOST)) {
+        } else if (properties.containsKey(SOCKS_PROXY_HOST)) {
             createSocksProxyFrom(option, properties);
         }
     }

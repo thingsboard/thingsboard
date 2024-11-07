@@ -30,7 +30,7 @@ export class Marker {
     private editing = false;
 
     leafletMarker: L.Marker;
-    labelOffset: L.LatLngTuple;
+    labelOffset: L.PointTuple;
     tooltipOffset: L.LatLngTuple;
     markerOffset: L.LatLngTuple;
     tooltip: L.Popup;
@@ -40,10 +40,10 @@ export class Marker {
               private location: L.LatLng,
               private settings: Partial<WidgetMarkersSettings>,
               private data?: FormattedData,
-              private dataSources?,
+              private dataSources?: FormattedData[],
               private onDragendListener?,
               snappable = false) {
-        this.leafletMarker = L.marker(location, {
+        this.leafletMarker = L.marker(this.location, {
           pmIgnore: !settings.draggableMarker,
           snapIgnore: !snappable,
           tbMarkerData: this.data
@@ -78,7 +78,7 @@ export class Marker {
         }
 
         if (settings.draggableMarker && onDragendListener) {
-          this.leafletMarker.on('pm:dragstart', (e) => {
+          this.leafletMarker.on('pm:dragstart', () => {
             (this.leafletMarker.dragging as any)._draggable = { _moved: true };
             (this.leafletMarker.dragging as any)._enabled = true;
             this.editing = true;
@@ -134,7 +134,7 @@ export class Marker {
         }
     }
 
-    updateMarkerColor(color) {
+    updateMarkerColor(color: tinycolor.Instance) {
         this.createDefaultMarkerIcon(color, (iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
         });
@@ -179,8 +179,8 @@ export class Marker {
           loadImageWithAspect(this.map.ctx.$injector.get(ImagePipe), currentImage.url).subscribe(
                 (aspectImage) => {
                     if (aspectImage?.aspect) {
-                        let width;
-                        let height;
+                        let width: number;
+                        let height: number;
                         if (aspectImage.aspect > 1) {
                             width = currentImage.size;
                             height = currentImage.size / aspectImage.aspect;
@@ -263,7 +263,7 @@ export class Marker {
                  this.leafletMarker.addTo(map))*/
     }
 
-    extendBoundsWithMarker(bounds) {
+    extendBoundsWithMarker(bounds: L.LatLngBounds) {
         bounds.extend(this.leafletMarker.getLatLng());
     }
 
@@ -271,7 +271,7 @@ export class Marker {
         return this.leafletMarker.getLatLng();
     }
 
-    setMarkerPosition(latLng) {
+    setMarkerPosition(latLng: L.LatLngExpression) {
         this.leafletMarker.setLatLng(latLng);
     }
 }

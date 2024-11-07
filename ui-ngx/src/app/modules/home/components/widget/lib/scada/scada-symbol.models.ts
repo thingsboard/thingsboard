@@ -15,7 +15,22 @@
 ///
 
 import { ValueType } from '@shared/models/constants';
-import { Box, Element, Runner, SVG, Svg, Text, Timeline } from '@svgdotjs/svg.js';
+import {
+  Box,
+  EasingLiteral,
+  Element,
+  Matrix,
+  MatrixExtract,
+  MatrixTransformParam,
+  Runner,
+  Style,
+  SVG,
+  Svg,
+  Text,
+  Timeline,
+  TimesParam,
+  TransformData
+} from '@svgdotjs/svg.js';
 import '@svgdotjs/svg.panzoom.js';
 import {
   DataToValueType,
@@ -27,31 +42,40 @@ import {
 } from '@shared/models/action-widget-settings.models';
 import {
   createLabelFromSubscriptionEntityInfo,
+  deepClone,
   formatValue,
   guid,
   isDefinedAndNotNull,
+  isFirefox,
+  isNumeric,
+  isSafari,
+  isUndefined,
   isUndefinedOrNull,
   mergeDeep,
   parseFunction
 } from '@core/utils';
-import { BehaviorSubject, forkJoin, Observable, Observer, Subject } from 'rxjs';
+import { BehaviorSubject, forkJoin, Observable, Observer, of, Subject } from 'rxjs';
 import { ValueAction, ValueGetter, ValueSetter } from '@home/components/widget/lib/action/action-widget.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { ColorProcessor, constantColor, Font } from '@shared/models/widget-settings.models';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetAction, WidgetActionType, widgetActionTypeTranslationMap } from '@shared/models/widget.models';
-import { ResizeObserver } from '@juggle/resize-observer';
-import { takeUntil } from 'rxjs/operators';
+import { catchError, map, take, takeUntil } from 'rxjs/operators';
+import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
+import { MatIconRegistry } from '@angular/material/icon';
+import { RafService } from '@core/services/raf.service';
 
 export interface ScadaSymbolApi {
   generateElementId: () => string;
   formatValue: (value: any, dec?: number, units?: string, showZeroDecimals?: boolean) => string | undefined;
   text: (element: Element | Element[], text: string) => void;
   font: (element: Element | Element[], font: Font, color: string) => void;
-  animate: (element: Element, duration: number) => Runner;
-  resetAnimation: (element: Element) => void;
-  finishAnimation: (element: Element) => void;
+  icon: (element: Element | Element[], icon: string, size?: number, color?: string, center?: boolean) => void;
+  cssAnimate: (element: Element, duration: number) => ScadaSymbolAnimation;
+  cssAnimation: (element: Element) => ScadaSymbolAnimation | undefined;
+  resetCssAnimation: (element: Element) => void;
+  finishCssAnimation: (element: Element) => void;
   disable: (element: Element | Element[]) => void;
   enable: (element: Element | Element[]) => void;
   callAction: (event: Event, behaviorId: string, value?: any, observer?: Partial<Observer<void>>) => void;
@@ -70,6 +94,7 @@ export type ScadaSymbolStateRenderFunction = (ctx: ScadaSymbolContext, svg: Svg)
 
 export type ScadaSymbolTagStateRenderFunction = (ctx: ScadaSymbolContext, element: Element) => void;
 
+// noinspection JSUnusedGlobalSymbols
 export type ScadaSymbolActionTrigger = 'click';
 
 export type ScadaSymbolActionFunction = (ctx: ScadaSymbolContext, element: Element, event: Event) => void;
@@ -133,7 +158,8 @@ export enum ScadaSymbolPropertyType {
   color = 'color',
   color_settings = 'color_settings',
   font = 'font',
-  units = 'units'
+  units = 'units',
+  icon = 'icon'
 }
 
 export const scadaSymbolPropertyTypes = Object.keys(ScadaSymbolPropertyType) as ScadaSymbolPropertyType[];
@@ -146,7 +172,8 @@ export const scadaSymbolPropertyTypeTranslations = new Map<ScadaSymbolPropertyTy
     [ScadaSymbolPropertyType.color, 'scada.property.type-color'],
     [ScadaSymbolPropertyType.color_settings, 'scada.property.type-color-settings'],
     [ScadaSymbolPropertyType.font, 'scada.property.type-font'],
-    [ScadaSymbolPropertyType.units, 'scada.property.type-units']
+    [ScadaSymbolPropertyType.units, 'scada.property.type-units'],
+    [ScadaSymbolPropertyType.icon, 'scada.property.type-icon']
   ]
 );
 
@@ -191,10 +218,10 @@ export interface ScadaSymbolMetadata {
   properties: ScadaSymbolProperty[];
 }
 
-export const emptyMetadata = (): ScadaSymbolMetadata => ({
+export const emptyMetadata = (width?: number, height?: number): ScadaSymbolMetadata => ({
   title: '',
-  widgetSizeX: 3,
-  widgetSizeY: 3,
+  widgetSizeX: width ? Math.max(Math.round(width/100), 1) : 3,
+  widgetSizeY: height ? Math.max(Math.round(height/100), 1) : 3,
   tags: [],
   behavior: [],
   properties: []
@@ -203,6 +230,8 @@ export const emptyMetadata = (): ScadaSymbolMetadata => ({
 const svgPartsRegex = /(<svg.*?>)(.*)<\/svg>/gms;
 
 const tbNamespaceRegex = /<svg.*(xmlns:tb="https:\/\/thingsboard.io\/svg").*>/gms;
+
+const tbTagRegex = /tb:tag="([^"]*)"/gms;
 
 const generateElementId = () => {
   const id = guid();
@@ -249,13 +278,34 @@ export const parseScadaSymbolMetadataFromContent = (svgContent: string): ScadaSy
   }
 };
 
+export const parseScadaSymbolsTagsFromContent = (svgContent: string): string[] => {
+  const tags: string[] = [];
+  tbTagRegex.lastIndex = 0;
+  let tagsMatch = tbTagRegex.exec(svgContent);
+  while (tagsMatch !== null) {
+    tags.push(tagsMatch[1]);
+    tagsMatch = tbTagRegex.exec(svgContent);
+  }
+  return tags.filter((v, i, arr) => arr.indexOf(v) === i);
+};
+
 const parseScadaSymbolMetadataFromDom = (svgDoc: Document): ScadaSymbolMetadata => {
   try {
     const elements = svgDoc.getElementsByTagName('tb:metadata');
     if (elements.length) {
       return JSON.parse(elements[0].textContent);
     } else {
-      return emptyMetadata();
+      const svg = svgDoc.getElementsByTagName('svg')[0];
+      let width = null;
+      let height = null;
+      if (svg.viewBox?.baseVal?.width && svg.viewBox?.baseVal?.height) {
+        width = svg.viewBox.baseVal.width;
+        height = svg.viewBox.baseVal.height;
+      } else if (svg.width?.baseVal?.value && svg.height?.baseVal?.value) {
+        width = svg.width.baseVal.value;
+        height = svg.height.baseVal.value;
+      }
+      return emptyMetadata(width, height);
     }
   } catch (_e) {
     console.error(_e);
@@ -474,9 +524,10 @@ export interface ScadaSymbolObjectCallbacks {
 
 export class ScadaSymbolObject {
 
-  private metadata: ScadaSymbolMetadata;
+  private readonly metadata: ScadaSymbolMetadata;
   private settings: ScadaSymbolObjectSettings;
   private context: ScadaSymbolContext;
+  private cssAnimations: CssScadaSymbolAnimations;
 
   private svgShape: Svg;
   private box: Box;
@@ -496,7 +547,9 @@ export class ScadaSymbolObject {
 
   constructor(private rootElement: HTMLElement,
               private ctx: WidgetContext,
-              private svgContent: string,
+              private iconRegistry: MatIconRegistry,
+              private raf: RafService,
+              private readonly svgContent: string,
               private inputSettings: ScadaSymbolObjectSettings,
               private callbacks: ScadaSymbolObjectCallbacks,
               private simulated: boolean) {
@@ -593,19 +646,22 @@ export class ScadaSymbolObject {
   }
 
   private init() {
+    this.cssAnimations = new CssScadaSymbolAnimations(this.svgShape, this.raf);
     this.context = {
       api: {
         generateElementId: () => generateElementId(),
         formatValue,
         text: this.setElementText.bind(this),
         font: this.setElementFont.bind(this),
-        animate: this.animate.bind(this),
-        resetAnimation: this.resetAnimation.bind(this),
-        finishAnimation: this.finishAnimation.bind(this),
+        icon: this.setElementIcon.bind(this),
+        cssAnimate: this.cssAnimate.bind(this),
+        cssAnimation: this.cssAnimation.bind(this),
+        resetCssAnimation: this.resetCssAnimation.bind(this),
+        finishCssAnimation: this.finishCssAnimation.bind(this),
         disable: this.disableElement.bind(this),
         enable: this.enableElement.bind(this),
         callAction: this.callAction.bind(this),
-        setValue: this.setValue.bind(this)
+        setValue: this.setValue.bind(this),
       },
       tags: {},
       properties: {},
@@ -669,8 +725,6 @@ export class ScadaSymbolObject {
         const valueSetter = ValueSetter.fromSettings<any>(this.ctx, setValueSettings, this.simulated);
         this.valueSetters[setBehavior.id] = valueSetter;
         this.valueActions.push(valueSetter);
-      } else if (behavior.type === ScadaSymbolBehaviorType.widgetAction) {
-        // TODO:
       }
     }
     this.renderState();
@@ -859,19 +913,91 @@ export class ScadaSymbolObject {
     });
   }
 
-  private animate(element: Element, duration: number): Runner {
-    this.finishAnimation(element);
-    return element.animate(duration, 0, 'now');
+  private setElementIcon(e: Element | Element[],
+                         icon: string,
+                         size = 12,
+                         color = '#0000008A',
+                         center = true) {
+    this.elements(e).forEach(element => {
+      if (element.type === 'g') {
+        let skip = false;
+        const firstChild = element.first();
+        if (firstChild) {
+          const iconData: {icon: string; size: number; color: string} = firstChild.remember('iconData');
+          if (iconData && iconData.icon === icon && iconData.size === size && iconData.color === color) {
+            skip = true;
+          }
+        }
+        if (!skip) {
+          element.clear();
+          this.createIconElement(icon, size, color).subscribe((iconElement) => {
+            if (iconElement) {
+              iconElement.remember('iconData', {icon, size, color});
+              element.add(iconElement);
+              if (center) {
+                const box = iconElement.bbox();
+                iconElement.translate(-box.cx, -box.cy);
+              }
+            }
+          });
+        }
+      }
+    });
   }
 
-  private resetAnimation(element: Element) {
-    element.timeline().stop();
-    element.timeline(new Timeline());
+  private createIconElement(icon: string, size: number, color: string): Observable<Element> {
+    const isSvg = isSvgIcon(icon);
+    if (isSvg) {
+      const [namespace, iconName] = splitIconName(icon);
+      return this.iconRegistry
+      .getNamedSvgIcon(iconName, namespace)
+      .pipe(
+        take(1),
+        map((svgElement) => {
+          const element = new Element(svgElement.firstChild);
+          const box = element.bbox();
+          const scale = size / box.height;
+          element.scale(scale);
+          element.fill(color);
+          return element;
+        }),
+        catchError(() => of(null)
+      ));
+    } else {
+      const iconName = splitIconName(icon)[1];
+      const textElement = this.svgShape.text(iconName);
+      const fontSetClasses = (
+        this.iconRegistry.getDefaultFontSetClass()
+      ).filter(className => className.length > 0);
+      fontSetClasses.forEach(className => textElement.addClass(className));
+      textElement.font({size: `${size}px`});
+      textElement.attr({
+        style: `font-size: ${size}px`,
+        'text-anchor': 'start'
+      });
+      textElement.fill(color);
+      const tspan = textElement.first();
+      tspan.attr({
+        'dominant-baseline': 'hanging'
+      });
+      return of(textElement);
+    }
   }
 
-  private finishAnimation(element: Element) {
-    element.timeline().finish();
-    element.timeline(new Timeline());
+  private cssAnimate(element: Element, duration: number): ScadaSymbolAnimation {
+    return this.cssAnimations.animate(element, duration);
+  }
+
+  private cssAnimation(element: Element): ScadaSymbolAnimation | undefined {
+    return this.cssAnimations.animation(element);
+  }
+
+  private resetCssAnimation(element: Element) {
+    this.cssAnimations.resetAnimation(element);
+  }
+
+  private finishCssAnimation(element: Element) {
+    this.cssAnimations.finishAnimation(element);
   }
 
   private disableElement(e: Element | Element[]) {
@@ -923,4 +1049,680 @@ export class ScadaSymbolObject {
       return '';
     }
   }
+}
+
+const scadaSymbolAnimationId = 'scadaSymbolAnimation';
+
+interface ScadaSymbolAnimation {
+
+  running(): boolean;
+
+  play(): void;
+  pause(): void;
+  stop(): void;
+  finish(): void;
+
+  speed(speed: number): ScadaSymbolAnimation;
+  ease(easing: string): ScadaSymbolAnimation;
+  loop(times?: number, swing?: boolean): ScadaSymbolAnimation;
+
+  transform(transform: MatrixTransformParam, relative?: boolean): ScadaSymbolAnimation;
+  rotate(r: number, cx?: number, cy?: number): ScadaSymbolAnimation;
+  x(x: number): ScadaSymbolAnimation;
+  y(y: number): ScadaSymbolAnimation;
+  size(width: number, height: number): ScadaSymbolAnimation;
+  width(width: number): ScadaSymbolAnimation;
+  height(height: number): ScadaSymbolAnimation;
+  move(x: number, y: number): ScadaSymbolAnimation;
+  dmove(dx: number, dy: number): ScadaSymbolAnimation;
+  relative(x: number, y: number): ScadaSymbolAnimation;
+  scale(x: number, y?: number, cx?: number, cy?: number): ScadaSymbolAnimation;
+  attr(attr: string | object, value?: any): ScadaSymbolAnimation;
+
+}
+
+class CssScadaSymbolAnimations {
+  constructor(private svgShape: Svg,
+              private raf: RafService) {}
+
+  public animate(element: Element, duration = 1000): ScadaSymbolAnimation {
+    this.checkOldAnimation(element);
+    return this.setupAnimation(element, this.createAnimation(element, duration));
+  }
+
+  public animation(element: Element): ScadaSymbolAnimation | undefined {
+    return element.remember(scadaSymbolAnimationId);
+  }
+
+  public resetAnimation(element: Element) {
+    const animation: ScadaSymbolAnimation = element.remember(scadaSymbolAnimationId);
+    if (animation) {
+      animation.stop();
+      element.remember(scadaSymbolAnimationId, null);
+    }
+  }
+
+  public finishAnimation(element: Element) {
+    const animation: ScadaSymbolAnimation = element.remember(scadaSymbolAnimationId);
+    if (animation) {
+      animation.finish();
+      element.remember(scadaSymbolAnimationId, null);
+    }
+  }
+
+  private checkOldAnimation(element: Element) {
+    const previousAnimation: ScadaSymbolAnimation = element.remember(scadaSymbolAnimationId);
+    if (previousAnimation) {
+      previousAnimation.finish();
+    }
+  }
+
+  private setupAnimation(element: Element, animation: ScadaSymbolAnimation): ScadaSymbolAnimation {
+    element.remember(scadaSymbolAnimationId, animation);
+    return animation;
+  }
+
+  private createAnimation(element: Element, duration: number): ScadaSymbolAnimation {
+    const fallbackToJs = (isSafari() || isFirefox()) && element.type === 'pattern';
+    if (fallbackToJs) {
+      return new JsScadaSymbolAnimation(element, duration);
+    } else {
+      return new CssScadaSymbolAnimation(this.svgShape, this.raf, element, duration);
+    }
+  }
+}
+
+interface ScadaSymbolAnimationKeyframe {
+  stop: string;
+  style: any;
+}
+
+class CssScadaSymbolAnimation implements ScadaSymbolAnimation {
+
+  private _animationName: string;
+  private _animationStyle: Style;
+
+  private _active = false;
+  private _running = true;
+  private _speed = 1;
+  private readonly _duration: number = 1000;
+  private _easing = 'linear';
+  private _times = 1;
+  private _swing = false;
+
+  private _hasAnimations = false;
+  private _transform: MatrixTransformParam;
+  private _relative: boolean;
+  private _initialTransform: MatrixExtract;
+  private _transformOriginX: number = null;
+  private _transformOriginY: number = null;
+  private _attrs: any;
+
+  private _startAttrs: any;
+  private _endAttrs: any;
+
+  private _caf = null;
+
+  constructor(private svgShape: Svg,
+              private raf: RafService,
+              private element: Element,
+              duration = 1000)  {
+    this._duration = duration;
+    this.fixPatternAnimationForChrome();
+  }
+
+  private fixPatternAnimationForChrome(): void {
+    try {
+      const userAgent = window.navigator.userAgent;
+      if (+(/Chrome\/(\d+)/i.exec(userAgent)[1]) > 0) {
+        if (this.svgShape.defs().findOne('pattern')  && !this.svgShape.defs().findOne('pattern.empty-animation')) {
+          this.svgShape.defs().add(SVG('<pattern class="empty-animation"></pattern>'));
+          this.svgShape.style()
+            .rule('.' + 'empty-animation',
+              {'animation-name': 'empty-animation', 'animation-duration': '1000ms', 'animation-iteration-count': 'infinite'})
+            .addText('@keyframes empty-animation {0% {<!--opacity:1;-->}100% {<!--opacity:1;-->}}');
+        }
+      }
+    } catch (e) {}
+  }
+
+  public running(): boolean {
+    return this._active && this._running;
+  }
+
+  public play() {
+    if (!this._running) {
+      this._running = true;
+      this.updateAnimationStyle('animation-play-state', this.playStateStyle());
+    }
+  }
+
+  public pause() {
+    if (this._running) {
+      this._running = false;
+      this.updateAnimationStyle('animation-play-state', this.playStateStyle());
+    }
+  }
+
+  public stop() {
+    this._running = false;
+    if (this._hasAnimations) {
+      this.destroy();
+      this.applyStartAttrs();
+    }
+  }
+
+  public finish() {
+    this._running = false;
+    if (this._hasAnimations) {
+      this.destroy();
+    }
+  }
+
+  public speed(speed: number): this {
+    this._speed = speed;
+    this.updateAnimationStyle('animation-duration',
+      this.durationStyle());
+    this.updateAnimationStyle('animation-play-state', this.playStateStyle());
+    return this;
+  }
+
+  public ease(easing: string | EasingLiteral): this {
+    this._easing = this.easingLiteralToCssEasing(easing);
+    this.updateAnimationStyle('animation-timing-function', this._easing);
+    return this;
+  }
+
+  public loop(times = 0, swing = false): this {
+    this._times = times;
+    this._swing = swing;
+    if (this._animationStyle) {
+      this.createOrUpdateAnimation();
+    }
+    return this;
+  }
+
+  public transform(transform: MatrixTransformParam, relative = false): this {
+    this._hasAnimations = true;
+    for (const key of Object.keys(transform)) {
+      const val = transform[key];
+      if (!isFinite(val) && !Array.isArray(val)) {
+        delete transform[key];
+      }
+    }
+    if (this._transform) {
+      this._transform = Object.assign(this._transform, transform);
+    } else {
+      this._transform = deepClone(transform);
+    }
+    this._relative = relative;
+    this.createOrUpdateAnimation();
+    return this;
+  }
+
+  public rotate(r: number, cx?: number, cy?: number): this {
+    return this.transform({rotate: r, ox: cx, oy: cy}, true);
+  }
+
+  public x(x: number): this {
+    return this.transform({translateX: x});
+  }
+
+  public y(y: number): this {
+    return this.transform({translateY: y});
+  }
+
+  public size(width: number, height: number): this {
+    const box = this.element.bbox();
+    if (width == null || height == null) {
+      if (width == null) {
+        width = box.width / box.height * height;
+      } else if (height == null) {
+        height = box.height / box.width * width;
+      }
+    }
+    const scaleX = width / box.width;
+    const scaleY = height / box.height;
+    return this.scale(scaleX, scaleY);
+  }
+
+  public width(width: number): this {
+    return this.size(width, this.element.bbox().height);
+  }
+
+  public height(height: number): this {
+    return this.size(this.element.bbox().width, height);
+  }
+
+  public move(x: number, y: number): this {
+    const box = this.element.bbox();
+    const dx = x - box.x;
+    const dy = y - box.y;
+    return this.dmove(dx, dy);
+  }
+
+  public dmove(dx: number, dy: number): this {
+    return this.transform({translateX: dx, translateY: dy}, true);
+  }
+
+  public relative(x: number, y: number): this {
+    return this.transform({translateX: x, translateY: y}, true);
+  }
+
+  public scale(x: number, y?: number, cx?: number, cy?: number): this {
+    return this.transform({scaleX: x, scaleY: isUndefined(y) ? x : y, ox: cx, oy: cy}, true);
+  }
+
+  public attr(attr: string | object, value?: any): this {
+    this._hasAnimations = true;
+    if (!this._attrs) {
+      this._attrs = {};
+    }
+    if (typeof attr === 'object') {
+      for (const key of Object.keys(attr)) {
+        this._attrs[key] = attr[key];
+      }
+    } else {
+      this._attrs[attr] = value;
+    }
+    this.createOrUpdateAnimation();
+    return this;
+  }
+
+  private createOrUpdateAnimation() {
+    this.destroy();
+    this._caf = this.raf.raf(() => this.prepareAnimation());
+  }
+
+  private prepareAnimation() {
+    this._active = true;
+    this.prepareTransform();
+    this.prepareStartEndAttrs();
+    this._animationName = 'animation_' + generateElementId();
+    this.element.on('animationend', (evt) => {
+      if ((evt as any).animationName === this._animationName) {
+        this.destroy();
+      }
+    });
+    this._animationStyle = this.svgShape.style();
+    const styles = {
+        'animation-name': this._animationName,
+        'animation-duration': this.durationStyle(),
+        'animation-timing-function': this._easing,
+        'animation-iteration-count': this._times === 0 ? 'infinite' : this._times,
+        'animation-play-state': this.playStateStyle()
+    };
+    this._animationStyle.rule('.' + this._animationName, styles);
+
+    const keyframes = this.animationKeyframes();
+    let keyframesCss = `\n@keyframes ${this._animationName} {\n`;
+    for (const keyframe of keyframes) {
+      let keyframeCss = `  ${keyframe.stop} {\n`;
+      for (const i of Object.keys(keyframe.style)) {
+        keyframeCss += '    ' + i + ':' + keyframe.style[i] + ';\n';
+      }
+      keyframeCss += '  }\n';
+      keyframesCss += keyframeCss;
+    }
+    keyframesCss += '}';
+    this._animationStyle.addText(keyframesCss);
+    setTimeout(() => {
+      this.element.addClass(this._animationName);
+      if (!this._swing) {
+        this.applyEndAttrs();
+      }
+    }, 0);
+  }
+
+  private destroy() {
+    this.element.off('animationend');
+    this._active = false;
+    if (this._caf) {
+      this._caf();
+      this._caf = null;
+    }
+    if (this._animationStyle) {
+      this._animationStyle.remove();
+      this.element.removeClass(this._animationName);
+      this._animationStyle = null;
+      this._animationName = null;
+    }
+  }
+
+  private updateAnimationStyle(attrName: string, value: any) {
+    if (this._animationStyle) {
+      const styleText = this._animationStyle.node.innerHTML;
+      const attrValueRegex = new RegExp(`${attrName}:([^;]+);`);
+      this._animationStyle.node.innerHTML = styleText.replace(attrValueRegex, `${attrName}:${value};`);
+    }
+  }
+
+  private durationStyle(): string {
+    return (this._speed > 0 && this._duration > 0) ? Math.round(
+      (this._duration / this._speed) * (this._swing ? 2 : 1)
+    ) + 'ms' : '1000ms';
+  }
+
+  private playStateStyle(): string {
+    return (this._running && this._speed > 0) ? 'running' : 'paused';
+  }
+
+  private animationKeyframes(): ScadaSymbolAnimationKeyframe[] {
+    const keyframes: ScadaSymbolAnimationKeyframe[] = [];
+    let startStyle: any = {};
+    let endStyle: any = {};
+    if (this._transform) {
+      const transformed = this.transformedData();
+      startStyle = this.cssTransform();
+      endStyle = this.cssTransform(transformed);
+    }
+    if (this._attrs) {
+      startStyle = {...startStyle, ...this.currentCssAttrs()};
+      endStyle = {...endStyle, ...this.toCssAttrs(this._attrs)};
+    }
+    keyframes.push({
+      stop: '0%',
+      style: startStyle
+    });
+    if (this._swing) {
+      keyframes.push(...[
+        {
+          stop: '50%',
+          style: endStyle
+        },
+        {
+          stop: '100%',
+          style: startStyle
+        }]
+      );
+    } else {
+      keyframes.push({
+        stop: '100%',
+        style: endStyle
+      });
+    }
+    return keyframes;
+  }
+
+  private prepareStartEndAttrs() {
+    if (this._attrs) {
+      this._startAttrs = {...this._startAttrs, ...this.currentSvgAttrs()};
+      this._endAttrs = {...this._endAttrs, ...this._attrs};
+    }
+  }
+
+  private applyStartAttrs() {
+    if (this._initialTransform) {
+      this.element.transform(this._initialTransform);
+    }
+    if (this._startAttrs) {
+      this.element.attr(this._startAttrs);
+    }
+  }
+
+  private applyEndAttrs() {
+    if (this._transform) {
+      this.element.transform(this._transform, this._relative);
+    }
+    if (this._endAttrs) {
+      this.element.attr(this._endAttrs);
+    }
+  }
+
+  private prepareTransform() {
+    if (this._transform) {
+      this._transformOriginX = this.element.cx();
+      this._transformOriginY = this.element.cy();
+      if (isDefinedAndNotNull(this._transform.originX)) {
+        this._transformOriginX = this._transform.originX;
+      } else if (isDefinedAndNotNull(this._transform.ox)) {
+        this._transformOriginX = this._transform.ox;
+      }
+      if (isDefinedAndNotNull(this._transform.originY)) {
+        this._transformOriginY = this._transform.originY;
+      } else if (isDefinedAndNotNull(this._transform.oy)) {
+        this._transformOriginX = this._transform.oy;
+      }
+
+      this._transformOriginX = this.normFloat(this._transformOriginX);
+      this._transformOriginY = this.normFloat(this._transformOriginY);
+
+      const transformValue: string = this.element.attr('transform');
+      const hasMatrixTransform = transformValue && transformValue.startsWith('matrix');
+      if (hasMatrixTransform) {
+        const matrix = new Matrix(this.element);
+        this._initialTransform = matrix.decompose(this._transformOriginX, this._transformOriginY);
+      } else {
+        this._initialTransform = this.element.transform();
+      }
+      this._initialTransform.originX = this._transformOriginX;
+      this._initialTransform.originY = this._transformOriginY;
+      for (const key of ['translateX', 'translateY', 'scaleX', 'scaleY', 'rotate']) {
+        this._initialTransform[key] = this.normFloat(this._initialTransform[key]);
+      }
+      for (const key of ['b', 'c']) {
+        this._initialTransform[key] = this.normFloat(this._initialTransform[key], 0);
+      }
+    }
+  }
+
+  private transformedData(): TransformData {
+    const transformed: TransformData = {};
+    const transform = this._initialTransform;
+    for (const key of Object.keys(this._transform)) {
+      if (this._relative) {
+        if (['scaleX', 'scaleY'].includes(key)) {
+          transformed[key] = this.normFloat(transform[key] * this._transform[key]);
+        } else {
+          transformed[key] = this.normFloat(transform[key] + this._transform[key]);
+        }
+      } else {
+        transformed[key] = this.normFloat(this._transform[key]);
+      }
+    }
+    return transformed;
+  }
+
+  private currentCssAttrs(): any {
+    const cssAttrs = {};
+    const computed = getComputedStyle(this.element.node);
+    for (const key of Object.keys(this._attrs)) {
+      const value = computed.getPropertyValue(key);
+      if (isDefinedAndNotNull(value)) {
+        cssAttrs[key] = value;
+      }
+    }
+    return cssAttrs;
+  }
+
+  private currentSvgAttrs(): any {
+    const svgAttrs = {};
+    for (const key of Object.keys(this._attrs)) {
+      const value = this.element.attr(key);
+      if (isDefinedAndNotNull(value)) {
+        svgAttrs[key] = value;
+      }
+    }
+    return svgAttrs;
+  }
+
+  private toCssAttrs(attrs: any): any {
+    const cssAttrs: any = {};
+    for (const key of Object.keys(attrs)) {
+      let val = attrs[key];
+      if (['x', 'y', 'width', 'height'].includes(key)) {
+        if (isNumeric(val)) {
+          val += 'px';
+        }
+      }
+      cssAttrs[key] = val;
+    }
+    return cssAttrs;
+  }
+
+  private cssTransform(inputTransform?: TransformData): any {
+    let transform = this._initialTransform || this.element.transform();
+    if (inputTransform) {
+      transform = deepClone(transform);
+      Object.assign(transform, inputTransform);
+    }
+
+    return {
+      'transform-origin': `${transform.originX}px ${transform.originY}px`,
+      transform: `translate(${transform.translateX}px, ${transform.translateY}px) ` +
+                 `scale(${transform.scaleX}, ${transform.scaleY}) ` +
+                 `rotate(${transform.rotate}deg)`};
+  }
+
+  private normFloat(num: number, digits = 2): number {
+    const factor = Math.pow(10, digits);
+    return Math.round((num + Number.EPSILON) * factor) / factor;
+  }
+
+  private easingLiteralToCssEasing(easing: string | EasingLiteral): string {
+    switch (easing) {
+      case '<>':
+        return 'ease-in-out';
+      case '-':
+        return 'linear';
+      case '>':
+        return 'ease-out';
+      case '<':
+        return 'ease-in';
+      default:
+        return easing;
+    }
+  }
+
+}
+
+class JsScadaSymbolAnimation implements ScadaSymbolAnimation {
+
+  private readonly _runner: Runner;
+  private _timeline: Timeline;
+  private _running = true;
+
+  constructor(private element: Element,
+              duration = 1000) {
+    this._timeline = this.element.timeline();
+    this._runner = this.element.animate(duration, 0, 'now').ease('-');
+  }
+
+  public runner(): Runner {
+    return this._runner;
+  }
+
+  public running(): boolean {
+    return this._running;
+  }
+
+  public play() {
+    if (!this._running) {
+      this._timeline.play();
+      this._running = true;
+    }
+  }
+
+  public pause() {
+    if (this._running) {
+      this._timeline.pause();
+      this._running = false;
+    }
+  }
+
+  public stop() {
+    this._running = false;
+    this._timeline.stop();
+    this._timeline = new Timeline();
+    this.element.timeline(this._timeline);
+  }
+
+  public finish() {
+    this._running = false;
+    this._timeline.finish();
+    this._timeline = new Timeline();
+    this.element.timeline(this._timeline);
+  }
+
+  public speed(speed: number): this {
+    this._timeline.speed(speed);
+    return this;
+  }
+
+  // Runner methods
+
+  public ease(easing: string): this {
+    this._runner.ease(easing as EasingLiteral);
+    return this;
+  }
+
+  public loop(times: number | TimesParam, swing?: boolean, wait?: number): this {
+    if (typeof times === 'object') {
+      this._runner.loop(times);
+    } else {
+      this._runner.loop(times, swing, wait);
+    }
+    return this;
+  }
+
+  public transform(transform: MatrixTransformParam, relative?: boolean): this {
+    this._runner.transform(transform, relative);
+    return this;
+  }
+
+  public rotate(_r: number, _cx?: number, _cy?: number): this {
+    (this._runner as any).rotate(...arguments);
+    return this;
+  }
+
+  public x(x: number): this {
+    this._runner.x(x);
+    return this;
+  }
+
+  public y(y: number): this {
+    this._runner.y(y);
+    return this;
+  }
+
+  public size(width: number, height: number): this {
+    this._runner.size(width, height);
+    return this;
+  }
+
+  public width(width: number): this {
+    this._runner.width(width);
+    return this;
+  }
+
+  public height(height: number): this {
+    this._runner.height(height);
+    return this;
+  }
+
+  public move(x: number, y: number): this {
+    this._runner.move(x, y);
+    return this;
+  }
+
+  public dmove(dx: number, dy: number): this {
+    this._runner.dmove(dx, dy);
+    return this;
+  }
+
+  public relative(_x: number, _y: number): this {
+    (this._runner as any).relative(...arguments);
+    return this;
+  }
+
+  public scale(_x: number, _y?: number, _cx?: number, _cy?: number): this {
+    (this._runner as any).scale(...arguments);
+    return this;
+  }
+
+  public attr(a: string | object, v?: string): this {
+    this._runner.attr(a, v);
+    return this;
+  }
+
 }

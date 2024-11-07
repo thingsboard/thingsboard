@@ -45,7 +45,6 @@ import {
   updateDarkMode,
   updateXAxisTimeWindow
 } from '@home/components/widget/lib/chart/time-series-chart.models';
-import { ResizeObserver } from '@juggle/resize-observer';
 import {
   calculateAxisSize,
   ECharts,
@@ -610,7 +609,7 @@ export class TbTimeSeriesChart {
     echartsModule.init();
     this.renderer.setStyle(this.chartElement, 'letterSpacing', 'normal');
     this.timeSeriesChart = echarts.init(this.chartElement,  null, {
-      renderer: 'canvas'
+      renderer: 'svg'
     });
     this.timeSeriesChartOptions = {
       darkMode: this.darkMode,

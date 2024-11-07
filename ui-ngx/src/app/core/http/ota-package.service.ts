@@ -59,7 +59,7 @@ export class OtaPackageService {
   }
 
   public getOtaPackage(otaPackageId: string, config?: RequestConfig): Observable<OtaPackage> {
-    return this.http.get<OtaPackage>(`/api/otaPackages/${otaPackageId}`, defaultHttpOptionsFromConfig(config));
+    return this.http.get<OtaPackage>(`/api/otaPackage/${otaPackageId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public getOtaPackageInfo(otaPackageId: string, config?: RequestConfig): Observable<OtaPackageInfo> {

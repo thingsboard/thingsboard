@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 
-import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
+import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import {
   CellActionDescriptor,
   checkBoxCell,
@@ -53,7 +53,7 @@ import { PageData } from '@shared/models/page/page-data';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 
 @Injectable()
-export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<RuleChain>> {
+export class RuleChainsTableConfigResolver  {
 
   private readonly config: EntityTableConfig<RuleChain> = new EntityTableConfig<RuleChain>();
   private edge: Edge;
@@ -127,7 +127,8 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     const columns: Array<EntityColumn<RuleChain>> = [];
     columns.push(
       new DateEntityTableColumn<RuleChain>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<RuleChain>('name', 'rulechain.name', '100%')
+      new EntityTableColumn<RuleChain>('name', 'rulechain.name', '50%'),
+      new EntityTableColumn<RuleChain>('description', 'rulechain.description', '50%', entity => entity.additionalInfo?.description ?? '')
     );
     if (ruleChainScope === 'tenant' || ruleChainScope === 'edge') {
       columns.push(

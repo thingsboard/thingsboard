@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 
-import { Resolve, Router } from '@angular/router';
+import { Router } from '@angular/router';
 
 import { TenantInfo } from '@shared/models/tenant.model';
 import {
@@ -34,7 +34,7 @@ import { TenantTabsComponent } from '@home/pages/tenant/tenant-tabs.component';
 import { mergeMap } from 'rxjs/operators';
 
 @Injectable()
-export class TenantsTableConfigResolver implements Resolve<EntityTableConfig<TenantInfo>> {
+export class TenantsTableConfigResolver  {
 
   private readonly config: EntityTableConfig<TenantInfo> = new EntityTableConfig<TenantInfo>();
 

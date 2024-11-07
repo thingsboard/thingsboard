@@ -18,15 +18,15 @@
 <section class="tb-widget-settings" [formGroup]="photoCameraInputWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.general-settings</legend>
-    <mat-form-field fxFlex class="mat-block">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>widgets.input-widgets.widget-title</mat-label>
       <input matInput formControlName="widgetTitle">
     </mat-form-field>
   </fieldset>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.image-settings</legend>
-    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
-      <mat-form-field fxFlex class="mat-block">
+    <section class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.input-widgets.image-format</mat-label>
         <mat-select formControlName="imageFormat">
           <mat-option [value]="'image/jpeg'">
@@ -40,17 +40,17 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.input-widgets.image-quality</mat-label>
         <input matInput type="number" min="0" max="1" formControlName="imageQuality">
       </mat-form-field>
     </section>
-    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
-      <mat-form-field fxFlex class="mat-block">
+    <section class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.input-widgets.max-image-width</mat-label>
         <input matInput type="number" min="1" formControlName="maxWidth">
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.input-widgets.max-image-height</mat-label>
         <input matInput type="number" min="1" formControlName="maxHeight">
       </mat-form-field>

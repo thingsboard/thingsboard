@@ -76,10 +76,14 @@
       <tb-value-input *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.switch"
                       [valueType]="ValueType.BOOLEAN"
                       formControlName="default"></tb-value-input>
+      <tb-material-icon-select *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.icon"
+                               asBoxInput
+                               formControlName="default">
+      </tb-material-icon-select>
     </div>
     <div *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.number" class="tb-form-row space-between">
       <div translate>scada.property.number-settings</div>
-      <div fxLayout="row" fxFlex fxLayoutAlign="end center" fxLayoutGap="8px">
+      <div class="flex flex-1 flex-row items-center justify-end gap-2">
         <div class="tb-small-label" translate>scada.property.min</div>
         <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput formControlName="min"
@@ -106,7 +110,7 @@
     </div>
     <div class="tb-form-panel stroked">
       <mat-expansion-panel class="tb-settings">
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
           <mat-panel-title>
             {{ 'scada.property.advanced-ui-settings' | translate }}
           </mat-panel-title>
@@ -136,6 +140,7 @@
             <div class="fixed-title-width" translate>scada.property.disable-on-property</div>
             <mat-form-field  class="flex" appearance="outline" subscriptSizing="dynamic">
               <mat-select formControlName="disableOnProperty" placeholder="{{ 'widget-config.set' | translate }}">
+                <mat-option [value]="null"></mat-option>
                 <mat-option *ngFor="let prop of booleanPropertyIds" [value]="prop">
                   {{ prop }}
                 </mat-option>

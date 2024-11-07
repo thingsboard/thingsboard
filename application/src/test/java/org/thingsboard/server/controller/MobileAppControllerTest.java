@@ -109,8 +109,8 @@ public class MobileAppControllerTest extends AbstractControllerTest {
         doPut("/api/mobileApp/" + savedMobileApp.getId() + "/oauth2Clients", List.of(savedOAuth2Client.getId().getId(), savedOAuth2Client2.getId().getId()));
 
         MobileAppInfo retrievedMobileAppInfo = doGet("/api/mobileApp/info/{id}", MobileAppInfo.class, savedMobileApp.getId().getId());
-        assertThat(retrievedMobileAppInfo).isEqualTo(new MobileAppInfo(savedMobileApp, List.of(new OAuth2ClientInfo(savedOAuth2Client),
-                new OAuth2ClientInfo(savedOAuth2Client2))));
+        assertThat(retrievedMobileAppInfo).isEqualTo(new MobileAppInfo(savedMobileApp, List.of(new OAuth2ClientInfo(savedOAuth2Client2),
+                new OAuth2ClientInfo(savedOAuth2Client))));
 
         doPut("/api/mobileApp/" + savedMobileApp.getId() + "/oauth2Clients", List.of(savedOAuth2Client2.getId().getId()));
         MobileAppInfo retrievedMobileAppInfo2 = doGet("/api/mobileApp/info/{id}", MobileAppInfo.class, savedMobileApp.getId().getId());

@@ -25,7 +25,6 @@ import { UtilsService } from '@core/services/utils.service';
 import { IWidgetSubscription, SubscriptionInfo, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { DatasourceType, widgetType } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { ResizeObserver } from '@juggle/resize-observer';
 import Timeout = NodeJS.Timeout;
 
 const checkStatusPollingInterval = 10000;

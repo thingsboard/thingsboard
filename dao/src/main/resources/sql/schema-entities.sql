@@ -20,18 +20,6 @@ CREATE TABLE IF NOT EXISTS tb_schema_settings
     CONSTRAINT tb_schema_settings_pkey PRIMARY KEY (schema_version)
 );
 
-CREATE OR REPLACE PROCEDURE insert_tb_schema_settings()
-    LANGUAGE plpgsql AS
-$$
-BEGIN
-    IF (SELECT COUNT(*) FROM tb_schema_settings) = 0 THEN
-        INSERT INTO tb_schema_settings (schema_version) VALUES (3006004);
-    END IF;
-END;
-$$;
-
-call insert_tb_schema_settings();
-
 CREATE TABLE IF NOT EXISTS admin_settings (
     id uuid NOT NULL CONSTRAINT admin_settings_pkey PRIMARY KEY,
     tenant_id uuid NOT NULL,
@@ -491,11 +479,15 @@ CREATE TABLE IF NOT EXISTS user_credentials (
     id uuid NOT NULL CONSTRAINT user_credentials_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     activate_token varchar(255) UNIQUE,
+    activate_token_exp_time BIGINT,
     enabled boolean,
     password varchar(255),
     reset_token varchar(255) UNIQUE,
+    reset_token_exp_time BIGINT,
     user_id uuid UNIQUE,
-    additional_info varchar DEFAULT '{}'
+    additional_info varchar DEFAULT '{}',
+    last_login_ts BIGINT,
+    failed_login_attempts INT
 );
 
 CREATE TABLE IF NOT EXISTS widget_type (

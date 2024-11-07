@@ -78,7 +78,6 @@ import {
   SaveWidgetTypeAsDialogResult
 } from '@home/pages/widget/save-widget-type-as-dialog.component';
 import { WidgetService } from '@core/http/widget.service';
-import { de } from 'date-fns/locale';
 
 @Component({
   selector: 'tb-scada-symbol',
@@ -211,6 +210,10 @@ export class ScadaSymbolComponent extends PageComponent
 
   onApplyScadaSymbolConfig() {
     if (this.scadaSymbolFormGroup.valid) {
+      if (this.symbolEditor.editorMode === 'xml') {
+        const tags = this.symbolEditor.getTags();
+        this.editObjectCallbacks.tagsUpdated(tags);
+      }
       const metadata: ScadaSymbolMetadata = this.scadaSymbolFormGroup.get('metadata').value;
       const scadaSymbolContent = this.prepareScadaSymbolContent(metadata);
       const file = createFileFromContent(scadaSymbolContent, this.symbolData.imageResource.fileName,

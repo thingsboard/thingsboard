@@ -107,9 +107,9 @@ export const renderTimeSeriesBar = (params: CustomSeriesRenderItemParams, api: C
   }
   let lowerLeft: number[];
   if (offset !== 0 && isNumeric(value)) {
-    lowerLeft = api.coord([startTime, value >= 0 ? Number(value) + offset : offset]);
+    lowerLeft = api.coord([startTime, Number(value) >= 0 ? Number(value) + offset : offset]);
   } else {
-    lowerLeft = api.coord([startTime, value >= 0 ? value : 0]);
+    lowerLeft = api.coord([startTime, value]);
   }
   const size = api.size([delta, value]);
   const width = size[0];
@@ -140,7 +140,7 @@ export const renderTimeSeriesBar = (params: CustomSeriesRenderItemParams, api: C
 
   if (renderCtx.labelOption.show) {
     let position = renderCtx.labelOption.position;
-    if (value < 0) {
+    if (Number(value) < 0) {
       if (position === 'top') {
         position = 'bottom';
       } else if (position === 'bottom') {
@@ -164,7 +164,7 @@ export const renderTimeSeriesBar = (params: CustomSeriesRenderItemParams, api: C
   }
 
   let borderRadius: number[];
-  if (value < 0) {
+  if (Number(value) < 0) {
     borderRadius = [0, 0, renderCtx.visualSettings.borderRadius, renderCtx.visualSettings.borderRadius];
   } else {
     borderRadius = [renderCtx.visualSettings.borderRadius, renderCtx.visualSettings.borderRadius, 0, 0];

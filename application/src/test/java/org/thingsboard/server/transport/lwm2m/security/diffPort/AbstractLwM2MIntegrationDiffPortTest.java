@@ -19,21 +19,28 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.peer.IpPeer;
 import org.eclipse.leshan.core.peer.LwM2mPeer;
 import org.eclipse.leshan.core.peer.SocketIdentity;
+import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.registration.RegistrationStore;
 import org.eclipse.leshan.server.registration.RegistrationUpdate;
 import org.junit.Assert;
+import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_SUCCESS;
@@ -59,20 +66,27 @@ public abstract class AbstractLwM2MIntegrationDiffPortTest extends AbstractSecur
             return invocation.callRealMethod();
         }).when(registrationStoreTest).updateRegistration(any(RegistrationUpdate.class));
 
-        createDeviceProfile(transportConfiguration);
-        createDevice(deviceCredentials, clientEndpoint);
-        createNewClient(security, null, true, clientEndpoint);
+        DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + clientEndpoint, transportConfiguration);
+        final Device device = createLwm2mDevice(deviceCredentials, clientEndpoint, deviceProfile.getId());
+        createNewClient(security, null, true, clientEndpoint, device.getId().getId().toString());
         lwM2MTestClient.start(true);
+
+        verify(defaultUplinkMsgHandlerTest, timeout(50000).atLeast(1))
+                .onRegistered(Mockito.any(Registration.class), Mockito.any());
         await(awaitAlias)
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_SUCCESS) || lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_STARTED));
         Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatusesRegistrationLwm2mSuccess));
 
+        awaitUpdateReg(1);
         await(awaitAlias)
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> lwM2MTestClient.getClientStates().contains(ON_UPDATE_SUCCESS));
 
         Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatusesRegistrationLwm2mSuccessUpdate));
+
+        long cntBefore = countUpdateReg();
+        awaitUpdateReg((int) (cntBefore + 1));
     }
 
     private RegistrationUpdate registrationUpdateNewPort (RegistrationUpdate update, int portValueChange) {

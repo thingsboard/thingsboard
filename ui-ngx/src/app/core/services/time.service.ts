@@ -19,13 +19,18 @@ import {
   AggregationType,
   DAY,
   defaultTimeIntervals,
-  defaultTimewindow, Interval, IntervalMath,
+  defaultTimewindow,
+  getDefaultTimezoneInfo,
+  Interval,
+  IntervalMath,
   SECOND,
   TimeInterval,
-  Timewindow
+  Timewindow,
+  TimezoneInfo
 } from '@shared/models/time/time.models';
 import { HttpClient } from '@angular/common/http';
-import { isDefined } from '@core/utils';
+import { deepClone, isDefined } from '@core/utils';
+import { TranslateService } from '@ngx-translate/core';
 
 const MIN_INTERVAL = SECOND;
 const MAX_INTERVAL = 365 * 20 * DAY;
@@ -41,8 +46,11 @@ export class TimeService {
 
   private maxDatapointsLimit = MAX_DATAPOINTS_LIMIT;
 
+  private localBrowserTimezoneInfoPlaceholder: TimezoneInfo;
+
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    private translate: TranslateService
   ) {}
 
   public setMaxDatapointsLimit(limit: number) {
@@ -160,5 +168,14 @@ export class TimeService {
     } else {
       return defValue;
     }
+  }
+
+  public getLocalBrowserTimezoneInfoPlaceholder(): TimezoneInfo {
+    if (!this.localBrowserTimezoneInfoPlaceholder) {
+      this.localBrowserTimezoneInfoPlaceholder = deepClone(getDefaultTimezoneInfo());
+      this.localBrowserTimezoneInfoPlaceholder.id = null;
+      this.localBrowserTimezoneInfoPlaceholder.name = this.translate.instant('timezone.browser-time');
+    }
+    return this.localBrowserTimezoneInfoPlaceholder;
   }
 }

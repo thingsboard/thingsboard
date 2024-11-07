@@ -18,6 +18,7 @@
 @mixin theme-overwrites($primary, $config-or-theme) {
   @include _mat-form-field-overwrites($primary, $config-or-theme);
   @include _mat-button-overwrites($primary, $config-or-theme);
+  @include _mat-icon-overwrites();
 }
 
 @mixin _mat-form-field-overwrites($primary, $config-or-theme) {
@@ -31,7 +32,7 @@
         position: absolute;
         left: 0;
         top: 0;
-        background-color: mat.get-color-from-palette($primary);
+        background-color: mat.m2-get-color-from-palette($primary);
       }
       background-color: transparent;
     }
@@ -64,8 +65,14 @@
     .mat-mdc-outlined-button {
       --mdc-outlined-button-outline-color: inherit;
       &:not(:disabled) {
-        border-color: var(--mdc-outlined-button-outline-color, inherit);
+        border-color: inherit;
       }
     }
+  }
+}
+
+@mixin _mat-icon-overwrites() {
+  .mat-icon, .mat-icon.mat-primary, .mat-icon.mat-accent, .mat-icon.mat-warn {
+    color: var(--mat-icon-color);
   }
 }

@@ -355,8 +355,8 @@ public class ImageControllerTest extends AbstractControllerTest {
         assertThat(previewDescriptor.getMediaType()).isEqualTo("image/png");
         assertThat(previewDescriptor.getWidth()).isEqualTo(225);
         assertThat(previewDescriptor.getHeight()).isEqualTo(225);
-        assertThat(previewDescriptor.getSize()).isEqualTo(53498);
-        assertThat(previewDescriptor.getEtag()).isEqualTo("c909e20ba942f95f4ed1ddfcf4307ce846b4a689195c629cd85f2517f46e84f9");
+        assertThat(previewDescriptor.getSize()).isEqualTo(52365);
+        assertThat(previewDescriptor.getEtag()).isEqualTo("f231854ceb5cfce4371c246f7738d35d61770bac106ad3b9ee9b74d19817d09e");
     }
 
     private void checkSvgImageDescriptor(ImageDescriptor imageDescriptor) {

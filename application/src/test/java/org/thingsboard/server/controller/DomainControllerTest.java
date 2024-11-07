@@ -107,8 +107,8 @@ public class DomainControllerTest extends AbstractControllerTest {
         doPut("/api/domain/" + savedDomain.getId() + "/oauth2Clients", List.of(savedOAuth2Client.getId().getId(), savedOAuth2Client2.getId().getId()));
 
         DomainInfo retrievedDomainInfo = doGet("/api/domain/info/{id}", DomainInfo.class, savedDomain.getId().getId());
-        assertThat(retrievedDomainInfo).isEqualTo(new DomainInfo(savedDomain, List.of(new OAuth2ClientInfo(savedOAuth2Client),
-                new OAuth2ClientInfo(savedOAuth2Client2))));
+        assertThat(retrievedDomainInfo).isEqualTo(new DomainInfo(savedDomain, List.of(new OAuth2ClientInfo(savedOAuth2Client2),
+                new OAuth2ClientInfo(savedOAuth2Client))));
 
         doPut("/api/domain/" + savedDomain.getId() + "/oauth2Clients", List.of(savedOAuth2Client2.getId().getId()));
         DomainInfo retrievedDomainInfo2 = doGet("/api/domain/info/{id}", DomainInfo.class, savedDomain.getId().getId());

@@ -42,7 +42,6 @@ import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.request.CreateRequest;
 import org.eclipse.leshan.core.request.ObserveRequest;
 import org.eclipse.leshan.core.request.ReadRequest;
-import org.eclipse.leshan.core.request.SendRequest;
 import org.eclipse.leshan.core.request.WriteCompositeRequest;
 import org.eclipse.leshan.core.request.WriteRequest;
 import org.eclipse.leshan.core.request.WriteRequest.Mode;
@@ -117,6 +116,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
@@ -372,21 +372,19 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 LwM2mPath path = instant.getKey();
                 LwM2mNode node = instant.getValue();
                 LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
-                String stringPath = convertObjectIdToVersionedId(path.toString(), lwM2MClient);
-                ObjectModel objectModelVersion = lwM2MClient.getObjectModel(stringPath, modelProvider);
+                ObjectModel objectModelVersion = lwM2MClient.getObjectModel(path.toString(), modelProvider);
                 if (objectModelVersion != null) {
                     if (node instanceof LwM2mObject) {
                         LwM2mObject lwM2mObject = (LwM2mObject) node;
-                        this.updateObjectResourceValue(lwM2MClient, lwM2mObject, stringPath, 0);
+                        this.updateObjectResourceValue(lwM2MClient, lwM2mObject, path.toString(), 0);
                     } else if (node instanceof LwM2mObjectInstance) {
                         LwM2mObjectInstance lwM2mObjectInstance = (LwM2mObjectInstance) node;
-                        this.updateObjectInstanceResourceValue(lwM2MClient, lwM2mObjectInstance, stringPath, 0);
+                        this.updateObjectInstanceResourceValue(lwM2MClient, lwM2mObjectInstance, path.toString(), 0);
                     } else if (node instanceof LwM2mResource) {
                         LwM2mResource lwM2mResource = (LwM2mResource) node;
-                        this.updateResourcesValue(lwM2MClient, lwM2mResource, stringPath, Mode.UPDATE, 0);
+                        this.updateResourcesValueWithTs(lwM2MClient, lwM2mResource, path.toString(), Mode.UPDATE, ts);
                     }
                 }
-
                 tryAwake(lwM2MClient);
             }
         }
@@ -569,7 +567,6 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     }
 
     private void updateObjectInstanceResourceValue(LwM2mClient client, LwM2mObjectInstance lwM2mObjectInstance, String pathIdVer, int code) {
-        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
         lwM2mObjectInstance.getResources().forEach((resourceId, resource) -> {
             String pathRez = pathIdVer + "/" + resourceId;
             this.updateResourcesValue(client, resource, pathRez, Mode.UPDATE, code);
@@ -584,11 +581,12 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
      * #4 updateAttrTelemetry
      *  @param lwM2MClient   - Registration LwM2M Client
      * @param lwM2mResource - LwM2mSingleResource response.getContent()
-     * @param path          - resource
+     * @param stringPath          - resource
      * @param mode          - Replace, Update
      */
-    private void updateResourcesValue(LwM2mClient lwM2MClient, LwM2mResource lwM2mResource, String path, Mode mode, int code) {
+    private void updateResourcesValue(LwM2mClient lwM2MClient, LwM2mResource lwM2mResource, String stringPath, Mode mode, int code) {
         Registration registration = lwM2MClient.getRegistration();
+        String path = convertObjectIdToVersionedId(stringPath, lwM2MClient);
         if (lwM2MClient.saveResourceValue(path, lwM2mResource, modelProvider, mode)) {
             if (path.equals(convertObjectIdToVersionedId(FW_NAME_ID, lwM2MClient))) {
                 otaService.onCurrentFirmwareNameUpdate(lwM2MClient, (String) lwM2mResource.getValue());
@@ -614,10 +612,19 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 otaService.onCurrentSoftwareResultUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
             }
             if (ResponseCode.BAD_REQUEST.getCode() > code) {
-                this.updateAttrTelemetry(registration, path);
+                this.updateAttrTelemetry(registration, path, null);
             }
         } else {
             log.error("Fail update path [{}] Resource [{}]", path, lwM2mResource);
+        }
+    }
+    private void updateResourcesValueWithTs(LwM2mClient lwM2MClient, LwM2mResource lwM2mResource, String stringPath, Mode mode, Instant ts) {
+        Registration registration = lwM2MClient.getRegistration();
+        String path = convertObjectIdToVersionedId(stringPath, lwM2MClient);
+        if (lwM2MClient.saveResourceValue(path, lwM2mResource, modelProvider, mode)) {
+            this.updateAttrTelemetry(registration, path, ts);
+        } else {
+            log.error("Fail update path [{}] Resource [{}] with ts.", path, lwM2mResource);
         }
     }
 
@@ -631,19 +638,19 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
      *
      * @param registration - Registration LwM2M Client
      */
-    public void updateAttrTelemetry(Registration registration, String path) {
+    public void updateAttrTelemetry(Registration registration, String path, Instant ts) {
+        log.trace("UpdateAttrTelemetry paths [{}]", path);
         try {
             ResultsAddKeyValueProto results = this.getParametersFromProfile(registration, path);
-            if (path.equals("/3_1.2/0/9")) {
-                log.info("UpdateTelemetry paths [{}] key: [{}] value [{}]", path, results.getResultTelemetries().get(0).getKey(), results.getResultTelemetries().get(0).getLongV());
-            }
             SessionInfoProto sessionInfo = this.getSessionInfoOrCloseSession(registration);
             if (results != null && sessionInfo != null) {
                 if (results.getResultAttributes().size() > 0) {
+                    log.trace("UpdateAttribute paths [{}] value [{}]", path, results.getResultAttributes().get(0).toString());
                     this.helper.sendParametersOnThingsboardAttribute(results.getResultAttributes(), sessionInfo);
                 }
                 if (results.getResultTelemetries().size() > 0) {
-                    this.helper.sendParametersOnThingsboardTelemetry(results.getResultTelemetries(), sessionInfo);
+                    log.trace("UpdateTelemetry paths [{}] value [{}] ts [{}]", path, results.getResultTelemetries().get(0).toString(), ts == null ? "null" : ts.toEpochMilli());
+                    this.helper.sendParametersOnThingsboardTelemetry(results.getResultTelemetries(), sessionInfo, null, ts);
                 }
             }
         } catch (Exception e) {

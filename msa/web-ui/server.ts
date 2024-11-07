@@ -23,6 +23,7 @@ import httpProxy from 'http-proxy';
 import compression from 'compression';
 import historyApiFallback from 'connect-history-api-fallback';
 import { Socket } from 'net';
+import { RequestHandler } from 'serve-static';
 
 const logger = _logger('main');
 
@@ -99,7 +100,19 @@ let connections: Socket[] = [];
 
         const root = path.join(webDir, 'public');
 
-        app.use(express.static(root));
+        const staticServe = express.static(root);
+
+        const indexHtmlFallback: RequestHandler<any> = (req, res, next) => {
+          res.sendFile(path.join(root, 'index.html'));
+        };
+
+        app.use(staticServe);
+
+        const indexHtmlFallbackPaths = [
+          /^\/resources\/scada-symbols\/(?:system|tenant)\/[^/]+$/
+        ];
+
+        app.use(indexHtmlFallbackPaths, indexHtmlFallback);
 
         server.listen(bindPort, bindAddress, () => {
             logger.info('==> 🌎  Listening on port %s.', bindPort);

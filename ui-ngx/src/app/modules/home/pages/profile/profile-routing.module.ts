@@ -15,7 +15,7 @@
 ///
 
 import { Injectable, NgModule } from '@angular/core';
-import { Resolve, RouterModule, Routes } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 
 import { ProfileComponent } from './profile.component';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
@@ -28,7 +28,7 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Observable } from 'rxjs';
 
 @Injectable()
-export class UserProfileResolver implements Resolve<User> {
+export class UserProfileResolver  {
 
   constructor(private store: Store<AppState>,
               private userService: UserService) {

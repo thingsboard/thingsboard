@@ -10,7 +10,7 @@
   "tags": [
     {
       "tag": "background",
-      "stateRenderFunction": "var opened = ctx.values.opened;\nvar openAnimate = element.remember('openAnimate');\nvar color = opened ? ctx.properties.openedColor : ctx.properties.closedColor;\nif (!openAnimate) {\n    element.attr({fill: color});\n} else {\n    ctx.api.animate(element, 500).attr({fill: color});\n    element.remember('openAnimate', false);\n}\n",
+      "stateRenderFunction": "var opened = ctx.values.opened;\nvar openAnimate = element.remember('openAnimate');\nvar color = opened ? ctx.properties.openedColor : ctx.properties.closedColor;\nif (!openAnimate) {\n    element.attr({fill: color});\n} else {\n    ctx.api.cssAnimate(element, 500).attr({fill: color});\n    element.remember('openAnimate', false);\n}\n",
       "actions": null
     },
     {
@@ -24,7 +24,7 @@
     },
     {
       "tag": "wheel",
-      "stateRenderFunction": "var opened = ctx.values.opened;\nvar openAnimate = element.remember('openAnimate');\nvar angle = opened ? ctx.properties.openedRotationAngle : ctx.properties.closedRotationAngle;\nif (!openAnimate) {\n    element.transform({rotate: angle});\n} else {\n    ctx.api.animate(element, 500).transform({rotate: angle});\n    element.remember('openAnimate', false);\n}\n",
+      "stateRenderFunction": "var opened = ctx.values.opened;\nvar openAnimate = element.remember('openAnimate');\nvar angle = opened ? ctx.properties.openedRotationAngle : ctx.properties.closedRotationAngle;\nif (!openAnimate) {\n    element.transform({rotate: angle});\n} else {\n    ctx.api.cssAnimate(element, 500).transform({rotate: angle});\n    element.remember('openAnimate', false);\n}\n",
       "actions": null
     }
   ],

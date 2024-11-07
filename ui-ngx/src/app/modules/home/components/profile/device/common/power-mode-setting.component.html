@@ -16,7 +16,7 @@
 
 -->
 <section [formGroup]="parentForm">
-  <mat-form-field class="mat-block" fxFlex>
+  <mat-form-field class="mat-block flex-1">
     <mat-label *ngIf="isDeviceSetting">{{ "device-profile.power-saving-mode" | translate }}</mat-label>
     <mat-select formControlName="powerMode">
       <mat-option [value]="null" *ngIf="isDeviceSetting">{{ "device-profile.power-saving-mode-type.default" | translate }}</mat-option>
@@ -25,7 +25,7 @@
       </mat-option>
     </mat-select>
   </mat-form-field>
-  <section class="mat-block" fxFlex *ngIf="parentForm.get('powerMode').value === 'E_DRX'">
+  <section class="mat-block flex-1" *ngIf="parentForm.get('powerMode').value === 'E_DRX'">
     <tb-time-unit-select [labelText]="'device-profile.edrx-cycle'"
                          [requiredText]="'device-profile.edrx-cycle-required'"
                          [patternText]="'device-profile.edrx-cycle-pattern'"

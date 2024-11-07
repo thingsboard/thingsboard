@@ -59,6 +59,10 @@ public interface UserService extends EntityDaoService {
 
     UserCredentials requestExpiredPasswordReset(TenantId tenantId, UserCredentialsId userCredentialsId);
 
+    UserCredentials generatePasswordResetToken(UserCredentials userCredentials);
+
+    UserCredentials generateUserActivationToken(UserCredentials userCredentials);
+
     UserCredentials replaceUserCredentials(TenantId tenantId, UserCredentials userCredentials);
 
     void deleteUser(TenantId tenantId, User user);
@@ -93,7 +97,7 @@ public interface UserService extends EntityDaoService {
 
     int increaseFailedLoginAttempts(TenantId tenantId, UserId userId);
 
-    void setLastLoginTs(TenantId tenantId, UserId userId);
+    void updateLastLoginTs(TenantId tenantId, UserId userId);
 
     void saveMobileSession(TenantId tenantId, UserId userId, String mobileToken, MobileSessionInfo sessionInfo);
 

@@ -35,7 +35,7 @@ import java.util.List;
         type = ComponentType.EXTERNAL,
         name = "rest api call",
         configClazz = TbRestApiCallNodeConfiguration.class,
-        version = 2,
+        version = 3,
         nodeDescription = "Invoke REST API calls to external REST server",
         nodeDetails = "Will invoke REST API call <code>GET | POST | PUT | DELETE</code> to external REST server. " +
                 "Message payload added into Request body. Configured attributes can be added into Headers from Message Metadata." +
@@ -52,6 +52,7 @@ import java.util.List;
 public class TbRestApiCallNode extends TbAbstractExternalNode {
 
     static final String PARSE_TO_PLAIN_TEXT = "parseToPlainText";
+    static final String MAX_IN_MEMORY_BUFFER_SIZE_IN_KB = "maxInMemoryBufferSizeInKb";
     static final String TRIM_DOUBLE_QUOTES = "trimDoubleQuotes";
     protected TbHttpClient httpClient;
 
@@ -91,6 +92,11 @@ public class TbRestApiCallNode extends TbAbstractExternalNode {
                 if (oldConfiguration.has("useRedisQueueForMsgPersistence")) {
                     hasChanges = true;
                     ((ObjectNode) oldConfiguration).remove(List.of("useRedisQueueForMsgPersistence", "trimQueue", "maxQueueSize"));
+                }
+            case 2:
+                if (!oldConfiguration.has(MAX_IN_MEMORY_BUFFER_SIZE_IN_KB)) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).put(MAX_IN_MEMORY_BUFFER_SIZE_IN_KB, 256);
                 }
                 break;
             default:

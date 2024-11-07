@@ -58,16 +58,16 @@ import { MatListModule } from '@angular/material/list';
 import { DatetimeAdapter, MatDatetimepickerModule, MatNativeDatetimeModule } from '@mat-datetimepicker/core';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 import { GridsterModule } from 'angular-gridster2';
-import { FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { ShareModule as ShareButtonsModule } from 'ngx-sharebuttons';
+import { ShareButtonDirective } from 'ngx-sharebuttons';
 import { HotkeyModule } from 'angular2-hotkeys';
 import { ColorPickerModule } from '@iplab/ngx-color-picker';
-import { NgxHmCarouselModule } from 'ngx-hm-carousel';
+import { NgxHmCarouselComponent, NgxHmCarouselDynamicDirective, NgxHmCarouselItemDirective } from 'ngx-hm-carousel';
 import { EditorModule, TINYMCE_SCRIPT_SRC } from '@tinymce/tinymce-angular';
 import { UserMenuComponent } from '@shared/components/user-menu.component';
 import { TruncateWithTooltipDirective } from '@shared/directives/truncate-with-tooltip.directive';
+import { ContextMenuDirective } from '@shared/directives/context-menu.directive';
 import { NospacePipe } from '@shared/pipe/nospace.pipe';
 import { TranslateModule } from '@ngx-translate/core';
 import { TbCheckboxComponent } from '@shared/components/tb-checkbox.component';
@@ -82,7 +82,7 @@ import { DatetimePeriodComponent } from '@shared/components/time/datetime-period
 import { EnumToArrayPipe } from '@shared/pipe/enum-to-array.pipe';
 import { ClipboardModule } from 'ngx-clipboard';
 import { ValueInputComponent } from '@shared/components/value-input.component';
-import { MarkdownModule, MarkedOptions } from 'ngx-markdown';
+import { MarkdownModule, MARKED_OPTIONS } from 'ngx-markdown';
 import { MarkdownEditorComponent } from '@shared/components/markdown-editor.component';
 import { FullscreenDirective } from '@shared/components/fullscreen.directive';
 import { HighlightPipe } from '@shared/pipe/highlight.pipe';
@@ -178,17 +178,6 @@ import { NotificationComponent } from '@shared/components/notification/notificat
 import { TemplateAutocompleteComponent } from '@shared/components/notification/template-autocomplete.component';
 import { SlackConversationAutocompleteComponent } from '@shared/components/slack-conversation-autocomplete.component';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
-import {
-  GtMdLgLayoutAlignDirective,
-  GtMdLgLayoutDirective,
-  GtMdLgLayoutGapDirective,
-  GtMdLgShowHideDirective,
-  MdLgLayoutAlignDirective,
-  MdLgLayoutDirective,
-  MdLgLayoutGapDirective,
-  MdLgShowHideDirective,
-  TbBreakPointsProvider
-} from '@shared/layout/layout.directives';
 import { ColorPickerComponent } from '@shared/components/color-picker/color-picker.component';
 import { ResourceAutocompleteComponent } from '@shared/components/resource/resource-autocomplete.component';
 import { ShortNumberPipe } from '@shared/pipe/short-number.pipe';
@@ -220,11 +209,15 @@ import { ImageGalleryDialogComponent } from '@shared/components/image/image-gall
 import { RuleChainSelectPanelComponent } from '@shared/components/rule-chain/rule-chain-select-panel.component';
 import { WidgetButtonComponent } from '@shared/components/button/widget-button.component';
 import { HexInputComponent } from '@shared/components/color-picker/hex-input.component';
+import { TimezoneComponent } from '@shared/components/time/timezone.component';
+import { TimezonePanelComponent } from '@shared/components/time/timezone-panel.component';
+import { TimewindowConfigDialogComponent } from '@shared/components/time/timewindow-config-dialog.component';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { ScadaSymbolInputComponent } from '@shared/components/image/scada-symbol-input.component';
 import { CountryAutocompleteComponent } from '@shared/components/country-autocomplete.component';
 import { CountryData } from '@shared/models/country.models';
 import { SvgXmlComponent } from '@shared/components/svg-xml.component';
+import { DatapointsLimitComponent } from '@shared/components/time/datapoints-limit.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -281,7 +274,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
         disableTooltipInteractivity: true
       }
     },
-    TbBreakPointsProvider,
     CountryData
   ],
   declarations: [
@@ -309,8 +301,12 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     UserMenuComponent,
     TimewindowComponent,
     TimewindowPanelComponent,
+    TimewindowConfigDialogComponent,
     TimeintervalComponent,
+    TimezoneComponent,
+    TimezonePanelComponent,
     QuickTimeIntervalComponent,
+    DatapointsLimitComponent,
     DashboardSelectComponent,
     DashboardSelectPanelComponent,
     DatetimePeriodComponent,
@@ -363,6 +359,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     LedLightComponent,
     MarkdownEditorComponent,
     TruncateWithTooltipDirective,
+    ContextMenuDirective,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -394,14 +391,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     NotificationComponent,
     TemplateAutocompleteComponent,
     SlackConversationAutocompleteComponent,
-    MdLgLayoutDirective,
-    MdLgLayoutAlignDirective,
-    MdLgLayoutGapDirective,
-    MdLgShowHideDirective,
-    GtMdLgLayoutDirective,
-    GtMdLgLayoutAlignDirective,
-    GtMdLgLayoutGapDirective,
-    GtMdLgShowHideDirective,
     ColorPickerComponent,
     ColorPickerPanelComponent,
     ResourceAutocompleteComponent,
@@ -474,14 +463,15 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     DragDropModule,
     GridsterModule,
     ClipboardModule,
-    FlexLayoutModule.withConfig({addFlexToParent: false}),
     FormsModule,
     ReactiveFormsModule,
     OverlayModule,
-    ShareButtonsModule,
+    ShareButtonDirective,
     HotkeyModule,
     ColorPickerModule,
-    NgxHmCarouselModule,
+    NgxHmCarouselComponent,
+    NgxHmCarouselDynamicDirective,
+    NgxHmCarouselItemDirective,
     DndModule,
     NgxFlowModule,
     NgxFlowchartModule,
@@ -489,7 +479,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     MarkdownModule.forRoot({
       sanitize: SecurityContext.NONE,
       markedOptions: {
-        provide: MarkedOptions,
+        provide: MARKED_OPTIONS,
         useFactory: MarkedOptionsFactory,
         deps: [MarkedOptionsService]
       }
@@ -518,8 +508,12 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     UserMenuComponent,
     TimewindowComponent,
     TimewindowPanelComponent,
+    TimewindowConfigDialogComponent,
     TimeintervalComponent,
+    TimezoneComponent,
+    TimezonePanelComponent,
     QuickTimeIntervalComponent,
+    DatapointsLimitComponent,
     DashboardSelectComponent,
     DatetimePeriodComponent,
     DatetimeComponent,
@@ -590,14 +584,14 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     DragDropModule,
     GridsterModule,
     ClipboardModule,
-    FlexLayoutModule,
     FormsModule,
     ReactiveFormsModule,
     OverlayModule,
-    ShareButtonsModule,
     HotkeyModule,
     ColorPickerModule,
-    NgxHmCarouselModule,
+    NgxHmCarouselComponent,
+    NgxHmCarouselDynamicDirective,
+    NgxHmCarouselItemDirective,
     EditorModule,
     DndModule,
     NgxFlowchartModule,
@@ -621,6 +615,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     LedLightComponent,
     MarkdownEditorComponent,
     TruncateWithTooltipDirective,
+    ContextMenuDirective,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -653,14 +648,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     NotificationComponent,
     TemplateAutocompleteComponent,
     SlackConversationAutocompleteComponent,
-    MdLgLayoutDirective,
-    MdLgLayoutAlignDirective,
-    MdLgLayoutGapDirective,
-    MdLgShowHideDirective,
-    GtMdLgLayoutDirective,
-    GtMdLgLayoutAlignDirective,
-    GtMdLgLayoutGapDirective,
-    GtMdLgShowHideDirective,
     ColorPickerComponent,
     ColorPickerPanelComponent,
     ResourceAutocompleteComponent,

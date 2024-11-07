@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
+import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { EntityTableColumn, EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import {
   QueueInfo,
@@ -39,7 +39,7 @@ import { selectAuthUser } from '@core/auth/auth.selectors';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 
 @Injectable()
-export class QueuesTableConfigResolver implements Resolve<EntityTableConfig<QueueInfo>> {
+export class QueuesTableConfigResolver  {
 
   readonly queueType = ServiceType.TB_RULE_ENGINE;
 

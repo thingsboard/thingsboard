@@ -17,17 +17,19 @@
 -->
 <div class="trip-animation-widget">
     <div class="trip-animation-label-container" *ngIf="settings.showLabel" [innerHTML]="label"></div>
-    <div class="trip-animation-container" fxLayout="column">
+    <div class="trip-animation-container flex flex-col">
         <div class="map" #map></div>
-        <div class="trip-animation-info-panel" fxLayout="row">
+        <div class="trip-animation-info-panel flex flex-row">
             <button class="tooltip-button" mat-mini-fab color="primary" aria-label="tooltip"
                 *ngIf="settings.showTooltip" (click)="visibleTooltip = !visibleTooltip">
                 <mat-icon>info_outline</mat-icon>
             </button>
         </div>
-        <div class="trip-animation-tooltip md-whiteframe-z4" fxLayout="column"
-             [ngClass]="{'trip-animation-tooltip-hidden':!visibleTooltip}"
-             [ngStyle]="{'background-color': settings.tooltipColor, 'opacity': settings.tooltipOpacity, 'color': settings.tooltipFontColor}">
+        <div class="trip-animation-tooltip md-whiteframe-z4 flex flex-col"
+             [class.trip-animation-tooltip-hidden]="!visibleTooltip"
+             [style.background-color]="settings.tooltipColor"
+             [style.opacity]="settings.tooltipOpacity"
+             [style.color]="settings.tooltipFontColor">
           <div *ngFor="let mainTooltip of mainTooltips"
                [innerHTML]="mainTooltip"
                style="padding: 10px 0">

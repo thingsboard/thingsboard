@@ -46,6 +46,7 @@ import { MatChipGrid } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { SubscriptSizing } from '@angular/material/form-field';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { isArray } from 'lodash';
 
 @Component({
   selector: 'tb-entity-list',
@@ -157,7 +158,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
         }
       }),
       filter((value) => typeof value === 'string'),
-      map((value) => value ? (typeof value === 'string' ? value : value.name) : ''),
+      map((value) => value ? value : ''),
       mergeMap(name => this.fetchEntities(name) ),
       share()
     );
@@ -209,7 +210,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
   }
 
   validate(): ValidationErrors | null {
-    return this.entityListFormGroup.valid ? null : {
+    return (isArray(this.modelValue) && this.modelValue.length) || !this.required ? null : {
       entities: {valid: false}
     };
   }

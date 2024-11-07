@@ -42,6 +42,7 @@ import { enumerable } from '@shared/decorators/enumerable';
 import { UtilsService } from '@core/services/utils.service';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ComponentStyle, iconStyle, textStyle } from '@shared/models/widget-settings.models';
+import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
 
 export interface WidgetsData {
   widgets: Array<Widget>;
@@ -56,11 +57,11 @@ export interface ContextMenuItem {
 }
 
 export interface DashboardContextMenuItem extends ContextMenuItem {
-  action: (contextMenuEvent: MouseEvent) => void;
+  action: (contextMenuEvent: TbContextMenuEvent) => void;
 }
 
 export interface WidgetContextMenuItem extends ContextMenuItem {
-  action: (contextMenuEvent: MouseEvent, widget: Widget) => void;
+  action: (contextMenuEvent: TbContextMenuEvent, widget: Widget) => void;
 }
 
 export interface DashboardCallbacks {
@@ -94,7 +95,7 @@ export interface IDashboardComponent {
   highlightWidget(widgetId: string, delay?: number);
   selectWidget(widgetId: string, delay?: number);
   getSelectedWidget(): Widget;
-  getEventGridPosition(event: Event): WidgetPosition;
+  getEventGridPosition(event: TbContextMenuEvent | KeyboardEvent): WidgetPosition;
   notifyGridsterOptionsChanged();
   pauseChangeNotifications();
   resumeChangeNotifications();
@@ -204,8 +205,7 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
             index = this.dashboardWidgets.findIndex((dashboardWidget) => dashboardWidget.widgetId === record.widgetId);
             if (index > -1) {
               const prevDashboardWidget = this.dashboardWidgets[index];
-              if (!isEqual(prevDashboardWidget.widget, record.widget) ||
-                  !isEqual(prevDashboardWidget.widgetLayout, record.widgetLayout)) {
+              if (!isEqual(prevDashboardWidget.widget, record.widget)) {
                 this.dashboardWidgets[index] = new DashboardWidget(this.dashboard, record.widget, record.widgetLayout,
                   this.parentDashboard, this.popoverComponent);
                 this.dashboardWidgets[index].highlighted = prevDashboardWidget.highlighted;
@@ -391,7 +391,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   private gridsterItemComponentSubject = new Subject<GridsterItemComponentInterface>();
   private gridsterItemComponentValue: GridsterItemComponentInterface;
 
-  private readonly aspectRatio: number;
+  private aspectRatio: number;
 
   private heightValue: number;
   private widthValue: number;
@@ -419,85 +419,97 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     this.gridsterItemComponentSubject.complete();
   }
 
+  private preserveAspectRatioApplied = false;
+
   private applyPreserveAspectRatio(item: GridsterItemComponentInterface) {
-    this.resizableHandles.ne = false;
-    this.resizableHandles.sw = false;
-    this.resizableHandles.nw = false;
 
-    const $item = item.$item;
+    if (this.widgetLayout?.preserveAspectRatio) {
+      this.resizableHandles.ne = false;
+      this.resizableHandles.sw = false;
+      this.resizableHandles.nw = false;
+    } else {
+      this.resizableHandles.ne = true;
+      this.resizableHandles.sw = true;
+      this.resizableHandles.nw = true;
+    }
 
-    this.rowsValue = $item.rows;
-    this.colsValue = $item.cols;
+    if (!this.preserveAspectRatioApplied) {
+      const $item = item.$item;
 
-    Object.defineProperty($item, 'rows', {
-      get: () => this.rowsValue,
-      set: v => {
-        if (this.rowsValue !== v) {
-          if (this.preserveAspectRatio) {
-            this.colsValue = v * this.aspectRatio;
+      this.rowsValue = $item.rows;
+      this.colsValue = $item.cols;
+
+      Object.defineProperty($item, 'rows', {
+        get: () => this.rowsValue,
+        set: v => {
+          if (this.rowsValue !== v) {
+            if (this.preserveAspectRatio) {
+              this.colsValue = v * this.aspectRatio;
+            }
+            this.rowsValue = v;
           }
-          this.rowsValue = v;
         }
-      }
-    });
+      });
 
-    Object.defineProperty($item, 'cols', {
-      get: () => this.colsValue,
-      set: v => {
-        if (this.colsValue !== v) {
-          if (this.preserveAspectRatio) {
-            this.rowsValue = v / this.aspectRatio;
+      Object.defineProperty($item, 'cols', {
+        get: () => this.colsValue,
+        set: v => {
+          if (this.colsValue !== v) {
+            if (this.preserveAspectRatio) {
+              this.rowsValue = v / this.aspectRatio;
+            }
+            this.colsValue = v;
           }
-          this.colsValue = v;
         }
-      }
-    });
+      });
 
-    const resizable = item.resize;
+      const resizable = item.resize;
 
-    this.heightValue = resizable.height;
-    this.widthValue = resizable.width;
+      this.heightValue = resizable.height;
+      this.widthValue = resizable.width;
 
-    const setItemHeight = resizable.setItemHeight.bind(resizable);
-    const setItemWidth = resizable.setItemWidth.bind(resizable);
-    resizable.setItemHeight = (height) => {
-      setItemHeight(height);
-      this.heightValue = height;
-      if (this.preserveAspectRatio) {
-        setItemWidth(height * this.aspectRatio);
-      }
-    };
-    resizable.setItemWidth = (width) => {
-      setItemWidth(width);
-      this.widthValue = width;
-      if (this.preserveAspectRatio) {
-        setItemHeight(width / this.aspectRatio);
-      }
-    };
+      const setItemHeight = resizable.setItemHeight.bind(resizable);
+      const setItemWidth = resizable.setItemWidth.bind(resizable);
+      resizable.setItemHeight = (height) => {
+        setItemHeight(height);
+        this.heightValue = height;
+        if (this.preserveAspectRatio) {
+          setItemWidth(height * this.aspectRatio);
+        }
+      };
+      resizable.setItemWidth = (width) => {
+        setItemWidth(width);
+        this.widthValue = width;
+        if (this.preserveAspectRatio) {
+          setItemHeight(width / this.aspectRatio);
+        }
+      };
 
-    Object.defineProperty(resizable, 'height', {
-      get: () => this.heightValue,
-      set: v => {
-        if (this.heightValue !== v) {
-          if (this.preserveAspectRatio) {
-            this.widthValue = v * this.aspectRatio;
+      Object.defineProperty(resizable, 'height', {
+        get: () => this.heightValue,
+        set: v => {
+          if (this.heightValue !== v) {
+            if (this.preserveAspectRatio) {
+              this.widthValue = v * this.aspectRatio;
+            }
+            this.heightValue = v;
           }
-          this.heightValue = v;
         }
-      }
-    });
+      });
 
-    Object.defineProperty(resizable, 'width', {
-      get: () => this.widthValue,
-      set: v => {
-        if (this.widthValue !== v) {
-          if (this.preserveAspectRatio) {
-            this.heightValue = v / this.aspectRatio;
+      Object.defineProperty(resizable, 'width', {
+        get: () => this.widthValue,
+        set: v => {
+          if (this.widthValue !== v) {
+            if (this.preserveAspectRatio) {
+              this.heightValue = v / this.aspectRatio;
+            }
+            this.widthValue = v;
           }
-          this.widthValue = v;
         }
-      }
-    });
+      });
+      this.preserveAspectRatioApplied = true;
+    }
   }
 
   get highlighted() {
@@ -527,19 +539,36 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     }
   }
 
+  get widgetLayout(): WidgetLayout {
+    return this.widgetLayoutValue;
+  }
+
+  set widgetLayout(value: WidgetLayout) {
+    this.widgetLayoutValue = value;
+    this._widgetLayoutUpdated();
+  }
+
+  private _widgetLayoutUpdated() {
+    if (isDefined(this.widgetLayout?.resizable)) {
+      this.resizeEnabled = this.widgetLayout.resizable;
+    }
+    if (this.widgetLayout?.preserveAspectRatio) {
+      this.aspectRatio = this.widgetLayout.sizeX / this.widgetLayout.sizeY;
+    }
+    if (this.gridsterItemComponentValue) {
+      this.applyPreserveAspectRatio(this.gridsterItemComponentValue);
+    }
+  }
+
   constructor(
     private dashboard: IDashboardComponent,
     public widget: Widget,
-    public widgetLayout?: WidgetLayout,
+    private widgetLayoutValue?: WidgetLayout,
     private parentDashboard?: IDashboardComponent,
     private popoverComponent?: TbPopoverComponent) {
 
-    if (isDefined(widgetLayout?.resizable)) {
-      this.resizeEnabled = widgetLayout.resizable;
-    }
-    if (widgetLayout?.preserveAspectRatio) {
-      this.aspectRatio = this.widgetLayout.sizeX / this.widgetLayout.sizeY;
-    }
+    this.widgetLayout = widgetLayoutValue;
+
     if (!widget.id) {
       widget.id = guid();
     }
@@ -678,15 +707,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     return Math.floor(res);
   }
 
-  set x(x: number) {
-    if (!this.dashboard.isMobileSize) {
-      if (this.widgetLayout) {
-        this.widgetLayout.col = x;
-      } else {
-        this.widget.col = x;
-      }
-    }
-  }
+  set x(_: number) {}
 
   @enumerable(true)
   get y(): number {
@@ -699,15 +720,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     return Math.floor(res);
   }
 
-  set y(y: number) {
-    if (!this.dashboard.isMobileSize) {
-      if (this.widgetLayout) {
-        this.widgetLayout.row = y;
-      } else {
-        this.widget.row = y;
-      }
-    }
-  }
+  set y(_: number) {}
 
   get preserveAspectRatio(): boolean {
     if (!this.dashboard.isMobileSize && this.widgetLayout) {
@@ -804,5 +817,15 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       }
     }
     return order;
+  }
+
+  updatePosition(x: number, y: number) {
+    if (this.widgetLayout) {
+      this.widgetLayout.col = x;
+      this.widgetLayout.row = y;
+    } else {
+      this.widget.col = x;
+      this.widget.row = y;
+    }
   }
 }

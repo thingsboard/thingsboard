@@ -186,6 +186,18 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
     }
 
     @Test
+    public void testUpdateRootRuleChain() throws Exception {
+        edgeImitator.expectMessageAmount(2);
+        updateRootRuleChainMetadata();
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        Optional<RuleChainUpdateMsg> ruleChainUpdateMsgOpt = edgeImitator.findMessageByType(RuleChainUpdateMsg.class);
+        Assert.assertTrue(ruleChainUpdateMsgOpt.isPresent());
+        Optional<RuleChainMetadataUpdateMsg> ruleChainMetadataUpdateMsgOpt = edgeImitator.findMessageByType(RuleChainMetadataUpdateMsg.class);
+        Assert.assertTrue(ruleChainMetadataUpdateMsgOpt.isPresent());
+    }
+
+    @Test
     public void testSetRootRuleChain() throws Exception {
         // create rule chain
         RuleChain ruleChain = new RuleChain();

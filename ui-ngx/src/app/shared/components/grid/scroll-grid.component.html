@@ -42,13 +42,12 @@
   <ng-container *ngTemplateOutlet="noData"></ng-container>
 </ng-template>
 <ng-template #defaultLoadingCell>
-  <div fxLayout="column" fxLayoutAlign="center center" [style]="{minHeight: itemSize + 'px'}">
+  <div class="flex flex-col items-center justify-center" [style]="{minHeight: itemSize + 'px'}">
     <mat-spinner color="accent" strokeWidth="5"></mat-spinner>
   </div>
 </ng-template>
 <ng-template #defaultDataLoading>
-  <div fxLayout="column"
-       fxLayoutAlign="center center" class="tb-absolute-fill">
+  <div class="tb-absolute-fill flex flex-col items-center justify-center">
     <mat-spinner color="accent" strokeWidth="5"></mat-spinner>
   </div>
 </ng-template>
