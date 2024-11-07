@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.calculated_field;
+package org.thingsboard.server.dao.cf;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.thingsboard.server.dao.model.sql.CalculatedFieldEntity;
+import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
-import java.util.UUID;
 
-public interface CalculatedFieldRepository extends JpaRepository<CalculatedFieldEntity, UUID> {
+public interface CalculatedFieldDao extends Dao<CalculatedField> {
 
-    boolean existsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
+    boolean existsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId);
 
-    List<CalculatedFieldEntity> findAllByTenantId(UUID tenantId);
+    List<CalculatedField> findAllByTenantId(TenantId tenantId);
 
-    List<CalculatedFieldEntity> removeAllByTenantIdAndEntityId(UUID tenantId, UUID entityId);
+    List<CalculatedField> removeAllByEntityId(TenantId tenantId, EntityId entityId);
 
 }

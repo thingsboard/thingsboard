@@ -17,9 +17,9 @@ package org.thingsboard.server.dao.service.validator;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.calculated_field.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.calculated_field.CalculatedFieldLinkDao;
+import org.thingsboard.server.dao.cf.CalculatedFieldLinkDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 

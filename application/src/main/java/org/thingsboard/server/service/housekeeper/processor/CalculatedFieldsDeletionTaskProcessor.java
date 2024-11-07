@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
-import org.thingsboard.server.dao.calculated_field.CalculatedFieldService;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 
 @Component
 @RequiredArgsConstructor

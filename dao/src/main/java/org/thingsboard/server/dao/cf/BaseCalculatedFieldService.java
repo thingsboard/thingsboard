@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.calculated_field;
+package org.thingsboard.server.dao.cf;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.calculated_field.CalculatedField;
-import org.thingsboard.server.common.data.calculated_field.CalculatedFieldConfig;
-import org.thingsboard.server.common.data.calculated_field.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldConfig;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -37,7 +37,6 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import static org.thingsboard.server.dao.entity.AbstractEntityService.checkConstraintViolation;

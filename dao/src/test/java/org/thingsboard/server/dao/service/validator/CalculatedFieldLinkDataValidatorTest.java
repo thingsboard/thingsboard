@@ -19,11 +19,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.thingsboard.server.common.data.calculated_field.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.calculated_field.CalculatedFieldLinkDao;
+import org.thingsboard.server.dao.cf.CalculatedFieldLinkDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.UUID;
