@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-start-db.sh
+#start-db.sh
 
 CONF_FOLDER="${pkg.installFolder}/conf"
 jarfile=${pkg.installFolder}/bin/${pkg.name}.jar

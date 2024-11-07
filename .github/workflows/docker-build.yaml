@@ -20,6 +20,23 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
     
     steps:
+      
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed,
+          # if set to "true" but frees about 6 GB
+          tool-cache: true
+          
+          # all of these default to true, but feel free to set to
+          # "false" if necessary for your workflow
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -41,7 +58,7 @@ jobs:
 
       - name: Build the project
         run: |
-          mvn -T 4 license:format install -DskipTests -Ddockerfile.skip=false
+          mvn license:format install -DskipTests -Ddockerfile.skip=false
           
       - name: list docker images
         run: |
