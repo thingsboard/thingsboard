@@ -1272,16 +1272,17 @@ pre.tb-highlight {
     border-radius: 20px;
     padding: 0 16px;
 
+    &:not(.active) {
+      color: rgba(0, 0, 0, 0.76);
+      background: rgba(0, 0, 0, 0.06);
+    }
+
     &.active:not(:disabled) {
       border-color: $primary !important;
     }
 
-    &:disabled, &:not(.active) {
+    &:disabled {
       background: rgba(0, 0, 0, 0.06);
-    }
-
-    &:not(.active) {
-      color: rgba(0, 0, 0, 0.76);
     }
   }
 }

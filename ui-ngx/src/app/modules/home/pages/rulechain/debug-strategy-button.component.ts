@@ -99,7 +99,7 @@ export class DebugStrategyButtonComponent implements ControlValueAccessor {
         {},
         {}, {}, true);
       debugStrategyPopover.tbComponentRef.instance.popover = debugStrategyPopover;
-      debugStrategyPopover.tbComponentRef.instance.onStrategyApplied.subscribe((strategy: DebugStrategy) => {
+      debugStrategyPopover.tbComponentRef.instance.onStrategyApplied.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((strategy: DebugStrategy) => {
         this.debugStrategyFormControl.patchValue(strategy);
         this.cdr.markForCheck();
         debugStrategyPopover.hide();
