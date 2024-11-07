@@ -163,7 +163,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         String resourceKey = filename;
         int idx = 1;
         while (existing.contains(resourceKey)) {
-            resourceKey = basename + "_(" + idx + ")." + extension;
+            resourceKey = basename + "_(" + idx + ")" + (!extension.isEmpty() ? "." + extension : "");
             idx++;
         }
         log.debug("[{}] Generated unique key {} for {} {}", tenantId, resourceKey, resourceType, filename);
