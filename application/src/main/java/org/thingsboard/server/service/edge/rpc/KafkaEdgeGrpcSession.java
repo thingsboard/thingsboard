@@ -15,12 +15,9 @@
  */
 package org.thingsboard.server.service.edge.rpc;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import io.grpc.stub.StreamObserver;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -40,6 +37,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -47,6 +45,7 @@ import java.util.function.Supplier;
 public class KafkaEdgeGrpcSession extends AbstractEdgeGrpcSession<KafkaEdgeGrpcSession> {
 
     private ExecutorService consumerExecutor;
+    private ScheduledExecutorService highPriorityExecutorService;
 
     private QueueConsumerManager<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumer;
 
@@ -60,14 +59,16 @@ public class KafkaEdgeGrpcSession extends AbstractEdgeGrpcSession<KafkaEdgeGrpcS
 
     protected void initConsumer(Supplier<TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>>> edgeEventsConsumer, long schedulerPoolSize) {
         this.consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("edge-event-consumer"));
+        this.highPriorityExecutorService = Executors.newScheduledThreadPool((int) schedulerPoolSize, ThingsBoardThreadFactory.forName("edge-event-high-priority-scheduler"));
         this.consumer = QueueConsumerManager.<TbProtoQueueMsg<ToEdgeEventNotificationMsg>>builder()
                 .name("TB Edge events")
                 .msgPackProcessor(this::processMsgs)
-                .pollInterval(schedulerPoolSize)
+                .pollInterval(ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval())
                 .consumerCreator(edgeEventsConsumer)
                 .consumerExecutor(consumerExecutor)
                 .threadPrefix("edge-events")
                 .build();
+        scheduleCheckForHighPriorityEvent();
     }
 
     private void processMsgs(List<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumer) {
@@ -83,24 +84,34 @@ public class KafkaEdgeGrpcSession extends AbstractEdgeGrpcSession<KafkaEdgeGrpcS
                     edgeEvents.add(edgeEvent);
                 }
                 List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(edgeEvents);
-                Futures.addCallback(sendDownlinkMsgsPack(downlinkMsgsPack), new FutureCallback<>() {
-                    @Override
-                    public void onSuccess(@Nullable Boolean isInterrupted) {
-                        if (Boolean.TRUE.equals(isInterrupted)) {
-                            log.debug("[{}][{}][{}] Send downlink messages task was interrupted", tenantId, edge.getId(), sessionId);
-                        } else {
-                            consumerExecutor.submit(consumer::commit);
-                        }
+                try {
+                    boolean isInterrupted = sendDownlinkMsgsPack(downlinkMsgsPack).get();
+                    if (isInterrupted) {
+                        log.debug("[{}][{}][{}] Send downlink messages task was interrupted", tenantId, edge.getId(), sessionId);
+                    } else {
+                        consumer.commit();
                     }
-                    @Override
-                    public void onFailure(Throwable t) {
-                        log.error("[{}] Failed to send downlink msgs pack", sessionId, t);
-                    }
-                }, ctx.getGrpcCallbackExecutorService());
+                } catch (Exception e) {
+                    log.error("[{}] Failed to process all downlink messages", sessionId, e);
+                }
             }
         } else {
             log.trace("[{}][{}] edge is not connected or sync is not completed. Skipping iteration", tenantId, sessionId);
         }
+    }
+
+    private void scheduleCheckForHighPriorityEvent() {
+        highPriorityExecutorService.scheduleAtFixedRate(() -> {
+            try {
+                if (isConnected() && isSyncCompleted()) {
+                    if (!highPriorityQueue.isEmpty()) {
+                        processHighPriorityEvents();
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Error in processing high priority events", e);
+            }
+        }, 0, ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval() * 3, TimeUnit.MILLISECONDS);
     }
 
     public void startConsumers() {

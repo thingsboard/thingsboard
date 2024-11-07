@@ -95,6 +95,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private final ConcurrentMap<EdgeId, ScheduledFuture<?>> sessionEdgeEventChecks = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, Consumer<FromEdgeSyncResponse>> localSyncEdgeRequests = new ConcurrentHashMap<>();
     private final ConcurrentMap<EdgeId, Boolean> edgeEventsProcessed = new ConcurrentHashMap<>();
+    private final ConcurrentMap<EdgeId, Boolean> kafkaConsumerInit = new ConcurrentHashMap<>();
 
     @Value("${edges.rpc.port}")
     private int rpcPort;
@@ -336,6 +337,8 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             Boolean isChecked = edgeEventsProcessed.get(edgeId);
             if (Boolean.FALSE.equals(isChecked)) {
                 scheduleEdgeEventsCheck(session);
+            } else {
+                initializeKafkaConsumer(session, tenantId, edgeId);
             }
         }
         if (edgeGrpcSession instanceof PostgresEdgeGrpcSession) {
@@ -345,8 +348,11 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     private void initializeKafkaConsumer(KafkaEdgeGrpcSession kafkaEdgeGrpcSession, TenantId tenantId, EdgeId edgeId) {
         TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumer = tbCoreQueueFactory.createEdgeEventMsgConsumer(tenantId, edgeId);
-        kafkaEdgeGrpcSession.initConsumer(() -> consumer, schedulerPoolSize);
-        kafkaEdgeGrpcSession.startConsumers();
+        if (!kafkaConsumerInit.getOrDefault(edgeId, Boolean.FALSE)) {
+            kafkaEdgeGrpcSession.initConsumer(() -> consumer, schedulerPoolSize);
+            kafkaEdgeGrpcSession.startConsumers();
+            kafkaConsumerInit.put(edgeId, Boolean.TRUE);
+        }
     }
 
     private void startSyncProcess(TenantId tenantId, EdgeId edgeId, UUID requestId, String requestServiceId) {
@@ -486,6 +492,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             }
             if (isKafkaSupported) {
                 ((KafkaEdgeGrpcSession) toRemove).stopConsumer();
+                kafkaConsumerInit.remove(edgeId);
             }
             TenantId tenantId = toRemove.getEdge().getTenantId();
             save(tenantId, edgeId, DefaultDeviceStateService.ACTIVITY_STATE, false);
