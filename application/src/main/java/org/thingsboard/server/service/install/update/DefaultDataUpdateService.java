@@ -35,15 +35,11 @@ import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.customer.CustomerService;
-import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceConnectivityConfiguration;
-import org.thingsboard.server.dao.resource.ImageService;
-import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
-import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.component.RuleNodeClassInfo;
 import org.thingsboard.server.utils.TbNodeUpgradeUtils;
@@ -84,17 +80,6 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     @Autowired
     private TenantProfileService tenantProfileService;
-
-    @Autowired
-    private ResourceService resourceService;
-    @Autowired
-    private ImageService imageService;
-
-    @Autowired
-    private DashboardService dashboardService;
-
-    @Autowired
-    private WidgetTypeService widgetTypeService;
 
     @Override
     public void updateData(String fromVersion) throws Exception {

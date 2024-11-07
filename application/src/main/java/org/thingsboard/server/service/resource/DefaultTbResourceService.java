@@ -143,10 +143,6 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     @Override
     public void importResources(List<ResourceExportData> resources, SecurityUser user) throws Exception {
         for (ResourceExportData resourceData : resources) {
-            TbResource resource = new TbResource();
-            resource.setTenantId(user.getTenantId());
-            accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.CREATE, null, resource);
-
             TbResourceInfo resourceInfo;
             if (resourceData.getType() == ResourceType.IMAGE) {
                 resourceInfo = tbImageService.importImage(resourceData, true, user);
@@ -172,12 +168,9 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     }
 
     private TbResourceInfo importResource(ResourceExportData resourceData, SecurityUser user) throws ThingsboardException {
-        TbResource resource = new TbResource();
-        resource.setTenantId(user.getTenantId());
-        accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.CREATE, null, resource);
-
-        resource = resourceService.toResource(user.getTenantId(), resourceData);
+        TbResource resource = resourceService.toResource(user.getTenantId(), resourceData);
         if (resource.getData() != null) {
+            accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.CREATE, null, resource);
             return save(resource, user);
         } else {
             accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.READ, resource.getId(), resource);

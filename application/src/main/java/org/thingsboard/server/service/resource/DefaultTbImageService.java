@@ -185,14 +185,12 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
 
     @Override
     public TbResourceInfo importImage(ResourceExportData imageData, boolean checkExisting, SecurityUser user) throws Exception {
-        TbResource image = new TbResource();
-        image.setTenantId(user.getTenantId());
-        accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.CREATE, null, image);
-
-        image = imageService.toImage(user.getTenantId(), imageData, checkExisting);
+        TbResource image = imageService.toImage(user.getTenantId(), imageData, checkExisting);
         if (checkExisting && image.getId() != null) {
             accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.READ, image.getId(), image);
             return image;
+        } else {
+            accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.CREATE, null, image);
         }
         return save(image, user);
     }
