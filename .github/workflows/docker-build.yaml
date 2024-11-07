@@ -34,9 +34,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install dependencies
+      - name: Build the project
         run: |
-          ./mvnw clean install -DskipTests=true -Ddockerfile.skip=false 
+          mvn clean install -DskipTests -Ddockerfile.skip=false
 
       - name: list docker images
         run: |
