@@ -26,8 +26,8 @@ export class MillisecondsToTimeStringPipe implements PipeTransform {
   constructor(private translate: TranslateService) {
   }
 
-  transform(millSeconds: number, shortFormat = false, onlyFirstDigit = false): string {
-    const { days, hours, minutes, seconds } = this.extractTimeUnits(millSeconds);
+  transform(milliSeconds: number, shortFormat = false, onlyFirstDigit = false): string {
+    const { days, hours, minutes, seconds } = this.extractTimeUnits(milliSeconds);
     return this.formatTimeString(days, hours, minutes, seconds, shortFormat, onlyFirstDigit);
   }
 
