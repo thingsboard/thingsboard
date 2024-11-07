@@ -21,7 +21,6 @@ import { AppState } from '@core/core.state';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { widgetType, widgetTypesData } from '@shared/models/widget.models';
-import { HelpLinks } from '@shared/models/constants';
 
 @Component({
   selector: 'tb-select-widget-type-dialog',
@@ -31,10 +30,11 @@ import { HelpLinks } from '@shared/models/constants';
 export class SelectWidgetTypeDialogComponent extends
   DialogComponent<SelectWidgetTypeDialogComponent, widgetType> {
 
-  readonly widgetTypes = widgetType;
-  readonly allWidgetTypes = Object.keys(widgetType);
-  readonly widgetTypesDataMap = widgetTypesData;
-  readonly widgetTypesHelpLink = HelpLinks.linksMap.widgetTypes;
+  widgetTypes = widgetType;
+
+  allWidgetTypes = Object.keys(widgetType);
+
+  widgetTypesDataMap = widgetTypesData;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
