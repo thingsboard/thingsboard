@@ -36,7 +36,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm install
           ./mvnw clean install -DskipTests=true -Ddockerfile.skip=false 
 
       - name: list docker images
