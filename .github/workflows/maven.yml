@@ -9,10 +9,11 @@
 name: Java CI with Maven
 
 on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+  workflow_dispatch:
+  # push:
+  #   branches: [ "master" ]
+  # pull_request:
+  #   branches: [ "master" ]
 env:
   MAVEN_OPTS: "-Xmx1024m" 
   NODE_OPTIONS: "--max_old_space_size=4096" 
