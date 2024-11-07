@@ -36,8 +36,8 @@ jobs:
 
       - name: Build the project
         run: |
-          mvn clean install -DskipTests -Ddockerfile.skip=false
-
+          mvn license:format install -DskipTests -Ddockerfile.skip=false
+          
       - name: list docker images
         run: |
           docker image ls 
