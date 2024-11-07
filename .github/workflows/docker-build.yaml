@@ -41,7 +41,7 @@ jobs:
 
       - name: Build the project
         run: |
-          mvn -T 3 license:format install -DskipTests -Ddockerfile.skip=false
+          mvn -T 4 license:format install -DskipTests -Ddockerfile.skip=false
           
       - name: list docker images
         run: |
