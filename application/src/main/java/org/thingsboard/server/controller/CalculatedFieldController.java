@@ -27,22 +27,13 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.CalculatedFieldConfig;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.config.annotations.ApiOperation;
-import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.entitiy.cf.TbCalculatedFieldService;
 import org.thingsboard.server.service.security.permission.Operation;
-
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
@@ -54,10 +45,7 @@ import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LI
 @Slf4j
 public class CalculatedFieldController extends BaseController {
 
-    private static final Set<EntityType> supportedEntityTypesForReferencedEntities = EnumSet.of(
-            EntityType.TENANT, EntityType.CUSTOMER, EntityType.ASSET, EntityType.DEVICE);
-
-    private final CalculatedFieldService calculatedFieldService;
+    private final TbCalculatedFieldService tbCalculatedFieldService;
 
     public static final String CALCULATED_FIELD_ID = "calculatedFieldId";
 
@@ -75,8 +63,7 @@ public class CalculatedFieldController extends BaseController {
                                                @RequestBody CalculatedField calculatedField) throws Exception {
         calculatedField.setTenantId(getTenantId());
         checkEntityId(calculatedField.getEntityId(), Operation.WRITE_CALCULATED_FIELD);
-        checkReferencedEntities(calculatedField.getConfiguration());
-        return calculatedFieldService.save(calculatedField);
+        return tbCalculatedFieldService.save(calculatedField, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Calculated Field (getCalculatedFieldById)",
@@ -88,7 +75,7 @@ public class CalculatedFieldController extends BaseController {
     public CalculatedField getCalculatedFieldById(@Parameter @PathVariable(CALCULATED_FIELD_ID) String strCalculatedFieldId) throws ThingsboardException {
         checkParameter(CALCULATED_FIELD_ID, strCalculatedFieldId);
         CalculatedFieldId calculatedFieldId = new CalculatedFieldId(toUUID(strCalculatedFieldId));
-        CalculatedField calculatedField = calculatedFieldService.findById(getTenantId(), calculatedFieldId);
+        CalculatedField calculatedField = tbCalculatedFieldService.findById(calculatedFieldId, getCurrentUser());
         checkNotNull(calculatedField);
         checkEntityId(calculatedField.getEntityId(), Operation.READ_CALCULATED_FIELD);
         return calculatedField;
@@ -103,23 +90,9 @@ public class CalculatedFieldController extends BaseController {
     public void deleteCalculatedField(@PathVariable(CALCULATED_FIELD_ID) String strCalculatedField) throws Exception {
         checkParameter(CALCULATED_FIELD_ID, strCalculatedField);
         CalculatedFieldId calculatedFieldId = new CalculatedFieldId(toUUID(strCalculatedField));
-        TenantId tenantId = getTenantId();
-        CalculatedField calculatedField = calculatedFieldService.findById(tenantId, calculatedFieldId);
+        CalculatedField calculatedField = tbCalculatedFieldService.findById(calculatedFieldId, getCurrentUser());
         checkEntityId(calculatedField.getEntityId(), Operation.WRITE_CALCULATED_FIELD);
-        calculatedFieldService.deleteCalculatedField(getTenantId(), calculatedFieldId);
-    }
-
-    private void checkReferencedEntities(CalculatedFieldConfig calculatedFieldConfig) throws ThingsboardException {
-        List<EntityId> referencedEntityIds = calculatedFieldConfig.getArguments().values().stream()
-                .map(CalculatedFieldConfig.Argument::getEntityId)
-                .filter(Objects::nonNull)
-                .toList();
-        for (EntityId referencedEntityId : referencedEntityIds) {
-            if (!supportedEntityTypesForReferencedEntities.contains(referencedEntityId.getEntityType())) {
-                throw new IllegalArgumentException("Calculated fields do not support entity type '" + referencedEntityId.getEntityType() + "' for referenced entities.");
-            }
-            checkEntityId(referencedEntityId, Operation.READ);
-        }
+        tbCalculatedFieldService.delete(calculatedField, getCurrentUser());
     }
 
 }

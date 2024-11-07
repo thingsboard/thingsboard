@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.cf;
+package org.thingsboard.server.service.entitiy.cf;
 
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
-import java.util.List;
+public interface TbCalculatedFieldService {
 
-public interface CalculatedFieldDao extends Dao<CalculatedField> {
+    void onMsg();
 
-    boolean existsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId);
+    CalculatedField save(CalculatedField calculatedField, SecurityUser user) throws ThingsboardException;
 
-    List<CalculatedField> findAllByTenantId(TenantId tenantId);
+    CalculatedField findById(CalculatedFieldId calculatedFieldId, SecurityUser user);
 
-    List<CalculatedField> findAll();
-
-    List<CalculatedField> removeAllByEntityId(TenantId tenantId, EntityId entityId);
+    void delete(CalculatedField calculatedField, SecurityUser user);
 
 }

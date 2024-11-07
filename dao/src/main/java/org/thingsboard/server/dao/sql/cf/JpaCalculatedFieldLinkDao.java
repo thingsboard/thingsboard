@@ -29,6 +29,7 @@ import org.thingsboard.server.dao.model.sql.CalculatedFieldLinkEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -42,6 +43,11 @@ public class JpaCalculatedFieldLinkDao extends JpaAbstractDao<CalculatedFieldLin
     @Override
     public CalculatedFieldLink findCalculatedFieldLinkByCalculatedFieldId(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
         return DaoUtil.getData(calculatedFieldLinkRepository.findByTenantIdAndCalculatedFieldId(tenantId.getId(), calculatedFieldId.getId()));
+    }
+
+    @Override
+    public List<CalculatedFieldLink> findAll() {
+        return DaoUtil.convertDataList(calculatedFieldLinkRepository.findAll());
     }
 
     @Override
