@@ -20,12 +20,12 @@ import {
   ControlValueAccessor,
   UntypedFormArray,
   UntypedFormBuilder,
-  UntypedFormControl,
   UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   Validator,
-  Validators
+  Validators,
+  ValidationErrors
 } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -118,7 +118,7 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
         if (Object.prototype.hasOwnProperty.call(keyValMap, property)) {
           keyValsControls.push(this.fb.group({
             key: [property, [Validators.required]],
-            value: [keyValMap[property], [Validators.required]]
+            value: [keyValMap[property]]
           }));
         }
       }
@@ -139,24 +139,12 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
     const keyValsFormArray = this.kvListFormGroup.get('keyVals') as UntypedFormArray;
     keyValsFormArray.push(this.fb.group({
       key: ['', [Validators.required]],
-      value: ['', [Validators.required]]
+      value: ['']
     }));
   }
 
-  public validate(c: UntypedFormControl) {
-    const kvList: {key: string; value: string}[] = this.kvListFormGroup.get('keyVals').value;
-    let valid = true;
-    for (const entry of kvList) {
-      if (!entry.key || !entry.value) {
-        valid = false;
-        break;
-      }
-    }
-    return (valid) ? null : {
-      keyVals: {
-        valid: false,
-      },
-    };
+  validate(): ValidationErrors | null {
+    return this.kvListFormGroup.valid ? null : { invalid: true };
   }
 
   private updateModel() {
