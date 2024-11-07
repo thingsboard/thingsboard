@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -112,6 +113,14 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
             checkConstraintViolation(e, "calculated_field_link_unq_key", "Calculated Field for such entity id is already exists!");
             throw e;
         }
+    }
+
+    @Override
+    public CalculatedFieldLink findCalculatedFieldLinkById(TenantId tenantId, CalculatedFieldLinkId calculatedFieldLinkId) {
+        log.trace("Executing findCalculatedFieldLinkById, tenantId [{}], calculatedFieldLinkId [{}]", tenantId, calculatedFieldLinkId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(calculatedFieldLinkId, id -> "Incorrect calculatedFieldLinkId " + id);
+        return calculatedFieldLinkDao.findById(tenantId, calculatedFieldLinkId.getId());
     }
 
     @Override

@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.cf;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.entity.EntityDaoService;
@@ -33,6 +34,8 @@ public interface CalculatedFieldService extends EntityDaoService {
     int deleteAllCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId);
 
     CalculatedFieldLink saveCalculatedFieldLink(TenantId tenantId, CalculatedFieldLink calculatedFieldLink);
+
+    CalculatedFieldLink findCalculatedFieldLinkById(TenantId tenantId, CalculatedFieldLinkId calculatedFieldLinkId);
 
     boolean existsByEntityId(TenantId tenantId, EntityId entityId);
 
