@@ -16,6 +16,7 @@
 
 import { Pipe, PipeTransform } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { DAY, HOUR, MINUTE, SECOND } from '@shared/models/time/time.models';
 
 @Pipe({
   name: 'milliSecondsToTimeString'
@@ -24,17 +25,18 @@ export class MillisecondsToTimeStringPipe implements PipeTransform {
 
   constructor(private translate: TranslateService) {
   }
+
   transform(millseconds: number, shortFormat = false, onlyFirstDigit = false): string {
     const { days, hours, minutes, seconds } = this.extractTimeUnits(millseconds);
     return this.formatTimeString(days, hours, minutes, seconds, shortFormat, onlyFirstDigit);
   }
 
   private extractTimeUnits(milliseconds: number): { days: number; hours: number; minutes: number; seconds: number } {
-    const seconds = Math.floor(milliseconds / 1000);
-    const days = Math.floor(seconds / 86400);
-    const hours = Math.floor((seconds % 86400) / 3600);
-    const minutes = Math.floor(((seconds % 86400) % 3600) / 60);
-    return { days, hours, minutes, seconds: seconds % 60 };
+    const days = Math.floor(milliseconds / DAY);
+    const hours = Math.floor((milliseconds % DAY) / HOUR);
+    const minutes = Math.floor((milliseconds % HOUR) / MINUTE);
+    const seconds = Math.floor((milliseconds % MINUTE) / SECOND);
+    return { days, hours, minutes, seconds };
   }
 
   private formatTimeString(
