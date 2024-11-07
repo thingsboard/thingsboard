@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.calculated_field;
+package org.thingsboard.server.dao.cf;
 
-import org.thingsboard.server.common.data.calculated_field.CalculatedField;
-import org.thingsboard.server.common.data.calculated_field.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
@@ -29,6 +31,14 @@ public interface CalculatedFieldService extends EntityDaoService {
 
     void deleteCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
+    int deleteAllCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId);
+
     CalculatedFieldLink saveCalculatedFieldLink(TenantId tenantId, CalculatedFieldLink calculatedFieldLink);
+
+    CalculatedFieldLink findCalculatedFieldLinkById(TenantId tenantId, CalculatedFieldLinkId calculatedFieldLinkId);
+
+    boolean existsByEntityId(TenantId tenantId, EntityId entityId);
+
+    boolean referencedInAnyCalculatedField(TenantId tenantId, EntityId referencedEntityId);
 
 }

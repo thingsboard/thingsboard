@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.calculated_field;
+package org.thingsboard.server.dao.sql.cf;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.calculated_field.CalculatedFieldLink;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.calculated_field.CalculatedFieldLinkDao;
+import org.thingsboard.server.dao.cf.CalculatedFieldLinkDao;
 import org.thingsboard.server.dao.model.sql.CalculatedFieldLinkEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
@@ -37,8 +40,8 @@ public class JpaCalculatedFieldLinkDao extends JpaAbstractDao<CalculatedFieldLin
     private final CalculatedFieldLinkRepository calculatedFieldLinkRepository;
 
     @Override
-    public CalculatedFieldLink findCalculatedFieldLinkByEntityId(UUID tenantId, UUID entityId) {
-        return DaoUtil.getData(calculatedFieldLinkRepository.findByTenantIdAndEntityId(tenantId, entityId));
+    public CalculatedFieldLink findCalculatedFieldLinkByCalculatedFieldId(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
+        return DaoUtil.getData(calculatedFieldLinkRepository.findByTenantIdAndCalculatedFieldId(tenantId.getId(), calculatedFieldId.getId()));
     }
 
     @Override
@@ -49,6 +52,11 @@ public class JpaCalculatedFieldLinkDao extends JpaAbstractDao<CalculatedFieldLin
     @Override
     protected JpaRepository<CalculatedFieldLinkEntity, UUID> getRepository() {
         return calculatedFieldLinkRepository;
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.CALCULATED_FIELD_LINK;
     }
 
 }

@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.permission;
+package org.thingsboard.server.dao.sql.cf;
 
-public enum Operation {
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.thingsboard.server.dao.model.sql.CalculatedFieldLinkEntity;
 
-    ALL, CREATE, READ, WRITE, DELETE, ASSIGN_TO_CUSTOMER, UNASSIGN_FROM_CUSTOMER, RPC_CALL,
-    READ_CREDENTIALS, WRITE_CREDENTIALS, READ_ATTRIBUTES, WRITE_ATTRIBUTES, READ_TELEMETRY, WRITE_TELEMETRY, CLAIM_DEVICES,
-    ASSIGN_TO_TENANT, READ_CALCULATED_FIELD, WRITE_CALCULATED_FIELD
+import java.util.UUID;
+
+public interface CalculatedFieldLinkRepository extends JpaRepository<CalculatedFieldLinkEntity, UUID> {
+
+    CalculatedFieldLinkEntity findByTenantIdAndCalculatedFieldId(UUID tenantId, UUID calculatedFieldId);
 
 }

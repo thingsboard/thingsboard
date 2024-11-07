@@ -50,6 +50,7 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
@@ -356,6 +357,8 @@ public interface TbContext {
     MobileAppService getMobileAppService();
 
     SlackService getSlackService();
+
+    CalculatedFieldService getCalculatedFieldService();
 
     boolean isExternalNodeForceAck();
 

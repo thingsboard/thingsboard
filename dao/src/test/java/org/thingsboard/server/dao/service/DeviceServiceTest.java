@@ -39,6 +39,8 @@ import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldConfig;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -50,6 +52,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
@@ -64,6 +67,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -86,6 +90,8 @@ public class DeviceServiceTest extends AbstractServiceTest {
     OtaPackageService otaPackageService;
     @Autowired
     TenantProfileService tenantProfileService;
+    @Autowired
+    private CalculatedFieldService calculatedFieldService;
     @Autowired
     private PlatformTransactionManager platformTransactionManager;
     @SpyBean
@@ -1197,5 +1203,43 @@ public class DeviceServiceTest extends AbstractServiceTest {
                         )
         );
     }
+
+    @Test
+    public void testDeleteAssetIfReferencedInCalculatedField() {
+        Device device = saveDevice(tenantId, "Test Device");
+        Device deviceWithCf = saveDevice(tenantId, "Device with CF");
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setTenantId(tenantId);
+        calculatedField.setName("Test CF");
+        calculatedField.setType("Simple");
+        calculatedField.setEntityId(deviceWithCf.getId());
+
+        CalculatedFieldConfig config = new CalculatedFieldConfig();
+
+        CalculatedFieldConfig.Argument argument = new CalculatedFieldConfig.Argument();
+        argument.setEntityId(device.getId());
+        argument.setType("TIME_SERIES");
+        argument.setKey("temperature");
+
+        config.setArguments(Map.of("T", argument));
+
+        CalculatedFieldConfig.Output output = new CalculatedFieldConfig.Output();
+        output.setType("TIME_SERIES");
+        output.setExpression("T - (100 - H) / 5");
+
+        config.setOutput(output);
+
+        calculatedField.setConfiguration(config);
+
+        CalculatedField savedCalculatedField = calculatedFieldService.save(calculatedField);
+
+        assertThatThrownBy(() -> deviceService.deleteDevice(tenantId, device.getId()))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("Can't delete device that has entity views or is referenced in calculated fields!");
+
+        calculatedFieldService.deleteCalculatedField(tenantId, savedCalculatedField.getId());
+    }
+
 
 }

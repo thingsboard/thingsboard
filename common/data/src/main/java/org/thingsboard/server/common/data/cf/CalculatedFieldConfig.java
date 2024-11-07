@@ -13,12 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.calculated_field;
+package org.thingsboard.server.common.data.cf;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.thingsboard.server.dao.model.sql.CalculatedFieldEntity;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
 
-import java.util.UUID;
+import java.util.Map;
 
-public interface CalculatedFieldRepository extends JpaRepository<CalculatedFieldEntity, UUID> {
+@Data
+public class CalculatedFieldConfig {
+
+    private Map<String, Argument> arguments;
+    private Output output;
+
+    @Data
+    public static class Argument {
+        private EntityId entityId;
+        private String key;
+        private String type;
+        private int defaultValue;
+    }
+
+    @Data
+    public static class Output {
+        private String type;
+        private String expression;
+    }
+
 }

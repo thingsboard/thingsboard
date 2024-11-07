@@ -62,6 +62,7 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
@@ -388,6 +389,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private SlackService slackService;
+
+    @Autowired
+    @Getter
+    private CalculatedFieldService calculatedFieldService;
 
     @Lazy
     @Autowired(required = false)

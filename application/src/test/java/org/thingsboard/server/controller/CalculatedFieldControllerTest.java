@@ -18,14 +18,17 @@ package org.thingsboard.server.controller;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.calculated_field.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldConfig;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -75,7 +78,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         assertThat(savedCalculatedField.getEntityId()).isEqualTo(calculatedField.getEntityId());
         assertThat(savedCalculatedField.getType()).isEqualTo(calculatedField.getType());
         assertThat(savedCalculatedField.getName()).isEqualTo(calculatedField.getName());
-        assertThat(savedCalculatedField.getConfiguration()).isEqualTo(calculatedField.getConfiguration());
+        assertThat(savedCalculatedField.getConfiguration()).isEqualTo(getCalculatedFieldConfig(testDevice.getId()));
         assertThat(savedCalculatedField.getVersion()).isEqualTo(calculatedField.getVersion());
 
         savedCalculatedField.setName("Test CF");
@@ -115,7 +118,6 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         doDelete("/api/calculatedField/" + savedCalculatedField.getId().getId().toString())
                 .andExpect(status().isOk());
         doGet("/api/calculatedField/" + savedCalculatedField.getId().getId()).andExpect(status().isNotFound());
-
     }
 
     private CalculatedField getCalculatedField(DeviceId deviceId) {
@@ -124,19 +126,28 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         calculatedField.setType("Simple");
         calculatedField.setName("Test Calculated Field");
         calculatedField.setConfigurationVersion(1);
-        calculatedField.setConfiguration(JacksonUtil.toJsonNode("{\n" +
-                "    \"T\": {\n" +
-                "    \"key\": \"temperature\",\n" +
-                "    \"type\": \"TIME_SERIES\"\n" +
-                "    },\n" +
-                "    \"H\": {\n" +
-                "    \"key\": \"humidity\",\n" +
-                "    \"type\": \"TIME_SERIES\",\n" +
-                "    \"defaultValue\": 50\n" +
-                "    }\n" +
-                " }\n"));
+        calculatedField.setConfiguration(getCalculatedFieldConfig(null));
         calculatedField.setVersion(1L);
         return calculatedField;
+    }
+
+    private CalculatedFieldConfig getCalculatedFieldConfig(EntityId referencedEntityId) {
+        CalculatedFieldConfig config = new CalculatedFieldConfig();
+
+        CalculatedFieldConfig.Argument argument = new CalculatedFieldConfig.Argument();
+        argument.setEntityId(referencedEntityId);
+        argument.setType("TIME_SERIES");
+        argument.setKey("temperature");
+
+        config.setArguments(Map.of("T", argument));
+
+        CalculatedFieldConfig.Output output = new CalculatedFieldConfig.Output();
+        output.setType("TIME_SERIES");
+        output.setExpression("T - (100 - H) / 5");
+
+        config.setOutput(output);
+
+        return config;
     }
 
 }

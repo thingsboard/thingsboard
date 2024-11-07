@@ -222,8 +222,8 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     @Transactional
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
-        if (!force && entityViewService.existsByTenantIdAndEntityId(tenantId, id)) {
-            throw new DataValidationException("Can't delete asset that has entity views!");
+        if (!force && (entityViewService.existsByTenantIdAndEntityId(tenantId, id) || calculatedFieldService.referencedInAnyCalculatedField(tenantId, id))) {
+            throw new DataValidationException("Can't delete asset that has entity views or is referenced in calculated fields!");
         }
 
         Asset asset = assetDao.findById(tenantId, id.getId());

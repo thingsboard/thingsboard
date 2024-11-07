@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.calculated_field;
+package org.thingsboard.server.common.data.cf;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -47,8 +46,8 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
     private String name;
     @Schema(description = "Version of calculated field configuration.", example = "0")
     private int configurationVersion;
-    @Schema(description = "JSON with the calculated field configuration.", implementation = com.fasterxml.jackson.databind.JsonNode.class)
-    private transient JsonNode configuration;
+    @Schema
+    private transient CalculatedFieldConfig configuration;
     @Getter
     @Setter
     private Long version;
@@ -64,8 +63,7 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
         super(id);
     }
 
-    public CalculatedField(TenantId tenantId, EntityId entityId, String type, String name, int configurationVersion, JsonNode configuration, Long version, CalculatedFieldId externalId) {
-        super();
+    public CalculatedField(TenantId tenantId, EntityId entityId, String type, String name, int configurationVersion, CalculatedFieldConfig configuration, Long version, CalculatedFieldId externalId) {
         this.tenantId = tenantId;
         this.entityId = entityId;
         this.type = type;
