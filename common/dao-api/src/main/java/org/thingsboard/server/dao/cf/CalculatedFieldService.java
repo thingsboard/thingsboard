@@ -23,11 +23,15 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
+import java.util.List;
+
 public interface CalculatedFieldService extends EntityDaoService {
 
     CalculatedField save(CalculatedField calculatedField);
 
     CalculatedField findById(TenantId tenantId, CalculatedFieldId calculatedFieldId);
+
+    List<CalculatedField> findAll();
 
     void deleteCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
@@ -36,6 +40,8 @@ public interface CalculatedFieldService extends EntityDaoService {
     CalculatedFieldLink saveCalculatedFieldLink(TenantId tenantId, CalculatedFieldLink calculatedFieldLink);
 
     CalculatedFieldLink findCalculatedFieldLinkById(TenantId tenantId, CalculatedFieldLinkId calculatedFieldLinkId);
+
+    List<CalculatedFieldLink> findAllCalculatedFieldLinks();
 
     boolean existsByEntityId(TenantId tenantId, EntityId entityId);
 

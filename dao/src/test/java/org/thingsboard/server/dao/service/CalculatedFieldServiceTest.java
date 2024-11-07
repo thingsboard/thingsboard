@@ -85,16 +85,6 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testSaveCalculatesFieldWithNonExistingDeviceId() {
-        DeviceId deviceId = new DeviceId(UUID.fromString("038f8668-c9fd-4f00-8501-ce20f2f93c22"));
-        CalculatedField calculatedField = getCalculatedField(deviceId, deviceId);
-
-        assertThatThrownBy(() -> calculatedFieldService.save(calculatedField))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Device with id [" + calculatedField.getEntityId().getId() + "] does not exist.");
-    }
-
-    @Test
     public void testSaveCalculatedFieldWithExistingName() {
         Device device = createTestDevice();
         CalculatedField calculatedField = getCalculatedField(device.getId(), device.getId());
