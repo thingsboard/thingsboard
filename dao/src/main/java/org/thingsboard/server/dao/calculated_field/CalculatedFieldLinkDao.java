@@ -20,8 +20,6 @@ import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.Dao;
 
-import java.util.UUID;
-
 public interface CalculatedFieldLinkDao extends Dao<CalculatedFieldLink> {
 
     CalculatedFieldLink findCalculatedFieldLinkByCalculatedFieldId(TenantId tenantId, CalculatedFieldId calculatedFieldId);

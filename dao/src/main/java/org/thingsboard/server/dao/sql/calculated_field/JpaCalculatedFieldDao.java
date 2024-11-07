@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.calculated_field.CalculatedField;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -65,4 +66,10 @@ public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity,
     protected JpaRepository<CalculatedFieldEntity, UUID> getRepository() {
         return calculatedFieldRepository;
     }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.CALCULATED_FIELD;
+    }
+
 }
