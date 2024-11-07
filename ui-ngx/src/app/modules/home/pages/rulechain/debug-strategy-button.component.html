@@ -16,7 +16,7 @@
 
 -->
 <button mat-stroked-button
-        class="tb-rounded-btn flex-1 mr-2 w-[140px]"
+        class="tb-rounded-btn flex-1 w-36"
         color="primary"
         #matButton
         [class.active]="debugStrategyFormControl.value !== DebugStrategy.DISABLED && !disabled"
@@ -24,8 +24,8 @@
         (click)="openDebugStrategyPanel($event, matButton)">
   <mat-icon [color]="disabled ? 'inherit' : 'primary'">bug_report</mat-icon>
   <ng-container [ngSwitch]="debugStrategyFormControl.value">
-    <span *ngSwitchCase="DebugStrategy.DISABLED" translate>disabled</span>
-    <span *ngSwitchCase="DebugStrategy.ALL_WITH_FAILURES" translate>debug-strategy.all</span>
+    <span *ngSwitchCase="DebugStrategy.DISABLED" translate>common.disabled</span>
+    <span *ngSwitchCase="DebugStrategy.ALL_THEN_ONLY_FAILURE_EVENTS" translate>debug-strategy.all</span>
     <span *ngSwitchCase="DebugStrategy.ALL_EVENTS">{{ lastUpdateTs | debugDurationLeft : maxRuleNodeDebugDurationMinutes }}</span>
     <span *ngSwitchCase="DebugStrategy.ONLY_FAILURE_EVENTS" translate>debug-strategy.failures</span>
   </ng-container>

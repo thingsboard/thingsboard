@@ -1004,6 +1004,7 @@
         "all": "All",
         "hint": {
             "main": "All node debug messages rate limited with:",
+            "main-limited": "All node debug messages will be rate-limited, with a maximum of {{msg}} messages allowed per {{sec}} seconds.",
             "on-failure": "Save all failure debug events without time limit.",
             "all-messages": "Save all debug events during time limit."
         }
@@ -1038,11 +1039,13 @@
         "enter-password": "Enter password",
         "enter-search": "Enter search",
         "created-time": "Created time",
+        "disabled": "Disabled",
         "loading": "Loading...",
         "proceed": "Proceed",
         "open-details-page": "Open details page",
         "not-found": "Not found",
-        "documentation": "Documentation"
+        "documentation": "Documentation",
+        "left": "left"
     },
     "content-type": {
         "json": "Json",
@@ -2084,7 +2087,6 @@
         "column": "Column",
         "row": "Row"
     },
-    "disabled": "Disabled",
     "edge": {
         "edge": "Edge",
         "edge-instances": "Edge instances",

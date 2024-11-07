@@ -16,6 +16,8 @@
 
 import { Pipe, PipeTransform } from '@angular/core';
 import { MINUTE } from '@shared/models/time/time.models';
+import { TranslateService } from '@ngx-translate/core';
+import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
 
 @Pipe({
   name: 'debugDurationLeft',
@@ -23,9 +25,12 @@ import { MINUTE } from '@shared/models/time/time.models';
   standalone: true,
 })
 export class DebugDurationLeftPipe implements PipeTransform {
+
+  constructor(private translate: TranslateService, private millisecondsToTimeString: MillisecondsToTimeStringPipe) {
+  }
   transform(lastUpdateTs: number, maxRuleNodeDebugDurationMinutes: number): string {
-    const minutes = Math.max(0, Math.floor(this.getDebugTime(lastUpdateTs, maxRuleNodeDebugDurationMinutes) / MINUTE));
-    return `${minutes} min left`;
+    const time = this.millisecondsToTimeString.transform(this.getDebugTime(lastUpdateTs, maxRuleNodeDebugDurationMinutes), true, true);
+    return `${time} ` + this.translate.instant('common.left');
   }
 
   getDebugTime(lastUpdateTs: number, maxRuleNodeDebugDurationMinutes: number): number {

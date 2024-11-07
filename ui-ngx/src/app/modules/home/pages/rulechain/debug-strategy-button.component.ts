@@ -59,10 +59,10 @@ import { MINUTE } from '@shared/models/time/time.models';
 })
 export class DebugStrategyButtonComponent implements ControlValueAccessor {
 
-  @Input() disabled = false;
   @Input() lastUpdateTs: number;
 
   debugStrategyFormControl: FormControl<DebugStrategy>;
+  disabled = false;
 
   private onChange: (debugStrategy: DebugStrategy) => void;
 
@@ -112,6 +112,10 @@ export class DebugStrategyButtonComponent implements ControlValueAccessor {
   }
 
   registerOnTouched(_: () => {}): void {}
+
+  setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
+  }
 
   writeValue(value: DebugStrategy): void {
     this.debugStrategyFormControl.patchValue(value, { emitEvent: false });

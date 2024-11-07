@@ -15,18 +15,23 @@
     limitations under the License.
 
 -->
-<div [formGroup]="debugStrategyFormGroup">
-  <div class="tb-form-panel-title p-2" translate>debug-strategy.label</div>
-  <div class="p-1 hint-container">
-    <div class="tb-form-hint tb-primary-fill tb-flex center" tbTruncateWithTooltip>{{ 'debug-strategy.hint.main' | translate }}</div>
+<div [formGroup]="debugStrategyFormGroup" class="flex flex-col gap-2 p-2 max-w-sm">
+  <div class="tb-form-panel-title" translate>debug-strategy.label</div>
+  <div class="hint-container">
+    <div class="tb-form-hint tb-primary-fill tb-flex center">
+      <span *ngIf="ruleChainDebugPerTenantLimitsConfiguration else noLimitHint">
+        {{ 'debug-strategy.hint.main-limited' | translate: { msg: maxMessagesCount, sec: maxTimeFrameSec } }}
+      </span>
+      <ng-template #noLimitHint>{{ 'debug-strategy.hint.main' | translate }}</ng-template>
+    </div>
   </div>
-  <div class="flex flex-col p-2">
-    <mat-slide-toggle class="mat-slide p-1" formControlName="onFailure">
+  <div class="flex flex-col gap-2">
+    <mat-slide-toggle class="mat-slide" formControlName="onFailure">
       <mat-label tb-hint-tooltip-icon="{{ 'debug-strategy.hint.on-failure' | translate }}">
         {{ 'debug-strategy.on-failure' | translate }}
       </mat-label>
     </mat-slide-toggle>
-    <mat-slide-toggle class="mat-slide p-1" formControlName="allMessages">
+    <mat-slide-toggle class="mat-slide" formControlName="allMessages">
       <mat-label tb-hint-tooltip-icon="{{ 'debug-strategy.hint.all-messages' | translate }}">
         {{ 'debug-strategy.all-messages' | translate }} {{ ' (' + maxRuleNodeDebugDurationMinutes + ' ' }} {{ ('debug-strategy.min' | translate) + ')'}}
       </mat-label>

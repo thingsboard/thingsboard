@@ -28,6 +28,7 @@ export interface SysParamsState {
   userSettings: UserSettings;
   maxResourceSize: number;
   maxRuleNodeDebugDurationMinutes: number;
+  ruleChainDebugPerTenantLimitsConfiguration?: string;
 }
 
 export interface SysParams extends SysParamsState {

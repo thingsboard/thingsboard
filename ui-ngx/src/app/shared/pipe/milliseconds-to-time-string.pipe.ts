@@ -24,53 +24,42 @@ export class MillisecondsToTimeStringPipe implements PipeTransform {
 
   constructor(private translate: TranslateService) {
   }
+  transform(millseconds: number, shortFormat = false, onlyFirstDigit = false): string {
+    const { days, hours, minutes, seconds } = this.extractTimeUnits(millseconds);
+    return this.formatTimeString(days, hours, minutes, seconds, shortFormat, onlyFirstDigit);
+  }
 
-  transform(millseconds: number, shortFormat = false): string {
-    let seconds = Math.floor(millseconds / 1000);
+  private extractTimeUnits(milliseconds: number): { days: number; hours: number; minutes: number; seconds: number } {
+    const seconds = Math.floor(milliseconds / 1000);
     const days = Math.floor(seconds / 86400);
-    let hours = Math.floor((seconds % 86400) / 3600);
-    let minutes = Math.floor(((seconds % 86400) % 3600) / 60);
-    seconds = seconds % 60;
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor(((seconds % 86400) % 3600) / 60);
+    return { days, hours, minutes, seconds: seconds % 60 };
+  }
+
+  private formatTimeString(
+    days: number,
+    hours: number,
+    minutes: number,
+    seconds: number,
+    shortFormat: boolean,
+    onlyFirstDigit: boolean
+  ): string {
+    const timeUnits = [
+      { value: days, key: 'days', shortKey: 'short.days' },
+      { value: hours, key: 'hours', shortKey: 'short.hours' },
+      { value: minutes, key: 'minutes', shortKey: 'short.minutes' },
+      { value: seconds, key: 'seconds', shortKey: 'short.seconds' }
+    ];
+
     let timeString = '';
-    if (shortFormat) {
-      if (days > 0) {
-        timeString += this.translate.instant('timewindow.short.days', {days});
-      }
-      if (hours > 0) {
-        timeString += this.translate.instant('timewindow.short.hours', {hours});
-      }
-      if (minutes > 0) {
-        timeString += this.translate.instant('timewindow.short.minutes', {minutes});
-      }
-      if (seconds > 0) {
-        timeString += this.translate.instant('timewindow.short.seconds', {seconds});
-      }
-      if (!timeString.length) {
-        timeString += this.translate.instant('timewindow.short.seconds', {seconds: 0});
-      }
-    } else {
-      if (days > 0) {
-        timeString += this.translate.instant('timewindow.days', {days});
-      }
-      if (hours > 0) {
-        if (timeString.length === 0 && hours === 1) {
-          hours = 0;
-        }
-        timeString += this.translate.instant('timewindow.hours', {hours});
-      }
-      if (minutes > 0) {
-        if (timeString.length === 0 && minutes === 1) {
-          minutes = 0;
-        }
-        timeString += this.translate.instant('timewindow.minutes', {minutes});
-      }
-      if (seconds > 0) {
-        if (timeString.length === 0 && seconds === 1) {
-          seconds = 0;
-        }
-        timeString += this.translate.instant('timewindow.seconds', {seconds});
+    for (const { value, key, shortKey } of timeUnits) {
+      if (value > 0) {
+        timeString += this.translate.instant(shortFormat ? `timewindow.${shortKey}` : `timewindow.${key}`, { [key]: value });
+        if (onlyFirstDigit) return timeString;
       }
     }
-    return timeString;
+
+    return timeString.length > 0 ? timeString : this.translate.instant('timewindow.short.seconds', { seconds: 0 });
   }
 }

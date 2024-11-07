@@ -44,6 +44,9 @@ export class DebugStrategyPanelComponent extends PageComponent implements OnInit
   onStrategyApplied = new EventEmitter<DebugStrategy>()
 
   readonly maxRuleNodeDebugDurationMinutes = getCurrentAuthState(this.store).maxRuleNodeDebugDurationMinutes;
+  readonly ruleChainDebugPerTenantLimitsConfiguration = getCurrentAuthState(this.store).ruleChainDebugPerTenantLimitsConfiguration;
+  readonly maxMessagesCount = this.ruleChainDebugPerTenantLimitsConfiguration?.split(':')[0];
+  readonly maxTimeFrameSec = this.ruleChainDebugPerTenantLimitsConfiguration?.split(':')[1];
 
   constructor(private fb: UntypedFormBuilder,
               protected store: Store<AppState>) {
@@ -67,7 +70,7 @@ export class DebugStrategyPanelComponent extends PageComponent implements OnInit
     const allMessages = this.debugStrategyFormGroup.get('allMessages').value;
     const onFailure = this.debugStrategyFormGroup.get('onFailure').value;
     if (allMessages && onFailure) {
-      this.onStrategyApplied.emit(DebugStrategy.ALL_WITH_FAILURES);
+      this.onStrategyApplied.emit(DebugStrategy.ALL_THEN_ONLY_FAILURE_EVENTS);
     } else if (allMessages) {
       this.onStrategyApplied.emit(DebugStrategy.ALL_EVENTS);
     } else if (onFailure) {
@@ -79,7 +82,7 @@ export class DebugStrategyPanelComponent extends PageComponent implements OnInit
 
   private updatePanelStrategy(): void {
     switch (this.debugStrategy) {
-      case DebugStrategy.ALL_WITH_FAILURES:
+      case DebugStrategy.ALL_THEN_ONLY_FAILURE_EVENTS:
         this.debugStrategyFormGroup.get('allMessages').patchValue(true, { emitEvent: false });
         this.debugStrategyFormGroup.get('onFailure').patchValue(true, { emitEvent: false });
         break;

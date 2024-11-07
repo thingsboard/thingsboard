@@ -34,8 +34,8 @@
         {{ 'rulenode.name-max-length' | translate }}
       </mat-error>
     </mat-form-field>
-    <section class="flex flex-row max-w-[280px] mb-[22px]">
-      <tb-debug-strategy-button formControlName="debugStrategy" [disabled]="disabled" [lastUpdateTs]="ruleNode.lastUpdateTs"/>
+    <section class="flex flex-row max-w-xs mb-5">
+      <tb-debug-strategy-button class="mr-2" formControlName="debugStrategy" [lastUpdateTs]="ruleNode.lastUpdateTs"/>
       <button mat-stroked-button
               class="tb-rounded-btn flex-1"
               color="primary"
@@ -43,9 +43,9 @@
               [disabled]="disabled"
               [class.active]="ruleNodeFormGroup.get('singletonMode').value"
               (click)="onSingleModeChange($event)">
-        <mat-icon [class.opacity-0]="!ruleNodeFormGroup.get('singletonMode').value">checkmark</mat-icon>
+        <mat-icon [class.invisible]="!ruleNodeFormGroup.get('singletonMode').value">checkmark</mat-icon>
         <span translate>rulenode.singleton</span>
-        <input [class.hidden]="true" formControlName="singletonMode">
+        <input class="hidden" formControlName="singletonMode">
       </button>
     </section>
   </section>
