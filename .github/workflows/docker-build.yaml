@@ -34,6 +34,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Install npm packages
+        run: |
+          npm install -g cross-env 
+          npm install -g webpack
+
       - name: Build the project
         run: |
           mvn license:format install -DskipTests -Ddockerfile.skip=false
