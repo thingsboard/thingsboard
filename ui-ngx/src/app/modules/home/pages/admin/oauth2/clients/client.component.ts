@@ -214,7 +214,11 @@ export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAu
     const mapperConfig = control.get('mapperConfig') as UntypedFormGroup;
     if (type === MapperType.CUSTOM) {
       mapperConfig.removeControl('basic');
-      mapperConfig.addControl('custom', this.formCustomGroup(predefinedValue?.custom));
+      if (!mapperConfig.get('custom')) {
+        mapperConfig.addControl('custom', this.formCustomGroup(predefinedValue?.custom));
+      } else {
+        mapperConfig.get('custom').patchValue(predefinedValue.custom, {emitEvent: false});
+      }
     } else {
       mapperConfig.removeControl('custom');
       if (!mapperConfig.get('basic')) {
