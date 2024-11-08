@@ -80,13 +80,13 @@
                 <ng-container matColumnDef="name">
                   <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 60%"> {{ 'dashboard.state-name' | translate }} </mat-header-cell>
                   <mat-cell *matCellDef="let state">
-                    {{ state.name | titlecase }}
+                    {{ state.name }}
                   </mat-cell>
                 </ng-container>
                 <ng-container matColumnDef="id">
                   <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 40%"> {{ 'dashboard.state-id' | translate }} </mat-header-cell>
                   <mat-cell *matCellDef="let state">
-                    {{ state.id | titlecase }}
+                    {{ state.id }}
                   </mat-cell>
                 </ng-container>
                 <ng-container matColumnDef="root">
