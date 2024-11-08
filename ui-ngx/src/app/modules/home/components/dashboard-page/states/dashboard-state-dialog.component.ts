@@ -109,10 +109,12 @@ export class DashboardStateDialogComponent extends
 
   private validateDuplicateStateId(): ValidatorFn {
     return (c: UntypedFormControl) => {
-      const newStateId: string = c.value;
+      const newStateId: string = c.value.toLowerCase();
       if (newStateId) {
-        const existing = this.states[newStateId];
-        if (existing && newStateId !== this.prevStateId) {
+        const existing = Object.keys(this.states).some(
+          key => key.toLowerCase() === newStateId
+        );
+        if (existing && newStateId !== this.prevStateId.toLowerCase()) {
           return {
             stateExists: true
           };
@@ -138,7 +140,8 @@ export class DashboardStateDialogComponent extends
   save(): void {
     this.submitted = true;
     this.state = {...this.state, ...this.stateFormGroup.value};
-    this.state.id = this.state.id.trim();
+    this.state.name = this.state.name.toLowerCase().trim();
+    this.state.id = this.state.id.toLowerCase().trim();
     this.dialogRef.close(this.state);
   }
 }
