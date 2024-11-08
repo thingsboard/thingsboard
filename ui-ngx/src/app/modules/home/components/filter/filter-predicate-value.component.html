@@ -43,7 +43,7 @@
     </div>
     <div class="tb-hint">{{ hintText | translate }}</div>
   </div>
-  <div class="flex flex-col" [class.!hidden]="!dynamicMode && !onlyUserDynamicSource">
+  <div class="flex flex-col flex-1" [class.!hidden]="!dynamicMode && !onlyUserDynamicSource">
     <div formGroupName="dynamicValue" class="flex flex-row items-center justify-start gap-2">
       <div class="flex max-w-35% flex-full flex-col">
         <mat-form-field hideRequiredMarker class="mat-block">
