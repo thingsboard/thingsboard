@@ -111,7 +111,9 @@ export class DashboardStateDialogComponent extends
     return (c: UntypedFormControl) => {
       const newStateId: string = c.value.toLowerCase();
       if (newStateId) {
-        const existing = this.states[newStateId];
+        const existing = Object.keys(this.states).some(
+          key => key.toLowerCase() === newStateId
+        );
         if (existing && newStateId !== this.prevStateId.toLowerCase()) {
           return {
             stateExists: true
