@@ -144,7 +144,7 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
   }
 
   validate(): ValidationErrors | null {
-    return this.kvListFormGroup.valid ? null : { keyVals: { valid: false } };
+    return this.kvListFormGroup.valid ? null : { invalid: true };
   }
 
   private updateModel() {
