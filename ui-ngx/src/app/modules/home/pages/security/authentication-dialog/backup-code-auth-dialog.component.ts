@@ -31,7 +31,7 @@ import { mergeMap, tap } from 'rxjs/operators';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { deepClone } from '@core/utils';
 
-import printTemplate from '!raw-loader!./backup-code-print-template.raw';
+import printTemplate from './backup-code-print-template.raw';
 
 @Component({
   selector: 'tb-backup-code-auth-dialog',
