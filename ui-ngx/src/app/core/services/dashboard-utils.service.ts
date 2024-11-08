@@ -95,10 +95,10 @@ export class DashboardUtilsService {
     }
     if (isUndefined(dashboard.configuration.states)) {
       dashboard.configuration.states = {
-        Default: this.createDefaultState(dashboard.title, true)
+        default: this.createDefaultState(dashboard.title, true)
       };
 
-      const mainLayout = dashboard.configuration.states.Default.layouts.main;
+      const mainLayout = dashboard.configuration.states.default.layouts.main;
       for (const id of Object.keys(dashboard.configuration.widgets)) {
         const widget = dashboard.configuration.widgets[id];
         mainLayout.widgets[id] = {
