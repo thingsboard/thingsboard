@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 @Slf4j
+@Deprecated(forRemoval = true, since = "3.9") // for removal in 4.0
 public class TbRabbitMqAdmin implements TbQueueAdmin {
 
     private final Channel channel;
