@@ -319,12 +319,12 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     public void deleteResource(TenantId tenantId, TbResourceId resourceId, boolean force) {
         log.trace("Executing deleteResource [{}] [{}]", tenantId, resourceId);
         Validator.validateId(resourceId, id -> INCORRECT_RESOURCE_ID + id);
-        if (!force) {
-            resourceValidator.validateDelete(tenantId, resourceId);
-        }
-        TbResource resource = findResourceById(tenantId, resourceId);
+        TbResourceInfo resource = findResourceInfoById(tenantId, resourceId);
         if (resource == null) {
             return;
+        }
+        if (!force) {
+            resourceValidator.validateDelete(tenantId, resource);
         }
         resourceDao.removeById(tenantId, resourceId.getId());
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entity(resource).entityId(resourceId).build());
