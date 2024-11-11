@@ -87,9 +87,16 @@ import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
 import { ExportableEntity } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { Customer } from '@shared/models/customer.model';
+import {
+  ExportResourceDialogComponent,
+  ExportResourceDialogData,
+  ExportResourceDialogDialogResult
+} from '@shared/import-export/export-resource-dialog.component';
 
 export type editMissingAliasesFunction = (widgets: Array<Widget>, isSingleWidget: boolean,
                                           customTitle: string, missingEntityAliases: EntityAliases) => Observable<EntityAliases>;
+
+type SupportEntityResources = 'includeResourcesInExportWidgetTypes' | 'includeResourcesInExportDashboard';
 
 // @dynamic
 @Injectable()
@@ -148,16 +155,23 @@ export class ImportExportService {
   }
 
   public exportDashboard(dashboardId: string) {
-    this.dashboardService.exportDashboard(dashboardId).subscribe({
-      next: (dashboard) => {
-        let name = dashboard.title;
-        name = name.toLowerCase().replace(/\W/g, '_');
-        this.exportToPc(this.prepareDashboardExport(dashboard), name);
-      },
-      error: (e) => {
-        this.handleExportError(e, 'dashboard.export-failed-error');
-      }
-    });
+    this.getIncludeResourcesPreference('includeResourcesInExportDashboard').subscribe(includeResources => {
+      this.openExportDialog('dashboard.export', 'dashboard.export-prompt', includeResources).subscribe(result => {
+        if (result) {
+          this.updateUserSettingsIncludeResourcesIfNeeded(includeResources, result.include, 'includeResourcesInExportDashboard');
+          this.dashboardService.exportDashboard(dashboardId, result.include).subscribe({
+            next: (dashboard) => {
+              let name = dashboard.title;
+              name = name.toLowerCase().replace(/\W/g, '_');
+              this.exportToPc(this.prepareDashboardExport(dashboard), name);
+            },
+            error: (e) => {
+              this.handleExportError(e, 'dashboard.export-failed-error');
+            }
+          });
+        }
+      })
+    })
   }
 
   public importDashboard(onEditMissingAliases: editMissingAliasesFunction): Observable<Dashboard> {
@@ -301,36 +315,54 @@ export class ImportExportService {
   }
 
   public exportWidgetType(widgetTypeId: string) {
-    this.widgetService.exportWidgetType(widgetTypeId).subscribe({
-      next: (widgetTypeDetails) => {
-        let name = widgetTypeDetails.name;
-        name = name.toLowerCase().replace(/\W/g, '_');
-        this.exportToPc(this.prepareExport(widgetTypeDetails), name);
-      },
-      error: (e) => {
-        this.handleExportError(e, 'widget-type.export-failed-error');
-      }
+    this.getIncludeResourcesPreference('includeResourcesInExportWidgetTypes').subscribe(includeResources => {
+      this.openExportDialog('widget.export', 'widget.export-prompt', includeResources).subscribe(result => {
+        if (result) {
+          this.updateUserSettingsIncludeResourcesIfNeeded(includeResources, result.include, 'includeResourcesInExportWidgetTypes');
+          this.widgetService.exportWidgetType(widgetTypeId, result.include).subscribe({
+            next: (widgetTypeDetails) => {
+              let name = widgetTypeDetails.name;
+              name = name.toLowerCase().replace(/\W/g, '_');
+              this.exportToPc(this.prepareExport(widgetTypeDetails), name);
+            },
+            error: (e) => {
+              this.handleExportError(e, 'widget-type.export-failed-error');
+            }
+          });
+        }
+      })
     });
   }
 
   public exportWidgetTypes(widgetTypeIds: string[]): Observable<void> {
-    const widgetTypesObservables: Array<Observable<WidgetTypeDetails>> = [];
-    for (const id of widgetTypeIds) {
-      widgetTypesObservables.push(this.widgetService.exportWidgetType(id));
-    }
-    return forkJoin(widgetTypesObservables).pipe(
-      map((widgetTypes) =>
-        Object.fromEntries(widgetTypes.map(wt=> {
-          let name = wt.name;
-          name = name.toLowerCase().replace(/\W/g, '_') + `.${JSON_TYPE.extension}`;
-          const data = JSON.stringify(this.prepareExport(wt), null, 2);
-          return [name, data];
-        }))),
-        mergeMap(widgetTypeFiles => this.exportJSZip(widgetTypeFiles, 'widget_types')),
-        catchError(e => {
-            this.handleExportError(e, 'widget-type.export-failed-error');
-            throw e;
-        })
+    return this.getIncludeResourcesPreference('includeResourcesInExportWidgetTypes').pipe(
+      mergeMap(includeResources =>
+        this.openExportDialog('widget.export-widgets', 'widget.export-widgets-prompt', includeResources).pipe(
+          mergeMap(result => {
+            if (result) {
+              this.updateUserSettingsIncludeResourcesIfNeeded(includeResources, result.include, 'includeResourcesInExportWidgetTypes');
+              const widgetTypesObservables: Array<Observable<WidgetTypeDetails>> = [];
+              for (const id of widgetTypeIds) {
+                widgetTypesObservables.push(this.widgetService.exportWidgetType(id, result.include));
+              }
+              return forkJoin(widgetTypesObservables).pipe(
+                map((widgetTypes) =>
+                  Object.fromEntries(widgetTypes.map(wt => {
+                    let name = wt.name;
+                    name = name.toLowerCase().replace(/\W/g, '_') + `.${JSON_TYPE.extension}`;
+                    const data = JSON.stringify(this.prepareExport(wt), null, 2);
+                    return [name, data];
+                  }))),
+                mergeMap(widgetTypeFiles => this.exportJSZip(widgetTypeFiles, 'widget_types')),
+                catchError(e => {
+                  this.handleExportError(e, 'widget-type.export-failed-error');
+                  throw e;
+                })
+              );
+            }
+          })
+        )
+      )
     );
   }
 
@@ -1185,6 +1217,29 @@ export class ImportExportService {
       delete importedData.externalId;
     }
     return importedData;
+  }
+
+  private getIncludeResourcesPreference(key: SupportEntityResources): Observable<boolean> {
+    return this.store.pipe(
+      select(selectUserSettingsProperty(key)),
+      take(1)
+    );
+  }
+
+  private openExportDialog(title: string, prompt: string, includeResources: boolean) {
+    return this.dialog.open<ExportResourceDialogComponent, ExportResourceDialogData, ExportResourceDialogDialogResult>(
+      ExportResourceDialogComponent, {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: { title, prompt, include: includeResources }
+      }
+    ).afterClosed();
+  }
+
+  private updateUserSettingsIncludeResourcesIfNeeded(currentValue: boolean, newValue: boolean, key: SupportEntityResources) {
+    if (currentValue !== newValue) {
+      this.store.dispatch(new ActionPreferencesPutUserSettings({[key]: newValue }));
+    }
   }
 
 }

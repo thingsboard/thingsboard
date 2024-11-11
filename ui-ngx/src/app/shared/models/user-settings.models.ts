@@ -19,6 +19,8 @@ export interface UserSettings {
   notDisplayConnectivityAfterAddDevice?: boolean;
   notDisplayInstructionsAfterAddEdge?: boolean;
   includeBundleWidgetsInExport?: boolean;
+  includeResourcesInExportWidgetTypes?: boolean;
+  includeResourcesInExportDashboard?: boolean;
 }
 
 export const initialUserSettings: UserSettings = {
