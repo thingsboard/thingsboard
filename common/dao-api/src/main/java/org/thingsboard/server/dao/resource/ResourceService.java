@@ -88,6 +88,6 @@ public interface ResourceService extends EntityDaoService {
 
     List<TbResourceInfo> getUsedResources(WidgetTypeDetails widgetTypeDetails);
 
-    TbResource createOrUpdateSystemResource(ResourceType resourceType, String resourceKey, String data);
+    TbResource createOrUpdateSystemResource(ResourceType resourceType, String resourceKey, byte[] data);
 
 }

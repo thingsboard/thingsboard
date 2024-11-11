@@ -416,6 +416,8 @@ public class InstallScripts {
         }
 
         Path resourcesDir = Path.of(getDataDir(), RESOURCES_DIR);
+        loadSystemResources(resourcesDir.resolve("images"), ResourceType.IMAGE);
+        loadSystemResources(resourcesDir.resolve("js_modules"), ResourceType.JS_MODULE);
         loadSystemResources(resourcesDir.resolve("dashboards"), ResourceType.DASHBOARD);
     }
 
@@ -520,18 +522,21 @@ public class InstallScripts {
         listDir(dir).forEach(resourceFile -> {
             String resourceKey = resourceFile.getFileName().toString();
             try {
-                String data = getContent(resourceFile);
-                TbResource resource = resourceService.createOrUpdateSystemResource(resourceType, resourceKey, data);
-                log.info("{} resource {}", (resource.getId() == null ? "Created" : "Updated"), resourceKey);
+                byte[] data = getContent(resourceFile);
+                if (resourceType == ResourceType.IMAGE) {
+                    imageService.createOrUpdateSystemImage(resourceKey, data);
+                } else {
+                    resourceService.createOrUpdateSystemResource(resourceType, resourceKey, data);
+                }
             } catch (Exception e) {
                 throw new RuntimeException("Unable to load system resource " + resourceFile, e);
             }
         });
     }
 
-    private String getContent(Path file) {
+    private byte[] getContent(Path file) {
         try {
-            return Files.readString(file);
+            return Files.readAllBytes(file);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
