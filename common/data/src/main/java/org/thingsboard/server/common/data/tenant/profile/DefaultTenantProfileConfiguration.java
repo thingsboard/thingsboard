@@ -205,6 +205,9 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
 
     @Override
     public int getMaxRuleNodeDebugModeDurationMinutes(int systemMaxRuleNodeDebugModeDurationMinutes) {
-        return Math.min(systemMaxRuleNodeDebugModeDurationMinutes, maxRuleNodeDebugDurationMinutes);
+        if (maxRuleNodeDebugDurationMinutes > 0) {
+            return Math.min(systemMaxRuleNodeDebugModeDurationMinutes, maxRuleNodeDebugDurationMinutes);
+        }
+        return systemMaxRuleNodeDebugModeDurationMinutes;
     }
 }

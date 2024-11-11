@@ -47,10 +47,12 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
     @Length(fieldName = "name")
     @Schema(description = "User defined name of the rule node. Used on UI and for logging. ", example = "Process sensor reading")
     private String name;
-    @Schema(description = "Timestamp of the last rule node update.")
-    private long lastUpdateTs;
-    @Schema(description = "Debug strategy. ", example = "ALL_EVENTS")
-    private DebugStrategy debugStrategy;
+    @Schema(description = "Debug failures. ", example = "false")
+    private boolean debugFailures;
+    @Schema(description = "Debug All. Used as a trigger for updating debugAllUntil.", example = "false")
+    private boolean debugAll;
+    @Schema(description = "Timestamp of the end time for the processing debug events.")
+    private long debugAllUntil;
     @Schema(description = "Enable/disable singleton mode. ", example = "false")
     private boolean singletonMode;
     @Schema(description = "Queue name. ", example = "Main")
@@ -77,8 +79,9 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
         this.ruleChainId = ruleNode.getRuleChainId();
         this.type = ruleNode.getType();
         this.name = ruleNode.getName();
-        this.lastUpdateTs = ruleNode.getLastUpdateTs();
-        this.debugStrategy = ruleNode.getDebugStrategy();
+        this.debugFailures = ruleNode.isDebugFailures();
+        this.debugAll = ruleNode.isDebugAll();
+        this.debugAllUntil = ruleNode.getDebugAllUntil();
         this.singletonMode = ruleNode.isSingletonMode();
         this.setConfiguration(ruleNode.getConfiguration());
         this.externalId = ruleNode.getExternalId();
@@ -87,10 +90,6 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
     @Override
     public String getName() {
         return name;
-    }
-
-    public DebugStrategy getDebugStrategy() {
-        return debugStrategy == null ? DebugStrategy.DISABLED : debugStrategy;
     }
 
     public JsonNode getConfiguration() {

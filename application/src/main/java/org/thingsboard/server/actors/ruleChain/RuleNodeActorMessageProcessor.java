@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.rule.RuleNodeDebugUtil;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.RuleNodeException;
@@ -218,7 +219,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     private void persistDebugInputIfAllowed(TbMsg msg, String fromNodeConnectionType, int debugModeDurationMinutes) {
-        if (ruleNode.getDebugStrategy().shouldPersistDebugInput(ruleNode.getLastUpdateTs(), msg.getTs(), debugModeDurationMinutes)) {
+        if (RuleNodeDebugUtil.isDebugAllAvailable(ruleNode)) {
             systemContext.persistDebugInput(tenantId, entityId, msg, fromNodeConnectionType);
         }
     }

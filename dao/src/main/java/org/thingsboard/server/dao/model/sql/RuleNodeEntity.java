@@ -19,14 +19,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
-import org.thingsboard.server.common.data.rule.DebugStrategy;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -61,12 +58,11 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> {
     @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
-    @Column(name = ModelConstants.LAST_UPDATE_TS_COLUMN)
-    private long lastUpdateTs;
+    @Column(name = ModelConstants.DEBUG_FAILURES)
+    private boolean debugFailures;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = ModelConstants.DEBUG_STRATEGY)
-    private DebugStrategy debugStrategy;
+    @Column(name = ModelConstants.DEBUG__ALL_UNTIL)
+    private long debugAllUntil;
 
     @Column(name = ModelConstants.SINGLETON_MODE)
     private boolean singletonMode;
@@ -90,8 +86,8 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> {
         }
         this.type = ruleNode.getType();
         this.name = ruleNode.getName();
-        this.lastUpdateTs = ruleNode.getLastUpdateTs();
-        this.debugStrategy = ruleNode.getDebugStrategy();
+        this.debugFailures = ruleNode.isDebugFailures();
+        this.debugAllUntil = ruleNode.getDebugAllUntil();
         this.singletonMode = ruleNode.isSingletonMode();
         this.queueName = ruleNode.getQueueName();
         this.configurationVersion = ruleNode.getConfigurationVersion();
@@ -111,8 +107,8 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> {
         }
         ruleNode.setType(type);
         ruleNode.setName(name);
-        ruleNode.setLastUpdateTs(lastUpdateTs);
-        ruleNode.setDebugStrategy(debugStrategy);
+        ruleNode.setDebugFailures(debugFailures);
+        ruleNode.setDebugAllUntil(debugAllUntil);
         ruleNode.setSingletonMode(singletonMode);
         ruleNode.setQueueName(queueName);
         ruleNode.setConfigurationVersion(configurationVersion);

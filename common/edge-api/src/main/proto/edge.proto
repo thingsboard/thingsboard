@@ -162,13 +162,6 @@ message RuleChainMetadataUpdateMsg {
   string entity = 8;
 }
 
-enum DebugStrategy {
-  DISABLED = 0;
-  ALL_EVENTS = 1;
-  ALL_THEN_ONLY_FAILURE_EVENTS = 2;
-  ONLY_FAILURE_EVENTS = 3;
-}
-
 message RuleNodeProto {
   option deprecated = true;
   int64 idMSB = 1;
@@ -180,8 +173,8 @@ message RuleNodeProto {
   string additionalInfo = 7;
   bool singletonMode = 8;
   int32 configurationVersion = 9;
-  int64 lastUpdateTs = 10;
-  DebugStrategy debugStrategy = 11;
+  bool debugFailures = 10;
+  int64 debugAllUntil = 11;
 }
 
 message NodeConnectionInfoProto {
