@@ -18,14 +18,18 @@ package org.thingsboard.server.dao.cf;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
 
 public interface CalculatedFieldLinkDao extends Dao<CalculatedFieldLink> {
 
-    CalculatedFieldLink findCalculatedFieldLinkByCalculatedFieldId(TenantId tenantId, CalculatedFieldId calculatedFieldId);
+    List<CalculatedFieldLink> findCalculatedFieldLinksByCalculatedFieldId(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
     List<CalculatedFieldLink> findAll();
+
+    PageData<CalculatedFieldLink> findAll(PageLink pageLink);
 
 }

@@ -24,6 +24,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -33,8 +35,6 @@ import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.cf.CalculatedFieldConfigUtil.calculatedFieldConfigToJson;
-import static org.thingsboard.server.dao.cf.CalculatedFieldConfigUtil.toCalculatedFieldConfig;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_CONFIGURATION;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_CONFIGURATION_VERSION;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_ENTITY_ID;
@@ -93,7 +93,7 @@ public class CalculatedFieldEntity extends BaseSqlEntity<CalculatedField> implem
         this.type = calculatedField.getType();
         this.name = calculatedField.getName();
         this.configurationVersion = calculatedField.getConfigurationVersion();
-        this.configuration = calculatedFieldConfigToJson(calculatedField.getConfiguration(), entityType, entityId);
+        this.configuration = calculatedField.getConfiguration().calculatedFieldConfigToJson(entityType, entityId);
         this.version = calculatedField.getVersion();
         if (calculatedField.getExternalId() != null) {
             this.externalId = calculatedField.getExternalId().getId();
@@ -109,12 +109,22 @@ public class CalculatedFieldEntity extends BaseSqlEntity<CalculatedField> implem
         calculatedField.setType(type);
         calculatedField.setName(name);
         calculatedField.setConfigurationVersion(configurationVersion);
-        calculatedField.setConfiguration(toCalculatedFieldConfig(configuration, entityType, entityId));
+        calculatedField.setConfiguration(readCalculatedFieldConfiguration(configuration, entityType, entityId));
         calculatedField.setVersion(version);
         if (externalId != null) {
             calculatedField.setExternalId(new CalculatedFieldId(externalId));
         }
         return calculatedField;
+    }
+
+    private  CalculatedFieldConfiguration readCalculatedFieldConfiguration(JsonNode config, EntityType entityType, UUID entityId) {
+        String type = config.get("type").asText();
+        switch (type) {
+            case "SIMPLE":
+                return new SimpleCalculatedFieldConfiguration(config, entityType, entityId);
+            default:
+                throw new IllegalArgumentException("Unsupported calculated field type: " + type + "!");
+        }
     }
 
 }

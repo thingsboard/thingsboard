@@ -18,16 +18,20 @@ package org.thingsboard.server.dao.sql.cf;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.cf.CalculatedFieldDao;
 import org.thingsboard.server.dao.model.sql.CalculatedFieldEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.sql.device.NativeDeviceRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
@@ -40,6 +44,7 @@ import java.util.UUID;
 public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity, CalculatedField> implements CalculatedFieldDao {
 
     private final CalculatedFieldRepository calculatedFieldRepository;
+    private final NativeCalculatedFieldRepository nativeCalculatedFieldRepository;
 
     @Override
     public boolean existsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId) {
@@ -54,6 +59,12 @@ public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity,
     @Override
     public List<CalculatedField> findAll() {
         return DaoUtil.convertDataList(calculatedFieldRepository.findAll());
+    }
+
+    @Override
+    public PageData<CalculatedField> findAll(PageLink pageLink) {
+        log.debug("Try to find calculated fields by pageLink [{}]", pageLink);
+        return nativeCalculatedFieldRepository.findCalculatedFields(DaoUtil.toPageable(pageLink));
     }
 
     @Override

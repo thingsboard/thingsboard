@@ -151,7 +151,7 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         calculatedField.setType("Simple");
         calculatedField.setName("Test Calculated Field");
         calculatedField.setConfigurationVersion(1);
-        calculatedField.setConfiguration(getCalculatedFieldConfig(referencedEntityId));
+//        calculatedField.setConfiguration(getCalculatedFieldConfig(referencedEntityId));
         calculatedField.setVersion(1L);
         return calculatedField;
     }

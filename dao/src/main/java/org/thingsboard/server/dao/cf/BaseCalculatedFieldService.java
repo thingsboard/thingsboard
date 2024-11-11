@@ -20,20 +20,24 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.CalculatedFieldConfig;
+import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.entity.AbstractEntityService.checkConstraintViolation;
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
 @Service("CalculatedFieldDaoService")
 @Slf4j
@@ -74,9 +78,16 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
     }
 
     @Override
-    public List<CalculatedField> findAll() {
+    public List<CalculatedField> findAllCalculatedFields() {
         log.trace("Executing findAll");
         return calculatedFieldDao.findAll();
+    }
+
+    @Override
+    public PageData<CalculatedField> findAllCalculatedFields(PageLink pageLink) {
+        log.trace("Executing findAll, pageLink [{}]", pageLink);
+        validatePageLink(pageLink);
+        return calculatedFieldDao.findAll(pageLink);
     }
 
     @Override
@@ -123,6 +134,19 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
     }
 
     @Override
+    public List<CalculatedFieldLink> findAllCalculatedFieldLinksById(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
+        log.trace("Executing findAllCalculatedFieldLinksById, calculatedFieldId [{}]", calculatedFieldId);
+        return calculatedFieldLinkDao.findCalculatedFieldLinksByCalculatedFieldId(tenantId, calculatedFieldId);
+    }
+
+    @Override
+    public PageData<CalculatedFieldLink> findAllCalculatedFieldLinks(PageLink pageLink) {
+        log.trace("Executing findAllCalculatedFieldLinks, pageLink [{}]", pageLink);
+        validatePageLink(pageLink);
+        return calculatedFieldLinkDao.findAll(pageLink);
+    }
+
+    @Override
     public boolean existsByEntityId(TenantId tenantId, EntityId entityId) {
         return calculatedFieldDao.existsByTenantIdAndEntityId(tenantId, entityId);
     }
@@ -132,9 +156,8 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
         return calculatedFieldDao.findAllByTenantId(tenantId).stream()
                 .filter(calculatedField -> !referencedEntityId.equals(calculatedField.getEntityId()))
                 .map(CalculatedField::getConfiguration)
-                .map(CalculatedFieldConfig::getArguments)
-                .flatMap(arguments -> arguments.values().stream())
-                .anyMatch(argument -> referencedEntityId.equals(argument.getEntityId()));
+                .map(CalculatedFieldConfiguration::getReferencedEntities)
+                .anyMatch(referencedEntities -> referencedEntities.contains(referencedEntityId));
     }
 
     @Override
@@ -148,21 +171,22 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
     }
 
     private void createOrUpdateCalculatedFieldLink(TenantId tenantId, CalculatedField calculatedField) {
-        CalculatedFieldLink existingLink = (calculatedField.getId() != null)
-                ? calculatedFieldLinkDao.findCalculatedFieldLinkByCalculatedFieldId(tenantId, calculatedField.getId())
-                : null;
-
-        CalculatedFieldLink updatedLink = buildCalculatedFieldLink(tenantId, calculatedField, existingLink);
-        saveCalculatedFieldLink(tenantId, updatedLink);
+        List<CalculatedFieldLink> links = buildCalculatedFieldLinks(tenantId, calculatedField);
+        links.forEach(link -> saveCalculatedFieldLink(tenantId, link));
     }
 
-    private CalculatedFieldLink buildCalculatedFieldLink(TenantId tenantId, CalculatedField calculatedField, CalculatedFieldLink existingLink) {
-        CalculatedFieldLink link = (existingLink != null) ? existingLink : new CalculatedFieldLink();
-        link.setTenantId(tenantId);
-        link.setEntityId(calculatedField.getEntityId());
-        link.setCalculatedFieldId(calculatedField.getId());
-        link.setConfiguration(calculatedField.getConfiguration());
-        return link;
+    private List<CalculatedFieldLink> buildCalculatedFieldLinks(TenantId tenantId, CalculatedField calculatedField) {
+        CalculatedFieldConfiguration cfConfig = calculatedField.getConfiguration();
+        return cfConfig.getReferencedEntities().stream()
+                .map(referencedEntityId -> {
+                    CalculatedFieldLink link = new CalculatedFieldLink();
+                    link.setTenantId(tenantId);
+                    link.setEntityId(referencedEntityId);
+                    link.setCalculatedFieldId(calculatedField.getId());
+                    link.setConfiguration(cfConfig.getReferencedEntityConfig(referencedEntityId));
+                    return link;
+                })
+                .collect(Collectors.toList());
     }
 
 }

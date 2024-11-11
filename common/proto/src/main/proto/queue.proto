@@ -1267,6 +1267,27 @@ message ToDeviceActorNotificationMsgProto {
   DeviceDeleteMsgProto deviceDeleteMsg = 8;
 }
 
+message CalculatedFieldAddMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 calculatedFieldIdMSB = 3;
+  int64 calculatedFieldIdLSB = 4;
+}
+
+message CalculatedFieldUpdateMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 calculatedFieldIdMSB = 3;
+  int64 calculatedFieldIdLSB = 4;
+}
+
+message CalculatedFieldDeleteMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 calculatedFieldIdMSB = 3;
+  int64 calculatedFieldIdLSB = 4;
+}
+
 /**
    TB Core to Version Control Service
  */

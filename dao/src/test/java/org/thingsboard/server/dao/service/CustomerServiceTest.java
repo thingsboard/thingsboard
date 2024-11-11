@@ -387,7 +387,7 @@ public class CustomerServiceTest extends AbstractServiceTest {
 
         config.setOutput(output);
 
-        calculatedField.setConfiguration(config);
+//        calculatedField.setConfiguration(config);
 
         CalculatedField savedCalculatedField = calculatedFieldService.save(calculatedField);
 

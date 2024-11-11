@@ -892,7 +892,7 @@ public class AssetServiceTest extends AbstractServiceTest {
 
         config.setOutput(output);
 
-        calculatedField.setConfiguration(config);
+//        calculatedField.setConfiguration(config);
 
         CalculatedField savedCalculatedField = calculatedFieldService.save(calculatedField);
 

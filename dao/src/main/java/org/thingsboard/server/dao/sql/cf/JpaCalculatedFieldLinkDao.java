@@ -22,7 +22,10 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.cf.CalculatedFieldLinkDao;
 import org.thingsboard.server.dao.model.sql.CalculatedFieldLinkEntity;
@@ -39,15 +42,22 @@ import java.util.UUID;
 public class JpaCalculatedFieldLinkDao extends JpaAbstractDao<CalculatedFieldLinkEntity, CalculatedFieldLink> implements CalculatedFieldLinkDao {
 
     private final CalculatedFieldLinkRepository calculatedFieldLinkRepository;
+    private final NativeCalculatedFieldRepository nativeCalculatedFieldRepository;
 
     @Override
-    public CalculatedFieldLink findCalculatedFieldLinkByCalculatedFieldId(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
-        return DaoUtil.getData(calculatedFieldLinkRepository.findByTenantIdAndCalculatedFieldId(tenantId.getId(), calculatedFieldId.getId()));
+    public List<CalculatedFieldLink> findCalculatedFieldLinksByCalculatedFieldId(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
+        return DaoUtil.convertDataList(calculatedFieldLinkRepository.findAllByTenantIdAndCalculatedFieldId(tenantId.getId(), calculatedFieldId.getId()));
     }
 
     @Override
     public List<CalculatedFieldLink> findAll() {
         return DaoUtil.convertDataList(calculatedFieldLinkRepository.findAll());
+    }
+
+    @Override
+    public PageData<CalculatedFieldLink> findAll(PageLink pageLink) {
+        log.debug("Try to find calculated field links by pageLink [{}]", pageLink);
+        return nativeCalculatedFieldRepository.findCalculatedFieldLinks(DaoUtil.toPageable(pageLink));
     }
 
     @Override

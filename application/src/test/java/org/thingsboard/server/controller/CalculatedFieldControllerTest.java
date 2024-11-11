@@ -126,7 +126,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         calculatedField.setType("Simple");
         calculatedField.setName("Test Calculated Field");
         calculatedField.setConfigurationVersion(1);
-        calculatedField.setConfiguration(getCalculatedFieldConfig(null));
+//        calculatedField.setConfiguration(getCalculatedFieldConfig(null));
         calculatedField.setVersion(1L);
         return calculatedField;
     }

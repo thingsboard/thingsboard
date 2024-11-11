@@ -13,27 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.cf;
+package org.thingsboard.server.dao.sql.cf;
 
+import org.springframework.data.domain.Pageable;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.Dao;
 
-import java.util.List;
+public interface NativeCalculatedFieldRepository {
 
-public interface CalculatedFieldDao extends Dao<CalculatedField> {
+    PageData<CalculatedField> findCalculatedFields(Pageable pageable);
 
-    boolean existsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId);
-
-    List<CalculatedField> findAllByTenantId(TenantId tenantId);
-
-    List<CalculatedField> findAll();
-
-    PageData<CalculatedField> findAll(PageLink pageLink);
-
-    List<CalculatedField> removeAllByEntityId(TenantId tenantId, EntityId entityId);
+    PageData<CalculatedFieldLink> findCalculatedFieldLinks(Pageable pageable);
 
 }
