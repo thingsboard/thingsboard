@@ -316,6 +316,30 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     }
 
     @Override
+    public TbResourceInfo createOrUpdateSystemImage(String resourceKey, byte[] data) {
+        TbResource image;
+        TbResourceInfo existingImage = findResourceInfoByTenantIdAndKey(TenantId.SYS_TENANT_ID, ResourceType.IMAGE, resourceKey);
+        if (existingImage != null) {
+            image = new TbResource(existingImage);
+        } else {
+            image = new TbResource();
+            image.setTenantId(TenantId.SYS_TENANT_ID);
+            image.setFileName(resourceKey);
+            image.setTitle(resourceKey);
+            image.setResourceKey(resourceKey);
+            image.setResourceType(ResourceType.IMAGE);
+            image.setResourceSubType(ResourceSubType.IMAGE);
+        }
+        ImageDescriptor descriptor = new ImageDescriptor();
+        descriptor.setMediaType(ImageUtils.fileExtensionToMediaType(StringUtils.substringAfterLast(resourceKey, ".")));
+        image.setDescriptorValue(descriptor);
+        image.setData(data);
+        image.setPublic(true);
+        log.debug("{} system image {}", (image.getId() == null ? "Creating" : "Updating"), resourceKey);
+        return saveImage(image);
+    }
+
+    @Override
     public String calculateImageEtag(byte[] imageData) {
         return calculateEtag(imageData);
     }

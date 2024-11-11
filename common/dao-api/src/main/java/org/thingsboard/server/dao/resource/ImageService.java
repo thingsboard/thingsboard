@@ -76,4 +76,6 @@ public interface ImageService {
 
     void inlineImagesForEdge(WidgetTypeDetails widgetTypeDetails);
 
+    TbResourceInfo createOrUpdateSystemImage(String resourceKey, byte[] data);
+
 }

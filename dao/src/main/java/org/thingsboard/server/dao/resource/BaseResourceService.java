@@ -546,9 +546,9 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     @Override
-    public TbResource createOrUpdateSystemResource(ResourceType resourceType, String resourceKey, String data) {
+    public TbResource createOrUpdateSystemResource(ResourceType resourceType, String resourceKey, byte[] data) {
         if (resourceType == ResourceType.DASHBOARD) {
-            Dashboard dashboard = JacksonUtil.fromString(data, Dashboard.class);
+            Dashboard dashboard = JacksonUtil.fromBytes(data, Dashboard.class);
             dashboard.setTenantId(TenantId.SYS_TENANT_ID);
             if (CollectionUtils.isNotEmpty(dashboard.getResources())) {
                 importResources(dashboard.getTenantId(), dashboard.getResources());
@@ -556,7 +556,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
             imageService.updateImagesUsage(dashboard);
             updateResourcesUsage(dashboard);
 
-            data = JacksonUtil.toString(dashboard);
+            data = JacksonUtil.writeValueAsBytes(dashboard);
         }
 
         TbResource resource = findResourceByTenantIdAndKey(TenantId.SYS_TENANT_ID, resourceType, resourceKey);
@@ -568,8 +568,8 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
             resource.setFileName(resourceKey);
             resource.setTitle(resourceKey);
         }
-        resource.setData(data.getBytes(StandardCharsets.UTF_8));
-        log.debug("{} system resource {}", (resource.getId() == null ? "Creating" : "Updating"), resourceKey);
+        resource.setData(data);
+        log.info("{} system resource {}", (resource.getId() == null ? "Creating" : "Updating"), resourceKey);
         return saveResource(resource);
     }
 
