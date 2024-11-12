@@ -22,7 +22,8 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.CalculatedFieldConfig;
+import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.security.Authority;
@@ -123,25 +124,25 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
     private CalculatedField getCalculatedField(DeviceId deviceId) {
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setEntityId(deviceId);
-        calculatedField.setType("Simple");
+        calculatedField.setType("SIMPLE");
         calculatedField.setName("Test Calculated Field");
         calculatedField.setConfigurationVersion(1);
-//        calculatedField.setConfiguration(getCalculatedFieldConfig(null));
+        calculatedField.setConfiguration(getCalculatedFieldConfig(null));
         calculatedField.setVersion(1L);
         return calculatedField;
     }
 
-    private CalculatedFieldConfig getCalculatedFieldConfig(EntityId referencedEntityId) {
-        CalculatedFieldConfig config = new CalculatedFieldConfig();
+    private CalculatedFieldConfiguration getCalculatedFieldConfig(EntityId referencedEntityId) {
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
 
-        CalculatedFieldConfig.Argument argument = new CalculatedFieldConfig.Argument();
+        SimpleCalculatedFieldConfiguration.Argument argument = new SimpleCalculatedFieldConfiguration.Argument();
         argument.setEntityId(referencedEntityId);
         argument.setType("TIME_SERIES");
         argument.setKey("temperature");
 
         config.setArguments(Map.of("T", argument));
 
-        CalculatedFieldConfig.Output output = new CalculatedFieldConfig.Output();
+        SimpleCalculatedFieldConfiguration.Output output = new SimpleCalculatedFieldConfiguration.Output();
         output.setType("TIME_SERIES");
         output.setExpression("T - (100 - H) / 5");
 

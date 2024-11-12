@@ -25,8 +25,6 @@ import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.cf.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -34,7 +32,6 @@ import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -146,21 +143,6 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         calculatedField.setConfiguration(getCalculatedFieldConfig(referencedEntityId));
         calculatedField.setVersion(1L);
         return calculatedField;
-    }
-
-    private CalculatedFieldLink getCalculatedFieldLink(CalculatedField calculatedField) {
-        CalculatedFieldLink calculatedFieldLink = new CalculatedFieldLink();
-        calculatedFieldLink.setTenantId(tenantId);
-        calculatedFieldLink.setEntityId(calculatedField.getEntityId());
-        calculatedFieldLink.setConfiguration(getCalculatedFieldLinkConfiguration());
-        calculatedFieldLink.setCalculatedFieldId(calculatedField.getId());
-        return calculatedFieldLink;
-    }
-
-    private CalculatedFieldLinkConfiguration getCalculatedFieldLinkConfiguration() {
-        CalculatedFieldLinkConfiguration calculatedFieldLinkConfiguration = new CalculatedFieldLinkConfiguration();
-        calculatedFieldLinkConfiguration.setTimeSeries(List.of("temperature"));
-        return calculatedFieldLinkConfiguration;
     }
 
     private CalculatedFieldConfiguration getCalculatedFieldConfig(EntityId referencedEntityId) {
