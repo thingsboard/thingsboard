@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.cf;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -35,14 +36,18 @@ import java.util.UUID;
 })
 public interface CalculatedFieldConfiguration {
 
+    @JsonIgnore
     String getType();
 
     Map<String, BaseCalculatedFieldConfiguration.Argument> getArguments();
 
+    @JsonIgnore
     List<EntityId> getReferencedEntities();
 
-    CalculatedFiledLinkConfiguration getReferencedEntityConfig(EntityId entityId);
+    @JsonIgnore
+    CalculatedFieldLinkConfiguration getReferencedEntityConfig(EntityId entityId);
 
+    @JsonIgnore
     JsonNode calculatedFieldConfigToJson(EntityType entityType, UUID entityId);
 
 }

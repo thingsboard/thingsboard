@@ -38,7 +38,7 @@ import org.thingsboard.server.common.data.cf.BaseCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
-import org.thingsboard.server.common.data.cf.CalculatedFiledLinkConfiguration;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -58,8 +58,6 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-import org.thingsboard.server.service.profile.TbAssetProfileCache;
-import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 
@@ -84,8 +82,6 @@ import static org.thingsboard.server.dao.service.Validator.validateEntityId;
 public class DefaultTbCalculatedFieldService extends AbstractTbEntityService implements TbCalculatedFieldService {
 
     private final CalculatedFieldService calculatedFieldService;
-    private final TbDeviceProfileCache deviceProfileCache;
-    private final TbAssetProfileCache assetProfileCache;
     private final AttributesService attributesService;
     private final TimeseriesService timeseriesService;
     private ListeningScheduledExecutorService scheduledExecutor;
@@ -215,6 +211,15 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
         return value != null ? value : argument.getDefaultValue();
     }
 
+    private <T extends EntityId> void initializeForProfile(TenantId tenantId, List<CalculatedFieldLink> links, CalculatedField cf, Iterable<T> profileIds) {
+        for (T profileId : profileIds) {
+            for (CalculatedFieldLink link : links) {
+                CalculatedFieldLinkConfiguration configuration = link.getConfiguration();
+                initializeStateFromFutures(tenantId, profileId, cf, configuration.getAttributes(), configuration.getTimeSeries());
+            }
+        }
+    }
+
     @Override
     public void onCalculatedFieldAdded(TransportProtos.CalculatedFieldAddMsgProto proto, TbCallback callback) {
         try {
@@ -227,33 +232,24 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
                 calculatedFields.put(calculatedFieldId, cf);
                 calculatedFieldLinks.put(calculatedFieldId, links);
                 switch (entityId.getEntityType()) {
-                    case ASSET, DEVICE: {
+                    case ASSET, DEVICE -> {
                         for (CalculatedFieldLink link : links) {
-                            CalculatedFiledLinkConfiguration configuration = link.getConfiguration();
+                            CalculatedFieldLinkConfiguration configuration = link.getConfiguration();
                             initializeStateFromFutures(tenantId, link.getEntityId(), cf, configuration.getAttributes(), configuration.getTimeSeries());
                         }
                     }
-                    case ASSET_PROFILE: {
+                    case ASSET_PROFILE -> {
                         PageDataIterable<AssetId> assetIds = new PageDataIterable<>(pageLink ->
                                 assetService.findAssetIdsByTenantIdAndAssetProfileId(tenantId, (AssetProfileId) entityId, pageLink), initFetchPackSize);
-                        for (AssetId assetId : assetIds) {
-                            for (CalculatedFieldLink link : links) {
-                                CalculatedFiledLinkConfiguration configuration = link.getConfiguration();
-                                initializeStateFromFutures(tenantId, assetId, cf, configuration.getAttributes(), configuration.getTimeSeries());
-                            }
-                        }
+                        initializeForProfile(tenantId, links, cf, assetIds);
                     }
-                    case DEVICE_PROFILE: {
+                    case DEVICE_PROFILE -> {
                         PageDataIterable<DeviceId> deviceIds = new PageDataIterable<>(pageLink ->
                                 deviceService.findDeviceIdsByTenantIdAndDeviceProfileId(tenantId, (DeviceProfileId) entityId, pageLink), initFetchPackSize);
-                        for (DeviceId deviceId : deviceIds) {
-                            for (CalculatedFieldLink link : links) {
-                                CalculatedFiledLinkConfiguration configuration = link.getConfiguration();
-                                initializeStateFromFutures(tenantId, deviceId, cf, configuration.getAttributes(), configuration.getTimeSeries());
-                            }
-                        }
+                        initializeForProfile(tenantId, links, cf, deviceIds);
                     }
-                    default: throw new IllegalArgumentException("Entity type '" + calculatedFieldId.getEntityType() + "' does not support calculated fields.");
+                    default ->
+                            throw new IllegalArgumentException("Entity type '" + calculatedFieldId.getEntityType() + "' does not support calculated fields.");
                 }
             } else {
                 //Calculated field or entity was probably deleted while message was in queue;
@@ -336,8 +332,9 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
 
     private void checkEntityExistence(TenantId tenantId, EntityId entityId) {
         switch (entityId.getEntityType()) {
-            case ASSET, DEVICE, ASSET_PROFILE, DEVICE_PROFILE -> Optional.ofNullable(entityService.fetchEntity(tenantId, entityId))
-                    .orElseThrow(() -> new IllegalArgumentException(entityId.getEntityType().getNormalName() + " with id [" + entityId.getId() + "] does not exist."));
+            case ASSET, DEVICE, ASSET_PROFILE, DEVICE_PROFILE ->
+                    Optional.ofNullable(entityService.fetchEntity(tenantId, entityId))
+                            .orElseThrow(() -> new IllegalArgumentException(entityId.getEntityType().getNormalName() + " with id [" + entityId.getId() + "] does not exist."));
             default ->
                     throw new IllegalArgumentException("Entity type '" + entityId.getEntityType() + "' does not support calculated fields.");
         }
@@ -357,7 +354,8 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
     private <E extends HasId<I> & HasTenantId, I extends EntityId> E findEntity(TenantId tenantId, EntityId entityId) {
         return switch (entityId.getEntityType()) {
             case TENANT, CUSTOMER, ASSET, DEVICE -> (E) entityService.fetchEntity(tenantId, entityId).orElse(null);
-            default -> throw new IllegalArgumentException("Calculated fields do not support entity type '" + entityId.getEntityType() + "' for referenced entities.");
+            default ->
+                    throw new IllegalArgumentException("Calculated fields do not support entity type '" + entityId.getEntityType() + "' for referenced entities.");
         };
     }
 

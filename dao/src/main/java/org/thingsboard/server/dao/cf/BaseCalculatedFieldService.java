@@ -110,13 +110,8 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
     @Override
     public CalculatedFieldLink saveCalculatedFieldLink(TenantId tenantId, CalculatedFieldLink calculatedFieldLink) {
         calculatedFieldLinkDataValidator.validate(calculatedFieldLink, CalculatedFieldLink::getTenantId);
-        try {
-            log.trace("Executing save calculated field link, [{}]", calculatedFieldLink);
-            return calculatedFieldLinkDao.save(tenantId, calculatedFieldLink);
-        } catch (Exception e) {
-            checkConstraintViolation(e, "calculated_field_link_unq_key", "Calculated Field for such entity id is already exists!");
-            throw e;
-        }
+        log.trace("Executing save calculated field link, [{}]", calculatedFieldLink);
+        return calculatedFieldLinkDao.save(tenantId, calculatedFieldLink);
     }
 
     @Override

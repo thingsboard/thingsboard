@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class CalculatedFiledLinkConfiguration {
+public class CalculatedFieldLinkConfiguration {
 
     private List<String> attributes = new ArrayList<>();
     private List<String> timeSeries = new ArrayList<>();

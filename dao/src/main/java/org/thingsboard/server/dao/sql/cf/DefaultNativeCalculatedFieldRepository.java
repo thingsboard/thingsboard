@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
-import org.thingsboard.server.common.data.cf.CalculatedFiledLinkConfiguration;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.cf.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
@@ -88,7 +88,7 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
                 calculatedField.setType(type);
                 calculatedField.setName(name);
                 calculatedField.setConfigurationVersion(configurationVersion);
-                calculatedField.setConfiguration(readCalculatedFieldConfiguration(configuration, entityType, entityId));
+                calculatedField.setConfiguration(readCalculatedFieldConfiguration(type, configuration, entityType, entityId));
                 calculatedField.setVersion(version);
                 calculatedField.setExternalId(externalIdObj != null ? new CalculatedFieldId(UUID.fromString((String) externalIdObj)) : null);
 
@@ -125,7 +125,7 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
                 calculatedFieldLink.setTenantId(new TenantId(tenantId));
                 calculatedFieldLink.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
                 calculatedFieldLink.setCalculatedFieldId(new CalculatedFieldId(calculatedFieldId));
-                calculatedFieldLink.setConfiguration(JacksonUtil.treeToValue(configuration, CalculatedFiledLinkConfiguration.class));
+                calculatedFieldLink.setConfiguration(JacksonUtil.treeToValue(configuration, CalculatedFieldLinkConfiguration.class));
 
                 return calculatedFieldLink;
             }).collect(Collectors.toList());
@@ -133,8 +133,7 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
         });
     }
 
-    private CalculatedFieldConfiguration readCalculatedFieldConfiguration(JsonNode config, EntityType entityType, UUID entityId) {
-        String type = config.get("type").asText();
+    private CalculatedFieldConfiguration readCalculatedFieldConfiguration(String type, JsonNode config, EntityType entityType, UUID entityId) {
         switch (type) {
             case "SIMPLE":
                 return new SimpleCalculatedFieldConfiguration(config, entityType, entityId);

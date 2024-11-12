@@ -117,8 +117,7 @@ public class CalculatedFieldEntity extends BaseSqlEntity<CalculatedField> implem
         return calculatedField;
     }
 
-    private  CalculatedFieldConfiguration readCalculatedFieldConfiguration(JsonNode config, EntityType entityType, UUID entityId) {
-        String type = config.get("type").asText();
+    private CalculatedFieldConfiguration readCalculatedFieldConfiguration(JsonNode config, EntityType entityType, UUID entityId) {
         switch (type) {
             case "SIMPLE":
                 return new SimpleCalculatedFieldConfiguration(config, entityType, entityId);

@@ -31,7 +31,7 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.CalculatedFieldConfig;
+import org.thingsboard.server.common.data.cf.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -874,25 +874,25 @@ public class AssetServiceTest extends AbstractServiceTest {
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setTenantId(tenantId);
         calculatedField.setName("Test CF");
-        calculatedField.setType("Simple");
+        calculatedField.setType("SIMPLE");
         calculatedField.setEntityId(savedAssetWithCf.getId());
 
-        CalculatedFieldConfig config = new CalculatedFieldConfig();
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
 
-        CalculatedFieldConfig.Argument argument = new CalculatedFieldConfig.Argument();
+        SimpleCalculatedFieldConfiguration.Argument argument = new SimpleCalculatedFieldConfiguration.Argument();
         argument.setEntityId(savedAsset.getId());
         argument.setType("TIME_SERIES");
         argument.setKey("temperature");
 
         config.setArguments(Map.of("T", argument));
 
-        CalculatedFieldConfig.Output output = new CalculatedFieldConfig.Output();
+        SimpleCalculatedFieldConfiguration.Output output = new SimpleCalculatedFieldConfiguration.Output();
         output.setType("TIME_SERIES");
         output.setExpression("T - (100 - H) / 5");
 
         config.setOutput(output);
 
-//        calculatedField.setConfiguration(config);
+        calculatedField.setConfiguration(config);
 
         CalculatedField savedCalculatedField = calculatedFieldService.save(calculatedField);
 

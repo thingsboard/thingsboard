@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -37,7 +38,7 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
     private final ObjectMapper mapper = new ObjectMapper();
 
     protected Map<String, Argument> arguments;
-    protected SimpleCalculatedFieldConfiguration.Output output;
+    protected Output output;
 
     public BaseCalculatedFieldConfiguration() {
     }
@@ -45,19 +46,20 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
     public BaseCalculatedFieldConfiguration(JsonNode config, EntityType entityType, UUID entityId) {
         BaseCalculatedFieldConfiguration calculatedFieldConfig = toCalculatedFieldConfig(config, entityType, entityId);
         this.arguments = calculatedFieldConfig.getArguments();
-        this.output =  calculatedFieldConfig.getOutput();
+        this.output = calculatedFieldConfig.getOutput();
     }
 
     @Override
     public List<EntityId> getReferencedEntities() {
         return arguments.values().stream()
-                .map(SimpleCalculatedFieldConfiguration.Argument::getEntityId)
+                .map(Argument::getEntityId)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public CalculatedFiledLinkConfiguration getReferencedEntityConfig(EntityId entityId) {
-        CalculatedFiledLinkConfiguration linkConfiguration = new CalculatedFiledLinkConfiguration();
+    public CalculatedFieldLinkConfiguration getReferencedEntityConfig(EntityId entityId) {
+        CalculatedFieldLinkConfiguration linkConfiguration = new CalculatedFieldLinkConfiguration();
         arguments.values().stream()
                 .filter(argument -> argument.getEntityId().equals(entityId))
                 .forEach(argument -> {
