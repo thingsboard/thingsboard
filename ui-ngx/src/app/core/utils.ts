@@ -894,3 +894,11 @@ export const camelCase = (str: string): string => {
 export const convertKeysToCamelCase = (obj: Record<string, any>): Record<string, any> => {
   return _.mapKeys(obj, (value, key) => _.camelCase(key));
 };
+
+export const unwrapModule = (module: any) : any => {
+  if ('default' in module && Object.keys(module).length === 1) {
+    return module.default;
+  } else {
+    return module;
+  }
+};

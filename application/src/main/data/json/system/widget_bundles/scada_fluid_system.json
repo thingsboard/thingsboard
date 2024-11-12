@@ -11,8 +11,10 @@
   "widgetTypeFqns": [
     "horizontal_pipe",
     "long_horizontal_pipe",
+    "extra_long_horizontal_pipe",
     "vertical_pipe",
     "long_vertical_pipe",
+    "extra_long_vertical_pipe",
     "left_bottom_elbow_pipe",
     "bottom_right_elbow_pipe",
     "top_right_elbow_pipe",
@@ -28,6 +30,10 @@
     "right_drain_pipe",
     "short_left_drain_pipe",
     "short_right_drain_pipe",
+    "horizontal_broken_pipe",
+    "vertical_broken_pipe",
+    "long_horizontal_broken_pipe",
+    "long_vertical_broken_pipe",
     "top_flow_meter",
     "right_flow_meter",
     "bottom_flow_meter",
@@ -58,6 +64,7 @@
     "stand_vertical_tank",
     "cylindrical_tank",
     "stand_cylindrical_tank",
+    "small_cylindrical_tank",
     "vertical_short_tank",
     "stand_vertical_short_tank",
     "large_cylindrical_tank",
@@ -68,6 +75,8 @@
     "stand_horizontal_tank",
     "spherical_tank",
     "small_spherical_tank",
+    "conical_tank",
+    "large_conical_tank",
     "elevated_tank",
     "pool"
   ]
