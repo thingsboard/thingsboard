@@ -14,7 +14,15 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, DestroyRef, EventEmitter, Input, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  EventEmitter,
+  Input,
+  OnInit
+} from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { FormControl, UntypedFormBuilder } from '@angular/forms';
@@ -37,7 +45,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     SharedModule,
     CommonModule,
     DebugDurationLeftPipe
-  ]
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DebugConfigPanelComponent extends PageComponent implements OnInit {
 
@@ -64,17 +73,8 @@ export class DebugConfigPanelComponent extends PageComponent implements OnInit {
 
     this.onFailuresControl = this.fb.control(false);
     this.debugAllControl = this.fb.control(false);
-    interval(SECOND)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.debugAllControl.patchValue(this.isDebugAllOn(), { emitEvent: false });
-        this.cdr.markForCheck();
-      });
-    this.debugAllControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(value => {
-      this.debugAllUntil = value? new Date().getTime() + this.maxRuleNodeDebugDurationMinutes * MINUTE : 0;
-      this.debugAll = value;
-      this.cdr.markForCheck();
-    });
+
+    this.observeDebugAllChange();
   }
 
   ngOnInit(): void {
@@ -101,5 +101,20 @@ export class DebugConfigPanelComponent extends PageComponent implements OnInit {
 
   isDebugAllOn(): boolean {
     return this.debugAllUntil > new Date().getTime();
+  }
+
+  private observeDebugAllChange(): void {
+    interval(SECOND)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.debugAllControl.patchValue(this.isDebugAllOn(), { emitEvent: false });
+        this.cdr.markForCheck();
+      });
+
+    this.debugAllControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(value => {
+      this.debugAllUntil = value? new Date().getTime() + this.maxRuleNodeDebugDurationMinutes * MINUTE : 0;
+      this.debugAll = value;
+      this.cdr.markForCheck();
+    });
   }
 }
