@@ -25,6 +25,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
@@ -114,6 +115,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     private DataValidator<RuleChain> ruleChainValidator;
 
     @Autowired
+    @Lazy
     private TbTenantProfileCache tbTenantProfileCache;
 
     @Value("${actors.rule.node.max_debug_mode_duration:60}")
