@@ -23,7 +23,7 @@
         [disabled]="disabled"
         (click)="openDebugStrategyPanel($event, matButton)">
   <mat-icon [color]="disabled ? 'inherit' : 'primary'">bug_report</mat-icon>
-  <span *ngIf="!debugAll && !debugFailures && !isDebugAllActive()" translate>common.disabled</span>
+  <span *ngIf="!debugFailures && !isDebugAllActive()" translate>common.disabled</span>
   <span *ngIf="isDebugAllActive() && debugFailures" translate>debug-config.all</span>
   <span *ngIf="isDebugAllActive() && !debugFailures">{{ debugAllUntil | debugDurationLeft }}</span>
   <span *ngIf="!isDebugAllActive() && debugFailures" translate>debug-config.failures</span>

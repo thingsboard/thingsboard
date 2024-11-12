@@ -46,7 +46,7 @@
               class="tb-rounded-btn flex-1"
               color="primary"
               *ngIf="isSingleton()"
-              [disabled]="disabled"
+              [disabled]="ruleNodeFormGroup.get('singletonMode').disabled || disabled"
               [class.active]="ruleNodeFormGroup.get('singletonMode').value"
               (click)="onSingleModeChange($event)">
         <mat-icon [class.invisible]="!ruleNodeFormGroup.get('singletonMode').value">checkmark</mat-icon>
