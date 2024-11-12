@@ -229,9 +229,13 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 node.setRuleChainId(ruleChainId);
                 node = ruleNodeUpdater.apply(node);
 
+                int debugDuration = tbTenantProfileCache.get(tenantId).getDefaultProfileConfiguration().getMaxRuleNodeDebugModeDurationMinutes(maxRuleNodeDebugModeDurationMinutes);
+                long debugUntil = now + TimeUnit.MINUTES.toMillis(debugDuration);
+
                 if (node.isDebugAll()) {
-                    int debugDuration = tbTenantProfileCache.get(tenantId).getDefaultProfileConfiguration().getMaxRuleNodeDebugModeDurationMinutes(maxRuleNodeDebugModeDurationMinutes);
-                    node.setDebugAllUntil(now + TimeUnit.MINUTES.toMillis(debugDuration));
+                    node.setDebugAllUntil(debugUntil);
+                } else if (node.getDebugAllUntil() > debugUntil) {
+                    throw new DataValidationException("Unable to update 'debugAllUntil' property. To reset the debug duration, please modify the 'debugAll' property instead.");
                 }
 
                 RuleChainDataValidator.validateRuleNode(node);
