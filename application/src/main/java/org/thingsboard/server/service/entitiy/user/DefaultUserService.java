@@ -35,8 +35,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
-import java.util.concurrent.TimeUnit;
-
 @Service
 @TbCoreComponent
 @AllArgsConstructor
@@ -90,7 +88,7 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
     public UserActivationLink getActivationLink(TenantId tenantId, CustomerId customerId, UserId userId, HttpServletRequest request) throws ThingsboardException {
         UserCredentials userCredentials = userService.findUserCredentialsByUserId(tenantId, userId);
         if (!userCredentials.isEnabled() && userCredentials.getActivateToken() != null) {
-            userCredentials = userService.refreshUserActivationToken(tenantId, userCredentials);
+            userCredentials = userService.checkUserActivationToken(tenantId, userCredentials);
             String baseUrl = systemSecurityService.getBaseUrl(tenantId, customerId, request);
             String link = baseUrl + "/api/noauth/activate?activateToken=" + userCredentials.getActivateToken();
             return new UserActivationLink(link, userCredentials.getActivationTokenTtl());

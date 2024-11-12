@@ -301,12 +301,12 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     }
 
     @Override
-    public UserCredentials refreshUserActivationToken(TenantId tenantId, UserCredentials userCredentials) {
+    public UserCredentials checkUserActivationToken(TenantId tenantId, UserCredentials userCredentials) {
         if (userCredentials.getActivationTokenTtl() < TimeUnit.MINUTES.toMillis(15)) { // renew link if less than 15 minutes before expiration
             userCredentials = generateUserActivationToken(userCredentials);
             userCredentials = saveUserCredentials(tenantId, userCredentials);
+            log.debug("[{}][{}] Regenerated expired user activation token", tenantId, userCredentials.getUserId());
         }
-        log.debug("[{}][{}] Regenerated expired user activation token", tenantId, userCredentials.getUserId());
         return userCredentials;
     }
 
