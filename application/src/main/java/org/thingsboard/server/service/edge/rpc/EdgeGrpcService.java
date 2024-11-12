@@ -57,9 +57,6 @@ import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
 import org.thingsboard.server.gen.edge.v1.EdgeRpcServiceGrpc;
 import org.thingsboard.server.gen.edge.v1.RequestMsg;
 import org.thingsboard.server.gen.edge.v1.ResponseMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeEventNotificationMsg;
-import org.thingsboard.server.queue.TbQueueConsumer;
-import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -95,7 +92,6 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private final ConcurrentMap<EdgeId, ScheduledFuture<?>> sessionEdgeEventChecks = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, Consumer<FromEdgeSyncResponse>> localSyncEdgeRequests = new ConcurrentHashMap<>();
     private final ConcurrentMap<EdgeId, Boolean> edgeEventsProcessed = new ConcurrentHashMap<>();
-    private final ConcurrentMap<EdgeId, Boolean> kafkaConsumerInit = new ConcurrentHashMap<>();
 
     @Value("${edges.rpc.port}")
     private int rpcPort;
@@ -220,7 +216,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     private AbstractEdgeGrpcSession<?> createEdgeGrpcSession(StreamObserver<ResponseMsg> outputStream) {
         return isKafkaSupported
-                ? new KafkaEdgeGrpcSession(ctx, outputStream, this::onEdgeConnect, this::onEdgeDisconnect,
+                ? new KafkaEdgeGrpcSession(ctx, tbCoreQueueFactory, outputStream, this::onEdgeConnect, this::onEdgeDisconnect,
                 sendDownlinkExecutorService, maxInboundMessageSize, maxHighPriorityQueueSizePerSession)
                 : new PostgresEdgeGrpcSession(ctx, outputStream, this::onEdgeConnect, this::onEdgeDisconnect,
                 sendDownlinkExecutorService, maxInboundMessageSize, maxHighPriorityQueueSizePerSession);
@@ -333,26 +329,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         pushRuleEngineMessage(tenantId, edge, lastConnectTs, TbMsgType.CONNECT_EVENT);
         cancelScheduleEdgeEventsCheck(edgeId);
         edgeEventsProcessed.putIfAbsent(edgeId, Boolean.FALSE);
-        if (edgeGrpcSession instanceof KafkaEdgeGrpcSession session) {
-            Boolean isChecked = edgeEventsProcessed.get(edgeId);
-            if (Boolean.FALSE.equals(isChecked)) {
-                scheduleEdgeEventsCheck(session);
-            } else {
-                initializeKafkaConsumer(session, tenantId, edgeId);
-            }
-        }
-        if (edgeGrpcSession instanceof PostgresEdgeGrpcSession) {
-            scheduleEdgeEventsCheck(edgeGrpcSession);
-        }
-    }
-
-    private void initializeKafkaConsumer(KafkaEdgeGrpcSession kafkaEdgeGrpcSession, TenantId tenantId, EdgeId edgeId) {
-        TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumer = tbCoreQueueFactory.createEdgeEventMsgConsumer(tenantId, edgeId);
-        if (!kafkaConsumerInit.getOrDefault(edgeId, Boolean.FALSE)) {
-            kafkaEdgeGrpcSession.initConsumer(() -> consumer, schedulerPoolSize);
-            kafkaEdgeGrpcSession.startConsumers();
-            kafkaConsumerInit.put(edgeId, Boolean.TRUE);
-        }
+        scheduleEdgeEventsCheck(edgeGrpcSession);
     }
 
     private void startSyncProcess(TenantId tenantId, EdgeId edgeId, UUID requestId, String requestServiceId) {
@@ -419,22 +396,18 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                     final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
                     newEventLock.lock();
                     try {
-                        if (Boolean.TRUE.equals(sessionNewEvents.get(edgeId)) && Boolean.FALSE.equals(edgeEventsProcessed.get(edgeId))) {
+                        if (Boolean.TRUE.equals(sessionNewEvents.get(edgeId))) {
                             log.trace("[{}][{}] Set session new events flag to false", tenantId, edgeId.getId());
                             sessionNewEvents.put(edgeId, false);
+                            processEdgeEventMigrationIfNeeded(session, edgeId);
+                            session.processHighPriorityEvents();
                             Futures.addCallback(session.processEdgeEvents(), new FutureCallback<>() {
                                 @Override
                                 public void onSuccess(Boolean newEventsAdded) {
                                     if (Boolean.TRUE.equals(newEventsAdded)) {
                                         sessionNewEvents.put(edgeId, true);
                                     }
-                                    if (session instanceof KafkaEdgeGrpcSession kafkaEdgeGrpcSession && newEventsAdded != null) {
-                                        edgeEventsProcessed.put(edgeId, true);
-                                        initializeKafkaConsumer(kafkaEdgeGrpcSession, tenantId, edgeId);
-                                        cancelScheduleEdgeEventsCheck(edgeId);
-                                    } else {
-                                        scheduleEdgeEventsCheck(session);
-                                    }
+                                    scheduleEdgeEventsCheck(session);
                                 }
 
                                 @Override
@@ -444,12 +417,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                                 }
                             }, ctx.getGrpcCallbackExecutorService());
                         } else {
-                            if (Boolean.TRUE.equals(edgeEventsProcessed.get(edgeId)) && session instanceof KafkaEdgeGrpcSession kafkaEdgeGrpcSession) {
-                                initializeKafkaConsumer(kafkaEdgeGrpcSession, tenantId, edgeId);
-                                cancelScheduleEdgeEventsCheck(edgeId);
-                            } else {
-                                scheduleEdgeEventsCheck(session);
-                            }
+                            scheduleEdgeEventsCheck(session);
                         }
                     } finally {
                         newEventLock.unlock();
@@ -463,6 +431,21 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         } else {
             log.debug("[{}] Session was removed and edge event check schedule must not be started [{}]",
                     tenantId, edgeId.getId());
+        }
+    }
+
+    private void processEdgeEventMigrationIfNeeded(AbstractEdgeGrpcSession<?> session, EdgeId edgeId) throws Exception {
+        boolean isMigrationProcessed = edgeEventsProcessed.getOrDefault(edgeId, Boolean.FALSE);
+        if (!isMigrationProcessed) {
+            Boolean migrated = session.migrateEdgeEvents(false).get();
+            if (Boolean.TRUE.equals(migrated)) {
+                sessionNewEvents.put(edgeId, true);
+                scheduleEdgeEventsCheck(session);
+            } else if (Boolean.FALSE.equals(migrated)) {
+                edgeEventsProcessed.put(edgeId, true);
+            } else {
+                scheduleEdgeEventsCheck(session);
+            }
         }
     }
 
@@ -492,7 +475,6 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             }
             if (isKafkaSupported) {
                 ((KafkaEdgeGrpcSession) toRemove).stopConsumer();
-                kafkaConsumerInit.remove(edgeId);
             }
             TenantId tenantId = toRemove.getEdge().getTenantId();
             save(tenantId, edgeId, DefaultDeviceStateService.ACTIVITY_STATE, false);

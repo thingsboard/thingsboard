@@ -20,10 +20,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
@@ -41,7 +37,6 @@ import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -55,10 +50,6 @@ import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.RelationActionEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.tenant.TenantService;
-import org.thingsboard.server.queue.discovery.TopicService;
-import org.thingsboard.server.queue.kafka.TbKafkaAdmin;
-import org.thingsboard.server.queue.kafka.TbKafkaSettings;
-import org.thingsboard.server.queue.kafka.TbKafkaTopicConfigs;
 
 /**
  * This event listener does not support async event processing because relay on ThreadLocal
@@ -79,21 +70,10 @@ import org.thingsboard.server.queue.kafka.TbKafkaTopicConfigs;
 @RequiredArgsConstructor
 public class EdgeEventSourcingListener {
 
-    private final TopicService topicService;
     private final TbClusterService tbClusterService;
 
     private final TenantService tenantService;
     private final EdgeSynchronizationManager edgeSynchronizationManager;
-
-    @Autowired(required = false)
-    @Lazy
-    private TbKafkaSettings kafkaSettings;
-    @Autowired(required = false)
-    @Lazy
-    private TbKafkaTopicConfigs kafkaTopicConfigs;
-
-    @Value("#{'${queue.type:null}' == 'kafka'}")
-    private boolean isKafkaSupported;
 
     @PostConstruct
     public void init() {
@@ -127,11 +107,7 @@ public class EdgeEventSourcingListener {
             return;
         }
         try {
-            if (EntityType.TENANT.equals(entityType)) {
-                return;
-            }
-            if (EntityType.EDGE.equals(entityType)) {
-                handleEdgeEntityDeletion((EdgeId) event.getEntityId(), tenantId);
+            if (EntityType.TENANT.equals(entityType) || EntityType.EDGE.equals(entityType)) {
                 return;
             }
             log.trace("[{}] DeleteEntityEvent called: {}", tenantId, event);
@@ -142,14 +118,6 @@ public class EdgeEventSourcingListener {
                     edgeSynchronizationManager.getEdgeId().get());
         } catch (Exception e) {
             log.error("[{}] failed to process DeleteEntityEvent: {}", tenantId, event, e);
-        }
-    }
-
-    private void handleEdgeEntityDeletion(EdgeId edgeId, TenantId tenantId) {
-        if (isKafkaSupported) {
-            String topic = topicService.buildEdgeEventNotificationsTopicPartitionInfo(tenantId, edgeId).getTopic();
-            TbKafkaAdmin kafkaAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdgeEventConfigs());
-            kafkaAdmin.deleteTopic(topic);
         }
     }
 

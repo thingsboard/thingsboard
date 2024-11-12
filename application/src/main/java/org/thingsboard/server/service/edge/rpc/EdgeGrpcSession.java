@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.edge.rpc;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.edge.Edge;
 
 public interface EdgeGrpcSession {
@@ -24,5 +25,11 @@ public interface EdgeGrpcSession {
     void startSyncProcess(boolean fullSync);
 
     boolean isConnected();
+
+    ListenableFuture<Boolean> migrateEdgeEvents(boolean isMigrationProcessed) throws Exception;
+
+    ListenableFuture<Boolean> processEdgeEvents() throws Exception;
+
+    void processHighPriorityEvents();
 
 }

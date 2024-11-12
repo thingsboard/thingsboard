@@ -539,7 +539,8 @@ public abstract class AbstractEdgeGrpcSession<T extends AbstractEdgeGrpcSession<
         }
     }
 
-    protected void processHighPriorityEvents() {
+    @Override
+    public void processHighPriorityEvents() {
         try {
             List<EdgeEvent> highPriorityEvents = new ArrayList<>();
             EdgeEvent event;
@@ -553,7 +554,8 @@ public abstract class AbstractEdgeGrpcSession<T extends AbstractEdgeGrpcSession<
         }
     }
 
-    protected ListenableFuture<Boolean> processEdgeEvents() throws Exception {
+    @Override
+    public ListenableFuture<Boolean> processEdgeEvents() throws Exception {
         SettableFuture<Boolean> result = SettableFuture.create();
         log.trace("[{}][{}] starting processing edge events", tenantId, sessionId);
         if (isConnected() && isSyncCompleted()) {
