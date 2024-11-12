@@ -33,7 +33,7 @@ import { RuleNodeLinkComponent } from './rule-node-link.component';
 import { LinkLabelsComponent } from '@home/pages/rulechain/link-labels.component';
 import { RuleNodeConfigComponent } from './rule-node-config.component';
 import { DebugDurationLeftPipe } from '@home/pages/rulechain/debug-duration-left.pipe';
-import { DebugStrategyButtonComponent } from '@home/pages/rulechain/debug-strategy-button.component';
+import { DebugConfigButtonComponent } from '@home/pages/rulechain/debug-config-button.component';
 
 @NgModule({
   declarations: [
@@ -63,7 +63,7 @@ import { DebugStrategyButtonComponent } from '@home/pages/rulechain/debug-strate
     HomeComponentsModule,
     RuleChainRoutingModule,
     DebugDurationLeftPipe,
-    DebugStrategyButtonComponent
+    DebugConfigButtonComponent
   ]
 })
 export class RuleChainModule { }

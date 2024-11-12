@@ -62,7 +62,6 @@ import {
 } from '@shared/models/rule-chain.models';
 import { FcItemInfo, FlowchartConstants, NgxFlowchartComponent, UserCallbacks } from 'ngx-flowchart';
 import {
-  DebugStrategy,
   FcRuleEdge,
   FcRuleNode,
   FcRuleNodeType,
@@ -576,8 +575,9 @@ export class RuleChainPageComponent extends PageComponent
         additionalInfo: ruleNode.additionalInfo,
         configuration: ruleNode.configuration,
         configurationVersion: isDefinedAndNotNull(ruleNode.configurationVersion) ? ruleNode.configurationVersion : 0,
-        debugStrategy: ruleNode.debugStrategy,
-        lastUpdateTs: ruleNode.lastUpdateTs,
+        debugAll: ruleNode.debugAll,
+        debugFailures: ruleNode.debugFailures,
+        debugAllUntil: ruleNode.debugAllUntil,
         singletonMode: ruleNode.singletonMode,
         queueName: ruleNode.queueName,
         x: Math.round(ruleNode.additionalInfo.layoutX),
@@ -938,8 +938,9 @@ export class RuleChainPageComponent extends PageComponent
             name: node.name,
             configuration: deepClone(node.configuration),
             additionalInfo: node.additionalInfo ? deepClone(node.additionalInfo) : {},
-            debugStrategy: node.debugStrategy,
-            lastUpdateTs: node.lastUpdateTs,
+            debugFailures: node.debugFailures,
+            debugAllUntil: node.debugAllUntil,
+            debugAll: node.debugAll,
             singletonMode: node.singletonMode,
             queueName: node.queueName
           };
@@ -1012,7 +1013,9 @@ export class RuleChainPageComponent extends PageComponent
             name: outputEdge.label,
             configuration: {},
             additionalInfo: {},
-            debugStrategy: DebugStrategy.DISABLED,
+            debugFailures: false,
+            debugAllUntil: 0,
+            debugAll: false,
             singletonMode: false
           };
           outputNode.additionalInfo.layoutX = Math.round(destNode.x);
@@ -1058,7 +1061,9 @@ export class RuleChainPageComponent extends PageComponent
             configuration: {
               ruleChainId: ruleChain.id.id
             },
-            debugStrategy: DebugStrategy.DISABLED,
+            debugFailures: false,
+            debugAllUntil: 0,
+            debugAll: false,
             singletonMode: false,
             x: Math.round(ruleChainNodeX),
             y: Math.round(ruleChainNodeY),
@@ -1478,8 +1483,9 @@ export class RuleChainPageComponent extends PageComponent
               : node.component.configurationVersion,
             configuration: node.configuration,
             additionalInfo: node.additionalInfo ? node.additionalInfo : {},
-            debugStrategy: node.debugStrategy,
-            lastUpdateTs: node.lastUpdateTs,
+            debugFailures: node.debugFailures,
+            debugAllUntil: node.debugAllUntil,
+            debugAll: node.debugAll,
             singletonMode: node.singletonMode,
             queueName: node.queueName
           };

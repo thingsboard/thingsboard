@@ -29,7 +29,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { DebugStrategy, FcRuleNode, RuleNodeType } from '@shared/models/rule-node.models';
+import { FcRuleNode, RuleNodeDebugConfig, RuleNodeType } from '@shared/models/rule-node.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { Subject } from 'rxjs';
 import { RuleNodeConfigComponent } from './rule-node-config.component';
@@ -92,7 +92,9 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
     if (this.ruleNode) {
       this.ruleNodeFormGroup = this.fb.group({
         name: [this.ruleNode.name, [Validators.required, Validators.pattern('(.|\\s)*\\S(.|\\s)*'), Validators.maxLength(255)]],
-        debugStrategy: [this.ruleNode.debugStrategy ?? DebugStrategy.DISABLED],
+        debugAll: [this.ruleNode.debugAll],
+        debugFailures: [this.ruleNode.debugFailures],
+        debugAllUntil: [this.ruleNode.debugAllUntil],
         singletonMode: [this.ruleNode.singletonMode, []],
         configuration: [this.ruleNode.configuration, [Validators.required]],
         additionalInfo: this.fb.group(
@@ -201,5 +203,12 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
 
   isSingletonEditAllowed() {
     return this.ruleNode.component.clusteringMode === ComponentClusteringMode.USER_PREFERENCE;
+  }
+
+  onDebugConfigChanged(config: RuleNodeDebugConfig): void {
+    this.ruleNodeFormGroup.get('debugAllUntil').setValue(config.debugAllUntil);
+    this.ruleNodeFormGroup.get('debugAll').setValue(config.debugAll);
+    this.ruleNodeFormGroup.get('debugFailures').setValue(config.debugFailures);
+    this.ruleNodeFormGroup.markAsDirty();
   }
 }

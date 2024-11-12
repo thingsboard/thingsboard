@@ -995,9 +995,9 @@
         "type-timeseries-deleted": "Telemetry deleted",
         "type-sms-sent": "SMS sent"
     },
-    "debug-strategy": {
+    "debug-config": {
         "min": "min",
-        "label": "Debug strategy",
+        "label": "Debug configuration",
         "on-failure": "Failures only (24/7)",
         "all-messages": "All messages",
         "failures": "Failures",

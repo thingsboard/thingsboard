@@ -35,7 +35,13 @@
       </mat-error>
     </mat-form-field>
     <section class="flex flex-row max-w-xs mb-5">
-      <tb-debug-strategy-button class="mr-2" formControlName="debugStrategy" [lastUpdateTs]="ruleNode.lastUpdateTs"/>
+      <tb-debug-config-button
+        class="mr-2"
+        [debugAll]="ruleNode.debugAll"
+        [debugFailures]="ruleNode.debugFailures"
+        [debugAllUntil]="ruleNode.debugAllUntil"
+        (onDebugConfigChanged)="onDebugConfigChanged($event)"
+      />
       <button mat-stroked-button
               class="tb-rounded-btn flex-1"
               color="primary"

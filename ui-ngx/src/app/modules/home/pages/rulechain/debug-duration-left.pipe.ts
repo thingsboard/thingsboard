@@ -29,15 +29,8 @@ export class DebugDurationLeftPipe implements PipeTransform {
   constructor(private translate: TranslateService, private millisecondsToTimeString: MillisecondsToTimeStringPipe) {
   }
 
-  transform(lastUpdateTs: number, maxRuleNodeDebugDurationMinutes: number): string {
-    const time = this.millisecondsToTimeString.transform(this.getDebugTime(lastUpdateTs, maxRuleNodeDebugDurationMinutes), true, true);
+  transform(debugAllUntil: number): string {
+    const time = this.millisecondsToTimeString.transform((debugAllUntil - new Date().getTime()), true, true);
     return `${time} ` + this.translate.instant('common.left');
-  }
-
-  private getDebugTime(lastUpdateTs: number, maxRuleNodeDebugDurationMinutes: number): number {
-    const maxDuration = maxRuleNodeDebugDurationMinutes * MINUTE;
-    const updateDuration = lastUpdateTs ? new Date().getTime() - lastUpdateTs : 0;
-    const leftTime = maxDuration - updateDuration;
-    return leftTime > 0 ? leftTime : 0;
   }
 }
