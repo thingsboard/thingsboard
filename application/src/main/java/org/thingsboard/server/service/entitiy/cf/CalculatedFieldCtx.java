@@ -15,17 +15,20 @@
  */
 package org.thingsboard.server.service.entitiy.cf;
 
-import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 
 @Data
-@Builder
 public class CalculatedFieldCtx {
 
-    private final CalculatedFieldId calculatedFieldId;
-    private final EntityId entityId;
-    private final CalculatedFieldState state;
+    private CalculatedFieldId calculatedFieldId;
+    private EntityId entityId;
+    private CalculatedFieldState state;
 
+    public CalculatedFieldCtx(CalculatedFieldId calculatedFieldId, EntityId entityId, CalculatedFieldState state) {
+        this.calculatedFieldId = calculatedFieldId;
+        this.entityId = entityId;
+        this.state = state;
+    }
 }
