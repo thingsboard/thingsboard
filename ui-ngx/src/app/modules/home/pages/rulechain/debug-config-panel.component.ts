@@ -82,7 +82,7 @@ export class DebugConfigPanelComponent extends PageComponent implements OnInit {
     this.onFailuresControl.patchValue(this.debugFailures);
   }
 
-  onCancel() {
+  onCancel(): void {
     this.popover?.hide();
   }
 
