@@ -32,13 +32,16 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.ComparisonTsValue;
+import org.thingsboard.server.common.data.query.OriginatorAlarmFilter;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityKey;
@@ -52,6 +55,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.ws.WebSocketService;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AggHistoryCmd;
@@ -60,6 +64,8 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.AggTimeSeriesCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmDataCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmDataUpdate;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmStatusCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
@@ -68,6 +74,7 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.GetTsCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.TimeSeriesCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.UnsubscribeCmd;
+import org.thingsboard.server.service.ws.telemetry.sub.AlarmSubscriptionUpdate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,6 +83,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -139,6 +147,8 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     private int maxAlarmQueriesPerRefreshInterval;
     @Value("${ui.dashboard.max_datapoints_limit:50000}")
     private int maxDatapointLimit;
+    @Value("${server.ws.alarms_per_alarm_status_subscription_cache_size:10}")
+    private int alarmsPerAlarmStatusSubscriptionCacheSize;
 
     private ExecutorService wsCallBackExecutor;
     private boolean tsInSqlDB;
@@ -434,6 +444,76 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         }
     }
 
+    @Override
+    public void handleCmd(WebSocketSessionRef sessionRef, AlarmStatusCmd cmd) {
+        log.debug("[{}] Handling alarm status subscription cmd (cmdId: {})", sessionRef.getSessionId(), cmd.getCmdId());
+        SecurityUser securityCtx = sessionRef.getSecurityCtx();
+
+        TbAlarmStatusSubscription subscription = TbAlarmStatusSubscription.builder()
+                .serviceId(serviceInfoProvider.getServiceId())
+                .sessionId(sessionRef.getSessionId())
+                .subscriptionId(cmd.getCmdId())
+                .tenantId(securityCtx.getTenantId())
+                .entityId(cmd.getOriginatorId())
+                .typeList(cmd.getTypeList())
+                .severityList(cmd.getSeverityList())
+                .updateProcessor(this::handleAlarmStatusSubscriptionUpdate)
+                .build();
+        localSubscriptionService.addSubscription(subscription, sessionRef);
+
+        fetchActiveAlarms(subscription);
+        sendUpdate(sessionRef.getSessionId(), subscription.createUpdate());
+    }
+
+    private void fetchActiveAlarms(TbAlarmStatusSubscription subscription) {
+        log.trace("[{}, subId: {}] Fetching active alarms from DB", subscription.getSessionId(), subscription.getSubscriptionId());
+        OriginatorAlarmFilter originatorAlarmFilter = new OriginatorAlarmFilter(subscription.getEntityId(), subscription.getTypeList(), subscription.getSeverityList());
+        List<UUID> alarmIds = alarmService.findActiveOriginatorAlarms(subscription.getTenantId(), originatorAlarmFilter, new PageLink(alarmsPerAlarmStatusSubscriptionCacheSize)).getData();
+
+        subscription.getAlarmIds().addAll(alarmIds);
+        subscription.setExceededLimit(alarmIds.size() == alarmsPerAlarmStatusSubscriptionCacheSize);
+    }
+
+    private void sendUpdate(String sessionId, CmdUpdate update) {
+        log.trace("[{}, cmdId: {}] Sending WS update: {}", sessionId, update.getCmdId(), update);
+        wsService.sendUpdate(sessionId, update);
+    }
+
+    private void handleAlarmStatusSubscriptionUpdate(TbSubscription<AlarmSubscriptionUpdate> sub, AlarmSubscriptionUpdate subscriptionUpdate) {
+        TbAlarmStatusSubscription subscription = (TbAlarmStatusSubscription) sub;
+        try {
+            AlarmInfo alarm = subscriptionUpdate.getAlarm();
+            Set<UUID> alarmsIds = subscription.getAlarmIds();
+            if (alarmsIds.contains(alarm.getId().getId())) {
+                if (!alarmMatchesSubscription(alarm, subscription) || subscriptionUpdate.isAlarmDeleted()) {
+                    alarmsIds.remove(alarm.getId().getId());
+                    if (alarmsIds.size() == 0) {
+                        if (subscription.isExceededLimit()) {
+                            fetchActiveAlarms(subscription);
+                            if (alarmsIds.size() == 0) {
+                                sendUpdate(subscription.getSessionId(), subscription.createUpdate());
+                            }
+                        } else {
+                            sendUpdate(subscription.getSessionId(), subscription.createUpdate());
+                        }
+                    }
+                }
+            } else if (alarmMatchesSubscription(alarm, subscription) && (alarmsIds.size() < alarmsPerAlarmStatusSubscriptionCacheSize)) {
+                alarmsIds.add(alarm.getId().getId());
+                if (alarmsIds.size() == 1) {
+                    sendUpdate(subscription.getSessionId(), subscription.createUpdate());
+                }
+            }
+        } catch (Exception e) {
+            log.error("[{}, subId: {}] Failed to handle update for alarm status subscription: {}", subscription.getSessionId(), subscription.getSubscriptionId(), subscriptionUpdate, e);
+        }
+    }
+
+    private boolean alarmMatchesSubscription(AlarmInfo alarm, TbAlarmStatusSubscription subscription) {
+        return !alarm.isCleared() && (subscription.getTypeList() == null || subscription.getTypeList().contains(alarm.getType())) &&
+                (subscription.getSeverityList() == null || subscription.getSeverityList().contains(alarm.getSeverity()));
+    }
+
     private boolean validate(TbAbstractSubCtx<?> finalCtx) {
         if (finalCtx.isStopped()) {
             log.warn("[{}][{}][{}] Received validation task for already stopped context.", finalCtx.getTenantId(), finalCtx.getSessionId(), finalCtx.getCmdId());
@@ -527,7 +607,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         return ctx;
     }
 
-    private TbAlarmCountSubCtx createSubCtx(WebSocketSessionRef sessionRef, AlarmCountCmd cmd) {
+    private  TbAlarmCountSubCtx createSubCtx(WebSocketSessionRef sessionRef, AlarmCountCmd cmd) {
         Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new ConcurrentHashMap<>());
         TbAlarmCountSubCtx ctx = new TbAlarmCountSubCtx(serviceId, wsService, entityService, localSubscriptionService,
                 attributesService, stats, alarmService, sessionRef, cmd.getCmdId());
