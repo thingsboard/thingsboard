@@ -28,9 +28,9 @@ UPDATE tb_user SET additional_info = (additional_info::jsonb - 'lastLoginTs' - '
 -- UPDATE RULE NODE DEBUG MODE TO DEBUG STRATEGY START
 
 ALTER TABLE rule_node
-    ADD COLUMN IF NOT EXISTS debug_strategy varchar(32) DEFAULT 'DISABLED';
+    ADD COLUMN IF NOT EXISTS debug_failures boolean DEFAULT false;
 ALTER TABLE rule_node
-    ADD COLUMN IF NOT EXISTS last_update_ts bigint NOT NULL DEFAULT extract(epoch from now()) * 1000;
+    ADD COLUMN IF NOT EXISTS debug_all_until bigint NOT NULL DEFAULT 0;
 DO
 $$
     BEGIN
@@ -38,7 +38,7 @@ $$
                    FROM information_schema.columns
                    WHERE table_name = 'rule_node' AND column_name = 'debug_mode') THEN
             UPDATE rule_node
-            SET debug_strategy = CASE WHEN debug_mode = true THEN 'ALL_EVENTS' ELSE 'DISABLED' END;
+            SET debug_all_until = CASE WHEN debug_mode = true THEN extract(epoch from now() + 3600) * 1000 ELSE 0 END;
             ALTER TABLE rule_node
                 DROP COLUMN debug_mode;
         END IF;

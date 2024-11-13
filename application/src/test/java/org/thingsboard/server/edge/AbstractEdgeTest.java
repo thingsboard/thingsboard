@@ -71,7 +71,6 @@ import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.queue.Queue;
-import org.thingsboard.server.common.data.rule.DebugStrategy;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
@@ -164,7 +163,8 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     }
 
     private RuleChainId getEdgeRootRuleChainId() throws Exception {
-        return doGetTypedWithPageLink("/api/ruleChains?type={type}&", new TypeReference<PageData<RuleChain>>() {},
+        return doGetTypedWithPageLink("/api/ruleChains?type={type}&", new TypeReference<PageData<RuleChain>>() {
+                },
                 new PageLink(100, 0, "Edge Root Rule Chain"),
                 "EDGE")
                 .getData().get(0).getId();
@@ -208,7 +208,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     protected void updateRootRuleChainMetadata() throws Exception {
         RuleChainId rootRuleChainId = getEdgeRootRuleChainId();
         RuleChainMetaData rootRuleChainMetadata = doGet("/api/ruleChain/" + rootRuleChainId.getId().toString() + "/metadata", RuleChainMetaData.class);
-        rootRuleChainMetadata.getNodes().forEach(n -> n.setDebugStrategy(DebugStrategy.ALL_EVENTS));
+        rootRuleChainMetadata.getNodes().forEach(n -> n.setDebugAll(true));
         doPost("/api/ruleChain/metadata", rootRuleChainMetadata, RuleChainMetaData.class);
     }
 

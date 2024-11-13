@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  pointer-events: all;
-  width: min-content; //for Safari
+package org.thingsboard.server.common.data;
 
-  .hidden {
-    display: none;
-  }
-}
+import io.swagger.v3.oas.annotations.media.Schema;
 
-:host ::ng-deep {
-  .mat-mdc-select.select-dashboard-breakpoint {
-    .mat-mdc-select-value {
-      max-width: 200px;
-      font-size: 14px;
-    }
-    .mat-mdc-select-arrow {
-      width: 24px;
-    }
-  }
+public interface HasDebugMode {
+
+    boolean isDebugFailures();
+
+    void setDebugFailures(boolean debugFailures);
+
+    boolean isDebugAll();
+
+    void setDebugAll(boolean debugAll);
+
+    long getDebugAllUntil();
+
+    void setDebugAllUntil(long debugAllUntil);
 }

@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.plugin.RuleNodeUpdatedMsg;
@@ -255,13 +256,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             var originatorNodeId = envelope.getTargetRuleNodeId();
             RuleNodeCtx ruleNodeCtx = nodeActors.get(originatorNodeId);
             if (ruleNodeCtx != null) {
-                var ruleNode = ruleNodeCtx.getSelf();
-                var debugStrategy = ruleNode.getDebugStrategy();
-                int maxRuleNodeDebugModeDurationMinutes = getTenantProfileConfiguration()
-                        .getMaxRuleNodeDebugModeDurationMinutes(systemContext.getMaxRuleNodeDebugModeDurationMinutes());
-                boolean shouldPersistDebugOutput = debugStrategy.shouldPersistDebugOutputForAllEvents(ruleNode.getLastUpdateTs(), tbMsg.getTs(), maxRuleNodeDebugModeDurationMinutes) ||
-                                                   debugStrategy.shouldPersistDebugForFailureEvent(envelope.getRelationType());
-                if (shouldPersistDebugOutput) {
+                if (DebugModeUtil.isDebugAvailable(ruleNodeCtx.getSelf(), envelope.getRelationType())) {
                     systemContext.persistDebugOutput(tenantId, originatorNodeId, tbMsg, envelope.getRelationType());
                 }
             }

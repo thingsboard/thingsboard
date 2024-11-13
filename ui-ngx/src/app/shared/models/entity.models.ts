@@ -20,6 +20,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { DeviceCredentialMQTTBasic } from '@shared/models/device.models';
 import { Lwm2mSecurityConfigModels } from '@shared/models/lwm2m-security-config.models';
 import { TenantId } from '@shared/models/id/tenant-id';
+import { RuleChainMetaData } from '@shared/models/rule-chain.models';
 
 export interface EntityInfo {
   name?: string;
@@ -197,3 +198,5 @@ export interface HasDebugConfig {
   debugFailures?: boolean;
   debugAllUntil?: number;
 }
+
+export type VersionedEntity = EntityInfoData & HasVersion | RuleChainMetaData;

@@ -34,24 +34,19 @@ import org.thingsboard.server.actors.ruleChain.RuleNodeCtx;
 import org.thingsboard.server.actors.ruleChain.RuleNodeToRuleChainTellNextMsg;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
-import org.thingsboard.server.common.data.rule.DebugStrategy;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.common.data.tenant.profile.TenantProfileConfiguration;
-import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.TbMsgProcessingStackItem;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.common.SimpleTbQueueCallback;
 
@@ -59,13 +54,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -75,7 +70,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -104,13 +98,14 @@ class DefaultTbContextTest {
     }
 
     @Test
-    public void givenDebugStrategyOnlyFailureEvents_whenTellSuccess_thenVerifyDebugOutputNotPersisted() {
+    public void givenDebugFailuresEvents_whenTellSuccess_thenVerifyDebugOutputNotPersisted() {
         // GIVEN
         var callbackMock = mock(TbMsgCallback.class);
         var msg = getTbMsgWithCallback(callbackMock);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugStrategy(DebugStrategy.ONLY_FAILURE_EVENTS);
+        ruleNode.setDebugFailures(true);
+        ruleNode.setDebugAllUntil(0);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
 
@@ -125,13 +120,14 @@ class DefaultTbContextTest {
     }
 
     @Test
-    public void givenDebugStrategyOnlyFailureEventsAndSuccessConnection_whenTellNext_thenVerifyDebugOutputNotPersisted() {
+    public void givenDebugFailuresEventsAndSuccessConnection_whenTellNext_thenVerifyDebugOutputNotPersisted() {
         // GIVEN
         var callbackMock = mock(TbMsgCallback.class);
         var msg = getTbMsgWithCallback(callbackMock);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugStrategy(DebugStrategy.ONLY_FAILURE_EVENTS);
+        ruleNode.setDebugFailures(true);
+        ruleNode.setDebugAllUntil(0);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
 
@@ -147,13 +143,14 @@ class DefaultTbContextTest {
 
     @MethodSource
     @ParameterizedTest
-    void givenDebugStrategyOnlyFailureEventsAndConnections_whenTellNext_thenVerifyDebugOutputPersisted(Set<String> connections) {
+    void givenDebugFailuresEventsAndConnections_whenTellNext_thenVerifyDebugOutputPersisted(Set<String> connections) {
         // GIVEN
         var callbackMock = mock(TbMsgCallback.class);
         var msg = getTbMsgWithCallback(callbackMock);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugStrategy(DebugStrategy.ONLY_FAILURE_EVENTS);
+        ruleNode.setDebugFailures(true);
+        ruleNode.setDebugAllUntil(0);
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
@@ -169,7 +166,7 @@ class DefaultTbContextTest {
         checkTellNextCommonLogic(callbackMock, connections, msg);
     }
 
-    private static Stream<Set<String>> givenDebugStrategyOnlyFailureEventsAndConnections_whenTellNext_thenVerifyDebugOutputPersisted() {
+    private static Stream<Set<String>> givenDebugFailuresEventsAndConnections_whenTellNext_thenVerifyDebugOutputPersisted() {
         return Stream.of(
                 Collections.singleton(TbNodeConnectionType.FAILURE),
                 Set.of(TbNodeConnectionType.FAILURE, TbNodeConnectionType.SUCCESS)
@@ -178,13 +175,14 @@ class DefaultTbContextTest {
 
     @MethodSource
     @ParameterizedTest
-    void givenDebugStrategyDisabledAndConnections_whenTellNext_thenVerifyDebugOutputNotPersisted(Set<String> connections) {
+    void givenDebugDisabledAndConnections_whenTellNext_thenVerifyDebugOutputNotPersisted(Set<String> connections) {
         // GIVEN
         var callbackMock = mock(TbMsgCallback.class);
         var msg = getTbMsgWithCallback(callbackMock);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugStrategy(DebugStrategy.DISABLED);
+        ruleNode.setDebugFailures(false);
+        ruleNode.setDebugAllUntil(0);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
 
@@ -198,7 +196,7 @@ class DefaultTbContextTest {
         checkTellNextCommonLogic(callbackMock, connections, msg);
     }
 
-    private static Stream<Set<String>> givenDebugStrategyDisabledAndConnections_whenTellNext_thenVerifyDebugOutputNotPersisted() {
+    private static Stream<Set<String>> givenDebugDisabledAndConnections_whenTellNext_thenVerifyDebugOutputNotPersisted() {
         return Stream.of(
                 Collections.singleton(TbNodeConnectionType.FAILURE),
                 Collections.singleton(TbNodeConnectionType.SUCCESS),
@@ -208,18 +206,17 @@ class DefaultTbContextTest {
 
     @MethodSource
     @ParameterizedTest
-    void givenDebugStrategyAllEventsAndConnection_whenTellNext_thenVerifyDebugOutputPersisted(String connection) {
+    void givenDebugAllEventsAndConnection_whenTellNext_thenVerifyDebugOutputPersisted(String connection) {
         // GIVEN
         var callbackMock = mock(TbMsgCallback.class);
         var msg = getTbMsgWithCallback(callbackMock);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setLastUpdateTs(System.currentTimeMillis());
-        ruleNode.setDebugStrategy(DebugStrategy.ALL_EVENTS);
+        ruleNode.setDebugFailures(false);
+        ruleNode.setDebugAllUntil(getUntilTime());
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
-        mockGetMaxRuleNodeDebugModeDurationMinutes();
 
         // WHEN
         defaultTbContext.tellNext(msg, connection);
@@ -227,30 +224,27 @@ class DefaultTbContextTest {
         // THEN
         then(nodeCtxMock).should().getChainActor();
         then(nodeCtxMock).shouldHaveNoMoreInteractions();
-        then(mainCtxMock).should().getTenantProfileCache();
-        then(mainCtxMock).should().getMaxRuleNodeDebugModeDurationMinutes();
         then(mainCtxMock).should().persistDebugOutput(TENANT_ID, RULE_NODE_ID, msg, connection, null, null);
         then(mainCtxMock).shouldHaveNoMoreInteractions();
         checkTellNextCommonLogic(callbackMock, connection, msg);
     }
 
-    private static Stream<String> givenDebugStrategyAllEventsAndConnection_whenTellNext_thenVerifyDebugOutputPersisted() {
+    private static Stream<String> givenDebugAllEventsAndConnection_whenTellNext_thenVerifyDebugOutputPersisted() {
         return failureAndSuccessConnection();
     }
 
     @Test
-    public void givenDebugStrategyAllEventsAndFailureAndSuccessConnection_whenTellNext_thenVerifyDebugOutputPersistedForAllEvents() {
+    public void givenDebugAllEventsAndFailureAndSuccessConnection_whenTellNext_thenVerifyDebugOutputPersistedForAllEvents() {
         // GIVEN
         var callbackMock = mock(TbMsgCallback.class);
         var msg = getTbMsgWithCallback(callbackMock);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setLastUpdateTs(System.currentTimeMillis());
-        ruleNode.setDebugStrategy(DebugStrategy.ALL_EVENTS);
+        ruleNode.setDebugFailures(false);
+        ruleNode.setDebugAllUntil(getUntilTime());
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
-        mockGetMaxRuleNodeDebugModeDurationMinutes();
 
         // WHEN
         Set<String> connections = failureAndSuccessConnection().collect(Collectors.toSet());
@@ -259,8 +253,6 @@ class DefaultTbContextTest {
         // THEN
         then(nodeCtxMock).should().getChainActor();
         then(nodeCtxMock).shouldHaveNoMoreInteractions();
-        then(mainCtxMock).should().getTenantProfileCache();
-        then(mainCtxMock).should().getMaxRuleNodeDebugModeDurationMinutes();
         var nodeConnectionsCaptor = ArgumentCaptor.forClass(String.class);
         int wantedNumberOfInvocations = connections.size();
         then(mainCtxMock).should(times(wantedNumberOfInvocations)).persistDebugOutput(eq(TENANT_ID), eq(RULE_NODE_ID), eq(msg), nodeConnectionsCaptor.capture(), nullable(Throwable.class), nullable(String.class));
@@ -272,18 +264,17 @@ class DefaultTbContextTest {
 
     @MethodSource
     @ParameterizedTest
-    void givenDebugStrategyAllThenOnlyFailureEventsAndConnection_whenTellNext_thenVerifyDebugOutputPersisted(String connection) {
+    void givenDebugAllThenOnlyFailureEventsAndConnection_whenTellNext_thenVerifyDebugOutputPersisted(String connection) {
         // GIVEN
         var callbackMock = mock(TbMsgCallback.class);
         var msg = getTbMsgWithCallback(callbackMock);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setLastUpdateTs(System.currentTimeMillis());
-        ruleNode.setDebugStrategy(DebugStrategy.ALL_THEN_ONLY_FAILURE_EVENTS);
+        ruleNode.setDebugFailures(false);
+        ruleNode.setDebugAllUntil(getUntilTime());
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
-        mockGetMaxRuleNodeDebugModeDurationMinutes();
 
         // WHEN
         defaultTbContext.tellNext(msg, connection);
@@ -291,30 +282,27 @@ class DefaultTbContextTest {
         // THEN
         then(nodeCtxMock).should().getChainActor();
         then(nodeCtxMock).shouldHaveNoMoreInteractions();
-        then(mainCtxMock).should().getTenantProfileCache();
-        then(mainCtxMock).should().getMaxRuleNodeDebugModeDurationMinutes();
         then(mainCtxMock).should().persistDebugOutput(TENANT_ID, RULE_NODE_ID, msg, connection, null, null);
         then(mainCtxMock).shouldHaveNoMoreInteractions();
         checkTellNextCommonLogic(callbackMock, connection, msg);
     }
 
-    private static Stream<String> givenDebugStrategyAllThenOnlyFailureEventsAndConnection_whenTellNext_thenVerifyDebugOutputPersisted() {
+    private static Stream<String> givenDebugAllThenOnlyFailureEventsAndConnection_whenTellNext_thenVerifyDebugOutputPersisted() {
         return failureAndSuccessConnection();
     }
 
     @Test
-    public void givenDebugStrategyAllThenOnlyEventsAndFailureAndSuccessConnection_whenTellNext_thenVerifyDebugOutputPersistedForAllEvents() {
+    public void givenDebugAllThenOnlyEventsAndFailureAndSuccessConnection_whenTellNext_thenVerifyDebugOutputPersistedForAllEvents() {
         // GIVEN
         var callbackMock = mock(TbMsgCallback.class);
         var msg = getTbMsgWithCallback(callbackMock);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setLastUpdateTs(System.currentTimeMillis());
-        ruleNode.setDebugStrategy(DebugStrategy.ALL_THEN_ONLY_FAILURE_EVENTS);
+        ruleNode.setDebugFailures(true);
+        ruleNode.setDebugAllUntil(getUntilTime());
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
-        mockGetMaxRuleNodeDebugModeDurationMinutes();
 
         // WHEN
         Set<String> connections = failureAndSuccessConnection().collect(Collectors.toSet());
@@ -323,8 +311,6 @@ class DefaultTbContextTest {
         // THEN
         then(nodeCtxMock).should().getChainActor();
         then(nodeCtxMock).shouldHaveNoMoreInteractions();
-        then(mainCtxMock).should().getTenantProfileCache();
-        then(mainCtxMock).should().getMaxRuleNodeDebugModeDurationMinutes();
         var nodeConnectionsCaptor = ArgumentCaptor.forClass(String.class);
         int wantedNumberOfInvocations = connections.size();
         then(mainCtxMock).should(times(wantedNumberOfInvocations)).persistDebugOutput(eq(TENANT_ID), eq(RULE_NODE_ID), eq(msg), nodeConnectionsCaptor.capture(), nullable(Throwable.class), nullable(String.class));
@@ -339,12 +325,12 @@ class DefaultTbContextTest {
     }
 
     @Test
-    public void givenDebugStrategyOnlyFailureEventsAndFailureConnection_whenOutput_thenVerifyDebugOutputPersisted() {
+    public void givenDebugFailuresEventsAndFailureConnection_whenOutput_thenVerifyDebugOutputPersisted() {
         // GIVEN
         var msgMock = mock(TbMsg.class);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugStrategy(DebugStrategy.ONLY_FAILURE_EVENTS);
+        ruleNode.setDebugFailures(true);
         given(msgMock.popFormStack()).willReturn(new TbMsgProcessingStackItem(RULE_CHAIN_ID, RULE_NODE_ID));
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
@@ -361,12 +347,12 @@ class DefaultTbContextTest {
     }
 
     @Test
-    public void givenDebugStrategyOnlyFailureEventsAndSuccessConnection_whenOutput_thenVerifyDebugOutputNotPersisted() {
+    public void givenDebugFailuresEventsAndSuccessConnection_whenOutput_thenVerifyDebugOutputNotPersisted() {
         // GIVEN
         var msgMock = mock(TbMsg.class);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugStrategy(DebugStrategy.ONLY_FAILURE_EVENTS);
+        ruleNode.setDebugFailures(true);
         given(msgMock.popFormStack()).willReturn(new TbMsgProcessingStackItem(RULE_CHAIN_ID, RULE_NODE_ID));
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
@@ -382,12 +368,13 @@ class DefaultTbContextTest {
 
     @ParameterizedTest
     @ValueSource(strings = {TbNodeConnectionType.SUCCESS, TbNodeConnectionType.FAILURE})
-    void givenDebugStrategyDisabled_whenOutput_thenVerifyDebugOutputNotPersisted(String nodeConnection) {
+    void givenDebugDisabled_whenOutput_thenVerifyDebugOutputNotPersisted(String nodeConnection) {
         // GIVEN
         var msgMock = mock(TbMsg.class);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugStrategy(DebugStrategy.DISABLED);
+        ruleNode.setDebugFailures(false);
+        ruleNode.setDebugAllUntil(0);
         given(msgMock.popFormStack()).willReturn(new TbMsgProcessingStackItem(RULE_CHAIN_ID, RULE_NODE_ID));
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
@@ -403,25 +390,23 @@ class DefaultTbContextTest {
 
     @ParameterizedTest
     @ValueSource(strings = {TbNodeConnectionType.SUCCESS, TbNodeConnectionType.FAILURE})
-    void givenDebugStrategyAllEvents_whenOutput_thenVerifyDebugOutputPersisted(String nodeConnection) {
+    void givenDebugAllEvents_whenOutput_thenVerifyDebugOutputPersisted(String nodeConnection) {
         // GIVEN
         var msgMock = mock(TbMsg.class);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugStrategy(DebugStrategy.ALL_EVENTS);
+        ruleNode.setDebugFailures(false);
+        ruleNode.setDebugAllUntil(getUntilTime());
         given(msgMock.popFormStack()).willReturn(new TbMsgProcessingStackItem(RULE_CHAIN_ID, RULE_NODE_ID));
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
-        mockGetMaxRuleNodeDebugModeDurationMinutes();
 
         // WHEN
         defaultTbContext.output(msgMock, nodeConnection);
 
         // THEN
         checkOutputCommonLogic(msgMock, nodeConnection);
-        then(mainCtxMock).should().getTenantProfileCache();
-        then(mainCtxMock).should().getMaxRuleNodeDebugModeDurationMinutes();
         then(mainCtxMock).should().persistDebugOutput(TENANT_ID, RULE_NODE_ID, msgMock, nodeConnection, null, null);
         then(mainCtxMock).shouldHaveNoMoreInteractions();
         then(nodeCtxMock).shouldHaveNoMoreInteractions();
@@ -429,25 +414,23 @@ class DefaultTbContextTest {
 
     @ParameterizedTest
     @ValueSource(strings = {TbNodeConnectionType.SUCCESS, TbNodeConnectionType.FAILURE})
-    void givenDebugStrategyAllThenOnlyFailureEvents_whenOutput_thenVerifyDebugOutputPersisted(String nodeConnection) {
+    void givenDebugAllThenOnlyFailureEvents_whenOutput_thenVerifyDebugOutputPersisted(String nodeConnection) {
         // GIVEN
         var msgMock = mock(TbMsg.class);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugStrategy(DebugStrategy.ALL_EVENTS);
+        ruleNode.setDebugFailures(false);
+        ruleNode.setDebugAllUntil(getUntilTime());
         given(msgMock.popFormStack()).willReturn(new TbMsgProcessingStackItem(RULE_CHAIN_ID, RULE_NODE_ID));
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
-        mockGetMaxRuleNodeDebugModeDurationMinutes();
 
         // WHEN
         defaultTbContext.output(msgMock, nodeConnection);
 
         // THEN
         checkOutputCommonLogic(msgMock, nodeConnection);
-        then(mainCtxMock).should().getTenantProfileCache();
-        then(mainCtxMock).should().getMaxRuleNodeDebugModeDurationMinutes();
         then(mainCtxMock).should().persistDebugOutput(TENANT_ID, RULE_NODE_ID, msgMock, nodeConnection, null, null);
         then(mainCtxMock).shouldHaveNoMoreInteractions();
         then(nodeCtxMock).shouldHaveNoMoreInteractions();
@@ -459,7 +442,8 @@ class DefaultTbContextTest {
         var msgMock = mock(TbMsg.class);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugStrategy(DebugStrategy.DISABLED);
+        ruleNode.setDebugFailures(false);
+        ruleNode.setDebugAllUntil(0);
         given(msgMock.popFormStack()).willReturn(null);
         TbMsgCallback callbackMock = mock(TbMsgCallback.class);
         given(msgMock.getCallback()).willReturn(callbackMock);
@@ -476,19 +460,18 @@ class DefaultTbContextTest {
     }
 
     @Test
-    public void givenEmptyStackAndDebugStrategyAllEvents_whenOutput_thenVerifyMsgAckAndDebugOutputPersisted() {
+    public void givenEmptyStackAndDebugAllEvents_whenOutput_thenVerifyMsgAckAndDebugOutputPersisted() {
         // GIVEN
         var msgMock = mock(TbMsg.class);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugStrategy(DebugStrategy.ALL_EVENTS);
-        ruleNode.setLastUpdateTs(System.currentTimeMillis());
+        ruleNode.setDebugFailures(false);
+        ruleNode.setDebugAllUntil(getUntilTime());
         given(msgMock.popFormStack()).willReturn(null);
         TbMsgCallback callbackMock = mock(TbMsgCallback.class);
         given(msgMock.getCallback()).willReturn(callbackMock);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
-        mockGetMaxRuleNodeDebugModeDurationMinutes();
 
         // WHEN
         defaultTbContext.output(msgMock, TbNodeConnectionType.SUCCESS);
@@ -502,19 +485,18 @@ class DefaultTbContextTest {
     }
 
     @Test
-    public void givenEmptyStackAndDebugStrategyAllThenOnlyFailureEvents_whenOutput_thenVerifyMsgAckAndDebugOutputPersisted() {
+    public void givenEmptyStackAndDebugAllThenOnlyFailureEvents_whenOutput_thenVerifyMsgAckAndDebugOutputPersisted() {
         // GIVEN
         var msgMock = mock(TbMsg.class);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugStrategy(DebugStrategy.ALL_THEN_ONLY_FAILURE_EVENTS);
-        ruleNode.setLastUpdateTs(System.currentTimeMillis());
+        ruleNode.setDebugFailures(true);
+        ruleNode.setDebugAllUntil(getUntilTime());
         given(msgMock.popFormStack()).willReturn(null);
         TbMsgCallback callbackMock = mock(TbMsgCallback.class);
         given(msgMock.getCallback()).willReturn(callbackMock);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
-        mockGetMaxRuleNodeDebugModeDurationMinutes();
 
         // WHEN
         defaultTbContext.output(msgMock, TbNodeConnectionType.SUCCESS);
@@ -528,13 +510,13 @@ class DefaultTbContextTest {
     }
 
     @Test
-    public void givenDebugStrategyOnlyFailureEvents_whenEnqueueForTellFailure_thenVerifyDebugOutputPersisted() {
+    public void givenDebugFailuresEvents_whenEnqueueForTellFailure_thenVerifyDebugOutputPersisted() {
         // GIVEN
         var msg = getTbMsgWithQueueName();
         var tpi = new TopicPartitionInfo(DataConstants.MAIN_QUEUE_TOPIC, TENANT_ID, 0, true);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugStrategy(DebugStrategy.ONLY_FAILURE_EVENTS);
+        ruleNode.setDebugFailures(true);
         var tbClusterServiceMock = mock(TbClusterService.class);
 
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
@@ -561,13 +543,14 @@ class DefaultTbContextTest {
     }
 
     @Test
-    public void givenDebugStrategyDisabled_whenEnqueueForTellFailure_thenVerifyDebugOutputNotPersisted() {
+    public void givenDebugDisabled_whenEnqueueForTellFailure_thenVerifyDebugOutputNotPersisted() {
         // GIVEN
         var msg = getTbMsgWithQueueName();
         var tpi = new TopicPartitionInfo(DataConstants.MAIN_QUEUE_TOPIC, TENANT_ID, 0, true);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugStrategy(DebugStrategy.DISABLED);
+        ruleNode.setDebugFailures(false);
+        ruleNode.setDebugAllUntil(0);
         var tbClusterServiceMock = mock(TbClusterService.class);
 
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
@@ -588,21 +571,20 @@ class DefaultTbContextTest {
     }
 
     @Test
-    public void givenDebugStrategyAllEvents_whenEnqueueForTellFailure_thenVerifyDebugOutputPersisted() {
+    public void givenDebugAllEvents_whenEnqueueForTellFailure_thenVerifyDebugOutputPersisted() {
         // GIVEN
         var msg = getTbMsgWithQueueName();
         var tpi = new TopicPartitionInfo(DataConstants.MAIN_QUEUE_TOPIC, TENANT_ID, 0, true);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugStrategy(DebugStrategy.ALL_EVENTS);
-        ruleNode.setLastUpdateTs(System.currentTimeMillis());
+        ruleNode.setDebugFailures(false);
+        ruleNode.setDebugAllUntil(getUntilTime());
         var tbClusterServiceMock = mock(TbClusterService.class);
 
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(mainCtxMock.resolve(any(ServiceType.class), anyString(), any(TenantId.class), any(EntityId.class))).willReturn(tpi);
         given(mainCtxMock.getClusterService()).willReturn(tbClusterServiceMock);
-        mockGetMaxRuleNodeDebugModeDurationMinutes();
 
         // WHEN
         defaultTbContext.enqueueForTellFailure(msg, EXCEPTION);
@@ -618,8 +600,6 @@ class DefaultTbContextTest {
                 .ignoringFields("id", "ctx")
                 .isEqualTo(expectedTbMsg);
         then(mainCtxMock).should().getClusterService();
-        then(mainCtxMock).should().getTenantProfileCache();
-        then(mainCtxMock).should().getMaxRuleNodeDebugModeDurationMinutes();
         then(mainCtxMock).shouldHaveNoMoreInteractions();
         then(tbClusterServiceMock).shouldHaveNoMoreInteractions();
     }
@@ -655,23 +635,20 @@ class DefaultTbContextTest {
 
     @MethodSource
     @ParameterizedTest
-    void givenDebugStrategyOptions_whenEnqueueForTellNext_thenVerifyDebugOutputPersistedOnlyForAllEventsDebugStrategy(DebugStrategy debugStrategy, String connectionType) {
+    void givenDebugOptions_whenEnqueueForTellNext_thenVerifyDebugOutputPersistedOnlyForDebugAll(boolean debugFailures, long debugAllUntil, String connectionType) {
         // GIVEN
         var msg = getTbMsgWithQueueName();
         var tpi = new TopicPartitionInfo(DataConstants.MAIN_QUEUE_TOPIC, TENANT_ID, 0, true);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugStrategy(debugStrategy);
-        ruleNode.setLastUpdateTs(System.currentTimeMillis());
+        ruleNode.setDebugFailures(debugFailures);
+        ruleNode.setDebugAllUntil(debugAllUntil);
         var tbClusterServiceMock = mock(TbClusterService.class);
 
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(mainCtxMock.resolve(any(ServiceType.class), anyString(), any(TenantId.class), any(EntityId.class))).willReturn(tpi);
         given(mainCtxMock.getClusterService()).willReturn(tbClusterServiceMock);
-        if (DebugStrategy.ALL_EVENTS.equals(debugStrategy) || DebugStrategy.ALL_THEN_ONLY_FAILURE_EVENTS.equals(debugStrategy)) {
-            mockGetMaxRuleNodeDebugModeDurationMinutes();
-        }
 
         // WHEN
         defaultTbContext.enqueueForTellNext(msg, connectionType);
@@ -697,9 +674,7 @@ class DefaultTbContextTest {
         assertThat(simpleTbQueueCallback).isNotNull();
         simpleTbQueueCallback.onSuccess(null);
 
-        if (DebugStrategy.ALL_EVENTS.equals(debugStrategy) || DebugStrategy.ALL_THEN_ONLY_FAILURE_EVENTS.equals(debugStrategy)) {
-            then(mainCtxMock).should().getTenantProfileCache();
-            then(mainCtxMock).should().getMaxRuleNodeDebugModeDurationMinutes();
+        if (debugAllUntil > 0) {
             ArgumentCaptor<TbMsg> tbMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
             then(mainCtxMock).should().persistDebugOutput(eq(TENANT_ID), eq(RULE_NODE_ID), tbMsgCaptor.capture(), eq(connectionType), isNull(), isNull());
             TbMsg actualTbMsg = tbMsgCaptor.getValue();
@@ -714,24 +689,21 @@ class DefaultTbContextTest {
 
     @MethodSource
     @ParameterizedTest
-    void givenDebugStrategyOptions_whenEnqueue_thenVerifyDebugOutputPersistedOnlyForAllEventsDebugStrategy(DebugStrategy debugStrategy) {
+    void givenDebugOptions_whenEnqueue_thenVerifyDebugOutputPersistedOnlyForDebugAll(boolean debugFailures, long debugAllUntil) {
         // GIVEN
         var msg = getTbMsgWithQueueName();
         var tpi = new TopicPartitionInfo(DataConstants.MAIN_QUEUE_TOPIC, TENANT_ID, 0, true);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setQueueName(DataConstants.MAIN_QUEUE_NAME);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugStrategy(debugStrategy);
-        ruleNode.setLastUpdateTs(System.currentTimeMillis());
+        ruleNode.setDebugFailures(debugFailures);
+        ruleNode.setDebugAllUntil(debugAllUntil);
         var tbClusterServiceMock = mock(TbClusterService.class);
 
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(mainCtxMock.resolve(any(ServiceType.class), anyString(), any(TenantId.class), any(EntityId.class))).willReturn(tpi);
         given(mainCtxMock.getClusterService()).willReturn(tbClusterServiceMock);
-        if (DebugStrategy.ALL_EVENTS.equals(debugStrategy) || DebugStrategy.ALL_THEN_ONLY_FAILURE_EVENTS.equals(debugStrategy)) {
-            mockGetMaxRuleNodeDebugModeDurationMinutes();
-        }
 
         Consumer<Throwable> onFailure = mock(Consumer.class);
         Runnable onSuccess = mock(Runnable.class);
@@ -760,9 +732,7 @@ class DefaultTbContextTest {
         assertThat(simpleTbQueueCallback).isNotNull();
         simpleTbQueueCallback.onSuccess(null);
 
-        if (debugStrategy.isHasDuration()) {
-            then(mainCtxMock).should().getTenantProfileCache();
-            then(mainCtxMock).should().getMaxRuleNodeDebugModeDurationMinutes();
+        if (debugAllUntil > 0) {
             then(mainCtxMock).should().persistDebugOutput(eq(TENANT_ID), eq(RULE_NODE_ID), eq(msg), eq(TbNodeConnectionType.TO_ROOT_RULE_CHAIN), nullable(Throwable.class), nullable(String.class));
         }
         then(mainCtxMock).should().getClusterService();
@@ -771,12 +741,13 @@ class DefaultTbContextTest {
     }
 
     @Test
-    public void givenDebugStrategyOnlyFailures_whenTellFailure_thenVerifyDebugOutputPersisted() {
+    public void givenDebugFailuress_whenTellFailure_thenVerifyDebugOutputPersisted() {
         // GIVEN
         var msg = getTbMsg();
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugStrategy(DebugStrategy.ONLY_FAILURE_EVENTS);
+        ruleNode.setDebugFailures(true);
+        ruleNode.setDebugAllUntil(0);
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
@@ -801,12 +772,13 @@ class DefaultTbContextTest {
     }
 
     @Test
-    public void givenDebugStrategyDisabled_whenTellFailure_thenVerifyDebugOutputNotPersisted() {
+    public void givenDebugDisabled_whenTellFailure_thenVerifyDebugOutputNotPersisted() {
         // GIVEN
         var msg = getTbMsg();
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugStrategy(DebugStrategy.DISABLED);
+        ruleNode.setDebugFailures(false);
+        ruleNode.setDebugAllUntil(0);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
 
@@ -829,17 +801,16 @@ class DefaultTbContextTest {
     }
 
     @Test
-    public void givenDebugStrategyAllEvents_whenTellFailure_thenVerifyDebugOutputPersisted() {
+    public void givenDebugAllEvents_whenTellFailure_thenVerifyDebugOutputPersisted() {
         // GIVEN
         var msg = getTbMsg();
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugStrategy(DebugStrategy.ALL_EVENTS);
-        ruleNode.setLastUpdateTs(System.currentTimeMillis());
+        ruleNode.setDebugFailures(false);
+        ruleNode.setDebugAllUntil(getUntilTime());
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
-        mockGetMaxRuleNodeDebugModeDurationMinutes();
 
         // WHEN
         defaultTbContext.tellFailure(msg, EXCEPTION);
@@ -856,15 +827,14 @@ class DefaultTbContextTest {
         then(chainActorMock).shouldHaveNoMoreInteractions();
         then(nodeCtxMock).should().getChainActor();
         then(mainCtxMock).should().persistDebugOutput(TENANT_ID, RULE_NODE_ID, msg, TbNodeConnectionType.FAILURE, EXCEPTION, null);
-        then(mainCtxMock).should().getTenantProfileCache();
-        then(mainCtxMock).should().getMaxRuleNodeDebugModeDurationMinutes();
         then(mainCtxMock).shouldHaveNoMoreInteractions();
         then(nodeCtxMock).shouldHaveNoMoreInteractions();
     }
 
     @MethodSource
     @ParameterizedTest
-    void givenDebugStrategyAndConnectionAndPersistedResultOptions_whenTellNext_thenVerifyDebugOutputPersistence(DebugStrategy debugStrategy,
+    void givenDebugFailuresAndDebugAllAndConnectionAndPersistedResultOptions_whenTellNext_thenVerifyDebugOutputPersistence(boolean debugFailures,
+                                                                                                                long debugAllUntil,
                                                                                                                 String connection,
                                                                                                                 boolean shouldPersist,
                                                                                                                 boolean shouldPersistAfterDurationTime) {
@@ -873,16 +843,13 @@ class DefaultTbContextTest {
         var msg = getTbMsgWithCallback(callbackMock);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setLastUpdateTs(System.currentTimeMillis());
-        ruleNode.setDebugStrategy(debugStrategy);
+        ruleNode.setDebugFailures(debugFailures);
+        ruleNode.setDebugAllUntil(debugAllUntil);
         if (shouldPersist) {
             given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         }
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
-        if (debugStrategy.isHasDuration()) {
-            mockGetMaxRuleNodeDebugModeDurationMinutes();
-        }
 
         // WHEN
         defaultTbContext.tellNext(msg, connection);
@@ -894,9 +861,7 @@ class DefaultTbContextTest {
 
         // GIVEN
         Mockito.clearInvocations(mainCtxMock);
-        if (debugStrategy.isHasDuration()) {
-            mockGetMaxRuleNodeDebugModeDurationMinutes(0);
-        }
+        ruleNode.setDebugAllUntil(0);
 
         // WHEN
         defaultTbContext.tellNext(msg, connection);
@@ -956,34 +921,34 @@ class DefaultTbContextTest {
         simpleTbQueueCallback.onSuccess(null);
     }
 
-    private static Stream<Arguments> givenDebugStrategyOptions_whenEnqueueForTellNext_thenVerifyDebugOutputPersistedOnlyForAllEventsDebugStrategy() {
+    private static Stream<Arguments> givenDebugOptions_whenEnqueueForTellNext_thenVerifyDebugOutputPersistedOnlyForDebugAll() {
         return Stream.of(
-                Arguments.of(DebugStrategy.ALL_EVENTS, TbNodeConnectionType.OTHER),
-                Arguments.of(DebugStrategy.ALL_THEN_ONLY_FAILURE_EVENTS, TbNodeConnectionType.OTHER),
-                Arguments.of(DebugStrategy.ONLY_FAILURE_EVENTS, TbNodeConnectionType.TRUE),
-                Arguments.of(DebugStrategy.DISABLED, TbNodeConnectionType.FALSE)
+                Arguments.of(false, getUntilTime(), TbNodeConnectionType.OTHER),
+                Arguments.of(true, getUntilTime(), TbNodeConnectionType.OTHER),
+                Arguments.of(true, 0, TbNodeConnectionType.TRUE),
+                Arguments.of(false, 0, TbNodeConnectionType.FALSE)
         );
     }
 
-    private static Stream<Arguments> givenDebugStrategyOptions_whenEnqueue_thenVerifyDebugOutputPersistedOnlyForAllEventsDebugStrategy() {
+    private static Stream<Arguments> givenDebugOptions_whenEnqueue_thenVerifyDebugOutputPersistedOnlyForDebugAll() {
         return Stream.of(
-                Arguments.of(DebugStrategy.ALL_EVENTS),
-                Arguments.of(DebugStrategy.ALL_THEN_ONLY_FAILURE_EVENTS),
-                Arguments.of(DebugStrategy.ONLY_FAILURE_EVENTS),
-                Arguments.of(DebugStrategy.DISABLED)
+                Arguments.of(false, getUntilTime()),
+                Arguments.of(true, getUntilTime()),
+                Arguments.of(true, 0),
+                Arguments.of(false, 0)
         );
     }
 
-    private static Stream<Arguments> givenDebugStrategyAndConnectionAndPersistedResultOptions_whenTellNext_thenVerifyDebugOutputPersistence() {
+    private static Stream<Arguments> givenDebugFailuresAndDebugAllAndConnectionAndPersistedResultOptions_whenTellNext_thenVerifyDebugOutputPersistence() {
         return Stream.of(
-                Arguments.of(DebugStrategy.ALL_EVENTS, TbNodeConnectionType.SUCCESS, true, false),
-                Arguments.of(DebugStrategy.ALL_EVENTS, TbNodeConnectionType.FAILURE, true, false),
-                Arguments.of(DebugStrategy.ALL_THEN_ONLY_FAILURE_EVENTS, TbNodeConnectionType.SUCCESS, true, false),
-                Arguments.of(DebugStrategy.ALL_THEN_ONLY_FAILURE_EVENTS, TbNodeConnectionType.FAILURE, true, true),
-                Arguments.of(DebugStrategy.ONLY_FAILURE_EVENTS, TbNodeConnectionType.SUCCESS, false, false),
-                Arguments.of(DebugStrategy.ONLY_FAILURE_EVENTS, TbNodeConnectionType.FAILURE, true, true),
-                Arguments.of(DebugStrategy.DISABLED, TbNodeConnectionType.SUCCESS, false, false),
-                Arguments.of(DebugStrategy.DISABLED, TbNodeConnectionType.FAILURE, false, false)
+                Arguments.of(false, getUntilTime(), TbNodeConnectionType.SUCCESS, true, false),
+                Arguments.of(false, getUntilTime(), TbNodeConnectionType.FAILURE, true, false),
+                Arguments.of(true, getUntilTime(), TbNodeConnectionType.SUCCESS, true, false),
+                Arguments.of(true, getUntilTime(), TbNodeConnectionType.FAILURE, true, true),
+                Arguments.of(true, 0, TbNodeConnectionType.SUCCESS, false, false),
+                Arguments.of(true, 0, TbNodeConnectionType.FAILURE, true, true),
+                Arguments.of(false, 0, TbNodeConnectionType.SUCCESS, false, false),
+                Arguments.of(false, 0, TbNodeConnectionType.FAILURE, false, false)
         );
     }
 
@@ -999,21 +964,11 @@ class DefaultTbContextTest {
         return TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, TENANT_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
     }
 
-    private void mockGetMaxRuleNodeDebugModeDurationMinutes() {
-        mockGetMaxRuleNodeDebugModeDurationMinutes(15);
+    private static long getUntilTime() {
+        return getUntilTime(15);
     }
 
-    private void mockGetMaxRuleNodeDebugModeDurationMinutes(int maxRuleNodeDebugModeDurationMinutes) {
-        var tbTenantProfileCacheMock = mock(TbTenantProfileCache.class);
-        var tenantProfileMock = mock(TenantProfile.class);
-        var tenantProfileDataMock = mock(TenantProfileData.class);
-        var tenantProfileConfigurationMock = mock(TenantProfileConfiguration.class);
-
-        given(mainCtxMock.getTenantProfileCache()).willReturn(tbTenantProfileCacheMock);
-        given(tbTenantProfileCacheMock.get(TENANT_ID)).willReturn(tenantProfileMock);
-        given(tenantProfileMock.getProfileData()).willReturn(tenantProfileDataMock);
-        given(tenantProfileDataMock.getConfiguration()).willReturn(tenantProfileConfigurationMock);
-        given(tenantProfileConfigurationMock.getMaxRuleNodeDebugModeDurationMinutes(anyInt())).willReturn(maxRuleNodeDebugModeDurationMinutes);
+    private static long getUntilTime(int maxRuleNodeDebugModeDurationMinutes) {
+        return System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(maxRuleNodeDebugModeDurationMinutes);
     }
-
 }

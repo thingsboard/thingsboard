@@ -36,7 +36,6 @@ import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.rule.DebugStrategy;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -98,7 +97,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         ruleNode.setName("Simple Rule Node");
         ruleNode.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
         ruleNode.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
-        ruleNode.setDebugStrategy(DebugStrategy.ALL_EVENTS);
+        ruleNode.setDebugAll(true);
         TbGetAttributesNodeConfiguration configuration = new TbGetAttributesNodeConfiguration();
         configuration.setFetchTo(TbMsgSource.METADATA);
         configuration.setServerAttributeNames(Collections.singletonList("serverAttributeKey"));

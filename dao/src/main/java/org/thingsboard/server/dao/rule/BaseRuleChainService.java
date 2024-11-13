@@ -24,6 +24,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
@@ -44,7 +46,6 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentClusteringMode;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.common.data.rule.DebugStrategy;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
@@ -66,6 +67,7 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.RuleChainDataValidator;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -77,6 +79,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -109,6 +112,13 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Autowired
     private DataValidator<RuleChain> ruleChainValidator;
+
+    @Autowired
+    @Lazy
+    private TbTenantProfileCache tbTenantProfileCache;
+
+    @Value("${debug_mode.max_duration:60}")
+    private int maxDebugModeDurationMinutes;
 
     @Override
     @Transactional
@@ -215,11 +225,20 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         }
         RuleChainId ruleChainId = ruleChain.getId();
         if (nodes != null) {
-            long lastUpdateTs = System.currentTimeMillis();
+            long now = System.currentTimeMillis();
             for (RuleNode node : toAddOrUpdate) {
                 node.setRuleChainId(ruleChainId);
                 node = ruleNodeUpdater.apply(node);
-                node.setLastUpdateTs(lastUpdateTs);
+
+                int debugDuration = tbTenantProfileCache.get(tenantId).getDefaultProfileConfiguration().getMaxDebugModeDurationMinutes(maxDebugModeDurationMinutes);
+                long debugUntil = now + TimeUnit.MINUTES.toMillis(debugDuration);
+
+                if (node.isDebugAll()) {
+                    node.setDebugAllUntil(debugUntil);
+                } else if (node.getDebugAllUntil() > debugUntil) {
+                    throw new DataValidationException("Unable to update 'debugAllUntil' property. To reset the debug duration, please modify the 'debugAll' property instead.");
+                }
+
                 RuleChainDataValidator.validateRuleNode(node);
                 RuleNode savedNode = ruleNodeDao.save(tenantId, node);
                 relations.add(new EntityRelation(ruleChainMetaData.getRuleChainId(), savedNode.getId(),
@@ -264,7 +283,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     layout.remove("description");
                     layout.remove("ruleChainNodeId");
                     targetNode.setAdditionalInfo(layout);
-                    targetNode.setDebugStrategy(DebugStrategy.DISABLED);
                     targetNode = ruleNodeDao.save(tenantId, targetNode);
 
                     EntityRelation sourceRuleChainToRuleNode = new EntityRelation();

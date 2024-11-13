@@ -637,6 +637,38 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
                                                   "endInterval": 1,
                                                   "endIntervalTimeUnit": "MINUTES"
                                         }
+                                """),
+                // config for version 0 (fetchMode is 'ALL' and limit, aggregation and orderBy do not exist)
+                Arguments.of(0,
+                        """
+                                        {
+                                                   "latestTsKeyNames": ["key"],
+                                                   "fetchMode": "ALL",
+                                                   "useMetadataIntervalPatterns": false,
+                                                   "startIntervalPattern": "",
+                                                   "endIntervalPattern": "",
+                                                   "startInterval": 2,
+                                                   "startIntervalTimeUnit": "MINUTES",
+                                                   "endInterval": 1,
+                                                   "endIntervalTimeUnit": "MINUTES"
+                                        }
+                                """,
+                        true,
+                        """
+                                        {
+                                                   "latestTsKeyNames": ["key"],
+                                                   "aggregation": "NONE",
+                                                   "fetchMode": "ALL",
+                                                   "orderBy": "ASC",
+                                                   "limit": 1000,
+                                                   "useMetadataIntervalPatterns": false,
+                                                   "startIntervalPattern": "",
+                                                   "endIntervalPattern": "",
+                                                   "startInterval": 2,
+                                                   "startIntervalTimeUnit": "MINUTES",
+                                                   "endInterval": 1,
+                                                   "endIntervalTimeUnit": "MINUTES"
+                                        }
                                 """)
         );
     }

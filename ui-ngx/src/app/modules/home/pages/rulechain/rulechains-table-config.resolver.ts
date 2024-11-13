@@ -127,7 +127,8 @@ export class RuleChainsTableConfigResolver  {
     const columns: Array<EntityColumn<RuleChain>> = [];
     columns.push(
       new DateEntityTableColumn<RuleChain>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<RuleChain>('name', 'rulechain.name', '100%')
+      new EntityTableColumn<RuleChain>('name', 'rulechain.name', '50%'),
+      new EntityTableColumn<RuleChain>('description', 'rulechain.description', '50%', entity => entity.additionalInfo?.description ?? '')
     );
     if (ruleChainScope === 'tenant' || ruleChainScope === 'edge') {
       columns.push(

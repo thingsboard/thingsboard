@@ -74,7 +74,7 @@ body {
   line-height: normal;
 }
 
-a:not(.mat-mdc-button-base):not(.mdc-tab) {
+a:not(.mat-mdc-button-base, .mdc-tab) {
   font-weight: 400;
   color: #106cc8;
   text-decoration: none;
@@ -85,7 +85,7 @@ a:not(.mat-mdc-button-base):not(.mdc-tab) {
 
 a:hover,
 a:focus {
-  &:not(.mat-mdc-button-base):not(.mdc-tab) {
+  &:not(.mat-mdc-button-base, .mdc-tab) {
     border-bottom: 1px solid #4054b2;
   }
 }
