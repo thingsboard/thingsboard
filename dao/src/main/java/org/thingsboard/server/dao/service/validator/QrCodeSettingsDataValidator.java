@@ -21,9 +21,8 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.app.MobileApp;
-import org.thingsboard.server.common.data.mobile.qrCodeSettings.QRCodeConfig;
+import org.thingsboard.server.common.data.mobile.app.MobileAppStatus;
 import org.thingsboard.server.common.data.mobile.qrCodeSettings.QrCodeSettings;
-import org.thingsboard.server.common.data.mobile.app.StoreInfo;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.mobile.MobileAppDao;
@@ -45,13 +44,13 @@ public class QrCodeSettingsDataValidator extends DataValidator<QrCodeSettings> {
         if (!qrCodeSettings.isUseDefaultApp()) {
             if (qrCodeSettings.isAndroidEnabled()) {
                 MobileApp androidApp = mobileAppDao.findByBundleIdAndPlatformType(tenantId, mobileAppBundleId, PlatformType.ANDROID);
-                if (androidApp != null && androidApp.getStoreInfo() == null) {
+                if (androidApp != null && androidApp.getStatus() != MobileAppStatus.PUBLISHED) {
                     throw new DataValidationException("The mobile app bundle references an Android app that has not been published!");
                 }
             }
             if (qrCodeSettings.isIosEnabled()) {
                 MobileApp iosApp = mobileAppDao.findByBundleIdAndPlatformType(tenantId, mobileAppBundleId, PlatformType.IOS);
-                if (iosApp != null && iosApp.getStoreInfo() == null) {
+                if (iosApp != null && iosApp.getStatus() != MobileAppStatus.PUBLISHED) {
                     throw new DataValidationException("The mobile app bundle references an iOS app that has not been published!");
                 }
             }

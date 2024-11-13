@@ -38,6 +38,4 @@ public interface MobileAppService extends EntityDaoService {
 
     void deleteMobileAppById(TenantId tenantId, MobileAppId mobileAppId);
 
-    void deleteMobileAppsByTenantId(TenantId tenantId);
-
 }

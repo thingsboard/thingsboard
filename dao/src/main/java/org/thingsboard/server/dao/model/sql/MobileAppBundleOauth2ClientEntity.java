@@ -51,9 +51,9 @@ public final class MobileAppBundleOauth2ClientEntity implements ToData<MobileApp
         super();
     }
 
-    public MobileAppBundleOauth2ClientEntity(MobileAppBundleOauth2Client domainOauth2Provider) {
-        mobileAppBundleId = domainOauth2Provider.getMobileAppBundleId().getId();
-        oauth2ClientId = domainOauth2Provider.getOAuth2ClientId().getId();
+    public MobileAppBundleOauth2ClientEntity(MobileAppBundleOauth2Client mobileAppBundleOauth2Client) {
+        mobileAppBundleId = mobileAppBundleOauth2Client.getMobileAppBundleId().getId();
+        oauth2ClientId = mobileAppBundleOauth2Client.getOAuth2ClientId().getId();
     }
 
     @Override
