@@ -622,7 +622,7 @@ CREATE TABLE IF NOT EXISTS mobile_app (
     id uuid NOT NULL CONSTRAINT mobile_app_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     tenant_id uuid,
-    pkg_name varchar(255) UNIQUE,
+    pkg_name varchar(255),
     app_secret varchar(2048),
     platform_type varchar(32),
     status varchar(32),
