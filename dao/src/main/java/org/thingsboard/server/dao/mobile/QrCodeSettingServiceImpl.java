@@ -100,6 +100,8 @@ public class QrCodeSettingServiceImpl extends AbstractCachedEntityService<Tenant
         if (qrCodeSettings == null) {
             qrCodeSettings = new QrCodeSettings();
             qrCodeSettings.setUseDefaultApp(true);
+            qrCodeSettings.setAndroidEnabled(true);
+            qrCodeSettings.setIosEnabled(true);
 
             QRCodeConfig qrCodeConfig = QRCodeConfig.builder()
                     .showOnHomePage(true)

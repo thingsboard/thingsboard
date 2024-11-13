@@ -248,10 +248,15 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
     private MobileApp validMobileApp(String mobileAppName, PlatformType platformType) {
         MobileApp mobileApp = new MobileApp();
         mobileApp.setTenantId(tenantId);
-        mobileApp.setStatus(MobileAppStatus.DRAFT);
+        mobileApp.setStatus(MobileAppStatus.PUBLISHED);
         mobileApp.setPkgName(mobileAppName);
         mobileApp.setPlatformType(platformType);
         mobileApp.setAppSecret(StringUtils.randomAlphanumeric(24));
+        StoreInfo storeInfo = StoreInfo.builder()
+                .storeLink("https://play.google/test")
+                .sha256CertFingerprints(ANDROID_APP_SHA256)
+                .appId("test.app.id").build();
+        mobileApp.setStoreInfo(storeInfo);
         return mobileApp;
     }
 }
