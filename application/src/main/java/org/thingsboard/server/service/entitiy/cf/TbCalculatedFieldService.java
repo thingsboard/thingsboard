@@ -24,11 +24,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TbCalculatedFieldService {
 
-    void onCalculatedFieldAdded(TransportProtos.CalculatedFieldAddMsgProto proto, TbCallback callback);
-
-    void onCalculatedFieldUpdated(TransportProtos.CalculatedFieldUpdateMsgProto proto, TbCallback callback);
-
-    void onCalculatedFieldDeleted(TransportProtos.CalculatedFieldDeleteMsgProto proto, TbCallback callback);
+    void onCalculatedFieldMsg(TransportProtos.CalculatedFieldMsgProto proto, TbCallback callback);
 
     CalculatedField save(CalculatedField calculatedField, SecurityUser user) throws ThingsboardException;
 

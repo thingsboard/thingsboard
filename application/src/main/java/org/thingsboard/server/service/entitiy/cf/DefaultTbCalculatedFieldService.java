@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2024 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -128,10 +128,17 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
     }
 
     @Override
-    public void onCalculatedFieldAdded(TransportProtos.CalculatedFieldAddMsgProto proto, TbCallback callback) {
+    public void onCalculatedFieldMsg(TransportProtos.CalculatedFieldMsgProto proto, TbCallback callback) {
         try {
             TenantId tenantId = TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
             CalculatedFieldId calculatedFieldId = new CalculatedFieldId(new UUID(proto.getCalculatedFieldIdMSB(), proto.getCalculatedFieldIdLSB()));
+            if (proto.getDeleted()) {
+                onCalculatedFieldDelete(calculatedFieldId, callback);
+                callback.onSuccess();
+            }
+            if (proto.getUpdated()) {
+                onCalculatedFieldDelete(calculatedFieldId, callback);
+            }
             CalculatedField cf = calculatedFieldService.findById(tenantId, calculatedFieldId);
             List<CalculatedFieldLink> links = calculatedFieldService.findAllCalculatedFieldLinksById(tenantId, calculatedFieldId);
             if (cf != null) {
@@ -159,30 +166,6 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
             }
         } catch (Exception e) {
             log.trace("Failed to process calculated field add msg: [{}]", proto, e);
-            callback.onFailure(e);
-        }
-    }
-
-    @Override
-    public void onCalculatedFieldUpdated(TransportProtos.CalculatedFieldUpdateMsgProto proto, TbCallback callback) {
-        try {
-            TenantId tenantId = TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
-            CalculatedFieldId calculatedFieldId = new CalculatedFieldId(new UUID(proto.getCalculatedFieldIdMSB(), proto.getCalculatedFieldIdLSB()));
-        } catch (Exception e) {
-            log.trace("Failed to process calculated field update msg: [{}]", proto, e);
-            callback.onFailure(e);
-        }
-    }
-
-    @Override
-    public void onCalculatedFieldDeleted(TransportProtos.CalculatedFieldDeleteMsgProto proto, TbCallback callback) {
-        try {
-            CalculatedFieldId calculatedFieldId = new CalculatedFieldId(new UUID(proto.getCalculatedFieldIdMSB(), proto.getCalculatedFieldIdLSB()));
-            calculatedFieldLinks.remove(calculatedFieldId);
-            calculatedFields.remove(calculatedFieldId);
-            states.keySet().removeIf(ctxId -> ctxId.startsWith(calculatedFieldId.getId().toString()));
-        } catch (Exception e) {
-            log.trace("Failed to process calculated field delete msg: [{}]", proto, e);
             callback.onFailure(e);
         }
     }
@@ -223,13 +206,25 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
         }
     }
 
+
+    private void onCalculatedFieldDelete(CalculatedFieldId calculatedFieldId, TbCallback callback) {
+        try {
+            calculatedFieldLinks.remove(calculatedFieldId);
+            calculatedFields.remove(calculatedFieldId);
+            states.keySet().removeIf(ctxId -> ctxId.startsWith(calculatedFieldId.getId().toString()));
+        } catch (Exception e) {
+            log.trace("Failed to delete calculated field.", e);
+            callback.onFailure(e);
+        }
+    }
+
     private void fetchCalculatedFields() {
         PageDataIterable<CalculatedField> cfs = new PageDataIterable<>(calculatedFieldService::findAllCalculatedFields, initFetchPackSize);
         cfs.forEach(cf -> calculatedFields.putIfAbsent(cf.getId(), cf));
         PageDataIterable<CalculatedFieldLink> cfls = new PageDataIterable<>(calculatedFieldService::findAllCalculatedFieldLinks, initFetchPackSize);
         cfls.forEach(link -> calculatedFieldLinks.computeIfAbsent(link.getCalculatedFieldId(), id -> new ArrayList<>()).add(link));
         // TODO:    read all states(CalculatedFieldCtx)
-        states.keySet().removeIf(calculatedFieldId -> !calculatedFields.containsKey(calculatedFieldId));
+        states.keySet().removeIf(ctxId -> calculatedFields.keySet().stream().noneMatch(id -> ctxId.startsWith(id.toString())));
     }
 
     private void checkEntityExistence(TenantId tenantId, EntityId entityId) {
