@@ -331,7 +331,7 @@ export interface RuleNodeComponentDescriptor extends ComponentDescriptor {
   configurationDescriptor?: RuleNodeConfigurationDescriptor;
 }
 
-export interface FcRuleNodeType extends FcNode {
+export interface FcRuleNodeType extends FcNode, HasDebugConfig {
   component?: RuleNodeComponentDescriptor;
   singletonMode?: boolean;
   queueName?: string;
