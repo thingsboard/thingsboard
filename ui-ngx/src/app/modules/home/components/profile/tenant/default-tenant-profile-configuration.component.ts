@@ -85,7 +85,7 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       tenantNotificationRequestsRateLimit: [null, []],
       tenantNotificationRequestsPerRuleRateLimit: [null, []],
       maxTransportMessages: [null, [Validators.required, Validators.min(0)]],
-      maxRuleNodeDebugDurationMinutes: [null, [Validators.required, Validators.min(0)]],
+      maxDebugModeDurationMinutes: [null, [Validators.required, Validators.min(0)]],
       maxTransportDataPoints: [null, [Validators.required, Validators.min(0)]],
       maxREExecutions: [null, [Validators.required, Validators.min(0)]],
       maxJSExecutions: [null, [Validators.required, Validators.min(0)]],

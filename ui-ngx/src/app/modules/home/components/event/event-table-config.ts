@@ -62,7 +62,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
   private filterParams: FilterEventBody = {};
   private filterColumns: FilterEntityColumn[] = [];
-  private readonly maxRuleNodeDebugDurationMinutes = getCurrentAuthState(this.store).maxRuleNodeDebugDurationMinutes;
+  private readonly maxDebugModeDurationMinutes = getCurrentAuthState(this.store).maxDebugModeDurationMinutes;
 
   set eventType(eventType: EventType | DebugEventType) {
     if (this.eventTypeValue !== eventType) {
@@ -92,14 +92,14 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
               private cd: ChangeDetectorRef,
-              protected store: Store<AppState>,
+              private store: Store<AppState>,
               public testButtonLabel?: string,
               private debugEventSelected?: EventEmitter<EventBody>) {
     super();
     this.loadDataOnInit = false;
     this.tableTitle = '';
     this.useTimePageLink = true;
-    this.defaultTimewindowInterval = this.maxRuleNodeDebugDurationMinutes ? historyInterval(this.maxRuleNodeDebugDurationMinutes * MINUTE) : historyInterval(DAY);
+    this.defaultTimewindowInterval = this.maxDebugModeDurationMinutes ? historyInterval(this.maxDebugModeDurationMinutes * MINUTE) : historyInterval(DAY);
     this.detailsPanelEnabled = false;
     this.selectionEnabled = false;
     this.searchEnabled = false;

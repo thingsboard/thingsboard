@@ -32,7 +32,7 @@ const emptyUserAuthState: AuthPayload = {
   mobileQrEnabled: false,
   maxResourceSize: 0,
   userSettings: initialUserSettings,
-  maxRuleNodeDebugDurationMinutes: 0,
+  maxDebugModeDurationMinutes: 0,
 };
 
 export const initialState: AuthState = {

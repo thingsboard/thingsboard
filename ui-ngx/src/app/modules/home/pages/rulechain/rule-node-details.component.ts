@@ -81,7 +81,6 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
 
   ruleNodeFormGroup: UntypedFormGroup;
 
-  readonly maxRuleNodeDebugDurationMinutes = getCurrentAuthState(this.store).maxRuleNodeDebugDurationMinutes;
   readonly ruleChainDebugPerTenantLimitsConfiguration = getCurrentAuthState(this.store).ruleChainDebugPerTenantLimitsConfiguration;
 
   private destroy$ = new Subject<void>();

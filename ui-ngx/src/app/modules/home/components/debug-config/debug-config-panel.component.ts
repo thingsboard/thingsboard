@@ -29,7 +29,7 @@ import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { MINUTE, SECOND } from '@shared/models/time/time.models';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
-import { timer } from 'rxjs';
+import { shareReplay, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HasDebugConfig } from '@shared/models/entity.models';
 import { distinctUntilChanged, map, tap } from 'rxjs/operators';
@@ -51,8 +51,8 @@ export class DebugConfigPanelComponent extends PageComponent implements OnInit {
   @Input() debugFailures = false;
   @Input() debugAll = false;
   @Input() debugAllUntil = 0;
-  @Input() maxRuleNodeDebugDurationMinutes: number;
-  @Input() ruleChainDebugPerTenantLimitsConfiguration: string;
+  @Input() maxDebugModeDurationMinutes: number;
+  @Input() debugLimitsConfiguration: string;
 
   onFailuresControl = this.fb.control(false);
   debugAllControl = this.fb.control(false);
@@ -63,10 +63,11 @@ export class DebugConfigPanelComponent extends PageComponent implements OnInit {
   isDebugAllActive$ = timer(0, SECOND).pipe(
     map(() => {
       this.cd.markForCheck();
-      return this.debugAllUntil > new Date().getTime()
+      return this.debugAllUntil > new Date().getTime();
     }),
     distinctUntilChanged(),
-    tap(isDebugOn => this.debugAllControl.patchValue(isDebugOn, { emitEvent: false }))
+    tap(isDebugOn => this.debugAllControl.patchValue(isDebugOn, { emitEvent: false })),
+    shareReplay(1),
   );
 
   onConfigApplied = new EventEmitter<HasDebugConfig>();
@@ -78,8 +79,8 @@ export class DebugConfigPanelComponent extends PageComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.maxMessagesCount = this.ruleChainDebugPerTenantLimitsConfiguration?.split(':')[0];
-    this.maxTimeFrameSec = this.ruleChainDebugPerTenantLimitsConfiguration?.split(':')[1];
+    this.maxMessagesCount = this.debugLimitsConfiguration?.split(':')[0];
+    this.maxTimeFrameSec = this.debugLimitsConfiguration?.split(':')[1];
     this.onFailuresControl.patchValue(this.debugFailures);
   }
 
@@ -97,12 +98,12 @@ export class DebugConfigPanelComponent extends PageComponent implements OnInit {
 
   onReset(): void {
     this.debugAll = true;
-    this.debugAllUntil = new Date().getTime() + this.maxRuleNodeDebugDurationMinutes * MINUTE;
+    this.debugAllUntil = new Date().getTime() + this.maxDebugModeDurationMinutes * MINUTE;
   }
 
   private observeDebugAllChange(): void {
     this.debugAllControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(value => {
-      this.debugAllUntil = value? new Date().getTime() + this.maxRuleNodeDebugDurationMinutes * MINUTE : 0;
+      this.debugAllUntil = value? new Date().getTime() + this.maxDebugModeDurationMinutes * MINUTE : 0;
       this.debugAll = value;
     });
   }

@@ -31,10 +31,13 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { MatButton } from '@angular/material/button';
 import { DebugConfigPanelComponent } from './debug-config-panel.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { timer } from 'rxjs';
+import { shareReplay, timer } from 'rxjs';
 import { SECOND } from '@shared/models/time/time.models';
 import { HasDebugConfig } from '@shared/models/entity.models';
 import { map } from 'rxjs/operators';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { AppState } from '@core/core.state';
+import { Store } from '@ngrx/store';
 
 @Component({
   selector: 'tb-debug-config-button',
@@ -53,15 +56,17 @@ export class DebugConfigButtonComponent {
   @Input() debugAll = false;
   @Input() debugAllUntil = 0;
   @Input() disabled = false;
-  @Input() maxRuleNodeDebugDurationMinutes: number;
-  @Input() ruleChainDebugPerTenantLimitsConfiguration: string;
+  @Input() debugLimitsConfiguration: string;
 
   @Output() onDebugConfigChanged = new EventEmitter<HasDebugConfig>();
 
-  isDebugAllActive$ = timer(0, SECOND).pipe(map(() => this.debugAllUntil > new Date().getTime()));
+  isDebugAllActive$ = timer(0, SECOND).pipe(map(() => this.debugAllUntil > new Date().getTime()), shareReplay(1));
+
+  readonly maxDebugModeDurationMinutes = getCurrentAuthState(this.store).maxDebugModeDurationMinutes;
 
   constructor(private popoverService: TbPopoverService,
               private renderer: Renderer2,
+              private store: Store<AppState>,
               private viewContainerRef: ViewContainerRef,
               private destroyRef: DestroyRef,
   ) {}
@@ -80,8 +85,8 @@ export class DebugConfigButtonComponent {
           debugFailures: this.debugFailures,
           debugAll: this.debugAll,
           debugAllUntil: this.debugAllUntil,
-          maxRuleNodeDebugDurationMinutes: this.maxRuleNodeDebugDurationMinutes,
-          ruleChainDebugPerTenantLimitsConfiguration: this.ruleChainDebugPerTenantLimitsConfiguration
+          maxDebugModeDurationMinutes: this.maxDebugModeDurationMinutes,
+          debugLimitsConfiguration: this.debugLimitsConfiguration
         },
         {},
         {}, {}, true);

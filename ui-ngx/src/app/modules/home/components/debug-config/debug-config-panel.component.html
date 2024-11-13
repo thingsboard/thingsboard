@@ -19,7 +19,7 @@
   <div class="tb-form-panel-title" translate>debug-config.label</div>
   <div class="hint-container">
     <div class="tb-form-hint tb-primary-fill tb-flex center">
-      <span *ngIf="ruleChainDebugPerTenantLimitsConfiguration else noLimitHint">
+      <span *ngIf="debugLimitsConfiguration else noLimitHint">
         {{ 'debug-config.hint.main-limited' | translate: { msg: maxMessagesCount, sec: maxTimeFrameSec } }}
       </span>
       <ng-template #noLimitHint>{{ 'debug-config.hint.main' | translate }}</ng-template>
@@ -34,7 +34,7 @@
     <div class="flex justify-between align-center">
       <mat-slide-toggle class="mat-slide" [formControl]="debugAllControl">
         <div tb-hint-tooltip-icon="{{ 'debug-config.hint.all-messages' | translate }}">
-          {{ 'debug-config.all-messages' | translate: { time: (isDebugAllActive$ | async) ? (debugAllUntil | durationLeft) : ('debug-config.min' | translate: { number:  maxRuleNodeDebugDurationMinutes }) } }}
+          {{ 'debug-config.all-messages' | translate: { time: (isDebugAllActive$ | async) ? (debugAllUntil | durationLeft) : ('debug-config.min' | translate: { number:  maxDebugModeDurationMinutes }) } }}
         </div>
       </mat-slide-toggle>
       <button mat-icon-button *ngIf="(isDebugAllActive$ | async)"

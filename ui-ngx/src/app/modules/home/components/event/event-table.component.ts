@@ -125,7 +125,7 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
               private dialog: MatDialog,
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
-              protected store: Store<AppState>,
+              private store: Store<AppState>,
               private cd: ChangeDetectorRef) {
   }
 
