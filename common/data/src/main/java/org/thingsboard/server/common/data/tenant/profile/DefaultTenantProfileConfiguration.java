@@ -95,7 +95,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     @Schema(example = "50")
     private int maxRuleNodeExecutionsPerMessage;
     @Schema(example = "15")
-    private int maxDebugDurationMinutes;
+    private int maxDebugModeDurationMinutes;
     @Schema(example = "0")
     private long maxEmails;
     @Schema(example = "true")
@@ -205,8 +205,8 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
 
     @Override
     public int getMaxDebugModeDurationMinutes(int systemMaxDebugModeDurationMinutes) {
-        if (maxDebugDurationMinutes > 0) {
-            return Math.min(systemMaxDebugModeDurationMinutes, maxDebugDurationMinutes);
+        if (maxDebugModeDurationMinutes > 0) {
+            return Math.min(systemMaxDebugModeDurationMinutes, maxDebugModeDurationMinutes);
         }
         return systemMaxDebugModeDurationMinutes;
     }
