@@ -191,3 +191,9 @@ export interface HasTenantId {
 export interface HasVersion {
   version?: number;
 }
+
+export interface HasDebugConfig {
+  debugAll: boolean;
+  debugFailures: boolean;
+  debugAllUntil: number;
+}

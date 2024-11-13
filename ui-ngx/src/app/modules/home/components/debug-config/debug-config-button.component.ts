@@ -21,22 +21,20 @@ import {
   ViewContainerRef,
   DestroyRef,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   EventEmitter,
   Output
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
-import { DebugDurationLeftPipe } from '@home/pages/rulechain/debug-duration-left.pipe';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
+import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { MatButton } from '@angular/material/button';
-import { DebugConfigPanelComponent } from '@home/pages/rulechain/debug-config-panel.component';
+import { DebugConfigPanelComponent } from './debug-config-panel.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { interval } from 'rxjs';
+import { timer } from 'rxjs';
 import { SECOND } from '@shared/models/time/time.models';
-import { RuleNodeDebugConfig } from '@shared/models/rule-node.models';
+import { HasDebugConfig } from '@shared/models/entity.models';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-debug-config-button',
@@ -45,7 +43,7 @@ import { RuleNodeDebugConfig } from '@shared/models/rule-node.models';
   imports: [
     CommonModule,
     SharedModule,
-    DebugDurationLeftPipe,
+    DurationLeftPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -55,20 +53,18 @@ export class DebugConfigButtonComponent {
   @Input() debugAll = false;
   @Input() debugAllUntil = 0;
   @Input() disabled = false;
+  @Input() maxRuleNodeDebugDurationMinutes: number;
+  @Input() ruleChainDebugPerTenantLimitsConfiguration: string;
 
-  @Output() onDebugConfigChanged = new EventEmitter<RuleNodeDebugConfig>()
+  @Output() onDebugConfigChanged = new EventEmitter<HasDebugConfig>();
 
-  constructor(protected store: Store<AppState>,
-              private popoverService: TbPopoverService,
+  isDebugAllActive$ = timer(0, SECOND).pipe(map(() => this.debugAllUntil > new Date().getTime()));
+
+  constructor(private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
               private destroyRef: DestroyRef,
-              private cdr: ChangeDetectorRef
-  ) {
-    interval(SECOND)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.cdr.markForCheck());
-  }
+  ) {}
 
   openDebugStrategyPanel($event: Event, matButton: MatButton): void {
     if ($event) {
@@ -84,19 +80,16 @@ export class DebugConfigButtonComponent {
           debugFailures: this.debugFailures,
           debugAll: this.debugAll,
           debugAllUntil: this.debugAllUntil,
+          maxRuleNodeDebugDurationMinutes: this.maxRuleNodeDebugDurationMinutes,
+          ruleChainDebugPerTenantLimitsConfiguration: this.ruleChainDebugPerTenantLimitsConfiguration
         },
         {},
         {}, {}, true);
       debugStrategyPopover.tbComponentRef.instance.popover = debugStrategyPopover;
-      debugStrategyPopover.tbComponentRef.instance.onConfigApplied.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((config: RuleNodeDebugConfig) => {
+      debugStrategyPopover.tbComponentRef.instance.onConfigApplied.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((config: HasDebugConfig) => {
         this.onDebugConfigChanged.emit(config);
-        this.cdr.markForCheck();
         debugStrategyPopover.hide();
       });
     }
-  }
-
-  isDebugAllActive(): boolean {
-    return this.debugAllUntil > new Date().getTime();
   }
 }

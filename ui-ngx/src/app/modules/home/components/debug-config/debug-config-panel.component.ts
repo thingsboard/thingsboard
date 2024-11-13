@@ -18,24 +18,21 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  DestroyRef,
   EventEmitter,
   Input,
   OnInit
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { FormControl, UntypedFormBuilder } from '@angular/forms';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
+import { UntypedFormBuilder } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
-import { getCurrentAuthState } from '@core/auth/auth.selectors';
-import { RuleNodeDebugConfig } from '@shared/models/rule-node.models';
 import { MINUTE, SECOND } from '@shared/models/time/time.models';
-import { DebugDurationLeftPipe } from '@home/pages/rulechain/debug-duration-left.pipe';
-import { interval } from 'rxjs';
+import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
+import { timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { HasDebugConfig } from '@shared/models/entity.models';
+import { distinctUntilChanged, map, tap } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-debug-config-panel',
@@ -44,7 +41,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   imports: [
     SharedModule,
     CommonModule,
-    DebugDurationLeftPipe
+    DurationLeftPipe
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -54,31 +51,35 @@ export class DebugConfigPanelComponent extends PageComponent implements OnInit {
   @Input() debugFailures = false;
   @Input() debugAll = false;
   @Input() debugAllUntil = 0;
+  @Input() maxRuleNodeDebugDurationMinutes: number;
+  @Input() ruleChainDebugPerTenantLimitsConfiguration: string;
 
-  onFailuresControl: FormControl<boolean>;
-  debugAllControl: FormControl<boolean>;
+  onFailuresControl = this.fb.control(false);
+  debugAllControl = this.fb.control(false);
 
-  onConfigApplied = new EventEmitter<RuleNodeDebugConfig>()
+  maxMessagesCount: string;
+  maxTimeFrameSec: string;
 
-  readonly maxRuleNodeDebugDurationMinutes = getCurrentAuthState(this.store).maxRuleNodeDebugDurationMinutes;
-  readonly ruleChainDebugPerTenantLimitsConfiguration = getCurrentAuthState(this.store).ruleChainDebugPerTenantLimitsConfiguration;
-  readonly maxMessagesCount = this.ruleChainDebugPerTenantLimitsConfiguration?.split(':')[0];
-  readonly maxTimeFrameSec = this.ruleChainDebugPerTenantLimitsConfiguration?.split(':')[1];
+  isDebugAllActive$ = timer(0, SECOND).pipe(
+    map(() => {
+      this.cd.markForCheck();
+      return this.debugAllUntil > new Date().getTime()
+    }),
+    distinctUntilChanged(),
+    tap(isDebugOn => this.debugAllControl.patchValue(isDebugOn, { emitEvent: false }))
+  );
 
-  constructor(private fb: UntypedFormBuilder,
-              private destroyRef: DestroyRef,
-              private cdr: ChangeDetectorRef,
-              protected store: Store<AppState>) {
-    super(store);
+  onConfigApplied = new EventEmitter<HasDebugConfig>();
 
-    this.onFailuresControl = this.fb.control(false);
-    this.debugAllControl = this.fb.control(false);
+  constructor(private fb: UntypedFormBuilder, private cd: ChangeDetectorRef) {
+    super();
 
     this.observeDebugAllChange();
   }
 
   ngOnInit(): void {
-    this.debugAllControl.patchValue(this.isDebugAllOn(), { emitEvent: false });
+    this.maxMessagesCount = this.ruleChainDebugPerTenantLimitsConfiguration?.split(':')[0];
+    this.maxTimeFrameSec = this.ruleChainDebugPerTenantLimitsConfiguration?.split(':')[1];
     this.onFailuresControl.patchValue(this.debugFailures);
   }
 
@@ -99,22 +100,10 @@ export class DebugConfigPanelComponent extends PageComponent implements OnInit {
     this.debugAllUntil = new Date().getTime() + this.maxRuleNodeDebugDurationMinutes * MINUTE;
   }
 
-  isDebugAllOn(): boolean {
-    return this.debugAllUntil > new Date().getTime();
-  }
-
   private observeDebugAllChange(): void {
-    interval(SECOND)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.debugAllControl.patchValue(this.isDebugAllOn(), { emitEvent: false });
-        this.cdr.markForCheck();
-      });
-
     this.debugAllControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(value => {
       this.debugAllUntil = value? new Date().getTime() + this.maxRuleNodeDebugDurationMinutes * MINUTE : 0;
       this.debugAll = value;
-      this.cdr.markForCheck();
     });
   }
 }

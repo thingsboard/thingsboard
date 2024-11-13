@@ -996,10 +996,10 @@
         "type-sms-sent": "SMS sent"
     },
     "debug-config": {
-        "min": "min",
+        "min": "{{number}} min",
         "label": "Debug configuration",
         "on-failure": "Failures only (24/7)",
-        "all-messages": "All messages",
+        "all-messages": "All messages ({{time}})",
         "failures": "Failures",
         "all": "All",
         "hint": {
@@ -1045,7 +1045,7 @@
         "open-details-page": "Open details page",
         "not-found": "Not found",
         "documentation": "Documentation",
-        "left": "left"
+        "time-left": "{{time}} left"
     },
     "content-type": {
         "json": "Json",

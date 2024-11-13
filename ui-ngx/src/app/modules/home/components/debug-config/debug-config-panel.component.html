@@ -27,23 +27,18 @@
   </div>
   <div class="flex flex-col gap-3">
     <mat-slide-toggle class="mat-slide" [formControl]="onFailuresControl">
-      <mat-label tb-hint-tooltip-icon="{{ 'debug-config.hint.on-failure' | translate }}">
+      <div tb-hint-tooltip-icon="{{ 'debug-config.hint.on-failure' | translate }}">
         {{ 'debug-config.on-failure' | translate }}
-      </mat-label>
+      </div>
     </mat-slide-toggle>
     <div class="flex justify-between align-center">
       <mat-slide-toggle class="mat-slide" [formControl]="debugAllControl">
-        <mat-label tb-hint-tooltip-icon="{{ 'debug-config.hint.all-messages' | translate }}">
-          {{ 'debug-config.all-messages' | translate }} {{ '( ' }}
-          <span *ngIf="isDebugAllOn() else debugAllOffLabel">{{ debugAllUntil | debugDurationLeft }}</span>
-          <ng-template #debugAllOffLabel>
-            {{ maxRuleNodeDebugDurationMinutes + ' ' }} {{ ('debug-config.min' | translate) }}
-          </ng-template>
-          {{ ' )' }}
-        </mat-label>
+        <div tb-hint-tooltip-icon="{{ 'debug-config.hint.all-messages' | translate }}">
+          {{ 'debug-config.all-messages' | translate: { time: (isDebugAllActive$ | async) ? (debugAllUntil | durationLeft) : ('debug-config.min' | translate: { number:  maxRuleNodeDebugDurationMinutes }) } }}
+        </div>
       </mat-slide-toggle>
-      <button mat-icon-button *ngIf="isDebugAllOn()"
-              class="tb-mat-20 p-0 mr-2"
+      <button mat-icon-button *ngIf="(isDebugAllActive$ | async)"
+              class="tb-mat-20"
               matTooltip="{{ 'action.reset' | translate }}"
               matTooltipPosition="above"
               color="primary"

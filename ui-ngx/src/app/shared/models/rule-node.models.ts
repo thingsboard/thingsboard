@@ -27,19 +27,16 @@ import { AppState } from '@core/core.state';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { RuleChainType } from '@shared/models/rule-chain.models';
 import { DebugRuleNodeEventBody } from '@shared/models/event.models';
-import { TranslateService } from '@ngx-translate/core';
+import { HasDebugConfig } from '@shared/models/entity.models';
 
 export interface RuleNodeConfiguration {
   [key: string]: any;
 }
 
-export interface RuleNode extends BaseData<RuleNodeId> {
+export interface RuleNode extends BaseData<RuleNodeId>, HasDebugConfig {
   ruleChainId?: RuleChainId;
   type: string;
   name: string;
-  debugAll: boolean;
-  debugFailures: boolean;
-  debugAllUntil: number;
   singletonMode: boolean;
   queueName?: string;
   configurationVersion?: number;
@@ -347,19 +344,10 @@ export interface FcRuleNode extends FcRuleNodeType {
   ruleNodeId?: RuleNodeId;
   additionalInfo?: any;
   configuration?: RuleNodeConfiguration;
-  debugAll?: boolean;
-  debugFailures?: boolean;
-  debugAllUntil?: number;
   error?: string;
   highlighted?: boolean;
   componentClazz?: string;
   ruleChainType?: RuleChainType;
-}
-
-export interface RuleNodeDebugConfig {
-  debugAll: boolean;
-  debugFailures: boolean;
-  debugAllUntil: number;
 }
 
 export interface FcRuleEdge extends FcEdge {

@@ -15,22 +15,21 @@
 ///
 
 import { Pipe, PipeTransform } from '@angular/core';
-import { MINUTE } from '@shared/models/time/time.models';
 import { TranslateService } from '@ngx-translate/core';
-import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
+import { MillisecondsToTimeStringPipe } from './milliseconds-to-time-string.pipe';
 
 @Pipe({
-  name: 'debugDurationLeft',
+  name: 'durationLeft',
   pure: false,
   standalone: true,
 })
-export class DebugDurationLeftPipe implements PipeTransform {
+export class DurationLeftPipe implements PipeTransform {
 
   constructor(private translate: TranslateService, private millisecondsToTimeString: MillisecondsToTimeStringPipe) {
   }
 
-  transform(debugAllUntil: number): string {
-    const time = this.millisecondsToTimeString.transform((debugAllUntil - new Date().getTime()), true, true);
-    return `${time} ` + this.translate.instant('common.left');
+  transform(untilTimestamp: number, shortFormat = true, onlyFirstDigit = true): string {
+    const time = this.millisecondsToTimeString.transform((untilTimestamp - new Date().getTime()), shortFormat, onlyFirstDigit) ?? 0;
+    return this.translate.instant('common.time-left', { time });
   }
 }

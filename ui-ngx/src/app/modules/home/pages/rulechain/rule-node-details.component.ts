@@ -29,7 +29,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { FcRuleNode, RuleNodeDebugConfig, RuleNodeType } from '@shared/models/rule-node.models';
+import { FcRuleNode, RuleNodeType } from '@shared/models/rule-node.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { Subject } from 'rxjs';
 import { RuleNodeConfigComponent } from './rule-node-config.component';
@@ -39,6 +39,8 @@ import { ComponentClusteringMode } from '@shared/models/component-descriptor.mod
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { ServiceType } from '@shared/models/queue.models';
 import { takeUntil } from 'rxjs/operators';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { HasDebugConfig } from '@shared/models/entity.models';
 
 @Component({
   selector: 'tb-rule-node',
@@ -78,6 +80,9 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
   serviceType = ServiceType.TB_RULE_ENGINE;
 
   ruleNodeFormGroup: UntypedFormGroup;
+
+  readonly maxRuleNodeDebugDurationMinutes = getCurrentAuthState(this.store).maxRuleNodeDebugDurationMinutes;
+  readonly ruleChainDebugPerTenantLimitsConfiguration = getCurrentAuthState(this.store).ruleChainDebugPerTenantLimitsConfiguration;
 
   private destroy$ = new Subject<void>();
 
@@ -205,7 +210,7 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
     return this.ruleNode.component.clusteringMode === ComponentClusteringMode.USER_PREFERENCE;
   }
 
-  onDebugConfigChanged(config: RuleNodeDebugConfig): void {
+  onDebugConfigChanged(config: HasDebugConfig): void {
     this.ruleNodeFormGroup.get('debugAllUntil').setValue(config.debugAllUntil);
     this.ruleNodeFormGroup.get('debugAll').setValue(config.debugAll);
     this.ruleNodeFormGroup.get('debugFailures').setValue(config.debugFailures);

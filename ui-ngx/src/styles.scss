@@ -1278,7 +1278,7 @@ pre.tb-highlight {
     }
 
     &.active:not(:disabled) {
-      border-color: $primary !important;
+      --mdc-outlined-button-outline-color: $primary;
     }
 
     &:disabled {

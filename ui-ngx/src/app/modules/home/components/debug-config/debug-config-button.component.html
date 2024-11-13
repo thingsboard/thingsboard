@@ -19,12 +19,12 @@
         class="tb-rounded-btn flex-1 w-36"
         color="primary"
         #matButton
-        [class.active]="(isDebugAllActive() || debugFailures) && !disabled"
+        [class.active]="((isDebugAllActive$ | async) || debugFailures) && !disabled"
         [disabled]="disabled"
         (click)="openDebugStrategyPanel($event, matButton)">
   <mat-icon [color]="disabled ? 'inherit' : 'primary'">bug_report</mat-icon>
-  <span *ngIf="!debugFailures && !isDebugAllActive()" translate>common.disabled</span>
-  <span *ngIf="isDebugAllActive() && debugFailures" translate>debug-config.all</span>
-  <span *ngIf="isDebugAllActive() && !debugFailures">{{ debugAllUntil | debugDurationLeft }}</span>
-  <span *ngIf="!isDebugAllActive() && debugFailures" translate>debug-config.failures</span>
+  <span *ngIf="!debugFailures && !(isDebugAllActive$ | async)" translate>common.disabled</span>
+  <span *ngIf="(isDebugAllActive$ | async) && debugFailures" translate>debug-config.all</span>
+  <span *ngIf="(isDebugAllActive$ | async) && !debugFailures">{{ debugAllUntil | durationLeft }}</span>
+  <span *ngIf="!(isDebugAllActive$ | async) && debugFailures" translate>debug-config.failures</span>
 </button>
