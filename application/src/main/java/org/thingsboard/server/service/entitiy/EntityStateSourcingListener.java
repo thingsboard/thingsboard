@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -118,7 +119,11 @@ public class EntityStateSourcingListener {
                 ApiUsageState apiUsageState = (ApiUsageState) event.getEntity();
                 tbClusterService.onApiStateChange(apiUsageState, null);
             }
-            default -> {}
+            case CALCULATED_FIELD -> {
+                onCalculatedFieldUpdate(event.getEntity(), event.getOldEntity());
+            }
+            default -> {
+            }
         }
     }
 
@@ -130,7 +135,7 @@ public class EntityStateSourcingListener {
             return;
         }
         EntityType entityType = entityId.getEntityType();
-        if (!tenantId.isSysTenantId() && entityType != EntityType.TENANT  && !tenantService.tenantExists(tenantId)) {
+        if (!tenantId.isSysTenantId() && entityType != EntityType.TENANT && !tenantService.tenantExists(tenantId)) {
             log.debug("[{}] Ignoring DeleteEntityEvent because tenant does not exist: {}", tenantId, event);
             return;
         }
@@ -149,7 +154,8 @@ public class EntityStateSourcingListener {
             case RULE_CHAIN -> {
                 RuleChain ruleChain = (RuleChain) event.getEntity();
                 if (RuleChainType.CORE.equals(ruleChain.getType())) {
-                    Set<RuleChainId> referencingRuleChainIds = JacksonUtil.fromString(event.getBody(), new TypeReference<>() {});
+                    Set<RuleChainId> referencingRuleChainIds = JacksonUtil.fromString(event.getBody(), new TypeReference<>() {
+                    });
                     if (referencingRuleChainIds != null) {
                         referencingRuleChainIds.forEach(referencingRuleChainId ->
                                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, referencingRuleChainId, ComponentLifecycleEvent.UPDATED));
@@ -177,7 +183,12 @@ public class EntityStateSourcingListener {
                 TbResourceInfo tbResource = (TbResourceInfo) event.getEntity();
                 tbClusterService.onResourceDeleted(tbResource, null);
             }
-            default -> {}
+            case CALCULATED_FIELD -> {
+                CalculatedField calculatedField = (CalculatedField) event.getEntity();
+                tbClusterService.onCalculatedFieldDeleted(tenantId, calculatedField, null);
+            }
+            default -> {
+            }
         }
     }
 
@@ -245,6 +256,15 @@ public class EntityStateSourcingListener {
         } else if (entity instanceof EdgeEvent edgeEvent) {
             tbClusterService.onEdgeEventUpdate(new EdgeEventUpdateMsg(tenantId, edgeEvent.getEdgeId()));
         }
+    }
+
+    private void onCalculatedFieldUpdate(Object entity, Object oldEntity) {
+        CalculatedField calculatedField = (CalculatedField) entity;
+        CalculatedField oldCalculatedField = null;
+        if (oldEntity instanceof CalculatedField) {
+            oldCalculatedField = (CalculatedField) oldEntity;
+        }
+        tbClusterService.onCalculatedFieldUpdated(calculatedField, oldCalculatedField);
     }
 
     private void pushAssignedFromNotification(Tenant currentTenant, TenantId newTenantId, Device assignedDevice) {

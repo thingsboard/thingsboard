@@ -38,10 +38,12 @@ import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -666,7 +668,8 @@ public class DefaultTbClusterService implements TbClusterService {
     private void pushDeviceUpdateMessage(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventActionType action) {
         log.trace("{} Going to send edge update notification for device actor, device id {}, edge id {}", tenantId, entityId, edgeId);
         switch (action) {
-            case ASSIGNED_TO_EDGE -> pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), edgeId), null);
+            case ASSIGNED_TO_EDGE ->
+                    pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), edgeId), null);
             case UNASSIGNED_FROM_EDGE -> {
                 EdgeId relatedEdgeId = findRelatedEdgeIdIfAny(tenantId, entityId);
                 pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), relatedEdgeId), null);
@@ -741,6 +744,35 @@ public class DefaultTbClusterService implements TbClusterService {
             producerProvider.getTransportNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), transportMsg), null);
             toTransportNfs.incrementAndGet();
         }
+    }
+
+    @Override
+    public void onCalculatedFieldUpdated(CalculatedField calculatedField, CalculatedField oldCalculatedField) {
+        var created = oldCalculatedField == null;
+        broadcastEntityChangeToTransport(calculatedField.getTenantId(), calculatedField.getId(), calculatedField, null);
+        broadcastEntityStateChangeEvent(calculatedField.getTenantId(), calculatedField.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+        sendCalculatedFieldEvent(calculatedField.getTenantId(), calculatedField.getId(), created, !created, false);
+    }
+
+    @Override
+    public void onCalculatedFieldDeleted(TenantId tenantId, CalculatedField calculatedField, TbQueueCallback callback) {
+        CalculatedFieldId calculatedFieldId = calculatedField.getId();
+        broadcastEntityDeleteToTransport(tenantId, calculatedFieldId, calculatedField.getName(), callback);
+        sendCalculatedFieldEvent(tenantId, calculatedFieldId, false, false, true);
+        broadcastEntityStateChangeEvent(tenantId, calculatedFieldId, ComponentLifecycleEvent.DELETED);
+    }
+
+    private void sendCalculatedFieldEvent(TenantId tenantId, CalculatedFieldId calculatedFieldId, boolean added, boolean updated, boolean deleted) {
+        TransportProtos.CalculatedFieldMsgProto.Builder builder = TransportProtos.CalculatedFieldMsgProto.newBuilder();
+        builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
+        builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
+        builder.setCalculatedFieldIdMSB(calculatedFieldId.getId().getMostSignificantBits());
+        builder.setCalculatedFieldIdLSB(calculatedFieldId.getId().getLeastSignificantBits());
+        builder.setAdded(added);
+        builder.setUpdated(updated);
+        builder.setDeleted(deleted);
+        TransportProtos.CalculatedFieldMsgProto msg = builder.build();
+        pushMsgToCore(tenantId, calculatedFieldId, ToCoreMsg.newBuilder().setCalculatedFieldMsg(msg).build(), null);
     }
 
 }

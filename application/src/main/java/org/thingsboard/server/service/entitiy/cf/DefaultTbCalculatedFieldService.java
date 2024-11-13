@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -64,6 +65,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
@@ -71,6 +73,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateEntityId;
 
@@ -83,6 +86,7 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
     private final CalculatedFieldService calculatedFieldService;
     private final AttributesService attributesService;
     private final TimeseriesService timeseriesService;
+    private final RocksDBService rocksDBService;
     private ListeningScheduledExecutorService scheduledExecutor;
 
     private ListeningExecutorService calculatedFieldExecutor;
@@ -212,6 +216,10 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
             calculatedFieldLinks.remove(calculatedFieldId);
             calculatedFields.remove(calculatedFieldId);
             states.keySet().removeIf(ctxId -> ctxId.startsWith(calculatedFieldId.getId().toString()));
+            List<String> statesToRemove = states.keySet().stream()
+                    .filter(key -> key.startsWith(calculatedFieldId.getId().toString()))
+                    .collect(Collectors.toList());
+            rocksDBService.deleteAll(statesToRemove);
         } catch (Exception e) {
             log.trace("Failed to delete calculated field.", e);
             callback.onFailure(e);
@@ -223,7 +231,7 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
         cfs.forEach(cf -> calculatedFields.putIfAbsent(cf.getId(), cf));
         PageDataIterable<CalculatedFieldLink> cfls = new PageDataIterable<>(calculatedFieldService::findAllCalculatedFieldLinks, initFetchPackSize);
         cfls.forEach(link -> calculatedFieldLinks.computeIfAbsent(link.getCalculatedFieldId(), id -> new ArrayList<>()).add(link));
-        // TODO:    read all states(CalculatedFieldCtx)
+        rocksDBService.getAll().forEach((ctxId, ctx) -> states.put(ctxId, JacksonUtil.convertValue(ctx, CalculatedFieldCtx.class)));
         states.keySet().removeIf(ctxId -> calculatedFields.keySet().stream().noneMatch(id -> ctxId.startsWith(id.toString())));
     }
 
@@ -319,6 +327,7 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
         }
         calculatedFieldCtx.setState(state);
         states.put(ctxId, calculatedFieldCtx);
+        rocksDBService.put(ctxId, Objects.requireNonNull(JacksonUtil.toString(calculatedFieldCtx)));
     }
 
     private String performCalculation(Map<String, String> argumentValues, CalculatedFieldConfiguration calculatedFieldConfiguration) {

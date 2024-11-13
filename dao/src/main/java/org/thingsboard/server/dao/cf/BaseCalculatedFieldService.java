@@ -29,20 +29,21 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.dao.entity.AbstractEntityService.checkConstraintViolation;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
 @Service("CalculatedFieldDaoService")
 @Slf4j
 @RequiredArgsConstructor
-public class BaseCalculatedFieldService implements CalculatedFieldService {
+public class BaseCalculatedFieldService extends AbstractEntityService implements CalculatedFieldService {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_CALCULATED_FIELD_ID = "Incorrect calculatedFieldId ";
@@ -60,6 +61,8 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
             log.trace("Executing save calculated field, [{}]", calculatedField);
             CalculatedField savedCalculatedField = calculatedFieldDao.save(tenantId, calculatedField);
             createOrUpdateCalculatedFieldLink(tenantId, savedCalculatedField);
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedCalculatedField.getTenantId()).entityId(savedCalculatedField.getId())
+                    .entity(savedCalculatedField).created(calculatedField.getId() == null).build());
             return savedCalculatedField;
         } catch (Exception e) {
             checkConstraintViolation(e,
