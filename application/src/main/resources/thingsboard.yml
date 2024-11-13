@@ -495,6 +495,11 @@ actors:
     # Actors statistic persistence frequency in milliseconds
     persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:3600000}"
 
+debug_mode:
+  # The maximum allowed duration (in minutes) for the debug mode to be used.
+  # If a specific value is set in the tenant profile, the minimum between value from profile and this setting will be used.
+  max_duration: "${DEBUG_MODE_MAX_DURATION_MINUTES:60}"
+
 # Cache settings parameters
 cache:
   # caffeine or redis(7.2 - latest compatible version)

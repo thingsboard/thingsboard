@@ -35,7 +35,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.common.data.rule.RuleNodeDebugUtil;
+import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.plugin.RuleNodeUpdatedMsg;
@@ -256,7 +256,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             var originatorNodeId = envelope.getTargetRuleNodeId();
             RuleNodeCtx ruleNodeCtx = nodeActors.get(originatorNodeId);
             if (ruleNodeCtx != null) {
-                if (RuleNodeDebugUtil.isDebugAvailable(ruleNodeCtx.getSelf(), envelope.getRelationType())) {
+                if (DebugModeUtil.isDebugAvailable(ruleNodeCtx.getSelf(), envelope.getRelationType())) {
                     systemContext.persistDebugOutput(tenantId, originatorNodeId, tbMsg, envelope.getRelationType());
                 }
             }

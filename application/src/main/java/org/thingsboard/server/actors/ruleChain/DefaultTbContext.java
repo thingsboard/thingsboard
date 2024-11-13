@@ -64,7 +64,7 @@ import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.common.data.rule.RuleNodeDebugUtil;
+import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbActorMsg;
@@ -1002,9 +1002,9 @@ public class DefaultTbContext implements TbContext {
 
     private void persistDebugOutput(TbMsg msg, Set<String> relationTypes, Throwable error, String failureMessage) {
         RuleNode ruleNode = nodeCtx.getSelf();
-        if (RuleNodeDebugUtil.isDebugAllAvailable(ruleNode)) {
+        if (DebugModeUtil.isDebugAllAvailable(ruleNode)) {
             relationTypes.forEach(relationType -> mainCtx.persistDebugOutput(getTenantId(), ruleNode.getId(), msg, relationType, error, failureMessage));
-        } else if (RuleNodeDebugUtil.isDebugFailuresAvailable(ruleNode, relationTypes)) {
+        } else if (DebugModeUtil.isDebugFailuresAvailable(ruleNode, relationTypes)) {
             mainCtx.persistDebugOutput(getTenantId(), ruleNode.getId(), msg, TbNodeConnectionType.FAILURE, error, failureMessage);
         }
     }

@@ -15,23 +15,19 @@
  */
 package org.thingsboard.server.common.data;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import lombok.Data;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.util.List;
+public interface HasDebugMode {
 
-@Data
-public class SystemParams {
-    boolean userTokenAccessEnabled;
-    List<String> allowedDashboardIds;
-    boolean edgesSupportEnabled;
-    boolean hasRepository;
-    boolean tbelEnabled;
-    boolean persistDeviceStateToTelemetry;
-    JsonNode userSettings;
-    long maxDatapointsLimit;
-    long maxResourceSize;
-    boolean mobileQrEnabled;
-    int maxDebugModeDurationMinutes;
-    String ruleChainDebugPerTenantLimitsConfiguration;
+    boolean isDebugFailures();
+
+    void setDebugFailures(boolean debugFailures);
+
+    boolean isDebugAll();
+
+    void setDebugAll(boolean debugAll);
+
+    long getDebugAllUntil();
+
+    void setDebugAllUntil(long debugAllUntil);
 }

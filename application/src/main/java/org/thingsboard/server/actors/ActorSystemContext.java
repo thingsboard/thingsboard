@@ -577,9 +577,9 @@ public class ActorSystemContext {
     @Getter
     private boolean externalNodeForceAck;
 
-    @Value("${actors.rule.node.max_debug_mode_duration:60}")
+    @Value("${debug_mode.max_duration:60}")
     @Getter
-    private int maxRuleNodeDebugModeDurationMinutes;
+    private int maxDebugModeDurationMinutes;
 
     @Value("${state.rule.node.deviceState.rateLimit:1:1,30:60,60:3600}")
     @Getter

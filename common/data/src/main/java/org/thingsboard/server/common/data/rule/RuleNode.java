@@ -23,6 +23,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
+import org.thingsboard.server.common.data.HasDebugMode;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -34,7 +35,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements HasName {
+public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements HasName, HasDebugMode {
 
     private static final long serialVersionUID = -5656679015121235465L;
 

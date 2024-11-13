@@ -68,7 +68,6 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.RuleChainDataValidator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.dao.util.TimeUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -118,8 +117,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Lazy
     private TbTenantProfileCache tbTenantProfileCache;
 
-    @Value("${actors.rule.node.max_debug_mode_duration:60}")
-    private int maxRuleNodeDebugModeDurationMinutes;
+    @Value("${debug_mode.max_duration:60}")
+    private int maxDebugModeDurationMinutes;
 
     @Override
     @Transactional
@@ -231,7 +230,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 node.setRuleChainId(ruleChainId);
                 node = ruleNodeUpdater.apply(node);
 
-                int debugDuration = tbTenantProfileCache.get(tenantId).getDefaultProfileConfiguration().getMaxRuleNodeDebugModeDurationMinutes(maxRuleNodeDebugModeDurationMinutes);
+                int debugDuration = tbTenantProfileCache.get(tenantId).getDefaultProfileConfiguration().getMaxDebugModeDurationMinutes(maxDebugModeDurationMinutes);
                 long debugUntil = now + TimeUnit.MINUTES.toMillis(debugDuration);
 
                 if (node.isDebugAll()) {

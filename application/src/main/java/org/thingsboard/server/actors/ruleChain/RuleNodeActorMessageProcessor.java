@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.common.data.rule.RuleNodeDebugUtil;
+import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.RuleNodeException;
@@ -131,7 +131,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         if (maxRuleNodeExecutionsPerMessage == 0 || ruleNodeCount < maxRuleNodeExecutionsPerMessage) {
             apiUsageClient.report(tenantId, tbMsg.getCustomerId(), ApiUsageRecordKey.RE_EXEC_COUNT);
             persistDebugInputIfAllowed(msg.getMsg(), "Self", tenantProfileConfiguration
-                    .getMaxRuleNodeDebugModeDurationMinutes(systemContext.getMaxRuleNodeDebugModeDurationMinutes()));
+                    .getMaxDebugModeDurationMinutes(systemContext.getMaxDebugModeDurationMinutes()));
             try {
                 tbNode.onMsg(defaultCtx, msg.getMsg());
             } catch (Exception e) {
@@ -155,7 +155,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
             if (maxRuleNodeExecutionsPerMessage == 0 || ruleNodeCount < maxRuleNodeExecutionsPerMessage) {
                 apiUsageClient.report(tenantId, tbMsg.getCustomerId(), ApiUsageRecordKey.RE_EXEC_COUNT);
                 persistDebugInputIfAllowed(msg.getMsg(), msg.getFromRelationType(), tenantProfileConfiguration
-                        .getMaxRuleNodeDebugModeDurationMinutes(systemContext.getMaxRuleNodeDebugModeDurationMinutes()));
+                        .getMaxDebugModeDurationMinutes(systemContext.getMaxDebugModeDurationMinutes()));
                 try {
                     tbNode.onMsg(msg.getCtx(), msg.getMsg());
                 } catch (Exception e) {
@@ -219,7 +219,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     }
 
     private void persistDebugInputIfAllowed(TbMsg msg, String fromNodeConnectionType, int debugModeDurationMinutes) {
-        if (RuleNodeDebugUtil.isDebugAllAvailable(ruleNode)) {
+        if (DebugModeUtil.isDebugAllAvailable(ruleNode)) {
             systemContext.persistDebugInput(tenantId, entityId, msg, fromNodeConnectionType);
         }
     }

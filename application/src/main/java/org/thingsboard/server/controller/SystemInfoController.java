@@ -71,8 +71,8 @@ public class SystemInfoController extends BaseController {
     @Value("${ui.dashboard.max_datapoints_limit}")
     private long maxDatapointsLimit;
 
-    @Value("${actors.rule.node.max_debug_mode_duration:60}")
-    private int maxRuleNodeDebugModeDurationMinutes;
+    @Value("${debug_mode.max_duration:60}")
+    private int maxDebugModeDurationMinutes;
 
     @Value("${actors.rule.chain.debug_mode_rate_limits_per_tenant.enabled:true}")
     @Getter
@@ -153,7 +153,7 @@ public class SystemInfoController extends BaseController {
         if (!currentUser.isSystemAdmin()) {
             DefaultTenantProfileConfiguration tenantProfileConfiguration = tenantProfileCache.get(tenantId).getDefaultProfileConfiguration();
             systemParams.setMaxResourceSize(tenantProfileConfiguration.getMaxResourceSize());
-            systemParams.setMaxRuleNodeDebugDurationMinutes(tenantProfileConfiguration.getMaxRuleNodeDebugModeDurationMinutes(maxRuleNodeDebugModeDurationMinutes));
+            systemParams.setMaxDebugModeDurationMinutes(tenantProfileConfiguration.getMaxDebugModeDurationMinutes(maxDebugModeDurationMinutes));
             if (ruleChainDebugPerTenantLimitsEnabled) {
                 systemParams.setRuleChainDebugPerTenantLimitsConfiguration(ruleChainDebugPerTenantLimitsConfiguration);
             }
