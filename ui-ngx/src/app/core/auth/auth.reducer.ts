@@ -31,8 +31,8 @@ const emptyUserAuthState: AuthPayload = {
   persistDeviceStateToTelemetry: false,
   mobileQrEnabled: false,
   maxResourceSize: 0,
-  userSettings: initialUserSettings,
   maxDebugModeDurationMinutes: 0,
+  userSettings: initialUserSettings
 };
 
 export const initialState: AuthState = {

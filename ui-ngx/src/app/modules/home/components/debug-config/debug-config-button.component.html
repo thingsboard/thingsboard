@@ -16,6 +16,7 @@
 
 -->
 <button mat-stroked-button
+        *ngIf="!minifyMode else minifiedButton"
         class="tb-rounded-btn flex-1 w-36"
         color="primary"
         #matButton
@@ -28,3 +29,16 @@
   <span *ngIf="(isDebugAllActive$ | async) && !debugFailures">{{ debugAllUntil | durationLeft }}</span>
   <span *ngIf="!(isDebugAllActive$ | async) && debugFailures" translate>debug-config.failures</span>
 </button>
+<ng-template #minifiedButton>
+  <button mat-icon-button
+          class="mini-debug-btn"
+          [disabled]="disabled"
+          #matButton
+          [matTooltip]="(isDebugAllActive$ | async) ? (debugAllUntil | durationLeft) : null"
+          matTooltipPosition="above"
+          (click)="openDebugStrategyPanel($event, matButton)">
+    <mat-icon class="material-icons" [color]="((isDebugAllActive$ | async) || debugFailures) && !disabled ? 'primary' : 'inherit'">
+      bug_report
+    </mat-icon>
+  </button>
+</ng-template>

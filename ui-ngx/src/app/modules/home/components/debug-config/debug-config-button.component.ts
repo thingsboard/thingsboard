@@ -42,6 +42,7 @@ import { Store } from '@ngrx/store';
 @Component({
   selector: 'tb-debug-config-button',
   templateUrl: './debug-config-button.component.html',
+  styleUrls: ['./debug-config-button.component.scss'],
   standalone: true,
   imports: [
     CommonModule,
@@ -56,6 +57,7 @@ export class DebugConfigButtonComponent {
   @Input() debugAll = false;
   @Input() debugAllUntil = 0;
   @Input() disabled = false;
+  @Input() minifyMode = false;
   @Input() debugLimitsConfiguration: string;
 
   @Output() onDebugConfigChanged = new EventEmitter<HasDebugConfig>();
