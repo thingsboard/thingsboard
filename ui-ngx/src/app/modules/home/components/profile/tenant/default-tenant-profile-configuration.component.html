@@ -83,10 +83,10 @@
                formControlName="maxDebugModeDurationMinutes"
                type="number">
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDebugModeDurationMinutes').hasError('required')">
-          {{ 'tenant-profile.maximum-debug-duration-min-range' | translate}}
+          {{ 'tenant-profile.maximum-debug-duration-min-range' | translate }}
         </mat-error>
         <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDebugModeDurationMinutes').hasError('min')">
-          {{ 'tenant-profile.maximum-debug-duration-min-required' | translate}}
+          {{ 'tenant-profile.maximum-debug-duration-min-required' | translate }}
         </mat-error>
         <mat-hint></mat-hint>
       </mat-form-field>

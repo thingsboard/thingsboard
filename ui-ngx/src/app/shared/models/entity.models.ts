@@ -193,7 +193,7 @@ export interface HasVersion {
 }
 
 export interface HasDebugConfig {
-  debugAll: boolean;
-  debugFailures: boolean;
-  debugAllUntil: number;
+  debugAll?: boolean;
+  debugFailures?: boolean;
+  debugAllUntil?: number;
 }
