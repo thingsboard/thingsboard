@@ -29,7 +29,7 @@
 </mat-progress-bar>
 <div *ngIf="!(isLoading$ | async)"></div>
 <div mat-dialog-content class="xs:!p-0">
-  <mat-horizontal-stepper [linear]="true" labelPosition="end" #addMobileBundle [orientation]="(stepperOrientation | async)"
+  <mat-horizontal-stepper [linear]="isAdd" labelPosition="end" #addMobileBundle [orientation]="(stepperOrientation | async)"
                           (selectionChange)="changeStep($event)">
     <ng-template matStepperIcon="edit">
       <mat-icon>check</mat-icon>

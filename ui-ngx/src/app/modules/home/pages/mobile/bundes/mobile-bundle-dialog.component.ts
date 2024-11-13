@@ -79,6 +79,8 @@ export class MobileBundleDialogComponent extends DialogComponent<MobileBundleDia
     layoutConfig: [null]
   });
 
+  isAdd = false;
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               protected dialogRef: MatDialogRef<MobileBundleDialogComponent, MobileAppBundle>,
@@ -90,7 +92,8 @@ export class MobileBundleDialogComponent extends DialogComponent<MobileBundleDia
     super(store, router, dialogRef);
 
     if (this.data.isAdd) {
-      this.dialogTitle = 'mobile.add-bundle'
+      this.dialogTitle = 'mobile.add-bundle';
+      this.isAdd = true;
     }
 
     this.stepperOrientation = this.breakpointObserver.observe(MediaBreakpoints['gt-xs'])
