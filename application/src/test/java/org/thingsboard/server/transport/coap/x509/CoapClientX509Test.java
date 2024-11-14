@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.coap;
+package org.thingsboard.server.transport.coap.x509;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapHandler;
 import org.eclipse.californium.core.CoapObserveRelation;
@@ -24,37 +25,53 @@ import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.network.CoapEndpoint;
+import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.californium.elements.exception.ConnectorException;
 import org.eclipse.californium.scandium.DTLSConnector;
+import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
+import org.eclipse.californium.scandium.dtls.CertificateType;
+import org.eclipse.californium.scandium.dtls.cipher.CipherSuite;
+import org.eclipse.californium.scandium.dtls.x509.CertificateProvider;
+import org.eclipse.californium.scandium.dtls.x509.SingleCertificateProvider;
 import org.thingsboard.server.common.msg.session.FeatureType;
+import org.thingsboard.server.transport.coap.CoapTestCallback;
 
 import java.io.IOException;
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.Collections;
 
-public class CoapTestClientX509 {
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.eclipse.californium.elements.config.CertificateAuthenticationMode.WANTED;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CIPHER_SUITES;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CLIENT_AUTHENTICATION_MODE;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RETRANSMISSION_TIMEOUT;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_ROLE;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DtlsRole.CLIENT_ONLY;
+
+@Slf4j
+public class CoapClientX509Test {
 
     private static final String COAPS_BASE_URL = "coaps://localhost:5684/api/v1/";
     private static final long CLIENT_REQUEST_TIMEOUT = 60000L;
 
     private final CoapClient clientX509;
     private final DTLSConnector dtlsConnector;
+    private final CertPrivateKey certPrivateKey;
 
     @Getter
     private CoAP.Type type = CoAP.Type.CON;
 
-    public CoapTestClientX509(DTLSConnector dtlsConnector) {
-        this.dtlsConnector = dtlsConnector;
-        this.clientX509 = createClient();
+    public CoapClientX509Test(CertPrivateKey certPrivateKey) {
+        this.certPrivateKey = certPrivateKey;
+        this.dtlsConnector = createDTLSConnector();
+        this.clientX509 = createClient(getFeatureTokenUrl(FeatureType.ATTRIBUTES));
     }
 
-    public CoapTestClientX509(DTLSConnector dtlsConnector, String accessToken, FeatureType featureType) {
-        this.dtlsConnector = dtlsConnector;
-        this.clientX509 = createClient(getFeatureTokenUrl(accessToken, featureType));
-    }
-
-    public CoapTestClientX509(DTLSConnector dtlsConnector, String featureTokenUrl) {
-        this.dtlsConnector = dtlsConnector;
-        this.clientX509 = createClient(featureTokenUrl);
-
+    public CoapClientX509Test(CertPrivateKey certPrivateKey, FeatureType featureType) {
+        this.certPrivateKey = certPrivateKey;
+        this.dtlsConnector = createDTLSConnector();
+        this.clientX509 = createClient(getFeatureTokenUrl(featureType));
     }
 
     public void connectToCoap(String accessToken) {
@@ -131,6 +148,24 @@ public class CoapTestClientX509 {
         clientX509.useNONs();
     }
 
+    private DTLSConnector createDTLSConnector() {
+        try {
+            // Create DTLS config client
+            DtlsConnectorConfig.Builder configBuilder = new DtlsConnectorConfig.Builder(new Configuration());
+            configBuilder.set(DTLS_CLIENT_AUTHENTICATION_MODE, WANTED);
+            configBuilder.set(DTLS_RETRANSMISSION_TIMEOUT, 60000, MILLISECONDS);
+            configBuilder.set(DTLS_ROLE, CLIENT_ONLY);
+            configBuilder.set(DTLS_CIPHER_SUITES, Arrays.asList(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256));
+            configBuilder.setAdvancedCertificateVerifier(new TbAdvancedCertificateVerifier());
+            X509Certificate[] certificateChainClient = new X509Certificate[]{this.certPrivateKey.getCert()};
+            CertificateProvider certificateProvider = new SingleCertificateProvider(this.certPrivateKey.getPrivateKey(), certificateChainClient, Collections.singletonList(CertificateType.X_509));
+            configBuilder.setCertificateIdentityProvider(certificateProvider);
+            return new DTLSConnector(configBuilder.build());
+        } catch (Exception e) {
+            throw new RuntimeException("", e);
+        }
+    }
+
     private CoapClient createClient() {
         return new CoapClient();
     }
@@ -141,6 +176,14 @@ public class CoapTestClientX509 {
         builder.setConnector(dtlsConnector);
         client.setEndpoint(builder.build());
         return client;
+    }
+
+    public static String getFeatureTokenUrl(FeatureType featureType) {
+        return COAPS_BASE_URL + featureType.name().toLowerCase();
+    }
+
+    public static String getFeatureTokenUrl(String featureType) {
+        return COAPS_BASE_URL + featureType.toLowerCase();
     }
 
     public static String getFeatureTokenUrl(String token, FeatureType featureType) {
