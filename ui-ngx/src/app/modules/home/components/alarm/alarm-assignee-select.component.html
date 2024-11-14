@@ -25,7 +25,7 @@
           [style.background-color]="getAvatarBgColor()">
       {{ getUserInitials() }}
     </span>
-    <mat-icon *ngIf="!assignee" matPrefix class="unassigned-icon" [class.inline]="inline">account_circle</mat-icon>
-    <mat-icon *ngIf="!disabled" matSuffix class="drop-down-icon" [class.inline]="inline">arrow_drop_down</mat-icon>
+    <mat-icon *ngIf="!assignee" matPrefix class="unassigned-icon flex" [class.inline]="inline">account_circle</mat-icon>
+    <mat-icon *ngIf="!disabled" matSuffix class="drop-down-icon flex" [class.inline]="inline">arrow_drop_down</mat-icon>
   </mat-form-field>
 </ng-container>
