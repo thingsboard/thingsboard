@@ -57,12 +57,20 @@
     <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-label translate>mobile.url</mat-label>
       <input required matInput formControlName="url">
+      <mat-hint></mat-hint>
+      <mat-error *ngIf="customMobilePageForm.get('url').hasError('pattern')">
+        {{ 'mobile.url-pattern' | translate }}
+      </mat-error>
     </mat-form-field>
   </ng-container>
   <ng-container *ngIf="customMobilePageForm.get('type').value === MobilePageType.CUSTOM">
     <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-label translate>mobile.path</mat-label>
       <input required matInput formControlName="path">
+      <mat-hint></mat-hint>
+      <mat-error *ngIf="customMobilePageForm.get('path').hasError('pattern')">
+        {{ 'mobile.path-pattern' | translate }}
+      </mat-error>
     </mat-form-field>
   </ng-container>
 </section>

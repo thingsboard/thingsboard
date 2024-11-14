@@ -63,8 +63,8 @@ export class CustomMobilePageComponent implements ControlValueAccessor, Validato
     label: ['', Validators.required],
     type: [MobilePageType.DASHBOARD],
     dashboardId: ['', Validators.required],
-    url: [{value:'', disabled: true}, [Validators.required]],
-    path: [{value:'', disabled: true}, [Validators.required, Validators.pattern(/^((?!\s).)*$/)]]
+    url: [{value:'', disabled: true}, [Validators.required, Validators.pattern(/^(https?:\/\/)?(localhost|([\w\-]+\.)+[\w\-]+)(:\d+)?(\/[\w\-._~:\/?#[\]@!$&'()*+,;=%]*)?$/)]],
+    path: [{value:'', disabled: true}, [Validators.required, Validators.pattern(/^(\/[\w\-._~:\/?#[\]@!$&'()*+,;=%]*)?$/)]]
   });
 
   private propagateChange = (_val: any) => {};
