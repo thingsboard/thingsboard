@@ -41,7 +41,6 @@ public interface CalculatedFieldConfiguration {
 
     Map<String, BaseCalculatedFieldConfiguration.Argument> getArguments();
 
-    @JsonIgnore
     BaseCalculatedFieldConfiguration.Output getOutput();
 
     @JsonIgnore

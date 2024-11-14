@@ -26,6 +26,9 @@ public class CalculatedFieldCtx {
     private EntityId entityId;
     private CalculatedFieldState state;
 
+    public CalculatedFieldCtx() {
+    }
+
     public CalculatedFieldCtx(CalculatedFieldId calculatedFieldId, EntityId entityId, CalculatedFieldState state) {
         this.calculatedFieldId = calculatedFieldId;
         this.entityId = entityId;

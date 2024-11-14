@@ -24,6 +24,7 @@ import java.util.Map;
 @Builder
 public class CalculatedFieldState {
 
+    // TODO: use value object(TsKv) instead of string
     Map<String, String> arguments;
     String result;
 

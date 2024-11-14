@@ -56,7 +56,7 @@ public class CalculatedFieldEntity extends BaseSqlEntity<CalculatedField> implem
     private UUID tenantId;
 
     @Column(name = CALCULATED_FIELD_ENTITY_TYPE)
-    private EntityType entityType;
+    private String entityType;
 
     @Column(name = CALCULATED_FIELD_ENTITY_ID)
     private UUID entityId;
@@ -88,12 +88,12 @@ public class CalculatedFieldEntity extends BaseSqlEntity<CalculatedField> implem
         this.setUuid(calculatedField.getUuidId());
         this.createdTime = calculatedField.getCreatedTime();
         this.tenantId = calculatedField.getTenantId().getId();
-        this.entityType = calculatedField.getEntityId().getEntityType();
+        this.entityType = calculatedField.getEntityId().getEntityType().name();
         this.entityId = calculatedField.getEntityId().getId();
         this.type = calculatedField.getType();
         this.name = calculatedField.getName();
         this.configurationVersion = calculatedField.getConfigurationVersion();
-        this.configuration = calculatedField.getConfiguration().calculatedFieldConfigToJson(entityType, entityId);
+        this.configuration = calculatedField.getConfiguration().calculatedFieldConfigToJson(EntityType.valueOf(entityType), entityId);
         this.version = calculatedField.getVersion();
         if (calculatedField.getExternalId() != null) {
             this.externalId = calculatedField.getExternalId().getId();
@@ -109,7 +109,7 @@ public class CalculatedFieldEntity extends BaseSqlEntity<CalculatedField> implem
         calculatedField.setType(type);
         calculatedField.setName(name);
         calculatedField.setConfigurationVersion(configurationVersion);
-        calculatedField.setConfiguration(readCalculatedFieldConfiguration(configuration, entityType, entityId));
+        calculatedField.setConfiguration(readCalculatedFieldConfiguration(configuration, EntityType.valueOf(entityType), entityId));
         calculatedField.setVersion(version);
         if (externalId != null) {
             calculatedField.setExternalId(new CalculatedFieldId(externalId));

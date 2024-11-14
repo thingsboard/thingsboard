@@ -53,7 +53,7 @@ public class CalculatedFieldLinkEntity extends BaseSqlEntity<CalculatedFieldLink
     private UUID tenantId;
 
     @Column(name = CALCULATED_FIELD_LINK_ENTITY_TYPE)
-    private EntityType entityType;
+    private String entityType;
 
     @Column(name = CALCULATED_FIELD_LINK_ENTITY_ID)
     private UUID entityId;
@@ -73,7 +73,7 @@ public class CalculatedFieldLinkEntity extends BaseSqlEntity<CalculatedFieldLink
         this.setUuid(calculatedFieldLink.getUuidId());
         this.createdTime = calculatedFieldLink.getCreatedTime();
         this.tenantId = calculatedFieldLink.getTenantId().getId();
-        this.entityType = calculatedFieldLink.getEntityId().getEntityType();
+        this.entityType = calculatedFieldLink.getEntityId().getEntityType().name();
         this.entityId = calculatedFieldLink.getEntityId().getId();
         this.calculatedFieldId = calculatedFieldLink.getCalculatedFieldId().getId();
         this.configuration = JacksonUtil.valueToTree(calculatedFieldLink.getConfiguration());

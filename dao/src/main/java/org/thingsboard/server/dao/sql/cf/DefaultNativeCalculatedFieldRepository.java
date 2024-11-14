@@ -76,7 +76,7 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
                 String type = (String) row.get("type");
                 String name = (String) row.get("name");
                 int configurationVersion = (int) row.get("configuration_version");
-                JsonNode configuration = JacksonUtil.valueToTree(row.get("configuration"));
+                JsonNode configuration = JacksonUtil.toJsonNode((String) row.get("configuration"));
                 long version = (long) row.get("version");
                 Object externalIdObj = row.get("external_id");
 
@@ -117,7 +117,7 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
                 EntityType entityType = EntityType.valueOf((String) row.get("entity_type"));
                 UUID entityId = (UUID) row.get("entity_id");
                 UUID calculatedFieldId = (UUID) row.get("calculated_field_id");
-                JsonNode configuration = JacksonUtil.valueToTree(row.get("configuration"));
+                JsonNode configuration = JacksonUtil.toJsonNode((String) row.get("configuration"));
 
                 CalculatedFieldLink calculatedFieldLink = new CalculatedFieldLink();
                 calculatedFieldLink.setId(new CalculatedFieldLinkId(id));
