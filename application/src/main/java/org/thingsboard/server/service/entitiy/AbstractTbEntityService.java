@@ -89,25 +89,18 @@ public abstract class AbstractTbEntityService {
     @Lazy
     private EntitiesVersionControlService vcService;
     @Autowired
-    @Lazy
     protected AccessControlService accessControlService;
     @Autowired
-    @Lazy
     protected TenantService tenantService;
     @Autowired
-    @Lazy
     protected AssetService assetService;
     @Autowired
-    @Lazy
     protected DeviceService deviceService;
     @Autowired
-    @Lazy
     protected AssetProfileService assetProfileService;
     @Autowired
-    @Lazy
     protected DeviceProfileService deviceProfileService;
     @Autowired
-    @Lazy
     protected EntityService entityService;
 
     protected boolean isTestProfile() {

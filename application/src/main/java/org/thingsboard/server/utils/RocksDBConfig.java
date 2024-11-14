@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class RocksDBConfig {
 
-    @Value("${rocksdb.db_path}")
+    @Value("${rocksdb.db_path:${java.io.tmpdir}/rocksdb}")
     private String dbPath;
     private RocksDB db;
 

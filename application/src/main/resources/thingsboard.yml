@@ -426,7 +426,7 @@ sql:
 
 rocksdb:
   # Rocksdb path
-  db_path: "${ROCKS_DB_PATH:}"
+  db_path: "${ROCKS_DB_PATH:${java.io.tmpdir}/rocksdb}"
 
 # Actor system parameters
 actors:
