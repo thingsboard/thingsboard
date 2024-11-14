@@ -25,6 +25,7 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -90,7 +91,7 @@ public class CalculatedFieldEntity extends BaseSqlEntity<CalculatedField> implem
         this.tenantId = calculatedField.getTenantId().getId();
         this.entityType = calculatedField.getEntityId().getEntityType().name();
         this.entityId = calculatedField.getEntityId().getId();
-        this.type = calculatedField.getType();
+        this.type = calculatedField.getType().name();
         this.name = calculatedField.getName();
         this.configurationVersion = calculatedField.getConfigurationVersion();
         this.configuration = calculatedField.getConfiguration().calculatedFieldConfigToJson(EntityType.valueOf(entityType), entityId);
@@ -106,7 +107,7 @@ public class CalculatedFieldEntity extends BaseSqlEntity<CalculatedField> implem
         calculatedField.setCreatedTime(createdTime);
         calculatedField.setTenantId(TenantId.fromUUID(tenantId));
         calculatedField.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
-        calculatedField.setType(type);
+        calculatedField.setType(CalculatedFieldType.valueOf(type));
         calculatedField.setName(name);
         calculatedField.setConfigurationVersion(configurationVersion);
         calculatedField.setConfiguration(readCalculatedFieldConfiguration(configuration, EntityType.valueOf(entityType), entityId));
@@ -118,8 +119,8 @@ public class CalculatedFieldEntity extends BaseSqlEntity<CalculatedField> implem
     }
 
     private CalculatedFieldConfiguration readCalculatedFieldConfiguration(JsonNode config, EntityType entityType, UUID entityId) {
-        switch (type) {
-            case "SIMPLE":
+        switch (CalculatedFieldType.valueOf(type)) {
+            case SIMPLE:
                 return new SimpleCalculatedFieldConfiguration(config, entityType, entityId);
             default:
                 throw new IllegalArgumentException("Unsupported calculated field type: " + type + "!");

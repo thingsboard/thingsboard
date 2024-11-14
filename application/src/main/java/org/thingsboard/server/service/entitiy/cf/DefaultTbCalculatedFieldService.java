@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.cf.BaseCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -141,12 +142,11 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
                 onCalculatedFieldDelete(calculatedFieldId, callback);
                 callback.onSuccess();
             }
+            CalculatedField cf = calculatedFieldService.findById(tenantId, calculatedFieldId);
             if (proto.getUpdated()) {
                 log.info("Executing onCalculatedFieldUpdate, calculatedFieldId=[{}]", calculatedFieldId);
-                //TODO: improve the check. Maybe it was renamed or just the name of the result changed.
-                onCalculatedFieldDelete(calculatedFieldId, callback);
+                onCalculatedFieldUpdate(cf, callback);
             }
-            CalculatedField cf = calculatedFieldService.findById(tenantId, calculatedFieldId);
             List<CalculatedFieldLink> links = calculatedFieldService.findAllCalculatedFieldLinksById(tenantId, calculatedFieldId);
             if (cf != null) {
                 EntityId entityId = cf.getEntityId();
@@ -235,6 +235,31 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
         }
     }
 
+    private void onCalculatedFieldUpdate(CalculatedField newCalculatedField, TbCallback callback) {
+        CalculatedField oldCalculatedField = calculatedFields.get(newCalculatedField.getId());
+        if (hasSignificantChanged(oldCalculatedField, newCalculatedField)) {
+            onCalculatedFieldDelete(newCalculatedField.getId(), callback);
+        } else {
+            calculatedFields.put(newCalculatedField.getId(), newCalculatedField);
+            callback.onSuccess();
+        }
+    }
+
+    private boolean hasSignificantChanged(CalculatedField oldCalculatedField, CalculatedField newCalculatedField) {
+        if (oldCalculatedField == null) {
+            return true;
+        }
+        boolean entityIdChanged = !oldCalculatedField.getEntityId().equals(newCalculatedField.getEntityId());
+        boolean typeChanged = !oldCalculatedField.getType().equals(newCalculatedField.getType());
+        CalculatedFieldConfiguration oldConfig = oldCalculatedField.getConfiguration();
+        CalculatedFieldConfiguration newConfig = newCalculatedField.getConfiguration();
+        boolean argumentsChanged = !oldConfig.getArguments().equals(newConfig.getArguments());
+        boolean outputTypeChanged = !oldConfig.getOutput().getType().equals(newConfig.getOutput().getType());
+        boolean outputNameChanged = !oldConfig.getOutput().getName().equals(newConfig.getOutput().getName());
+
+        return entityIdChanged || typeChanged || argumentsChanged || outputTypeChanged || outputNameChanged;
+    }
+
     private void fetchCalculatedFields() {
         PageDataIterable<CalculatedField> cfs = new PageDataIterable<>(calculatedFieldService::findAllCalculatedFields, initFetchPackSize);
         cfs.forEach(cf -> calculatedFields.putIfAbsent(cf.getId(), cf));
@@ -309,39 +334,33 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
     }
 
     private void updateOrInitializeState(CalculatedField calculatedField, EntityId entityId, Map<String, String> argumentValues) {
-        String ctxId = calculatedField.getId().getId() + "_" + entityId.getId();
+        String ctxId = generateCtxId(calculatedField.getId(), entityId);
         CalculatedFieldCtx calculatedFieldCtx = states.computeIfAbsent(ctxId,
                 ctx -> new CalculatedFieldCtx(calculatedField.getId(), calculatedField.getEntityId(), null));
 
         CalculatedFieldState state = calculatedFieldCtx.getState();
-
         if (state != null) {
-            // calculation based on the previous data
-            String calculation = performCalculation(state.getArguments(), calculatedField.getConfiguration());
-
-            Map<String, String> updatedArguments = new HashMap<>(state.getArguments());
-
-            state = CalculatedFieldState.builder()
-                    .arguments(updatedArguments)
-                    .result(calculation)
-                    .build();
+            state.performCalculation(argumentValues, calculatedField.getConfiguration(), false);
         } else {
-            // initial calculation
-            String calculation = performCalculation(argumentValues, calculatedField.getConfiguration());
-
-            state = CalculatedFieldState.builder()
-                    .arguments(argumentValues)
-                    .result(calculation)
-                    .build();
+            CalculatedFieldState newState = createStateByType(calculatedField.getType());
+            newState.performCalculation(argumentValues, calculatedField.getConfiguration(), true);
         }
         calculatedFieldCtx.setState(state);
+
         states.put(ctxId, calculatedFieldCtx);
         rocksDBService.put(ctxId, Objects.requireNonNull(JacksonUtil.writeValueAsString(calculatedFieldCtx)));
     }
 
-    private String performCalculation(Map<String, String> argumentValues, CalculatedFieldConfiguration calculatedFieldConfiguration) {
-        BaseCalculatedFieldConfiguration.Output output = calculatedFieldConfiguration.getOutput();
-        return "calculation";
+    private CalculatedFieldState createStateByType(CalculatedFieldType calculatedFieldType) {
+        return switch (calculatedFieldType) {
+            case SIMPLE -> new SimpleCalculatedFieldState();
+            default ->
+                    throw new IllegalArgumentException("Invalid calculated field type '" + calculatedFieldType + "'.");
+        };
+    }
+
+    private String generateCtxId(CalculatedFieldId calculatedFieldId, EntityId entityId) {
+        return calculatedFieldId.getId() + "_" + entityId.getId();
     }
 
 }

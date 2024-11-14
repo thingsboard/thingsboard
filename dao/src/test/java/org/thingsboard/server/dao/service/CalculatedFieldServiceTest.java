@@ -25,6 +25,7 @@ import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -137,7 +138,7 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setTenantId(tenantId);
         calculatedField.setEntityId(entityId);
-        calculatedField.setType("SIMPLE");
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
         calculatedField.setName("Test Calculated Field");
         calculatedField.setConfigurationVersion(1);
         calculatedField.setConfiguration(getCalculatedFieldConfig(referencedEntityId));

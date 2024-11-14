@@ -15,17 +15,25 @@
  */
 package org.thingsboard.server.service.entitiy.cf;
 
-import lombok.Builder;
-import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 
 import java.util.Map;
 
-@Data
-@Builder
-public class CalculatedFieldState {
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = SimpleCalculatedFieldState.class, name = "SIMPLE")
+})
+public interface CalculatedFieldState {
 
-    // TODO: use value object(TsKv) instead of string
-    Map<String, String> arguments;
-    String result;
+    CalculatedFieldType getType();
+
+    void performCalculation(Map<String, String> argumentValues, CalculatedFieldConfiguration calculatedFieldConfiguration, boolean initialCalculation);
 
 }

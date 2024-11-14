@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -874,7 +875,7 @@ public class AssetServiceTest extends AbstractServiceTest {
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setTenantId(tenantId);
         calculatedField.setName("Test CF");
-        calculatedField.setType("SIMPLE");
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
         calculatedField.setEntityId(savedAssetWithCf.getId());
 
         SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();

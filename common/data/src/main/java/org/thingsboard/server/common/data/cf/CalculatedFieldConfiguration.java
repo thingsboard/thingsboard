@@ -37,7 +37,7 @@ import java.util.UUID;
 public interface CalculatedFieldConfiguration {
 
     @JsonIgnore
-    String getType();
+    CalculatedFieldType getType();
 
     Map<String, BaseCalculatedFieldConfiguration.Argument> getArguments();
 

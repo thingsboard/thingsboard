@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -1212,7 +1213,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setTenantId(tenantId);
         calculatedField.setName("Test CF");
-        calculatedField.setType("SIMPLE");
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
         calculatedField.setEntityId(deviceWithCf.getId());
 
         SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();

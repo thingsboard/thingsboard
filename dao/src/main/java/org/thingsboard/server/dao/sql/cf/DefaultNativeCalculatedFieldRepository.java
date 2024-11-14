@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
@@ -73,7 +74,7 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
                 UUID tenantId = (UUID) row.get("tenant_id");
                 EntityType entityType = EntityType.valueOf((String) row.get("entity_type"));
                 UUID entityId = (UUID) row.get("entity_id");
-                String type = (String) row.get("type");
+                CalculatedFieldType type = CalculatedFieldType.valueOf((String) row.get("type"));
                 String name = (String) row.get("name");
                 int configurationVersion = (int) row.get("configuration_version");
                 JsonNode configuration = JacksonUtil.toJsonNode((String) row.get("configuration"));
@@ -133,9 +134,9 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
         });
     }
 
-    private CalculatedFieldConfiguration readCalculatedFieldConfiguration(String type, JsonNode config, EntityType entityType, UUID entityId) {
+    private CalculatedFieldConfiguration readCalculatedFieldConfiguration(CalculatedFieldType type, JsonNode config, EntityType entityType, UUID entityId) {
         switch (type) {
-            case "SIMPLE":
+            case SIMPLE:
                 return new SimpleCalculatedFieldConfiguration(config, entityType, entityId);
             default:
                 throw new IllegalArgumentException("Unsupported calculated field type: " + type + "!");

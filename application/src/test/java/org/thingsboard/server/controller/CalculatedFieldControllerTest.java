@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -124,7 +125,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
     private CalculatedField getCalculatedField(DeviceId deviceId) {
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setEntityId(deviceId);
-        calculatedField.setType("SIMPLE");
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
         calculatedField.setName("Test Calculated Field");
         calculatedField.setConfigurationVersion(1);
         calculatedField.setConfiguration(getCalculatedFieldConfig(null));
