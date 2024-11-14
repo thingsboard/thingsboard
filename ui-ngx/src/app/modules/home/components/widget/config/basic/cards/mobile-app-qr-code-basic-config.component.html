@@ -68,10 +68,10 @@
           {{ 'widgets.liquid-level-card.icon' | translate }}
         </mat-slide-toggle>
         <div class="tb-flex row flex-end align-center">
-          <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+          <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
             <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
-          <tb-css-unit-select fxFlex formControlName="iconSizeUnit"></tb-css-unit-select>
+          <tb-css-unit-select class="flex-1" formControlName="iconSizeUnit"></tb-css-unit-select>
           <tb-material-icon-select asBoxInput
                                    iconClearButton
                                    [color]="mobileAppQrCodeWidgetConfigForm.get('iconColor').value"

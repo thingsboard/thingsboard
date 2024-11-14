@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<div [formGroup]="datasourcesFormGroup" class="tb-form-panel tb-datasources" [ngClass]="{'no-padding-bottom': !showAddDatasource}">
-  <div fxLayout="column">
-    <div fxLayout="row" fxLayoutAlign="space-between center">
+<div [formGroup]="datasourcesFormGroup" class="tb-form-panel tb-datasources" [class.no-padding-bottom]="!showAddDatasource">
+  <div class="flex flex-col">
+    <div class="flex flex-row items-center justify-between">
       <div class="tb-form-panel-title">{{ (singleDatasource ? (isAlarmSource ? 'widget-config.alarm-source' : 'widget-config.datasource') : 'widget-config.datasources') | translate }}</div>
-      <div fxFlex fxLayout="row" fxLayoutAlign="center center" *ngIf="timeseriesKeyError">
+      <div class="flex flex-1 flex-row items-center justify-center" *ngIf="timeseriesKeyError">
         <mat-error >{{ 'widget-config.timeseries-key-error' | translate }}</mat-error>
       </div>
       <tb-toggle-select *ngIf="basicMode && !hideDatasourcesMode" [ngModel]="datasourcesMode" (ngModelChange)="datasourcesModeChange($event)"
@@ -32,8 +32,8 @@
          class="tb-form-panel-hint">{{ 'widget-config.maximum-datasources' | translate:{count: maxDatasources} }}</div>
   </div>
   <div *ngIf="datasourcesFormArray.length === 0; else datasourcesTemplate">
-                <span translate fxLayoutAlign="center center"
-                      class="tb-prompt">datasource.add-datasource-prompt</span>
+                <span translate
+                      class="tb-prompt flex items-center justify-center">datasource.add-datasource-prompt</span>
   </div>
   <ng-template #datasourcesTemplate>
     <div style="overflow: auto;">

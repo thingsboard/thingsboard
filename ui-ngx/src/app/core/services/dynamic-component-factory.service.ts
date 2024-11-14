@@ -15,9 +15,11 @@
 ///
 
 import { Component, Injectable, Type, ɵComponentDef, ɵNG_COMP_DEF } from '@angular/core';
-import { from, Observable, of } from 'rxjs';
+import { forkJoin, from, Observable, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { mergeMap } from 'rxjs/operators';
+import { guid } from '@core/utils';
+import { getFlexLayoutModule } from '@shared/legacy/flex-layout.models';
 
 @Injectable({
     providedIn: 'root'
@@ -30,14 +32,14 @@ export class DynamicComponentFactoryService {
   public createDynamicComponent<T>(
                      componentType: Type<T>,
                      template: string,
-                     modules?: Type<any>[],
+                     imports?: Type<any>[],
                      preserveWhitespaces?: boolean,
                      styles?: string[]): Observable<Type<T>> {
-    return from(import('@angular/compiler')).pipe(
-      mergeMap(() => {
-        let componentImports: Type<any>[] = [CommonModule];
-        if (modules) {
-          componentImports = [...componentImports, ...modules];
+    return forkJoin({flexLayoutModule: getFlexLayoutModule(), compiler: from(import('@angular/compiler'))}).pipe(
+      mergeMap((data) => {
+        let componentImports: Type<any>[] = [CommonModule, data.flexLayoutModule];
+        if (imports) {
+          componentImports = [...componentImports, ...imports];
         }
         const comp = this.createAndCompileDynamicComponent(componentType, template, componentImports, preserveWhitespaces, styles);
         return of(comp.type);
@@ -60,7 +62,8 @@ export class DynamicComponentFactoryService {
       imports,
       preserveWhitespaces,
       styles,
-      standalone: true
+      standalone: true,
+      selector: 'tb-dynamic-component#' + guid()
     })(componentType);
     // Trigger component compilation
     return comp[ɵNG_COMP_DEF];

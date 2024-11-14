@@ -20,15 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.LwM2m.Version;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.node.LwM2mPath;
-import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.registration.Registration;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationObserveTest;
-import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
-
-import java.util.Optional;
 
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.junit.Assert.assertEquals;
@@ -41,21 +37,21 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INST
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_2;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_3;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3_9;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fromVersionedIdToObjectId;
 
 @Slf4j
 public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationObserveTest {
 
-    @SpyBean
-    DefaultLwM2mUplinkMsgHandler defaultUplinkMsgHandlerTest;
+    @Before
+    public void setupObserveTest() throws Exception {
+        awaitObserveReadAll(4,lwM2MTestClient.getDeviceIdStr());
+    }
+
 
     @Test
     public void testObserveReadAll_Count_4_CancelAll_Count_0_Ok() throws Exception {
-        String actualValuesReadAll = sendRpcObserveOkWithResultValue("ObserveReadAll", null);
-        assertEquals(4, actualValuesReadAll.split(",").length);
-        sendObserveCancelAllWithAwait(deviceId);
-        actualValuesReadAll = sendRpcObserveOkWithResultValue("ObserveReadAll", null);
-        assertEquals("[]", actualValuesReadAll);
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
     }
 
     /**
@@ -64,12 +60,12 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
      */
     @Test
     public void testObserveOneResource_Result_CONTENT_Value_Count_3_After_Cancel_Count_2() throws Exception {
-        sendObserveCancelAllWithAwait(deviceId);
+        long initSendTelemetryAtCount = countSendParametersOnThingsboardTelemetryResource(RESOURCE_ID_NAME_3_9);
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
         sendRpcObserveWithContainsLwM2mSingleResource(idVer_3_0_9);
-
-        int cntUpdate = 3;
-        verify(defaultUplinkMsgHandlerTest, timeout(10000).times(cntUpdate))
-                .onUpdateValueAfterReadResponse(Mockito.any(Registration.class), eq(idVer_3_0_9), Mockito.any(ReadResponse.class));
+        updateRegAtLeastOnceAfterAction();
+        long lastSendTelemetryAtCount = countSendParametersOnThingsboardTelemetryResource(RESOURCE_ID_NAME_3_9);
+        assertTrue(lastSendTelemetryAtCount > initSendTelemetryAtCount);
     }
 
     /**
@@ -78,13 +74,13 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
      */
     @Test
     public void testObserveOneObjectInstance_Result_CONTENT_Value_Count_3_After_Cancel_Count_2() throws Exception {
-        sendObserveCancelAllWithAwait(deviceId);
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
         String idVer_3_0 = objectInstanceIdVer_3;
         sendRpcObserveWithContainsLwM2mSingleResource(idVer_3_0);
 
         int cntUpdate = 3;
         verify(defaultUplinkMsgHandlerTest, timeout(10000).times(cntUpdate))
-                .updateAttrTelemetry(Mockito.any(Registration.class), eq(idVer_3_0_9));
+                .updateAttrTelemetry(Mockito.any(Registration.class), eq(idVer_3_0_9), eq(null));
     }
 
     /**
@@ -93,13 +89,13 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
      */
     @Test
     public void testObserveOneObject_Result_CONTENT_Value_Count_3_After_Cancel_Count_2() throws Exception {
-        sendObserveCancelAllWithAwait(deviceId);
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
         String idVer_3_0 = objectInstanceIdVer_3;
         sendRpcObserveWithContainsLwM2mSingleResource(idVer_3_0);
 
         int cntUpdate = 3;
         verify(defaultUplinkMsgHandlerTest, timeout(10000).times(cntUpdate))
-                .updateAttrTelemetry(Mockito.any(Registration.class), eq(idVer_3_0_9));
+                .updateAttrTelemetry(Mockito.any(Registration.class), eq(idVer_3_0_9), eq(null));
     }
 
     /**
@@ -203,7 +199,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
      */
     @Test
     public void testObserves_OverlappedPaths_FirstResource_SecondObjectOrInstance() throws Exception {
-        sendObserveCancelAllWithAwait(deviceId);
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
         // "19/0/0"
         sendRpcObserveOkWithResultValue("Observe", idVer_19_0_0);
         // PreviousObservation "19/0/0" change to CurrentObservation "19" - object
@@ -251,7 +247,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
      */
     @Test
     public void testObserveResource_ObserveCancelResource_Result_CONTENT_Count_1() throws Exception {
-        sendObserveCancelAllWithAwait(deviceId);
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
 
         String actualValuesReadAll = sendRpcObserveReadAllWithResult(idVer_3_0_9);
         assertEquals(1, actualValuesReadAll.split(",").length);
@@ -269,7 +265,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
      */
     @Test
     public void testObserveObject_ObserveCancelOneResource_Result_INTERNAL_SERVER_ERROR_Than_Cancel_ObserveObject_Result_CONTENT_Count_1() throws Exception {
-        sendObserveCancelAllWithAwait(deviceId);
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
 
         String actualValuesReadAll = sendRpcObserveReadAllWithResult(objectIdVer_3);
         assertEquals(1, actualValuesReadAll.split(",").length);
@@ -296,7 +292,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
      */
     @Test
     public void testObserveResource_ObserveCancelObject_Result_CONTENT_Count_1() throws Exception {
-        sendObserveCancelAllWithAwait(deviceId);
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
         sendRpcObserveWithWithTwoResource(idVer_3_0_0, idVer_3_0_9);
         String rpcActualResul = sendRpcObserveOkWithResultValue("ObserveReadAll", null);
         assertEquals(2, rpcActualResul.split(",").length);
@@ -324,17 +320,15 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
      */
     @Test
     public void testObserveResource_Update_AfterUpdateRegistration() throws Exception {
-        sendObserveCancelAllWithAwait(deviceId);
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
 
-        int cntUpdate = 3;
-        verify(defaultUplinkMsgHandlerTest, timeout(50000).atLeast(cntUpdate))
-                .updatedReg(Mockito.any(Registration.class));
+        awaitUpdateReg(3);
 
         sendRpcObserveWithContainsLwM2mSingleResource(idVer_3_0_9);
 
-        cntUpdate = 10;
+        int cntUpdate = 10;
         verify(defaultUplinkMsgHandlerTest, timeout(50000).atLeast(cntUpdate))
-                .updateAttrTelemetry(Mockito.any(Registration.class), eq(idVer_3_0_9));
+                .updateAttrTelemetry(Mockito.any(Registration.class), eq(idVer_3_0_9), eq(null));
     }
 
     private void sendRpcObserveWithWithTwoResource(String expectedId_1, String expectedId_2) throws Exception {
@@ -347,12 +341,6 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
         ObjectNode rpcActualResult = sendRpcObserveWithResult("ObserveReadAll", null);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         return rpcActualResult.get("value").asText();
-    }
-
-    private void sendRpcObserveWithContainsLwM2mSingleResource(String params) throws Exception {
-        String rpcActualResult = sendRpcObserveOkWithResultValue("Observe", params);
-        assertTrue(rpcActualResult.contains("LwM2mSingleResource"));
-        assertEquals(Optional.of(1).get(), Optional.ofNullable(getCntObserveAll(deviceId)).get());
     }
 }
 

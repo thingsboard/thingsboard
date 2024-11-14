@@ -95,7 +95,7 @@ public abstract class RuleChainManagerActor extends ContextAwareActor {
                 () -> {
                     RuleChain ruleChain = provider.apply(ruleChainId);
                     if (ruleChain == null) {
-                        return new RuleChainErrorActor.ActorCreator(systemContext, tenantId,
+                        return new RuleChainErrorActor.ActorCreator(systemContext, tenantId, ruleChainId,
                                 new RuleEngineException("Rule Chain with id: " + ruleChainId + " not found!"));
                     } else {
                         return new RuleChainActor.ActorCreator(systemContext, tenantId, ruleChain);

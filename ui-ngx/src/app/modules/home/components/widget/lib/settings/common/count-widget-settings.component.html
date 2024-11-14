@@ -37,7 +37,7 @@
     <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showLabel">
       {{ 'widgets.count.label' | translate }}
     </mat-slide-toggle>
-    <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+    <div class="flex flex-1 flex-row items-center justify-start gap-2">
       <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
         <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
@@ -52,11 +52,11 @@
     <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showIcon">
       {{ 'widgets.count.icon' | translate }}
     </mat-slide-toggle>
-    <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-      <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+    <div class="flex flex-1 flex-row items-center justify-start gap-2">
+      <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
         <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
-      <tb-css-unit-select fxFlex formControlName="iconSizeUnit"></tb-css-unit-select>
+      <tb-css-unit-select class="flex-1" formControlName="iconSizeUnit"></tb-css-unit-select>
       <tb-material-icon-select asBoxInput
                                iconClearButton
                                [color]="countWidgetConfigForm.get('iconColor').value?.color"
@@ -73,18 +73,18 @@
     <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showIconBackground">
       {{ 'widgets.count.icon-background' | translate }}
     </mat-slide-toggle>
-    <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-      <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+    <div class="flex flex-1 flex-row items-center justify-start gap-2">
+      <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
         <input matInput type="number" min="0" formControlName="iconBackgroundSize" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
-      <tb-css-unit-select fxFlex formControlName="iconBackgroundSizeUnit"></tb-css-unit-select>
+      <tb-css-unit-select class="flex-1" formControlName="iconBackgroundSizeUnit"></tb-css-unit-select>
       <tb-color-settings formControlName="iconBackgroundColor" settingsKey="{{'widgets.count.icon-background' | translate }}">
       </tb-color-settings>
     </div>
   </div>
   <div class="tb-form-row space-between">
     <div translate>widgets.count.value</div>
-    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+    <div class="flex flex-row items-center justify-start gap-2">
       <tb-font-settings formControlName="valueFont"
                         previewText="10">
       </tb-font-settings>
@@ -96,11 +96,11 @@
     <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showChevron">
       {{ 'widgets.count.chevron' | translate }}
     </mat-slide-toggle>
-    <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-      <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+    <div class="flex flex-1 flex-row items-center justify-start gap-2">
+      <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
         <input matInput type="number" min="0" formControlName="chevronSize" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
-      <tb-css-unit-select fxFlex formControlName="chevronSizeUnit"></tb-css-unit-select>
+      <tb-css-unit-select class="flex-1" formControlName="chevronSizeUnit"></tb-css-unit-select>
       <tb-color-input asBoxInput
                       colorClearButton
                       formControlName="chevronColor">

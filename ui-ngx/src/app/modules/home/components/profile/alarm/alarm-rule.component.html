@@ -15,12 +15,12 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" [formGroup]="alarmRuleFormGroup">
+<div class="flex flex-col" [formGroup]="alarmRuleFormGroup">
   <tb-alarm-rule-condition formControlName="condition" [deviceProfileId]="deviceProfileId">
   </tb-alarm-rule-condition>
   <tb-alarm-schedule-info formControlName="schedule">
   </tb-alarm-schedule-info>
-  <div *ngIf="!disabled || alarmRuleFormGroup.get('alarmDetails').value" fxLayout="row" fxLayoutAlign="start center">
+  <div *ngIf="!disabled || alarmRuleFormGroup.get('alarmDetails').value" class="flex flex-row items-center justify-start">
     <span class="tb-alarm-rule-details title" (click)="openEditDetailsDialog($event)">
       {{ ('device-profile.alarm-rule-additional-info' | translate) + ': ' }}
     </span>
@@ -35,8 +35,7 @@
       <mat-icon>{{ disabled ? 'visibility' : (alarmRuleFormGroup.get('alarmDetails').value ? 'edit' : 'add') }}</mat-icon>
     </button>
   </div>
-  <div *ngIf="!disabled || alarmRuleFormGroup.get('dashboardId').value" fxLayout="column" fxLayoutAlign="start start"
-       fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center">
+  <div *ngIf="!disabled || alarmRuleFormGroup.get('dashboardId').value" class="flex flex-col items-start justify-start gt-sm:flex-row gt-sm:items-center">
     <span class="tb-alarm-rule-dashboard title">
       {{ ('device-profile.alarm-rule-mobile-dashboard' | translate) + ': ' }}
     </span>

@@ -38,6 +38,8 @@ public interface ResourceService extends EntityDaoService {
 
     TbResource findResourceById(TenantId tenantId, TbResourceId resourceId);
 
+    byte[] getResourceData(TenantId tenantId, TbResourceId resourceId);
+
     TbResourceInfo findResourceInfoById(TenantId tenantId, TbResourceId resourceId);
 
     TbResourceInfo findResourceInfoByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceKey);
@@ -61,5 +63,9 @@ public interface ResourceService extends EntityDaoService {
     void deleteResourcesByTenantId(TenantId tenantId);
 
     long sumDataSizeByTenantId(TenantId tenantId);
+
+    TbResource createOrUpdateSystemResource(ResourceType resourceType, String resourceKey, String data);
+
+    String checkSystemResourcesUsage(String content, ResourceType... usedResourceTypes);
 
 }

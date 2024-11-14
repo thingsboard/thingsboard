@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.7.1-SNAPSHOT</version>
+        <version>3.9.0-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>dao</artifactId>
@@ -246,12 +246,8 @@
             <artifactId>hypersistence-utils-hibernate-63</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.apache.xmlgraphics</groupId>
-            <artifactId>batik-transcoder</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.xmlgraphics</groupId>
-            <artifactId>batik-codec</artifactId>
+            <groupId>com.github.weisj</groupId>
+            <artifactId>jsvg</artifactId>
         </dependency>
         <dependency>
             <groupId>com.drewnoakes</groupId>

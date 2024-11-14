@@ -33,7 +33,7 @@ import {
   ElementRef,
   EventEmitter,
   HostBinding,
-  Input,
+  Input, NgZone,
   OnDestroy,
   OnInit,
   Output,
@@ -174,8 +174,6 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
 
   authUser = getCurrentAuthUser(this.store);
 
-  actionColumnWidth = '240px';
-
   get isScada() {
     return this.imageSubType === ResourceSubType.SCADA_SYMBOL;
   }
@@ -196,7 +194,8 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
               private importExportService: ImportExportService,
               private elementRef: ElementRef,
               private cd: ChangeDetectorRef,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private zone: NgZone) {
     super(store);
 
     this.gridImagesFetchFunction = (pageSize, page, filter) => {
@@ -243,9 +242,6 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     if (this.mode === 'list') {
       this.dataSource = new ImagesDatasource(this.imageService, null,
           entity => this.deleteEnabled(entity));
-    }
-    if (this.isScada) {
-      this.actionColumnWidth = '192px';
     }
   }
 
@@ -361,11 +357,13 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
   private initListMode() {
     this.destroyListMode$ = new Subject<void>();
     this.widgetResize$ = new ResizeObserver(() => {
-      const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
-      if (showHidePageSize !== this.hidePageSize) {
-        this.hidePageSize = showHidePageSize;
-        this.cd.markForCheck();
-      }
+      this.zone.run(() => {
+        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+        if (showHidePageSize !== this.hidePageSize) {
+          this.hidePageSize = showHidePageSize;
+          this.cd.markForCheck();
+        }
+      });
     });
     this.widgetResize$.observe(this.elementRef.nativeElement);
     if (this.pageMode) {

@@ -19,10 +19,9 @@
   <mat-tab label="{{ 'widget.resources' | translate }}" style="width: 100%; height: 100%;">
     <div class="tb-custom-action-editor-container" style="background-color: #fff;">
       <div class="mat-padding">
-        <div fxFlex fxLayout="row"
-             fxLayoutAlign="start center"
+        <div class="flex flex-1 flex-row items-center justify-start"
              *ngFor="let resource of action.customResources; let i = index" style="padding-top: 10px;">
-          <tb-resource-autocomplete fxFlex class="mat-block"
+          <tb-resource-autocomplete class="mat-block flex-1"
                                     subscriptSizing="dynamic"
                                     hideRequiredMarker required
                                     [allowAutocomplete]="resource.isModule"

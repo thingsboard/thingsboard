@@ -15,7 +15,7 @@
 ///
 
 import { Injectable, NgModule } from '@angular/core';
-import { Resolve, RouterModule, Routes } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { Authority } from '@shared/models/authority.enum';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
@@ -30,7 +30,7 @@ import { MobileAppTableConfigResolver } from '@home/pages/admin/oauth2/mobile-ap
 import { MenuId } from '@core/services/menu.models';
 
 @Injectable()
-export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
+export class OAuth2LoginProcessingUrlResolver  {
 
   constructor(private oauth2Service: OAuth2Service) {
   }

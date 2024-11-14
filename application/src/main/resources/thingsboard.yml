@@ -204,7 +204,7 @@ ui:
   # Help parameters
   help:
     # Base URL for UI help assets
-    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-3.7}"
+    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-3.9}"
 
 # Database telemetry parameters
 database:
@@ -802,7 +802,7 @@ spring:
         # This property controls the amount of time that a connection can be out of the pool before a message is logged indicating a possible connection leak for events datasource. A value of 0 means leak detection is disabled
         leakDetectionThreshold: "${SPRING_EVENTS_DATASOURCE_HIKARI_LEAK_DETECTION_THRESHOLD:0}"
         # This property increases the number of connections in the pool as demand increases for events datasource. At the same time, the property ensures that the pool doesn't grow to the point of exhausting a system's resources, which ultimately affects an application's performance and availability
-        maximumPoolSize: "${SPRING_EVENTS_DATASOURCE_MAXIMUM_POOL_SIZE:16}"
+        maximumPoolSize: "${SPRING_EVENTS_DATASOURCE_MAXIMUM_POOL_SIZE:4}"
         # Enable MBean to diagnose pools state via JMX for events datasource
         registerMbeans: "${SPRING_EVENTS_DATASOURCE_HIKARI_REGISTER_MBEANS:false}"
 
@@ -1244,6 +1244,17 @@ transport:
     enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
     # Interval of transport statistics logging
     print-interval-ms: "${TB_TRANSPORT_STATS_PRINT_INTERVAL_MS:60000}"
+  gateway:
+    dashboard:
+      sync:
+        # Enable/disable gateways dashboard sync with git repository
+        enabled: "${TB_GATEWAY_DASHBOARD_SYNC_ENABLED:true}"
+        # URL of gateways dashboard repository
+        repository_url: "${TB_GATEWAY_DASHBOARD_SYNC_REPOSITORY_URL:https://github.com/thingsboard/gateway-management-extensions-dist.git}"
+        # Branch of gateways dashboard repository to work with
+        branch: "${TB_GATEWAY_DASHBOARD_SYNC_BRANCH:main}"
+        # Fetch frequency in hours for gateways dashboard repository
+        fetch_frequency: "${TB_GATEWAY_DASHBOARD_SYNC_FETCH_FREQUENCY:24}"
 
 # CoAP server parameters
 coap:
@@ -1439,7 +1450,9 @@ swagger:
 
 # Queue configuration parameters
 queue:
-  type: "${TB_QUEUE_TYPE:in-memory}" # in-memory or kafka (Apache Kafka) or aws-sqs (AWS SQS) or pubsub (PubSub) or service-bus (Azure Service Bus) or rabbitmq (RabbitMQ)
+  # in-memory or kafka (Apache Kafka). The following queue types are deprecated and will no longer be supported in ThingsBoard 4.0:
+  # aws-sqs (AWS SQS), pubsub (PubSub), service-bus (Azure Service Bus), rabbitmq (RabbitMQ)
+  type: "${TB_QUEUE_TYPE:in-memory}"
   prefix: "${TB_QUEUE_PREFIX:}" # Global queue prefix. If specified, prefix is added before default topic name: 'prefix.default_topic_name'. Prefix is applied to all topics (and consumer groups for kafka).
   in_memory:
     stats:

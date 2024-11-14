@@ -15,11 +15,12 @@
 ///
 
 import {
+  AfterViewInit,
   ChangeDetectorRef,
   Component,
   ElementRef,
   Injector,
-  Input,
+  Input, NgZone, OnDestroy,
   OnInit,
   StaticProvider,
   ViewChild,
@@ -100,7 +101,7 @@ interface PersistentTableWidgetActionDescriptor extends TableCellButtonActionDes
   styleUrls: ['./persistent-table.component.scss' , '../table-widget.scss']
 })
 
-export class PersistentTableComponent extends PageComponent implements OnInit {
+export class PersistentTableComponent extends PageComponent implements OnInit, OnDestroy, AfterViewInit {
 
   @Input()
   ctx: WidgetContext;
@@ -144,7 +145,8 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
               private dialogService: DialogService,
               private deviceService: DeviceService,
               private dialog: MatDialog,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private zone: NgZone) {
     super(store);
   }
 
@@ -158,11 +160,13 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
     this.ctx.updateWidgetParams();
     if (this.displayPagination) {
       this.widgetResize$ = new ResizeObserver(() => {
-        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
-        if (showHidePageSize !== this.hidePageSize) {
-          this.hidePageSize = showHidePageSize;
-          this.cd.markForCheck();
-        }
+        this.zone.run(() => {
+          const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+          if (showHidePageSize !== this.hidePageSize) {
+            this.hidePageSize = showHidePageSize;
+            this.cd.markForCheck();
+          }
+        });
       });
       this.widgetResize$.observe(this.elementRef.nativeElement);
     }
@@ -439,6 +443,8 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
     });
     this.ctx.detectChanges();
   }
+
+  protected readonly rpcStatusColorsMap = rpcStatusColors;
 }
 
 class PersistentDatasource implements DataSource<PersistentRpcData> {

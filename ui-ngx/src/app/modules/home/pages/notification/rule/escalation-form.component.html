@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<form [formGroup]="escalationFormGroup" fxLayout="column">
-  <div class="escalation" fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center center" fxLayoutAlign.xs="start">
-    <div fxFlex *ngIf="systemEscalation; else selectTime" translate>notification.first-recipient</div>
+<form [formGroup]="escalationFormGroup" class="flex flex-col">
+  <div class="escalation flex flex-row items-center justify-center xs:flex-col xs:items-stretch xs:justify-start">
+    <div class="flex-1" *ngIf="systemEscalation; else selectTime" translate>notification.first-recipient</div>
     <ng-template #selectTime>
-      <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutAlign="center center">
+      <div class="flex flex-1 flex-row items-center justify-center xs:flex-col">
         <span translate>notification.after</span>
         <tb-timeinterval
           subscriptSizing="dynamic"
@@ -27,19 +27,19 @@
           min="60000"
           max="604800000"
           disabledAdvanced></tb-timeinterval>
-        <span fxFlex class="escalation-notify" translate>notification.notify</span>
+        <span class="escalation-notify flex-1" translate>notification.notify</span>
       </div>
     </ng-template>
     <tb-entity-list
       required
-      fxFlex="60"
+      class="flex-full xs:max-h-60% gt-xs:max-w-60%"
       formControlName="targets"
       subscriptSizing="dynamic"
       entityType="{{ entityType.NOTIFICATION_TARGET }}"
       subType="{{ notificationType.ALARM }}"
       [placeholderText]="escalationFormGroup.get('targets').value ? '' : ('notification.add-recipient' | translate)">
       <button #createTargetButton
-              mat-button [fxHide]="disabled" matSuffix
+              mat-button [class.!hidden]="disabled" matSuffix
               (click)="createTarget($event, createTargetButton)">
         <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
       </button>

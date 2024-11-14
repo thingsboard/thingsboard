@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ComponentFactoryResolver, Inject, Injector, OnInit, SkipSelf, ViewChild } from '@angular/core';
+import { Component, Inject, Injector, OnInit, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -55,7 +55,6 @@ export class AddEntityDialogComponent extends
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AddEntityDialogData<BaseData<HasId>>,
               public dialogRef: MatDialogRef<AddEntityDialogComponent, BaseData<HasId>>,
-              private componentFactoryResolver: ComponentFactoryResolver,
               private injector: Injector,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher) {
     super(store, router, dialogRef);
@@ -66,7 +65,6 @@ export class AddEntityDialogComponent extends
     this.translations = this.entitiesTableConfig.entityTranslations;
     this.resources = this.entitiesTableConfig.entityResources;
     this.entity = {};
-    const componentFactory = this.componentFactoryResolver.resolveComponentFactory(this.entitiesTableConfig.entityComponent);
     const viewContainerRef = this.entityDetailsFormAnchor.viewContainerRef;
     viewContainerRef.clear();
     const injector: Injector = Injector.create(
@@ -84,7 +82,7 @@ export class AddEntityDialogComponent extends
         parent: this.injector
       }
     );
-    const componentRef = viewContainerRef.createComponent(componentFactory, 0, injector);
+    const componentRef = viewContainerRef.createComponent(this.entitiesTableConfig.entityComponent, {index: 0, injector});
     this.entityComponent = componentRef.instance;
     this.entityComponent.isEdit = true;
     this.detailsForm = this.entityComponent.entityForm;

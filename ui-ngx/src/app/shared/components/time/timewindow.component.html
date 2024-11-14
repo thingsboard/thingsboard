@@ -49,8 +49,8 @@
          (click)="toggleTimewindow($event)">
   <tb-icon *ngIf="computedTimewindowStyle.showIcon && computedTimewindowStyle.iconPosition === 'left'"
            [style]="timewindowIconStyle">{{ computedTimewindowStyle.icon }}</tb-icon>
-  <div class="tb-timewindow-label" [fxHide]="hideLabel">
-    {{innerValue?.displayValue}} <span [fxShow]="innerValue?.displayTimezoneAbbr !== ''">| <span class="timezone-abbr">{{innerValue?.displayTimezoneAbbr}}</span></span>
+  <div class="tb-timewindow-label" [class.!hidden]="hideLabel">
+    {{innerValue?.displayValue}} <span [class.!hidden]="!(innerValue?.displayTimezoneAbbr !== '')">| <span class="timezone-abbr">{{innerValue?.displayTimezoneAbbr}}</span></span>
   </div>
   <tb-icon *ngIf="computedTimewindowStyle.showIcon && computedTimewindowStyle.iconPosition === 'right'"
            [style]="timewindowIconStyle">{{ computedTimewindowStyle.icon }}</tb-icon>

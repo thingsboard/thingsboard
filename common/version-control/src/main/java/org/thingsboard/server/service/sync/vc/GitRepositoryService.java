@@ -42,7 +42,7 @@ public interface GitRepositoryService {
 
     void testRepository(TenantId tenantId, RepositorySettings settings) throws Exception;
 
-    void initRepository(TenantId tenantId, RepositorySettings settings) throws Exception;
+    void initRepository(TenantId tenantId, RepositorySettings settings, boolean fetch) throws Exception;
 
     RepositorySettings getRepositorySettings(TenantId tenantId) throws Exception;
 
@@ -67,4 +67,5 @@ public interface GitRepositoryService {
     String getContentsDiff(TenantId tenantId, String content1, String content2) throws IOException;
 
     void fetch(TenantId tenantId) throws GitAPIException;
+
 }

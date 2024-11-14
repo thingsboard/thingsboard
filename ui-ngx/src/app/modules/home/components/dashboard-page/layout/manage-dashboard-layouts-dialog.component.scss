@@ -17,7 +17,7 @@
 @import '../theme.scss';
 @import '../scss/constants.scss';
 
-$tb-warn: mat.get-color-from-palette(map-get($tb-theme, warn), text);
+$tb-warn: mat.m2-get-color-from-palette(map-get($tb-theme, warn), text);
 
 :host {
   .tb-layout-fixed-container {
@@ -30,12 +30,11 @@ $tb-warn: mat.get-color-from-palette(map-get($tb-theme, warn), text);
   .tb-hint-group {
     padding: 0;
     margin-top: -14px;
-    display: block;
   }
 
   .tb-layout-preview {
     width: 100%;
-    background-color: rgba(mat.get-color-from-palette($tb-primary, 50), 0.6);
+    background-color: rgba(mat.m2-get-color-from-palette($tb-primary, 50), 0.6);
     padding: 35px;
 
     &-container {
@@ -181,6 +180,11 @@ $tb-warn: mat.get-color-from-palette(map-get($tb-theme, warn), text);
     }
     .mat-button-toggle {
       border: none !important;
+    }
+    .mat-button-toggle-label-content {
+      .mat-pseudo-checkbox {
+        display: none;
+      }
     }
   }
 }

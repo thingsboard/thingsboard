@@ -19,14 +19,11 @@ import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { EntityComponent } from '@home/components/entity/entity.component';
 import { MobileAppInfo } from '@shared/models/oauth2.models';
 import { AppState } from '@core/core.state';
-import { OAuth2Service } from '@core/http/oauth2.service';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngrx/store';
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
-import { WINDOW } from '@core/services/window.service';
 import { isDefinedAndNotNull, randomAlphanumeric } from '@core/utils';
-import { MatButton } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { ClientDialogComponent } from '@home/pages/admin/oauth2/clients/client-dialog.component';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -42,19 +39,18 @@ export class MobileAppComponent extends EntityComponent<MobileAppInfo> {
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
-              private oauth2Service: OAuth2Service,
               @Inject('entity') protected entityValue: MobileAppInfo,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<MobileAppInfo>,
               protected cd: ChangeDetectorRef,
               public fb: UntypedFormBuilder,
-              @Inject(WINDOW) private window: Window,
               private dialog: MatDialog) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
   buildForm(entity: MobileAppInfo): UntypedFormGroup {
     return this.fb.group({
-      pkgName: [entity?.pkgName ? entity.pkgName : '', [Validators.required, Validators.maxLength(255)]],
+      pkgName: [entity?.pkgName ? entity.pkgName : '', [Validators.required, Validators.maxLength(255),
+        Validators.pattern(/^\S+$/)]],
       appSecret: [entity?.appSecret ? entity.appSecret : btoa(randomAlphanumeric(64)),
         [Validators.required, this.base64Format]],
       oauth2Enabled: isDefinedAndNotNull(entity?.oauth2Enabled) ? entity.oauth2Enabled : true,
@@ -68,10 +64,10 @@ export class MobileAppComponent extends EntityComponent<MobileAppInfo> {
       appSecret: entity.appSecret,
       oauth2Enabled: entity.oauth2Enabled,
       oauth2ClientInfos: entity.oauth2ClientInfos?.map(info => info.id ? info.id.id : info)
-    })
+    });
   }
 
-  createClient($event: Event, button: MatButton) {
+  createClient($event: Event) {
     if ($event) {
       $event.stopPropagation();
       $event.preventDefault();

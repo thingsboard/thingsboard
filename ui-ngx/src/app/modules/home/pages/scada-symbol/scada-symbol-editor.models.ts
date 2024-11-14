@@ -34,7 +34,7 @@ import {
 import { TbEditorCompletion, TbEditorCompletions } from '@shared/models/ace/completion.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { AceHighlightRule, AceHighlightRules } from '@shared/models/ace/ace.models';
-import { ValueType } from '@shared/models/constants';
+import { HelpLinks, ValueType } from '@shared/models/constants';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
 import ITooltipsterHelper = JQueryTooltipster.ITooltipsterHelper;
@@ -79,7 +79,7 @@ export class ScadaSymbolEditObject {
   constructor(private rootElement: HTMLElement,
               public tooltipsContainer: HTMLElement,
               public viewContainerRef: ViewContainerRef,
-              public zone: NgZone,
+              private zone: NgZone,
               private callbacks: ScadaSymbolEditObjectCallbacks,
               public readonly: boolean) {
     this.shapeResize$ = new ResizeObserver(() => {
@@ -194,7 +194,9 @@ export class ScadaSymbolEditObject {
       from(import('tooltipster')),
       from(import('tooltipster/dist/js/plugins/tooltipster/SVG/tooltipster-SVG.min.js'))
     ]).subscribe(() => {
-      this.setupElements();
+      this.zone.run(() => {
+        this.setupElements();
+      });
     });
   }
 
@@ -407,6 +409,10 @@ export class ScadaSymbolEditObject {
     .filter((v, i, a) => a.indexOf(v) === i)
     .sort();
     this.callbacks.tagsUpdated(this.tags);
+  }
+
+  public getTags(): string[] {
+    return this.tags;
   }
 
   public tagHasStateRenderFunction(tag: string): boolean {
@@ -759,9 +765,7 @@ export class ScadaSymbolElement {
   }
 
   private setupTagPanel() {
-    this.editObject.zone.run(() => {
-      setupTagPanelTooltip(this, this.editObject.viewContainerRef);
-    });
+    setupTagPanelTooltip(this, this.editObject.viewContainerRef);
   }
 
   private createAddTagTooltip() {
@@ -809,9 +813,7 @@ export class ScadaSymbolElement {
   }
 
   private setupAddTagPanel() {
-    this.editObject.zone.run(() => {
-      setupAddTagPanelTooltip(this, this.editObject.viewContainerRef);
-    });
+    setupAddTagPanelTooltip(this, this.editObject.viewContainerRef);
   }
 
   private innerTagTooltipPosition(_instance: ITooltipsterInstance, helper: ITooltipsterHelper,
@@ -1101,8 +1103,9 @@ export const generalStateRenderFunctionCompletions = (ctxCompletion: TbEditorCom
     ctx: ctxCompletion,
     svg: {
       meta: 'argument',
-      type: '<a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg">SVG.Svg</a>',
-      description: 'A root svg node. Instance of <a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg">SVG.Svg</a>.'
+      type: '<a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg" target="_blank">SVG.Svg</a>',
+      description: 'A root svg node. Instance of <a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg" ' +
+        'target="_blank">SVG.Svg</a>.'
     }
   });
 
@@ -1112,8 +1115,9 @@ export const elementStateRenderFunctionCompletions = (ctxCompletion: TbEditorCom
       meta: 'argument',
       type: 'Element',
       description: 'SVG element.<br>' +
-        'See <a href="https://svgjs.dev/docs/3.2/manipulating/">Manipulating</a> section to manipulate the element.<br>' +
-        'See <a href="https://svgjs.dev/docs/3.2/animating/">Animating</a> section to animate the element.'
+        'See <a href="https://svgjs.dev/docs/3.2/manipulating/" ' +
+        'target="_blank">Manipulating</a> section to manipulate the element.<br>' +
+        'See <a href="https://svgjs.dev/docs/3.2/animating/" target="_blank">Animating</a> section to animate the element.'
     }
   });
 
@@ -1129,6 +1133,10 @@ export const clickActionFunctionCompletions = (ctxCompletion: TbEditorCompletion
 
 export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags: string[],
                                              customTranslate: CustomTranslatePipe): TbEditorCompletion => {
+
+  const scadaSymbolAnimationLink = HelpLinks.linksMap.scadaSymbolDevAnimation;
+  const scadaSymbolAnimation = `<a href="${scadaSymbolAnimationLink}" target="_blank">ScadaSymbolAnimation</a>`;
+
   const properties: TbEditorCompletion = {
     meta: 'object',
     type: 'object',
@@ -1189,9 +1197,8 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
               }
             ],
             return: {
-              description: 'Instance of ScadaSymbolAnimation which has generally similar methods as ' +
-                '<a href="https://svgjs.dev/docs/3.2/animating/#svg-runner">SVG.Runner</a> to control the animation.',
-              type: 'ScadaSymbolAnimation'
+              description: `Instance of ${scadaSymbolAnimation} class with API to setup and control the animation.`,
+              type: scadaSymbolAnimation
             }
           },
           cssAnimation: {
@@ -1205,9 +1212,8 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
               }
             ],
             return: {
-              description: 'Instance of ScadaSymbolAnimation which has generally similar methods as ' +
-                '<a href="https://svgjs.dev/docs/3.2/animating/#svg-runner">SVG.Runner</a> to control the animation.',
-              type: 'ScadaSymbolAnimation'
+              description: `Instance of ${scadaSymbolAnimation} class with API to setup and control the animation.`,
+              type: scadaSymbolAnimation
             }
           },
           resetCssAnimation: {
@@ -1225,49 +1231,6 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
             meta: 'function',
             description: 'Finishes CSS animation if any, SVG element state updated according to the end animation values, ' +
               'removes CSS animation instance.',
-            args: [
-              {
-                name: 'element',
-                description: 'SVG element',
-                type: 'Element'
-              },
-            ]
-          },
-          animate: {
-            meta: 'function',
-            description: 'Finishes any previous animation and starts new animation for SVG element.',
-            args: [
-              {
-                name: 'element',
-                description: 'SVG element',
-                type: 'Element'
-              },
-              {
-                name: 'duration',
-                description: 'Animation duration in milliseconds',
-                type: 'number'
-              }
-            ],
-            return: {
-              description: 'Instance of SVG.Runner which has the same methods as any element and additional methods to control the runner.',
-              type: '<a href="https://svgjs.dev/docs/3.2/animating/#svg-runner">SVG.Runner</a>'
-            }
-          },
-          resetAnimation: {
-            meta: 'function',
-            description: 'Stops animation if any and restore SVG element initial state, resets animation timeline.',
-            args: [
-              {
-                name: 'element',
-                description: 'SVG element',
-                type: 'Element'
-              },
-            ]
-          },
-          finishAnimation: {
-            meta: 'function',
-            description: 'Finishes animation if any, SVG element state updated according to the end animation values, ' +
-              'resets animation timeline.',
             args: [
               {
                 name: 'element',
@@ -1321,8 +1284,8 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
           text: {
             meta: 'function',
             description: 'Set text to element(s). Only applicable for elements of type ' +
-              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-text">SVG.Text</a> or ' +
-              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-tspan">SVG.Tspan</a>.',
+              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-text" target="_blank">SVG.Text</a> or ' +
+              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-tspan" target="_blank">SVG.Tspan</a>.',
             args: [
               {
                 name: 'element',
@@ -1339,8 +1302,8 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
           font: {
             meta: 'function',
             description: 'Set element(s) text font and color. Only applicable for elements of type ' +
-              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-text">SVG.Text</a> or ' +
-              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-tspan">SVG.Tspan</a>.',
+              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-text" target="_blank">SVG.Text</a> or ' +
+              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-tspan" target="_blank">SVG.Tspan</a>.',
             args: [
               {
                 name: 'element',
@@ -1362,7 +1325,7 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
           icon: {
             meta: 'function',
             description: 'Draws icon inside element(s). Only applicable for elements of type ' +
-              '<a href="https://svgjs.dev/docs/3.2/container-elements/#svg-g">SVG.G</a>.',
+              '<a href="https://svgjs.dev/docs/3.2/container-elements/#svg-g" target="_blank">SVG.G</a>.',
             args: [
               {
                 name: 'element',
@@ -1470,8 +1433,9 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
       tags: tagsCompletions,
       svg: {
         meta: 'argument',
-        type: '<a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg">SVG.Svg</a>',
-        description: 'A root svg node. Instance of <a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg">SVG.Svg</a>.'
+        type: '<a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg" target="_blank">SVG.Svg</a>',
+        description: 'A root svg node. Instance of <a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg" ' +
+          'target="_blank">SVG.Svg</a>.'
       }
     }
   };

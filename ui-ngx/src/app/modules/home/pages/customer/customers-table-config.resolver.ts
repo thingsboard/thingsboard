@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 
-import { Resolve, Router } from '@angular/router';
+import { Router } from '@angular/router';
 
 import {
   DateEntityTableColumn,
@@ -37,7 +37,7 @@ import { AppState } from '@core/core.state';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 
 @Injectable()
-export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<Customer>> {
+export class CustomersTableConfigResolver  {
 
   private readonly config: EntityTableConfig<Customer> = new EntityTableConfig<Customer>();
 

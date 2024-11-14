@@ -16,7 +16,7 @@
 
 -->
 <section class="tb-widget-settings" [formGroup]="providerSettingsFormGroup">
-  <mat-form-field fxFlex class="mat-block">
+  <mat-form-field class="mat-block">
     <mat-label translate>widgets.maps.openstreet-provider</mat-label>
     <mat-select required formControlName="mapProvider">
       <mat-option *ngFor="let provider of mapProviders" [value]="provider">
@@ -25,19 +25,18 @@
     </mat-select>
   </mat-form-field>
   <mat-expansion-panel class="tb-settings" [expanded]="providerSettingsFormGroup.get('useCustomProvider').value">
-    <mat-expansion-panel-header fxLayout="row wrap">
+    <mat-expansion-panel-header class="flex-wrap">
       <mat-panel-title>
-        <mat-slide-toggle formControlName="useCustomProvider" (click)="$event.stopPropagation()"
-                          fxLayoutAlign="center">
+        <mat-slide-toggle formControlName="useCustomProvider" (click)="$event.stopPropagation()">
           {{ 'widgets.maps.use-custom-provider' | translate }}
         </mat-slide-toggle>
       </mat-panel-title>
-      <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+      <mat-panel-description class="justify-end xs:!hidden" translate>
         widget-config.advanced-settings
       </mat-panel-description>
     </mat-expansion-panel-header>
     <ng-template matExpansionPanelContent>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="mat-block">
         <mat-label translate>widgets.maps.custom-provider-tile-url</mat-label>
         <input required matInput formControlName="customProviderTileUrl">
       </mat-form-field>

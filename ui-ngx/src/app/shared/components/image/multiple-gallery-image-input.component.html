@@ -16,10 +16,10 @@
 
 -->
 <div class="tb-container">
-  <label class="tb-title" *ngIf="label" [ngClass]="{'tb-error': !disabled && (required && !imageUrls.length), 'tb-required': !disabled && required}">{{label}}</label>
-  <div class="images-container" dndDropzone [dndHorizontal]="true" dndEffectAllowed="move"
-       [dndDisableIf]="disabled" (dndDrop)="imageDrop($event)"
-       fxLayout="row" fxLayoutGap="8px" [ngClass]="{'no-images': !imageUrls.length}">
+  <label class="tb-title" *ngIf="label" [class]="{'tb-error': !disabled && (required && !imageUrls.length), 'tb-required': !disabled && required}">{{label}}</label>
+  <div class="images-container flex flex-row gap-2" dndDropzone [dndHorizontal]="true" dndEffectAllowed="move"
+       [class.no-images]="!imageUrls.length"
+       [dndDisableIf]="disabled" (dndDrop)="imageDrop($event)">
     <div dndPlaceholderRef class="image-card image-dnd-placeholder"></div>
     <div *ngFor="let imageUrl of imageUrls; let $index = index;"
          (dndStart)="imageDragStart($index)"
@@ -27,10 +27,10 @@
          [dndDraggable]="imageUrl"
          [dndDisableIf]="disabled"
          dndEffectAllowed="move"
-         [ngClass]="{'image-dragging': dragIndex === $index}"
-         class="image-card" fxLayout="column">
+         [class.image-dragging]="dragIndex === $index"
+         class="image-card flex flex-col">
       <span class="image-title">{{ 'image-input.images' | translate }} [{{ $index }}]</span>
-      <div class="image-content-container" fxLayout="row">
+      <div class="image-content-container flex flex-row">
         <div dndHandle *ngIf="!disabled" class="tb-image-action-container tb-drag-handle">
           <mat-icon color="primary">drag_indicator</mat-icon>
         </div>

@@ -65,6 +65,13 @@ $backgroundColorDisabled: var(--tb-slider-background-color-disabled, #D5D7E5);
   div.tb-slider-title-panel {
     z-index: 2;
   }
+  &.no-pointer-events {
+    .mat-mdc-slider.tb-slider {
+      .mdc-slider__input {
+        pointer-events: none;
+      }
+    }
+  }
   .tb-slider-content {
     flex: 1;
     min-height: 0;

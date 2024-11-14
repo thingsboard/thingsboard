@@ -8,7 +8,7 @@
   ],
   "widgetSizeX": 3,
   "widgetSizeY": 5,
-  "stateRenderFunction": "var running = ctx.values.running;\nif (running) {\n    ctx.api.enable(svg.children());\n} else {\n    ctx.api.disable(svg.children());\n}",
+  "stateRenderFunction": "var running = ctx.values.running;\nif (running) {\n    ctx.api.enable(ctx.tags.filterMode);\n} else {\n    ctx.api.disable(ctx.tags.filterMode);\n}",
   "tags": [
     {
       "tag": "background",
@@ -354,37 +354,37 @@
    <path d="m74 470c0-6.627 5.3726-12 12-12h186c6.627 0 12 5.373 12 12v56c0 6.627-5.373 12-12 12h-186c-6.6274 0-12-5.373-12-12v-56z" fill="#fff"/>
    <path d="m75.5 470c0-5.799 4.701-10.5 10.5-10.5h186c5.799 0 10.5 4.701 10.5 10.5v56c0 5.799-4.701 10.5-10.5 10.5h-186c-5.799 0-10.5-4.701-10.5-10.5v-56z" stroke="#198038" stroke-width="3"/>
    <circle cx="179.5" cy="483" r="10" fill="#198038"/>
-   <text x="178.02383" y="512.61719" dominant-baseline="middle" fill="#000000" font-family="Roboto" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan>Filter</tspan></text>
+   <text x="178.02383" y="512.61719" fill="#000000" font-family="Roboto" font-size="28px" font-weight="500" xml:space="preserve" text-anchor="middle"><tspan dominant-baseline="middle">Filter</tspan></text>
   </g>
   <g filter="url(#filter1_ii_1830_321985)">
    <path d="m74 574c0-6.627 5.3726-12 12-12h186c6.627 0 12 5.373 12 12v56c0 6.627-5.373 12-12 12h-186c-6.6274 0-12-5.373-12-12v-56z" fill="#fff"/>
    <path d="m75.5 574c0-5.799 4.701-10.5 10.5-10.5h186c5.799 0 10.5 4.701 10.5 10.5v56c0 5.799-4.701 10.5-10.5 10.5h-186c-5.799 0-10.5-4.701-10.5-10.5v-56z" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
    <circle cx="179.5" cy="587" r="10" fill="#000" fill-opacity=".12"/>
-   <text x="179.43652" y="617.61719" dominant-baseline="middle" fill="#727272" font-family="Roboto" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan>Backwash</tspan></text>
+   <text x="179.43652" y="617.61719" fill="#727272" font-family="Roboto" font-size="28px" font-weight="500" xml:space="preserve" text-anchor="middle"><tspan dominant-baseline="middle">Backwash</tspan></text>
   </g>
   <g filter="url(#filter2_ii_1830_321985)">
    <path d="m74 678c0-6.627 5.3726-12 12-12h186c6.627 0 12 5.373 12 12v56c0 6.627-5.373 12-12 12h-186c-6.6274 0-12-5.373-12-12v-56z" fill="#fff"/>
    <path d="m75.5 678c0-5.799 4.701-10.5 10.5-10.5h186c5.799 0 10.5 4.701 10.5 10.5v56c0 5.799-4.701 10.5-10.5 10.5h-186c-5.799 0-10.5-4.701-10.5-10.5v-56z" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
    <circle cx="179" cy="691" r="10" fill="#000" fill-opacity=".12"/>
-   <text x="177.64941" y="722.61719" dominant-baseline="middle" fill="#727272" font-family="Roboto" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan>Rinse</tspan></text>
+   <text x="177.64941" y="722.61719" fill="#727272" font-family="Roboto" font-size="28px" font-weight="500" xml:space="preserve" text-anchor="middle"><tspan dominant-baseline="middle">Rinse</tspan></text>
   </g>
   <g filter="url(#filter3_ii_1830_321985)">
    <path d="m316 470c0-6.627 5.373-12 12-12h186c6.627 0 12 5.373 12 12v56c0 6.627-5.373 12-12 12h-186c-6.627 0-12-5.373-12-12v-56z" fill="#fff"/>
    <path d="m317.5 470c0-5.799 4.701-10.5 10.5-10.5h186c5.799 0 10.5 4.701 10.5 10.5v56c0 5.799-4.701 10.5-10.5 10.5h-186c-5.799 0-10.5-4.701-10.5-10.5v-56z" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
    <circle cx="421" cy="483" r="10" fill="#000" fill-opacity=".12"/>
-   <text x="420.99316" y="512.75586" dominant-baseline="middle" fill="#727272" font-family="Roboto" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan>Waste</tspan></text>
+   <text x="420.99316" y="512.75586" fill="#727272" font-family="Roboto" font-size="28px" font-weight="500" xml:space="preserve" text-anchor="middle"><tspan dominant-baseline="middle">Waste</tspan></text>
   </g>
   <g filter="url(#filter4_ii_1830_321985)">
    <path d="m316 574c0-6.627 5.373-12 12-12h186c6.627 0 12 5.373 12 12v56c0 6.627-5.373 12-12 12h-186c-6.627 0-12-5.373-12-12v-56z" fill="#fff"/>
    <path d="m317.5 574c0-5.799 4.701-10.5 10.5-10.5h186c5.799 0 10.5 4.701 10.5 10.5v56c0 5.799-4.701 10.5-10.5 10.5h-186c-5.799 0-10.5-4.701-10.5-10.5v-56z" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
    <circle cx="421.5" cy="587" r="10" fill="#000" fill-opacity=".12"/>
-   <text x="420.14062" y="617.61719" dominant-baseline="middle" fill="#727272" font-family="Roboto" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan>Recirculate</tspan></text>
+   <text x="420.14062" y="617.61719" fill="#727272" font-family="Roboto" font-size="28px" font-weight="500" xml:space="preserve" text-anchor="middle"><tspan dominant-baseline="middle">Recirculate</tspan></text>
   </g>
   <g filter="url(#filter5_ii_1830_321985)">
    <path d="m316 678c0-6.627 5.373-12 12-12h186c6.627 0 12 5.373 12 12v56c0 6.627-5.373 12-12 12h-186c-6.627 0-12-5.373-12-12v-56z" fill="#fff"/>
    <path d="m317.5 678c0-5.799 4.701-10.5 10.5-10.5h186c5.799 0 10.5 4.701 10.5 10.5v56c0 5.799-4.701 10.5-10.5 10.5h-186c-5.799 0-10.5-4.701-10.5-10.5v-56z" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
    <circle cx="421.5" cy="691" r="10" fill="#000" fill-opacity=".12"/>
-   <text x="421.45215" y="721.61719" dominant-baseline="middle" fill="#727272" font-family="Roboto" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan>Closed</tspan></text>
+   <text x="421.45215" y="721.61719" fill="#727272" font-family="Roboto" font-size="28px" font-weight="500" xml:space="preserve" text-anchor="middle"><tspan dominant-baseline="middle">Closed</tspan></text>
   </g>
  </g><defs>
   <filter id="filter0_ii_1830_321985" x="70" y="454" width="218" height="88" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
