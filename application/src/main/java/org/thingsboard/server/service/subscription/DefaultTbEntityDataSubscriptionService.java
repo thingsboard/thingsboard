@@ -38,7 +38,6 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.ComparisonTsValue;
 import org.thingsboard.server.common.data.query.OriginatorAlarmFilter;
@@ -468,10 +467,10 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     private void fetchActiveAlarms(TbAlarmStatusSubscription subscription) {
         log.trace("[{}, subId: {}] Fetching active alarms from DB", subscription.getSessionId(), subscription.getSubscriptionId());
         OriginatorAlarmFilter originatorAlarmFilter = new OriginatorAlarmFilter(subscription.getEntityId(), subscription.getTypeList(), subscription.getSeverityList());
-        List<UUID> alarmIds = alarmService.findActiveOriginatorAlarms(subscription.getTenantId(), originatorAlarmFilter, new PageLink(alarmsPerAlarmStatusSubscriptionCacheSize)).getData();
+        List<UUID> alarmIds = alarmService.findActiveOriginatorAlarms(subscription.getTenantId(), originatorAlarmFilter, alarmsPerAlarmStatusSubscriptionCacheSize);
 
         subscription.getAlarmIds().addAll(alarmIds);
-        subscription.setExceededLimit(alarmIds.size() == alarmsPerAlarmStatusSubscriptionCacheSize);
+        subscription.setFullCache(alarmIds.size() == alarmsPerAlarmStatusSubscriptionCacheSize);
     }
 
     private void sendUpdate(String sessionId, CmdUpdate update) {
@@ -485,12 +484,12 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             AlarmInfo alarm = subscriptionUpdate.getAlarm();
             Set<UUID> alarmsIds = subscription.getAlarmIds();
             if (alarmsIds.contains(alarm.getId().getId())) {
-                if (!alarmMatchesSubscription(alarm, subscription) || subscriptionUpdate.isAlarmDeleted()) {
+                if (!subscription.matches(alarm) || subscriptionUpdate.isAlarmDeleted()) {
                     alarmsIds.remove(alarm.getId().getId());
-                    if (alarmsIds.size() == 0) {
-                        if (subscription.isExceededLimit()) {
+                    if (alarmsIds.isEmpty()) {
+                        if (subscription.isFullCache()) {
                             fetchActiveAlarms(subscription);
-                            if (alarmsIds.size() == 0) {
+                            if (alarmsIds.isEmpty()) {
                                 sendUpdate(subscription.getSessionId(), subscription.createUpdate());
                             }
                         } else {
@@ -498,20 +497,19 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                         }
                     }
                 }
-            } else if (alarmMatchesSubscription(alarm, subscription) && (alarmsIds.size() < alarmsPerAlarmStatusSubscriptionCacheSize)) {
-                alarmsIds.add(alarm.getId().getId());
-                if (alarmsIds.size() == 1) {
-                    sendUpdate(subscription.getSessionId(), subscription.createUpdate());
+            } else if (subscription.matches(alarm)) {
+                if (alarmsIds.size() < alarmsPerAlarmStatusSubscriptionCacheSize) {
+                    alarmsIds.add(alarm.getId().getId());
+                    if (alarmsIds.size() == 1) {
+                        sendUpdate(subscription.getSessionId(), subscription.createUpdate());
+                    }
+                } else {
+                    subscription.setFullCache(true);
                 }
             }
         } catch (Exception e) {
             log.error("[{}, subId: {}] Failed to handle update for alarm status subscription: {}", subscription.getSessionId(), subscription.getSubscriptionId(), subscriptionUpdate, e);
         }
-    }
-
-    private boolean alarmMatchesSubscription(AlarmInfo alarm, TbAlarmStatusSubscription subscription) {
-        return !alarm.isCleared() && (subscription.getTypeList() == null || subscription.getTypeList().contains(alarm.getType())) &&
-                (subscription.getSeverityList() == null || subscription.getSeverityList().contains(alarm.getSeverity()));
     }
 
     private boolean validate(TbAbstractSubCtx<?> finalCtx) {
@@ -607,7 +605,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         return ctx;
     }
 
-    private  TbAlarmCountSubCtx createSubCtx(WebSocketSessionRef sessionRef, AlarmCountCmd cmd) {
+    private TbAlarmCountSubCtx createSubCtx(WebSocketSessionRef sessionRef, AlarmCountCmd cmd) {
         Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new ConcurrentHashMap<>());
         TbAlarmCountSubCtx ctx = new TbAlarmCountSubCtx(serviceId, wsService, entityService, localSubscriptionService,
                 attributesService, stats, alarmService, sessionRef, cmd.getCmdId());

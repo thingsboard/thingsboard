@@ -332,7 +332,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         AlarmStatusUpdate update = JacksonUtil.fromString(getWsClient().waitForReply(), AlarmStatusUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
-        Assert.assertFalse(update.isPresent());
+        Assert.assertFalse(update.isActive());
 
         //create alarm
         getWsClient().registerWaitForUpdate();
@@ -346,7 +346,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         AlarmStatusUpdate alarmStatusUpdate = JacksonUtil.fromString(getWsClient().waitForUpdate(), AlarmStatusUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
-        Assert.assertTrue(alarmStatusUpdate.isPresent());
+        Assert.assertTrue(alarmStatusUpdate.isActive());
 
         //clear alarm
         getWsClient().registerWaitForUpdate();
@@ -358,7 +358,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         AlarmStatusUpdate alarmStatusUpdate2 = JacksonUtil.fromString(getWsClient().waitForUpdate(), AlarmStatusUpdate.class);
         Assert.assertEquals(1, alarmStatusUpdate2.getCmdId());
-        Assert.assertFalse(alarmStatusUpdate2.isPresent());
+        Assert.assertFalse(alarmStatusUpdate2.isActive());
 
         // add second type alarm
         getWsClient().registerWaitForUpdate();
@@ -372,7 +372,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         AlarmStatusUpdate alarmStatusUpdate3 = JacksonUtil.fromString(getWsClient().waitForReply(), AlarmStatusUpdate.class);
         Assert.assertEquals(1, alarmStatusUpdate3.getCmdId());
-        Assert.assertTrue(alarmStatusUpdate3.isPresent());
+        Assert.assertTrue(alarmStatusUpdate3.isActive());
 
         //change severity
         alarm2.setSeverity(AlarmSeverity.MAJOR);
@@ -382,7 +382,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         AlarmStatusUpdate alarmStatusUpdate4 = JacksonUtil.fromString(getWsClient().waitForReply(), AlarmStatusUpdate.class);
         Assert.assertEquals(1, alarmStatusUpdate4.getCmdId());
-        Assert.assertFalse(alarmStatusUpdate4.isPresent());
+        Assert.assertFalse(alarmStatusUpdate4.isActive());
 
         //subscribe for critical alarms
         AlarmStatusCmd cmd3 = new AlarmStatusCmd(2, device.getId(), List.of("TEST ALARM"), List.of(AlarmSeverity.CRITICAL));
@@ -391,13 +391,22 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         AlarmStatusUpdate alarmStatusUpdate5 = JacksonUtil.fromString(getWsClient().waitForReply(), AlarmStatusUpdate.class);
         Assert.assertEquals(2, alarmStatusUpdate5.getCmdId());
-        Assert.assertFalse(alarmStatusUpdate5.isPresent());
+        Assert.assertFalse(alarmStatusUpdate5.isActive());
     }
 
     @Test
     public void testAlarmStatusWsCmdWithMaxAlarmsCacheSize() throws Exception {
         loginTenantAdmin();
 
+        AlarmStatusCmd cmd = new AlarmStatusCmd(1, device.getId(), null, List.of(AlarmSeverity.CRITICAL));
+
+        getWsClient().send(cmd);
+
+        AlarmStatusUpdate update = JacksonUtil.fromString(getWsClient().waitForReply(), AlarmStatusUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        Assert.assertFalse(update.isActive());
+
+        getWsClient().registerWaitForUpdate();
         //create 5+1 alarms
         List<Alarm> alarms = new ArrayList<>();
         for (int i = 0; i < 6; i++) {
@@ -409,13 +418,9 @@ public class WebsocketApiTest extends AbstractControllerTest {
             alarms.add(alarm);
         }
 
-        AlarmStatusCmd cmd = new AlarmStatusCmd(1, device.getId(), null, List.of(AlarmSeverity.CRITICAL));
-
-        getWsClient().send(cmd);
-
-        AlarmStatusUpdate update = JacksonUtil.fromString(getWsClient().waitForReply(), AlarmStatusUpdate.class);
-        Assert.assertEquals(1, update.getCmdId());
-        Assert.assertTrue(update.isPresent());
+        AlarmStatusUpdate updateAfterAlarmsAdded = JacksonUtil.fromString(getWsClient().waitForReply(), AlarmStatusUpdate.class);
+        Assert.assertEquals(1, updateAfterAlarmsAdded.getCmdId());
+        Assert.assertTrue(updateAfterAlarmsAdded.isActive());
 
         getWsClient().registerWaitForUpdate();
         //clear first 5 alarms
@@ -432,7 +437,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         AlarmStatusUpdate alarmStatusUpdate2 = JacksonUtil.fromString(getWsClient().waitForUpdate(), AlarmStatusUpdate.class);
         Assert.assertEquals(1, alarmStatusUpdate2.getCmdId());
-        Assert.assertFalse(alarmStatusUpdate2.isPresent());
+        Assert.assertFalse(alarmStatusUpdate2.isActive());
     }
 
     @Test

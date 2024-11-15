@@ -18,6 +18,7 @@ package org.thingsboard.server.service.subscription;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -37,7 +38,7 @@ public class TbAlarmStatusSubscription extends TbSubscription<AlarmSubscriptionU
     private final Set<UUID> alarmIds = new HashSet<>();
     @Getter
     @Setter
-    private boolean exceededLimit;
+    private boolean fullCache;
     @Getter
     private final List<String> typeList;
     @Getter
@@ -52,20 +53,15 @@ public class TbAlarmStatusSubscription extends TbSubscription<AlarmSubscriptionU
         this.severityList = severityList;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        return super.equals(o);
-    }
-
-    @Override
-    public int hashCode() {
-        return super.hashCode();
-    }
-
     public AlarmStatusUpdate createUpdate() {
         return AlarmStatusUpdate.builder()
                 .cmdId(getSubscriptionId())
-                .present(alarmIds.size() > 0)
+                .active(alarmIds.size() > 0)
                 .build();
+    }
+
+    public boolean matches(AlarmInfo alarm) {
+        return !alarm.isCleared() && (this.typeList == null || this.typeList.contains(alarm.getType())) &&
+                (this.severityList == null || this.severityList.contains(alarm.getSeverity()));
     }
 }

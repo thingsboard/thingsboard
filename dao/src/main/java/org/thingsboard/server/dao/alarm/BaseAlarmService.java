@@ -367,9 +367,9 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     }
 
     @Override
-    public PageData<UUID> findActiveOriginatorAlarms(TenantId tenantId, OriginatorAlarmFilter originatorAlarmFilter, PageLink pageLink) {
+    public List<UUID> findActiveOriginatorAlarms(TenantId tenantId, OriginatorAlarmFilter originatorAlarmFilter, int limit) {
         log.trace("Executing findActiveOriginatorAlarms, tenantId [{}], originatorAlarmFilter [{}]", tenantId, originatorAlarmFilter);
-        return alarmDao.findActiveOriginatorAlarms(tenantId, originatorAlarmFilter, pageLink);
+        return alarmDao.findActiveOriginatorAlarms(tenantId, originatorAlarmFilter, limit);
     }
 
     private Alarm merge(Alarm existing, Alarm alarm) {

@@ -26,11 +26,11 @@ import org.thingsboard.server.service.subscription.SubscriptionErrorCode;
 public class AlarmStatusUpdate extends CmdUpdate {
 
     @Getter
-    private boolean present;
+    private boolean active;
 
-    public AlarmStatusUpdate(int cmdId, boolean present) {
+    public AlarmStatusUpdate(int cmdId, boolean active) {
         super(cmdId, SubscriptionErrorCode.NO_ERROR.getCode(), null);
-        this.present = present;
+        this.active = active;
     }
 
     public AlarmStatusUpdate(int cmdId, int errorCode, String errorMsg) {
@@ -39,11 +39,11 @@ public class AlarmStatusUpdate extends CmdUpdate {
 
     @Builder
     public AlarmStatusUpdate(@JsonProperty("cmdId") int cmdId,
-                             @JsonProperty("present") boolean present,
+                             @JsonProperty("present") boolean active,
                              @JsonProperty("errorCode") int errorCode,
                              @JsonProperty("errorMsg") String errorMsg) {
         super(cmdId, errorCode, errorMsg);
-        this.present = present;
+        this.active = active;
     }
 
     @Override

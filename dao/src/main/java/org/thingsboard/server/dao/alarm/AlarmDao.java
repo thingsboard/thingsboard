@@ -112,6 +112,6 @@ public interface AlarmDao extends Dao<Alarm> {
 
     boolean removeAlarmTypesIfNoAlarmsPresent(UUID tenantId, Set<String> types);
 
-    PageData<UUID> findActiveOriginatorAlarms(TenantId tenantId, OriginatorAlarmFilter originatorAlarmFilter, PageLink pageLink);
+    List<UUID> findActiveOriginatorAlarms(TenantId tenantId, OriginatorAlarmFilter originatorAlarmFilter, int limit);
 
 }

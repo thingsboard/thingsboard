@@ -436,9 +436,10 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public PageData<UUID> findActiveOriginatorAlarms(TenantId tenantId, OriginatorAlarmFilter originatorAlarmFilter, PageLink pageLink) {
-        return DaoUtil.pageToPageData(alarmRepository.findActiveOriginatorAlarms(tenantId.getId(), originatorAlarmFilter.getOriginatorId().getId(),
-                originatorAlarmFilter.getTypeList(), originatorAlarmFilter.getSeverityList(), toPageable(pageLink, false)));
+    public List<UUID> findActiveOriginatorAlarms(TenantId tenantId, OriginatorAlarmFilter filter, int limit) {
+        return alarmRepository.findActiveOriginatorAlarms(filter.getOriginatorId().getId(),
+                filter.getTypeList(), filter.getSeverityList() != null ? filter.getSeverityList().stream().map(Enum::name).toList() : null,
+                limit);
     }
 
     private static String getPropagationTypes(AlarmPropagationInfo ap) {
