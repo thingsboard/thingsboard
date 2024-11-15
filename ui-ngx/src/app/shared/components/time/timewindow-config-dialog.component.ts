@@ -26,7 +26,8 @@ import {
   RealtimeWindowType,
   realtimeWindowTypeTranslations,
   Timewindow,
-  TimewindowType
+  TimewindowType,
+  updateFormValuesOnTimewindowTypeChange
 } from '@shared/models/time/time.models';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -350,41 +351,16 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
 
   private onTimewindowTypeChange(selectedTab: TimewindowType) {
     const timewindowFormValue = this.timewindowForm.getRawValue();
-    if (selectedTab === TimewindowType.REALTIME) {
-      if (timewindowFormValue.history.historyType !== HistoryWindowType.FIXED
-        && !(this.quickIntervalOnly && timewindowFormValue.history.historyType === HistoryWindowType.LAST_INTERVAL)) {
-        const allowedLastIntervals = timewindowFormValue.realtime.advancedParams.allowedLastIntervals;
-        const allowedQuickIntervals = timewindowFormValue.realtime.advancedParams.allowedQuickIntervals;
-        if (Object.keys(RealtimeWindowType).includes(HistoryWindowType[timewindowFormValue.history.historyType])) {
-          this.timewindowForm.get('realtime.realtimeType').patchValue(RealtimeWindowType[HistoryWindowType[timewindowFormValue.history.historyType]]);
-        }
-        if (!allowedLastIntervals?.length || allowedLastIntervals.includes(timewindowFormValue.history.timewindowMs)) {
-          this.timewindowForm.get('realtime.timewindowMs').patchValue(timewindowFormValue.history.timewindowMs);
-        }
-        if (allowedQuickIntervals?.includes(timewindowFormValue.history.quickInterval) ||
-            (!allowedQuickIntervals?.length && timewindowFormValue.history.quickInterval.startsWith('CURRENT'))) {
-          this.timewindowForm.get('realtime.quickInterval').patchValue(timewindowFormValue.history.quickInterval);
-        }
-        setTimeout(() => this.timewindowForm.get('realtime.interval').patchValue(timewindowFormValue.history.interval));
-      }
-    } else {
-      const allowedLastIntervals = timewindowFormValue.history.advancedParams.allowedLastIntervals;
-      const allowedQuickIntervals = timewindowFormValue.history.advancedParams.allowedQuickIntervals;
-      this.timewindowForm.get('history.historyType').patchValue(HistoryWindowType[RealtimeWindowType[timewindowFormValue.realtime.realtimeType]]);
-      if (!allowedLastIntervals?.length || allowedLastIntervals?.includes(timewindowFormValue.realtime.timewindowMs)) {
-        this.timewindowForm.get('history.timewindowMs').patchValue(timewindowFormValue.realtime.timewindowMs);
-      }
-      if (!allowedQuickIntervals?.length || allowedQuickIntervals?.includes(timewindowFormValue.realtime.quickInterval)) {
-        this.timewindowForm.get('history.quickInterval').patchValue(timewindowFormValue.realtime.quickInterval);
-      }
-      setTimeout(() => this.timewindowForm.get('history.interval').patchValue(timewindowFormValue.realtime.interval));
-    }
+    const realtimeDisableCustomInterval = timewindowFormValue.realtime.disableCustomInterval;
+    const historyDisableCustomInterval = timewindowFormValue.history.disableCustomInterval;
+    const realtimeAllowedLastIntervals = timewindowFormValue.realtime.advancedParams.allowedLastIntervals;
+    const realtimeAllowedQuickIntervals = timewindowFormValue.realtime.advancedParams.allowedQuickIntervals;
+    const historyAllowedLastIntervals = timewindowFormValue.history.advancedParams.allowedLastIntervals;
+    const historyAllowedQuickIntervals = timewindowFormValue.history.advancedParams.allowedQuickIntervals;
+    updateFormValuesOnTimewindowTypeChange(selectedTab, this.quickIntervalOnly, this.timewindowForm,
+      realtimeDisableCustomInterval, historyDisableCustomInterval,
+      realtimeAllowedLastIntervals, realtimeAllowedQuickIntervals, historyAllowedLastIntervals, historyAllowedQuickIntervals);
     this.timewindowForm.patchValue({
-      aggregation: {
-        type: timewindowFormValue.aggregation.type,
-        limit: timewindowFormValue.aggregation.limit
-      },
-      timezone: timewindowFormValue.timezone,
       hideAggregation: timewindowFormValue.hideAggregation,
       hideAggInterval: timewindowFormValue.hideAggInterval,
       hideTimezone: timewindowFormValue.hideTimezone

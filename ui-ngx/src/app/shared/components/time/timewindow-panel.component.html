@@ -52,7 +52,7 @@
             subscriptSizing="dynamic"
             appearance="outline"
             [allowedIntervals]="realtimeAllowedLastIntervals"
-            [disabledAdvanced]="timewindow.realtime.disableCustomInterval"
+            [disabledAdvanced]="realtimeDisableCustomInterval"
             [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
                               timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
           </tb-timeinterval>
@@ -98,7 +98,7 @@
             subscriptSizing="dynamic"
             appearance="outline"
             [allowedIntervals]="historyAllowedLastIntervals"
-            [disabledAdvanced]="timewindow.history.disableCustomInterval"
+            [disabledAdvanced]="historyDisableCustomInterval"
             [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
                             timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
           </tb-timeinterval>
@@ -154,7 +154,7 @@
             useCalendarIntervals
             subscriptSizing="dynamic"
             appearance="outline"
-            [disabledAdvanced]="timewindow.realtime.disableCustomGroupInterval">
+            [disabledAdvanced]="realtimeDisableCustomGroupInterval">
             <div class="fixed-title-width-180">{{ 'aggregation.group-interval' | translate }}</div>
           </tb-timeinterval>
         </ng-container>
@@ -165,7 +165,7 @@
             useCalendarIntervals
             subscriptSizing="dynamic"
             appearance="outline"
-            [disabledAdvanced]="timewindow.history.disableCustomGroupInterval">
+            [disabledAdvanced]="historyDisableCustomGroupInterval">
             <div class="fixed-title-width-180">{{ 'aggregation.group-interval' | translate }}</div>
           </tb-timeinterval>
         </ng-container>

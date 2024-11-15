@@ -26,7 +26,8 @@ import {
   RealtimeWindowType,
   realtimeWindowTypeTranslations,
   Timewindow,
-  TimewindowType
+  TimewindowType,
+  updateFormValuesOnTimewindowTypeChange
 } from '@shared/models/time/time.models';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -104,6 +105,11 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   historyTypeSelectionAvailable: boolean;
   historyIntervalSelectionAvailable: boolean;
   aggregationOptionsAvailable: boolean;
+
+  realtimeDisableCustomInterval: boolean;
+  realtimeDisableCustomGroupInterval: boolean;
+  historyDisableCustomInterval: boolean;
+  historyDisableCustomGroupInterval: boolean;
 
   realtimeAllowedLastIntervals: Array<Interval>;
   realtimeAllowedQuickIntervals: Array<QuickTimeInterval>;
@@ -318,40 +324,9 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   }
 
   private onTimewindowTypeChange(selectedTab: TimewindowType) {
-    const timewindowFormValue = this.timewindowForm.getRawValue();
-    if (selectedTab === TimewindowType.REALTIME) {
-      if (timewindowFormValue.history.historyType !== HistoryWindowType.FIXED
-        && !((this.quickIntervalOnly || this.timewindow.realtime.hideLastInterval)
-          && timewindowFormValue.history.historyType === HistoryWindowType.LAST_INTERVAL)
-        && !(this.timewindow.realtime.hideQuickInterval && timewindowFormValue.history.historyType === HistoryWindowType.INTERVAL)) {
-
-        this.timewindowForm.get('realtime').patchValue({
-          realtimeType: Object.keys(RealtimeWindowType).includes(HistoryWindowType[timewindowFormValue.history.historyType]) ?
-            RealtimeWindowType[HistoryWindowType[timewindowFormValue.history.historyType]] :
-            timewindowFormValue.realtime.realtimeType,
-          timewindowMs: timewindowFormValue.history.timewindowMs,
-          quickInterval: timewindowFormValue.history.quickInterval.startsWith('CURRENT') ?
-            timewindowFormValue.history.quickInterval : timewindowFormValue.realtime.quickInterval
-        });
-        setTimeout(() => this.timewindowForm.get('realtime.interval').patchValue(timewindowFormValue.history.interval));
-      }
-    } else if (!(this.timewindow.history.hideLastInterval && timewindowFormValue.realtime.realtimeType === RealtimeWindowType.LAST_INTERVAL)
-      && !(this.timewindow.history.hideQuickInterval && timewindowFormValue.realtime.realtimeType === RealtimeWindowType.INTERVAL)) {
-
-      this.timewindowForm.get('history').patchValue({
-        historyType: HistoryWindowType[RealtimeWindowType[timewindowFormValue.realtime.realtimeType]],
-        timewindowMs: timewindowFormValue.realtime.timewindowMs,
-        quickInterval: timewindowFormValue.realtime.quickInterval
-      });
-      setTimeout(() => this.timewindowForm.get('history.interval').patchValue(timewindowFormValue.realtime.interval));
-    }
-    this.timewindowForm.patchValue({
-      aggregation: {
-        type: timewindowFormValue.aggregation.type,
-        limit: timewindowFormValue.aggregation.limit
-      },
-      timezone: timewindowFormValue.timezone
-    });
+    updateFormValuesOnTimewindowTypeChange(selectedTab, this.quickIntervalOnly, this.timewindowForm,
+      this.realtimeDisableCustomInterval, this.historyDisableCustomInterval,
+      this.realtimeAllowedLastIntervals, this.realtimeAllowedQuickIntervals, this.historyAllowedLastIntervals, this.historyAllowedQuickIntervals);
   }
 
   update() {
@@ -377,31 +352,6 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
         quickInterval: timewindowFormValue.history.quickInterval,
       }};
 
-    // if (!this.timewindow.realtime.advancedParams?.allowedLastIntervals?.length) {
-    //   delete this.timewindow.realtime.advancedParams.allowedLastIntervals;
-    // }
-    // if (!this.timewindow.realtime.advancedParams?.allowedQuickIntervals?.length) {
-    //   delete this.timewindow.realtime.advancedParams.allowedQuickIntervals;
-    // }
-    //
-    // if (!this.timewindow.history.advancedParams?.allowedLastIntervals?.length) {
-    //   delete this.timewindow.history.advancedParams.allowedLastIntervals;
-    // }
-    // if (!this.timewindow.history.advancedParams?.allowedQuickIntervals?.length) {
-    // } else {
-    //   delete this.timewindow.history.advancedParams.allowedQuickIntervals;
-    // }
-    //
-    // if (!Object.keys(this.timewindow.realtime.advancedParams).length) {
-    //   delete this.timewindow.realtime.advancedParams;
-    // }
-    // if (!Object.keys(this.timewindow.history.advancedParams).length) {
-    //   delete this.timewindow.history.advancedParams;
-    // }
-    //
-    // if (!this.timewindow.allowedAggTypes?.length) {
-    //   delete this.timewindow.allowedAggTypes;
-    // }
     if (this.aggregation) {
       this.timewindow.aggregation = {
         type: timewindowFormValue.aggregation.type,
@@ -551,6 +501,11 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   }
 
   private updateTimewindowAdvancedParams() {
+    this.realtimeDisableCustomInterval = this.timewindow.realtime.disableCustomInterval;
+    this.realtimeDisableCustomGroupInterval = this.timewindow.realtime.disableCustomGroupInterval;
+    this.historyDisableCustomInterval = this.timewindow.history.disableCustomInterval;
+    this.historyDisableCustomGroupInterval = this.timewindow.history.disableCustomGroupInterval;
+
     if (this.timewindow.realtime.advancedParams) {
       this.realtimeAllowedLastIntervals = this.timewindow.realtime.advancedParams.allowedLastIntervals;
       this.realtimeAllowedQuickIntervals = this.timewindow.realtime.advancedParams.allowedQuickIntervals;

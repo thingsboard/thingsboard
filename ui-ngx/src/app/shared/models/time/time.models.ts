@@ -19,6 +19,7 @@ import { deepClone, isDefined, isDefinedAndNotNull, isNumeric, isUndefined } fro
 import moment_ from 'moment';
 import * as momentTz from 'moment-timezone';
 import { IntervalType } from '@shared/models/telemetry/telemetry.models';
+import { FormGroup } from '@angular/forms';
 
 const moment = moment_;
 
@@ -491,6 +492,48 @@ export const timewindowTypeChanged = (newTimewindow: Timewindow, oldTimewindow: 
   const newType = getTimewindowType(newTimewindow);
   const oldType = getTimewindowType(oldTimewindow);
   return newType !== oldType;
+};
+
+export const updateFormValuesOnTimewindowTypeChange = (selectedTab: TimewindowType,
+                                                       quickIntervalOnly: boolean, timewindowForm: FormGroup,
+                                                       realtimeDisableCustomInterval: boolean, historyDisableCustomInterval: boolean,
+                                                       realtimeAllowedLastIntervals?: Array<Interval>, realtimeAllowedQuickIntervals?: Array<QuickTimeInterval>,
+                                                       historyAllowedLastIntervals?: Array<Interval>, historyAllowedQuickIntervals?: Array<QuickTimeInterval>) => {
+  const timewindowFormValue = timewindowForm.getRawValue();
+  if (selectedTab === TimewindowType.REALTIME) {
+    if (timewindowFormValue.history.historyType !== HistoryWindowType.FIXED
+      && !(quickIntervalOnly && timewindowFormValue.history.historyType === HistoryWindowType.LAST_INTERVAL)) {
+      if (Object.keys(RealtimeWindowType).includes(HistoryWindowType[timewindowFormValue.history.historyType])) {
+        timewindowForm.get('realtime.realtimeType').patchValue(RealtimeWindowType[HistoryWindowType[timewindowFormValue.history.historyType]]);
+      }
+      if (!realtimeDisableCustomInterval ||
+          !realtimeAllowedLastIntervals?.length || realtimeAllowedLastIntervals.includes(timewindowFormValue.history.timewindowMs)) {
+        timewindowForm.get('realtime.timewindowMs').patchValue(timewindowFormValue.history.timewindowMs);
+      }
+      if (realtimeAllowedQuickIntervals?.includes(timewindowFormValue.history.quickInterval) ||
+        (!realtimeAllowedQuickIntervals?.length && timewindowFormValue.history.quickInterval.startsWith('CURRENT'))) {
+        timewindowForm.get('realtime.quickInterval').patchValue(timewindowFormValue.history.quickInterval);
+      }
+      setTimeout(() => timewindowForm.get('realtime.interval').patchValue(timewindowFormValue.history.interval));
+    }
+  } else {
+    timewindowForm.get('history.historyType').patchValue(HistoryWindowType[RealtimeWindowType[timewindowFormValue.realtime.realtimeType]]);
+    if (!historyDisableCustomInterval ||
+        !historyAllowedLastIntervals?.length || historyAllowedLastIntervals?.includes(timewindowFormValue.realtime.timewindowMs)) {
+      timewindowForm.get('history.timewindowMs').patchValue(timewindowFormValue.realtime.timewindowMs);
+    }
+    if (!historyAllowedQuickIntervals?.length || historyAllowedQuickIntervals?.includes(timewindowFormValue.realtime.quickInterval)) {
+      timewindowForm.get('history.quickInterval').patchValue(timewindowFormValue.realtime.quickInterval);
+    }
+    setTimeout(() => timewindowForm.get('history.interval').patchValue(timewindowFormValue.realtime.interval));
+  }
+  timewindowForm.patchValue({
+    aggregation: {
+      type: timewindowFormValue.aggregation.type,
+      limit: timewindowFormValue.aggregation.limit
+    },
+    timezone: timewindowFormValue.timezone
+  });
 };
 
 export const getTimezone = (tz: string): moment_.Moment => moment.tz(tz);
