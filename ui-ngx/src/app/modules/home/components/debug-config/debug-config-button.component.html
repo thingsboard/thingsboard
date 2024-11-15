@@ -26,7 +26,9 @@
   <mat-icon [color]="disabled ? 'inherit' : 'primary'">bug_report</mat-icon>
   <span *ngIf="!debugFailures && !(isDebugAllActive$ | async)" translate>common.disabled</span>
   <span *ngIf="(isDebugAllActive$ | async) && debugFailures" translate>debug-config.all</span>
-  <span *ngIf="(isDebugAllActive$ | async) && !debugFailures">{{ debugAllUntil | durationLeft }}</span>
+  <span *ngIf="(isDebugAllActive$ | async) && !debugFailures">
+    {{ !debugAll ? (debugAllUntil | durationLeft) : ('debug-config.min' | translate: { number:  maxDebugModeDurationMinutes }) }}
+  </span>
   <span *ngIf="!(isDebugAllActive$ | async) && debugFailures" translate>debug-config.failures</span>
 </button>
 <ng-template #minifiedButton>

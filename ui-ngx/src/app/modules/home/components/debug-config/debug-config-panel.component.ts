@@ -99,12 +99,14 @@ export class DebugConfigPanelComponent extends PageComponent implements OnInit {
   onReset(): void {
     this.debugAll = true;
     this.debugAllUntil = new Date().getTime() + this.maxDebugModeDurationMinutes * MINUTE;
+    this.cd.markForCheck();
   }
 
   private observeDebugAllChange(): void {
     this.debugAllControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(value => {
       this.debugAllUntil = value? new Date().getTime() + this.maxDebugModeDurationMinutes * MINUTE : 0;
       this.debugAll = value;
+      this.cd.markForCheck();
     });
   }
 }

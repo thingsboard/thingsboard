@@ -34,10 +34,10 @@
     <div class="flex justify-between align-center">
       <mat-slide-toggle class="mat-slide" [formControl]="debugAllControl">
         <div tb-hint-tooltip-icon="{{ 'debug-config.hint.all-messages' | translate }}">
-          {{ 'debug-config.all-messages' | translate: { time: (isDebugAllActive$ | async) ? (debugAllUntil | durationLeft) : ('debug-config.min' | translate: { number:  maxDebugModeDurationMinutes }) } }}
+          {{ 'debug-config.all-messages' | translate: { time: (isDebugAllActive$ | async) && !debugAll ? (debugAllUntil | durationLeft) : ('debug-config.min' | translate: { number:  maxDebugModeDurationMinutes }) } }}
         </div>
       </mat-slide-toggle>
-      <button mat-icon-button *ngIf="(isDebugAllActive$ | async)"
+      <button mat-icon-button *ngIf="(isDebugAllActive$ | async) && !debugAll"
               class="tb-mat-20"
               matTooltip="{{ 'action.reset' | translate }}"
               matTooltipPosition="above"
