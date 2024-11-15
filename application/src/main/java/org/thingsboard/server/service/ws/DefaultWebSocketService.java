@@ -170,10 +170,10 @@ public class DefaultWebSocketService implements WebSocketService {
     private final TbCoreDeviceRpcService deviceRpcService;
 
     @Value("${server.rest.server_side_rpc.min_timeout:5000}")
-    private final long rpcMinTimeout;
+    private long rpcMinTimeout;
 
     @Value("${server.rest.server_side_rpc.default_timeout:10000}")
-    private final long rpcDefaultTimeout;
+    private long rpcDefaultTimeout;
 
     @PostConstruct
     public void init() {
@@ -440,7 +440,7 @@ public class DefaultWebSocketService implements WebSocketService {
             if (cmd.getEntityId() == null || cmd.getEntityId().isEmpty() || cmd.getEntityType() == null || cmd.getEntityType().isEmpty()) {
                 throw new IllegalArgumentException("Device id is empty!");
             }
-            if (cmd.getRpcjson() == null || cmd.getRpcjson().isEmpty()) {
+            if (cmd.getRpcJson() == null || cmd.getRpcJson().isEmpty()) {
                 throw new IllegalArgumentException("RPC JSON is empty!");
             }
         })) return;
@@ -453,7 +453,7 @@ public class DefaultWebSocketService implements WebSocketService {
         boolean oneWay = cmd.isOneway();
         long timeout = cmd.getTimeout() > 0 ? cmd.getTimeout() : rpcDefaultTimeout;
         long expTime = cmd.getExpTime() > 0 ? cmd.getExpTime() : System.currentTimeMillis() + Math.max(rpcMinTimeout, timeout);
-        JsonNode rpcRequestBody = JacksonUtil.toJsonNode(cmd.getRpcjson());
+        JsonNode rpcRequestBody = JacksonUtil.toJsonNode(cmd.getRpcJson());
         ToDeviceRpcRequestBody body = new ToDeviceRpcRequestBody(rpcRequestBody.get("method").asText(), JacksonUtil.toString(rpcRequestBody.get("params")));
         boolean persisted = cmd.isPersisted();
         int retries = Math.max(cmd.getRetries(), 0);

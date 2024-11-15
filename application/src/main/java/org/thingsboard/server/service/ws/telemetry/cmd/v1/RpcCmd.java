@@ -34,7 +34,7 @@ public class RpcCmd implements WsCmd {
     private int cmdId;  //required
     private String entityType;  //required
     private String entityId;  //required
-    private String rpcjson;  //required
+    private String rpcJson;  //required
     private long timeout;
     private long expTime;
     private boolean persisted;
