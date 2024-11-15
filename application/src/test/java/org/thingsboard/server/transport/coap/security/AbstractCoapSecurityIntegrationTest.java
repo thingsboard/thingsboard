@@ -40,6 +40,7 @@ import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
 import org.thingsboard.server.transport.coap.x509.CertPrivateKey;
 import org.thingsboard.server.transport.coap.x509.CoapClientX509Test;
 import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
@@ -48,7 +49,9 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+
 import org.eclipse.californium.scandium.dtls.x509.StaticNewAdvancedCertificateVerifier;
+
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -58,6 +61,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -194,19 +198,21 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
         DeviceId deviceId = deviceX509.getId();
         JsonNode expectedNode = JacksonUtil.toJsonNode(PAYLOAD_VALUES_STR);
         List<String> expectedKeys = getKeysFromNode(expectedNode);
-        List<String> actualKeys = getActualKeysList(deviceId, expectedKeys);
+        List<String> actualKeys = getActualKeysList(deviceId, expectedKeys, "attributes/CLIENT_SCOPE");
         assertNotNull(actualKeys);
 
         Set<String> actualKeySet = new HashSet<>(actualKeys);
         Set<String> expectedKeySet = new HashSet<>(expectedKeys);
         assertEquals(expectedKeySet, actualKeySet);
 
-        String getAttributesValuesUrl = getAttributesValuesUrl(deviceId, actualKeySet);
+        String getAttributesValuesUrl = getAttributesValuesUrl(deviceId, actualKeySet, "attributes/CLIENT_SCOPE");
         List<Map<String, Object>> actualValues = doGetAsyncTyped(getAttributesValuesUrl, new TypeReference<>() {
         });
-        assertAttributesValues(actualValues, expectedNode);
+        assertValuesList(actualValues, expectedNode);
     }
-    protected void clientX509FromPathUpdateAttributesTest() throws Exception {
+
+    protected void clientX509FromPathUpdateFeatureTypeTest(FeatureType featureType) throws Exception {
+        String apiSuffix = FeatureType.ATTRIBUTES.equals(featureType) ? "attributes/CLIENT_SCOPE" : "timeseries";
         CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
                 .deviceName("Test Post Attribute device json payload, security X509 from Path")
                 .coapDeviceType(CoapDeviceType.DEFAULT)
@@ -214,32 +220,39 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
                 .build();
         CertPrivateKey certPrivateKey = new CertPrivateKey(CREDENTIALS_PATH_CERT_PEM, CREDENTIALS_PATH_KEY_PEM);
         Device deviceX509 = createDeviceWithX509(configProperties, "CoapX509TrustNoFromPath", certPrivateKey.getCert());
-        clientX509 = new CoapClientX509Test(certPrivateKey, FeatureType.ATTRIBUTES);
+        clientX509 = new CoapClientX509Test(certPrivateKey, featureType);
         CoapResponse coapResponseX509 = clientX509.postMethod(PAYLOAD_VALUES_STR.getBytes());
         assertEquals(CoAP.ResponseCode.CREATED, coapResponseX509.getCode());
         DeviceId deviceId = deviceX509.getId();
         JsonNode expectedNode = JacksonUtil.toJsonNode(PAYLOAD_VALUES_STR);
         List<String> expectedKeys = getKeysFromNode(expectedNode);
-        List<String> actualKeys = getActualKeysList(deviceId, expectedKeys);
+        List<String> actualKeys = getActualKeysList(deviceId, expectedKeys, apiSuffix);
         assertNotNull(actualKeys);
 
         Set<String> actualKeySet = new HashSet<>(actualKeys);
         Set<String> expectedKeySet = new HashSet<>(expectedKeys);
         assertEquals(expectedKeySet, actualKeySet);
 
-        String getAttributesValuesUrl = getAttributesValuesUrl(deviceId, actualKeySet);
-        List<Map<String, Object>> actualValues = doGetAsyncTyped(getAttributesValuesUrl, new TypeReference<>() {
-        });
-        assertAttributesValues(actualValues, expectedNode);
+        String getAttributesValuesUrl = getAttributesValuesUrl(deviceId, actualKeySet, apiSuffix);
+        if (FeatureType.ATTRIBUTES.equals(featureType)) {
+            List<Map<String, Object>> actualValuesAttributes = doGetAsyncTyped(getAttributesValuesUrl, new TypeReference<>() {
+            });
+            assertValuesList(actualValuesAttributes, expectedNode);
+        } else if (FeatureType.TELEMETRY.equals(featureType)) {
+            Map<String, List<Map<String, Object>>> actualValuesTelemetry = doGetAsyncTyped(getAttributesValuesUrl, new TypeReference<>() {
+            });
+            assertNotNull(actualValuesTelemetry);
+            assertValuesProto(actualValuesTelemetry, expectedNode);
+        }
     }
 
-    private List<String> getActualKeysList(DeviceId deviceId, List<String> expectedKeys) throws Exception {
+    private List<String> getActualKeysList(DeviceId deviceId, List<String> expectedKeys, String apiSuffix) throws Exception {
         long start = System.currentTimeMillis();
         long end = System.currentTimeMillis() + 5000;
 
         List<String> actualKeys = null;
         while (start <= end) {
-            actualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/attributes/CLIENT_SCOPE", new TypeReference<>() {
+            actualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/" + apiSuffix, new TypeReference<>() {
             });
             if (actualKeys.size() == expectedKeys.size()) {
                 break;
@@ -250,8 +263,26 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
         return actualKeys;
     }
 
-    private String getAttributesValuesUrl(DeviceId deviceId, Set<String> actualKeySet) {
-        return "/api/plugins/telemetry/DEVICE/" + deviceId + "/values/attributes/CLIENT_SCOPE?keys=" + String.join(",", actualKeySet);
+    private List<String> getActualKeysListTelemetry(DeviceId deviceId, List<String> expectedKeys) throws Exception {
+        long start = System.currentTimeMillis();
+        long end = System.currentTimeMillis() + 3000;
+
+        List<String> actualKeys = null;
+        while (start <= end) {
+            actualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/timeseries", new TypeReference<>() {
+            });
+            if (actualKeys.size() == expectedKeys.size()) {
+                break;
+            }
+            Thread.sleep(100);
+            start += 100;
+        }
+        return actualKeys;
+    }
+
+    private String getAttributesValuesUrl(DeviceId deviceId, Set<String> actualKeySet, String apiSuffix) {
+        //     "/api/plugins/telemetry/DEVICE/" + deviceId + "/values/timeseries?keys=" + String.join(",", actualKeySet);
+        return "/api/plugins/telemetry/DEVICE/" + deviceId + "/values/" + apiSuffix + "?keys=" + String.join(",", actualKeySet);
     }
 
     private List getKeysFromNode(JsonNode jNode) {
@@ -263,36 +294,87 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
         return jKeys;
     }
 
-    protected void assertAttributesValues(List<Map<String, Object>> actualValues, JsonNode expectedValues) {
+    protected void assertValuesProto(Map<String, List<Map<String, Object>>> actualValues, JsonNode expectedValues) {
+        assertTrue(actualValues.size() > 0);
+        assertEquals(expectedValues.size(), actualValues.size());
+        for (Map.Entry<String, List<Map<String, Object>>> entry : actualValues.entrySet()) {
+            String key = entry.getKey();
+            List<Map<String, Object>> tsKv = entry.getValue();
+            Object actualValue = tsKv.get(0).get("value");
+            assertTrue(expectedValues.has(key));
+            JsonNode expectedValue = expectedValues.get(key);
+            assertExpectedActualValueProto(expectedValue, actualValue);
+        }
+    }
+
+    protected void assertValuesList(List<Map<String, Object>> actualValues, JsonNode expectedValues) {
+        assertTrue(actualValues.size() > 0);
+        assertEquals(expectedValues.size(), actualValues.size());
         for (Map<String, Object> map : actualValues) {
             String key = (String) map.get("key");
             Object actualValue = map.get("value");
             assertTrue(expectedValues.has(key));
             JsonNode expectedValue = expectedValues.get(key);
-            switch (expectedValue.getNodeType()) {
-                case STRING:
-                    assertEquals(expectedValue.asText(), actualValue);
-                    break;
-                case NUMBER:
-                    if (expectedValue.isInt()) {
-                        assertEquals(expectedValue.asInt(), actualValue);
-                    } else if (expectedValue.isLong()) {
-                        assertEquals(expectedValue.asLong(), actualValue);
-                    } else if (expectedValue.isFloat() || expectedValue.isDouble()) {
-                        assertEquals(expectedValue.asDouble(), actualValue);
-                    }
-                    break;
-                case BOOLEAN:
-                    assertEquals(expectedValue.asBoolean(), actualValue);
-                    break;
-                case ARRAY:
-                case OBJECT:
-                    assertNotNull(actualValue);
-                    assertEquals(expectedValue.size(), ((LinkedHashMap) actualValue).size());
-                    break;
-                default:
-                    break;
-            }
+            assertExpectedActualValue(expectedValue, actualValue);
+        }
+    }
+
+    protected void assertExpectedActualValueProto(JsonNode expectedValue, Object actualValue) {
+        switch (expectedValue.getNodeType()) {
+            case STRING:
+                assertEquals(expectedValue.asText(), actualValue);
+                break;
+            case NUMBER:
+                if (expectedValue.isInt()) {
+                    Integer iActual = Integer.valueOf(actualValue.toString());
+                    Integer iExpected = expectedValue.asInt();
+                    assertEquals(iExpected, iActual);
+                } else if (expectedValue.isLong()) {
+                    Long lActual = Long.valueOf(actualValue.toString());
+                    Long lExpected = expectedValue.asLong();
+                    assertEquals(lExpected, lActual);
+                } else if (expectedValue.isFloat() || expectedValue.isDouble()) {
+                    Double dActual = Double.valueOf(actualValue.toString());
+                    Double dExpected = expectedValue.asDouble();
+                    assertEquals(dExpected, dActual);
+                }
+                break;
+            case BOOLEAN:
+                assertTrue(actualValue.equals("true") || actualValue.equals("false"));
+                assertEquals(expectedValue.asBoolean(), actualValue.equals("true"));
+                break;
+            case ARRAY:
+            case OBJECT:
+                assertEquals(expectedValue.toString(), actualValue);
+                break;
+            default:
+                break;
+        }
+    }
+
+    protected void assertExpectedActualValue(JsonNode expectedValue, Object actualValue) {
+        switch (expectedValue.getNodeType()) {
+            case STRING:
+                assertEquals(expectedValue.asText(), actualValue);
+                break;
+            case NUMBER:
+                if (expectedValue.isInt()) {
+                    assertEquals(expectedValue.asInt(), actualValue);
+                } else if (expectedValue.isLong()) {
+                    assertEquals(expectedValue.asLong(), actualValue);
+                } else if (expectedValue.isFloat() || expectedValue.isDouble()) {
+                    assertEquals(expectedValue.asDouble(), actualValue);
+                }
+                break;
+            case BOOLEAN:
+                assertEquals(expectedValue.asBoolean(), actualValue);
+                break;
+            case ARRAY:
+            case OBJECT:
+                expectedValue.toString().equals(JacksonUtil.toString(actualValue));
+                break;
+            default:
+                break;
         }
     }
 

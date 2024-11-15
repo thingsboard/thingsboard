@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.coap.security.sql;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Test;
+import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.coap.security.AbstractCoapSecurityIntegrationTest;
 
@@ -37,6 +38,10 @@ public class CoapClientX509SecurityIntegrationTest extends AbstractCoapSecurityI
 
     @Test
     public void testX509NoTrustFromPathConnectCoapSuccessUpdateAttributesSuccess() throws Exception {
-        clientX509FromPathUpdateAttributesTest();
+        clientX509FromPathUpdateFeatureTypeTest(FeatureType.ATTRIBUTES);
+    }
+    @Test
+    public void testX509NoTrustFromPathConnectCoapSuccessUpdateTelemetrySuccess() throws Exception {
+        clientX509FromPathUpdateFeatureTypeTest(FeatureType.TELEMETRY);
     }
 }
