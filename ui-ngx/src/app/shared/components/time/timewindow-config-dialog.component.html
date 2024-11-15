@@ -62,7 +62,7 @@
             formControlName="timewindowMs"
             subscriptSizing="dynamic"
             appearance="outline"
-            [allowedIntervals]="timewindowForm.get('realtime.allowedLastIntervals').value"
+            [allowedIntervals]="timewindowForm.get('realtime.advancedParams.allowedLastIntervals').value"
             [disabledAdvanced]="timewindowForm.get('realtime.disableCustomInterval').value"
             [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
                             timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
@@ -90,7 +90,7 @@
           onlyCurrentInterval="true"
           subscriptSizing="dynamic"
           appearance="outline"
-          [allowedIntervals]="timewindowForm.get('realtime.allowedQuickIntervals').value"
+          [allowedIntervals]="timewindowForm.get('realtime.advancedParams.allowedQuickIntervals').value"
           [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
                           timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
           <button *ngIf="!(timewindowForm.get('realtime.hideQuickInterval').value ||
@@ -131,7 +131,7 @@
             formControlName="timewindowMs"
             subscriptSizing="dynamic"
             appearance="outline"
-            [allowedIntervals]="timewindowForm.get('history.allowedLastIntervals').value"
+            [allowedIntervals]="timewindowForm.get('history.advancedParams.allowedLastIntervals').value"
             [disabledAdvanced]="timewindowForm.get('history.disableCustomInterval').value"
             [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
                           timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
@@ -172,7 +172,7 @@
             formControlName="quickInterval"
             subscriptSizing="dynamic"
             appearance="outline"
-            [allowedIntervals]="timewindowForm.get('history.allowedQuickIntervals').value"
+            [allowedIntervals]="timewindowForm.get('history.advancedParams.allowedQuickIntervals').value"
             [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
                         timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
             <button *ngIf="!(timewindowForm.get('history.hideQuickInterval').value ||

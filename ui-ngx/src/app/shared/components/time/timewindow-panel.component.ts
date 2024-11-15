@@ -521,5 +521,4 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
       });
   }
 
-  protected readonly AggregationType = AggregationType;
 }

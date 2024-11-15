@@ -84,18 +84,22 @@ export class IntervalMath {
   }
 }
 
+export interface TimewindowAdvancedParams {
+  allowedLastIntervals? : Array<Interval>;
+  allowedQuickIntervals? : Array<QuickTimeInterval>;
+}
+
 export interface IntervalWindow {
   interval?: Interval;
   timewindowMs?: number;
   quickInterval?: QuickTimeInterval;
-  allowedLastIntervals? : Array<Interval>;
-  allowedQuickIntervals? : Array<QuickTimeInterval>;
   disableCustomInterval?: boolean;
   disableCustomGroupInterval?: boolean;
   hideInterval?: boolean;
   hideLastInterval?: boolean;
   hideQuickInterval?: boolean;
   hideFixedInterval?: boolean;
+  advancedParams?: TimewindowAdvancedParams
 }
 
 export interface RealtimeWindow extends IntervalWindow{
