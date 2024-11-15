@@ -366,6 +366,10 @@ export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalO
       if (isDefined(value.realtime.timewindowMs)) {
         model.realtime.timewindowMs = value.realtime.timewindowMs;
       }
+
+      if (value.realtime.advancedParams) {
+        model.realtime.advancedParams = value.realtime.advancedParams;
+      }
     }
     if (isDefined(value.history)) {
       if (isDefinedAndNotNull(value.history.hideInterval)) {
@@ -408,6 +412,10 @@ export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalO
         if (isDefined(value.history.fixedTimewindow.endTimeMs)) {
           model.history.fixedTimewindow.endTimeMs = value.history.fixedTimewindow.endTimeMs;
         }
+      }
+
+      if (value.history.advancedParams) {
+        model.history.advancedParams = value.history.advancedParams;
       }
     }
     if (value.aggregation) {
@@ -467,6 +475,9 @@ export const toHistoryTimewindow = (timewindow: Timewindow, startTimeMs: number,
     },
     timezone: timewindow.timezone
   };
+  if (timewindow.history?.advancedParams) {
+    historyTimewindow.history.advancedParams = timewindow.history.advancedParams;
+  }
   if (timewindow.allowedAggTypes?.length) {
     historyTimewindow.allowedAggTypes = timewindow.allowedAggTypes;
   }

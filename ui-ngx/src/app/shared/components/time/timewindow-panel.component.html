@@ -51,6 +51,7 @@
             formControlName="timewindowMs"
             subscriptSizing="dynamic"
             appearance="outline"
+            [allowedIntervals]="realtimeAllowedLastIntervals"
             [disabledAdvanced]="timewindow.realtime.disableCustomInterval"
             [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
                               timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
@@ -63,6 +64,7 @@
             onlyCurrentInterval="true"
             subscriptSizing="dynamic"
             appearance="outline"
+            [allowedIntervals]="realtimeAllowedQuickIntervals"
             [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
                               timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
           </tb-quick-time-interval>
@@ -95,6 +97,7 @@
             formControlName="timewindowMs"
             subscriptSizing="dynamic"
             appearance="outline"
+            [allowedIntervals]="historyAllowedLastIntervals"
             [disabledAdvanced]="timewindow.history.disableCustomInterval"
             [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
                             timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
@@ -116,6 +119,7 @@
             formControlName="quickInterval"
             subscriptSizing="dynamic"
             appearance="outline"
+            [allowedIntervals]="historyAllowedQuickIntervals"
             [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
                           timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
           </tb-quick-time-interval>

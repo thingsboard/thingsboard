@@ -355,14 +355,6 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
         && !(this.quickIntervalOnly && timewindowFormValue.history.historyType === HistoryWindowType.LAST_INTERVAL)) {
         const allowedLastIntervals = timewindowFormValue.realtime.advancedParams.allowedLastIntervals;
         const allowedQuickIntervals = timewindowFormValue.realtime.advancedParams.allowedQuickIntervals;
-        // this.timewindowForm.get('realtime').patchValue({
-        //   realtimeType: Object.keys(RealtimeWindowType).includes(HistoryWindowType[timewindowFormValue.history.historyType]) ?
-        //     RealtimeWindowType[HistoryWindowType[timewindowFormValue.history.historyType]] :
-        //     timewindowFormValue.realtime.realtimeType,
-        //   timewindowMs: timewindowFormValue.history.timewindowMs,
-        //   quickInterval: timewindowFormValue.history.quickInterval.startsWith('CURRENT') ?
-        //     timewindowFormValue.history.quickInterval : timewindowFormValue.realtime.quickInterval
-        // });
         if (Object.keys(RealtimeWindowType).includes(HistoryWindowType[timewindowFormValue.history.historyType])) {
           this.timewindowForm.get('realtime.realtimeType').patchValue(RealtimeWindowType[HistoryWindowType[timewindowFormValue.history.historyType]]);
         }
@@ -378,11 +370,6 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     } else {
       const allowedLastIntervals = timewindowFormValue.history.advancedParams.allowedLastIntervals;
       const allowedQuickIntervals = timewindowFormValue.history.advancedParams.allowedQuickIntervals;
-      // this.timewindowForm.get('history').patchValue({
-      //   historyType: HistoryWindowType[RealtimeWindowType[timewindowFormValue.realtime.realtimeType]],
-      //   timewindowMs: timewindowFormValue.realtime.timewindowMs,
-      //   quickInterval: timewindowFormValue.realtime.quickInterval
-      // });
       this.timewindowForm.get('history.historyType').patchValue(HistoryWindowType[RealtimeWindowType[timewindowFormValue.realtime.realtimeType]]);
       if (!allowedLastIntervals?.length || allowedLastIntervals?.includes(timewindowFormValue.realtime.timewindowMs)) {
         this.timewindowForm.get('history.timewindowMs').patchValue(timewindowFormValue.realtime.timewindowMs);
@@ -407,11 +394,42 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
   update() {
     const timewindowFormValue = this.timewindowForm.getRawValue();
     this.timewindow = mergeDeep(this.timewindow, timewindowFormValue);
+
+    if (timewindowFormValue.realtime.advancedParams.allowedLastIntervals?.length) {
+      this.timewindow.realtime.advancedParams.allowedLastIntervals = timewindowFormValue.realtime.advancedParams.allowedLastIntervals;
+    } else {
+      delete this.timewindow.realtime.advancedParams.allowedLastIntervals;
+    }
+    if (timewindowFormValue.realtime.advancedParams.allowedQuickIntervals?.length) {
+      this.timewindow.realtime.advancedParams.allowedQuickIntervals = timewindowFormValue.realtime.advancedParams.allowedQuickIntervals;
+    } else {
+      delete this.timewindow.realtime.advancedParams.allowedQuickIntervals;
+    }
+
+    if (timewindowFormValue.history.advancedParams.allowedLastIntervals?.length) {
+      this.timewindow.history.advancedParams.allowedLastIntervals = timewindowFormValue.history.advancedParams.allowedLastIntervals;
+    } else {
+      delete this.timewindow.history.advancedParams.allowedLastIntervals;
+    }
+    if (timewindowFormValue.history.advancedParams.allowedQuickIntervals?.length) {
+      this.timewindow.history.advancedParams.allowedQuickIntervals = timewindowFormValue.history.advancedParams.allowedQuickIntervals;
+    } else {
+      delete this.timewindow.history.advancedParams.allowedQuickIntervals;
+    }
+
+    if (!Object.keys(this.timewindow.realtime.advancedParams).length) {
+      delete this.timewindow.realtime.advancedParams;
+    }
+    if (!Object.keys(this.timewindow.history.advancedParams).length) {
+      delete this.timewindow.history.advancedParams;
+    }
+
     if (timewindowFormValue.allowedAggTypes?.length) {
       this.timewindow.allowedAggTypes = timewindowFormValue.allowedAggTypes;
     } else {
       delete this.timewindow.allowedAggTypes;
     }
+
     if (!this.aggregation) {
       delete this.timewindow.aggregation;
     }
