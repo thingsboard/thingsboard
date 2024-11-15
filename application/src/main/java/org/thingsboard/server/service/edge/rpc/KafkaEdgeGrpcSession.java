@@ -18,7 +18,6 @@ package org.thingsboard.server.service.edge.rpc;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.grpc.stub.StreamObserver;
-import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -43,19 +42,18 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.BiConsumer;
 
 @Slf4j
-public class KafkaEdgeGrpcSession extends AbstractEdgeGrpcSession<KafkaEdgeGrpcSession> {
+public class KafkaEdgeGrpcSession extends AbstractEdgeGrpcSession {
 
     private final TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> edgeEventsConsumer;
 
     private volatile boolean isHighPriorityProcessing;
-    private volatile boolean isConsumerInit;
 
     private QueueConsumerManager<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumer;
 
     private ExecutorService consumerExecutor;
 
     public KafkaEdgeGrpcSession(EdgeContextComponent ctx, TbCoreQueueFactory tbCoreQueueFactory, StreamObserver<ResponseMsg> outputStream,
-                                BiConsumer<EdgeId, KafkaEdgeGrpcSession> sessionOpenListener,
+                                BiConsumer<EdgeId, AbstractEdgeGrpcSession> sessionOpenListener,
                                 BiConsumer<Edge, UUID> sessionCloseListener, ScheduledExecutorService sendDownlinkExecutorService,
                                 int maxInboundMessageSize, int maxHighPriorityQueueSizePerSession) {
         super(ctx, outputStream, sessionOpenListener, sessionCloseListener, sendDownlinkExecutorService, maxInboundMessageSize, maxHighPriorityQueueSizePerSession);
@@ -82,32 +80,23 @@ public class KafkaEdgeGrpcSession extends AbstractEdgeGrpcSession<KafkaEdgeGrpcS
                 log.error("[{}] Failed to process all downlink messages", sessionId, e);
             }
         } else {
+            try {
+                Thread.sleep(ctx.getEdgeEventStorageSettings().getNoRecordsSleepInterval());
+            } catch (InterruptedException interruptedException) {
+                log.trace("Failed to wait until the server has capacity to handle new requests", interruptedException);
+            }
             log.trace("[{}][{}] edge is not connected or sync is not completed. Skipping iteration", tenantId, sessionId);
         }
     }
 
-    @PreDestroy
-    private void destroy() {
-        consumer.stop();
-        consumerExecutor.shutdown();
-    }
-
-    public void stopConsumer() {
-        consumer.stop();
-        consumerExecutor.shutdown();
-    }
-
     @Override
-    public ListenableFuture<Boolean> migrateEdgeEvents(boolean isMigrationProcessed) throws Exception {
-        if (isMigrationProcessed) {
-            return Futures.immediateFuture(Boolean.FALSE);
-        }
+    public ListenableFuture<Boolean> migrateEdgeEvents() throws Exception {
         return super.processEdgeEvents();
     }
 
     @Override
     public ListenableFuture<Boolean> processEdgeEvents() {
-        if (!isConsumerInit) {
+        if (consumer == null) {
             this.consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("edge-event-consumer"));
             this.consumer = QueueConsumerManager.<TbProtoQueueMsg<ToEdgeEventNotificationMsg>>builder()
                     .name("TB Edge events")
@@ -117,7 +106,6 @@ public class KafkaEdgeGrpcSession extends AbstractEdgeGrpcSession<KafkaEdgeGrpcS
                     .consumerExecutor(consumerExecutor)
                     .threadPrefix("edge-events")
                     .build();
-            isConsumerInit = true;
             consumer.subscribe();
             consumer.launch();
         }
@@ -128,6 +116,12 @@ public class KafkaEdgeGrpcSession extends AbstractEdgeGrpcSession<KafkaEdgeGrpcS
     public void processHighPriorityEvents() {
         isHighPriorityProcessing = true;
         super.processHighPriorityEvents();
+    }
+
+    @Override
+    public void destroy() {
+        consumer.stop();
+        consumerExecutor.shutdown();
     }
 
 }

@@ -105,7 +105,7 @@ import java.util.function.BiConsumer;
 
 @Slf4j
 @Data
-public abstract class AbstractEdgeGrpcSession<T extends AbstractEdgeGrpcSession<T>> implements EdgeGrpcSession, Closeable {
+public abstract class AbstractEdgeGrpcSession implements EdgeGrpcSession, Closeable {
 
     private static final String QUEUE_START_TS_ATTR_KEY = "queueStartTs";
     private static final String QUEUE_START_SEQ_ID_ATTR_KEY = "queueStartSeqId";
@@ -116,7 +116,7 @@ public abstract class AbstractEdgeGrpcSession<T extends AbstractEdgeGrpcSession<
     protected static final ConcurrentLinkedQueue<EdgeEvent> highPriorityQueue = new ConcurrentLinkedQueue<>();
 
     protected UUID sessionId;
-    private BiConsumer<EdgeId, T> sessionOpenListener;
+    private BiConsumer<EdgeId, AbstractEdgeGrpcSession> sessionOpenListener;
     private BiConsumer<Edge, UUID> sessionCloseListener;
 
     private final EdgeSessionState sessionState = new EdgeSessionState();
@@ -146,7 +146,7 @@ public abstract class AbstractEdgeGrpcSession<T extends AbstractEdgeGrpcSession<
     private ScheduledExecutorService sendDownlinkExecutorService;
 
     public AbstractEdgeGrpcSession(EdgeContextComponent ctx, StreamObserver<ResponseMsg> outputStream,
-                                   BiConsumer<EdgeId, T> sessionOpenListener,
+                                   BiConsumer<EdgeId, AbstractEdgeGrpcSession> sessionOpenListener,
                                    BiConsumer<Edge, UUID> sessionCloseListener,
                                    ScheduledExecutorService sendDownlinkExecutorService,
                                    int maxInboundMessageSize, int maxHighPriorityQueueSizePerSession) {
@@ -299,11 +299,6 @@ public abstract class AbstractEdgeGrpcSession<T extends AbstractEdgeGrpcSession<
             if (isConnected() && !pageData.getData().isEmpty()) {
                 log.trace("[{}][{}][{}] event(s) are going to be processed.", tenantId, sessionId, pageData.getData().size());
                 List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(pageData.getData());
-                for (DownlinkMsg downlinkMsg : downlinkMsgsPack) {
-                    if (downlinkMsg.getEntityDataCount() > 0) {
-                        System.out.println("downlink = " + downlinkMsg);
-                    }
-                }
                 Futures.addCallback(sendDownlinkMsgsPack(downlinkMsgsPack), new FutureCallback<>() {
                     @Override
                     public void onSuccess(@Nullable Boolean isInterrupted) {
@@ -351,7 +346,7 @@ public abstract class AbstractEdgeGrpcSession<T extends AbstractEdgeGrpcSession<
             tenantId = edge.getTenantId();
             try {
                 if (edge.getSecret().equals(request.getEdgeSecret())) {
-                    sessionOpenListener.accept(edge.getId(), (T) this);
+                    sessionOpenListener.accept(edge.getId(), this);
                     edgeVersion = request.getEdgeVersion();
                     processSaveEdgeVersionAsAttribute(request.getEdgeVersion().name());
                     return ConnectResponseMsg.newBuilder()

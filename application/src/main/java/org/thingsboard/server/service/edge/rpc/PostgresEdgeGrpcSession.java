@@ -29,10 +29,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.BiConsumer;
 
 @Slf4j
-public class PostgresEdgeGrpcSession extends AbstractEdgeGrpcSession<PostgresEdgeGrpcSession> {
+public class PostgresEdgeGrpcSession extends AbstractEdgeGrpcSession {
 
     PostgresEdgeGrpcSession(EdgeContextComponent ctx, StreamObserver<ResponseMsg> outputStream,
-                            BiConsumer<EdgeId, PostgresEdgeGrpcSession> sessionOpenListener,
+                            BiConsumer<EdgeId, AbstractEdgeGrpcSession> sessionOpenListener,
                             BiConsumer<Edge, UUID> sessionCloseListener, ScheduledExecutorService sendDownlinkExecutorService,
                             int maxInboundMessageSize, int maxHighPriorityQueueSizePerSession) {
         super(ctx, outputStream, sessionOpenListener, sessionCloseListener, sendDownlinkExecutorService, maxInboundMessageSize, maxHighPriorityQueueSizePerSession);
@@ -40,7 +40,10 @@ public class PostgresEdgeGrpcSession extends AbstractEdgeGrpcSession<PostgresEdg
     }
 
     @Override
-    public ListenableFuture<Boolean> migrateEdgeEvents(boolean isMigrationProcessed) {
+    public void destroy() {}
+
+    @Override
+    public ListenableFuture<Boolean> migrateEdgeEvents() {
         return Futures.immediateFuture(Boolean.FALSE);
     }
 

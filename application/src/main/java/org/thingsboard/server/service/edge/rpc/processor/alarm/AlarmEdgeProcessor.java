@@ -21,23 +21,18 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EdgeUtils;
-import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
-import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.AlarmId;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterableByTenantIdEntityId;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
@@ -58,6 +53,9 @@ public abstract class AlarmEdgeProcessor extends BaseAlarmProcessor implements A
 
     @Autowired
     private AlarmMsgConstructorFactory alarmMsgConstructorFactory;
+
+    @Autowired
+    private EntityService entityService;
 
     @Override
     public ListenableFuture<Void> processAlarmMsgFromEdge(TenantId tenantId, EdgeId edgeId, AlarmUpdateMsg alarmUpdateMsg) {
@@ -178,42 +176,19 @@ public abstract class AlarmEdgeProcessor extends BaseAlarmProcessor implements A
             case ADDED, UPDATED, ALARM_ACK, ALARM_CLEAR -> {
                 Alarm alarm = edgeCtx.getAlarmService().findAlarmById(tenantId, alarmId);
                 if (alarm != null) {
-                    return msgConstructor.constructAlarmUpdatedMsg(msgType, alarm, findOriginatorEntityName(tenantId, alarm));
+                    return msgConstructor.constructAlarmUpdatedMsg(msgType, alarm,
+                            entityService.fetchEntityName(tenantId, alarm.getOriginator()).orElse(null));
                 }
             }
             case ALARM_DELETE, DELETED -> {
                 Alarm deletedAlarm = JacksonUtil.convertValue(body, Alarm.class);
                 if (deletedAlarm != null) {
-                    return msgConstructor.constructAlarmUpdatedMsg(msgType, deletedAlarm, findOriginatorEntityName(tenantId, deletedAlarm));
+                    return msgConstructor.constructAlarmUpdatedMsg(msgType, deletedAlarm,
+                            entityService.fetchEntityName(tenantId, deletedAlarm.getOriginator()).orElse(null));
                 }
             }
         }
         return null;
-    }
-
-    private String findOriginatorEntityName(TenantId tenantId, Alarm alarm) {
-        String entityName = null;
-        switch (alarm.getOriginator().getEntityType()) {
-            case DEVICE -> {
-                Device deviceById = edgeCtx.getDeviceService().findDeviceById(tenantId, new DeviceId(alarm.getOriginator().getId()));
-                if (deviceById != null) {
-                    entityName = deviceById.getName();
-                }
-            }
-            case ASSET -> {
-                Asset assetById = edgeCtx.getAssetService().findAssetById(tenantId, new AssetId(alarm.getOriginator().getId()));
-                if (assetById != null) {
-                    entityName = assetById.getName();
-                }
-            }
-            case ENTITY_VIEW -> {
-                EntityView entityViewById = edgeCtx.getEntityViewService().findEntityViewById(tenantId, new EntityViewId(alarm.getOriginator().getId()));
-                if (entityViewById != null) {
-                    entityName = entityViewById.getName();
-                }
-            }
-        }
-        return entityName;
     }
 
 }

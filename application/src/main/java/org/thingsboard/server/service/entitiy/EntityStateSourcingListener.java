@@ -17,6 +17,7 @@ package org.thingsboard.server.service.entitiy;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -64,6 +65,7 @@ import java.util.Set;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class EntityStateSourcingListener {
 
     private final TopicService topicService;
@@ -72,15 +74,6 @@ public class EntityStateSourcingListener {
 
     private final Optional<TbKafkaSettings> kafkaSettings;
     private final Optional<TbKafkaTopicConfigs> kafkaTopicConfigs;
-
-    public EntityStateSourcingListener(TopicService topicService, TbClusterService tbClusterService, TenantService tenantService,
-                                       Optional<TbKafkaSettings> kafkaSettings, Optional<TbKafkaTopicConfigs> kafkaTopicConfigs) {
-        this.topicService = topicService;
-        this.tbClusterService = tbClusterService;
-        this.tenantService = tenantService;
-        this.kafkaSettings = kafkaSettings;
-        this.kafkaTopicConfigs = kafkaTopicConfigs;
-    }
 
     @PostConstruct
     public void init() {

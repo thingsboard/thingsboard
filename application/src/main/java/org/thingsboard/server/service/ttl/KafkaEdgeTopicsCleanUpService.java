@@ -17,6 +17,7 @@ package org.thingsboard.server.service.ttl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -40,7 +41,6 @@ import org.thingsboard.server.service.state.DefaultDeviceStateService;
 
 import java.time.Instant;
 import java.util.Date;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -52,8 +52,6 @@ import java.util.concurrent.TimeUnit;
 @ConditionalOnExpression("'${queue.type:null}'=='kafka' && ${edges.enabled:true}")
 public class KafkaEdgeTopicsCleanUpService {
 
-    private static final long ONE_MONTH_MILLIS = TimeUnit.DAYS.toChronoUnit().getDuration().multipliedBy(30).toMillis();
-
     private final EdgeService edgeService;
     private final TenantService tenantService;
     private final AttributesService attributesService;
@@ -63,6 +61,9 @@ public class KafkaEdgeTopicsCleanUpService {
 
     private final TbKafkaSettings kafkaSettings;
     private final TbKafkaTopicConfigs kafkaTopicConfigs;
+
+    @Value("${sql.ttl.edge_events.edge_events_ttl:2628000}")
+    private long ttlSeconds;
 
     private final ExecutorService executorService = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("kafka-edge-topic-cleanup"));
 
@@ -87,25 +88,26 @@ public class KafkaEdgeTopicsCleanUpService {
 
         PageDataIterable<EdgeId> edgeIds = new PageDataIterable<>(link -> edgeService.findEdgeIdsByTenantId(tenantId, link), 1024);
         long currentTimeMillis = System.currentTimeMillis();
+        long ttlMillis = TimeUnit.SECONDS.toChronoUnit().getDuration().multipliedBy(ttlSeconds).toMillis();
 
         for (EdgeId edgeId : edgeIds) {
-            Optional<AttributeKvEntry> attributeOpt = attributesService.find(tenantId, edgeId, AttributeScope.SERVER_SCOPE, DefaultDeviceStateService.LAST_CONNECT_TIME).get();
-            if (attributeOpt.isPresent()) {
-                Optional<Long> lastConnectTimeOpt = attributeOpt.get().getLongValue();
-                if (lastConnectTimeOpt.isPresent() && isTopicExpired(lastConnectTimeOpt.get(), currentTimeMillis)) {
-                    String topic = topicService.buildEdgeEventNotificationsTopicPartitionInfo(tenantId, edgeId).getTopic();
-                    TbKafkaAdmin kafkaAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdgeEventConfigs());
-                    if (kafkaAdmin.isTopicEmpty(topic)) {
-                        kafkaAdmin.deleteTopic(topic);
-                        log.info("Removed outdated topic for tenant {} and edge with id {} older than {}", tenantId, edgeId, Date.from(Instant.ofEpochMilli(currentTimeMillis - ONE_MONTH_MILLIS)));
-                    }
-                }
-            }
+            attributesService.find(tenantId, edgeId, AttributeScope.SERVER_SCOPE, DefaultDeviceStateService.LAST_CONNECT_TIME).get()
+                    .flatMap(AttributeKvEntry::getLongValue)
+                    .filter(lastConnectTime -> isTopicExpired(lastConnectTime, ttlMillis, currentTimeMillis))
+                    .ifPresent(lastConnectTime -> {
+                        String topic = topicService.buildEdgeEventNotificationsTopicPartitionInfo(tenantId, edgeId).getTopic();
+                        TbKafkaAdmin kafkaAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdgeEventConfigs());
+                        if (kafkaAdmin.isTopicEmpty(topic)) {
+                            kafkaAdmin.deleteTopic(topic);
+                            log.info("Removed outdated topic for tenant {} and edge with id {} older than {}",
+                                    tenantId, edgeId, Date.from(Instant.ofEpochMilli(currentTimeMillis - ttlMillis)));
+                        }
+                    });
         }
     }
 
-    private boolean isTopicExpired(long lastConnectTime, long currentTimeMillis) {
-        return lastConnectTime + ONE_MONTH_MILLIS < currentTimeMillis;
+    private boolean isTopicExpired(long lastConnectTime, long ttlMillis, long currentTimeMillis) {
+        return lastConnectTime + ttlMillis < currentTimeMillis;
     }
 
 }
