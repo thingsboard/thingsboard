@@ -147,6 +147,76 @@ $color: map_merge($color, (background: $tb-dark-theme-background));
 $tb-dark-theme: map_merge($tb-dark-theme, (color: $color));
 $tb-dark-theme: map_merge($tb-dark-theme, $color);
 
+// New Theme: High Contrast
+$tb-high-contrast-indigo: (
+  50: #ffffff,
+  100: #e8e8e8,
+  200: #c5c5c5,
+  300: #9f9f9f,
+  400: #7a7a7a,
+  500: #000000, 
+  600: #ffffff, 
+  700: #1a1a1a,
+  800: #0d0d0d,
+  900: #000000,
+  A100: #ffff00, 
+  A200: #00ff00, 
+  A400: #ff0000, 
+  A700: #00ffff, 
+  contrast: (
+    50: black,
+    100: black,
+    200: black,
+    300: white,
+    400: white,
+    500: white,
+    600: black,
+    700: white,
+    800: white,
+    900: white,
+    A100: black,
+    A200: white,
+    A400: white,
+    A700: white,
+  )
+);
+
+$tb-high-contrast-primary: mat.m2-define-palette($tb-high-contrast-indigo);
+$tb-high-contrast-accent: mat.m2-define-palette(mat.$m2-pink-palette);
+
+$tb-high-contrast-theme-background: (
+  status-bar: black,
+  app-bar:    #000000,
+  background: #ffffff,
+  hover:      #c5c5c5,
+  card:       #ffffff,
+  dialog:     #ffffff,
+  disabled-button: #c5c5c5,
+  raised-button: #7a7a7a,
+  focused-button: #c5c5c5,
+  selected-button: #000000,
+  selected-disabled-button: #7a7a7a,
+  disabled-button-toggle: #c5c5c5,
+  unselected-chip: #000000,
+  disabled-list-option: #c5c5c5,
+  tooltip: #ffffff,
+);
+
+$tb-high-contrast-theme: mat.m2-define-light-theme((
+  color: (
+    primary: $tb-high-contrast-primary,
+    accent: $tb-high-contrast-accent,
+  ),
+  typography: mat.m2-define-typography-config(
+    $button: mat.m2-define-typography-level(16px, 36px, 700, $letter-spacing: 0.05em)
+  ),
+  density: 0,
+));
+
+$color: map_get($tb-high-contrast-theme, color);
+$color: map_merge($color, (background: $tb-high-contrast-theme-background));
+$tb-high-contrast-theme: map_merge($tb-high-contrast-theme, (color: $color));
+
 @mixin mat-fab-toolbar-theme($theme) {
   $primary: map-get($theme, primary);
   $accent: map-get($theme, accent);
@@ -266,3 +336,12 @@ $tb-dark-theme: map_merge($tb-dark-theme, $color);
 .tb-dark {
   @include mat.all-component-colors($tb-dark-theme);
 }
+
+.tb-high-contrast {
+  @include mat.all-component-themes($tb-high-contrast-theme);
+  @include mat-datetimepicker-theme($tb-high-contrast-theme);
+  @include tb-components-theme($tb-high-contrast-theme);
+  @include overwrites.theme-overwrites($tb-high-contrast-primary, $tb-high-contrast-theme);
+  @include mat.typography-hierarchy($tb-high-contrast-theme);
+}
+

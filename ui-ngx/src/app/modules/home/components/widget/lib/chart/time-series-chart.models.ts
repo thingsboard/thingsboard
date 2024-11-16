@@ -694,6 +694,7 @@ export const timeSeriesChartGridDefaultSettings: TimeSeriesChartGridSettings = {
 export interface TimeSeriesChartSettings extends TimeSeriesChartTooltipWidgetSettings, TimeSeriesChartComparisonSettings {
   thresholds: TimeSeriesChartThreshold[];
   darkMode: boolean;
+  highContrast: boolean;
   dataZoom: boolean;
   stack: boolean;
   grid: TimeSeriesChartGridSettings;
@@ -709,6 +710,7 @@ export interface TimeSeriesChartSettings extends TimeSeriesChartTooltipWidgetSet
 export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
   thresholds: [],
   darkMode: false,
+  highContrast: false,
   dataZoom: true,
   stack: false,
   grid: mergeDeep({} as TimeSeriesChartGridSettings,
@@ -1310,6 +1312,113 @@ export const updateDarkMode = (options: EChartsOption,
         const barSettings = item.dataKey.settings as ChartBarSettings;
         (item.barRenderContext.labelOption.rich.value as any).fill = prepareChartThemeColor(barSettings.labelColor,
           darkMode, 'series.label');
+      }
+    }
+  }
+  return options;
+};
+
+export const updateHighContrastMode = (
+  options: EChartsOption,
+  xAxisList: TimeSeriesChartXAxis[],
+  yAxisList: TimeSeriesChartYAxis[],
+  dataItems: TimeSeriesChartDataItem[],
+  highContrast: boolean
+): EChartsOption => {
+  options.highContrast = highContrast;
+  if (Array.isArray(options.yAxis)) {
+    for (let i = 0; i < options.yAxis.length; i++) {
+      const yAxis = options.yAxis[i];
+      const yAxisSettings = yAxisList[i].settings;
+      yAxis.nameTextStyle.color = prepareChartThemeColor(
+        yAxisSettings.labelColor,
+        highContrast,
+        "axis.label"
+      );
+      yAxis.axisLabel.color = prepareChartThemeColor(
+        yAxisSettings.tickLabelColor,
+        highContrast,
+        "axis.tickLabel"
+      );
+      yAxis.axisLine.lineStyle.color = prepareChartThemeColor(
+        yAxisSettings.lineColor,
+        highContrast,
+        "axis.line"
+      );
+      yAxis.axisTick.lineStyle.color = prepareChartThemeColor(
+        yAxisSettings.ticksColor,
+        highContrast,
+        "axis.ticks"
+      );
+      yAxis.splitLine.lineStyle.color = prepareChartThemeColor(
+        yAxisSettings.splitLinesColor,
+        highContrast,
+        "axis.splitLine"
+      );
+    }
+  }
+  if (Array.isArray(options.xAxis)) {
+    for (let i = 0; i < options.xAxis.length; i++) {
+      const xAxis = options.xAxis[i];
+      const xAxisSettings = xAxisList[i].settings;
+      xAxis.nameTextStyle.color = prepareChartThemeColor(
+        xAxisSettings.labelColor,
+        highContrast,
+        "axis.label"
+      );
+      xAxis.axisLabel.color = prepareChartThemeColor(
+        xAxisSettings.tickLabelColor,
+        highContrast,
+        "axis.tickLabel"
+      );
+      xAxis.axisLine.lineStyle.color = prepareChartThemeColor(
+        xAxisSettings.lineColor,
+        highContrast,
+        "axis.line"
+      );
+      xAxis.axisTick.lineStyle.color = prepareChartThemeColor(
+        xAxisSettings.ticksColor,
+        highContrast,
+        "axis.ticks"
+      );
+      xAxis.splitLine.lineStyle.color = prepareChartThemeColor(
+        xAxisSettings.splitLinesColor,
+        highContrast,
+        "axis.splitLine"
+      );
+    }
+  }
+  for (const item of dataItems) {
+    if (item.dataKey.settings.type === TimeSeriesChartSeriesType.line) {
+      const lineSettings = item.dataKey.settings as LineSeriesSettings;
+      if (item.option.label?.show) {
+        item.option.label.rich.value.color = prepareChartThemeColor(
+          lineSettings.pointLabelColor,
+          highContrast,
+          "series.label"
+        );
+      }
+      if (Array.isArray(options.series)) {
+        const series = options.series.find((s) => s.id === item.id);
+        if (series) {
+          if (series.label?.show) {
+            series.label.rich.value.color = prepareChartThemeColor(
+              lineSettings.pointLabelColor,
+              highContrast,
+              "series.label"
+            );
+          }
+        }
+      }
+    } else {
+      if (item.barRenderContext?.labelOption?.show) {
+        const barSettings = item.dataKey.settings as ChartBarSettings;
+        (item.barRenderContext.labelOption.rich.value as any).fill =
+          prepareChartThemeColor(
+            barSettings.labelColor,
+            highContrast,
+            "series.label"
+          );
       }
     }
   }

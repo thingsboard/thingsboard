@@ -149,6 +149,8 @@ export class TbTimeSeriesChart {
 
   private darkMode = false;
 
+  private highContrast = false;
+
   private darkModeObserver: MutationObserver;
 
   private topPointLabels = false;
@@ -184,6 +186,7 @@ export class TbTimeSeriesChart {
     const $dashboardPageElement = this.ctx.$containerParent.parents('.tb-dashboard-page');
     const dashboardPageElement = $dashboardPageElement.length ? $($dashboardPageElement[$dashboardPageElement.length-1]) : null;
     this.darkMode = this.settings.darkMode || dashboardPageElement?.hasClass('dark');
+    this.highContrast = this.settings.highContrast || dashboardPageElement?.hasClass('high-contrast');
     this.setupXAxes();
     this.setupYAxes();
     this.setupData();
@@ -375,8 +378,24 @@ export class TbTimeSeriesChart {
     }
   }
 
+  
+  public setHighContrast(highContrast: boolean): void {
+    if (this.highContrast !== highContrast) {
+      this.highContrast = highContrast;
+      if (this.timeSeriesChart) {
+        this.timeSeriesChartOptions = updateDarkMode(this.timeSeriesChartOptions,
+          this.xAxisList, this.yAxisList, this.dataItems, highContrast);
+        this.timeSeriesChart.setOption(this.timeSeriesChartOptions);
+      }
+    }
+  }
+
   public isDarkMode(): boolean {
     return this.darkMode;
+  }
+
+  public isHighContrast() : boolean {
+    return this.highContrast;
   }
 
   private setupData(): void {

@@ -17,6 +17,7 @@
 export interface TbColor {
   light: string;
   dark: string;
+  highContrast: string;
 }
 
 export interface TbColorScheme {
