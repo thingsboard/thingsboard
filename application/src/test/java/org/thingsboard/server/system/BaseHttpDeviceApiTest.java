@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2024 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,12 @@ package org.thingsboard.server.system;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -29,6 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
@@ -42,14 +49,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @TestPropertySource(properties = {
         "transport.http.enabled=true",
+        "transport.rate_limits.ip_block_timeout=6000",
+        "transport.rate_limits.max_wrong_credentials_per_ip=10",
+        "transport.rate_limits.ip_limits_enabled=true",
         "transport.http.max_payload_size=/api/v1/*/rpc/**=10000;/api/v1/**=20000"
 })
 public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
 
     private static final AtomicInteger idSeq = new AtomicInteger(new Random(System.currentTimeMillis()).nextInt());
-
     protected Device device;
     protected DeviceCredentials deviceCredentials;
+    private long ipBlockTimeout = 6000;
+    private int maxWrongCredentialsPerIp = 10;
+    @SpyBean
+    private TransportService transportService;
 
     @Before
     public void before() throws Exception {
@@ -64,6 +77,27 @@ public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testRateLimits_wrongCredentialsMaxOut() throws Exception {
+        doGetAsync("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes?clientKeys=keyA,keyB,keyC")
+                .andExpect(status().isOk());
+
+        for (int i = 0; i < maxWrongCredentialsPerIp; i++) {
+            doGetAsync("/api/v1/" + "WRONG_TOKEN" + "/attributes?clientKeys=keyA,keyB,keyC")
+                    .andExpect(status().is(401));
+        }
+        Mockito.verify(transportService, Mockito.times(maxWrongCredentialsPerIp + 1))
+                .process(Mockito.any(DeviceTransportType.class), Mockito.any(TransportProtos.ValidateDeviceTokenRequestMsg.class), Mockito.any());
+        mockMvc.perform(get("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes?clientKeys=keyA,keyB,keyC"))
+                .andExpect(status().is(401));
+
+        Mockito.verify(transportService, Mockito.times(maxWrongCredentialsPerIp + 1))
+                .process(Mockito.any(DeviceTransportType.class), Mockito.any(TransportProtos.ValidateDeviceTokenRequestMsg.class), Mockito.any());
+        Thread.sleep(ipBlockTimeout);
+        doGetAsync("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes?clientKeys=keyA,keyB,keyC")
+                .andExpect(status().isOk());
+    }
+
+    @Test
     public void testGetAttributes() throws Exception {
         doGetAsync("/api/v1/" + "WRONG_TOKEN" + "/attributes?clientKeys=keyA,keyB,keyC").andExpect(status().isUnauthorized());
         doGetAsync("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes?clientKeys=keyA,keyB,keyC").andExpect(status().isOk());
@@ -71,7 +105,7 @@ public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
         Map<String, String> attrMap = new HashMap<>();
         attrMap.put("keyA", "valueA");
         mockMvc.perform(
-                asyncDispatch(doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes", attrMap, new String[]{}).andReturn()))
+                        asyncDispatch(doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes", attrMap, new String[]{}).andReturn()))
                 .andExpect(status().isOk());
         Thread.sleep(2000);
         doGetAsync("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes?clientKeys=keyA,keyB,keyC").andExpect(status().isOk());
