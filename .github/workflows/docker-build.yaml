@@ -12,6 +12,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: dev
     env:
       JAVA_VERSION: 17
       NODE_VERSION: lts/*  # This will pick the latest LTS version (Node 18)
@@ -42,6 +43,21 @@ jobs:
       - name: Build the project
         run: |
           mvn -T 4 license:format install -DskipTests -Ddockerfile.skip=false
+          
+      - name: Extract Docker image name from pom.xml
+        id: extract-image-name
+        run: |
+          IMAGE_NAME=$(xmllint --xpath "string(//properties/docker.image.name)" pom.xml)
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+
+      - name: Login to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Push Docker images
+        run: |
+          IMAGE_TAG=$(xmllint --xpath "string(//properties/docker.image.tag)" pom.xml)
+          docker push "${IMAGE_NAME}:${IMAGE_TAG}"
           
       - name: list docker images
         run: |
