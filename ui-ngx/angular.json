@@ -164,9 +164,9 @@
             },
             "development": {
               "optimization": {
-                "scripts": false,
+                "scripts": true,
                 "styles": {
-                  "minify": false,
+                  "minify": true,
                   "inlineCritical": false
                 },
                 "fonts": false
