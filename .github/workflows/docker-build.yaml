@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: wasslz-dev
     environment: dev
     env:
       JAVA_VERSION: 17
