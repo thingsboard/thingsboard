@@ -44,4 +44,4 @@ java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardI
 
 echo "${pkg.upgradeVersion}" > ${upgradeversion}
 
-stop-db.sh
+# stop-db.sh

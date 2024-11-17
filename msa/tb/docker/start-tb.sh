@@ -39,4 +39,4 @@ else
     echo "ERROR: ThingsBoard is not installed"
 fi
 
-stop-db.sh
+# stop-db.sh
