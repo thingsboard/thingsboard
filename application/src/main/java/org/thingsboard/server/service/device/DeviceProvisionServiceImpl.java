@@ -19,6 +19,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
@@ -62,14 +68,6 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-
 @Service
 @Slf4j
 @TbCoreComponent
@@ -99,10 +97,13 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
 
     @Override
     public ProvisionResponse provisionDeviceViaX509Chain(DeviceProfile targetProfile, ProvisionRequest provisionRequest) throws ProvisionFailedException {
+        log.debug("Starting device provisioning via X509 certificate chain for device: {}", provisionRequest.getDeviceName());
+
         if (targetProfile == null) {
             throw new ProvisionFailedException("Device profile is not specified!");
         }
         if (!DeviceProfileProvisionType.X509_CERTIFICATE_CHAIN.equals(targetProfile.getProfileData().getProvisionConfiguration().getType())) {
+            log.error("Invalid provisioning strategy for device: {}. Expected X509_CERTIFICATE_CHAIN.", provisionRequest.getDeviceName());
             throw new ProvisionFailedException("Device profile provision strategy is not X509_CERTIFICATE_CHAIN!");
         }
         X509CertificateChainProvisionConfiguration configuration = (X509CertificateChainProvisionConfiguration) targetProfile.getProfileData().getProvisionConfiguration();
@@ -113,12 +114,15 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         provisionRequest.setDeviceName(deviceName);
         Device targetDevice = deviceService.findDeviceByTenantIdAndName(targetProfile.getTenantId(), provisionRequest.getDeviceName());
         X509CertificateChainProvisionConfiguration x509Configuration = (X509CertificateChainProvisionConfiguration) targetProfile.getProfileData().getProvisionConfiguration();
+
+        // Refactored code
         if (targetDevice != null && targetDevice.getDeviceProfileId().equals(targetProfile.getId())) {
+            log.debug("Device found: {}", targetDevice.getName());
             DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(targetDevice.getTenantId(), targetDevice.getId());
-            if (DeviceCredentialsType.X509_CERTIFICATE.equals(deviceCredentials.getCredentialsType())) {
+            if (DeviceCredentialsType.X509_CERTIFICATE.equals(deviceCredentials.getCredentialsType())
+                    && !deviceCredentials.getCredentialsValue().equals(provisionRequest.getCredentialsData().getX509CertHash())) {
                 String updatedDeviceCertificateValue = provisionRequest.getCredentialsData().getX509CertHash();
-                deviceCredentials = updateDeviceCredentials(targetDevice.getTenantId(), deviceCredentials,
-                        updatedDeviceCertificateValue, DeviceCredentialsType.X509_CERTIFICATE);
+                deviceCredentials = updateDeviceCredentials(targetDevice.getTenantId(), deviceCredentials, updatedDeviceCertificateValue, DeviceCredentialsType.X509_CERTIFICATE);
             }
             return new ProvisionResponse(deviceCredentials, ProvisionResponseStatus.SUCCESS);
         } else if (x509Configuration.isAllowCreateNewDevicesByX509Certificate()) {
@@ -132,9 +136,12 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
 
     @Override
     public ProvisionResponse provisionDevice(ProvisionRequest provisionRequest) {
+        log.debug("Provision request received for device: {}", provisionRequest.getDeviceName());
+
         String provisionRequestKey = provisionRequest.getCredentials().getProvisionDeviceKey();
         String provisionRequestSecret = provisionRequest.getCredentials().getProvisionDeviceSecret();
         if (!StringUtils.isEmpty(provisionRequest.getDeviceName())) {
+            log.warn("Provision request contains empty device name");
             provisionRequest.setDeviceName(provisionRequest.getDeviceName().trim());
             if (StringUtils.isEmpty(provisionRequest.getDeviceName())) {
                 log.warn("Provision request contains empty device name!");
@@ -143,14 +150,18 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         }
 
         if (StringUtils.isEmpty(provisionRequestKey) || StringUtils.isEmpty(provisionRequestSecret)) {
+            log.warn("Provisioning secret key or secret is missing for device: {}", provisionRequest.getDeviceName());
             throw new ProvisionFailedException(ProvisionResponseStatus.NOT_FOUND.name());
         }
 
         DeviceProfile targetProfile = deviceProfileService.findDeviceProfileByProvisionDeviceKey(provisionRequestKey);
 
-        if (targetProfile == null || targetProfile.getProfileData().getProvisionConfiguration() == null ||
-                targetProfile.getProfileData().getProvisionConfiguration().getProvisionDeviceSecret() == null) {
+        if (targetProfile == null || targetProfile.getProfileData().getProvisionConfiguration() == null
+                || targetProfile.getProfileData().getProvisionConfiguration().getProvisionDeviceSecret() == null) {
+            log.error("Device profile not found for provisioning request key: {}", provisionRequestKey);
             throw new ProvisionFailedException(ProvisionResponseStatus.NOT_FOUND.name());
+        } else {
+            log.debug("Device profile found: {}", targetProfile.getName());
         }
 
         Device targetDevice = deviceService.findDeviceByTenantIdAndName(targetProfile.getTenantId(), provisionRequest.getDeviceName());
@@ -170,6 +181,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
             case CHECK_PRE_PROVISIONED_DEVICES:
                 if (targetProfile.getProfileData().getProvisionConfiguration().getProvisionDeviceSecret().equals(provisionRequestSecret)) {
                     if (targetDevice != null && targetDevice.getDeviceProfileId().equals(targetProfile.getId())) {
+                        log.debug("Device found: {}", targetDevice.getName());
                         return processProvision(targetDevice, provisionRequest);
                     } else {
                         log.warn("[{}] Failed to find pre provisioned device!", provisionRequest.getDeviceName());
@@ -180,21 +192,31 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
             case X509_CERTIFICATE_CHAIN:
                 throw new ProvisionFailedException("Invalid provision strategy type!");
         }
+        log.debug("Successfully provisioned device: {}", provisionRequest.getDeviceName());
         throw new ProvisionFailedException(ProvisionResponseStatus.NOT_FOUND.name());
     }
 
     private ProvisionResponse processProvision(Device device, ProvisionRequest provisionRequest) {
         try {
+            log.debug("Starting provisioning process for device: {}", provisionRequest.getDeviceName());
+
             Optional<AttributeKvEntry> provisionState = attributesService.find(device.getTenantId(), device.getId(),
                     AttributeScope.SERVER_SCOPE, DEVICE_PROVISION_STATE).get();
             if (provisionState != null && provisionState.isPresent() && !provisionState.get().getValueAsString().equals(PROVISIONED_STATE)) {
+                log.debug("Provision state for device {}: {}", device.getName(), provisionState.get().getValueAsString());
                 notify(device, provisionRequest, TbMsgType.PROVISION_FAILURE, false);
                 throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
             } else {
+                log.debug("No provision state found for device {}", device.getName());
                 saveProvisionStateAttribute(device).get();
                 notify(device, provisionRequest, TbMsgType.PROVISION_SUCCESS, true);
             }
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException e) { // Refined exception handling
+            Thread.currentThread().interrupt(); // Preserve interrupt status
+            log.error("Provision interrupted for device {}", device.getName(), e);
+            throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+        } catch (ExecutionException e) {
+            log.error("Execution error during provisioning device {}", device.getName(), e);
             throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
         }
         return new ProvisionResponse(deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId()), ProvisionResponseStatus.SUCCESS);
@@ -207,19 +229,23 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     private void notify(Device device, ProvisionRequest provisionRequest, TbMsgType type, boolean success) {
         pushProvisionEventToRuleEngine(provisionRequest, device, type);
         logAction(device.getTenantId(), device.getCustomerId(), device, success, provisionRequest);
+        log.debug("Sending provisioning event to Rule Engine for device: {}", device.getName());
     }
 
     private ProvisionResponse processCreateDevice(ProvisionRequest provisionRequest, DeviceProfile profile) {
         try {
+            log.debug("Starting device creating for device: {}", provisionRequest.getDeviceName());
+
             if (StringUtils.isEmpty(provisionRequest.getDeviceName())) {
                 String newDeviceName = StringUtils.randomAlphanumeric(20);
-                log.info("Device name not found in provision request. Generated name is: {}", newDeviceName);
+                log.info("Device name not found in provision request. Generated new name: {}", newDeviceName);
                 provisionRequest.setDeviceName(newDeviceName);
             }
             Device savedDevice = deviceService.saveDevice(provisionRequest, profile);
             saveProvisionStateAttribute(savedDevice).get();
             pushDeviceCreatedEventToRuleEngine(savedDevice);
             notify(savedDevice, provisionRequest, TbMsgType.PROVISION_SUCCESS, true);
+            log.debug("Successfully provisioned device with name: {}", provisionRequest.getDeviceName());
 
             return new ProvisionResponse(getDeviceCredentials(savedDevice), ProvisionResponseStatus.SUCCESS);
         } catch (Exception e) {
@@ -233,10 +259,11 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     }
 
     private DeviceCredentials updateDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials, String certificateValue,
-                                                      DeviceCredentialsType credentialsType) {
+            DeviceCredentialsType credentialsType) {
         log.trace("Updating device credentials [{}] with certificate value [{}]", deviceCredentials, certificateValue);
         deviceCredentials.setCredentialsValue(certificateValue);
         deviceCredentials.setCredentialsType(credentialsType);
+        log.debug("Updating device credentials for device: {}", deviceCredentials.getDeviceId());
         return deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
     }
 
@@ -306,7 +333,8 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
             if (matcher.find()) {
                 return matcher.group(1);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         log.trace("[{}][{}] Failed to match device name using [{}] from CN: [{}]", profile.getTenantId(), profile.getId(), regex, commonName);
         throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
     }
