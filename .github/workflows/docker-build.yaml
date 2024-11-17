@@ -52,11 +52,6 @@ jobs:
           npm install -g cross-env 
           npm install -g webpack
 
-      - name: Install xmllint
-        run: |
-          sudo apt-get update && sudo apt-get install -y libxml2-utils
-          sudo apt-get clean
-
       - name: Build the project
         run: |
           mvn license:format install -DskipTests -Ddockerfile.skip=false
