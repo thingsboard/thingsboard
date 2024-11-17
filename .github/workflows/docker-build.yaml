@@ -54,15 +54,15 @@ jobs:
 
       - name: Build the project
         run: |
-          mvn license:format install -DskipTests -Ddockerfile.skip=false
+          mvn license:format install -DskipTests -Ddockerfile.skip=false -Ppush-docker-image
 
       - name: Login to Docker Hub
         run: |
           echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      - name: Push Docker images
-        run: |
-          mvn clean package -Ppush-docker-image
+      # - name: Push Docker images
+      #   run: |
+      #     mvn clean package -Ppush-docker-image
 
       - name: List Docker images
         run: |
