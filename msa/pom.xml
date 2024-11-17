@@ -26,12 +26,12 @@
     <artifactId>msa</artifactId>
     <packaging>pom</packaging>
 
-    <name>ThingsBoard Microservices</name>
-    <url>https://thingsboard.io</url>
+    <name>Wasslz Microservices</name>
+    <url>https://wasslz.io</url>
 
     <properties>
         <main.dir>${basedir}/..</main.dir>
-        <docker.repo>thingsboard</docker.repo>
+        <docker.repo>wasslz</docker.repo>
         <dockerfile.skip>true</dockerfile.skip>
         <blackBoxTests.skip>true</blackBoxTests.skip>
         <dockerfile-maven.version>1.4.13</dockerfile-maven.version>

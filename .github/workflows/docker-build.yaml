@@ -8,6 +8,7 @@ on:
     branches:
       - master
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   build:
@@ -15,50 +16,72 @@ jobs:
     environment: dev
     env:
       JAVA_VERSION: 17
-      NODE_VERSION: lts/*  # This will pick the latest LTS version (Node 18)
+      NODE_VERSION: lts/*  # Latest LTS version (Node 18)
       IMAGE_NAME: thingsboard
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-    
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
+      # Set up Java
       - name: Set up Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
 
+      # Set up Node.js
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install npm packages
-        run: |
-          npm install -g cross-env 
-          npm install -g webpack
+      # Cache npm packages
+      - name: Cache npm packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-global-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-global-
+            ${{ runner.os }}-
 
-      - name: Build the project
+      # Install global npm packages
+      - name: Install Global npm Packages
         run: |
-          mvn -T 4 license:format install -DskipTests -Ddockerfile.skip=false
-          
-      - name: Extract Docker image name from pom.xml
-        id: extract-image-name
-        run: |
-          IMAGE_NAME=$(xmllint --xpath "string(//properties/docker.image.name)" pom.xml)
-          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+          npm config set prefer-offline true
+          npm config set progress false
+          npm install -g cross-env webpack
 
+      # Cache Maven dependencies
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+            ${{ runner.os }}-
+
+      # Debug cache keys (optional)
+      - name: Debug Cache Keys
+        run: |
+          echo "NPM Cache Key: ${{ runner.os }}-npm-global-${{ hashFiles('**/package-lock.json') }}"
+          echo "Maven Cache Key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}"
+
+      # Login to Docker Hub
       - name: Login to Docker Hub
         run: |
           echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      - name: Push Docker images
+      # Build the project with Maven
+      - name: Build the project
         run: |
-          IMAGE_TAG=$(xmllint --xpath "string(//properties/docker.image.tag)" pom.xml)
-          docker push "${IMAGE_NAME}:${IMAGE_TAG}"
-          
-      - name: list docker images
+          mvn license:format install -DskipTests -Ddockerfile.skip=false -Ppush-docker-image
+
+      # List Docker images for verification
+      - name: List Docker images
         run: |
-          docker image ls 
+          docker image ls
