@@ -8,6 +8,7 @@ on:
     branches:
       - master
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   build:
@@ -34,23 +35,32 @@ jobs:
       #     swap-storage: true
 
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Install npm packages
+      - name: Cache npm packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-global-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-global-
+
+      - name: Install Global npm Packages
         run: |
-          npm install -g cross-env 
-          npm install -g webpack
+          npm config set prefer-offline true
+          npm config set progress false
+          npm install -g cross-env webpack
       
       - name: Login to Docker Hub
         run: |
