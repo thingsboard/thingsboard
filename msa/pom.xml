@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2024 The wasslz Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,19 +19,19 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.thingsboard</groupId>
+        <groupId>org.wasslz</groupId>
         <version>3.9.0-SNAPSHOT</version>
-        <artifactId>thingsboard</artifactId>
+        <artifactId>wasslz</artifactId>
     </parent>
     <artifactId>msa</artifactId>
     <packaging>pom</packaging>
 
-    <name>ThingsBoard Microservices</name>
-    <url>https://thingsboard.io</url>
+    <name>wasslz Microservices</name>
+    <url>https://wasslz.io</url>
 
     <properties>
         <main.dir>${basedir}/..</main.dir>
-        <docker.repo>thingsboard</docker.repo>
+        <docker.repo>wasslz</docker.repo>
         <dockerfile.skip>true</dockerfile.skip>
         <blackBoxTests.skip>true</blackBoxTests.skip>
         <dockerfile-maven.version>1.4.13</dockerfile-maven.version>
