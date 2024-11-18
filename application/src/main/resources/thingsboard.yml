@@ -424,10 +424,6 @@ sql:
     pool_size: "${SQL_RELATIONS_POOL_SIZE:4}" # This value has to be reasonably small to prevent the relation query from blocking all other DB calls
     query_timeout: "${SQL_RELATIONS_QUERY_TIMEOUT_SEC:20}" # This value has to be reasonably small to prevent the relation query from blocking all other DB calls
 
-# Calculated Field parameters
-calculatedField:
-  initFetchPackSize: "${INIT_FETCH_PACK_SIZE:50000}"
-
 rocksdb:
   # Rocksdb path
   db_path: "${ROCKS_DB_PATH:${java.io.tmpdir}/rocksdb}"
