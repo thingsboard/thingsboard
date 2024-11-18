@@ -1,0 +1,174 @@
+<svg xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="200" height="400" fill="none" version="1.1" viewBox="0 0 200 400" id="svg4" sodipodi:docname="long-vertical-connector.svg" inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"><tb:metadata xmlns=""><![CDATA[{
+  "title": "HP Long vertical connector",
+  "description": "Long vertical connector",
+  "widgetSizeX": 1,
+  "widgetSizeY": 2,
+  "tags": [
+    {
+      "tag": "arrow",
+      "stateRenderFunction": "var arrow = ctx.values.arrow;\nif (arrow) {\n    element.show();\n    var arrowDirection = ctx.values.arrowDirection;\n    var direticon = element.remember('direticon');\n    var angle = arrowDirection ? 0 : 180;\n    if (!direticon) {\n        element.transform({rotate: angle});\n    } else {\n        ctx.api.transform({rotate: angle, originY: 100});\n        element.remember('direticon', false);\n    }\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
+      "tag": "line",
+      "stateRenderFunction": "element.stroke(ctx.properties.lineColor);\nif (ctx.properties.mainLine) {\n    element.attr({'stroke-width': ctx.properties.mainLineSize});\n} else {\n    element.attr({'stroke-width': ctx.properties.secondaryLineSize});\n}",
+      "actions": null
+    }
+  ],
+  "behavior": [
+    {
+      "id": "arrow",
+      "name": "{i18n:scada.symbol.arrow-presence}",
+      "hint": "{i18n:scada.symbol.arrow-presence-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": "{i18n:scada.symbol.present}",
+      "falseLabel": "{i18n:scada.symbol.absent}",
+      "stateLabel": "{i18n:scada.symbol.arrow-present}",
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": true,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "arrowDirection",
+      "name": "{i18n:scada.symbol.arrow-direction}",
+      "hint": "{i18n:scada.symbol.arrow-direction-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": "{i18n:scada.symbol.forward}",
+      "falseLabel": "{i18n:scada.symbol.reverse}",
+      "stateLabel": "{i18n:scada.symbol.forward}",
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": true,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    }
+  ],
+  "properties": [
+    {
+      "id": "mainLine",
+      "name": "{i18n:scada.symbol.main-line}",
+      "type": "switch",
+      "default": true,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "mainLineSize",
+      "name": "{i18n:scada.symbol.line}",
+      "type": "number",
+      "default": 6,
+      "required": true,
+      "subLabel": "Main",
+      "divider": true,
+      "fieldSuffix": "px",
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": 0,
+      "max": 99,
+      "step": 1
+    },
+    {
+      "id": "secondaryLineSize",
+      "name": "{i18n:scada.symbol.line}",
+      "type": "number",
+      "default": 2,
+      "required": true,
+      "subLabel": "Secondary",
+      "divider": null,
+      "fieldSuffix": "px",
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": 0,
+      "max": 99,
+      "step": 1
+    },
+    {
+      "id": "lineColor",
+      "name": "{i18n:scada.symbol.line-color}",
+      "type": "color",
+      "default": "#1A1A1A",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "arrowColor",
+      "name": "{i18n:scada.symbol.arrow-color}",
+      "type": "color",
+      "default": "#1A1A1A",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    }
+  ]
+}]]></tb:metadata>
+<defs id="defs8"/><sodipodi:namedview id="namedview6" pagecolor="#505050" bordercolor="#eeeeee" borderopacity="1" inkscape:pageshadow="0" inkscape:pageopacity="0" inkscape:pagecheckerboard="0" showgrid="false" inkscape:zoom="2.2475" inkscape:cx="99.888765" inkscape:cy="200" inkscape:window-width="1920" inkscape:window-height="1136" inkscape:window-x="0" inkscape:window-y="0" inkscape:window-maximized="1" inkscape:current-layer="svg4"/><path d="M100 400L100 0" stroke="#1A1A1A" stroke-width="6" id="path4" tb:tag="line"/><path d="M100 171L129 229H71L100 171Z" fill="#1A1A1A" id="path2" tb:tag="arrow"/>
+</svg>
