@@ -15,7 +15,7 @@ jobs:
     environment: dev
 
     steps:
-     - name: Login to Docker Hub
+      - name: Login to Docker Hub
         run: |
           echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
           
