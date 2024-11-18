@@ -37,8 +37,8 @@ public interface OAuth2ClientRepository extends JpaRepository<OAuth2ClientEntity
 
     @Query("SELECT c " +
             "FROM OAuth2ClientEntity c " +
-            "LEFT JOIN DomainOauth2ClientEntity dc on c.id = dc.oauth2ClientId " +
-            "LEFT JOIN DomainEntity domain on dc.domainId = domain.id " +
+            "LEFT JOIN DomainOauth2ClientEntity dc ON c.id = dc.oauth2ClientId " +
+            "LEFT JOIN DomainEntity domain ON dc.domainId = domain.id " +
             "WHERE domain.name = :domainName AND domain.oauth2Enabled = true " +
             "AND (:platformFilter IS NULL OR c.platforms IS NULL OR c.platforms = '' OR ilike(c.platforms, CONCAT('%', :platformFilter, '%')) = true)")
     List<OAuth2ClientEntity> findEnabledByDomainNameAndPlatformType(@Param("domainName") String domainName,
@@ -46,31 +46,33 @@ public interface OAuth2ClientRepository extends JpaRepository<OAuth2ClientEntity
 
     @Query("SELECT c " +
             "FROM OAuth2ClientEntity c " +
-            "LEFT JOIN MobileAppOauth2ClientEntity mc on c.id = mc.oauth2ClientId " +
-            "LEFT JOIN MobileAppEntity app on mc.mobileAppId = app.id " +
-            "WHERE app.pkgName = :pkgName AND app.oauth2Enabled = true " +
+            "LEFT JOIN MobileAppBundleOauth2ClientEntity ac ON c.id = ac.oauth2ClientId " +
+            "LEFT JOIN MobileAppBundleEntity b ON ac.mobileAppBundleId = b.id " +
+            "LEFT JOIN MobileAppEntity andApp ON b.androidAppId = andApp.id LEFT JOIN MobileAppEntity iosApp ON b.iosAppID = iosApp.id " +
+            "WHERE andApp.pkgName = :pkgName OR iosApp.pkgName = :pkgName AND b.oauth2Enabled = true " +
             "AND (:platformFilter IS NULL OR c.platforms IS NULL OR c.platforms = '' OR ilike(c.platforms, CONCAT('%', :platformFilter, '%')) = true)")
     List<OAuth2ClientEntity> findEnabledByPkgNameAndPlatformType(@Param("pkgName") String pkgName,
                                                                  @Param("platformFilter") String platformFilter);
 
     @Query("SELECT c " +
             "FROM OAuth2ClientEntity c " +
-            "LEFT JOIN DomainOauth2ClientEntity dc on dc.oauth2ClientId = c.id " +
+            "LEFT JOIN DomainOauth2ClientEntity dc ON dc.oauth2ClientId = c.id " +
             "WHERE dc.domainId = :domainId ")
     List<OAuth2ClientEntity> findByDomainId(@Param("domainId") UUID domainId);
 
     @Query("SELECT c " +
             "FROM OAuth2ClientEntity c " +
-            "LEFT JOIN MobileAppOauth2ClientEntity mc on mc.oauth2ClientId = c.id " +
-            "WHERE mc.mobileAppId = :mobileAppId ")
-    List<OAuth2ClientEntity> findByMobileAppId(@Param("mobileAppId") UUID mobileAppId);
+            "LEFT JOIN MobileAppBundleOauth2ClientEntity bc ON bc.oauth2ClientId = c.id " +
+            "WHERE bc.mobileAppBundleId = :mobileAppBundleId ")
+    List<OAuth2ClientEntity> findByMobileAppBundleId(@Param("mobileAppBundleId") UUID mobileAppBundleId);
 
-    @Query("SELECT m.appSecret " +
-            "FROM MobileAppEntity m " +
-            "LEFT JOIN MobileAppOauth2ClientEntity mp on m.id = mp.mobileAppId " +
-            "LEFT JOIN OAuth2ClientEntity p on mp.oauth2ClientId = p.id " +
-            "WHERE p.id = :clientId " +
-            "AND m.pkgName = :pkgName")
+    @Query("SELECT a.appSecret " +
+            "FROM MobileAppEntity a " +
+            "LEFT JOIN MobileAppBundleEntity b ON (b.androidAppId = a.id OR b.iosAppID = a.id) " +
+            "LEFT JOIN MobileAppBundleOauth2ClientEntity bc ON bc.mobileAppBundleId = b.id " +
+            "LEFT JOIN OAuth2ClientEntity c ON bc.oauth2ClientId = c.id " +
+            "WHERE c.id = :clientId " +
+            "AND a.pkgName = :pkgName")
     String findAppSecret(@Param("clientId") UUID id,
                          @Param("pkgName") String pkgName);
 
