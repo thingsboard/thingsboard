@@ -124,14 +124,10 @@ export class WidgetService {
   }
 
   public deleteWidgetsBundle(widgetsBundleId: string, config?: RequestConfig) {
-    return this.getWidgetsBundle(widgetsBundleId, config).pipe(
-      mergeMap((widgetsBundle) => this.http.delete(`/api/widgetsBundle/${widgetsBundleId}`,
-          defaultHttpOptionsFromConfig(config)).pipe(
-          tap(() => {
-            this.invalidateWidgetsBundleCache();
-          })
-        )
-    ));
+    return this.http.delete(`/api/widgetsBundle/${widgetsBundleId}`, defaultHttpOptionsFromConfig(config))
+      .pipe(
+        tap(() => this.invalidateWidgetsBundleCache())
+      );
   }
 
   public getBundleWidgetTypes(widgetsBundleId: string,
