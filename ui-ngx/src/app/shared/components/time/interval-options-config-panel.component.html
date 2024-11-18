@@ -24,13 +24,40 @@
   <div class="tb-form-table no-gap no-padding">
     <div class="tb-form-table-header">
       <div class="tb-form-table-header-cell">{{"timewindow.interval" | translate }}</div>
+      <ng-container *ngIf="aggregation">
+        <div class="tb-form-table-header-cell">{{"timewindow.allowed-agg-intervals" | translate }}</div>
+        <div class="tb-form-table-header-cell">{{"timewindow.preferred-agg-interval" | translate }}</div>
+      </ng-container>
     </div>
     <div class="tb-form-table-body">
-      <mat-selection-list formControlName="allowedIntervals">
-        <mat-list-option *ngFor="let interval of allIntervals" [value]="interval.value" togglePosition="before">
-          {{ interval.name | translate:interval.translateParams }}
-        </mat-list-option>
-      </mat-selection-list>
+<!--      <mat-selection-list formControlName="allowedIntervals">-->
+<!--        <mat-list-option *ngFor="let interval of allIntervals" [value]="interval.value" togglePosition="before">-->
+<!--          {{ interval.name | translate:interval.translateParams }}-->
+<!--        </mat-list-option>-->
+<!--      </mat-selection-list>-->
+      <ng-container *ngFor="let interval of intervalsFormArray.controls; let i = index; trackBy: trackByElement">
+        <div [formGroupName]="i" class="tb-form-table-row">
+          <div class="tb-form-table-row-cell">
+            <mat-checkbox formControlName="enabled">
+              <mat-label>{{ interval.get('name').value }}</mat-label>
+            </mat-checkbox>
+          </div>
+          <ng-container *ngIf="aggregation">
+            <div class="tb-form-table-row-cell"></div>
+            <div class="tb-form-table-row-cell">
+              <tb-timeinterval
+                formControlName="interval"
+                [min]="minAggInterval(interval.get('value').value)"
+                [max]="maxAggInterval(interval.get('value').value)"
+                useCalendarIntervals
+                subscriptSizing="dynamic"
+                appearance="outline"
+                disabledAdvanced>
+              </tb-timeinterval>
+            </div>
+          </ng-container>
+        </div>
+      </ng-container>
     </div>
   </div>
   <div class="flex flex-row gap-2 items-center">

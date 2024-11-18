@@ -47,7 +47,7 @@ export class AggregationOptionsConfigPanelComponent implements OnInit {
 
   ngOnInit(): void {
     this.aggregationOptionsConfigForm = this.fb.group({
-      allowedAggregationTypes: [this.allowedAggregationTypes]
+      allowedAggregationTypes: [this.allowedAggregationTypes?.length ? this.allowedAggregationTypes : this.allAggregationTypes]
     });
   }
 

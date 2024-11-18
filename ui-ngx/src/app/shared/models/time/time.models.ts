@@ -90,6 +90,17 @@ export interface TimewindowAdvancedParams {
   allowedQuickIntervals? : Array<QuickTimeInterval>;
 }
 
+export type TimewindowInterval = Interval | QuickTimeInterval;
+
+export interface TimewindowAllowedAggIntervalsConfig {
+  [key: string]: TimewindowAllowedAggIntervalOption;
+}
+
+export interface TimewindowAllowedAggIntervalOption {
+  aggIntervals: Array<TimewindowInterval>;
+  preferredAggInterval: TimewindowInterval;
+}
+
 export interface IntervalWindow {
   interval?: Interval;
   timewindowMs?: number;
@@ -186,7 +197,7 @@ export interface WidgetTimewindow {
 export interface TimewindowIntervalOption {
   name: string;
   translateParams?: {[key: string]: any};
-  value: Interval | QuickTimeInterval;
+  value: TimewindowInterval;
 }
 
 export enum QuickTimeInterval {
