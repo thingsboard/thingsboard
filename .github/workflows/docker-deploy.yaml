@@ -28,6 +28,6 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             export SSH_OPTIONS="-o StrictHostKeyChecking=no"
-            cd /app
+            cd ~/app
             docker pull wasslz/tb-postgres:latest
             docker compose up -d
