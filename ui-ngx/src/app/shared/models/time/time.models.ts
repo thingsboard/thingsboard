@@ -331,6 +331,12 @@ export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalO
       if (isDefinedAndNotNull(value.realtime.hideQuickInterval)) {
         model.realtime.hideQuickInterval = value.realtime.hideQuickInterval;
       }
+      if (isDefinedAndNotNull(value.realtime.disableCustomInterval)) {
+        model.realtime.disableCustomInterval = value.realtime.disableCustomInterval;
+      }
+      if (isDefinedAndNotNull(value.realtime.disableCustomGroupInterval)) {
+        model.realtime.disableCustomGroupInterval = value.realtime.disableCustomGroupInterval;
+      }
 
       if (isDefined(value.realtime.interval)) {
         model.realtime.interval = value.realtime.interval;
@@ -363,6 +369,12 @@ export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalO
       }
       if (isDefinedAndNotNull(value.history.hideQuickInterval)) {
         model.history.hideQuickInterval = value.history.hideQuickInterval;
+      }
+      if (isDefinedAndNotNull(value.history.disableCustomInterval)) {
+        model.history.disableCustomInterval = value.history.disableCustomInterval;
+      }
+      if (isDefinedAndNotNull(value.history.disableCustomGroupInterval)) {
+        model.history.disableCustomGroupInterval = value.history.disableCustomGroupInterval;
       }
 
       if (isDefined(value.history.interval)) {
@@ -444,6 +456,8 @@ export const toHistoryTimewindow = (timewindow: Timewindow, startTimeMs: number,
       hideInterval: timewindow.history?.hideInterval || false,
       hideLastInterval: timewindow.history?.hideLastInterval || false,
       hideQuickInterval: timewindow.history?.hideQuickInterval || false,
+      disableCustomInterval: timewindow.history?.disableCustomInterval || false,
+      disableCustomGroupInterval: timewindow.history?.disableCustomGroupInterval || false,
     },
     aggregation: {
       type: aggType,
