@@ -16,8 +16,7 @@ jobs:
     environment: dev
     env:
       JAVA_VERSION: 17
-      NODE_VERSION: lts/*  # Latest LTS version (Node 18)
-      IMAGE_NAME: thingsboard
+      NODE_VERSION: lts/*  # This will pick the latest LTS version (Node 18)
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 

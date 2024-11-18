@@ -30,7 +30,7 @@ ENV SPRING_DATASOURCE_USERNAME=${pkg.user}
 ENV SPRING_DATASOURCE_PASSWORD=postgres
 
 
-COPY logback.xml ${pkg.name}.conf start-db.sh stop-db.sh start-tb.sh upgrade-tb.sh install-tb.sh ${pkg.name}.deb /tmp/
+COPY logback.xml ${pkg.name}.conf start-tb.sh install-tb.sh ${pkg.name}.deb /tmp/
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends wget gnupg2 \
@@ -38,7 +38,6 @@ RUN apt-get update \
     && apt-get purge -y --auto-remove \
     && chmod a+x /tmp/*.sh \
     && mv /tmp/start-tb.sh /usr/bin \
-    && mv /tmp/upgrade-tb.sh /usr/bin \
     && mv /tmp/install-tb.sh /usr/bin \
     && dpkg -i /tmp/${pkg.name}.deb \
     && rm /tmp/${pkg.name}.deb \
