@@ -1,0 +1,30 @@
+name: Deploy to dev server
+
+on:
+  workflow_run:
+    workflows:
+      - Build and Publish Docker Image
+    types:
+      - completed
+  workflow_dispatch:
+  workflow_call:  
+
+jobs:
+  deploy:
+    runs-on: wasslz-dev-local
+    environment: dev
+
+    steps:
+      - name: Connect and deploy via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd /app
+            docker pull wasslz/tb-postgres:latest
+            docker compose up -d
+          env:
+            SSH_OPTIONS: "-o StrictHostKeyChecking=no"
