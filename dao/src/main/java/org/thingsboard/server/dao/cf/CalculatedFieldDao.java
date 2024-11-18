@@ -26,8 +26,6 @@ import java.util.List;
 
 public interface CalculatedFieldDao extends Dao<CalculatedField> {
 
-    boolean existsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId);
-
     List<CalculatedField> findAllByTenantId(TenantId tenantId);
 
     List<CalculatedField> findAll();

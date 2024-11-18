@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.cf;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,7 +23,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -47,6 +47,11 @@ public class JpaCalculatedFieldLinkDao extends JpaAbstractDao<CalculatedFieldLin
     @Override
     public List<CalculatedFieldLink> findCalculatedFieldLinksByCalculatedFieldId(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
         return DaoUtil.convertDataList(calculatedFieldLinkRepository.findAllByTenantIdAndCalculatedFieldId(tenantId.getId(), calculatedFieldId.getId()));
+    }
+
+    @Override
+    public ListenableFuture<List<CalculatedFieldLink>> findCalculatedFieldLinksByCalculatedFieldIdAsync(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
+        return service.submit(() -> findCalculatedFieldLinksByCalculatedFieldId(tenantId, calculatedFieldId));
     }
 
     @Override

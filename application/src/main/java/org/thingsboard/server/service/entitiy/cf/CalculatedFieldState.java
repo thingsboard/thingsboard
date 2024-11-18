@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.entitiy.cf;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
@@ -32,6 +33,7 @@ import java.util.Map;
 })
 public interface CalculatedFieldState {
 
+    @JsonIgnore
     CalculatedFieldType getType();
 
     void performCalculation(Map<String, String> argumentValues, CalculatedFieldConfiguration calculatedFieldConfiguration, boolean initialCalculation);

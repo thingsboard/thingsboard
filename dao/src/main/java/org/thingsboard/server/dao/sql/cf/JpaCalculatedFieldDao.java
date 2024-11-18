@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.sql.cf;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
@@ -31,7 +30,6 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.cf.CalculatedFieldDao;
 import org.thingsboard.server.dao.model.sql.CalculatedFieldEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
-import org.thingsboard.server.dao.sql.device.NativeDeviceRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
@@ -45,11 +43,6 @@ public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity,
 
     private final CalculatedFieldRepository calculatedFieldRepository;
     private final NativeCalculatedFieldRepository nativeCalculatedFieldRepository;
-
-    @Override
-    public boolean existsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId) {
-        return calculatedFieldRepository.existsByTenantIdAndEntityId(tenantId.getId(), entityId.getId());
-    }
 
     @Override
     public List<CalculatedField> findAllByTenantId(TenantId tenantId) {

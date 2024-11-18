@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.cf;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -33,6 +34,8 @@ public interface CalculatedFieldService extends EntityDaoService {
 
     CalculatedField findById(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
+    ListenableFuture<CalculatedField> findCalculatedFieldByIdAsync(TenantId tenantId, CalculatedFieldId calculatedFieldId);
+
     List<CalculatedField> findAllCalculatedFields();
 
     PageData<CalculatedField> findAllCalculatedFields(PageLink pageLink);
@@ -45,13 +48,15 @@ public interface CalculatedFieldService extends EntityDaoService {
 
     CalculatedFieldLink findCalculatedFieldLinkById(TenantId tenantId, CalculatedFieldLinkId calculatedFieldLinkId);
 
+    ListenableFuture<CalculatedFieldLink> findCalculatedFieldLinkByIdAsync(TenantId tenantId, CalculatedFieldLinkId calculatedFieldLinkId);
+
     List<CalculatedFieldLink> findAllCalculatedFieldLinks();
 
     List<CalculatedFieldLink> findAllCalculatedFieldLinksById(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
-    PageData<CalculatedFieldLink> findAllCalculatedFieldLinks(PageLink pageLink);
+    ListenableFuture<List<CalculatedFieldLink>> findAllCalculatedFieldLinksByIdAsync(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
-    boolean existsByEntityId(TenantId tenantId, EntityId entityId);
+    PageData<CalculatedFieldLink> findAllCalculatedFieldLinks(PageLink pageLink);
 
     boolean referencedInAnyCalculatedField(TenantId tenantId, EntityId referencedEntityId);
 

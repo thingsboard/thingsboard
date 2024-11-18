@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.cf;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
@@ -55,14 +58,14 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
 
     @Override
     public CalculatedField save(CalculatedField calculatedField) {
-        calculatedFieldDataValidator.validate(calculatedField, CalculatedField::getTenantId);
+        CalculatedField oldCalculatedField = calculatedFieldDataValidator.validate(calculatedField, CalculatedField::getTenantId);
         try {
             TenantId tenantId = calculatedField.getTenantId();
             log.trace("Executing save calculated field, [{}]", calculatedField);
             CalculatedField savedCalculatedField = calculatedFieldDao.save(tenantId, calculatedField);
             createOrUpdateCalculatedFieldLink(tenantId, savedCalculatedField);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedCalculatedField.getTenantId()).entityId(savedCalculatedField.getId())
-                    .entity(savedCalculatedField).created(calculatedField.getId() == null).build());
+                    .entity(savedCalculatedField).oldEntity(oldCalculatedField).created(calculatedField.getId() == null).build());
             return savedCalculatedField;
         } catch (Exception e) {
             checkConstraintViolation(e,
@@ -81,6 +84,13 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     }
 
     @Override
+    public ListenableFuture<CalculatedField> findCalculatedFieldByIdAsync(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
+        log.trace("Executing findCalculatedFieldByIdAsync [{}]", calculatedFieldId);
+        validateId(calculatedFieldId, id -> INCORRECT_CALCULATED_FIELD_ID + id);
+        return calculatedFieldDao.findByIdAsync(tenantId, calculatedFieldId.getId());
+    }
+
+    @Override
     public List<CalculatedField> findAllCalculatedFields() {
         log.trace("Executing findAll");
         return calculatedFieldDao.findAll();
@@ -95,10 +105,28 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
 
     @Override
     public void deleteCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
-        log.trace("Executing deleteCalculatedField, tenantId [{}], calculatedFieldId [{}]", tenantId, calculatedFieldId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validateId(calculatedFieldId, id -> INCORRECT_CALCULATED_FIELD_ID + id);
-        calculatedFieldDao.removeById(tenantId, calculatedFieldId.getId());
+        deleteEntity(tenantId, calculatedFieldId, false);
+    }
+
+    @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        CalculatedField calculatedField = calculatedFieldDao.findById(tenantId, id.getId());
+        if (calculatedField == null) {
+            if (force) {
+                return;
+            } else {
+                throw new IncorrectParameterException("Unable to delete non-existent calculated field.");
+            }
+        }
+        deleteCalculatedField(tenantId, calculatedField);
+    }
+
+    private void deleteCalculatedField(TenantId tenantId, CalculatedField calculatedField) {
+        log.trace("Executing deleteCalculatedField, tenantId [{}], calculatedFieldId [{}]", tenantId, calculatedField.getId());
+        calculatedFieldDao.removeById(tenantId, calculatedField.getUuidId());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(calculatedField.getId()).entity(calculatedField).build());
     }
 
     @Override
@@ -126,6 +154,14 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     }
 
     @Override
+    public ListenableFuture<CalculatedFieldLink> findCalculatedFieldLinkByIdAsync(TenantId tenantId, CalculatedFieldLinkId calculatedFieldLinkId) {
+        log.trace("Executing findCalculatedFieldLinkByIdAsync [{}]", calculatedFieldLinkId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(calculatedFieldLinkId, id -> "Incorrect calculatedFieldLinkId " + id);
+        return calculatedFieldLinkDao.findByIdAsync(tenantId, calculatedFieldLinkId.getId());
+    }
+
+    @Override
     public List<CalculatedFieldLink> findAllCalculatedFieldLinks() {
         log.trace("Executing findAllCalculatedFieldLinks");
         return calculatedFieldLinkDao.findAll();
@@ -138,15 +174,16 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     }
 
     @Override
+    public ListenableFuture<List<CalculatedFieldLink>> findAllCalculatedFieldLinksByIdAsync(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
+        log.trace("Executing findAllCalculatedFieldLinksByIdAsync, calculatedFieldId [{}]", calculatedFieldId);
+        return calculatedFieldLinkDao.findCalculatedFieldLinksByCalculatedFieldIdAsync(tenantId, calculatedFieldId);
+    }
+
+    @Override
     public PageData<CalculatedFieldLink> findAllCalculatedFieldLinks(PageLink pageLink) {
         log.trace("Executing findAllCalculatedFieldLinks, pageLink [{}]", pageLink);
         validatePageLink(pageLink);
         return calculatedFieldLinkDao.findAll(pageLink);
-    }
-
-    @Override
-    public boolean existsByEntityId(TenantId tenantId, EntityId entityId) {
-        return calculatedFieldDao.existsByTenantIdAndEntityId(tenantId, entityId);
     }
 
     @Override

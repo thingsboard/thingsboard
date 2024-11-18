@@ -96,7 +96,7 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
     private final ConcurrentMap<CalculatedFieldId, List<CalculatedFieldLink>> calculatedFieldLinks = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, CalculatedFieldCtx> states = new ConcurrentHashMap<>();
 
-    @Value("${state.initFetchPackSize:50000}")
+    @Value("${calculatedField.initFetchPackSize:50000}")
     @Getter
     private int initFetchPackSize;
 
@@ -145,7 +145,10 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
             CalculatedField cf = calculatedFieldService.findById(tenantId, calculatedFieldId);
             if (proto.getUpdated()) {
                 log.info("Executing onCalculatedFieldUpdate, calculatedFieldId=[{}]", calculatedFieldId);
-                onCalculatedFieldUpdate(cf, callback);
+                boolean shouldReinit = onCalculatedFieldUpdate(cf, callback);
+                if (!shouldReinit) {
+                    return;
+                }
             }
             List<CalculatedFieldLink> links = calculatedFieldService.findAllCalculatedFieldLinksById(tenantId, calculatedFieldId);
             if (cf != null) {
@@ -172,12 +175,13 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
                     default ->
                             throw new IllegalArgumentException("Entity type '" + calculatedFieldId.getEntityType() + "' does not support calculated fields.");
                 }
-                log.info("Successfully processed calculated field message for calculatedFieldId: [{}]", calculatedFieldId);
             } else {
                 //Calculated field was probably deleted while message was in queue;
                 log.warn("Calculated field not found, possibly deleted: {}", calculatedFieldId);
                 callback.onSuccess();
             }
+            callback.onSuccess();
+            log.info("Successfully processed calculated field message for calculatedFieldId: [{}]", calculatedFieldId);
         } catch (Exception e) {
             log.trace("Failed to process calculated field msg: [{}]", proto, e);
             callback.onFailure(e);
@@ -235,17 +239,20 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
         }
     }
 
-    private void onCalculatedFieldUpdate(CalculatedField newCalculatedField, TbCallback callback) {
+    private boolean onCalculatedFieldUpdate(CalculatedField newCalculatedField, TbCallback callback) {
         CalculatedField oldCalculatedField = calculatedFields.get(newCalculatedField.getId());
-        if (hasSignificantChanged(oldCalculatedField, newCalculatedField)) {
+        boolean shouldReinit = true;
+        if (hasSignificantChanges(oldCalculatedField, newCalculatedField)) {
             onCalculatedFieldDelete(newCalculatedField.getId(), callback);
         } else {
             calculatedFields.put(newCalculatedField.getId(), newCalculatedField);
             callback.onSuccess();
+            shouldReinit = false;
         }
+        return shouldReinit;
     }
 
-    private boolean hasSignificantChanged(CalculatedField oldCalculatedField, CalculatedField newCalculatedField) {
+    private boolean hasSignificantChanges(CalculatedField oldCalculatedField, CalculatedField newCalculatedField) {
         if (oldCalculatedField == null) {
             return true;
         }
@@ -255,9 +262,9 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
         CalculatedFieldConfiguration newConfig = newCalculatedField.getConfiguration();
         boolean argumentsChanged = !oldConfig.getArguments().equals(newConfig.getArguments());
         boolean outputTypeChanged = !oldConfig.getOutput().getType().equals(newConfig.getOutput().getType());
-        boolean outputNameChanged = !oldConfig.getOutput().getName().equals(newConfig.getOutput().getName());
+        boolean outputExpressionChanged = !oldConfig.getOutput().getExpression().equals(newConfig.getOutput().getExpression());
 
-        return entityIdChanged || typeChanged || argumentsChanged || outputTypeChanged || outputNameChanged;
+        return entityIdChanged || typeChanged || argumentsChanged || outputTypeChanged || outputExpressionChanged;
     }
 
     private void fetchCalculatedFields() {
@@ -344,6 +351,7 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
         } else {
             CalculatedFieldState newState = createStateByType(calculatedField.getType());
             newState.performCalculation(argumentValues, calculatedField.getConfiguration(), true);
+            state = newState;
         }
         calculatedFieldCtx.setState(state);
 
