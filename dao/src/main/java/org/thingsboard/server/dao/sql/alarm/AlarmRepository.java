@@ -408,7 +408,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "WHERE a.originator_id = :originatorId " +
             "AND (COALESCE(:alarmTypes) IS NULL OR a.type IN (:alarmTypes)) " +
             "AND (COALESCE(:alarmSeverities) IS NULL OR a.severity IN (:alarmSeverities)) " +
-            "AND (a.cleared = false) LIMIT :limit", nativeQuery = true)
+            "AND (a.cleared = false) ORDER BY id LIMIT :limit", nativeQuery = true)
     List<UUID> findActiveOriginatorAlarms(@Param("originatorId") UUID originatorId,
                                           @Param("alarmTypes") List<String> alarmTypes,
                                           @Param("alarmSeverities") List<String> alarmSeverities,

@@ -470,7 +470,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         List<UUID> alarmIds = alarmService.findActiveOriginatorAlarms(subscription.getTenantId(), originatorAlarmFilter, alarmsPerAlarmStatusSubscriptionCacheSize);
 
         subscription.getAlarmIds().addAll(alarmIds);
-        subscription.setFullCache(alarmIds.size() == alarmsPerAlarmStatusSubscriptionCacheSize);
+        subscription.setCacheFull(alarmIds.size() == alarmsPerAlarmStatusSubscriptionCacheSize);
     }
 
     private void sendUpdate(String sessionId, CmdUpdate update) {
@@ -487,7 +487,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 if (!subscription.matches(alarm) || subscriptionUpdate.isAlarmDeleted()) {
                     alarmsIds.remove(alarm.getId().getId());
                     if (alarmsIds.isEmpty()) {
-                        if (subscription.isFullCache()) {
+                        if (subscription.isCacheFull()) {
                             fetchActiveAlarms(subscription);
                             if (alarmsIds.isEmpty()) {
                                 sendUpdate(subscription.getSessionId(), subscription.createUpdate());
@@ -504,7 +504,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                         sendUpdate(subscription.getSessionId(), subscription.createUpdate());
                     }
                 } else {
-                    subscription.setFullCache(true);
+                    subscription.setCacheFull(true);
                 }
             }
         } catch (Exception e) {

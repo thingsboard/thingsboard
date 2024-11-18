@@ -38,7 +38,7 @@ public class TbAlarmStatusSubscription extends TbSubscription<AlarmSubscriptionU
     private final Set<UUID> alarmIds = new HashSet<>();
     @Getter
     @Setter
-    private boolean fullCache;
+    private boolean cacheFull;
     @Getter
     private final List<String> typeList;
     @Getter
