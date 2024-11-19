@@ -62,7 +62,7 @@ export class DebugConfigButtonComponent {
 
   @Output() onDebugConfigChanged = new EventEmitter<HasDebugConfig>();
 
-  isDebugAllActive$ = timer(0, SECOND).pipe(map(() => this.debugAllUntil > new Date().getTime()), shareReplay(1));
+  isDebugAllActive$ = timer(0, SECOND).pipe(map(() => this.debugAllUntil > new Date().getTime() || this.debugAll), shareReplay(1));
 
   readonly maxDebugModeDurationMinutes = getCurrentAuthState(this.store).maxDebugModeDurationMinutes;
 

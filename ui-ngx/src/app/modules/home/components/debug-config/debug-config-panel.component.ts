@@ -63,7 +63,7 @@ export class DebugConfigPanelComponent extends PageComponent implements OnInit {
   isDebugAllActive$ = timer(0, SECOND).pipe(
     map(() => {
       this.cd.markForCheck();
-      return this.debugAllUntil > new Date().getTime();
+      return this.debugAllUntil > new Date().getTime() || this.debugAll;
     }),
     distinctUntilChanged(),
     tap(isDebugOn => this.debugAllControl.patchValue(isDebugOn, { emitEvent: false })),
