@@ -84,9 +84,9 @@ public interface ResourceService extends EntityDaoService {
 
     boolean updateResourcesUsage(WidgetTypeDetails widgetTypeDetails);
 
-    List<TbResourceInfo> getUsedResources(Dashboard dashboard);
+    Collection<TbResourceInfo> getUsedResources(Dashboard dashboard);
 
-    List<TbResourceInfo> getUsedResources(WidgetTypeDetails widgetTypeDetails);
+    Collection<TbResourceInfo> getUsedResources(WidgetTypeDetails widgetTypeDetails);
 
     TbResource createOrUpdateSystemResource(ResourceType resourceType, String resourceKey, byte[] data);
 

@@ -57,7 +57,6 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
@@ -461,22 +460,22 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     @Override
-    public List<TbResourceInfo> getUsedResources(Dashboard dashboard) {
-        return getUsedResources(dashboard.getTenantId(), dashboard.getConfiguration(), DASHBOARD_RESOURCES_MAPPING);
+    public Collection<TbResourceInfo> getUsedResources(Dashboard dashboard) {
+        return getUsedResources(dashboard.getTenantId(), dashboard.getConfiguration(), DASHBOARD_RESOURCES_MAPPING).values();
     }
 
     @Override
-    public List<TbResourceInfo> getUsedResources(WidgetTypeDetails widgetTypeDetails) {
-        List<TbResourceInfo> resources = getUsedResources(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor(), WIDGET_RESOURCES_MAPPING);
+    public Collection<TbResourceInfo> getUsedResources(WidgetTypeDetails widgetTypeDetails) {
+        Map<TbResourceId, TbResourceInfo> resources = getUsedResources(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor(), WIDGET_RESOURCES_MAPPING);
         JsonNode defaultConfig = widgetTypeDetails.getDefaultConfig();
         if (defaultConfig != null) {
-            resources.addAll(getUsedResources(widgetTypeDetails.getTenantId(), defaultConfig, WIDGET_DEFAULT_CONFIG_RESOURCES_MAPPING));
+            resources.putAll(getUsedResources(widgetTypeDetails.getTenantId(), defaultConfig, WIDGET_DEFAULT_CONFIG_RESOURCES_MAPPING));
         }
-        return resources;
+        return resources.values();
     }
 
-    private List<TbResourceInfo> getUsedResources(TenantId tenantId, JsonNode jsonNode, Map<String, String> mapping) {
-        List<TbResourceInfo> resources = new ArrayList<>();
+    private Map<TbResourceId, TbResourceInfo> getUsedResources(TenantId tenantId, JsonNode jsonNode, Map<String, String> mapping) {
+        Map<TbResourceId, TbResourceInfo> resources = new HashMap<>();
         processResources(jsonNode, mapping, value -> {
             String link = getResourceLink(value);
             if (link == null) {
@@ -499,7 +498,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
 
             TbResourceInfo resourceInfo = findResourceInfoByTenantIdAndKey(resourceTenantId, resourceType, resourceKey);
             if (resourceInfo != null) {
-                resources.add(resourceInfo);
+                resources.putIfAbsent(resourceInfo.getId(), resourceInfo);
             } else {
                 log.warn("[{}] Unknown resource referenced with '{}'", tenantId, value);
             }

@@ -606,7 +606,8 @@ public class DashboardControllerTest extends AbstractControllerTest {
                         {"xxx":
                         {"config":{"actions":{"elementClick":[
                         {"customResources":[{"url":{"entityType":"TB_RESOURCE","id":
-                        "tb-resource;/api/resource/js_module/tenant/gateway-management-extension.js"},"isModule":true}]}]}}}}
+                        "tb-resource;/api/resource/js_module/tenant/gateway-management-extension.js"},"isModule":true},
+                        {"url":"tb-resource;/api/resource/js_module/tenant/gateway-management-extension.js","isModule":true}]}]}}}}
                         """)));
         dashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
 
