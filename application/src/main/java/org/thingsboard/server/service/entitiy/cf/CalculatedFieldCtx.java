@@ -13,31 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf;
+package org.thingsboard.server.service.entitiy.cf;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 
-import java.util.Map;
-
 @Data
-public class CalculatedFieldConfig {
+public class CalculatedFieldCtx {
 
-    private Map<String, Argument> arguments;
-    private Output output;
+    private CalculatedFieldId calculatedFieldId;
+    private EntityId entityId;
+    private CalculatedFieldState state;
 
-    @Data
-    public static class Argument {
-        private EntityId entityId;
-        private String key;
-        private String type;
-        private int defaultValue;
+    public CalculatedFieldCtx() {
     }
 
-    @Data
-    public static class Output {
-        private String type;
-        private String expression;
+    public CalculatedFieldCtx(CalculatedFieldId calculatedFieldId, EntityId entityId, CalculatedFieldState state) {
+        this.calculatedFieldId = calculatedFieldId;
+        this.entityId = entityId;
+        this.state = state;
     }
-
 }

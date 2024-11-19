@@ -40,7 +40,8 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.CalculatedFieldConfig;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -1212,19 +1213,19 @@ public class DeviceServiceTest extends AbstractServiceTest {
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setTenantId(tenantId);
         calculatedField.setName("Test CF");
-        calculatedField.setType("Simple");
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
         calculatedField.setEntityId(deviceWithCf.getId());
 
-        CalculatedFieldConfig config = new CalculatedFieldConfig();
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
 
-        CalculatedFieldConfig.Argument argument = new CalculatedFieldConfig.Argument();
+        SimpleCalculatedFieldConfiguration.Argument argument = new SimpleCalculatedFieldConfiguration.Argument();
         argument.setEntityId(device.getId());
         argument.setType("TIME_SERIES");
         argument.setKey("temperature");
 
         config.setArguments(Map.of("T", argument));
 
-        CalculatedFieldConfig.Output output = new CalculatedFieldConfig.Output();
+        SimpleCalculatedFieldConfiguration.Output output = new SimpleCalculatedFieldConfiguration.Output();
         output.setType("TIME_SERIES");
         output.setExpression("T - (100 - H) / 5");
 
@@ -1240,6 +1241,5 @@ public class DeviceServiceTest extends AbstractServiceTest {
 
         calculatedFieldService.deleteCalculatedField(tenantId, savedCalculatedField.getId());
     }
-
 
 }

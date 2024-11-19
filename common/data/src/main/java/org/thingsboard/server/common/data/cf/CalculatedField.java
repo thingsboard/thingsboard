@@ -20,7 +20,11 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -39,15 +43,15 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
 
     @NoXss
     @Length(fieldName = "type")
-    private String type;
+    private CalculatedFieldType type;
     @NoXss
     @Length(fieldName = "name")
     @Schema(description = "User defined name of the calculated field.")
     private String name;
     @Schema(description = "Version of calculated field configuration.", example = "0")
     private int configurationVersion;
-    @Schema
-    private transient CalculatedFieldConfig configuration;
+    @Schema(implementation = SimpleCalculatedFieldConfiguration.class)
+    private transient CalculatedFieldConfiguration configuration;
     @Getter
     @Setter
     private Long version;
@@ -63,7 +67,7 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
         super(id);
     }
 
-    public CalculatedField(TenantId tenantId, EntityId entityId, String type, String name, int configurationVersion, CalculatedFieldConfig configuration, Long version, CalculatedFieldId externalId) {
+    public CalculatedField(TenantId tenantId, EntityId entityId, CalculatedFieldType type, String name, int configurationVersion, CalculatedFieldConfiguration configuration, Long version, CalculatedFieldId externalId) {
         this.tenantId = tenantId;
         this.entityId = entityId;
         this.type = type;

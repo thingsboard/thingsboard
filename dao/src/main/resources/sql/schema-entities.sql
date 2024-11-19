@@ -925,9 +925,7 @@ CREATE TABLE IF NOT EXISTS calculated_field_link (
     tenant_id uuid NOT NULL,
     entity_type VARCHAR(32),
     entity_id uuid NOT NULL,
---     target_id uuid NOT NULL,
     calculated_field_id uuid NOT NULL,
-    configuration varchar(1000000),
-    CONSTRAINT calculated_field_link_unq_key UNIQUE (entity_id, calculated_field_id),
+    configuration varchar(10000),
     CONSTRAINT fk_calculated_field_id FOREIGN KEY (calculated_field_id) REFERENCES calculated_field(id) ON DELETE CASCADE
 );

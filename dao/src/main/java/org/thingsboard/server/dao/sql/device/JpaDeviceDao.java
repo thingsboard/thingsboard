@@ -174,6 +174,17 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
     }
 
     @Override
+    public PageData<DeviceId> findDeviceIdsByTenantIdAndDeviceProfileId(UUID tenantId, UUID deviceProfileId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(
+                deviceRepository.findIdsByTenantIdAndDeviceProfileId(
+                        tenantId,
+                        deviceProfileId,
+                        pageLink.getTextSearch(),
+                        DaoUtil.toPageable(pageLink)))
+                .mapData(DeviceId::new);
+    }
+
+    @Override
     public PageData<Device> findDevicesByTenantIdAndTypeAndEmptyOtaPackage(UUID tenantId,
                                                                            UUID deviceProfileId,
                                                                            OtaPackageType type,

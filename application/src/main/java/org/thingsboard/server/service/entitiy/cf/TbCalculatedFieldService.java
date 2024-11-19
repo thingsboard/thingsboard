@@ -18,11 +18,13 @@ package org.thingsboard.server.service.entitiy.cf;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TbCalculatedFieldService {
 
-    void onMsg();
+    void onCalculatedFieldMsg(TransportProtos.CalculatedFieldMsgProto proto, TbCallback callback);
 
     CalculatedField save(CalculatedField calculatedField, SecurityUser user) throws ThingsboardException;
 

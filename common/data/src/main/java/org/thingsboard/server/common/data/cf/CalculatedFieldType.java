@@ -13,16 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.cf;
+package org.thingsboard.server.common.data.cf;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.thingsboard.server.dao.model.sql.CalculatedFieldLinkEntity;
+public enum CalculatedFieldType {
 
-import java.util.List;
-import java.util.UUID;
-
-public interface CalculatedFieldLinkRepository extends JpaRepository<CalculatedFieldLinkEntity, UUID> {
-
-    List<CalculatedFieldLinkEntity> findAllByTenantIdAndCalculatedFieldId(UUID tenantId, UUID calculatedFieldId);
+    SIMPLE, SCRIPT
 
 }

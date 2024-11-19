@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.cf;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,6 +24,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.cf.CalculatedFieldLinkDao;
 import org.thingsboard.server.dao.model.sql.CalculatedFieldLinkEntity;
@@ -39,15 +42,27 @@ import java.util.UUID;
 public class JpaCalculatedFieldLinkDao extends JpaAbstractDao<CalculatedFieldLinkEntity, CalculatedFieldLink> implements CalculatedFieldLinkDao {
 
     private final CalculatedFieldLinkRepository calculatedFieldLinkRepository;
+    private final NativeCalculatedFieldRepository nativeCalculatedFieldRepository;
 
     @Override
-    public CalculatedFieldLink findCalculatedFieldLinkByCalculatedFieldId(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
-        return DaoUtil.getData(calculatedFieldLinkRepository.findByTenantIdAndCalculatedFieldId(tenantId.getId(), calculatedFieldId.getId()));
+    public List<CalculatedFieldLink> findCalculatedFieldLinksByCalculatedFieldId(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
+        return DaoUtil.convertDataList(calculatedFieldLinkRepository.findAllByTenantIdAndCalculatedFieldId(tenantId.getId(), calculatedFieldId.getId()));
+    }
+
+    @Override
+    public ListenableFuture<List<CalculatedFieldLink>> findCalculatedFieldLinksByCalculatedFieldIdAsync(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
+        return service.submit(() -> findCalculatedFieldLinksByCalculatedFieldId(tenantId, calculatedFieldId));
     }
 
     @Override
     public List<CalculatedFieldLink> findAll() {
         return DaoUtil.convertDataList(calculatedFieldLinkRepository.findAll());
+    }
+
+    @Override
+    public PageData<CalculatedFieldLink> findAll(PageLink pageLink) {
+        log.debug("Try to find calculated field links by pageLink [{}]", pageLink);
+        return nativeCalculatedFieldRepository.findCalculatedFieldLinks(DaoUtil.toPageable(pageLink));
     }
 
     @Override

@@ -15,30 +15,38 @@
  */
 package org.thingsboard.server.dao.cf;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.CalculatedFieldConfig;
+import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-import static org.thingsboard.server.dao.entity.AbstractEntityService.checkConstraintViolation;
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
 @Service("CalculatedFieldDaoService")
 @Slf4j
 @RequiredArgsConstructor
-public class BaseCalculatedFieldService implements CalculatedFieldService {
+public class BaseCalculatedFieldService extends AbstractEntityService implements CalculatedFieldService {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_CALCULATED_FIELD_ID = "Incorrect calculatedFieldId ";
@@ -50,12 +58,14 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
 
     @Override
     public CalculatedField save(CalculatedField calculatedField) {
-        calculatedFieldDataValidator.validate(calculatedField, CalculatedField::getTenantId);
+        CalculatedField oldCalculatedField = calculatedFieldDataValidator.validate(calculatedField, CalculatedField::getTenantId);
         try {
             TenantId tenantId = calculatedField.getTenantId();
             log.trace("Executing save calculated field, [{}]", calculatedField);
             CalculatedField savedCalculatedField = calculatedFieldDao.save(tenantId, calculatedField);
             createOrUpdateCalculatedFieldLink(tenantId, savedCalculatedField);
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedCalculatedField.getTenantId()).entityId(savedCalculatedField.getId())
+                    .entity(savedCalculatedField).oldEntity(oldCalculatedField).created(calculatedField.getId() == null).build());
             return savedCalculatedField;
         } catch (Exception e) {
             checkConstraintViolation(e,
@@ -74,17 +84,49 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
     }
 
     @Override
-    public List<CalculatedField> findAll() {
+    public ListenableFuture<CalculatedField> findCalculatedFieldByIdAsync(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
+        log.trace("Executing findCalculatedFieldByIdAsync [{}]", calculatedFieldId);
+        validateId(calculatedFieldId, id -> INCORRECT_CALCULATED_FIELD_ID + id);
+        return calculatedFieldDao.findByIdAsync(tenantId, calculatedFieldId.getId());
+    }
+
+    @Override
+    public List<CalculatedField> findAllCalculatedFields() {
         log.trace("Executing findAll");
         return calculatedFieldDao.findAll();
     }
 
     @Override
+    public PageData<CalculatedField> findAllCalculatedFields(PageLink pageLink) {
+        log.trace("Executing findAll, pageLink [{}]", pageLink);
+        validatePageLink(pageLink);
+        return calculatedFieldDao.findAll(pageLink);
+    }
+
+    @Override
     public void deleteCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
-        log.trace("Executing deleteCalculatedField, tenantId [{}], calculatedFieldId [{}]", tenantId, calculatedFieldId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validateId(calculatedFieldId, id -> INCORRECT_CALCULATED_FIELD_ID + id);
-        calculatedFieldDao.removeById(tenantId, calculatedFieldId.getId());
+        deleteEntity(tenantId, calculatedFieldId, false);
+    }
+
+    @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        CalculatedField calculatedField = calculatedFieldDao.findById(tenantId, id.getId());
+        if (calculatedField == null) {
+            if (force) {
+                return;
+            } else {
+                throw new IncorrectParameterException("Unable to delete non-existent calculated field.");
+            }
+        }
+        deleteCalculatedField(tenantId, calculatedField);
+    }
+
+    private void deleteCalculatedField(TenantId tenantId, CalculatedField calculatedField) {
+        log.trace("Executing deleteCalculatedField, tenantId [{}], calculatedFieldId [{}]", tenantId, calculatedField.getId());
+        calculatedFieldDao.removeById(tenantId, calculatedField.getUuidId());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(calculatedField.getId()).entity(calculatedField).build());
     }
 
     @Override
@@ -99,13 +141,8 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
     @Override
     public CalculatedFieldLink saveCalculatedFieldLink(TenantId tenantId, CalculatedFieldLink calculatedFieldLink) {
         calculatedFieldLinkDataValidator.validate(calculatedFieldLink, CalculatedFieldLink::getTenantId);
-        try {
-            log.trace("Executing save calculated field link, [{}]", calculatedFieldLink);
-            return calculatedFieldLinkDao.save(tenantId, calculatedFieldLink);
-        } catch (Exception e) {
-            checkConstraintViolation(e, "calculated_field_link_unq_key", "Calculated Field for such entity id is already exists!");
-            throw e;
-        }
+        log.trace("Executing save calculated field link, [{}]", calculatedFieldLink);
+        return calculatedFieldLinkDao.save(tenantId, calculatedFieldLink);
     }
 
     @Override
@@ -117,14 +154,36 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
     }
 
     @Override
+    public ListenableFuture<CalculatedFieldLink> findCalculatedFieldLinkByIdAsync(TenantId tenantId, CalculatedFieldLinkId calculatedFieldLinkId) {
+        log.trace("Executing findCalculatedFieldLinkByIdAsync [{}]", calculatedFieldLinkId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(calculatedFieldLinkId, id -> "Incorrect calculatedFieldLinkId " + id);
+        return calculatedFieldLinkDao.findByIdAsync(tenantId, calculatedFieldLinkId.getId());
+    }
+
+    @Override
     public List<CalculatedFieldLink> findAllCalculatedFieldLinks() {
         log.trace("Executing findAllCalculatedFieldLinks");
         return calculatedFieldLinkDao.findAll();
     }
 
     @Override
-    public boolean existsByEntityId(TenantId tenantId, EntityId entityId) {
-        return calculatedFieldDao.existsByTenantIdAndEntityId(tenantId, entityId);
+    public List<CalculatedFieldLink> findAllCalculatedFieldLinksById(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
+        log.trace("Executing findAllCalculatedFieldLinksById, calculatedFieldId [{}]", calculatedFieldId);
+        return calculatedFieldLinkDao.findCalculatedFieldLinksByCalculatedFieldId(tenantId, calculatedFieldId);
+    }
+
+    @Override
+    public ListenableFuture<List<CalculatedFieldLink>> findAllCalculatedFieldLinksByIdAsync(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
+        log.trace("Executing findAllCalculatedFieldLinksByIdAsync, calculatedFieldId [{}]", calculatedFieldId);
+        return calculatedFieldLinkDao.findCalculatedFieldLinksByCalculatedFieldIdAsync(tenantId, calculatedFieldId);
+    }
+
+    @Override
+    public PageData<CalculatedFieldLink> findAllCalculatedFieldLinks(PageLink pageLink) {
+        log.trace("Executing findAllCalculatedFieldLinks, pageLink [{}]", pageLink);
+        validatePageLink(pageLink);
+        return calculatedFieldLinkDao.findAll(pageLink);
     }
 
     @Override
@@ -132,9 +191,8 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
         return calculatedFieldDao.findAllByTenantId(tenantId).stream()
                 .filter(calculatedField -> !referencedEntityId.equals(calculatedField.getEntityId()))
                 .map(CalculatedField::getConfiguration)
-                .map(CalculatedFieldConfig::getArguments)
-                .flatMap(arguments -> arguments.values().stream())
-                .anyMatch(argument -> referencedEntityId.equals(argument.getEntityId()));
+                .map(CalculatedFieldConfiguration::getReferencedEntities)
+                .anyMatch(referencedEntities -> referencedEntities.contains(referencedEntityId));
     }
 
     @Override
@@ -148,21 +206,22 @@ public class BaseCalculatedFieldService implements CalculatedFieldService {
     }
 
     private void createOrUpdateCalculatedFieldLink(TenantId tenantId, CalculatedField calculatedField) {
-        CalculatedFieldLink existingLink = (calculatedField.getId() != null)
-                ? calculatedFieldLinkDao.findCalculatedFieldLinkByCalculatedFieldId(tenantId, calculatedField.getId())
-                : null;
-
-        CalculatedFieldLink updatedLink = buildCalculatedFieldLink(tenantId, calculatedField, existingLink);
-        saveCalculatedFieldLink(tenantId, updatedLink);
+        List<CalculatedFieldLink> links = buildCalculatedFieldLinks(tenantId, calculatedField);
+        links.forEach(link -> saveCalculatedFieldLink(tenantId, link));
     }
 
-    private CalculatedFieldLink buildCalculatedFieldLink(TenantId tenantId, CalculatedField calculatedField, CalculatedFieldLink existingLink) {
-        CalculatedFieldLink link = (existingLink != null) ? existingLink : new CalculatedFieldLink();
-        link.setTenantId(tenantId);
-        link.setEntityId(calculatedField.getEntityId());
-        link.setCalculatedFieldId(calculatedField.getId());
-        link.setConfiguration(calculatedField.getConfiguration());
-        return link;
+    private List<CalculatedFieldLink> buildCalculatedFieldLinks(TenantId tenantId, CalculatedField calculatedField) {
+        CalculatedFieldConfiguration cfConfig = calculatedField.getConfiguration();
+        return cfConfig.getReferencedEntities().stream()
+                .map(referencedEntityId -> {
+                    CalculatedFieldLink link = new CalculatedFieldLink();
+                    link.setTenantId(tenantId);
+                    link.setEntityId(referencedEntityId);
+                    link.setCalculatedFieldId(calculatedField.getId());
+                    link.setConfiguration(cfConfig.getReferencedEntityConfig(referencedEntityId));
+                    return link;
+                })
+                .collect(Collectors.toList());
     }
 
 }

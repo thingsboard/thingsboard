@@ -13,16 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.cf;
+package org.thingsboard.server.common.data.cf;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.thingsboard.server.dao.model.sql.CalculatedFieldLinkEntity;
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Data;
+import org.thingsboard.server.common.data.EntityType;
 
-import java.util.List;
 import java.util.UUID;
 
-public interface CalculatedFieldLinkRepository extends JpaRepository<CalculatedFieldLinkEntity, UUID> {
+@Data
+public class SimpleCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
 
-    List<CalculatedFieldLinkEntity> findAllByTenantIdAndCalculatedFieldId(UUID tenantId, UUID calculatedFieldId);
+    public SimpleCalculatedFieldConfiguration() {
+        super();
+    }
 
+    public SimpleCalculatedFieldConfiguration(JsonNode config, EntityType entityType, UUID entityId) {
+        super(config, entityType, entityId);
+    }
+
+    @Override
+    public CalculatedFieldType getType() {
+        return CalculatedFieldType.SIMPLE;
+    }
 }

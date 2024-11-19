@@ -18,17 +18,19 @@ package org.thingsboard.server.dao.cf;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
 
 public interface CalculatedFieldDao extends Dao<CalculatedField> {
 
-    boolean existsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId);
-
     List<CalculatedField> findAllByTenantId(TenantId tenantId);
 
     List<CalculatedField> findAll();
+
+    PageData<CalculatedField> findAll(PageLink pageLink);
 
     List<CalculatedField> removeAllByEntityId(TenantId tenantId, EntityId entityId);
 

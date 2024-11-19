@@ -15,14 +15,15 @@
  */
 package org.thingsboard.server.dao.sql.cf;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.thingsboard.server.dao.model.sql.CalculatedFieldLinkEntity;
+import org.springframework.data.domain.Pageable;
+import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.page.PageData;
 
-import java.util.List;
-import java.util.UUID;
+public interface NativeCalculatedFieldRepository {
 
-public interface CalculatedFieldLinkRepository extends JpaRepository<CalculatedFieldLinkEntity, UUID> {
+    PageData<CalculatedField> findCalculatedFields(Pageable pageable);
 
-    List<CalculatedFieldLinkEntity> findAllByTenantIdAndCalculatedFieldId(UUID tenantId, UUID calculatedFieldId);
+    PageData<CalculatedFieldLink> findCalculatedFieldLinks(Pageable pageable);
 
 }

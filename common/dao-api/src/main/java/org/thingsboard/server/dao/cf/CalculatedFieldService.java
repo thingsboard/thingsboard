@@ -15,12 +15,15 @@
  */
 package org.thingsboard.server.dao.cf;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
@@ -31,7 +34,11 @@ public interface CalculatedFieldService extends EntityDaoService {
 
     CalculatedField findById(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
-    List<CalculatedField> findAll();
+    ListenableFuture<CalculatedField> findCalculatedFieldByIdAsync(TenantId tenantId, CalculatedFieldId calculatedFieldId);
+
+    List<CalculatedField> findAllCalculatedFields();
+
+    PageData<CalculatedField> findAllCalculatedFields(PageLink pageLink);
 
     void deleteCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
@@ -41,9 +48,15 @@ public interface CalculatedFieldService extends EntityDaoService {
 
     CalculatedFieldLink findCalculatedFieldLinkById(TenantId tenantId, CalculatedFieldLinkId calculatedFieldLinkId);
 
+    ListenableFuture<CalculatedFieldLink> findCalculatedFieldLinkByIdAsync(TenantId tenantId, CalculatedFieldLinkId calculatedFieldLinkId);
+
     List<CalculatedFieldLink> findAllCalculatedFieldLinks();
 
-    boolean existsByEntityId(TenantId tenantId, EntityId entityId);
+    List<CalculatedFieldLink> findAllCalculatedFieldLinksById(TenantId tenantId, CalculatedFieldId calculatedFieldId);
+
+    ListenableFuture<List<CalculatedFieldLink>> findAllCalculatedFieldLinksByIdAsync(TenantId tenantId, CalculatedFieldId calculatedFieldId);
+
+    PageData<CalculatedFieldLink> findAllCalculatedFieldLinks(PageLink pageLink);
 
     boolean referencedInAnyCalculatedField(TenantId tenantId, EntityId referencedEntityId);
 

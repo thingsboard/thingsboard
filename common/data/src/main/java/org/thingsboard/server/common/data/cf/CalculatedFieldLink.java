@@ -37,7 +37,7 @@ public class CalculatedFieldLink extends BaseData<CalculatedFieldLinkId> {
     @Schema(description = "JSON object with the Calculated Field Id. ", accessMode = Schema.AccessMode.READ_ONLY)
     private CalculatedFieldId calculatedFieldId;
     @Schema
-    private transient CalculatedFieldConfig configuration;
+    private transient CalculatedFieldLinkConfiguration configuration;
 
     public CalculatedFieldLink() {
         super();
@@ -47,7 +47,7 @@ public class CalculatedFieldLink extends BaseData<CalculatedFieldLinkId> {
         super(id);
     }
 
-    public CalculatedFieldLink(TenantId tenantId, EntityId entityId, CalculatedFieldId calculatedFieldId, CalculatedFieldConfig configuration) {
+    public CalculatedFieldLink(TenantId tenantId, EntityId entityId, CalculatedFieldId calculatedFieldId, CalculatedFieldLinkConfiguration configuration) {
         this.tenantId = tenantId;
         this.entityId = entityId;
         this.calculatedFieldId = calculatedFieldId;

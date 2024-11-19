@@ -24,10 +24,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.CalculatedFieldConfig;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -128,16 +128,6 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         assertThat(calculatedFieldService.findById(tenantId, savedCalculatedField.getId())).isNull();
     }
 
-    @Test
-    public void testSaveCalculatedFieldLinkIfCalculatedFieldForSuchEntityExists() {
-        CalculatedField savedCalculatedField = saveValidCalculatedField();
-        CalculatedFieldLink calculatedFieldLink = getCalculatedFieldLink(savedCalculatedField);
-
-        assertThatThrownBy(() -> calculatedFieldService.saveCalculatedFieldLink(tenantId, calculatedFieldLink))
-                .isInstanceOf(DataValidationException.class)
-                .hasMessage("Calculated Field for such entity id is already exists!");
-    }
-
     private CalculatedField saveValidCalculatedField() {
         Device device = createTestDevice();
         CalculatedField calculatedField = getCalculatedField(device.getId(), device.getId());
@@ -148,7 +138,7 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setTenantId(tenantId);
         calculatedField.setEntityId(entityId);
-        calculatedField.setType("Simple");
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
         calculatedField.setName("Test Calculated Field");
         calculatedField.setConfigurationVersion(1);
         calculatedField.setConfiguration(getCalculatedFieldConfig(referencedEntityId));
@@ -156,26 +146,17 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         return calculatedField;
     }
 
-    private CalculatedFieldLink getCalculatedFieldLink(CalculatedField calculatedField) {
-        CalculatedFieldLink calculatedFieldLink = new CalculatedFieldLink();
-        calculatedFieldLink.setTenantId(tenantId);
-        calculatedFieldLink.setEntityId(calculatedField.getEntityId());
-//        calculatedFieldLink.setConfiguration(calculatedField.getConfiguration());
-        calculatedFieldLink.setCalculatedFieldId(calculatedField.getId());
-        return calculatedFieldLink;
-    }
+    private CalculatedFieldConfiguration getCalculatedFieldConfig(EntityId referencedEntityId) {
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
 
-    private CalculatedFieldConfig getCalculatedFieldConfig(EntityId referencedEntityId) {
-        CalculatedFieldConfig config = new CalculatedFieldConfig();
-
-        CalculatedFieldConfig.Argument argument = new CalculatedFieldConfig.Argument();
+        SimpleCalculatedFieldConfiguration.Argument argument = new SimpleCalculatedFieldConfiguration.Argument();
         argument.setEntityId(referencedEntityId);
         argument.setType("TIME_SERIES");
         argument.setKey("temperature");
 
         config.setArguments(Map.of("T", argument));
 
-        CalculatedFieldConfig.Output output = new CalculatedFieldConfig.Output();
+        SimpleCalculatedFieldConfiguration.Output output = new SimpleCalculatedFieldConfiguration.Output();
         output.setType("TIME_SERIES");
         output.setExpression("T - (100 - H) / 5");
 

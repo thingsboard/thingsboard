@@ -20,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.cf.CalculatedFieldDao;
@@ -44,7 +45,7 @@ public class CalculatedFieldDataValidatorTest {
     @Test
     public void testUpdateNonExistingCalculatedField() {
         CalculatedField calculatedField = new CalculatedField(CALCULATED_FIELD_ID);
-        calculatedField.setType("Simple");
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
         calculatedField.setName("Test");
 
         given(calculatedFieldDao.findById(TENANT_ID, CALCULATED_FIELD_ID.getId())).willReturn(null);

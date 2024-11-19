@@ -24,6 +24,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.cf.CalculatedFieldDao;
 import org.thingsboard.server.dao.model.sql.CalculatedFieldEntity;
@@ -40,11 +42,7 @@ import java.util.UUID;
 public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity, CalculatedField> implements CalculatedFieldDao {
 
     private final CalculatedFieldRepository calculatedFieldRepository;
-
-    @Override
-    public boolean existsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId) {
-        return calculatedFieldRepository.existsByTenantIdAndEntityId(tenantId.getId(), entityId.getId());
-    }
+    private final NativeCalculatedFieldRepository nativeCalculatedFieldRepository;
 
     @Override
     public List<CalculatedField> findAllByTenantId(TenantId tenantId) {
@@ -54,6 +52,12 @@ public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity,
     @Override
     public List<CalculatedField> findAll() {
         return DaoUtil.convertDataList(calculatedFieldRepository.findAll());
+    }
+
+    @Override
+    public PageData<CalculatedField> findAll(PageLink pageLink) {
+        log.debug("Try to find calculated fields by pageLink [{}]", pageLink);
+        return nativeCalculatedFieldRepository.findCalculatedFields(DaoUtil.toPageable(pageLink));
     }
 
     @Override

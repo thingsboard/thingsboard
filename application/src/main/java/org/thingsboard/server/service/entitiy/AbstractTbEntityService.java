@@ -42,6 +42,7 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
@@ -99,6 +100,8 @@ public abstract class AbstractTbEntityService {
     protected AssetProfileService assetProfileService;
     @Autowired
     protected DeviceProfileService deviceProfileService;
+    @Autowired
+    protected EntityService entityService;
 
     protected boolean isTestProfile() {
         return Set.of(this.env.getActiveProfiles()).contains("test");
