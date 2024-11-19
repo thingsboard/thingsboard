@@ -31,6 +31,7 @@ import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.cf.Argument;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.SimpleCalculatedFieldConfiguration;
@@ -375,7 +376,7 @@ public class CustomerServiceTest extends AbstractServiceTest {
 
         SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
 
-        SimpleCalculatedFieldConfiguration.Argument argument = new SimpleCalculatedFieldConfiguration.Argument();
+        Argument argument = new Argument();
         argument.setEntityId(savedCustomer.getId());
         argument.setType("TIME_SERIES");
         argument.setKey("temperature");

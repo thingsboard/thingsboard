@@ -196,6 +196,11 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     }
 
     @Override
+    public boolean existsCalculatedFieldByEntityId(TenantId tenantId, EntityId entityId) {
+        return calculatedFieldDao.existsByEntityId(tenantId, entityId);
+    };
+
+    @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findById(tenantId, new CalculatedFieldId(entityId.getId())));
     }

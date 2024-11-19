@@ -13,24 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.cf;
+package org.thingsboard.server.common.data.cf;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 
 @Data
-public class CalculatedFieldCtx {
+public class Argument {
 
-    private CalculatedFieldCtxId id;
-    private CalculatedFieldState state;
+    private EntityId entityId;
+    private String key;
+    private String type;
+    private String defaultValue;
 
-    public CalculatedFieldCtx() {
-    }
-
-    public CalculatedFieldCtx(CalculatedFieldCtxId id, CalculatedFieldState state) {
-        this.id = id;
-        this.state = state;
-    }
+    private int limit;
+    private long timeWindow;
 
 }

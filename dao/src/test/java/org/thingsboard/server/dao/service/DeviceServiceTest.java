@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.cf.Argument;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.SimpleCalculatedFieldConfiguration;
@@ -1218,7 +1219,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
 
         SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
 
-        SimpleCalculatedFieldConfiguration.Argument argument = new SimpleCalculatedFieldConfiguration.Argument();
+        Argument argument = new Argument();
         argument.setEntityId(device.getId());
         argument.setType("TIME_SERIES");
         argument.setKey("temperature");

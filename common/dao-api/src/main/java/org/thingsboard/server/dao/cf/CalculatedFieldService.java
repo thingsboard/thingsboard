@@ -60,4 +60,6 @@ public interface CalculatedFieldService extends EntityDaoService {
 
     boolean referencedInAnyCalculatedField(TenantId tenantId, EntityId referencedEntityId);
 
+    boolean existsCalculatedFieldByEntityId(TenantId tenantId, EntityId entityId);
+
 }

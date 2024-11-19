@@ -106,14 +106,6 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
     }
 
     @Data
-    public static class Argument {
-        private EntityId entityId;
-        private String key;
-        private String type;
-        private String defaultValue;
-    }
-
-    @Data
     public static class Output {
         private String name;
         private String type;

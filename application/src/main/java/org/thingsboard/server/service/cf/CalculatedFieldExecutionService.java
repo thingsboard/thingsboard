@@ -13,24 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.cf;
+package org.thingsboard.server.service.cf;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.gen.transport.TransportProtos;
 
-@Data
-public class CalculatedFieldCtx {
+public interface CalculatedFieldExecutionService {
 
-    private CalculatedFieldCtxId id;
-    private CalculatedFieldState state;
-
-    public CalculatedFieldCtx() {
-    }
-
-    public CalculatedFieldCtx(CalculatedFieldCtxId id, CalculatedFieldState state) {
-        this.id = id;
-        this.state = state;
-    }
+    void onCalculatedFieldMsg(TransportProtos.CalculatedFieldMsgProto proto, TbCallback callback);
 
 }

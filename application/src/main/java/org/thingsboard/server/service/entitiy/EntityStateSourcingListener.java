@@ -51,6 +51,8 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceCredentialsUpdateNotificationMsg;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -65,6 +67,8 @@ public class EntityStateSourcingListener {
 
     private final TbClusterService tbClusterService;
     private final TenantService tenantService;
+    private final CalculatedFieldService calculatedFieldService;
+    private final DeviceProfileService deviceProfileService;
 
     @PostConstruct
     public void init() {
@@ -102,7 +106,7 @@ public class EntityStateSourcingListener {
                 onTenantProfileUpdate(tenantProfile, lifecycleEvent);
             }
             case DEVICE -> {
-                onDeviceUpdate(event.getEntity(), event.getOldEntity());
+                onDeviceUpdate(tenantId, event.getEntity(), event.getOldEntity());
             }
             case DEVICE_PROFILE -> {
                 DeviceProfile deviceProfile = (DeviceProfile) event.getEntity();
@@ -241,11 +245,19 @@ public class EntityStateSourcingListener {
         tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
     }
 
-    private void onDeviceUpdate(Object entity, Object oldEntity) {
+    private void onDeviceUpdate(TenantId tenantId, Object entity, Object oldEntity) {
         Device device = (Device) entity;
         Device oldDevice = null;
         if (oldEntity instanceof Device) {
             oldDevice = (Device) oldEntity;
+            // TODO: move verification of device type to cluster service
+            if (!oldDevice.getType().equals(device.getType())) {
+                DeviceProfile profile = deviceProfileService.findDeviceProfileByName(tenantId, device.getType());
+                boolean cfExistsByProfile = calculatedFieldService.existsCalculatedFieldByEntityId(tenantId, profile.getId());
+                if (cfExistsByProfile) {
+                    // TODO: send device type updated msg to core
+                }
+            }
         }
         tbClusterService.onDeviceUpdated(device, oldDevice);
     }

@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.cf.Argument;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -149,7 +150,7 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
     private CalculatedFieldConfiguration getCalculatedFieldConfig(EntityId referencedEntityId) {
         SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
 
-        SimpleCalculatedFieldConfiguration.Argument argument = new SimpleCalculatedFieldConfiguration.Argument();
+        Argument argument = new Argument();
         argument.setEntityId(referencedEntityId);
         argument.setType("TIME_SERIES");
         argument.setKey("temperature");

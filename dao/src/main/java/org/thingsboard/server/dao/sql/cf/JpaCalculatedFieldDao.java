@@ -67,6 +67,11 @@ public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity,
     }
 
     @Override
+    public boolean existsByEntityId(TenantId tenantId, EntityId entityId) {
+        return calculatedFieldRepository.existsByTenantIdAndEntityId(tenantId.getId(), entityId.getId());
+    }
+
+    @Override
     protected Class<CalculatedFieldEntity> getEntityClass() {
         return CalculatedFieldEntity.class;
     }

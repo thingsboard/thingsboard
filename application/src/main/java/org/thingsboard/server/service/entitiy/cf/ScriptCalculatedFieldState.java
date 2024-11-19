@@ -16,8 +16,7 @@
 package org.thingsboard.server.service.entitiy.cf;
 
 import lombok.Data;
-import net.objecthunter.exp4j.Expression;
-import net.objecthunter.exp4j.ExpressionBuilder;
+import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 
@@ -25,41 +24,24 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Data
-public class SimpleCalculatedFieldState implements CalculatedFieldState {
+public class ScriptCalculatedFieldState implements CalculatedFieldState {
 
-    // TODO: use value object(TsKv) instead of string
+    private TbelInvokeService tbelInvokeService;
+
     private Map<String, String> arguments = new HashMap<>();
-    private String outputResult;
 
     @Override
     public CalculatedFieldType getType() {
-        return CalculatedFieldType.SIMPLE;
+        return CalculatedFieldType.SCRIPT;
     }
 
     @Override
     public void initState(Map<String, String> argumentValues) {
-        this.arguments = argumentValues;
+
     }
 
     @Override
     public CalculatedFieldResult performCalculation(CalculatedFieldConfiguration calculatedFieldConfiguration) {
-        if (isValid(arguments, calculatedFieldConfiguration)) {
-            String expression = calculatedFieldConfiguration.getOutput().getExpression();
-            ThreadLocal<Expression> customExpression = new ThreadLocal<>();
-            var expr = customExpression.get();
-            if (expr == null) {
-                expr = new ExpressionBuilder(expression)
-                        .implicitMultiplication(true)
-                        .variables(arguments.keySet())
-                        .build();
-                customExpression.set(expr);
-            }
-            Map<String, Double> variables = new HashMap<>();
-            arguments.forEach((k, v) -> variables.put(k, Double.parseDouble(v)));
-            expr.setVariables(variables);
-            double result = expr.evaluate();
-            this.outputResult = Double.toString(result);
-        }
         return null;
     }
 
