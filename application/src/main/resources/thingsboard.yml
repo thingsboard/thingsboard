@@ -468,9 +468,6 @@ actors:
     node:
       # Errors for particular actor are persisted once per specified amount of milliseconds
       error_persist_frequency: "${ACTORS_RULE_NODE_ERROR_FREQUENCY:3000}"
-      # The maximum allowed duration (in minutes) for the debug mode to be enabled if the debug strategy is set to ALL_EVENTS.
-      # If a specific value is set in the tenant profile, the minimum between value from profile and this setting will be used.
-      max_debug_mode_duration: "${ACTORS_RULE_NODE_MAX_DEBUG_MODE_DURATION_MINUTES:60}"
     transaction:
       # Size of queues that store messages for transaction rule nodes
       queue_size: "${ACTORS_RULE_TRANSACTION_QUEUE_SIZE:15000}"
