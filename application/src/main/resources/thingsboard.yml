@@ -496,9 +496,12 @@ actors:
     persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:3600000}"
 
 debug_mode:
-  # The maximum allowed duration (in minutes) for the debug mode to be used.
-  # If a specific value is set in the tenant profile, the minimum between value from profile and this setting will be used.
-  max_duration: "${DEBUG_MODE_MAX_DURATION_MINUTES:60}"
+  # Maximum duration (in minutes) for debug mode.
+  # Min value is 1 minute.
+  # If set in the tenant profile and valid, it will be used.
+  # Otherwise, the value from this setting is used.
+  # If value from this setting is invalid, the default value (15 minutes) will be used.
+  max_duration: "${DEBUG_MODE_MAX_DURATION_MINUTES:15}"
 
 # Cache settings parameters
 cache:

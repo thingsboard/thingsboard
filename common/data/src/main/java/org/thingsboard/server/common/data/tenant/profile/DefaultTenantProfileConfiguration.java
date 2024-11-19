@@ -36,6 +36,8 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     @Serial
     private static final long serialVersionUID = -7134932690332578595L;
 
+    private static final int DEBUG_MODE_DEFAULT_DURATION_MINUTES = 15;
+
     private long maxDevices;
     private long maxAssets;
     private long maxCustomers;
@@ -205,9 +207,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
 
     @Override
     public int getMaxDebugModeDurationMinutes(int systemMaxDebugModeDurationMinutes) {
-        if (maxDebugModeDurationMinutes > 0) {
-            return Math.min(systemMaxDebugModeDurationMinutes, maxDebugModeDurationMinutes);
-        }
-        return systemMaxDebugModeDurationMinutes;
+        return maxDebugModeDurationMinutes > 0 ? maxDebugModeDurationMinutes : systemMaxDebugModeDurationMinutes > 0 ?
+                systemMaxDebugModeDurationMinutes : DEBUG_MODE_DEFAULT_DURATION_MINUTES;
     }
 }
