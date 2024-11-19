@@ -313,6 +313,28 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     sendResponseForAdaptorErrorOrCloseContext(ctx, topicName, msgId);
                 }
                 break;
+            case SUBSCRIBE:
+                MqttSubscribeMessage mqttSubscribeMsg = (MqttSubscribeMessage) msg;
+                log.trace("[{}] Processing subscription [{}]!", sessionId, mqttSubscribeMsg.variableHeader().messageId());
+                List<Integer> grantedQoSList = new ArrayList<>();
+                for (MqttTopicSubscription subscription : mqttSubscribeMsg.payload().topicSubscriptions()) {
+                    String topic = subscription.topicFilter();
+                    MqttQoS reqQoS = subscription.qualityOfService();
+                    try {
+                        if (MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC.equals(topic)) {
+                            registerSubQoS(topic, grantedQoSList, reqQoS);
+                        } else {
+                            log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topic, reqQoS);
+                            grantedQoSList.add(ReturnCodeResolver.getSubscriptionReturnCode(deviceSessionCtx.getMqttVersion(), MqttReasonCodes.SubAck.TOPIC_FILTER_INVALID));
+                            break;
+                        }
+                    } catch (Exception e) {
+                        log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topic, reqQoS, e);
+                        grantedQoSList.add(ReturnCodeResolver.getSubscriptionReturnCode(deviceSessionCtx.getMqttVersion(), MqttReasonCodes.SubAck.IMPLEMENTATION_SPECIFIC_ERROR));
+                    }
+                }
+                ctx.writeAndFlush(createSubAckMessage(mqttSubscribeMsg.variableHeader().messageId(), grantedQoSList));
+                break;
             case PINGREQ:
                 ctx.writeAndFlush(new MqttMessage(new MqttFixedHeader(PINGRESP, false, AT_MOST_ONCE, false, 0)));
                 break;
@@ -822,7 +844,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC:
                         case MqttTopics.GATEWAY_RPC_TOPIC:
                         case MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC:
-                        case MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC:
                         case MqttTopics.DEVICE_FIRMWARE_RESPONSES_TOPIC:
                         case MqttTopics.DEVICE_FIRMWARE_ERROR_TOPIC:
                         case MqttTopics.DEVICE_SOFTWARE_RESPONSES_TOPIC:
