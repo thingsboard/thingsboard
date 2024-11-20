@@ -160,6 +160,7 @@
                                *matHeaderCellDef [style]="headerCellStyle(column)" mat-sort-header [disabled]="!column.sortable">
                 {{ column.ignoreTranslate ? column.title : (column.title | translate) }} </mat-header-cell>
               <mat-cell [class.mat-number-cell]="column.isNumberColumn"
+                        [class.cell-action]="column.actionCell?.type === cellActionType.COPY_BUTTON"
                         [class.lt-lg:!hidden]="column.mobileHide"
                         *matCellDef="let entity; let row = index"
                         [matTooltip]="cellTooltip(entity, column, row)"
@@ -172,7 +173,7 @@
                        (click)="$event.stopPropagation();"></a>
                   </ng-template>
                   <ng-template [ngSwitchCase]="'entityChips'">
-                    <tb-entity-chips [entity]="entity"></tb-entity-chips>
+                    <tb-entity-chips [entity]="entity" [key]="column.key"></tb-entity-chips>
                   </ng-template>
                   <ng-template #defaultContent ngSwitchDefault>
                     <span [innerHTML]="cellContent(entity, column, row)"></span>
@@ -182,6 +183,7 @@
                   <ng-container [ngSwitch]="column.actionCell.type">
                     <ng-template [ngSwitchCase]="cellActionType.COPY_BUTTON">
                       <tb-copy-button
+                        class="copy-button"
                         [disabled]="isLoading$ | async"
                         [class.!hidden]="!column.actionCell.isEnabled(entity)"
                         [copyText]="column.actionCell.onAction(null, entity)"
