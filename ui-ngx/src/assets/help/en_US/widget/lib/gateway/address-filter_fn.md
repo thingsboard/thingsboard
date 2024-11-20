@@ -21,4 +21,4 @@ For example, we have a device that has the following IP address: 192.168.0.120:5
 
 4. Allow any devices:
 
-   **Address filter:** *:*
+   **Address filter:** `*:*`
