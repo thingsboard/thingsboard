@@ -626,7 +626,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
             ImageCacheKey key = getKeyFromUrl(tenantId, imageUrl);
             if (key != null) {
                 var imageInfo = getImageInfoByTenantIdAndKey(key.getTenantId(), key.getResourceKey());
-                if (imageInfo == null || (TenantId.SYS_TENANT_ID.equals(imageInfo.getTenantId()) && ResourceSubType.SCADA_SYMBOL.equals(imageInfo.getResourceSubType()))) {
+                if (imageInfo == null) {
                     return imageUrl;
                 } else {
                     String result = processor.apply(key, imageInfo);
