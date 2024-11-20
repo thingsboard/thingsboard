@@ -194,7 +194,6 @@ import { ImagePipe } from '@shared/pipe/image.pipe';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { ImportDialogComponent } from '@shared/import-export/import-dialog.component';
 import { ImportDialogCsvComponent } from '@shared/import-export/import-dialog-csv.component';
-import { ExportWidgetsBundleDialogComponent } from '@shared/import-export/export-widgets-bundle-dialog.component';
 import { ExportResourceDialogComponent } from '@shared/import-export/export-resource-dialog.component';
 import { TableColumnsAssignmentComponent } from '@shared/import-export/table-columns-assignment.component';
 import { ScrollGridComponent } from '@shared/components/grid/scroll-grid.component';
@@ -407,7 +406,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     HintTooltipIconComponent,
     ImportDialogComponent,
     ImportDialogCsvComponent,
-    ExportWidgetsBundleDialogComponent,
     ExportResourceDialogComponent,
     TableColumnsAssignmentComponent,
     ScrollGridComponent,
@@ -665,7 +663,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     HintTooltipIconComponent,
     ImportDialogComponent,
     ImportDialogCsvComponent,
-    ExportWidgetsBundleDialogComponent,
     ExportResourceDialogComponent,
     TableColumnsAssignmentComponent,
     ScrollGridComponent,
