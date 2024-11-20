@@ -14,54 +14,51 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
-import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { isDefinedAndNotNull } from '@core/utils';
 
-export interface ExportWidgetsBundleDialogData {
-  widgetsBundle: WidgetsBundle;
-  includeBundleWidgetsInExport: boolean;
+export interface ExportResourceDialogData {
+  title: string;
+  prompt: string;
+  include?: boolean;
   ignoreLoading?: boolean;
 }
 
-export interface ExportWidgetsBundleDialogResult {
-  exportWidgets: boolean;
+export interface ExportResourceDialogDialogResult {
+  include: boolean;
 }
 
 @Component({
-  selector: 'tb-export-widgets-bundle-dialog',
-  templateUrl: './export-widgets-bundle-dialog.component.html',
-  providers: [],
+  selector: 'tb-export-resource-dialog',
+  templateUrl: './export-resource-dialog.component.html',
   styleUrls: []
 })
-export class ExportWidgetsBundleDialogComponent extends DialogComponent<ExportWidgetsBundleDialogComponent, ExportWidgetsBundleDialogResult>
-  implements OnInit {
-
-  widgetsBundle: WidgetsBundle;
+export class ExportResourceDialogComponent extends DialogComponent<ExportResourceDialogComponent, ExportResourceDialogDialogResult> {
 
   ignoreLoading = false;
 
-  exportWidgetsFormControl = new FormControl(true);
+  title: string;
+  prompt: string
+
+  includeResourcesFormControl = new FormControl(true);
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              @Inject(MAT_DIALOG_DATA) public data: ExportWidgetsBundleDialogData,
-              public dialogRef: MatDialogRef<ExportWidgetsBundleDialogComponent, ExportWidgetsBundleDialogResult>) {
+              @Inject(MAT_DIALOG_DATA) private data: ExportResourceDialogData,
+              public dialogRef: MatDialogRef<ExportResourceDialogComponent, ExportResourceDialogDialogResult>) {
     super(store, router, dialogRef);
-    this.widgetsBundle = data.widgetsBundle;
-    this.ignoreLoading = data.ignoreLoading;
-    if (isDefinedAndNotNull(data.includeBundleWidgetsInExport)) {
-      this.exportWidgetsFormControl.patchValue(data.includeBundleWidgetsInExport, {emitEvent: false});
+    this.ignoreLoading = this.data.ignoreLoading;
+    this.title = this.data.title;
+    this.prompt = this.data.prompt;
+    if (isDefinedAndNotNull(this.data.include)) {
+      this.includeResourcesFormControl.patchValue(this.data.include, {emitEvent: false});
     }
-  }
-
-  ngOnInit(): void {
   }
 
   cancel(): void {
@@ -70,7 +67,7 @@ export class ExportWidgetsBundleDialogComponent extends DialogComponent<ExportWi
 
   export(): void {
     this.dialogRef.close({
-      exportWidgets: this.exportWidgetsFormControl.value
+      include: this.includeResourcesFormControl.value
     });
   }
 }

@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,15 +30,25 @@ import lombok.extern.slf4j.Slf4j;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ImageExportData {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ResourceExportData {
 
-    private String mediaType;
-    private String fileName;
+    private String link;
     private String title;
-    private String subType;
+    private ResourceType type;
+    private ResourceSubType subType;
     private String resourceKey;
-    private boolean isPublic;
+    private String fileName;
     private String publicResourceKey;
+    private boolean isPublic;
+    private String mediaType;
     private String data;
+
+    /*
+     * when importing resource, the previous link may be changed due to existing duplicates or something else.
+     * this is the new proper link to be used in place of the old link
+     * */
+    @JsonIgnore
+    private String newLink;
 
 }

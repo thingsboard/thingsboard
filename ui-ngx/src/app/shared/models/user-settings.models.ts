@@ -20,6 +20,8 @@ export interface UserSettings {
   notDisplayInstructionsAfterAddEdge?: boolean;
   notDisplayConfigurationAfterAddMobileBundle?: boolean;
   includeBundleWidgetsInExport?: boolean;
+  includeResourcesInExportWidgetTypes?: boolean;
+  includeResourcesInExportDashboard?: boolean;
 }
 
 export const initialUserSettings: UserSettings = {

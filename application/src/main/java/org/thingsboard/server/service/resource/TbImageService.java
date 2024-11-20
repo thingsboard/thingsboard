@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.service.resource;
 
+import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.TbImageDeleteResult;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.dao.resource.ImageCacheKey;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TbImageService {
 
@@ -34,5 +36,7 @@ public interface TbImageService {
     void putETag(ImageCacheKey imageCacheKey, String etag);
 
     void evictETags(ImageCacheKey imageCacheKey);
+
+    TbResourceInfo importImage(ResourceExportData imageData, boolean checkExisting, SecurityUser user) throws Exception;
 
 }

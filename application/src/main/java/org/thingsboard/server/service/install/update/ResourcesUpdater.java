@@ -17,22 +17,29 @@ package org.thingsboard.server.service.install.update;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.HasImage;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.asset.AssetProfileDao;
 import org.thingsboard.server.dao.dashboard.DashboardDao;
+import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.resource.ImageService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.widget.WidgetTypeDao;
+import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
 import java.util.function.BiFunction;
@@ -41,12 +48,15 @@ import java.util.function.Function;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class ImagesUpdater {
+public class ResourcesUpdater {
     private final ImageService imageService;
+    private final ResourceService resourceService;
     private final WidgetsBundleDao widgetsBundleDao;
     private final WidgetTypeDao widgetTypeDao;
+    private final WidgetTypeService widgetTypeService;
     private final TenantDao tenantDao;
     private final DashboardDao dashboardDao;
+    private final DashboardService dashboardService;
     private final DeviceProfileDao deviceProfileDao;
     private final AssetProfileDao assetProfileDao;
 
@@ -59,20 +69,63 @@ public class ImagesUpdater {
     public void updateWidgetTypesImages() {
         log.info("Updating widget types images...");
         var widgetTypesIds = new PageDataIterable<>(widgetTypeDao::findAllWidgetTypesIds, 1024);
-        updateImages(widgetTypesIds, "widget type", imageService::replaceBase64WithImageUrl, widgetTypeDao);
+        updateImages(widgetTypesIds, "widget type", imageService::updateImagesUsage, widgetTypeDao);
     }
 
     public void updateDashboardsImages() {
         log.info("Updating dashboards images...");
-        updateImages("dashboard", dashboardDao::findIdsByTenantId, imageService::replaceBase64WithImageUrl, dashboardDao);
+        updateImages("dashboard", dashboardDao::findIdsByTenantId, imageService::updateImagesUsage, dashboardDao);
     }
 
-    public void createSystemImages(Dashboard defaultDashboard) {
+    public void createSystemImagesAndResources(Dashboard defaultDashboard) {
         defaultDashboard.setTenantId(TenantId.SYS_TENANT_ID);
-        boolean created = imageService.replaceBase64WithImageUrl(defaultDashboard);
-        if (created) {
-            log.debug("Created system images for default dashboard '{}'", defaultDashboard.getTitle());
+        if (CollectionUtils.isNotEmpty(defaultDashboard.getResources())) {
+            resourceService.importResources(defaultDashboard.getTenantId(), defaultDashboard.getResources());
         }
+        imageService.updateImagesUsage(defaultDashboard);
+        log.debug("Created/updated system images and resources for default dashboard '{}'", defaultDashboard.getTitle());
+    }
+
+    public void updateDashboardsResources() {
+        log.info("Updating resources usage in dashboards");
+        var dashboards = new PageDataIterable<>(dashboardService::findAllDashboardsIds, 512);
+        int totalCount = 0;
+        int updatedCount = 0;
+        for (DashboardId dashboardId : dashboards) {
+            Dashboard dashboard = dashboardService.findDashboardById(TenantId.SYS_TENANT_ID, dashboardId);
+            boolean updated = resourceService.updateResourcesUsage(dashboard); // will convert resources ids to new structure
+            if (updated) {
+                dashboardService.saveDashboard(dashboard);
+                updatedCount++;
+            }
+            totalCount++;
+
+            if (totalCount % 1000 == 0) {
+                log.info("Processed {} dashboards, updated {}", totalCount, updatedCount);
+            }
+        }
+        log.info("Updated {} dashboards", updatedCount);
+    }
+
+    public void updateWidgetsResources() {
+        log.info("Updating resources usage in widgets");
+        int totalCount = 0;
+        int updatedCount = 0;
+        var widgets = new PageDataIterable<>(widgetTypeService::findAllWidgetTypesIds, 512);
+        for (WidgetTypeId widgetTypeId : widgets) {
+            WidgetTypeDetails widgetTypeDetails = widgetTypeService.findWidgetTypeDetailsById(TenantId.SYS_TENANT_ID, widgetTypeId);
+            boolean updated = resourceService.updateResourcesUsage(widgetTypeDetails);
+            if (updated) {
+                widgetTypeService.saveWidgetType(widgetTypeDetails);
+                updatedCount++;
+            }
+            totalCount++;
+
+            if (totalCount % 200 == 0) {
+                log.info("Processed {} widgets, updated {}", totalCount, updatedCount);
+            }
+        }
+        log.info("Updated {} widgets", updatedCount);
     }
 
     public void updateDeviceProfilesImages() {

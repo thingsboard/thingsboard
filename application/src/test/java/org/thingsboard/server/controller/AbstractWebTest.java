@@ -42,18 +42,22 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.mock.http.MockHttpOutputMessage;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.mock.web.MockPart;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.context.WebApplicationContext;
@@ -75,6 +79,7 @@ import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
@@ -148,6 +153,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1178,6 +1184,27 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                         )
                         .build());
         return oAuth2Client;
+    }
+
+    protected <R> TbResourceInfo uploadImage(HttpMethod httpMethod, String url, String filename, String mediaType, byte[] content) throws Exception {
+        return this.uploadImage(httpMethod, url, null, filename, mediaType, content);
+    }
+
+    protected <R> TbResourceInfo uploadImage(HttpMethod httpMethod, String url, String subType, String filename, String mediaType, byte[] content) throws Exception {
+        return uploadResource(httpMethod, url, filename, mediaType, content, StringUtils.isNotEmpty(subType) ?
+                List.of(new MockPart("imageSubType", subType.getBytes(StandardCharsets.UTF_8))) : null);
+    }
+
+    protected <R> TbResourceInfo uploadResource(HttpMethod httpMethod, String url, String filename, String mediaType, byte[] content, List<MockPart> otherParts) throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", filename, mediaType, content);
+        var request = MockMvcRequestBuilders.multipart(httpMethod, url).file(file);
+        if (otherParts != null && !otherParts.isEmpty()) {
+            for (MockPart otherPart : otherParts) {
+                request.part(otherPart);
+            }
+        }
+        setJwtToken(request);
+        return readResponse(mockMvc.perform(request).andExpect(status().isOk()), TbResourceInfo.class);
     }
 
     protected NotificationTarget createNotificationTarget(UserId... usersIds) {
