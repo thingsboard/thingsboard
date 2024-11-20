@@ -60,6 +60,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -206,6 +207,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     @Override
     public List<ResourceExportData> exportResources(TenantId tenantId, Collection<TbResourceInfo> resources) {
         return resources.stream()
+                .sorted(Comparator.comparing(TbResourceInfo::getResourceType).thenComparing(TbResourceInfo::getResourceKey))
                 .map(resourceInfo -> {
                     if (resourceInfo.getResourceType() == ResourceType.IMAGE) {
                         ResourceExportData imageExportData = imageService.exportImage(resourceInfo);
