@@ -33,6 +33,7 @@ import { AppState } from '@core/core.state';
 import { SubscriptSizing } from '@angular/material/form-field';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-key-val-map',
@@ -55,7 +56,7 @@ export class KeyValMapComponent extends PageComponent implements ControlValueAcc
 
   @Input() disabled: boolean;
 
-  @Input() isValueRequired = true;
+  @Input() @coerceBoolean() isValueRequired = true;
 
   @Input() titleText: string;
 
