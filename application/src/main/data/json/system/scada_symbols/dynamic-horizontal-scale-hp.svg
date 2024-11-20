@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="800" height="400" fill="none" version="1.1" viewBox="0 0 800 400"><tb:metadata xmlns=""><![CDATA[{
+<svg width="800" height="400" fill="none" version="1.1" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg">
+ <tb:metadata><![CDATA[{
   "title": "HP Dynamic horizontal scale",
   "description": "Dynamic horizontal scale with current volume value and dynamically configurable warning and critical scale.",
   "searchTags": [
@@ -83,7 +84,7 @@
     },
     {
       "tag": "target",
-      "stateRenderFunction": "function calculateOffset(value, minValue, maxValue) {\n    var clampedValue = Math.max(minValue, Math.min(value, maxValue));\n    var normalizedValue = (clampedValue - minValue) / (maxValue - minValue);\n    var offset = normalizedValue * 653;\n\n    return offset;\n}\n\nvar minValue = ctx.properties.minValue;\nvar maxValue = ctx.properties.maxValue;\nvar showTarget = ctx.properties.showTarget;\nvar targetValue = ctx.values.targetValue;\n\nif (showTarget && targetValue !== null) {\n    element.show();\n    var offset = calculateOffset(targetValue, minValue, maxValue);\n    element.transform({translateX: -(Math.min(Math.max(offset-17, 0), 617))});\n} else {\n    element.hide();\n}\n\n",
+      "stateRenderFunction": "function calculateOffset(value, minValue, maxValue) {\n    var clampedValue = Math.max(minValue, Math.min(value, maxValue));\n    var normalizedValue = (clampedValue - minValue) / (maxValue - minValue);\n    var offset = normalizedValue * 640;\n\n    return offset;\n}\n\nvar minValue = ctx.properties.minValue;\nvar maxValue = ctx.properties.maxValue;\nvar showTarget = ctx.properties.showTarget;\nvar targetValue = ctx.values.targetValue;\n\nif (showTarget && targetValue !== null) {\n    element.show();\n    var offset = calculateOffset(targetValue, minValue, maxValue);\n    element.transform({translateX: -(640 - (Math.min(Math.max(offset+17, 36), 640)))});\n} else {\n    element.hide();\n}\n\n",
       "actions": null
     },
     {
@@ -108,7 +109,7 @@
     },
     {
       "tag": "valuePosition",
-      "stateRenderFunction": "function calculateOffset(value, minValue, maxValue) {\n    var clampedValue = Math.max(minValue, Math.min(value, maxValue));\n    var normalizedValue = (clampedValue - minValue) / (maxValue - minValue);\n    var offset = normalizedValue * 653;\n\n    return offset;\n}\n\nvar minValue = ctx.properties.minValue;\nvar maxValue = ctx.properties.maxValue;\nvar value = ctx.values.value;\n\nif (value !== null) {\n    var offset = calculateOffset(value, minValue, maxValue);\n    element.transform({translateX: -offset});\n}\n",
+      "stateRenderFunction": "function calculateOffset(value, minValue, maxValue) {\n    var clampedValue = Math.max(minValue, Math.min(value, maxValue));\n    var normalizedValue = (clampedValue - minValue) / (maxValue - minValue);\n    var offset = normalizedValue * 638;\n\n    return offset;\n}\n\nvar minValue = ctx.properties.minValue;\nvar maxValue = ctx.properties.maxValue;\nvar value = ctx.values.value;\n\nif (value !== null) {\n    var offset = calculateOffset(value, minValue, maxValue);\n    element.transform({translateX: -(638 - offset)});\n}\n",
       "actions": null
     }
   ],
@@ -547,7 +548,7 @@
       "id": "units",
       "name": "{i18n:scada.symbol.units}",
       "type": "units",
-      "default": "°C",
+      "default": "&#176;C",
       "required": null,
       "subLabel": null,
       "divider": null,
@@ -564,7 +565,7 @@
       "name": "{i18n:scada.symbol.units}",
       "type": "font",
       "default": {
-        "size": 56,
+        "size": 40,
         "sizeUnit": "px",
         "family": "Roboto",
         "weight": "500",
@@ -791,33 +792,39 @@
     }
   ]
 }]]></tb:metadata>
-<text x="409.16602" y="113.23438" fill="#000000" font-family="Roboto" font-size="56px" font-weight="400" text-anchor="middle" tb:tag="label" xml:space="preserve"><tspan transform="translate(0,-144)" dominant-baseline="middle">Outdoor</tspan></text><text x="765.21875" y="225.25" fill="#000000" font-family="Roboto" font-size="56px" font-weight="400" text-anchor="middle" tb:tag="units" xml:space="preserve"><tspan transform="translate(0,-144)" dominant-baseline="middle">°C</tspan></text><g fill="#666" font-family="Roboto" font-size="32px" font-weight="500" text-anchor="middle" style="display: none;" tb:tag="minMaxValue">
-  <text x="100.02344" y="268" tb:tag="maxValue" xml:space="preserve" style=""><tspan dominant-baseline="middle">100</tspan></text>
-  <text x="715.07031" y="268" tb:tag="minValue" xml:space="preserve" style=""><tspan dominant-baseline="middle">0</tspan></text>
- </g><g transform="translate(-350)" tb:tag="valuePosition">
-  <path d="m724 191 24-42h-48z" fill="#666" tb:tag="valuePointer"/>
-  <text x="723.7793" y="295.82501" fill="#002878" font-family="Roboto" font-size="60px" font-weight="400" text-anchor="middle" tb:tag="value" xml:space="preserve"><tspan transform="translate(0,-144)" dominant-baseline="middle">26</tspan></text>
- </g><g tb:tag="scale">
+ <text x="409.16602" y="97.234375" fill="#000000" font-family="Roboto" font-size="56px" font-weight="400" text-anchor="middle" tb:tag="label" xml:space="preserve"><tspan transform="translate(0,-144)" dominant-baseline="middle">Outdoor</tspan></text>
+ <text x="401.15625" y="345.75" fill="#000000" font-family="Roboto" font-size="40px" font-weight="400" text-anchor="middle" tb:tag="units" xml:space="preserve"><tspan transform="translate(0,-144)" dominant-baseline="middle">°C</tspan></text>
+ <g transform="matrix(.98289 0 0 1 8.2492 -20)" fill="#666" font-family="Roboto" font-size="32px" font-weight="500" text-anchor="middle" style="display:none" tb:tag="minMaxValue">
+  <text x="100.02344" y="268" style="" tb:tag="maxValue" xml:space="preserve"><tspan dominant-baseline="middle">100</tspan></text>
+  <text x="715.07031" y="268" style="" tb:tag="minValue" xml:space="preserve"><tspan dominant-baseline="middle">0</tspan></text>
+ </g>
+ <g transform="translate(-350)" tb:tag="valuePosition">
+  <path d="m719 179 24-42h-48z" fill="#666" tb:tag="valuePointer"/>
+  <text x="718.7793" y="273.125" fill="#002878" font-family="Roboto" font-size="60px" font-weight="400" text-anchor="middle" tb:tag="value" xml:space="preserve"><tspan transform="translate(0,-144)" dominant-baseline="middle">26</tspan></text>
+ </g>
+ <g transform="matrix(.97855 0 0 1 9.5443 -16.995)" tb:tag="scale">
   <rect transform="rotate(-90)" x="-242" y="72" width="42" height="653" fill="#c8dff7" style="stroke-width:.9497" tb:tag="scaleBackground"/>
   <rect transform="rotate(-90)" x="-241.52" y="72.475" width="41.05" height="652.05" stroke="#000" stroke-opacity=".87" style="stroke-width:.95024"/>
-  <g tb:tag="highWarningScale">
-   <rect transform="rotate(-90)" x="-242" y="72" width="42" height="153.12" fill="#ebebeb" style="stroke-width:.94905" tb:tag="highWarningScaleBackground"/>
+  <g tb:tag="lowWarningScale">
+   <rect transform="rotate(-90)" x="-242" y="72" width="42" height="153.12" fill="#ebebeb" style="stroke-width:.94905" tb:tag="lowWarningScaleBackground"/>
    <rect transform="rotate(-90)" x="-241.53" y="72.475" width="41.051" height="152.17" stroke="#000" stroke-opacity=".87" style="stroke-width:.94948"/>
   </g>
-  <g tb:tag="highCriticalScale">
-   <rect transform="rotate(-90)" x="-242" y="72" width="42" height="81.062" fill="#666" style="stroke-width:.94905" tb:tag="highCriticalScaleBackground"/>
+  <g tb:tag="lowCriticalScale">
+   <rect transform="rotate(-90)" x="-242" y="72" width="42" height="81.062" fill="#666" style="stroke-width:.94905" tb:tag="lowCriticalScaleBackground"/>
    <rect transform="rotate(-90)" x="-241.53" y="72.475" width="41.051" height="80.113" stroke="#000" stroke-opacity=".87" style="stroke-width:.94934"/>
   </g>
-  <g transform="rotate(90 700.5 265.5)" tb:tag="lowWarningScale">
-   <rect transform="scale(-1,1)" x="-677" y="241" width="42" height="153.12" fill="#ebebeb" style="stroke-width:.94905" tb:tag="lowWarningScaleBackground"/>
+  <g transform="rotate(90,700.5,265.5)" tb:tag="highWarningScale">
+   <rect transform="scale(-1,1)" x="-677" y="241" width="42" height="153.12" fill="#ebebeb" style="stroke-width:.94905" tb:tag="highWarningScaleBackground"/>
    <rect transform="scale(-1,1)" x="-676.53" y="241.47" width="41.051" height="152.17" stroke="#000" stroke-opacity=".87" style="stroke-width:.94948"/>
   </g>
-  <g transform="rotate(90 700.5 265.5)" tb:tag="lowCriticalScale">
-   <rect transform="scale(-1,1)" x="-677" y="241" width="42" height="81.062" fill="#666" style="stroke-width:.94905" tb:tag="lowCriticalScaleBackground"/>
+  <g transform="rotate(90,700.5,265.5)" tb:tag="highCriticalScale">
+   <rect transform="scale(-1,1)" x="-677" y="241" width="42" height="81.062" fill="#666" style="stroke-width:.94905" tb:tag="highCriticalScaleBackground"/>
    <rect transform="scale(-1,1)" x="-676.53" y="241.48" width="41.051" height="80.113" stroke="#000" stroke-opacity=".87" style="stroke-width:.94934"/>
   </g>
- </g><g transform="translate(-180)" tb:tag="target">
-  <rect transform="rotate(45)" x="644.15" y="-355.65" width="24" height="24" fill="#dedede" tb:tag="targetBackground"/>
-  <rect transform="rotate(45)" x="645.15" y="-354.65" width="22" height="22" stroke="#000" stroke-opacity=".87" stroke-width="2"/>
- </g><path d="m269.06 0s-269.06 0-269.06 67v328.36c0 2.6512 7.1634 4.6404 16 4.6404h768c8.836 0 16-1.9892 16-4.6404v-328.36c0-67-264.28-67-264.28-67h-135.72zm268.28 81.2c-5.1546 0-9.3334 1.2536-9.3334 2.8v300.4c0 1.5464 4.1786 2.8 9.3334 2.8h58.666c5.1546 0 9.3334-1.2536 9.3334-2.8v-300.4c0-1.5464-4.1786-2.8-9.3334-2.8z" fill="#000" fill-opacity="0" style="stroke-width:.7303" tb:tag="clickArea"/>
+ </g>
+ <g transform="translate(-180)" tb:tag="target">
+  <rect transform="rotate(45)" x="627.89" y="-363.43" width="24" height="24" fill="#dedede" tb:tag="targetBackground"/>
+  <rect transform="rotate(45)" x="628.89" y="-362.43" width="22" height="22" stroke="#000" stroke-opacity=".87" stroke-width="2"/>
+ </g>
+ <path d="m269.06 0s-269.06 0-269.06 67v328.36c0 2.6512 7.1634 4.6404 16 4.6404h768c8.836 0 16-1.9892 16-4.6404v-328.36c0-67-264.28-67-264.28-67h-135.72zm268.28 81.2c-5.1546 0-9.3334 1.2536-9.3334 2.8v300.4c0 1.5464 4.1786 2.8 9.3334 2.8h58.666c5.1546 0 9.3334-1.2536 9.3334-2.8v-300.4c0-1.5464-4.1786-2.8-9.3334-2.8z" fill="#000" fill-opacity="0" style="stroke-width:.7303" tb:tag="clickArea"/>
 </svg>
