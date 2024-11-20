@@ -25,6 +25,7 @@ import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Base64;
 import java.util.List;
 
 public class CertPrivateKey {
@@ -62,5 +63,24 @@ public class CertPrivateKey {
         ClassLoader classLoader = getClass().getClassLoader();
         File file = new File(classLoader.getResource(fileName).getFile());
         return FileUtils.readFileToString(file, "UTF-8");
+    }
+
+    public String convertCertToPEM() throws Exception {
+        return  convertCertToPEM(this.cert);
+    }
+
+    public static String convertCertToPEM(X509Certificate certificate) throws Exception {
+        StringBuilder pemBuilder = new StringBuilder();
+        pemBuilder.append("-----BEGIN CERTIFICATE-----\n");
+        // Copy cert to Base64
+        String base64EncodedCert = Base64.getEncoder().encodeToString(certificate.getEncoded());
+        int index = 0;
+        while (index < base64EncodedCert.length()) {
+            pemBuilder.append(base64EncodedCert, index, Math.min(index + 64, base64EncodedCert.length()));
+            pemBuilder.append("\n");
+            index += 64;
+        }
+        pemBuilder.append("-----END CERTIFICATE-----\n");
+        return pemBuilder.toString();
     }
 }

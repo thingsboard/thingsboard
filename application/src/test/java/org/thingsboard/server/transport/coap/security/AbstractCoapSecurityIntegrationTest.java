@@ -57,7 +57,6 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -70,17 +69,28 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = {
         "coap.enabled=true",
         "coap.dtls.enabled=true",
-        "coap.dtls.credentials.type=KEYSTORE",
-        "coap.dtls.credentials.keystore.store_file=coap/credentials/coapserver.jks",
-        "coap.dtls.credentials.keystore.key_password=server_ks_password",
-        "coap.dtls.credentials.keystore.key_alias=server",
+        "coap.dtls.credentials.type=PEM",
+//        "coap.dtls.credentials.pem.cert_file=coap/credentials/server_pem_ec/certServerQaAllChianEC.pem",
+        "coap.dtls.credentials.pem.cert_file=coap/credentials/server_pem/certServerQaAll.pem",
         "device.connectivity.coaps.enabled=true",
         "service.integrations.supported=ALL",
         "transport.coap.enabled=true",
 })
+//@TestPropertySource(properties = {
+//        "coap.enabled=true",
+//        "coap.dtls.enabled=true",
+//        "coap.dtls.credentials.type=KEYSTORE",
+//        "coap.dtls.credentials.keystore.store_file=coap/credentials/coapserver.jks",
+//        "coap.dtls.credentials.keystore.key_password=server_ks_password",
+//        "coap.dtls.credentials.keystore.key_alias=server",
+//        "device.connectivity.coaps.enabled=true",
+//        "service.integrations.supported=ALL",
+//        "transport.coap.enabled=true",
+//})
+
 @Slf4j
 public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIntegrationTest {
-
+    private static final String COAPS_BASE_URL = "coaps://localhost:5684/api/v1/";
     protected final String CREDENTIALS_PATH = "coap/credentials/";
     protected final String CREDENTIALS_PATH_CERT_PEM = "coap/credentials/cert.pem";
     protected final String CREDENTIALS_PATH_KEY_PEM = "coap/credentials/key.pem";
@@ -147,7 +157,7 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
 
         DeviceCredentials deviceCredentials = new DeviceCredentials();
         deviceCredentials.setCredentialsType(DeviceCredentialsType.X509_CERTIFICATE);
-        String pemFormatCert = convertToPEM(clientX509Cert);
+        String pemFormatCert = CertPrivateKey.convertCertToPEM(clientX509Cert);
         deviceCredentials.setCredentialsValue(pemFormatCert);
 
         SaveDeviceWithCredentialsRequest saveRequest = new SaveDeviceWithCredentialsRequest(device, deviceCredentials);
@@ -169,21 +179,6 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
         }
     }
 
-    private static String convertToPEM(X509Certificate certificate) throws Exception {
-        StringBuilder pemBuilder = new StringBuilder();
-        pemBuilder.append("-----BEGIN CERTIFICATE-----\n");
-        // Copy cert to Base64
-        String base64EncodedCert = Base64.getEncoder().encodeToString(certificate.getEncoded());
-        int index = 0;
-        while (index < base64EncodedCert.length()) {
-            pemBuilder.append(base64EncodedCert, index, Math.min(index + 64, base64EncodedCert.length()));
-            pemBuilder.append("\n");
-            index += 64;
-        }
-        pemBuilder.append("-----END CERTIFICATE-----\n");
-        return pemBuilder.toString();
-    }
-
     protected void clientX509FromJksUpdateAttributesTest() throws Exception {
         CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
                 .deviceName("Test Post Attribute device json payload, security X509 from jks")
@@ -192,8 +187,9 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
                 .build();
         CertPrivateKey certPrivateKey = new CertPrivateKey(clientX509CertTrustNo, clientPrivateKeyFromCertTrustNo);
         Device deviceX509 = createDeviceWithX509(configProperties, CLIENT_ENDPOINT_X509_TRUST_NO, certPrivateKey.getCert());
-        clientX509 = new CoapClientX509Test(certPrivateKey);
+        clientX509 = new CoapClientX509Test(certPrivateKey, COAPS_BASE_URL);
         CoapResponse coapResponseX509 = clientX509.postMethod(PAYLOAD_VALUES_STR.getBytes());
+        assertNotNull(coapResponseX509);
         assertEquals(CoAP.ResponseCode.CREATED, coapResponseX509.getCode());
         DeviceId deviceId = deviceX509.getId();
         JsonNode expectedNode = JacksonUtil.toJsonNode(PAYLOAD_VALUES_STR);
@@ -220,8 +216,9 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
                 .build();
         CertPrivateKey certPrivateKey = new CertPrivateKey(CREDENTIALS_PATH_CERT_PEM, CREDENTIALS_PATH_KEY_PEM);
         Device deviceX509 = createDeviceWithX509(configProperties, "CoapX509TrustNoFromPath", certPrivateKey.getCert());
-        clientX509 = new CoapClientX509Test(certPrivateKey, featureType);
+        clientX509 = new CoapClientX509Test(certPrivateKey, featureType, COAPS_BASE_URL);
         CoapResponse coapResponseX509 = clientX509.postMethod(PAYLOAD_VALUES_STR.getBytes());
+        assertNotNull(coapResponseX509);
         assertEquals(CoAP.ResponseCode.CREATED, coapResponseX509.getCode());
         DeviceId deviceId = deviceX509.getId();
         JsonNode expectedNode = JacksonUtil.toJsonNode(PAYLOAD_VALUES_STR);

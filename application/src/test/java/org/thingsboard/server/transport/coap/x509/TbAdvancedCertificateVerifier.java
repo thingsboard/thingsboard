@@ -33,6 +33,8 @@ import java.util.List;
 
 @Slf4j
 public class TbAdvancedCertificateVerifier implements NewAdvancedCertificateVerifier {
+
+    private HandshakeResultHandler resultHandler;
     /**
      * Get the list of supported certificate types in order of preference.
      *
@@ -108,5 +110,9 @@ public class TbAdvancedCertificateVerifier implements NewAdvancedCertificateVeri
     @Override
     public void setResultHandler(HandshakeResultHandler resultHandler) {
         log.warn("setResultHandler");
+        if (this.resultHandler != null && resultHandler != null && this.resultHandler != resultHandler) {
+            throw new IllegalStateException("handshake result handler already set!");
+        }
+        this.resultHandler = resultHandler;
     }
 }
