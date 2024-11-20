@@ -13,9 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.cf;
+package org.thingsboard.server.service.cf.ctx;
 
-import java.util.UUID;
+import lombok.Data;
+import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 
-public record CalculatedFieldCtxId(UUID cfId, UUID entityId) {
+@Data
+public class CalculatedFieldCtx {
+
+    private CalculatedFieldCtxId id;
+    private CalculatedFieldState state;
+
+    public CalculatedFieldCtx() {
+    }
+
+    public CalculatedFieldCtx(CalculatedFieldCtxId id, CalculatedFieldState state) {
+        this.id = id;
+        this.state = state;
+    }
+
 }

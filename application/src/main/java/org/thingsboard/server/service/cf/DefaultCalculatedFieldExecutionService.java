@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.cf;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -29,13 +30,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
-import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.cf.Argument;
-import org.thingsboard.server.common.data.cf.BaseCalculatedFieldConfiguration;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -44,7 +44,10 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageDataIterable;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -54,12 +57,11 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.entitiy.cf.CalculatedFieldCtx;
-import org.thingsboard.server.service.entitiy.cf.CalculatedFieldCtxId;
-import org.thingsboard.server.service.entitiy.cf.CalculatedFieldState;
-import org.thingsboard.server.service.entitiy.cf.RocksDBService;
-import org.thingsboard.server.service.entitiy.cf.ScriptCalculatedFieldState;
-import org.thingsboard.server.service.entitiy.cf.SimpleCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.CalculatedFieldCtx;
+import org.thingsboard.server.service.cf.ctx.CalculatedFieldCtxId;
+import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.SimpleCalculatedFieldState;
 import org.thingsboard.server.service.partition.AbstractPartitionBasedService;
 
 import java.util.ArrayList;
@@ -71,6 +73,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 
 @TbCoreComponent
 @Service
@@ -84,6 +89,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     private final AttributesService attributesService;
     private final TimeseriesService timeseriesService;
     private final RocksDBService rocksDBService;
+    private final TbClusterService clusterService;
 
     private ListeningExecutorService calculatedFieldExecutor;
     private ListeningExecutorService calculatedFieldCallbackExecutor;
@@ -194,6 +200,17 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         }
     }
 
+    @Override
+    public void onTelemetryUpdate(TenantId tenantId, CalculatedFieldId calculatedFieldId, Map<String, String> updatedTelemetry) {
+        try {
+            CalculatedField calculatedField = calculatedFields.computeIfAbsent(calculatedFieldId, id -> calculatedFieldService.findById(tenantId, id));
+            updateOrInitializeState(calculatedField, calculatedField.getEntityId(), updatedTelemetry);
+            log.info("Successfully updated time series for calculatedFieldId: [{}]", calculatedFieldId);
+        } catch (Exception e) {
+            log.trace("Failed to update time series for calculatedFieldId: [{}]", calculatedFieldId, e);
+        }
+    }
+
     private boolean onCalculatedFieldUpdate(CalculatedField newCalculatedField, TbCallback callback) {
         CalculatedField oldCalculatedField = calculatedFields.get(newCalculatedField.getId());
         boolean shouldReinit = true;
@@ -250,11 +267,15 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     private void initializeStateForEntity(TenantId tenantId, CalculatedField calculatedField, EntityId entityId, TbCallback callback) {
         Map<String, Argument> arguments = calculatedField.getConfiguration().getArguments();
         Map<String, String> argumentValues = new HashMap<>();
+        AtomicInteger remaining = new AtomicInteger(arguments.size());
         arguments.forEach((key, argument) -> Futures.addCallback(fetchArgumentValue(tenantId, argument), new FutureCallback<>() {
             @Override
             public void onSuccess(Optional<? extends KvEntry> result) {
                 String value = result.map(KvEntry::getValueAsString).orElse(argument.getDefaultValue());
                 argumentValues.put(key, value);
+                if (remaining.decrementAndGet() == 0) {
+                    updateOrInitializeState(calculatedField, entityId, argumentValues);
+                }
             }
 
             @Override
@@ -263,15 +284,12 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
                 callback.onFailure(t);
             }
         }, calculatedFieldCallbackExecutor));
-
-        updateOrInitializeState(calculatedField, entityId, argumentValues);
-
     }
 
     private ListenableFuture<Optional<? extends KvEntry>> fetchArgumentValue(TenantId tenantId, Argument argument) {
         return switch (argument.getType()) {
             case "ATTRIBUTES" -> Futures.transform(
-                    attributesService.find(tenantId, argument.getEntityId(), AttributeScope.SERVER_SCOPE, argument.getKey()),
+                    attributesService.find(tenantId, argument.getEntityId(), argument.getScope(), argument.getKey()),
                     result -> result.map(entry -> (KvEntry) entry),
                     MoreExecutors.directExecutor());
             case "TIME_SERIES" -> Futures.transform(
@@ -296,7 +314,29 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         states.put(ctxId, calculatedFieldCtx);
         rocksDBService.put(JacksonUtil.writeValueAsString(ctxId), JacksonUtil.writeValueAsString(calculatedFieldCtx));
 
-        state.performCalculation(calculatedField.getConfiguration());
+        CalculatedFieldResult result = state.performCalculation(calculatedField.getConfiguration());
+        if (result != null) {
+            pushMsgToRuleEngine(calculatedField.getTenantId(), calculatedField.getEntityId(), result);
+        }
+    }
+
+    private void pushMsgToRuleEngine(TenantId tenantId, EntityId originatorId, CalculatedFieldResult calculatedFieldResult) {
+        try {
+            String type = calculatedFieldResult.getType();
+            TbMsgType msgType = "ATTRIBUTES".equals(type) ? TbMsgType.POST_ATTRIBUTES_REQUEST : TbMsgType.POST_TELEMETRY_REQUEST;
+            TbMsgMetaData md = "ATTRIBUTES".equals(type) ? new TbMsgMetaData(Map.of(SCOPE, calculatedFieldResult.getScope().name())) : TbMsgMetaData.EMPTY;
+            ObjectNode jsonNodes = createJsonPayload(calculatedFieldResult);
+            TbMsg msg = TbMsg.newMsg(msgType, originatorId, md, JacksonUtil.writeValueAsString(jsonNodes));
+            clusterService.pushMsgToRuleEngine(tenantId, originatorId, msg, null);
+        } catch (Exception e) {
+            log.warn("[{}] Failed to push message to rule engine. CalculatedFieldResult: {}", originatorId, calculatedFieldResult, e);
+        }
+    }
+
+    private ObjectNode createJsonPayload(CalculatedFieldResult calculatedFieldResult) {
+        ObjectNode jsonNodes = JacksonUtil.newObjectNode();
+        calculatedFieldResult.getResultMap().forEach(jsonNodes::put);
+        return jsonNodes;
     }
 
     private CalculatedFieldState createStateByType(CalculatedFieldType calculatedFieldType) {

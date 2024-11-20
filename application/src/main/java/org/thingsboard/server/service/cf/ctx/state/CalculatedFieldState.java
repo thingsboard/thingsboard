@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf;
+package org.thingsboard.server.service.cf.ctx.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.JsonNode;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -32,24 +31,20 @@ import java.util.UUID;
         property = "type"
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = SimpleCalculatedFieldConfiguration.class, name = "SIMPLE")
+        @JsonSubTypes.Type(value = SimpleCalculatedFieldState.class, name = "SIMPLE"),
+        @JsonSubTypes.Type(value = ScriptCalculatedFieldState.class, name = "SCRIPT")
 })
-public interface CalculatedFieldConfiguration {
+public interface CalculatedFieldState {
 
     @JsonIgnore
     CalculatedFieldType getType();
 
-    Map<String, Argument> getArguments();
+    default boolean isValid(Map<String, String> argumentValues, Map<String, Argument> arguments) {
+        return argumentValues.keySet().containsAll(arguments.keySet());
+    }
 
-    BaseCalculatedFieldConfiguration.Output getOutput();
+    void initState(Map<String, String> argumentValues);
 
-    @JsonIgnore
-    List<EntityId> getReferencedEntities();
-
-    @JsonIgnore
-    CalculatedFieldLinkConfiguration getReferencedEntityConfig(EntityId entityId);
-
-    @JsonIgnore
-    JsonNode calculatedFieldConfigToJson(EntityType entityType, UUID entityId);
+    CalculatedFieldResult performCalculation(CalculatedFieldConfiguration calculatedFieldConfiguration);
 
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.cf;
+package org.thingsboard.server.service.cf;
 
 import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.RocksDB;

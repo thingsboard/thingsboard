@@ -13,22 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.cf;
+package org.thingsboard.server.service.cf.ctx.state;
 
 import lombok.Data;
-import org.thingsboard.script.api.tbel.TbelInvokeService;
-import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Data
+@Slf4j
 public class ScriptCalculatedFieldState implements CalculatedFieldState {
 
-    private TbelInvokeService tbelInvokeService;
-
     private Map<String, String> arguments = new HashMap<>();
+
+    public ScriptCalculatedFieldState() {
+    }
 
     @Override
     public CalculatedFieldType getType() {
@@ -37,11 +40,15 @@ public class ScriptCalculatedFieldState implements CalculatedFieldState {
 
     @Override
     public void initState(Map<String, String> argumentValues) {
-
+        if (arguments == null) {
+            this.arguments = new HashMap<>();
+        }
+        this.arguments.putAll(argumentValues);
     }
 
     @Override
     public CalculatedFieldResult performCalculation(CalculatedFieldConfiguration calculatedFieldConfiguration) {
+        // TODO: implement
         return null;
     }
 

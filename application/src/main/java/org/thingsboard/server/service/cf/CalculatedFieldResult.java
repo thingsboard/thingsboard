@@ -13,27 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf;
+package org.thingsboard.server.service.cf;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
-import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.AttributeScope;
 
-import java.util.UUID;
+import java.util.Map;
 
 @Data
-public class SimpleCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
+public class CalculatedFieldResult {
 
-    public SimpleCalculatedFieldConfiguration() {
-        super();
+    private String type;
+    private AttributeScope scope;
+    private Map<String, String> resultMap;
+
+    public CalculatedFieldResult() {
     }
 
-    public SimpleCalculatedFieldConfiguration(JsonNode config, EntityType entityType, UUID entityId) {
-        super(config, entityType, entityId);
-    }
-
-    @Override
-    public CalculatedFieldType getType() {
-        return CalculatedFieldType.SIMPLE;
-    }
 }

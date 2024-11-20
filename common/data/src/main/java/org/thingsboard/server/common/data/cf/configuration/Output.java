@@ -13,24 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.cf;
+package org.thingsboard.server.common.data.cf.configuration;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.AttributeScope;
 
 @Data
-public class CalculatedFieldCtx {
+public class Output {
 
-    private CalculatedFieldCtxId id;
-    private CalculatedFieldState state;
-
-    public CalculatedFieldCtx() {
-    }
-
-    public CalculatedFieldCtx(CalculatedFieldCtxId id, CalculatedFieldState state) {
-        this.id = id;
-        this.state = state;
-    }
+    private String name;
+    private String type;
+    private AttributeScope scope;
+    private String expression;
 
 }

@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf;
+package org.thingsboard.server.common.data.cf.configuration;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Data;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 
@@ -60,18 +62,20 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
     @Override
     public CalculatedFieldLinkConfiguration getReferencedEntityConfig(EntityId entityId) {
         CalculatedFieldLinkConfiguration linkConfiguration = new CalculatedFieldLinkConfiguration();
-        arguments.values().stream()
-                .filter(argument -> argument.getEntityId().equals(entityId))
-                .forEach(argument -> {
-                    switch (argument.getType()) {
-                        case "ATTRIBUTES":
-                            linkConfiguration.getAttributes().add(argument.getKey());
-                            break;
-                        case "TIME_SERIES":
-                            linkConfiguration.getTimeSeries().add(argument.getKey());
-                            break;
-                    }
-                });
+
+        for (Map.Entry<String, Argument> entry : arguments.entrySet()) {
+            Argument argument = entry.getValue();
+            if (argument.getEntityId().equals(entityId)) {
+                switch (argument.getType()) {
+                    case "ATTRIBUTES":
+                        linkConfiguration.getAttributes().put(entry.getKey(), argument.getKey());
+                        break;
+                    case "TIME_SERIES":
+                        linkConfiguration.getTimeSeries().put(entry.getKey(), argument.getKey());
+                        break;
+                }
+            }
+        }
 
         return linkConfiguration;
     }
@@ -93,23 +97,19 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
             }
             argumentNode.put("key", argument.getKey());
             argumentNode.put("type", argument.getType());
+            argumentNode.put("scope", String.valueOf(argument.getScope()));
             argumentNode.put("defaultValue", argument.getDefaultValue());
         });
 
         if (output != null) {
             ObjectNode outputNode = configNode.putObject("output");
+            outputNode.put("name", output.getName());
             outputNode.put("type", output.getType());
+            outputNode.put("scope", String.valueOf(output.getScope()));
             outputNode.put("expression", output.getExpression());
         }
 
         return configNode;
-    }
-
-    @Data
-    public static class Output {
-        private String name;
-        private String type;
-        private String expression;
     }
 
     private BaseCalculatedFieldConfiguration toCalculatedFieldConfig(JsonNode config, EntityType entityType, UUID entityId) {
@@ -133,6 +133,7 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
                 }
                 argument.setKey(argumentNode.get("key").asText());
                 argument.setType(argumentNode.get("type").asText());
+                argument.setScope(AttributeScope.valueOf(argumentNode.get("scope").asText()));
                 argument.setDefaultValue(argumentNode.get("defaultValue").asText());
                 arguments.put(key, argument);
             });
@@ -142,7 +143,9 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
         JsonNode outputNode = config.get("output");
         if (outputNode != null) {
             Output output = new Output();
+            output.setName(outputNode.get("name").asText());
             output.setType(outputNode.get("type").asText());
+            output.setScope(AttributeScope.valueOf(outputNode.get("scope").asText()));
             output.setExpression(outputNode.get("expression").asText());
             this.setOutput(output);
         }

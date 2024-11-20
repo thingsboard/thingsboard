@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.cf;
+package org.thingsboard.server.service.cf.ctx.state;
 
 import lombok.Data;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
-import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,8 +31,7 @@ import java.util.Map;
 public class SimpleCalculatedFieldState implements CalculatedFieldState {
 
     // TODO: use value object(TsKv) instead of string
-    private Map<String, String> arguments = new HashMap<>();
-    private String outputResult;
+    private Map<String, String> arguments;
 
     @Override
     public CalculatedFieldType getType() {
@@ -38,29 +40,43 @@ public class SimpleCalculatedFieldState implements CalculatedFieldState {
 
     @Override
     public void initState(Map<String, String> argumentValues) {
-        this.arguments = argumentValues;
+        if (arguments == null) {
+            arguments = new HashMap<>();
+        }
+        arguments.putAll(argumentValues);
     }
 
     @Override
     public CalculatedFieldResult performCalculation(CalculatedFieldConfiguration calculatedFieldConfiguration) {
-        if (isValid(arguments, calculatedFieldConfiguration)) {
-            String expression = calculatedFieldConfiguration.getOutput().getExpression();
+        Output output = calculatedFieldConfiguration.getOutput();
+        Map<String, Argument> arguments = calculatedFieldConfiguration.getArguments();
+
+        if (isValid(this.arguments, arguments)) {
+            CalculatedFieldResult result = new CalculatedFieldResult();
+            String expression = output.getExpression();
             ThreadLocal<Expression> customExpression = new ThreadLocal<>();
             var expr = customExpression.get();
             if (expr == null) {
                 expr = new ExpressionBuilder(expression)
                         .implicitMultiplication(true)
-                        .variables(arguments.keySet())
+                        .variables(this.arguments.keySet())
                         .build();
                 customExpression.set(expr);
             }
             Map<String, Double> variables = new HashMap<>();
-            arguments.forEach((k, v) -> variables.put(k, Double.parseDouble(v)));
+            this.arguments.forEach((k, v) -> variables.put(k, Double.parseDouble(v)));
             expr.setVariables(variables);
-            double result = expr.evaluate();
-            this.outputResult = Double.toString(result);
+
+            String expressionResult = String.valueOf(expr.evaluate());
+
+            result.setType(output.getType());
+            result.setScope(output.getScope());
+            result.setResultMap(Map.of(output.getName(), expressionResult));
+            return result;
         }
+
         return null;
+        // TODO: handle what happens when not valid
     }
 
 }

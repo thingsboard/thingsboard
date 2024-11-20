@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
@@ -174,6 +174,12 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     }
 
     @Override
+    public List<CalculatedFieldLink> findAllCalculatedFieldLinksByEntityId(TenantId tenantId, EntityId entityId) {
+        log.trace("Executing findAllCalculatedFieldLinksByEntityId, entityId [{}]", entityId);
+        return calculatedFieldLinkDao.findCalculatedFieldLinksByEntityId(tenantId, entityId);
+    }
+
+    @Override
     public ListenableFuture<List<CalculatedFieldLink>> findAllCalculatedFieldLinksByIdAsync(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
         log.trace("Executing findAllCalculatedFieldLinksByIdAsync, calculatedFieldId [{}]", calculatedFieldId);
         return calculatedFieldLinkDao.findCalculatedFieldLinksByCalculatedFieldIdAsync(tenantId, calculatedFieldId);
@@ -190,6 +196,14 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     public boolean referencedInAnyCalculatedField(TenantId tenantId, EntityId referencedEntityId) {
         return calculatedFieldDao.findAllByTenantId(tenantId).stream()
                 .filter(calculatedField -> !referencedEntityId.equals(calculatedField.getEntityId()))
+                .map(CalculatedField::getConfiguration)
+                .map(CalculatedFieldConfiguration::getReferencedEntities)
+                .anyMatch(referencedEntities -> referencedEntities.contains(referencedEntityId));
+    }
+
+    @Override
+    public boolean referencedInAnyCalculatedFieldIncludingEntityId(TenantId tenantId, EntityId referencedEntityId) {
+        return calculatedFieldDao.findAllByTenantId(tenantId).stream()
                 .map(CalculatedField::getConfiguration)
                 .map(CalculatedFieldConfiguration::getReferencedEntities)
                 .anyMatch(referencedEntities -> referencedEntities.contains(referencedEntityId));

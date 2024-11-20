@@ -25,4 +25,6 @@ public interface CalculatedFieldLinkRepository extends JpaRepository<CalculatedF
 
     List<CalculatedFieldLinkEntity> findAllByTenantIdAndCalculatedFieldId(UUID tenantId, UUID calculatedFieldId);
 
+    List<CalculatedFieldLinkEntity> findAllByTenantIdAndEntityId(UUID tenantId, UUID entityId);
+
 }

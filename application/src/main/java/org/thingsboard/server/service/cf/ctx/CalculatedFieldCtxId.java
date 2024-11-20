@@ -13,20 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf;
+package org.thingsboard.server.service.cf.ctx;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.id.EntityId;
+import java.util.UUID;
 
-@Data
-public class Argument {
-
-    private EntityId entityId;
-    private String key;
-    private String type;
-    private String defaultValue;
-
-    private int limit;
-    private long timeWindow;
-
+public record CalculatedFieldCtxId(UUID cfId, UUID entityId) {
 }
