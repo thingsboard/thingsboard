@@ -13,8 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api;
+package org.thingsboard.server.service.cf.ctx.state;
 
-public enum ScriptType {
-    RULE_NODE_SCRIPT, CALCULATED_FIELD_SCRIPT
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.kv.KvEntry;
+
+import java.util.Map;
+
+public interface CalculatedFieldScriptEngine {
+
+    ListenableFuture<Object> executeScriptAsync(Map<String, KvEntry> arguments);
+
+    void destroy();
+
 }

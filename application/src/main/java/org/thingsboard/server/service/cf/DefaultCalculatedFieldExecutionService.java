@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.cf;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -30,6 +31,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
@@ -90,6 +92,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     private final TimeseriesService timeseriesService;
     private final RocksDBService rocksDBService;
     private final TbClusterService clusterService;
+    private final TbelInvokeService tbelInvokeService;
 
     private ListeningExecutorService calculatedFieldExecutor;
     private ListeningExecutorService calculatedFieldCallbackExecutor;
@@ -201,7 +204,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     }
 
     @Override
-    public void onTelemetryUpdate(TenantId tenantId, CalculatedFieldId calculatedFieldId, Map<String, String> updatedTelemetry) {
+    public void onTelemetryUpdate(TenantId tenantId, CalculatedFieldId calculatedFieldId, Map<String, KvEntry> updatedTelemetry) {
         try {
             CalculatedField calculatedField = calculatedFields.computeIfAbsent(calculatedFieldId, id -> calculatedFieldService.findById(tenantId, id));
             updateOrInitializeState(calculatedField, calculatedField.getEntityId(), updatedTelemetry);
@@ -266,13 +269,13 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
 
     private void initializeStateForEntity(TenantId tenantId, CalculatedField calculatedField, EntityId entityId, TbCallback callback) {
         Map<String, Argument> arguments = calculatedField.getConfiguration().getArguments();
-        Map<String, String> argumentValues = new HashMap<>();
+        Map<String, KvEntry> argumentValues = new HashMap<>();
         AtomicInteger remaining = new AtomicInteger(arguments.size());
         arguments.forEach((key, argument) -> Futures.addCallback(fetchArgumentValue(tenantId, argument), new FutureCallback<>() {
             @Override
             public void onSuccess(Optional<? extends KvEntry> result) {
-                String value = result.map(KvEntry::getValueAsString).orElse(argument.getDefaultValue());
-                argumentValues.put(key, value);
+                // todo: should be rewritten implementation for default value
+                argumentValues.put(key, result.orElse(null));
                 if (remaining.decrementAndGet() == 0) {
                     updateOrInitializeState(calculatedField, entityId, argumentValues);
                 }
@@ -300,7 +303,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         };
     }
 
-    private void updateOrInitializeState(CalculatedField calculatedField, EntityId entityId, Map<String, String> argumentValues) {
+    private void updateOrInitializeState(CalculatedField calculatedField, EntityId entityId, Map<String, KvEntry> argumentValues) {
         CalculatedFieldCtxId ctxId = new CalculatedFieldCtxId(calculatedField.getUuidId(), entityId.getId());
         CalculatedFieldCtx calculatedFieldCtx = states.computeIfAbsent(ctxId, ctx -> new CalculatedFieldCtx(ctxId, null));
 
@@ -314,10 +317,21 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         states.put(ctxId, calculatedFieldCtx);
         rocksDBService.put(JacksonUtil.writeValueAsString(ctxId), JacksonUtil.writeValueAsString(calculatedFieldCtx));
 
-        CalculatedFieldResult result = state.performCalculation(calculatedField.getConfiguration());
-        if (result != null) {
-            pushMsgToRuleEngine(calculatedField.getTenantId(), calculatedField.getEntityId(), result);
-        }
+        ListenableFuture<CalculatedFieldResult> resultFuture = state.performCalculation(calculatedField.getTenantId(), calculatedField.getConfiguration(), tbelInvokeService);
+        Futures.addCallback(resultFuture, new FutureCallback<>() {
+            @Override
+            public void onSuccess(CalculatedFieldResult result) {
+                if (result != null) {
+                    pushMsgToRuleEngine(calculatedField.getTenantId(), calculatedField.getEntityId(), result);
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.warn("[{}] Failed to perform calculation. entityId: [{}]", calculatedField.getId(), entityId, t);
+            }
+        }, MoreExecutors.directExecutor());
+
     }
 
     private void pushMsgToRuleEngine(TenantId tenantId, EntityId originatorId, CalculatedFieldResult calculatedFieldResult) {
@@ -325,8 +339,8 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             String type = calculatedFieldResult.getType();
             TbMsgType msgType = "ATTRIBUTES".equals(type) ? TbMsgType.POST_ATTRIBUTES_REQUEST : TbMsgType.POST_TELEMETRY_REQUEST;
             TbMsgMetaData md = "ATTRIBUTES".equals(type) ? new TbMsgMetaData(Map.of(SCOPE, calculatedFieldResult.getScope().name())) : TbMsgMetaData.EMPTY;
-            ObjectNode jsonNodes = createJsonPayload(calculatedFieldResult);
-            TbMsg msg = TbMsg.newMsg(msgType, originatorId, md, JacksonUtil.writeValueAsString(jsonNodes));
+            ObjectNode payload = createJsonPayload(calculatedFieldResult);
+            TbMsg msg = TbMsg.newMsg(msgType, originatorId, md, JacksonUtil.writeValueAsString(payload));
             clusterService.pushMsgToRuleEngine(tenantId, originatorId, msg, null);
         } catch (Exception e) {
             log.warn("[{}] Failed to push message to rule engine. CalculatedFieldResult: {}", originatorId, calculatedFieldResult, e);
@@ -334,9 +348,10 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     }
 
     private ObjectNode createJsonPayload(CalculatedFieldResult calculatedFieldResult) {
-        ObjectNode jsonNodes = JacksonUtil.newObjectNode();
-        calculatedFieldResult.getResultMap().forEach(jsonNodes::put);
-        return jsonNodes;
+        ObjectNode payload = JacksonUtil.newObjectNode();
+        Map<String, Object> resultMap = calculatedFieldResult.getResultMap();
+        resultMap.forEach((k, v) -> payload.set(k, JacksonUtil.convertValue(v, JsonNode.class)));
+        return payload;
     }
 
     private CalculatedFieldState createStateByType(CalculatedFieldType calculatedFieldType) {

@@ -15,10 +15,19 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.HashMap;
@@ -28,7 +37,10 @@ import java.util.Map;
 @Slf4j
 public class ScriptCalculatedFieldState implements CalculatedFieldState {
 
-    private Map<String, String> arguments = new HashMap<>();
+    @JsonIgnore
+    private CalculatedFieldScriptEngine calculatedFieldScriptEngine;
+
+    private Map<String, KvEntry> arguments = new HashMap<>();
 
     public ScriptCalculatedFieldState() {
     }
@@ -39,7 +51,7 @@ public class ScriptCalculatedFieldState implements CalculatedFieldState {
     }
 
     @Override
-    public void initState(Map<String, String> argumentValues) {
+    public void initState(Map<String, KvEntry> argumentValues) {
         if (arguments == null) {
             this.arguments = new HashMap<>();
         }
@@ -47,9 +59,46 @@ public class ScriptCalculatedFieldState implements CalculatedFieldState {
     }
 
     @Override
-    public CalculatedFieldResult performCalculation(CalculatedFieldConfiguration calculatedFieldConfiguration) {
-        // TODO: implement
-        return null;
+    public ListenableFuture<CalculatedFieldResult> performCalculation(TenantId tenantId, CalculatedFieldConfiguration calculatedFieldConfiguration, TbelInvokeService tbelInvokeService) {
+        if (tbelInvokeService == null) {
+            throw new IllegalArgumentException("TBEL script engine is disabled!");
+        }
+
+        if (calculatedFieldScriptEngine == null) {
+            initEngine(tenantId, calculatedFieldConfiguration, tbelInvokeService);
+        }
+
+        ListenableFuture<Object> resultFuture = calculatedFieldScriptEngine.executeScriptAsync(arguments);
+
+        return Futures.transform(resultFuture, result -> {
+            Output output = calculatedFieldConfiguration.getOutput();
+            Map<String, Object> resultMap = new HashMap<>();
+
+            if (result instanceof Map<?, ?>) {
+                Map<String, Object> map = JacksonUtil.convertValue(result, Map.class);
+                if (map != null) {
+                    resultMap.putAll(map);
+                }
+            } else {
+                resultMap.put(output.getName(), JacksonUtil.convertValue(result, Object.class));
+            }
+
+            CalculatedFieldResult calculatedFieldResult = new CalculatedFieldResult();
+            calculatedFieldResult.setType(output.getType());
+            calculatedFieldResult.setScope(output.getScope());
+            calculatedFieldResult.setResultMap(resultMap);
+
+            return calculatedFieldResult;
+        }, MoreExecutors.directExecutor());
+    }
+
+    private void initEngine(TenantId tenantId, CalculatedFieldConfiguration calculatedFieldConfiguration, TbelInvokeService tbelInvokeService) {
+        calculatedFieldScriptEngine = new CalculatedFieldTbelScriptEngine(
+                tenantId,
+                tbelInvokeService,
+                calculatedFieldConfiguration.getOutput().getExpression(),
+                arguments.keySet().toArray(new String[0])
+        );
     }
 
 }

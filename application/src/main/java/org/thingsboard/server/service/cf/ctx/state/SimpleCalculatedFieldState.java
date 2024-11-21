@@ -15,13 +15,18 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
+import org.thingsboard.script.api.tbel.TbelInvokeService;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.HashMap;
@@ -30,8 +35,7 @@ import java.util.Map;
 @Data
 public class SimpleCalculatedFieldState implements CalculatedFieldState {
 
-    // TODO: use value object(TsKv) instead of string
-    private Map<String, String> arguments;
+    private Map<String, KvEntry> arguments;
 
     @Override
     public CalculatedFieldType getType() {
@@ -39,7 +43,7 @@ public class SimpleCalculatedFieldState implements CalculatedFieldState {
     }
 
     @Override
-    public void initState(Map<String, String> argumentValues) {
+    public void initState(Map<String, KvEntry> argumentValues) {
         if (arguments == null) {
             arguments = new HashMap<>();
         }
@@ -47,7 +51,7 @@ public class SimpleCalculatedFieldState implements CalculatedFieldState {
     }
 
     @Override
-    public CalculatedFieldResult performCalculation(CalculatedFieldConfiguration calculatedFieldConfiguration) {
+    public ListenableFuture<CalculatedFieldResult> performCalculation(TenantId tenantId, CalculatedFieldConfiguration calculatedFieldConfiguration, TbelInvokeService tbelInvokeService) {
         Output output = calculatedFieldConfiguration.getOutput();
         Map<String, Argument> arguments = calculatedFieldConfiguration.getArguments();
 
@@ -64,19 +68,17 @@ public class SimpleCalculatedFieldState implements CalculatedFieldState {
                 customExpression.set(expr);
             }
             Map<String, Double> variables = new HashMap<>();
-            this.arguments.forEach((k, v) -> variables.put(k, Double.parseDouble(v)));
+            this.arguments.forEach((k, v) -> variables.put(k, Double.parseDouble(v.getValueAsString())));
             expr.setVariables(variables);
 
-            String expressionResult = String.valueOf(expr.evaluate());
+            double expressionResult = expr.evaluate();
 
             result.setType(output.getType());
             result.setScope(output.getScope());
             result.setResultMap(Map.of(output.getName(), expressionResult));
-            return result;
+            return Futures.immediateFuture(result);
         }
-
         return null;
-        // TODO: handle what happens when not valid
     }
 
 }

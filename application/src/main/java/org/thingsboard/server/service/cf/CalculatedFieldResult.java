@@ -25,7 +25,7 @@ public class CalculatedFieldResult {
 
     private String type;
     private AttributeScope scope;
-    private Map<String, String> resultMap;
+    private Map<String, Object> resultMap;
 
     public CalculatedFieldResult() {
     }

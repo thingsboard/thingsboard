@@ -18,9 +18,13 @@ package org.thingsboard.server.service.cf.ctx.state;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.script.api.tbel.TbelInvokeService;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.Map;
@@ -39,12 +43,12 @@ public interface CalculatedFieldState {
     @JsonIgnore
     CalculatedFieldType getType();
 
-    default boolean isValid(Map<String, String> argumentValues, Map<String, Argument> arguments) {
+    default boolean isValid(Map<String, KvEntry> argumentValues, Map<String, Argument> arguments) {
         return argumentValues.keySet().containsAll(arguments.keySet());
     }
 
-    void initState(Map<String, String> argumentValues);
+    void initState(Map<String, KvEntry> argumentValues);
 
-    CalculatedFieldResult performCalculation(CalculatedFieldConfiguration calculatedFieldConfiguration);
+    ListenableFuture<CalculatedFieldResult> performCalculation(TenantId tenantId, CalculatedFieldConfiguration calculatedFieldConfiguration, TbelInvokeService tbelInvokeService);
 
 }

@@ -69,6 +69,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 /**
  * Created by ashvayka on 27.03.18.
@@ -207,32 +208,28 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                     CalculatedFieldId calculatedFieldId = link.getCalculatedFieldId();
                     Map<String, String> attributes = link.getConfiguration().getAttributes();
                     Map<String, String> timeSeries = link.getConfiguration().getTimeSeries();
-                    List<? extends KvEntry> filteredTelemetry = telemetry.stream()
+                    Map<String, KvEntry> updatedTelemetry = telemetry.stream()
                             .filter(entry -> attributes.containsValue(entry.getKey()) || timeSeries.containsValue(entry.getKey()))
-                            .toList();
-
-
-                    Map<String, String> updatedTelemetry = new HashMap<>();
-                    for (KvEntry telemetryEntry : filteredTelemetry) {
-                        String key = telemetryEntry.getKey();
-                        if (telemetryEntry instanceof AttributeKvEntry) {
-                            for (Map.Entry<String, String> attribute : attributes.entrySet()) {
-                                if (telemetryEntry.getKey().equals(attribute.getValue())) {
-                                    key = attribute.getKey();
-                                    break;
-                                }
-                            }
-                        }
-                        if (telemetryEntry instanceof TsKvEntry) {
-                            for (Map.Entry<String, String> timeSeriesEntry : timeSeries.entrySet()) {
-                                if (telemetryEntry.getKey().equals(timeSeriesEntry.getValue())) {
-                                    key = timeSeriesEntry.getKey();
-                                    break;
-                                }
-                            }
-                        }
-                        updatedTelemetry.put(key, telemetryEntry.getValueAsString());
-                    }
+                            .collect(Collectors.toMap(
+                                    entry -> {
+                                        if (entry instanceof AttributeKvEntry) {
+                                            return attributes.entrySet().stream()
+                                                    .filter(attr -> attr.getValue().equals(entry.getKey()))
+                                                    .map(Map.Entry::getKey)
+                                                    .findFirst()
+                                                    .orElse(entry.getKey());
+                                        } else if (entry instanceof TsKvEntry) {
+                                            return timeSeries.entrySet().stream()
+                                                    .filter(ts -> ts.getValue().equals(entry.getKey()))
+                                                    .map(Map.Entry::getKey)
+                                                    .findFirst()
+                                                    .orElse(entry.getKey());
+                                        }
+                                        return entry.getKey();
+                                    },
+                                    entry -> entry,
+                                    (v1, v2) -> v1
+                            ));
 
                     if (!updatedTelemetry.isEmpty()) {
                         calculatedFieldExecutionService.onTelemetryUpdate(tenantId, calculatedFieldId, updatedTelemetry);
