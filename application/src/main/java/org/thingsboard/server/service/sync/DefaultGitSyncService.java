@@ -92,14 +92,9 @@ public class DefaultGitSyncService implements GitSyncService {
 
 
     @Override
-    public String getFileContent(String key, String path) {
+    public byte[] getFileContent(String key, String path) {
         GitRepository repository = getRepository(key);
-        try {
-            return repository.getFileContentAtCommit(path, getBranchRef(repository));
-        } catch (Exception e) {
-            log.warn("[{}] Failed to get file content for path {}: {}", key, path, e.getMessage());
-            return "{}";
-        }
+        return repository.getFileContentAtCommit(path, getBranchRef(repository));
     }
 
     @Override
