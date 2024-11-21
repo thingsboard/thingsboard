@@ -73,23 +73,23 @@ public class DashboardSyncService {
 
         List<RepoFile> resources = listFiles("resources");
         for (RepoFile resourceFile : resources) {
-            byte[] data = getFileContent(resourceFile.path()).getBytes(StandardCharsets.UTF_8);
+            byte[] data = getFileContent(resourceFile.path());
             resourceService.createOrUpdateSystemResource(ResourceType.JS_MODULE, resourceFile.name(), data);
         }
         List<RepoFile> images = listFiles("images");
         for (RepoFile imageFile : images) {
-            byte[] data = getFileContent(imageFile.path()).getBytes(StandardCharsets.UTF_8);
+            byte[] data = getFileContent(imageFile.path());
             imageService.createOrUpdateSystemImage(imageFile.name(), data);
         }
 
         Stream<String> widgetsBundles = listFiles("widget_bundles").stream()
-                .map(widgetsBundleFile -> getFileContent(widgetsBundleFile.path()));
+                .map(widgetsBundleFile -> new String(getFileContent(widgetsBundleFile.path()), StandardCharsets.UTF_8));
         Stream<String> widgetTypes = listFiles("widget_types").stream()
-                .map(widgetTypeFile -> getFileContent(widgetTypeFile.path()));
+                .map(widgetTypeFile -> new String(getFileContent(widgetTypeFile.path()), StandardCharsets.UTF_8));
         widgetsBundleService.updateSystemWidgets(widgetsBundles, widgetTypes);
 
         RepoFile dashboardFile = listFiles("dashboards").get(0);
-        resourceService.createOrUpdateSystemResource(ResourceType.DASHBOARD, GATEWAYS_DASHBOARD_KEY, getFileContent(dashboardFile.path()).getBytes(StandardCharsets.UTF_8));
+        resourceService.createOrUpdateSystemResource(ResourceType.DASHBOARD, GATEWAYS_DASHBOARD_KEY, getFileContent(dashboardFile.path()));
 
         log.info("Gateways dashboard sync completed");
     }
@@ -98,7 +98,7 @@ public class DashboardSyncService {
         return gitSyncService.listFiles(REPO_KEY, path, 1, FileType.FILE);
     }
 
-    private String getFileContent(String path) {
+    private byte[] getFileContent(String path) {
         return gitSyncService.getFileContent(REPO_KEY, path);
     }
 
