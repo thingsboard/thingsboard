@@ -38,7 +38,7 @@ public class TbAlarmStatusSubscription extends TbSubscription<AlarmSubscriptionU
     private final Set<UUID> alarmIds = new HashSet<>();
     @Getter
     @Setter
-    private boolean cacheFull;
+    private boolean hasMoreAlarmsInDB;
     @Getter
     private final List<String> typeList;
     @Getter
@@ -48,7 +48,7 @@ public class TbAlarmStatusSubscription extends TbSubscription<AlarmSubscriptionU
     public TbAlarmStatusSubscription(String serviceId, String sessionId, int subscriptionId, TenantId tenantId, EntityId entityId,
                                      BiConsumer<TbSubscription<AlarmSubscriptionUpdate>, AlarmSubscriptionUpdate> updateProcessor,
                                      List<String> typeList, List<AlarmSeverity> severityList) {
-        super(serviceId, sessionId, subscriptionId, tenantId, entityId, TbSubscriptionType.ALARM_STATUS, updateProcessor);
+        super(serviceId, sessionId, subscriptionId, tenantId, entityId, TbSubscriptionType.ALARMS, updateProcessor);
         this.typeList = typeList;
         this.severityList = severityList;
     }
@@ -56,7 +56,7 @@ public class TbAlarmStatusSubscription extends TbSubscription<AlarmSubscriptionU
     public AlarmStatusUpdate createUpdate() {
         return AlarmStatusUpdate.builder()
                 .cmdId(getSubscriptionId())
-                .active(alarmIds.size() > 0)
+                .active(!alarmIds.isEmpty())
                 .build();
     }
 

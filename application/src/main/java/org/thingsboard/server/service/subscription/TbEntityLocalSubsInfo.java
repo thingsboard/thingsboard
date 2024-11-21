@@ -74,7 +74,6 @@ public class TbEntityLocalSubsInfo {
                     stateChanged = true;
                 }
                 break;
-            case ALARM_STATUS:
             case ALARMS:
                 if (!newState.alarms) {
                     newState.alarms = true;
@@ -169,7 +168,6 @@ public class TbEntityLocalSubsInfo {
             case NOTIFICATIONS_COUNT:
                 state.notifications = false;
                 break;
-            case ALARM_STATUS:
             case ALARMS:
                 state.alarms = false;
                 break;

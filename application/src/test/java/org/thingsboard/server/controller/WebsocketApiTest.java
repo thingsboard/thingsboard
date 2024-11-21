@@ -428,7 +428,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
             String alarmId = alarms.get(i).getId().getId().toString();
             doPost("/api/alarm/" + alarmId + "/clear", Alarm.class);
         }
-        AlarmStatusUpdate alarmStatusUpdate = JacksonUtil.fromString(getWsClient().waitForUpdate(), AlarmStatusUpdate.class);
+        AlarmStatusUpdate alarmStatusUpdate = JacksonUtil.fromString(getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(5)), AlarmStatusUpdate.class);
         Assert.assertNull(alarmStatusUpdate);
 
         //clear 6-th alarm should send update

@@ -414,7 +414,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
 
     private void onAlarmUpdate(UUID entityId, AlarmSubscriptionUpdate update, TbCallback callback) {
         processSubscriptionData(entityId,
-                sub -> TbSubscriptionType.ALARMS.equals(sub.getType()) || TbSubscriptionType.ALARM_STATUS.equals(sub.getType()),
+                sub -> TbSubscriptionType.ALARMS.equals(sub.getType()),
                 update, callback);
     }
 

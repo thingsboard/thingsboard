@@ -444,75 +444,23 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     }
 
     @Override
-    public void handleCmd(WebSocketSessionRef sessionRef, AlarmStatusCmd cmd) {
-        log.debug("[{}] Handling alarm status subscription cmd (cmdId: {})", sessionRef.getSessionId(), cmd.getCmdId());
-        SecurityUser securityCtx = sessionRef.getSecurityCtx();
-
-        TbAlarmStatusSubscription subscription = TbAlarmStatusSubscription.builder()
-                .serviceId(serviceInfoProvider.getServiceId())
-                .sessionId(sessionRef.getSessionId())
-                .subscriptionId(cmd.getCmdId())
-                .tenantId(securityCtx.getTenantId())
-                .entityId(cmd.getOriginatorId())
-                .typeList(cmd.getTypeList())
-                .severityList(cmd.getSeverityList())
-                .updateProcessor(this::handleAlarmStatusSubscriptionUpdate)
-                .build();
-        localSubscriptionService.addSubscription(subscription, sessionRef);
-
-        fetchActiveAlarms(subscription);
-        sendUpdate(sessionRef.getSessionId(), subscription.createUpdate());
-    }
-
-    private void fetchActiveAlarms(TbAlarmStatusSubscription subscription) {
-        log.trace("[{}, subId: {}] Fetching active alarms from DB", subscription.getSessionId(), subscription.getSubscriptionId());
-        OriginatorAlarmFilter originatorAlarmFilter = new OriginatorAlarmFilter(subscription.getEntityId(), subscription.getTypeList(), subscription.getSeverityList());
-        List<UUID> alarmIds = alarmService.findActiveOriginatorAlarms(subscription.getTenantId(), originatorAlarmFilter, alarmsPerAlarmStatusSubscriptionCacheSize);
-
-        subscription.getAlarmIds().addAll(alarmIds);
-        subscription.setCacheFull(alarmIds.size() == alarmsPerAlarmStatusSubscriptionCacheSize);
-    }
-
-    private void sendUpdate(String sessionId, CmdUpdate update) {
-        log.trace("[{}, cmdId: {}] Sending WS update: {}", sessionId, update.getCmdId(), update);
-        wsService.sendUpdate(sessionId, update);
-    }
-
-    private void handleAlarmStatusSubscriptionUpdate(TbSubscription<AlarmSubscriptionUpdate> sub, AlarmSubscriptionUpdate subscriptionUpdate) {
-        TbAlarmStatusSubscription subscription = (TbAlarmStatusSubscription) sub;
-        try {
-            AlarmInfo alarm = subscriptionUpdate.getAlarm();
-            Set<UUID> alarmsIds = subscription.getAlarmIds();
-            if (alarmsIds.contains(alarm.getId().getId())) {
-                if (!subscription.matches(alarm) || subscriptionUpdate.isAlarmDeleted()) {
-                    alarmsIds.remove(alarm.getId().getId());
-                    if (alarmsIds.isEmpty()) {
-                        if (subscription.isCacheFull()) {
-                            fetchActiveAlarms(subscription);
-                            if (alarmsIds.isEmpty()) {
-                                sendUpdate(subscription.getSessionId(), subscription.createUpdate());
-                            }
-                        } else {
-                            sendUpdate(subscription.getSessionId(), subscription.createUpdate());
-                        }
-                    }
-                }
-            } else if (subscription.matches(alarm)) {
-                if (alarmsIds.size() < alarmsPerAlarmStatusSubscriptionCacheSize) {
-                    alarmsIds.add(alarm.getId().getId());
-                    if (alarmsIds.size() == 1) {
-                        sendUpdate(subscription.getSessionId(), subscription.createUpdate());
-                    }
-                } else {
-                    subscription.setCacheFull(true);
-                }
-            }
-        } catch (Exception e) {
-            log.error("[{}, subId: {}] Failed to handle update for alarm status subscription: {}", subscription.getSessionId(), subscription.getSubscriptionId(), subscriptionUpdate, e);
+    public void handleCmd(WebSocketSessionRef session, AlarmStatusCmd cmd) {
+        log.debug("[{}] Handling alarm status subscription cmd (cmdId: {})", session.getSessionId(), cmd.getCmdId());
+        TbAlarmStatusSubCtx ctx = getSubCtx(session.getSessionId(), cmd.getCmdId());
+        if (ctx == null) {
+            ctx = createSubCtx(session, cmd);
+            long start = System.currentTimeMillis();
+            ctx.fetchActiveAlarms();
+            long end = System.currentTimeMillis();
+            stats.getAlarmQueryInvocationCnt().incrementAndGet();
+            stats.getAlarmQueryTimeSpent().addAndGet(end - start);
+            ctx.sendUpdate();
+        } else {
+            log.debug("[{}][{}] Received duplicate command: {}", session.getSessionId(), cmd.getCmdId(), cmd);
         }
     }
 
-    private boolean validate(TbAbstractSubCtx<?> finalCtx) {
+    private boolean validate(TbAbstractSubCtx finalCtx) {
         if (finalCtx.isStopped()) {
             log.warn("[{}][{}][{}] Received validation task for already stopped context.", finalCtx.getTenantId(), finalCtx.getSessionId(), finalCtx.getCmdId());
             return false;
@@ -528,7 +476,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         return true;
     }
 
-    private void refreshDynamicQuery(TbAbstractSubCtx<?> finalCtx) {
+    private void refreshDynamicQuery(TbAbstractEntityQuerySubCtx<?> finalCtx) {
         try {
             if (validate(finalCtx)) {
                 long start = System.currentTimeMillis();
@@ -612,6 +560,15 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         if (cmd.getQuery() != null) {
             ctx.setAndResolveQuery(cmd.getQuery());
         }
+        sessionSubs.put(cmd.getCmdId(), ctx);
+        return ctx;
+    }
+
+    private TbAlarmStatusSubCtx createSubCtx(WebSocketSessionRef sessionRef, AlarmStatusCmd cmd) {
+        Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new ConcurrentHashMap<>());
+        TbAlarmStatusSubCtx ctx = new TbAlarmStatusSubCtx(serviceId, wsService, localSubscriptionService,
+                stats, alarmService, alarmsPerAlarmStatusSubscriptionCacheSize, sessionRef, cmd.getCmdId());
+        ctx.createSubscription(cmd);
         sessionSubs.put(cmd.getCmdId(), ctx);
         return ctx;
     }
