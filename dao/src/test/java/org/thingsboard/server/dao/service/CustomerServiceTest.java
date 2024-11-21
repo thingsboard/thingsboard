@@ -31,9 +31,9 @@ import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -384,9 +384,11 @@ public class CustomerServiceTest extends AbstractServiceTest {
 
         config.setArguments(Map.of("T", argument));
 
+        config.setExpression("T - (100 - H) / 5");
+
         Output output = new Output();
+        output.setName("output");
         output.setType("TIME_SERIES");
-        output.setExpression("T - (100 - H) / 5");
 
         config.setOutput(output);
 

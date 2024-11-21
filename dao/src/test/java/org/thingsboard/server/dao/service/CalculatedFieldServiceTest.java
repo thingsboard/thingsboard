@@ -23,10 +23,10 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -158,9 +158,11 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
         config.setArguments(Map.of("T", argument));
 
+        config.setExpression("T - (100 - H) / 5");
+
         Output output = new Output();
+        output.setName("output");
         output.setType("TIME_SERIES");
-        output.setExpression("T - (100 - H) / 5");
 
         config.setOutput(output);
 

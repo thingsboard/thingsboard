@@ -44,6 +44,8 @@ public interface CalculatedFieldConfiguration {
 
     Map<String, Argument> getArguments();
 
+    String getExpression();
+
     Output getOutput();
 
     @JsonIgnore

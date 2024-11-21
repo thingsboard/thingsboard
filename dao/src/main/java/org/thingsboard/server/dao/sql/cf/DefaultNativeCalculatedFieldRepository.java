@@ -25,10 +25,11 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
@@ -138,6 +139,8 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
         switch (type) {
             case SIMPLE:
                 return new SimpleCalculatedFieldConfiguration(config, entityType, entityId);
+            case SCRIPT:
+                return new ScriptCalculatedFieldConfiguration(config, entityType, entityId);
             default:
                 throw new IllegalArgumentException("Unsupported calculated field type: " + type + "!");
         }

@@ -57,7 +57,7 @@ public class SimpleCalculatedFieldState implements CalculatedFieldState {
 
         if (isValid(this.arguments, arguments)) {
             CalculatedFieldResult result = new CalculatedFieldResult();
-            String expression = output.getExpression();
+            String expression = calculatedFieldConfiguration.getExpression();
             ThreadLocal<Expression> customExpression = new ThreadLocal<>();
             var expr = customExpression.get();
             if (expr == null) {

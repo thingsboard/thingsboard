@@ -40,6 +40,7 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
     private final ObjectMapper mapper = new ObjectMapper();
 
     protected Map<String, Argument> arguments;
+    protected String expression;
     protected Output output;
 
     public BaseCalculatedFieldConfiguration() {
@@ -48,6 +49,7 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
     public BaseCalculatedFieldConfiguration(JsonNode config, EntityType entityType, UUID entityId) {
         BaseCalculatedFieldConfiguration calculatedFieldConfig = toCalculatedFieldConfig(config, entityType, entityId);
         this.arguments = calculatedFieldConfig.getArguments();
+        this.expression = calculatedFieldConfig.getExpression();
         this.output = calculatedFieldConfig.getOutput();
     }
 
@@ -101,12 +103,17 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
             argumentNode.put("defaultValue", argument.getDefaultValue());
         });
 
+        if (expression != null) {
+            configNode.put("expression", expression);
+        }
+
         if (output != null) {
             ObjectNode outputNode = configNode.putObject("output");
             outputNode.put("name", output.getName());
             outputNode.put("type", output.getType());
-            outputNode.put("scope", String.valueOf(output.getScope()));
-            outputNode.put("expression", output.getExpression());
+            if (output.getScope() != null) {
+                outputNode.put("scope", String.valueOf(output.getScope()));
+            }
         }
 
         return configNode;
@@ -133,20 +140,30 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
                 }
                 argument.setKey(argumentNode.get("key").asText());
                 argument.setType(argumentNode.get("type").asText());
-                argument.setScope(AttributeScope.valueOf(argumentNode.get("scope").asText()));
+                JsonNode scope = argumentNode.get("scope");
+                if (scope != null && !scope.isNull() && !scope.asText().equals("null")) {
+                    argument.setScope(AttributeScope.valueOf(scope.asText()));
+                }
                 argument.setDefaultValue(argumentNode.get("defaultValue").asText());
                 arguments.put(key, argument);
             });
         }
         this.setArguments(arguments);
 
+        JsonNode expressionNode = config.get("expression");
+        if (expressionNode != null && expressionNode.isTextual()) {
+            this.setExpression(expressionNode.asText());
+        }
+
         JsonNode outputNode = config.get("output");
         if (outputNode != null) {
             Output output = new Output();
             output.setName(outputNode.get("name").asText());
             output.setType(outputNode.get("type").asText());
-            output.setScope(AttributeScope.valueOf(outputNode.get("scope").asText()));
-            output.setExpression(outputNode.get("expression").asText());
+            JsonNode scope = outputNode.get("scope");
+            if (scope != null && !scope.isNull() && !scope.asText().equals("null")) {
+                output.setScope(AttributeScope.valueOf(scope.asText()));
+            }
             this.setOutput(output);
         }
 

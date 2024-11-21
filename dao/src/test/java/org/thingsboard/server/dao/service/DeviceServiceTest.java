@@ -39,9 +39,9 @@ import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -1227,9 +1227,11 @@ public class DeviceServiceTest extends AbstractServiceTest {
 
         config.setArguments(Map.of("T", argument));
 
+        config.setExpression("T - (100 - H) / 5");
+
         Output output = new Output();
+        output.setName("output");
         output.setType("TIME_SERIES");
-        output.setExpression("T - (100 - H) / 5");
 
         config.setOutput(output);
 

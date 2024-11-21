@@ -253,9 +253,9 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         CalculatedFieldConfiguration newConfig = newCalculatedField.getConfiguration();
         boolean argumentsChanged = !oldConfig.getArguments().equals(newConfig.getArguments());
         boolean outputTypeChanged = !oldConfig.getOutput().getType().equals(newConfig.getOutput().getType());
-        boolean outputExpressionChanged = !oldConfig.getOutput().getExpression().equals(newConfig.getOutput().getExpression());
+        boolean expressionChanged = !oldConfig.getExpression().equals(newConfig.getExpression());
 
-        return entityIdChanged || typeChanged || argumentsChanged || outputTypeChanged || outputExpressionChanged;
+        return entityIdChanged || typeChanged || argumentsChanged || outputTypeChanged || expressionChanged;
     }
 
     private void fetchCalculatedFields() {

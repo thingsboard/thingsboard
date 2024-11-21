@@ -96,7 +96,7 @@ public class ScriptCalculatedFieldState implements CalculatedFieldState {
         calculatedFieldScriptEngine = new CalculatedFieldTbelScriptEngine(
                 tenantId,
                 tbelInvokeService,
-                calculatedFieldConfiguration.getOutput().getExpression(),
+                calculatedFieldConfiguration.getExpression(),
                 arguments.keySet().toArray(new String[0])
         );
     }

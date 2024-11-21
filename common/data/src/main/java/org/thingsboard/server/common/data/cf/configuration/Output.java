@@ -24,6 +24,5 @@ public class Output {
     private String name;
     private String type;
     private AttributeScope scope;
-    private String expression;
 
 }
