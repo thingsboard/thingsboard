@@ -146,18 +146,20 @@ export class MobileBundleTableConfigResolver {
       }
     }).afterClosed()
       .subscribe((res) => {
-        if (res && !isAdd) {
-          this.config.updateData();
-        } else {
-          this.store.pipe(select(selectUserSettingsProperty('notDisplayConfigurationAfterAddMobileBundle'))).pipe(
-            take(1)
-          ).subscribe((settings: boolean) => {
-            if (!settings) {
-              this.configurationApp(null, res, true);
-            } else {
-              this.config.updateData();
-            }
-          });
+        if (res) {
+          if (!isAdd) {
+            this.config.updateData();
+          } else {
+            this.store.pipe(select(selectUserSettingsProperty('notDisplayConfigurationAfterAddMobileBundle'))).pipe(
+              take(1)
+            ).subscribe((settings: boolean) => {
+              if (!settings) {
+                this.configurationApp(null, res, true);
+              } else {
+                this.config.updateData();
+              }
+            });
+          }
         }
       });
   }
