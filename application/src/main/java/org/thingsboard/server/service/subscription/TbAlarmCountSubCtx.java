@@ -29,7 +29,7 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountUpdate;
 
 @Slf4j
 @ToString(callSuper = true)
-public class TbAlarmCountSubCtx extends TbAbstractSubCtx<AlarmCountQuery> {
+public class TbAlarmCountSubCtx extends TbAbstractEntityQuerySubCtx<AlarmCountQuery> {
 
     private final AlarmService alarmService;
 

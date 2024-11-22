@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,12 +45,12 @@ import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetTypeFilter;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.common.data.widget.WidgetsBundleFilter;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.widgets.type.TbWidgetTypeService;
+import org.thingsboard.server.service.resource.TbResourceService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -58,8 +59,8 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
-import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES;
-import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.INCLUDE_RESOURCES;
+import static org.thingsboard.server.controller.ControllerConstants.INCLUDE_RESOURCES_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -77,7 +78,7 @@ import static org.thingsboard.server.controller.ControllerConstants.WIDGET_TYPE_
 public class WidgetTypeController extends AutoCommitController {
 
     private final TbWidgetTypeService tbWidgetTypeService;
-    private final ImageService imageService;
+    private final TbResourceService tbResourceService;
 
     private static final String WIDGET_TYPE_DESCRIPTION = "Widget Type represents the template for widget creation. Widget Type and Widget are similar to class and object in OOP theory.";
     private static final String WIDGET_TYPE_DETAILS_DESCRIPTION = "Widget Type Details extend Widget Type and add image and description properties. " +
@@ -93,20 +94,18 @@ public class WidgetTypeController extends AutoCommitController {
     @ApiOperation(value = "Get Widget Type Details (getWidgetTypeById)",
             notes = "Get the Widget Type Details based on the provided Widget Type Id. " + WIDGET_TYPE_DETAILS_DESCRIPTION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetType/{widgetTypeId}", method = RequestMethod.GET)
-    @ResponseBody
-    public WidgetTypeDetails getWidgetTypeById(
-            @Parameter(description = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
-            @PathVariable("widgetTypeId") String strWidgetTypeId,
-            @Parameter(description = INLINE_IMAGES_DESCRIPTION)
-            @RequestParam(value = INLINE_IMAGES, required = false) boolean inlineImages) throws ThingsboardException {
+    @GetMapping(value = "/widgetType/{widgetTypeId}")
+    public WidgetTypeDetails getWidgetTypeById(@Parameter(description = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
+                                               @PathVariable("widgetTypeId") String strWidgetTypeId,
+                                               @Parameter(description = INCLUDE_RESOURCES_DESCRIPTION)
+                                               @RequestParam(value = INCLUDE_RESOURCES, required = false) boolean includeResources) throws ThingsboardException {
         checkParameter("widgetTypeId", strWidgetTypeId);
         WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
-        var result = checkWidgetTypeId(widgetTypeId, Operation.READ);
-        if (inlineImages) {
-            imageService.inlineImages(result);
+        WidgetTypeDetails widgetTypeDetails = checkWidgetTypeId(widgetTypeId, Operation.READ);
+        if (includeResources) {
+            widgetTypeDetails.setResources(tbResourceService.exportResources(widgetTypeDetails, getCurrentUser()));
         }
-        return result;
+        return widgetTypeDetails;
     }
 
     @ApiOperation(value = "Get Widget Type Info (getWidgetTypeInfoById)",
@@ -275,13 +274,16 @@ public class WidgetTypeController extends AutoCommitController {
     public List<WidgetTypeDetails> getBundleWidgetTypesDetails(
             @Parameter(description = "Widget Bundle Id", required = true)
             @RequestParam("widgetsBundleId") String strWidgetsBundleId,
-            @Parameter(description = INLINE_IMAGES_DESCRIPTION)
-            @RequestParam(value = INLINE_IMAGES, required = false) boolean inlineImages
+            @Parameter(description = INCLUDE_RESOURCES_DESCRIPTION)
+            @RequestParam(value = INCLUDE_RESOURCES, required = false) boolean includeResources
     ) throws ThingsboardException {
+        SecurityUser user = getCurrentUser();
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
-        var result = checkNotNull(widgetTypeService.findWidgetTypesDetailsByWidgetsBundleId(getTenantId(), widgetsBundleId));
-        if (inlineImages) {
-            result.forEach(imageService::inlineImages);
+        List<WidgetTypeDetails> result = checkNotNull(widgetTypeService.findWidgetTypesDetailsByWidgetsBundleId(getTenantId(), widgetsBundleId));
+        if (includeResources) {
+            for (WidgetTypeDetails widgetTypeDetails : result) {
+                widgetTypeDetails.setResources(tbResourceService.exportResources(widgetTypeDetails, user));
+            }
         }
         return result;
     }

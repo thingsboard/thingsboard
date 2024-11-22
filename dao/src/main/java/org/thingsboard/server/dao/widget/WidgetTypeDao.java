@@ -95,14 +95,7 @@ public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityD
 
     WidgetTypeDetails findDetailsByTenantIdAndFqn(UUID tenantId, String fqn);
 
-    /**
-     * Find widget types infos by tenantId and resourceId in descriptor.
-     *
-     * @param tenantId the tenantId
-     * @param tbResourceId the resourceId
-     * @return the list of widget types infos objects
-     */
-    List<WidgetTypeDetails> findWidgetTypesInfosByTenantIdAndResourceId(UUID tenantId, UUID tbResourceId);
+    List<String> findWidgetTypesNamesByTenantIdAndResourceLink(UUID tenantId, String link);
 
     List<WidgetTypeId> findWidgetTypeIdsByTenantIdAndFqns(UUID tenantId, List<String> widgetFqns);
 

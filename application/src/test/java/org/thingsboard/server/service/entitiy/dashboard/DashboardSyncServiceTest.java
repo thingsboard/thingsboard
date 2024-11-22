@@ -57,17 +57,15 @@ public class DashboardSyncServiceTest extends AbstractControllerTest {
     @Test
     public void testGatewaysDashboardSync() throws Exception {
         loginTenantAdmin();
-        await().atMost(60, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(45, TimeUnit.SECONDS).untilAsserted(() -> {
             MockHttpServletResponse response = doGet("/api/resource/dashboard/system/gateways_dashboard.json")
                     .andExpect(status().isOk())
                     .andReturn().getResponse();
             String dashboardJson = response.getContentAsString();
-            String etag = response.getHeader("ETag");
-
             Dashboard dashboard = JacksonUtil.fromString(dashboardJson, Dashboard.class);
             assertThat(dashboard).isNotNull();
             assertThat(dashboard.getTitle()).containsIgnoringCase("gateway");
-            assertThat(etag).isNotBlank();
+            assertThat(response.getHeader("ETag")).isNotBlank();
         });
     }
 

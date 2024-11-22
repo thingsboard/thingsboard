@@ -74,6 +74,7 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.mobile.MobileAppBundleService;
 import org.thingsboard.server.dao.mobile.MobileAppService;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateReadExecutor;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateWriteExecutor;
@@ -384,6 +385,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private MobileAppService mobileAppService;
+
+    @Autowired
+    @Getter
+    private MobileAppBundleService mobileAppBundleService;
 
     @Autowired
     @Getter

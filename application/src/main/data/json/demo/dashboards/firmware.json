@@ -2600,6 +2600,6 @@
       "showUpdateDashboardImage": false
     }
   },
-  "externalId": null,
-  "name": "Firmware"
+  "name": "Firmware",
+  "resources": []
 }
