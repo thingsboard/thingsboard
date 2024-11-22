@@ -18,9 +18,11 @@ package org.thingsboard.server.dao.entity;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.HasDebugMode;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -33,11 +35,13 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.housekeeper.CleanUpService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public abstract class AbstractEntityService {
@@ -67,6 +71,13 @@ public abstract class AbstractEntityService {
     @Autowired
     @Lazy
     protected CleanUpService cleanUpService;
+
+    @Autowired
+    @Lazy
+    private TbTenantProfileCache tbTenantProfileCache;
+
+    @Value("${debug_mode.max_duration:15}")
+    private int maxDebugModeDurationMinutes;
 
     protected void createRelation(TenantId tenantId, EntityRelation relation) {
         log.debug("Creating relation: {}", relation);
@@ -122,6 +133,17 @@ public abstract class AbstractEntityService {
             if (relationExists) {
                 throw new DataValidationException("Can't unassign device/asset from edge that is related to entity view and entity view is assigned to edge!");
             }
+        }
+    }
+
+    protected void setDebugAllUntil(TenantId tenantId, HasDebugMode entity, long now) {
+        int debugDuration = tbTenantProfileCache.get(tenantId).getDefaultProfileConfiguration().getMaxDebugModeDurationMinutes(maxDebugModeDurationMinutes);
+        long debugUntil = now + TimeUnit.MINUTES.toMillis(debugDuration);
+
+        if (entity.isDebugAll()) {
+            entity.setDebugAllUntil(debugUntil);
+        } else if (entity.getDebugAllUntil() > debugUntil) {
+            throw new DataValidationException("Unable to update 'debugAllUntil' property. To reset the debug duration, please modify the 'debugAll' property instead.");
         }
     }
 }
