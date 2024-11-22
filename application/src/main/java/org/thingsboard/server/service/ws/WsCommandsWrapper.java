@@ -38,6 +38,7 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountUnsubscribeCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUnsubscribeCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmStatusUnsubscribeCmd;
 
 import java.util.List;
 
@@ -67,6 +68,7 @@ public class WsCommandsWrapper {
             @Type(name = "ENTITY_DATA_UNSUBSCRIBE", value = EntityDataUnsubscribeCmd.class),
             @Type(name = "ENTITY_COUNT_UNSUBSCRIBE", value = EntityCountUnsubscribeCmd.class),
             @Type(name = "NOTIFICATIONS_UNSUBSCRIBE", value = NotificationsUnsubCmd.class),
+            @Type(name = "ALARM_STATUS_UNSUBSCRIBE", value = AlarmStatusUnsubscribeCmd.class),
     })
     private List<WsCmd> cmds;
 

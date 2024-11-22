@@ -22,7 +22,6 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmStatusUpdate;
 import org.thingsboard.server.service.ws.telemetry.sub.AlarmSubscriptionUpdate;
 
 import java.util.HashSet;
@@ -53,15 +52,12 @@ public class TbAlarmStatusSubscription extends TbSubscription<AlarmSubscriptionU
         this.severityList = severityList;
     }
 
-    public AlarmStatusUpdate createUpdate() {
-        return AlarmStatusUpdate.builder()
-                .cmdId(getSubscriptionId())
-                .active(!alarmIds.isEmpty())
-                .build();
-    }
-
     public boolean matches(AlarmInfo alarm) {
         return !alarm.isCleared() && (this.typeList == null || this.typeList.contains(alarm.getType())) &&
                 (this.severityList == null || this.severityList.contains(alarm.getSeverity()));
+    }
+
+    public boolean hasAlarms() {
+        return !alarmIds.isEmpty();
     }
 }
