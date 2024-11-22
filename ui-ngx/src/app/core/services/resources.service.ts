@@ -39,6 +39,7 @@ import { AppState } from '@core/core.state';
 import { map, tap } from 'rxjs/operators';
 import { RequestConfig } from '@core/http/http-utils';
 import { getFlexLayoutModule } from '@app/shared/legacy/flex-layout.models';
+import { isJSResource, removeTbResourcePrefix } from '@shared/models/resource.models';
 
 export interface ModuleInfo {
   module: ɵNgModuleDef<any>;
@@ -377,11 +378,11 @@ export class ResourcesService {
     if (isObject(resourceId)) {
       return `/api/resource/js/${(resourceId as TbResourceId).id}/download`;
     }
-    return resourceId as string;
+    return removeTbResourcePrefix(resourceId as string);
   }
 
   private getMetaInfo(resourceId: string | TbResourceId): object {
-    if (isObject(resourceId)) {
+    if (isObject(resourceId) || (typeof resourceId === 'string' && isJSResource(resourceId))) {
       return {
         additionalHeaders: {
           'X-Authorization': `Bearer ${AuthService.getJwtToken()}`

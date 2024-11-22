@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.entitiy.dashboard;
 
 import lombok.AllArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -32,6 +33,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+import org.thingsboard.server.service.resource.TbResourceService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -42,11 +45,17 @@ import java.util.Set;
 public class DefaultTbDashboardService extends AbstractTbEntityService implements TbDashboardService {
 
     private final DashboardService dashboardService;
+    private final TbResourceService tbResourceService;
 
     @Override
-    public Dashboard save(Dashboard dashboard, User user) throws Exception {
+    public Dashboard save(Dashboard dashboard, SecurityUser user) throws Exception {
         ActionType actionType = dashboard.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = dashboard.getTenantId();
+
+        if (CollectionUtils.isNotEmpty(dashboard.getResources())) {
+            tbResourceService.importResources(dashboard.getResources(), user);
+        }
+
         try {
             Dashboard savedDashboard = checkNotNull(dashboardService.saveDashboard(dashboard));
             autoCommit(user, savedDashboard.getId());

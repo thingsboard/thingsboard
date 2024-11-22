@@ -1,0 +1,109 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-toolbar color="primary">
+  <h2>{{ dialogTitle | translate }}</h2>
+  <span class="flex-1"></span>
+  <div tb-help="mobileBundle"></div>
+  <button mat-icon-button
+          (click)="cancel()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+</mat-progress-bar>
+<div *ngIf="!(isLoading$ | async)"></div>
+<div mat-dialog-content class="xs:!p-0">
+  <mat-horizontal-stepper [linear]="isAdd" labelPosition="end" #addMobileBundle [orientation]="(stepperOrientation | async)"
+                          (selectionChange)="changeStep($event)">
+    <ng-template matStepperIcon="edit">
+      <mat-icon>check</mat-icon>
+    </ng-template>
+    <mat-step [stepControl]="bundlesForms">
+      <ng-template matStepLabel>{{ 'mobile.basic-settings' | translate }}</ng-template>
+      <form [formGroup]="bundlesForms" style="margin-top: 4px;">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label translate>mobile.title</mat-label>
+          <input matInput required formControlName="title">
+          <mat-hint> </mat-hint>
+          <mat-error *ngIf="bundlesForms.get('title').hasError('required')">
+            {{ 'mobile.title-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <tb-entity-autocomplete
+          allowCreateNew
+          useFullEntityId
+          appearance="outline"
+          labelText="mobile.android-application"
+          [entityType]="entityType.MOBILE_APP"
+          [entitySubtype]="platformType.ANDROID"
+          (createNew)="createApplication('androidAppId', platformType.ANDROID)"
+          formControlName="androidAppId">
+        </tb-entity-autocomplete>
+        <tb-entity-autocomplete
+          allowCreateNew
+          useFullEntityId
+          appearance="outline"
+          labelText="mobile.ios-application"
+          [entityType]="entityType.MOBILE_APP"
+          [entitySubtype]="platformType.IOS"
+          (createNew)="createApplication('iosAppId', platformType.IOS)"
+          formControlName="iosAppId">
+        </tb-entity-autocomplete>
+        <mat-form-field appearance="outline">
+          <mat-label translate>mobile.description</mat-label>
+          <textarea matInput formControlName="description" rows="1"></textarea>
+        </mat-form-field>
+      </form>
+    </mat-step>
+    <mat-step [stepControl]="oauthForms">
+      <ng-template matStepLabel>{{ 'admin.oauth2.oauth2' | translate }}</ng-template>
+      <form [formGroup]="oauthForms" style="margin-top: 8px;">
+        <mat-slide-toggle formControlName="oauth2Enabled">
+          {{ 'mobile.enable-oauth' | translate }}
+        </mat-slide-toggle>
+        <tb-entity-list formControlName="oauth2ClientIds"
+                        [entityType]="entityType.OAUTH2_CLIENT"
+                        appearance="outline"
+                        labelText="{{ 'admin.oauth2.clients' | translate }}"
+                        placeholderText="{{ 'admin.oauth2.add-client' | translate }}">
+          <button mat-button color="primary" matSuffix
+                  [disabled]="this.oauthForms.get('oauth2ClientIds').disabled"
+                  (click)="createClient($event)">
+            <span style="white-space: nowrap">{{ 'admin.oauth2.create-new' | translate }}</span>
+          </button>
+        </tb-entity-list>
+      </form>
+    </mat-step>
+    <mat-step [stepControl]="layoutForms">
+      <ng-template matStepLabel>{{ 'mobile.layout' | translate }}</ng-template>
+      <form [formGroup]="layoutForms" class="layout-form">
+        <tb-mobile-layout formControlName="layoutConfig">
+        </tb-mobile-layout>
+      </form>
+    </mat-step>
+  </mat-horizontal-stepper>
+</div>
+<div mat-dialog-actions>
+  <button mat-stroked-button *ngIf="selectedIndex > 0"
+          (click)="backStep()">{{ 'action.back' | translate }}</button>
+  <span class="flex-1"></span>
+  <button mat-raised-button
+          color="primary"
+          (click)="nextStep()">{{ nextStepLabel() | translate }}</button>
+</div>
