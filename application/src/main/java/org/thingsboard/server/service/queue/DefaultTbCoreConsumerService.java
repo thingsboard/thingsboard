@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.LifecycleEvent;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -157,6 +158,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private QueueConsumerManager<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> firmwareStatesConsumer;
 
     private volatile ListeningExecutorService deviceActivityEventsExecutor;
+    private volatile ListeningExecutorService calculatedFieldsExecutor;
 
     public DefaultTbCoreConsumerService(TbCoreQueueFactory tbCoreQueueFactory,
                                         ActorSystemContext actorContext,
@@ -202,6 +204,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     public void init() {
         super.init("tb-core");
         this.deviceActivityEventsExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-device-activity-events-executor")));
+        this.calculatedFieldsExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-calculated-fields-executor")));
 
         this.mainConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<ToCoreMsg>, CoreQueueConfig>builder()
                 .queueKey(new QueueKey(ServiceType.TB_CORE))
@@ -315,6 +318,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                         forwardToEventService(toCoreMsg.getLifecycleEventMsg(), callback);
                     } else if (toCoreMsg.hasCalculatedFieldMsg()) {
                         forwardToCalculatedFieldService(toCoreMsg.getCalculatedFieldMsg(), callback);
+                    } else if (toCoreMsg.hasEntityProfileUpdateMsg()) {
+                        forwardToCalculatedFieldService(toCoreMsg.getEntityProfileUpdateMsg(), callback);
                     }
                 } catch (Throwable e) {
                     log.warn("[{}] Failed to process message: {}", id, msg, e);
@@ -668,11 +673,23 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private void forwardToCalculatedFieldService(TransportProtos.CalculatedFieldMsgProto calculatedFieldMsg, TbCallback callback) {
         var tenantId = toTenantId(calculatedFieldMsg.getTenantIdMSB(), calculatedFieldMsg.getTenantIdLSB());
         var calculatedFieldId = new CalculatedFieldId(new UUID(calculatedFieldMsg.getCalculatedFieldIdMSB(), calculatedFieldMsg.getCalculatedFieldIdLSB()));
-        ListenableFuture<?> future = deviceActivityEventsExecutor.submit(() -> calculatedFieldExecutionService.onCalculatedFieldMsg(calculatedFieldMsg, callback));
+        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onCalculatedFieldMsg(calculatedFieldMsg, callback));
         DonAsynchron.withCallback(future,
                 __ -> callback.onSuccess(),
                 t -> {
                     log.warn("[{}] Failed to process calculated field message for calculated field [{}]", tenantId.getId(), calculatedFieldId.getId(), t);
+                    callback.onFailure(t);
+                });
+    }
+
+    private void forwardToCalculatedFieldService(TransportProtos.EntityProfileUpdateMsgProto profileUpdateMsg, TbCallback callback) {
+        var tenantId = toTenantId(profileUpdateMsg.getTenantIdMSB(), profileUpdateMsg.getTenantIdLSB());
+        var entityId = EntityIdFactory.getByTypeAndUuid(profileUpdateMsg.getEntityProfileType(), new UUID(profileUpdateMsg.getEntityIdMSB(), profileUpdateMsg.getEntityIdLSB()));
+        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onEntityTypeChanged(profileUpdateMsg, callback));
+        DonAsynchron.withCallback(future,
+                __ -> callback.onSuccess(),
+                t -> {
+                    log.warn("[{}] Failed to process device type updated message for device [{}]", tenantId.getId(), entityId.getId(), t);
                     callback.onFailure(t);
                 });
     }

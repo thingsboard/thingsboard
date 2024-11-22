@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -51,8 +52,6 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceCredentialsUpdateNotificationMsg;
-import org.thingsboard.server.dao.cf.CalculatedFieldService;
-import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -67,8 +66,6 @@ public class EntityStateSourcingListener {
 
     private final TbClusterService tbClusterService;
     private final TenantService tenantService;
-    private final CalculatedFieldService calculatedFieldService;
-    private final DeviceProfileService deviceProfileService;
 
     @PostConstruct
     public void init() {
@@ -88,7 +85,10 @@ public class EntityStateSourcingListener {
         ComponentLifecycleEvent lifecycleEvent = isCreated ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED;
 
         switch (entityType) {
-            case ASSET, ASSET_PROFILE, ENTITY_VIEW, NOTIFICATION_RULE -> {
+            case ASSET -> {
+                onAssetUpdate(event.getEntity(), event.getOldEntity());
+            }
+            case ASSET_PROFILE, ENTITY_VIEW, NOTIFICATION_RULE -> {
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, lifecycleEvent);
             }
             case RULE_CHAIN -> {
@@ -106,7 +106,7 @@ public class EntityStateSourcingListener {
                 onTenantProfileUpdate(tenantProfile, lifecycleEvent);
             }
             case DEVICE -> {
-                onDeviceUpdate(tenantId, event.getEntity(), event.getOldEntity());
+                onDeviceUpdate(event.getEntity(), event.getOldEntity());
             }
             case DEVICE_PROFILE -> {
                 DeviceProfile deviceProfile = (DeviceProfile) event.getEntity();
@@ -245,21 +245,22 @@ public class EntityStateSourcingListener {
         tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
     }
 
-    private void onDeviceUpdate(TenantId tenantId, Object entity, Object oldEntity) {
+    private void onDeviceUpdate(Object entity, Object oldEntity) {
         Device device = (Device) entity;
         Device oldDevice = null;
         if (oldEntity instanceof Device) {
             oldDevice = (Device) oldEntity;
-            // TODO: move verification of device type to cluster service
-            if (!oldDevice.getType().equals(device.getType())) {
-                DeviceProfile profile = deviceProfileService.findDeviceProfileByName(tenantId, device.getType());
-                boolean cfExistsByProfile = calculatedFieldService.existsCalculatedFieldByEntityId(tenantId, profile.getId());
-                if (cfExistsByProfile) {
-                    // TODO: send device type updated msg to core
-                }
-            }
         }
         tbClusterService.onDeviceUpdated(device, oldDevice);
+    }
+
+    private void onAssetUpdate(Object entity, Object oldEntity) {
+        Asset asset = (Asset) entity;
+        Asset oldAsset = null;
+        if (oldEntity instanceof Asset) {
+            oldAsset = (Asset) oldEntity;
+        }
+        tbClusterService.onAssetUpdated(asset, oldAsset);
     }
 
     private void onEdgeEvent(TenantId tenantId, EntityId entityId, Object entity, ComponentLifecycleEvent lifecycleEvent) {

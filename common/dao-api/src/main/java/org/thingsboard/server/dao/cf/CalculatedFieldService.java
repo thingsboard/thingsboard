@@ -36,6 +36,8 @@ public interface CalculatedFieldService extends EntityDaoService {
 
     ListenableFuture<CalculatedField> findCalculatedFieldByIdAsync(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
+    List<CalculatedFieldId> findCalculatedFieldIdsByEntityId(TenantId tenantId, EntityId entityId);
+
     List<CalculatedField> findAllCalculatedFields();
 
     PageData<CalculatedField> findAllCalculatedFields(PageLink pageLink);

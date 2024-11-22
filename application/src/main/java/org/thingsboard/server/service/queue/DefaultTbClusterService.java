@@ -68,6 +68,7 @@ import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.common.util.ProtoUtils;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ComponentLifecycleMsgProto;
@@ -149,6 +150,7 @@ public class DefaultTbClusterService implements TbClusterService {
     private final GatewayNotificationsService gatewayNotificationsService;
     private final EdgeService edgeService;
     private final TbTransactionalCache<EdgeId, String> edgeIdServiceIdCache;
+    private final CalculatedFieldService calculatedFieldService;
 
     @Override
     public void pushMsgToCore(TenantId tenantId, EntityId entityId, ToCoreMsg msg, TbQueueCallback callback) {
@@ -609,13 +611,37 @@ public class DefaultTbClusterService implements TbClusterService {
             if (deviceNameChanged) {
                 gatewayNotificationsService.onDeviceUpdated(device, old);
             }
-            if (deviceNameChanged || !device.getType().equals(old.getType())) {
+            boolean deviceTypeChanged = !device.getType().equals(old.getType());
+            if (deviceTypeChanged) {
+                handleProfileChange(device.getTenantId(), device.getId(), old.getDeviceProfileId(), device.getDeviceProfileId());
+            }
+            if (deviceNameChanged || deviceTypeChanged) {
                 pushMsgToCore(new DeviceNameOrTypeUpdateMsg(device.getTenantId(), device.getId(), device.getName(), device.getType()), null);
             }
         }
         broadcastEntityStateChangeEvent(device.getTenantId(), device.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
         sendDeviceStateServiceEvent(device.getTenantId(), device.getId(), created, !created, false);
         otaPackageStateService.update(device, old);
+    }
+
+    @Override
+    public void onAssetUpdated(Asset asset, Asset old) {
+        var created = old == null;
+        broadcastEntityChangeToTransport(asset.getTenantId(), asset.getId(), asset, null);
+        if (old != null) {
+            boolean assetTypeChanged = !asset.getType().equals(old.getType());
+            if (assetTypeChanged) {
+                handleProfileChange(asset.getTenantId(), asset.getId(), old.getAssetProfileId(), asset.getAssetProfileId());
+            }
+        }
+        broadcastEntityStateChangeEvent(asset.getTenantId(), asset.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+    }
+
+    private void handleProfileChange(TenantId tenantId, EntityId entityId, EntityId oldProfileId, EntityId newProfileId) {
+        boolean cfExistsByProfile = calculatedFieldService.existsCalculatedFieldByEntityId(tenantId, oldProfileId);
+        if (cfExistsByProfile) {
+            sendEntityTypeUpdatedEvent(tenantId, entityId, oldProfileId, newProfileId);
+        }
     }
 
     @Override
@@ -773,6 +799,22 @@ public class DefaultTbClusterService implements TbClusterService {
         builder.setDeleted(deleted);
         TransportProtos.CalculatedFieldMsgProto msg = builder.build();
         pushMsgToCore(tenantId, calculatedFieldId, ToCoreMsg.newBuilder().setCalculatedFieldMsg(msg).build(), null);
+    }
+
+    private void sendEntityTypeUpdatedEvent(TenantId tenantId, EntityId entityId, EntityId oldProfileId, EntityId newProfileId) {
+        TransportProtos.EntityProfileUpdateMsgProto.Builder builder = TransportProtos.EntityProfileUpdateMsgProto.newBuilder();
+        builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
+        builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
+        builder.setEntityType(entityId.getEntityType().name());
+        builder.setEntityIdMSB(entityId.getId().getMostSignificantBits());
+        builder.setEntityIdLSB(entityId.getId().getLeastSignificantBits());
+        builder.setEntityProfileType(newProfileId.getEntityType().name());
+        builder.setOldProfileIdMSB(oldProfileId.getId().getMostSignificantBits());
+        builder.setOldProfileIdLSB(oldProfileId.getId().getLeastSignificantBits());
+        builder.setNewProfileIdMSB(newProfileId.getId().getMostSignificantBits());
+        builder.setNewProfileIdLSB(newProfileId.getId().getLeastSignificantBits());
+        TransportProtos.EntityProfileUpdateMsgProto msg = builder.build();
+        pushMsgToCore(tenantId, entityId, ToCoreMsg.newBuilder().setEntityProfileUpdateMsg(msg).build(), null);
     }
 
 }

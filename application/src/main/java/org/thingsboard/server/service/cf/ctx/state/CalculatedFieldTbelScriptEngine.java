@@ -19,7 +19,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -55,18 +54,7 @@ public class CalculatedFieldTbelScriptEngine implements CalculatedFieldScriptEng
     @Override
     public ListenableFuture<Object> executeScriptAsync(Map<String, KvEntry> arguments) {
         log.trace("execute script async, arguments {}", arguments);
-        Object[] args = new Object[arguments.size()];
-        int index = 0;
-        for (KvEntry entry : arguments.values()) {
-            switch (entry.getDataType()) {
-                case BOOLEAN -> args[index] = entry.getBooleanValue().orElse(null);
-                case DOUBLE -> args[index] = entry.getDoubleValue().orElse(null);
-                case LONG -> args[index] = entry.getLongValue().orElse(null);
-                case JSON -> args[index] = entry.getJsonValue().map(JacksonUtil::toJsonNode).orElse(null);
-                default -> args[index] = entry.getValueAsString();
-            }
-            index++;
-        }
+        Object[] args = arguments.values().stream().map(KvEntry::getValue).toArray();
         return Futures.transformAsync(tbelInvokeService.invokeScript(tenantId, null, this.scriptId, args),
                 o -> {
                     try {

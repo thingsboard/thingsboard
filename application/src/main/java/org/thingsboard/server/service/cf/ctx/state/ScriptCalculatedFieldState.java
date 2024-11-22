@@ -72,16 +72,9 @@ public class ScriptCalculatedFieldState implements CalculatedFieldState {
 
         return Futures.transform(resultFuture, result -> {
             Output output = calculatedFieldConfiguration.getOutput();
-            Map<String, Object> resultMap = new HashMap<>();
-
-            if (result instanceof Map<?, ?>) {
-                Map<String, Object> map = JacksonUtil.convertValue(result, Map.class);
-                if (map != null) {
-                    resultMap.putAll(map);
-                }
-            } else {
-                resultMap.put(output.getName(), JacksonUtil.convertValue(result, Object.class));
-            }
+            Map<String, Object> resultMap = result instanceof Map<?, ?>
+                    ? JacksonUtil.convertValue(result, Map.class)
+                    : new HashMap<>();
 
             CalculatedFieldResult calculatedFieldResult = new CalculatedFieldResult();
             calculatedFieldResult.setType(output.getType());

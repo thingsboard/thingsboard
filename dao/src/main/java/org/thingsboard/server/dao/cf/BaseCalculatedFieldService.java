@@ -21,8 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -50,6 +50,7 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_CALCULATED_FIELD_ID = "Incorrect calculatedFieldId ";
+    public static final String INCORRECT_ENTITY_ID = "Incorrect entityId ";
 
     private final CalculatedFieldDao calculatedFieldDao;
     private final CalculatedFieldLinkDao calculatedFieldLinkDao;
@@ -88,6 +89,13 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
         log.trace("Executing findCalculatedFieldByIdAsync [{}]", calculatedFieldId);
         validateId(calculatedFieldId, id -> INCORRECT_CALCULATED_FIELD_ID + id);
         return calculatedFieldDao.findByIdAsync(tenantId, calculatedFieldId.getId());
+    }
+
+    @Override
+    public List<CalculatedFieldId> findCalculatedFieldIdsByEntityId(TenantId tenantId, EntityId entityId) {
+        log.trace("Executing findCalculatedFieldIdsByEntityId [{}]", entityId);
+        validateId(entityId.getId(), id -> INCORRECT_ENTITY_ID + id);
+        return calculatedFieldDao.findCalculatedFieldIdsByEntityId(tenantId, entityId);
     }
 
     @Override
@@ -133,7 +141,7 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     public int deleteAllCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId) {
         log.trace("Executing deleteAllCalculatedFieldsByEntityId, tenantId [{}], entityId [{}]", tenantId, entityId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        validateId(entityId.getId(), id -> "Incorrect entityId " + id);
+        validateId(entityId.getId(), id -> INCORRECT_ENTITY_ID + id);
         List<CalculatedField> calculatedFields = calculatedFieldDao.removeAllByEntityId(tenantId, entityId);
         return calculatedFields.size();
     }
@@ -212,7 +220,7 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     @Override
     public boolean existsCalculatedFieldByEntityId(TenantId tenantId, EntityId entityId) {
         return calculatedFieldDao.existsByEntityId(tenantId, entityId);
-    };
+    }
 
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {

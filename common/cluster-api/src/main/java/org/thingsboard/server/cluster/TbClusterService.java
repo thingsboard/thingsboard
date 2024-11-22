@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -96,6 +97,8 @@ public interface TbClusterService extends TbQueueClusterService {
     void onDeviceDeleted(TenantId tenantId, Device device, TbQueueCallback callback);
 
     void onDeviceAssignedToTenant(TenantId oldTenantId, Device device);
+
+    void onAssetUpdated(Asset asset, Asset old);
 
     void onResourceChange(TbResourceInfo resource, TbQueueCallback callback);
 
