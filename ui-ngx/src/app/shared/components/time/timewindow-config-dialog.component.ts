@@ -340,6 +340,18 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
   update() {
     const timewindowFormValue = this.timewindowForm.getRawValue();
     this.timewindow = mergeDeep(this.timewindow, timewindowFormValue);
+    if (!this.timewindow.realtime.disableCustomInterval) {
+      delete this.timewindow.realtime.disableCustomInterval;
+    }
+    if (!this.timewindow.realtime.disableCustomGroupInterval) {
+      delete this.timewindow.realtime.disableCustomGroupInterval;
+    }
+    if (!this.timewindow.history.disableCustomInterval) {
+      delete this.timewindow.history.disableCustomInterval;
+    }
+    if (!this.timewindow.history.disableCustomGroupInterval) {
+      delete this.timewindow.history.disableCustomGroupInterval;
+    }
     if (!this.aggregation) {
       delete this.timewindow.aggregation;
     }
