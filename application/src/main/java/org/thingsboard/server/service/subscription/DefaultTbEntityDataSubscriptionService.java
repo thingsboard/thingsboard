@@ -149,7 +149,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     public void initExecutor() {
         serviceId = serviceInfoProvider.getServiceId();
         wsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ws-entity-sub-callback"));
-        tsInSqlDB = databaseTsType.equalsIgnoreCase("sql") || databaseTsType.equalsIgnoreCase("timescale");
+        tsInSqlDB = databaseTsType.equalsIgnoreCase("sql");
         ThreadFactory tbThreadFactory = ThingsBoardThreadFactory.forName("ws-entity-sub-scheduler");
         if (dynamicPageLinkRefreshPoolSize == 1) {
             scheduler = Executors.newSingleThreadScheduledExecutor(tbThreadFactory);

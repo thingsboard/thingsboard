@@ -60,9 +60,6 @@ public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseries
     @Value("${sql.ts.batch_threads:4}")
     protected int tsBatchThreads;
 
-    @Value("${sql.timescale.batch_threads:4}")
-    protected int timescaleBatchThreads;
-
     @Value("${sql.batch_sort:true}")
     protected boolean batchSortEnabled;
 

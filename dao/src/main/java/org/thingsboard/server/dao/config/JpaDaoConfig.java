@@ -69,9 +69,7 @@ public class JpaDaoConfig {
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(@Qualifier("dataSource") DataSource dataSource,
                                                                        EntityManagerFactoryBuilder builder,
                                                                        @Autowired(required = false) SqlTsLatestDaoConfig tsLatestDaoConfig,
-                                                                       @Autowired(required = false) SqlTsDaoConfig tsDaoConfig,
-                                                                       @Autowired(required = false) TimescaleDaoConfig timescaleDaoConfig,
-                                                                       @Autowired(required = false) TimescaleTsLatestDaoConfig timescaleTsLatestDaoConfig) {
+                                                                       @Autowired(required = false) SqlTsDaoConfig tsDaoConfig) {
         List<String> packages = new ArrayList<>();
         packages.add("org.thingsboard.server.dao.model.sql");
         packages.add("org.thingsboard.server.dao.model.sqlts.dictionary");
@@ -80,12 +78,6 @@ public class JpaDaoConfig {
         }
         if (tsDaoConfig != null) {
             packages.add("org.thingsboard.server.dao.model.sqlts.ts");
-        }
-        if (timescaleDaoConfig != null) {
-            packages.add("org.thingsboard.server.dao.model.sqlts.timescale");
-        }
-        if (timescaleTsLatestDaoConfig != null) {
-            packages.add("org.thingsboard.server.dao.model.sqlts.latest");
         }
         return builder
                 .dataSource(dataSource)
