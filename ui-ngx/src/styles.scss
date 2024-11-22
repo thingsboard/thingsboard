@@ -907,6 +907,9 @@ pre.tb-highlight {
     &.tb-mat-20 {
       @include tb-mat-icon-size(20);
     }
+    &.tb-mat-24 {
+      @include tb-mat-icon-size(24);
+    }
     &.tb-mat-28 {
       @include tb-mat-icon-size(28);
     }

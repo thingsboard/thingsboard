@@ -173,6 +173,21 @@ public class TbResourceController extends BaseController {
         return checkResourceInfoId(resourceId, Operation.READ);
     }
 
+    @ApiOperation(value = "Get resource info (getResourceInfo)",
+            notes = "Get info for the resource with the given type, scope and key. " +
+                    RESOURCE_INFO_DESCRIPTION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @GetMapping(value = "/resource/{resourceType}/{scope}/{key}/info")
+    public TbResourceInfo getResourceInfo(@Parameter(description = "Type of the resource", schema = @Schema(allowableValues = {"lwm2m_model", "jks", "pkcs_12", "js_module", "dashboard"}))
+                                          @PathVariable("resourceType") String resourceTypeStr,
+                                          @Parameter(description = "Scope of the resource", schema = @Schema(allowableValues = {"system", "tenant"}))
+                                          @PathVariable String scope,
+                                          @Parameter(description = "Key of the resource, e.g. 'extension.js'")
+                                          @PathVariable String key) throws ThingsboardException {
+        ResourceType resourceType = ResourceType.valueOf(resourceTypeStr.toUpperCase());
+        return checkResourceInfo(scope, resourceType, key, Operation.READ);
+    }
+
     @ApiOperation(value = "Get Resource (getResourceById)",
             notes = "Fetch the Resource object based on the provided Resource Id. " +
                     RESOURCE_DESCRIPTION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH, hidden = true)

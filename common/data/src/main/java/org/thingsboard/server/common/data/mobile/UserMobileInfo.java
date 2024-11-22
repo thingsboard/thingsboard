@@ -15,13 +15,10 @@
  */
 package org.thingsboard.server.common.data.mobile;
 
-import lombok.Data;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.thingsboard.server.common.data.HomeDashboardInfo;
+import org.thingsboard.server.common.data.User;
 
-import java.util.Map;
 
-@Data
-public class UserMobileInfo {
-
-    private Map<String, MobileSessionInfo> sessions;
-
+public record UserMobileInfo(User user, HomeDashboardInfo homeDashboardInfo, JsonNode pages) {
 }

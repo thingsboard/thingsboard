@@ -54,6 +54,7 @@ import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
+import org.thingsboard.server.common.data.query.OriginatorAlarmFilter;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
@@ -363,6 +364,12 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
                     alarmDao.findTenantAlarmTypes(tenantId.getId(), pageLink), false);
         }
         return alarmDao.findTenantAlarmTypes(tenantId.getId(), pageLink);
+    }
+
+    @Override
+    public List<UUID> findActiveOriginatorAlarms(TenantId tenantId, OriginatorAlarmFilter originatorAlarmFilter, int limit) {
+        log.trace("Executing findActiveOriginatorAlarms, tenantId [{}], originatorAlarmFilter [{}]", tenantId, originatorAlarmFilter);
+        return alarmDao.findActiveOriginatorAlarms(tenantId, originatorAlarmFilter, limit);
     }
 
     private Alarm merge(Alarm existing, Alarm alarm) {
