@@ -145,6 +145,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
   private rssi = -100;
   private noSignal = false;
   private noData = false;
+  private noSignalRssiValue = -100;
 
   constructor(public widgetComponent: WidgetComponent,
               private imagePipe: ImagePipe,
@@ -165,6 +166,8 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
       this.dateStyle = textStyle(this.settings.dateFont);
       this.dateStyle.color = this.settings.dateColor;
     }
+
+    this.noSignalRssiValue = this.settings.noSignalRssiValue ?? -100;
 
     this.activeBarsColor = ColorProcessor.fromSettings(this.settings.activeBarsColor);
     const inactiveBarsColor = tinycolor(this.settings.inactiveBarsColor);
@@ -262,7 +265,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
       }
     }
 
-    this.noSignal = this.rssi <= this.settings.noSignalRssiValue;
+    this.noSignal = this.rssi <= this.noSignalRssiValue;
 
     this.activeBarsColor.update(this.rssi);
 
@@ -342,7 +345,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
       const activeBarsOpacity = activeBarsColor.getAlpha();
       for (let index = 0; index < this.bars.length; index++) {
         const bar = this.bars[index];
-        const active = signalBarActive(this.rssi, index);
+        const active = signalBarActive(this.rssi, index, this.noSignalRssiValue);
         const newFill = active ? activeBarsColorHex : this.inactiveBarsColorHex;
         const newOpacity = active ? activeBarsOpacity : this.inactiveBarsOpacity;
         if (newFill !== bar.fill() || newOpacity !== bar.opacity()) {
