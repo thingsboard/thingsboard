@@ -65,20 +65,16 @@ public class KafkaEdgeTopicsCleanUpService {
     @Value("${sql.ttl.edge_events.edge_events_ttl:2628000}")
     private long ttlSeconds;
 
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("kafka-edge-topic-cleanup"));
-
     @Scheduled(initialDelayString = "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${sql.ttl.edge_events.execution_interval_ms})}", fixedDelayString = "${sql.ttl.edge_events.execution_interval_ms}")
     public void cleanUp() {
-        executorService.submit(() -> {
-            PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 10_000);
-            for (TenantId tenantId : tenants) {
-                try {
-                    cleanUp(tenantId);
-                } catch (Exception e) {
-                    log.warn("Failed to drop kafka topics for tenant {}", tenantId, e);
-                }
+        PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 10_000);
+        for (TenantId tenantId : tenants) {
+            try {
+                cleanUp(tenantId);
+            } catch (Exception e) {
+                log.warn("Failed to drop kafka topics for tenant {}", tenantId, e);
             }
-        });
+        }
     }
 
     private void cleanUp(TenantId tenantId) throws Exception {
@@ -91,12 +87,12 @@ public class KafkaEdgeTopicsCleanUpService {
         long ttlMillis = TimeUnit.SECONDS.toChronoUnit().getDuration().multipliedBy(ttlSeconds).toMillis();
 
         for (EdgeId edgeId : edgeIds) {
+            TbKafkaAdmin kafkaAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdgeEventConfigs());
             attributesService.find(tenantId, edgeId, AttributeScope.SERVER_SCOPE, DefaultDeviceStateService.LAST_CONNECT_TIME).get()
                     .flatMap(AttributeKvEntry::getLongValue)
                     .filter(lastConnectTime -> isTopicExpired(lastConnectTime, ttlMillis, currentTimeMillis))
                     .ifPresent(lastConnectTime -> {
                         String topic = topicService.buildEdgeEventNotificationsTopicPartitionInfo(tenantId, edgeId).getTopic();
-                        TbKafkaAdmin kafkaAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdgeEventConfigs());
                         if (kafkaAdmin.isTopicEmpty(topic)) {
                             kafkaAdmin.deleteTopic(topic);
                             log.info("Removed outdated topic for tenant {} and edge with id {} older than {}",

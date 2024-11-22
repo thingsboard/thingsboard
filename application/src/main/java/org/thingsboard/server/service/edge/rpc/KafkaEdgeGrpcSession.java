@@ -30,6 +30,10 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeEventNotificat
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.common.consumer.QueueConsumerManager;
+import org.thingsboard.server.queue.discovery.TopicService;
+import org.thingsboard.server.queue.kafka.TbKafkaAdmin;
+import org.thingsboard.server.queue.kafka.TbKafkaSettings;
+import org.thingsboard.server.queue.kafka.TbKafkaTopicConfigs;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 
@@ -42,9 +46,13 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.BiConsumer;
 
 @Slf4j
-public class KafkaEdgeGrpcSession extends AbstractEdgeGrpcSession {
+public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
 
+    private final TopicService topicService;
     private final TbCoreQueueFactory tbCoreQueueFactory;
+
+    private final TbKafkaSettings kafkaSettings;
+    private final TbKafkaTopicConfigs kafkaTopicConfigs;
 
     private volatile boolean isHighPriorityProcessing;
 
@@ -52,12 +60,15 @@ public class KafkaEdgeGrpcSession extends AbstractEdgeGrpcSession {
 
     private ExecutorService consumerExecutor;
 
-    public KafkaEdgeGrpcSession(EdgeContextComponent ctx, TbCoreQueueFactory tbCoreQueueFactory, StreamObserver<ResponseMsg> outputStream,
-                                BiConsumer<EdgeId, AbstractEdgeGrpcSession> sessionOpenListener,
-                                BiConsumer<Edge, UUID> sessionCloseListener, ScheduledExecutorService sendDownlinkExecutorService,
-                                int maxInboundMessageSize, int maxHighPriorityQueueSizePerSession) {
+    public KafkaEdgeGrpcSession(EdgeContextComponent ctx, TopicService topicService, TbCoreQueueFactory tbCoreQueueFactory,
+                                TbKafkaSettings kafkaSettings, TbKafkaTopicConfigs kafkaTopicConfigs, StreamObserver<ResponseMsg> outputStream,
+                                BiConsumer<EdgeId, EdgeGrpcSession> sessionOpenListener, BiConsumer<Edge, UUID> sessionCloseListener,
+                                ScheduledExecutorService sendDownlinkExecutorService, int maxInboundMessageSize, int maxHighPriorityQueueSizePerSession) {
         super(ctx, outputStream, sessionOpenListener, sessionCloseListener, sendDownlinkExecutorService, maxInboundMessageSize, maxHighPriorityQueueSizePerSession);
+        this.topicService = topicService;
         this.tbCoreQueueFactory = tbCoreQueueFactory;
+        this.kafkaSettings = kafkaSettings;
+        this.kafkaTopicConfigs = kafkaTopicConfigs;
     }
 
     private void processMsgs(List<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumer) {
@@ -123,6 +134,13 @@ public class KafkaEdgeGrpcSession extends AbstractEdgeGrpcSession {
     public void destroy() {
         consumer.stop();
         consumerExecutor.shutdown();
+    }
+
+    @Override
+    public void deleteTopic(EdgeId edgeId) {
+        String topic = topicService.buildEdgeEventNotificationsTopicPartitionInfo(tenantId, edgeId).getTopic();
+        TbKafkaAdmin kafkaAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdgeEventConfigs());
+        kafkaAdmin.deleteTopic(topic);
     }
 
 }

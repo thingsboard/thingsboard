@@ -83,7 +83,7 @@ public class TbTransportQueueProducerProvider implements TbQueueProducerProvider
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToEdgeMsg>> getTbEdgeMsgProducer() {
-        throw new RuntimeException("Not Implemented! Should not be used Transport!");
+        throw new RuntimeException("Not Implemented! Should not be used by Transport!");
     }
 
     @Override
@@ -93,7 +93,7 @@ public class TbTransportQueueProducerProvider implements TbQueueProducerProvider
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> getTbEdgeEventsMsgProducer() {
-        throw new RuntimeException("Not Implemented! Should not be used Transport!");
+        throw new RuntimeException("Not Implemented! Should not be used by Transport!");
     }
 
     @Override
