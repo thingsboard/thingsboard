@@ -21,32 +21,40 @@
   <div class="tb-form-hint tb-primary-fill">
     {{ 'timewindow.edit-intervals-list-hint' | translate }} {{ aggregation ? ('timewindow.edit-grouping-intervals-list-hint' | translate) : '' }}
   </div>
-  <div class="tb-form-table no-gap no-padding">
+  <div class="tb-form-table">
     <div class="tb-form-table-header">
-      <div class="tb-form-table-header-cell">{{"timewindow.interval" | translate }}</div>
+      <div class="tb-form-table-header-cell tb-interval">{{"timewindow.interval" | translate }}</div>
       <ng-container *ngIf="aggregation">
-        <div class="tb-form-table-header-cell">{{"timewindow.allowed-agg-intervals" | translate }}</div>
-        <div class="tb-form-table-header-cell">{{"timewindow.preferred-agg-interval" | translate }}</div>
+        <div class="tb-form-table-header-cell tb-agg-interval">{{"timewindow.allowed-agg-intervals" | translate }}</div>
+        <div class="tb-form-table-header-cell tb-agg-interval">{{"timewindow.preferred-agg-interval" | translate }}</div>
       </ng-container>
     </div>
-    <div class="tb-form-table-body">
-<!--      <mat-selection-list formControlName="allowedIntervals">-->
-<!--        <mat-list-option *ngFor="let interval of allIntervals" [value]="interval.value" togglePosition="before">-->
-<!--          {{ interval.name | translate:interval.translateParams }}-->
-<!--        </mat-list-option>-->
-<!--      </mat-selection-list>-->
+    <div class="tb-form-table-body" formArrayName="intervals">
       <ng-container *ngFor="let interval of intervalsFormArray.controls; let i = index; trackBy: trackByElement">
         <div [formGroupName]="i" class="tb-form-table-row">
-          <div class="tb-form-table-row-cell">
+          <div class="tb-form-table-row-cell tb-interval">
             <mat-checkbox formControlName="enabled">
               <mat-label>{{ interval.get('name').value }}</mat-label>
             </mat-checkbox>
           </div>
           <ng-container *ngIf="aggregation">
-            <div class="tb-form-table-row-cell"></div>
-            <div class="tb-form-table-row-cell">
+            <div class="tb-form-table-row-cell tb-agg-interval">
+              <tb-time-intervals-list
+                class="tb-inline-field"
+                formControlName="aggIntervals"
+                [min]="minAggInterval(interval.get('value').value)"
+                [max]="maxAggInterval(interval.get('value').value)"
+                useCalendarIntervals
+                subscriptSizing="dynamic"
+                appearance="outline"
+                setAllIfEmpty
+                returnEmptyIfAllSet>
+              </tb-time-intervals-list>
+            </div>
+            <div class="tb-form-table-row-cell tb-agg-interval">
               <tb-timeinterval
-                formControlName="interval"
+                class="tb-inline-field"
+                formControlName="preferredAggInterval"
                 [min]="minAggInterval(interval.get('value').value)"
                 [max]="maxAggInterval(interval.get('value').value)"
                 useCalendarIntervals

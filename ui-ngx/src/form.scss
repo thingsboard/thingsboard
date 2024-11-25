@@ -799,4 +799,15 @@
       }
     }
   }
+
+  .mat-mdc-form-field-has-icon-suffix {
+    .mat-mdc-form-field-icon-suffix:empty {
+      padding: 0;
+    }
+    .mat-mdc-text-field-wrapper:has(.mat-mdc-form-field-icon-suffix:empty) {
+      &.mdc-text-field--outlined, &:not(.mdc-text-field--outlined) {
+        padding-right: 16px;
+      }
+    }
+  }
 }

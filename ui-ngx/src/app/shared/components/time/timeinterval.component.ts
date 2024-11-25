@@ -74,10 +74,6 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor, OnCh
 
   @Input() predefinedName: string;
 
-  @Input()
-  @coerceBoolean()
-  isEdit = false;
-
   @Input({transform : booleanAttribute})
   disabledAdvanced = false;
 

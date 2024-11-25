@@ -90,22 +90,20 @@ export class IntervalOptionsConfigPanelComponent implements OnInit {
       intervals: this.fb.array([])
     });
 
-    if (this.aggregation) {
-      const intervalControls: Array<AbstractControl> = [];
-      for (const interval of this.allIntervals) {
-        const intervalConfig: TimewindowAllowedAggIntervalOption = this.allowedAggIntervals?.hasOwnProperty(interval.value)
-          ? this.allIntervalValues[interval.value]
-          : null;
-        intervalControls.push(this.fb.group({
-          name: [this.translate.instant(interval.name, interval.translateParams)],
-          value: [interval.value],
-          enabled: [this.allowedIntervals?.length ? this.allowedIntervals.includes(interval.value) : true],
-          aggIntervals: [intervalConfig ? intervalConfig.aggIntervals : []],
-          preferredAggInterval: [intervalConfig ? intervalConfig.preferredAggInterval : null]
-        }));
-      }
-      this.intervalOptionsConfigForm.setControl('intervals', this.fb.array(intervalControls), {emitEvent: false});
+    const intervalControls: Array<AbstractControl> = [];
+    for (const interval of this.allIntervals) {
+      const intervalConfig: TimewindowAllowedAggIntervalOption = this.allowedAggIntervals?.hasOwnProperty(interval.value)
+        ? this.allIntervalValues[interval.value]
+        : null;
+      intervalControls.push(this.fb.group({
+        name: [this.translate.instant(interval.name, interval.translateParams)],
+        value: [interval.value],
+        enabled: [this.allowedIntervals?.length ? this.allowedIntervals.includes(interval.value) : true],
+        aggIntervals: [intervalConfig ? intervalConfig.aggIntervals : []],
+        preferredAggInterval: [intervalConfig ? intervalConfig.preferredAggInterval : null]
+      }));
     }
+    this.intervalOptionsConfigForm.setControl('intervals', this.fb.array(intervalControls), {emitEvent: false});
   }
 
   get intervalsFormArray(): UntypedFormArray {
@@ -151,7 +149,7 @@ export class IntervalOptionsConfigPanelComponent implements OnInit {
     this.intervalOptionsConfigForm.markAsDirty();
   }
 
-  private getQuickIntervals() {
+  private getQuickIntervals(): Array<QuickTimeInterval> {
     const allQuickIntervals = Object.values(QuickTimeInterval);
     if (this.timewindowType === TimewindowType.REALTIME) {
       return allQuickIntervals.filter(interval => interval.startsWith('CURRENT_'));

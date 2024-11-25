@@ -36,7 +36,7 @@ import { isEqual } from '@core/utils';
 })
 export class QuickTimeIntervalComponent implements OnInit, ControlValueAccessor, OnChanges {
 
-  private allIntervals = Object.values(QuickTimeInterval);
+  private allIntervals = Object.values(QuickTimeInterval) as QuickTimeInterval[];
 
   modelValue: QuickTimeInterval;
   timeIntervalTranslationMap = QuickTimeIntervalTranslationMap;
