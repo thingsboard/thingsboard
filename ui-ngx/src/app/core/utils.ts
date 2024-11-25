@@ -133,8 +133,8 @@ export function isLiteralObject(value: any) {
 
 export const formatValue = (value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined => {
   if (isDefinedAndNotNull(value) && isNumeric(value) &&
-    (isDefinedAndNotNull(dec) || isDefinedAndNotNull(units) || Number(value).toString() === value)) {
-    let formatted: string | number = Number(value);
+    (isDefinedAndNotNull(dec) || isNotEmptyStr(units) || Number(value).toString() === value)) {
+    let formatted: string | number = isDefinedAndNotNull(dec) ? Number(value) : (value as number);
     if (isDefinedAndNotNull(dec)) {
       formatted = formatted.toFixed(dec);
     }
@@ -142,7 +142,7 @@ export const formatValue = (value: any, dec?: number, units?: string, showZeroDe
       formatted = (Number(formatted));
     }
     formatted = formatted.toString();
-    if (isDefinedAndNotNull(units) && units.length > 0) {
+    if (isNotEmptyStr(units)) {
       formatted += ' ' + units;
     }
     return formatted;
