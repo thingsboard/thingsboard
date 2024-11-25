@@ -886,7 +886,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     private void processUnsubscribe(ChannelHandlerContext ctx, MqttUnsubscribeMessage mqttMsg) {
-        if (!checkConnected(ctx, mqttMsg)) {
+        if (!checkConnected(ctx, mqttMsg) && !deviceSessionCtx.isProvisionOnly()) {
             ctx.writeAndFlush(createUnSubAckMessage(mqttMsg.variableHeader().messageId(),
                     Collections.singletonList((short) MqttReasonCodes.UnsubAck.NOT_AUTHORIZED.byteValue())));
             return;
@@ -900,6 +900,14 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 mqttQoSMap.remove(matcher);
                 try {
                     short resultValue = MqttReasonCodes.UnsubAck.SUCCESS.byteValue();
+                    if (deviceSessionCtx.isProvisionOnly()) {
+                        if (!matcher.matches(MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC)) {
+                            resultValue = MqttReasonCodes.UnsubAck.TOPIC_FILTER_INVALID.byteValue();
+                        }
+                        unSubResults.add(resultValue);
+                        activityReported = true;
+                        continue;
+                    }
                     switch (topicName) {
                         case MqttTopics.DEVICE_ATTRIBUTES_TOPIC:
                         case MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC:
@@ -930,7 +938,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC:
                         case MqttTopics.GATEWAY_RPC_TOPIC:
                         case MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC:
-                        case MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC:
                         case MqttTopics.DEVICE_FIRMWARE_RESPONSES_TOPIC:
                         case MqttTopics.DEVICE_FIRMWARE_ERROR_TOPIC:
                         case MqttTopics.DEVICE_SOFTWARE_RESPONSES_TOPIC:
