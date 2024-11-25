@@ -317,6 +317,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 MqttSubscribeMessage subscribeMessage = (MqttSubscribeMessage) msg;
                 processSubscribe(ctx, subscribeMessage);
                 break;
+            case UNSUBSCRIBE:
+                MqttUnsubscribeMessage unsubscribeMessage = (MqttUnsubscribeMessage) msg;
+                processUnsubscribe(ctx, unsubscribeMessage);
+                break;
             case PINGREQ:
                 ctx.writeAndFlush(new MqttMessage(new MqttFixedHeader(PINGRESP, false, AT_MOST_ONCE, false, 0)));
                 break;
