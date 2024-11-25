@@ -7358,6 +7358,7 @@
             "get-dashboard-state": "Get dashboard state",
             "add-time-series": "Add time series",
             "execute-rpc-text": "Execute RPC method '{{methodName}}'",
+            "get-time-series-text": "Use time series '{{key}}'",
             "get-attribute-text": "Use attribute '{{key}}'",
             "get-alarm-status-text": "Use alarm status",
             "get-dashboard-state-text": "Use dashboard state",
