@@ -40,7 +40,7 @@ public class ScriptCalculatedFieldState implements CalculatedFieldState {
     @JsonIgnore
     private CalculatedFieldScriptEngine calculatedFieldScriptEngine;
 
-    private Map<String, KvEntry> arguments = new HashMap<>();
+    private Map<String, KvEntry> arguments;
 
     public ScriptCalculatedFieldState() {
     }
@@ -50,22 +50,27 @@ public class ScriptCalculatedFieldState implements CalculatedFieldState {
         return CalculatedFieldType.SCRIPT;
     }
 
-    @Override
-    public void initState(Map<String, KvEntry> argumentValues) {
-        if (arguments == null) {
-            this.arguments = new HashMap<>();
-        }
-        this.arguments.putAll(argumentValues);
-    }
 
     @Override
-    public ListenableFuture<CalculatedFieldResult> performCalculation(TenantId tenantId, CalculatedFieldConfiguration calculatedFieldConfiguration, TbelInvokeService tbelInvokeService) {
+    public void initState(Map<String, ArgumentEntry> argumentValues) {
+        if (arguments == null) {
+            arguments = new HashMap<>();
+        }
+        argumentValues.forEach((key, value) -> arguments.put(key, value.getKvEntry()));
+    }
+
+
+    @Override
+    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculationContext ctx) {
+        CalculatedFieldConfiguration calculatedFieldConfiguration = ctx.getConfiguration();
+        TbelInvokeService tbelInvokeService = ctx.getTbelInvokeService();
+
         if (tbelInvokeService == null) {
             throw new IllegalArgumentException("TBEL script engine is disabled!");
         }
 
         if (calculatedFieldScriptEngine == null) {
-            initEngine(tenantId, calculatedFieldConfiguration, tbelInvokeService);
+            initEngine(ctx.getTenantId(), calculatedFieldConfiguration, tbelInvokeService);
         }
 
         ListenableFuture<Object> resultFuture = calculatedFieldScriptEngine.executeScriptAsync(arguments);

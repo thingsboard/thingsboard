@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.LastRecordsCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -136,14 +137,11 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
     }
 
     private CalculatedFieldConfiguration readCalculatedFieldConfiguration(CalculatedFieldType type, JsonNode config, EntityType entityType, UUID entityId) {
-        switch (type) {
-            case SIMPLE:
-                return new SimpleCalculatedFieldConfiguration(config, entityType, entityId);
-            case SCRIPT:
-                return new ScriptCalculatedFieldConfiguration(config, entityType, entityId);
-            default:
-                throw new IllegalArgumentException("Unsupported calculated field type: " + type + "!");
-        }
+        return switch (type) {
+            case SIMPLE -> new SimpleCalculatedFieldConfiguration(config, entityType, entityId);
+            case SCRIPT -> new ScriptCalculatedFieldConfiguration(config, entityType, entityId);
+            case LAST_RECORDS -> new LastRecordsCalculatedFieldConfiguration(config, entityType, entityId);
+        };
     }
 
 }

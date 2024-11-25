@@ -15,21 +15,25 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
-import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+
+import java.util.UUID;
 
 @Data
-public class Argument {
+public class LastRecordsCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
 
-    private EntityId entityId;
-    private String key;
-    private String type;
-    private AttributeScope scope;
-    private String defaultValue;
+    public LastRecordsCalculatedFieldConfiguration() {
+    }
 
-    private int limit;
-    private long startTs;
-    private long timeWindow;
+    public LastRecordsCalculatedFieldConfiguration(JsonNode config, EntityType entityType, UUID entityId) {
+        super(config, entityType, entityId);
+    }
 
+    @Override
+    public CalculatedFieldType getType() {
+        return CalculatedFieldType.LAST_RECORDS;
+    }
 }

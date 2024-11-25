@@ -20,12 +20,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
-import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
@@ -37,21 +35,26 @@ public class SimpleCalculatedFieldState implements CalculatedFieldState {
 
     private Map<String, KvEntry> arguments;
 
+    public SimpleCalculatedFieldState() {
+    }
+
     @Override
     public CalculatedFieldType getType() {
         return CalculatedFieldType.SIMPLE;
     }
 
     @Override
-    public void initState(Map<String, KvEntry> argumentValues) {
+    public void initState(Map<String, ArgumentEntry> argumentValues) {
         if (arguments == null) {
             arguments = new HashMap<>();
         }
-        arguments.putAll(argumentValues);
+        argumentValues.forEach((key, value) -> arguments.put(key, value.getKvEntry()));
     }
 
     @Override
-    public ListenableFuture<CalculatedFieldResult> performCalculation(TenantId tenantId, CalculatedFieldConfiguration calculatedFieldConfiguration, TbelInvokeService tbelInvokeService) {
+    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculationContext ctx) {
+        CalculatedFieldConfiguration calculatedFieldConfiguration = ctx.getConfiguration();
+
         Output output = calculatedFieldConfiguration.getOutput();
         Map<String, Argument> arguments = calculatedFieldConfiguration.getArguments();
 

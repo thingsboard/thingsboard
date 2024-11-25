@@ -13,23 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.server.service.cf.ctx.state;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
+
+import java.util.List;
 
 @Data
-public class Argument {
+public class ArgumentEntry {
 
-    private EntityId entityId;
-    private String key;
-    private String type;
-    private AttributeScope scope;
-    private String defaultValue;
-
-    private int limit;
-    private long startTs;
-    private long timeWindow;
+    private KvEntry kvEntry;
+    private List<TsKvEntry> kvEntries;
 
 }

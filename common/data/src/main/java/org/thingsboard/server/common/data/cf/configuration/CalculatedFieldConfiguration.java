@@ -35,7 +35,8 @@ import java.util.UUID;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = SimpleCalculatedFieldConfiguration.class, name = "SIMPLE"),
-        @JsonSubTypes.Type(value = ScriptCalculatedFieldConfiguration.class, name = "SCRIPT")
+        @JsonSubTypes.Type(value = ScriptCalculatedFieldConfiguration.class, name = "SCRIPT"),
+        @JsonSubTypes.Type(value = LastRecordsCalculatedFieldConfiguration.class, name = "LAST_RECORDS")
 })
 public interface CalculatedFieldConfiguration {
 

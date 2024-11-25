@@ -48,12 +48,16 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -69,7 +73,10 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldCtxId;
+import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.CalculationContext;
+import org.thingsboard.server.service.cf.ctx.state.LastRecordsCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SimpleCalculatedFieldState;
 import org.thingsboard.server.service.partition.AbstractPartitionBasedService;
@@ -84,6 +91,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 
@@ -108,6 +116,8 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     private final ConcurrentMap<CalculatedFieldId, CalculatedField> calculatedFields = new ConcurrentHashMap<>();
     private final ConcurrentMap<CalculatedFieldId, List<CalculatedFieldLink>> calculatedFieldLinks = new ConcurrentHashMap<>();
     private final ConcurrentMap<CalculatedFieldCtxId, CalculatedFieldCtx> states = new ConcurrentHashMap<>();
+
+    private static final int MAX_LAST_RECORDS_VALUE = 1024;
 
     @Value("${calculatedField.initFetchPackSize:50000}")
     @Getter
@@ -215,7 +225,19 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     public void onTelemetryUpdate(TenantId tenantId, CalculatedFieldId calculatedFieldId, Map<String, KvEntry> updatedTelemetry) {
         try {
             CalculatedField calculatedField = calculatedFields.computeIfAbsent(calculatedFieldId, id -> calculatedFieldService.findById(tenantId, id));
-            updateOrInitializeState(calculatedField, calculatedField.getEntityId(), updatedTelemetry);
+            Map<String, ArgumentEntry> argumentValues = updatedTelemetry.entrySet().stream()
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            entry -> {
+                                ArgumentEntry argumentEntry = new ArgumentEntry();
+                                argumentEntry.setKvEntry(entry.getValue());
+                                if (entry.getValue() instanceof TsKvEntry) {
+                                    argumentEntry.setKvEntries(List.of((TsKvEntry) entry.getValue()));
+                                }
+                                return argumentEntry;
+                            }
+                    ));
+            updateOrInitializeState(calculatedField, calculatedField.getEntityId(), argumentValues);
             log.info("Successfully updated time series for calculatedFieldId: [{}]", calculatedFieldId);
         } catch (Exception e) {
             log.trace("Failed to update telemetry for calculatedFieldId: [{}]", calculatedFieldId, e);
@@ -308,12 +330,12 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
 
     private void initializeStateForEntity(TenantId tenantId, CalculatedField calculatedField, EntityId entityId, TbCallback callback) {
         Map<String, Argument> arguments = calculatedField.getConfiguration().getArguments();
-        Map<String, KvEntry> argumentValues = new HashMap<>();
+        Map<String, ArgumentEntry> argumentValues = new HashMap<>();
         AtomicInteger remaining = new AtomicInteger(arguments.size());
-        arguments.forEach((key, argument) -> Futures.addCallback(fetchArgumentValue(tenantId, argument, entityId), new FutureCallback<>() {
+        arguments.forEach((key, argument) -> Futures.addCallback(fetchArgumentValue(calculatedField, argument), new FutureCallback<>() {
             @Override
-            public void onSuccess(Optional<? extends KvEntry> result) {
-                argumentValues.put(key, result.orElse(null));
+            public void onSuccess(ArgumentEntry result) {
+                argumentValues.put(key, result);
                 if (remaining.decrementAndGet() == 0) {
                     updateOrInitializeState(calculatedField, entityId, argumentValues);
                 }
@@ -327,10 +349,37 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         }, calculatedFieldCallbackExecutor));
     }
 
-    private ListenableFuture<Optional<? extends KvEntry>> fetchArgumentValue(TenantId tenantId, Argument argument, EntityId targetEntityId) {
+    private ListenableFuture<ArgumentEntry> fetchArgumentValue(CalculatedField calculatedField, Argument argument) {
+        TenantId tenantId = calculatedField.getTenantId();
+        EntityId cfEntityId = calculatedField.getEntityId();
         EntityId argumentEntityId = argument.getEntityId();
-        EntityId entityId = EntityType.DEVICE_PROFILE.equals(argumentEntityId.getEntityType()) || EntityType.ASSET_PROFILE.equals(argumentEntityId.getEntityType()) ? targetEntityId : argumentEntityId;
-        return switch (argument.getType()) {
+        EntityId entityId = EntityType.DEVICE_PROFILE.equals(argumentEntityId.getEntityType()) || EntityType.ASSET_PROFILE.equals(argumentEntityId.getEntityType())
+                ? cfEntityId
+                : argumentEntityId;
+        if (CalculatedFieldType.LAST_RECORDS.equals(calculatedField.getType())) {
+            return fetchLastRecords(tenantId, entityId, argument);
+        }
+        return fetchKvEntry(tenantId, entityId, argument);
+    }
+
+    private ListenableFuture<ArgumentEntry> fetchLastRecords(TenantId tenantId, EntityId entityId, Argument argument) {
+        long startTs = Math.max(argument.getStartTs(), 0);
+        long timeWindow = argument.getTimeWindow() == 0 ? System.currentTimeMillis() : argument.getTimeWindow();
+        long endTs = startTs + timeWindow;
+        int limit = argument.getLimit() == 0 ? MAX_LAST_RECORDS_VALUE : argument.getLimit();
+
+        ReadTsKvQuery query = new BaseReadTsKvQuery(argument.getKey(), startTs, endTs, 0, limit, Aggregation.NONE);
+        ListenableFuture<List<TsKvEntry>> lastRecordsFuture = timeseriesService.findAll(tenantId, entityId, List.of(query));
+
+        return Futures.transform(lastRecordsFuture, lastRecords -> {
+            ArgumentEntry argumentEntry = new ArgumentEntry();
+            argumentEntry.setKvEntries(lastRecords);
+            return argumentEntry;
+        }, calculatedFieldExecutor);
+    }
+
+    private ListenableFuture<ArgumentEntry> fetchKvEntry(TenantId tenantId, EntityId entityId, Argument argument) {
+        ListenableFuture<Optional<? extends KvEntry>> kvEntryFuture = switch (argument.getType()) {
             case "ATTRIBUTES" -> Futures.transform(
                     attributesService.find(tenantId, entityId, argument.getScope(), argument.getKey()),
                     result -> result.or(() -> Optional.of(
@@ -342,9 +391,16 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
                     result -> result.or(() -> Optional.of(
                             new BasicTsKvEntry(System.currentTimeMillis(), createDefaultKvEntry(argument))
                     )),
-                    MoreExecutors.directExecutor());
+                    calculatedFieldExecutor);
             default -> throw new IllegalArgumentException("Invalid argument type '" + argument.getType() + "'.");
         };
+        return Futures.transform(kvEntryFuture, kvEntry -> {
+            ArgumentEntry argumentEntry = new ArgumentEntry();
+            if (kvEntry.isPresent()) {
+                argumentEntry.setKvEntry(kvEntry.orElse(null));
+            }
+            return argumentEntry;
+        }, calculatedFieldExecutor);
     }
 
     private KvEntry createDefaultKvEntry(Argument argument) {
@@ -359,7 +415,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         return new StringDataEntry(key, defaultValue);
     }
 
-    private void updateOrInitializeState(CalculatedField calculatedField, EntityId entityId, Map<String, KvEntry> argumentValues) {
+    private void updateOrInitializeState(CalculatedField calculatedField, EntityId entityId, Map<String, ArgumentEntry> argumentValues) {
         CalculatedFieldCtxId ctxId = new CalculatedFieldCtxId(calculatedField.getUuidId(), entityId.getId());
         CalculatedFieldCtx calculatedFieldCtx = states.computeIfAbsent(ctxId, ctx -> new CalculatedFieldCtx(ctxId, null));
 
@@ -373,7 +429,12 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         states.put(ctxId, calculatedFieldCtx);
         rocksDBService.put(JacksonUtil.writeValueAsString(ctxId), JacksonUtil.writeValueAsString(calculatedFieldCtx));
 
-        ListenableFuture<CalculatedFieldResult> resultFuture = state.performCalculation(calculatedField.getTenantId(), calculatedField.getConfiguration(), tbelInvokeService);
+        CalculationContext ctx = CalculationContext.builder()
+                .tenantId(calculatedField.getTenantId())
+                .configuration(calculatedField.getConfiguration())
+                .tbelInvokeService(tbelInvokeService)
+                .build();
+        ListenableFuture<CalculatedFieldResult> resultFuture = state.performCalculation(ctx);
         Futures.addCallback(resultFuture, new FutureCallback<>() {
             @Override
             public void onSuccess(CalculatedFieldResult result) {
@@ -414,6 +475,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         return switch (calculatedFieldType) {
             case SIMPLE -> new SimpleCalculatedFieldState();
             case SCRIPT -> new ScriptCalculatedFieldState();
+            case LAST_RECORDS -> new LastRecordsCalculatedFieldState();
         };
     }
 
