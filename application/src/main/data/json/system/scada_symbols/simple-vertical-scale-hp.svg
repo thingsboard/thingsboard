@@ -540,7 +540,7 @@
       "id": "units",
       "name": "{i18n:scada.symbol.units}",
       "type": "units",
-      "default": "&#176;C",
+      "default": "°C",
       "required": null,
       "subLabel": null,
       "divider": null,

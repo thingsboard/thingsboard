@@ -168,6 +168,7 @@
     "ace-builds": "1.36.2",
     "tinymce": "6.8.5",
     "rollup": "4.22.4",
-    "@babel/core": "7.25.2"
+    "@babel/core": "7.25.2",
+    "esbuild": "0.23.0"
   }
 }
