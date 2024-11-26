@@ -24,15 +24,15 @@ import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Request;
+import org.eclipse.californium.core.config.CoapConfig;
 import org.eclipse.californium.core.network.CoapEndpoint;
 import org.eclipse.californium.elements.config.Configuration;
+import org.eclipse.californium.elements.config.ValueException;
 import org.eclipse.californium.elements.exception.ConnectorException;
 import org.eclipse.californium.scandium.DTLSConnector;
 import org.eclipse.californium.scandium.config.DtlsConfig.SignatureAndHashAlgorithmsDefinition;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.dtls.CertificateType;
-import org.eclipse.californium.scandium.dtls.HandshakeResult;
-import org.eclipse.californium.scandium.dtls.HandshakeResultHandler;
 import org.eclipse.californium.scandium.dtls.SignatureAndHashAlgorithm;
 import org.eclipse.californium.scandium.dtls.SignatureAndHashAlgorithm.HashAlgorithm;
 import org.eclipse.californium.scandium.dtls.SignatureAndHashAlgorithm.SignatureAlgorithm;
@@ -47,15 +47,24 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.eclipse.californium.core.config.CoapConfig.MAX_MESSAGE_SIZE;
-import static org.eclipse.californium.elements.config.CertificateAuthenticationMode.WANTED;
+import static org.eclipse.californium.core.config.CoapConfig.DEFAULT_BLOCKWISE_STATUS_LIFETIME_IN_SECONDS;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_AUTO_HANDSHAKE_TIMEOUT;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CIPHER_SUITES;
-import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CLIENT_AUTHENTICATION_MODE;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_MAX_FRAGMENTED_HANDSHAKE_MESSAGE_LENGTH;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_MAX_PENDING_HANDSHAKE_RESULT_JOBS;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_MAX_RETRANSMISSIONS;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_MAX_RETRANSMISSION_TIMEOUT;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECEIVE_BUFFER_SIZE;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RETRANSMISSION_TIMEOUT;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_ROLE;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_SIGNATURE_AND_HASH_ALGORITHMS;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_USE_HELLO_VERIFY_REQUEST;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_USE_MULTI_HANDSHAKE_MESSAGE_RECORDS;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_VERIFY_SERVER_CERTIFICATES_SUBJECT;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DtlsRole.CLIENT_ONLY;
 import static org.eclipse.californium.scandium.config.DtlsConfig.MODULE;
 import static org.eclipse.californium.scandium.dtls.SignatureAndHashAlgorithm.SHA256_WITH_ECDSA;
@@ -65,12 +74,11 @@ import static org.eclipse.californium.scandium.dtls.SignatureAndHashAlgorithm.SH
 @Slf4j
 public class CoapClientX509Test {
 
-//    private static final String COAPS_BASE_URL = "coaps://localhost:5684/api/v1/";
-//    private static final String COAPS_BASE_URL = "coaps://coap.thingsboard.cloud/api/v1/";
     private static final long CLIENT_REQUEST_TIMEOUT = 60000L;
 
     private final CoapClient clientX509;
     private final DTLSConnector dtlsConnector;
+    private final Configuration config;
     private final CertPrivateKey certPrivateKey;
     private final String coapsBaseUrl;
 
@@ -80,6 +88,7 @@ public class CoapClientX509Test {
     public CoapClientX509Test(CertPrivateKey certPrivateKey, String coapsBaseUrl) {
         this.certPrivateKey = certPrivateKey;
         this.coapsBaseUrl = coapsBaseUrl;
+        this.config = createConfiguration();
         this.dtlsConnector = createDTLSConnector();
         this.clientX509 = createClient(getFeatureTokenUrl(FeatureType.ATTRIBUTES));
     }
@@ -87,6 +96,7 @@ public class CoapClientX509Test {
     public CoapClientX509Test(CertPrivateKey certPrivateKey, FeatureType featureType, String coapsBaseUrl) {
         this.certPrivateKey = certPrivateKey;
         this.coapsBaseUrl = coapsBaseUrl;
+        this.config = createConfiguration();
         this.dtlsConnector = createDTLSConnector();
         this.clientX509 = createClient(getFeatureTokenUrl(featureType));
     }
@@ -168,23 +178,63 @@ public class CoapClientX509Test {
         clientX509.useNONs();
     }
 
+    private Configuration createConfiguration() {
+        Configuration clientCoapConfig = new Configuration();
+        clientCoapConfig.set(CoapConfig.BLOCKWISE_STRICT_BLOCK2_OPTION, true);
+        clientCoapConfig.set(CoapConfig.BLOCKWISE_ENTITY_TOO_LARGE_AUTO_FAILOVER, true);
+        clientCoapConfig.set(CoapConfig.BLOCKWISE_STATUS_LIFETIME, DEFAULT_BLOCKWISE_STATUS_LIFETIME_IN_SECONDS, TimeUnit.SECONDS);
+        clientCoapConfig.set(CoapConfig.MAX_RESOURCE_BODY_SIZE, 256 * 1024 * 1024);
+        clientCoapConfig.set(CoapConfig.RESPONSE_MATCHING, CoapConfig.MatcherMode.RELAXED);
+        clientCoapConfig.set(CoapConfig.PREFERRED_BLOCK_SIZE, 1024);
+        clientCoapConfig.set(CoapConfig.MAX_MESSAGE_SIZE, 1024);
+        clientCoapConfig.set(DTLS_ROLE, CLIENT_ONLY);
+        clientCoapConfig.set(DTLS_MAX_RETRANSMISSIONS, 2);
+        clientCoapConfig.set(DTLS_RETRANSMISSION_TIMEOUT, 5000, MILLISECONDS);
+        clientCoapConfig.set(DTLS_MAX_RETRANSMISSION_TIMEOUT, 60000, TimeUnit.MILLISECONDS);
+        clientCoapConfig.set(DTLS_USE_HELLO_VERIFY_REQUEST, false);
+        clientCoapConfig.set(DTLS_VERIFY_SERVER_CERTIFICATES_SUBJECT, false);
+        clientCoapConfig.set(DTLS_MAX_FRAGMENTED_HANDSHAKE_MESSAGE_LENGTH, 22490);
+//        clientCoapConfig.set(DTLS_DEFAULT_HANDSHAKE_MODE, DtlsEndpointContext.HANDSHAKE_MODE_NONE); // only server
+        clientCoapConfig.set(DTLS_AUTO_HANDSHAKE_TIMEOUT, 100000,  TimeUnit.MILLISECONDS);
+        clientCoapConfig.set(DTLS_MAX_PENDING_HANDSHAKE_RESULT_JOBS, 64);
+        clientCoapConfig.set(DTLS_USE_MULTI_HANDSHAKE_MESSAGE_RECORDS, false);
+        clientCoapConfig.set(DTLS_RECEIVE_BUFFER_SIZE, 8192);
+
+
+//        clientCoapConfig.set(DTLS_RETRANSMISSION_TIMEOUT_SCALE, 1.0F);
+//        clientCoapConfig.set(DTLS_MAX_FRAGMENTED_HANDSHAKE_MESSAGE_LENGTH, 24576);
+
+        clientCoapConfig.setTransient(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY);
+        // DTLS.VERIFY_SERVER_CERTIFICATES_SUBJECT
+        // DTLS.RECOMMENDED_CIPHER_SUITES_ONLY
+//            configBuilder.set(DTLS_CLIENT_AUTHENTICATION_MODE, NONE);
+//        clientCoapConfig.setTransient(DTLS_RETRANSMISSION_TIMEOUT);
+//        clientCoapConfig.set(DTLS_RETRANSMISSION_TIMEOUT, 60000, MILLISECONDS);
+//        clientCoapConfig.setTransient(DTLS_ROLE);
+//        clientCoapConfig.set(DTLS_ROLE, CLIENT_ONLY);
+//        clientCoapConfig.setTransient(DTLS_SIGNATURE_AND_HASH_ALGORITHMS);
+        SignatureAndHashAlgorithmsDefinition algorithmsDefinition = new SignatureAndHashAlgorithmsDefinition(MODULE + "SIGNATURE_AND_HASH_ALGORITHMS", "List of DTLS signature- and hash-algorithms.\nValues e.g SHA256withECDSA or ED25519.");
+        SignatureAndHashAlgorithm SHA384_WITH_RSA = new SignatureAndHashAlgorithm(HashAlgorithm.SHA384,
+                SignatureAlgorithm.RSA);
+        List<SignatureAndHashAlgorithm> algorithms = null;
+        try {
+            algorithms = algorithmsDefinition.checkValue(Arrays.asList(SHA256_WITH_ECDSA, SHA256_WITH_RSA, SHA384_WITH_ECDSA, SHA384_WITH_RSA));
+        } catch (ValueException e) {
+            throw new RuntimeException(e);
+        }
+        clientCoapConfig.setTransient(DTLS_SIGNATURE_AND_HASH_ALGORITHMS);
+        clientCoapConfig.set(DTLS_SIGNATURE_AND_HASH_ALGORITHMS, algorithms);
+        clientCoapConfig.setTransient(DTLS_CIPHER_SUITES);
+        clientCoapConfig.set(DTLS_CIPHER_SUITES, Arrays.asList(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256));
+         clientCoapConfig.setTransient(DTLS_VERIFY_SERVER_CERTIFICATES_SUBJECT);
+        clientCoapConfig.set(DTLS_VERIFY_SERVER_CERTIFICATES_SUBJECT, false);
+        return clientCoapConfig;
+    }
+
     private DTLSConnector createDTLSConnector() {
         try {
             // Create DTLS config client
-            DtlsConnectorConfig.Builder configBuilder = new DtlsConnectorConfig.Builder(new Configuration());
-            configBuilder.set(DTLS_CLIENT_AUTHENTICATION_MODE, WANTED);
-            configBuilder.set(DTLS_RETRANSMISSION_TIMEOUT, 60000, MILLISECONDS);
-            configBuilder.set(MAX_MESSAGE_SIZE, 1024);
-//            configBuilder.set(PREFERRED_BLOCK_SIZE, 1024);
-//            configBuilder.set(MAX_RESOURCE_BODY_SIZE, 268435456);
-//            configBuilder.set(BLOCKWISE_STRICT_BLOCK2_OPTION, true);
-            SignatureAndHashAlgorithmsDefinition algorithmsDefinition = new SignatureAndHashAlgorithmsDefinition(MODULE + "SIGNATURE_AND_HASH_ALGORITHMS", "List of DTLS signature- and hash-algorithms.\nValues e.g SHA256withECDSA or ED25519.");
-             SignatureAndHashAlgorithm SHA384_WITH_RSA = new SignatureAndHashAlgorithm(HashAlgorithm.SHA384,
-                    SignatureAlgorithm.RSA);
-            List<SignatureAndHashAlgorithm> algorithms = algorithmsDefinition.checkValue(Arrays.asList(SHA256_WITH_ECDSA, SHA256_WITH_RSA, SHA384_WITH_ECDSA, SHA384_WITH_RSA));
-            configBuilder.set(DTLS_SIGNATURE_AND_HASH_ALGORITHMS, algorithms);
-            configBuilder.set(DTLS_ROLE, CLIENT_ONLY);
-            configBuilder.set(DTLS_CIPHER_SUITES, Arrays.asList(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256));
+            DtlsConnectorConfig.Builder configBuilder = new DtlsConnectorConfig.Builder(this.config);
             configBuilder.setAdvancedCertificateVerifier(new TbAdvancedCertificateVerifier());
             X509Certificate[] certificateChainClient = new X509Certificate[]{this.certPrivateKey.getCert()};
             CertificateProvider certificateProvider = new SingleCertificateProvider(this.certPrivateKey.getPrivateKey(), certificateChainClient, Collections.singletonList(CertificateType.X_509));

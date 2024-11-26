@@ -9,6 +9,16 @@
 
 <!--    <logger name="org.thingsboard.server.service.subscription" level="TRACE"/>-->
     <logger name="org.thingsboard.server.controller.TbTestWebSocketClient" level="INFO"/>
+    <logger name="org.eclipse.californium.elements.config.Configuration" level="TRACE"/>
+    <logger name="org.eclipse.californium.scandium.DTLSConnector" level="TRACE"/>
+    <logger name="org.eclipse.californium.scandium.DtlsManagedClusterConnector" level="TRACE"/>
+    <logger name="org.eclipse.californium.elements.util.CertPathUtil" level="TRACE"/>
+    <logger name="org.eclipse.californium.scandium.dtls.Handshaker" level="TRACE"/>
+    <logger name="org.eclipse.californium.scandium.dtls.ClientHandshaker" level="TRACE"/>
+    <logger name="org.eclipse.californium.scandium.dtls.ServerHandshaker" level="TRACE"/>
+    <logger name="org.eclipse.californium.core.network.stack.BaseCoapStack" level="TRACE"/>
+    <logger name="org.eclipse.californium.scandium.dtls.x509.StaticNewAdvancedCertificateVerifier" level="TRACE"/>
+    <logger name="org.thingsboard.server.coapserver.TbCoapDtlsCertificateVerifier" level="TRACE"/>
     <logger name="org.thingsboard.server" level="WARN"/>
     <logger name="org.springframework" level="WARN"/>
     <logger name="org.springframework.boot.test" level="WARN"/>

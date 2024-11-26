@@ -16,19 +16,30 @@
 package org.thingsboard.server.transport.coap.x509;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.scandium.dtls.AlertMessage;
+import org.eclipse.californium.scandium.dtls.AlertMessage.AlertDescription;
+import org.eclipse.californium.scandium.dtls.AlertMessage.AlertLevel;
 import org.eclipse.californium.scandium.dtls.CertificateMessage;
 import org.eclipse.californium.scandium.dtls.CertificateType;
 import org.eclipse.californium.scandium.dtls.CertificateVerificationResult;
 import org.eclipse.californium.scandium.dtls.ConnectionId;
+import org.eclipse.californium.scandium.dtls.DTLSContext;
+import org.eclipse.californium.scandium.dtls.HandshakeException;
 import org.eclipse.californium.scandium.dtls.HandshakeResultHandler;
 import org.eclipse.californium.scandium.dtls.x509.NewAdvancedCertificateVerifier;
 import org.eclipse.californium.scandium.util.ServerNames;
+import org.eclipse.leshan.core.security.certificate.verifier.X509CertificateVerifier.Role;
 
 import javax.security.auth.x500.X500Principal;
 import java.net.InetSocketAddress;
 import java.security.PublicKey;
 import java.security.cert.CertPath;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 @Slf4j
@@ -45,6 +56,7 @@ public class TbAdvancedCertificateVerifier implements NewAdvancedCertificateVeri
     public List<CertificateType> getSupportedCertificateTypes() {
         log.warn("client_getSupportedCertificateTypes");
         return Arrays.asList(CertificateType.X_509, CertificateType.RAW_PUBLIC_KEY);
+//        return Arrays.asList(CertificateType.X_509);
     }
 
     /**
@@ -72,16 +84,30 @@ public class TbAdvancedCertificateVerifier implements NewAdvancedCertificateVeri
      * verifySubject)
      */
     @Override
-    public CertificateVerificationResult verifyCertificate(ConnectionId cid, ServerNames serverName, InetSocketAddress remotePeer, boolean clientUsage, boolean verifySubject, boolean truncateCertificatePath, CertificateMessage message) {
-        log.warn("client_verifyCertificate");
+    public CertificateVerificationResult verifyCertificate(ConnectionId cid, ServerNames serverName, InetSocketAddress remotePeer,
+                                                           boolean clientUsage, boolean verifySubject, boolean truncateCertificatePath,
+                                                           CertificateMessage message) {
+        long startTime = System.currentTimeMillis();
+        log.warn("Start client_verifyCertificate locale");
+
         CertPath certChain = message.getCertificateChain();
+        CertificateVerificationResult result;
+
         if (certChain == null) {
-            //We trust all RPK on this layer
             PublicKey publicKey = message.getPublicKey();
-            return new CertificateVerificationResult(cid, publicKey, null);
+            result = new CertificateVerificationResult(cid, publicKey, null);
         } else {
-            return new CertificateVerificationResult(cid, certChain, null);
+            if (message.getCertificateChain().getCertificates().isEmpty()) {
+                result = new CertificateVerificationResult(cid, new HandshakeException("Empty certificate chain",
+                        new AlertMessage(AlertLevel.FATAL, AlertDescription.BAD_CERTIFICATE)), null);
+            } else {
+                result = new CertificateVerificationResult(cid, certChain, null);
+            }
         }
+
+        long endTime = System.currentTimeMillis();
+        log.warn("Certificate verification took {} ms", (endTime - startTime));
+        return result;
     }
 
     /**
@@ -99,7 +125,7 @@ public class TbAdvancedCertificateVerifier implements NewAdvancedCertificateVeri
     /**
      * Set the handler for asynchronous handshake results.
      * <p>
-     * Called during initialization of the {@link DTLSConnector}. Synchronous
+     * Called during initialization of the {link DTLSConnector}. Synchronous
      * implementations may just ignore this using an empty implementation.
      *
      * @param resultHandler handler for asynchronous master secret results. This
