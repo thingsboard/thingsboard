@@ -15,14 +15,10 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
-import aj.org.objectweb.asm.TypeReference;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
-import org.thingsboard.server.common.data.cf.configuration.Argument;
-import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
@@ -37,8 +33,6 @@ import java.util.stream.Collectors;
 @Data
 public class LastRecordsCalculatedFieldState extends BaseCalculatedFieldState {
 
-    private Map<String, List<TsKvEntry>> arguments;
-
     public LastRecordsCalculatedFieldState() {
     }
 
@@ -47,36 +41,46 @@ public class LastRecordsCalculatedFieldState extends BaseCalculatedFieldState {
         return CalculatedFieldType.LAST_RECORDS;
     }
 
-
     @Override
     public void initState(Map<String, ArgumentEntry> argumentValues) {
         if (arguments == null) {
             arguments = new HashMap<>();
         }
         argumentValues.forEach((key, argumentEntry) -> {
-            List<TsKvEntry> tsKvEntryList = arguments.computeIfAbsent(key, k -> new ArrayList<>());
-//            tsKvEntryList.addAll(argumentEntry.getKvEntries());
+            LastRecordsArgumentEntry existingArgumentEntry = (LastRecordsArgumentEntry)
+                    arguments.computeIfAbsent(key, k -> new LastRecordsArgumentEntry(new HashMap<>()));
+            if (argumentEntry instanceof LastRecordsArgumentEntry lastRecordsArgumentEntry) {
+                existingArgumentEntry.getTsRecords().putAll(lastRecordsArgumentEntry.getTsRecords());
+            } else if (argumentEntry instanceof SingleValueArgumentEntry singleValueArgumentEntry
+                    && singleValueArgumentEntry.getValue() instanceof TsKvEntry tsKvEntry) {
+                existingArgumentEntry.getTsRecords().put(tsKvEntry.getTs(), tsKvEntry.getValue());
+            }
         });
     }
 
-
     @Override
-    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculationContext ctx) {
+    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
         Map<String, Object> resultMap = new HashMap<>();
-        arguments.replaceAll((key, entries) -> {
+        arguments.replaceAll((key, argumentEntry) -> {
             int limit = ctx.getArguments().get(key).getLimit();
-            List<TsKvEntry> limitedEntries = entries.stream()
-                    .sorted(Comparator.comparingLong(TsKvEntry::getTs).reversed())
-                    .limit(limit)
-                    .collect(Collectors.toList());
 
-            Map<Long, Object> valueWithTs = limitedEntries.stream()
-                    .collect(Collectors.toMap(TsKvEntry::getTs, TsKvEntry::getValue));
-            resultMap.put(key, valueWithTs);
+            // TODO: implement removing if size > limit
 
-            return limitedEntries;
+
+//            List<TsKvEntry> limitedEntries = entries.stream()
+//                    .sorted(Comparator.comparingLong(TsKvEntry::getTs).reversed())
+//                    .limit(limit)
+//                    .collect(Collectors.toList());
+//
+//            Map<Long, Object> valueWithTs = limitedEntries.stream()
+//                    .collect(Collectors.toMap(TsKvEntry::getTs, TsKvEntry::getValue));
+//            resultMap.put(key, valueWithTs);
+
+//            return new LastRecordsArgumentEntry(limitedEntries);
+            return null;
         });
-        return Futures.immediateFuture(buildResult(ctx.getOutput(), resultMap));
+        Output output = ctx.getOutput();
+        return Futures.immediateFuture(new CalculatedFieldResult(output.getType(), output.getScope(), resultMap));
     }
 
 }

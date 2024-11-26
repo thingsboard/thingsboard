@@ -41,12 +41,14 @@ public interface CalculatedFieldState {
     @JsonIgnore
     CalculatedFieldType getType();
 
-    default boolean isValid(Map<String, KvEntry> argumentValues, Map<String, Argument> arguments) {
-        return argumentValues.keySet().containsAll(arguments.keySet());
+    Map<String, ArgumentEntry> getArguments();
+
+    default boolean isValid(Map<String, Argument> arguments) {
+        return getArguments().keySet().containsAll(arguments.keySet());
     }
 
     void initState(Map<String, ArgumentEntry> argumentValues);
 
-    ListenableFuture<CalculatedFieldResult> performCalculation(CalculationContext ctx);
+    ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx);
 
 }

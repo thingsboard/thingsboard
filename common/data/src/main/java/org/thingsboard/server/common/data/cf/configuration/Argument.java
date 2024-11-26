@@ -29,7 +29,6 @@ public class Argument {
     private String defaultValue;
 
     private int limit;
-    private long startTs;
     private long timeWindow;
 
 }

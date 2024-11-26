@@ -22,7 +22,6 @@ import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
-import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
@@ -39,8 +38,8 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
-    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculationContext ctx) {
-        if (isValid(this.arguments, ctx.getArguments())) {
+    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
+        if (isValid(ctx.getArguments())) {
             String expression = ctx.getExpression();
             ThreadLocal<Expression> customExpression = new ThreadLocal<>();
             var expr = customExpression.get();
@@ -52,13 +51,13 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
                 customExpression.set(expr);
             }
             Map<String, Double> variables = new HashMap<>();
-            this.arguments.forEach((k, v) -> variables.put(k, Double.parseDouble(v.getValueAsString())));
+            this.arguments.forEach((k, v) -> variables.put(k, Double.parseDouble(((KvEntry) v.getValue()).getValueAsString())));
             expr.setVariables(variables);
 
             double expressionResult = expr.evaluate();
 
             Output output = ctx.getOutput();
-            return Futures.immediateFuture(buildResult(output, Map.of(output.getName(), expressionResult)));
+            return Futures.immediateFuture(new CalculatedFieldResult(output.getType(), output.getScope(), Map.of(output.getName(), expressionResult)));
         }
         return null;
     }

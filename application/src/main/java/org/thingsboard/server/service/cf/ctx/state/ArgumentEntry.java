@@ -15,25 +15,35 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = SingleValueArgumentEntry.class, name = "SINGLE_VALUE"),
+        @JsonSubTypes.Type(value = LastRecordsArgumentEntry.class, name = "LAST_RECORDS")
+})
 public interface ArgumentEntry {
+
+    ArgumentType getType();
 
     Object getValue();
 
-    static ArgumentEntry createArgumentEntry(KvEntry kvEntry) {
-        if (kvEntry instanceof TsKvEntry tsKvEntry) {
-            return new LastRecordsArgumentEntry(List.of(tsKvEntry));
-        } else {
-            return new KvArgumentEntry(kvEntry);
-        }
+    static ArgumentEntry createSingleValueArgument(KvEntry kvEntry) {
+        return new SingleValueArgumentEntry(kvEntry.getValue());
     }
 
-    static ArgumentEntry createArgumentEntry(List<TsKvEntry> kvEntries) {
-        return new LastRecordsArgumentEntry(kvEntries);
+    static ArgumentEntry createLastRecordsArgument(List<TsKvEntry> kvEntries) {
+        return new LastRecordsArgumentEntry(kvEntries.stream() .collect(Collectors.toMap(TsKvEntry::getTs, TsKvEntry::getValue)));
     }
 
 }

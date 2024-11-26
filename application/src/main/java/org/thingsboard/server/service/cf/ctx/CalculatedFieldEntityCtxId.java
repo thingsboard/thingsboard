@@ -13,23 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf;
+package org.thingsboard.server.service.cf.ctx;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.AttributeScope;
+import java.util.UUID;
 
-import java.util.Map;
-
-@Data
-public final class CalculatedFieldResult {
-
-    private String type;
-    private AttributeScope scope;
-    private Map<String, Object> resultMap;
-
-    public CalculatedFieldResult(String type, AttributeScope scope, Map<String, Object> resultMap) {
-        this.type = type;
-        this.scope = scope;
-        this.resultMap = resultMap == null ? Map.of() : Map.copyOf(resultMap);
-    }
+public record CalculatedFieldEntityCtxId(UUID cfId, UUID entityId) {
 }

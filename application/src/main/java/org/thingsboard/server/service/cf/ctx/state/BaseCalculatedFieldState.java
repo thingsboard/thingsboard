@@ -15,18 +15,20 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
-import org.thingsboard.server.common.data.cf.configuration.Output;
-import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.service.cf.CalculatedFieldResult;
-
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
-    protected Map<String, KvEntry> arguments;
+    protected Map<String, ArgumentEntry> arguments;
 
     public BaseCalculatedFieldState() {
+    }
+
+    @Override
+    public Map<String, ArgumentEntry> getArguments() {
+        return this.arguments;
     }
 
     @Override
@@ -34,15 +36,15 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
         if (arguments == null) {
             arguments = new HashMap<>();
         }
-//        argumentValues.forEach((key, value) -> arguments.put(key, value.getKvEntry()));
-    }
-
-    protected CalculatedFieldResult buildResult(Output output, Map<String, Object> resultMap) {
-        CalculatedFieldResult result = new CalculatedFieldResult();
-        result.setType(output.getType());
-        result.setScope(output.getScope());
-        result.setResultMap(resultMap);
-        return result;
+        arguments.putAll(
+                argumentValues.entrySet().stream()
+                        .peek(entry -> {
+                            if (entry.getValue() instanceof LastRecordsArgumentEntry) {
+                                throw new IllegalArgumentException("Last records argument entry is not allowed for single calculated field state");
+                            }
+                        })
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+        );
     }
 
 }

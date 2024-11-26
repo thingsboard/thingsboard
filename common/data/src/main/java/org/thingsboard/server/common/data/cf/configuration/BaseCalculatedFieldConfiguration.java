@@ -102,7 +102,6 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
             argumentNode.put("scope", String.valueOf(argument.getScope()));
             argumentNode.put("defaultValue", argument.getDefaultValue());
             argumentNode.put("limit", String.valueOf(argument.getLimit()));
-            argumentNode.put("startTs", String.valueOf(argument.getStartTs()));
             argumentNode.put("timeWindow", String.valueOf(argument.getTimeWindow()));
         });
 
@@ -152,9 +151,6 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
                 }
                 if (argumentNode.hasNonNull("limit")) {
                     argument.setLimit(argumentNode.get("limit").asInt());
-                }
-                if (argumentNode.hasNonNull("startTs")) {
-                    argument.setStartTs(argumentNode.get("startTs").asLong());
                 }
                 if (argumentNode.hasNonNull("timeWindow")) {
                     argument.setTimeWindow(argumentNode.get("timeWindow").asInt());

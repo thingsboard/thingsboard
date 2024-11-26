@@ -15,19 +15,27 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
+import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.Map;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class LastRecordsArgumentEntry implements ArgumentEntry {
 
-    private final List<TsKvEntry> kvEntries;
+    private Map<Long, Object> tsRecords;
+
+    @Override
+    public ArgumentType getType() {
+        return ArgumentType.LAST_RECORDS;
+    }
 
     @Override
     public Object getValue() {
-        return kvEntries;
+        return tsRecords.values();
     }
 
 }

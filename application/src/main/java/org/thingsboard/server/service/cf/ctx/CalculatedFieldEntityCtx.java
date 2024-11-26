@@ -19,15 +19,15 @@ import lombok.Data;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 
 @Data
-public class CalculatedFieldCtx {
+public class CalculatedFieldEntityCtx {
 
-    private CalculatedFieldCtxId id;
+    private CalculatedFieldEntityCtxId id;
     private CalculatedFieldState state;
 
-    public CalculatedFieldCtx() {
+    public CalculatedFieldEntityCtx() {
     }
 
-    public CalculatedFieldCtx(CalculatedFieldCtxId id, CalculatedFieldState state) {
+    public CalculatedFieldEntityCtx(CalculatedFieldEntityCtxId id, CalculatedFieldState state) {
         this.id = id;
         this.state = state;
     }

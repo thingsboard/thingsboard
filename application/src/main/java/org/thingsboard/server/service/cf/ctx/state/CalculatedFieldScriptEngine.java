@@ -16,13 +16,16 @@
 package org.thingsboard.server.service.cf.ctx.state;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.data.kv.KvEntry;
 
 import java.util.Map;
 
 public interface CalculatedFieldScriptEngine {
 
-    ListenableFuture<Object> executeScriptAsync(Map<String, KvEntry> arguments);
+    ListenableFuture<Object> executeScriptAsync(Map<String, ArgumentEntry> arguments);
+
+    ListenableFuture<Map<String, Object>> executeToMapAsync(Map<String, ArgumentEntry> arguments);
+
+    ListenableFuture<Map<String, Object>> executeToMapTransform(Object result);
 
     void destroy();
 

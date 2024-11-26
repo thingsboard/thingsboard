@@ -15,17 +15,25 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.thingsboard.server.common.data.kv.KvEntry;
+import lombok.NoArgsConstructor;
 
 @Data
-public class KvArgumentEntry implements ArgumentEntry {
+@NoArgsConstructor
+@AllArgsConstructor
+public class SingleValueArgumentEntry implements ArgumentEntry {
 
-    private final KvEntry kvEntry;
+    private Object value;
+
+    @Override
+    public ArgumentType getType() {
+        return ArgumentType.SINGLE_VALUE;
+    }
 
     @Override
     public Object getValue() {
-        return kvEntry;
+        return value;
     }
 
 }
