@@ -78,7 +78,7 @@ export class DeviceProfilesTableConfigResolver  {
         return this.translate.instant(deviceTransportTypeTranslationMap.get(deviceProfile.transportType));
       }),
       new EntityTableColumn<DeviceProfile>('description', 'device-profile.description', '40%',
-          entity => this.customTranslate.transform(entity.description)),
+          entity => this.customTranslate.transform(entity.description || '')),
       new EntityTableColumn<DeviceProfile>('isDefault', 'device-profile.default', '60px',
         entity => {
           return checkBoxCell(entity.default);

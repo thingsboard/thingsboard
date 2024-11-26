@@ -58,7 +58,7 @@ export class TenantProfilesTableConfigResolver  {
       new DateEntityTableColumn<TenantProfile>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<TenantProfile>('name', 'tenant-profile.name', '40%'),
       new EntityTableColumn<TenantProfile>('description', 'tenant-profile.description', '60%',
-        entity => this.customTranslate.transform(entity.description)),
+        entity => this.customTranslate.transform(entity.description || '')),
       new EntityTableColumn<TenantProfile>('isDefault', 'tenant-profile.default', '60px',
         entity => {
           return checkBoxCell(entity.default);

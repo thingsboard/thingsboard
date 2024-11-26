@@ -60,7 +60,7 @@ export class AssetProfilesTableConfigResolver  {
       new DateEntityTableColumn<AssetProfile>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<AssetProfile>('name', 'asset-profile.name', '50%'),
       new EntityTableColumn<AssetProfile>('description', 'asset-profile.description', '50%',
-          entity => this.customTranslate.transform(entity.description)),
+          entity => this.customTranslate.transform(entity.description || '')),
       new EntityTableColumn<AssetProfile>('isDefault', 'asset-profile.default', '60px',
         entity => {
           return checkBoxCell(entity.default);
