@@ -18,7 +18,7 @@
 <form>
   <mat-toolbar color="primary">
     <h2 translate>layout.select</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
       (click)="cancel()"
             type="button">
@@ -28,19 +28,17 @@
   <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
   </mat-progress-bar>
   <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async" fxLayout="column" fxLayoutGap="8px">
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <button fxFlex
-                mat-raised-button color="primary"
+    <fieldset [disabled]="isLoading$ | async" class="flex flex-col gap-2">
+      <div class="flex flex-row items-center justify-start gap-2">
+        <button mat-raised-button color="primary"
                 type="button"
-                class="tb-layout-button"
+                class="tb-layout-button flex-1"
                 (click)="selectLayout('main')">
           <span translate>layout.main</span>
         </button>
-        <button fxFlex
-                mat-raised-button color="primary"
+        <button mat-raised-button color="primary"
                 type="button"
-                class="tb-layout-button"
+                class="tb-layout-button flex-1"
                 (click)="selectLayout('right')">
           <span translate>layout.right</span>
         </button>

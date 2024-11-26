@@ -15,64 +15,64 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons" fxLayout.xs="column">
+<div class="tb-details-buttons xs:flex xs:flex-col">
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'open')"
-          [fxShow]="!isEdit && !isDetailsPage">
+          [class.!hidden]="isEdit || isDetailsPage">
     {{'common.open-details-page' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'manageUsers')"
-          [fxShow]="!isEdit && !isPublic">
+          [class.!hidden]="isEdit || isPublic">
     {{'customer.manage-users' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'manageAssets')"
-          [fxShow]="!isEdit">
+          [class.!hidden]="isEdit">
     {{'customer.manage-assets' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'manageDevices')"
-          [fxShow]="!isEdit">
+          [class.!hidden]="isEdit">
     {{'customer.manage-devices' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'manageDashboards')"
-          [fxShow]="!isEdit">
+          [class.!hidden]="isEdit">
     {{'customer.manage-dashboards' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'manageEdges')"
-          [fxShow]="!isEdit"
+          [class.!hidden]="isEdit"
           *ngIf="edgesSupportEnabled()">
     {{'customer.manage-edges' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
-          [fxShow]="!hideDelete() && !isEdit && !isPublic">
+          [class.!hidden]="hideDelete() || isEdit || isPublic">
     {{'customer.delete' | translate }}
   </button>
-  <div fxLayout="row" fxLayout.xs="column">
+  <div class="flex flex-row xs:flex-col">
     <button mat-raised-button
             ngxClipboard
             (cbOnSuccess)="onCustomerIdCopied($event)"
             [cbContent]="entity?.id?.id"
-            [fxShow]="!isEdit">
+            [class.!hidden]="isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>customer.copyId</span>
     </button>
   </div>
 </div>
-<div class="mat-padding" fxLayout="column">
+<div class="mat-padding flex flex-col">
   <form [formGroup]="entityForm">
-    <fieldset [fxShow]="!isPublic" [disabled]="(isLoading$ | async) || !isEdit">
+    <fieldset [class.!hidden]="isPublic" [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block">
         <mat-label translate>customer.title</mat-label>
         <input matInput formControlName="title" required/>
@@ -83,22 +83,22 @@
           {{ 'customer.title-max-length' | translate }}
         </mat-error>
       </mat-form-field>
-      <div formGroupName="additionalInfo" fxLayout="column">
+      <div formGroupName="additionalInfo" class="flex flex-col">
         <mat-form-field class="mat-block">
           <mat-label translate>customer.description</mat-label>
           <textarea matInput formControlName="description" rows="2"></textarea>
         </mat-form-field>
-        <section class="tb-default-dashboard" fxFlex fxLayout="column" *ngIf="entity?.id">
-          <section fxFlex fxLayout="column" fxLayout.gt-sm="row">
+        <section class="tb-default-dashboard flex flex-1 flex-col" *ngIf="entity?.id">
+          <section class="flex flex-1 flex-col gt-sm:flex-row">
             <tb-dashboard-autocomplete
-              fxFlex
+              class="flex-1"
               label="{{ 'dashboard.home-dashboard' | translate }}"
               formControlName="homeDashboardId"
               [dashboardsScope]="'customer'"
               [customerId]="entity?.id.id"
               [selectFirstDashboard]="false"
             ></tb-dashboard-autocomplete>
-            <mat-checkbox fxFlex formControlName="homeDashboardHideToolbar">
+            <mat-checkbox class="flex-1" formControlName="homeDashboardHideToolbar">
               {{ 'dashboard.home-dashboard-hide-toolbar' | translate }}
             </mat-checkbox>
           </section>

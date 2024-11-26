@@ -25,17 +25,17 @@
     </div>
   </div>
   <div [formGroup]="metadataFormGroup" class="tb-scada-symbol-metadata-content">
-    <div [fxShow]="selectedOption === 'general'" class="mat-content">
+    <div [class.!hidden]="selectedOption !== 'general'" class="mat-content">
       <div class="tb-form-panel">
         <div class="tb-form-row">
           <div class="fixed-title-width" translate>scada.title</div>
-          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <input matInput required formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
         <div class="tb-form-row">
           <div class="fixed-title-width" translate>scada.description</div>
-          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <textarea matInput
                       formControlName="description"
                       rows="2"></textarea>
@@ -43,8 +43,8 @@
         </div>
         <div class="tb-form-row">
           <div class="fixed-title-width" translate>scada.search-tags</div>
-          <div fxFlex fxLayout="row" fxLayoutAlign="start center">
-            <tb-string-items-list fxFlex
+          <div class="flex flex-1 flex-row items-center justify-start">
+            <tb-string-items-list class="flex-1"
                                   style="display: flex;"
                                   formControlName="searchTags"
                                   appearance="outline"
@@ -54,7 +54,7 @@
         </div>
         <div class="tb-form-row">
           <div class="fixed-title-width" translate>scada.widget-size</div>
-          <div fxLayout="row" fxFlex fxLayoutAlign="end center" fxLayoutGap="8px">
+          <div class="flex flex-1 flex-row items-center justify-end gap-2">
             <div class="tb-small-label">{{ 'scada.cols' | translate }}</div>
             <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
               <input matInput formControlName="widgetSizeX" required
@@ -71,7 +71,7 @@
         </div>
         <div class="tb-form-panel stroked">
           <mat-expansion-panel class="tb-settings" expanded>
-            <mat-expansion-panel-header fxLayout="row wrap">
+            <mat-expansion-panel-header class="flex flex-row flex-wrap">
               <mat-panel-title>
                 {{ 'scada.state-render-function' | translate }}
               </mat-panel-title>
@@ -89,7 +89,7 @@
         </div>
       </div>
     </div>
-    <div [fxShow]="selectedOption === 'tags'" class="mat-content overflow-hidden">
+    <div [class.!hidden]="selectedOption !== 'tags'" class="mat-content overflow-hidden">
       <tb-scada-symbol-metadata-tags
         #symbolMetadataTags
         [tags]="tags"
@@ -98,14 +98,14 @@
         formControlName="tags">
       </tb-scada-symbol-metadata-tags>
     </div>
-    <div [fxShow]="selectedOption === 'behavior'" class="mat-content overflow-hidden">
+    <div [class.!hidden]="selectedOption !== 'behavior'" class="mat-content overflow-hidden">
       <tb-scada-symbol-metadata-behaviors
         formControlName="behavior"
         [aliasController]="aliasController"
         [callbacks]="callbacks">
       </tb-scada-symbol-metadata-behaviors>
     </div>
-    <div [fxShow]="selectedOption === 'properties'" class="mat-content overflow-hidden">
+    <div [class.!hidden]="selectedOption !== 'properties'" class="mat-content overflow-hidden">
       <tb-scada-symbol-metadata-properties
         formControlName="properties">
       </tb-scada-symbol-metadata-properties>

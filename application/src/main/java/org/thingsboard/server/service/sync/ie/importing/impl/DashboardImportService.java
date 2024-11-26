@@ -49,7 +49,6 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
 
     private final DashboardService dashboardService;
 
-
     @Override
     protected void setOwner(TenantId tenantId, Dashboard dashboard, IdProvider idProvider) {
         dashboard.setTenantId(tenantId);

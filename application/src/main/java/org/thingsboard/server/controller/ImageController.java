@@ -40,7 +40,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.thingsboard.server.common.data.ImageDescriptor;
-import org.thingsboard.server.common.data.ImageExportData;
+import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbImageDeleteResult;
@@ -61,7 +61,6 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
@@ -193,53 +192,19 @@ public class ImageController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = IMAGE_URL + "/export")
-    public ImageExportData exportImage(@Parameter(description = IMAGE_TYPE_PARAM_DESCRIPTION, schema = @Schema(allowableValues = {"tenant", "system"}), required = true)
-                                       @PathVariable String type,
-                                       @Parameter(description = IMAGE_KEY_PARAM_DESCRIPTION, required = true)
-                                       @PathVariable String key) throws Exception {
+    public ResourceExportData exportImage(@Parameter(description = IMAGE_TYPE_PARAM_DESCRIPTION, schema = @Schema(allowableValues = {"tenant", "system"}), required = true)
+                                          @PathVariable String type,
+                                          @Parameter(description = IMAGE_KEY_PARAM_DESCRIPTION, required = true)
+                                          @PathVariable String key) throws Exception {
         TbResourceInfo imageInfo = checkImageInfo(type, key, Operation.READ);
-        ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
-        byte[] data = imageService.getImageData(imageInfo.getTenantId(), imageInfo.getId());
-        return ImageExportData.builder()
-                .mediaType(descriptor.getMediaType())
-                .fileName(imageInfo.getFileName())
-                .title(imageInfo.getTitle())
-                .subType(imageInfo.getResourceSubType().name())
-                .resourceKey(imageInfo.getResourceKey())
-                .isPublic(imageInfo.isPublic())
-                .publicResourceKey(imageInfo.getPublicResourceKey())
-                .data(Base64.getEncoder().encodeToString(data))
-                .build();
+        return imageService.exportImage(imageInfo);
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @PutMapping("/api/image/import")
-    public TbResourceInfo importImage(@RequestBody ImageExportData imageData) throws Exception {
+    public TbResourceInfo importImage(@RequestBody ResourceExportData imageData) throws Exception {
         SecurityUser user = getCurrentUser();
-        TbResource image = new TbResource();
-        image.setTenantId(user.getTenantId());
-        accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.CREATE, null, image);
-
-        image.setFileName(imageData.getFileName());
-        if (StringUtils.isNotEmpty(imageData.getTitle())) {
-            image.setTitle(imageData.getTitle());
-        } else {
-            image.setTitle(imageData.getFileName());
-        }
-        if (StringUtils.isNotEmpty(imageData.getSubType())) {
-            image.setResourceSubType(ResourceSubType.valueOf(imageData.getSubType()));
-        } else {
-            image.setResourceSubType(ResourceSubType.IMAGE);
-        }
-        image.setResourceType(ResourceType.IMAGE);
-        image.setResourceKey(imageData.getResourceKey());
-        image.setPublic(imageData.isPublic());
-        image.setPublicResourceKey(imageData.getPublicResourceKey());
-        ImageDescriptor descriptor = new ImageDescriptor();
-        descriptor.setMediaType(imageData.getMediaType());
-        image.setDescriptorValue(descriptor);
-        image.setData(Base64.getDecoder().decode(imageData.getData()));
-        return tbImageService.save(image, user);
+        return tbImageService.importImage(imageData, false, user);
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")

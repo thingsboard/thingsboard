@@ -16,6 +16,8 @@
 package org.thingsboard.server.dao.resource;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -24,8 +26,10 @@ import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface ResourceService extends EntityDaoService {
@@ -37,6 +41,16 @@ public interface ResourceService extends EntityDaoService {
     TbResource findResourceByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceKey);
 
     TbResource findResourceById(TenantId tenantId, TbResourceId resourceId);
+
+    byte[] getResourceData(TenantId tenantId, TbResourceId resourceId);
+
+    ResourceExportData exportResource(TbResourceInfo resourceInfo);
+
+    List<ResourceExportData> exportResources(TenantId tenantId, Collection<TbResourceInfo> resources);
+
+    TbResource toResource(TenantId tenantId, ResourceExportData exportData);
+
+    void importResources(TenantId tenantId, List<ResourceExportData> resources);
 
     TbResourceInfo findResourceInfoById(TenantId tenantId, TbResourceId resourceId);
 
@@ -61,5 +75,19 @@ public interface ResourceService extends EntityDaoService {
     void deleteResourcesByTenantId(TenantId tenantId);
 
     long sumDataSizeByTenantId(TenantId tenantId);
+
+    String calculateEtag(byte[] data);
+
+    TbResourceInfo findSystemOrTenantResourceByEtag(TenantId tenantId, ResourceType resourceType, String etag);
+
+    boolean updateResourcesUsage(Dashboard dashboard);
+
+    boolean updateResourcesUsage(WidgetTypeDetails widgetTypeDetails);
+
+    Collection<TbResourceInfo> getUsedResources(Dashboard dashboard);
+
+    Collection<TbResourceInfo> getUsedResources(WidgetTypeDetails widgetTypeDetails);
+
+    TbResource createOrUpdateSystemResource(ResourceType resourceType, String resourceKey, byte[] data);
 
 }

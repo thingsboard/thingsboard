@@ -15,25 +15,25 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="flotPieWidgetSettingsForm" fxLayout="column">
+<section class="tb-widget-settings flex flex-col" [formGroup]="flotPieWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.chart.common-pie-settings</legend>
-    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
-      <mat-form-field fxFlex class="mat-block">
+    <section class="flex flex-col gt-xs:flex-row gt-xs:gap-2">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.chart.radius</mat-label>
         <input matInput type="number" step="0.1" min="0" max="1" formControlName="radius">
         <mat-error *ngIf="flotPieWidgetSettingsForm.get('radius').hasError('min') || flotPieWidgetSettingsForm.get('radius').hasError('max')">
           {{ 'widgets.chart.common-pie-settings-range-error' | translate }}
         </mat-error>
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.chart.inner-radius</mat-label>
         <input matInput type="number" step="0.1" min="0" max="1" formControlName="innerRadius">
         <mat-error *ngIf="flotPieWidgetSettingsForm.get('innerRadius').hasError('min') || flotPieWidgetSettingsForm.get('innerRadius').hasError('max')">
           {{ 'widgets.chart.common-pie-settings-range-error' | translate }}
         </mat-error>
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.chart.tilt</mat-label>
         <input matInput type="number" step="0.1" min="0" max="1" formControlName="tilt">
         <mat-error *ngIf="flotPieWidgetSettingsForm.get('tilt').hasError('min') || flotPieWidgetSettingsForm.get('tilt').hasError('max')">
@@ -50,12 +50,12 @@
   </fieldset>
   <fieldset class="fields-group" formGroupName="stroke">
     <legend class="group-title" translate>widgets.chart.stroke-settings</legend>
-    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-      <mat-form-field fxFlex class="mat-block">
+    <section class="flex flex-row xs:flex-col gt-xs:gap-2">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.chart.width-pixels</mat-label>
         <input matInput type="number" min="0" formControlName="width">
       </mat-form-field>
-      <tb-color-input fxFlex
+      <tb-color-input class="flex-1"
         formControlName="color"
         icon="format_color_fill"
         label="{{ 'widgets.chart.color' | translate }}" openOnInput colorClearButton>

@@ -47,6 +47,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -145,8 +146,9 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
     @After
     public void afterTest() throws Exception {
         loginSysAdmin();
-
         deleteTenant(savedTenant.getId());
+
+        resourceService.deleteResourcesByTenantId(TenantId.SYS_TENANT_ID);
     }
 
     @Test
@@ -277,30 +279,26 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testSaveTbResourceWithExistsFileName() throws Exception {
+    public void testSaveTbResourceWithSameFileName() throws Exception {
         TbResource resource = new TbResource();
         resource.setTenantId(tenantId);
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("My resource");
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData(TEST_DATA);
-
-        TbResource savedResource = tbResourceService.save(resource);
+        resource = tbResourceService.save(resource);
 
         TbResource resource2 = new TbResource();
-        resource.setTenantId(tenantId);
-        resource.setResourceType(ResourceType.JKS);
-        resource.setTitle("My resource");
-        resource.setFileName(DEFAULT_FILE_NAME);
-        resource.setData(TEST_DATA);
+        resource2.setTenantId(tenantId);
+        resource2.setResourceType(ResourceType.JKS);
+        resource2.setTitle("My resource");
+        resource2.setFileName(DEFAULT_FILE_NAME);
+        resource2.setData(TEST_DATA);
+        resource2 = tbResourceService.save(resource2);
 
-        try {
-            Assertions.assertThrows(DataValidationException.class, () -> {
-                tbResourceService.save(resource2);
-            });
-        } finally {
-            tbResourceService.delete(savedResource, null);
-        }
+        assertThat(resource2.getId()).isNotEqualTo(resource.getId());
+        assertThat(resource2.getFileName()).isEqualTo("test.jks");
+        assertThat(resource2.getResourceKey()).isEqualTo("test_(1).jks");
     }
 
     @Test

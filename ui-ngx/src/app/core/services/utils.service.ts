@@ -40,24 +40,15 @@ import { WindowMessage } from '@shared/models/window-message.model';
 import { TranslateService } from '@ngx-translate/core';
 import { customTranslationsPrefix, i18nPrefix } from '@app/shared/models/constants';
 import { DataKey, Datasource, DatasourceType, KeyInfo } from '@shared/models/widget.models';
-import { DataKeyType } from '@app/shared/models/telemetry/telemetry.models';
-import {
-  alarmFields,
-  alarmSeverityTranslations,
-  alarmStatusTranslations
-} from '@shared/models/alarm.models';
+import { DataKeyType, SharedTelemetrySubscriber } from '@app/shared/models/telemetry/telemetry.models';
+import { alarmFields, alarmSeverityTranslations, alarmStatusTranslations } from '@shared/models/alarm.models';
 import { materialColors } from '@app/shared/models/material.models';
 import { WidgetInfo } from '@home/models/widget-component.models';
 import jsonSchemaDefaults from 'json-schema-defaults';
 import { Observable } from 'rxjs';
 import { publishReplay, refCount } from 'rxjs/operators';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
-import {
-  AttributeData,
-  LatestTelemetry,
-  TelemetrySubscriber,
-  TelemetryType
-} from '@shared/models/telemetry/telemetry.models';
+import { AttributeData, LatestTelemetry, TelemetryType } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { DatePipe, DOCUMENT } from '@angular/common';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
@@ -483,13 +474,13 @@ export class UtilsService {
     if (!entityId && ctx.datasources.length > 0) {
       entityId = this.getEntityIdFromDatasource(ctx.datasources[0]);
     }
-    const subscription = TelemetrySubscriber.createEntityAttributesSubscription(ctx.telemetryWsService, entityId, type, ctx.ngZone, keys);
+    const subscription = SharedTelemetrySubscriber.createEntityAttributesSubscription(ctx.telemetryWsService, entityId, type, ctx.ngZone, keys);
     if (!ctx.telemetrySubscribers) {
       ctx.telemetrySubscribers = [];
     }
     ctx.telemetrySubscribers.push(subscription);
     subscription.subscribe();
-    return subscription.attributeData$().pipe(
+    return subscription.attributeData$.pipe(
       publishReplay(1),
       refCount()
     );

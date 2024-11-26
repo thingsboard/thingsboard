@@ -18,7 +18,7 @@
 <form [formGroup]="complexFilterFormGroup" (ngSubmit)="save()" style="width: 1200px;">
   <mat-toolbar color="primary">
     <h2 translate>filter.complex-filter</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -26,7 +26,7 @@
     </button>
   </mat-toolbar>
   <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async" fxLayout="column">
+    <fieldset [disabled]="isLoading$ | async"  class="flex flex-col">
       <mat-form-field class="mat-block">
         <mat-label translate>filter.operation.operation</mat-label>
         <mat-select required formControlName="operation">
@@ -46,7 +46,7 @@
       </tb-filter-predicate-list>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

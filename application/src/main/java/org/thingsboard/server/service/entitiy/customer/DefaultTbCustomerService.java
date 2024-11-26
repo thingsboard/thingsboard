@@ -24,13 +24,14 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 @Service
 @AllArgsConstructor
 public class DefaultTbCustomerService extends AbstractTbEntityService implements TbCustomerService {
 
     @Override
-    public Customer save(Customer customer, User user) throws Exception {
+    public Customer save(Customer customer, SecurityUser user) throws Exception {
         ActionType actionType = customer.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = customer.getTenantId();
         try {
