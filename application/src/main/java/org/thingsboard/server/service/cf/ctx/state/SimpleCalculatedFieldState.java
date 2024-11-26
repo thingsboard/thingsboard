@@ -31,12 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Data
-public class SimpleCalculatedFieldState implements CalculatedFieldState {
-
-    private Map<String, KvEntry> arguments;
-
-    public SimpleCalculatedFieldState() {
-    }
+public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
 
     @Override
     public CalculatedFieldType getType() {
@@ -44,23 +39,9 @@ public class SimpleCalculatedFieldState implements CalculatedFieldState {
     }
 
     @Override
-    public void initState(Map<String, ArgumentEntry> argumentValues) {
-        if (arguments == null) {
-            arguments = new HashMap<>();
-        }
-        argumentValues.forEach((key, value) -> arguments.put(key, value.getKvEntry()));
-    }
-
-    @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(CalculationContext ctx) {
-        CalculatedFieldConfiguration calculatedFieldConfiguration = ctx.getConfiguration();
-
-        Output output = calculatedFieldConfiguration.getOutput();
-        Map<String, Argument> arguments = calculatedFieldConfiguration.getArguments();
-
-        if (isValid(this.arguments, arguments)) {
-            CalculatedFieldResult result = new CalculatedFieldResult();
-            String expression = calculatedFieldConfiguration.getExpression();
+        if (isValid(this.arguments, ctx.getArguments())) {
+            String expression = ctx.getExpression();
             ThreadLocal<Expression> customExpression = new ThreadLocal<>();
             var expr = customExpression.get();
             if (expr == null) {
@@ -76,10 +57,8 @@ public class SimpleCalculatedFieldState implements CalculatedFieldState {
 
             double expressionResult = expr.evaluate();
 
-            result.setType(output.getType());
-            result.setScope(output.getScope());
-            result.setResultMap(Map.of(output.getName(), expressionResult));
-            return Futures.immediateFuture(result);
+            Output output = ctx.getOutput();
+            return Futures.immediateFuture(buildResult(output, Map.of(output.getName(), expressionResult)));
         }
         return null;
     }

@@ -15,25 +15,19 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
-import org.thingsboard.server.common.data.kv.KvEntry;
+import lombok.Data;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 import java.util.List;
 
-public interface ArgumentEntry {
+@Data
+public class LastRecordsArgumentEntry implements ArgumentEntry {
 
-    Object getValue();
+    private final List<TsKvEntry> kvEntries;
 
-    static ArgumentEntry createArgumentEntry(KvEntry kvEntry) {
-        if (kvEntry instanceof TsKvEntry tsKvEntry) {
-            return new LastRecordsArgumentEntry(List.of(tsKvEntry));
-        } else {
-            return new KvArgumentEntry(kvEntry);
-        }
-    }
-
-    static ArgumentEntry createArgumentEntry(List<TsKvEntry> kvEntries) {
-        return new LastRecordsArgumentEntry(kvEntries);
+    @Override
+    public Object getValue() {
+        return kvEntries;
     }
 
 }

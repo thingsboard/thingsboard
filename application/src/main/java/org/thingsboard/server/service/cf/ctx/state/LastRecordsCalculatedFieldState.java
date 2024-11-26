@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import aj.org.objectweb.asm.TypeReference;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
@@ -33,7 +35,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Data
-public class LastRecordsCalculatedFieldState implements CalculatedFieldState {
+public class LastRecordsCalculatedFieldState extends BaseCalculatedFieldState {
 
     private Map<String, List<TsKvEntry>> arguments;
 
@@ -53,21 +55,16 @@ public class LastRecordsCalculatedFieldState implements CalculatedFieldState {
         }
         argumentValues.forEach((key, argumentEntry) -> {
             List<TsKvEntry> tsKvEntryList = arguments.computeIfAbsent(key, k -> new ArrayList<>());
-            tsKvEntryList.addAll(argumentEntry.getKvEntries());
+//            tsKvEntryList.addAll(argumentEntry.getKvEntries());
         });
     }
 
 
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(CalculationContext ctx) {
-        CalculatedFieldConfiguration configuration = ctx.getConfiguration();
-        Map<String, Argument> configArguments = configuration.getArguments();
-        Output output = configuration.getOutput();
-
         Map<String, Object> resultMap = new HashMap<>();
-
         arguments.replaceAll((key, entries) -> {
-            int limit = configArguments.get(key).getLimit();
+            int limit = ctx.getArguments().get(key).getLimit();
             List<TsKvEntry> limitedEntries = entries.stream()
                     .sorted(Comparator.comparingLong(TsKvEntry::getTs).reversed())
                     .limit(limit)
@@ -79,13 +76,7 @@ public class LastRecordsCalculatedFieldState implements CalculatedFieldState {
 
             return limitedEntries;
         });
-
-        CalculatedFieldResult calculatedFieldResult = new CalculatedFieldResult();
-        calculatedFieldResult.setType(output.getType());
-        calculatedFieldResult.setScope(output.getScope());
-        calculatedFieldResult.setResultMap(resultMap);
-
-        return Futures.immediateFuture(calculatedFieldResult);
+        return Futures.immediateFuture(buildResult(ctx.getOutput(), resultMap));
     }
 
 }

@@ -35,15 +35,10 @@ import java.util.Map;
 
 @Data
 @Slf4j
-public class ScriptCalculatedFieldState implements CalculatedFieldState {
+public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
 
     @JsonIgnore
     private CalculatedFieldScriptEngine calculatedFieldScriptEngine;
-
-    private Map<String, KvEntry> arguments;
-
-    public ScriptCalculatedFieldState() {
-    }
 
     @Override
     public CalculatedFieldType getType() {
@@ -52,50 +47,35 @@ public class ScriptCalculatedFieldState implements CalculatedFieldState {
 
 
     @Override
-    public void initState(Map<String, ArgumentEntry> argumentValues) {
-        if (arguments == null) {
-            arguments = new HashMap<>();
+    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculationContext ctx) {
+        if (isValid(this.arguments, ctx.getArguments())) {
+            if (calculatedFieldScriptEngine == null) {
+                initEngine(ctx.getTenantId(), ctx.getExpression(), ctx.getTbelInvokeService());
+            }
+
+            ListenableFuture<Object> resultFuture = calculatedFieldScriptEngine.executeScriptAsync(this.arguments);
+
+            return Futures.transform(resultFuture, result -> {
+                Map<String, Object> resultMap = result instanceof Map<?, ?>
+                        ? JacksonUtil.convertValue(result, Map.class)
+                        : new HashMap<>();
+
+                return buildResult(ctx.getOutput(), resultMap);
+            }, MoreExecutors.directExecutor());
         }
-        argumentValues.forEach((key, value) -> arguments.put(key, value.getKvEntry()));
+        return null;
     }
 
-
-    @Override
-    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculationContext ctx) {
-        CalculatedFieldConfiguration calculatedFieldConfiguration = ctx.getConfiguration();
-        TbelInvokeService tbelInvokeService = ctx.getTbelInvokeService();
-
+    private void initEngine(TenantId tenantId, String expression, TbelInvokeService tbelInvokeService) {
         if (tbelInvokeService == null) {
             throw new IllegalArgumentException("TBEL script engine is disabled!");
         }
 
-        if (calculatedFieldScriptEngine == null) {
-            initEngine(ctx.getTenantId(), calculatedFieldConfiguration, tbelInvokeService);
-        }
-
-        ListenableFuture<Object> resultFuture = calculatedFieldScriptEngine.executeScriptAsync(arguments);
-
-        return Futures.transform(resultFuture, result -> {
-            Output output = calculatedFieldConfiguration.getOutput();
-            Map<String, Object> resultMap = result instanceof Map<?, ?>
-                    ? JacksonUtil.convertValue(result, Map.class)
-                    : new HashMap<>();
-
-            CalculatedFieldResult calculatedFieldResult = new CalculatedFieldResult();
-            calculatedFieldResult.setType(output.getType());
-            calculatedFieldResult.setScope(output.getScope());
-            calculatedFieldResult.setResultMap(resultMap);
-
-            return calculatedFieldResult;
-        }, MoreExecutors.directExecutor());
-    }
-
-    private void initEngine(TenantId tenantId, CalculatedFieldConfiguration calculatedFieldConfiguration, TbelInvokeService tbelInvokeService) {
         calculatedFieldScriptEngine = new CalculatedFieldTbelScriptEngine(
                 tenantId,
                 tbelInvokeService,
-                calculatedFieldConfiguration.getExpression(),
-                arguments.keySet().toArray(new String[0])
+                expression,
+                this.arguments.keySet().toArray(new String[0])
         );
     }
 

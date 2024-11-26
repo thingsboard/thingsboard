@@ -18,7 +18,9 @@ package org.thingsboard.server.service.cf.ctx.state;
 import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 
@@ -29,7 +31,9 @@ import java.util.Map;
 public class CalculationContext {
 
     private TenantId tenantId;
-    private CalculatedFieldConfiguration configuration;
+    private Map<String, Argument> arguments;
+    private Output output;
+    private String expression;
     private TbelInvokeService tbelInvokeService;
 
 }
