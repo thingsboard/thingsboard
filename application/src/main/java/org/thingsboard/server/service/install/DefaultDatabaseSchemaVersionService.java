@@ -51,7 +51,7 @@ public class DefaultDatabaseSchemaVersionService implements DatabaseSchemaVersio
 
         String product = getProductFromDb();
         if (!CURRENT_PRODUCT.equals(product)) {
-            onSchemaSettingsError("Upgrade failed: ThingsBoard " + product + " database using ThingsBoard " + CURRENT_PRODUCT);
+            onSchemaSettingsError(String.format("Upgrade failed: can't upgrade ThingsBoard %s database using ThingsBoard %s.", product, CURRENT_PRODUCT));
         }
 
         Long schemaVersionFromDb = getSchemaVersionFromDb();
