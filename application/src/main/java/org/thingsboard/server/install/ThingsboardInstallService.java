@@ -43,7 +43,7 @@ public class ThingsboardInstallService {
     @Value("${install.upgrade:false}")
     private Boolean isUpgrade;
 
-    @Value("${install.upgrade.from_version:1.2.3}")
+    @Value("${install.upgrade.from_version:}")
     private String upgradeFromVersion;
 
     @Value("${install.load_demo:false}")
@@ -117,8 +117,11 @@ public class ThingsboardInstallService {
                         default:
                             throw new RuntimeException("Unable to upgrade ThingsBoard, unsupported fromVersion: " + upgradeFromVersion);
                     }
+
+                    entityDatabaseSchemaService.createDatabaseSchema(false);
                     entityDatabaseSchemaService.createOrUpdateViewsAndFunctions();
                     entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
+                    entityDatabaseSchemaService.createDatabaseIndexes();
                     log.info("Updating system data...");
                     dataUpdateService.upgradeRuleNodes();
                     systemDataLoaderService.loadSystemWidgets();
