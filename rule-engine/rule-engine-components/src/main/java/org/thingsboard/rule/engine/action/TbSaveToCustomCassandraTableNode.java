@@ -175,7 +175,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                 query.append("?, ");
             }
         }
-        if (config.getDefaultTtL() > 0) {
+        if (config.getDefaultTtl() > 0) {
             query.append(" USING TTL ?");
         }
         return query.toString();
@@ -219,8 +219,8 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                 }
                 i.getAndIncrement();
             });
-            if (config.getDefaultTtL() > 0) {
-                stmtBuilder.setInt(i.get(), config.getDefaultTtL());
+            if (config.getDefaultTtl() > 0) {
+                stmtBuilder.setInt(i.get(), config.getDefaultTtl());
             }
             return getFuture(executeAsyncWrite(ctx, stmtBuilder.build()), rs -> null);
         }
@@ -267,9 +267,9 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
         boolean hasChanges = false;
         switch (fromVersion) {
             case 0:
-                if (!oldConfiguration.has("defaultTtL")) {
+                if (!oldConfiguration.has("defaultTtl")) {
                     hasChanges = true;
-                    ((ObjectNode) oldConfiguration).put("defaultTtL", 0);
+                    ((ObjectNode) oldConfiguration).put("defaultTtl", 0);
                 }
                 break;
             default:

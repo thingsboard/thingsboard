@@ -135,7 +135,7 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
     public void verifyDefaultConfig() {
         assertThat(config.getTableName()).isEqualTo("");
         assertThat(config.getFieldsMapping()).isEqualTo(Map.of("", ""));
-        assertThat(config.getDefaultTtL()).isEqualTo(0);
+        assertThat(config.getDefaultTtl()).isEqualTo(0);
     }
 
     @Test
@@ -240,7 +240,7 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
                                                        Consumer<BoundStatementBuilder> verifyBuilder) throws TbNodeException {
         config.setTableName("readings");
         config.setFieldsMapping(Map.of("$entityId", "entityIdTableColumn"));
-        config.setDefaultTtL(ttlFromConfig);
+        config.setDefaultTtl(ttlFromConfig);
 
         mockOnInit();
         willAnswer(invocation -> boundStatementBuilderMock).given(node).getStmtBuilder();
@@ -271,7 +271,7 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
 
     @Test
     public void givenValidMsgStructure_whenOnMsg_thenVerifyMatchOfValuesInsertionOrderIntoStatementAndSaveToCustomCassandraTable() throws TbNodeException {
-        config.setDefaultTtL(25);
+        config.setDefaultTtl(25);
         config.setTableName("readings");
         Map<String, String> mappings = Map.of(
                 "$entityId", "entityIdTableColumn",
@@ -325,13 +325,13 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
                 Arguments.of(0,
                         "{\"tableName\":\"\",\"fieldsMapping\":{\"\":\"\"}}",
                         true,
-                        "{\"tableName\":\"\",\"fieldsMapping\":{\"\":\"\"},\"defaultTtL\":0}"
+                        "{\"tableName\":\"\",\"fieldsMapping\":{\"\":\"\"},\"defaultTtl\":0}"
                 ),
                 // default config for version 1 with upgrade from version 1
                 Arguments.of(1,
-                        "{\"tableName\":\"\",\"fieldsMapping\":{\"\":\"\"},\"defaultTtL\":0}",
+                        "{\"tableName\":\"\",\"fieldsMapping\":{\"\":\"\"},\"defaultTtl\":0}",
                         false,
-                        "{\"tableName\":\"\",\"fieldsMapping\":{\"\":\"\"},\"defaultTtL\":0}"
+                        "{\"tableName\":\"\",\"fieldsMapping\":{\"\":\"\"},\"defaultTtl\":0}"
                 )
         );
     }
