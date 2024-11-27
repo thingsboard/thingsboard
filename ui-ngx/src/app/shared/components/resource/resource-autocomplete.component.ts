@@ -26,6 +26,7 @@ import {
   prependTbResourcePrefix,
   removeTbResourcePrefix,
   ResourceInfo,
+  ResourceSubType,
   ResourceType
 } from '@shared/models/resource.models';
 import { TbResourceId } from '@shared/models/id/tb-resource-id';
@@ -60,6 +61,10 @@ export class ResourceAutocompleteComponent implements ControlValueAccessor, OnIn
   subscriptSizing: SubscriptSizing = 'fixed';
 
   @Input()
+  @coerceBoolean()
+  inlineField: boolean;
+
+  @Input()
   placeholder: string;
 
   @Input()
@@ -69,6 +74,9 @@ export class ResourceAutocompleteComponent implements ControlValueAccessor, OnIn
   @Input()
   @coerceBoolean()
   allowAutocomplete = false;
+
+  @Input()
+  subType = ResourceSubType.EXTENSION;
 
   resourceFormGroup = this.fb.group({
     resource: this.fb.control<string|ResourceInfo>(null)
@@ -101,7 +109,7 @@ export class ResourceAutocompleteComponent implements ControlValueAccessor, OnIn
           let modelValue: string;
           if (isObject(value)) {
             modelValue = prependTbResourcePrefix((value as ResourceInfo).link);
-          } else if (isEmptyStr(value)) {
+          } else if (isEmptyStr(value) || this.subType !== ResourceSubType.EXTENSION) {
             modelValue = null;
           } else {
             modelValue = value as string;
@@ -196,7 +204,7 @@ export class ResourceAutocompleteComponent implements ControlValueAccessor, OnIn
 
   private fetchResources(searchText?: string): Observable<Array<ResourceInfo>> {
     this.searchText = searchText;
-    return this.resourceService.getResources(new PageLink(50, 0, searchText), ResourceType.JS_MODULE, {ignoreLoading: true}).pipe(
+    return this.resourceService.getResources(new PageLink(50, 0, searchText), ResourceType.JS_MODULE, this.subType, {ignoreLoading: true}).pipe(
       catchError(() => of(null)),
       map(data => data.data)
     );

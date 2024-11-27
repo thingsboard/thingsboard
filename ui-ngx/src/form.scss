@@ -652,6 +652,15 @@
         }
       }
     }
+
+    .mat-mdc-form-field.tb-inline-field {
+      .mat-mdc-text-field-wrapper {
+        .mat-mdc-form-field-icon-prefix, .mat-mdc-form-field-icon-suffix,
+        .mat-datetimepicker-toggle {
+          line-height: normal;
+        }
+      }
+    }
   }
 
   .tb-no-data-available {

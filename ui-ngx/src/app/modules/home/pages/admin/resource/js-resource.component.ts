@@ -24,25 +24,27 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EntityComponent } from '@home/components/entity/entity.component';
 import {
   Resource,
+  ResourceSubType,
+  ResourceSubTypeTranslationMap,
   ResourceType,
   ResourceTypeExtension,
-  ResourceTypeMIMETypes,
-  ResourceTypeTranslationMap
+  ResourceTypeMIMETypes
 } from '@shared/models/resource.models';
 import { startWith, takeUntil } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { isDefinedAndNotNull } from '@core/utils';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { scadaSymbolGeneralStateHighlightRules } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 
 @Component({
-  selector: 'tb-resources-library',
-  templateUrl: './resources-library.component.html'
+  selector: 'tb-js-resource',
+  templateUrl: './js-resource.component.html'
 })
-export class ResourcesLibraryComponent extends EntityComponent<Resource> implements OnInit, OnDestroy {
+export class JsResourceComponent extends EntityComponent<Resource> implements OnInit, OnDestroy {
 
-  readonly resourceType = ResourceType;
-  readonly resourceTypes = [ResourceType.LWM2M_MODEL, ResourceType.PKCS_12, ResourceType.JKS];
-  readonly resourceTypesTranslationMap = ResourceTypeTranslationMap;
+  readonly ResourceSubType = ResourceSubType;
+  readonly jsResourceSubTypes: ResourceSubType[] = [ResourceSubType.EXTENSION, ResourceSubType.MODULE];
+  readonly ResourceSubTypeTranslationMap = ResourceSubTypeTranslationMap;
   readonly maxResourceSize = getCurrentAuthState(this.store).maxResourceSize;
 
   private destroy$ = new Subject<void>();
@@ -59,7 +61,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   ngOnInit(): void {
     super.ngOnInit();
     if (this.isAdd) {
-      this.observeResourceTypeChange();
+      this.observeResourceSubTypeChange();
     }
   }
 
@@ -80,21 +82,24 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   buildForm(entity: Resource): FormGroup {
     return this.fb.group({
       title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
-      resourceType: [entity?.resourceType ? entity.resourceType : ResourceType.LWM2M_MODEL, Validators.required],
+      resourceSubType: [entity?.resourceSubType ? entity.resourceSubType : ResourceSubType.EXTENSION, Validators.required],
       fileName: [entity ? entity.fileName : null, Validators.required],
-      data: [entity ? entity.data : null, this.isAdd ? [Validators.required] : []]
+      data: [entity ? entity.data : null, this.isAdd ? [Validators.required] : []],
+      content: [entity?.data?.length ? window.atob(entity.data) : '', Validators.required]
     });
   }
 
   updateForm(entity: Resource): void {
     this.entityForm.patchValue(entity);
+    const content = entity.resourceSubType === ResourceSubType.MODULE && entity?.data?.length ? window.atob(entity.data) : '';
+    this.entityForm.get('content').patchValue(content);
   }
 
   override updateFormState(): void {
     super.updateFormState();
     if (this.isEdit && this.entityForm && !this.isAdd) {
-      this.entityForm.get('resourceType').disable({ emitEvent: false });
-      this.entityForm.get('fileName').disable({ emitEvent: false });
+      this.entityForm.get('resourceSubType').disable({ emitEvent: false });
+      this.updateResourceSubTypeFieldsState(this.entityForm.get('resourceSubType').value);
     }
   }
 
@@ -102,23 +107,22 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
     if (this.isEdit && !isDefinedAndNotNull(formValue.data)) {
       delete formValue.data;
     }
+    if (formValue.resourceSubType === ResourceSubType.MODULE) {
+      if (!formValue.fileName) {
+        formValue.fileName = formValue.title + '.js';
+      }
+      formValue.data = window.btoa((formValue as any).content);
+      delete (formValue as any).content;
+    }
     return super.prepareFormValue(formValue);
   }
 
   getAllowedExtensions(): string {
-    try {
-      return ResourceTypeExtension.get(this.entityForm.get('resourceType').value);
-    } catch (e) {
-      return '';
-    }
+    return ResourceTypeExtension.get(ResourceType.JS_MODULE);
   }
 
   getAcceptType(): string {
-    try {
-      return ResourceTypeMIMETypes.get(this.entityForm.get('resourceType').value);
-    } catch (e) {
-      return '*/*';
-    }
+    return ResourceTypeMIMETypes.get(ResourceType.JS_MODULE);
   }
 
   convertToBase64File(data: string): string {
@@ -136,23 +140,37 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
       }));
   }
 
-  private observeResourceTypeChange(): void {
-    this.entityForm.get('resourceType').valueChanges.pipe(
-      startWith(ResourceType.LWM2M_MODEL),
-      takeUntil(this.destroy$)
-    ).subscribe((type: ResourceType) => this.onResourceTypeChange(type));
+  uploadContentFromFile(content: string) {
+    this.entityForm.get('content').patchValue(content);
+    this.entityForm.markAsDirty();
   }
 
-  private onResourceTypeChange(type: ResourceType): void {
-    if (type === this.resourceType.LWM2M_MODEL) {
-      this.entityForm.get('title').disable({emitEvent: false});
-      this.entityForm.patchValue({title: ''}, {emitEvent: false});
-    } else {
-      this.entityForm.get('title').enable({emitEvent: false});
-    }
+  private observeResourceSubTypeChange(): void {
+    this.entityForm.get('resourceSubType').valueChanges.pipe(
+      startWith(ResourceSubType.EXTENSION),
+      takeUntil(this.destroy$)
+    ).subscribe((subType: ResourceSubType) => this.onResourceSubTypeChange(subType));
+  }
+
+  private onResourceSubTypeChange(subType: ResourceSubType): void {
+    this.updateResourceSubTypeFieldsState(subType);
     this.entityForm.patchValue({
       data: null,
       fileName: null
     }, {emitEvent: false});
   }
+
+  private updateResourceSubTypeFieldsState(subType: ResourceSubType) {
+    if (subType === ResourceSubType.EXTENSION) {
+      this.entityForm.get('data').enable({ emitEvent: false });
+      this.entityForm.get('fileName').enable({ emitEvent: false });
+      this.entityForm.get('content').disable({ emitEvent: false });
+    } else {
+      this.entityForm.get('data').disable({ emitEvent: false });
+      this.entityForm.get('fileName').disable({ emitEvent: false });
+      this.entityForm.get('content').enable({ emitEvent: false });
+    }
+  }
+
+  protected readonly highlightRules = scadaSymbolGeneralStateHighlightRules;
 }

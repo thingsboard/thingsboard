@@ -177,3 +177,9 @@ $$
         ALTER TABLE qr_code_settings DROP COLUMN IF EXISTS android_config, DROP COLUMN IF EXISTS ios_config;
     END;
 $$;
+
+-- UPDATE RESOURCE JS_MODULE SUB TYPE START
+
+UPDATE resource SET resource_sub_type = 'EXTENSION' WHERE resource_type = 'JS_MODULE' AND resource_sub_type IS NULL;
+
+-- UPDATE RESOURCE JS_MODULE SUB TYPE END

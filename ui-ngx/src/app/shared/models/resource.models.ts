@@ -29,7 +29,9 @@ export enum ResourceType {
 
 export enum ResourceSubType {
   IMAGE = 'IMAGE',
-  SCADA_SYMBOL = 'SCADA_SYMBOL'
+  SCADA_SYMBOL = 'SCADA_SYMBOL',
+  EXTENSION = 'EXTENSION',
+  MODULE = 'MODULE'
 }
 
 export const ResourceTypeMIMETypes = new Map<ResourceType, string>(
@@ -56,6 +58,15 @@ export const ResourceTypeTranslationMap = new Map<ResourceType, string>(
     [ResourceType.PKCS_12, 'resource.type.pkcs-12'],
     [ResourceType.JKS, 'resource.type.jks'],
     [ResourceType.JS_MODULE, 'resource.type.js-module']
+  ]
+);
+
+export const ResourceSubTypeTranslationMap = new Map<ResourceSubType, string>(
+  [
+    [ResourceSubType.IMAGE, 'resource.sub-type.image'],
+    [ResourceSubType.SCADA_SYMBOL, 'resource.sub-type.scada-symbol'],
+    [ResourceSubType.EXTENSION, 'resource.sub-type.extension'],
+    [ResourceSubType.MODULE, 'resource.sub-type.module']
   ]
 );
 

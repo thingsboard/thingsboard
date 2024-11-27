@@ -21,8 +21,8 @@ import {
   forwardRef,
   Input,
   OnDestroy,
-  OnInit,
-  ViewChild,
+  OnInit, Renderer2,
+  ViewChild, ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, UntypedFormControl, Validator } from '@angular/forms';
@@ -33,13 +33,20 @@ import { ActionNotificationHide, ActionNotificationShow } from '@core/notificati
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UtilsService } from '@core/services/utils.service';
-import { guid, isUndefined } from '@app/core/utils';
+import { deepClone, guid, isUndefined, isUndefinedOrNull } from '@app/core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { beautifyJs } from '@shared/models/beautify.models';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { TbFunction } from '@shared/models/js-function.models';
+import { MatButton } from '@angular/material/button';
+import { TbPopoverService } from '@shared/components/popover.service';
+import {
+  ScadaSymbolPropertyPanelComponent
+} from '@home/pages/scada-symbol/metadata-components/scada-symbol-property-panel.component';
+import { JsFuncModulesComponent } from '@shared/components/js-func-modules.component';
 
 @Component({
   selector: 'tb-js-func',
@@ -103,6 +110,14 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   @coerceBoolean()
   hideBrackets = false;
 
+  @Input()
+  @coerceBoolean()
+  hideLabel = false;
+
+  @Input()
+  @coerceBoolean()
+  withModules = false;
+
   private noValidateValue: boolean;
   get noValidate(): boolean {
     return this.noValidateValue;
@@ -127,6 +142,8 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
 
   modelValue: string;
 
+  modules: {[alias: string]: string };
+
   functionValid = true;
 
   validationError: string;
@@ -139,6 +156,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   private functionArgsString = '';
 
   private propagateChange = null;
+  private _onTouched = null;
   public hasErrors = false;
 
   constructor(public elementRef: ElementRef,
@@ -146,7 +164,10 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
               private translate: TranslateService,
               protected store: Store<AppState>,
               private raf: RafService,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private popoverService: TbPopoverService,
+              private renderer: Renderer2,
+              private viewContainerRef: ViewContainerRef) {
   }
 
   ngOnInit(): void {
@@ -200,6 +221,11 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
             this.updateView();
           }
         });
+        this.jsEditor.on('blur', () => {
+          if (this._onTouched) {
+            this._onTouched();
+          }
+        });
         if (!this.disableUndefinedCheck) {
           // @ts-ignore
           this.jsEditor.session.on('changeAnnotation', () => {
@@ -231,26 +257,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
           // @ts-ignore
           this.jsEditor.session.$onChangeMode(newMode);
         }
-        // @ts-ignore
-        if (!!this.jsEditor.session.$worker) {
-          const jsWorkerOptions = {
-            undef: !this.disableUndefinedCheck,
-            unused: true,
-            globals: {}
-          };
-          if (!this.disableUndefinedCheck && this.functionArgs) {
-            this.functionArgs.forEach(arg => {
-              jsWorkerOptions.globals[arg] = false;
-            });
-          }
-          if (!this.disableUndefinedCheck && this.globalVariables) {
-            this.globalVariables.forEach(arg => {
-              jsWorkerOptions.globals[arg] = false;
-            });
-          }
-          // @ts-ignore
-          this.jsEditor.session.$worker.send('changeOptions', [jsWorkerOptions]);
-        }
+        this.updateJsWorkerGlobals();
         if (this.editorCompleter) {
           this.jsEditor.completers = [this.editorCompleter, ...(this.jsEditor.completers || [])];
         }
@@ -287,6 +294,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   }
 
   registerOnTouched(fn: any): void {
+    this._onTouched = fn;
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -437,22 +445,94 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
     }
   }
 
-  writeValue(value: string): void {
-    this.modelValue = value;
+  writeValue(value: TbFunction): void {
+    if (isUndefinedOrNull(value) || typeof value === 'string') {
+      this.modelValue = value as any;
+    } else {
+      this.modelValue = value.body;
+      this.modules = value.modules;
+    }
     if (this.jsEditor) {
+      if (this.withModules) {
+        this.updateJsWorkerGlobals();
+      }
       this.ignoreChange = true;
       this.jsEditor.setValue(this.modelValue ? this.modelValue : '', -1);
       this.ignoreChange = false;
     }
   }
 
-  updateView() {
+  updateView(force = false) {
     const editorValue = this.jsEditor.getValue();
-    if (this.modelValue !== editorValue) {
+    if (this.modelValue !== editorValue || force) {
       this.modelValue = editorValue;
       this.functionValid = true;
-      this.propagateChange(this.modelValue);
+      if (this.withModules && this.modules && Object.keys(this.modules).length) {
+        const tbFunction: TbFunction = {
+          body: this.modelValue,
+          modules: this.modules
+        };
+        this.propagateChange(tbFunction);
+      } else {
+        this.propagateChange(this.modelValue);
+      }
       this.cd.markForCheck();
+    }
+  }
+
+  editModules($event: Event, element: Element) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = element;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const ctx: any = {
+        modules: deepClone(this.modules)
+      };
+      const modulesPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, JsFuncModulesComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
+        ctx,
+        {},
+        {}, {}, true);
+      modulesPanelPopover.tbComponentRef.instance.popover = modulesPanelPopover;
+      modulesPanelPopover.tbComponentRef.instance.modulesApplied.subscribe((modules) => {
+        modulesPanelPopover.hide();
+        this.modules = modules;
+        this.updateJsWorkerGlobals();
+        this.updateView(true);
+      });
+    }
+  }
+
+  private updateJsWorkerGlobals() {
+    // @ts-ignore
+    if (!!this.jsEditor.session.$worker) {
+      const jsWorkerOptions = {
+        undef: !this.disableUndefinedCheck,
+        unused: true,
+        globals: {}
+      };
+      if (!this.disableUndefinedCheck) {
+        if (this.functionArgs) {
+          this.functionArgs.forEach(arg => {
+            jsWorkerOptions.globals[arg] = false;
+          });
+        }
+        if (this.withModules && this.modules) {
+          Object.keys(this.modules).forEach(arg => {
+            jsWorkerOptions.globals[arg] = false;
+          });
+        }
+        if (this.globalVariables) {
+          this.globalVariables.forEach(arg => {
+            jsWorkerOptions.globals[arg] = false;
+          });
+        }
+      }
+      // @ts-ignore
+      this.jsEditor.session.$worker.send('changeOptions', [jsWorkerOptions]);
     }
   }
 }

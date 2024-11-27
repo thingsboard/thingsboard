@@ -44,6 +44,7 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { HasTenantId, HasVersion } from '@shared/models/entity.models';
 import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
+import { TbFunction } from '@shared/models/js-function.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -656,7 +657,7 @@ export interface WidgetMobileActionDescriptor extends WidgetMobileActionDescript
 }
 
 export interface CustomActionDescriptor {
-  customFunction?: string;
+  customFunction?: TbFunction;
   customResources?: Array<WidgetResource>;
   customHtml?: string;
   customCss?: string;

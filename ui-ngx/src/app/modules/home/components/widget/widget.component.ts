@@ -120,6 +120,7 @@ import { DASHBOARD_PAGE_COMPONENT_TOKEN } from '@home/components/tokens';
 import { MODULES_MAP } from '@shared/models/constants';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
+import { compileTbFunction, isNotEmptyTbFunction } from '@shared/models/js-function.models';
 
 @Component({
   selector: 'tb-widget',
@@ -1108,17 +1109,25 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         break;
       case WidgetActionType.custom:
         const customFunction = descriptor.customFunction;
-        if (customFunction && customFunction.length > 0) {
-          try {
-            if (!additionalParams) {
-              additionalParams = {};
+        if (isNotEmptyTbFunction(customFunction)) {
+          compileTbFunction(this.widgetContext.http, customFunction, '$event', 'widgetContext', 'entityId',
+            'entityName', 'additionalParams', 'entityLabel').subscribe(
+            {
+              next: (compiled) => {
+                try {
+                  if (!additionalParams) {
+                    additionalParams = {};
+                  }
+                  compiled.execute($event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
+                } catch (e) {
+                  console.error(e);
+                }
+              },
+              error: (err) => {
+                console.error(err);
+              }
             }
-            const customActionFunction = new Function('$event', 'widgetContext', 'entityId',
-              'entityName', 'additionalParams', 'entityLabel', customFunction);
-            customActionFunction($event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
-          } catch (e) {
-            console.error(e);
-          }
+          )
         }
         break;
       case WidgetActionType.customPretty:
@@ -1133,18 +1142,26 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         }
         this.loadCustomActionResources(actionNamespace, customCss, customResources, descriptor).subscribe({
           next: () => {
-            if (isDefined(customPrettyFunction) && customPrettyFunction.length > 0) {
-              try {
-                if (!additionalParams) {
-                  additionalParams = {};
+            if (isNotEmptyTbFunction(customPrettyFunction)) {
+              compileTbFunction(this.widgetContext.http, customPrettyFunction, '$event', 'widgetContext', 'entityId',
+                'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel').subscribe(
+                {
+                  next: (compiled) => {
+                    try {
+                      if (!additionalParams) {
+                        additionalParams = {};
+                      }
+                      this.widgetContext.customDialog.setAdditionalImports(descriptor.customImports);
+                      compiled.execute($event, this.widgetContext, entityId, entityName, htmlTemplate, additionalParams, entityLabel);
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  },
+                  error: (err) => {
+                    console.error(err);
+                  }
                 }
-                const customActionPrettyFunction = new Function('$event', 'widgetContext', 'entityId',
-                  'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel', customPrettyFunction);
-                this.widgetContext.customDialog.setAdditionalImports(descriptor.customImports);
-                customActionPrettyFunction($event, this.widgetContext, entityId, entityName, htmlTemplate, additionalParams, entityLabel);
-              } catch (e) {
-                console.error(e);
-              }
+              )
             }
           },
           error: (errorMessages: string[]) => {
