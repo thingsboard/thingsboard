@@ -81,7 +81,7 @@ public class JpaOAuth2ClientDao extends JpaAbstractDao<OAuth2ClientEntity, OAuth
 
     @Override
     public String findAppSecret(UUID id, String pkgName, PlatformType platformType) {
-        return repository.findAppSecret(id, pkgName, platformType != null ? platformType.name() : null);
+        return repository.findAppSecret(id, pkgName, platformType.name());
     }
 
     @Override

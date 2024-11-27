@@ -147,7 +147,8 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
                     try {
                         callbackUrlScheme = validateMobileAppToken(oauth2ClientId, appPackage, PlatformType.ANDROID, appToken);
                     } catch (IllegalArgumentException e) {
-                        log.warn("Failed attempt to validate android application token", e);
+                        log.debug("Failed attempt to validate android application token, oauth client id: [{}], package name: [{}], appToken [{}] ",
+                                oauth2ClientId, appPackage, appToken, e);
                         callbackUrlScheme = validateMobileAppToken(oauth2ClientId, appPackage, PlatformType.IOS, appToken);
                     }
                 }
