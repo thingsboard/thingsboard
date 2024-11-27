@@ -15,24 +15,26 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Map;
+import java.util.TreeMap;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class LastRecordsArgumentEntry implements ArgumentEntry {
 
-    private Map<Long, Object> tsRecords;
+    private TreeMap<Long, Object> tsRecords;
 
     @Override
     public ArgumentType getType() {
         return ArgumentType.LAST_RECORDS;
     }
 
+    @JsonIgnore
     @Override
     public Object getValue() {
         return tsRecords.values();

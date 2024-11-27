@@ -21,9 +21,7 @@ import lombok.Data;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
-import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.Output;
-import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.HashMap;
@@ -51,7 +49,7 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
                 customExpression.set(expr);
             }
             Map<String, Double> variables = new HashMap<>();
-            this.arguments.forEach((k, v) -> variables.put(k, Double.parseDouble(((KvEntry) v.getValue()).getValueAsString())));
+            this.arguments.forEach((k, v) -> variables.put(k, Double.parseDouble(v.getValue().toString())));
             expr.setVariables(variables);
 
             double expressionResult = expr.evaluate();

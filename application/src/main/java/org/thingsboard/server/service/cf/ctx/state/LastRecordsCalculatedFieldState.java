@@ -19,16 +19,13 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.Output;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.TreeMap;
 
 @Data
 public class LastRecordsCalculatedFieldState extends BaseCalculatedFieldState {
@@ -44,16 +41,15 @@ public class LastRecordsCalculatedFieldState extends BaseCalculatedFieldState {
     @Override
     public void initState(Map<String, ArgumentEntry> argumentValues) {
         if (arguments == null) {
-            arguments = new HashMap<>();
+            arguments = new TreeMap<>();
         }
         argumentValues.forEach((key, argumentEntry) -> {
             LastRecordsArgumentEntry existingArgumentEntry = (LastRecordsArgumentEntry)
-                    arguments.computeIfAbsent(key, k -> new LastRecordsArgumentEntry(new HashMap<>()));
+                    arguments.computeIfAbsent(key, k -> new LastRecordsArgumentEntry(new TreeMap<>()));
             if (argumentEntry instanceof LastRecordsArgumentEntry lastRecordsArgumentEntry) {
                 existingArgumentEntry.getTsRecords().putAll(lastRecordsArgumentEntry.getTsRecords());
-            } else if (argumentEntry instanceof SingleValueArgumentEntry singleValueArgumentEntry
-                    && singleValueArgumentEntry.getValue() instanceof TsKvEntry tsKvEntry) {
-                existingArgumentEntry.getTsRecords().put(tsKvEntry.getTs(), tsKvEntry.getValue());
+            } else if (argumentEntry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
+                existingArgumentEntry.getTsRecords().put(singleValueArgumentEntry.getTs(), singleValueArgumentEntry.getValue());
             }
         });
     }
@@ -61,26 +57,22 @@ public class LastRecordsCalculatedFieldState extends BaseCalculatedFieldState {
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
         Map<String, Object> resultMap = new HashMap<>();
-        arguments.replaceAll((key, argumentEntry) -> {
-            int limit = ctx.getArguments().get(key).getLimit();
-
-            // TODO: implement removing if size > limit
-
-
-//            List<TsKvEntry> limitedEntries = entries.stream()
-//                    .sorted(Comparator.comparingLong(TsKvEntry::getTs).reversed())
-//                    .limit(limit)
-//                    .collect(Collectors.toList());
-//
-//            Map<Long, Object> valueWithTs = limitedEntries.stream()
-//                    .collect(Collectors.toMap(TsKvEntry::getTs, TsKvEntry::getValue));
-//            resultMap.put(key, valueWithTs);
-
-//            return new LastRecordsArgumentEntry(limitedEntries);
-            return null;
+        arguments.forEach((key, argumentEntry) -> {
+            Argument argument = ctx.getArguments().get(key);
+            TreeMap<Long, Object> tsRecords = ((LastRecordsArgumentEntry) argumentEntry).getTsRecords();
+            if (tsRecords.size() > argument.getLimit()) {
+                tsRecords.pollFirstEntry();
+            }
+            long necessaryIntervalTs = calculateIntervalStart(System.currentTimeMillis(), argument.getTimeWindow());
+            tsRecords.entrySet().removeIf(tsRecord -> calculateIntervalStart(tsRecord.getKey(), argument.getTimeWindow()) < necessaryIntervalTs);
+            resultMap.put(key, tsRecords);
         });
         Output output = ctx.getOutput();
         return Futures.immediateFuture(new CalculatedFieldResult(output.getType(), output.getScope(), resultMap));
+    }
+
+    private long calculateIntervalStart(long ts, long interval) {
+        return (ts / interval) * interval;
     }
 
 }

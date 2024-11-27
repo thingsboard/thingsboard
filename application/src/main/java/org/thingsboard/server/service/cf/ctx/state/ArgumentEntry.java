@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 import java.util.List;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 @JsonTypeInfo(
@@ -34,16 +36,18 @@ import java.util.stream.Collectors;
 })
 public interface ArgumentEntry {
 
+    @JsonIgnore
     ArgumentType getType();
 
     Object getValue();
 
     static ArgumentEntry createSingleValueArgument(KvEntry kvEntry) {
-        return new SingleValueArgumentEntry(kvEntry.getValue());
+        return new SingleValueArgumentEntry(kvEntry);
     }
 
     static ArgumentEntry createLastRecordsArgument(List<TsKvEntry> kvEntries) {
-        return new LastRecordsArgumentEntry(kvEntries.stream() .collect(Collectors.toMap(TsKvEntry::getTs, TsKvEntry::getValue)));
+        return new LastRecordsArgumentEntry(kvEntries.stream().
+                collect(Collectors.toMap(TsKvEntry::getTs, TsKvEntry::getValue, (oldValue, newValue) -> newValue, TreeMap::new)));
     }
 
 }

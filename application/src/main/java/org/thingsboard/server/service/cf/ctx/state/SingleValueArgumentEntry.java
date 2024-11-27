@@ -15,16 +15,28 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class SingleValueArgumentEntry implements ArgumentEntry {
 
+    private long ts;
     private Object value;
+
+    public SingleValueArgumentEntry() {
+    }
+
+    public SingleValueArgumentEntry(KvEntry entry) {
+        if (entry instanceof TsKvEntry) {
+            this.ts = ((TsKvEntry) entry).getTs();
+        } else if (entry instanceof AttributeKvEntry) {
+            this.ts = ((AttributeKvEntry) entry).getLastUpdateTs();
+        }
+        this.value = entry.getValue();
+    }
 
     @Override
     public ArgumentType getType() {
