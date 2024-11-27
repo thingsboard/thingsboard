@@ -1,4 +1,4 @@
-<svg xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="200" height="400" fill="none" version="1.1" viewBox="0 0 200 400" id="svg4" sodipodi:docname="long-vertical-connector.svg" inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"><tb:metadata xmlns=""><![CDATA[{
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="200" height="400" fill="none" version="1.1" viewBox="0 0 200 400"><tb:metadata xmlns=""><![CDATA[{
   "title": "HP Long vertical connector",
   "description": "Long vertical connector",
   "widgetSizeX": 1,
@@ -170,5 +170,5 @@
     }
   ]
 }]]></tb:metadata>
-<defs id="defs8"/><sodipodi:namedview id="namedview6" pagecolor="#505050" bordercolor="#eeeeee" borderopacity="1" inkscape:pageshadow="0" inkscape:pageopacity="0" inkscape:pagecheckerboard="0" showgrid="false" inkscape:zoom="2.2475" inkscape:cx="99.888765" inkscape:cy="200" inkscape:window-width="1920" inkscape:window-height="1136" inkscape:window-x="0" inkscape:window-y="0" inkscape:window-maximized="1" inkscape:current-layer="svg4"/><path d="M100 400L100 0" stroke="#1A1A1A" stroke-width="6" id="path4" tb:tag="line"/><path d="M100 171L129 229H71L100 171Z" fill="#1A1A1A" id="path2" tb:tag="arrow"/>
+<path d="m100 400v-400" stroke="#1A1A1A" stroke-width="6" tb:tag="line"/><path d="m100 171 29 58h-58l29-58z" fill="#1A1A1A" tb:tag="arrow"/>
 </svg>
