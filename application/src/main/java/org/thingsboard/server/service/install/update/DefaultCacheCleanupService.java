@@ -27,9 +27,6 @@ import org.springframework.stereotype.Service;
 import java.util.Objects;
 import java.util.Optional;
 
-import static org.thingsboard.server.common.data.CacheConstants.RESOURCE_INFO_CACHE;
-import static org.thingsboard.server.common.data.CacheConstants.SECURITY_SETTINGS_CACHE;
-
 @RequiredArgsConstructor
 @Service
 @Profile("install")
@@ -39,7 +36,6 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
     private final CacheManager cacheManager;
     private final Optional<RedisTemplate<String, Object>> redisTemplate;
 
-
     /**
      * Cleanup caches that can not deserialize anymore due to schema upgrade or data update using sql scripts.
      * Refer to SqlDatabaseUpgradeService and /data/upgrage/*.sql
@@ -48,22 +44,10 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
     @Override
     public void clearCache(String fromVersion) throws Exception {
         switch (fromVersion) {
-            case "3.6.1":
-                log.info("Clearing cache to upgrade from version 3.6.1 to 3.6.2");
-                clearCacheByName(SECURITY_SETTINGS_CACHE);
-                clearCacheByName(RESOURCE_INFO_CACHE);
-                break;
-            case "3.6.3":
-                log.info("Clearing cache to upgrade from version 3.6.3 to 3.6.4");
-                clearAll();
-                break;
-            case "3.6.4":
-                log.info("Clearing cache to upgrade from version 3.6.4 to 3.7.0");
-                clearAll();
-                break;
-            case "3.7.0":
-                log.info("Clearing cache to upgrade from version 3.7.0 to 3.8.0");
-                clearAll();
+            case "3.8.0":
+            case "3.8.1":
+                log.info("Clearing cache to upgrade from version {} to 3.9.0", fromVersion);
+                clearAllCaches();
                 break;
             default:
                 //Do nothing, since cache cleanup is optional.

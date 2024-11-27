@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.service.install;
 
-public interface EntityDatabaseSchemaService extends DatabaseSchemaService {
+public interface DatabaseSchemaVersionService {
+    String validateSchemaSettings(String upgradeFromVersion);
 
-    void createOrUpdateDeviceInfoView(boolean activityStateInTelemetry);
+    void createSchemaSettings();
 
-    void createOrUpdateViewsAndFunctions() throws Exception;
-
+    void updateSchemaVersion();
 }
