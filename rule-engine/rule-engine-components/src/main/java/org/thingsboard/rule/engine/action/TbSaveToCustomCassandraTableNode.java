@@ -38,10 +38,8 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
-import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
@@ -54,7 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
@@ -88,7 +85,6 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
     private PreparedStatement saveStmt;
     private ExecutorService readResultsProcessingExecutor;
     private Map<String, String> fieldsMap;
-    private Integer ttl;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -100,18 +96,8 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
         if (!isTableExists()) {
             throw new TbNodeException("Table '" + TABLE_PREFIX + config.getTableName() + "' does not exist in Cassandra cluster.");
         }
-        ctx.addTenantProfileListener(this::onTenantProfileUpdate);
-        onTenantProfileUpdate(ctx.getTenantProfile());
         startExecutor();
         saveStmt = getSaveStmt();
-    }
-
-    private void onTenantProfileUpdate(TenantProfile tenantProfile) {
-        DefaultTenantProfileConfiguration configuration = (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
-        ttl = config.getDefaultTTL();
-        if (ttl != null && ttl == 0) {
-            ttl = (int) TimeUnit.DAYS.toSeconds(configuration.getDefaultStorageTtlDays());
-        }
     }
 
     @Override
@@ -189,7 +175,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                 query.append("?, ");
             }
         }
-        if (ttl != null && ttl > 0) {
+        if (config.getDefaultTtL() > 0) {
             query.append(" USING TTL ?");
         }
         return query.toString();
@@ -233,8 +219,8 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                 }
                 i.getAndIncrement();
             });
-            if (ttl != null && ttl > 0) {
-                stmtBuilder.setInt(i.get(), ttl);
+            if (config.getDefaultTtL() > 0) {
+                stmtBuilder.setInt(i.get(), config.getDefaultTtL());
             }
             return getFuture(executeAsyncWrite(ctx, stmtBuilder.build()), rs -> null);
         }
@@ -281,9 +267,9 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
         boolean hasChanges = false;
         switch (fromVersion) {
             case 0:
-                if (!oldConfiguration.has("defaultTTL")) {
+                if (!oldConfiguration.has("defaultTtL")) {
                     hasChanges = true;
-                    ((ObjectNode) oldConfiguration).putNull("defaultTTL");
+                    ((ObjectNode) oldConfiguration).put("defaultTtL", 0);
                 }
                 break;
             default:

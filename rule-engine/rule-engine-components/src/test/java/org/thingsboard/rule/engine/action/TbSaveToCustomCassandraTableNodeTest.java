@@ -46,13 +46,9 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
@@ -91,7 +87,6 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
 
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("ac4ca02e-2ae6-404a-8f7e-c4ae31c56aa7"));
     private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("64ad971e-9cfa-49e4-9f59-faa1a2350c6e"));
-    private final TenantProfileId TENANT_PROFILE_ID = new TenantProfileId(UUID.fromString("239af5ad-53c1-4179-802f-3821f92ed338"));
 
     private final ListeningExecutor dbCallbackExecutor = new TestDbCallbackExecutor();
 
@@ -140,7 +135,7 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
     public void verifyDefaultConfig() {
         assertThat(config.getTableName()).isEqualTo("");
         assertThat(config.getFieldsMapping()).isEqualTo(Map.of("", ""));
-        assertThat(config.getDefaultTTL()).isEqualTo(0);
+        assertThat(config.getDefaultTtL()).isEqualTo(0);
     }
 
     @Test
@@ -175,7 +170,6 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
         var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         mockCassandraCluster();
-        given(ctxMock.getTenantProfile()).willReturn(getTenantProfileWithTtl(5));
 
         assertThatThrownBy(() -> node.init(ctxMock, configuration))
                 .isInstanceOf(TbNodeException.class)
@@ -241,16 +235,14 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
 
     @ParameterizedTest
     @MethodSource
-    public void givenTtl_whenOnMsg_thenVerifyStatement(Integer ttlFromConfig,
-                                                       int ttlFromTenantProfileInDays,
+    public void givenTtl_whenOnMsg_thenVerifyStatement(int ttlFromConfig,
                                                        String expectedQuery,
                                                        Consumer<BoundStatementBuilder> verifyBuilder) throws TbNodeException {
         config.setTableName("readings");
         config.setFieldsMapping(Map.of("$entityId", "entityIdTableColumn"));
-        config.setDefaultTTL(ttlFromConfig);
+        config.setDefaultTtL(ttlFromConfig);
 
         mockOnInit();
-        given(ctxMock.getTenantProfile()).willReturn(getTenantProfileWithTtl(ttlFromTenantProfileInDays));
         willAnswer(invocation -> boundStatementBuilderMock).given(node).getStmtBuilder();
         given(boundStatementBuilderMock.setUuid(anyInt(), any(UUID.class))).willReturn(boundStatementBuilderMock);
         given(boundStatementBuilderMock.build()).willReturn(boundStatementMock);
@@ -266,28 +258,20 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
 
     private static Stream<Arguments> givenTtl_whenOnMsg_thenVerifyStatement() {
         return Stream.of(
-                Arguments.of(0, 0, "INSERT INTO cs_tb_readings(entityIdTableColumn) VALUES(?)",
+                Arguments.of(0, "INSERT INTO cs_tb_readings(entityIdTableColumn) VALUES(?)",
                         (Consumer<BoundStatementBuilder>) builder -> {
                             then(builder).should(never()).setInt(anyInt(), anyInt());
                         }),
-                Arguments.of(0, 5, "INSERT INTO cs_tb_readings(entityIdTableColumn) VALUES(?) USING TTL ?",
-                        (Consumer<BoundStatementBuilder>) builder -> {
-                            then(builder).should().setInt(1, 432000);
-                        }),
-                Arguments.of(20, 1, "INSERT INTO cs_tb_readings(entityIdTableColumn) VALUES(?) USING TTL ?",
+                Arguments.of(20, "INSERT INTO cs_tb_readings(entityIdTableColumn) VALUES(?) USING TTL ?",
                         (Consumer<BoundStatementBuilder>) builder -> {
                             then(builder).should().setInt(1, 20);
-                        }),
-                Arguments.of(null, 2, "INSERT INTO cs_tb_readings(entityIdTableColumn) VALUES(?)",
-                        (Consumer<BoundStatementBuilder>) builder -> {
-                            then(builder).should(never()).setInt(anyInt(), anyInt());
                         })
         );
     }
 
     @Test
     public void givenValidMsgStructure_whenOnMsg_thenVerifyMatchOfValuesInsertionOrderIntoStatementAndSaveToCustomCassandraTable() throws TbNodeException {
-        config.setDefaultTTL(25);
+        config.setDefaultTtL(25);
         config.setTableName("readings");
         Map<String, String> mappings = Map.of(
                 "$entityId", "entityIdTableColumn",
@@ -341,20 +325,19 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
                 Arguments.of(0,
                         "{\"tableName\":\"\",\"fieldsMapping\":{\"\":\"\"}}",
                         true,
-                        "{\"tableName\":\"\",\"fieldsMapping\":{\"\":\"\"},\"defaultTTL\":null}"
+                        "{\"tableName\":\"\",\"fieldsMapping\":{\"\":\"\"},\"defaultTtL\":0}"
                 ),
                 // default config for version 1 with upgrade from version 1
                 Arguments.of(1,
-                        "{\"tableName\":\"\",\"fieldsMapping\":{\"\":\"\"},\"defaultTTL\":0}",
+                        "{\"tableName\":\"\",\"fieldsMapping\":{\"\":\"\"},\"defaultTtL\":0}",
                         false,
-                        "{\"tableName\":\"\",\"fieldsMapping\":{\"\":\"\"},\"defaultTTL\":0}"
+                        "{\"tableName\":\"\",\"fieldsMapping\":{\"\":\"\"},\"defaultTtL\":0}"
                 )
         );
     }
 
     private void mockOnInit() {
         mockCassandraCluster();
-        given(ctxMock.getTenantProfile()).willReturn(getTenantProfileWithTtl(5));
         given(cassandraClusterMock.getDefaultWriteConsistencyLevel()).willReturn(DefaultConsistencyLevel.ONE);
         given(sessionMock.prepare(anyString())).willReturn(preparedStatementMock);
     }
@@ -408,16 +391,6 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
         then(boundStatementBuilderMock).should().setString(values.indexOf("stringTableColumn"), "some string");
         then(boundStatementBuilderMock).should().setString(values.indexOf("jsonTableColumn"), "{\"key\":\"value\"}");
         then(boundStatementBuilderMock).should().setInt(values.size(), 25);
-    }
-
-    private TenantProfile getTenantProfileWithTtl(int ttlInDays) {
-        var tenantProfile = new TenantProfile(TENANT_PROFILE_ID);
-        var tenantProfileData = new TenantProfileData();
-        var tenantProfileConfiguration = new DefaultTenantProfileConfiguration();
-        tenantProfileConfiguration.setDefaultStorageTtlDays(ttlInDays);
-        tenantProfileData.setConfiguration(tenantProfileConfiguration);
-        tenantProfile.setProfileData(tenantProfileData);
-        return tenantProfile;
     }
 
 }

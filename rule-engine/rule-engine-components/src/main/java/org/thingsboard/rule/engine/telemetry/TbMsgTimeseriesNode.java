@@ -75,7 +75,7 @@ public class TbMsgTimeseriesNode implements TbNode {
         onTenantProfileUpdate(ctx.getTenantProfile());
     }
 
-    private void onTenantProfileUpdate(TenantProfile tenantProfile) {
+    void onTenantProfileUpdate(TenantProfile tenantProfile) {
         DefaultTenantProfileConfiguration configuration = (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
         tenantProfileDefaultStorageTtl = TimeUnit.DAYS.toSeconds(configuration.getDefaultStorageTtlDays());
     }
