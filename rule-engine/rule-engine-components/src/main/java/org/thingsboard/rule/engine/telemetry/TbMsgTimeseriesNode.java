@@ -23,6 +23,7 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -31,7 +32,6 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.adaptor.JsonConverter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,10 +43,10 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_RE
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
-        name = "save timeseries",
+        name = "save time series",
         configClazz = TbMsgTimeseriesNodeConfiguration.class,
-        nodeDescription = "Saves timeseries data",
-        nodeDetails = "Saves timeseries telemetry data based on configurable TTL parameter. Expects messages with 'POST_TELEMETRY_REQUEST' message type. " +
+        nodeDescription = "Saves time series data",
+        nodeDetails = "Saves time series telemetry data based on configurable TTL parameter. Expects messages with 'POST_TELEMETRY_REQUEST' message type. " +
                 "Timestamp in milliseconds will be taken from metadata.ts, otherwise 'now' message timestamp will be applied. " +
                 "Allows stopping updating values for incoming keys in the latest ts_kv table if 'skipLatestPersistence' is set to true.\n " +
                 "<br/>" +

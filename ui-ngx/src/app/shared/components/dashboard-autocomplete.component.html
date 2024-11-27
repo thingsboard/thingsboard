@@ -32,7 +32,7 @@
          [matAutocomplete]="dashboardAutocomplete"
          [fxShow]="!useDashboardLink || !disabled || !selectDashboardFormGroup.get('dashboard').value">
   <a *ngIf="useDashboardLink && selectDashboardFormGroup.get('dashboard').value && disabled" aria-label="Open device profile" [routerLink]=dashboardURL>
-    {{ displayDashboardFn(selectDashboardFormGroup.get('dashboard').value) }}
+    {{ displayDashboardFn(selectDashboardFormGroup.get('dashboard').value) | customTranslate }}
   </a>
   <button *ngIf="selectDashboardFormGroup.get('dashboard').value && !disabled"
           type="button"
@@ -54,12 +54,19 @@
     #dashboardAutocomplete="matAutocomplete"
     [displayWith]="displayDashboardFn">
     <mat-option *ngFor="let dashboard of filteredDashboards | async" [value]="dashboard">
-      <span [innerHTML]="dashboard.title | highlight:searchText"></span>
+      <span [innerHTML]="dashboard.title | customTranslate | highlight:searchText"></span>
     </mat-option>
     <mat-option *ngIf="!(filteredDashboards | async)?.length" [value]="null">
-      <span>
+      <div (click)="$event.stopPropagation()">
+        <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
+          <span>{{ 'dashboard.no-dashboards-text' | translate }}</span>
+        </div>
+        <ng-template #searchNotEmpty>
+          <span>
           {{ translate.get('dashboard.no-dashboards-matching', {entity: searchText}) | async }}
-      </span>
+          </span>
+        </ng-template>
+      </div>
     </mat-option>
   </mat-autocomplete>
   <mat-error *ngIf="!inlineField">

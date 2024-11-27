@@ -60,15 +60,20 @@ public interface TbTransactionalCache<K extends Serializable, V extends Serializ
     }
 
     default V getAndPutInTransaction(K key, Supplier<V> dbCall, boolean cacheNullValue) {
+        return getAndPutInTransaction(key, dbCall, Function.identity(), Function.identity(), cacheNullValue);
+    }
+
+    default <R> R getAndPutInTransaction(K key, Supplier<R> dbCall, Function<V, R> cacheValueToResult, Function<R, V> dbValueToCacheValue, boolean cacheNullValue) {
         TbCacheValueWrapper<V> cacheValueWrapper = get(key);
         if (cacheValueWrapper != null) {
-            return cacheValueWrapper.get();
+            V cacheValue = cacheValueWrapper.get();
+            return cacheValue != null ? cacheValueToResult.apply(cacheValue) : null;
         }
         var cacheTransaction = newTransactionForKey(key);
         try {
-            V dbValue = dbCall.get();
+            R dbValue = dbCall.get();
             if (dbValue != null || cacheNullValue) {
-                cacheTransaction.putIfAbsent(key, dbValue);
+                cacheTransaction.put(key, dbValueToCacheValue.apply(dbValue));
                 cacheTransaction.commit();
                 return dbValue;
             } else {
@@ -91,29 +96,6 @@ public interface TbTransactionalCache<K extends Serializable, V extends Serializ
                 return cacheValue == null ? null : cacheValueToResult.apply(cacheValue);
             }
             return dbCall.get();
-        }
-    }
-
-    default <R> R getAndPutInTransaction(K key, Supplier<R> dbCall, Function<V, R> cacheValueToResult, Function<R, V> dbValueToCacheValue, boolean cacheNullValue) {
-        TbCacheValueWrapper<V> cacheValueWrapper = get(key);
-        if (cacheValueWrapper != null) {
-            var cacheValue = cacheValueWrapper.get();
-            return cacheValue == null ? null : cacheValueToResult.apply(cacheValue);
-        }
-        var cacheTransaction = newTransactionForKey(key);
-        try {
-            R dbValue = dbCall.get();
-            if (dbValue != null || cacheNullValue) {
-                cacheTransaction.putIfAbsent(key, dbValueToCacheValue.apply(dbValue));
-                cacheTransaction.commit();
-                return dbValue;
-            } else {
-                cacheTransaction.rollback();
-                return null;
-            }
-        } catch (Throwable e) {
-            cacheTransaction.rollback();
-            throw e;
         }
     }
 

@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.ImageDescriptor;
+import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbImageDeleteResult;
 import org.thingsboard.server.common.data.TbResource;
@@ -103,6 +104,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         WIDGET_TYPE_BASE64_MAPPING.put("settings.markerImages", "Map marker image $index");
         WIDGET_TYPE_BASE64_MAPPING.put("settings.background.imageUrl", "$prefix background");
         WIDGET_TYPE_BASE64_MAPPING.put("settings.background.imageBase64", "$prefix background");
+        WIDGET_TYPE_BASE64_MAPPING.put("settings.scadaSymbolUrl", "$prefix SCADA symbol");
         WIDGET_TYPE_BASE64_MAPPING.put("datasources.*.dataKeys.*.settings.customIcon", "$prefix custom icon");
     }
 
@@ -139,6 +141,9 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     public TbResourceInfo saveImage(TbResource image) {
         if (image.getId() == null) {
             image.setResourceKey(getUniqueKey(image.getTenantId(), StringUtils.defaultIfEmpty(image.getResourceKey(), image.getFileName())));
+        }
+        if (image.getResourceSubType() == null) {
+            image.setResourceSubType(ResourceSubType.IMAGE);
         }
         resourceValidator.validate(image, TbResourceInfo::getTenantId);
 
@@ -220,21 +225,23 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     }
 
     @Override
-    public PageData<TbResourceInfo> getImagesByTenantId(TenantId tenantId, PageLink pageLink) {
+    public PageData<TbResourceInfo> getImagesByTenantId(TenantId tenantId, ResourceSubType imageSubType, PageLink pageLink) {
         log.trace("Executing getImagesByTenantId [{}]", tenantId);
         TbResourceInfoFilter filter = TbResourceInfoFilter.builder()
                 .tenantId(tenantId)
                 .resourceTypes(Set.of(ResourceType.IMAGE))
+                .resourceSubTypes(Set.of(imageSubType))
                 .build();
         return findTenantResourcesByTenantId(filter, pageLink);
     }
 
     @Override
-    public PageData<TbResourceInfo> getAllImagesByTenantId(TenantId tenantId, PageLink pageLink) {
+    public PageData<TbResourceInfo> getAllImagesByTenantId(TenantId tenantId, ResourceSubType imageSubType, PageLink pageLink) {
         log.trace("Executing getAllImagesByTenantId [{}]", tenantId);
         TbResourceInfoFilter filter = TbResourceInfoFilter.builder()
                 .tenantId(tenantId)
                 .resourceTypes(Set.of(ResourceType.IMAGE))
+                .resourceSubTypes(Set.of(imageSubType))
                 .build();
         return findAllTenantResourcesByTenantId(filter, pageLink);
     }
@@ -278,6 +285,11 @@ public class BaseImageService extends BaseResourceService implements ImageServic
             deleteResource(tenantId, imageId, force);
         }
         return result.success(success).build();
+    }
+
+    @Override
+    public String calculateImageEtag(byte[] imageData) {
+        return calculateEtag(imageData);
     }
 
     @Override
@@ -419,7 +431,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         return base64ToImageUrl(tenantId, name, data, false);
     }
 
-    private static final Pattern TB_IMAGE_METADATA_PATTERN = Pattern.compile("^tb-image:(.*):(.*);data:(.*);.*");
+    private static final Pattern TB_IMAGE_METADATA_PATTERN = Pattern.compile("^tb-image:([^:]*):([^:]*):?([^:]*)?;data:(.*);.*");
 
     private UpdateResult base64ToImageUrl(TenantId tenantId, String name, String data, boolean strict) {
         if (StringUtils.isBlank(data)) {
@@ -429,11 +441,15 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         boolean matches = matcher.matches();
         String mdResourceKey = null;
         String mdResourceName = null;
+        String mdResourceSubType = null;
         String mdMediaType;
         if (matches) {
             mdResourceKey = new String(Base64.getDecoder().decode(matcher.group(1)), StandardCharsets.UTF_8);
             mdResourceName = new String(Base64.getDecoder().decode(matcher.group(2)), StandardCharsets.UTF_8);
-            mdMediaType = matcher.group(3);
+            if (StringUtils.isNotBlank(matcher.group(3))) {
+                mdResourceSubType = new String(Base64.getDecoder().decode(matcher.group(3)), StandardCharsets.UTF_8);
+            };
+            mdMediaType = matcher.group(4);
         } else if (data.startsWith(DataConstants.TB_IMAGE_PREFIX + "data:image/") || (!strict && data.startsWith("data:image/"))) {
             mdMediaType = StringUtils.substringBetween(data, "data:", ";base64");
         } else {
@@ -461,6 +477,11 @@ public class BaseImageService extends BaseResourceService implements ImageServic
                         + "." + extension;
             } else {
                 fileName = mdResourceKey;
+            }
+            if (StringUtils.isBlank(mdResourceSubType)) {
+                image.setResourceSubType(ResourceSubType.IMAGE);
+            } else {
+                image.setResourceSubType(ResourceSubType.valueOf(mdResourceSubType));
             }
             image.setFileName(fileName);
             image.setDescriptor(JacksonUtil.newObjectNode().put("mediaType", mdMediaType));
@@ -617,13 +638,14 @@ public class BaseImageService extends BaseResourceService implements ImageServic
             ImageCacheKey key = getKeyFromUrl(tenantId, url);
             if (key != null) {
                 var imageInfo = getImageInfoByTenantIdAndKey(key.getTenantId(), key.getResourceKey());
-                if (imageInfo != null) {
+                if (imageInfo != null && !(TenantId.SYS_TENANT_ID.equals(imageInfo.getTenantId()) && ResourceSubType.SCADA_SYMBOL.equals(imageInfo.getResourceSubType()))) {
                     byte[] data = key.isPreview() ? getImagePreview(tenantId, imageInfo.getId()) : getImageData(tenantId, imageInfo.getId());
                     ImageDescriptor descriptor = getImageDescriptor(imageInfo, key.isPreview());
                     String tbImagePrefix = "";
                     if (addTbImagePrefix) {
                         tbImagePrefix = "tb-image:" + Base64.getEncoder().encodeToString(imageInfo.getResourceKey().getBytes(StandardCharsets.UTF_8)) + ":"
-                                + Base64.getEncoder().encodeToString(imageInfo.getName().getBytes(StandardCharsets.UTF_8)) + ";";
+                                + Base64.getEncoder().encodeToString(imageInfo.getName().getBytes(StandardCharsets.UTF_8)) + ":"
+                                + Base64.getEncoder().encodeToString(imageInfo.getResourceSubType().name().getBytes(StandardCharsets.UTF_8)) + ";";
                     }
                     return tbImagePrefix + "data:" + descriptor.getMediaType() + ";base64," + Base64.getEncoder().encodeToString(data);
                 }

@@ -29,7 +29,7 @@ import {
   ResourceTypeMIMETypes,
   ResourceTypeTranslationMap
 } from '@shared/models/resource.models';
-import { filter, startWith, takeUntil } from 'rxjs/operators';
+import { startWith, takeUntil } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { isDefinedAndNotNull } from '@core/utils';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
@@ -43,8 +43,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   readonly resourceType = ResourceType;
   readonly resourceTypes: ResourceType[] = Object.values(this.resourceType);
   readonly resourceTypesTranslationMap = ResourceTypeTranslationMap;
-
-  maxResourceSize = getCurrentAuthState(this.store).maxResourceSize;
+  readonly maxResourceSize = getCurrentAuthState(this.store).maxResourceSize;
 
   private destroy$ = new Subject<void>();
 
@@ -57,33 +56,20 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     super.ngOnInit();
-    this.entityForm.get('resourceType').valueChanges.pipe(
-      startWith(ResourceType.JS_MODULE),
-      filter(() => this.isAdd),
-      takeUntil(this.destroy$)
-    ).subscribe((type) => {
-      if (type === this.resourceType.LWM2M_MODEL) {
-        this.entityForm.get('title').disable({emitEvent: false});
-        this.entityForm.patchValue({title: ''}, {emitEvent: false});
-      } else {
-        this.entityForm.get('title').enable({emitEvent: false});
-      }
-      this.entityForm.patchValue({
-        data: null,
-        fileName: null
-      }, {emitEvent: false});
-    });
+    if (this.isAdd) {
+      this.observeResourceTypeChange();
+    }
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     super.ngOnDestroy();
     this.destroy$.next();
     this.destroy$.complete();
   }
 
-  hideDelete() {
+  hideDelete(): boolean {
     if (this.entitiesTableConfig) {
       return !this.entitiesTableConfig.deleteEnabled(this.entity);
     } else {
@@ -96,24 +82,22 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
       title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
       resourceType: [entity?.resourceType ? entity.resourceType : ResourceType.JS_MODULE, Validators.required],
       fileName: [entity ? entity.fileName : null, Validators.required],
-      data: [entity ? entity.data : null, Validators.required]
+      data: [entity ? entity.data : null, this.isAdd ? [Validators.required] : []]
     });
   }
 
-  updateForm(entity: Resource) {
-    if (this.isEdit) {
-      this.entityForm.get('resourceType').disable({emitEvent: false});
-      if (entity.resourceType !== ResourceType.JS_MODULE) {
-        this.entityForm.get('fileName').disable({emitEvent: false});
-        this.entityForm.get('data').disable({emitEvent: false});
+  updateForm(entity: Resource): void {
+    this.entityForm.patchValue(entity);
+  }
+
+  override updateFormState(): void {
+    super.updateFormState();
+    if (this.isEdit && this.entityForm && !this.isAdd) {
+      this.entityForm.get('resourceType').disable({ emitEvent: false });
+      if (this.entityForm.get('resourceType').value !== ResourceType.JS_MODULE) {
+        this.entityForm.get('fileName').disable({ emitEvent: false });
       }
     }
-    this.entityForm.patchValue({
-      resourceType: entity.resourceType,
-      fileName: entity.fileName,
-      title: entity.title,
-      data: entity.data
-    });
   }
 
   prepareFormValue(formValue: Resource): Resource {
@@ -123,7 +107,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
     return super.prepareFormValue(formValue);
   }
 
-  getAllowedExtensions() {
+  getAllowedExtensions(): string {
     try {
       return ResourceTypeExtension.get(this.entityForm.get('resourceType').value);
     } catch (e) {
@@ -131,7 +115,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
     }
   }
 
-  getAcceptType() {
+  getAcceptType(): string {
     try {
       return ResourceTypeMIMETypes.get(this.entityForm.get('resourceType').value);
     } catch (e) {
@@ -143,7 +127,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
     return window.btoa(data);
   }
 
-  onResourceIdCopied() {
+  onResourceIdCopied(): void {
     this.store.dispatch(new ActionNotificationShow(
       {
         message: this.translate.instant('resource.idCopiedMessage'),
@@ -152,5 +136,25 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
         verticalPosition: 'bottom',
         horizontalPosition: 'right'
       }));
+  }
+
+  private observeResourceTypeChange(): void {
+    this.entityForm.get('resourceType').valueChanges.pipe(
+      startWith(ResourceType.JS_MODULE),
+      takeUntil(this.destroy$)
+    ).subscribe((type: ResourceType) => this.onResourceTypeChange(type));
+  }
+
+  private onResourceTypeChange(type: ResourceType): void {
+    if (type === this.resourceType.LWM2M_MODEL) {
+      this.entityForm.get('title').disable({emitEvent: false});
+      this.entityForm.patchValue({title: ''}, {emitEvent: false});
+    } else {
+      this.entityForm.get('title').enable({emitEvent: false});
+    }
+    this.entityForm.patchValue({
+      data: null,
+      fileName: null
+    }, {emitEvent: false});
   }
 }

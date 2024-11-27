@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="100" height="100" fill="none" version="1.1" viewBox="0 0 100 100"><tb:metadata xmlns=""><![CDATA[{
+  "title": "Leak sensor",
+  "description": "Leak sensor",
+  "searchTags": [
+    "leak"
+  ],
+  "widgetSizeX": 1,
+  "widgetSizeY": 1,
+  "tags": [
+    {
+      "tag": "background",
+      "stateRenderFunction": "var fill = ctx.properties.backgroundColor;\nelement.attr({fill: fill});",
+      "actions": null
+    },
+    {
+      "tag": "clickArea",
+      "stateRenderFunction": null,
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'click');"
+        }
+      }
+    },
+    {
+      "tag": "icon",
+      "stateRenderFunction": "var leak = ctx.values.leak;\nif (leak) {\n    element.attr({stroke: ctx.properties.leakColor});\n    ctx.api.cssAnimate(element, 500).attr({opacity: 0.15}).loop(0, true);\n} else {\n    element.attr({stroke: ctx.properties.defaultColor});\n    ctx.api.finishCssAnimation(element);\n}\n",
+      "actions": null
+    }
+  ],
+  "behavior": [
+    {
+      "id": "leak",
+      "name": "{i18n:scada.symbol.leak}",
+      "hint": "{i18n:scada.symbol.water-leak-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": {
+        "action": "GET_TIME_SERIES",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "leak"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "click",
+      "name": "{i18n:scada.symbol.on-click}",
+      "hint": "{i18n:scada.symbol.on-click-hint}",
+      "group": null,
+      "type": "widgetAction",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "targetDashboardStateId": null,
+        "openRightLayout": false,
+        "setEntityId": false,
+        "stateEntityParamName": null
+      }
+    }
+  ],
+  "properties": [
+    {
+      "id": "backgroundColor",
+      "name": "{i18n:scada.symbol.background-color}",
+      "type": "color",
+      "default": "#FFFFFF",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "defaultColor",
+      "name": "{i18n:scada.symbol.default-color}",
+      "type": "color",
+      "default": "#1C943E",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "leakColor",
+      "name": "{i18n:scada.symbol.leak-color}",
+      "type": "color",
+      "default": "#D12730",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    }
+  ]
+}]]></tb:metadata>
+<rect x=".5" y=".5" width="99" height="99" rx="23.5" fill="#fff" tb:tag="background"/><rect x=".5" y=".5" width="99" height="99" rx="23.5" fill="url(#paint0_linear_2089_217648)"/><rect x=".5" y=".5" width="99" height="99" rx="23.5" fill="url(#paint1_linear_2089_217648)"/><rect x=".5" y=".5" width="99" height="99" rx="23.5" stroke="#fff"/><path d="m56.668 52.309c0 2.04-0.7902 3.9966-2.1967 5.4391-0.7985 0.819-1.7586 1.4347-2.8035 1.8135m10-6.7401c0-10.962-11.667-19.487-11.667-19.487s-11.667 8.5256-11.667 19.487c0 3.2301 1.2292 6.3283 3.4171 8.6125 2.1879 2.284 5.1556 3.5659 8.2497 3.5659 3.0942 0 6.0615-1.2826 8.2493-3.5666 2.188-2.2842 3.4172-5.3817 3.4172-8.6118z" stroke="#1C943E" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" tb:tag="icon"/><path d="m33.631 0s-33.631 0-33.631 16.75v82.09c0 0.6628 0.89543 1.1601 2 1.1601h96c1.1045 0 2-0.4973 2-1.1601v-82.09c0-16.75-33.035-16.75-33.035-16.75h-16.965zm33.535 20.3c-0.64434 0-1.1666 0.3134-1.1666 0.7v75.1c0 0.3866 0.52234 0.7 1.1666 0.7h7.3336c0.64434 0 1.1666-0.3134 1.1666-0.7v-75.1c0-0.3866-0.52233-0.7-1.1666-0.7z" fill="#000" fill-opacity="0" style="stroke-width:.059761" tb:tag="clickArea"/><defs>
+  <linearGradient id="paint0_linear_2089_217648" x1="100" x2="1.5002" y1="50.119" y2="49.881" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#020202" stop-opacity=".2" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".05"/>
+   <stop stop-color="#fff" stop-opacity=".12" offset=".15"/>
+   <stop stop-color="#fff" stop-opacity=".2" offset=".51114"/>
+   <stop stop-color="#fff" stop-opacity=".12" offset=".85"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".95"/>
+   <stop stop-color="#020202" stop-opacity=".2" offset=".99341"/>
+  </linearGradient>
+  <linearGradient id="paint1_linear_2089_217648" x1="50" x2="50" y2="100" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#020202" stop-opacity=".2" offset=".01"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".05"/>
+   <stop stop-color="#fff" stop-opacity=".12" offset=".15343"/>
+   <stop stop-color="#fff" stop-opacity=".2" offset=".5"/>
+   <stop stop-color="#fff" stop-opacity=".12" offset=".85"/>
+   <stop stop-opacity=".12" offset=".95"/>
+   <stop stop-opacity=".2" offset="1"/>
+  </linearGradient>
+ </defs>
+</svg>

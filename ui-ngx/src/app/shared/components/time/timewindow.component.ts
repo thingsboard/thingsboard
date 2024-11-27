@@ -220,14 +220,14 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
     if ($event) {
       $event.stopPropagation();
     }
-    if (this.disablePanel) {
+    if (this.disablePanel || this.timewindowDisabled) {
       return;
     }
     const config = new OverlayConfig({
       panelClass: 'tb-timewindow-panel',
       backdropClass: 'cdk-overlay-transparent-backdrop',
       hasBackdrop: true,
-      maxHeight: '80vh',
+      maxHeight: '70vh',
       height: 'min-content'
     });
 
@@ -363,8 +363,14 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
 
   private isTimewindowDisabled(): boolean {
     return this.disabled ||
-      (!this.isEdit && (!this.innerValue || this.innerValue.hideInterval &&
-        (!this.aggregation || this.innerValue.hideAggregation && this.innerValue.hideAggInterval)));
+      (!this.isEdit && (!this.innerValue || (
+        ((this.innerValue.realtime?.hideInterval && this.innerValue.history?.hideInterval) ||
+          (this.innerValue.realtime?.hideLastInterval && this.innerValue.realtime?.hideQuickInterval &&
+            this.innerValue.history?.hideLastInterval && this.innerValue.history?.hideFixedInterval &&
+            this.innerValue.history?.hideQuickInterval)) &&
+        (!this.aggregation || this.innerValue.hideAggregation && this.innerValue.hideAggInterval) &&
+        (!this.timezone || this.innerValue.hideTimezone)
+      )));
   }
 
 }

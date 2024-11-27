@@ -40,7 +40,6 @@ import { AttributeService } from '@core/http/attribute.service';
 import { AttributeData, AttributeScope, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { forkJoin, Observable, Subject } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { takeUntil } from 'rxjs/operators';
 import {
   JsonObjectEditDialogComponent,
@@ -190,7 +189,9 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
     this.buildForm();
     this.ctx.updateWidgetParams();
     this.formResize$ = new ResizeObserver(() => {
-      this.resize();
+      this.ngZone.run(() => {
+        this.resize();
+      });
     });
     this.formResize$.observe(this.formContainerRef.nativeElement);
   }

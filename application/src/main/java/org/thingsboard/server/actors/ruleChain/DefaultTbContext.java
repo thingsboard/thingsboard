@@ -83,17 +83,20 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.domain.DomainService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.mobile.MobileAppService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
+import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.queue.QueueStatsService;
@@ -107,9 +110,8 @@ import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
-import org.thingsboard.server.queue.TbQueueMsgMetadata;
-import org.thingsboard.server.service.executors.PubSubRuleNodeExecutorProvider;
 import org.thingsboard.server.queue.common.SimpleTbQueueCallback;
+import org.thingsboard.server.service.executors.PubSubRuleNodeExecutorProvider;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.script.RuleNodeTbelScriptEngine;
 
@@ -171,8 +173,13 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public void input(TbMsg msg, RuleChainId ruleChainId) {
-        msg.pushToStack(nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId());
-        nodeCtx.getChainActor().tell(new RuleChainInputMsg(ruleChainId, msg));
+        if (!msg.isValid()) {
+            return;
+        }
+        TbMsg tbMsg = msg.copyWithRuleChainId(ruleChainId);
+        tbMsg.pushToStack(nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId());
+        TopicPartitionInfo tpi = mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getQueueName(), getTenantId(), tbMsg.getOriginator());
+        doEnqueue(tpi, tbMsg, new SimpleTbQueueCallback(md -> ack(msg), t -> tellFailure(msg, t)));
     }
 
     @Override
@@ -208,14 +215,10 @@ class DefaultTbContext implements TbContext {
             }
             return;
         }
-        TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
-                .setTenantIdMSB(getTenantId().getId().getMostSignificantBits())
-                .setTenantIdLSB(getTenantId().getId().getLeastSignificantBits())
-                .setTbMsg(TbMsg.toByteString(tbMsg)).build();
         if (nodeCtx.getSelf().isDebugMode()) {
             mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), tbMsg, "To Root Rule Chain");
         }
-        mainCtx.getClusterService().pushMsgToRuleEngine(tpi, tbMsg.getId(), msg, new SimpleTbQueueCallback(
+        doEnqueue(tpi, tbMsg, new SimpleTbQueueCallback(
                 metadata -> {
                     if (onSuccess != null) {
                         onSuccess.run();
@@ -228,6 +231,14 @@ class DefaultTbContext implements TbContext {
                         log.debug("[{}] Failed to put item into queue!", nodeCtx.getTenantId().getId(), t);
                     }
                 }));
+    }
+
+    private void doEnqueue(TopicPartitionInfo tpi, TbMsg tbMsg, TbQueueCallback callback) {
+        TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
+                .setTenantIdMSB(getTenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(getTenantId().getId().getLeastSignificantBits())
+                .setTbMsg(TbMsg.toByteString(tbMsg)).build();
+        mainCtx.getClusterService().pushMsgToRuleEngine(tpi, tbMsg.getId(), msg, callback);
     }
 
     @Override
@@ -825,6 +836,21 @@ class DefaultTbContext implements TbContext {
     @Override
     public NotificationRuleService getNotificationRuleService() {
         return mainCtx.getNotificationRuleService();
+    }
+
+    @Override
+    public OAuth2ClientService getOAuth2ClientService() {
+        return mainCtx.getOAuth2ClientService();
+    }
+
+    @Override
+    public DomainService getDomainService() {
+        return mainCtx.getDomainService();
+    }
+
+    @Override
+    public MobileAppService getMobileAppService() {
+        return mainCtx.getMobileAppService();
     }
 
     @Override

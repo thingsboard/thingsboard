@@ -99,6 +99,9 @@ import * as TbJsonPipe from '@shared/pipe/tbJson.pipe';
 import * as TruncatePipe from '@shared/pipe/truncate.pipe';
 import * as ImagePipe from '@shared/pipe/image.pipe';
 
+import * as EllipsisChipListDirective from '@shared/directives/ellipsis-chip-list.directive';
+import * as TruncateWithTooltipDirective from '@shared/directives/truncate-with-tooltip.directive';
+
 import * as coercion from '@shared/decorators/coercion';
 import * as enumerable from '@shared/decorators/enumerable';
 import * as TbInject from '@shared/decorators/tb-inject';
@@ -332,6 +335,9 @@ import * as AssetProfileAutocompleteComponent from '@home/components/profile/ass
 import * as RuleChainSelectComponent from '@shared/components/rule-chain/rule-chain-select.component';
 
 import { IModulesMap } from '@modules/common/modules-map.models';
+import { TimezoneComponent } from '@shared/components/time/timezone.component';
+import { TimezonePanelComponent } from '@shared/components/time/timezone-panel.component';
+import { DatapointsLimitComponent } from '@shared/components/time/datapoints-limit.component';
 
 declare const System;
 
@@ -422,6 +428,9 @@ class ModulesMap implements IModulesMap {
     '@shared/pipe/truncate.pipe': TruncatePipe,
     '@shared/pipe/image.pipe': ImagePipe,
 
+    '@shared/directives/ellipsis-chip-list.directive': EllipsisChipListDirective,
+    '@shared/directives/truncate-with-tooltip.directive': TruncateWithTooltipDirective,
+
     '@shared/decorators/coercion': coercion,
     '@shared/decorators/enumerable': enumerable,
     '@shared/decorators/tb-inject': TbInject,
@@ -460,6 +469,9 @@ class ModulesMap implements IModulesMap {
     '@shared/components/time/datetime-period.component': DatetimePeriodComponent,
     '@shared/components/time/datetime.component': DatetimeComponent,
     '@shared/components/time/timezone-select.component': TimezoneSelectComponent,
+    '@shared/components/time/timezone.component': TimezoneComponent,
+    '@shared/components/time/timezone-panel.component': TimezonePanelComponent,
+    '@shared/components/time/datapoints-limit': DatapointsLimitComponent,
     '@shared/components/value-input.component': ValueInputComponent,
     '@shared/components/dashboard-autocomplete.component': DashboardAutocompleteComponent,
     '@shared/components/entity/entity-subtype-autocomplete.component': EntitySubTypeAutocompleteComponent,

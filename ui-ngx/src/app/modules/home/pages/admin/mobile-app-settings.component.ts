@@ -21,7 +21,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { Subject, takeUntil } from 'rxjs';
-import { MobileAppService } from '@core/http/mobile-app.service';
+import { MobileApplicationService } from '@core/http/mobile-application.service';
 import {
   BadgePosition,
   badgePositionTranslationsMap,
@@ -45,7 +45,7 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
   badgePositionTranslationsMap = badgePositionTranslationsMap;
 
   constructor(protected store: Store<AppState>,
-              private mobileAppService: MobileAppService,
+              private mobileAppService: MobileApplicationService,
               private fb: FormBuilder) {
     super(store);
     this.buildMobileAppSettingsForm();
@@ -57,14 +57,18 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
       if (value) {
         this.mobileAppSettingsForm.get('androidConfig.appPackage').disable({emitEvent: false});
         this.mobileAppSettingsForm.get('androidConfig.sha256CertFingerprints').disable({emitEvent: false});
+        this.mobileAppSettingsForm.get('androidConfig.storeLink').disable({emitEvent: false});
         this.mobileAppSettingsForm.get('iosConfig.appId').disable({emitEvent: false});
+        this.mobileAppSettingsForm.get('iosConfig.storeLink').disable({emitEvent: false});
       } else {
         if (this.mobileAppSettingsForm.get('androidConfig.enabled').value) {
           this.mobileAppSettingsForm.get('androidConfig.appPackage').enable({emitEvent: false});
           this.mobileAppSettingsForm.get('androidConfig.sha256CertFingerprints').enable({emitEvent: false});
+          this.mobileAppSettingsForm.get('androidConfig.storeLink').enable({emitEvent: false});
         }
         if (this.mobileAppSettingsForm.get('iosConfig.enabled').value) {
           this.mobileAppSettingsForm.get('iosConfig.appId').enable({emitEvent: false});
+          this.mobileAppSettingsForm.get('iosConfig.storeLink').enable({emitEvent: false});
         }
       }
     });
@@ -128,11 +132,13 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
       androidConfig: this.fb.group({
         enabled: [true],
         appPackage: [{value: '', disabled: true}, [Validators.required]],
-        sha256CertFingerprints: [{value: '', disabled: true}, [Validators.required]]
+        sha256CertFingerprints: [{value: '', disabled: true}, [Validators.required]],
+        storeLink: ['', [Validators.required]]
       }),
       iosConfig: this.fb.group({
         enabled: [true],
-        appId: [{value: '', disabled: true}, [Validators.required]]
+        appId: [{value: '', disabled: true}, [Validators.required]],
+        storeLink: ['', [Validators.required]]
       }),
       qrCodeConfig: this.fb.group({
         showOnHomePage: [true],
@@ -154,10 +160,12 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
       if (!this.mobileAppSettingsForm.get('useDefaultApp').value) {
         this.mobileAppSettingsForm.get('androidConfig.appPackage').enable({emitEvent: false});
         this.mobileAppSettingsForm.get('androidConfig.sha256CertFingerprints').enable({emitEvent: false});
+        this.mobileAppSettingsForm.get('androidConfig.storeLink').enable({emitEvent: false});
       }
     } else {
       this.mobileAppSettingsForm.get('androidConfig.appPackage').disable({emitEvent: false});
       this.mobileAppSettingsForm.get('androidConfig.sha256CertFingerprints').disable({emitEvent: false});
+      this.mobileAppSettingsForm.get('androidConfig.storeLink').disable({emitEvent: false});
     }
     this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').updateValueAndValidity({onlySelf: true});
   }
@@ -166,9 +174,11 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
     if (value) {
       if (!this.mobileAppSettingsForm.get('useDefaultApp').value) {
         this.mobileAppSettingsForm.get('iosConfig.appId').enable({emitEvent: false});
+        this.mobileAppSettingsForm.get('iosConfig.storeLink').enable({emitEvent: false});
       }
     } else {
       this.mobileAppSettingsForm.get('iosConfig.appId').disable({emitEvent: false});
+      this.mobileAppSettingsForm.get('iosConfig.storeLink').disable({emitEvent: false});
     }
     this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').updateValueAndValidity({onlySelf: true});
   }

@@ -1,0 +1,59 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "../../../../scss/constants";
+
+.limit-slider-container {
+  width: 100%;
+  .limit-slider-value {
+    margin-left: 16px;
+    min-width: 25px;
+    max-width: 106px;
+  }
+  mat-form-field input[type=number] {
+    text-align: center;
+  }
+
+  .mdc-slider {
+    height: 40px;
+
+    ::ng-deep {
+      .mdc-slider__thumb {
+        left: -20px;
+        height: 40px;
+        width: 40px;
+
+        .mat-ripple-element.mat-mdc-slider-focus-ripple,
+        .mat-ripple-element.mat-mdc-slider-active-ripple,
+        .mat-ripple-element.mat-mdc-slider-hover-ripple {
+          left: 0 !important;
+          top: 0 !important;
+          height: 40px !important;
+          width: 40px !important;
+        }
+      }
+    }
+  }
+}
+
+@media #{$mat-gt-sm} {
+  .limit-slider-container {
+    > label {
+      margin-right: 16px;
+      width: min-content;
+      max-width: 40%;
+    }
+  }
+}

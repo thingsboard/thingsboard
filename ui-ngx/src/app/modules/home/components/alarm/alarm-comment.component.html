@@ -69,10 +69,14 @@
                *ngIf="!displayDataElement.edit; else commentEditing"
                (mouseenter)="onCommentMouseEnter(displayDataElement.commentId, i)"
                (mouseleave)="onCommentMouseLeave(i)">
-            <div class="user-avatar" fxLayout="row" fxLayoutAlign="center center" fxFlexAlign="start" fxHide.xs
+            <div *ngIf="displayDataElement.userExists; else userDeleted" class="user-avatar"
+                 fxLayout="row" fxLayoutAlign="center center" fxFlexAlign="start" fxHide.xs
                  [style.background-color]="displayDataElement.avatarBgColor">
               {{ getUserInitials(displayDataElement.displayName) }}
             </div>
+            <ng-template #userDeleted>
+              <mat-icon class="mat-icon tb-mat-28" fxHide.xs>no_accounts</mat-icon>
+            </ng-template>
             <div fxFlex fxLayout="column" fxLayoutGap="5px">
               <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
                 <span class="user-name">{{ displayDataElement.displayName }}</span>

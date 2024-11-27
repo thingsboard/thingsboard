@@ -37,7 +37,6 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { Observable } from 'rxjs';
 import { backgroundStyle, ComponentStyle, overlayStyle, textStyle } from '@shared/models/widget-settings.models';
 import { TbLatestChart } from '@home/components/widget/lib/chart/latest-chart';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import { WidgetComponent } from '@home/components/widget/widget.component';
@@ -83,6 +82,7 @@ export class LatestChartComponent implements OnInit, OnDestroy, AfterViewInit {
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  padding: string;
 
   get legendItems(): LatestChartLegendItem[] {
     return this.latestChart ? this.latestChart.getLegendItems() : [];
@@ -111,6 +111,7 @@ export class LatestChartComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
+    this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
 
     if (this.showLegend) {
       this.legendClass = `legend-${this.settings.legendPosition}`;

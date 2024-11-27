@@ -1,0 +1,81 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="rpcParametersFormGroup">
+  <div class="tb-form-hint tb-primary-fill tb-flex no-padding-top hint-container">
+    {{ 'gateway.rpc.hint.modbus-response-reading' | translate }}<br>
+    {{ 'gateway.rpc.hint.modbus-writing-functions' | translate }}
+  </div>
+  <div fxFlex fxLayout="row" fxLayoutGap="10px">
+    <mat-form-field fxFlex="50" class="mat-block">
+      <mat-label>{{ 'gateway.rpc.type' | translate }}</mat-label>
+      <mat-select formControlName="type">
+        <mat-option *ngFor="let type of modbusDataTypes" [value]="type">{{ type }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field fxFlex="50" class="mat-block">
+      <mat-label>{{ 'gateway.rpc.functionCode' | translate }}</mat-label>
+      <mat-select formControlName="functionCode">
+        <mat-option *ngFor="let code of functionCodes" [value]="code">{{ ModbusFunctionCodeTranslationsMap.get(code) | translate}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div fxFlex fxLayout="row" fxLayoutGap="10px">
+    <mat-form-field fxFlex="50">
+      <mat-label>{{ 'gateway.rpc.address' | translate }}</mat-label>
+      <input matInput type="number" min="0" max="50000" name="value" formControlName="address" placeholder="{{ 'gateway.set' | translate }}"/>
+      <mat-icon matSuffix
+                matTooltipPosition="above"
+                matTooltipClass="tb-error-tooltip"
+                [matTooltip]="('gateway.address-required') | translate"
+                *ngIf="rpcParametersFormGroup.get('address').hasError('required') &&
+                                           rpcParametersFormGroup.get('address').touched"
+                class="tb-error">
+        warning
+      </mat-icon>
+    </mat-form-field>
+    <mat-form-field fxFlex="50">
+      <mat-label>{{ 'gateway.rpc.objectsCount' | translate }}</mat-label>
+      <input
+        matInput
+        type="number"
+        min="1"
+        max="50000"
+        name="value"
+        formControlName="objectsCount"
+        placeholder="{{ 'gateway.set' | translate }}"
+        [readonly]="!ModbusEditableDataTypes.includes(rpcParametersFormGroup.get('type').value)"
+      />
+    </mat-form-field>
+  </div>
+  <div *ngIf="writeFunctionCodes.includes(rpcParametersFormGroup.get('functionCode').value)" fxFlex fxLayout="row">
+    <mat-form-field fxFlex="100">
+      <mat-label>{{ 'gateway.rpc.value' | translate }}</mat-label>
+      <input matInput name="value" formControlName="value" placeholder="{{ 'gateway.set' | translate }}"/>
+      <mat-icon matSuffix
+                matTooltipPosition="above"
+                matTooltipClass="tb-error-tooltip"
+                [matTooltip]="('gateway.value-required') | translate"
+                *ngIf="rpcParametersFormGroup.get('value').hasError('required') && rpcParametersFormGroup.get('value').touched"
+                class="tb-error"
+      >
+        warning
+      </mat-icon>
+    </mat-form-field>
+  </div>
+</ng-container>
+

@@ -20,9 +20,10 @@
     <mat-toolbar class="mat-mdc-table-toolbar">
       <h2>{{ 'gateway.connectors' | translate }}</h2>
       <span fxFlex></span>
-      <button mat-icon-button
+      <button *ngIf="dataSource?.data?.length"
+              mat-icon-button
               [disabled]="isLoading$ | async"
-              (click)="addConnector($event)"
+              (click)="onAddConnector($event)"
               matTooltip="{{ 'action.add' | translate }}"
               matTooltipPosition="above">
         <mat-icon>add</mat-icon>
@@ -32,7 +33,7 @@
       <section *ngIf="!dataSource?.data?.length" fxLayoutAlign="center center"
                class="mat-headline-5 tb-absolute-fill tb-add-new">
         <button mat-button class="connector"
-        (click)="addConnector($event)">
+        (click)="onAddConnector($event)">
           <mat-icon class="tb-mat-96">add</mat-icon>
           <span>{{ 'gateway.add-connector' | translate }}</span>
         </button>
@@ -46,7 +47,7 @@
           </mat-header-cell>
           <mat-cell *matCellDef="let attribute">
             <mat-slide-toggle [checked]="activeConnectors.includes(attribute.key)"
-                              (click)="$event.stopPropagation(); enableConnector(attribute)"></mat-slide-toggle>
+                              (click)="$event.stopPropagation(); onEnableConnector(attribute)"></mat-slide-toggle>
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="key">
@@ -153,14 +154,16 @@
   <section [formGroup]="connectorForm" class="tb-form-panel section-container flex">
     <div class="tb-form-panel-title tb-flex no-flex space-between align-center">
       <div class="tb-form-panel-title">
-        {{ initialConnector?.type ? gatewayConnectorDefaultTypes.get(initialConnector.type) : '' }}
+        {{ initialConnector?.type ? GatewayConnectorTypesTranslatesMap.get(initialConnector.type) : '' }}
         {{ 'gateway.configuration' | translate }}
+        <span class="version-placeholder" *ngIf="connectorForm.get('configVersion').value">v{{connectorForm.get('configVersion').value}}</span>
       </div>
-      <tb-toggle-select *ngIf="initialConnector && initialConnector.type === connectorType.MQTT" formControlName="mode" appearance="fill">
-        <tb-toggle-option [value]="connectorConfigurationModes.BASIC">
+      <tb-toggle-select *ngIf="initialConnector && allowBasicConfig.has(initialConnector.type)"
+                        formControlName="mode" appearance="fill">
+        <tb-toggle-option [value]="ConnectorConfigurationModes.BASIC">
           {{ 'gateway.basic' | translate }}
         </tb-toggle-option>
-        <tb-toggle-option [value]="connectorConfigurationModes.ADVANCED">
+        <tb-toggle-option [value]="ConnectorConfigurationModes.ADVANCED">
           {{ 'gateway.advanced' | translate }}
         </tb-toggle-option>
       </tb-toggle-select>
@@ -171,194 +174,60 @@
       gateway.select-connector
     </span>
     <section class="tb-form-panel section-container no-border no-padding tb-flex space-between" *ngIf="initialConnector">
-      <mat-tab-group>
-        <mat-tab label="{{ 'gateway.general' | translate }}">
-          <div class="tb-form-panel no-border no-padding padding-top">
-            <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-              <div class="fixed-title-width tb-required" translate>gateway.name</div>
-              <div class="tb-flex no-gap">
-                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                  <input matInput name="value" formControlName="name" placeholder="{{ 'gateway.set' | translate }}"/>
-                  <mat-icon matSuffix
-                            matTooltipPosition="above"
-                            matTooltipClass="tb-error-tooltip"
-                            [matTooltip]="('gateway.name-required') | translate"
-                            *ngIf="connectorForm.get('name').hasError('required') && connectorForm.get('name').touched"
-                            class="tb-error">
-                    warning
-                  </mat-icon>
-                </mat-form-field>
-              </div>
-            </div>
-            <div class="tb-form-panel stroked">
-              <div class="tb-form-panel-title" translate>gateway.logs-configuration</div>
-              <div class="tb-form-row" fxLayoutAlign="space-between center">
-                <mat-slide-toggle class="mat-slide" formControlName="enableRemoteLogging">
-                  <mat-label>
-                    {{ 'gateway.enable-remote-logging' | translate }}
-                  </mat-label>
-                </mat-slide-toggle>
-              </div>
-              <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                <div class="fixed-title-width" translate>gateway.remote-logging-level</div>
-                <div class="tb-flex no-gap">
-                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                    <mat-select formControlName="logLevel">
-                      <mat-option *ngFor="let logLevel of gatewayLogLevel" [value]="logLevel">{{ logLevel }}</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
-              </div>
-            </div>
-            <div *ngIf="connectorForm.get('type').value === connectorType.MQTT" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-              <mat-slide-toggle class="mat-slide" formControlName="sendDataOnlyOnChange">
-                <mat-label tb-hint-tooltip-icon="{{ 'gateway.send-change-data-hint' | translate }}">
-                  {{ 'gateway.send-change-data' | translate }}
-                </mat-label>
-              </mat-slide-toggle>
-            </div>
-          </div>
-        </mat-tab>
-        <ng-container *ngIf="connectorForm.get('type').value === connectorType.MQTT &&
-                             connectorForm.get('mode').value === connectorConfigurationModes.BASIC; else defaultConfig"
-                      formGroupName="basicConfig">
-          <mat-tab label="{{ 'gateway.broker.connection' | translate }}*">
-            <ng-container formGroupName="broker">
-              <div class="tb-form-panel no-border no-padding padding-top">
-                <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                  <div class="fixed-title-width tb-required" translate>gateway.host</div>
-                  <div class="tb-flex no-gap">
-                    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                      <input matInput name="value" formControlName="host" placeholder="{{ 'gateway.set' | translate }}"/>
-                      <mat-icon matSuffix
-                                matTooltipPosition="above"
-                                matTooltipClass="tb-error-tooltip"
-                                [matTooltip]="('gateway.host-required') | translate"
-                                *ngIf="connectorForm.get('basicConfig.broker.host').hasError('required')
-                                       && connectorForm.get('basicConfig.broker.host').touched"
-                                class="tb-error">
-                        warning
-                      </mat-icon>
-                    </mat-form-field>
-                  </div>
-                </div>
-                <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                  <div class="fixed-title-width tb-required" translate>gateway.port</div>
-                  <div class="tb-flex no-gap">
-                    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                      <input matInput type="number" min="{{portLimits.MIN}}" max="{{portLimits.MAX}}"
-                             name="value" formControlName="port" placeholder="{{ 'gateway.set' | translate }}"/>
-                      <mat-icon matSuffix
-                                matTooltipPosition="above"
-                                matTooltipClass="tb-error-tooltip"
-                                [matTooltip]="portErrorTooltip"
-                                *ngIf="(connectorForm.get('basicConfig.broker.port').hasError('required') ||
-                                        connectorForm.get('basicConfig.broker.port').hasError('min') ||
-                                        connectorForm.get('basicConfig.broker.port').hasError('max')) &&
-                                        connectorForm.get('basicConfig.broker.port').touched"
-                                class="tb-error">
-                        warning
-                      </mat-icon>
-                    </mat-form-field>
-                  </div>
-                </div>
-                <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                  <div class="fixed-title-width" translate>gateway.mqtt-version</div>
-                  <div class="tb-flex no-gap">
-                    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                      <mat-select formControlName="version">
-                        <mat-option *ngFor="let version of mqttVersions" [value]="version.value">{{ version.name }}</mat-option>
-                      </mat-select>
-                    </mat-form-field>
-                  </div>
-                </div>
-                <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                  <div class="fixed-title-width" translate>gateway.client-id</div>
-                  <div class="tb-flex no-gap">
-                    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                      <input matInput name="value" formControlName="clientId" placeholder="{{ 'gateway.set' | translate }}"/>
-                      <button type="button"
-                              matSuffix
-                              mat-icon-button
-                              aria-label="Generate"
-                              matTooltip="{{ 'gateway.generate-client-id' | translate }}"
-                              matTooltipPosition="above"
-                              (click)="generate('basicConfig.broker.clientId')"
-                              *ngIf="!connectorForm.get('basicConfig.broker.clientId').value">
-                        <mat-icon>autorenew</mat-icon>
-                      </button>
-                    </mat-form-field>
-                  </div>
-                </div>
-                <tb-broker-security [formControl]="connectorForm.get('basicConfig.broker.security')">
-                </tb-broker-security>
-              </div>
-            </ng-container>
-          </mat-tab>
-          <mat-tab label="{{ 'gateway.data-mapping' | translate }}*">
-            <div class="tb-form-panel no-border no-padding padding-top tb-flex fill-height">
-              <tb-mapping-table formControlName="dataMapping" [mappingType]="mappingTypes.DATA"></tb-mapping-table>
-            </div>
-          </mat-tab>
-          <mat-tab label="{{ 'gateway.requests-mapping' | translate }}">
-            <div class="tb-form-panel no-border no-padding padding-top tb-flex fill-height">
-              <tb-mapping-table formControlName="requestsMapping" [mappingType]="mappingTypes.REQUESTS"></tb-mapping-table>
-            </div>
-          </mat-tab>
-          <mat-tab label="{{ 'gateway.workers-settings' | translate }}">
-            <div class="tb-form-panel no-border no-padding">
-              <ng-container formGroupName="broker">
-                <div class="tb-form-panel no-border no-padding padding-top">
-                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                    <div class="fixed-title-width tb-required" [style.width.%]="50"
-                         tb-hint-tooltip-icon="{{ 'gateway.max-number-of-workers-hint' | translate }}" translate>
-                      gateway.max-number-of-workers
-                    </div>
-                    <div class="tb-flex no-gap">
-                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                        <input matInput name="value" type="number" min="1" formControlName="maxNumberOfWorkers"
-                               placeholder="{{ 'gateway.set' | translate }}"/>
-                        <mat-icon matSuffix
-                                  matTooltipPosition="above"
-                                  matTooltipClass="tb-error-tooltip"
-                                  [matTooltip]="('gateway.max-number-of-workers-required') | translate"
-                                  *ngIf="connectorForm.get('basicConfig.broker.maxNumberOfWorkers').hasError('min') ||
-                                         (connectorForm.get('basicConfig.broker.maxNumberOfWorkers').hasError('required') &&
-                                         connectorForm.get('basicConfig.broker.maxNumberOfWorkers').touched)"
-                                  class="tb-error">
-                          warning
-                        </mat-icon>
-                      </mat-form-field>
-                    </div>
-                  </div>
-                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                    <div class="fixed-title-width tb-required" [style.width.%]="50"
-                         tb-hint-tooltip-icon="{{ 'gateway.max-messages-queue-for-worker-hint' | translate }}" translate>
-                      gateway.max-messages-queue-for-worker
-                    </div>
-                    <div class="tb-flex no-gap">
-                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                        <input matInput name="value" type="number" min="1" formControlName="maxMessageNumberPerWorker"
-                               placeholder="{{ 'gateway.set' | translate }}"/>
-                        <mat-icon matSuffix
-                                  matTooltipPosition="above"
-                                  matTooltipClass="tb-error-tooltip"
-                                  [matTooltip]="('gateway.max-messages-queue-for-worker-required') | translate"
-                                  *ngIf="connectorForm.get('basicConfig.broker.maxMessageNumberPerWorker').hasError('min') ||
-                                         (connectorForm.get('basicConfig.broker.maxMessageNumberPerWorker').hasError('required') &&
-                                         connectorForm.get('basicConfig.broker.maxMessageNumberPerWorker').touched)"
-                                  class="tb-error">
-                          warning
-                        </mat-icon>
-                      </mat-form-field>
-                    </div>
-                  </div>
-                </div>
-              </ng-container>
-            </div>
-          </mat-tab>
+      <ng-container *ngIf="connectorForm.get('mode')?.value === ConnectorConfigurationModes.BASIC else defaultConfig">
+        <ng-container [ngSwitch]="initialConnector.type">
+          <ng-container *ngSwitchCase="ConnectorType.MQTT">
+            <tb-mqtt-basic-config
+              *ngIf="connectorForm.get('configVersion').value | isLatestVersionConfig else legacy"
+              formControlName="basicConfig"
+              [generalTabContent]="generalTabContent"
+              (initialized)="basicConfigInitSubject.next()"
+            />
+            <ng-template #legacy>
+              <tb-mqtt-legacy-basic-config
+                (initialized)="basicConfigInitSubject.next()"
+                formControlName="basicConfig"
+                [generalTabContent]="generalTabContent"
+              />
+            </ng-template>
+          </ng-container>
+          <ng-container *ngSwitchCase="ConnectorType.OPCUA">
+            <tb-opc-ua-basic-config
+              *ngIf="connectorForm.get('configVersion').value | isLatestVersionConfig else legacy"
+              formControlName="basicConfig"
+              [generalTabContent]="generalTabContent"
+              (initialized)="basicConfigInitSubject.next()"
+            />
+            <ng-template #legacy>
+              <tb-opc-ua-legacy-basic-config
+                (initialized)="basicConfigInitSubject.next()"
+                formControlName="basicConfig"
+                [generalTabContent]="generalTabContent"
+              />
+            </ng-template>
+          </ng-container>
+          <ng-container *ngSwitchCase="ConnectorType.MODBUS">
+            <tb-modbus-basic-config
+              *ngIf="connectorForm.get('configVersion').value | isLatestVersionConfig else legacy"
+              formControlName="basicConfig"
+              [generalTabContent]="generalTabContent"
+              (initialized)="basicConfigInitSubject.next()"
+            />
+            <ng-template #legacy>
+              <tb-modbus-legacy-basic-config
+                formControlName="basicConfig"
+                (initialized)="basicConfigInitSubject.next()"
+                [generalTabContent]="generalTabContent"
+              />
+            </ng-template>
+          </ng-container>
         </ng-container>
-        <ng-template #defaultConfig>
+      </ng-container>
+      <ng-template #defaultConfig>
+        <mat-tab-group>
+          <mat-tab label="{{ 'gateway.general' | translate }}">
+            <ng-container [ngTemplateOutlet]="generalTabContent"></ng-container>
+          </mat-tab>
           <mat-tab label="{{ 'gateway.configuration' | translate }}*">
             <tb-json-object-edit
               fillHeight="true"
@@ -369,16 +238,86 @@
               formControlName="configurationJson">
             </tb-json-object-edit>
           </mat-tab>
-        </ng-template>
-      </mat-tab-group>
+        </mat-tab-group>
+      </ng-template>
       <div fxLayoutAlign="end center">
         <button mat-raised-button color="primary"
                 type="button"
                 [disabled]="!connectorForm.dirty || connectorForm.invalid"
-                (click)="saveConnector()">
+                (click)="onSaveConnector()">
           {{ 'action.save' | translate }}
         </button>
       </div>
     </section>
   </section>
 </div>
+<ng-template #generalTabContent>
+  <section [formGroup]="connectorForm" class="tb-form-panel no-border no-padding padding-top section-container flex">
+    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center" >
+      <div class="fixed-title-width tb-required" translate>gateway.name</div>
+      <div class="tb-flex no-gap">
+        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+          <input matInput autocomplete="off" name="value" formControlName="name" placeholder="{{ 'gateway.set' | translate }}"/>
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="(connectorForm.get('name').hasError('duplicateName') ?
+                                    'gateway.connector-duplicate-name' : 'gateway.name-required') | translate"
+                    *ngIf="(connectorForm.get('name').hasError('required') && connectorForm.get('name').touched) ||
+                                    connectorForm.get('name').hasError('duplicateName')"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        </mat-form-field>
+      </div>
+    </div>
+    <div *ngIf="connectorForm.get('type').value === ConnectorType.CUSTOM" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+      <div class="fixed-title-width" translate>gateway.connectors-table-class</div>
+      <div class="tb-flex no-gap">
+        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+          <input matInput name="value" formControlName="class" placeholder="{{ 'gateway.set' | translate }}"/>
+        </mat-form-field>
+      </div>
+    </div>
+    <div *ngIf="connectorForm.get('type').value === ConnectorType.GRPC" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+      <div class="fixed-title-width" translate>gateway.connectors-table-key</div>
+      <div class="tb-flex no-gap">
+        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+          <input matInput name="value" formControlName="key" placeholder="{{ 'gateway.set' | translate }}"/>
+        </mat-form-field>
+      </div>
+    </div>
+    <div class="tb-form-panel stroked">
+      <div class="tb-form-panel-title" translate>gateway.logs-configuration</div>
+      <div class="tb-form-row" fxLayoutAlign="space-between center">
+        <mat-slide-toggle class="mat-slide" formControlName="enableRemoteLogging">
+          <mat-label>
+            {{ 'gateway.enable-remote-logging' | translate }}
+          </mat-label>
+        </mat-slide-toggle>
+      </div>
+      <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+        <div class="fixed-title-width" translate>gateway.remote-logging-level</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="logLevel">
+              <mat-option *ngFor="let logLevel of gatewayLogLevel" [value]="logLevel">{{ logLevel }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+    <div *ngIf="connectorForm.get('type').value === ConnectorType.MQTT" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+      <mat-slide-toggle class="mat-slide" formControlName="sendDataOnlyOnChange">
+        <mat-label tb-hint-tooltip-icon="{{ 'gateway.send-change-data-hint' | translate }}">
+          {{ 'gateway.send-change-data' | translate }}
+        </mat-label>
+      </mat-slide-toggle>
+    </div>
+    <tb-report-strategy
+      [defaultValue]="ReportStrategyDefaultValue.Connector"
+      *ngIf="connectorForm.get('type').value === ConnectorType.MODBUS && (connectorForm.get('configVersion').value | isLatestVersionConfig)"
+      formControlName="reportStrategy"
+    />
+  </section>
+</ng-template>

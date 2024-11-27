@@ -16,35 +16,34 @@
 
 -->
 <section [formGroup]="parentForm">
-  <mat-form-field class="mat-block">
-    <mat-label translate>contact.country</mat-label>
-    <mat-select formControlName="country">
-      <mat-option *ngFor="let country of countries" [value]="country">
-        {{ country }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
-  <div fxLayout.gt-sm="row" fxLayoutGap.gt-sm="10px">
-    <mat-form-field class="mat-block">
+  <tb-country-autocomplete
+    formControlName="country"
+    (selectCountryCode)="changeCountry($event)">
+  </tb-country-autocomplete>
+  <div class="tb-form-row column-xs tb-standard-fields no-border no-padding">
+    <mat-form-field class="flex" subscriptSizing="dynamic">
       <mat-label translate>contact.city</mat-label>
       <input matInput formControlName="city">
       <mat-error *ngIf="parentForm.get('city').hasError('maxlength')">
         {{ 'contact.city-max-length' | translate }}
       </mat-error>
+      <mat-hint></mat-hint>
     </mat-form-field>
-    <mat-form-field class="mat-block">
+    <mat-form-field class="flex" subscriptSizing="dynamic">
       <mat-label translate>contact.state</mat-label>
       <input matInput formControlName="state">
       <mat-error *ngIf="parentForm.get('state').hasError('maxlength')">
         {{ 'contact.state-max-length' | translate }}
       </mat-error>
+      <mat-hint></mat-hint>
     </mat-form-field>
-    <mat-form-field class="mat-block">
+    <mat-form-field class="flex" subscriptSizing="dynamic">
       <mat-label translate>contact.postal-code</mat-label>
       <input matInput formControlName="zip">
       <mat-error *ngIf="parentForm.get('zip').hasError('pattern')">
         {{ 'contact.postal-code-invalid' | translate }}
       </mat-error>
+      <mat-hint></mat-hint>
     </mat-form-field>
   </div>
   <mat-form-field class="mat-block">
@@ -56,6 +55,7 @@
     <input matInput formControlName="address2">
   </mat-form-field>
   <tb-phone-input [required]="false"
+                  [defaultCountry]="phoneInputDefaultCountry"
                   label="{{ 'contact.phone' | translate }}"
                   [enableFlagsSelect]="true"
                   formControlName="phone">

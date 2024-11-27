@@ -56,6 +56,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.edge.EdgeHighPriorityMsg;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponseActorMsg;
@@ -74,6 +75,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.DeviceSessionsCacheE
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseNotificationProto;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseReason;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionEvent;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionEventMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
@@ -90,7 +92,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCre
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.gen.transport.TransportProtos.UplinkNotificationMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseReason;
 import org.thingsboard.server.service.rpc.RpcSubmitStrategy;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
@@ -214,7 +215,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             log.debug("[{}][{}] device is related to edge: [{}]. Saving RPC request: [{}][{}] to edge queue", tenantId, deviceId, edgeId.getId(), rpcId, requestId);
             try {
                 if (systemContext.getEdgeService().isEdgeActiveAsync(tenantId, edgeId, DefaultDeviceStateService.ACTIVITY_STATE).get()) {
-                    saveRpcRequestToEdgeQueue(request, requestId).get();
+                    saveRpcRequestToEdgeQueue(request, requestId);
                 } else {
                     log.error("[{}][{}][{}] Failed to save RPC request to edge queue {}. The Edge is currently offline or unreachable", tenantId, deviceId, edgeId.getId(), request);
                 }
@@ -921,7 +922,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         systemContext.getTbCoreToTransportService().process(nodeId, msg);
     }
 
-    private ListenableFuture<Void> saveRpcRequestToEdgeQueue(ToDeviceRpcRequest msg, Integer requestId) {
+    private void saveRpcRequestToEdgeQueue(ToDeviceRpcRequest msg, Integer requestId) {
         ObjectNode body = JacksonUtil.newObjectNode();
         body.put("requestId", requestId);
         body.put("requestUUID", msg.getId().toString());
@@ -935,7 +936,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
         EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(tenantId, edgeId, EdgeEventType.DEVICE, EdgeEventActionType.RPC_CALL, deviceId, body);
 
-        return systemContext.getEdgeEventService().saveAsync(edgeEvent);
+        systemContext.getClusterService().onEdgeHighPriorityMsg(new EdgeHighPriorityMsg(tenantId, edgeEvent));
     }
 
     void restoreSessions() {

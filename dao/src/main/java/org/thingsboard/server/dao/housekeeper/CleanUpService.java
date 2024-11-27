@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.housekeeper.HousekeeperClient;
+import org.thingsboard.server.dao.eventsourcing.ActionCause;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.relation.RelationService;
 
@@ -59,7 +60,7 @@ public class CleanUpService {
             if (!skippedEntities.contains(entityType)) {
                 cleanUpRelatedData(tenantId, entityId);
             }
-            if (entityType == EntityType.USER) {
+            if (entityType == EntityType.USER && event.getCause() != ActionCause.TENANT_DELETION) {
                 submitTask(HousekeeperTask.unassignAlarms((User) event.getEntity()));
             }
         } catch (Throwable e) {

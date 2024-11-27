@@ -79,6 +79,7 @@ import org.thingsboard.server.queue.util.TbVersionControlComponent;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -174,7 +175,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                 }
             }
         }
-        consumer.subscribe(event.getPartitions());
+        consumer.subscribe(event.getPartitionsMap().values().stream().findAny().orElse(Collections.emptySet()));
     }
 
     @Override
@@ -202,7 +203,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
         try {
             Futures.allAsList(futures).get(packProcessingTimeout, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
-            log.info("Timeout for processing the version control tasks.", e);
+            log.error("Timeout for processing the version control tasks.", e);
         }
         consumer.commit();
     }
@@ -222,7 +223,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                     var currentSettings = vcService.getRepositorySettings(ctx.getTenantId());
                     var newSettings = ctx.getSettings();
                     if (!newSettings.equals(currentSettings)) {
-                        vcService.initRepository(ctx.getTenantId(), ctx.getSettings());
+                        vcService.initRepository(ctx.getTenantId(), ctx.getSettings(), false);
                     }
                     if (msg.hasCommitRequest()) {
                         handleCommitRequest(ctx, msg.getCommitRequest());
@@ -463,7 +464,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
 
     private void handleInitRepositoryCommand(VersionControlRequestCtx ctx) {
         try {
-            vcService.initRepository(ctx.getTenantId(), ctx.getSettings());
+            vcService.initRepository(ctx.getTenantId(), ctx.getSettings(), false);
             reply(ctx, Optional.empty());
         } catch (Exception e) {
             log.debug("[{}] Failed to connect to the repository: ", ctx, e);
@@ -563,4 +564,5 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
             }, MoreExecutors.directExecutor());
         }
     }
+
 }

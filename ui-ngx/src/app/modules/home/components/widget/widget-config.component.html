@@ -168,18 +168,32 @@
         </tb-manage-widget-actions>
       </div>
     </div>
-    <div [fxShow]="selectedOption === 'mobile'" [formGroup]="layoutSettings" class="mat-content">
-      <div class="tb-form-panel">
-        <mat-slide-toggle class="mat-slide" formControlName="mobileHide">
-          {{ 'widget-config.mobile-hide' | translate }}
-        </mat-slide-toggle>
+    <div [fxShow]="selectedOption === 'layout'" [formGroup]="layoutSettings" class="mat-content">
+      <div class="tb-form-panel" *ngIf="!showLayoutConfig || isDefaultBreakpoint">
+        <div class="tb-form-panel-title" translate>widget-config.resize-options</div>
+        <div class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="resizable">
+            {{ 'widget-config.resizable' | translate }}
+          </mat-slide-toggle>
+        </div>
+        <div class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="preserveAspectRatio">
+            {{ 'widget-config.preserve-aspect-ratio' | translate }}
+          </mat-slide-toggle>
+        </div>
       </div>
-      <div class="tb-form-panel">
-        <mat-slide-toggle class="mat-slide" formControlName="desktopHide">
-          {{ 'widget-config.desktop-hide' | translate }}
-        </mat-slide-toggle>
-      </div>
-      <div class="tb-form-panel">
+      <div class="tb-form-panel" *ngIf="showLayoutConfig">
+        <div class="tb-form-panel-title">{{ (isDefaultBreakpoint ? 'widget-config.mobile' : 'widget-config.list-layout') | translate }}</div>
+        <div class="tb-form-row" *ngIf="isDefaultBreakpoint">
+          <mat-slide-toggle class="mat-slide" formControlName="mobileHide">
+            {{ 'widget-config.mobile-hide' | translate }}
+          </mat-slide-toggle>
+        </div>
+        <div class="tb-form-row" *ngIf="isDefaultBreakpoint">
+          <mat-slide-toggle class="mat-slide" formControlName="desktopHide">
+            {{ 'widget-config.desktop-hide' | translate }}
+          </mat-slide-toggle>
+        </div>
         <div class="tb-form-row space-between">
           <div translate>widget-config.order</div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
@@ -288,7 +302,7 @@
     <div *ngIf="displayAdvancedAppearance" style="height: 100%;" [formGroup]="advancedSettings">
       <tb-widget-settings
         [aliasController]="aliasController"
-        [dataKeyCallbacks]="widgetConfigCallbacks"
+        [callbacks]="widgetConfigCallbacks"
         [dashboard]="dashboard"
         [widget]="widget"
         [widgetConfig]="modelValue"

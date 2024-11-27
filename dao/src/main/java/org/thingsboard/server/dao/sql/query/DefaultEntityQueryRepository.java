@@ -583,6 +583,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 return "e.tenant_id=:permissions_tenant_id and e.id=:permissions_customer_id";
             } else if (ctx.getEntityType() == EntityType.API_USAGE_STATE) {
                 return "e.tenant_id=:permissions_tenant_id and e.entity_id=:permissions_customer_id";
+            } else if (ctx.getEntityType() == EntityType.DASHBOARD) {
+                return "e.tenant_id=:permissions_tenant_id and e.assigned_customers like concat('%', :permissions_customer_id, '%')";
             } else {
                 return "e.tenant_id=:permissions_tenant_id and e.customer_id=:permissions_customer_id";
             }
@@ -661,7 +663,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                     .append("nr.").append(fromOrTo).append("_id").append(" = re.").append(toOrFrom).append("_id")
                     .append(" and ")
                     .append("nr.").append(fromOrTo).append("_type").append(" = re.").append(toOrFrom).append("_type");
-
+            notExistsPart.append(" and nr.relation_type_group = 'COMMON'"); // hit the index, the same condition are on the recursive query
             notExistsPart.append(")");
             whereFilter += " and ( r_int.lvl = " + entityFilter.getMaxLevel() + " OR " + notExistsPart.toString() + ")";
         }
@@ -753,7 +755,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                     .append("nr.").append(fromOrTo).append("_type").append(" = re.").append(toOrFrom).append("_type")
                     .append(" and ")
                     .append(whereFilter.toString().replaceAll("re\\.", "nr\\."));
-
+            notExistsPart.append(" and nr.relation_type_group = 'COMMON'"); // hit the index, the same condition are on the recursive query
             notExistsPart.append(")");
             whereFilter.append(" and ( r_int.lvl = ").append(entityFilter.getMaxLevel()).append(" OR ").append(notExistsPart.toString()).append(")");
         }

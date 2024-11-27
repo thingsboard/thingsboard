@@ -63,7 +63,8 @@ export class AggregatedValueCardWidgetSettingsComponent extends WidgetSettingsCo
 
       showChart: [settings.showChart, []],
 
-      background: [settings.background, []]
+      background: [settings.background, []],
+      padding: [settings.padding, []]
     });
   }
 

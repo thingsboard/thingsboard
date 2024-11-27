@@ -49,7 +49,6 @@ class TbKafkaSettingsTest {
         Properties props = settings.toProps();
 
         assertThat(props).as("TB_QUEUE_KAFKA_REQUEST_TIMEOUT_MS").containsEntry("request.timeout.ms", 30000);
-        assertThat(props).as("TB_QUEUE_KAFKA_SESSION_TIMEOUT_MS").containsEntry("session.timeout.ms", 10000);
 
         //other-inline
         assertThat(props).as("metrics.recording.level").containsEntry("metrics.recording.level", "INFO");

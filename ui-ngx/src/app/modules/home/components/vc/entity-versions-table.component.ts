@@ -20,7 +20,7 @@ import {
   Component,
   ElementRef,
   EventEmitter,
-  Input,
+  Input, NgZone,
   OnDestroy,
   OnInit,
   Output,
@@ -41,7 +41,6 @@ import { EntityVersion, VersionCreationResult, VersionLoadResult } from '@shared
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { BranchAutocompleteComponent } from '@shared/components/vc/branch-autocomplete.component';
@@ -142,7 +141,8 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
               private cd: ChangeDetectorRef,
               private viewContainerRef: ViewContainerRef,
               private elementRef: ElementRef,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private zone: NgZone) {
     super(store);
     this.dirtyValue = !this.activeValue;
     const sortOrder: SortOrder = { property: 'timestamp', direction: Direction.DESC };
@@ -152,11 +152,13 @@ export class EntityVersionsTableComponent extends PageComponent implements OnIni
 
   ngOnInit() {
     this.componentResize$ = new ResizeObserver(() => {
-      const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
-      if (showHidePageSize !== this.hidePageSize) {
-        this.hidePageSize = showHidePageSize;
-        this.cd.markForCheck();
-      }
+      this.zone.run(() => {
+        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+        if (showHidePageSize !== this.hidePageSize) {
+          this.hidePageSize = showHidePageSize;
+          this.cd.markForCheck();
+        }
+      });
     });
     this.componentResize$.observe(this.elementRef.nativeElement);
     this.isReadOnly = this.adminService.getRepositorySettingsInfo().pipe(map(settings => settings.readOnly));

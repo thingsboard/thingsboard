@@ -57,13 +57,13 @@ public class RelationServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testSaveRelation() throws ExecutionException, InterruptedException {
+    public void testSaveRelation() {
         AssetId parentId = new AssetId(Uuids.timeBased());
         AssetId childId = new AssetId(Uuids.timeBased());
 
         EntityRelation relation = new EntityRelation(parentId, childId, EntityRelation.CONTAINS_TYPE);
 
-        Assert.assertTrue(saveRelation(relation));
+        Assert.assertNotNull(saveRelation(relation));
 
         Assert.assertTrue(relationService.checkRelation(SYSTEM_TENANT_ID, parentId, childId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON));
 
@@ -204,8 +204,8 @@ public class RelationServiceTest extends AbstractServiceTest {
         Assert.assertEquals(0, relations.size());
     }
 
-    private Boolean saveRelation(EntityRelation relationA1) {
-        return relationService.saveRelation(SYSTEM_TENANT_ID, relationA1);
+    private EntityRelation saveRelation(EntityRelation relation) {
+        return relationService.saveRelation(SYSTEM_TENANT_ID, relation);
     }
 
     @Test
@@ -265,9 +265,9 @@ public class RelationServiceTest extends AbstractServiceTest {
         EntityRelation relationB = new EntityRelation(assetB, assetC, EntityRelation.CONTAINS_TYPE);
         EntityRelation relationC = new EntityRelation(assetC, assetA, EntityRelation.CONTAINS_TYPE);
 
-        saveRelation(relationA);
-        saveRelation(relationB);
-        saveRelation(relationC);
+        relationA = saveRelation(relationA);
+        relationB = saveRelation(relationB);
+        relationC = saveRelation(relationC);
 
         EntityRelationsQuery query = new EntityRelationsQuery();
         query.setParameters(new RelationsSearchParameters(assetA, EntitySearchDirection.FROM, -1, false));
@@ -299,8 +299,8 @@ public class RelationServiceTest extends AbstractServiceTest {
         EntityRelation relationBD = new EntityRelation(assetB, deviceD, EntityRelation.CONTAINS_TYPE);
 
 
-        saveRelation(relationAB);
-        saveRelation(relationBC);
+        relationAB = saveRelation(relationAB);
+        relationBC = saveRelation(relationBC);
         saveRelation(relationBD);
 
         EntityRelationsQuery query = new EntityRelationsQuery();
@@ -329,25 +329,19 @@ public class RelationServiceTest extends AbstractServiceTest {
 
         EntityRelation relationAB = new EntityRelation(root, left, EntityRelation.CONTAINS_TYPE);
         EntityRelation relationBC = new EntityRelation(root, right, EntityRelation.CONTAINS_TYPE);
-        saveRelation(relationAB);
-        expected.add(relationAB);
-
-        saveRelation(relationBC);
-        expected.add(relationBC);
+        expected.add(saveRelation(relationAB));
+        expected.add(saveRelation(relationBC));
 
         for (int i = 0; i < maxLevel; i++) {
             var newLeft = new AssetId(Uuids.timeBased());
             var newRight = new AssetId(Uuids.timeBased());
             EntityRelation relationLeft = new EntityRelation(left, newLeft, EntityRelation.CONTAINS_TYPE);
             EntityRelation relationRight = new EntityRelation(right, newRight, EntityRelation.CONTAINS_TYPE);
-            saveRelation(relationLeft);
-            expected.add(relationLeft);
-            saveRelation(relationRight);
-            expected.add(relationRight);
+            expected.add(saveRelation(relationLeft));
+            expected.add(saveRelation(relationRight));
             left = newLeft;
             right = newRight;
         }
-
 
         EntityRelationsQuery query = new EntityRelationsQuery();
         query.setParameters(new RelationsSearchParameters(root, EntitySearchDirection.FROM, -1, false));
@@ -372,7 +366,7 @@ public class RelationServiceTest extends AbstractServiceTest {
         relation.setTo(new AssetId(Uuids.timeBased()));
         relation.setType(EntityRelation.CONTAINS_TYPE);
         Assertions.assertThrows(DataValidationException.class, () -> {
-            Assert.assertTrue(saveRelation(relation));
+            Assert.assertNotNull(saveRelation(relation));
         });
     }
 
@@ -382,7 +376,7 @@ public class RelationServiceTest extends AbstractServiceTest {
         relation.setFrom(new AssetId(Uuids.timeBased()));
         relation.setType(EntityRelation.CONTAINS_TYPE);
         Assertions.assertThrows(DataValidationException.class, () -> {
-            Assert.assertTrue(saveRelation(relation));
+            Assert.assertNotNull(saveRelation(relation));
         });
     }
 
@@ -392,7 +386,7 @@ public class RelationServiceTest extends AbstractServiceTest {
         relation.setFrom(new AssetId(Uuids.timeBased()));
         relation.setTo(new AssetId(Uuids.timeBased()));
         Assertions.assertThrows(DataValidationException.class, () -> {
-            Assert.assertTrue(saveRelation(relation));
+            Assert.assertNotNull(saveRelation(relation));
         });
     }
 
@@ -414,10 +408,10 @@ public class RelationServiceTest extends AbstractServiceTest {
         EntityRelation relationC = new EntityRelation(assetC, assetD, EntityRelation.CONTAINS_TYPE);
         EntityRelation relationD = new EntityRelation(assetC, assetE, EntityRelation.CONTAINS_TYPE);
 
-        saveRelation(relationA);
-        saveRelation(relationB);
-        saveRelation(relationC);
-        saveRelation(relationD);
+        relationA = saveRelation(relationA);
+        relationB = saveRelation(relationB);
+        relationC = saveRelation(relationC);
+        relationD = saveRelation(relationD);
 
         EntityRelationsQuery query = new EntityRelationsQuery();
         query.setParameters(new RelationsSearchParameters(assetA, EntitySearchDirection.FROM, -1, true));
@@ -450,9 +444,9 @@ public class RelationServiceTest extends AbstractServiceTest {
         EntityRelation relationB = new EntityRelation(assetB, assetC, EntityRelation.CONTAINS_TYPE);
         EntityRelation relationC = new EntityRelation(assetC, assetD, EntityRelation.CONTAINS_TYPE);
 
-        saveRelation(relationA);
-        saveRelation(relationB);
-        saveRelation(relationC);
+        relationA = saveRelation(relationA);
+        relationB = saveRelation(relationB);
+        relationC = saveRelation(relationC);
 
         EntityRelationsQuery query = new EntityRelationsQuery();
         query.setParameters(new RelationsSearchParameters(assetA, EntitySearchDirection.FROM, -1, true));
@@ -494,12 +488,12 @@ public class RelationServiceTest extends AbstractServiceTest {
         EntityRelation relationE = new EntityRelation(assetD, assetF, EntityRelation.CONTAINS_TYPE);
         EntityRelation relationF = new EntityRelation(assetD, assetG, EntityRelation.CONTAINS_TYPE);
 
-        saveRelation(relationA);
-        saveRelation(relationB);
-        saveRelation(relationC);
-        saveRelation(relationD);
-        saveRelation(relationE);
-        saveRelation(relationF);
+        relationA = saveRelation(relationA);
+        relationB = saveRelation(relationB);
+        relationC = saveRelation(relationC);
+        relationD = saveRelation(relationD);
+        relationE = saveRelation(relationE);
+        relationF = saveRelation(relationF);
 
         EntityRelationsQuery query = new EntityRelationsQuery();
         query.setParameters(new RelationsSearchParameters(assetA, EntitySearchDirection.FROM, 2, true));
@@ -547,12 +541,12 @@ public class RelationServiceTest extends AbstractServiceTest {
         EntityRelation relationE = new EntityRelation(assetD, assetF, EntityRelation.CONTAINS_TYPE);
         EntityRelation relationF = new EntityRelation(assetD, assetG, EntityRelation.CONTAINS_TYPE);
 
-        saveRelation(relationA);
-        saveRelation(relationB);
-        saveRelation(relationC);
-        saveRelation(relationD);
-        saveRelation(relationE);
-        saveRelation(relationF);
+        relationA = saveRelation(relationA);
+        relationB = saveRelation(relationB);
+        relationC = saveRelation(relationC);
+        relationD = saveRelation(relationD);
+        relationE = saveRelation(relationE);
+        relationF = saveRelation(relationF);
 
         EntityRelationsQuery query = new EntityRelationsQuery();
         query.setParameters(new RelationsSearchParameters(assetA, EntitySearchDirection.FROM, 2, false));
@@ -600,12 +594,12 @@ public class RelationServiceTest extends AbstractServiceTest {
         EntityRelation relationE = new EntityRelation(assetD, assetF, EntityRelation.CONTAINS_TYPE);
         EntityRelation relationF = new EntityRelation(assetD, assetG, EntityRelation.CONTAINS_TYPE);
 
-        saveRelation(relationA);
-        saveRelation(relationB);
-        saveRelation(relationC);
-        saveRelation(relationD);
-        saveRelation(relationE);
-        saveRelation(relationF);
+        relationA = saveRelation(relationA);
+        relationB = saveRelation(relationB);
+        relationC = saveRelation(relationC);
+        relationD = saveRelation(relationD);
+        relationE = saveRelation(relationE);
+        relationF = saveRelation(relationF);
 
         EntityRelationsQuery query = new EntityRelationsQuery();
         query.setParameters(new RelationsSearchParameters(assetA, EntitySearchDirection.FROM, -1, false));
@@ -670,8 +664,8 @@ public class RelationServiceTest extends AbstractServiceTest {
         EntityRelation firstRelation = new EntityRelation(rootAsset, firstAsset, EntityRelation.CONTAINS_TYPE);
         EntityRelation secondRelation = new EntityRelation(rootAsset, secondAsset, EntityRelation.CONTAINS_TYPE);
 
-        saveRelation(firstRelation);
-        saveRelation(secondRelation);
+        firstRelation = saveRelation(firstRelation);
+        secondRelation = saveRelation(secondRelation);
 
         if (!lastLvlOnly || lvl == 1) {
             entityRelations.add(firstRelation);

@@ -26,7 +26,6 @@ import { prepareFontSettings } from '@home/components/widget/lib/settings.models
 import { CanvasDigitalGauge, CanvasDigitalGaugeOptions } from '@home/components/widget/lib/canvas-digital-gauge';
 import { DatePipe } from '@angular/common';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
-import { Subscription } from 'rxjs';
 import { ColorProcessor, createValueSubscription, ValueSourceType } from '@shared/models/widget-settings.models';
 import GenericOptions = CanvasGauges.GenericOptions;
 
@@ -60,7 +59,7 @@ export class TbCanvasDigitalGauge {
     this.localSettings.gaugeWidthScale = settings.gaugeWidthScale || 0.75;
     this.localSettings.gaugeColor = settings.gaugeColor || tinycolor(keyColor).setAlpha(0.2).toRgbString();
 
-    convertLevelColorsSettingsToColorProcessor(settings);
+    convertLevelColorsSettingsToColorProcessor(settings, keyColor);
     this.localSettings.barColor = settings.barColor;
 
     this.localSettings.showTicks = settings.showTicks || false;
@@ -260,6 +259,8 @@ export class TbCanvasDigitalGauge {
         if (value !== this.gauge.value) {
           if (!this.gauge.options.animation) {
             this.gauge._value = value;
+          } else {
+            delete this.gauge._value;
           }
           this.gauge.value = value;
         } else if (this.localSettings.showTimestamp && this.gauge.timestamp !== timestamp) {

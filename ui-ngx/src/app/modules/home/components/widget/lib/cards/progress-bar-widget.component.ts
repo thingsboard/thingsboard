@@ -42,7 +42,6 @@ import {
 } from '@shared/models/widget-settings.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { progressBarDefaultSettings, ProgressBarLayout, ProgressBarWidgetSettings } from './progress-bar-widget.models';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -98,6 +97,7 @@ export class ProgressBarWidgetComponent implements OnInit, OnDestroy, AfterViewI
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  padding: string;
 
   progressBarPanelResize$: ResizeObserver;
 
@@ -130,7 +130,12 @@ export class ProgressBarWidgetComponent implements OnInit, OnDestroy, AfterViewI
 
     this.showValue = this.settings.showValue;
     this.valueStyle = textStyle(this.settings.valueFont);
-    this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
+    this.valueColor = ColorProcessor.fromColorProcessorSettings({
+      settings: this.settings.valueColor,
+      ctx: this.ctx,
+      minGradientValue: this.settings.tickMin,
+      maxGradientValue: this.settings.tickMax
+    });
 
     this.showTitleValueRow = this.showValue ||
       (this.layout === ProgressBarLayout.simplified && this.widgetComponent.dashboardWidget.showWidgetTitlePanel);
@@ -141,7 +146,12 @@ export class ProgressBarWidgetComponent implements OnInit, OnDestroy, AfterViewI
     this.titleValueRowClass = (this.layout === ProgressBarLayout.simplified &&
       !this.widgetComponent.dashboardWidget.showWidgetTitlePanel) ? 'flex-end' : '';
 
-    this.barColor = ColorProcessor.fromSettings(this.settings.barColor);
+    this.barColor = ColorProcessor.fromColorProcessorSettings({
+      settings: this.settings.barColor,
+      ctx: this.ctx,
+      minGradientValue: this.settings.tickMin,
+      maxGradientValue: this.settings.tickMax
+    });;
 
     this.showTicks = this.settings.showTicks && this.layout === ProgressBarLayout.default;
     if (this.showTicks) {
@@ -151,6 +161,7 @@ export class ProgressBarWidgetComponent implements OnInit, OnDestroy, AfterViewI
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
+    this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
   }
 
   ngAfterViewInit() {

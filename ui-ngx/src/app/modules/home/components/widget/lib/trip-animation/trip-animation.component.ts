@@ -51,7 +51,6 @@ import {
   parseFunction,
   safeExecute
 } from '@core/utils';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { MapWidgetInterface } from '@home/components/widget/lib/maps/map-widget.interface';
 
 interface DataMap {

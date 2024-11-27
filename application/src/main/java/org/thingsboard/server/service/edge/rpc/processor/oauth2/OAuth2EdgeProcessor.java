@@ -15,49 +15,95 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor.oauth2;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.domain.DomainInfo;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.edge.EdgeEventType;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.OAuth2Info;
+import org.thingsboard.server.common.data.id.DomainId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
-import org.thingsboard.server.gen.edge.v1.OAuth2UpdateMsg;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
+import org.thingsboard.server.gen.edge.v1.OAuth2ClientUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.OAuth2DomainUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
 
 @Slf4j
 @Component
 @TbCoreComponent
 public class OAuth2EdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg convertOAuth2EventToDownlink(EdgeEvent edgeEvent) {
+    public DownlinkMsg convertOAuth2DomainEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
+        if (EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_3_8_0)) {
+            return null;
+        }
+        DomainId domainId = new DomainId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
-        OAuth2Info oAuth2Info = JacksonUtil.convertValue(edgeEvent.getBody(), OAuth2Info.class);
-        if (oAuth2Info != null) {
-            OAuth2UpdateMsg oAuth2UpdateMsg = oAuth2MsgConstructor.constructOAuth2UpdateMsg(oAuth2Info);
-            downlinkMsg = DownlinkMsg.newBuilder()
-                    .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                    .addOAuth2UpdateMsg(oAuth2UpdateMsg)
-                    .build();
+
+        switch (edgeEvent.getAction()) {
+            case ADDED, UPDATED -> {
+                DomainInfo domainInfo = domainService.findDomainInfoById(edgeEvent.getTenantId(), domainId);
+                if (domainInfo != null && domainInfo.isPropagateToEdge()) {
+                    UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
+                    OAuth2DomainUpdateMsg oAuth2DomainUpdateMsg = oAuth2MsgConstructor.constructOAuth2DomainUpdateMsg(msgType, domainInfo);
+                    DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
+                            .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
+                            .addOAuth2DomainUpdateMsg(oAuth2DomainUpdateMsg);
+                    domainInfo.getOauth2ClientInfos().forEach(clientInfo -> {
+                        OAuth2Client oauth2Client = oAuth2ClientService.findOAuth2ClientById(edgeEvent.getTenantId(), clientInfo.getId());
+                        OAuth2ClientUpdateMsg oAuth2ClientUpdateMsg = oAuth2MsgConstructor.constructOAuth2ClientUpdateMsg(msgType, oauth2Client);
+                        builder.addOAuth2ClientUpdateMsg(oAuth2ClientUpdateMsg);
+                    });
+                    downlinkMsg = builder.build();
+                }
+            }
+            case DELETED -> {
+                OAuth2DomainUpdateMsg oAuth2DomainUpdateMsg = oAuth2MsgConstructor.constructOAuth2DomainDeleteMsg(domainId);
+                downlinkMsg = DownlinkMsg.newBuilder()
+                        .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
+                        .addOAuth2DomainUpdateMsg(oAuth2DomainUpdateMsg)
+                        .build();
+            }
         }
         return downlinkMsg;
     }
 
-    public ListenableFuture<Void> processOAuth2Notification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        OAuth2Info oAuth2Info = JacksonUtil.fromString(edgeNotificationMsg.getBody(), OAuth2Info.class);
-        if (oAuth2Info == null) {
-            return Futures.immediateFuture(null);
+    public DownlinkMsg convertOAuth2ClientEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
+        if (EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_3_8_0)) {
+            return null;
         }
-        EdgeEventType type = EdgeEventType.valueOf(edgeNotificationMsg.getType());
-        EdgeEventActionType actionType = EdgeEventActionType.valueOf(edgeNotificationMsg.getAction());
-        return processActionForAllEdges(tenantId, type, actionType, null, JacksonUtil.toJsonNode(edgeNotificationMsg.getBody()), null);
+        OAuth2ClientId oAuth2ClientId = new OAuth2ClientId(edgeEvent.getEntityId());
+        DownlinkMsg downlinkMsg = null;
+
+        switch (edgeEvent.getAction()) {
+            case ADDED, UPDATED -> {
+                boolean isPropagateToEdge = oAuth2ClientService.isPropagateOAuth2ClientToEdge(edgeEvent.getTenantId(), oAuth2ClientId);
+                if (!isPropagateToEdge) {
+                    return null;
+                }
+                OAuth2Client oAuth2Client = oAuth2ClientService.findOAuth2ClientById(edgeEvent.getTenantId(), oAuth2ClientId);
+                if (oAuth2Client != null) {
+                    UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
+                    OAuth2ClientUpdateMsg oAuth2ClientUpdateMsg = oAuth2MsgConstructor.constructOAuth2ClientUpdateMsg(msgType, oAuth2Client);
+                    downlinkMsg = DownlinkMsg.newBuilder()
+                            .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
+                            .addOAuth2ClientUpdateMsg(oAuth2ClientUpdateMsg)
+                            .build();
+                }
+            }
+            case DELETED -> {
+                OAuth2ClientUpdateMsg oAuth2ClientDeleteMsg = oAuth2MsgConstructor.constructOAuth2ClientDeleteMsg(oAuth2ClientId);
+                downlinkMsg = DownlinkMsg.newBuilder()
+                        .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
+                        .addOAuth2ClientUpdateMsg(oAuth2ClientDeleteMsg)
+                        .build();
+            }
+        }
+        return downlinkMsg;
     }
 
 }

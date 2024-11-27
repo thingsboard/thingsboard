@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnDestroy } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -26,13 +26,18 @@ import {
   AddConnectorConfigData,
   ConnectorType,
   CreatedConnectorConfigData,
+  GatewayConnector,
   GatewayConnectorDefaultTypesTranslatesMap,
   GatewayLogLevel,
-  getDefaultConfig,
+  GatewayVersion,
+  GatewayVersionedDefaultConfig,
   noLeadTrailSpacesRegex
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { ResourcesService } from '@core/services/resources.service';
+import { takeUntil, tap } from 'rxjs/operators';
+import { helpBaseUrl } from '@shared/models/constants';
+import { LatestVersionConfigPipe } from '@home/components/widget/lib/gateway/pipes/latest-version-config.pipe';
 
 @Component({
   selector: 'tb-add-connector-dialog',
@@ -40,7 +45,8 @@ import { ResourcesService } from '@core/services/resources.service';
   styleUrls: ['./add-connector-dialog.component.scss'],
   providers: [],
 })
-export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDialogComponent, BaseData<HasId>> implements OnDestroy {
+export class AddConnectorDialogComponent
+  extends DialogComponent<AddConnectorDialogComponent, BaseData<HasId>> implements OnInit, OnDestroy {
 
   connectorForm: UntypedFormGroup;
 
@@ -58,6 +64,7 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
               @Inject(MAT_DIALOG_DATA) public data: AddConnectorConfigData,
               public dialogRef: MatDialogRef<AddConnectorDialogComponent, CreatedConnectorConfigData>,
               private fb: FormBuilder,
+              private isLatestVersionConfig: LatestVersionConfigPipe,
               private resourcesService: ResourcesService) {
     super(store, router, dialogRef);
     this.connectorForm = this.fb.group({
@@ -66,7 +73,13 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
       logLevel: [GatewayLogLevel.INFO, []],
       useDefaults: [true, []],
       sendDataOnlyOnChange: [false, []],
+      class: ['', []],
+      key: ['auto', []],
     });
+  }
+
+  ngOnInit(): void {
+    this.observeTypeChange();
   }
 
   ngOnDestroy(): void {
@@ -76,7 +89,7 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
   }
 
   helpLinkId(): string {
-    return 'https://thingsboard.io/docs/iot-gateway/configuration/';
+    return helpBaseUrl + '/docs/iot-gateway/configuration/';
   }
 
   cancel(): void {
@@ -87,8 +100,15 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
     this.submitted = true;
     const value = this.connectorForm.getRawValue();
     if (value.useDefaults) {
-      getDefaultConfig(this.resourcesService, value.type).subscribe((defaultConfig) => {
-        value.configurationJson = defaultConfig;
+      this.getDefaultConfig(value.type).subscribe((defaultConfig: GatewayVersionedDefaultConfig) => {
+        const gatewayVersion = this.data.gatewayVersion;
+        if (gatewayVersion) {
+          value.configVersion = gatewayVersion;
+        }
+        value.configurationJson = (this.isLatestVersionConfig.transform(gatewayVersion)
+          ? defaultConfig[GatewayVersion.Current]
+          : defaultConfig[GatewayVersion.Legacy])
+          ?? defaultConfig;
         if (this.connectorForm.valid) {
           this.dialogRef.close(value);
         }
@@ -99,23 +119,31 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
   }
 
   private uniqNameRequired(): ValidatorFn {
-    return (c: UntypedFormControl) => {
-      const newName = c.value.trim().toLowerCase();
-      const found = this.data.dataSourceData.find((connectorAttr) => {
-        const connectorData = connectorAttr.value;
-        return connectorData.name.toLowerCase() === newName;
-      });
-      if (found) {
-        if (c.hasError('required')) {
-          return c.getError('required');
-        }
-        return {
-          duplicateName: {
-            valid: false
-          }
-        };
-      }
-      return null;
+    return (control: UntypedFormControl) => {
+      const newName = control.value.trim().toLowerCase();
+      const isDuplicate = this.data.dataSourceData.some(({ value: { name } }) =>
+        name.toLowerCase() === newName
+      );
+
+      return isDuplicate ? { duplicateName: { valid: false } } : null;
     };
   }
+
+  private observeTypeChange(): void {
+    this.connectorForm.get('type').valueChanges.pipe(
+      tap((type: ConnectorType) => {
+        const useDefaultControl = this.connectorForm.get('useDefaults');
+        if (type === ConnectorType.GRPC || type === ConnectorType.CUSTOM) {
+          useDefaultControl.setValue(false);
+        } else if (!useDefaultControl.value) {
+          useDefaultControl.setValue(true);
+        }
+      }),
+      takeUntil(this.destroy$),
+    ).subscribe();
+  }
+
+  private getDefaultConfig(type: string): Observable<GatewayVersionedDefaultConfig | GatewayConnector> {
+    return this.resourcesService.loadJsonResource(`/assets/metadata/connector-default-configs/${type}.json`);
+  };
 }

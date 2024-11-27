@@ -30,12 +30,12 @@ import {
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { DataKey, DataKeyConfigMode, Widget, widgetType } from '@shared/models/widget.models';
-import { DataKeysCallbacks } from './data-keys.component.models';
 import { DataKeyConfigComponent } from '@home/components/widget/config/data-key-config.component';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { TranslateService } from '@ngx-translate/core';
+import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 
 export interface DataKeyConfigDialogData {
   dataKey: DataKey;
@@ -49,7 +49,7 @@ export interface DataKeyConfigDialogData {
   deviceId?: string;
   entityAliasId?: string;
   showPostProcessing?: boolean;
-  callbacks?: DataKeysCallbacks;
+  callbacks?: WidgetConfigCallbacks;
   hideDataKeyName?: boolean;
   hideDataKeyLabel?: boolean;
   hideDataKeyColor?: boolean;

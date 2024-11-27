@@ -18,8 +18,8 @@
 <div class="mat-subtitle-1 title">{{ 'gateway.rpc.templates-title' | translate }}</div>
 <mat-expansion-panel hideToggle *ngFor="let template of rpcTemplates">
   <mat-expansion-panel-header>
-    <mat-panel-title>
-      {{template.name}}
+    <mat-panel-title class="template-name">
+      <span matTooltip="{{template.name}}" matTooltipPosition="above">{{template.name}}</span>
     </mat-panel-title>
     <mat-panel-description>
       <button mat-icon-button matTooltip="Delete" (click)="deleteTemplate($event, template)">
@@ -32,7 +32,7 @@
   </mat-expansion-panel-header>
 
   <ng-container
-    *ngFor="let config of template.config | keyvalue : originalOrder"
+    *ngFor="let config of template.config | keyValueIsNotEmpty"
     [ngTemplateOutlet]="RPCTemplateRef"
     [ngTemplateOutletContext]="{ $implicit: config, innerValue: false }">
   </ng-container>
@@ -44,10 +44,17 @@
       <div class="template-key">
         {{!innerValue ? ('gateway.rpc.' + config.key | translate) : config.key}}
       </div>
-      <div *ngIf="!isObject(config.value) else RPCObjectRow"
+      <div *ngIf="isArray(config.value)" tbTruncateWithTooltip class="array-value">
+        {{ config.value | getRpcTemplateArrayView }}
+      </div>
+      <ng-container *ngIf="isObject(config.value)" [ngTemplateOutlet]="RPCObjectRow"></ng-container>
+      <div *ngIf="!isObject(config.value) && !isArray(config.value)"
            [ngClass]="{'boolean-true': config.value === true,
                    'boolean-false': config.value === false  }">
-        {{config.value}}</div>
+        <ng-container *ngIf="config.key === 'method' else value" [ngTemplateOutlet]="SNMPMethod"></ng-container>
+      </div>
+      <ng-template #value>{{ config.value }}</ng-template>
+      <ng-template #SNMPMethod>{{ SNMPMethodsTranslations.get(config.value) | translate }}</ng-template>
       <ng-template #RPCObjectRow>
         <ng-container
           *ngFor="let subConfig of config.value | keyvalue : originalOrder"

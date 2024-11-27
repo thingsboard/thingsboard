@@ -53,6 +53,7 @@ import java.util.concurrent.TimeoutException;
         type = ComponentType.EXTERNAL,
         name = "mqtt",
         configClazz = TbMqttNodeConfiguration.class,
+        version = 1,
         clusteringMode = ComponentClusteringMode.USER_PREFERENCE,
         nodeDescription = "Publish messages to the MQTT broker",
         nodeDetails = "Will publish message payload to the MQTT broker with QoS <b>AT_LEAST_ONCE</b>.",
@@ -76,6 +77,8 @@ public class TbMqttNode extends TbAbstractExternalNode {
         this.mqttNodeConfiguration = TbNodeUtils.convert(configuration, TbMqttNodeConfiguration.class);
         try {
             this.mqttClient = initClient(ctx);
+        } catch (TbNodeException e) {
+            throw e;
         } catch (Exception e) {
             throw new TbNodeException(e);
         }
@@ -118,13 +121,12 @@ public class TbMqttNode extends TbAbstractExternalNode {
         MqttClientConfig config = new MqttClientConfig(getSslContext());
         config.setOwnerId(getOwnerId(ctx));
         if (!StringUtils.isEmpty(this.mqttNodeConfiguration.getClientId())) {
-            config.setClientId(this.mqttNodeConfiguration.isAppendClientIdSuffix() ?
-                    this.mqttNodeConfiguration.getClientId() + "_" + ctx.getServiceId() : this.mqttNodeConfiguration.getClientId());
+            config.setClientId(getClientId(ctx));
         }
         config.setCleanSession(this.mqttNodeConfiguration.isCleanSession());
 
         prepareMqttClientConfig(config);
-        MqttClient client = MqttClient.create(config, null, ctx.getExternalCallExecutor());
+        MqttClient client = getMqttClient(ctx, config);
         client.setEventLoop(ctx.getSharedEventLoop());
         Promise<MqttConnectResult> connectFuture = client.connect(this.mqttNodeConfiguration.getHost(), this.mqttNodeConfiguration.getPort());
         MqttConnectResult result;
@@ -145,7 +147,22 @@ public class TbMqttNode extends TbAbstractExternalNode {
         return client;
     }
 
-    protected void prepareMqttClientConfig(MqttClientConfig config) throws SSLException {
+    private String getClientId(TbContext ctx) throws TbNodeException {
+        String clientId = this.mqttNodeConfiguration.isAppendClientIdSuffix() ?
+                this.mqttNodeConfiguration.getClientId() + "_" + ctx.getServiceId() :
+                this.mqttNodeConfiguration.getClientId();
+        if (clientId.length() > 23) {
+            throw new TbNodeException("Client ID is too long '" + clientId + "'. " +
+                    "The length of Client ID cannot be longer than 23, but current length is " + clientId.length() + ".", true);
+        }
+        return clientId;
+    }
+
+    MqttClient getMqttClient(TbContext ctx, MqttClientConfig config) {
+        return MqttClient.create(config, null, ctx.getExternalCallExecutor());
+    }
+
+    protected void prepareMqttClientConfig(MqttClientConfig config) {
         ClientCredentials credentials = this.mqttNodeConfiguration.getCredentials();
         if (credentials.getType() == CredentialsType.BASIC) {
             BasicCredentials basicCredentials = (BasicCredentials) credentials;

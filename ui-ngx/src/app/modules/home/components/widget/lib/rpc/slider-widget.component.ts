@@ -34,7 +34,6 @@ import {
   textStyle
 } from '@shared/models/widget-settings.models';
 import { Observable } from 'rxjs';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ValueType } from '@shared/models/constants';
@@ -94,6 +93,7 @@ export class SliderWidgetComponent extends
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  padding: string;
 
   value: number = null;
   private prevValue: number = null;
@@ -145,6 +145,7 @@ export class SliderWidgetComponent extends
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
+    this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
 
     this.layout = this.settings.layout;
 

@@ -119,10 +119,13 @@ public abstract class AbstractTsKvEntity implements ToData<TsKvEntry> {
         }
 
         if (aggValuesCount == null) {
-            return new BasicTsKvEntry(ts, kvEntry);
+            return new BasicTsKvEntry(ts, kvEntry, getVersion());
         } else {
             return new AggTsKvEntry(ts, kvEntry, aggValuesCount);
         }
     }
 
+    public Long getVersion() {
+        return null;
+    }
 }

@@ -1,0 +1,352 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="slaves-config-container">
+  <mat-toolbar color="primary">
+    <h2>{{ 'gateway.server-slave' | translate }}</h2>
+    <span fxFlex></span>
+    <div [tb-help]="modbusHelpLink"></div>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content [formGroup]="slaveConfigFormGroup" class="tb-form-panel">
+    <div class="stroked tb-form-panel">
+      <div class="tb-form-panel no-border no-padding padding-top">
+        <div class="tb-flex row space-between align-center no-gap fill-width">
+          <div class="fixed-title-width" translate>gateway.server-connection</div>
+          <tb-toggle-select formControlName="type" appearance="fill">
+            <tb-toggle-option *ngFor="let type of modbusProtocolTypes" [value]="type">{{ ModbusProtocolLabelsMap.get(type) }}</tb-toggle-option>
+          </tb-toggle-select>
+        </div>
+        <div class="tb-form-panel no-border no-padding padding-top">
+          <div *ngIf="protocolType !== ModbusProtocolType.Serial"
+               class="tb-form-row column-xs"
+               fxLayoutAlign="space-between center"
+          >
+            <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.host' | translate }}" translate>gateway.host</div>
+            <div class="tb-flex no-gap">
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput name="value" formControlName="host" placeholder="{{ 'gateway.set' | translate }}"/>
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="('gateway.host-required') | translate"
+                          *ngIf="slaveConfigFormGroup.get('host').hasError('required')
+                                           && slaveConfigFormGroup.get('host').touched"
+                          class="tb-error">
+                  warning
+                </mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
+          <div *ngIf="protocolType !== ModbusProtocolType.Serial else serialPort"
+               class="tb-form-row column-xs"
+               fxLayoutAlign="space-between center"
+          >
+            <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.port' | translate }}" translate>gateway.port</div>
+            <div class="tb-flex no-gap">
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" min="{{portLimits.MIN}}" max="{{portLimits.MAX}}"
+                       name="value" formControlName="port" placeholder="{{ 'gateway.set' | translate }}"/>
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="slaveConfigFormGroup.get('port') | getGatewayPortTooltip"
+                          *ngIf="(slaveConfigFormGroup.get('port').hasError('required') ||
+                                            slaveConfigFormGroup.get('port').hasError('min') ||
+                                            slaveConfigFormGroup.get('port').hasError('max')) &&
+                                            slaveConfigFormGroup.get('port').touched"
+                          class="tb-error">
+                  warning
+                </mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
+          <ng-template #serialPort>
+            <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+              <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.serial-port' | translate }}" translate>gateway.port</div>
+              <div class="tb-flex no-gap">
+                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                  <input matInput name="value" formControlName="serialPort" placeholder="{{ 'gateway.set' | translate }}"/>
+                  <mat-icon matSuffix
+                            matTooltipPosition="above"
+                            matTooltipClass="tb-error-tooltip"
+                            [matTooltip]="'gateway.port-required' | translate"
+                            *ngIf="slaveConfigFormGroup.get('serialPort').hasError('required') &&
+                                            slaveConfigFormGroup.get('serialPort').touched"
+                            class="tb-error">
+                    warning
+                  </mat-icon>
+                </mat-form-field>
+              </div>
+            </div>
+          </ng-template>
+          <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.framer-type' | translate }}" translate>
+              gateway.method
+            </div>
+            <div class="tb-flex no-gap">
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="method">
+                  <mat-option *ngFor="let method of protocolType === ModbusProtocolType.Serial ? modbusSerialMethodTypes : modbusMethodTypes"
+                              [value]="method">{{ ModbusMethodLabelsMap.get(method) }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+        <ng-container *ngIf="protocolType === ModbusProtocolType.Serial">
+          <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.baudrate' | translate }}" translate>gateway.baudrate</div>
+            <div class="tb-flex no-gap">
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="baudrate">
+                  <mat-option *ngFor="let rate of modbusBaudrates" [value]="rate">{{ rate }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+          <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.bytesize' | translate }}" translate>gateway.bytesize</div>
+            <div class="tb-flex no-gap">
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="bytesize">
+                  <mat-option *ngFor="let size of modbusByteSizes" [value]="size">{{ size }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+          <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.stopbits' | translate }}"  translate>gateway.stopbits</div>
+            <div class="tb-flex no-gap">
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput type="number" min="0" name="value" formControlName="stopbits" placeholder="{{ 'gateway.set' | translate }}"/>
+              </mat-form-field>
+            </div>
+          </div>
+          <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.parity' | translate }}" translate>gateway.parity</div>
+            <div class="tb-flex no-gap">
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="parity">
+                  <mat-option *ngFor="let parity of modbusParities" [value]="parity">{{ ModbusParityLabelsMap.get(parity) }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+          <div class="tb-form-row" fxLayoutAlign="space-between center">
+            <mat-slide-toggle class="mat-slide" formControlName="strict">
+              <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.strict' | translate }}">
+                {{ 'gateway.strict' | translate }}
+              </mat-label>
+            </mat-slide-toggle>
+          </div>
+        </ng-container>
+        <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+          <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.unit-id' | translate }}" translate>gateway.unit-id</div>
+          <div class="tb-flex no-gap">
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput type="number" min="0" name="value" formControlName="unitId" placeholder="{{ 'gateway.set' | translate }}"/>
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="('gateway.unit-id-required') | translate"
+                        *ngIf="slaveConfigFormGroup.get('unitId').hasError('required') &&
+                                           slaveConfigFormGroup.get('unitId').touched"
+                        class="tb-error">
+                warning
+              </mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+        <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+          <div class="fixed-title-width tb-required" translate>gateway.device-name</div>
+          <div class="tb-flex no-gap">
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput name="value" formControlName="deviceName" placeholder="{{ 'gateway.set' | translate }}"/>
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="('gateway.device-name-required') | translate"
+                        *ngIf="slaveConfigFormGroup.get('deviceName').hasError('required') &&
+                                           slaveConfigFormGroup.get('deviceName').touched"
+                        class="tb-error">
+                warning
+              </mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+        <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+          <div class="fixed-title-width tb-required" translate>gateway.device-profile</div>
+          <div class="tb-flex no-gap">
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput name="value" formControlName="deviceType" placeholder="{{ 'gateway.set' | translate }}"/>
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="('gateway.device-profile-required') | translate"
+                        *ngIf="slaveConfigFormGroup.get('deviceType').hasError('required') &&
+                                           slaveConfigFormGroup.get('deviceType').touched"
+                        class="tb-error">
+                warning
+              </mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+        <div *ngIf="data.hideNewFields else reportStrategy" class="tb-form-row" fxLayoutAlign="space-between center">
+          <mat-slide-toggle class="mat-slide" formControlName="sendDataOnlyOnChange">
+            <mat-label>
+              {{ 'gateway.send-data-on-change' | translate }}
+            </mat-label>
+          </mat-slide-toggle>
+        </div>
+        <ng-template #reportStrategy>
+          <tb-report-strategy [defaultValue]="ReportStrategyDefaultValue.Device" formControlName="reportStrategy" [isExpansionMode]="true"/>
+        </ng-template>
+        <div class="tb-form-panel stroked">
+          <mat-expansion-panel class="tb-settings">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <div class="tb-form-panel-title" translate>gateway.advanced-connection-settings</div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <div class="tb-form-panel no-border no-padding padding-top">
+              <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.connection-timeout' | translate }}" translate>gateway.connection-timeout</div>
+                <div class="tb-flex no-gap">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput type="number" min="0" name="value" formControlName="timeout" placeholder="{{ 'gateway.set' | translate }}"/>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.byte-order' | translate }}" translate>gateway.byte-order</div>
+                <div class="tb-flex no-gap">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <mat-select formControlName="byteOrder">
+                      <mat-option *ngFor="let order of modbusOrderType" [value]="order">{{ order }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.word-order' | translate }}" translate>gateway.word-order</div>
+                <div class="tb-flex no-gap">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <mat-select formControlName="wordOrder">
+                      <mat-option *ngFor="let order of modbusOrderType" [value]="order">{{ order }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div *ngIf="protocolType !== ModbusProtocolType.Serial" class="tb-form-panel stroked tb-slide-toggle">
+                <mat-expansion-panel class="tb-settings" [expanded]="showSecurityControl.value">
+                  <mat-expansion-panel-header fxLayout="row wrap">
+                    <mat-panel-title>
+                      <mat-slide-toggle fxLayoutAlign="center" [formControl]="showSecurityControl" class="mat-slide" (click)="$event.stopPropagation()">
+                        <mat-label>
+                          {{ 'gateway.tls-connection' | translate }}
+                        </mat-label>
+                      </mat-slide-toggle>
+                    </mat-panel-title>
+                  </mat-expansion-panel-header>
+                  <tb-modbus-security-config class="security-config" formControlName="security"></tb-modbus-security-config>
+                </mat-expansion-panel>
+              </div>
+              <div class="tb-form-row" fxLayoutAlign="space-between center">
+                <mat-slide-toggle class="mat-slide" formControlName="retries">
+                  <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.retries' | translate }}">
+                    {{ 'gateway.retries' | translate }}
+                  </mat-label>
+                </mat-slide-toggle>
+              </div>
+              <div class="tb-form-row" fxLayoutAlign="space-between center">
+                <mat-slide-toggle class="mat-slide" formControlName="retryOnEmpty">
+                  <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.retries-on-empty' | translate }}">
+                    {{ 'gateway.retries-on-empty' | translate }}
+                  </mat-label>
+                </mat-slide-toggle>
+              </div>
+              <div class="tb-form-row" fxLayoutAlign="space-between center">
+                <mat-slide-toggle class="mat-slide" formControlName="retryOnInvalid">
+                  <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.retries-on-invalid' | translate }}">
+                    {{ 'gateway.retries-on-invalid' | translate }}
+                  </mat-label>
+                </mat-slide-toggle>
+              </div>
+              <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                <div class="fixed-title-width-260 tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.poll-period' | translate }}">
+                  <span tbTruncateWithTooltip translate>
+                    gateway.poll-period
+                  </span>
+                </div>
+                <div class="tb-flex no-gap">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput type="number" min="0" name="value" formControlName="pollPeriod" placeholder="{{ 'gateway.set' | translate }}"/>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                <div class="fixed-title-width-260 tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.connect-attempt-time' | translate }}" translate>gateway.connect-attempt-time</div>
+                <div class="tb-flex no-gap">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput type="number" min="0" name="value" formControlName="connectAttemptTimeMs" placeholder="{{ 'gateway.set' | translate }}"/>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                <div class="fixed-title-width-260 tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.connect-attempt-count' | translate }}" translate>gateway.connect-attempt-count</div>
+                <div class="tb-flex no-gap">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput type="number" min="0" name="value" formControlName="connectAttemptCount" placeholder="{{ 'gateway.set' | translate }}"/>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                <div class="fixed-title-width-260 tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.wait-after-failed-attempts' | translate }}" translate>gateway.wait-after-failed-attempts</div>
+                <div class="tb-flex no-gap">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput type="number" min="0" name="value" formControlName="waitAfterFailedAttemptsMs" placeholder="{{ 'gateway.set' | translate }}"/>
+                  </mat-form-field>
+                </div>
+              </div>
+            </div>
+          </mat-expansion-panel>
+        </div>
+        <div class="tb-form-panel stroked">
+          <tb-modbus-values [singleMode]="true" [hideNewFields]="data.hideNewFields" formControlName="values"></tb-modbus-values>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-button color="primary"
+            type="button"
+            cdkFocusInitial
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            (click)="add()"
+            [disabled]="slaveConfigFormGroup.invalid || !slaveConfigFormGroup.dirty">
+      {{ data.buttonTitle | translate }}
+    </button>
+  </div>
+</div>

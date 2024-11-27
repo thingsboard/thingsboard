@@ -100,27 +100,23 @@ public abstract class DashboardEdgeProcessor extends BaseDashboardProcessor impl
     public DownlinkMsg convertDashboardEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         DashboardId dashboardId = new DashboardId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
+        var msgConstructor = (DashboardMsgConstructor) dashboardMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion);
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED, ASSIGNED_TO_EDGE, ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER -> {
                 Dashboard dashboard = dashboardService.findDashboardById(edgeEvent.getTenantId(), dashboardId);
                 if (dashboard != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    DashboardUpdateMsg dashboardUpdateMsg = ((DashboardMsgConstructor)
-                            dashboardMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructDashboardUpdatedMsg(msgType, dashboard);
+                    DashboardUpdateMsg dashboardUpdateMsg = msgConstructor.constructDashboardUpdatedMsg(msgType, dashboard);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addDashboardUpdateMsg(dashboardUpdateMsg)
                             .build();
                 }
             }
-            case DELETED, UNASSIGNED_FROM_EDGE -> {
-                DashboardUpdateMsg dashboardUpdateMsg = ((DashboardMsgConstructor)
-                        dashboardMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructDashboardDeleteMsg(dashboardId);
-                downlinkMsg = DownlinkMsg.newBuilder()
-                        .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addDashboardUpdateMsg(dashboardUpdateMsg)
-                        .build();
-            }
+            case DELETED, UNASSIGNED_FROM_EDGE -> downlinkMsg = DownlinkMsg.newBuilder()
+                    .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
+                    .addDashboardUpdateMsg(msgConstructor.constructDashboardDeleteMsg(dashboardId))
+                    .build();
         }
         return downlinkMsg;
     }

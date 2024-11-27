@@ -37,7 +37,8 @@
     <ng-template [ngSwitchCase]="aliasFilterType.entityList">
       <tb-entity-type-select required
                              showLabel
-                             [allowedEntityTypes]="allowedEntityTypes"
+                             useAliasEntityTypes="true"
+                             [allowedEntityTypes]="listEntityTypes"
                              formControlName="entityType">
       </tb-entity-type-select>
       <tb-entity-list required
@@ -49,7 +50,8 @@
     <ng-template [ngSwitchCase]="aliasFilterType.entityName">
       <tb-entity-type-select required
                              showLabel
-                             [allowedEntityTypes]="allowedEntityTypes"
+                             useAliasEntityTypes="true"
+                             [allowedEntityTypes]="listEntityTypes"
                              formControlName="entityType">
       </tb-entity-type-select>
       <mat-form-field class="mat-block">
@@ -65,7 +67,8 @@
     <ng-template [ngSwitchCase]="aliasFilterType.entityType">
       <tb-entity-type-select required
                              showLabel
-                             [allowedEntityTypes]="allowedEntityTypes"
+                             useAliasEntityTypes="true"
+                             [allowedEntityTypes]="listEntityTypes"
                              formControlName="entityType">
       </tb-entity-type-select>
     </ng-template>

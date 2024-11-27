@@ -21,8 +21,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @Service
 public class TopicService {
@@ -30,8 +30,9 @@ public class TopicService {
     @Value("${queue.prefix:}")
     private String prefix;
 
-    private Map<String, TopicPartitionInfo> tbCoreNotificationTopics = new HashMap<>();
-    private Map<String, TopicPartitionInfo> tbRuleEngineNotificationTopics = new HashMap<>();
+    private final ConcurrentMap<String, TopicPartitionInfo> tbCoreNotificationTopics = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, TopicPartitionInfo> tbRuleEngineNotificationTopics = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, TopicPartitionInfo> tbEdgeNotificationTopics = new ConcurrentHashMap<>();
 
     /**
      * Each Service should start a consumer for messages that target individual service instance based on serviceId.
@@ -41,16 +42,21 @@ public class TopicService {
      * @return
      */
     public TopicPartitionInfo getNotificationsTopic(ServiceType serviceType, String serviceId) {
-        switch (serviceType) {
-            case TB_CORE:
-                return tbCoreNotificationTopics.computeIfAbsent(serviceId,
-                        id -> buildNotificationsTopicPartitionInfo(serviceType, serviceId));
-            case TB_RULE_ENGINE:
-                return tbRuleEngineNotificationTopics.computeIfAbsent(serviceId,
-                        id -> buildNotificationsTopicPartitionInfo(serviceType, serviceId));
-            default:
-                return buildNotificationsTopicPartitionInfo(serviceType, serviceId);
-        }
+        return switch (serviceType) {
+            case TB_CORE -> tbCoreNotificationTopics.computeIfAbsent(serviceId,
+                    id -> buildNotificationsTopicPartitionInfo(serviceType, serviceId));
+            case TB_RULE_ENGINE -> tbRuleEngineNotificationTopics.computeIfAbsent(serviceId,
+                    id -> buildNotificationsTopicPartitionInfo(serviceType, serviceId));
+            default -> buildNotificationsTopicPartitionInfo(serviceType, serviceId);
+        };
+    }
+
+    public TopicPartitionInfo getEdgeNotificationsTopic(String serviceId) {
+        return tbEdgeNotificationTopics.computeIfAbsent(serviceId, id -> buildEdgeNotificationsTopicPartitionInfo(serviceId));
+    }
+
+    private TopicPartitionInfo buildEdgeNotificationsTopicPartitionInfo(String serviceId) {
+        return buildTopicPartitionInfo("tb_edge.notifications." + serviceId, null, null, false);
     }
 
     private TopicPartitionInfo buildNotificationsTopicPartitionInfo(ServiceType serviceType, String serviceId) {

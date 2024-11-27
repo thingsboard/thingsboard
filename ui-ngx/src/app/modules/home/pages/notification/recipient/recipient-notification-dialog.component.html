@@ -121,11 +121,25 @@
         </tb-slack-conversation-autocomplete>
       </section>
       <section *ngIf="targetNotificationForm.get('configuration.type').value === notificationTargetType.MICROSOFT_TEAMS">
+        <section class="tb-form-row" style="margin-bottom: 16px">
+          <mat-slide-toggle class="mat-slide margin" formControlName="useOldApi">
+            {{ "notification.use-old-api" | translate }}
+          </mat-slide-toggle>
+          <a mat-icon-button
+             href="https://devblogs.microsoft.com/microsoft365dev/retirement-of-office-365-connectors-within-microsoft-teams/"
+             target="_blank"
+             matTooltip="{{ 'notification.use-deprecated-webhook-connectors' | translate }}"
+             matTooltipPosition="above"
+             class="tb-mat-20">
+            <mat-icon>open_in_new</mat-icon>
+          </a>
+        </section>
         <mat-form-field class="mat-block">
-          <mat-label translate>notification.webhook-url</mat-label>
+          <mat-label>{{ (targetNotificationForm.get('configuration.useOldApi').value ?
+            'notification.webhook-url' : 'notification.workflow-url') | translate }}</mat-label>
           <input matInput formControlName="webhookUrl">
           <mat-error *ngIf="targetNotificationForm.get('configuration.webhookUrl').hasError('required')">
-            {{ 'notification.webhook-url-required' | translate }}
+            {{ (targetNotificationForm.get('configuration.useOldApi').value ? 'notification.webhook-url-required' : 'notification.workflow-url-required') | translate }}
           </mat-error>
         </mat-form-field>
         <mat-form-field class="mat-block">

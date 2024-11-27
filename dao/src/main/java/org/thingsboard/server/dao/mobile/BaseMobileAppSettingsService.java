@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.mobile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -40,6 +41,11 @@ public class BaseMobileAppSettingsService extends AbstractCachedEntityService<Te
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     private static final String DEFAULT_QR_CODE_LABEL = "Scan to connect or download mobile app";
 
+    @Value("${mobileApp.googlePlayLink:https://play.google.com/store/apps/details?id=org.thingsboard.demo.app}")
+    private String googlePlayLink;
+    @Value("${mobileApp.appStoreLink:https://apps.apple.com/us/app/thingsboard-live/id1594355695}")
+    private String appStoreLink;
+
     private final MobileAppSettingsDao mobileAppSettingsDao;
     private final DataValidator<MobileAppSettings> mobileAppSettingsDataValidator;
 
@@ -49,7 +55,7 @@ public class BaseMobileAppSettingsService extends AbstractCachedEntityService<Te
         try {
             MobileAppSettings savedMobileAppSettings = mobileAppSettingsDao.save(tenantId, mobileAppSettings);
             publishEvictEvent(new MobileAppSettingsEvictEvent(tenantId));
-            return savedMobileAppSettings;
+            return constructMobileAppSettings(savedMobileAppSettings);
         } catch (Exception e) {
             handleEvictEvent(new MobileAppSettingsEvictEvent(tenantId));
             checkConstraintViolation(e, Map.of(
@@ -103,6 +109,10 @@ public class BaseMobileAppSettingsService extends AbstractCachedEntityService<Te
             mobileAppSettings.setQrCodeConfig(qrCodeConfig);
             mobileAppSettings.setAndroidConfig(androidConfig);
             mobileAppSettings.setIosConfig(iosConfig);
+        }
+        if (mobileAppSettings.isUseDefaultApp()) {
+            mobileAppSettings.setDefaultGooglePlayLink(googlePlayLink);
+            mobileAppSettings.setDefaultAppStoreLink(appStoreLink);
         }
         return mobileAppSettings;
     }

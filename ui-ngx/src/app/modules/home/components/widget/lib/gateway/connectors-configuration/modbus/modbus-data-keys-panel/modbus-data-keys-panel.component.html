@@ -1,0 +1,270 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-modbus-keys-panel">
+  <div class="tb-form-panel no-border no-padding">
+    <div class="tb-form-panel-title">{{ panelTitle  | translate }}{{' (' + keysListFormArray.controls.length + ')'}}</div>
+    <div class="tb-form-panel no-border no-padding key-panel" *ngIf="keysListFormArray.controls.length; else noKeys">
+      <div class="tb-form-panel no-border no-padding tb-flex no-flex row center fill-width"
+           *ngFor="let keyControl of keysListFormArray.controls; trackBy: trackByControlId; let $index = index; let last = last;">
+        <div class="tb-form-panel stroked tb-flex">
+          <ng-container [formGroup]="keyControl">
+            <mat-expansion-panel class="tb-settings" [expanded]="last">
+              <mat-expansion-panel-header fxLayout="row wrap">
+                <mat-panel-title>
+                  <div *ngIf="isMaster else tagName" class="title-container" tbTruncateWithTooltip>
+                    {{ keyControl.get('tag').value }}{{ '-' }}{{ keyControl.get('value').value }}
+                  </div>
+                  <ng-template #tagName>
+                    <div class="tb-flex">
+                      <div class="title-container tb-flex">{{ 'gateway.key' | translate }}:
+                        <span class="key-label" tbTruncateWithTooltip>{{ keyControl.get('tag').value }}</span>
+                      </div>
+                      <div class="title-container">{{ 'gateway.address' | translate }}:
+                        <span class="key-label">{{ keyControl.get('address').value }}</span>
+                      </div>
+                      <div class="title-container">{{ 'gateway.type' | translate }}:
+                        <span class="key-label">{{ keyControl.get('type').value }}</span>
+                      </div>
+                    </div>
+                  </ng-template>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <ng-template matExpansionPanelContent>
+                <div class="tb-form-hint tb-primary-fill tb-flex center align-center">
+                  {{ 'gateway.hints.modbus.data-keys' | translate }}
+                  <div matSuffix
+                       class="see-example"
+                       [tb-help-popup]="'widget/lib/gateway/modbus-functions-data-types_fn'"
+                       tb-help-popup-placement="left"
+                       [tb-help-popup-style]="{maxWidth: '970px'}">
+                  </div>
+                </div>
+                <div class="tb-form-panel stroked">
+                  <div class="tb-form-panel-title" translate>gateway.platform-side</div>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.key' | translate }}" translate>
+                      gateway.key
+                    </div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput name="value" formControlName="tag" placeholder="{{ 'gateway.set' | translate }}"/>
+                        <mat-icon matSuffix
+                                  matTooltipPosition="above"
+                                  matTooltipClass="tb-error-tooltip"
+                                  [matTooltip]="('gateway.key-required') | translate"
+                                  *ngIf="keyControl.get('tag').hasError('required') &&
+                                           keyControl.get('tag').touched"
+                                  class="tb-error">
+                          warning
+                        </mat-icon>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                </div>
+                <div class="tb-form-panel stroked">
+                  <div class="tb-form-panel-title" translate>gateway.connector-side</div>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width" translate>
+                      gateway.type
+                    </div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <mat-select formControlName="type">
+                          <mat-option *ngFor="let type of modbusDataTypes" [value]="type">{{ type }}</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div *ngIf="withFunctionCode" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width" translate>gateway.function-code</div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <mat-select formControlName="functionCode">
+                          <mat-option
+                            *ngFor="let code of functionCodesMap.get(keyControl.get('id').value) || defaultFunctionCodes"
+                            [value]="code"
+                          >
+                            {{ ModbusFunctionCodeTranslationsMap.get(code) | translate }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.objects-count' | translate }}" translate>gateway.objects-count</div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input
+                          matInput
+                          type="number"
+                          min="1"
+                          max="50000"
+                          name="value"
+                          formControlName="objectsCount"
+                          placeholder="{{ 'gateway.set' | translate }}"
+                          [readonly]="!ModbusEditableDataTypes.includes(keyControl.get('type').value)"
+                        />
+                        <mat-icon matSuffix
+                                  matTooltipPosition="above"
+                                  matTooltipClass="tb-error-tooltip"
+                                  [matTooltip]="('gateway.objects-count-required') | translate"
+                                  *ngIf="keyControl.get('objectsCount').hasError('required') &&
+                                           keyControl.get('objectsCount').touched"
+                                  class="tb-error">
+                          warning
+                        </mat-icon>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.address' | translate }}" translate>gateway.address</div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput type="number" min="0" max="50000" name="value" formControlName="address" placeholder="{{ 'gateway.set' | translate }}"/>
+                        <mat-icon matSuffix
+                                  matTooltipPosition="above"
+                                  matTooltipClass="tb-error-tooltip"
+                                  [matTooltip]="('gateway.address-required') | translate"
+                                  *ngIf="keyControl.get('address').hasError('required') &&
+                                           keyControl.get('address').touched"
+                                  class="tb-error">
+                          warning
+                        </mat-icon>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div *ngIf="showModifiersMap.get(keyControl.get('id').value)" class="tb-form-panel stroked tb-slide-toggle">
+                    <mat-expansion-panel class="tb-settings" [expanded]="enableModifiersControlMap.get(keyControl.get('id').value).value">
+                      <mat-expansion-panel-header fxLayout="row wrap">
+                        <mat-panel-title>
+                          <mat-slide-toggle
+                            fxLayoutAlign="center"
+                            [formControl]="enableModifiersControlMap.get(keyControl.get('id').value)"
+                            class="mat-slide"
+                            (click)="$event.stopPropagation()"
+                          >
+                            <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.modifier' | translate }}">
+                              {{ 'gateway.modifier' | translate }}
+                            </mat-label>
+                          </mat-slide-toggle>
+                        </mat-panel-title>
+                      </mat-expansion-panel-header>
+                      <div class="tb-flex no-gap">
+                        <div class="tb-form-row column-xs tb-flex full-width" fxLayoutAlign="space-between center">
+                          <div class="fixed-title-width" translate>gateway.type</div>
+                          <div class="tb-flex no-gap">
+                            <mat-form-field class="tb-flex no-gap fill-width" appearance="outline" subscriptSizing="dynamic">
+                              <mat-select formControlName="modifierType">
+                                <mat-select-trigger>
+                                  <div class="tb-flex align-center">
+                                    <mat-icon class="tb-mat-18" [svgIcon]="ModifierTypesMap.get(keyControl.get('modifierType').value)?.icon"></mat-icon>
+                                    <span>{{ ModifierTypesMap.get(keyControl.get('modifierType').value)?.name | translate}}</span>
+                                  </div>
+                                </mat-select-trigger>
+                                <mat-option *ngFor="let modifierType of modifierTypes" [value]="modifierType">
+                                  <mat-icon class="tb-mat-20" svgIcon="{{ ModifierTypesMap.get(modifierType).icon }}">
+                                  </mat-icon>
+                                  <span>{{ ModifierTypesMap.get(modifierType).name | translate }}</span>
+                                </mat-option>
+                              </mat-select>
+                            </mat-form-field>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                        <div class="fixed-title-width" translate>gateway.value</div>
+                        <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic" class="tb-inline-field flex tb-suffix-absolute">
+                          <input matInput required formControlName="modifierValue" step="0.1" type="number"
+                                 placeholder="{{ 'gateway.set' | translate }}" />
+                          <mat-icon matSuffix
+                                    matTooltipPosition="above"
+                                    matTooltipClass="tb-error-tooltip"
+                                    [matTooltip]="('gateway.modifier-invalid') | translate"
+                                    *ngIf="keyControl.get('modifierValue').hasError('pattern') &&
+                                           keyControl.get('modifierValue').touched"
+                                    class="tb-error">
+                            warning
+                          </mat-icon>
+                        </mat-form-field>
+                      </div>
+                    </mat-expansion-panel>
+                  </div>
+                  <div *ngIf="isMaster" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width tb-required" translate>gateway.value</div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput name="value" formControlName="value" placeholder="{{ 'gateway.set' | translate }}"/>
+                        <mat-icon matSuffix
+                                  matTooltipPosition="above"
+                                  matTooltipClass="tb-error-tooltip"
+                                  [matTooltip]="('gateway.value-required') | translate"
+                                  *ngIf="keyControl.get('value').hasError('required') &&
+                                           keyControl.get('value').touched"
+                                  class="tb-error">
+                          warning
+                        </mat-icon>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <tb-report-strategy
+                    *ngIf="withReportStrategy"
+                    [defaultValue]="ReportStrategyDefaultValue.Key"
+                    formControlName="reportStrategy"
+                    [isExpansionMode]="true"
+                  />
+                </div>
+              </ng-template>
+            </mat-expansion-panel>
+          </ng-container>
+        </div>
+        <button type="button"
+                mat-icon-button
+                (click)="deleteKey($event, $index)"
+                [matTooltip]="deleteKeyTitle | translate"
+                matTooltipPosition="above">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </div>
+    <div>
+      <button type="button" mat-stroked-button color="primary" (click)="addKey()">
+        {{ addKeyTitle | translate }}
+      </button>
+    </div>
+  </div>
+  <ng-template #noKeys>
+    <div class="tb-flex no-flex center align-center key-panel">
+      <span class="tb-prompt" translate>{{ noKeysText }}</span>
+    </div>
+  </ng-template>
+  <div class="tb-flex flex-end">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="applyKeysData()"
+            [disabled]="keysListFormArray.invalid || !keysListFormArray.dirty">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</div>

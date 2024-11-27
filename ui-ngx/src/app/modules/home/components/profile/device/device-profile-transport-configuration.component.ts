@@ -15,10 +15,18 @@
 ///
 
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
+  ValidationErrors,
+  Validator
+} from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DeviceProfileTransportConfiguration, DeviceTransportType } from '@shared/models/device.models';
 import { deepClone } from '@core/utils';
 
@@ -26,26 +34,24 @@ import { deepClone } from '@core/utils';
   selector: 'tb-device-profile-transport-configuration',
   templateUrl: './device-profile-transport-configuration.component.html',
   styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => DeviceProfileTransportConfigurationComponent),
-    multi: true
-  }]
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => DeviceProfileTransportConfigurationComponent),
+      multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => DeviceProfileTransportConfigurationComponent),
+      multi: true,
+    }
+  ]
 })
-export class DeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit {
+export class DeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit, Validator {
 
   deviceTransportType = DeviceTransportType;
 
   deviceProfileTransportConfigurationFormGroup: UntypedFormGroup;
-
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
-  @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
 
   @Input()
   disabled: boolean;
@@ -70,7 +76,7 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
 
   ngOnInit() {
     this.deviceProfileTransportConfigurationFormGroup = this.fb.group({
-      configuration: [null, Validators.required]
+      configuration: [null]
     });
     this.deviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
@@ -93,16 +99,21 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
       delete configuration.type;
     }
     setTimeout(() => {
-      this.deviceProfileTransportConfigurationFormGroup.patchValue({configuration}, {emitEvent: false});
+      this.deviceProfileTransportConfigurationFormGroup.patchValue({configuration});
     }, 0);
   }
 
   private updateModel() {
-    let configuration: DeviceProfileTransportConfiguration = null;
-    if (this.deviceProfileTransportConfigurationFormGroup.valid) {
-      configuration = this.deviceProfileTransportConfigurationFormGroup.getRawValue().configuration;
-      configuration.type = this.transportType;
-    }
+    const configuration = this.deviceProfileTransportConfigurationFormGroup.getRawValue().configuration;
+    configuration.type = this.transportType;
     this.propagateChange(configuration);
+  }
+
+  public validate(c: UntypedFormControl): ValidationErrors | null {
+    return (this.deviceProfileTransportConfigurationFormGroup.valid) ? null : {
+      configuration: {
+        valid: false,
+      },
+    };
   }
 }

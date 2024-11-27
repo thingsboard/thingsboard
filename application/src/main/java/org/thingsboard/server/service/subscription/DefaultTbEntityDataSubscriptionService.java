@@ -19,6 +19,8 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -42,6 +44,7 @@ import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.TsValue;
+import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entity.EntityService;
@@ -66,8 +69,6 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.TimeSeriesCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.UnsubscribeCmd;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -93,7 +94,7 @@ import java.util.stream.Collectors;
 public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubscriptionService {
 
     private static final int DEFAULT_LIMIT = 100;
-    private final Map<String, Map<Integer, TbAbstractSubCtx>> subscriptionsBySessionId = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, ConcurrentMap<Integer, TbAbstractSubCtx>> subscriptionsBySessionId = new ConcurrentHashMap<>();
 
     @Autowired
     @Lazy
@@ -355,6 +356,9 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
     private void handleWsCmdRuntimeException(String sessionId, RuntimeException e, EntityDataCmd cmd) {
         log.debug("[{}] Failed to process ws cmd: {}", sessionId, cmd, e);
+        if (e instanceof TbRateLimitsException) {
+            return;
+        }
         wsService.close(sessionId, CloseStatus.SERVICE_RESTARTED);
     }
 
@@ -491,7 +495,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     }
 
     private TbEntityDataSubCtx createSubCtx(WebSocketSessionRef sessionRef, EntityDataCmd cmd) {
-        Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new HashMap<>());
+        Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new ConcurrentHashMap<>());
         TbEntityDataSubCtx ctx = new TbEntityDataSubCtx(serviceId, wsService, entityService, localSubscriptionService,
                 attributesService, stats, sessionRef, cmd.getCmdId(), maxEntitiesPerDataSubscription);
         if (cmd.getQuery() != null) {
@@ -502,7 +506,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     }
 
     private TbEntityCountSubCtx createSubCtx(WebSocketSessionRef sessionRef, EntityCountCmd cmd) {
-        Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new HashMap<>());
+        Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new ConcurrentHashMap<>());
         TbEntityCountSubCtx ctx = new TbEntityCountSubCtx(serviceId, wsService, entityService, localSubscriptionService,
                 attributesService, stats, sessionRef, cmd.getCmdId());
         if (cmd.getQuery() != null) {
@@ -514,7 +518,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
 
     private TbAlarmDataSubCtx createSubCtx(WebSocketSessionRef sessionRef, AlarmDataCmd cmd) {
-        Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new HashMap<>());
+        Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new ConcurrentHashMap<>());
         TbAlarmDataSubCtx ctx = new TbAlarmDataSubCtx(serviceId, wsService, entityService, localSubscriptionService,
                 attributesService, stats, alarmService, sessionRef, cmd.getCmdId(), maxEntitiesPerAlarmSubscription,
                 maxAlarmQueriesPerRefreshInterval);
@@ -524,7 +528,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     }
 
     private TbAlarmCountSubCtx createSubCtx(WebSocketSessionRef sessionRef, AlarmCountCmd cmd) {
-        Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new HashMap<>());
+        Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new ConcurrentHashMap<>());
         TbAlarmCountSubCtx ctx = new TbAlarmCountSubCtx(serviceId, wsService, entityService, localSubscriptionService,
                 attributesService, stats, alarmService, sessionRef, cmd.getCmdId());
         if (cmd.getQuery() != null) {

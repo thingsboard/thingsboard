@@ -16,21 +16,30 @@
 package org.thingsboard.server.transport.lwm2m.client;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.client.LeshanClient;
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
+import org.eclipse.leshan.client.send.ManualDataSender;
 import org.eclipse.leshan.client.servers.LwM2mServer;
 import org.eclipse.leshan.core.model.ObjectModel;
+import org.eclipse.leshan.core.node.LwM2mPath;
+import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.request.argument.Arguments;
 import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
+import org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper;
 
 import javax.security.auth.Destroyable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_VALUE_0;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_VALUE_1;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS;
 
 @Slf4j
 public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destroyable {
@@ -39,6 +48,11 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
     private double currentTemp = 20d;
     private double minMeasuredValue = currentTemp;
     private double maxMeasuredValue = currentTemp;
+
+    private LeshanClient leshanClient;
+    private int cntRead_5700;
+    private int cntIdentitySystem;
+
     protected static final Random RANDOM = new Random();
     private static final List<Integer> supportedResources = Arrays.asList(5601, 5602, 5700, 5701);
 
@@ -49,7 +63,7 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
     public LwM2mTemperatureSensor(ScheduledExecutorService executorService, Integer id) {
         try {
             if (id != null) this.setId(id);
-        executorService.scheduleWithFixedDelay(this::adjustTemperature, 2000, 2000, TimeUnit.MILLISECONDS);
+            executorService.scheduleWithFixedDelay(this::adjustTemperature, 2000, 2000, TimeUnit.MILLISECONDS);
         } catch (Throwable e) {
             log.error("[{}]Throwable", e.toString());
             e.printStackTrace();
@@ -65,7 +79,20 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
             case 5602:
                 return ReadResponse.success(resourceId, getTwoDigitValue(maxMeasuredValue));
             case 5700:
-                return ReadResponse.success(resourceId, getTwoDigitValue(currentTemp));
+                if (identity == LwM2mServer.SYSTEM) { // return value for ForCollectedValue
+                    cntIdentitySystem++;
+                    return ReadResponse.success(resourceId, cntIdentitySystem == 1 ?
+                            RESOURCE_ID_3303_12_5700_VALUE_0 : RESOURCE_ID_3303_12_5700_VALUE_1);
+                }
+                cntRead_5700++;
+                if (cntRead_5700 == 1) {            // read value after start
+                    return ReadResponse.success(resourceId, getTwoDigitValue(currentTemp));
+                } else {
+                    if (this.getId() == 12 && this.leshanClient != null) {
+                        sendCollected();
+                    }
+                    return ReadResponse.success(resourceId, getTwoDigitValue(currentTemp));
+                }
             case 5701:
                 return ReadResponse.success(resourceId, UNIT_CELSIUS);
             default:
@@ -91,13 +118,17 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
     }
 
     private void adjustTemperature() {
-        float delta = (RANDOM.nextInt(20) - 10) / 10f;
-        currentTemp += delta;
+        setTemperature();
         Integer changedResource = adjustMinMaxMeasuredValue(currentTemp);
         fireResourceChange(5700);
         if (changedResource != null) {
             fireResourceChange(changedResource);
         }
+    }
+
+    private void setTemperature() {
+        float delta = (RANDOM.nextInt(20) - 10) / 10f;
+        currentTemp += delta;
     }
 
     private synchronized Integer adjustMinMaxMeasuredValue(double newTemperature) {
@@ -122,9 +153,34 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
         return supportedResources;
     }
 
+    protected void setLeshanClient(LeshanClient leshanClient) {
+        this.leshanClient = leshanClient;
+    }
+
     @Override
     public void destroy() {
     }
 
+    private void sendCollected() {
+        try {
+            int resourceId = 5700;
+            LwM2mServer registeredServer = this.leshanClient.getRegisteredServers().values().iterator().next();
+            ManualDataSender sender = this.leshanClient.getSendService().getDataSender(ManualDataSender.DEFAULT_NAME,
+                    ManualDataSender.class);
+            sender.collectData(Arrays.asList(getPathForCollectedValue(resourceId)));
+            Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_TS_0 = Instant.now().toEpochMilli();
+            Thread.sleep(RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS);
+            sender.collectData(Arrays.asList(getPathForCollectedValue(resourceId)));
+            Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_TS_1 = Instant.now().toEpochMilli();
+            sender.sendCollectedData(registeredServer, ContentFormat.SENML_JSON, 1000, false);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
+    private LwM2mPath getPathForCollectedValue(int resourceId) {
+        return new LwM2mPath(3303, this.getId(), resourceId);
+    }
 }
+
+

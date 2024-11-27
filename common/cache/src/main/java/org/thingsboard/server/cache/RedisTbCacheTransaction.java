@@ -18,7 +18,6 @@ package org.thingsboard.server.cache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.RedisConnection;
-import org.springframework.data.redis.connection.RedisStringCommands;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -31,8 +30,8 @@ public class RedisTbCacheTransaction<K extends Serializable, V extends Serializa
     private final RedisConnection connection;
 
     @Override
-    public void putIfAbsent(K key, V value) {
-        cache.put(connection, key, value, RedisStringCommands.SetOption.UPSERT);
+    public void put(K key, V value) {
+        cache.put(key, value, connection);
     }
 
     @Override

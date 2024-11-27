@@ -17,6 +17,7 @@ package org.thingsboard.server.service.edge;
 
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -30,11 +31,14 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.EntityAlarm;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.domain.Domain;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.OAuth2Info;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -47,8 +51,6 @@ import org.thingsboard.server.dao.eventsourcing.RelationActionEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserServiceImpl;
-
-import javax.annotation.PostConstruct;
 
 /**
  * This event listener does not support async event processing because relay on ThreadLocal
@@ -75,7 +77,7 @@ public class EdgeEventSourcingListener {
 
     @PostConstruct
     public void init() {
-        log.info("EdgeEventSourcingListener initiated");
+        log.debug("EdgeEventSourcingListener initiated");
     }
 
     @TransactionalEventListener(fallbackExecution = true)
@@ -130,11 +132,21 @@ public class EdgeEventSourcingListener {
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(ActionEntityEvent<?> event) {
-        if (EntityType.DEVICE.equals(event.getEntityId().getEntityType())
-                && ActionType.ASSIGNED_TO_TENANT.equals(event.getActionType())) {
+        if (EntityType.DEVICE.equals(event.getEntityId().getEntityType()) && ActionType.ASSIGNED_TO_TENANT.equals(event.getActionType())) {
             return;
         }
         try {
+            if (event.getEntityId().getEntityType().equals(EntityType.RULE_CHAIN) && event.getEdgeId() != null && event.getActionType().equals(ActionType.ASSIGNED_TO_EDGE)) {
+                try {
+                    Edge edge = JacksonUtil.fromString(event.getBody(), Edge.class);
+                    if (edge != null && new RuleChainId(event.getEntityId().getId()).equals(edge.getRootRuleChainId())) {
+                        log.trace("[{}] skipping ASSIGNED_TO_EDGE event of RULE_CHAIN entity in case Edge Root Rule Chain: {}", event.getTenantId(), event);
+                        return;
+                    }
+                } catch (Exception ignored) {
+                    return;
+                }
+            }
             log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
             tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
                     event.getBody(), null, EdgeUtils.getEdgeEventActionTypeByActionType(event.getActionType()),
@@ -181,7 +193,8 @@ public class EdgeEventSourcingListener {
                             return false;
                         }
                         if (oldEntity != null) {
-                            User oldUser = (User) oldEntity;
+                            user = JacksonUtil.clone(user);
+                            User oldUser = JacksonUtil.clone((User) oldEntity);
                             cleanUpUserAdditionalInfo(oldUser);
                             cleanUpUserAdditionalInfo(user);
                             return !user.equals(oldUser);
@@ -194,7 +207,7 @@ public class EdgeEventSourcingListener {
                     }
                     break;
                 case ALARM:
-                    if (entity instanceof AlarmApiCallResult || entity instanceof Alarm) {
+                    if (entity instanceof AlarmApiCallResult || entity instanceof Alarm || entity instanceof EntityAlarm) {
                         return false;
                     }
                     break;
@@ -202,6 +215,10 @@ public class EdgeEventSourcingListener {
                     return !event.getCreated();
                 case API_USAGE_STATE, EDGE:
                     return false;
+                case DOMAIN:
+                    if (entity instanceof Domain domain) {
+                        return domain.isPropagateToEdge();
+                    }
             }
         }
         // Default: If the entity doesn't match any of the conditions, consider it as valid.
@@ -222,21 +239,18 @@ public class EdgeEventSourcingListener {
                 user.setAdditionalInfo(additionalInfo);
             }
         }
+        user.setVersion(null);
     }
 
     private EdgeEventType getEdgeEventTypeForEntityEvent(Object entity) {
         if (entity instanceof AlarmComment) {
             return EdgeEventType.ALARM_COMMENT;
-        } else if (entity instanceof OAuth2Info) {
-            return EdgeEventType.OAUTH2;
         }
         return null;
     }
 
     private String getBodyMsgForEntityEvent(Object entity) {
         if (entity instanceof AlarmComment) {
-            return JacksonUtil.toString(entity);
-        } else if (entity instanceof OAuth2Info) {
             return JacksonUtil.toString(entity);
         }
         return null;

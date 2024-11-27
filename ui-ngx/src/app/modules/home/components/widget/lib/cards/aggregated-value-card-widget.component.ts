@@ -49,7 +49,6 @@ import {
 import { DataKey } from '@shared/models/widget.models';
 import { formatNumberValue, formatValue, isDefined, isDefinedAndNotNull, isNumeric } from '@core/utils';
 import { map } from 'rxjs/operators';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
@@ -106,6 +105,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  padding: string;
 
   private lineChart: TbTimeSeriesChart;
   private lineChartDataKey: DataKey;
@@ -169,6 +169,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
+    this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
   }
 
   ngAfterViewInit(): void {

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.elements.auth.RawPublicKeyIdentity;
@@ -41,7 +42,6 @@ import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 
-import jakarta.annotation.PostConstruct;
 import javax.security.auth.x500.X500Principal;
 import java.net.InetSocketAddress;
 import java.security.PublicKey;
@@ -82,7 +82,7 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
                 staticCertificateVerifier = new StaticNewAdvancedCertificateVerifier(trustedCertificates, new RawPublicKeyIdentity[0], null);
             }
         } catch (Exception e) {
-            log.warn("ailed to initialize the LwM2M certificate verifier", e);
+            log.warn("Failed to initialize the LwM2M certificate verifier", e);
         }
     }
 

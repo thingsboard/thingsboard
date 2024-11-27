@@ -19,7 +19,7 @@
   <mat-toolbar color="primary">
     <h2>{{ MappingTypeTranslationsMap.get(this.data?.mappingType) | translate}}</h2>
     <span fxFlex></span>
-    <div [tb-help]="helpLinkId()"></div>
+    <div [tb-help]="HelpLinkByMappingTypeMap.get(this.data.mappingType)"></div>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -57,8 +57,8 @@
             </div>
           </div>
           <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.response-topic-Qos-hint' | translate }}" translate>
-              gateway.mqtt-qos
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.response-topic-Qos-hint' | translate }}">
+              {{ 'gateway.mqtt-qos' | translate }}
             </div>
             <div class="tb-flex no-gap">
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -110,6 +110,8 @@
                       <button type="button"
                               mat-icon-button
                               color="primary"
+                              matTooltip="{{ 'action.edit' | translate }}"
+                              matTooltipPosition="above"
                               #attributesButton
                               (click)="manageKeys($event, attributesButton, MappingKeysType.ATTRIBUTES)">
                         <tb-icon matButtonIcon>edit</tb-icon>
@@ -130,6 +132,8 @@
                       <button type="button"
                               mat-icon-button
                               color="primary"
+                              matTooltip="{{ 'action.edit' | translate }}"
+                              matTooltipPosition="above"
                               #telemetryButton
                               (click)="manageKeys($event, telemetryButton, MappingKeysType.TIMESERIES)">
                         <tb-icon matButtonIcon>edit</tb-icon>
@@ -140,8 +144,8 @@
                 <div class="tb-form-panel no-border no-padding" *ngIf="converterType === ConvertorTypeEnum.CUSTOM">
                   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
                     <div class="fixed-title-width tb-required"
-                         tb-hint-tooltip-icon="{{ 'gateway.extension-hint' | translate }}" translate>
-                      gateway.extension
+                         tb-hint-tooltip-icon="{{ 'gateway.extension-hint' | translate }}">
+                      {{ 'gateway.extension' | translate }}
                     </div>
                     <div class="tb-flex no-gap">
                       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -175,6 +179,8 @@
                         <button type="button"
                                 mat-icon-button
                                 color="primary"
+                                matTooltip="{{ 'action.edit' | translate }}"
+                                matTooltipPosition="above"
                                 #keysButton
                                 (click)="manageKeys($event, keysButton, MappingKeysType.CUSTOM)">
                           <tb-icon matButtonIcon>edit</tb-icon>
@@ -369,8 +375,8 @@
                 <ng-template [ngSwitchCase]="RequestTypeEnum.ATTRIBUTE_UPDATE">
                   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
                     <div class="fixed-title-width tb-required"
-                         tb-hint-tooltip-icon="{{ 'gateway.device-name-filter-hint' | translate }}" translate>
-                      gateway.device-name-filter
+                         tb-hint-tooltip-icon="{{ 'gateway.device-name-filter-hint' | translate }}">
+                      {{ 'gateway.device-name-filter' | translate }}
                     </div>
                     <div class="tb-flex no-gap">
                       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -388,8 +394,8 @@
                     </div>
                   </div>
                   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.attribute-filter-hint' | translate }}" translate>
-                      gateway.attribute-filter
+                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.attribute-filter-hint' | translate }}">
+                      {{ 'gateway.attribute-filter' | translate }}
                     </div>
                     <div class="tb-flex no-gap">
                       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -472,8 +478,8 @@
                     </tb-toggle-select>
                   </div>
                   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.device-name-filter-hint' | translate }}" translate>
-                      gateway.device-name-filter
+                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.device-name-filter-hint' | translate }}">
+                      {{ 'gateway.device-name-filter' | translate }}
                     </div>
                     <div class="tb-flex no-gap">
                       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -491,8 +497,8 @@
                     </div>
                   </div>
                   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.method-filter-hint' | translate }}" translate>
-                      gateway.method-filter
+                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.method-filter-hint' | translate }}">
+                      {{ 'gateway.method-filter' | translate }}
                     </div>
                     <div class="tb-flex no-gap">
                       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -580,8 +586,8 @@
                       </div>
                     </div>
                     <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                      <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.response-topic-Qos-hint' | translate }}" translate>
-                        gateway.response-topic-Qos
+                      <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.response-topic-Qos-hint' | translate }}">
+                        {{ 'gateway.response-topic-Qos' | translate }}
                       </div>
                       <mat-form-field class="tb-flex" appearance="outline" subscriptSizing="dynamic">
                         <mat-select formControlName="responseTopicQoS">
@@ -614,6 +620,132 @@
                 </ng-template>
               </ng-container>
             </ng-container>
+        </ng-template>
+        <ng-template [ngSwitchCase]="MappingType.OPCUA">
+          <div class="tb-form-row column-xs" fxLayoutAlign="center">
+            <div class="tb-flex no-flex align-center" translate>
+              <div class="tb-required" tb-hint-tooltip-icon="{{ 'gateway.device-node-hint' | translate }}">
+                {{ 'gateway.device-node' | translate }}
+              </div>
+            </div>
+            <div class="tb-flex device-config">
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="deviceNodeSource">
+                  <mat-option *ngFor="let type of [OPCUaSourceTypesEnum.PATH, OPCUaSourceTypesEnum.IDENTIFIER]" [value]="type">
+                    {{ SourceTypeTranslationsMap.get(type) | translate }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field class="tb-flex no-gap device-node-pattern-field" appearance="outline" subscriptSizing="dynamic">
+                <input matInput name="value" formControlName="deviceNodePattern" placeholder="{{ 'gateway.set' | translate }}"/>
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="('gateway.device-node-required') | translate"
+                          *ngIf="(mappingForm.get('deviceNodePattern').hasError('required') &&
+                                  mappingForm.get('deviceNodePattern').touched)"
+                          class="tb-error">
+                  warning
+                </mat-icon>
+                <div matSuffix
+                     class="see-example"
+                     [tb-help-popup]="'device-node' | getGatewayHelpLink: mappingForm.get('deviceNodeSource').value"
+                     tb-help-popup-placement="left"
+                     [tb-help-popup-style]="{maxWidth: '970px'}">
+                </div>
+              </mat-form-field>
+            </div>
+          </div>
+          <tb-device-info-table formControlName="deviceInfo" [sourceTypes]="OPCUaSourceTypes" [deviceInfoType]="DeviceInfoType.FULL" required="true">
+          </tb-device-info-table>
+          <div class="tb-form-row space-between tb-flex">
+            <div class="fixed-title-width" translate>gateway.attributes</div>
+            <div class="tb-flex ellipsis-chips-container">
+              <mat-chip-listbox [tb-ellipsis-chip-list]="opcAttributes" class="tb-flex">
+                <mat-chip *ngFor="let attribute of opcAttributes">
+                  {{ attribute }}
+                </mat-chip>
+                <mat-chip class="mat-mdc-chip ellipsis-chip">
+                  <label class="ellipsis-text"></label>
+                </mat-chip>
+              </mat-chip-listbox>
+              <button type="button"
+                      mat-icon-button
+                      color="primary"
+                      matTooltip="{{ 'action.edit' | translate }}"
+                      matTooltipPosition="above"
+                      #opcAttributesButton
+                      (click)="manageKeys($event, opcAttributesButton, MappingKeysType.ATTRIBUTES)">
+                <tb-icon matButtonIcon>edit</tb-icon>
+              </button>
+            </div>
+          </div>
+          <div class="tb-form-row space-between tb-flex">
+            <div class="fixed-title-width" translate>gateway.timeseries</div>
+            <div class="tb-flex ellipsis-chips-container">
+              <mat-chip-listbox class="tb-flex" [tb-ellipsis-chip-list]="opcTelemetry">
+                <mat-chip *ngFor="let telemetry of opcTelemetry">
+                  {{ telemetry }}
+                </mat-chip>
+                <mat-chip class="mat-mdc-chip ellipsis-chip">
+                  <label class="ellipsis-text"></label>
+                </mat-chip>
+              </mat-chip-listbox>
+              <button type="button"
+                      mat-icon-button
+                      color="primary"
+                      matTooltip="{{ 'action.edit' | translate }}"
+                      matTooltipPosition="above"
+                      #opcTelemetryButton
+                      (click)="manageKeys($event, opcTelemetryButton, MappingKeysType.TIMESERIES)">
+                <tb-icon matButtonIcon>edit</tb-icon>
+              </button>
+            </div>
+          </div>
+          <div class="tb-form-row space-between tb-flex">
+            <div class="fixed-title-width" translate>gateway.attribute-updates</div>
+            <div class="tb-flex ellipsis-chips-container">
+              <mat-chip-listbox [tb-ellipsis-chip-list]="opcAttributesUpdates" class="tb-flex">
+                <mat-chip *ngFor="let attribute of opcAttributesUpdates">
+                  {{ attribute }}
+                </mat-chip>
+                <mat-chip class="mat-mdc-chip ellipsis-chip">
+                  <label class="ellipsis-text"></label>
+                </mat-chip>
+              </mat-chip-listbox>
+              <button type="button"
+                      mat-icon-button
+                      color="primary"
+                      matTooltip="{{ 'action.edit' | translate }}"
+                      matTooltipPosition="above"
+                      #attributesUpdatesButton
+                      (click)="manageKeys($event, attributesUpdatesButton, MappingKeysType.ATTRIBUTES_UPDATES)">
+                <tb-icon matButtonIcon>edit</tb-icon>
+              </button>
+            </div>
+          </div>
+          <div class="tb-form-row space-between tb-flex">
+            <div class="fixed-title-width" translate>gateway.rpc-methods</div>
+            <div class="tb-flex ellipsis-chips-container">
+              <mat-chip-listbox [tb-ellipsis-chip-list]="opcRpcMethods" class="tb-flex">
+                <mat-chip *ngFor="let attribute of opcRpcMethods">
+                  {{ attribute }}
+                </mat-chip>
+                <mat-chip class="mat-mdc-chip ellipsis-chip">
+                  <label class="ellipsis-text"></label>
+                </mat-chip>
+              </mat-chip-listbox>
+              <button type="button"
+                      mat-icon-button
+                      color="primary"
+                      matTooltip="{{ 'action.edit' | translate }}"
+                      matTooltipPosition="above"
+                      #rpcMethodsButton
+                      (click)="manageKeys($event, rpcMethodsButton, MappingKeysType.RPC_METHODS)">
+                <tb-icon matButtonIcon>edit</tb-icon>
+              </button>
+            </div>
+          </div>
         </ng-template>
       </ng-container>
     </div>

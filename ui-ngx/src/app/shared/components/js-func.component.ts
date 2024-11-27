@@ -25,9 +25,9 @@ import {
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
-import { ControlValueAccessor, UntypedFormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
+import { ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, UntypedFormControl, Validator } from '@angular/forms';
 import { Ace } from 'ace-builds';
-import { getAce, Range } from '@shared/models/ace/ace.models';
+import { AceHighlightRules, getAce, Range } from '@shared/models/ace/ace.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ActionNotificationHide, ActionNotificationShow } from '@core/notification/notification.actions';
 import { Store } from '@ngrx/store';
@@ -36,7 +36,6 @@ import { UtilsService } from '@core/services/utils.service';
 import { guid, isUndefined } from '@app/core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { beautifyJs } from '@shared/models/beautify.models';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
@@ -89,6 +88,8 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   @Input() minHeight = '200px';
 
   @Input() editorCompleter: TbEditorCompleter;
+
+  @Input() highlightRules: AceHighlightRules;
 
   @Input() globalVariables: Array<string>;
 
@@ -216,6 +217,21 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
           });
         }
         // @ts-ignore
+        if (!!this.highlightRules && !!this.jsEditor.session.$mode) {
+          // @ts-ignore
+          const newMode = new this.jsEditor.session.$mode.constructor();
+          newMode.$highlightRules = new newMode.HighlightRules();
+          for(const group in this.highlightRules) {
+            if(!!newMode.$highlightRules.$rules[group]) {
+              newMode.$highlightRules.$rules[group].unshift(...this.highlightRules[group]);
+            } else {
+              newMode.$highlightRules.$rules[group] = this.highlightRules[group];
+            }
+          }
+          // @ts-ignore
+          this.jsEditor.session.$onChangeMode(newMode);
+        }
+        // @ts-ignore
         if (!!this.jsEditor.session.$worker) {
           const jsWorkerOptions = {
             undef: !this.disableUndefinedCheck,
@@ -315,6 +331,11 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
         this.errorShowed = true;
       }
     }
+  }
+
+  public focus() {
+    this.javascriptEditorElmRef.nativeElement.scrollIntoView();
+    this.jsEditor?.focus();
   }
 
   private validateJsFunc(): boolean {

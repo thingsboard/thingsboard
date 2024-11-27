@@ -1,0 +1,69 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-form-panel no-gap no-border" [class.no-padding]="isAdd" [formGroup]="entityForm">
+  <div class="tb-form-row tb-standard-fields no-border no-padding">
+    <mat-form-field class="flex">
+      <mat-label translate>admin.oauth2.domain-name</mat-label>
+      <input matInput formControlName="name">
+      <mat-error *ngIf="entityForm.get('name').hasError('required')">
+        {{ 'admin.oauth2.domain-name-required' | translate }}
+      </mat-error>
+      <mat-error *ngIf="entityForm.get('name').hasError('maxlength')">
+        {{ 'admin.domain-name-max-length' | translate }}
+      </mat-error>
+      <mat-error *ngIf="entityForm.get('name').hasError('pattern')">
+        {{ 'admin.error-verification-url' | translate }}
+      </mat-error>
+    </mat-form-field>
+  </div>
+  <div class="tb-form-row tb-standard-fields no-border no-padding">
+    <mat-form-field class="flex">
+      <mat-label translate>admin.oauth2.redirect-url-template</mat-label>
+      <input matInput [value]="redirectURI()" readonly>
+      <tb-copy-button
+        matSuffix
+        miniButton="false"
+        color="primary"
+        [copyText]="redirectURI()"
+        tooltipText="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
+        tooltipPosition="above"
+        icon="content_copy">
+      </tb-copy-button>
+    </mat-form-field>
+  </div>
+  <div class="tb-form-row no-border no-padding" style="margin-bottom: 22px">
+    <mat-slide-toggle class="mat-slide" formControlName="oauth2Enabled">
+      {{ 'admin.oauth2.enable' | translate }}
+    </mat-slide-toggle>
+  </div>
+  <tb-entity-list [entityType]="entityType.OAUTH2_CLIENT" formControlName="oauth2ClientInfos"
+                  labelText="{{ 'admin.oauth2.clients' | translate }}"
+                  placeholderText="{{ 'admin.oauth2.add-client' | translate }}">
+    <button mat-button color="primary" matSuffix
+            [disabled]="!isEdit"
+            (click)="createClient($event)">
+      <span style="white-space: nowrap">{{ 'admin.oauth2.create-new' | translate }}</span>
+    </button>
+  </tb-entity-list>
+  <div class="tb-form-row no-border no-padding">
+    <mat-slide-toggle class="mat-slide" formControlName="propagateToEdge">
+      {{ 'admin.oauth2.edge' | translate }}
+    </mat-slide-toggle>
+  </div>
+</section>
+

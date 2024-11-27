@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.timeseries;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.kv.AggTsKvEntry;
 import org.thingsboard.server.common.data.kv.Aggregation;
@@ -32,7 +33,6 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntryAggWrapper;
 import org.thingsboard.server.dao.nosql.TbResultSet;
 
-import jakarta.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executor;

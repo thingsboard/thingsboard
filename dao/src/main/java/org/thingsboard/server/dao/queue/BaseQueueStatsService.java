@@ -23,14 +23,18 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.QueueStatsId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.QueueStats;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.service.Validator;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateIds;
 
 @Service("QueueStatsDaoService")
 @Slf4j
@@ -58,6 +62,14 @@ public class BaseQueueStatsService extends AbstractEntityService implements Queu
     }
 
     @Override
+    public List<QueueStats> findQueueStatsByIds(TenantId tenantId, List<QueueStatsId> queueStatsIds) {
+        log.trace("Executing findQueueStatsByIds, tenantId [{}], queueStatsIds [{}]", tenantId, queueStatsIds);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateIds(queueStatsIds, ids -> "Incorrect queueStatsIds " + ids);
+        return queueStatsDao.findByIds(tenantId, queueStatsIds);
+    }
+
+    @Override
     public QueueStats findByTenantIdAndNameAndServiceId(TenantId tenantId, String queueName, String serviceId) {
         log.trace("Executing findByTenantIdAndNameAndServiceId, tenantId: [{}], queueName: [{}], serviceId: [{}]", tenantId, queueName, serviceId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
@@ -65,10 +77,10 @@ public class BaseQueueStatsService extends AbstractEntityService implements Queu
     }
 
     @Override
-    public List<QueueStats> findByTenantId(TenantId tenantId) {
+    public PageData<QueueStats> findByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findByTenantId, tenantId: [{}]", tenantId);
-        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        return queueStatsDao.findByTenantId(tenantId);
+        Validator.validatePageLink(pageLink);
+        return queueStatsDao.findByTenantId(tenantId, pageLink);
     }
 
     @Override

@@ -327,12 +327,22 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             if (!isBootstrapServerUpdateEnable && serverConfig.isBootstrapServerIs()) {
                 throw new DeviceCredentialsValidationException("Bootstrap config must not include \"Bootstrap Server\". \"Include Bootstrap Server updates\" is " + isBootstrapServerUpdateEnable + ".");
             }
-            if (!serverConfig.isBootstrapServerIs() && (serverConfig.getShortServerId() < 1 || serverConfig.getShortServerId() > 65534)) {
-                throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must not be less than 1 and more than 65534!");
+
+            if (serverConfig.getShortServerId() != null) {
+                if (serverConfig.isBootstrapServerIs()){
+                    if(serverConfig.getShortServerId() < 0 || serverConfig.getShortServerId() > 65535){
+                        throw new DeviceCredentialsValidationException("Bootstrap Server ShortServerId must be in range [0 - 65535]!");
+                    }
+                } else {
+                    if (serverConfig.getShortServerId() < 1 || serverConfig.getShortServerId() > 65534) {
+                        throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must be in range [1 - 65534]!");
+                    }
+                }
+            } else {
+                String serverName = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
+                throw new DeviceCredentialsValidationException(serverName + " ShortServerId must not be null!");
             }
-           if (serverConfig.isBootstrapServerIs() && !(serverConfig.getShortServerId() == null || serverConfig.getShortServerId() ==0)) {
-                throw new DeviceCredentialsValidationException("Bootstrap Server ShortServerId must be null or '0'!");
-            }
+
             String server = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
             if (!shortServerIds.add(serverConfig.getShortServerId())) {
                 throw new DeviceCredentialsValidationException(server + " \"Short server Id\" value = " + serverConfig.getShortServerId() + ". This value must be a unique value for all servers!");

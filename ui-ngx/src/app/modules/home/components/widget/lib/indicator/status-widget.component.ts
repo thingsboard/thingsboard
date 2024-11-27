@@ -21,14 +21,16 @@ import {
   ElementRef,
   OnDestroy,
   OnInit,
-  Renderer2, ViewChild,
+  Renderer2,
+  ViewChild,
   ViewEncapsulation
 } from '@angular/core';
 import { BasicActionWidgetComponent } from '@home/components/widget/lib/action/action-widget.models';
 import {
   statusWidgetDefaultSettings,
   StatusWidgetLayout,
-  StatusWidgetSettings, StatusWidgetStateSettings
+  StatusWidgetSettings,
+  StatusWidgetStateSettings
 } from '@home/components/widget/lib/indicator/status-widget.models';
 import { Observable } from 'rxjs';
 import {
@@ -36,12 +38,11 @@ import {
   ComponentStyle,
   iconStyle,
   overlayStyle,
+  resolveCssSize,
   textStyle
 } from '@shared/models/widget-settings.models';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
-import { UtilsService } from '@core/services/utils.service';
 import { ValueType } from '@shared/models/constants';
 
 const initialStatusWidgetSize = 147;
@@ -65,6 +66,7 @@ export class StatusWidgetComponent extends
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  padding: string;
 
   overlayInset = '12px';
   borderRadius = '';
@@ -101,9 +103,7 @@ export class StatusWidgetComponent extends
   constructor(protected imagePipe: ImagePipe,
               protected sanitizer: DomSanitizer,
               private renderer: Renderer2,
-              private utils: UtilsService,
-              protected cd: ChangeDetectorRef,
-              private elementRef: ElementRef) {
+              protected cd: ChangeDetectorRef) {
     super(cd);
   }
 
@@ -191,8 +191,13 @@ export class StatusWidgetComponent extends
   }
 
   private onResize() {
-    const panelWidth = this.statusWidgetPanel.nativeElement.getBoundingClientRect().width;
-    const panelHeight = this.statusWidgetPanel.nativeElement.getBoundingClientRect().height;
+    const computedStyle = getComputedStyle(this.statusWidgetPanel.nativeElement);
+    const [pLeft, pRight, pTop, pBottom] = ['paddingLeft', 'paddingRight', 'paddingTop', 'paddingBottom']
+      .map(side => resolveCssSize(computedStyle[side])[0]);
+
+    const widgetBoundingClientRect = this.statusWidgetPanel.nativeElement.getBoundingClientRect();
+    const panelWidth = widgetBoundingClientRect.width - (pLeft + pRight);
+    const panelHeight = widgetBoundingClientRect.height - (pTop + pBottom);
     const targetSize = Math.min(panelWidth, panelHeight);
     const scale = targetSize / initialStatusWidgetSize;
     const width = initialStatusWidgetSize;
@@ -220,6 +225,9 @@ export class StatusWidgetComponent extends
     this.showLabel = stateSettings.showLabel && this.layout !== StatusWidgetLayout.icon;
     this.showStatus = stateSettings.showStatus && this.layout !== StatusWidgetLayout.icon;
     this.icon = stateSettings.icon;
+    this.padding = stateSettings.backgroundDisabled.overlay.enabled || stateSettings.background.overlay.enabled
+      ? undefined
+      : this.settings.padding;
 
     const primaryColor = disabled ? stateSettings.primaryColorDisabled : stateSettings.primaryColor;
     const secondaryColor = disabled ? stateSettings.secondaryColorDisabled : stateSettings.secondaryColor;

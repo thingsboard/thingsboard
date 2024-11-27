@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.security.auth.oauth2;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.Data;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -24,13 +25,12 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
-import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
 import org.thingsboard.server.dao.oauth2.OAuth2User;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
@@ -49,13 +49,13 @@ public class GithubOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
     private OAuth2Configuration oAuth2Configuration;
 
     @Override
-    public SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Registration registration) {
-        OAuth2MapperConfig config = registration.getMapperConfig();
+    public SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Client oAuth2Client) {
+        OAuth2MapperConfig config = oAuth2Client.getMapperConfig();
         Map<String, String> githubMapperConfig = oAuth2Configuration.getGithubMapper();
         String email = getEmail(githubMapperConfig.get(EMAIL_URL_KEY), providerAccessToken);
         Map<String, Object> attributes = token.getPrincipal().getAttributes();
         OAuth2User oAuth2User = BasicMapperUtils.getOAuth2User(email, attributes, config);
-        return getOrCreateSecurityUserFromOAuth2User(oAuth2User, registration);
+        return getOrCreateSecurityUserFromOAuth2User(oAuth2User, oAuth2Client);
     }
 
     private synchronized String getEmail(String emailUrl, String oauth2Token) {

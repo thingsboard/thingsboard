@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
@@ -98,7 +98,7 @@ export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigCom
   protected onConfigSet(configData: WidgetConfigComponentData) {
     const settings: DigitalGaugeSettings = {...defaultDigitalSimpleGaugeOptions, ...(configData.config.settings || {})};
 
-    convertLevelColorsSettingsToColorProcessor(settings);
+    convertLevelColorsSettingsToColorProcessor(settings, settings.defaultColor || '#2196f3');
 
     this.simpleGaugeWidgetConfigForm = this.fb.group({
       timewindowConfig: [getTimewindowConfig(configData.config), []],
@@ -109,7 +109,7 @@ export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigCom
 
       showMinMax: [settings.showMinMax, []],
       minValue: [settings.minValue, []],
-      maxValue: [settings.maxValue, []],
+      maxValue: [settings.maxValue, [this.maxValueValidation()]],
       minMaxFont: [settings.minMaxFont, []],
       minMaxColor: [settings.minMaxFont?.color, []],
 
@@ -124,7 +124,6 @@ export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigCom
       titleFont: [settings.titleFont, []],
       titleColor: [settings.titleFont?.color, []],
 
-      defaultColor: [settings.defaultColor, []],
       gaugeColor: [settings.gaugeColor, []],
       barColor: [settings.barColor, []],
 
@@ -165,7 +164,6 @@ export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigCom
     this.widgetConfig.config.settings.titleFont = config.titleFont;
     this.widgetConfig.config.settings.titleFont.color = config.titleColor;
 
-    this.widgetConfig.config.settings.defaultColor = config.defaultColor;
     this.widgetConfig.config.settings.gaugeColor = config.gaugeColor;
     this.widgetConfig.config.settings.barColor = config.barColor;
     const barColor: ColorSettings = config.barColor;
@@ -184,11 +182,29 @@ export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigCom
     return this.widgetConfig;
   }
 
+  private maxValueValidation(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value: string = control.value;
+      if (value) {
+        if (value < control.parent?.get('minValue').value) {
+          return {maxValue: true};
+        }
+      }
+      return null;
+    };
+  }
+
   protected validatorTriggers(): string[] {
-    return ['gaugeType', 'showValue', 'showTitle', 'showMinMax'];
+    return ['gaugeType', 'showValue', 'showTitle', 'showMinMax', 'minValue'];
   }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
+    if (trigger === 'minValue') {
+      this.simpleGaugeWidgetConfigForm.get('maxValue').updateValueAndValidity({emitEvent: true});
+      this.simpleGaugeWidgetConfigForm.get('maxValue').markAsTouched({onlySelf: true});
+      return;
+    }
+
     const isDonut = this.simpleGaugeWidgetConfigForm.get('gaugeType').value === this.digitalGaugeType.donut;
 
     if (isDonut) {

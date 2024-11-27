@@ -20,76 +20,6 @@
     class="mat-subtitle-1 title">{{ 'gateway.rpc.title' | translate: {type: gatewayConnectorDefaultTypesTranslates.get(connectorType)} }}</div>
   <ng-template [ngIf]="connectorType">
     <ng-container [ngSwitch]="connectorType">
-      <ng-template [ngSwitchCase]="ConnectorType.MQTT">
-        <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.methodFilter' | translate }}</mat-label>
-          <input matInput formControlName="methodFilter"
-                 placeholder="echo"/>
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.requestTopicExpression' | translate }}</mat-label>
-          <input matInput formControlName="requestTopicExpression"
-                 placeholder="sensor/${deviceName}/request/${methodName}/${requestId}"/>
-        </mat-form-field>
-        <mat-slide-toggle class="margin" (click)="$event.stopPropagation()" [formControl]="isMQTTWithResponse">
-          {{ 'gateway.rpc.withResponse' | translate }}
-        </mat-slide-toggle>
-        <mat-form-field *ngIf="isMQTTWithResponse.value">
-          <mat-label>{{ 'gateway.rpc.responseTopicExpression' | translate }}</mat-label>
-          <input matInput formControlName="responseTopicExpression"
-                 placeholder="sensor/${deviceName}/response/${methodName}/${requestId}"/>
-        </mat-form-field>
-        <mat-form-field *ngIf="isMQTTWithResponse.value">
-          <mat-label>{{ 'gateway.rpc.responseTimeout' | translate }}</mat-label>
-          <input matInput formControlName="responseTimeout" type="number"
-                 placeholder="10000" min="10" step="1"/>
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.valueExpression' | translate }}</mat-label>
-          <input matInput formControlName="valueExpression"
-                 placeholder="${params}"/>
-        </mat-form-field>
-      </ng-template>
-      <ng-template [ngSwitchCase]="ConnectorType.MODBUS">
-        <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.tag' | translate }}</mat-label>
-          <input matInput formControlName="tag" placeholder="setValue"/>
-        </mat-form-field>
-        <div fxFlex fxLayout="row" fxLayoutGap="10px">
-          <mat-form-field fxFlex="50" class="mat-block">
-            <mat-label>{{ 'gateway.rpc.type' | translate }}</mat-label>
-            <mat-select formControlName="type">
-              <mat-option *ngFor="let type of modbusCommandTypes" [value]="type">
-                {{ type }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field fxFlex="50" class="mat-block">
-            <mat-label>{{ 'gateway.rpc.functionCode' | translate }}</mat-label>
-            <mat-select formControlName="functionCode">
-              <mat-option *ngFor="let code of codesArray" [value]="code">
-                {{ modbusCodesTranslate.get(code) | translate}}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-        <mat-form-field *ngIf="commandForm.get('functionCode').value>4">
-          <mat-label>{{ 'gateway.rpc.value' | translate }}</mat-label>
-          <input matInput formControlName="value" placeholder="value"/>
-        </mat-form-field>
-        <div fxFlex fxLayout="row" fxLayoutGap="10px">
-          <mat-form-field fxFlex="50">
-            <mat-label>{{ 'gateway.rpc.address' | translate }}</mat-label>
-            <input matInput formControlName="address" type="number" min="0"
-                   placeholder="1" step="1"/>
-          </mat-form-field>
-          <mat-form-field fxFlex="50">
-            <mat-label>{{ 'gateway.rpc.objectsCount' | translate }}</mat-label>
-            <input matInput formControlName="objectsCount" type="number" min="0"
-                   placeholder="31" step="1"/>
-          </mat-form-field>
-        </div>
-      </ng-template>
       <ng-template [ngSwitchCase]="ConnectorType.BACNET">
         <mat-form-field>
           <mat-label>{{ 'gateway.rpc.methodRPC' | translate }}</mat-label>
@@ -368,38 +298,7 @@
             {{ 'gateway.rpc.add-header' | translate }}
           </button>
         </fieldset>
-        <fieldset class="fields border" fxLayout="column" fxLayoutGap="10px" formArrayName="security">
-          <span class="fields-label">{{ 'gateway.rpc.security' | translate }}</span>
-          <div class="border" fxLayout="column" fxLayoutGap="10px" *ngIf="getFormArrayControls('security').length">
-            <div fxLayout="row" fxLayoutGap="10px" fxLayoutAlign="center center">
-              <span fxFlex class="title">{{ 'gateway.rpc.security-name' | translate }}</span>
-              <span fxFlex class="title">{{ 'gateway.rpc.value' | translate }}</span>
-              <span fxFlex="30px"></span>
-            </div>
-            <mat-divider></mat-divider>
-            <div fxFlex fxLayout="row" fxLayoutGap="10px" fxLayoutAlign="center center"
-                 *ngFor="let control of getFormArrayControls('security'); let i = index">
-              <ng-container [formGroupName]="i">
-                <mat-form-field appearance="outline" fxFlex>
-                  <input matInput formControlName="securityName"/>
-                </mat-form-field>
-                <mat-form-field appearance="outline" fxFlex>
-                  <input matInput formControlName="value" placeholder="anonymous"/>
-                </mat-form-field>
-                <mat-icon style="cursor:pointer;"
-                          fxFlex="30px"
-                          (click)="removeHTTPSecurity(i)"
-                          matTooltip="{{ 'gateway.rpc.remove' | translate }}">delete
-                </mat-icon>
-              </ng-container>
-            </div>
-          </div>
-          <button mat-raised-button
-                  fxFlexAlign="start"
-                  (click)="addHTTPSecurity()">
-            {{ 'gateway.rpc.add-security' | translate }}
-          </button>
-        </fieldset>
+        <tb-rest-connector-security [formControl]="commandForm.get('security')"></tb-rest-connector-security>
       </ng-template>
       <ng-template [ngSwitchCase]="ConnectorType.REQUEST">
         <mat-form-field>
@@ -475,34 +374,6 @@
                   fxFlexAlign="start"
                   (click)="addHTTPHeader()">
             {{ 'gateway.rpc.add-header' | translate }}
-          </button>
-        </fieldset>
-      </ng-template>
-      <ng-template [ngSwitchCase]="ConnectorType.OPCUA_ASYNCIO">
-        <ng-container *ngTemplateOutlet="OPCUAForm"></ng-container>
-      </ng-template>
-      <ng-template [ngSwitchCase]="ConnectorType.OPCUA" #OPCUAForm>
-        <mat-form-field >
-          <mat-label>{{ 'gateway.rpc.method' | translate }}</mat-label>
-          <input matInput formControlName="method" placeholder="multiply"/>
-        </mat-form-field>
-        <fieldset class="fields border" fxLayout="column" fxLayoutGap="10px" formArrayName="arguments">
-          <span class="fields-label">{{ 'gateway.rpc.arguments' | translate }}</span>
-          <div fxFlex fxLayout="row" fxLayoutGap="10px" fxLayoutAlign="center center"
-               *ngFor="let control of getFormArrayControls('arguments'); let i = index">
-            <mat-form-field appearance="outline" fxFlex>
-              <input matInput [formControl]="control" required/>
-            </mat-form-field>
-            <mat-icon style="cursor:pointer;"
-                      fxFlex="30px"
-                      (click)="removeOCPUAArguments(i)"
-                      matTooltip="{{ 'gateway.rpc.remove' | translate }}">delete
-            </mat-icon>
-          </div>
-          <button mat-raised-button
-                  fxFlexAlign="start"
-                  (click)="addOCPUAArguments()">
-            {{ 'gateway.rpc.add-argument' | translate }}
           </button>
         </fieldset>
       </ng-template>

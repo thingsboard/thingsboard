@@ -22,7 +22,9 @@ import { DisplayColumnsPanelComponent } from '@home/components/widget/lib/displa
 import { AlarmsTableWidgetComponent } from '@home/components/widget/lib/alarm/alarms-table-widget.component';
 import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 import { TimeseriesTableWidgetComponent } from '@home/components/widget/lib/timeseries-table-widget.component';
-import { EntitiesHierarchyWidgetComponent } from '@home/components/widget/lib/entity/entities-hierarchy-widget.component';
+import {
+  EntitiesHierarchyWidgetComponent
+} from '@home/components/widget/lib/entity/entities-hierarchy-widget.component';
 import { RpcWidgetsModule } from '@home/components/widget/lib/rpc/rpc-widgets.module';
 import {
   DateRangeNavigatorPanelComponent,
@@ -54,7 +56,7 @@ import {
   GatewayServiceRPCConnectorTemplatesComponent
 } from '@home/components/widget/lib/gateway/gateway-service-rpc-connector-templates.component';
 import { DeviceGatewayCommandComponent } from '@home/components/widget/lib/gateway/device-gateway-command.component';
-import { GatewayConfigurationComponent } from '@home/components/widget/lib/gateway/gateway-configuration.component';
+import { GatewayConfigurationComponent } from '@home/components/widget/lib/gateway/configuration/gateway-configuration.component';
 import {
   GatewayRemoteConfigurationDialogComponent
 } from '@home/components/widget/lib/gateway/gateway-remote-configuration-dialog';
@@ -87,12 +89,7 @@ import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-wi
 import { ToggleButtonWidgetComponent } from '@home/components/widget/lib/button/toggle-button-widget.component';
 import { TimeSeriesChartWidgetComponent } from '@home/components/widget/lib/chart/time-series-chart-widget.component';
 import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
-import { MappingTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table.component';
 import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dialog/mapping-dialog.component';
-import { DeviceInfoTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/device-info-table.component';
-import { MappingDataKeysPanelComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-data-keys-panel.component';
-import { BrokerSecurityComponent } from '@home/components/widget/lib/gateway/connectors-configuration/broker-security.component';
-import { EllipsisChipListDirective } from '@home/components/widget/lib/gateway/connectors-configuration/ellipsis-chip-list.directive';
 import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/status-widget.component';
 import { LatestChartComponent } from '@home/components/widget/lib/chart/latest-chart.component';
 import { PieChartWidgetComponent } from '@home/components/widget/lib/chart/pie-chart-widget.component';
@@ -100,146 +97,250 @@ import { BarChartWidgetComponent } from '@home/components/widget/lib/chart/bar-c
 import { PolarAreaWidgetComponent } from '@home/components/widget/lib/chart/polar-area-widget.component';
 import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/radar-chart-widget.component';
 import { MobileAppQrcodeWidgetComponent } from '@home/components/widget/lib/mobile-app-qrcode-widget.component';
+import { KeyValueIsNotEmptyPipe } from '@shared/pipe/key-value-not-empty.pipe';
+import { LabelCardWidgetComponent } from '@home/components/widget/lib/cards/label-card-widget.component';
+import { LabelValueCardWidgetComponent } from '@home/components/widget/lib/cards/label-value-card-widget.component';
+import {
+  RestConnectorSecurityComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/rest-connector-secuirity/rest-connector-security.component';
+import {
+  UnreadNotificationWidgetComponent
+} from '@home/components/widget/lib/cards/unread-notification-widget.component';
+import {
+  NotificationTypeFilterPanelComponent
+} from '@home/components/widget/lib/cards/notification-type-filter-panel.component';
+import { GatewayHelpLinkPipe } from '@home/components/widget/lib/gateway/pipes/gateway-help-link.pipe';
+import { EllipsisChipListDirective } from '@shared/directives/ellipsis-chip-list.directive';
+import {
+  BrokerConfigControlComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt/broker-config-control/broker-config-control.component';
+import {
+  WorkersConfigControlComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt/workers-config-control/workers-config-control.component';
+import {
+  OpcServerConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/opc/opc-server-config/opc-server-config.component';
+import {
+  MqttBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt/basic-config/mqtt-basic-config.component';
+import {
+  MappingTableComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table/mapping-table.component';
+import {
+  OpcUaBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/opc/opc-ua-basic-config/opc-ua-basic-config.component';
+import {
+  ModbusBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/modbus/modbus-basic-config/modbus-basic-config.component';
+import {
+  DeviceInfoTableComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/device-info-table/device-info-table.component';
+import {
+  MappingDataKeysPanelComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mapping-data-keys-panel/mapping-data-keys-panel.component';
+import {
+  TypeValuePanelComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/type-value-panel/type-value-panel.component';
+import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/scada-symbol-widget.component';
+import {
+  MqttLegacyBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt/basic-config/mqtt-legacy-basic-config.component';
+import {
+  GatewayBasicConfigurationComponent
+} from '@home/components/widget/lib/gateway/configuration/basic/gateway-basic-configuration.component';
+import {
+    GatewayAdvancedConfigurationComponent
+} from '@home/components/widget/lib/gateway/configuration/advanced/gateway-advanced-configuration.component';
+import {
+    OpcUaLegacyBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/opc/opc-ua-basic-config/opc-ua-legacy-basic-config.component';
+import {
+  ModbusLegacyBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/modbus/modbus-basic-config/modbus-legacy-basic-config.component';
+import {
+  MqttRpcParametersComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/rpc-parameters/mqtt-rpc-parameters/mqtt-rpc-parameters.component';
+import {
+  OpcRpcParametersComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/rpc-parameters/opc-rpc-parameters/opc-rpc-parameters.component';
+import {
+  ModbusRpcParametersComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/rpc-parameters/modbus-rpc-parameters/modbus-rpc-parameters.component';
+import { RpcTemplateArrayViewPipe } from '@home/components/widget/lib/gateway/pipes/rpc-template-array-view.pipe';
+import {
+  ReportStrategyComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/report-strategy/report-strategy.component';
+import { LatestVersionConfigPipe } from '@home/components/widget/lib/gateway/pipes/latest-version-config.pipe';
 
 @NgModule({
-  declarations:
-    [
-      DisplayColumnsPanelComponent,
-      EntitiesTableWidgetComponent,
-      AlarmsTableWidgetComponent,
-      TimeseriesTableWidgetComponent,
-      EntitiesHierarchyWidgetComponent,
-      EdgesOverviewWidgetComponent,
-      DateRangeNavigatorWidgetComponent,
-      DateRangeNavigatorPanelComponent,
-      JsonInputWidgetComponent,
-      MultipleInputWidgetComponent,
-      TripAnimationComponent,
-      PhotoCameraInputWidgetComponent,
-      GatewayFormComponent,
-      NavigationCardsWidgetComponent,
-      NavigationCardWidgetComponent,
-      QrCodeWidgetComponent,
-      MobileAppQrcodeWidgetComponent,
-      MarkdownWidgetComponent,
-      SelectEntityDialogComponent,
-      LegendComponent,
-      FlotWidgetComponent,
-      GatewayConnectorComponent,
-      AddConnectorDialogComponent,
-      MappingTableComponent,
-      MappingDialogComponent,
-      DeviceInfoTableComponent,
-      MappingDataKeysPanelComponent,
-      BrokerSecurityComponent,
-      GatewayLogsComponent,
-      GatewayStatisticsComponent,
-      GatewayServiceRPCComponent,
-      GatewayServiceRPCConnectorComponent,
-      GatewayServiceRPCConnectorTemplatesComponent,
-      DeviceGatewayCommandComponent,
-      GatewayConfigurationComponent,
-      GatewayRemoteConfigurationDialogComponent,
-      GatewayServiceRPCConnectorTemplateDialogComponent,
-      EllipsisChipListDirective,
-      ValueCardWidgetComponent,
-      AggregatedValueCardWidgetComponent,
-      CountWidgetComponent,
-      BatteryLevelWidgetComponent,
-      WindSpeedDirectionWidgetComponent,
-      SignalStrengthWidgetComponent,
-      ValueChartCardWidgetComponent,
-      ProgressBarWidgetComponent,
-      LiquidLevelWidgetComponent,
-      DoughnutWidgetComponent,
-      RangeChartWidgetComponent,
-      BarChartWithLabelsWidgetComponent,
-      SingleSwitchWidgetComponent,
-      ActionButtonWidgetComponent,
-      CommandButtonWidgetComponent,
-      PowerButtonWidgetComponent,
-      SliderWidgetComponent,
-      ToggleButtonWidgetComponent,
-      TimeSeriesChartWidgetComponent,
-      StatusWidgetComponent,
-      LatestChartComponent,
-      PieChartWidgetComponent,
-      BarChartWidgetComponent,
-      PolarAreaWidgetComponent,
-      RadarChartWidgetComponent
-    ],
+  declarations: [
+    DisplayColumnsPanelComponent,
+    EntitiesTableWidgetComponent,
+    AlarmsTableWidgetComponent,
+    TimeseriesTableWidgetComponent,
+    EntitiesHierarchyWidgetComponent,
+    EdgesOverviewWidgetComponent,
+    DateRangeNavigatorWidgetComponent,
+    DateRangeNavigatorPanelComponent,
+    JsonInputWidgetComponent,
+    MultipleInputWidgetComponent,
+    TripAnimationComponent,
+    PhotoCameraInputWidgetComponent,
+    GatewayFormComponent,
+    NavigationCardsWidgetComponent,
+    NavigationCardWidgetComponent,
+    QrCodeWidgetComponent,
+    MobileAppQrcodeWidgetComponent,
+    MarkdownWidgetComponent,
+    SelectEntityDialogComponent,
+    LegendComponent,
+    FlotWidgetComponent,
+    GatewayConnectorComponent,
+    AddConnectorDialogComponent,
+    MappingDialogComponent,
+    DeviceInfoTableComponent,
+    MappingDataKeysPanelComponent,
+    TypeValuePanelComponent,
+    GatewayLogsComponent,
+    GatewayStatisticsComponent,
+    GatewayServiceRPCComponent,
+    GatewayServiceRPCConnectorComponent,
+    GatewayServiceRPCConnectorTemplatesComponent,
+    DeviceGatewayCommandComponent,
+    GatewayConfigurationComponent,
+    GatewayRemoteConfigurationDialogComponent,
+    GatewayServiceRPCConnectorTemplateDialogComponent,
+    ValueCardWidgetComponent,
+    AggregatedValueCardWidgetComponent,
+    CountWidgetComponent,
+    BatteryLevelWidgetComponent,
+    WindSpeedDirectionWidgetComponent,
+    SignalStrengthWidgetComponent,
+    ValueChartCardWidgetComponent,
+    ProgressBarWidgetComponent,
+    LiquidLevelWidgetComponent,
+    DoughnutWidgetComponent,
+    RangeChartWidgetComponent,
+    BarChartWithLabelsWidgetComponent,
+    SingleSwitchWidgetComponent,
+    ActionButtonWidgetComponent,
+    CommandButtonWidgetComponent,
+    PowerButtonWidgetComponent,
+    SliderWidgetComponent,
+    ToggleButtonWidgetComponent,
+    TimeSeriesChartWidgetComponent,
+    StatusWidgetComponent,
+    LatestChartComponent,
+    PieChartWidgetComponent,
+    BarChartWidgetComponent,
+    PolarAreaWidgetComponent,
+    RadarChartWidgetComponent,
+    LabelCardWidgetComponent,
+    LabelValueCardWidgetComponent,
+    UnreadNotificationWidgetComponent,
+    NotificationTypeFilterPanelComponent,
+    ScadaSymbolWidgetComponent
+  ],
   imports: [
     CommonModule,
     SharedModule,
     RpcWidgetsModule,
     HomePageWidgetsModule,
-    SharedHomeComponentsModule
+    SharedHomeComponentsModule,
+    RestConnectorSecurityComponent,
+    GatewayHelpLinkPipe,
+    BrokerConfigControlComponent,
+    WorkersConfigControlComponent,
+    OpcServerConfigComponent,
+    MqttBasicConfigComponent,
+    MappingTableComponent,
+    OpcUaBasicConfigComponent,
+    KeyValueIsNotEmptyPipe,
+    ModbusBasicConfigComponent,
+    EllipsisChipListDirective,
+    ModbusRpcParametersComponent,
+    MqttLegacyBasicConfigComponent,
+    GatewayBasicConfigurationComponent,
+    GatewayAdvancedConfigurationComponent,
+    OpcUaLegacyBasicConfigComponent,
+    ModbusLegacyBasicConfigComponent,
+    MqttRpcParametersComponent,
+    OpcRpcParametersComponent,
+    ModbusRpcParametersComponent,
+    RpcTemplateArrayViewPipe,
+    ReportStrategyComponent,
+    LatestVersionConfigPipe,
   ],
-    exports: [
-        EntitiesTableWidgetComponent,
-        AlarmsTableWidgetComponent,
-        TimeseriesTableWidgetComponent,
-        EntitiesHierarchyWidgetComponent,
-        EdgesOverviewWidgetComponent,
-        RpcWidgetsModule,
-        HomePageWidgetsModule,
-        DateRangeNavigatorWidgetComponent,
-        JsonInputWidgetComponent,
-        MultipleInputWidgetComponent,
-        TripAnimationComponent,
-        PhotoCameraInputWidgetComponent,
-        GatewayFormComponent,
-        NavigationCardsWidgetComponent,
-        NavigationCardWidgetComponent,
-        QrCodeWidgetComponent,
-        MobileAppQrcodeWidgetComponent,
-        MarkdownWidgetComponent,
-        LegendComponent,
-        FlotWidgetComponent,
-        GatewayConnectorComponent,
-        AddConnectorDialogComponent,
-        MappingTableComponent,
-        MappingDialogComponent,
-        DeviceInfoTableComponent,
-        MappingDataKeysPanelComponent,
-        BrokerSecurityComponent,
-        GatewayLogsComponent,
-        GatewayServiceRPCConnectorComponent,
-        GatewayServiceRPCConnectorTemplatesComponent,
-        EllipsisChipListDirective,
-        GatewayStatisticsComponent,
-        GatewayServiceRPCComponent,
-        DeviceGatewayCommandComponent,
-        GatewayConfigurationComponent,
-        GatewayRemoteConfigurationDialogComponent,
-        GatewayServiceRPCConnectorTemplateDialogComponent,
-        ValueCardWidgetComponent,
-        AggregatedValueCardWidgetComponent,
-        CountWidgetComponent,
-        BatteryLevelWidgetComponent,
-        WindSpeedDirectionWidgetComponent,
-        SignalStrengthWidgetComponent,
-        ValueChartCardWidgetComponent,
-        ProgressBarWidgetComponent,
-        LiquidLevelWidgetComponent,
-        DoughnutWidgetComponent,
-        RangeChartWidgetComponent,
-        BarChartWithLabelsWidgetComponent,
-        SingleSwitchWidgetComponent,
-        ActionButtonWidgetComponent,
-        CommandButtonWidgetComponent,
-        PowerButtonWidgetComponent,
-        SliderWidgetComponent,
-        ToggleButtonWidgetComponent,
-        TimeSeriesChartWidgetComponent,
-        StatusWidgetComponent,
-        PieChartWidgetComponent,
-        BarChartWidgetComponent,
-        PolarAreaWidgetComponent,
-        RadarChartWidgetComponent
-    ],
+  exports: [
+    EntitiesTableWidgetComponent,
+    AlarmsTableWidgetComponent,
+    TimeseriesTableWidgetComponent,
+    EntitiesHierarchyWidgetComponent,
+    EdgesOverviewWidgetComponent,
+    RpcWidgetsModule,
+    HomePageWidgetsModule,
+    DateRangeNavigatorWidgetComponent,
+    JsonInputWidgetComponent,
+    MultipleInputWidgetComponent,
+    TripAnimationComponent,
+    PhotoCameraInputWidgetComponent,
+    GatewayFormComponent,
+    NavigationCardsWidgetComponent,
+    NavigationCardWidgetComponent,
+    QrCodeWidgetComponent,
+    MobileAppQrcodeWidgetComponent,
+    MarkdownWidgetComponent,
+    LegendComponent,
+    FlotWidgetComponent,
+    GatewayConnectorComponent,
+    AddConnectorDialogComponent,
+    MappingDialogComponent,
+    DeviceInfoTableComponent,
+    MappingDataKeysPanelComponent,
+    TypeValuePanelComponent,
+    GatewayLogsComponent,
+    GatewayServiceRPCConnectorComponent,
+    GatewayServiceRPCConnectorTemplatesComponent,
+    EllipsisChipListDirective,
+    GatewayStatisticsComponent,
+    GatewayServiceRPCComponent,
+    DeviceGatewayCommandComponent,
+    GatewayConfigurationComponent,
+    GatewayRemoteConfigurationDialogComponent,
+    GatewayServiceRPCConnectorTemplateDialogComponent,
+    ValueCardWidgetComponent,
+    AggregatedValueCardWidgetComponent,
+    CountWidgetComponent,
+    BatteryLevelWidgetComponent,
+    WindSpeedDirectionWidgetComponent,
+    SignalStrengthWidgetComponent,
+    ValueChartCardWidgetComponent,
+    ProgressBarWidgetComponent,
+    LiquidLevelWidgetComponent,
+    DoughnutWidgetComponent,
+    RangeChartWidgetComponent,
+    BarChartWithLabelsWidgetComponent,
+    SingleSwitchWidgetComponent,
+    ActionButtonWidgetComponent,
+    CommandButtonWidgetComponent,
+    PowerButtonWidgetComponent,
+    SliderWidgetComponent,
+    ToggleButtonWidgetComponent,
+    TimeSeriesChartWidgetComponent,
+    StatusWidgetComponent,
+    PieChartWidgetComponent,
+    BarChartWidgetComponent,
+    PolarAreaWidgetComponent,
+    RadarChartWidgetComponent,
+    LabelCardWidgetComponent,
+    LabelValueCardWidgetComponent,
+    UnreadNotificationWidgetComponent,
+    NotificationTypeFilterPanelComponent,
+    ScadaSymbolWidgetComponent
+  ],
   providers: [
-    {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }
+    {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule},
+    {provide: LatestVersionConfigPipe}
   ]
 })
 export class WidgetComponentsModule {

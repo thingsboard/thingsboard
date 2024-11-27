@@ -16,14 +16,11 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,8 +39,8 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.config.annotations.ApiOperation;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.device.profile.TbDeviceProfileService;
@@ -128,8 +125,8 @@ public class DeviceProfileController extends BaseController {
         return checkNotNull(deviceProfileService.findDefaultDeviceProfileInfo(getTenantId()));
     }
 
-    @ApiOperation(value = "Get time-series keys (getTimeseriesKeys)",
-            notes = "Get a set of unique time-series keys used by devices that belong to specified profile. " +
+    @ApiOperation(value = "Get time series keys (getTimeseriesKeys)",
+            notes = "Get a set of unique time series keys used by devices that belong to specified profile. " +
                     "If profile is not set returns a list of unique keys among all profiles. " +
                     "The call is used for auto-complete in the UI forms. " +
                     "The implementation limits the number of devices that participate in search to 100 as a trade of between accurate results and time-consuming queries. " +

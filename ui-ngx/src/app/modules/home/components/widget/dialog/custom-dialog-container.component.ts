@@ -17,11 +17,12 @@
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import {
   Component,
-  ComponentFactory,
-  ComponentRef, HostBinding,
+  ComponentRef,
+  HostBinding,
   Inject,
-  Injector, NgModuleRef,
-  OnDestroy, Type,
+  Injector,
+  OnDestroy,
+  Type,
   ViewContainerRef
 } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
@@ -35,13 +36,11 @@ import {
 } from '@home/components/widget/dialog/custom-dialog.component';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
-import { DynamicComponentModule } from '@core/services/dynamic-component-factory.service';
 
 export interface CustomDialogContainerData {
   controller: (instance: CustomDialogComponent) => void;
   data?: any;
   customComponentType: Type<CustomDialogComponent>;
-  customComponentModuleRef: NgModuleRef<DynamicComponentModule>;
 }
 
 @Component({
@@ -80,7 +79,7 @@ export class CustomDialogContainerComponent extends DialogComponent<CustomDialog
     });
     try {
       this.customComponentRef = this.viewContainerRef.createComponent(this.data.customComponentType,
-        {index: 0, injector, ngModuleRef: this.data.customComponentModuleRef});
+        {index: 0, injector});
     } catch (e: any) {
       let message;
       if (e.message?.startsWith('NG0')) {

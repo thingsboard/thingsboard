@@ -1,0 +1,40 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-form-panel tb-scada-symbol-metadata-tags">
+  <div class="tb-form-table">
+    <div class="tb-form-table-header">
+      <div class="tb-form-table-header-cell tb-tag-header" translate>scada.tag.tag</div>
+      <div class="tb-form-table-header-cell tb-state-render-function-header" translate>scada.state-render-function</div>
+      <div class="tb-form-table-header-cell tb-on-click-action-header" translate>scada.tag.on-click-action</div>
+    </div>
+    <div *ngIf="tagsFormArray().controls.length; else noTags" class="tb-form-table-body">
+      <div *ngFor="let tagControl of tagsFormArray().controls; trackBy: trackByTag; let $index = index; let $last = last">
+        <tb-scada-symbol-metadata-tag fxFlex
+                                      [elementStateRenderFunctionCompleter]="elementStateRenderFunctionCompleter"
+                                      [clickActionFunctionCompleter]="clickActionFunctionCompleter"
+                                      [formControl]="tagControl">
+        </tb-scada-symbol-metadata-tag>
+        <mat-divider *ngIf="!$last"></mat-divider>
+      </div>
+    </div>
+  </div>
+</div>
+<ng-template #noTags>
+  <span fxLayoutAlign="center center"
+        class="tb-prompt">{{ 'scada.tag.no-tags' | translate }}</span>
+</ng-template>

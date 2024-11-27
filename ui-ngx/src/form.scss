@@ -205,6 +205,12 @@
     &.space-between {
       justify-content: space-between;
     }
+    &.flex-wrap {
+      flex-wrap: wrap;
+    }
+    &.overflow-auto {
+      overflow: auto;
+    }
     .mat-divider-vertical {
       height: 56px;
       margin-top: -7px;
@@ -235,6 +241,10 @@
     .fixed-title-width {
       min-width: 200px;
 
+      &-180 {
+        min-width: 180px;
+      }
+
       &-230 {
         min-width: 230px;
       }
@@ -260,12 +270,21 @@
   }
 
   .tb-flex {
-    display: flex;
     flex: 1;
-    gap: 8px;
+
     &.no-flex {
       flex: none;
     }
+
+    &-xs {
+      @media #{$mat-xs} {
+        flex: 1;
+      }
+    }
+  }
+  [class*="tb-flex"] {
+    display: flex;
+    gap: 8px;
     &.row {
       flex-direction: row;
     }
@@ -287,11 +306,14 @@
     &.space-between {
       justify-content: space-between;
     }
-    &.center {
-      justify-content: center;
-    }
     &.align-center {
       align-items: center;
+    }
+    &.align-start {
+      align-items: start;
+    }
+    &.align-end {
+      align-items: end;
     }
     &.no-gap {
       gap: 0;
@@ -362,8 +384,17 @@
     .mat-mdc-text-field-wrapper {
       &.mdc-text-field--outlined, &:not(.mdc-text-field--outlined) {
         &:not(.mdc-text-field--focused):not(.mdc-text-field--disabled):not(.mdc-text-field--invalid):not(:hover) {
-          .mdc-notched-outline__leading, .mdc-notched-outline__trailing {
+          .mdc-notched-outline__leading, .mdc-notched-outline__trailing, .mdc-notched-outline__notch {
             border-color: rgba(0, 0, 0, 0.12);
+          }
+        }
+        .mdc-floating-label {
+          top: 20px;
+          font-weight: 400;
+          font-size: 14px;
+          line-height: 20px;
+          &--float-above {
+            --mat-mdc-form-field-label-transform: translateY(-27px) scale(var(--mat-mdc-form-field-floating-label-scale, 0.75));
           }
         }
         .mat-mdc-form-field-infix {
@@ -377,7 +408,8 @@
             line-height: 20px;
           }
         }
-        .mat-mdc-form-field-icon-prefix, .mat-mdc-form-field-icon-suffix {
+        .mat-mdc-form-field-icon-prefix, .mat-mdc-form-field-icon-suffix,
+        .mat-datetimepicker-toggle {
           height: 40px;
           font-size: 14px;
           line-height: 40px;
@@ -391,6 +423,10 @@
               width: 20px;
               height: 20px;
               font-size: 20px;
+              svg {
+                width: 20px;
+                height: 20px;
+              }
             }
             .mat-mdc-button-touch-target {
               width: 40px;
@@ -582,6 +618,7 @@
 
   .tb-form-table-header {
     height: 48px;
+    min-height: 48px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.12);
     &-cell {
       color: rgba(0, 0, 0, 0.54);

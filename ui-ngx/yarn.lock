@@ -1697,11 +1697,6 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@juggle/resize-observer@^3.4.0":
-  version "3.4.0"
-  resolved "https://registry.yarnpkg.com/@juggle/resize-observer/-/resize-observer-3.4.0.tgz#08d6c5e20cf7e4cc02fd181c4b0c225cd31dbb60"
-  integrity sha512-dfLbk+PwWvFzSxwk3n5ySL0hfBog779o8h68wK/7/APo/7cgyWp5jcXockbxdk5kFRkbeXWm4Fbi9FrdN381sA==
-
 "@leichtgewicht/ip-codec@^2.0.1":
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/@leichtgewicht/ip-codec/-/ip-codec-2.0.4.tgz#b2ac626d6cb9c8718ab459166d4bb405b8ffa78b"
@@ -2695,10 +2690,17 @@
   dependencies:
     "@svgdotjs/svg.js" "^3.1.1"
 
-"@svgdotjs/svg.js@^3.1.1", "@svgdotjs/svg.js@^3.2.0":
+"@svgdotjs/svg.js@^3.0.16", "@svgdotjs/svg.js@^3.1.1", "@svgdotjs/svg.js@^3.2.0":
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/@svgdotjs/svg.js/-/svg.js-3.2.0.tgz#6baa8cef6778a93818ac18faa2055222e60aa644"
   integrity sha512-Tr8p+QVP7y+QT1GBlq1Tt57IvedVH8zCPoYxdHLX0Oof3a/PqnC/tXAkVufv1JQJfsDHlH/UrjcDfgxSofqSNA==
+
+"@svgdotjs/svg.panzoom.js@^2.1.2":
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/@svgdotjs/svg.panzoom.js/-/svg.panzoom.js-2.1.2.tgz#50e66a861f7c4f9e3992707f8e62e6e8da5c5223"
+  integrity sha512-0Nzo2TRlTebW3pzfAPtHx8Ye7Y3kuMEkK7hwVJi0SgQUB/vstjg7fvCJxB++EqsuDEetP0/SC+4CpLMVm6Lh2g==
+  dependencies:
+    "@svgdotjs/svg.js" "^3.0.16"
 
 "@tinymce/tinymce-angular@^7.0.0":
   version "7.0.0"
@@ -3050,10 +3052,10 @@
   dependencies:
     "@types/jasmine" "*"
 
-"@types/jquery@*", "@types/jquery@^3.5.16", "@types/jquery@^3.5.29":
-  version "3.5.29"
-  resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-3.5.29.tgz#3c06a1f519cd5fc3a7a108971436c00685b5dcea"
-  integrity sha512-oXQQC9X9MOPRrMhPHHOsXqeQDnWeCDT3PelUIg/Oy8FAbzSZtFHRjc7IpbfFVmpLtJ+UOoywpRsuO5Jxjybyeg==
+"@types/jquery@*", "@types/jquery@^3.5.29", "@types/jquery@^3.5.30":
+  version "3.5.30"
+  resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-3.5.30.tgz#888d584cbf844d3df56834b69925085038fd80f7"
+  integrity sha512-nbWKkkyb919DOUxjmRVk8vwtDb0/k8FKncmUKFi+NY+QXqWltooxTrswvz4LspQwxvLdvzBN1TImr6cw3aQx2A==
   dependencies:
     "@types/sizzle" "*"
 
@@ -5432,7 +5434,7 @@ ecc-jsbn@~0.1.1:
 
 "echarts@https://github.com/thingsboard/echarts/archive/5.5.0-TB.tar.gz":
   version "5.5.0-TB"
-  resolved "https://github.com/thingsboard/echarts/archive/5.5.0-TB.tar.gz#d1017728576b3fd65532eb17e503d1349f7feaed"
+  resolved "https://github.com/thingsboard/echarts/archive/5.5.0-TB.tar.gz#0b707b5cd2ae4699e9ced8b07ca49cb70189ae2a"
   dependencies:
     tslib "2.3.0"
     zrender "5.5.0"
@@ -7375,7 +7377,7 @@ jquery.terminal@^2.35.3:
   optionalDependencies:
     fsevents "^2.3.2"
 
-jquery@>=1.9.1, jquery@^3.5.0, jquery@^3.6.3, jquery@^3.7.1:
+jquery@>=1.9.1, jquery@^3.5.0, jquery@^3.7.1:
   version "3.7.1"
   resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.7.1.tgz#083ef98927c9a6a74d05a6af02806566d16274de"
   integrity sha512-m4avr8yL8kmFN8psrbFFFmB/If14iN5o9nw/NgnnM+kybDJpRsAynV2BsfpTYrTRysYUdADVD7CkUUizgkpLfg==
