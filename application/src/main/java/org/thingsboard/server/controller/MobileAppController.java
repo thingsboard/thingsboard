@@ -82,9 +82,9 @@ public class MobileAppController extends BaseController {
     public LoginMobileInfo getLoginMobileInfo(@Parameter(description = "Mobile application package name")
                                               @RequestParam String pkgName,
                                               @Parameter(description = "Platform type", schema = @Schema(allowableValues = {"ANDROID", "IOS"}))
-                                              @RequestParam PlatformType platform) throws ThingsboardException {
+                                              @RequestParam PlatformType platform) {
         List<OAuth2ClientLoginInfo> oauth2Clients = oAuth2ClientService.findOAuth2ClientLoginInfosByMobilePkgNameAndPlatformType(pkgName, platform);
-        MobileApp mobileApp = checkNotNull(mobileAppService.findMobileAppByPkgNameAndPlatformType(pkgName, platform));
+        MobileApp mobileApp = mobileAppService.findMobileAppByPkgNameAndPlatformType(pkgName, platform);
         StoreInfo storeInfo = Optional.ofNullable(mobileApp).map(MobileApp::getStoreInfo).orElse(null);
         MobileAppVersionInfo versionInfo = Optional.ofNullable(mobileApp).map(MobileApp::getVersionInfo).orElse(null);
         return new LoginMobileInfo(oauth2Clients, storeInfo, versionInfo);
