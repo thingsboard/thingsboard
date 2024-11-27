@@ -26,6 +26,8 @@ import org.thingsboard.server.common.data.notification.targets.platform.SystemAd
 import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -38,9 +40,16 @@ public class DeprecationService {
     @Value("${queue.type}")
     private String queueType;
 
+    @Value("${database.ts.type}")
+    private String tsType;
+
+    @Value("${database.ts_latest.type}")
+    private String tsLatestType;
+
     @AfterStartUp(order = Integer.MAX_VALUE)
     public void checkDeprecation() {
         checkQueueTypeDeprecation();
+        checkDatabaseTypeDeprecation();
     }
 
     private void checkQueueTypeDeprecation() {
@@ -63,4 +72,33 @@ public class DeprecationService {
                 )));
     }
 
+    private void checkDatabaseTypeDeprecation() {
+        String deprecatedDatabaseType = "timescale";
+        var fieldsWithDeprecatedType = new ArrayList<String>();
+
+        addFieldIfValueDeprecated(tsType, "ts", fieldsWithDeprecatedType, deprecatedDatabaseType);
+        addFieldIfValueDeprecated(tsLatestType, "ts_latest", fieldsWithDeprecatedType, deprecatedDatabaseType);
+
+        if (fieldsWithDeprecatedType.isEmpty()) {
+            return;
+        }
+
+        String deprecatedFieldNames = String.join(", ", fieldsWithDeprecatedType);
+
+        log.warn("WARNING: Starting with ThingsBoard 4.0, {} will no longer be supported as a database type for telemetry storage. " +
+                        "Please migrate to Cassandra or SQL-based storage solutions. This change will not impact the telemetry query.",
+                deprecatedDatabaseType);
+
+        notificationCenter.sendGeneralWebNotification(TenantId.SYS_TENANT_ID, new SystemAdministratorsFilter(),
+                DefaultNotifications.databaseTypeDeprecation.toTemplate(), new GeneralNotificationInfo(Map.of(
+                        "databaseType", deprecatedDatabaseType,
+                        "deprecatedFields", deprecatedFieldNames
+                )));
+    }
+
+    private void addFieldIfValueDeprecated(String fieldValue, String fieldName, List<String> fieldsWithDeprecatedType, String deprecatedDatabaseType) {
+        if (deprecatedDatabaseType.equals(fieldValue)) {
+            fieldsWithDeprecatedType.add(fieldName);
+        }
+    }
 }

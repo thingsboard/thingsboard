@@ -381,6 +381,16 @@ public class DefaultNotifications {
             .icon("warning").color(RED_COLOR)
             .build();
 
+    public static final DefaultNotification databaseTypeDeprecation = DefaultNotification.builder()
+            .name("Database type deprecation")
+            .type(NotificationType.GENERAL)
+            .subject("WARNING: Database type '${databaseType}' is deprecated")
+            .text("Starting with ThingsBoard 4.0, the database type '${databaseType}' (${deprecatedFields}) will no longer be supported. " +
+                    "Please migrate to Cassandra or SQL-based storage solutions")
+            .icon("warning")
+            .color(RED_COLOR)
+            .build();
+
     private final NotificationTemplateService templateService;
     private final NotificationRuleService ruleService;
 
