@@ -72,9 +72,10 @@ public interface OAuth2ClientRepository extends JpaRepository<OAuth2ClientEntity
             "LEFT JOIN MobileAppBundleOauth2ClientEntity bc ON bc.mobileAppBundleId = b.id " +
             "LEFT JOIN OAuth2ClientEntity c ON bc.oauth2ClientId = c.id " +
             "WHERE c.id = :clientId " +
-            "AND a.pkgName = :pkgName")
+            "AND a.pkgName = :pkgName and a.platformType = :platformType")
     String findAppSecret(@Param("clientId") UUID id,
-                         @Param("pkgName") String pkgName);
+                         @Param("pkgName") String pkgName,
+                         @Param("platformType") String platformType);
 
     @Transactional
     @Modifying
