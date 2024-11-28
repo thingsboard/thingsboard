@@ -100,6 +100,8 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void onAssetUpdated(Asset asset, Asset old);
 
+    void onAssetDeleted(TenantId tenantId, Asset asset, TbQueueCallback callback);
+
     void onResourceChange(TbResourceInfo resource, TbQueueCallback callback);
 
     void onResourceDeleted(TbResourceInfo resource, TbQueueCallback callback);

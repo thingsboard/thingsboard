@@ -74,8 +74,8 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtx;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
-import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
+import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.LastRecordsCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SimpleCalculatedFieldState;
@@ -227,6 +227,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     @Override
     public void onTelemetryUpdate(TenantId tenantId, CalculatedFieldId calculatedFieldId, Map<String, KvEntry> updatedTelemetry) {
         try {
+            log.info("Received telemetry update msg: tenantId=[{}], calculatedFieldId=[{}]", tenantId, calculatedFieldId);
             CalculatedFieldCtx calculatedFieldCtx = calculatedFieldsCtx.computeIfAbsent(calculatedFieldId, id -> {
                 CalculatedField calculatedField = calculatedFields.computeIfAbsent(id, cfId -> calculatedFieldService.findById(tenantId, id));
                 return new CalculatedFieldCtx(calculatedField, tbelInvokeService);
@@ -247,7 +248,6 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             EntityId entityId = EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
             EntityId oldProfileId = EntityIdFactory.getByTypeAndUuid(proto.getEntityProfileType(), new UUID(proto.getOldProfileIdMSB(), proto.getOldProfileIdLSB()));
             EntityId newProfileId = EntityIdFactory.getByTypeAndUuid(proto.getEntityProfileType(), new UUID(proto.getNewProfileIdMSB(), proto.getNewProfileIdLSB()));
-
             log.info("Received EntityProfileUpdateMsgProto for processing: tenantId=[{}], entityId=[{}]", tenantId, entityId);
 
             calculatedFieldService.findCalculatedFieldIdsByEntityId(tenantId, oldProfileId)
@@ -257,10 +257,44 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
                         rocksDBService.delete(JacksonUtil.writeValueAsString(ctxId));
                     });
 
-            calculatedFieldService.findCalculatedFieldIdsByEntityId(tenantId, newProfileId)
-                    .stream()
-                    .map(cfId -> calculatedFieldsCtx.computeIfAbsent(cfId, id -> new CalculatedFieldCtx(calculatedFieldService.findById(tenantId, id), tbelInvokeService)))
-                    .forEach(cfCtx -> initializeStateForEntity(cfCtx, entityId, callback));
+            initializeStateForEntityByProfile(tenantId, entityId, newProfileId, callback);
+        } catch (Exception e) {
+            log.trace("Failed to process entity type update msg: [{}]", proto, e);
+        }
+    }
+
+    @Override
+    public void onEntityAdded(TransportProtos.EntityAddMsgProto proto, TbCallback callback) {
+        try {
+            TenantId tenantId = TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
+            EntityId entityId = EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
+            EntityId profileId = EntityIdFactory.getByTypeAndUuid(proto.getEntityProfileType(), new UUID(proto.getProfileIdMSB(), proto.getProfileIdLSB()));
+            log.info("Received EntityCreateMsgProto for processing: tenantId=[{}], entityId=[{}]", tenantId, entityId);
+
+            initializeStateForEntityByProfile(tenantId, entityId, profileId, callback);
+        } catch (Exception e) {
+            log.trace("Failed to process entity type update msg: [{}]", proto, e);
+        }
+    }
+
+    private void initializeStateForEntityByProfile(TenantId tenantId, EntityId entityId, EntityId profileId, TbCallback callback) {
+        calculatedFieldService.findCalculatedFieldIdsByEntityId(tenantId, profileId)
+                .stream()
+                .map(cfId -> calculatedFieldsCtx.computeIfAbsent(cfId, id -> new CalculatedFieldCtx(calculatedFieldService.findById(tenantId, id), tbelInvokeService)))
+                .forEach(cfCtx -> initializeStateForEntity(cfCtx, entityId, callback));
+    }
+
+    @Override
+    public void onEntityDeleted(TransportProtos.EntityDeleteMsg proto, TbCallback callback) {
+        try {
+            EntityId entityId = EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
+            log.info("Received EntityDeleteMsg for processing: entityId=[{}]", entityId);
+            List<String> statesToRemove = states.keySet().stream()
+                    .filter(ctxEntityId -> ctxEntityId.entityId().equals(entityId.getId()))
+                    .map(JacksonUtil::writeValueAsString)
+                    .toList();
+            states.keySet().removeIf(ctxEntityId -> ctxEntityId.entityId().equals(entityId.getId()));
+            rocksDBService.deleteAll(statesToRemove);
         } catch (Exception e) {
             log.trace("Failed to process entity type update msg: [{}]", proto, e);
         }

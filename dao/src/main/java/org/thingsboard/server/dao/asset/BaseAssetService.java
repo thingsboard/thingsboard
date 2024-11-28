@@ -239,7 +239,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
 
         publishEvictEvent(new AssetCacheEvictEvent(asset.getTenantId(), asset.getName(), null));
         countService.publishCountEntityEvictEvent(tenantId, EntityType.ASSET);
-        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(asset.getId()).build());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(asset.getId()).entity(asset).build());
     }
 
     @Override

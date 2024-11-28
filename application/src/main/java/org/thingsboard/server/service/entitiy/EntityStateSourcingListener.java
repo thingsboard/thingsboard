@@ -146,7 +146,11 @@ public class EntityStateSourcingListener {
         log.debug("[{}][{}][{}] Handling entity deletion event: {}", tenantId, entityType, entityId, event);
 
         switch (entityType) {
-            case ASSET, ASSET_PROFILE, ENTITY_VIEW, CUSTOMER, EDGE, NOTIFICATION_RULE -> {
+            case ASSET -> {
+                Asset asset = (Asset) event.getEntity();
+                tbClusterService.onAssetDeleted(tenantId, asset, null);
+            }
+            case ASSET_PROFILE, ENTITY_VIEW, CUSTOMER, EDGE, NOTIFICATION_RULE -> {
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
             }
             case NOTIFICATION_REQUEST -> {
