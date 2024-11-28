@@ -26,7 +26,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.actors.ruleChain.DefaultTbContext;
@@ -837,7 +836,7 @@ class DefaultTbContextTest {
 
         // GIVEN
         Mockito.clearInvocations(mainCtxMock);
-        ruleNode.setDebugSettings(new DebugSettings(ruleNode.getDebugSettings().isDebugFailures(), 0));
+        ruleNode.setDebugSettings(new DebugSettings(ruleNode.getDebugSettings().isFailuresEnabled(), 0));
 
         // WHEN
         defaultTbContext.tellNext(msg, connection);

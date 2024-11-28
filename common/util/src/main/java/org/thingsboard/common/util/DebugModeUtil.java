@@ -16,7 +16,6 @@
 package org.thingsboard.common.util;
 
 import org.thingsboard.server.common.data.HasDebugSettings;
-import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 
 import java.util.Set;
@@ -38,7 +37,7 @@ public final class DebugModeUtil {
 
     public static boolean isDebugAllAvailable(HasDebugSettings debugSettingsAware) {
         var debugSettings = debugSettingsAware.getDebugSettings();
-        return debugSettings != null && debugSettings.getDebugAllUntil() > System.currentTimeMillis();
+        return debugSettings != null && debugSettings.getAllEnabledUntil() > System.currentTimeMillis();
     }
 
     public static boolean isDebugAvailable(HasDebugSettings debugSettingsAware, String nodeConnection) {
@@ -46,7 +45,7 @@ public final class DebugModeUtil {
             return true;
         } else {
             var debugSettings = debugSettingsAware.getDebugSettings();
-            return debugSettings != null && debugSettings.isDebugFailures() && TbNodeConnectionType.FAILURE.equals(nodeConnection);
+            return debugSettings != null && debugSettings.isFailuresEnabled() && TbNodeConnectionType.FAILURE.equals(nodeConnection);
         }
     }
 
@@ -55,7 +54,7 @@ public final class DebugModeUtil {
             return true;
         } else {
             var debugSettings = debugSettingsAware.getDebugSettings();
-            return debugSettings != null && nodeConnections != null && debugSettings.isDebugFailures() && nodeConnections.contains(TbNodeConnectionType.FAILURE);
+            return debugSettings != null && nodeConnections != null && debugSettings.isFailuresEnabled() && nodeConnections.contains(TbNodeConnectionType.FAILURE);
         }
     }
 }
