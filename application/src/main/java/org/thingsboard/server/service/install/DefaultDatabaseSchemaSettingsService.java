@@ -22,7 +22,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
 
 import java.util.List;
@@ -31,7 +30,7 @@ import java.util.List;
 @Profile("install")
 @Slf4j
 @RequiredArgsConstructor
-public class DefaultDatabaseSchemaVersionService implements DatabaseSchemaVersionService {
+public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSettingsService {
 
     private static final String CURRENT_PRODUCT = "CE";
     private static final List<String> SUPPORTED_VERSIONS_FOR_UPGRADE = List.of("3.8.0", "3.8.1");
@@ -39,52 +38,35 @@ public class DefaultDatabaseSchemaVersionService implements DatabaseSchemaVersio
     private final BuildProperties buildProperties;
     private final JdbcTemplate jdbcTemplate;
 
-    @Override
-    public String validateSchemaSettings(String upgradeFromVersion) {
-        //TODO: remove after release (3.9.0)
-       createProductIfNotExists();
+    private String packageSchemaVersion;
+    private String schemaVersionFromDb;
 
-        if (StringUtils.isNotEmpty(upgradeFromVersion) && DefaultDataUpdateService.getEnv("SKIP_SCHEMA_VERSION_CHECK", false)) {
+    @Override
+    public void validateSchemaSettings() {
+        //TODO: remove after release (3.9.0)
+        createProductIfNotExists();
+
+        String dbSchemaVersion = getDbSchemaVersion();
+
+        if (DefaultDataUpdateService.getEnv("SKIP_SCHEMA_VERSION_CHECK", false)) {
             log.info("Skipped DB schema version check due to SKIP_SCHEMA_VERSION_CHECK set to 'true'.");
-            return upgradeFromVersion;
+            return;
+        }
+
+        if (dbSchemaVersion.equals(getPackageSchemaVersion())) {
+            onSchemaSettingsError("Upgrade failed: database already upgraded to current version. You can set SKIP_SCHEMA_VERSION_CHECK to 'true' if force re-upgrade needed.");
+        }
+
+        if (!SUPPORTED_VERSIONS_FOR_UPGRADE.contains(dbSchemaVersion)) {
+            onSchemaSettingsError(String.format("Upgrade failed: database version '%s' is not supported for upgrade. Supported versions are: %s.",
+                    dbSchemaVersion, SUPPORTED_VERSIONS_FOR_UPGRADE
+            ));
         }
 
         String product = getProductFromDb();
         if (!CURRENT_PRODUCT.equals(product)) {
             onSchemaSettingsError(String.format("Upgrade failed: can't upgrade ThingsBoard %s database using ThingsBoard %s.", product, CURRENT_PRODUCT));
         }
-
-        Long schemaVersionFromDb = getSchemaVersionFromDb();
-        if (schemaVersionFromDb == null) {
-            onSchemaSettingsError("Upgrade failed: the database schema version is missing.");
-        }
-
-        long currentSchemaVersion = getCurrentSchemaVersion();
-
-        if (currentSchemaVersion == schemaVersionFromDb) {
-            onSchemaSettingsError("Upgrade failed: database already upgraded to current version. You can set SKIP_SCHEMA_VERSION_CHECK to 'true' if force re-upgrade needed.");
-        }
-
-        long major = schemaVersionFromDb / 1000000;
-        long minor = (schemaVersionFromDb % 1000000) / 1000;
-        long patch = schemaVersionFromDb % 1000;
-
-        String currentSchemaVersionFromDb = major + "." + minor + "." + patch;
-
-        if (!SUPPORTED_VERSIONS_FOR_UPGRADE.contains(currentSchemaVersionFromDb)) {
-            onSchemaSettingsError(String.format("Upgrade failed: database version '%s' is not supported for upgrade. Supported versions are: %s.",
-                    currentSchemaVersionFromDb, SUPPORTED_VERSIONS_FOR_UPGRADE
-            ));
-        }
-
-        if (StringUtils.isEmpty(upgradeFromVersion)) {
-            upgradeFromVersion = currentSchemaVersionFromDb;
-        } else if (!SUPPORTED_VERSIONS_FOR_UPGRADE.contains(upgradeFromVersion)) {
-            onSchemaSettingsError(String.format("Upgrade failed: 'versionFrom' '%s' is not supported for upgrade. Supported versions are: %s.",
-                    upgradeFromVersion, SUPPORTED_VERSIONS_FOR_UPGRADE));
-        }
-
-        return upgradeFromVersion;
     }
 
     @Deprecated(forRemoval = true, since = "3.9.0")
@@ -104,13 +86,39 @@ public class DefaultDatabaseSchemaVersionService implements DatabaseSchemaVersio
     public void createSchemaSettings() {
         Long schemaVersion = getSchemaVersionFromDb();
         if (schemaVersion == null) {
-            jdbcTemplate.execute("INSERT INTO tb_schema_settings (schema_version, product) VALUES (" + getCurrentSchemaVersion() + ", '" + CURRENT_PRODUCT + "')");
+            jdbcTemplate.execute("INSERT INTO tb_schema_settings (schema_version, product) VALUES (" + getPackageSchemaVersionForDb() + ", '" + CURRENT_PRODUCT + "')");
         }
     }
 
     @Override
     public void updateSchemaVersion() {
-        jdbcTemplate.execute("UPDATE tb_schema_settings SET schema_version = " + getCurrentSchemaVersion());
+        jdbcTemplate.execute("UPDATE tb_schema_settings SET schema_version = " + getPackageSchemaVersionForDb());
+    }
+
+    @Override
+    public String getPackageSchemaVersion() {
+        if (packageSchemaVersion == null) {
+            packageSchemaVersion = buildProperties.getVersion().replaceAll("[^\\d.]", "");
+        }
+        return packageSchemaVersion;
+    }
+
+    @Override
+    public String getDbSchemaVersion() {
+        if (schemaVersionFromDb == null) {
+            Long version = getSchemaVersionFromDb();
+            if (version == null) {
+                onSchemaSettingsError("Upgrade failed: the database schema version is missing.");
+            }
+
+            @SuppressWarnings("DataFlowIssue")
+            long major = version / 1000000;
+            long minor = (version % 1000000) / 1000;
+            long patch = version % 1000;
+
+            schemaVersionFromDb = major + "." + minor + "." + patch;
+        }
+        return schemaVersionFromDb;
     }
 
     private Long getSchemaVersionFromDb() {
@@ -121,8 +129,8 @@ public class DefaultDatabaseSchemaVersionService implements DatabaseSchemaVersio
         return jdbcTemplate.queryForList("SELECT product FROM tb_schema_settings", String.class).stream().findFirst().orElse(null);
     }
 
-    private long getCurrentSchemaVersion() {
-        String[] versionParts = buildProperties.getVersion().replaceAll("[^\\d.]", "").split("\\.");
+    private long getPackageSchemaVersionForDb() {
+        String[] versionParts = getPackageSchemaVersion().split("\\.");
 
         long major = Integer.parseInt(versionParts[0]);
         long minor = Integer.parseInt(versionParts[1]);

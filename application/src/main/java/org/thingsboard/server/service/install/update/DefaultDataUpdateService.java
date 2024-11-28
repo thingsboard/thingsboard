@@ -58,11 +58,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
     JpaExecutorService jpaExecutorService;
 
     @Override
-    public void updateData(String fromVersion) throws Exception {
-        switch (fromVersion) {
-            default:
-                throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
-        }
+    public void updateData(String fromVersion, String toVersion) throws Exception {
+        log.info("Updating data from version {} to {} ...", fromVersion, toVersion);
+        log.info("Data updated.");
     }
 
     @Override
