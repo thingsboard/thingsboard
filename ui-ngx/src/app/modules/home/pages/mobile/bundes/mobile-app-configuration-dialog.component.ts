@@ -21,10 +21,12 @@ import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
+import { MobileApp } from '@shared/models/mobile-app.models';
 
 export interface MobileAppConfigurationDialogData {
   afterAdd: boolean;
-  appSecret: string;
+  androidApp: MobileApp;
+  iosApp: MobileApp;
 }
 
 @Component({
@@ -35,14 +37,18 @@ export interface MobileAppConfigurationDialogData {
 export class MobileAppConfigurationDialogComponent extends DialogComponent<MobileAppConfigurationDialogComponent> {
 
   notShowAgain = false;
+  setApplication = false;
 
   showDontShowAgain: boolean;
 
   gitRepositoryLink = 'git clone -b master https://github.com/thingsboard/flutter_thingsboard_app.git';
   pathToConstants = 'lib/constants/app_constants.dart';
   flutterRunCommand = 'flutter run';
+  flutterInstallRenameCommand = 'flutter pub global activate rename';
 
-  configureApi: string[] = [];
+  configureApi: string;
+
+  renameCommands: string[] = [];
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -53,8 +59,20 @@ export class MobileAppConfigurationDialogComponent extends DialogComponent<Mobil
 
     this.showDontShowAgain = this.data.afterAdd;
 
-    this.configureApi.push(`static const thingsBoardApiEndpoint = '${window.location.origin}';`);
-    this.configureApi.push(`static const thingsboardOAuth2AppSecret = '${this.data.appSecret}';`);
+    this.setApplication = !!this.data.androidApp || !!this.data.iosApp;
+
+    this.configureApi = `static const thingsBoardApiEndpoint = '${window.location.origin}';`;
+    if (this.setApplication) {
+      this.configureApi += '\n';
+      if (!!this.data.androidApp) {
+        this.configureApi += `\nstatic const thingsboardAndroidAppSecret = '${this.data.androidApp.appSecret}';`;
+        this.renameCommands.push(`rename setBundleId --targets android --value "${this.data.androidApp.pkgName}"`);
+      }
+      if (!!this.data.iosApp) {
+        this.configureApi += `\nstatic const thingsboardIOSAppSecret = '${this.data.iosApp.appSecret}';`;
+        this.renameCommands.push(`rename setBundleId --targets ios --value "${this.data.iosApp.pkgName}"`);
+      }
+    }
   }
 
   close(): void {
