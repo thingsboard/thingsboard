@@ -53,6 +53,11 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
             return;
         }
 
+        String product = getProductFromDb();
+        if (!CURRENT_PRODUCT.equals(product)) {
+            onSchemaSettingsError(String.format("Upgrade failed: can't upgrade ThingsBoard %s database using ThingsBoard %s.", product, CURRENT_PRODUCT));
+        }
+
         if (dbSchemaVersion.equals(getPackageSchemaVersion())) {
             onSchemaSettingsError("Upgrade failed: database already upgraded to current version. You can set SKIP_SCHEMA_VERSION_CHECK to 'true' if force re-upgrade needed.");
         }
@@ -61,11 +66,6 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
             onSchemaSettingsError(String.format("Upgrade failed: database version '%s' is not supported for upgrade. Supported versions are: %s.",
                     dbSchemaVersion, SUPPORTED_VERSIONS_FOR_UPGRADE
             ));
-        }
-
-        String product = getProductFromDb();
-        if (!CURRENT_PRODUCT.equals(product)) {
-            onSchemaSettingsError(String.format("Upgrade failed: can't upgrade ThingsBoard %s database using ThingsBoard %s.", product, CURRENT_PRODUCT));
         }
     }
 

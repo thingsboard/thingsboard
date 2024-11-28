@@ -108,6 +108,7 @@ public class ThingsboardInstallService {
                     String fromVersion = databaseSchemaVersionService.getDbSchemaVersion();
                     String toVersion = databaseSchemaVersionService.getPackageSchemaVersion();
                     cacheCleanupService.clearCache(fromVersion, toVersion);
+                    log.info("Upgrading ThingsBoard from version {} to {} ...", fromVersion, toVersion);
                     databaseEntitiesUpgradeService.upgradeDatabase(fromVersion, toVersion);
 //                    dataUpdateService.updateData(fromVersion, toVersion);
                     installScripts.updateResourcesUsage();

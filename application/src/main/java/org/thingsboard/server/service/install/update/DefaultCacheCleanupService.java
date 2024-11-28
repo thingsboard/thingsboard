@@ -44,7 +44,7 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
     @Override
     public void clearCache(String from, String to) throws Exception {
         log.info("Clearing cache to upgrade from version {} to {}", from, to);
-        clearAllCaches();
+        clearAll();
     }
 
     void clearAllCaches() {
