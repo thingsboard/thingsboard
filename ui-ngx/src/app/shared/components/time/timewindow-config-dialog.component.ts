@@ -370,7 +370,6 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
   update() {
     const timewindowFormValue = this.timewindowForm.getRawValue();
     this.timewindow = mergeDeep(this.timewindow, timewindowFormValue);
-<<<<<<< HEAD
 
     if (timewindowFormValue.realtime.advancedParams.allowedLastIntervals?.length) {
       this.timewindow.realtime.advancedParams.allowedLastIntervals = timewindowFormValue.realtime.advancedParams.allowedLastIntervals;
@@ -407,7 +406,6 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
       delete this.timewindow.allowedAggTypes;
     }
 
-=======
     if (!this.timewindow.realtime.disableCustomInterval) {
       delete this.timewindow.realtime.disableCustomInterval;
     }
@@ -420,7 +418,7 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     if (!this.timewindow.history.disableCustomGroupInterval) {
       delete this.timewindow.history.disableCustomGroupInterval;
     }
->>>>>>> upstream/master
+
     if (!this.aggregation) {
       delete this.timewindow.aggregation;
     }
