@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<section [formGroup]="timeintervalFormGroup">
+<section class="flex flex-1 flex-row" [formGroup]="timeintervalFormGroup">
   <mat-form-field class="flex flex-1" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
     <mat-label *ngIf="predefinedName" translate>{{ predefinedName }}</mat-label>
     <mat-select formControlName="intervals" multiple>
-      <mat-option *ngFor="let interval of intervals" [value]="interval.value">
+      <mat-option *ngFor="let interval of allIntervals" [value]="interval.value">
         {{ interval.name | translate:interval.translateParams }}
       </mat-option>
     </mat-select>

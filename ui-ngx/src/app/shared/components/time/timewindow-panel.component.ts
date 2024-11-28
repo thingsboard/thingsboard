@@ -17,15 +17,16 @@
 import { Component, Inject, InjectionToken, OnDestroy, OnInit, ViewContainerRef } from '@angular/core';
 import {
   AggregationType,
-  DAY,
+  currentHistoryTimewindow,
+  currentRealtimeTimewindow, historyAllowedAggIntervals,
   HistoryWindowType,
   historyWindowTypeTranslations,
   Interval,
-  QuickTimeInterval,
-  quickTimeIntervalPeriod,
+  QuickTimeInterval, realtimeAllowedAggIntervals,
   RealtimeWindowType,
   realtimeWindowTypeTranslations,
   Timewindow,
+  TimewindowAdvancedParams,
   TimewindowType,
   updateFormValuesOnTimewindowTypeChange
 } from '@shared/models/time/time.models';
@@ -111,8 +112,10 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   historyDisableCustomInterval: boolean;
   historyDisableCustomGroupInterval: boolean;
 
+  realtimeAdvancedParams: TimewindowAdvancedParams;
   realtimeAllowedLastIntervals: Array<Interval>;
   realtimeAllowedQuickIntervals: Array<QuickTimeInterval>;
+  historyAdvancedParams: TimewindowAdvancedParams;
   historyAllowedLastIntervals: Array<Interval>;
   historyAllowedQuickIntervals: Array<QuickTimeInterval>;
   allowedAggTypes: Array<AggregationType>;
@@ -436,46 +439,36 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
     this.overlayRef.dispose();
   }
 
-  minRealtimeAggInterval() {
+  get minRealtimeAggInterval() {
     return this.timeService.minIntervalLimit(this.currentRealtimeTimewindow());
   }
 
-  maxRealtimeAggInterval() {
+  get maxRealtimeAggInterval() {
     return this.timeService.maxIntervalLimit(this.currentRealtimeTimewindow());
   }
 
-  currentRealtimeTimewindow(): number {
-    const timeWindowFormValue = this.timewindowForm.getRawValue();
-    switch (timeWindowFormValue.realtime.realtimeType) {
-      case RealtimeWindowType.LAST_INTERVAL:
-        return timeWindowFormValue.realtime.timewindowMs;
-      case RealtimeWindowType.INTERVAL:
-        return quickTimeIntervalPeriod(timeWindowFormValue.realtime.quickInterval);
-      default:
-        return DAY;
-    }
+  private currentRealtimeTimewindow(): number {
+    return currentRealtimeTimewindow(this.timewindowForm.getRawValue());
   }
 
-  minHistoryAggInterval() {
+  get minHistoryAggInterval() {
     return this.timeService.minIntervalLimit(this.currentHistoryTimewindow());
   }
 
-  maxHistoryAggInterval() {
+  get maxHistoryAggInterval() {
     return this.timeService.maxIntervalLimit(this.currentHistoryTimewindow());
   }
 
-  currentHistoryTimewindow() {
-    const timewindowFormValue = this.timewindowForm.getRawValue();
-    if (timewindowFormValue.history.historyType === HistoryWindowType.LAST_INTERVAL) {
-      return timewindowFormValue.history.timewindowMs;
-    } else if (timewindowFormValue.history.historyType === HistoryWindowType.INTERVAL) {
-      return quickTimeIntervalPeriod(timewindowFormValue.history.quickInterval);
-    } else if (timewindowFormValue.history.fixedTimewindow) {
-      return timewindowFormValue.history.fixedTimewindow.endTimeMs -
-        timewindowFormValue.history.fixedTimewindow.startTimeMs;
-    } else {
-      return DAY;
-    }
+  private currentHistoryTimewindow(): number {
+    return currentHistoryTimewindow(this.timewindowForm.getRawValue());
+  }
+
+  get realtimeAllowedAggIntervals(): Array<Interval> {
+    return realtimeAllowedAggIntervals(this.timewindowForm.getRawValue(), this.realtimeAdvancedParams);
+  }
+
+  get historyAllowedAggIntervals(): Array<Interval> {
+    return historyAllowedAggIntervals(this.timewindowForm.getRawValue(), this.historyAdvancedParams);
   }
 
   openTimewindowConfig() {
@@ -507,16 +500,20 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
     this.historyDisableCustomGroupInterval = this.timewindow.history.disableCustomGroupInterval;
 
     if (this.timewindow.realtime.advancedParams) {
+      this.realtimeAdvancedParams = this.timewindow.realtime.advancedParams;
       this.realtimeAllowedLastIntervals = this.timewindow.realtime.advancedParams.allowedLastIntervals;
       this.realtimeAllowedQuickIntervals = this.timewindow.realtime.advancedParams.allowedQuickIntervals;
     } else {
+      this.realtimeAdvancedParams = null;
       this.realtimeAllowedLastIntervals = null;
       this.realtimeAllowedQuickIntervals = null;
     }
     if (this.timewindow.history.advancedParams) {
+      this.historyAdvancedParams = this.timewindow.history.advancedParams;
       this.historyAllowedLastIntervals = this.timewindow.history.advancedParams.allowedLastIntervals;
       this.historyAllowedQuickIntervals = this.timewindow.history.advancedParams.allowedQuickIntervals;
     } else {
+      this.historyAdvancedParams = null;
       this.historyAllowedLastIntervals = null;
       this.historyAllowedQuickIntervals = null;
     }

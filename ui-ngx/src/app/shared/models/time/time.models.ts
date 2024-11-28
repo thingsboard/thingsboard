@@ -88,17 +88,19 @@ export class IntervalMath {
 export interface TimewindowAdvancedParams {
   allowedLastIntervals? : Array<Interval>;
   allowedQuickIntervals? : Array<QuickTimeInterval>;
+  lastAggIntervalsConfig? : TimewindowAggIntervalsConfig;
+  quickAggIntervalsConfig? : TimewindowAggIntervalsConfig;
 }
 
 export type TimewindowInterval = Interval | QuickTimeInterval;
 
-export interface TimewindowAllowedAggIntervalsConfig {
-  [key: string]: TimewindowAllowedAggIntervalOption;
+export interface TimewindowAggIntervalsConfig {
+  [key: string]: TimewindowAggIntervalOptions;
 }
 
-export interface TimewindowAllowedAggIntervalOption {
-  aggIntervals: Array<TimewindowInterval>;
-  preferredAggInterval: TimewindowInterval;
+export interface TimewindowAggIntervalOptions {
+  aggIntervals?: Array<Interval>;
+  defaultAggInterval?: Interval;
 }
 
 export interface IntervalWindow {
@@ -563,6 +565,58 @@ export const updateFormValuesOnTimewindowTypeChange = (selectedTab: TimewindowTy
     },
     timezone: timewindowFormValue.timezone
   });
+};
+
+export const currentRealtimeTimewindow = (timewindow: Timewindow): number => {
+  switch (timewindow.realtime.realtimeType) {
+    case RealtimeWindowType.LAST_INTERVAL:
+      return timewindow.realtime.timewindowMs;
+    case RealtimeWindowType.INTERVAL:
+      return quickTimeIntervalPeriod(timewindow.realtime.quickInterval);
+    default:
+      return DAY;
+  }
+};
+
+export const currentHistoryTimewindow = (timewindow: Timewindow): number => {
+  if (timewindow.history.historyType === HistoryWindowType.LAST_INTERVAL) {
+    return timewindow.history.timewindowMs;
+  } else if (timewindow.history.historyType === HistoryWindowType.INTERVAL) {
+    return quickTimeIntervalPeriod(timewindow.history.quickInterval);
+  } else if (timewindow.history.fixedTimewindow) {
+    return timewindow.history.fixedTimewindow.endTimeMs -
+      timewindow.history.fixedTimewindow.startTimeMs;
+  } else {
+    return DAY;
+  }
+}
+
+export const realtimeAllowedAggIntervals = (timewindow: Timewindow,
+                                            advancedParams: TimewindowAdvancedParams): Array<Interval> => {
+  if (timewindow.realtime.realtimeType === RealtimeWindowType.LAST_INTERVAL &&
+    advancedParams?.lastAggIntervalsConfig?.hasOwnProperty(timewindow.realtime.timewindowMs) &&
+    advancedParams.lastAggIntervalsConfig[timewindow.realtime.timewindowMs].aggIntervals?.length) {
+    return advancedParams.lastAggIntervalsConfig[timewindow.realtime.timewindowMs].aggIntervals;
+  } else if (timewindow.realtime.realtimeType === RealtimeWindowType.INTERVAL &&
+    advancedParams?.quickAggIntervalsConfig?.hasOwnProperty(timewindow.realtime.quickInterval) &&
+    advancedParams.quickAggIntervalsConfig[timewindow.realtime.quickInterval].aggIntervals?.length) {
+    return advancedParams.quickAggIntervalsConfig[timewindow.realtime.quickInterval].aggIntervals;
+  }
+  return [];
+};
+
+export const historyAllowedAggIntervals = (timewindow: Timewindow,
+                                            advancedParams: TimewindowAdvancedParams): Array<Interval> => {
+  if (timewindow.history.historyType === HistoryWindowType.LAST_INTERVAL &&
+    advancedParams?.lastAggIntervalsConfig?.hasOwnProperty(timewindow.history.timewindowMs) &&
+    advancedParams.lastAggIntervalsConfig[timewindow.history.timewindowMs].aggIntervals?.length) {
+    return advancedParams.lastAggIntervalsConfig[timewindow.history.timewindowMs].aggIntervals;
+  } else if (timewindow.history.historyType === HistoryWindowType.INTERVAL &&
+    advancedParams?.quickAggIntervalsConfig?.hasOwnProperty(timewindow.history.quickInterval) &&
+    advancedParams.quickAggIntervalsConfig[timewindow.history.quickInterval].aggIntervals?.length) {
+    return advancedParams.quickAggIntervalsConfig[timewindow.history.quickInterval].aggIntervals;
+  }
+  return [];
 };
 
 export const getTimezone = (tz: string): moment_.Moment => moment.tz(tz);

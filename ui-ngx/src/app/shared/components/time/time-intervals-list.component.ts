@@ -67,7 +67,8 @@ export class TimeIntervalsListComponent implements OnInit, ControlValueAccessor 
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
 
-  intervals: Array<TimeInterval>;
+  allIntervals: Array<TimeInterval>;
+  allIntervalValues: Array<Interval>;
 
   timeintervalFormGroup: FormGroup;
 
@@ -119,12 +120,13 @@ export class TimeIntervalsListComponent implements OnInit, ControlValueAccessor 
   }
 
   private updateIntervalsList() {
-    this.intervals = this.timeService.getIntervals(this.min, this.max, this.useCalendarIntervals);
+    this.allIntervals = this.timeService.getIntervals(this.min, this.max, this.useCalendarIntervals);
+    this.allIntervalValues = this.allIntervals.map(interval => interval.value);
   }
 
   private setIntervals(intervals: Array<Interval>) {
     this.timeintervalFormGroup.get('intervals').patchValue(
-      (this.setAllIfEmpty && !intervals?.length) ? this.intervals : intervals,
+      (this.setAllIfEmpty && !intervals?.length) ? this.allIntervalValues : intervals,
       {emitEvent: false});
   }
 
@@ -135,7 +137,7 @@ export class TimeIntervalsListComponent implements OnInit, ControlValueAccessor 
     let value: Array<Interval>;
     const intervals: Array<Interval> = this.timeintervalFormGroup.get('intervals').value;
 
-    if (!this.returnEmptyIfAllSet || intervals.length < this.intervals.length) {
+    if (!this.returnEmptyIfAllSet || intervals.length < this.allIntervals.length) {
       value = intervals;
     } else {
       value = [];

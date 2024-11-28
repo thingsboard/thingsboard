@@ -26,7 +26,7 @@
       <div class="tb-form-table-header-cell tb-interval">{{"timewindow.interval" | translate }}</div>
       <ng-container *ngIf="aggregation">
         <div class="tb-form-table-header-cell tb-agg-interval">{{"timewindow.allowed-agg-intervals" | translate }}</div>
-        <div class="tb-form-table-header-cell tb-agg-interval">{{"timewindow.preferred-agg-interval" | translate }}</div>
+        <div class="tb-form-table-header-cell tb-agg-interval">{{"timewindow.default-agg-interval" | translate }}</div>
       </ng-container>
     </div>
     <div class="tb-form-table-body" formArrayName="intervals">
@@ -54,7 +54,7 @@
             <div class="tb-form-table-row-cell tb-agg-interval">
               <tb-timeinterval
                 class="tb-inline-field"
-                formControlName="preferredAggInterval"
+                formControlName="defaultAggInterval"
                 [min]="minAggInterval(interval.get('value').value)"
                 [max]="maxAggInterval(interval.get('value').value)"
                 useCalendarIntervals

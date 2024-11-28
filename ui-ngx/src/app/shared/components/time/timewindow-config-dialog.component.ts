@@ -17,12 +17,13 @@
 import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, Renderer2, ViewContainerRef } from '@angular/core';
 import {
   AggregationType,
-  DAY,
+  currentHistoryTimewindow,
+  currentRealtimeTimewindow,
+  historyAllowedAggIntervals,
   HistoryWindowType,
   historyWindowTypeTranslations,
   Interval,
-  QuickTimeInterval,
-  quickTimeIntervalPeriod,
+  realtimeAllowedAggIntervals,
   RealtimeWindowType,
   realtimeWindowTypeTranslations,
   Timewindow,
@@ -34,7 +35,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TimeService } from '@core/services/time.service';
-import { deepClone, isDefined, isDefinedAndNotNull, mergeDeep } from '@core/utils';
+import { deepClone, isDefined, isDefinedAndNotNull, isObject, mergeDeep } from '@core/utils';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -44,7 +45,10 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import {
   AggregationOptionsConfigPanelComponent
 } from '@shared/components/time/aggregation/aggregation-options-config-panel.component';
-import { IntervalOptionsConfigPanelComponent } from '@shared/components/time/interval-options-config-panel.component';
+import {
+  IntervalOptionsConfigPanelComponent,
+  IntervalOptionsConfigPanelData
+} from '@shared/components/time/interval-options-config-panel.component';
 
 export interface TimewindowConfigDialogData {
   quickIntervalOnly: boolean;
@@ -171,7 +175,11 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
           allowedLastIntervals: [ isDefinedAndNotNull(this.timewindow.realtime?.advancedParams?.allowedLastIntervals)
             ? this.timewindow.realtime.advancedParams.allowedLastIntervals : null ],
           allowedQuickIntervals: [ isDefinedAndNotNull(this.timewindow.realtime?.advancedParams?.allowedQuickIntervals)
-            ? this.timewindow.realtime.advancedParams.allowedQuickIntervals : null ]
+            ? this.timewindow.realtime.advancedParams.allowedQuickIntervals : null ],
+          lastAggIntervalsConfig: [ isDefinedAndNotNull(this.timewindow.realtime?.advancedParams?.lastAggIntervalsConfig)
+            ? this.timewindow.realtime.advancedParams.lastAggIntervalsConfig : null ],
+          quickAggIntervalsConfig: [ isDefinedAndNotNull(this.timewindow.realtime?.advancedParams?.quickAggIntervalsConfig)
+            ? this.timewindow.realtime.advancedParams.quickAggIntervalsConfig : null ]
         })
       }),
       history: this.fb.group({
@@ -205,7 +213,11 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
           allowedLastIntervals: [ isDefinedAndNotNull(this.timewindow.history?.advancedParams?.allowedLastIntervals)
             ? this.timewindow.history.advancedParams.allowedLastIntervals : null ],
           allowedQuickIntervals: [ isDefinedAndNotNull(this.timewindow.history?.advancedParams?.allowedQuickIntervals)
-            ? this.timewindow.history.advancedParams.allowedQuickIntervals : null ]
+            ? this.timewindow.history.advancedParams.allowedQuickIntervals : null ],
+          lastAggIntervalsConfig: [ isDefinedAndNotNull(this.timewindow.history?.advancedParams?.lastAggIntervalsConfig)
+            ? this.timewindow.history.advancedParams.lastAggIntervalsConfig : null ],
+          quickAggIntervalsConfig: [ isDefinedAndNotNull(this.timewindow.history?.advancedParams?.quickAggIntervalsConfig)
+            ? this.timewindow.history.advancedParams.quickAggIntervalsConfig : null ]
         })
       }),
       aggregation: this.fb.group({
@@ -381,6 +393,18 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     } else {
       delete this.timewindow.realtime.advancedParams.allowedQuickIntervals;
     }
+    if (isObject(timewindowFormValue.realtime.advancedParams.lastAggIntervalsConfig) &&
+      Object.keys(timewindowFormValue.realtime.advancedParams.lastAggIntervalsConfig).length) {
+      this.timewindow.realtime.advancedParams.lastAggIntervalsConfig = timewindowFormValue.realtime.advancedParams.lastAggIntervalsConfig;
+    } else {
+      delete this.timewindow.realtime.advancedParams.lastAggIntervalsConfig;
+    }
+    if (isObject(timewindowFormValue.realtime.advancedParams.quickAggIntervalsConfig) &&
+      Object.keys(timewindowFormValue.realtime.advancedParams.quickAggIntervalsConfig).length) {
+      this.timewindow.realtime.advancedParams.quickAggIntervalsConfig = timewindowFormValue.realtime.advancedParams.quickAggIntervalsConfig;
+    } else {
+      delete this.timewindow.realtime.advancedParams.quickAggIntervalsConfig;
+    }
 
     if (timewindowFormValue.history.advancedParams.allowedLastIntervals?.length) {
       this.timewindow.history.advancedParams.allowedLastIntervals = timewindowFormValue.history.advancedParams.allowedLastIntervals;
@@ -391,6 +415,18 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
       this.timewindow.history.advancedParams.allowedQuickIntervals = timewindowFormValue.history.advancedParams.allowedQuickIntervals;
     } else {
       delete this.timewindow.history.advancedParams.allowedQuickIntervals;
+    }
+    if (isObject(timewindowFormValue.history.advancedParams.lastAggIntervalsConfig) &&
+      Object.keys(timewindowFormValue.history.advancedParams.lastAggIntervalsConfig).length) {
+      this.timewindow.history.advancedParams.lastAggIntervalsConfig = timewindowFormValue.history.advancedParams.lastAggIntervalsConfig;
+    } else {
+      delete this.timewindow.history.advancedParams.lastAggIntervalsConfig;
+    }
+    if (isObject(timewindowFormValue.history.advancedParams.quickAggIntervalsConfig) &&
+      Object.keys(timewindowFormValue.history.advancedParams.quickAggIntervalsConfig).length) {
+      this.timewindow.history.advancedParams.quickAggIntervalsConfig = timewindowFormValue.history.advancedParams.quickAggIntervalsConfig;
+    } else {
+      delete this.timewindow.history.advancedParams.quickAggIntervalsConfig;
     }
 
     if (!Object.keys(this.timewindow.realtime.advancedParams).length) {
@@ -429,46 +465,38 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     this.dialogRef.close();
   }
 
-  minRealtimeAggInterval() {
+  get minRealtimeAggInterval() {
     return this.timeService.minIntervalLimit(this.currentRealtimeTimewindow());
   }
 
-  maxRealtimeAggInterval() {
+  get maxRealtimeAggInterval() {
     return this.timeService.maxIntervalLimit(this.currentRealtimeTimewindow());
   }
 
-  currentRealtimeTimewindow(): number {
-    const timeWindowFormValue = this.timewindowForm.getRawValue();
-    switch (timeWindowFormValue.realtime.realtimeType) {
-      case RealtimeWindowType.LAST_INTERVAL:
-        return timeWindowFormValue.realtime.timewindowMs;
-      case RealtimeWindowType.INTERVAL:
-        return quickTimeIntervalPeriod(timeWindowFormValue.realtime.quickInterval);
-      default:
-        return DAY;
-    }
+  private currentRealtimeTimewindow(): number {
+    return currentRealtimeTimewindow(this.timewindowForm.getRawValue());
   }
 
-  minHistoryAggInterval() {
+  get minHistoryAggInterval() {
     return this.timeService.minIntervalLimit(this.currentHistoryTimewindow());
   }
 
-  maxHistoryAggInterval() {
+  get maxHistoryAggInterval() {
     return this.timeService.maxIntervalLimit(this.currentHistoryTimewindow());
   }
 
-  currentHistoryTimewindow() {
+  private currentHistoryTimewindow(): number {
+    return currentHistoryTimewindow(this.timewindowForm.getRawValue());
+  }
+
+  get realtimeAllowedAggIntervals(): Array<Interval> {
     const timewindowFormValue = this.timewindowForm.getRawValue();
-    if (timewindowFormValue.history.historyType === HistoryWindowType.LAST_INTERVAL) {
-      return timewindowFormValue.history.timewindowMs;
-    } else if (timewindowFormValue.history.historyType === HistoryWindowType.INTERVAL) {
-      return quickTimeIntervalPeriod(timewindowFormValue.history.quickInterval);
-    } else if (timewindowFormValue.history.fixedTimewindow) {
-      return timewindowFormValue.history.fixedTimewindow.endTimeMs -
-        timewindowFormValue.history.fixedTimewindow.startTimeMs;
-    } else {
-      return DAY;
-    }
+    return realtimeAllowedAggIntervals(timewindowFormValue, timewindowFormValue.realtime.advancedParams);
+  }
+
+  get historyAllowedAggIntervals(): Array<Interval> {
+    const timewindowFormValue = this.timewindowForm.getRawValue();
+    return historyAllowedAggIntervals(timewindowFormValue, timewindowFormValue.history.advancedParams);
   }
 
   openAggregationOptionsConfig($event: Event) {
@@ -499,38 +527,32 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
   }
 
   configureRealtimeLastIntervalOptions($event: Event) {
-    const resFn = (res) => {
-      this.timewindowForm.get('realtime.advancedParams.allowedLastIntervals').patchValue(res);
-    };
-    this.openIntervalOptionsConfig($event, this.timewindowForm.get('realtime.advancedParams.allowedLastIntervals').value,
-      resFn, RealtimeWindowType.LAST_INTERVAL);
+    this.openIntervalOptionsConfig($event,
+      'realtime.advancedParams.allowedLastIntervals', 'realtime.advancedParams.lastAggIntervalsConfig',
+      RealtimeWindowType.LAST_INTERVAL);
   }
 
   configureRealtimeQuickIntervalOptions($event: Event) {
-    const resFn = (res) => {
-      this.timewindowForm.get('realtime.advancedParams.allowedQuickIntervals').patchValue(res);
-    };
-    this.openIntervalOptionsConfig($event, this.timewindowForm.get('realtime.advancedParams.allowedQuickIntervals').value,
-      resFn, RealtimeWindowType.INTERVAL, TimewindowType.REALTIME);
+    this.openIntervalOptionsConfig($event,
+      'realtime.advancedParams.allowedQuickIntervals', 'realtime.advancedParams.quickAggIntervalsConfig',
+      RealtimeWindowType.INTERVAL, TimewindowType.REALTIME);
   }
 
   configureHistoryLastIntervalOptions($event: Event) {
-    const resFn = (res) => {
-      this.timewindowForm.get('history.advancedParams.allowedLastIntervals').patchValue(res);
-    };
-    this.openIntervalOptionsConfig($event, this.timewindowForm.get('history.advancedParams.allowedLastIntervals').value,
-      resFn, HistoryWindowType.LAST_INTERVAL);
+    this.openIntervalOptionsConfig($event,
+      'history.advancedParams.allowedLastIntervals', 'history.advancedParams.lastAggIntervalsConfig',
+      HistoryWindowType.LAST_INTERVAL);
   }
 
   configureHistoryQuickIntervalOptions($event: Event) {
-    const resFn = (res) => {
-      this.timewindowForm.get('history.advancedParams.allowedQuickIntervals').patchValue(res);
-    };
-    this.openIntervalOptionsConfig($event, this.timewindowForm.get('history.advancedParams.allowedQuickIntervals').value,
-      resFn, HistoryWindowType.INTERVAL, TimewindowType.HISTORY);
+    this.openIntervalOptionsConfig($event,
+      'history.advancedParams.allowedQuickIntervals', 'history.advancedParams.quickAggIntervalsConfig',
+      HistoryWindowType.INTERVAL, TimewindowType.HISTORY);
   }
 
-  private openIntervalOptionsConfig($event: Event, allowedIntervals: Array<Interval | QuickTimeInterval>, resFn: (res) => void,
+  private openIntervalOptionsConfig($event: Event,
+                                    allowedIntervalsControlName: string,
+                                    aggIntervalsConfigControlName: string,
                                     intervalType: RealtimeWindowType | HistoryWindowType, timewindowType?: TimewindowType) {
     if ($event) {
       $event.stopPropagation();
@@ -543,12 +565,16 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
         this.viewContainerRef, IntervalOptionsConfigPanelComponent, ['left', 'leftTop', 'leftBottom'], true, null,
         {
           aggregation: this.aggregation,
-          allowedIntervals: deepClone(allowedIntervals),
+          allowedIntervals: deepClone(this.timewindowForm.get(allowedIntervalsControlName).value),
+          aggIntervalsConfig: deepClone(this.timewindowForm.get(aggIntervalsConfigControlName).value),
           intervalType: intervalType,
           timewindowType: timewindowType,
-          onClose: (result: Array<any> | null) => {
+          onClose: (result: IntervalOptionsConfigPanelData | null) => {
             intervalsConfigPopover.hide();
-            resFn(result);
+            if (result) {
+              this.timewindowForm.get(allowedIntervalsControlName).patchValue(result.allowedIntervals);
+              this.timewindowForm.get(aggIntervalsConfigControlName).patchValue(result.aggIntervalsConfig);
+            }
           }
         },
         {maxHeight: '500px', height: '100%'},

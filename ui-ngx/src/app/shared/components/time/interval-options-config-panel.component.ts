@@ -14,14 +14,14 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, Input, OnInit } from '@angular/core';
 import {
   HistoryWindowType,
   QuickTimeInterval, quickTimeIntervalPeriod,
   QuickTimeIntervalTranslationMap,
   RealtimeWindowType,
-  TimewindowAllowedAggIntervalOption,
-  TimewindowAllowedAggIntervalsConfig,
+  TimewindowAggIntervalOptions,
+  TimewindowAggIntervalsConfig,
   TimewindowInterval,
   TimewindowIntervalOption,
   TimewindowType
@@ -31,6 +31,12 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
 import { TimeService } from '@core/services/time.service';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TranslateService } from '@ngx-translate/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+export interface IntervalOptionsConfigPanelData {
+  allowedIntervals: Array<TimewindowInterval>;
+  aggIntervalsConfig: TimewindowAggIntervalsConfig
+}
 
 @Component({
   selector: 'tb-interval-options-config-panel',
@@ -47,7 +53,7 @@ export class IntervalOptionsConfigPanelComponent implements OnInit {
   allowedIntervals: Array<TimewindowInterval>;
 
   @Input()
-  allowedAggIntervals: TimewindowAllowedAggIntervalsConfig;
+  aggIntervalsConfig: TimewindowAggIntervalsConfig;
 
   @Input()
   intervalType: RealtimeWindowType | HistoryWindowType;
@@ -56,7 +62,7 @@ export class IntervalOptionsConfigPanelComponent implements OnInit {
   timewindowType: TimewindowType;
 
   @Input()
-  onClose: (result: Array<any> | null) => void;
+  onClose: (result: IntervalOptionsConfigPanelData | null) => void;
 
   @Input()
   popoverComponent: TbPopoverComponent;
@@ -67,6 +73,8 @@ export class IntervalOptionsConfigPanelComponent implements OnInit {
   allIntervalValues: Array<TimewindowInterval>
 
   private timeIntervalTranslationMap = QuickTimeIntervalTranslationMap;
+
+  private destroyRef = inject(DestroyRef);
 
   constructor(private fb: FormBuilder,
               private timeService: TimeService,
@@ -86,22 +94,36 @@ export class IntervalOptionsConfigPanelComponent implements OnInit {
     }
 
     this.intervalOptionsConfigForm = this.fb.group({
-      allowedIntervals: [this.allowedIntervals?.length ? this.allowedIntervals : this.allIntervalValues],
       intervals: this.fb.array([])
     });
 
     const intervalControls: Array<AbstractControl> = [];
     for (const interval of this.allIntervals) {
-      const intervalConfig: TimewindowAllowedAggIntervalOption = this.allowedAggIntervals?.hasOwnProperty(interval.value)
+      const intervalConfig: TimewindowAggIntervalOptions = this.aggIntervalsConfig?.hasOwnProperty(interval.value)
         ? this.allIntervalValues[interval.value]
         : null;
-      intervalControls.push(this.fb.group({
+      const intervalEnabled = this.allowedIntervals?.length ? this.allowedIntervals.includes(interval.value) : true;
+      const intervalControl = this.fb.group({
         name: [this.translate.instant(interval.name, interval.translateParams)],
         value: [interval.value],
-        enabled: [this.allowedIntervals?.length ? this.allowedIntervals.includes(interval.value) : true],
-        aggIntervals: [intervalConfig ? intervalConfig.aggIntervals : []],
-        preferredAggInterval: [intervalConfig ? intervalConfig.preferredAggInterval : null]
-      }));
+        enabled: [intervalEnabled],
+        aggIntervals: [{value: intervalConfig ? intervalConfig.aggIntervals : [], disabled: !(intervalEnabled && this.aggregation)}],
+        defaultAggInterval: [{value: intervalConfig ? intervalConfig.defaultAggInterval : null, disabled: !(intervalEnabled && this.aggregation)}],
+      });
+      if (this.aggregation) {
+        intervalControl.get('enabled').valueChanges.pipe(
+          takeUntilDestroyed(this.destroyRef)
+        ).subscribe((intervalEnabled) => {
+          if (intervalEnabled) {
+            intervalControl.get('aggIntervals').enable({emitEvent: false});
+            intervalControl.get('defaultAggInterval').enable({emitEvent: false});
+          } else {
+            intervalControl.get('aggIntervals').disable({emitEvent: false});
+            intervalControl.get('defaultAggInterval').disable({emitEvent: false});
+          }
+        });
+      }
+      intervalControls.push(intervalControl);
     }
     this.intervalOptionsConfigForm.setControl('intervals', this.fb.array(intervalControls), {emitEvent: false});
   }
@@ -132,9 +154,30 @@ export class IntervalOptionsConfigPanelComponent implements OnInit {
 
   update() {
     if (this.onClose) {
-      const allowedIntervals = this.intervalOptionsConfigForm.get('allowedIntervals').value;
-      // if full list selected returns empty for optimization
-      this.onClose(allowedIntervals?.length < this.allIntervals.length ? allowedIntervals : []);
+      const allowedIntervals: Array<TimewindowInterval> = [];
+      const aggIntervalsConfig: TimewindowAggIntervalsConfig = {};
+      const intervalOptionsConfig = this.intervalOptionsConfigForm.get('intervals').value;
+      for (const interval of intervalOptionsConfig) {
+        if (interval.enabled) {
+          allowedIntervals.push(interval.value);
+          if (this.aggregation && (interval.aggIntervals.length || interval.defaultAggInterval)) {
+            const intervalParams: TimewindowAggIntervalOptions = {};
+            if (interval.aggIntervals.length) {
+              intervalParams.aggIntervals = interval.aggIntervals;
+            }
+            if (interval.defaultAggInterval) {
+              intervalParams.defaultAggInterval = interval.defaultAggInterval;
+            }
+            aggIntervalsConfig[interval.value] = intervalParams;
+          }
+        }
+      }
+      console.log(aggIntervalsConfig);
+      this.onClose({
+        // if full list selected returns empty for optimization
+        allowedIntervals: allowedIntervals?.length < this.allIntervals.length ? allowedIntervals : [],
+        aggIntervalsConfig
+      });
     }
   }
 
@@ -145,7 +188,14 @@ export class IntervalOptionsConfigPanelComponent implements OnInit {
   }
 
   reset() {
-    this.intervalOptionsConfigForm.reset();
+    const intervalControls = this.intervalsFormArray.controls;
+    for (const interval of intervalControls) {
+      interval.patchValue({
+        enabled: true,
+        aggIntervals: [],
+        defaultAggInterval: null,
+      });
+    }
     this.intervalOptionsConfigForm.markAsDirty();
   }
 

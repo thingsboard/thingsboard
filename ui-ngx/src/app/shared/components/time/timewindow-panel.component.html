@@ -140,7 +140,7 @@
                  *ngIf="timewindowForm.get('aggregation.type').value === aggregationTypes.NONE && (isEdit || !timewindow.hideAggInterval)">
           <div>{{ 'aggregation.limit' | translate }}</div>
           <tb-datapoints-limit formControlName="limit"
-                               [required]="timewindowForm.get('aggregation.type').value === aggregationTypes.MIN">
+                               [required]="timewindowForm.get('aggregation.type').value === aggregationTypes.NONE">
           </tb-datapoints-limit>
         </section>
       </ng-container>
@@ -150,7 +150,8 @@
         <ng-container formGroupName="realtime" *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME">
           <tb-timeinterval
             formControlName="interval"
-            [min]="minRealtimeAggInterval()" [max]="maxRealtimeAggInterval()"
+            [min]="minRealtimeAggInterval" [max]="maxRealtimeAggInterval"
+            [allowedIntervals]="realtimeAllowedAggIntervals"
             useCalendarIntervals
             subscriptSizing="dynamic"
             appearance="outline"
@@ -161,7 +162,8 @@
         <ng-container formGroupName="history" *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY">
           <tb-timeinterval
             formControlName="interval"
-            [min]="minHistoryAggInterval()" [max]="maxHistoryAggInterval()"
+            [min]="minHistoryAggInterval" [max]="maxHistoryAggInterval"
+            [allowedIntervals]="historyAllowedAggIntervals"
             useCalendarIntervals
             subscriptSizing="dynamic"
             appearance="outline"

@@ -240,7 +240,8 @@
               </ng-container>
               <tb-timeinterval
                 formControlName="interval"
-                [min]="minRealtimeAggInterval()" [max]="maxRealtimeAggInterval()"
+                [min]="minRealtimeAggInterval" [max]="maxRealtimeAggInterval"
+                [allowedIntervals]="realtimeAllowedAggIntervals"
                 useCalendarIntervals
                 subscriptSizing="dynamic"
                 appearance="outline"
@@ -261,7 +262,8 @@
             <ng-container formGroupName="history">
               <tb-timeinterval
                 formControlName="interval"
-                [min]="minHistoryAggInterval()" [max]="maxHistoryAggInterval()"
+                [min]="minHistoryAggInterval" [max]="maxHistoryAggInterval"
+                [allowedIntervals]="historyAllowedAggIntervals"
                 useCalendarIntervals
                 subscriptSizing="dynamic"
                 appearance="outline"

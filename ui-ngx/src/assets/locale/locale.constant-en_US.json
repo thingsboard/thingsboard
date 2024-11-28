@@ -4710,7 +4710,7 @@
         "allowed-aggregation-functions": "Allowed aggregation functions",
         "edit-intervals-list": "Edit intervals list",
         "allowed-agg-intervals": "Allowed grouping intervals",
-        "preferred-agg-interval": "Preferred intervals",
+        "default-agg-interval": "Default grouping interval",
         "edit-intervals-list-hint": "List of available interval options can be specified.",
         "edit-grouping-intervals-list-hint": "It is possible to configure the grouping intervals list and default grouping interval."
     },
