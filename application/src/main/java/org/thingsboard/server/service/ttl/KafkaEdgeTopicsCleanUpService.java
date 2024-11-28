@@ -36,17 +36,18 @@ import org.thingsboard.server.queue.kafka.TbKafkaAdmin;
 import org.thingsboard.server.queue.kafka.TbKafkaSettings;
 import org.thingsboard.server.queue.kafka.TbKafkaTopicConfigs;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.state.DefaultDeviceStateService;
 
 import java.time.Instant;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
+import static org.thingsboard.server.service.state.DefaultDeviceStateService.LAST_CONNECT_TIME;
+
 @Slf4j
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
-@ConditionalOnExpression("'${queue.type:null}'=='kafka' && ${edges.enabled:true}")
+@ConditionalOnExpression("'${queue.type:null}'=='kafka' && ${edges.enabled:true} && ${sql.ttl.edge_events.edge_events_ttl:0} > 0")
 public class KafkaEdgeTopicsCleanUpService {
 
     private final EdgeService edgeService;
@@ -81,11 +82,11 @@ public class KafkaEdgeTopicsCleanUpService {
 
         PageDataIterable<EdgeId> edgeIds = new PageDataIterable<>(link -> edgeService.findEdgeIdsByTenantId(tenantId, link), 1024);
         long currentTimeMillis = System.currentTimeMillis();
-        long ttlMillis = TimeUnit.SECONDS.toChronoUnit().getDuration().multipliedBy(ttlSeconds).toMillis();
+        long ttlMillis = TimeUnit.SECONDS.toMillis(ttlSeconds);
 
         for (EdgeId edgeId : edgeIds) {
             TbKafkaAdmin kafkaAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdgeEventConfigs());
-            attributesService.find(tenantId, edgeId, AttributeScope.SERVER_SCOPE, DefaultDeviceStateService.LAST_CONNECT_TIME).get()
+            attributesService.find(tenantId, edgeId, AttributeScope.SERVER_SCOPE, LAST_CONNECT_TIME).get()
                     .flatMap(AttributeKvEntry::getLongValue)
                     .filter(lastConnectTime -> isTopicExpired(lastConnectTime, ttlMillis, currentTimeMillis))
                     .ifPresent(lastConnectTime -> {

@@ -137,8 +137,8 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
     }
 
     @Override
-    public void deleteTopic(EdgeId edgeId) {
-        String topic = topicService.getEdgeEventNotificationsTopic(tenantId, edgeId).getTopic();
+    public void cleanUp() {
+        String topic = topicService.getEdgeEventNotificationsTopic(tenantId, edge.getId()).getTopic();
         TbKafkaAdmin kafkaAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdgeEventConfigs());
         kafkaAdmin.deleteTopic(topic);
     }

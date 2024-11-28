@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -39,9 +38,7 @@ import java.util.UUID;
 @ConditionalOnExpression("'${queue.type:null}'=='kafka'")
 public class KafkaEdgeEventService extends BaseEdgeEventService {
 
-    @Lazy
     private final TopicService topicService;
-    @Lazy
     private final TbQueueProducerProvider producerProvider;
 
     @Override

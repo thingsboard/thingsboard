@@ -28,12 +28,14 @@ import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.util.PropertyUtils;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 /**
  * Created by ashvayka on 24.09.18.
@@ -178,17 +180,24 @@ public class TbKafkaAdmin implements TbQueueAdmin {
     public boolean isTopicEmpty(String topic) {
         try {
             TopicDescription topicDescription = settings.getAdminClient().describeTopics(Collections.singletonList(topic)).topicNameValues().get(topic).get();
-            TopicPartition topicPartition = new TopicPartition(topic, topicDescription.partitions().get(0).partition());
+            List<TopicPartition> partitions = topicDescription.partitions().stream().map(partitionInfo -> new TopicPartition(topic, partitionInfo.partition())).toList();
 
-            Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> beginningOffsets =
-                    settings.getAdminClient().listOffsets(Collections.singletonMap(topicPartition, OffsetSpec.earliest())).all().get();
-            Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> endOffsets =
-                    settings.getAdminClient().listOffsets(Collections.singletonMap(topicPartition, OffsetSpec.latest())).all().get();
+            Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> beginningOffsets = settings.getAdminClient().listOffsets(partitions.stream()
+                    .collect(Collectors.toMap(partition -> partition, partition -> OffsetSpec.earliest()))).all().get();
 
-            long beginningOffset = beginningOffsets.get(topicPartition).offset();
-            long endOffset = endOffsets.get(topicPartition).offset();
+            Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> endOffsets = settings.getAdminClient().listOffsets(partitions.stream()
+                    .collect(Collectors.toMap(partition -> partition, partition -> OffsetSpec.latest()))).all().get();
 
-            return beginningOffset == endOffset;
+            for (TopicPartition partition : partitions) {
+                long beginningOffset = beginningOffsets.get(partition).offset();
+                long endOffset = endOffsets.get(partition).offset();
+
+                if (beginningOffset != endOffset) {
+                    log.debug("Partition [{}] of topic [{}] is not empty. Returning false.", partition.partition(), topic);
+                    return false;
+                }
+            }
+            return true;
         } catch (InterruptedException | ExecutionException e) {
             log.error("Failed to check if topic [{}] is empty.", topic, e);
             return false;
