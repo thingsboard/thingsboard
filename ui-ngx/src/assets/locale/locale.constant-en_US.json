@@ -5621,7 +5621,12 @@
         "action-button": {
             "behavior": "Behavior",
             "on-click": "On click",
-            "on-click-hint": "Action triggered when the button is clicked"
+            "on-click-hint": "Action triggered when the button is clicked",
+            "left-button-click": "Left button click",
+            "left-button-click-hint": "Action while pressing on left button.",
+            "right-button-click": "Right button click",
+            "right-button-click-hint": "Action while pressing on right button.",
+            "button-click-hint": "Action while pressing on widget."
         },
         "command-button": {
             "behavior": "Behavior",
@@ -5666,6 +5671,18 @@
             "vertical-fill": "Vertical fill",
             "button-appearance": "Button appearance"
         },
+        "segmented-button": {
+            "layout": "Layout",
+            "layout-squared": "Squared",
+            "layout-rounded": "Rounded",
+            "card-border": "Card border",
+            "button-appearance": "Button appearance",
+            "left": "Left",
+            "right": "Right",
+            "color-styles": "Color styles",
+            "selected": "Selected",
+            "unselected": "Unselected"
+        },
         "button": {
             "layout": "Layout",
             "outlined": "Outlined",
@@ -5679,6 +5696,7 @@
             "color-palette": "Color palette",
             "main": "Main",
             "background": "Background",
+            "border": "Border",
             "custom-styles": "Custom styles",
             "clear-style": "Clear style",
             "shadow": "Shadow",
@@ -5692,11 +5710,16 @@
             "activated-state-hint": "Configure condition under which the button is active.",
             "disabled-state": "Disabled state",
             "disabled-state-hint": "Configure condition under which the button is disabled.",
+            "initial-state": "Initial button",
+            "initial-state-hint": "Action to get the initial state of the component",
             "enabled": "Enabled",
             "hovered": "Hovered",
             "pressed": "Pressed",
             "activated": "Activated",
-            "disabled": "Disabled"
+            "disabled": "Disabled",
+            "initial": "Left button",
+            "left": "Left",
+            "right": "Right"
         },
         "background": {
             "background": "Background",
