@@ -120,4 +120,5 @@ public abstract class AbstractTbEntityService {
             return Futures.immediateFailedFuture(new RuntimeException("Operation not supported!"));
         }
     }
+
 }

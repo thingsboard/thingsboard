@@ -55,6 +55,17 @@
 
       .table-container {
         overflow: auto;
+
+        .copy-button {
+          visibility: hidden;
+          transition: visibility 0.1s;
+        }
+
+        .cell-action:hover {
+          .copy-button {
+            visibility: visible;
+          }
+        }
       }
 
       .tb-entity-table-info{

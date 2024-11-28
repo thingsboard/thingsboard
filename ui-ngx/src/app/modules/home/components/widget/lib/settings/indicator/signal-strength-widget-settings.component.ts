@@ -16,7 +16,7 @@
 
 import { Component, Injector } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { formatValue } from '@core/utils';
@@ -88,7 +88,7 @@ export class SignalStrengthWidgetSettingsComponent extends WidgetSettingsCompone
 
       background: [settings.background, []],
       padding: [settings.padding, []],
-      noSignalRssiValue: [settings.noSignalRssiValue, []]
+      noSignalRssiValue: [settings.noSignalRssiValue, [Validators.max(-86)]]
     });
   }
 

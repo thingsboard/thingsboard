@@ -274,14 +274,6 @@ public class NotificationEdgeTest extends AbstractEdgeTest {
         return saveNotificationRule(notificationRule);
     }
 
-    private NotificationTemplate saveNotificationTemplate(NotificationTemplate notificationTemplate) {
-        return doPost("/api/notification/template", notificationTemplate, NotificationTemplate.class);
-    }
-
-    private NotificationTarget saveNotificationTarget(NotificationTarget notificationTarget) {
-        return doPost("/api/notification/target", notificationTarget, NotificationTarget.class);
-    }
-
     private NotificationRule saveNotificationRule(NotificationRule notificationRule) {
         return doPost("/api/notification/rule", notificationRule, NotificationRule.class);
     }

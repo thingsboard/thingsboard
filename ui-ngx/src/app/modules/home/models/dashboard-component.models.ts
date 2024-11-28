@@ -761,7 +761,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     } else {
       res = this.sizeY;
     }
-    return Math.floor(res);
+    return Math.max(Math.floor(res), 1);
   }
 
   set rows(rows: number) {

@@ -342,6 +342,7 @@ import * as TimeIntervalsListComponent from '@shared/components/time/time-interv
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { Observable, map, of } from 'rxjs';
 import { getFlexLayout } from '@shared/legacy/flex-layout.models';
+import { isJSResourceUrl } from '@shared/public-api';
 
 class ModulesMap implements IModulesMap {
 
@@ -701,7 +702,7 @@ class ModulesMap implements IModulesMap {
           for (const moduleId of Object.keys(this.modulesMap)) {
             System.set('app:' + moduleId, this.modulesMap[moduleId]);
           }
-          System.constructor.prototype.shouldFetch = (url: string) => url.endsWith('/download');
+          System.constructor.prototype.shouldFetch = (url: string) => url.endsWith('/download') || isJSResourceUrl(url);
           System.constructor.prototype.fetch = (url: string, options: RequestInit & {meta?: any}) => {
             if (options?.meta?.additionalHeaders) {
               options.headers = { ...options.headers, ...options.meta.additionalHeaders };

@@ -14,48 +14,53 @@
 /// limitations under the License.
 ///
 
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { BaseData } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { baseDetailsPageByEntityType, EntityType } from '@app/shared/public-api';
-
-const entityTypeEntitiesPropertyKeyMap = new Map<EntityType, string>([
-  [EntityType.DOMAIN, 'oauth2ClientInfos'],
-  [EntityType.MOBILE_APP, 'oauth2ClientInfos']
-]);
+import { isEqual, isObject } from '@core/utils';
 
 @Component({
   selector: 'tb-entity-chips',
   templateUrl: './entity-chips.component.html',
   styleUrls: ['./entity-chips.component.scss']
 })
-export class EntityChipsComponent {
+export class EntityChipsComponent implements OnChanges {
 
   @Input()
-  set entity(value: BaseData<EntityId>) {
-    this.entityValue = value;
-    this.update();
-  }
+  entity: BaseData<EntityId>;
 
-  get entity(): BaseData<EntityId> {
-    return this.entityValue;
-  }
+  @Input()
+  key: string;
 
   entityDetailsPrefixUrl: string;
 
-  subEntities: Array<BaseData<EntityId>>;
+  subEntities: Array<BaseData<EntityId>> = [];
 
-  private entityValue?: BaseData<EntityId>;
+  ngOnChanges(changes: SimpleChanges) {
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (propName === 'entity' && change.currentValue !== change.previousValue) {
+        this.update();
+      }
+    }
+  }
 
-  private subEntitiesKey: string;
-
-  update(): void {
-    if (this.entity && this.entity.id) {
-      const entityType = this.entity.id.entityType as EntityType;
-      this.subEntitiesKey = entityTypeEntitiesPropertyKeyMap.get(entityType);
-      this.subEntities = this.entity?.[this.subEntitiesKey];
-      if (this.subEntities.length) {
-        this.entityDetailsPrefixUrl = baseDetailsPageByEntityType.get(this.subEntities[0].id.entityType as EntityType);
+  private update(): void {
+    if (this.entity && this.entity.id && this.key) {
+      let entitiesList = this.entity?.[this.key];
+      if (isObject(entitiesList) && !Array.isArray(entitiesList)) {
+        entitiesList = [entitiesList];
+      }
+      if (Array.isArray(entitiesList)) {
+        if (entitiesList.length) {
+          this.entityDetailsPrefixUrl = baseDetailsPageByEntityType.get(entitiesList[0].id.entityType as EntityType);
+        }
+      } else {
+        entitiesList = [];
+      }
+      if (!isEqual(entitiesList, this.subEntities)) {
+        this.subEntities = entitiesList;
       }
     }
   }
