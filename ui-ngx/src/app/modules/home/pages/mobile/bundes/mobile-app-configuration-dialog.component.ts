@@ -66,11 +66,21 @@ export class MobileAppConfigurationDialogComponent extends DialogComponent<Mobil
       this.configureApi += '\n';
       if (!!this.data.androidApp) {
         this.configureApi += `\nstatic const thingsboardAndroidAppSecret = '${this.data.androidApp.appSecret}';`;
-        this.renameCommands.push(`rename setBundleId --targets android --value "${this.data.androidApp.pkgName}"`);
       }
       if (!!this.data.iosApp) {
         this.configureApi += `\nstatic const thingsboardIOSAppSecret = '${this.data.iosApp.appSecret}';`;
-        this.renameCommands.push(`rename setBundleId --targets ios --value "${this.data.iosApp.pkgName}"`);
+      }
+    }
+    if (this.setApplication) {
+      if (this.data.androidApp?.pkgName === this.data.iosApp?.pkgName) {
+        this.renameCommands.push(`rename setBundleId --targets android, ios --value "${this.data.androidApp.pkgName}"`);
+      } else {
+        if (!!this.data.androidApp) {
+          this.renameCommands.push(`rename setBundleId --targets android --value "${this.data.androidApp.pkgName}"`);
+        }
+        if (!!this.data.iosApp) {
+          this.renameCommands.push(`rename setBundleId --targets ios --value "${this.data.iosApp.pkgName}"`);
+        }
       }
     }
   }

@@ -3548,7 +3548,7 @@
             "configure-package-title": "Configure application package",
             "configure-package-text": "You can manually change the Application Package or use third party CLI tool.",
             "configure-package-text-install": "To install the Rename CLI Tool, execute the following command:",
-            "configure-package-run-commands": "Run these commands in the root directory of your projectЖ"
+            "configure-package-run-commands": "Run these commands in the root directory of your project:"
         }
     },
     "notification": {
