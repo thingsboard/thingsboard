@@ -104,6 +104,7 @@ export class JsLibraryTableConfigResolver  {
       }
     };
     this.config.saveEntity = resource => {
+      resource.resourceType = ResourceType.JS_MODULE;
       let saveObservable = this.resourceService.saveResource(resource);
       if (resource.resourceSubType === ResourceSubType.MODULE) {
         saveObservable = saveObservable.pipe(

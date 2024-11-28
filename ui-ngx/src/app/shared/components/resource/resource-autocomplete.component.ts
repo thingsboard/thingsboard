@@ -88,6 +88,7 @@ export class ResourceAutocompleteComponent implements ControlValueAccessor, OnIn
 
   @ViewChild('resourceInput', {static: true}) resourceInput: ElementRef;
 
+  resource: ResourceInfo;
   private modelValue: string;
   private dirty = false;
 
@@ -108,10 +109,13 @@ export class ResourceAutocompleteComponent implements ControlValueAccessor, OnIn
         tap(value => {
           let modelValue: string;
           if (isObject(value)) {
-            modelValue = prependTbResourcePrefix((value as ResourceInfo).link);
+            this.resource = value as ResourceInfo;
+            modelValue = prependTbResourcePrefix(this.resource.link);
           } else if (isEmptyStr(value) || this.subType !== ResourceSubType.EXTENSION) {
+            this.resource = null;
             modelValue = null;
           } else {
+            this.resource = null;
             modelValue = value as string;
           }
           this.updateView(modelValue);
@@ -147,10 +151,12 @@ export class ResourceAutocompleteComponent implements ControlValueAccessor, OnIn
       if (isObject(value) && typeof value !== 'string' && (value as TbResourceId).id) {
         this.resourceService.getResourceInfoById(value.id, {ignoreLoading: true, ignoreErrors: true}).subscribe({
           next: resource => {
+            this.resource = resource;
             this.modelValue = prependTbResourcePrefix(resource.link);
             this.resourceFormGroup.get('resource').patchValue(resource, {emitEvent: false});
           },
           error: () => {
+            this.resource = null;
             this.modelValue = '';
             this.resourceFormGroup.get('resource').patchValue('');
           }
@@ -160,10 +166,12 @@ export class ResourceAutocompleteComponent implements ControlValueAccessor, OnIn
         const params = extractParamsFromJSResourceUrl(url);
         this.resourceService.getResourceInfo(params.type, params.scope, params.key, {ignoreLoading: true, ignoreErrors: true}).subscribe({
           next: resource => {
+            this.resource = resource;
             this.modelValue = value;
             this.resourceFormGroup.get('resource').patchValue(resource, {emitEvent: false});
           },
           error: () => {
+            this.resource = null;
             this.modelValue = '';
             this.resourceFormGroup.get('resource').patchValue('');
           }

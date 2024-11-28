@@ -21,8 +21,10 @@ import {
   forwardRef,
   Input,
   OnDestroy,
-  OnInit, Renderer2,
-  ViewChild, ViewContainerRef,
+  OnInit,
+  Renderer2,
+  ViewChild,
+  ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, UntypedFormControl, Validator } from '@angular/forms';
@@ -40,13 +42,11 @@ import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { beautifyJs } from '@shared/models/beautify.models';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { TbFunction } from '@shared/models/js-function.models';
-import { MatButton } from '@angular/material/button';
+import { loadModulesCompleter, TbFunction } from '@shared/models/js-function.models';
 import { TbPopoverService } from '@shared/components/popover.service';
-import {
-  ScadaSymbolPropertyPanelComponent
-} from '@home/pages/scada-symbol/metadata-components/scada-symbol-property-panel.component';
 import { JsFuncModulesComponent } from '@shared/components/js-func-modules.component';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
 
 @Component({
   selector: 'tb-js-func',
@@ -72,6 +72,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   javascriptEditorElmRef: ElementRef;
 
   private jsEditor: Ace.Editor;
+  private initialCompleters: Ace.Completer[];
   private editorsResizeCaf: CancelAnimationFrame;
   private editorResize$: ResizeObserver;
   private ignoreChange = false;
@@ -167,7 +168,8 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
               private cd: ChangeDetectorRef,
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
-              private viewContainerRef: ViewContainerRef) {
+              private viewContainerRef: ViewContainerRef,
+              private http: HttpClient) {
   }
 
   ngOnInit(): void {
@@ -237,7 +239,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
             const hasErrors = annotations.filter(annotation => annotation.type === 'error').length > 0;
             if (this.hasErrors !== hasErrors) {
               this.hasErrors = hasErrors;
-              this.propagateChange(this.modelValue);
+              this.propagateValue(this.modelValue);
               this.cd.markForCheck();
             }
           });
@@ -258,9 +260,8 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
           this.jsEditor.session.$onChangeMode(newMode);
         }
         this.updateJsWorkerGlobals();
-        if (this.editorCompleter) {
-          this.jsEditor.completers = [this.editorCompleter, ...(this.jsEditor.completers || [])];
-        }
+        this.initialCompleters = this.jsEditor.completers || [];
+        this.updateCompleters();
         this.editorResize$ = new ResizeObserver(() => {
           this.onAceEditorResize();
         });
@@ -326,7 +327,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
       this.cleanupJsErrors();
       this.functionValid = this.validateJsFunc();
       if (!this.functionValid) {
-        this.propagateChange(this.modelValue);
+        this.propagateValue(this.modelValue);
         this.cd.markForCheck();
         this.store.dispatch(new ActionNotificationShow(
           {
@@ -455,6 +456,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
     if (this.jsEditor) {
       if (this.withModules) {
         this.updateJsWorkerGlobals();
+        this.updateCompleters();
       }
       this.ignoreChange = true;
       this.jsEditor.setValue(this.modelValue ? this.modelValue : '', -1);
@@ -467,15 +469,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
     if (this.modelValue !== editorValue || force) {
       this.modelValue = editorValue;
       this.functionValid = true;
-      if (this.withModules && this.modules && Object.keys(this.modules).length) {
-        const tbFunction: TbFunction = {
-          body: this.modelValue,
-          modules: this.modules
-        };
-        this.propagateChange(tbFunction);
-      } else {
-        this.propagateChange(this.modelValue);
-      }
+      this.propagateValue(this.modelValue);
       this.cd.markForCheck();
     }
   }
@@ -501,8 +495,21 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
         modulesPanelPopover.hide();
         this.modules = modules;
         this.updateJsWorkerGlobals();
+        this.updateCompleters();
         this.updateView(true);
       });
+    }
+  }
+
+  private propagateValue(value: string) {
+    if (this.withModules && this.modules && Object.keys(this.modules).length) {
+      const tbFunction: TbFunction = {
+        body: value,
+        modules: this.modules
+      };
+      this.propagateChange(tbFunction);
+    } else {
+      this.propagateChange(value);
     }
   }
 
@@ -534,5 +541,25 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
       // @ts-ignore
       this.jsEditor.session.$worker.send('changeOptions', [jsWorkerOptions]);
     }
+  }
+
+  updateCompleters() {
+    let modulesCompleterObservable: Observable<TbEditorCompleter>;
+    if (this.withModules) {
+      modulesCompleterObservable = loadModulesCompleter(this.http, this.modules);
+    } else {
+      modulesCompleterObservable = of(null);
+    }
+    modulesCompleterObservable.subscribe((modulesCompleter) => {
+      const completers: Ace.Completer[] = [];
+      if (this.editorCompleter) {
+        completers.push(this.editorCompleter);
+      }
+      if (modulesCompleter) {
+        completers.push(modulesCompleter);
+      }
+      completers.push(...this.initialCompleters);
+      this.jsEditor.completers = completers;
+    });
   }
 }

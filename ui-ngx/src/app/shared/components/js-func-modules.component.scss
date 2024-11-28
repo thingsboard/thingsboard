@@ -51,14 +51,14 @@
     margin: 12px;
     .tb-form-table-header-cell {
       &.tb-alias-header {
-        flex: 1 1 40%;
+        flex: 1 1 25%;
       }
       &.tb-module-link-header {
-        flex: 1 1 60%;
+        flex: 1 1 75%;
       }
       &.tb-actions-header {
-        width: 40px;
-        min-width: 40px;
+        width: 120px;
+        min-width: 120px;
       }
     }
     .tb-form-table {

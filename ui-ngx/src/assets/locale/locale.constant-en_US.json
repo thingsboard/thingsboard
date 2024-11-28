@@ -3303,7 +3303,9 @@
         "add-module": "Add module",
         "module-alias": "Alias",
         "module-resource": "JS module resource",
-        "not-unique-module-aliases-error": "Modules aliases must be unique!"
+        "not-unique-module-aliases-error": "Modules aliases must be unique!",
+        "show-module-info": "Show module info",
+        "show-module-source-code": "Show module source code"
     },
     "key-val": {
         "key": "Key",

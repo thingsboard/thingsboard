@@ -21,7 +21,7 @@ import {
   forwardRef,
   Input,
   OnInit,
-  Output,
+  Output, ViewChild,
   ViewEncapsulation
 } from '@angular/core';
 import {
@@ -37,6 +37,10 @@ import {
 } from '@angular/forms';
 import { JsFuncModulesComponent } from '@shared/components/js-func-modules.component';
 import { ResourceSubType } from '@shared/models/resource.models';
+import { Observable, of } from 'rxjs';
+import { ResourceAutocompleteComponent } from '@shared/components/resource/resource-autocomplete.component';
+import { HttpClient } from '@angular/common/http';
+import { loadModuleMarkdownDescription, loadModuleMarkdownSourceCode } from '@shared/models/js-function.models';
 
 export interface JsFuncModuleRow {
   alias: string;
@@ -67,6 +71,9 @@ export class JsFuncModuleRowComponent implements ControlValueAccessor, OnInit, V
 
   ResourceSubType = ResourceSubType;
 
+  @ViewChild('resourceAutocomplete')
+  resourceAutocomplete: ResourceAutocompleteComponent;
+
   @Input()
   index: number;
 
@@ -77,11 +84,16 @@ export class JsFuncModuleRowComponent implements ControlValueAccessor, OnInit, V
 
   modelValue: JsFuncModuleRow;
 
+  moduleDescription = this.loadModuleDescription.bind(this);
+
+  moduleSourceCode = this.loadModuleSourceCode.bind(this);
+
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: UntypedFormBuilder,
               private cd: ChangeDetectorRef,
-              private modulesComponent: JsFuncModulesComponent) {}
+              private modulesComponent: JsFuncModulesComponent,
+              private http: HttpClient) {}
 
   ngOnInit() {
     this.moduleRowFormGroup = this.fb.group({
@@ -129,6 +141,26 @@ export class JsFuncModuleRowComponent implements ControlValueAccessor, OnInit, V
       };
     }
     return null;
+  }
+
+  private loadModuleDescription(): Observable<string> | null {
+    const moduleLink = this.moduleRowFormGroup.get('moduleLink').value;
+    if (moduleLink) {
+      const resource = this.resourceAutocomplete.resource;
+      return loadModuleMarkdownDescription(this.http, resource);
+    } else {
+      return null;
+    }
+  }
+
+  private loadModuleSourceCode(): Observable<string> | null {
+    const moduleLink = this.moduleRowFormGroup.get('moduleLink').value;
+    if (moduleLink) {
+      const resource = this.resourceAutocomplete.resource;
+      return loadModuleMarkdownSourceCode(this.http, resource);
+    } else {
+      return null;
+    }
   }
 
   private moduleAliasValidator(): ValidatorFn {
