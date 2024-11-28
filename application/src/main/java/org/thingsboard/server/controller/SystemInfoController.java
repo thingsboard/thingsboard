@@ -70,6 +70,9 @@ public class SystemInfoController extends BaseController {
     @Value("${ui.dashboard.max_datapoints_limit}")
     private long maxDatapointsLimit;
 
+    @Value("${js.evaluator}")
+    private String jsEvaluator;
+
     @Autowired(required = false)
     private BuildProperties buildProperties;
 
@@ -145,6 +148,7 @@ public class SystemInfoController extends BaseController {
         systemParams.setMobileQrEnabled(Optional.ofNullable(qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID))
                 .map(QrCodeSettings::getQrCodeConfig).map(QRCodeConfig::isShowOnHomePage)
                 .orElse(false));
+        systemParams.setJsEvaluator(jsEvaluator);
         return systemParams;
     }
 
