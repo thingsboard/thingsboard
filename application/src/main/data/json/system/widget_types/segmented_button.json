@@ -22,7 +22,7 @@
   "resources": [
     {
       "link": "/api/images/system/segmented-button.svg",
-      "title": "\"Action button\" system widget image",
+      "title": "\"Segmented button\" system widget image",
       "type": "IMAGE",
       "subType": "IMAGE",
       "fileName": "segmented-button.svg",
