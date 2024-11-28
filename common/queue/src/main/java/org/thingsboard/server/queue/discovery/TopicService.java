@@ -17,6 +17,7 @@ package org.thingsboard.server.queue.discovery;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -34,7 +35,7 @@ public class TopicService {
     private final ConcurrentMap<String, TopicPartitionInfo> tbCoreNotificationTopics = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TopicPartitionInfo> tbRuleEngineNotificationTopics = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TopicPartitionInfo> tbEdgeNotificationTopics = new ConcurrentHashMap<>();
-    private final ConcurrentMap<EdgeId, TopicPartitionInfo> tbEdgeEventsNotificationTopics = new ConcurrentHashMap<>();
+    private final ConcurrentReferenceHashMap<EdgeId, TopicPartitionInfo> tbEdgeEventsNotificationTopics = new ConcurrentReferenceHashMap<>();
 
     /**
      * Each Service should start a consumer for messages that target individual service instance based on serviceId.

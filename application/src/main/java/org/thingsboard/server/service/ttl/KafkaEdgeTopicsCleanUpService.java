@@ -21,7 +21,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -41,8 +40,6 @@ import org.thingsboard.server.service.state.DefaultDeviceStateService;
 
 import java.time.Instant;
 import java.util.Date;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -92,7 +89,7 @@ public class KafkaEdgeTopicsCleanUpService {
                     .flatMap(AttributeKvEntry::getLongValue)
                     .filter(lastConnectTime -> isTopicExpired(lastConnectTime, ttlMillis, currentTimeMillis))
                     .ifPresent(lastConnectTime -> {
-                        String topic = topicService.buildEdgeEventNotificationsTopicPartitionInfo(tenantId, edgeId).getTopic();
+                        String topic = topicService.getEdgeEventNotificationsTopic(tenantId, edgeId).getTopic();
                         if (kafkaAdmin.isTopicEmpty(topic)) {
                             kafkaAdmin.deleteTopic(topic);
                             log.info("Removed outdated topic for tenant {} and edge with id {} older than {}",
