@@ -33,8 +33,10 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -56,6 +58,8 @@ import org.thingsboard.server.dao.util.KvUtils;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.cf.CalculatedFieldExecutionService;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
+import org.thingsboard.server.service.profile.TbAssetProfileCache;
+import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
 import java.util.ArrayList;
@@ -85,6 +89,8 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     private final TbApiUsageStateService apiUsageStateService;
     private final CalculatedFieldService calculatedFieldService;
     private final CalculatedFieldExecutionService calculatedFieldExecutionService;
+    private final TbAssetProfileCache assetProfileCache;
+    private final TbDeviceProfileCache deviceProfileCache;
 
     private ExecutorService tsCallBackExecutor;
 
@@ -97,7 +103,9 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                                TbApiUsageReportClient apiUsageClient,
                                                TbApiUsageStateService apiUsageStateService,
                                                CalculatedFieldService calculatedFieldService,
-                                               CalculatedFieldExecutionService calculatedFieldExecutionService) {
+                                               CalculatedFieldExecutionService calculatedFieldExecutionService,
+                                               TbAssetProfileCache assetProfileCache,
+                                               TbDeviceProfileCache deviceProfileCache) {
         this.attrService = attrService;
         this.tsService = tsService;
         this.tbEntityViewService = tbEntityViewService;
@@ -105,6 +113,8 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         this.apiUsageStateService = apiUsageStateService;
         this.calculatedFieldService = calculatedFieldService;
         this.calculatedFieldExecutionService = calculatedFieldExecutionService;
+        this.assetProfileCache = assetProfileCache;
+        this.deviceProfileCache = deviceProfileCache;
     }
 
     @PostConstruct
@@ -201,8 +211,17 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     private void updateTelemetryInCalculatedFields(TenantId tenantId, EntityId entityId, List<? extends KvEntry> telemetry) {
-        if (EntityType.DEVICE.equals(entityId.getEntityType()) || EntityType.ASSET.equals(entityId.getEntityType())) {
-            List<CalculatedFieldLink> cfLinks = calculatedFieldService.findAllCalculatedFieldLinksByEntityId(tenantId, entityId);
+        EntityType entityType = entityId.getEntityType();
+        if (EntityType.DEVICE.equals(entityType) || EntityType.ASSET.equals(entityType)) {
+            EntityId profileId;
+            if (EntityType.ASSET.equals(entityType)) {
+                profileId = assetProfileCache.get(tenantId, (AssetId) entityId).getId();
+            } else {
+                profileId = deviceProfileCache.get(tenantId, (DeviceId) entityId).getId();
+            }
+            List<CalculatedFieldLink> cfLinks = new ArrayList<>();
+            cfLinks.addAll(calculatedFieldService.findAllCalculatedFieldLinksByEntityId(tenantId, entityId));
+            cfLinks.addAll(calculatedFieldService.findAllCalculatedFieldLinksByEntityId(tenantId, profileId));
             if (!cfLinks.isEmpty()) {
                 cfLinks.forEach(link -> {
                     CalculatedFieldId calculatedFieldId = link.getCalculatedFieldId();
@@ -211,32 +230,34 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                     Map<String, KvEntry> updatedTelemetry = telemetry.stream()
                             .filter(entry -> attributes.containsValue(entry.getKey()) || timeSeries.containsValue(entry.getKey()))
                             .collect(Collectors.toMap(
-                                    entry -> {
-                                        if (entry instanceof AttributeKvEntry) {
-                                            return attributes.entrySet().stream()
-                                                    .filter(attr -> attr.getValue().equals(entry.getKey()))
-                                                    .map(Map.Entry::getKey)
-                                                    .findFirst()
-                                                    .orElse(entry.getKey());
-                                        } else if (entry instanceof TsKvEntry) {
-                                            return timeSeries.entrySet().stream()
-                                                    .filter(ts -> ts.getValue().equals(entry.getKey()))
-                                                    .map(Map.Entry::getKey)
-                                                    .findFirst()
-                                                    .orElse(entry.getKey());
-                                        }
-                                        return entry.getKey();
-                                    },
+                                    entry -> getMappedKey(entry, attributes, timeSeries),
                                     entry -> entry,
                                     (v1, v2) -> v1
                             ));
 
                     if (!updatedTelemetry.isEmpty()) {
-                        calculatedFieldExecutionService.onTelemetryUpdate(tenantId, calculatedFieldId, updatedTelemetry);
+                        calculatedFieldExecutionService.onTelemetryUpdate(tenantId, entityId, calculatedFieldId, updatedTelemetry);
                     }
                 });
             }
         }
+    }
+
+    private String getMappedKey(KvEntry entry, Map<String, String> attributes, Map<String, String> timeSeries) {
+        if (entry instanceof AttributeKvEntry) {
+            return attributes.entrySet().stream()
+                    .filter(attr -> attr.getValue().equals(entry.getKey()))
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .orElse(entry.getKey());
+        } else if (entry instanceof TsKvEntry) {
+            return timeSeries.entrySet().stream()
+                    .filter(ts -> ts.getValue().equals(entry.getKey()))
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .orElse(entry.getKey());
+        }
+        return entry.getKey();
     }
 
     private void addEntityViewCallback(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {

@@ -225,7 +225,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     }
 
     @Override
-    public void onTelemetryUpdate(TenantId tenantId, CalculatedFieldId calculatedFieldId, Map<String, KvEntry> updatedTelemetry) {
+    public void onTelemetryUpdate(TenantId tenantId, EntityId entityId, CalculatedFieldId calculatedFieldId, Map<String, KvEntry> updatedTelemetry) {
         try {
             log.info("Received telemetry update msg: tenantId=[{}], calculatedFieldId=[{}]", tenantId, calculatedFieldId);
             CalculatedFieldCtx calculatedFieldCtx = calculatedFieldsCtx.computeIfAbsent(calculatedFieldId, id -> {
@@ -234,7 +234,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             });
             Map<String, ArgumentEntry> argumentValues = updatedTelemetry.entrySet().stream()
                     .collect(Collectors.toMap(Map.Entry::getKey, entry -> ArgumentEntry.createSingleValueArgument(entry.getValue())));
-            updateOrInitializeState(calculatedFieldCtx, calculatedFieldCtx.getEntityId(), argumentValues);
+            updateOrInitializeState(calculatedFieldCtx, entityId, argumentValues);
             log.info("Successfully updated time series for calculatedFieldId: [{}]", calculatedFieldId);
         } catch (Exception e) {
             log.trace("Failed to update telemetry for calculatedFieldId: [{}]", calculatedFieldId, e);
