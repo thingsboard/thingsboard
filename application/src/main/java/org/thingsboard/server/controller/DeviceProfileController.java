@@ -34,6 +34,9 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.device.data.Column;
+import org.thingsboard.server.common.data.device.data.TableInfo;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -48,7 +51,9 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_DATA;
@@ -187,6 +192,42 @@ public class DeviceProfileController extends BaseController {
             @RequestBody DeviceProfile deviceProfile) throws Exception {
         deviceProfile.setTenantId(getTenantId());
         checkEntity(deviceProfile.getId(), deviceProfile, Resource.DEVICE_PROFILE);
+        /* for tdengine, start */
+        if (useStable) {
+            TableInfo tableInfo = deviceProfile.getTableInfo();
+            if (deviceProfile.getId() == null) {
+                if (null == tableInfo || tableInfo.getColumns() == null || tableInfo.getColumns().isEmpty()) {
+                    throw new ThingsboardException("The parameter of stable info can't be empty!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+                }
+                Column.addAdditionalColumn(tableInfo.getColumns());
+                Set<String> names = new HashSet<>();
+                for (Column column : tableInfo.getColumns()) {
+                    Column.validColumn(names, column);
+                }
+                if (tableInfo.getTags() != null && !tableInfo.getTags().isEmpty()) {
+                    Set<String> tags = new HashSet<>();
+                    for (Column tag : tableInfo.getTags()) {
+                        Column.validTag(tags, tag);
+                    }
+                }
+            } else {
+                if (tableInfo != null) {
+                    if (tableInfo.getColumns() != null && !tableInfo.getColumns().isEmpty()) {
+                        Set<String> names = new HashSet<>();
+                        for (Column column : tableInfo.getColumns()) {
+                            Column.validColumn(names, column);
+                        }
+                    }
+                    if (tableInfo.getTags() != null && !tableInfo.getTags().isEmpty()) {
+                        Set<String> tags = new HashSet<>();
+                        for (Column tag : tableInfo.getTags()) {
+                            Column.validColumn(tags, tag);
+                        }
+                    }
+                }
+            }
+        }
+        /* for tdengine, end */
         return tbDeviceProfileService.save(deviceProfile, getCurrentUser());
     }
 

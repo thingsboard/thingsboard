@@ -72,6 +72,10 @@ public abstract class AbstractTbEntityService {
     @Lazy
     private EntitiesVersionControlService vcService;
 
+    // for tdengine
+    @Value("${tdengine.useStable:false}")
+    protected boolean useStable;
+
     protected boolean isTestProfile() {
         return Set.of(this.env.getActiveProfiles()).contains("test");
     }

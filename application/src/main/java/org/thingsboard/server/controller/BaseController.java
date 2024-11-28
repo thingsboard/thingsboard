@@ -26,11 +26,13 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -68,6 +70,8 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.device.data.Column;
+import org.thingsboard.server.common.data.device.data.TableInfo;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
@@ -158,6 +162,7 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.dao.util.TDengineTsDao;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
@@ -190,6 +195,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -368,6 +374,16 @@ public abstract class BaseController {
     @Value("${edges.enabled}")
     @Getter
     protected boolean edgesEnabled;
+
+    // for tdengine
+    @Autowired(required = false)
+    @Qualifier("TDengineTemplate")
+    @TDengineTsDao
+    protected JdbcTemplate jdbcTemplate;
+
+    // for tdengine
+    @Value("${tdengine.useStable:false}")
+    protected boolean useStable;
 
     @ExceptionHandler(Exception.class)
     public void handleControllerException(Exception e, HttpServletResponse response) {
@@ -701,6 +717,35 @@ public abstract class BaseController {
     }
 
     DeviceProfile checkDeviceProfileId(DeviceProfileId deviceProfileId, Operation operation) throws ThingsboardException {
+        DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(getCurrentUser().getTenantId(), deviceProfileId);
+        /* for tdengine, start */
+        if (useStable) {
+            AtomicReference<TableInfo> info = new AtomicReference<>();
+            jdbcTemplate.query(String.format("select stable_name from information_schema.ins_stables where stable_name = '%s'", deviceProfileId), handler -> {
+                info.set(new TableInfo());
+                jdbcTemplate.query("desc `" + deviceProfileId + "`", rs -> {
+                    List<Column> columns = new ArrayList<>();
+                    List<Column> tags = new ArrayList<>();
+                    do {
+                        Column column = new Column();
+                        column.setName(rs.getString("field"));
+                        column.setType(rs.getString("type"));
+                        column.setLen(rs.getInt("length"));
+                        if (StringUtils.isNotEmpty(rs.getString("note"))) {
+                            tags.add(column);
+                        } else {
+                            columns.add(column);
+                        }
+                    } while (rs.next());
+                    info.get().setColumns(columns);
+                    info.get().setTags(tags);
+                });
+            });
+            if (null != info.get()) {
+                deviceProfile.setTableInfo(info.get());
+            }
+        }
+        /* for tdengine, end */
         return checkEntityId(deviceProfileId, deviceProfileService::findDeviceProfileById, operation);
     }
 
