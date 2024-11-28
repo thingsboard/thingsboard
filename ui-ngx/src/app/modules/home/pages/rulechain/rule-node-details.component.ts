@@ -39,6 +39,8 @@ import { ComponentClusteringMode } from '@shared/models/component-descriptor.mod
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { ServiceType } from '@shared/models/queue.models';
 import { takeUntil } from 'rxjs/operators';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { HasDebugConfig } from '@shared/models/entity.models';
 
 @Component({
   selector: 'tb-rule-node',
@@ -79,6 +81,8 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
 
   ruleNodeFormGroup: UntypedFormGroup;
 
+  readonly ruleChainDebugPerTenantLimitsConfiguration = getCurrentAuthState(this.store).ruleChainDebugPerTenantLimitsConfiguration;
+
   private destroy$ = new Subject<void>();
 
   constructor(protected store: Store<AppState>,
@@ -92,7 +96,9 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
     if (this.ruleNode) {
       this.ruleNodeFormGroup = this.fb.group({
         name: [this.ruleNode.name, [Validators.required, Validators.pattern('(.|\\s)*\\S(.|\\s)*'), Validators.maxLength(255)]],
-        debugMode: [this.ruleNode.debugMode, []],
+        debugAll: [this.ruleNode.debugAll],
+        debugFailures: [this.ruleNode.debugFailures],
+        debugAllUntil: [this.ruleNode.debugAllUntil],
         singletonMode: [this.ruleNode.singletonMode, []],
         configuration: [this.ruleNode.configuration, [Validators.required]],
         additionalInfo: this.fb.group(
@@ -167,6 +173,15 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
     this.ruleNodeConfigComponent.validate();
   }
 
+  onSingleModeChange($event: Event): void {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const singleModeControl = this.ruleNodeFormGroup.get('singletonMode');
+    singleModeControl.patchValue(!singleModeControl.value);
+    singleModeControl.markAsDirty();
+  }
+
   openRuleChain($event: Event) {
     if ($event) {
       $event.stopPropagation();
@@ -192,5 +207,12 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
 
   isSingletonEditAllowed() {
     return this.ruleNode.component.clusteringMode === ComponentClusteringMode.USER_PREFERENCE;
+  }
+
+  onDebugConfigChanged(config: HasDebugConfig): void {
+    this.ruleNodeFormGroup.get('debugAllUntil').setValue(config.debugAllUntil);
+    this.ruleNodeFormGroup.get('debugAll').setValue(config.debugAll);
+    this.ruleNodeFormGroup.get('debugFailures').setValue(config.debugFailures);
+    this.ruleNodeFormGroup.markAsDirty();
   }
 }

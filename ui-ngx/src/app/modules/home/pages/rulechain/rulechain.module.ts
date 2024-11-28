@@ -32,6 +32,8 @@ import { RuleNodeDetailsComponent } from './rule-node-details.component';
 import { RuleNodeLinkComponent } from './rule-node-link.component';
 import { LinkLabelsComponent } from '@home/pages/rulechain/link-labels.component';
 import { RuleNodeConfigComponent } from './rule-node-config.component';
+import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
+import { DebugConfigButtonComponent } from '@home/components/debug-config/debug-config-button.component';
 
 @NgModule({
   declarations: [
@@ -59,7 +61,9 @@ import { RuleNodeConfigComponent } from './rule-node-config.component';
     CommonModule,
     SharedModule,
     HomeComponentsModule,
-    RuleChainRoutingModule
+    RuleChainRoutingModule,
+    DurationLeftPipe,
+    DebugConfigButtonComponent
   ]
 })
 export class RuleChainModule { }

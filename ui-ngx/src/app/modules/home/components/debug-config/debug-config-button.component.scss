@@ -13,28 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import './../scss/constants';
-
 :host {
-  form {
-    overflow-x: hidden !important;
-  }
-  .title-row {
-    display: flex;
-    flex-direction: column;
-
-    @media #{$mat-gt-sm} {
-      flex-direction: row;
-      gap: 8px;
-      align-items: center;
-
-      .node-setting {
-        margin-top: 5px;
-      }
-    }
-  }
-
-  .description-block {
-    margin-top: 22px;
+  .mini-debug-btn {
+    color: rgba(0, 0, 0, 0.6);
   }
 }

@@ -168,11 +168,13 @@ message RuleNodeProto {
   int64 idLSB = 2;
   string type = 3;
   string name = 4;
-  bool debugMode = 5;
+  bool debugMode = 5 [deprecated = true];
   string configuration = 6;
   string additionalInfo = 7;
   bool singletonMode = 8;
   int32 configurationVersion = 9;
+  bool debugFailures = 10;
+  int64 debugAllUntil = 11;
 }
 
 message NodeConnectionInfoProto {

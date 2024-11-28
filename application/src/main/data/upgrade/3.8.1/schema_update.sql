@@ -25,6 +25,23 @@ UPDATE user_credentials c SET failed_login_attempts = (SELECT (additional_info::
 UPDATE tb_user SET additional_info = (additional_info::jsonb - 'lastLoginTs' - 'failedLoginAttempts' - 'userCredentialsEnabled')::text
   WHERE additional_info IS NOT NULL AND additional_info != 'null';
 
+-- UPDATE RULE NODE DEBUG MODE TO DEBUG STRATEGY START
+
+ALTER TABLE rule_node ADD COLUMN IF NOT EXISTS debug_failures boolean DEFAULT false;
+ALTER TABLE rule_node ADD COLUMN IF NOT EXISTS debug_all_until bigint NOT NULL DEFAULT 0;
+DO
+$$
+    BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'rule_node' AND column_name = 'debug_mode')
+            THEN
+                UPDATE rule_node SET debug_all_until = (extract(epoch from now()) + 3600) * 1000 WHERE debug_mode = true;
+                ALTER TABLE rule_node DROP COLUMN debug_mode;
+        END IF;
+    END
+$$;
+
+-- UPDATE RULE NODE DEBUG MODE TO DEBUG STRATEGY END
+
 
 -- CREATE MOBILE APP BUNDLES FROM EXISTING APPS
 

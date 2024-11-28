@@ -58,8 +58,11 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> {
     @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
-    @Column(name = ModelConstants.DEBUG_MODE)
-    private boolean debugMode;
+    @Column(name = ModelConstants.DEBUG_FAILURES)
+    private boolean debugFailures;
+
+    @Column(name = ModelConstants.DEBUG__ALL_UNTIL)
+    private long debugAllUntil;
 
     @Column(name = ModelConstants.SINGLETON_MODE)
     private boolean singletonMode;
@@ -83,7 +86,8 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> {
         }
         this.type = ruleNode.getType();
         this.name = ruleNode.getName();
-        this.debugMode = ruleNode.isDebugMode();
+        this.debugFailures = ruleNode.isDebugFailures();
+        this.debugAllUntil = ruleNode.getDebugAllUntil();
         this.singletonMode = ruleNode.isSingletonMode();
         this.queueName = ruleNode.getQueueName();
         this.configurationVersion = ruleNode.getConfigurationVersion();
@@ -103,7 +107,8 @@ public class RuleNodeEntity extends BaseSqlEntity<RuleNode> {
         }
         ruleNode.setType(type);
         ruleNode.setName(name);
-        ruleNode.setDebugMode(debugMode);
+        ruleNode.setDebugFailures(debugFailures);
+        ruleNode.setDebugAllUntil(debugAllUntil);
         ruleNode.setSingletonMode(singletonMode);
         ruleNode.setQueueName(queueName);
         ruleNode.setConfigurationVersion(configurationVersion);

@@ -13,28 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import './../scss/constants';
+package org.thingsboard.server.common.data;
 
-:host {
-  form {
-    overflow-x: hidden !important;
-  }
-  .title-row {
-    display: flex;
-    flex-direction: column;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-    @media #{$mat-gt-sm} {
-      flex-direction: row;
-      gap: 8px;
-      align-items: center;
+public interface HasDebugMode {
 
-      .node-setting {
-        margin-top: 5px;
-      }
-    }
-  }
+    boolean isDebugFailures();
 
-  .description-block {
-    margin-top: 22px;
-  }
+    void setDebugFailures(boolean debugFailures);
+
+    boolean isDebugAll();
+
+    void setDebugAll(boolean debugAll);
+
+    long getDebugAllUntil();
+
+    void setDebugAllUntil(long debugAllUntil);
 }

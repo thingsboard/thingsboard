@@ -575,7 +575,9 @@ export class RuleChainPageComponent extends PageComponent
         additionalInfo: ruleNode.additionalInfo,
         configuration: ruleNode.configuration,
         configurationVersion: isDefinedAndNotNull(ruleNode.configurationVersion) ? ruleNode.configurationVersion : 0,
-        debugMode: ruleNode.debugMode,
+        debugAll: ruleNode.debugAll,
+        debugFailures: ruleNode.debugFailures,
+        debugAllUntil: ruleNode.debugAllUntil,
         singletonMode: ruleNode.singletonMode,
         queueName: ruleNode.queueName,
         x: Math.round(ruleNode.additionalInfo.layoutX),
@@ -936,7 +938,9 @@ export class RuleChainPageComponent extends PageComponent
             name: node.name,
             configuration: deepClone(node.configuration),
             additionalInfo: node.additionalInfo ? deepClone(node.additionalInfo) : {},
-            debugMode: node.debugMode,
+            debugFailures: node.debugFailures,
+            debugAllUntil: node.debugAllUntil,
+            debugAll: node.debugAll,
             singletonMode: node.singletonMode,
             queueName: node.queueName
           };
@@ -1009,7 +1013,9 @@ export class RuleChainPageComponent extends PageComponent
             name: outputEdge.label,
             configuration: {},
             additionalInfo: {},
-            debugMode: false,
+            debugFailures: false,
+            debugAllUntil: 0,
+            debugAll: false,
             singletonMode: false
           };
           outputNode.additionalInfo.layoutX = Math.round(destNode.x);
@@ -1055,7 +1061,9 @@ export class RuleChainPageComponent extends PageComponent
             configuration: {
               ruleChainId: ruleChain.id.id
             },
-            debugMode: false,
+            debugFailures: false,
+            debugAllUntil: 0,
+            debugAll: false,
             singletonMode: false,
             x: Math.round(ruleChainNodeX),
             y: Math.round(ruleChainNodeY),
@@ -1475,7 +1483,9 @@ export class RuleChainPageComponent extends PageComponent
               : node.component.configurationVersion,
             configuration: node.configuration,
             additionalInfo: node.additionalInfo ? node.additionalInfo : {},
-            debugMode: node.debugMode,
+            debugFailures: node.debugFailures,
+            debugAllUntil: node.debugAllUntil,
+            debugAll: node.debugAll,
             singletonMode: node.singletonMode,
             queueName: node.queueName
           };

@@ -228,7 +228,7 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
 
         // update metadata for root rule chain
         edgeImitator.expectMessageAmount(1);
-        metaData.getNodes().forEach(n -> n.setDebugMode(true));
+        metaData.getNodes().forEach(n -> n.setDebugAll(true));
         doPost("/api/ruleChain/metadata", metaData, RuleChainMetaData.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
         ruleChainUpdateMsgOpt = edgeImitator.findMessageByType(RuleChainUpdateMsg.class);
