@@ -21,9 +21,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
+import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.HasDebugMode;
+import org.thingsboard.server.common.data.HasDebugSettings;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -76,8 +78,8 @@ public abstract class AbstractEntityService {
     @Lazy
     private TbTenantProfileCache tbTenantProfileCache;
 
-    @Value("${debug_mode.max_duration:15}")
-    private int maxDebugModeDurationMinutes;
+    @Value("${debug.settings.default_duration:15}")
+    private int defaultDebugDurationMinutes;
 
     protected void createRelation(TenantId tenantId, EntityRelation relation) {
         log.debug("Creating relation: {}", relation);
@@ -136,14 +138,16 @@ public abstract class AbstractEntityService {
         }
     }
 
-    protected void setDebugAllUntil(TenantId tenantId, HasDebugMode entity, long now) {
-        int debugDuration = tbTenantProfileCache.get(tenantId).getDefaultProfileConfiguration().getMaxDebugModeDurationMinutes(maxDebugModeDurationMinutes);
-        long debugUntil = now + TimeUnit.MINUTES.toMillis(debugDuration);
-
-        if (entity.isDebugAll()) {
-            entity.setDebugAllUntil(debugUntil);
-        } else if (entity.getDebugAllUntil() > debugUntil) {
-            throw new DataValidationException("Unable to update 'debugAllUntil' property. To reset the debug duration, please modify the 'debugAll' property instead.");
+    protected void updateDebugSettings(TenantId tenantId, HasDebugSettings entity, long now) {
+        if (entity.getDebugSettings() != null) {
+            entity.setDebugSettings(entity.getDebugSettings().copy(getMaxDebugAllUntil(tenantId, now)));
+        } else if (entity.isDebugMode()) {
+            entity.setDebugSettings(DebugSettings.failuresOrUntil(getMaxDebugAllUntil(tenantId, now)));
+            entity.setDebugMode(false);
         }
+    }
+
+    private long getMaxDebugAllUntil(TenantId tenantId, long now) {
+        return now + TimeUnit.MINUTES.toMillis(DebugModeUtil.getMaxDebugAllDuration(tbTenantProfileCache.get(tenantId).getDefaultProfileConfiguration().getMaxDebugModeDurationMinutes(), defaultDebugDurationMinutes));
     }
 }

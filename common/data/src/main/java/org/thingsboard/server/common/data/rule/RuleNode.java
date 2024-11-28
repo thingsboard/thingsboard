@@ -17,14 +17,16 @@ package org.thingsboard.server.common.data.rule;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
-import org.thingsboard.server.common.data.HasDebugMode;
+import org.thingsboard.server.common.data.HasDebugSettings;
 import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.validation.Length;
@@ -35,7 +37,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements HasName, HasDebugMode {
+public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements HasName, HasDebugSettings {
 
     private static final long serialVersionUID = -5656679015121235465L;
 
@@ -48,12 +50,11 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
     @Length(fieldName = "name")
     @Schema(description = "User defined name of the rule node. Used on UI and for logging. ", example = "Process sensor reading")
     private String name;
-    @Schema(description = "Debug failures. ", example = "false")
-    private boolean debugFailures;
-    @Schema(description = "Debug All. Used as a trigger for updating debugAllUntil.", example = "false")
-    private boolean debugAll;
-    @Schema(description = "Timestamp of the end time for the processing debug events.")
-    private long debugAllUntil;
+    @Deprecated
+    @Schema(description = "Enable/disable debug. ", example = "false", deprecated = true)
+    private boolean debugMode;
+    @Schema(description = "Debug settings object.")
+    private DebugSettings debugSettings;
     @Schema(description = "Enable/disable singleton mode. ", example = "false")
     private boolean singletonMode;
     @Schema(description = "Queue name. ", example = "Main")
@@ -80,9 +81,7 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
         this.ruleChainId = ruleNode.getRuleChainId();
         this.type = ruleNode.getType();
         this.name = ruleNode.getName();
-        this.debugFailures = ruleNode.isDebugFailures();
-        this.debugAll = ruleNode.isDebugAll();
-        this.debugAllUntil = ruleNode.getDebugAllUntil();
+        this.debugSettings = ruleNode.getDebugSettings();
         this.singletonMode = ruleNode.isSingletonMode();
         this.setConfiguration(ruleNode.getConfiguration());
         this.externalId = ruleNode.getExternalId();
@@ -120,5 +119,17 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();
+    }
+
+    // Getter is ignored for serialization
+    @JsonIgnore
+    public boolean isDebugMode() {
+        return debugMode;
+    }
+
+    // Setter is annotated for deserialization
+    @JsonSetter
+    public void setDebugMode(boolean debugMode) {
+        this.debugMode = debugMode;
     }
 }

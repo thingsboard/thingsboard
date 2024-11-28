@@ -27,14 +27,13 @@ UPDATE tb_user SET additional_info = (additional_info::jsonb - 'lastLoginTs' - '
 
 -- UPDATE RULE NODE DEBUG MODE TO DEBUG STRATEGY START
 
-ALTER TABLE rule_node ADD COLUMN IF NOT EXISTS debug_failures boolean DEFAULT false;
-ALTER TABLE rule_node ADD COLUMN IF NOT EXISTS debug_all_until bigint NOT NULL DEFAULT 0;
+ALTER TABLE rule_node ADD COLUMN IF NOT EXISTS debug_settings varchar(1024) DEFAULT null;
 DO
 $$
     BEGIN
-        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'rule_node' AND column_name = 'debug_mode')
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'rule_node' AND column_name = 'debug_settings')
             THEN
-                UPDATE rule_node SET debug_all_until = (extract(epoch from now()) + 3600) * 1000 WHERE debug_mode = true;
+                UPDATE rule_node SET debug_settings = '{"failuresEnabled": true, "allEnabledUntil": ' || (extract(epoch from now()) + 900) * 1000 || '}' WHERE debug_mode = true; -- 15 minutes according to thingsboard.yml default settings.
                 ALTER TABLE rule_node DROP COLUMN debug_mode;
         END IF;
     END

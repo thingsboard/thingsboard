@@ -20,8 +20,6 @@
         },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
         "name": "Save Timeseries",
-        "debugFailures": false,
-        "debugAll": true,
         "singletonMode": false,
         "configurationVersion": 0,
         "configuration": {
@@ -36,8 +34,6 @@
         },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
         "name": "Save Attributes",
-        "debugFailures": false,
-        "debugAll": false,
         "singletonMode": false,
         "configurationVersion": 1,
         "configuration": {
@@ -55,8 +51,6 @@
         },
         "type": "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
         "name": "Message Type Switch",
-        "debugFailures": false,
-        "debugAll": false,
         "singletonMode": false,
         "configurationVersion": 0,
         "configuration": {
@@ -71,8 +65,6 @@
         },
         "type": "org.thingsboard.rule.engine.action.TbLogNode",
         "name": "Log RPC from Device",
-        "debugFailures": false,
-        "debugAll": false,
         "singletonMode": false,
         "configurationVersion": 0,
         "configuration": {
@@ -89,8 +81,6 @@
         },
         "type": "org.thingsboard.rule.engine.action.TbLogNode",
         "name": "Log Other",
-        "debugFailures": false,
-        "debugAll": false,
         "singletonMode": false,
         "configurationVersion": 0,
         "configuration": {
@@ -107,8 +97,6 @@
         },
         "type": "org.thingsboard.rule.engine.rpc.TbSendRPCRequestNode",
         "name": "RPC Call Request",
-        "debugFailures": false,
-        "debugAll": false,
         "singletonMode": false,
         "configurationVersion": 0,
         "configuration": {
@@ -123,8 +111,6 @@
         },
         "type": "org.thingsboard.rule.engine.filter.TbOriginatorTypeFilterNode",
         "name": "Is Entity Group",
-        "debugFailures": false,
-        "debugAll": false,
         "singletonMode": false,
         "configurationVersion": 0,
         "configuration": {
@@ -141,8 +127,6 @@
         },
         "type": "org.thingsboard.rule.engine.filter.TbMsgTypeFilterNode",
         "name": "Post attributes or RPC request",
-        "debugFailures": false,
-        "debugAll": false,
         "singletonMode": false,
         "configurationVersion": 0,
         "configuration": {
@@ -160,8 +144,6 @@
         },
         "type": "org.thingsboard.rule.engine.transform.TbDuplicateMsgToGroupNode",
         "name": "Duplicate To Group Entities",
-        "debugFailures": false,
-        "debugAll": false,
         "singletonMode": false,
         "configurationVersion": 0,
         "configuration": {
@@ -178,8 +160,6 @@
         },
         "type": "org.thingsboard.rule.engine.profile.TbDeviceProfileNode",
         "name": "Device Profile Node",
-        "debugFailures": false,
-        "debugAll": true,
         "singletonMode": false,
         "configurationVersion": 0,
         "configuration": {
@@ -196,8 +176,6 @@
         },
         "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
         "name": "Test JS script",
-        "debugFailures": false,
-        "debugAll": false,
         "singletonMode": false,
         "configurationVersion": 0,
         "configuration": {
@@ -215,8 +193,6 @@
         },
         "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
         "name": "Test TBEL script",
-        "debugFailures": false,
-        "debugAll": false,
         "singletonMode": false,
         "configurationVersion": 0,
         "configuration": {
@@ -234,8 +210,6 @@
         },
         "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
         "name": "Add arrival timestamp",
-        "debugFailures": false,
-        "debugAll": false,
         "singletonMode": false,
         "configurationVersion": 0,
         "configuration": {
@@ -253,8 +227,6 @@
         },
         "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
         "name": "Calculate additional latencies",
-        "debugFailures": false,
-        "debugAll": true,
         "singletonMode": false,
         "configurationVersion": 0,
         "configuration": {
@@ -272,8 +244,6 @@
         },
         "type": "org.thingsboard.rule.engine.transform.TbChangeOriginatorNode",
         "name": "To latencies asset",
-        "debugFailures": false,
-        "debugAll": false,
         "singletonMode": false,
         "configurationVersion": 0,
         "configuration": {
@@ -302,8 +272,6 @@
         },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
         "name": "Save Timeseries",
-        "debugFailures": false,
-        "debugAll": true,
         "singletonMode": false,
         "configurationVersion": 0,
         "configuration": {
@@ -319,8 +287,6 @@
         },
         "type": "org.thingsboard.rule.engine.filter.TbCheckMessageNode",
         "name": "Has testData",
-        "debugFailures": false,
-        "debugAll": false,
         "singletonMode": false,
         "configurationVersion": 0,
         "configuration": {
@@ -340,8 +306,6 @@
         },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
         "name": "Save Timeseries with TTL",
-        "debugFailures": false,
-        "debugAll": true,
         "singletonMode": false,
         "configurationVersion": 0,
         "configuration": {

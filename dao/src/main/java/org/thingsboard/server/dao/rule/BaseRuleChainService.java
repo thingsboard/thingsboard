@@ -219,7 +219,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 node.setRuleChainId(ruleChainId);
                 node = ruleNodeUpdater.apply(node);
 
-                setDebugAllUntil(tenantId, node, now);
+                updateDebugSettings(tenantId, node, now);
 
                 RuleChainDataValidator.validateRuleNode(node);
                 RuleNode savedNode = ruleNodeDao.save(tenantId, node);

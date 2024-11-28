@@ -15,19 +15,18 @@
  */
 package org.thingsboard.server.common.data;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+import org.thingsboard.server.common.data.debug.DebugSettings;
 
-public interface HasDebugMode {
+public interface HasDebugSettings {
 
-    boolean isDebugFailures();
+    @Deprecated
+    boolean isDebugMode();
 
-    void setDebugFailures(boolean debugFailures);
+    @Deprecated
+    void setDebugMode(boolean debugMode);
 
-    boolean isDebugAll();
+    DebugSettings getDebugSettings();
 
-    void setDebugAll(boolean debugAll);
+    void setDebugSettings(DebugSettings debugSettings);
 
-    long getDebugAllUntil();
-
-    void setDebugAllUntil(long debugAllUntil);
 }

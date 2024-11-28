@@ -465,7 +465,7 @@ actors:
       debug_mode_rate_limits_per_tenant:
         # Enable/Disable the rate limit of persisted debug events for all rule nodes per tenant
         enabled: "${ACTORS_RULE_CHAIN_DEBUG_MODE_RATE_LIMITS_PER_TENANT_ENABLED:true}"
-        # The value of DEBUG mode rate limit. By default, no more then 50 thousand events per hour
+        # The value of DEBUG mode rate limit. By default, no more than 50 thousand events per hour
         configuration: "${ACTORS_RULE_CHAIN_DEBUG_MODE_RATE_LIMITS_PER_TENANT_CONFIGURATION:50000:3600}"
     node:
       # Errors for particular actor are persisted once per specified amount of milliseconds
@@ -494,13 +494,11 @@ actors:
     # Actors statistic persistence frequency in milliseconds
     persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:3600000}"
 
-debug_mode:
-  # Maximum duration (in minutes) for debug mode.
-  # Min value is 1 minute.
-  # If set in the tenant profile and valid, it will be used.
-  # Otherwise, the value from this setting is used.
-  # If value from this setting is invalid, the default value (15 minutes) will be used.
-  max_duration: "${DEBUG_MODE_MAX_DURATION_MINUTES:15}"
+debug:
+  settings:
+    # Default duration (in minutes) for debug mode. Min value is 1 minute. Tenant profile settings override this one.
+    # If value from this setting is invalid, the default value (15 minutes) will be used.
+    default_duration: "${DEBUG_SETTINGS_DEFAULT_DURATION_MINUTES:15}"
 
 # Cache settings parameters
 cache:

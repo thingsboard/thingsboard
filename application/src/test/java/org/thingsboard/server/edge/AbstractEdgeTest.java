@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
@@ -208,7 +209,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     protected void updateRootRuleChainMetadata() throws Exception {
         RuleChainId rootRuleChainId = getEdgeRootRuleChainId();
         RuleChainMetaData rootRuleChainMetadata = doGet("/api/ruleChain/" + rootRuleChainId.getId().toString() + "/metadata", RuleChainMetaData.class);
-        rootRuleChainMetadata.getNodes().forEach(n -> n.setDebugAll(true));
+        rootRuleChainMetadata.getNodes().forEach(n -> n.setDebugSettings(DebugSettings.all()));
         doPost("/api/ruleChain/metadata", rootRuleChainMetadata, RuleChainMetaData.class);
     }
 

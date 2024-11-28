@@ -26,6 +26,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.actors.ruleChain.DefaultTbContext;
@@ -34,6 +35,7 @@ import org.thingsboard.server.actors.ruleChain.RuleNodeCtx;
 import org.thingsboard.server.actors.ruleChain.RuleNodeToRuleChainTellNextMsg;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -104,8 +106,7 @@ class DefaultTbContextTest {
         var msg = getTbMsgWithCallback(callbackMock);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(true);
-        ruleNode.setDebugAllUntil(0);
+        ruleNode.setDebugSettings(DebugSettings.failures());
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
 
@@ -126,8 +127,7 @@ class DefaultTbContextTest {
         var msg = getTbMsgWithCallback(callbackMock);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(true);
-        ruleNode.setDebugAllUntil(0);
+        ruleNode.setDebugSettings(DebugSettings.failures());
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
 
@@ -149,8 +149,7 @@ class DefaultTbContextTest {
         var msg = getTbMsgWithCallback(callbackMock);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(true);
-        ruleNode.setDebugAllUntil(0);
+        ruleNode.setDebugSettings(DebugSettings.failures());
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
@@ -181,8 +180,7 @@ class DefaultTbContextTest {
         var msg = getTbMsgWithCallback(callbackMock);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(false);
-        ruleNode.setDebugAllUntil(0);
+        ruleNode.setDebugSettings(DebugSettings.off());
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
 
@@ -212,8 +210,7 @@ class DefaultTbContextTest {
         var msg = getTbMsgWithCallback(callbackMock);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(false);
-        ruleNode.setDebugAllUntil(getUntilTime());
+        ruleNode.setDebugSettings(DebugSettings.until(getUntilTime()));
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
@@ -240,8 +237,7 @@ class DefaultTbContextTest {
         var msg = getTbMsgWithCallback(callbackMock);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(false);
-        ruleNode.setDebugAllUntil(getUntilTime());
+        ruleNode.setDebugSettings(DebugSettings.until(getUntilTime()));
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
@@ -270,8 +266,7 @@ class DefaultTbContextTest {
         var msg = getTbMsgWithCallback(callbackMock);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(false);
-        ruleNode.setDebugAllUntil(getUntilTime());
+        ruleNode.setDebugSettings(DebugSettings.until(getUntilTime()));
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
@@ -298,8 +293,7 @@ class DefaultTbContextTest {
         var msg = getTbMsgWithCallback(callbackMock);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(true);
-        ruleNode.setDebugAllUntil(getUntilTime());
+        ruleNode.setDebugSettings(DebugSettings.failuresOrUntil(getUntilTime()));
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
@@ -330,7 +324,7 @@ class DefaultTbContextTest {
         var msgMock = mock(TbMsg.class);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(true);
+        ruleNode.setDebugSettings(DebugSettings.failures());
         given(msgMock.popFormStack()).willReturn(new TbMsgProcessingStackItem(RULE_CHAIN_ID, RULE_NODE_ID));
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
@@ -352,7 +346,7 @@ class DefaultTbContextTest {
         var msgMock = mock(TbMsg.class);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(true);
+        ruleNode.setDebugSettings(DebugSettings.failures());
         given(msgMock.popFormStack()).willReturn(new TbMsgProcessingStackItem(RULE_CHAIN_ID, RULE_NODE_ID));
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
@@ -373,8 +367,6 @@ class DefaultTbContextTest {
         var msgMock = mock(TbMsg.class);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(false);
-        ruleNode.setDebugAllUntil(0);
         given(msgMock.popFormStack()).willReturn(new TbMsgProcessingStackItem(RULE_CHAIN_ID, RULE_NODE_ID));
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
@@ -395,8 +387,7 @@ class DefaultTbContextTest {
         var msgMock = mock(TbMsg.class);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(false);
-        ruleNode.setDebugAllUntil(getUntilTime());
+        ruleNode.setDebugSettings(DebugSettings.until(getUntilTime()));
         given(msgMock.popFormStack()).willReturn(new TbMsgProcessingStackItem(RULE_CHAIN_ID, RULE_NODE_ID));
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
@@ -419,8 +410,7 @@ class DefaultTbContextTest {
         var msgMock = mock(TbMsg.class);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(false);
-        ruleNode.setDebugAllUntil(getUntilTime());
+        ruleNode.setDebugSettings(DebugSettings.until(getUntilTime()));
         given(msgMock.popFormStack()).willReturn(new TbMsgProcessingStackItem(RULE_CHAIN_ID, RULE_NODE_ID));
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
@@ -442,8 +432,6 @@ class DefaultTbContextTest {
         var msgMock = mock(TbMsg.class);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(false);
-        ruleNode.setDebugAllUntil(0);
         given(msgMock.popFormStack()).willReturn(null);
         TbMsgCallback callbackMock = mock(TbMsgCallback.class);
         given(msgMock.getCallback()).willReturn(callbackMock);
@@ -465,8 +453,7 @@ class DefaultTbContextTest {
         var msgMock = mock(TbMsg.class);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(false);
-        ruleNode.setDebugAllUntil(getUntilTime());
+        ruleNode.setDebugSettings(DebugSettings.until(getUntilTime()));
         given(msgMock.popFormStack()).willReturn(null);
         TbMsgCallback callbackMock = mock(TbMsgCallback.class);
         given(msgMock.getCallback()).willReturn(callbackMock);
@@ -490,8 +477,7 @@ class DefaultTbContextTest {
         var msgMock = mock(TbMsg.class);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(true);
-        ruleNode.setDebugAllUntil(getUntilTime());
+        ruleNode.setDebugSettings(DebugSettings.failuresOrUntil(getUntilTime()));
         given(msgMock.popFormStack()).willReturn(null);
         TbMsgCallback callbackMock = mock(TbMsgCallback.class);
         given(msgMock.getCallback()).willReturn(callbackMock);
@@ -516,7 +502,7 @@ class DefaultTbContextTest {
         var tpi = new TopicPartitionInfo(DataConstants.MAIN_QUEUE_TOPIC, TENANT_ID, 0, true);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(true);
+        ruleNode.setDebugSettings(DebugSettings.failures());
         var tbClusterServiceMock = mock(TbClusterService.class);
 
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
@@ -549,8 +535,6 @@ class DefaultTbContextTest {
         var tpi = new TopicPartitionInfo(DataConstants.MAIN_QUEUE_TOPIC, TENANT_ID, 0, true);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(false);
-        ruleNode.setDebugAllUntil(0);
         var tbClusterServiceMock = mock(TbClusterService.class);
 
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
@@ -577,8 +561,7 @@ class DefaultTbContextTest {
         var tpi = new TopicPartitionInfo(DataConstants.MAIN_QUEUE_TOPIC, TENANT_ID, 0, true);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(false);
-        ruleNode.setDebugAllUntil(getUntilTime());
+        ruleNode.setDebugSettings(DebugSettings.until(getUntilTime()));
         var tbClusterServiceMock = mock(TbClusterService.class);
 
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
@@ -641,8 +624,7 @@ class DefaultTbContextTest {
         var tpi = new TopicPartitionInfo(DataConstants.MAIN_QUEUE_TOPIC, TENANT_ID, 0, true);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(debugFailures);
-        ruleNode.setDebugAllUntil(debugAllUntil);
+        ruleNode.setDebugSettings(new DebugSettings(debugFailures, debugAllUntil));
         var tbClusterServiceMock = mock(TbClusterService.class);
 
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
@@ -696,8 +678,7 @@ class DefaultTbContextTest {
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setQueueName(DataConstants.MAIN_QUEUE_NAME);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(debugFailures);
-        ruleNode.setDebugAllUntil(debugAllUntil);
+        ruleNode.setDebugSettings(new DebugSettings(debugFailures, debugAllUntil));
         var tbClusterServiceMock = mock(TbClusterService.class);
 
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
@@ -746,8 +727,7 @@ class DefaultTbContextTest {
         var msg = getTbMsg();
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(true);
-        ruleNode.setDebugAllUntil(0);
+        ruleNode.setDebugSettings(DebugSettings.failures());
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
@@ -777,8 +757,6 @@ class DefaultTbContextTest {
         var msg = getTbMsg();
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(false);
-        ruleNode.setDebugAllUntil(0);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
 
@@ -806,8 +784,7 @@ class DefaultTbContextTest {
         var msg = getTbMsg();
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(false);
-        ruleNode.setDebugAllUntil(getUntilTime());
+        ruleNode.setDebugSettings(DebugSettings.until(getUntilTime()));
         given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         given(nodeCtxMock.getSelf()).willReturn(ruleNode);
         given(nodeCtxMock.getChainActor()).willReturn(chainActorMock);
@@ -843,8 +820,7 @@ class DefaultTbContextTest {
         var msg = getTbMsgWithCallback(callbackMock);
         var ruleNode = new RuleNode(RULE_NODE_ID);
         ruleNode.setRuleChainId(RULE_CHAIN_ID);
-        ruleNode.setDebugFailures(debugFailures);
-        ruleNode.setDebugAllUntil(debugAllUntil);
+        ruleNode.setDebugSettings(new DebugSettings(debugFailures, debugAllUntil));
         if (shouldPersist) {
             given(nodeCtxMock.getTenantId()).willReturn(TENANT_ID);
         }
@@ -861,7 +837,7 @@ class DefaultTbContextTest {
 
         // GIVEN
         Mockito.clearInvocations(mainCtxMock);
-        ruleNode.setDebugAllUntil(0);
+        ruleNode.setDebugSettings(new DebugSettings(ruleNode.getDebugSettings().isDebugFailures(), 0));
 
         // WHEN
         defaultTbContext.tellNext(msg, connection);

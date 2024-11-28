@@ -52,6 +52,6 @@ public interface TenantProfileConfiguration extends Serializable {
     int getMaxRuleNodeExecsPerMessage();
 
     @JsonIgnore
-    int getMaxDebugModeDurationMinutes(int systemMaxDebugModeDurationMinutes);
+    int getMaxDebugModeDurationMinutes();
 
 }

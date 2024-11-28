@@ -18,9 +18,6 @@
         },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
         "name": "Save Timeseries",
-        "debugFailures": false,
-        "debugAll": false,
-        "debugAllUntil": 0,
         "configuration": {
           "defaultTTL": 0
         }
@@ -32,9 +29,6 @@
         },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
         "name": "Save Client Attributes",
-        "debugFailures": false,
-        "debugAll": false,
-        "debugAllUntil": 0,
         "configurationVersion": 2,
         "configuration": {
           "scope": "CLIENT_SCOPE",
@@ -50,9 +44,6 @@
         },
         "type": "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
         "name": "Message Type Switch",
-        "debugFailures": false,
-        "debugAll": false,
-        "debugAllUntil": 0,
         "configuration": {
           "version": 0
         }
@@ -64,9 +55,6 @@
         },
         "type": "org.thingsboard.rule.engine.action.TbLogNode",
         "name": "Log RPC from Device",
-        "debugFailures": false,
-        "debugAll": false,
-        "debugAllUntil": 0,
         "configuration": {
           "scriptLang": "TBEL",
           "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);",
@@ -80,9 +68,6 @@
         },
         "type": "org.thingsboard.rule.engine.action.TbLogNode",
         "name": "Log Other",
-        "debugFailures": false,
-        "debugAll": false,
-        "debugAllUntil": 0,
         "configuration": {
           "scriptLang": "TBEL",
           "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);",
@@ -96,9 +81,6 @@
         },
         "type": "org.thingsboard.rule.engine.rpc.TbSendRPCRequestNode",
         "name": "RPC Call Request",
-        "debugFailures": false,
-        "debugAll": false,
-        "debugAllUntil": 0,
         "configuration": {
           "timeoutInSeconds": 60
         }
@@ -111,9 +93,6 @@
         },
         "type": "org.thingsboard.rule.engine.profile.TbDeviceProfileNode",
         "name": "Device Profile Node",
-        "debugFailures": false,
-        "debugAll": false,
-        "debugAllUntil": 0,
         "configuration": {
           "persistAlarmRulesState": false,
           "fetchAlarmRulesStateOnStart": false
