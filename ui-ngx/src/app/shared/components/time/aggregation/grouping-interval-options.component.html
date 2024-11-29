@@ -32,6 +32,7 @@
                   [subscriptSizing]="subscriptSizing" [appearance]="appearance">
     <mat-select formControlName="defaultAggInterval"
                 placeholder="{{ 'action.set' | translate }}">
+      <mat-option>--</mat-option>
       <mat-option *ngFor="let interval of selectedIntervals" [value]="interval.value">
         {{ interval.name | translate:interval.translateParams }}
       </mat-option>
