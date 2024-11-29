@@ -30,10 +30,10 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { MatButton } from '@angular/material/button';
 import { DebugSettingsPanelComponent } from './debug-settings-panel.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { shareReplay, timer } from 'rxjs';
+import { of, shareReplay, timer } from 'rxjs';
 import { SECOND } from '@shared/models/time/time.models';
 import { DebugSettings } from '@shared/models/entity.models';
-import { map } from 'rxjs/operators';
+import { map, startWith, switchMap } from 'rxjs/operators';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { AppState } from '@core/core.state';
 import { Store } from '@ngrx/store';
@@ -70,9 +70,18 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
     allEnabled: [false],
     allEnabledUntil: []
   });
-
   disabled = false;
-  isDebugAllActive$ = timer(0, SECOND).pipe(map(() => this.allEnabledUntil > new Date().getTime() || this.allEnabled), shareReplay(1));
+  isDebugAllActive$ = this.debugSettingsFormGroup.get('allEnabled').valueChanges.pipe(
+    startWith(this.debugSettingsFormGroup.get('allEnabled').value),
+    switchMap(value => {
+      if (value) {
+        return of(true);
+      } else {
+        return timer(0, SECOND).pipe(map(() => this.allEnabledUntil > new Date().getTime()));
+      }
+    }),
+    shareReplay(1)
+  );
 
   readonly maxDebugModeDurationMinutes = getCurrentAuthState(this.store).maxDebugModeDurationMinutes;
 

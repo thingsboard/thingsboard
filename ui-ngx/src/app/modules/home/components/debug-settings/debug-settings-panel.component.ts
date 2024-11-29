@@ -30,10 +30,10 @@ import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { MINUTE, SECOND } from '@shared/models/time/time.models';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
-import { shareReplay, timer } from 'rxjs';
+import { of, shareReplay, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DebugSettings } from '@shared/models/entity.models';
-import { distinctUntilChanged, map, tap } from 'rxjs/operators';
+import { map, startWith, switchMap, tap } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-debug-settings-panel',
@@ -61,12 +61,15 @@ export class DebugSettingsPanelComponent extends PageComponent implements OnInit
   maxMessagesCount: string;
   maxTimeFrameSec: string;
 
-  isDebugAllActive$ = timer(0, SECOND).pipe(
-    map(() => {
-      this.cd.markForCheck();
-      return this.allEnabledUntil > new Date().getTime() || this.allEnabled;
+  isDebugAllActive$ = this.debugAllControl.valueChanges.pipe(
+    startWith(this.debugAllControl.value),
+    switchMap(value => {
+      if (value) {
+        return of(true);
+      } else {
+        return timer(0, SECOND).pipe(map(() => this.allEnabledUntil > new Date().getTime()));
+      }
     }),
-    distinctUntilChanged(),
     tap(isDebugOn => this.debugAllControl.patchValue(isDebugOn, { emitEvent: false })),
     shareReplay(1),
   );
@@ -91,15 +94,15 @@ export class DebugSettingsPanelComponent extends PageComponent implements OnInit
 
   onApply(): void {
     this.onConfigApplied.emit({
-      allEnabled: this.allEnabled,
+      allEnabled: this.debugAllControl.value,
       failuresEnabled: this.onFailuresControl.value,
       allEnabledUntil: this.allEnabledUntil
     });
   }
 
   onReset(): void {
-    this.allEnabled = true;
-    this.allEnabledUntil = new Date().getTime() + this.maxDebugModeDurationMinutes * MINUTE;
+    this.debugAllControl.patchValue(true);
+    this.allEnabledUntil = 0;
     this.cd.markForCheck();
   }
 
