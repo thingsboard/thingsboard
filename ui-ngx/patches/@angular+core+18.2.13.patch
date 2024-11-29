@@ -1,5 +1,5 @@
 diff --git a/node_modules/@angular/core/fesm2022/core.mjs b/node_modules/@angular/core/fesm2022/core.mjs
-index 6fe7ad6..291e4ed 100755
+index 7d9d345..b4d21c6 100755
 --- a/node_modules/@angular/core/fesm2022/core.mjs
 +++ b/node_modules/@angular/core/fesm2022/core.mjs
 @@ -12859,13 +12859,13 @@ function findDirectiveDefMatches(tView, tNode) {
