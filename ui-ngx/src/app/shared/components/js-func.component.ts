@@ -42,11 +42,12 @@ import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { beautifyJs } from '@shared/models/beautify.models';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { loadModulesCompleter, TbFunction } from '@shared/models/js-function.models';
+import { compileTbFunction, loadModulesCompleter, TbFunction } from '@shared/models/js-function.models';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { JsFuncModulesComponent } from '@shared/components/js-func-modules.component';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { map, Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-js-func',
@@ -322,23 +323,29 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
     );
   }
 
-  validateOnSubmit(): void {
+  validateOnSubmit(): Observable<void> {
     if (!this.disabled) {
       this.cleanupJsErrors();
-      this.functionValid = this.validateJsFunc();
-      if (!this.functionValid) {
-        this.propagateValue(this.modelValue);
-        this.cd.markForCheck();
-        this.store.dispatch(new ActionNotificationShow(
-          {
-            message: this.validationError,
-            type: 'error',
-            target: this.toastTargetId,
-            verticalPosition: 'bottom',
-            horizontalPosition: 'left'
-          }));
-        this.errorShowed = true;
-      }
+      return this.validateJsFunc().pipe(
+        map((valid) => {
+          this.functionValid = valid;
+          if (!this.functionValid) {
+            this.propagateValue(this.modelValue);
+            this.cd.markForCheck();
+            this.store.dispatch(new ActionNotificationShow(
+              {
+                message: this.validationError,
+                type: 'error',
+                target: this.toastTargetId,
+                verticalPosition: 'bottom',
+                horizontalPosition: 'left'
+              }));
+            this.errorShowed = true;
+          }
+        })
+      );
+    } else {
+      return of(null);
     }
   }
 
@@ -347,83 +354,95 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
     this.jsEditor?.focus();
   }
 
-  private validateJsFunc(): boolean {
-    try {
-      const toValidate = new Function(this.functionArgsString, this.modelValue);
-      if (this.noValidate) {
-        return true;
-      }
-      if (this.validationArgs) {
-        let res: any;
-        let validationError: any;
-        for (const validationArg of this.validationArgs) {
-          try {
-            res = toValidate.apply(this, validationArg);
-            validationError = null;
-            break;
-          } catch (e) {
-            validationError = e;
-          }
-        }
-        if (validationError) {
-          throw validationError;
-        }
-        if (this.resultType !== 'nocheck') {
-          if (this.resultType === 'any') {
-            if (isUndefined(res)) {
-              this.validationError = this.translate.instant('js-func.no-return-error');
-              return false;
-            }
-          } else {
-            const resType = typeof res;
-            if (resType !== this.resultType) {
-              this.validationError = this.translate.instant('js-func.return-type-mismatch', {type: this.resultType});
-              return false;
-            }
-          }
-        }
-        return true;
-      } else {
-        return true;
-      }
-    } catch (e) {
-      const details = this.utils.parseException(e);
-      let errorInfo = 'Error:';
-      if (details.name) {
-        errorInfo += ' ' + details.name + ':';
-      }
-      if (details.message) {
-        errorInfo += ' ' + details.message;
-      }
-      if (details.lineNumber) {
-        errorInfo += '<br>Line ' + details.lineNumber;
-        if (details.columnNumber) {
-          errorInfo += ' column ' + details.columnNumber;
-        }
-        errorInfo += ' of script.';
-      }
-      this.validationError = errorInfo;
-      if (details.lineNumber) {
-        const line = details.lineNumber - 1;
-        let column = 0;
-        if (details.columnNumber) {
-          column = details.columnNumber;
-        }
-        const errorMarkerId = this.jsEditor.session.addMarker(new Range(line, 0, line, Infinity),
-          'ace_active-line', 'screenLine');
-        this.errorMarkers.push(errorMarkerId);
-        const annotations = this.jsEditor.session.getAnnotations();
-        const errorAnnotation: Ace.Annotation = {
-          row: line,
-          column,
-          text: details.message,
-          type: 'error'
-        };
-        this.errorAnnotationId = annotations.push(errorAnnotation) - 1;
-        this.jsEditor.session.setAnnotations(annotations);
-      }
-      return false;
+  private validateJsFunc(): Observable<boolean> {
+    let toCompile: TbFunction;
+    if (this.withModules && this.modules && Object.keys(this.modules).length) {
+      toCompile = {
+        body: this.modelValue,
+        modules: this.modules
+      };
+    } else {
+      toCompile = this.modelValue;
     }
+    const args = this.functionArgs || [];
+    return compileTbFunction(this.http, toCompile, ...args).pipe(
+      map(toValidate => {
+        if (this.noValidate) {
+          return true;
+        }
+        if (this.validationArgs) {
+          let res: any;
+          let validationError: any;
+          for (const validationArg of this.validationArgs) {
+            try {
+              res = toValidate.apply(this, validationArg);
+              validationError = null;
+              break;
+            } catch (e) {
+              validationError = e;
+            }
+          }
+          if (validationError) {
+            throw validationError;
+          }
+          if (this.resultType !== 'nocheck') {
+            if (this.resultType === 'any') {
+              if (isUndefined(res)) {
+                this.validationError = this.translate.instant('js-func.no-return-error');
+                return false;
+              }
+            } else {
+              const resType = typeof res;
+              if (resType !== this.resultType) {
+                this.validationError = this.translate.instant('js-func.return-type-mismatch', {type: this.resultType});
+                return false;
+              }
+            }
+          }
+          return true;
+        } else {
+          return true;
+        }
+      }),
+      catchError((e) => {
+        const details = this.utils.parseException(e);
+        let errorInfo = 'Error:';
+        if (details.name) {
+          errorInfo += ' ' + details.name + ':';
+        }
+        if (details.message) {
+          errorInfo += ' ' + details.message;
+        }
+        if (details.lineNumber) {
+          errorInfo += '<br>Line ' + details.lineNumber;
+          if (details.columnNumber) {
+            errorInfo += ' column ' + details.columnNumber;
+          }
+          errorInfo += ' of script.';
+        }
+        this.validationError = errorInfo;
+        if (details.lineNumber) {
+          const line = details.lineNumber - 1;
+          let column = 0;
+          if (details.columnNumber) {
+            column = details.columnNumber;
+          }
+          const errorMarkerId = this.jsEditor.session.addMarker(new Range(line, 0, line, Infinity),
+            'ace_active-line', 'screenLine');
+          this.errorMarkers.push(errorMarkerId);
+          const annotations = this.jsEditor.session.getAnnotations();
+          const errorAnnotation: Ace.Annotation = {
+            row: line,
+            column,
+            text: details.message,
+            type: 'error'
+          };
+          this.errorAnnotationId = annotations.push(errorAnnotation) - 1;
+          this.jsEditor.session.setAnnotations(annotations);
+        }
+        return of(false);
+      })
+    );
   }
 
   private cleanupJsErrors(): void {
@@ -449,6 +468,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   writeValue(value: TbFunction): void {
     if (isUndefinedOrNull(value) || typeof value === 'string') {
       this.modelValue = value as any;
+      this.modules = null;
     } else {
       this.modelValue = value.body;
       this.modules = value.modules;

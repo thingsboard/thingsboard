@@ -26,6 +26,9 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
+import { CompiledTbFunction, compileTbFunction, isNotEmptyTbFunction } from '@shared/models/js-function.models';
+import { forkJoin, Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 type ColumnVisibilityOptions = 'visible' | 'hidden' | 'hidden-mobile';
 
@@ -59,7 +62,7 @@ export type ShowCellButtonActionFunction = (ctx: WidgetContext, data: EntityData
 
 export interface TableCellButtonActionDescriptor extends  WidgetActionDescriptor {
   useShowActionCellButtonFunction: boolean;
-  showActionCellButtonFunction: ShowCellButtonActionFunction;
+  showActionCellButtonFunction: CompiledTbFunction<ShowCellButtonActionFunction>;
 }
 
 export interface EntityData {
@@ -314,20 +317,26 @@ export function getColumnSelectionAvailability(keySettings: TableWidgetDataKeySe
   return !(isDefined(keySettings.columnSelectionToDisplay) && keySettings.columnSelectionToDisplay === 'disabled');
 }
 
-export function getTableCellButtonActions(widgetContext: WidgetContext): TableCellButtonActionDescriptor[] {
-  return widgetContext.actionsApi.getActionDescriptors('actionCellButton').map(descriptor => {
+export function getTableCellButtonActions(widgetContext: WidgetContext): Observable<TableCellButtonActionDescriptor[]> {
+  const actions$ = widgetContext.actionsApi.getActionDescriptors('actionCellButton').map(descriptor => {
     let useShowActionCellButtonFunction = descriptor.useShowWidgetActionFunction || false;
-    let showActionCellButtonFunction: ShowCellButtonActionFunction = null;
-    if (useShowActionCellButtonFunction && isNotEmptyStr(descriptor.showWidgetActionFunction)) {
-      try {
-        showActionCellButtonFunction =
-          new Function('widgetContext', 'data', descriptor.showWidgetActionFunction) as ShowCellButtonActionFunction;
-      } catch (e) {
-        useShowActionCellButtonFunction = false;
-      }
+    let showActionCellButtonFunction$: Observable<CompiledTbFunction<ShowCellButtonActionFunction>>;
+    if (useShowActionCellButtonFunction && isNotEmptyTbFunction(descriptor.showWidgetActionFunction)) {
+      showActionCellButtonFunction$ = compileTbFunction(widgetContext.http, descriptor.showWidgetActionFunction, 'widgetContext', 'data');
+    } else {
+      showActionCellButtonFunction$ = of(null);
     }
-    return {...descriptor, showActionCellButtonFunction, useShowActionCellButtonFunction};
+    return showActionCellButtonFunction$.pipe(
+      catchError(() => { return of(null) }),
+      map(showActionCellButtonFunction => {
+        if (!showActionCellButtonFunction) {
+          useShowActionCellButtonFunction = false;
+        }
+        return {...descriptor, showActionCellButtonFunction, useShowActionCellButtonFunction};
+      })
+    );
   });
+  return actions$.length ? forkJoin(actions$) : of([]);
 }
 
 export function checkHasActions(cellButtonActions: TableCellButtonActionDescriptor[]): boolean {
@@ -348,7 +357,7 @@ function filterTableCellButtonAction(widgetContext: WidgetContext,
                                      action: TableCellButtonActionDescriptor, data: EntityData | AlarmDataInfo | FormattedData): boolean {
   if (action.useShowActionCellButtonFunction) {
     try {
-      return action.showActionCellButtonFunction(widgetContext, data);
+      return action.showActionCellButtonFunction.execute(widgetContext, data);
     } catch (e) {
       console.warn('Failed to execute showActionCellButtonFunction', e);
       return false;

@@ -58,7 +58,17 @@ import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/s
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { BehaviorSubject, fromEvent, merge, Observable, of, Subject, Subscription } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
-import { catchError, debounceTime, distinctUntilChanged, map, skip, startWith, takeUntil } from 'rxjs/operators';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  skip,
+  startWith,
+  switchMap,
+  takeUntil,
+  tap
+} from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -828,7 +838,8 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
 
   private reserveSpaceForHiddenAction = true;
   private cellButtonActions: TableCellButtonActionDescriptor[];
-  private readonly usedShowCellActionFunction: boolean;
+  private usedShowCellActionFunction: boolean;
+  private inited = false;
 
   constructor(
     private source: TimeseriesTableSource,
@@ -837,12 +848,23 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
     private datePipe: DatePipe,
     private widgetContext: WidgetContext
   ) {
-    this.cellButtonActions = getTableCellButtonActions(widgetContext);
-    this.usedShowCellActionFunction = this.cellButtonActions.some(action => action.useShowActionCellButtonFunction);
     if (this.widgetContext.settings.reserveSpaceForHiddenAction) {
       this.reserveSpaceForHiddenAction = coerceBooleanProperty(this.widgetContext.settings.reserveSpaceForHiddenAction);
     }
     this.source.timeseriesDatasource = this;
+  }
+
+  private init(): Observable<any> {
+    if (this.inited) {
+      return of(null);
+    }
+    return getTableCellButtonActions(this.widgetContext).pipe(
+      tap(actions => {
+        this.cellButtonActions = actions
+        this.usedShowCellActionFunction = this.cellButtonActions.some(action => action.useShowActionCellButtonFunction);
+        this.inited = true;
+      })
+    );
   }
 
   connect(collectionViewer: CollectionViewer): Observable<TimeseriesRow[] | ReadonlyArray<TimeseriesRow>> {
@@ -886,68 +908,74 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
   }
 
   private updateSourceData() {
-    this.source.data = this.convertData(this.source.rawData, this.source.latestRawData);
-    this.allRowsSubject.next(this.source.data);
+    this.convertData(this.source.rawData, this.source.latestRawData).subscribe((data) => {
+      this.source.data = data;
+      this.allRowsSubject.next(this.source.data);
+    });
   }
 
-  private convertData(data: DatasourceData[], latestData: DatasourceData[]): TimeseriesRow[] {
-    const rowsMap: {[timestamp: number]: TimeseriesRow} = {};
-    for (let d = 0; d < data.length; d++) {
-      const columnData = data[d].data;
-      columnData.forEach((cellData) => {
-        const timestamp = cellData[0];
-        let row = rowsMap[timestamp];
-        if (!row) {
-          row = {
-            formattedTs: this.datePipe.transform(timestamp, this.dateFormatFilter)
-          };
-          if (this.cellButtonActions.length) {
-            if (this.usedShowCellActionFunction) {
-              const parsedData = formattedDataFormDatasourceData(data, undefined, timestamp);
-              row.actionCellButtons = prepareTableCellButtonActions(this.widgetContext, this.cellButtonActions,
-                parsedData[0], this.reserveSpaceForHiddenAction);
-              row.hasActions = checkHasActions(row.actionCellButtons);
-            } else {
-              row.hasActions = true;
-              row.actionCellButtons = this.cellButtonActions;
+  private convertData(data: DatasourceData[], latestData: DatasourceData[]): Observable<TimeseriesRow[]> {
+    return this.init().pipe(
+      map(() => {
+        const rowsMap: {[timestamp: number]: TimeseriesRow} = {};
+        for (let d = 0; d < data.length; d++) {
+          const columnData = data[d].data;
+          columnData.forEach((cellData) => {
+            const timestamp = cellData[0];
+            let row = rowsMap[timestamp];
+            if (!row) {
+              row = {
+                formattedTs: this.datePipe.transform(timestamp, this.dateFormatFilter)
+              };
+              if (this.cellButtonActions.length) {
+                if (this.usedShowCellActionFunction) {
+                  const parsedData = formattedDataFormDatasourceData(data, undefined, timestamp);
+                  row.actionCellButtons = prepareTableCellButtonActions(this.widgetContext, this.cellButtonActions,
+                    parsedData[0], this.reserveSpaceForHiddenAction);
+                  row.hasActions = checkHasActions(row.actionCellButtons);
+                } else {
+                  row.hasActions = true;
+                  row.actionCellButtons = this.cellButtonActions;
+                }
+              }
+              row[0] = timestamp;
+              for (let c = 0; c < (data.length + latestData.length); c++) {
+                row[c + 1] = undefined;
+              }
+              rowsMap[timestamp] = row;
+            }
+            row[d + 1] = cellData[1];
+          });
+        }
+
+        let rows: TimeseriesRow[]  = [];
+        if (this.hideEmptyLines) {
+          for (const t of Object.keys(rowsMap)) {
+            let hideLine = true;
+            for (let c = 0; (c < data.length) && hideLine; c++) {
+              if (rowsMap[t][c + 1]) {
+                hideLine = false;
+              }
+            }
+            if (!hideLine) {
+              rows.push(rowsMap[t]);
             }
           }
-          row[0] = timestamp;
-          for (let c = 0; c < (data.length + latestData.length); c++) {
-            row[c + 1] = undefined;
-          }
-          rowsMap[timestamp] = row;
+        } else {
+          rows = Object.keys(rowsMap).map(itm => rowsMap[itm]);
         }
-        row[d + 1] = cellData[1];
-      });
-    }
-
-    let rows: TimeseriesRow[]  = [];
-    if (this.hideEmptyLines) {
-      for (const t of Object.keys(rowsMap)) {
-        let hideLine = true;
-        for (let c = 0; (c < data.length) && hideLine; c++) {
-          if (rowsMap[t][c + 1]) {
-            hideLine = false;
+        for (let d = 0; d < latestData.length; d++) {
+          const columnData = latestData[d].data;
+          if (columnData.length) {
+            const value = columnData[0][1];
+            rows.forEach((row) => {
+              row[data.length + d + 1] = value;
+            });
           }
         }
-        if (!hideLine) {
-          rows.push(rowsMap[t]);
-        }
-      }
-    } else {
-      rows = Object.keys(rowsMap).map(itm => rowsMap[itm]);
-    }
-    for (let d = 0; d < latestData.length; d++) {
-      const columnData = latestData[d].data;
-      if (columnData.length) {
-        const value = columnData[0][1];
-        rows.forEach((row) => {
-          row[data.length + d + 1] = value;
-        });
-      }
-    }
-    return rows;
+        return rows;
+      })
+    );
   }
 
   isEmpty(): Observable<boolean> {
@@ -963,19 +991,23 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
   }
 
   private fetchRows(pageLink: PageLink): Observable<PageData<TimeseriesRow>> {
-    return this.allRows$.pipe(
-      map((data) => {
-        const fetchData = pageLink.filterData(data);
-        if (this.cellButtonActions.length) {
-          let maxCellButtonAction: number;
-          if (this.usedShowCellActionFunction && !this.reserveSpaceForHiddenAction) {
-            maxCellButtonAction = Math.max(...fetchData.data.map(tsRow => tsRow.actionCellButtons.length));
-          } else {
-            maxCellButtonAction = this.cellButtonActions.length;
-          }
-          this.countCellButtonAction = maxCellButtonAction;
-        }
-        return fetchData;
+    return this.init().pipe(
+      switchMap(() => {
+        return this.allRows$.pipe(
+          map((data) => {
+            const fetchData = pageLink.filterData(data);
+            if (this.cellButtonActions.length) {
+              let maxCellButtonAction: number;
+              if (this.usedShowCellActionFunction && !this.reserveSpaceForHiddenAction) {
+                maxCellButtonAction = Math.max(...fetchData.data.map(tsRow => tsRow.actionCellButtons.length));
+              } else {
+                maxCellButtonAction = this.cellButtonActions.length;
+              }
+              this.countCellButtonAction = maxCellButtonAction;
+            }
+            return fetchData;
+          })
+        );
       })
     );
   }

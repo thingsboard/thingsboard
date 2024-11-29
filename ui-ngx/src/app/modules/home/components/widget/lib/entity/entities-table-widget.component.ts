@@ -46,11 +46,11 @@ import { deepClone, hashCode, isDefined, isNumber, isObject, isUndefined } from 
 import cssjs from '@core/css/css';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { BehaviorSubject, fromEvent, merge, Observable, Subject } from 'rxjs';
+import { BehaviorSubject, fromEvent, merge, Observable, of, Subject } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
-import { debounceTime, distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, takeUntil, tap } from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, SortDirection } from '@angular/material/sort';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -789,7 +789,8 @@ class EntityDatasource implements DataSource<EntityData> {
 
   private reserveSpaceForHiddenAction = true;
   private cellButtonActions: TableCellButtonActionDescriptor[];
-  private readonly usedShowCellActionFunction: boolean;
+  private usedShowCellActionFunction: boolean;
+  private inited = false;
 
   constructor(
        private translate: TranslateService,
@@ -798,11 +799,22 @@ class EntityDatasource implements DataSource<EntityData> {
        private ngZone: NgZone,
        private widgetContext: WidgetContext
     ) {
-    this.cellButtonActions = getTableCellButtonActions(widgetContext);
-    this.usedShowCellActionFunction = this.cellButtonActions.some(action => action.useShowActionCellButtonFunction);
     if (this.widgetContext.settings.reserveSpaceForHiddenAction) {
       this.reserveSpaceForHiddenAction = coerceBooleanProperty(this.widgetContext.settings.reserveSpaceForHiddenAction);
     }
+  }
+
+  private init(): Observable<any> {
+    if (this.inited) {
+      return of(null);
+    }
+    return getTableCellButtonActions(this.widgetContext).pipe(
+      tap(actions => {
+        this.cellButtonActions = actions
+        this.usedShowCellActionFunction = this.cellButtonActions.some(action => action.useShowActionCellButtonFunction);
+        this.inited = true;
+      })
+    );
   }
 
   connect(collectionViewer: CollectionViewer): Observable<EntityData[] | ReadonlyArray<EntityData>> {
@@ -828,36 +840,38 @@ class EntityDatasource implements DataSource<EntityData> {
   }
 
   dataUpdated() {
-    const datasourcesPageData = this.subscription.datasourcePages[0];
-    const dataPageData = this.subscription.dataPages[0];
-    let entities = new Array<EntityData>();
-    let maxCellButtonAction = 0;
-    const dynamicWidthCellButtonActions = this.usedShowCellActionFunction && !this.reserveSpaceForHiddenAction;
-    datasourcesPageData.data.forEach((datasource, index) => {
-      const entity = this.datasourceToEntityData(datasource, dataPageData.data[index]);
-      entities.push(entity);
-      if (dynamicWidthCellButtonActions && entity.actionCellButtons.length > maxCellButtonAction) {
-        maxCellButtonAction = entity.actionCellButtons.length;
+    this.init().subscribe(() => {
+      const datasourcesPageData = this.subscription.datasourcePages[0];
+      const dataPageData = this.subscription.dataPages[0];
+      let entities = new Array<EntityData>();
+      let maxCellButtonAction = 0;
+      const dynamicWidthCellButtonActions = this.usedShowCellActionFunction && !this.reserveSpaceForHiddenAction;
+      datasourcesPageData.data.forEach((datasource, index) => {
+        const entity = this.datasourceToEntityData(datasource, dataPageData.data[index]);
+        entities.push(entity);
+        if (dynamicWidthCellButtonActions && entity.actionCellButtons.length > maxCellButtonAction) {
+          maxCellButtonAction = entity.actionCellButtons.length;
+        }
+      });
+      if (this.appliedSortOrderLabel && this.appliedSortOrderLabel.length) {
+        const asc = this.appliedPageLink.sortOrder.direction === Direction.ASC;
+        entities = entities.sort((a, b) => sortItems(a, b, this.appliedSortOrderLabel, asc));
       }
-    });
-    if (this.appliedSortOrderLabel && this.appliedSortOrderLabel.length) {
-      const asc = this.appliedPageLink.sortOrder.direction === Direction.ASC;
-      entities = entities.sort((a, b) => sortItems(a, b, this.appliedSortOrderLabel, asc));
-    }
-    if (!dynamicWidthCellButtonActions && this.cellButtonActions.length && entities.length) {
-      maxCellButtonAction = entities[0].actionCellButtons.length;
-    }
-    const entitiesPageData: PageData<EntityData> = {
-      data: entities,
-      totalPages: datasourcesPageData.totalPages,
-      totalElements: datasourcesPageData.totalElements,
-      hasNext: datasourcesPageData.hasNext
-    };
-    this.ngZone.run(() => {
-      this.entitiesSubject.next(entities);
-      this.pageDataSubject.next(entitiesPageData);
-      this.countCellButtonAction = maxCellButtonAction;
-      this.dataLoading = false;
+      if (!dynamicWidthCellButtonActions && this.cellButtonActions.length && entities.length) {
+        maxCellButtonAction = entities[0].actionCellButtons.length;
+      }
+      const entitiesPageData: PageData<EntityData> = {
+        data: entities,
+        totalPages: datasourcesPageData.totalPages,
+        totalElements: datasourcesPageData.totalElements,
+        hasNext: datasourcesPageData.hasNext
+      };
+      this.ngZone.run(() => {
+        this.entitiesSubject.next(entities);
+        this.pageDataSubject.next(entitiesPageData);
+        this.countCellButtonAction = maxCellButtonAction;
+        this.dataLoading = false;
+      });
     });
   }
 

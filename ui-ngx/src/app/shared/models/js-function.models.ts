@@ -39,11 +39,11 @@ export const isNotEmptyTbFunction = (tbFunction: TbFunction): boolean => {
       return tbFunction.body && tbFunction.body.trim().length > 0;
     }
   } else {
-    return true;
+    return false;
   }
 }
 
-export const compileTbFunction = (http: HttpClient, tbFunction: TbFunction, ...args: string[]): Observable<CompiledTbFunction> => {
+export const compileTbFunction = <T extends GenericFunction>(http: HttpClient, tbFunction: TbFunction, ...args: string[]): Observable<CompiledTbFunction<T>> => {
   let functionBody: string;
   let functionArgs: string[];
   let modules: {[alias: string]: string };
@@ -59,7 +59,7 @@ export const compileTbFunction = (http: HttpClient, tbFunction: TbFunction, ...a
   return loadFunctionModules(http, modules).pipe(
     map((compiledModules) => {
       const compiledFunction = new Function(...functionArgs, functionBody);
-      return new CompiledTbFunction(compiledFunction, compiledModules);
+      return new CompiledTbFunction<T>(compiledFunction, compiledModules);
     })
   );
 }
@@ -188,13 +188,17 @@ const loadModuleCompletion = (http: HttpClient, moduleLink: string): Observable<
   );
 }
 
-export class CompiledTbFunction {
+type GenericFunction = (...args: any[]) => any;
+
+export class CompiledTbFunction<T extends GenericFunction> {
+
+  public execute: T = this.executeImpl.bind(this);
 
   constructor(private compiledFunction: Function,
               private compiledModules: System.Module[]) {
   }
 
-  execute(...args: any[]): any {
+  private executeImpl(...args: any[]): any {
     let functionArgs: any[];
     if (this.compiledModules?.length) {
       functionArgs = args ? args.concat(this.compiledModules) : this.compiledModules;
@@ -292,8 +296,15 @@ const loadFunctionModuleSource = (http: HttpClient, moduleLink: string): Observa
 
 const getFunctionArguments = (func: Function): string[] => {
   const fnStr = func.toString().replace(/((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg, '');
-  let result = new Array<string>(...fnStr.slice(fnStr.indexOf('(')+1, fnStr.indexOf(')')).match(/([^\s,]+)/g));
-  if (result === null)
-    result = [];
-  return result;
+  const firstBracketIndex = fnStr.indexOf('(');
+  const secondBracketIndex = fnStr.indexOf(')');
+  if (firstBracketIndex === -1 || secondBracketIndex === -1 || (secondBracketIndex - firstBracketIndex) <= 1) {
+    return [];
+  }
+  const match = fnStr.slice(firstBracketIndex+1, secondBracketIndex).match(/([^\s,]+)/g);
+  if (match) {
+    return new Array<string>(...match);
+  } else {
+    return [];
+  }
 }

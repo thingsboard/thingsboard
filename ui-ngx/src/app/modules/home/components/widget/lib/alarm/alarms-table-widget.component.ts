@@ -51,7 +51,7 @@ import cssjs from '@core/css/css';
 import { sortItems } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
-import { BehaviorSubject, forkJoin, fromEvent, merge, Observable, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, forkJoin, fromEvent, merge, Observable, of, Subject, Subscription } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { debounceTime, distinctUntilChanged, map, take, takeUntil, tap } from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
@@ -1196,18 +1196,30 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
 
   private reserveSpaceForHiddenAction = true;
   private cellButtonActions: TableCellButtonActionDescriptor[];
-  private readonly usedShowCellActionFunction: boolean;
+  private usedShowCellActionFunction: boolean;
+  private inited = false;
 
   constructor(private subscription: IWidgetSubscription,
               private dataKeys: Array<DataKey>,
               private ngZone: NgZone,
               private widgetContext: WidgetContext,
-              actionCellDescriptors: AlarmWidgetActionDescriptor[]) {
-    this.cellButtonActions = actionCellDescriptors.concat(getTableCellButtonActions(widgetContext));
-    this.usedShowCellActionFunction = this.cellButtonActions.some(action => action.useShowActionCellButtonFunction);
+              private actionCellDescriptors: AlarmWidgetActionDescriptor[]) {
     if (this.widgetContext.settings.reserveSpaceForHiddenAction) {
       this.reserveSpaceForHiddenAction = coerceBooleanProperty(this.widgetContext.settings.reserveSpaceForHiddenAction);
     }
+  }
+
+  private init(): Observable<any> {
+    if (this.inited) {
+      return of(null);
+    }
+    return getTableCellButtonActions(this.widgetContext).pipe(
+      tap(actions => {
+        this.cellButtonActions = this.actionCellDescriptors.concat(actions);
+        this.usedShowCellActionFunction = this.cellButtonActions.some(action => action.useShowActionCellButtonFunction);
+        this.inited = true;
+      })
+    );
   }
 
   connect(collectionViewer: CollectionViewer): Observable<AlarmDataInfo[] | ReadonlyArray<AlarmDataInfo>> {
@@ -1237,47 +1249,49 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
   }
 
   updateAlarms() {
-    const subscriptionAlarms = this.subscription.alarms;
-    let alarms = new Array<AlarmDataInfo>();
-    let maxCellButtonAction = 0;
-    let isEmptySelection = false;
-    const dynamicWidthCellButtonActions = this.usedShowCellActionFunction && !this.reserveSpaceForHiddenAction;
-    subscriptionAlarms.data.forEach((alarmData) => {
-      const alarm = this.alarmDataToInfo(alarmData);
-      alarms.push(alarm);
-      if (dynamicWidthCellButtonActions && alarm.actionCellButtons.length > maxCellButtonAction) {
-        maxCellButtonAction = alarm.actionCellButtons.length;
+    this.init().subscribe(() => {
+      const subscriptionAlarms = this.subscription.alarms;
+      let alarms = new Array<AlarmDataInfo>();
+      let maxCellButtonAction = 0;
+      let isEmptySelection = false;
+      const dynamicWidthCellButtonActions = this.usedShowCellActionFunction && !this.reserveSpaceForHiddenAction;
+      subscriptionAlarms.data.forEach((alarmData) => {
+        const alarm = this.alarmDataToInfo(alarmData);
+        alarms.push(alarm);
+        if (dynamicWidthCellButtonActions && alarm.actionCellButtons.length > maxCellButtonAction) {
+          maxCellButtonAction = alarm.actionCellButtons.length;
+        }
+      });
+      if (!dynamicWidthCellButtonActions && this.cellButtonActions.length && alarms.length) {
+        maxCellButtonAction = alarms[0].actionCellButtons.length;
       }
-    });
-    if (!dynamicWidthCellButtonActions && this.cellButtonActions.length && alarms.length) {
-      maxCellButtonAction = alarms[0].actionCellButtons.length;
-    }
-    if (this.appliedSortOrderLabel && this.appliedSortOrderLabel.length) {
-      const asc = this.appliedPageLink.sortOrder.direction === Direction.ASC;
-      alarms = alarms.sort((a, b) => sortItems(a, b, this.appliedSortOrderLabel, asc));
-    }
-    if (this.selection.hasValue()) {
-      const alarmIds = alarms.map((alarm) => alarm.id.id);
-      const toRemove = this.selection.selected.filter(alarm => alarmIds.indexOf(alarm.id.id) === -1);
-      this.selection.deselect(...toRemove);
-      if (this.selection.isEmpty()) {
-        isEmptySelection = true;
+      if (this.appliedSortOrderLabel && this.appliedSortOrderLabel.length) {
+        const asc = this.appliedPageLink.sortOrder.direction === Direction.ASC;
+        alarms = alarms.sort((a, b) => sortItems(a, b, this.appliedSortOrderLabel, asc));
       }
-    }
-    const alarmsPageData: PageData<AlarmDataInfo> = {
-      data: alarms,
-      totalPages: subscriptionAlarms.totalPages,
-      totalElements: subscriptionAlarms.totalElements,
-      hasNext: subscriptionAlarms.hasNext
-    };
-    this.ngZone.run(() => {
-      if (isEmptySelection) {
-        this.onSelectionModeChanged(false);
+      if (this.selection.hasValue()) {
+        const alarmIds = alarms.map((alarm) => alarm.id.id);
+        const toRemove = this.selection.selected.filter(alarm => alarmIds.indexOf(alarm.id.id) === -1);
+        this.selection.deselect(...toRemove);
+        if (this.selection.isEmpty()) {
+          isEmptySelection = true;
+        }
       }
-      this.alarmsSubject.next(alarms);
-      this.pageDataSubject.next(alarmsPageData);
-      this.countCellButtonAction = maxCellButtonAction;
-      this.dataLoading = false;
+      const alarmsPageData: PageData<AlarmDataInfo> = {
+        data: alarms,
+        totalPages: subscriptionAlarms.totalPages,
+        totalElements: subscriptionAlarms.totalElements,
+        hasNext: subscriptionAlarms.hasNext
+      };
+      this.ngZone.run(() => {
+        if (isEmptySelection) {
+          this.onSelectionModeChanged(false);
+        }
+        this.alarmsSubject.next(alarms);
+        this.pageDataSubject.next(alarmsPageData);
+        this.countCellButtonAction = maxCellButtonAction;
+        this.dataLoading = false;
+      });
     });
   }
 

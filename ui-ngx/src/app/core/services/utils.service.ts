@@ -14,9 +14,6 @@
 /// limitations under the License.
 ///
 
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference
-/// <reference path="../../../../src/typings/rawloader.typings.d.ts" />
-
 import { Inject, Injectable, NgZone, Renderer2 } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { ExceptionData, parseException } from '@app/shared/models/error.models';
@@ -53,6 +50,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { DatePipe, DOCUMENT } from '@angular/common';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
 import cssjs from '@core/css/css';
+import { isNotEmptyTbFunction } from '@shared/models/js-function.models';
 
 const i18nRegExp = new RegExp(`{${i18nPrefix}:[^{}]+}`, 'g');
 
@@ -291,7 +289,7 @@ export class UtilsService {
     } else if (index > -1) {
       dataKey.color = this.getMaterialColor(index);
     }
-    if (keyInfo.postFuncBody && keyInfo.postFuncBody.length) {
+    if (isNotEmptyTbFunction(keyInfo.postFuncBody)) {
       dataKey.usePostProcessing = true;
       dataKey.postFuncBody = keyInfo.postFuncBody;
     }

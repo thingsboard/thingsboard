@@ -335,7 +335,7 @@ export interface KeyInfo {
   label?: string;
   color?: string;
   funcBody?: string;
-  postFuncBody?: string;
+  postFuncBody?: TbFunction;
   units?: string;
   decimals?: number;
 }
@@ -694,7 +694,7 @@ export interface WidgetActionDescriptor extends WidgetAction {
   icon: string;
   displayName?: string;
   useShowWidgetActionFunction?: boolean;
-  showWidgetActionFunction?: string;
+  showWidgetActionFunction?: TbFunction;
   columnIndex?: number;
 }
 

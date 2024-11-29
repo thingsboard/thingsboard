@@ -105,6 +105,7 @@ import { UserId } from '@shared/models/id/user-id';
 import { UserSettingsService } from '@core/http/user-settings.service';
 import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { UtilsService } from '@core/services/utils.service';
+import { CompiledTbFunction } from '@shared/models/js-function.models';
 
 export interface IWidgetAction {
   name: string;
@@ -118,7 +119,7 @@ export interface WidgetHeaderAction extends IWidgetAction {
   displayName: string;
   descriptor: WidgetActionDescriptor;
   useShowWidgetHeaderActionFunction: boolean;
-  showWidgetHeaderActionFunction: ShowWidgetHeaderActionFunction;
+  showWidgetHeaderActionFunction: CompiledTbFunction<ShowWidgetHeaderActionFunction>;
 }
 
 export interface WidgetAction extends IWidgetAction {
