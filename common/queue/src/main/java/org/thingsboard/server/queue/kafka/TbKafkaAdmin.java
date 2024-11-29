@@ -121,6 +121,15 @@ public class TbKafkaAdmin implements TbQueueAdmin {
         return topics;
     }
 
+    public Set<String> getAllTopics() {
+        try {
+            return settings.getAdminClient().listTopics().names().get();
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Failed to get all topics.", e);
+        }
+        return null;
+    }
+
     public CreateTopicsResult createTopic(NewTopic topic) {
         return settings.getAdminClient().createTopics(Collections.singletonList(topic));
     }
