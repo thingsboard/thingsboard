@@ -43,16 +43,6 @@
     .tb-form-hint {
       flex-shrink: 0;
     }
-
-    .mdc-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-
-      .mat-mdc-list-item.mdc-list-item--with-leading-checkbox.mdc-list-item--with-one-line {
-        height: 40px;
-      }
-    }
   }
 }
 
