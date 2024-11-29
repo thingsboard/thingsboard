@@ -73,32 +73,15 @@ public class DeprecationService {
     }
 
     private void checkDatabaseTypeDeprecation() {
-        String deprecatedDatabaseType = "timescale";
-        var fieldsWithDeprecatedType = new ArrayList<String>();
+        if ("timescale".equals(tsType) || "timescale".equals(tsLatestType)) {
+            String deprecatedDatabaseType = "Timescale";
 
-        addFieldIfValueDeprecated(tsType, "ts", fieldsWithDeprecatedType, deprecatedDatabaseType);
-        addFieldIfValueDeprecated(tsLatestType, "ts_latest", fieldsWithDeprecatedType, deprecatedDatabaseType);
-
-        if (fieldsWithDeprecatedType.isEmpty()) {
-            return;
-        }
-
-        String deprecatedFieldNames = String.join(", ", fieldsWithDeprecatedType);
-
-        log.warn("WARNING: Starting with ThingsBoard 4.0, {} will no longer be supported as a database type for telemetry storage. " +
-                        "Please migrate to Cassandra or SQL-based storage solutions. This change will not impact the telemetry query.",
-                deprecatedDatabaseType);
-
-        notificationCenter.sendGeneralWebNotification(TenantId.SYS_TENANT_ID, new SystemAdministratorsFilter(),
-                DefaultNotifications.databaseTypeDeprecation.toTemplate(), new GeneralNotificationInfo(Map.of(
-                        "databaseType", deprecatedDatabaseType,
-                        "deprecatedFields", deprecatedFieldNames
-                )));
-    }
-
-    private void addFieldIfValueDeprecated(String fieldValue, String fieldName, List<String> fieldsWithDeprecatedType, String deprecatedDatabaseType) {
-        if (deprecatedDatabaseType.equals(fieldValue)) {
-            fieldsWithDeprecatedType.add(fieldName);
+            log.warn("WARNING: Starting with ThingsBoard 4.0, the database type {} will no longer be supported as a storage provider. " +
+                    "Please migrate to Cassandra or PostgreSQL.", deprecatedDatabaseType);
+            notificationCenter.sendGeneralWebNotification(TenantId.SYS_TENANT_ID, new SystemAdministratorsFilter(),
+                    DefaultNotifications.databaseTypeDeprecation.toTemplate(), new GeneralNotificationInfo(Map.of(
+                            "databaseType", deprecatedDatabaseType
+                    )));
         }
     }
 }
