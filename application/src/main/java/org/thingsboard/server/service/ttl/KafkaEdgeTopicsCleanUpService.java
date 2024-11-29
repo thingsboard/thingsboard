@@ -88,14 +88,13 @@ public class KafkaEdgeTopicsCleanUpService extends AbstractCleanUpService {
         TbKafkaAdmin kafkaAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdgeEventConfigs());
         Set<String> topics = kafkaAdmin.getAllTopics();
         if (topics == null || topics.isEmpty()) {
-            log.warn("No topics found in Kafka. Skipping cleanup.");
             return;
         }
 
         String edgeTopicPrefix = topicService.buildTopicName(EDGE_EVENT_TOPIC_NAME);
         List<String> matchingTopics = topics.stream().filter(topic -> topic.startsWith(edgeTopicPrefix)).toList();
         if (matchingTopics.isEmpty()) {
-            log.info("No matching topics found with prefix [{}]. Skipping cleanup.", edgeTopicPrefix);
+            log.debug("No matching topics found with prefix [{}]. Skipping cleanup.", edgeTopicPrefix);
             return;
         }
 
