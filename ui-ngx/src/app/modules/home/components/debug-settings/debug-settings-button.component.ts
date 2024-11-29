@@ -41,7 +41,6 @@ import {
   ControlValueAccessor,
   FormBuilder,
   NG_VALUE_ACCESSOR,
-  UntypedFormGroup,
 } from '@angular/forms';
 
 @Component({
@@ -66,13 +65,18 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
 
   @Input() debugLimitsConfiguration: string;
 
-  debugSettingsFormGroup: UntypedFormGroup;
+  debugSettingsFormGroup = this.fb.group({
+    failuresEnabled: [false],
+    allEnabled: [false],
+    allEnabledUntil: []
+  });
+
   disabled = false;
   isDebugAllActive$ = timer(0, SECOND).pipe(map(() => this.allEnabledUntil > new Date().getTime() || this.allEnabled), shareReplay(1));
 
   readonly maxDebugModeDurationMinutes = getCurrentAuthState(this.store).maxDebugModeDurationMinutes;
 
-  private onChange: (settings: DebugSettings) => void;
+  private propagateChange: (settings: DebugSettings) => void;
 
   constructor(private popoverService: TbPopoverService,
               private renderer: Renderer2,
@@ -81,14 +85,8 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
               private destroyRef: DestroyRef,
               private fb: FormBuilder,
   ) {
-    this.debugSettingsFormGroup = this.fb.group({
-      failuresEnabled: [false],
-      allEnabled: [false],
-      allEnabledUntil: []
-    });
-
     this.debugSettingsFormGroup.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(value => {
-      this.onChange(value);
+      this.propagateChange(value);
     })
   }
 
@@ -132,7 +130,7 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
   }
 
   registerOnChange(fn: (settings: DebugSettings) => void): void {
-    this.onChange = fn;
+    this.propagateChange = fn;
   }
 
   registerOnTouched(_: () => void): void {}
@@ -143,6 +141,10 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
-    this.debugSettingsFormGroup[isDisabled ? 'disable' : 'enable']({emitEvent: false});
+    if (isDisabled) {
+      this.debugSettingsFormGroup.disable({emitEvent: false});
+    } else {
+      this.debugSettingsFormGroup.enable({emitEvent: false});
+    }
   }
 }

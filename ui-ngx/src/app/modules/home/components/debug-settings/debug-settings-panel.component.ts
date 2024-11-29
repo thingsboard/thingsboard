@@ -15,6 +15,7 @@
 ///
 
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
@@ -33,7 +34,6 @@ import { shareReplay, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DebugSettings } from '@shared/models/entity.models';
 import { distinctUntilChanged, map, tap } from 'rxjs/operators';
-import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-debug-settings-panel',
@@ -49,8 +49,8 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 export class DebugSettingsPanelComponent extends PageComponent implements OnInit {
 
   @Input() popover: TbPopoverComponent<DebugSettingsPanelComponent>;
-  @Input() @coerceBoolean() failuresEnabled = false;
-  @Input() @coerceBoolean() allEnabled = false;
+  @Input({ transform: booleanAttribute }) failuresEnabled = false;
+  @Input({ transform: booleanAttribute }) allEnabled = false;
   @Input() allEnabledUntil = 0;
   @Input() maxDebugModeDurationMinutes: number;
   @Input() debugLimitsConfiguration: string;

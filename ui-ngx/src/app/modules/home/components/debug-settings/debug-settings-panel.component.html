@@ -38,16 +38,14 @@
           {{ 'debug-config.all-messages' | translate: { time: (isDebugAllActive$ | async) && !allEnabled ? (allEnabledUntil | durationLeft) : ('debug-config.min' | translate: { number:  maxDebugModeDurationMinutes }) } }}
         </div>
       </mat-slide-toggle>
-      @if ((isDebugAllActive$ | async) && !allEnabled) {
-        <button mat-icon-button
-                class="tb-mat-20"
-                matTooltip="{{ 'action.reset' | translate }}"
-                matTooltipPosition="above"
-                color="primary"
-                (click)="onReset()">
-          <mat-icon class="material-icons">refresh</mat-icon>
-        </button>
-      }
+      <button mat-icon-button *ngIf="(isDebugAllActive$ | async) && !allEnabled"
+              class="tb-mat-20"
+              matTooltip="{{ 'action.reset' | translate }}"
+              matTooltipPosition="above"
+              color="primary"
+              (click)="onReset()">
+        <mat-icon class="material-icons">refresh</mat-icon>
+      </button>
     </div>
   </div>
   <div class="flex justify-end">
