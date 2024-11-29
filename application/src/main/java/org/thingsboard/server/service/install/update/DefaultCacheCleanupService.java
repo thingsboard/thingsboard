@@ -42,8 +42,8 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
      * to discover which tables were changed
      * */
     @Override
-    public void clearCache(String from, String to) throws Exception {
-        log.info("Clearing cache to upgrade from version {} to {}", from, to);
+    public void clearCache() throws Exception {
+        log.info("Clearing cache to upgrade.");
         clearAll();
     }
 

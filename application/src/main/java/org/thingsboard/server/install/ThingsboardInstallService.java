@@ -107,10 +107,10 @@ public class ThingsboardInstallService {
                     // this list should include last version and can include previous versions without upgrade
                     String fromVersion = databaseSchemaVersionService.getDbSchemaVersion();
                     String toVersion = databaseSchemaVersionService.getPackageSchemaVersion();
-                    cacheCleanupService.clearCache(fromVersion, toVersion);
+                    cacheCleanupService.clearCache();
                     log.info("Upgrading ThingsBoard from version {} to {} ...", fromVersion, toVersion);
-                    databaseEntitiesUpgradeService.upgradeDatabase(fromVersion, toVersion);
-//                    dataUpdateService.updateData(fromVersion, toVersion);
+                    databaseEntitiesUpgradeService.upgradeDatabase();
+//                    dataUpdateService.updateData();
                     installScripts.updateResourcesUsage();
 
                     entityDatabaseSchemaService.createDatabaseSchema(false);
