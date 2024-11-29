@@ -376,13 +376,6 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
       }
     });
 
-    this.timewindowForm.get('hideAggregation').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((value: boolean) => {
-      if (value) {
-        this.timewindowForm.get('allowedAggTypes').patchValue([]);
-      }
-    });
     this.timewindowForm.get('hideAggInterval').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((value: boolean) => {
@@ -432,46 +425,55 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     const timewindowFormValue = this.timewindowForm.getRawValue();
     this.timewindow = mergeDeep(this.timewindow, timewindowFormValue);
 
-    if (timewindowFormValue.realtime.advancedParams.allowedLastIntervals?.length) {
+    const realtimeConfigurableLastIntervalsAvailable = !(timewindowFormValue.hideAggInterval &&
+      (timewindowFormValue.realtime.hideInterval || timewindowFormValue.realtime.hideLastInterval));
+    const realtimeConfigurableQuickIntervalsAvailable = !(timewindowFormValue.hideAggInterval &&
+      (timewindowFormValue.realtime.hideInterval || timewindowFormValue.realtime.hideQuickInterval));
+    const historyConfigurableLastIntervalsAvailable = !(timewindowFormValue.hideAggInterval &&
+      (timewindowFormValue.history.hideInterval || timewindowFormValue.history.hideLastInterval));
+    const historyConfigurableQuickIntervalsAvailable = !(timewindowFormValue.hideAggInterval &&
+      (timewindowFormValue.history.hideInterval || timewindowFormValue.history.hideQuickInterval));
+
+    if (realtimeConfigurableLastIntervalsAvailable && timewindowFormValue.realtime.advancedParams.allowedLastIntervals?.length) {
       this.timewindow.realtime.advancedParams.allowedLastIntervals = timewindowFormValue.realtime.advancedParams.allowedLastIntervals;
     } else {
       delete this.timewindow.realtime.advancedParams.allowedLastIntervals;
     }
-    if (timewindowFormValue.realtime.advancedParams.allowedQuickIntervals?.length) {
+    if (realtimeConfigurableQuickIntervalsAvailable && timewindowFormValue.realtime.advancedParams.allowedQuickIntervals?.length) {
       this.timewindow.realtime.advancedParams.allowedQuickIntervals = timewindowFormValue.realtime.advancedParams.allowedQuickIntervals;
     } else {
       delete this.timewindow.realtime.advancedParams.allowedQuickIntervals;
     }
-    if (isObject(timewindowFormValue.realtime.advancedParams.lastAggIntervalsConfig) &&
+    if (realtimeConfigurableLastIntervalsAvailable && isObject(timewindowFormValue.realtime.advancedParams.lastAggIntervalsConfig) &&
       Object.keys(timewindowFormValue.realtime.advancedParams.lastAggIntervalsConfig).length) {
       this.timewindow.realtime.advancedParams.lastAggIntervalsConfig = timewindowFormValue.realtime.advancedParams.lastAggIntervalsConfig;
     } else {
       delete this.timewindow.realtime.advancedParams.lastAggIntervalsConfig;
     }
-    if (isObject(timewindowFormValue.realtime.advancedParams.quickAggIntervalsConfig) &&
+    if (realtimeConfigurableQuickIntervalsAvailable && isObject(timewindowFormValue.realtime.advancedParams.quickAggIntervalsConfig) &&
       Object.keys(timewindowFormValue.realtime.advancedParams.quickAggIntervalsConfig).length) {
       this.timewindow.realtime.advancedParams.quickAggIntervalsConfig = timewindowFormValue.realtime.advancedParams.quickAggIntervalsConfig;
     } else {
       delete this.timewindow.realtime.advancedParams.quickAggIntervalsConfig;
     }
 
-    if (timewindowFormValue.history.advancedParams.allowedLastIntervals?.length) {
+    if (historyConfigurableLastIntervalsAvailable && timewindowFormValue.history.advancedParams.allowedLastIntervals?.length) {
       this.timewindow.history.advancedParams.allowedLastIntervals = timewindowFormValue.history.advancedParams.allowedLastIntervals;
     } else {
       delete this.timewindow.history.advancedParams.allowedLastIntervals;
     }
-    if (timewindowFormValue.history.advancedParams.allowedQuickIntervals?.length) {
+    if (historyConfigurableQuickIntervalsAvailable && timewindowFormValue.history.advancedParams.allowedQuickIntervals?.length) {
       this.timewindow.history.advancedParams.allowedQuickIntervals = timewindowFormValue.history.advancedParams.allowedQuickIntervals;
     } else {
       delete this.timewindow.history.advancedParams.allowedQuickIntervals;
     }
-    if (isObject(timewindowFormValue.history.advancedParams.lastAggIntervalsConfig) &&
+    if (historyConfigurableLastIntervalsAvailable && isObject(timewindowFormValue.history.advancedParams.lastAggIntervalsConfig) &&
       Object.keys(timewindowFormValue.history.advancedParams.lastAggIntervalsConfig).length) {
       this.timewindow.history.advancedParams.lastAggIntervalsConfig = timewindowFormValue.history.advancedParams.lastAggIntervalsConfig;
     } else {
       delete this.timewindow.history.advancedParams.lastAggIntervalsConfig;
     }
-    if (isObject(timewindowFormValue.history.advancedParams.quickAggIntervalsConfig) &&
+    if (historyConfigurableQuickIntervalsAvailable && isObject(timewindowFormValue.history.advancedParams.quickAggIntervalsConfig) &&
       Object.keys(timewindowFormValue.history.advancedParams.quickAggIntervalsConfig).length) {
       this.timewindow.history.advancedParams.quickAggIntervalsConfig = timewindowFormValue.history.advancedParams.quickAggIntervalsConfig;
     } else {
@@ -485,7 +487,7 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
       delete this.timewindow.history.advancedParams;
     }
 
-    if (timewindowFormValue.allowedAggTypes?.length) {
+    if (timewindowFormValue.allowedAggTypes?.length && !timewindowFormValue.hideAggregation) {
       this.timewindow.allowedAggTypes = timewindowFormValue.allowedAggTypes;
     } else {
       delete this.timewindow.allowedAggTypes;
