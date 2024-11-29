@@ -20,4 +20,5 @@ import { EntityAlias } from '@shared/models/alias.models';
 
 export interface EntityAliasSelectCallbacks {
   createEntityAlias: (alias: string, allowedEntityTypes: Array<EntityType>) => Observable<EntityAlias>;
+  editEntityAlias: (alias: EntityAlias, allowedEntityTypes: Array<EntityType>) => Observable<EntityAlias>;
 }
