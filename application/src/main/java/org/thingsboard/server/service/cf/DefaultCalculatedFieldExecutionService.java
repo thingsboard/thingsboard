@@ -36,7 +36,6 @@ import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
@@ -81,7 +80,6 @@ import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SimpleCalculatedFieldState;
 import org.thingsboard.server.service.partition.AbstractPartitionBasedService;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,7 +112,6 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     private ListeningExecutorService calculatedFieldCallbackExecutor;
 
     private final ConcurrentMap<CalculatedFieldId, CalculatedField> calculatedFields = new ConcurrentHashMap<>();
-    private final ConcurrentMap<CalculatedFieldId, List<CalculatedFieldLink>> calculatedFieldLinks = new ConcurrentHashMap<>();
     private final ConcurrentMap<CalculatedFieldId, CalculatedFieldCtx> calculatedFieldsCtx = new ConcurrentHashMap<>();
     private final ConcurrentMap<CalculatedFieldEntityCtxId, CalculatedFieldEntityCtx> states = new ConcurrentHashMap<>();
 
@@ -131,7 +128,6 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
                 Math.max(4, Runtime.getRuntime().availableProcessors()), "calculated-field"));
         calculatedFieldCallbackExecutor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(
                 Math.max(4, Runtime.getRuntime().availableProcessors()), "calculated-field-callback"));
-        scheduledExecutor.submit(this::fetchCalculatedFields);
     }
 
     @PreDestroy
@@ -176,7 +172,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
                 onCalculatedFieldDelete(calculatedFieldId, callback);
                 callback.onSuccess();
             }
-            CalculatedField cf = calculatedFieldService.findById(tenantId, calculatedFieldId);
+            CalculatedField cf = getOfFetchFromDb(tenantId, calculatedFieldId);
             if (proto.getUpdated()) {
                 log.info("Executing onCalculatedFieldUpdate, calculatedFieldId=[{}]", calculatedFieldId);
                 boolean shouldReinit = onCalculatedFieldUpdate(cf, callback);
@@ -184,11 +180,8 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
                     return;
                 }
             }
-            List<CalculatedFieldLink> links = calculatedFieldService.findAllCalculatedFieldLinksById(tenantId, calculatedFieldId);
             if (cf != null) {
                 EntityId entityId = cf.getEntityId();
-                calculatedFields.put(calculatedFieldId, cf);
-                calculatedFieldLinks.put(calculatedFieldId, links);
                 CalculatedFieldCtx calculatedFieldCtx = new CalculatedFieldCtx(cf, tbelInvokeService);
                 calculatedFieldsCtx.put(calculatedFieldId, calculatedFieldCtx);
                 switch (entityId.getEntityType()) {
@@ -229,7 +222,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         try {
             log.info("Received telemetry update msg: tenantId=[{}], calculatedFieldId=[{}]", tenantId, calculatedFieldId);
             CalculatedFieldCtx calculatedFieldCtx = calculatedFieldsCtx.computeIfAbsent(calculatedFieldId, id -> {
-                CalculatedField calculatedField = calculatedFields.computeIfAbsent(id, cfId -> calculatedFieldService.findById(tenantId, id));
+                CalculatedField calculatedField = getOfFetchFromDb(tenantId, id);
                 return new CalculatedFieldCtx(calculatedField, tbelInvokeService);
             });
             Map<String, ArgumentEntry> argumentValues = updatedTelemetry.entrySet().stream()
@@ -300,14 +293,14 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         }
     }
 
-    private boolean onCalculatedFieldUpdate(CalculatedField newCalculatedField, TbCallback callback) {
-        CalculatedField oldCalculatedField = calculatedFields.get(newCalculatedField.getId());
+    private boolean onCalculatedFieldUpdate(CalculatedField updatedCalculatedField, TbCallback callback) {
+        CalculatedField oldCalculatedField = getOfFetchFromDb(updatedCalculatedField.getTenantId(), updatedCalculatedField.getId());
         boolean shouldReinit = true;
-        if (hasSignificantChanges(oldCalculatedField, newCalculatedField)) {
-            onCalculatedFieldDelete(newCalculatedField.getId(), callback);
+        if (hasSignificantChanges(oldCalculatedField, updatedCalculatedField)) {
+            onCalculatedFieldDelete(updatedCalculatedField.getId(), callback);
         } else {
-            calculatedFields.put(newCalculatedField.getId(), newCalculatedField);
-            calculatedFieldsCtx.put(newCalculatedField.getId(), new CalculatedFieldCtx(newCalculatedField, tbelInvokeService));
+            calculatedFields.put(updatedCalculatedField.getId(), updatedCalculatedField);
+            calculatedFieldsCtx.put(updatedCalculatedField.getId(), new CalculatedFieldCtx(updatedCalculatedField, tbelInvokeService));
             callback.onSuccess();
             shouldReinit = false;
         }
@@ -316,12 +309,11 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
 
     private void onCalculatedFieldDelete(CalculatedFieldId calculatedFieldId, TbCallback callback) {
         try {
-            calculatedFieldLinks.remove(calculatedFieldId);
             calculatedFields.remove(calculatedFieldId);
             calculatedFieldsCtx.remove(calculatedFieldId);
-            states.keySet().removeIf(ctxId -> calculatedFields.keySet().stream().noneMatch(id -> ctxId.cfId().equals(id.getId())));
+            states.keySet().removeIf(ctxId -> ctxId.cfId().equals(calculatedFieldId.getId()));
             List<String> statesToRemove = states.keySet().stream()
-                    .filter(ctxId -> !calculatedFields.containsKey(new CalculatedFieldId(ctxId.cfId())))
+                    .filter(ctxId -> ctxId.cfId().equals(calculatedFieldId.getId()))
                     .map(JacksonUtil::writeValueAsString)
                     .toList();
             rocksDBService.deleteAll(statesToRemove);
@@ -329,6 +321,10 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             log.trace("Failed to delete calculated field: [{}]", calculatedFieldId, e);
             callback.onFailure(e);
         }
+    }
+
+    private CalculatedField getOfFetchFromDb(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
+        return calculatedFields.computeIfAbsent(calculatedFieldId, cfId -> calculatedFieldService.findById(tenantId, calculatedFieldId));
     }
 
     private boolean hasSignificantChanges(CalculatedField oldCalculatedField, CalculatedField newCalculatedField) {
@@ -344,15 +340,6 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         boolean expressionChanged = !oldConfig.getExpression().equals(newConfig.getExpression());
 
         return entityIdChanged || typeChanged || argumentsChanged || outputTypeChanged || expressionChanged;
-    }
-
-    private void fetchCalculatedFields() {
-        PageDataIterable<CalculatedField> cfs = new PageDataIterable<>(calculatedFieldService::findAllCalculatedFields, initFetchPackSize);
-        cfs.forEach(cf -> calculatedFields.putIfAbsent(cf.getId(), cf));
-        PageDataIterable<CalculatedFieldLink> cfls = new PageDataIterable<>(calculatedFieldService::findAllCalculatedFieldLinks, initFetchPackSize);
-        cfls.forEach(link -> calculatedFieldLinks.computeIfAbsent(link.getCalculatedFieldId(), id -> new ArrayList<>()).add(link));
-        rocksDBService.getAll().forEach((ctxId, ctx) -> states.put(JacksonUtil.fromString(ctxId, CalculatedFieldEntityCtxId.class), JacksonUtil.fromString(ctx, CalculatedFieldEntityCtx.class)));
-        states.keySet().removeIf(ctxId -> calculatedFields.keySet().stream().noneMatch(id -> ctxId.cfId().equals(id.getId())));
     }
 
     private void initializeStateForEntity(CalculatedFieldCtx calculatedFieldCtx, EntityId entityId, TbCallback callback) {
@@ -433,7 +420,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
 
     private void updateOrInitializeState(CalculatedFieldCtx calculatedFieldCtx, EntityId entityId, Map<String, ArgumentEntry> argumentValues) {
         CalculatedFieldEntityCtxId entityCtxId = new CalculatedFieldEntityCtxId(calculatedFieldCtx.getCfId().getId(), entityId.getId());
-        CalculatedFieldEntityCtx calculatedFieldEntityCtx = states.computeIfAbsent(entityCtxId, ctx -> new CalculatedFieldEntityCtx(entityCtxId, null));
+        CalculatedFieldEntityCtx calculatedFieldEntityCtx = states.computeIfAbsent(entityCtxId, this::fetchCalculatedFieldEntityState);
 
         CalculatedFieldState state = calculatedFieldEntityCtx.getState();
 
@@ -460,6 +447,14 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             }
         }, MoreExecutors.directExecutor());
 
+    }
+
+    private CalculatedFieldEntityCtx fetchCalculatedFieldEntityState(CalculatedFieldEntityCtxId entityCtxId) {
+        String stateStr = rocksDBService.get(JacksonUtil.writeValueAsString(entityCtxId));
+        if (stateStr == null) {
+            return new CalculatedFieldEntityCtx(entityCtxId, null);
+        }
+        return JacksonUtil.fromString(rocksDBService.get(JacksonUtil.writeValueAsString(entityCtxId)), CalculatedFieldEntityCtx.class);
     }
 
     private void pushMsgToRuleEngine(TenantId tenantId, EntityId originatorId, CalculatedFieldResult calculatedFieldResult) {
