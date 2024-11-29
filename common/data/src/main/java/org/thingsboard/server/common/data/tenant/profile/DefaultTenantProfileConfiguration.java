@@ -203,8 +203,4 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
         return maxRuleNodeExecutionsPerMessage;
     }
 
-    @Override
-    public int getMaxDebugModeDurationMinutes() {
-        return maxDebugModeDurationMinutes;
-    }
 }
