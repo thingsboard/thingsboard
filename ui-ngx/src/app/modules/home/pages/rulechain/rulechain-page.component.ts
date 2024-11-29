@@ -1009,7 +1009,6 @@ export class RuleChainPageComponent extends PageComponent
             name: outputEdge.label,
             configuration: {},
             additionalInfo: {},
-            debugSettings: {},
             singletonMode: false
           };
           outputNode.additionalInfo.layoutX = Math.round(destNode.x);
@@ -1055,7 +1054,6 @@ export class RuleChainPageComponent extends PageComponent
             configuration: {
               ruleChainId: ruleChain.id.id
             },
-            debugSettings: {},
             singletonMode: false,
             x: Math.round(ruleChainNodeX),
             y: Math.round(ruleChainNodeY),
