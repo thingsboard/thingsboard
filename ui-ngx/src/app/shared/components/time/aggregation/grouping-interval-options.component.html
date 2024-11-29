@@ -16,7 +16,7 @@
 
 -->
 <section class="flex flex-1 flex-row gap-2" [formGroup]="timeintervalFormGroup">
-  <mat-form-field class="flex flex-1" [class]="{'tb-inline-field': appearance === 'outline'}"
+  <mat-form-field class="agg-interval flex flex-1" [class]="{'tb-inline-field': appearance === 'outline'}"
                   [subscriptSizing]="subscriptSizing" [appearance]="appearance">
     <mat-select formControlName="aggIntervals" multiple
                 placeholder="{{ 'timewindow.all' | translate }}">

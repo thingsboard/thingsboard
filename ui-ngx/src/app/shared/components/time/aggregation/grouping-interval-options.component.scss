@@ -16,6 +16,9 @@
 @import '../../../../../scss/constants';
 
 :host {
+  .agg-interval {
+    max-width: 180px;
+  }
 
   @media #{$mat-xs} {
     min-width: 0;

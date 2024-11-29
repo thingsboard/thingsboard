@@ -102,7 +102,7 @@ export class IntervalOptionsConfigPanelComponent implements OnInit {
       const intervalConfig: TimewindowAggIntervalOptions = this.aggIntervalsConfig?.hasOwnProperty(interval.value)
         ? this.aggIntervalsConfig[interval.value]
         : null;
-      const intervalEnabled = this.allowedIntervals?.length ? this.allowedIntervals.includes(interval.value) : false;
+      const intervalEnabled = this.allowedIntervals?.length ? this.allowedIntervals.includes(interval.value) : true;
       const intervalControl = this.fb.group({
         name: [this.translate.instant(interval.name, interval.translateParams)],
         value: [interval.value],
