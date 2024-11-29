@@ -17,6 +17,7 @@ package org.thingsboard.server.service.update;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.NotificationCenter;
@@ -24,6 +25,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.info.GeneralNotificationInfo;
 import org.thingsboard.server.common.data.notification.targets.platform.SystemAdministratorsFilter;
 import org.thingsboard.server.dao.notification.DefaultNotifications;
+import org.thingsboard.server.dao.notification.DefaultNotifications.DefaultNotification;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
 import java.util.Map;
@@ -64,22 +66,25 @@ public class DeprecationService {
 
         log.warn("WARNING: Starting with ThingsBoard 4.0, {} will no longer be supported as a message queue for microservices. " +
                 "Please migrate to Apache Kafka. This change will not impact any rule nodes", queueTypeName);
-        notificationCenter.sendGeneralWebNotification(TenantId.SYS_TENANT_ID, new SystemAdministratorsFilter(),
-                DefaultNotifications.queueTypeDeprecation.toTemplate(), new GeneralNotificationInfo(Map.of(
-                        "queueType", queueTypeName
-                )));
+        sendNotification(DefaultNotifications.queueTypeDeprecation, Map.of(
+                "queueType", queueTypeName
+        ));
     }
 
     private void checkDatabaseTypeDeprecation() {
-        if ("timescale".equals(tsType) || "timescale".equals(tsLatestType)) {
-            String deprecatedDatabaseType = "Timescale";
-
-            log.warn("WARNING: Starting with ThingsBoard 4.0, the database type {} will no longer be supported as a storage provider. " +
+        String deprecatedDatabaseType = "Timescale";
+        if (StringUtils.equalsAnyIgnoreCase(deprecatedDatabaseType, tsType, tsLatestType)) {
+            log.warn("WARNING: Starting with ThingsBoard 4.0, {} will no longer be supported as a storage provider. " +
                     "Please migrate to Cassandra or PostgreSQL.", deprecatedDatabaseType);
-            notificationCenter.sendGeneralWebNotification(TenantId.SYS_TENANT_ID, new SystemAdministratorsFilter(),
-                    DefaultNotifications.databaseTypeDeprecation.toTemplate(), new GeneralNotificationInfo(Map.of(
-                            "databaseType", deprecatedDatabaseType
-                    )));
+            sendNotification(DefaultNotifications.databaseTypeDeprecation, Map.of(
+                    "databaseType", deprecatedDatabaseType
+            ));
         }
     }
+
+    private void sendNotification(DefaultNotification notification, Map<String, String> info) {
+        notificationCenter.sendGeneralWebNotification(TenantId.SYS_TENANT_ID, new SystemAdministratorsFilter(),
+                notification.toTemplate(), new GeneralNotificationInfo(info));
+    }
+
 }
