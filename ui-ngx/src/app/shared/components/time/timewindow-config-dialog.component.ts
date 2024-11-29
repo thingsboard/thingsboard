@@ -26,7 +26,8 @@ import {
   realtimeAllowedAggIntervals,
   RealtimeWindowType,
   realtimeWindowTypeTranslations,
-  Timewindow, TimewindowAggIntervalsConfig,
+  Timewindow,
+  TimewindowAggIntervalsConfig,
   TimewindowType,
   updateFormValuesOnTimewindowTypeChange
 } from '@shared/models/time/time.models';
@@ -234,62 +235,65 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
       hideTimezone: [ isDefinedAndNotNull(this.timewindow.hideTimezone)
                       ? this.timewindow.hideTimezone : false ]
     });
-
-    this.timewindowForm.get('realtime.timewindowMs').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((timewindowMs: number) => {
-      const lastAggIntervalsConfig:TimewindowAggIntervalsConfig =
-        this.timewindowForm.get('realtime.advancedParams.lastAggIntervalsConfig').value;
-      if (lastAggIntervalsConfig?.hasOwnProperty(timewindowMs) &&
-        lastAggIntervalsConfig[timewindowMs].defaultAggInterval) {
-        this.timewindowForm.get('realtime.interval').patchValue(
-          lastAggIntervalsConfig[timewindowMs].defaultAggInterval, {emitEvent: false}
-        );
-      }
-    });
-    this.timewindowForm.get('realtime.quickInterval').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((quickInterval: number) => {
-      const quickAggIntervalsConfig:TimewindowAggIntervalsConfig =
-        this.timewindowForm.get('realtime.advancedParams.quickAggIntervalsConfig').value;
-      if (quickAggIntervalsConfig?.hasOwnProperty(quickInterval) &&
-        quickAggIntervalsConfig[quickInterval].defaultAggInterval) {
-        this.timewindowForm.get('realtime.interval').patchValue(
-          quickAggIntervalsConfig[quickInterval].defaultAggInterval, {emitEvent: false}
-        );
-      }
-    });
-    this.timewindowForm.get('history.timewindowMs').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((timewindowMs: number) => {
-      const lastAggIntervalsConfig:TimewindowAggIntervalsConfig =
-        this.timewindowForm.get('history.advancedParams.lastAggIntervalsConfig').value;
-      if (lastAggIntervalsConfig?.hasOwnProperty(timewindowMs) &&
-        lastAggIntervalsConfig[timewindowMs].defaultAggInterval) {
-        this.timewindowForm.get('history.interval').patchValue(
-          lastAggIntervalsConfig[timewindowMs].defaultAggInterval, {emitEvent: false}
-        );
-      }
-    });
-    this.timewindowForm.get('history.quickInterval').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((quickInterval: number) => {
-      const quickAggIntervalsConfig:TimewindowAggIntervalsConfig =
-        this.timewindowForm.get('history.advancedParams.quickAggIntervalsConfig').value;
-      if (quickAggIntervalsConfig?.hasOwnProperty(quickInterval) &&
-        quickAggIntervalsConfig[quickInterval].defaultAggInterval) {
-        this.timewindowForm.get('history.interval').patchValue(
-          quickAggIntervalsConfig[quickInterval].defaultAggInterval, {emitEvent: false}
-        );
-      }
-    });
-
     this.updateValidators(this.timewindowForm.get('aggregation.type').value);
-    this.timewindowForm.get('aggregation.type').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((aggregationType: AggregationType) => {
-      this.updateValidators(aggregationType);
-    });
+
+    if (this.aggregation) {
+      this.timewindowForm.get('realtime.timewindowMs').valueChanges.pipe(
+        takeUntil(this.destroy$)
+      ).subscribe((timewindowMs: number) => {
+        const lastAggIntervalsConfig: TimewindowAggIntervalsConfig =
+          this.timewindowForm.get('realtime.advancedParams.lastAggIntervalsConfig').value;
+        if (lastAggIntervalsConfig?.hasOwnProperty(timewindowMs) &&
+          lastAggIntervalsConfig[timewindowMs].defaultAggInterval) {
+          this.timewindowForm.get('realtime.interval').patchValue(
+            lastAggIntervalsConfig[timewindowMs].defaultAggInterval, {emitEvent: false}
+          );
+        }
+      });
+      this.timewindowForm.get('realtime.quickInterval').valueChanges.pipe(
+        takeUntil(this.destroy$)
+      ).subscribe((quickInterval: number) => {
+        const quickAggIntervalsConfig: TimewindowAggIntervalsConfig =
+          this.timewindowForm.get('realtime.advancedParams.quickAggIntervalsConfig').value;
+        if (quickAggIntervalsConfig?.hasOwnProperty(quickInterval) &&
+          quickAggIntervalsConfig[quickInterval].defaultAggInterval) {
+          this.timewindowForm.get('realtime.interval').patchValue(
+            quickAggIntervalsConfig[quickInterval].defaultAggInterval, {emitEvent: false}
+          );
+        }
+      });
+      this.timewindowForm.get('history.timewindowMs').valueChanges.pipe(
+        takeUntil(this.destroy$)
+      ).subscribe((timewindowMs: number) => {
+        const lastAggIntervalsConfig: TimewindowAggIntervalsConfig =
+          this.timewindowForm.get('history.advancedParams.lastAggIntervalsConfig').value;
+        if (lastAggIntervalsConfig?.hasOwnProperty(timewindowMs) &&
+          lastAggIntervalsConfig[timewindowMs].defaultAggInterval) {
+          this.timewindowForm.get('history.interval').patchValue(
+            lastAggIntervalsConfig[timewindowMs].defaultAggInterval, {emitEvent: false}
+          );
+        }
+      });
+      this.timewindowForm.get('history.quickInterval').valueChanges.pipe(
+        takeUntil(this.destroy$)
+      ).subscribe((quickInterval: number) => {
+        const quickAggIntervalsConfig: TimewindowAggIntervalsConfig =
+          this.timewindowForm.get('history.advancedParams.quickAggIntervalsConfig').value;
+        if (quickAggIntervalsConfig?.hasOwnProperty(quickInterval) &&
+          quickAggIntervalsConfig[quickInterval].defaultAggInterval) {
+          this.timewindowForm.get('history.interval').patchValue(
+            quickAggIntervalsConfig[quickInterval].defaultAggInterval, {emitEvent: false}
+          );
+        }
+      });
+
+      this.timewindowForm.get('aggregation.type').valueChanges.pipe(
+        takeUntil(this.destroy$)
+      ).subscribe((aggregationType: AggregationType) => {
+        this.updateValidators(aggregationType);
+      });
+    }
+
     this.timewindowForm.get('selectedTab').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((selectedTab: TimewindowType) => {
@@ -414,13 +418,9 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     const timewindowFormValue = this.timewindowForm.getRawValue();
     const realtimeDisableCustomInterval = timewindowFormValue.realtime.disableCustomInterval;
     const historyDisableCustomInterval = timewindowFormValue.history.disableCustomInterval;
-    const realtimeAllowedLastIntervals = timewindowFormValue.realtime.advancedParams.allowedLastIntervals;
-    const realtimeAllowedQuickIntervals = timewindowFormValue.realtime.advancedParams.allowedQuickIntervals;
-    const historyAllowedLastIntervals = timewindowFormValue.history.advancedParams.allowedLastIntervals;
-    const historyAllowedQuickIntervals = timewindowFormValue.history.advancedParams.allowedQuickIntervals;
     updateFormValuesOnTimewindowTypeChange(selectedTab, this.quickIntervalOnly, this.timewindowForm,
       realtimeDisableCustomInterval, historyDisableCustomInterval,
-      realtimeAllowedLastIntervals, realtimeAllowedQuickIntervals, historyAllowedLastIntervals, historyAllowedQuickIntervals);
+      timewindowFormValue.realtime.advancedParams, timewindowFormValue.history.advancedParams);
     this.timewindowForm.patchValue({
       hideAggregation: timewindowFormValue.hideAggregation,
       hideAggInterval: timewindowFormValue.hideAggInterval,
@@ -623,6 +623,7 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
             if (result) {
               this.timewindowForm.get(allowedIntervalsControlName).patchValue(result.allowedIntervals);
               this.timewindowForm.get(aggIntervalsConfigControlName).patchValue(result.aggIntervalsConfig);
+              this.timewindowForm.markAsDirty();
             }
           }
         },

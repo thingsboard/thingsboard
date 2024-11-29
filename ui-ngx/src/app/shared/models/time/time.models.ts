@@ -528,8 +528,8 @@ export const timewindowTypeChanged = (newTimewindow: Timewindow, oldTimewindow: 
 export const updateFormValuesOnTimewindowTypeChange = (selectedTab: TimewindowType,
                                                        quickIntervalOnly: boolean, timewindowForm: FormGroup,
                                                        realtimeDisableCustomInterval: boolean, historyDisableCustomInterval: boolean,
-                                                       realtimeAllowedLastIntervals?: Array<Interval>, realtimeAllowedQuickIntervals?: Array<QuickTimeInterval>,
-                                                       historyAllowedLastIntervals?: Array<Interval>, historyAllowedQuickIntervals?: Array<QuickTimeInterval>) => {
+                                                       realtimeAdvancedParams?: TimewindowAdvancedParams,
+                                                       historyAdvancedParams?: TimewindowAdvancedParams) => {
   const timewindowFormValue = timewindowForm.getRawValue();
   if (selectedTab === TimewindowType.REALTIME) {
     if (timewindowFormValue.history.historyType !== HistoryWindowType.FIXED
@@ -538,25 +538,37 @@ export const updateFormValuesOnTimewindowTypeChange = (selectedTab: TimewindowTy
         timewindowForm.get('realtime.realtimeType').patchValue(RealtimeWindowType[HistoryWindowType[timewindowFormValue.history.historyType]]);
       }
       if (!realtimeDisableCustomInterval ||
-          !realtimeAllowedLastIntervals?.length || realtimeAllowedLastIntervals.includes(timewindowFormValue.history.timewindowMs)) {
+          !realtimeAdvancedParams?.allowedLastIntervals?.length || realtimeAdvancedParams.allowedLastIntervals.includes(timewindowFormValue.history.timewindowMs)) {
         timewindowForm.get('realtime.timewindowMs').patchValue(timewindowFormValue.history.timewindowMs);
       }
-      if (realtimeAllowedQuickIntervals?.includes(timewindowFormValue.history.quickInterval) ||
-        (!realtimeAllowedQuickIntervals?.length && timewindowFormValue.history.quickInterval.startsWith('CURRENT'))) {
+      if (realtimeAdvancedParams?.allowedQuickIntervals?.includes(timewindowFormValue.history.quickInterval) ||
+        (!realtimeAdvancedParams?.allowedQuickIntervals?.length && timewindowFormValue.history.quickInterval.startsWith('CURRENT'))) {
         timewindowForm.get('realtime.quickInterval').patchValue(timewindowFormValue.history.quickInterval);
       }
-      setTimeout(() => timewindowForm.get('realtime.interval').patchValue(timewindowFormValue.history.interval));
+      const defaultAggInterval = realtimeDefaultAggInterval(timewindowForm.getRawValue(), realtimeAdvancedParams);
+      const allowedAggIntervals = realtimeAllowedAggIntervals(timewindowForm.getRawValue(), realtimeAdvancedParams);
+      if (defaultAggInterval || !allowedAggIntervals.length || allowedAggIntervals.includes(timewindowFormValue.history.interval)) {
+        setTimeout(() => timewindowForm.get('realtime.interval').patchValue(
+          defaultAggInterval ?? timewindowFormValue.history.interval
+        ));
+      }
     }
   } else {
     timewindowForm.get('history.historyType').patchValue(HistoryWindowType[RealtimeWindowType[timewindowFormValue.realtime.realtimeType]]);
     if (!historyDisableCustomInterval ||
-        !historyAllowedLastIntervals?.length || historyAllowedLastIntervals?.includes(timewindowFormValue.realtime.timewindowMs)) {
+        !historyAdvancedParams?.allowedLastIntervals?.length || historyAdvancedParams.allowedLastIntervals?.includes(timewindowFormValue.realtime.timewindowMs)) {
       timewindowForm.get('history.timewindowMs').patchValue(timewindowFormValue.realtime.timewindowMs);
     }
-    if (!historyAllowedQuickIntervals?.length || historyAllowedQuickIntervals?.includes(timewindowFormValue.realtime.quickInterval)) {
+    if (!historyAdvancedParams?.allowedQuickIntervals?.length || historyAdvancedParams.allowedQuickIntervals?.includes(timewindowFormValue.realtime.quickInterval)) {
       timewindowForm.get('history.quickInterval').patchValue(timewindowFormValue.realtime.quickInterval);
     }
-    setTimeout(() => timewindowForm.get('history.interval').patchValue(timewindowFormValue.realtime.interval));
+    const defaultAggInterval = historyDefaultAggInterval(timewindowForm.getRawValue(), historyAdvancedParams);
+    const allowedAggIntervals = historyAllowedAggIntervals(timewindowForm.getRawValue(), historyAdvancedParams);
+    if (defaultAggInterval || !allowedAggIntervals.length || allowedAggIntervals.includes(timewindowFormValue.realtime.interval)) {
+      setTimeout(() => timewindowForm.get('history.interval').patchValue(
+        defaultAggInterval ?? timewindowFormValue.realtime.interval
+      ));
+    }
   }
   timewindowForm.patchValue({
     aggregation: {
@@ -617,6 +629,34 @@ export const historyAllowedAggIntervals = (timewindow: Timewindow,
     return advancedParams.quickAggIntervalsConfig[timewindow.history.quickInterval].aggIntervals;
   }
   return [];
+};
+
+export const realtimeDefaultAggInterval = (timewindow: Timewindow,
+                                            advancedParams: TimewindowAdvancedParams): Interval => {
+  if (timewindow.realtime.realtimeType === RealtimeWindowType.LAST_INTERVAL &&
+    advancedParams?.lastAggIntervalsConfig?.hasOwnProperty(timewindow.realtime.timewindowMs) &&
+    advancedParams.lastAggIntervalsConfig[timewindow.realtime.timewindowMs].defaultAggInterval) {
+    return advancedParams.lastAggIntervalsConfig[timewindow.realtime.timewindowMs].defaultAggInterval;
+  } else if (timewindow.realtime.realtimeType === RealtimeWindowType.INTERVAL &&
+    advancedParams?.quickAggIntervalsConfig?.hasOwnProperty(timewindow.realtime.quickInterval) &&
+    advancedParams.quickAggIntervalsConfig[timewindow.realtime.quickInterval].defaultAggInterval) {
+    return advancedParams.quickAggIntervalsConfig[timewindow.realtime.quickInterval].defaultAggInterval;
+  }
+  return null;
+};
+
+export const historyDefaultAggInterval = (timewindow: Timewindow,
+                                            advancedParams: TimewindowAdvancedParams): Interval => {
+  if (timewindow.history.historyType === HistoryWindowType.LAST_INTERVAL &&
+    advancedParams?.lastAggIntervalsConfig?.hasOwnProperty(timewindow.history.timewindowMs) &&
+    advancedParams.lastAggIntervalsConfig[timewindow.history.timewindowMs].defaultAggInterval) {
+    return advancedParams.lastAggIntervalsConfig[timewindow.history.timewindowMs].defaultAggInterval;
+  } else if (timewindow.history.historyType === HistoryWindowType.INTERVAL &&
+    advancedParams?.quickAggIntervalsConfig?.hasOwnProperty(timewindow.history.quickInterval) &&
+    advancedParams.quickAggIntervalsConfig[timewindow.history.quickInterval].defaultAggInterval) {
+    return advancedParams.quickAggIntervalsConfig[timewindow.history.quickInterval].defaultAggInterval;
+  }
+  return null;
 };
 
 export const getTimezone = (tz: string): moment_.Moment => moment.tz(tz);
