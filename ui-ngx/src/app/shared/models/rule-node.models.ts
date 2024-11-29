@@ -27,13 +27,13 @@ import { AppState } from '@core/core.state';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { RuleChainType } from '@shared/models/rule-chain.models';
 import { DebugRuleNodeEventBody } from '@shared/models/event.models';
-import { HasDebugConfig } from '@shared/models/entity.models';
+import { HasDebugSettings } from '@shared/models/entity.models';
 
 export interface RuleNodeConfiguration {
   [key: string]: any;
 }
 
-export interface RuleNode extends BaseData<RuleNodeId>, HasDebugConfig {
+export interface RuleNode extends BaseData<RuleNodeId>, HasDebugSettings {
   ruleChainId?: RuleChainId;
   type: string;
   name: string;
@@ -331,7 +331,7 @@ export interface RuleNodeComponentDescriptor extends ComponentDescriptor {
   configurationDescriptor?: RuleNodeConfigurationDescriptor;
 }
 
-export interface FcRuleNodeType extends FcNode, HasDebugConfig {
+export interface FcRuleNodeType extends FcNode, HasDebugSettings {
   component?: RuleNodeComponentDescriptor;
   singletonMode?: boolean;
   queueName?: string;

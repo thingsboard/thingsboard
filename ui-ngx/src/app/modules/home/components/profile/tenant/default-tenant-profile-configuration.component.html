@@ -76,22 +76,6 @@
         <mat-hint></mat-hint>
       </mat-form-field>
     </div>
-    <div class="fields-element flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
-      <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
-        <mat-label translate>tenant-profile.maximum-debug-duration-min</mat-label>
-        <input matInput required min="0" step="1"
-               formControlName="maxDebugModeDurationMinutes"
-               type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDebugModeDurationMinutes').hasError('required')">
-          {{ 'tenant-profile.maximum-debug-duration-min-range' | translate }}
-        </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDebugModeDurationMinutes').hasError('min')">
-          {{ 'tenant-profile.maximum-debug-duration-min-required' | translate }}
-        </mat-error>
-        <mat-hint></mat-hint>
-      </mat-form-field>
-      <div class="flex-1"></div>
-    </div>
     <mat-expansion-panel class="configuration-panel">
       <mat-expansion-panel-header>
         <mat-panel-description class="flex items-stretch justify-end" translate>
@@ -367,6 +351,25 @@
         </mat-error>
         <mat-hint></mat-hint>
       </mat-form-field>
+    </div>
+  </fieldset>
+
+  <fieldset class="fields-group">
+    <legend class="group-title">
+      {{ 'tenant-profile.debug' | translate }} <span translate>tenant-profile.unlimited</span>
+    </legend>
+    <div class="fields-element flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+      <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
+        <mat-label translate>tenant-profile.maximum-debug-duration-min</mat-label>
+        <input matInput min="0" step="1"
+               formControlName="maxDebugModeDurationMinutes"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDebugModeDurationMinutes').hasError('min')">
+          {{ 'tenant-profile.maximum-debug-duration-min-range' | translate }}
+        </mat-error>
+        <mat-hint></mat-hint>
+      </mat-form-field>
+      <div class="flex-1"></div>
     </div>
   </fieldset>
 

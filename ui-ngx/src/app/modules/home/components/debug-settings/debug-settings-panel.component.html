@@ -19,10 +19,11 @@
   <div class="tb-form-panel-title" translate>debug-config.label</div>
   <div class="hint-container">
     <div class="tb-form-hint tb-primary-fill tb-flex center">
-      <span *ngIf="debugLimitsConfiguration else noLimitHint">
+      @if (debugLimitsConfiguration) {
         {{ 'debug-config.hint.main-limited' | translate: { msg: maxMessagesCount, sec: maxTimeFrameSec } }}
-      </span>
-      <ng-template #noLimitHint>{{ 'debug-config.hint.main' | translate }}</ng-template>
+      } @else {
+        {{ 'debug-config.hint.main' | translate }}
+      }
     </div>
   </div>
   <div class="flex flex-col gap-3">
@@ -34,17 +35,19 @@
     <div class="flex justify-between align-center">
       <mat-slide-toggle class="mat-slide" [formControl]="debugAllControl">
         <div tb-hint-tooltip-icon="{{ 'debug-config.hint.all-messages' | translate }}">
-          {{ 'debug-config.all-messages' | translate: { time: (isDebugAllActive$ | async) && !debugAll ? (debugAllUntil | durationLeft) : ('debug-config.min' | translate: { number:  maxDebugModeDurationMinutes }) } }}
+          {{ 'debug-config.all-messages' | translate: { time: (isDebugAllActive$ | async) && !allEnabled ? (allEnabledUntil | durationLeft) : ('debug-config.min' | translate: { number:  maxDebugModeDurationMinutes }) } }}
         </div>
       </mat-slide-toggle>
-      <button mat-icon-button *ngIf="(isDebugAllActive$ | async) && !debugAll"
-              class="tb-mat-20"
-              matTooltip="{{ 'action.reset' | translate }}"
-              matTooltipPosition="above"
-              color="primary"
-              (click)="onReset()">
-        <mat-icon class="material-icons">refresh</mat-icon>
-      </button>
+      @if ((isDebugAllActive$ | async) && !allEnabled) {
+        <button mat-icon-button
+                class="tb-mat-20"
+                matTooltip="{{ 'action.reset' | translate }}"
+                matTooltipPosition="above"
+                color="primary"
+                (click)="onReset()">
+          <mat-icon class="material-icons">refresh</mat-icon>
+        </button>
+      }
     </div>
   </div>
   <div class="flex justify-end">

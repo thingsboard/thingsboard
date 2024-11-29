@@ -649,18 +649,20 @@ export class ImportExportService {
     );
   }
 
-  private processOldRuleChainConnections(ruleChainImport: RuleChainImport): Observable<RuleChainImport> {
-    ruleChainImport.ruleChain = this.prepareImport(ruleChainImport.ruleChain);
-    const metadata = ruleChainImport.metadata;
+  private processOldRuleChainConnections({ruleChain, metadata}: RuleChainImport): Observable<RuleChainImport> {
+    ruleChain = this.prepareImport(ruleChain);
+    metadata = {
+      ...metadata,
+      nodes: metadata.nodes.map(({ debugMode, ...node }: RuleNode & { debugMode: boolean }) => {
+        return debugMode ? { ...node, debugSettings: { failuresEnabled: true, allEnabled: true} } : node
+      })
+    };
     if ((metadata as any).ruleChainConnections) {
       const ruleChainNameResolveObservables: Observable<void>[] = [];
       for (const ruleChainConnection of (metadata as any).ruleChainConnections) {
         if (ruleChainConnection.targetRuleChainId && ruleChainConnection.targetRuleChainId.id) {
           const ruleChainNode: RuleNode = {
             name: '',
-            debugFailures: false,
-            debugAllUntil: 0,
-            debugAll: false,
             singletonMode: false,
             type: 'org.thingsboard.rule.engine.flow.TbRuleChainInputNode',
             configuration: {
@@ -688,13 +690,13 @@ export class ImportExportService {
       }
       if (ruleChainNameResolveObservables.length) {
         return forkJoin(ruleChainNameResolveObservables).pipe(
-           map(() => ruleChainImport)
+           map(() => ({ruleChain, metadata}))
         );
       } else {
-        return of(ruleChainImport);
+        return of({ruleChain, metadata});
       }
     } else {
-      return of(ruleChainImport);
+      return of({ruleChain, metadata});
     }
   }
 

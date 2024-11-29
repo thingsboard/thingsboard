@@ -31,12 +31,13 @@ import { MINUTE, SECOND } from '@shared/models/time/time.models';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { shareReplay, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { HasDebugConfig } from '@shared/models/entity.models';
+import { DebugSettings } from '@shared/models/entity.models';
 import { distinctUntilChanged, map, tap } from 'rxjs/operators';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-debug-config-panel',
-  templateUrl: './debug-config-panel.component.html',
+  selector: 'tb-debug-settings-panel',
+  templateUrl: './debug-settings-panel.component.html',
   standalone: true,
   imports: [
     SharedModule,
@@ -45,12 +46,12 @@ import { distinctUntilChanged, map, tap } from 'rxjs/operators';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DebugConfigPanelComponent extends PageComponent implements OnInit {
+export class DebugSettingsPanelComponent extends PageComponent implements OnInit {
 
-  @Input() popover: TbPopoverComponent<DebugConfigPanelComponent>;
-  @Input() debugFailures = false;
-  @Input() debugAll = false;
-  @Input() debugAllUntil = 0;
+  @Input() popover: TbPopoverComponent<DebugSettingsPanelComponent>;
+  @Input() @coerceBoolean() failuresEnabled = false;
+  @Input() @coerceBoolean() allEnabled = false;
+  @Input() allEnabledUntil = 0;
   @Input() maxDebugModeDurationMinutes: number;
   @Input() debugLimitsConfiguration: string;
 
@@ -63,14 +64,14 @@ export class DebugConfigPanelComponent extends PageComponent implements OnInit {
   isDebugAllActive$ = timer(0, SECOND).pipe(
     map(() => {
       this.cd.markForCheck();
-      return this.debugAllUntil > new Date().getTime() || this.debugAll;
+      return this.allEnabledUntil > new Date().getTime() || this.allEnabled;
     }),
     distinctUntilChanged(),
     tap(isDebugOn => this.debugAllControl.patchValue(isDebugOn, { emitEvent: false })),
     shareReplay(1),
   );
 
-  onConfigApplied = new EventEmitter<HasDebugConfig>();
+  onConfigApplied = new EventEmitter<DebugSettings>();
 
   constructor(private fb: UntypedFormBuilder, private cd: ChangeDetectorRef) {
     super();
@@ -81,7 +82,7 @@ export class DebugConfigPanelComponent extends PageComponent implements OnInit {
   ngOnInit(): void {
     this.maxMessagesCount = this.debugLimitsConfiguration?.split(':')[0];
     this.maxTimeFrameSec = this.debugLimitsConfiguration?.split(':')[1];
-    this.onFailuresControl.patchValue(this.debugFailures);
+    this.onFailuresControl.patchValue(this.failuresEnabled);
   }
 
   onCancel(): void {
@@ -90,22 +91,22 @@ export class DebugConfigPanelComponent extends PageComponent implements OnInit {
 
   onApply(): void {
     this.onConfigApplied.emit({
-      debugAll: this.debugAll,
-      debugFailures: this.onFailuresControl.value,
-      debugAllUntil: this.debugAllUntil
+      allEnabled: this.allEnabled,
+      failuresEnabled: this.onFailuresControl.value,
+      allEnabledUntil: this.allEnabledUntil
     });
   }
 
   onReset(): void {
-    this.debugAll = true;
-    this.debugAllUntil = new Date().getTime() + this.maxDebugModeDurationMinutes * MINUTE;
+    this.allEnabled = true;
+    this.allEnabledUntil = new Date().getTime() + this.maxDebugModeDurationMinutes * MINUTE;
     this.cd.markForCheck();
   }
 
   private observeDebugAllChange(): void {
     this.debugAllControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(value => {
-      this.debugAllUntil = value? new Date().getTime() + this.maxDebugModeDurationMinutes * MINUTE : 0;
-      this.debugAll = value;
+      this.allEnabledUntil = value? new Date().getTime() + this.maxDebugModeDurationMinutes * MINUTE : 0;
+      this.allEnabled = value;
       this.cd.markForCheck();
     });
   }
