@@ -22,6 +22,7 @@ import { TbEditorCompleter, TbEditorCompletion } from '@shared/models/ace/comple
 import { blobToText } from '@core/utils';
 import { catchError, finalize } from 'rxjs/operators';
 import { parseError } from '@shared/models/error.models';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface TbFunctionWithModules {
   body: string;
@@ -79,8 +80,8 @@ export const loadModulesCompleter = (http: HttpClient, modules: {[alias: string]
   }
 };
 
-export const loadModuleMarkdownDescription = (http: HttpClient, resource: ResourceInfo): Observable<string> => {
-  let description = `<div class="flex flex-col !pl-4 !pr-4"><h6>${resource.title}</h6><small>Module members</small></div>\n\n`;
+export const loadModuleMarkdownDescription = (http: HttpClient, translate: TranslateService, resource: ResourceInfo): Observable<string> => {
+  let description = `<div class="flex flex-col !pl-4 !pr-4"><h6>${resource.title}</h6><small>${translate.instant('js-func.module-members')}</small></div>\n\n`;
   description += '<div class="divider !pt-2"></div>\n' +
     '<br/>\n\n';
   return loadFunctionModuleWithSource(http, resource.link).pipe(
@@ -116,7 +117,7 @@ export const loadModuleMarkdownDescription = (http: HttpClient, resource: Resour
         else return 1;
       });
       if (!propertiesData.length) {
-        description += `<div class="!pl-4 !pr-4">Module has no exported members</div>\n\n`;
+        description += `<div class="!pl-4 !pr-4">${translate.instant('js-func.module-no-members')}</div>\n\n`;
       } else {
         propertiesData.forEach((pData) => {
           description += pData.description;
@@ -126,14 +127,14 @@ export const loadModuleMarkdownDescription = (http: HttpClient, resource: Resour
     }),
     catchError(err => {
       const errorText = parseError(err);
-      description += `<div class="!pl-4 !pr-4">Module load error:<br/><span style="color: red;">${errorText}</span></div>\n\n`;
+      description += `<div class="!pl-4 !pr-4">${translate.instant('js-func.module-load-error')}:<br/><span style="color: red;">${errorText}</span></div>\n\n`;
       return of(description);
     })
   );
 }
 
-export const loadModuleMarkdownSourceCode = (http: HttpClient, resource: ResourceInfo): Observable<string> => {
-  let sourceCode = `<div class="flex flex-col !pl-4"><h6>${resource.title}</h6><small>Source code</small></div>\n\n`;
+export const loadModuleMarkdownSourceCode = (http: HttpClient, translate: TranslateService, resource: ResourceInfo): Observable<string> => {
+  let sourceCode = `<div class="flex flex-col !pl-4"><h6>${resource.title}</h6><small>${translate.instant('js-func.source-code')}</small></div>\n\n`;
   return loadFunctionModuleSource(http, resource.link).pipe(
     map((source) => {
       sourceCode += '```javascript\n{:code-style="margin-left: -16px; margin-right: -16px;"}\n' +  source + '\n```';
@@ -141,7 +142,7 @@ export const loadModuleMarkdownSourceCode = (http: HttpClient, resource: Resourc
     }),
     catchError(err => {
       const errorText = parseError(err);
-      sourceCode += `<div class="!pl-4 !pr-4">Source code load error:<br/><span style="color: red;">${errorText}</span></div>\n\n`;
+      sourceCode += `<div class="!pl-4 !pr-4">${translate.instant('js-func.source-code-load-error')}:<br/><span style="color: red;">${errorText}</span></div>\n\n`;
       return of(sourceCode);
     })
   );
@@ -196,13 +197,22 @@ export class CompiledTbFunction {
   execute(...args: any[]): any {
     let functionArgs: any[];
     if (this.compiledModules?.length) {
-      functionArgs = args.concat(this.compiledModules);
+      functionArgs = args ? args.concat(this.compiledModules) : this.compiledModules;
     } else {
       functionArgs = args;
     }
     return this.compiledFunction(...functionArgs);
   }
 
+  apply(thisArg: any, argArray?: any): any {
+    let functionArgs: any[];
+    if (this.compiledModules?.length) {
+      functionArgs = argArray ? argArray.concat(this.compiledModules) : this.compiledModules;
+    } else {
+      functionArgs = argArray;
+    }
+    return this.compiledFunction.apply(thisArg, functionArgs);
+  }
 }
 
 const loadFunctionModules = (http: HttpClient, modules: {[alias: string]: string }): Observable<System.Module[]> => {

@@ -41,6 +41,7 @@ import { Observable, of } from 'rxjs';
 import { ResourceAutocompleteComponent } from '@shared/components/resource/resource-autocomplete.component';
 import { HttpClient } from '@angular/common/http';
 import { loadModuleMarkdownDescription, loadModuleMarkdownSourceCode } from '@shared/models/js-function.models';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface JsFuncModuleRow {
   alias: string;
@@ -93,7 +94,8 @@ export class JsFuncModuleRowComponent implements ControlValueAccessor, OnInit, V
   constructor(private fb: UntypedFormBuilder,
               private cd: ChangeDetectorRef,
               private modulesComponent: JsFuncModulesComponent,
-              private http: HttpClient) {}
+              private http: HttpClient,
+              private translate: TranslateService) {}
 
   ngOnInit() {
     this.moduleRowFormGroup = this.fb.group({
@@ -147,7 +149,7 @@ export class JsFuncModuleRowComponent implements ControlValueAccessor, OnInit, V
     const moduleLink = this.moduleRowFormGroup.get('moduleLink').value;
     if (moduleLink) {
       const resource = this.resourceAutocomplete.resource;
-      return loadModuleMarkdownDescription(this.http, resource);
+      return loadModuleMarkdownDescription(this.http, this.translate, resource);
     } else {
       return null;
     }
@@ -157,7 +159,7 @@ export class JsFuncModuleRowComponent implements ControlValueAccessor, OnInit, V
     const moduleLink = this.moduleRowFormGroup.get('moduleLink').value;
     if (moduleLink) {
       const resource = this.resourceAutocomplete.resource;
-      return loadModuleMarkdownSourceCode(this.http, resource);
+      return loadModuleMarkdownSourceCode(this.http, this.translate, resource);
     } else {
       return null;
     }

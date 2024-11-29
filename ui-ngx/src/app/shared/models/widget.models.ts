@@ -152,7 +152,7 @@ export interface WidgetTypeDescriptor {
   resources: Array<WidgetResource>;
   templateHtml: string;
   templateCss: string;
-  controllerScript: string;
+  controllerScript: TbFunction;
   settingsSchema?: string | any;
   dataKeySettingsSchema?: string | any;
   latestDataKeySettingsSchema?: string | any;

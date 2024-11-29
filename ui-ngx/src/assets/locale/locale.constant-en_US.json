@@ -3305,7 +3305,12 @@
         "module-resource": "JS module resource",
         "not-unique-module-aliases-error": "Modules aliases must be unique!",
         "show-module-info": "Show module info",
-        "show-module-source-code": "Show module source code"
+        "show-module-source-code": "Show module source code",
+        "module-members": "Module members",
+        "module-no-members": "Module has no exported members",
+        "module-load-error": "Module load error",
+        "source-code": "Source code",
+        "source-code-load-error": "Source code load error"
     },
     "key-val": {
         "key": "Key",
