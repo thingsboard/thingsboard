@@ -298,6 +298,48 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
         disabled: hideTimezone
       }]
     });
+
+    this.timewindowForm.get('realtime.timewindowMs').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((timewindowMs: number) => {
+      if (this.realtimeAdvancedParams?.lastAggIntervalsConfig?.hasOwnProperty(timewindowMs) &&
+        this.realtimeAdvancedParams.lastAggIntervalsConfig[timewindowMs].defaultAggInterval) {
+        this.timewindowForm.get('realtime.interval').patchValue(
+          this.realtimeAdvancedParams.lastAggIntervalsConfig[timewindowMs].defaultAggInterval, {emitEvent: false}
+        );
+      }
+    });
+    this.timewindowForm.get('realtime.quickInterval').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((quickInterval: number) => {
+      if (this.realtimeAdvancedParams?.quickAggIntervalsConfig?.hasOwnProperty(quickInterval) &&
+        this.realtimeAdvancedParams.quickAggIntervalsConfig[quickInterval].defaultAggInterval) {
+        this.timewindowForm.get('realtime.interval').patchValue(
+          this.realtimeAdvancedParams.quickAggIntervalsConfig[quickInterval].defaultAggInterval, {emitEvent: false}
+        );
+      }
+    });
+    this.timewindowForm.get('history.timewindowMs').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((timewindowMs: number) => {
+      if (this.historyAdvancedParams?.lastAggIntervalsConfig?.hasOwnProperty(timewindowMs) &&
+        this.historyAdvancedParams.lastAggIntervalsConfig[timewindowMs].defaultAggInterval) {
+        this.timewindowForm.get('history.interval').patchValue(
+          this.historyAdvancedParams.lastAggIntervalsConfig[timewindowMs].defaultAggInterval, {emitEvent: false}
+        );
+      }
+    });
+    this.timewindowForm.get('history.quickInterval').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((quickInterval: number) => {
+      if (this.historyAdvancedParams?.quickAggIntervalsConfig?.hasOwnProperty(quickInterval) &&
+        this.historyAdvancedParams.quickAggIntervalsConfig[quickInterval].defaultAggInterval) {
+        this.timewindowForm.get('history.interval').patchValue(
+          this.historyAdvancedParams.quickAggIntervalsConfig[quickInterval].defaultAggInterval, {emitEvent: false}
+        );
+      }
+    });
+
     this.updateValidators(this.timewindowForm.get('aggregation.type').value);
     this.timewindowForm.get('aggregation.type').valueChanges.pipe(
       takeUntil(this.destroy$)

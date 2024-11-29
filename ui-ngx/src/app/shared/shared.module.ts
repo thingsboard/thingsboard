@@ -221,7 +221,7 @@ import { DatapointsLimitComponent } from '@shared/components/time/datapoints-lim
 import { AggregationTypeSelectComponent } from '@shared/components/time/aggregation/aggregation-type-select.component';
 import { AggregationOptionsConfigPanelComponent } from '@shared/components/time/aggregation/aggregation-options-config-panel.component';
 import { IntervalOptionsConfigPanelComponent } from '@shared/components/time/interval-options-config-panel.component';
-import { TimeIntervalsListComponent } from '@shared/components/time/time-intervals-list.component';
+import { GroupingIntervalOptionsComponent } from '@shared/components/time/aggregation/grouping-interval-options.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -307,7 +307,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TimewindowPanelComponent,
     TimewindowConfigDialogComponent,
     TimeintervalComponent,
-    TimeIntervalsListComponent,
+    GroupingIntervalOptionsComponent,
     TimezoneComponent,
     TimezonePanelComponent,
     QuickTimeIntervalComponent,
@@ -518,7 +518,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TimewindowPanelComponent,
     TimewindowConfigDialogComponent,
     TimeintervalComponent,
-    TimeIntervalsListComponent,
+    GroupingIntervalOptionsComponent,
     TimezoneComponent,
     TimezonePanelComponent,
     QuickTimeIntervalComponent,

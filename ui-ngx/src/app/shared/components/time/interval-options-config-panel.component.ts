@@ -100,26 +100,26 @@ export class IntervalOptionsConfigPanelComponent implements OnInit {
     const intervalControls: Array<AbstractControl> = [];
     for (const interval of this.allIntervals) {
       const intervalConfig: TimewindowAggIntervalOptions = this.aggIntervalsConfig?.hasOwnProperty(interval.value)
-        ? this.allIntervalValues[interval.value]
+        ? this.aggIntervalsConfig[interval.value]
         : null;
-      const intervalEnabled = this.allowedIntervals?.length ? this.allowedIntervals.includes(interval.value) : true;
+      const intervalEnabled = this.allowedIntervals?.length ? this.allowedIntervals.includes(interval.value) : false;
       const intervalControl = this.fb.group({
         name: [this.translate.instant(interval.name, interval.translateParams)],
         value: [interval.value],
         enabled: [intervalEnabled],
-        aggIntervals: [{value: intervalConfig ? intervalConfig.aggIntervals : [], disabled: !(intervalEnabled && this.aggregation)}],
-        defaultAggInterval: [{value: intervalConfig ? intervalConfig.defaultAggInterval : null, disabled: !(intervalEnabled && this.aggregation)}],
+        aggIntervalsConfig: [{value: {
+            aggIntervals: intervalConfig?.aggIntervals ? intervalConfig.aggIntervals : [],
+            defaultAggInterval: intervalConfig?.defaultAggInterval ? intervalConfig.defaultAggInterval : null
+          }, disabled: !(intervalEnabled && this.aggregation)}]
       });
       if (this.aggregation) {
         intervalControl.get('enabled').valueChanges.pipe(
           takeUntilDestroyed(this.destroyRef)
         ).subscribe((intervalEnabled) => {
           if (intervalEnabled) {
-            intervalControl.get('aggIntervals').enable({emitEvent: false});
-            intervalControl.get('defaultAggInterval').enable({emitEvent: false});
+            intervalControl.get('aggIntervalsConfig').enable({emitEvent: false});
           } else {
-            intervalControl.get('aggIntervals').disable({emitEvent: false});
-            intervalControl.get('defaultAggInterval').disable({emitEvent: false});
+            intervalControl.get('aggIntervalsConfig').disable({emitEvent: false});
           }
         });
       }
@@ -160,19 +160,18 @@ export class IntervalOptionsConfigPanelComponent implements OnInit {
       for (const interval of intervalOptionsConfig) {
         if (interval.enabled) {
           allowedIntervals.push(interval.value);
-          if (this.aggregation && (interval.aggIntervals.length || interval.defaultAggInterval)) {
+          if (this.aggregation && (interval.aggIntervalsConfig.aggIntervals.length || interval.aggIntervalsConfig.defaultAggInterval)) {
             const intervalParams: TimewindowAggIntervalOptions = {};
-            if (interval.aggIntervals.length) {
-              intervalParams.aggIntervals = interval.aggIntervals;
+            if (interval.aggIntervalsConfig.aggIntervals.length) {
+              intervalParams.aggIntervals = interval.aggIntervalsConfig.aggIntervals;
             }
-            if (interval.defaultAggInterval) {
-              intervalParams.defaultAggInterval = interval.defaultAggInterval;
+            if (interval.aggIntervalsConfig.defaultAggInterval) {
+              intervalParams.defaultAggInterval = interval.aggIntervalsConfig.defaultAggInterval;
             }
             aggIntervalsConfig[interval.value] = intervalParams;
           }
         }
       }
-      console.log(aggIntervalsConfig);
       this.onClose({
         // if full list selected returns empty for optimization
         allowedIntervals: allowedIntervals?.length < this.allIntervals.length ? allowedIntervals : [],
@@ -192,8 +191,10 @@ export class IntervalOptionsConfigPanelComponent implements OnInit {
     for (const interval of intervalControls) {
       interval.patchValue({
         enabled: true,
-        aggIntervals: [],
-        defaultAggInterval: null,
+        aggIntervalsConfig: {
+          aggIntervals: [],
+          defaultAggInterval: null
+        }
       });
     }
     this.intervalOptionsConfigForm.markAsDirty();

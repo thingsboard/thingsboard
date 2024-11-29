@@ -30,10 +30,14 @@
         flex: 1 1 30%;
       }
       &.tb-agg-interval {
-        flex: 1 1 35%;
-        width: 35%;
-        max-width: 35%;
+        flex: 1 1 70%;
+        width: 70%;
+        max-width: 70%;
       }
+    }
+
+    .tb-form-table-header-cell.tb-agg-interval-header {
+      flex: 1 1 35%;
     }
 
     .tb-form-hint {

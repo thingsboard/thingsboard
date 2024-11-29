@@ -19,23 +19,28 @@ import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from 
 import { TimeService } from '@core/services/time.service';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { coerceBoolean, coerceNumber } from '@shared/decorators/coercion';
-import { Interval, TimeInterval } from '@shared/models/time/time.models';
+import {
+  Interval,
+  intervalValuesToTimeIntervals,
+  TimeInterval,
+  TimewindowAggIntervalOptions
+} from '@shared/models/time/time.models';
 import { isDefined } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-time-intervals-list',
-  templateUrl: './time-intervals-list.component.html',
-  styleUrls: ['./time-intervals-list.component.scss'],
+  selector: 'tb-grouping-interval-options',
+  templateUrl: './grouping-interval-options.component.html',
+  styleUrls: ['./grouping-interval-options.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeIntervalsListComponent),
+      useExisting: forwardRef(() => GroupingIntervalOptionsComponent),
       multi: true
     }
   ]
 })
-export class TimeIntervalsListComponent implements OnInit, ControlValueAccessor {
+export class GroupingIntervalOptionsComponent implements OnInit, ControlValueAccessor {
 
   @Input()
   @coerceNumber()
@@ -44,16 +49,6 @@ export class TimeIntervalsListComponent implements OnInit, ControlValueAccessor 
   @Input()
   @coerceNumber()
   max: number;
-
-  @Input() predefinedName: string;
-
-  @Input()
-  @coerceBoolean()
-  setAllIfEmpty = false;
-
-  @Input()
-  @coerceBoolean()
-  returnEmptyIfAllSet = false;
 
   @Input()
   @coerceBoolean()
@@ -69,10 +64,11 @@ export class TimeIntervalsListComponent implements OnInit, ControlValueAccessor 
 
   allIntervals: Array<TimeInterval>;
   allIntervalValues: Array<Interval>;
+  selectedIntervals: Array<TimeInterval>;
 
   timeintervalFormGroup: FormGroup;
 
-  private modelValue: Array<Interval>;
+  private modelValue: TimewindowAggIntervalOptions;
   private rendered = false;
   private propagateChangeValue: any;
 
@@ -83,9 +79,13 @@ export class TimeIntervalsListComponent implements OnInit, ControlValueAccessor 
   constructor(private timeService: TimeService,
               private fb: FormBuilder) {
     this.timeintervalFormGroup = this.fb.group({
-      intervals: [ [] ]
+      aggIntervals: [ [] ],
+      defaultAggInterval: [ null ],
     });
-    this.timeintervalFormGroup.get('intervals').valueChanges.pipe(
+    this.timeintervalFormGroup.get('aggIntervals').valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe(selectedIntervalValues => this.setSelectedIntervals(selectedIntervalValues));
+    this.timeintervalFormGroup.valueChanges.pipe(
       takeUntilDestroyed()
     ).subscribe(() => this.updateView());
   }
@@ -113,10 +113,11 @@ export class TimeIntervalsListComponent implements OnInit, ControlValueAccessor 
     }
   }
 
-  writeValue(intervals: Array<Interval>): void {
-    this.modelValue = intervals;
+  writeValue(intervalOptions: TimewindowAggIntervalOptions): void {
+    this.modelValue = intervalOptions;
     this.rendered = true;
-    this.setIntervals(this.modelValue);
+    this.timeintervalFormGroup.get('defaultAggInterval').patchValue(intervalOptions.defaultAggInterval, { emitEvent: false });
+    this.setIntervals(intervalOptions.aggIntervals);
   }
 
   private updateIntervalsList() {
@@ -125,24 +126,41 @@ export class TimeIntervalsListComponent implements OnInit, ControlValueAccessor 
   }
 
   private setIntervals(intervals: Array<Interval>) {
-    this.timeintervalFormGroup.get('intervals').patchValue(
-      (this.setAllIfEmpty && !intervals?.length) ? this.allIntervalValues : intervals,
+    const selectedIntervals = !intervals?.length ? this.allIntervalValues : intervals;
+    this.timeintervalFormGroup.get('aggIntervals').patchValue(
+      selectedIntervals,
       {emitEvent: false});
+    this.setSelectedIntervals(selectedIntervals);
+  }
+
+  private setSelectedIntervals(selectedIntervalValues: Array<Interval>) {
+    if (!selectedIntervalValues.length || selectedIntervalValues.length === this.allIntervalValues.length) {
+      this.selectedIntervals = this.allIntervals;
+    } else {
+      this.selectedIntervals = intervalValuesToTimeIntervals(selectedIntervalValues);
+    }
+    const defaultInterval: Interval = this.timeintervalFormGroup.get('defaultAggInterval').value;
+    if (defaultInterval && !selectedIntervalValues.includes(defaultInterval)) {
+      this.timeintervalFormGroup.get('defaultAggInterval').patchValue(null);
+    }
   }
 
   private updateView() {
     if (!this.rendered) {
       return;
     }
-    let value: Array<Interval>;
-    const intervals: Array<Interval> = this.timeintervalFormGroup.get('intervals').value;
+    let selectedIntervals: Array<Interval>;
+    const intervals: Array<Interval> = this.timeintervalFormGroup.get('aggIntervals').value;
 
-    if (!this.returnEmptyIfAllSet || intervals.length < this.allIntervals.length) {
-      value = intervals;
+    if (intervals.length < this.allIntervals.length) {
+      selectedIntervals = intervals;
     } else {
-      value = [];
+      selectedIntervals = [];
     }
-    this.modelValue = value;
+    this.modelValue = {
+      aggIntervals: selectedIntervals,
+      defaultAggInterval: this.timeintervalFormGroup.get('defaultAggInterval').value
+    };
     this.propagateChange(this.modelValue);
   }
 

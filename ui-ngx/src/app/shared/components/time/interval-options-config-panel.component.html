@@ -25,8 +25,8 @@
     <div class="tb-form-table-header">
       <div class="tb-form-table-header-cell tb-interval">{{"timewindow.interval" | translate }}</div>
       <ng-container *ngIf="aggregation">
-        <div class="tb-form-table-header-cell tb-agg-interval">{{"timewindow.allowed-agg-intervals" | translate }}</div>
-        <div class="tb-form-table-header-cell tb-agg-interval">{{"timewindow.default-agg-interval" | translate }}</div>
+        <div class="tb-form-table-header-cell tb-agg-interval-header">{{"timewindow.allowed-agg-intervals" | translate }}</div>
+        <div class="tb-form-table-header-cell tb-agg-interval-header">{{"timewindow.default-agg-interval" | translate }}</div>
       </ng-container>
     </div>
     <div class="tb-form-table-body" formArrayName="intervals">
@@ -39,29 +39,15 @@
           </div>
           <ng-container *ngIf="aggregation">
             <div class="tb-form-table-row-cell tb-agg-interval">
-              <tb-time-intervals-list
+              <tb-grouping-interval-options
                 class="tb-inline-field"
-                formControlName="aggIntervals"
+                formControlName="aggIntervalsConfig"
                 [min]="minAggInterval(interval.get('value').value)"
                 [max]="maxAggInterval(interval.get('value').value)"
                 useCalendarIntervals
                 subscriptSizing="dynamic"
-                appearance="outline"
-                setAllIfEmpty
-                returnEmptyIfAllSet>
-              </tb-time-intervals-list>
-            </div>
-            <div class="tb-form-table-row-cell tb-agg-interval">
-              <tb-timeinterval
-                class="tb-inline-field"
-                formControlName="defaultAggInterval"
-                [min]="minAggInterval(interval.get('value').value)"
-                [max]="maxAggInterval(interval.get('value').value)"
-                useCalendarIntervals
-                subscriptSizing="dynamic"
-                appearance="outline"
-                disabledAdvanced>
-              </tb-timeinterval>
+                appearance="outline">
+              </tb-grouping-interval-options>
             </div>
           </ng-container>
         </div>
