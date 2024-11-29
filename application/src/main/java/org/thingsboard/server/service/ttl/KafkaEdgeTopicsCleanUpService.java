@@ -64,9 +64,6 @@ public class KafkaEdgeTopicsCleanUpService extends AbstractCleanUpService {
     private final TbKafkaSettings kafkaSettings;
     private final TbKafkaTopicConfigs kafkaTopicConfigs;
 
-    @Value("${queue.prefix:}")
-    private String prefix;
-
     @Value("${sql.ttl.edge_events.edge_events_ttl:2628000}")
     private long ttlSeconds;
 
@@ -95,7 +92,7 @@ public class KafkaEdgeTopicsCleanUpService extends AbstractCleanUpService {
             return;
         }
 
-        String edgeTopicPrefix = prefix.isBlank() ? EDGE_EVENT_TOPIC_NAME : prefix + "." + EDGE_EVENT_TOPIC_NAME;
+        String edgeTopicPrefix = topicService.buildTopicName(EDGE_EVENT_TOPIC_NAME);
         List<String> matchingTopics = topics.stream().filter(topic -> topic.startsWith(edgeTopicPrefix)).toList();
         if (matchingTopics.isEmpty()) {
             log.info("No matching topics found with prefix [{}]. Skipping cleanup.", edgeTopicPrefix);
