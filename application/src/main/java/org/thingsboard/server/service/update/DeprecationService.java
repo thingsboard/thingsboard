@@ -26,8 +26,6 @@ import org.thingsboard.server.common.data.notification.targets.platform.SystemAd
 import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 @Service
