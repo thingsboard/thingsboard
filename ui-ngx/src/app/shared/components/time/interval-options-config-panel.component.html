@@ -23,7 +23,15 @@
   </div>
   <div class="tb-form-table">
     <div class="tb-form-table-header">
-      <div class="tb-form-table-header-cell tb-interval">{{"timewindow.interval" | translate }}</div>
+      <div class="tb-form-table-header-cell tb-interval">
+        <mat-checkbox color="warn"
+                      (click)="$event.stopPropagation()"
+                      [indeterminate]="getIndeterminate()"
+                      (change)="enableDisableIntervals($event.checked)"
+                      [checked]="getChecked()">
+        </mat-checkbox>
+        {{ "timewindow.interval" | translate }}
+      </div>
       <ng-container *ngIf="aggregation">
         <div class="tb-form-table-header-cell tb-agg-interval-header">{{"timewindow.allowed-agg-intervals" | translate }}</div>
         <div class="tb-form-table-header-cell tb-agg-interval-header">{{"timewindow.default-agg-interval" | translate }}</div>
@@ -33,7 +41,7 @@
       <ng-container *ngFor="let interval of intervalsFormArray.controls; let i = index; trackBy: trackByElement">
         <div [formGroupName]="i" class="tb-form-table-row">
           <div class="tb-form-table-row-cell tb-interval">
-            <mat-checkbox formControlName="enabled">
+            <mat-checkbox formControlName="enabled" color="primary">
               <mat-label>{{ interval.get('name').value }}</mat-label>
             </mat-checkbox>
           </div>

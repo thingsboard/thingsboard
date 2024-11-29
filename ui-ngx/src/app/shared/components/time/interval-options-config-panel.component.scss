@@ -28,14 +28,17 @@
     .tb-form-table-header-cell, .tb-form-table-row-cell {
       &.tb-interval {
         flex: 1 1 30%;
+        width: 30%;
       }
       &.tb-agg-interval {
         flex: 1 1 70%;
+        width: 70%;
       }
     }
 
     .tb-form-table-header-cell.tb-agg-interval-header {
       flex: 1 1 35%;
+      width: 35%;
     }
 
     .tb-form-hint {

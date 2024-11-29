@@ -208,4 +208,24 @@ export class IntervalOptionsConfigPanelComponent implements OnInit {
     return allQuickIntervals;
   }
 
+  getIndeterminate(): boolean {
+    const enabledIntervals = this.intervalsFormArray.value.filter(interval => interval.enabled);
+    return enabledIntervals.length !== 0 && enabledIntervals.length !== this.allIntervals.length;
+  }
+
+  enableDisableIntervals(allEnabled: boolean) {
+    const intervalControls = this.intervalsFormArray.controls;
+    for (const interval of intervalControls) {
+      interval.patchValue({
+        enabled: allEnabled
+      });
+    }
+    this.intervalOptionsConfigForm.markAsDirty();
+  }
+
+  getChecked(): boolean {
+    const intervals = this.intervalsFormArray.value;
+    return intervals.every(interval => interval.enabled);
+  }
+
 }

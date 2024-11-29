@@ -24,7 +24,7 @@
     </div>
     <div class="tb-form-table-body">
       <mat-selection-list formControlName="allowedAggregationTypes">
-        <mat-list-option *ngFor="let type of allAggregationTypes" [value]="type" togglePosition="before">
+        <mat-list-option *ngFor="let type of allAggregationTypes" [value]="type" togglePosition="before" color="primary">
           {{ aggregationTypesTranslations.get(aggregationTypes[type]) | translate }}
         </mat-list-option>
       </mat-selection-list>

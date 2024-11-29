@@ -20,6 +20,9 @@
                   [subscriptSizing]="subscriptSizing" [appearance]="appearance">
     <mat-select formControlName="aggIntervals" multiple
                 placeholder="{{ 'timewindow.all' | translate }}">
+      <mat-select-trigger *ngIf="timeintervalFormGroup.get('aggIntervals').value?.length === allIntervals.length">
+        {{ 'timewindow.all' | translate }}
+      </mat-select-trigger>
       <mat-option *ngFor="let interval of allIntervals" [value]="interval.value">
         {{ interval.name | translate:interval.translateParams }}
       </mat-option>
