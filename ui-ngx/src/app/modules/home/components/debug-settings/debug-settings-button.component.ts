@@ -62,9 +62,9 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
   disabled = false;
 
   isDebugAllActive$ = this.debugSettingsFormGroup.get('allEnabled').valueChanges.pipe(
-    startWith(this.debugSettingsFormGroup.get('allEnabled').value),
-    switchMap(value => {
-      if (value) {
+    startWith(null),
+    switchMap(() => {
+      if (this.allEnabled) {
         return of(true);
       } else {
         return timer(0, SECOND).pipe(
@@ -79,7 +79,7 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
 
   readonly maxDebugModeDurationMinutes = getCurrentAuthState(this.store).maxDebugModeDurationMinutes;
 
-  private propagateChange: (settings: DebugSettings) => void;
+  private propagateChange: (settings: DebugSettings) => void = () => {};
 
   constructor(private popoverService: TbPopoverService,
               private renderer: Renderer2,
