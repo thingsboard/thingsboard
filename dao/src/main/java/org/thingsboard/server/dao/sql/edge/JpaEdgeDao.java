@@ -215,6 +215,11 @@ public class JpaEdgeDao extends JpaAbstractDao<EdgeEntity, Edge> implements Edge
     }
 
     @Override
+    public Long countByTenantId(TenantId tenantId) {
+        return edgeRepository.countByTenantId(tenantId.getId());
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.EDGE;
     }

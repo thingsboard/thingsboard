@@ -106,7 +106,20 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.warn("Failed to execute update script for device profile rule nodes due to: ", e);
                 }
             }
-            case "3.8.1" -> updateSchema("3.8.1", 3008001, "3.9.0", 3009000);
+            case "3.8.1" -> {
+                updateSchema("3.8.1", 3008001, "3.9.0", 3009000);
+
+                try {
+                    execute("UPDATE tenant_profile " +
+                                    "SET profile_data = jsonb_set(profile_data, '{configuration, maxEdges}', " +
+                                    "    to_jsonb(COALESCE(NULLIF((profile_data -> 'configuration' ->> 'maxDevices')::integer, 0), 0)), true " +
+                                    ") " +
+                                    "WHERE NOT (profile_data -> 'configuration' ? 'maxEdges');",
+                            false);
+                } catch (Exception e) {
+                    log.warn("Failed to update tenant_profile with maxEdges configuration due to: ", e);
+                }
+            }
             default -> throw new RuntimeException("Unsupported fromVersion '" + fromVersion + "'");
         }
     }
