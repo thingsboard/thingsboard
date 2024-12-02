@@ -3459,6 +3459,8 @@
         "delete-application": "Delete application",
         "delete-application-button-text": "I understand consequences, delete application",
         "delete-application-text": "This action can not be undone. This will permanently delete your application.<br/>If you don’t want to delete it permanently you can <b>suspend</b> application temporary.<br/><b>To delete</b> the application anyway please type <b>\"{{phrase}}\"</b> to confirm.",
+        "delete-application-title-short": "Are you sure you want to delete the application '{{name}}'?",
+        "delete-application-text-short": "Be careful, after the confirmation the applications and all related data will become unrecoverable.",
         "delete-application-phrase": "delete application",
         "delete-applications-bundle-text": "Be careful, after the confirmation the mobile bundle and all related data will become unrecoverable.",
         "delete-applications-bundle-title": "Are you sure you want to delete the mobile bundle '{{bundleName}}'?",
@@ -3558,7 +3560,11 @@
             "run-app-title": "Run the app",
             "run-app-text": "Run the app as described in your IDE.\nIf using the terminal, run the app with the following command:",
             "more-information": "Detailed information may be found in our Getting Started documentation.",
-            "getting-started": "Getting Started"
+            "getting-started": "Getting Started",
+            "configure-package-title": "Configure application package",
+            "configure-package-text": "You can manually change the Application Package or use third party CLI tool.",
+            "configure-package-text-install": "To install the Rename CLI Tool, execute the following command:",
+            "configure-package-run-commands": "Run these commands in the root directory of your project:"
         }
     },
     "notification": {

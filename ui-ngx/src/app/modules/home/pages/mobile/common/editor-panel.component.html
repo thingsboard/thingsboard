@@ -28,6 +28,7 @@
     <button mat-raised-button
             color="primary"
             type="button"
+            *ngIf="!disabled"
             (click)="apply()"
             [disabled]="editorControl.invalid || !editorControl.dirty">
       {{ 'action.apply' | translate }}

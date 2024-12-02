@@ -79,7 +79,7 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
           Validators.pattern(/^https?:\/\/play\.google\.com\/store\/apps\/details\?id=[a-zA-Z0-9._]+$/)],
         sha256CertFingerprints: [entity?.storeInfo?.sha256CertFingerprints ? entity.storeInfo.sha256CertFingerprints : '',
           Validators.pattern(/^[A-Fa-f0-9]{2}(:[A-Fa-f0-9]{2}){1,31}$/)],
-        appId: [entity?.storeInfo?.appId ? entity.storeInfo.appId : '', Validators.pattern(/^\d{7,10}$/)],
+        appId: [entity?.storeInfo?.appId ? entity.storeInfo.appId : '', Validators.pattern(/^[A-Z0-9]{10}\.[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*$/)],
       }),
     });
 
@@ -126,7 +126,8 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
   override updateFormState(): void {
     super.updateFormState();
     if (this.isEdit && this.entityForm && !this.isAdd) {
-      this.entityForm.get('status').updateValueAndValidity({onlySelf: false});
+      this.entityForm.get('status').updateValueAndValidity({onlySelf: true});
+      this.entityForm.get('platformType').updateValueAndValidity({onlySelf: true});
       this.entityForm.get('platformType').disable({emitEvent: false});
       if (this.entityForm.get('platformType').value === PlatformType.ANDROID) {
         this.entityForm.get('storeInfo.appId').disable({emitEvent: false});

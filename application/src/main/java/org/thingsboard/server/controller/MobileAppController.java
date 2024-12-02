@@ -168,7 +168,7 @@ public class MobileAppController extends BaseController {
                     .collect(Collectors.toList());
             return JacksonUtil.toJsonNode(JacksonUtil.writeValueAsViewIgnoringNullFields(mobilePages, Views.Public.class));
         } else {
-            return JacksonUtil.newArrayNode();
+            return null;
         }
     }
 

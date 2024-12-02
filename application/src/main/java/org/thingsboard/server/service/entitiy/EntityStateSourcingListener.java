@@ -57,13 +57,13 @@ import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.Set;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class EntityStateSourcingListener {
 
-    private final TbClusterService tbClusterService;
     private final TenantService tenantService;
+    private final TbClusterService tbClusterService;
 
     @PostConstruct
     public void init() {
@@ -137,7 +137,7 @@ public class EntityStateSourcingListener {
         log.debug("[{}][{}][{}] Handling entity deletion event: {}", tenantId, entityType, entityId, event);
 
         switch (entityType) {
-            case ASSET, ASSET_PROFILE, ENTITY_VIEW, CUSTOMER, EDGE, NOTIFICATION_RULE -> {
+            case ASSET, ASSET_PROFILE, EDGE, ENTITY_VIEW, CUSTOMER, NOTIFICATION_RULE -> {
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
             }
             case NOTIFICATION_REQUEST -> {

@@ -40,6 +40,8 @@ public interface EdgeDao extends Dao<Edge> {
 
     EdgeInfo findEdgeInfoById(TenantId tenantId, UUID edgeId);
 
+    PageData<EdgeId> findEdgeIdsByTenantId(UUID tenantId, PageLink pageLink);
+
     PageData<Edge> findEdgesByTenantId(UUID tenantId, PageLink pageLink);
 
     PageData<Edge> findEdgesByTenantIdAndType(UUID tenantId, String type, PageLink pageLink);

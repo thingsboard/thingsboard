@@ -21,6 +21,8 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -38,6 +40,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.cassandra.guava.GuavaSession;
@@ -57,6 +60,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 @RuleNode(type = ComponentType.ACTION,
         name = "save to custom table",
         configClazz = TbSaveToCustomCassandraTableNodeConfiguration.class,
+        version = 1,
         nodeDescription = "Node stores data from incoming Message payload to the Cassandra database into the predefined custom table" +
                 " that should have <b>cs_tb_</b> prefix, to avoid the data insertion to the common TB tables.<br>" +
                 "<b>Note:</b> rule node can be used only for Cassandra DB.",
@@ -87,11 +91,13 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
         config = TbNodeUtils.convert(configuration, TbSaveToCustomCassandraTableNodeConfiguration.class);
         cassandraCluster = ctx.getCassandraCluster();
         if (cassandraCluster == null) {
-            throw new RuntimeException("Unable to connect to Cassandra database");
-        } else {
-            startExecutor();
-            saveStmt = getSaveStmt();
+            throw new TbNodeException("Unable to connect to Cassandra database", true);
         }
+        if (!isTableExists()) {
+            throw new TbNodeException("Table '" + TABLE_PREFIX + config.getTableName() + "' does not exist in Cassandra cluster.");
+        }
+        startExecutor();
+        saveStmt = getSaveStmt();
     }
 
     @Override
@@ -115,6 +121,12 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
         }
     }
 
+    private boolean isTableExists() {
+        var keyspaceMdOpt = getSession().getMetadata().getKeyspace(cassandraCluster.getKeyspaceName());
+        return keyspaceMdOpt.map(keyspaceMetadata ->
+                keyspaceMetadata.getTable(TABLE_PREFIX + config.getTableName()).isPresent()).orElse(false);
+    }
+
     private PreparedStatement prepare(String query) {
         return getSession().prepare(query);
     }
@@ -127,10 +139,10 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
         return session;
     }
 
-    private PreparedStatement getSaveStmt() {
+    private PreparedStatement getSaveStmt() throws TbNodeException {
         fieldsMap = config.getFieldsMapping();
         if (fieldsMap.isEmpty()) {
-            throw new RuntimeException("Fields(key,value) map is empty!");
+            throw new TbNodeException("Fields(key,value) map is empty!", true);
         } else {
             return prepareStatement(new ArrayList<>(fieldsMap.values()));
         }
@@ -163,16 +175,19 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                 query.append("?, ");
             }
         }
+        if (config.getDefaultTtl() > 0) {
+            query.append(" USING TTL ?");
+        }
         return query.toString();
     }
 
     private ListenableFuture<Void> save(TbMsg msg, TbContext ctx) {
         JsonElement data = JsonParser.parseString(msg.getData());
         if (!data.isJsonObject()) {
-            throw new IllegalStateException("Invalid message structure, it is not a JSON Object:" + data);
+            throw new IllegalStateException("Invalid message structure, it is not a JSON Object: " + data);
         } else {
             JsonObject dataAsObject = data.getAsJsonObject();
-            BoundStatementBuilder stmtBuilder = new BoundStatementBuilder(saveStmt.bind());
+            BoundStatementBuilder stmtBuilder = getStmtBuilder();
             AtomicInteger i = new AtomicInteger(0);
             fieldsMap.forEach((key, value) -> {
                 if (key.equals(ENTITY_ID)) {
@@ -197,15 +212,22 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                     } else if (dataKeyElement.isJsonObject()) {
                         stmtBuilder.setString(i.get(), dataKeyElement.getAsJsonObject().toString());
                     } else {
-                        throw new IllegalStateException("Message data key: '" + key + "' with value: '" + value + "' is not a JSON Object or JSON Primitive!");
+                        throw new IllegalStateException("Message data key: '" + key + "' with value: '" + dataKeyElement + "' is not a JSON Object or JSON Primitive!");
                     }
                 } else {
                     throw new RuntimeException("Message data doesn't contain key: " + "'" + key + "'!");
                 }
                 i.getAndIncrement();
             });
+            if (config.getDefaultTtl() > 0) {
+                stmtBuilder.setInt(i.get(), config.getDefaultTtl());
+            }
             return getFuture(executeAsyncWrite(ctx, stmtBuilder.build()), rs -> null);
         }
+    }
+
+    BoundStatementBuilder getStmtBuilder() {
+        return new BoundStatementBuilder(saveStmt.bind());
     }
 
     private TbResultSetFuture executeAsyncWrite(TbContext ctx, Statement statement) {
@@ -238,6 +260,22 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                 return transformer.apply(input);
             }
         }, readResultsProcessingExecutor);
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                if (!oldConfiguration.has("defaultTtl")) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).put("defaultTtl", 0);
+                }
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
 }
