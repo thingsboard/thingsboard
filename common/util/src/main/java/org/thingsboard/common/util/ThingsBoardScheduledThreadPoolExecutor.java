@@ -48,8 +48,8 @@ final class ThingsBoardScheduledThreadPoolExecutor extends ScheduledThreadPoolEx
             }
         }
 
-        if (directThrowable != null) {
-            log.error("Uncaught error occurred during task execution!", directThrowable);
+        if (directThrowable != null) { // should never be true since ScheduledThreadPoolExecutor wraps tasks in Future's
+            log.error("Caught direct throwable from task submitted to the scheduled thread pool executor!", directThrowable);
         }
     }
 
