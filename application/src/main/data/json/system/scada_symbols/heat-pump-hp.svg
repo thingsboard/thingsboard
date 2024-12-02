@@ -57,7 +57,7 @@
     },
     {
       "tag": "value-box-background",
-      "stateRenderFunction": "if (ctx.values.running) {\n    var color = ctx.properties.valueBoxBackground;\n    element.attr({fill: color});\n}\n",
+      "stateRenderFunction": "if (ctx.values.running) {\n    var color = ctx.properties.valueBoxBackground;\n    element.attr({fill: color});\n} else {\n    var color = ctx.properties.stoppedColor;\n    element.attr({fill: color});\n}\n",
       "actions": null
     },
     {
