@@ -143,6 +143,9 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
     @Query("SELECT DISTINCT d.type FROM EdgeEntity d WHERE d.tenantId = :tenantId")
     List<String> findTenantEdgeTypes(@Param("tenantId") UUID tenantId);
 
+    @Query("SELECT count(*) FROM EdgeEntity e WHERE e.tenantId = :tenantId")
+    Long countByTenantId(@Param("tenantId") UUID tenantId);
+
     EdgeEntity findByTenantIdAndName(UUID tenantId, String name);
 
     List<EdgeEntity> findEdgesByTenantIdAndCustomerIdAndIdIn(UUID tenantId, UUID customerId, List<UUID> edgeIds);
