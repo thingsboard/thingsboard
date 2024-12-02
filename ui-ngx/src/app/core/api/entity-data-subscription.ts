@@ -64,7 +64,7 @@ import { PageData } from '@shared/models/page/page-data';
 import { DataAggregator, onAggregatedData } from '@core/api/data-aggregator';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityType } from '@shared/models/entity-type.models';
-import { firstValueFrom, from, Observable, of, ReplaySubject, Subject, switchMap } from 'rxjs';
+import { firstValueFrom, from, Observable, of, ReplaySubject, Subject, tap } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 import {
@@ -89,8 +89,8 @@ export interface SubscriptionDataKey {
   timeForComparison?: ComparisonDuration;
   comparisonCustomIntervalValue?: number;
   comparisonResultType?: ComparisonResultType;
-  funcBody: string;
-  func?: DataKeyFunction;
+  funcBody: TbFunction;
+  func?: CompiledTbFunction<DataKeyFunction>;
   postFuncBody: TbFunction;
   postFunc?: CompiledTbFunction<DataKeyPostFunction>;
   index?: number;
@@ -210,7 +210,7 @@ export class EntityDataSubscription {
       dataKey.index = i;
       if (this.datasourceType === DatasourceType.function) {
         if (!dataKey.func) {
-          dataKey.func = new Function('time', 'prevValue', dataKey.funcBody) as DataKeyFunction;
+          dataKey.func = await firstValueFrom(compileTbFunction(this.http, dataKey.funcBody, 'time', 'prevValue'));
         }
       } else {
         if (isNotEmptyTbFunction(dataKey.postFuncBody) && !dataKey.postFunc) {
@@ -276,9 +276,9 @@ export class EntityDataSubscription {
   }
 
   public subscribe(): Observable<EntityDataLoadResult> {
-    return from(this.initializeSubscription()).pipe(
-      switchMap(() => {
-        this.entityDataResolveSubject = new ReplaySubject(1);
+    this.entityDataResolveSubject = new ReplaySubject(1);
+    from(this.initializeSubscription()).pipe(
+      tap(() => {
         if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
           this.started = true;
           this.dataResolved = true;
@@ -621,13 +621,13 @@ export class EntityDataSubscription {
           );
           this.subscriber.subscribe();
         }
-        if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
-          return of(null);
-        } else {
-          return this.entityDataResolveSubject.asObservable();
-        }
       })
-    );
+    ).subscribe();
+    if (this.entityDataSubscriptionOptions.isPaginatedDataSubscription) {
+      return of(null);
+    } else {
+      return this.entityDataResolveSubject.asObservable();
+    }
   }
 
   public start() {
@@ -1211,7 +1211,7 @@ export class EntityDataSubscription {
       prevSeries = [0, 0];
     }
     for (let time = startTime; time <= endTime && (this.timeseriesTimer || this.history); time += this.frequency) {
-      const value = dataKey.func(time, prevSeries[1]);
+      const value = dataKey.func.execute(time, prevSeries[1]);
       const series: [number, any] = [time, value];
       data.push(series);
       prevSeries = series;
@@ -1232,7 +1232,7 @@ export class EntityDataSubscription {
       prevSeries = [0, 0];
     }
     const time = Date.now() + this.latestTsOffset;
-    const value = dataKey.func(time, prevSeries[1]);
+    const value = dataKey.func.execute(time, prevSeries[1]);
     const series: [number, any] = [time, value];
     this.datasourceData[0][datasourceKey].data = [series];
     this.listener.dataUpdated(this.datasourceData[0][datasourceKey],

@@ -53,7 +53,7 @@ import { Direction } from '@shared/models/page/sort-order';
 import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
 import { BehaviorSubject, forkJoin, fromEvent, merge, Observable, of, Subject, Subscription } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
-import { debounceTime, distinctUntilChanged, map, take, takeUntil, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, take, takeUntil, tap } from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, SortDirection } from '@angular/material/sort';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -69,7 +69,7 @@ import {
   findEntityKeyByColumnDef,
   fromEntityColumnDef,
   getAlarmValue,
-  getCellContentInfo,
+  getCellContentFunctionInfo,
   getCellStyleInfo,
   getColumnDefaultVisibility,
   getColumnSelectionAvailability,
@@ -217,13 +217,13 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private defaultSortOrder = '-' + alarmFields.createdTime.value;
 
   private contentsInfo: {[key: string]: CellContentInfo} = {};
-  private stylesInfo: {[key: string]: CellStyleInfo} = {};
+  private stylesInfo: {[key: string]: Observable<CellStyleInfo>} = {};
   private columnWidth: {[key: string]: string} = {};
   private columnDefaultVisibility: {[key: string]: boolean} = {};
   private columnSelectionAvailability: {[key: string]: boolean} = {};
   private columnsWithCellClick: Array<number> = [];
 
-  private rowStylesInfo: RowStyleInfo;
+  private rowStylesInfo: Observable<RowStyleInfo>;
 
   private widgetTimewindowChanged$: Subscription;
 
@@ -389,7 +389,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     }
     this.alarmFilterAction.show = enableFilter;
 
-    this.rowStylesInfo = getRowStyleInfo(this.settings, 'alarm, ctx');
+    this.rowStylesInfo = getRowStyleInfo(this.ctx, this.settings, 'alarm, ctx');
 
     const pageSize = this.settings.defaultPageSize;
     if (isDefined(pageSize) && isNumber(pageSize) && pageSize > 0) {
@@ -438,10 +438,14 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
             keySettings.columnWidth = '120px';
           }
         }
-        this.stylesInfo[dataKey.def] = getCellStyleInfo(keySettings, 'value, alarm, ctx');
-        this.contentsInfo[dataKey.def] = getCellContentInfo(keySettings, 'value, alarm, ctx');
-        this.contentsInfo[dataKey.def].units = dataKey.units;
-        this.contentsInfo[dataKey.def].decimals = dataKey.decimals;
+        this.stylesInfo[dataKey.def] = getCellStyleInfo(this.ctx, keySettings, 'value, alarm, ctx');
+        const contentFunctionInfo = getCellContentFunctionInfo(this.ctx, keySettings, 'value, alarm, ctx');
+        const contentInfo: CellContentInfo = {
+          contentFunction: contentFunctionInfo,
+          units: dataKey.units,
+          decimals: dataKey.decimals
+        };
+        this.contentsInfo[dataKey.def] = contentInfo;
         this.columnWidth[dataKey.def] = getColumnWidth(keySettings);
         this.columnDefaultVisibility[dataKey.def] = getColumnDefaultVisibility(keySettings, this.ctx);
         this.columnSelectionAvailability[dataKey.def] = getColumnSelectionAvailability(keySettings);
@@ -719,100 +723,135 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     return widthStyle(columnWidth);
   }
 
-  public rowStyle(alarm: AlarmDataInfo, row: number): any {
+  public rowStyle(alarm: AlarmDataInfo, row: number): Observable<any> {
+    let style$: Observable<any>;
     let res = this.rowStyleCache[row];
     if (!res) {
-      res = {};
-      if (alarm && this.rowStylesInfo.useRowStyleFunction && this.rowStylesInfo.rowStyleFunction) {
-        try {
-          res = this.rowStylesInfo.rowStyleFunction(alarm, this.ctx);
-          if (!isObject(res)) {
-            throw new TypeError(`${res === null ? 'null' : typeof res} instead of style object`);
+      style$ = this.rowStylesInfo.pipe(
+        map(styleInfo => {
+          if (styleInfo.useRowStyleFunction && styleInfo.rowStyleFunction) {
+            const style = styleInfo.rowStyleFunction.execute(alarm, this.ctx);
+            if (!isObject(style)) {
+              throw new TypeError(`${style === null ? 'null' : typeof style} instead of style object`);
+            }
+            if (Array.isArray(style)) {
+              throw new TypeError(`Array instead of style object`);
+            }
+            return style;
+          } else {
+            return {};
           }
-          if (Array.isArray(res)) {
-            throw new TypeError(`Array instead of style object`);
-          }
-        } catch (e) {
-          res = {};
+        }),
+        catchError(e => {
           console.warn(`Row style function in widget '${this.ctx.widgetTitle}' ` +
             `returns '${e}'. Please check your row style function.`);
-        }
-      }
-      this.rowStyleCache[row] = res;
+          return of({});
+        })
+      );
+      style$ = style$.pipe(
+        tap((style) => {
+          this.rowStyleCache[row] = style;
+        })
+      );
+    } else {
+      style$ = of(res);
     }
-    return res;
+    return style$;
   }
 
-  public cellStyle(alarm: AlarmDataInfo, key: EntityColumn, row: number): any {
+  public cellStyle(alarm: AlarmDataInfo, key: EntityColumn, row: number): Observable<any> {
+    let style$: Observable<any>;
     const col = this.columns.indexOf(key);
     const index = row * this.columns.length + col;
     let res = this.cellStyleCache[index];
     if (!res) {
-      res = {};
       if (alarm && key) {
-        const styleInfo = this.stylesInfo[key.def];
-        const value = getAlarmValue(alarm, key);
-        if (styleInfo.useCellStyleFunction && styleInfo.cellStyleFunction) {
-          try {
-            res = styleInfo.cellStyleFunction(value, alarm, this.ctx);
-            if (!isObject(res)) {
-              throw new TypeError(`${res === null ? 'null' : typeof res} instead of style object`);
+        style$ = this.stylesInfo[key.def].pipe(
+          map(styleInfo => {
+            const value = getAlarmValue(alarm, key);
+            if (styleInfo.useCellStyleFunction && styleInfo.cellStyleFunction) {
+              const style = styleInfo.cellStyleFunction.execute(value, alarm, this.ctx);
+              if (!isObject(style)) {
+                throw new TypeError(`${style === null ? 'null' : typeof style} instead of style object`);
+              }
+              if (Array.isArray(style)) {
+                throw new TypeError(`Array instead of style object`);
+              }
+              return style;
+            } else {
+              return this.defaultStyle(key, value);
             }
-            if (Array.isArray(res)) {
-              throw new TypeError(`Array instead of style object`);
-            }
-          } catch (e) {
-            res = {};
+          }),
+          catchError(e => {
             console.warn(`Cell style function for data key '${key.label}' in widget '${this.ctx.widgetTitle}' ` +
               `returns '${e}'. Please check your cell style function.`);
-          }
-        } else {
-          res = this.defaultStyle(key, value);
-        }
+            return of({});
+          })
+        );
+      } else {
+        style$ = of({});
       }
-      this.cellStyleCache[index] = res;
+      style$ = style$.pipe(
+        map((style) => {
+          if (!style.width) {
+            const columnWidth = this.columnWidth[key.def];
+            style = Object.assign(style, widthStyle(columnWidth));
+          }
+          return style;
+        }),
+        tap((style) => {
+          this.cellStyleCache[index] = style;
+        })
+      );
+    } else {
+      style$ = of(res);
     }
-    if (!res.width) {
-      const columnWidth = this.columnWidth[key.def];
-      res = Object.assign(res, widthStyle(columnWidth));
-    }
-    return res;
+    return style$;
   }
 
-  public cellContent(alarm: AlarmDataInfo, key: EntityColumn, row: number): SafeHtml {
+  public cellContent(alarm: AlarmDataInfo, key: EntityColumn, row: number): Observable<SafeHtml> {
+    let content$: Observable<SafeHtml>;
     const col = this.columns.indexOf(key);
     const index = row * this.columns.length + col;
     let res = this.cellContentCache[index];
     if (isUndefined(res)) {
-      res = '';
-      if (alarm && key) {
-        const contentInfo = this.contentsInfo[key.def];
-        const value = getAlarmValue(alarm, key);
-        let content = '';
-        if (contentInfo.useCellContentFunction && contentInfo.cellContentFunction) {
-          try {
-            content = contentInfo.cellContentFunction(value, alarm, this.ctx);
-          } catch (e) {
-            content = '' + value;
+      const contentInfo = this.contentsInfo[key.def];
+      content$ = contentInfo.contentFunction.pipe(
+        map((contentFunction) => {
+          let content: any = '';
+          if (alarm && key) {
+            const contentInfo = this.contentsInfo[key.def];
+            const value = getAlarmValue(alarm, key);
+            if (contentFunction.useCellContentFunction && contentFunction.cellContentFunction) {
+              try {
+                content = contentFunction.cellContentFunction.execute(value, alarm, this.ctx);
+              } catch (e) {
+                content = '' + value;
+              }
+            } else {
+              content = this.defaultContent(key, contentInfo, value);
+            }
+            if (isDefined(content)) {
+              content = this.utils.customTranslation(content, content);
+              switch (typeof content) {
+                case 'string':
+                  content = this.domSanitizer.bypassSecurityTrustHtml(content);
+                  break;
+              }
+            }
           }
-        } else {
-          content = this.defaultContent(key, contentInfo, value);
-        }
-
-        if (isDefined(content)) {
-          content = this.utils.customTranslation(content, content);
-          switch (typeof content) {
-            case 'string':
-              res = this.domSanitizer.bypassSecurityTrustHtml(content);
-              break;
-            default:
-              res = content;
-          }
-        }
-      }
-      this.cellContentCache[index] = res;
+          return content;
+        })
+      );
+      content$ = content$.pipe(
+        tap((content) => {
+          this.cellContentCache[index] = content;
+        })
+      );
+    } else {
+      content$ = of(res);
     }
-    return res;
+    return content$;
   }
 
   public onCellClick($event: Event, alarm: AlarmDataInfo, key: EntityColumn, columnIndex: number) {

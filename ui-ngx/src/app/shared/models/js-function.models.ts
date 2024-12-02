@@ -188,7 +188,7 @@ const loadModuleCompletion = (http: HttpClient, moduleLink: string): Observable<
   );
 }
 
-type GenericFunction = (...args: any[]) => any;
+export type GenericFunction = (...args: any[]) => any;
 
 export class CompiledTbFunction<T extends GenericFunction> {
 

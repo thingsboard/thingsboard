@@ -20,7 +20,8 @@ import {
   Component,
   ElementRef,
   Injector,
-  Input, NgZone,
+  Input,
+  NgZone,
   OnDestroy,
   OnInit,
   QueryList,
@@ -78,7 +79,7 @@ import {
   checkHasActions,
   constructTableCssString,
   DisplayColumn,
-  getCellContentInfo,
+  getCellContentFunctionInfo,
   getCellStyleInfo,
   getColumnDefaultVisibility,
   getColumnSelectionAvailability,
@@ -131,7 +132,7 @@ interface TimeseriesHeader {
   show: boolean;
   columnDefaultVisibility?: boolean;
   columnSelectionAvailability?: boolean;
-  styleInfo: CellStyleInfo;
+  styleInfo: Observable<CellStyleInfo>;
   contentInfo: CellContentInfo;
   order?: number;
 }
@@ -200,7 +201,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
 
   private displayedColumns: Array<DisplayColumn[]> = [];
 
-  private rowStylesInfo: RowStyleInfo;
+  private rowStylesInfo: Observable<RowStyleInfo>;
 
   private subscriptions: Subscription[] = [];
   private widgetTimewindowChanged$: Subscription;
@@ -348,7 +349,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
       this.dateFormatFilter = isDefined(this.settings.dateFormat?.format) ? this.settings.dateFormat?.format : 'yyyy-MM-dd HH:mm:ss';
     }
 
-    this.rowStylesInfo = getRowStyleInfo(this.settings, 'rowData, ctx');
+    this.rowStylesInfo = getRowStyleInfo(this.ctx, this.settings, 'rowData, ctx');
 
     const pageSize = this.settings.defaultPageSize;
     if (isDefined(pageSize) && isNumber(pageSize) && pageSize > 0) {
@@ -519,12 +520,15 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     dataKeys.forEach((dataKey, index) => {
       const sortable = !dataKey.usePostProcessing;
       const keySettings: TableWidgetDataKeySettings = dataKey.settings;
-      const styleInfo = getCellStyleInfo(keySettings, 'value, rowData, ctx');
-      const contentInfo = getCellContentInfo(keySettings, 'value, rowData, ctx');
+      const styleInfo = getCellStyleInfo(this.ctx, keySettings, 'value, rowData, ctx');
+      const contentFunctionInfo = getCellContentFunctionInfo(this.ctx, keySettings, 'value, rowData, ctx');
       const columnDefaultVisibility = getColumnDefaultVisibility(keySettings, this.ctx);
       const columnSelectionAvailability = getColumnSelectionAvailability(keySettings);
-      contentInfo.units = dataKey.units;
-      contentInfo.decimals = dataKey.decimals;
+      const contentInfo: CellContentInfo = {
+        contentFunction: contentFunctionInfo,
+        units: dataKey.units,
+        decimals: dataKey.decimals
+      };
       header.push({
         index: index + 1,
         dataKey,
@@ -542,12 +546,15 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         const index = dataKeys.length + latestIndex;
         const sortable = !dataKey.usePostProcessing;
         const keySettings: TimeseriesWidgetLatestDataKeySettings = dataKey.settings;
-        const styleInfo = getCellStyleInfo(keySettings, 'value, rowData, ctx');
-        const contentInfo = getCellContentInfo(keySettings, 'value, rowData, ctx');
+        const styleInfo = getCellStyleInfo(this.ctx, keySettings, 'value, rowData, ctx');
+        const contentFunctionInfo = getCellContentFunctionInfo(this.ctx, keySettings, 'value, rowData, ctx');
         const columnDefaultVisibility = getColumnDefaultVisibility(keySettings, this.ctx);
         const columnSelectionAvailability = getColumnSelectionAvailability(keySettings);
-        contentInfo.units = dataKey.units;
-        contentInfo.decimals = dataKey.decimals;
+        const contentInfo: CellContentInfo = {
+          contentFunction: contentFunctionInfo,
+          units: dataKey.units,
+          decimals: dataKey.decimals
+        };
         header.push({
           index: index + 1,
           dataKey,
@@ -658,111 +665,143 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     return source.datasource.entityId;
   }
 
-  public rowStyle(source: TimeseriesTableSource, row: TimeseriesRow, index: number): any {
+  public rowStyle(source: TimeseriesTableSource, row: TimeseriesRow, index: number): Observable<any> {
+    let style$: Observable<any>;
     let res = this.rowStyleCache[index];
     if (!res) {
-      res = {};
-      if (this.rowStylesInfo.useRowStyleFunction && this.rowStylesInfo.rowStyleFunction) {
-        try {
-          const rowData = source.rowDataTemplate;
-          rowData.Timestamp = row[0];
-          source.header.forEach((headerInfo) => {
-            rowData[headerInfo.dataKey.label] = row[headerInfo.index];
-          });
-          res = this.rowStylesInfo.rowStyleFunction(rowData, this.ctx);
-          if (!isObject(res)) {
-            throw new TypeError(`${res === null ? 'null' : typeof res} instead of style object`);
+      style$ = this.rowStylesInfo.pipe(
+        map(styleInfo => {
+          if (styleInfo.useRowStyleFunction && styleInfo.rowStyleFunction) {
+            const rowData = source.rowDataTemplate;
+            rowData.Timestamp = row[0];
+            source.header.forEach((headerInfo) => {
+              rowData[headerInfo.dataKey.label] = row[headerInfo.index];
+            });
+            const style = styleInfo.rowStyleFunction.execute(rowData, this.ctx);
+            if (!isObject(style)) {
+              throw new TypeError(`${style === null ? 'null' : typeof style} instead of style object`);
+            }
+            if (Array.isArray(style)) {
+              throw new TypeError(`Array instead of style object`);
+            }
+            return style;
+          } else {
+            return {};
           }
-          if (Array.isArray(res)) {
-            throw new TypeError(`Array instead of style object`);
-          }
-        } catch (e) {
-          res = {};
+        }),
+        catchError(e => {
           console.warn(`Row style function in widget ` +
             `'${this.ctx.widgetConfig.title}' returns '${e}'. Please check your row style function.`);
-        }
-      }
-      this.rowStyleCache[index] = res;
+          return of({});
+        })
+      );
+      style$ = style$.pipe(
+        tap((style) => {
+          this.rowStyleCache[index] = style;
+        })
+      );
+    } else {
+      style$ = of(res);
     }
-    return res;
+    return style$;
   }
 
   public cellStyle(source: TimeseriesTableSource, header: TimeseriesHeader,
-                   index: number, row: TimeseriesRow, value: any, rowIndex: number): any {
+                   index: number, row: TimeseriesRow, value: any, rowIndex: number): Observable<any> {
+    let style$: Observable<any>;
     const cacheIndex = rowIndex * (source.header.length + 1) + index;
     let res = this.cellStyleCache[cacheIndex];
     if (!res) {
-      res = {};
       if (index > 0) {
-        const styleInfo = header.styleInfo;
-        if (styleInfo.useCellStyleFunction && styleInfo.cellStyleFunction) {
-          try {
-            const rowData = source.rowDataTemplate;
-            rowData.Timestamp = row[0];
-            source.header.forEach((headerInfo) => {
-              rowData[headerInfo.dataKey.label] = row[headerInfo.index];
-            });
-            res = styleInfo.cellStyleFunction(value, rowData, this.ctx);
-            if (!isObject(res)) {
-              throw new TypeError(`${res === null ? 'null' : typeof res} instead of style object`);
+        style$ = header.styleInfo.pipe(
+          map(styleInfo => {
+            if (styleInfo.useCellStyleFunction && styleInfo.cellStyleFunction) {
+              const rowData = source.rowDataTemplate;
+              rowData.Timestamp = row[0];
+              source.header.forEach((headerInfo) => {
+                rowData[headerInfo.dataKey.label] = row[headerInfo.index];
+              });
+              const style = styleInfo.cellStyleFunction.execute(value, rowData, this.ctx);
+              if (!isObject(style)) {
+                throw new TypeError(`${style === null ? 'null' : typeof style} instead of style object`);
+              }
+              if (Array.isArray(style)) {
+                throw new TypeError(`Array instead of style object`);
+              }
+              return style;
+            } else {
+              return {};
             }
-            if (Array.isArray(res)) {
-              throw new TypeError(`Array instead of style object`);
-            }
-          } catch (e) {
-            res = {};
+          }),
+          catchError(e => {
             console.warn(`Cell style function for data key '${source.header[index - 1].dataKey.label}' in widget ` +
               `'${this.ctx.widgetConfig.title}' returns '${e}'. Please check your cell style function.`);
-          }
-        }
+            return of({});
+          })
+        );
+      } else {
+        style$ = of({});
       }
-      this.cellStyleCache[cacheIndex] = res;
+      style$ = style$.pipe(
+        tap((style) => {
+          this.cellStyleCache[cacheIndex] = style;
+        })
+      );
+    } else {
+      style$ = of(res);
     }
-    return res;
+    return style$;
   }
 
   public cellContent(source: TimeseriesTableSource, header: TimeseriesHeader,
-                     index: number, row: TimeseriesRow, value: any, rowIndex: number): SafeHtml {
+                     index: number, row: TimeseriesRow, value: any, rowIndex: number): Observable<SafeHtml> {
+    let content$: Observable<SafeHtml>;
     const cacheIndex = rowIndex * (source.header.length + 1) + index ;
     let res = this.cellContentCache[cacheIndex];
     if (isUndefined(res)) {
-      res = '';
       if (index === 0) {
-        res = row.formattedTs;
+        content$ = of(row.formattedTs);
       } else {
-        let content;
-        const contentInfo = header.contentInfo;
-        if (contentInfo.useCellContentFunction && contentInfo.cellContentFunction) {
-          try {
-            const rowData = source.rowDataTemplate;
-            rowData.Timestamp = row[0];
-            source.header.forEach((headerInfo) => {
-              rowData[headerInfo.dataKey.label] = row[headerInfo.index];
-            });
-            content = contentInfo.cellContentFunction(value, rowData, this.ctx);
-          } catch (e) {
-            content = '' + value;
-          }
-        } else {
-          const decimals = (contentInfo.decimals || contentInfo.decimals === 0) ? contentInfo.decimals : this.ctx.widgetConfig.decimals;
-          const units = contentInfo.units || this.ctx.widgetConfig.units;
-          content = this.ctx.utils.formatValue(value, decimals, units, true);
-        }
-
-        if (isDefined(content)) {
-          content = this.utils.customTranslation(content, content);
-          switch (typeof content) {
-            case 'string':
-              res = this.domSanitizer.bypassSecurityTrustHtml(content);
-              break;
-            default:
-              res = content;
-          }
-        }
+        content$ = header.contentInfo.contentFunction.pipe(
+          map((contentFunction) => {
+            let content: any;
+            if (contentFunction.useCellContentFunction && contentFunction.cellContentFunction) {
+              try {
+                const rowData = source.rowDataTemplate;
+                rowData.Timestamp = row[0];
+                source.header.forEach((headerInfo) => {
+                  rowData[headerInfo.dataKey.label] = row[headerInfo.index];
+                });
+                content = contentFunction.cellContentFunction.execute(value, rowData, this.ctx);
+              } catch (e) {
+                content = '' + value;
+              }
+            } else {
+              const decimals = (header.contentInfo.decimals || header.contentInfo.decimals === 0) ? header.contentInfo.decimals : this.ctx.widgetConfig.decimals;
+              const units = header.contentInfo.units || this.ctx.widgetConfig.units;
+              content = this.ctx.utils.formatValue(value, decimals, units, true);
+            }
+            if (isDefined(content)) {
+              content = this.utils.customTranslation(content, content);
+              switch (typeof content) {
+                case 'string':
+                  content = this.domSanitizer.bypassSecurityTrustHtml(content);
+                  break;
+              }
+            }
+            return content;
+          })
+        );
       }
-      this.cellContentCache[cacheIndex] = res;
+      content$ = content$.pipe(
+        tap((content) => {
+          this.cellContentCache[cacheIndex] = content;
+        })
+      );
+    } else {
+      content$ = of(res);
     }
-    return res;
+    return content$;
   }
 
   public onRowClick($event: Event, row: TimeseriesRow) {

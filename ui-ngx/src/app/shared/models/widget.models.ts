@@ -334,7 +334,7 @@ export interface KeyInfo {
   comparisonResultType?: ComparisonResultType;
   label?: string;
   color?: string;
-  funcBody?: string;
+  funcBody?: TbFunction;
   postFuncBody?: TbFunction;
   units?: string;
   decimals?: number;
