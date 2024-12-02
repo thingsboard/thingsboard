@@ -42,7 +42,7 @@
         <div [formGroupName]="i" class="tb-form-table-row">
           <div class="tb-form-table-row-cell tb-interval">
             <mat-checkbox class="tb-interval-option" formControlName="enabled" color="primary">
-              <mat-label>{{ interval.get('name').value }}</mat-label>
+              <mat-label tbTruncateWithTooltip>{{ interval.get('name').value }}</mat-label>
             </mat-checkbox>
           </div>
           <ng-container *ngIf="aggregation">

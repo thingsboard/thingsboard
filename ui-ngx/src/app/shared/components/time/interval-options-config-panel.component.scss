@@ -59,9 +59,10 @@
         }
 
         .mdc-label {
-          white-space: nowrap;
           overflow: hidden;
-          text-overflow: ellipsis;
+          mat-label {
+            display: block;
+          }
         }
       }
     }
