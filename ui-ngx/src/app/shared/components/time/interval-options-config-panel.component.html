@@ -23,7 +23,7 @@
   </div>
   <div class="tb-form-table">
     <div class="tb-form-table-header">
-      <div class="tb-form-table-header-cell tb-interval">
+      <div class="tb-form-table-header-cell tb-interval" tbTruncateWithTooltip>
         <mat-checkbox color="warn"
                       (click)="$event.stopPropagation()"
                       [indeterminate]="getIndeterminate()"
@@ -33,22 +33,21 @@
         {{ "timewindow.interval" | translate }}
       </div>
       <ng-container *ngIf="aggregation">
-        <div class="tb-form-table-header-cell tb-agg-interval-header">{{"timewindow.allowed-agg-intervals" | translate }}</div>
-        <div class="tb-form-table-header-cell tb-agg-interval-header">{{"timewindow.default-agg-interval" | translate }}</div>
+        <div class="tb-form-table-header-cell tb-agg-interval-header" tbTruncateWithTooltip>{{"timewindow.allowed-agg-intervals" | translate }}</div>
+        <div class="tb-form-table-header-cell tb-agg-interval-header" tbTruncateWithTooltip>{{"timewindow.default-agg-interval" | translate }}</div>
       </ng-container>
     </div>
     <div class="tb-form-table-body" formArrayName="intervals">
       <ng-container *ngFor="let interval of intervalsFormArray.controls; let i = index; trackBy: trackByElement">
         <div [formGroupName]="i" class="tb-form-table-row">
           <div class="tb-form-table-row-cell tb-interval">
-            <mat-checkbox formControlName="enabled" color="primary">
+            <mat-checkbox class="tb-interval-option" formControlName="enabled" color="primary">
               <mat-label>{{ interval.get('name').value }}</mat-label>
             </mat-checkbox>
           </div>
           <ng-container *ngIf="aggregation">
             <div class="tb-form-table-row-cell tb-agg-interval">
               <tb-grouping-interval-options
-                class="tb-inline-field"
                 formControlName="aggIntervalsConfig"
                 [min]="minAggInterval(interval.get('value').value)"
                 [max]="maxAggInterval(interval.get('value').value)"
