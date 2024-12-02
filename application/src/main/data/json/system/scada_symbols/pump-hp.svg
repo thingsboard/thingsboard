@@ -3,7 +3,8 @@
   "description": "Centrifugal pump with configurable connectors and various states.",
   "searchTags": [
     "pump",
-    "centrifugal"
+    "centrifugal",
+    "high performance"
   ],
   "widgetSizeX": 2,
   "widgetSizeY": 2,
@@ -80,16 +81,16 @@
     },
     {
       "id": "warning",
-      "name": "{i18n:scada.symbol.warning-state}",
+      "name": "{i18n:scada.symbol.warning}",
       "hint": "{i18n:scada.symbol.warning-state-hint}",
-      "group": null,
+      "group": "{i18n:scada.symbol.warning-state}",
       "type": "value",
       "valueType": "BOOLEAN",
       "trueLabel": null,
       "falseLabel": null,
       "stateLabel": "{i18n:scada.symbol.warning}",
       "defaultGetValueSettings": {
-        "action": "DO_NOTHING",
+        "action": "GET_ALARM_STATUS",
         "defaultValue": false,
         "executeRpc": {
           "method": "getState",
@@ -98,33 +99,62 @@
           "persistentPollingInterval": 1000
         },
         "getAttribute": {
-          "key": "state",
-          "scope": null
+          "scope": null,
+          "key": "state"
         },
         "getTimeSeries": {
           "key": "state"
         },
+        "getAlarmStatus": {
+          "severityList": [
+            "MAJOR",
+            "MINOR",
+            "WARNING",
+            "INDETERMINATE"
+          ],
+          "typeList": null
+        },
         "dataToValue": {
           "type": "NONE",
-          "compareToValue": true,
-          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
         }
       },
       "defaultSetValueSettings": null,
       "defaultWidgetActionSettings": null
     },
     {
+      "id": "warningClick",
+      "name": "{i18n:scada.symbol.warning-click}",
+      "hint": "{i18n:scada.symbol.on-click-hint}",
+      "group": "{i18n:scada.symbol.warning-state}",
+      "type": "widgetAction",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "targetDashboardStateId": null,
+        "openRightLayout": false,
+        "setEntityId": false,
+        "stateEntityParamName": null
+      }
+    },
+    {
       "id": "critical",
-      "name": "{i18n:scada.symbol.critical-state}",
+      "name": "{i18n:scada.symbol.critical}",
       "hint": "{i18n:scada.symbol.critical-state-hint}",
-      "group": null,
+      "group": "{i18n:scada.symbol.critical-state}",
       "type": "value",
       "valueType": "BOOLEAN",
       "trueLabel": null,
       "falseLabel": null,
       "stateLabel": "{i18n:scada.symbol.critical}",
       "defaultGetValueSettings": {
-        "action": "DO_NOTHING",
+        "action": "GET_ALARM_STATUS",
         "defaultValue": false,
         "executeRpc": {
           "method": "getState",
@@ -133,20 +163,46 @@
           "persistentPollingInterval": 1000
         },
         "getAttribute": {
-          "key": "state",
-          "scope": null
+          "scope": null,
+          "key": "state"
         },
         "getTimeSeries": {
           "key": "state"
         },
+        "getAlarmStatus": {
+          "severityList": [
+            "CRITICAL"
+          ],
+          "typeList": null
+        },
         "dataToValue": {
           "type": "NONE",
-          "compareToValue": true,
-          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
         }
       },
       "defaultSetValueSettings": null,
       "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "criticalClick",
+      "name": "{i18n:scada.symbol.critical-click}",
+      "hint": "{i18n:scada.symbol.on-click-hint}",
+      "group": "{i18n:scada.symbol.critical-state}",
+      "type": "widgetAction",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "targetDashboardStateId": null,
+        "openRightLayout": false,
+        "setEntityId": false,
+        "stateEntityParamName": null
+      }
     },
     {
       "id": "criticalAnimation",
@@ -184,46 +240,6 @@
       "defaultWidgetActionSettings": null
     },
     {
-      "id": "warningClick",
-      "name": "{i18n:scada.symbol.warning-click}",
-      "hint": "{i18n:scada.symbol.on-click-hint}",
-      "group": null,
-      "type": "widgetAction",
-      "valueType": "BOOLEAN",
-      "trueLabel": null,
-      "falseLabel": null,
-      "stateLabel": null,
-      "defaultGetValueSettings": null,
-      "defaultSetValueSettings": null,
-      "defaultWidgetActionSettings": {
-        "type": "doNothing",
-        "targetDashboardStateId": null,
-        "openRightLayout": false,
-        "setEntityId": false,
-        "stateEntityParamName": null
-      }
-    },
-    {
-      "id": "criticalClick",
-      "name": "{i18n:scada.symbol.critical-click}",
-      "hint": "{i18n:scada.symbol.on-click-hint}",
-      "group": null,
-      "type": "widgetAction",
-      "valueType": "BOOLEAN",
-      "trueLabel": null,
-      "falseLabel": null,
-      "stateLabel": null,
-      "defaultGetValueSettings": null,
-      "defaultSetValueSettings": null,
-      "defaultWidgetActionSettings": {
-        "type": "doNothing",
-        "targetDashboardStateId": null,
-        "openRightLayout": false,
-        "setEntityId": false,
-        "stateEntityParamName": null
-      }
-    },
-    {
       "id": "click",
       "name": "{i18n:scada.symbol.on-click}",
       "hint": "{i18n:scada.symbol.on-click-hint}",
@@ -247,12 +263,12 @@
   "properties": [
     {
       "id": "runningColor",
-      "name": "{i18n:scada.symbol.running-color}",
+      "name": "{i18n:scada.symbol.colors}",
       "type": "color",
       "default": "#FFFFFF",
       "required": null,
-      "subLabel": null,
-      "divider": null,
+      "subLabel": "{i18n:scada.symbol.running}",
+      "divider": true,
       "fieldSuffix": null,
       "disableOnProperty": null,
       "rowClass": "",
@@ -263,11 +279,11 @@
     },
     {
       "id": "stoppedColor",
-      "name": "{i18n:scada.symbol.stopped-color}",
+      "name": "{i18n:scada.symbol.colors}",
       "type": "color",
       "default": "#666666",
       "required": null,
-      "subLabel": null,
+      "subLabel": "{i18n:scada.symbol.stopped}",
       "divider": null,
       "fieldSuffix": null,
       "disableOnProperty": null,
@@ -279,12 +295,12 @@
     },
     {
       "id": "warningColor",
-      "name": "{i18n:scada.symbol.warning-color}",
+      "name": "{i18n:scada.symbol.alarm-colors}",
       "type": "color",
       "default": "#FAA405",
       "required": null,
-      "subLabel": null,
-      "divider": null,
+      "subLabel": "{i18n:scada.symbol.warning}",
+      "divider": true,
       "fieldSuffix": null,
       "disableOnProperty": null,
       "rowClass": "",
@@ -295,11 +311,11 @@
     },
     {
       "id": "criticalColor",
-      "name": "{i18n:scada.symbol.critical-color}",
+      "name": "{i18n:scada.symbol.alarm-colors}",
       "type": "color",
       "default": "#D12730",
       "required": null,
-      "subLabel": null,
+      "subLabel": "Critical",
       "divider": null,
       "fieldSuffix": null,
       "disableOnProperty": null,
