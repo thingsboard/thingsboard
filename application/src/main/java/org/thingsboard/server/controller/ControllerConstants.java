@@ -35,6 +35,8 @@ public class ControllerConstants {
 
     protected static final String INLINE_IMAGES = "inlineImages";
     protected static final String INLINE_IMAGES_DESCRIPTION = "Inline images as a data URL (Base64)";
+    protected static final String INCLUDE_RESOURCES = "includeResources";
+    protected static final String INCLUDE_RESOURCES_DESCRIPTION = "Export used resources and replace resource links with resource metadata";
     protected static final String DASHBOARD_ID_PARAM_DESCRIPTION = "A string value representing the dashboard id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String RPC_ID_PARAM_DESCRIPTION = "A string value representing the rpc id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String DEVICE_ID_PARAM_DESCRIPTION = "A string value representing the device id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";

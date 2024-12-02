@@ -50,16 +50,13 @@ public abstract class AssetProfileEdgeProcessor extends BaseAssetProfileProcesso
         try {
             edgeSynchronizationManager.getEdgeId().set(edge.getId());
 
-            switch (assetProfileUpdateMsg.getMsgType()) {
-                case ENTITY_CREATED_RPC_MESSAGE:
-                case ENTITY_UPDATED_RPC_MESSAGE:
+            return switch (assetProfileUpdateMsg.getMsgType()) {
+                case ENTITY_CREATED_RPC_MESSAGE, ENTITY_UPDATED_RPC_MESSAGE -> {
                     saveOrUpdateAssetProfile(tenantId, assetProfileId, assetProfileUpdateMsg, edge);
-                    return Futures.immediateFuture(null);
-                case ENTITY_DELETED_RPC_MESSAGE:
-                case UNRECOGNIZED:
-                default:
-                    return handleUnsupportedMsgType(assetProfileUpdateMsg.getMsgType());
-            }
+                    yield Futures.immediateFuture(null);
+                }
+                default -> handleUnsupportedMsgType(assetProfileUpdateMsg.getMsgType());
+            };
         } catch (DataValidationException e) {
             log.warn("[{}] Failed to process AssetProfileUpdateMsg from Edge [{}]", tenantId, assetProfileUpdateMsg, e);
             return Futures.immediateFailedFuture(e);
@@ -83,7 +80,7 @@ public abstract class AssetProfileEdgeProcessor extends BaseAssetProfileProcesso
 
     private void pushAssetProfileCreatedEventToRuleEngine(TenantId tenantId, Edge edge, AssetProfileId assetProfileId) {
         try {
-            AssetProfile assetProfile = assetProfileService.findAssetProfileById(tenantId, assetProfileId);
+            AssetProfile assetProfile = edgeCtx.getAssetProfileService().findAssetProfileById(tenantId, assetProfileId);
             String assetProfileAsString = JacksonUtil.toString(assetProfile);
             TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, null);
             pushEntityEventToRuleEngine(tenantId, assetProfileId, null, TbMsgType.ENTITY_CREATED, assetProfileAsString, msgMetaData);
@@ -93,33 +90,30 @@ public abstract class AssetProfileEdgeProcessor extends BaseAssetProfileProcesso
     }
 
     @Override
-    public DownlinkMsg convertAssetProfileEventToDownlink(EdgeEvent edgeEvent, EdgeId edgeId, EdgeVersion edgeVersion) {
+    public DownlinkMsg convertAssetProfileEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         AssetProfileId assetProfileId = new AssetProfileId(edgeEvent.getEntityId());
-        DownlinkMsg downlinkMsg = null;
+        var msgConstructor = (AssetMsgConstructor) edgeCtx.getAssetMsgConstructorFactory().getMsgConstructorByEdgeVersion(edgeVersion);
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED -> {
-                AssetProfile assetProfile = assetProfileService.findAssetProfileById(edgeEvent.getTenantId(), assetProfileId);
+                AssetProfile assetProfile = edgeCtx.getAssetProfileService().findAssetProfileById(edgeEvent.getTenantId(), assetProfileId);
                 if (assetProfile != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    assetProfile = checkIfAssetProfileDefaultFieldsAssignedToEdge(edgeEvent.getTenantId(), edgeId, assetProfile, edgeVersion);
-                    AssetProfileUpdateMsg assetProfileUpdateMsg = ((AssetMsgConstructor)
-                            assetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructAssetProfileUpdatedMsg(msgType, assetProfile);
-                    downlinkMsg = DownlinkMsg.newBuilder()
+                    AssetProfileUpdateMsg assetProfileUpdateMsg = msgConstructor.constructAssetProfileUpdatedMsg(msgType, assetProfile);
+                    return DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addAssetProfileUpdateMsg(assetProfileUpdateMsg)
                             .build();
                 }
             }
             case DELETED -> {
-                AssetProfileUpdateMsg assetProfileUpdateMsg = ((AssetMsgConstructor)
-                        assetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructAssetProfileDeleteMsg(assetProfileId);
-                downlinkMsg = DownlinkMsg.newBuilder()
+                AssetProfileUpdateMsg assetProfileUpdateMsg = msgConstructor.constructAssetProfileDeleteMsg(assetProfileId);
+                return DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addAssetProfileUpdateMsg(assetProfileUpdateMsg)
                         .build();
             }
         }
-        return downlinkMsg;
+        return null;
     }
 
 }

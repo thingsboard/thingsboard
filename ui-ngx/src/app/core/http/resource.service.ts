@@ -20,7 +20,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
 import { forkJoin, Observable, of } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
-import { Resource, ResourceInfo, ResourceType } from '@shared/models/resource.models';
+import { Resource, ResourceInfo, ResourceType, TBResourceScope } from '@shared/models/resource.models';
 import { catchError, mergeMap } from 'rxjs/operators';
 import { isNotEmptyStr } from '@core/utils';
 import { ResourcesService } from '@core/services/resources.service';
@@ -52,8 +52,12 @@ export class ResourceService {
     return this.http.get<Resource>(`/api/resource/${resourceId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getResourceInfo(resourceId: string, config?: RequestConfig): Observable<ResourceInfo> {
+  public getResourceInfoById(resourceId: string, config?: RequestConfig): Observable<ResourceInfo> {
     return this.http.get<Resource>(`/api/resource/info/${resourceId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getResourceInfo(type: ResourceType, scope: TBResourceScope, key: string, config?: RequestConfig): Observable<ResourceInfo> {
+    return this.http.get<Resource>(`/api/resource/${type}/${scope}/${key}/info`, defaultHttpOptionsFromConfig(config));
   }
 
   public downloadResource(resourceId: string): Observable<any> {

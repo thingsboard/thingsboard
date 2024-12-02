@@ -31,7 +31,7 @@ public class MobileAppOauth2ClientCompositeKey implements Serializable {
     @Transient
     private static final long serialVersionUID = -245388185894468455L;
 
-    private UUID mobileAppId;
+    private UUID mobileAppBundleId;
     private UUID oauth2ClientId;
 
 }
