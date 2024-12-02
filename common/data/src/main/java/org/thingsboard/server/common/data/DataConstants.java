@@ -52,7 +52,9 @@ public class DataConstants {
     public static final String HTTP_TRANSPORT_NAME = "HTTP";
     public static final String SNMP_TRANSPORT_NAME = "SNMP";
     public static final String MAXIMUM_NUMBER_OF_DEVICES_REACHED = "Maximum number of devices reached!";
+
     public static final String TB_IMAGE_PREFIX = "tb-image;";
+    public static final String TB_RESOURCE_PREFIX = "tb-resource;";
 
 
     public static String[] allScopes() {
@@ -141,5 +143,6 @@ public class DataConstants {
     public static final String QUEUE_NAME = "queueName";
 
     public static final String EDGE_QUEUE_NAME = "Edge";
+    public static final String EDGE_EVENT_QUEUE_NAME = "EdgeEvent";
 
 }

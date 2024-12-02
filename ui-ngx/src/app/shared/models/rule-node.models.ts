@@ -493,7 +493,7 @@ const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode': 'ruleNodeSaveAttributes',
   'org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode': 'ruleNodeSaveTimeseries',
   'org.thingsboard.rule.engine.action.TbSaveToCustomCassandraTableNode': 'ruleNodeSaveToCustomTable',
-  'org.thingsboard.rule.engine.aws.lambda.TbLambdaNode': 'ruleNodeAwsLambda',
+  'org.thingsboard.rule.engine.aws.lambda.TbAwsLambdaNode': 'ruleNodeAwsLambda',
   'org.thingsboard.rule.engine.aws.sns.TbSnsNode': 'ruleNodeAwsSns',
   'org.thingsboard.rule.engine.aws.sqs.TbSqsNode': 'ruleNodeAwsSqs',
   'org.thingsboard.rule.engine.kafka.TbKafkaNode': 'ruleNodeKafka',
@@ -507,8 +507,12 @@ const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.edge.TbMsgPushToEdgeNode': 'ruleNodePushToEdge',
   'org.thingsboard.rule.engine.flow.TbRuleChainInputNode': 'ruleNodeRuleChain',
   'org.thingsboard.rule.engine.flow.TbRuleChainOutputNode': 'ruleNodeOutputNode',
+  'org.thingsboard.rule.engine.flow.TbAckNode': 'ruleNodeAcknowledge',
+  'org.thingsboard.rule.engine.flow.TbCheckpointNode': 'ruleNodeCheckpoint',
   'org.thingsboard.rule.engine.math.TbMathNode': 'ruleNodeMath',
   'org.thingsboard.rule.engine.rest.TbSendRestApiCallReplyNode': 'ruleNodeRestCallReply',
+  'org.thingsboard.rule.engine.notification.TbNotificationNode': 'ruleNodeSendNotification',
+  'org.thingsboard.rule.engine.notification.TbSlackNode': 'ruleNodeSendSlack',
 };
 
 export function getRuleNodeHelpLink(component: RuleNodeComponentDescriptor): string {

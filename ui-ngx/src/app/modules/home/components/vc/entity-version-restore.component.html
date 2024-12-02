@@ -18,7 +18,7 @@
 <section *ngIf="!versionLoadResult$">
   <mat-toolbar *ngIf="entityDataInfo">
     <h2>{{ 'version-control.restore-entity-from-version' | translate: {versionName} }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
   </mat-toolbar>
   <mat-progress-bar color="warn" style="z-index: 10; width: 100%; margin-bottom: -4px;" mode="indeterminate"
                     *ngIf="entityDataInfo && (isLoading$ | async)">
@@ -26,7 +26,7 @@
   <mat-spinner *ngIf="!entityDataInfo" mode="indeterminate" diameter="80"></mat-spinner>
   <form *ngIf="entityDataInfo" [formGroup]="restoreFormGroup" style="padding-top: 16px;">
     <fieldset [disabled]="isLoading$ | async">
-      <div fxFlex fxLayout="column">
+      <div class="flex flex-1 flex-col">
         <mat-checkbox *ngIf="entityDataInfo.hasCredentials" formControlName="loadCredentials" style="margin-bottom: 16px;">
           {{ 'version-control.load-credentials' | translate }}
         </mat-checkbox>
@@ -39,7 +39,7 @@
       </div>
     </fieldset>
   </form>
-  <div *ngIf="entityDataInfo"  fxLayoutAlign="end center" fxLayoutGap="8px">
+  <div *ngIf="entityDataInfo"  class="flex items-center justify-end gap-2">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
@@ -58,7 +58,7 @@
   <section *ngIf="(versionLoadResult$ | async)?.done || errorMessage; else progress">
     <section *ngIf="errorMessage">
       <div class="mat-headline-6 vc-result-message error" [innerHTML]="errorMessage"></div>
-      <div fxLayoutAlign="end center" fxLayoutGap="8px">
+      <div class="flex items-center justify-end gap-2">
         <button mat-button color="primary"
                 type="button"
                 [disabled]="(isLoading$ | async)"
@@ -69,7 +69,7 @@
     </section>
   </section>
   <ng-template #progress>
-    <section fxLayout="column" fxLayoutAlign="center center">
+    <section class="flex flex-col items-center justify-center">
       <div class="mat-headline-6 vc-result-message progress">
         <span translate>version-control.restoring-entity-version</span>
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>

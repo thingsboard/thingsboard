@@ -176,6 +176,9 @@ export class GetValueActionSettingsComponent implements OnInit, ControlValueAcce
       case GetValueAction.GET_TIME_SERIES:
         this.displayValue = this.translate.instant('widgets.value-action.get-time-series-text', {key: this.modelValue.getTimeSeries.key});
         break;
+      case GetValueAction.GET_ALARM_STATUS:
+        this.displayValue = this.translate.instant('widgets.value-action.get-alarm-status-text');
+        break;
       case GetValueAction.GET_DASHBOARD_STATE:
         if (this.valueType === ValueType.BOOLEAN) {
           const state = this.modelValue.dataToValue?.compareToValue;

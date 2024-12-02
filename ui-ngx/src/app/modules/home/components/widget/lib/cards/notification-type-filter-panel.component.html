@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<form fxLayout="column" fxFlex class="mat-content mat-padding" (ngSubmit)="update()">
+<form class="mat-content mat-padding flex flex-1 flex-col" (ngSubmit)="update()">
   <div class="tb-form-panel no-padding">
     <div class="tb-form-row column-xs">
-      <div class="fixed-title-width" ngClass.xs="filters-title-mobile" translate>widgets.notification.notification-types</div>
-      <mat-form-field floatLabel="auto" appearance="outline" subscriptSizing="dynamic" class="flex fb-chips">
+      <div class="fixed-title-width" translate>widgets.notification.notification-types</div>
+      <mat-form-field floatLabel="auto" appearance="outline" subscriptSizing="dynamic" class="fb-chips flex">
         <mat-chip-grid #chipList>
           <mat-chip-row
             *ngFor="let type of selectedNotificationTypes"
@@ -54,14 +54,14 @@
     </div>
   </div>
 
-  <div fxLayout="row" class="tb-panel-actions" fxLayoutAlign="end center">
+  <div class="tb-panel-actions flex flex-row items-center justify-end">
     <button type="button"
             mat-button
             (click)="reset()"
             color="primary">
       {{ 'action.reset' | translate }}
     </button>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button type="button"
             (click)="cancel()"
             mat-button>

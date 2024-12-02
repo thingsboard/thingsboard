@@ -1255,7 +1255,7 @@ public class TbUtils {
         if (str == null || str.isEmpty()) {
             return -1;
         }
-        return str.matches("-?\\d+(\\.\\d+)?") ? DEC_RADIX : -1;
+        return str.matches("[+-]?\\d+(\\.\\d+)?") ? DEC_RADIX : -1;
     }
 
     public static int isHexadecimal(String str) {

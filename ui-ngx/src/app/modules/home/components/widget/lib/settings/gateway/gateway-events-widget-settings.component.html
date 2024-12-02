@@ -15,12 +15,12 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="gatewayEventsWidgetSettingsForm" fxLayout="column">
-  <mat-form-field fxFlex class="mat-block">
+<section class="tb-widget-settings flex flex-col" [formGroup]="gatewayEventsWidgetSettingsForm">
+  <mat-form-field class="mat-block flex-1">
     <mat-label translate>widgets.gateway.events-title</mat-label>
     <input matInput formControlName="eventsTitle">
   </mat-form-field>
-  <mat-form-field fxFlex class="mat-block" floatLabel="always">
+  <mat-form-field class="mat-block flex-1" floatLabel="always">
     <mat-label translate>widgets.gateway.events-filter</mat-label>
     <mat-chip-grid #chipList formControlName="eventsReg">
       <mat-chip-row

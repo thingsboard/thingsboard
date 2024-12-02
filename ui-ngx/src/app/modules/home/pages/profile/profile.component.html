@@ -18,13 +18,12 @@
 <div>
   <mat-card appearance="outlined" class="profile-card">
     <mat-card-header>
-      <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.xs="8px"
-           fxLayoutAlign="space-between start" fxLayoutAlign.xs="start start">
-        <div fxFlex fxLayout="column">
+      <div class="flex flex-1 flex-row items-start justify-between xs:flex-col xs:justify-start xs:gap-2">
+        <div class="flex flex-1 flex-col">
           <span class="mat-headline-5" translate>profile.profile</span>
           <span class="profile-email" style='opacity: 0.7;'>{{ profile ? profile.get('email').value : '' }}</span>
         </div>
-        <div fxLayout="column">
+        <div class="flex flex-col">
           <span class="mat-mdc-subheader" translate>profile.last-login-time</span>
           <span class="profile-last-login-ts" style='opacity: 0.7;'>{{ user?.additionalInfo?.lastLoginTs | date:'yyyy-MM-dd HH:mm:ss'  }}</span>
         </div>
@@ -67,9 +66,9 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <section class="tb-home-dashboard" fxFlex fxLayout="column" fxLayout.gt-sm="row" *ngIf="!isSysAdmin()">
+          <section class="tb-home-dashboard flex flex-1 flex-col gt-sm:flex-row" *ngIf="!isSysAdmin()">
             <tb-dashboard-autocomplete
-              fxFlex
+              class="flex-1"
               label="{{ 'dashboard.home-dashboard' | translate }}"
               formControlName="homeDashboardId"
               [dashboardsScope]="user?.authority === authorities.TENANT_ADMIN ? 'tenant' : 'customer'"
@@ -77,11 +76,11 @@
               [customerId]="user?.customerId?.id"
               [selectFirstDashboard]="false"
             ></tb-dashboard-autocomplete>
-            <mat-checkbox fxFlex formControlName="homeDashboardHideToolbar">
+            <mat-checkbox class="flex-1" formControlName="homeDashboardHideToolbar">
               {{ 'dashboard.home-dashboard-hide-toolbar' | translate }}
             </mat-checkbox>
           </section>
-          <div fxLayout="row" fxLayoutAlign="end start">
+          <div class="flex flex-row items-start justify-end">
             <button mat-button mat-raised-button color="primary"
                     type="submit"
                     [disabled]="(isLoading$ | async) || profile.invalid || !profile.dirty">

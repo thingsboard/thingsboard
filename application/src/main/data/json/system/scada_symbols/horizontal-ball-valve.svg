@@ -1,5 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="200" height="200" fill="none" version="1.1" viewBox="0 0 200 200">
-<tb:metadata xmlns=""><![CDATA[{
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="200" height="200" fill="none" version="1.1" viewBox="0 0 200 200"><tb:metadata xmlns=""><![CDATA[{
   "title": "Horizontal ball valve",
   "description": "Horizontal ball valve with open/close animation and state colors.",
   "searchTags": [
@@ -11,7 +10,7 @@
   "tags": [
     {
       "tag": "background",
-      "stateRenderFunction": "var opened = ctx.values.opened;\nvar openAnimate = element.remember('openAnimate');\nvar color = opened ? ctx.properties.openedColor : ctx.properties.closedColor;\nif (!openAnimate) {\n    element.attr({fill: color});\n} else {\n    ctx.api.animate(element, 500).attr({fill: color});\n    element.remember('openAnimate', false);\n}\n",
+      "stateRenderFunction": "var opened = ctx.values.opened;\nvar openAnimate = element.remember('openAnimate');\nvar color = opened ? ctx.properties.openedColor : ctx.properties.closedColor;\nif (!openAnimate) {\n    element.attr({fill: color});\n} else {\n    ctx.api.cssAnimate(element, 500).attr({fill: color});\n    element.remember('openAnimate', false);\n}\n",
       "actions": null
     },
     {
@@ -25,7 +24,7 @@
     },
     {
       "tag": "wheel",
-      "stateRenderFunction": "var opened = ctx.values.opened;\nvar openAnimate = element.remember('openAnimate');\nvar angle = opened ? ctx.properties.openedRotationAngle : ctx.properties.closedRotationAngle;\nif (!openAnimate) {\n    element.transform({rotate: angle, originX: 100});\n} else {\n    ctx.api.animate(element, 500).transform({rotate: angle, originX: 100});\n    element.remember('openAnimate', false);\n}\n",
+      "stateRenderFunction": "var opened = ctx.values.opened;\nvar openAnimate = element.remember('openAnimate');\nvar angle = opened ? ctx.properties.openedRotationAngle : ctx.properties.closedRotationAngle;\nif (!openAnimate) {\n    element.transform({rotate: angle, originX: 100});\n} else {\n    ctx.api.cssAnimate(element, 500).transform({rotate: angle, originX: 100});\n    element.remember('openAnimate', false);\n}\n",
       "actions": null
     }
   ],
@@ -200,7 +199,8 @@
       "step": null
     }
   ]
-}]]></tb:metadata><defs>
+}]]></tb:metadata>
+<defs>
   <linearGradient id="paint0_linear_1595_99338" x1="58.72" x2="58.3" y1="46.5" y2="153.51" gradientTransform="translate(-1.1e-6)" gradientUnits="userSpaceOnUse">
    <stop stop-color="#020202" stop-opacity=".35" offset="0"/>
    <stop stop-color="#020202" stop-opacity=".12" offset=".18316"/>

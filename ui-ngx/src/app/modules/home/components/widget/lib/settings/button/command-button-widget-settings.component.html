@@ -20,7 +20,7 @@
     <div class="tb-form-panel-title" translate>widgets.command-button.behavior</div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.command-button.on-click-hint' | translate}}" translate>widgets.command-button.on-click</div>
-      <tb-set-value-action-settings fxFlex
+      <tb-set-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.command-button.on-click' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
@@ -29,7 +29,7 @@
     </div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.button-state.disabled-state-hint' | translate}}" translate>widgets.button-state.disabled-state</div>
-      <tb-get-value-action-settings fxFlex
+      <tb-get-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.button-state.disabled-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
                                     stateLabel="{{ 'widgets.button-state.disabled' | translate }}"

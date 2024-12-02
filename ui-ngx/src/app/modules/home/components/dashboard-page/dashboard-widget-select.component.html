@@ -36,7 +36,7 @@
       [noData]="noWidgets">
     </tb-scroll-grid>
     <ng-template #widgetCard let-item="item">
-      <mat-card class="tb-widget-preview-card" appearance="raised" fxLayout="column" fxLayoutGap="8px" (click)="onWidgetClicked($event, item)">
+      <mat-card class="tb-widget-preview-card flex flex-col gap-2" appearance="raised" (click)="onWidgetClicked($event, item)">
         <div class="title-container">
           <div title="{{item.name}}" class="widget-title">
             {{item.name}}
@@ -51,13 +51,12 @@
         </div>
         <div class="preview-container">
           <div class="preview-spacer"></div>
-          <img class="preview" [src]="item.image | image: {emptyUrl: '/assets/widget-preview-empty.svg'} | async" alt="{{ item.title }}">
+          <img class="preview" [src]="item.image | image: {emptyUrl: '/assets/widget-preview-empty.svg', preview: item.scada} | async" alt="{{ item.title }}">
         </div>
       </mat-card>
     </ng-template>
     <ng-template #loadingWidgets>
-      <div fxLayout="column"
-           fxLayoutAlign="center center" class="tb-absolute-fill">
+      <div class="tb-absolute-fill flex flex-col items-center justify-center">
         <span class="mat-headline-5" style="padding-bottom: 20px;">
           {{ 'widget.loading-widgets' | translate }}
         </span>
@@ -65,9 +64,7 @@
       </div>
     </ng-template>
     <ng-template #noWidgets>
-        <span style="display: flex;"
-              fxLayoutAlign="center center"
-              class="mat-headline-5 tb-absolute-fill">{{(selectWidgetMode === 'bundles' ? 'widgets-bundle.empty' : 'widget.no-widgets-text') | translate}}</span>
+        <span class="mat-headline-5 tb-absolute-fill flex items-center justify-center">{{(selectWidgetMode === 'bundles' ? 'widgets-bundle.empty' : 'widget.no-widgets-text') | translate}}</span>
     </ng-template>
   </ng-template>
 
@@ -83,7 +80,7 @@
       [noData]="noWidgetBundles">
     </tb-scroll-grid>
     <ng-template #widgetsBundleCard let-item="item">
-      <mat-card class="tb-widget-preview-card" appearance="raised" fxLayout="column" fxLayoutGap="8px" (click)="selectBundle($event, item)">
+      <mat-card class="tb-widget-preview-card flex flex-col gap-2" appearance="raised" (click)="selectBundle($event, item)">
         <div class="title-container">
           <div title="{{item.name}}" class="widget-title">
             {{item.title}}
@@ -100,8 +97,7 @@
       </mat-card>
     </ng-template>
     <ng-template #loadingWidgetBundles>
-      <div fxLayout="column"
-           fxLayoutAlign="center center" class="tb-absolute-fill">
+      <div class="tb-absolute-fill flex flex-col items-center justify-center">
         <span class="mat-headline-5" style="padding-bottom: 20px;">
           {{ 'widgets-bundle.loading-widgets-bundles' | translate }}
         </span>
@@ -110,13 +106,11 @@
     </ng-template>
     <ng-template #noWidgetBundles>
         <span translate
-              style="display: flex;"
-              fxLayoutAlign="center center"
-              class="mat-headline-5 tb-absolute-fill">widgets-bundle.no-widgets-bundles-text</span>
+              class="mat-headline-5 tb-absolute-fill flex items-center justify-center">widgets-bundle.no-widgets-bundles-text</span>
     </ng-template>
   </ng-template>
   <ng-template #widgetLoadingCard>
-    <mat-card class="tb-widget-preview-card loading-cell" appearance="raised" fxLayout="column" fxLayoutGap="8px">
+    <mat-card class="tb-widget-preview-card loading-cell flex flex-col gap-2" appearance="raised">
       <div class="title-container">
       </div>
       <div class="preview-container">

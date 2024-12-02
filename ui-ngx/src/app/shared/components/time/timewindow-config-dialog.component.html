@@ -18,7 +18,7 @@
 <form [formGroup]="timewindowForm" mat-dialog-content  class="tb-timewindow-form">
   <mat-toolbar color="primary">
     <h2>{{ 'timewindow.timewindow-settings' | translate }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <!--  <div tb-help="#"></div>-->
     <button mat-icon-button
             (click)="cancel()"
@@ -54,14 +54,16 @@
         <div class="tb-form-row">
           <mat-slide-toggle *ngIf="!quickIntervalOnly"
                             class="mat-slide" formControlName="hideLastInterval">
-            {{ 'timewindow.hide' | translate }}
+            <div tb-hint-tooltip-icon="{{'timewindow.hide-last-interval' | translate}}">
+              {{ 'timewindow.hide' | translate }}
+            </div>
           </mat-slide-toggle>
           <tb-timeinterval
             formControlName="timewindowMs"
             subscriptSizing="dynamic"
             appearance="outline"
             [disabledAdvanced]="timewindowForm.get('realtime.disableCustomInterval').value"
-            [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
+            [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
                             timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
           </tb-timeinterval>
         </div>
@@ -71,7 +73,9 @@
            class="tb-form-row">
         <mat-slide-toggle *ngIf="!quickIntervalOnly"
                           class="mat-slide" formControlName="hideQuickInterval">
-          {{ 'timewindow.hide' | translate }}
+          <div tb-hint-tooltip-icon="{{'timewindow.hide-relative-interval' | translate}}">
+            {{ 'timewindow.hide' | translate }}
+          </div>
         </mat-slide-toggle>
         <tb-quick-time-interval
           displayLabel="false"
@@ -79,7 +83,7 @@
           onlyCurrentInterval="true"
           subscriptSizing="dynamic"
           appearance="outline"
-          [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
+          [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
                           timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
         </tb-quick-time-interval>
       </div>
@@ -105,14 +109,16 @@
         </div>
         <div class="tb-form-row">
           <mat-slide-toggle class="mat-slide" formControlName="hideLastInterval">
-            {{ 'timewindow.hide' | translate }}
+            <div tb-hint-tooltip-icon="{{'timewindow.hide-last-interval' | translate}}">
+              {{ 'timewindow.hide' | translate }}
+            </div>
           </mat-slide-toggle>
           <tb-timeinterval
             formControlName="timewindowMs"
             subscriptSizing="dynamic"
             appearance="outline"
             [disabledAdvanced]="timewindowForm.get('history.disableCustomInterval').value"
-            [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+            [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
                           timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
           </tb-timeinterval>
         </div>
@@ -120,28 +126,32 @@
 
       <div *ngIf="timewindowForm.get('history.historyType').value === historyTypes.FIXED" class="tb-form-row">
         <mat-slide-toggle class="mat-slide" formControlName="hideFixedInterval">
-          {{ 'timewindow.hide' | translate }}
+          <div tb-hint-tooltip-icon="{{'timewindow.hide-fixed-interval' | translate}}">
+            {{ 'timewindow.hide' | translate }}
+          </div>
         </mat-slide-toggle>
         <tb-datetime-period
           formControlName="fixedTimewindow"
           subscriptSizing="dynamic"
           appearance="outline"
           class="history-time-input"
-          [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+          [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
                         timewindowForm.get('history.historyType').value === historyTypes.FIXED">
         </tb-datetime-period>
       </div>
 
       <div *ngIf="timewindowForm.get('history.historyType').value === historyTypes.INTERVAL" class="tb-form-row">
           <mat-slide-toggle class="mat-slide" formControlName="hideQuickInterval">
-            {{ 'timewindow.hide' | translate }}
+            <div tb-hint-tooltip-icon="{{'timewindow.hide-relative-interval' | translate}}">
+              {{ 'timewindow.hide' | translate }}
+            </div>
           </mat-slide-toggle>
           <tb-quick-time-interval
             displayLabel="false"
             formControlName="quickInterval"
             subscriptSizing="dynamic"
             appearance="outline"
-            [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+            [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
                         timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
           </tb-quick-time-interval>
         </div>
@@ -152,7 +162,9 @@
         <div class="tb-form-panel-title">{{ 'aggregation.aggregation' | translate }}</div>
         <div class="tb-form-row column-xs">
           <mat-slide-toggle class="mat-slide" formControlName="hideAggregation">
-            {{ 'timewindow.hide' | translate }}
+            <div tb-hint-tooltip-icon="{{'timewindow.hide-aggregation' | translate}}">
+              {{ 'timewindow.hide' | translate }}
+            </div>
           </mat-slide-toggle>
           <ng-container formGroupName="aggregation">
             <mat-form-field class="flex" subscriptSizing="dynamic" appearance="outline">
@@ -171,7 +183,9 @@
         <div class="tb-form-panel-title">{{ 'aggregation.limit' | translate }}</div>
         <div class="tb-form-row column-xs">
           <mat-slide-toggle class="mat-slide" formControlName="hideAggInterval">
-            {{ 'timewindow.hide' | translate }}
+            <div tb-hint-tooltip-icon="{{'timewindow.hide-max-values' | translate}}">
+              {{ 'timewindow.hide' | translate }}
+            </div>
           </mat-slide-toggle>
           <ng-container formGroupName="aggregation">
             <tb-datapoints-limit formControlName="limit"
@@ -181,10 +195,10 @@
         </div>
       </section>
 
-      <section class="tb-form-panel" [fxShow]="timewindowForm.get('aggregation.type').value !== aggregationTypes.NONE">
+      <section class="tb-form-panel" [class.!hidden]="timewindowForm.get('aggregation.type').value === aggregationTypes.NONE">
         <div class="tb-form-panel-title">{{ 'aggregation.group-interval' | translate }}</div>
 
-        <ng-container *ngIf="timewindow.selectedTab === timewindowTypes.REALTIME">
+        <ng-container *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME">
           <div class="tb-form-row" formGroupName="realtime">
             <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="disableCustomGroupInterval">
               {{ 'timewindow.disable-custom-interval' | translate }}
@@ -205,7 +219,7 @@
             </ng-container>
           </div>
         </ng-container>
-        <ng-container *ngIf="timewindow.selectedTab === timewindowTypes.HISTORY">
+        <ng-container *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY">
           <div class="tb-form-row" formGroupName="history">
             <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="disableCustomGroupInterval">
               {{ 'timewindow.disable-custom-interval' | translate }}
@@ -229,7 +243,9 @@
 
         <ng-template #hideAggInterval>
           <mat-slide-toggle class="mat-slide" formControlName="hideAggInterval">
-            {{ 'timewindow.hide' | translate }}
+            <div tb-hint-tooltip-icon="{{'timewindow.hide-group-interval' | translate}}">
+              {{ 'timewindow.hide' | translate }}
+            </div>
           </mat-slide-toggle>
         </ng-template>
       </section>
@@ -239,7 +255,9 @@
       <div class="tb-form-panel-title">{{ 'timezone.timezone' | translate }}</div>
       <div class="tb-form-row column-xs">
         <mat-slide-toggle class="mat-slide" formControlName="hideTimezone">
-          {{ 'timewindow.hide' | translate }}
+          <div tb-hint-tooltip-icon="{{'timewindow.hide-timezone' | translate}}">
+            {{ 'timewindow.hide' | translate }}
+          </div>
         </mat-slide-toggle>
         <tb-timezone-select [localBrowserTimezonePlaceholderOnEmpty]="true"
                             formControlName="timezone"

@@ -35,8 +35,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
-import java.util.concurrent.TimeUnit;
-
 @Service
 @TbCoreComponent
 @AllArgsConstructor
@@ -60,7 +58,7 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
                     mailService.sendActivationEmail(activationLink.value(), activationLink.ttlMs(), savedUser.getEmail());
                 } catch (ThingsboardException e) {
                     userService.deleteUser(tenantId, savedUser);
-                    throw e;
+                    throw new ThingsboardException("Couldn't send user activation email", ThingsboardErrorCode.GENERAL);
                 }
             }
             logEntityActionService.logEntityAction(tenantId, savedUser.getId(), savedUser, customerId, actionType, user);
@@ -90,16 +88,10 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
     public UserActivationLink getActivationLink(TenantId tenantId, CustomerId customerId, UserId userId, HttpServletRequest request) throws ThingsboardException {
         UserCredentials userCredentials = userService.findUserCredentialsByUserId(tenantId, userId);
         if (!userCredentials.isEnabled() && userCredentials.getActivateToken() != null) {
-            long ttl = userCredentials.getActivationTokenTtl();
-            if (ttl < TimeUnit.MINUTES.toMillis(15)) { // renew link if less than 15 minutes before expiration
-                userCredentials = userService.generateUserActivationToken(userCredentials);
-                userCredentials = userService.saveUserCredentials(tenantId, userCredentials);
-                ttl = userCredentials.getActivationTokenTtl();
-                log.debug("[{}][{}] Regenerated expired user activation token", tenantId, userId);
-            }
+            userCredentials = userService.checkUserActivationToken(tenantId, userCredentials);
             String baseUrl = systemSecurityService.getBaseUrl(tenantId, customerId, request);
             String link = baseUrl + "/api/noauth/activate?activateToken=" + userCredentials.getActivateToken();
-            return new UserActivationLink(link, ttl);
+            return new UserActivationLink(link, userCredentials.getActivationTokenTtl());
         } else {
             throw new ThingsboardException("User is already activated!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }

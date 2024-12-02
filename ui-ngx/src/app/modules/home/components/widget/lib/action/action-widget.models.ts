@@ -17,8 +17,7 @@
 import {
   AttributeData,
   AttributeScope,
-  LatestTelemetry,
-  TelemetrySubscriber,
+  LatestTelemetry, SharedTelemetrySubscriber,
   TelemetryType,
   telemetryTypeTranslationsShort
 } from '@shared/models/telemetry/telemetry.models';
@@ -243,6 +242,8 @@ export abstract class ValueGetter<V> extends ValueAction {
         return new AttributeValueGetter<V>(ctx, settings, valueType, valueObserver, simulated);
       case GetValueAction.GET_TIME_SERIES:
         return new TimeSeriesValueGetter<V>(ctx, settings, valueType, valueObserver, simulated);
+      case GetValueAction.GET_ALARM_STATUS:
+        return new AlarmStatusValueGetter<V>(ctx, settings, valueType, valueObserver, simulated);
       case GetValueAction.GET_DASHBOARD_STATE:
         return new DashboardStateGetter<V>(ctx, settings, valueType, valueObserver, simulated);
     }
@@ -258,7 +259,7 @@ export abstract class ValueGetter<V> extends ValueAction {
                         protected valueObserver: Partial<Observer<V>>,
                         protected simulated: boolean) {
     super(ctx, settings);
-    if (this.settings.action !== GetValueAction.DO_NOTHING) {
+    if (this.settings.action !== GetValueAction.DO_NOTHING && this.settings.action !== GetValueAction.GET_ALARM_STATUS) {
       this.dataConverter = new DataToValueConverter<V>(settings.dataToValue, valueType);
     }
   }
@@ -436,7 +437,7 @@ export class ExecuteRpcValueGetter<V> extends ValueGetter<V> {
 export abstract class TelemetryValueGetter<V, S extends TelemetryValueSettings> extends ValueGetter<V> {
 
   protected targetEntityId: EntityId;
-  private telemetrySubscriber: TelemetrySubscriber;
+  private telemetrySubscriber: SharedTelemetrySubscriber;
 
   protected constructor(protected ctx: WidgetContext,
                         protected settings: GetValueSettings<V>,
@@ -470,10 +471,10 @@ export abstract class TelemetryValueGetter<V, S extends TelemetryValueSettings> 
 
   private subscribeForTelemetryValue(): Observable<V> {
     this.telemetrySubscriber =
-      TelemetrySubscriber.createEntityAttributesSubscription(this.ctx.telemetryWsService, this.targetEntityId,
+      SharedTelemetrySubscriber.createEntityAttributesSubscription(this.ctx.telemetryWsService, this.targetEntityId,
         this.scope(), this.ctx.ngZone, [this.getTelemetryValueSettings().key]);
     this.telemetrySubscriber.subscribe();
-    return this.telemetrySubscriber.attributeData$().pipe(
+    return this.telemetrySubscriber.attributeData$.pipe(
       map((data) => {
         let value: V = null;
         const entry = data.find(attr => attr.key === this.getTelemetryValueSettings().key);
@@ -535,6 +536,58 @@ export class TimeSeriesValueGetter<V> extends TelemetryValueGetter<V, TelemetryV
 
   protected getTelemetryValueSettings(): TelemetryValueSettings {
     return this.settings.getTimeSeries;
+  }
+}
+
+export class AlarmStatusValueGetter<V> extends ValueGetter<V> {
+
+  protected targetEntityId: EntityId;
+  private telemetrySubscriber: SharedTelemetrySubscriber;
+
+  constructor(protected ctx: WidgetContext,
+                        protected settings: GetValueSettings<V>,
+                        protected valueType: ValueType,
+                        protected valueObserver: Partial<Observer<V>>,
+                        protected simulated: boolean) {
+    super(ctx, settings, valueType, valueObserver, simulated);
+    const entityInfo = this.ctx.defaultSubscription.getFirstEntityInfo();
+    this.targetEntityId = entityInfo?.entityId;
+  }
+
+  protected doGetValue(): Observable<boolean> {
+    if (this.simulated) {
+      return of(false).pipe(delay(100));
+    } else {
+      if (!this.targetEntityId && !this.ctx.defaultSubscription.rpcEnabled) {
+        return throwError(() => new Error(this.ctx.translate.instant('widgets.value-action.error.target-entity-is-not-set')));
+      }
+      if (this.targetEntityId) {
+        return this.subscribeForTelemetryValue();
+      } else {
+        return of(null);
+      }
+    }
+  }
+
+  private subscribeForTelemetryValue(): Observable<boolean> {
+    this.telemetrySubscriber =
+      SharedTelemetrySubscriber.createAlarmStatusSubscription(this.ctx.telemetryWsService, this.targetEntityId,
+        this.ctx.ngZone, this.settings.getAlarmStatus.severityList, this.settings.getAlarmStatus.typeList);
+    this.telemetrySubscriber.subscribe();
+    return this.telemetrySubscriber.alarmStatus$.pipe(
+      map((data) => {
+        return data.active;
+      })
+    );
+  }
+
+
+  destroy() {
+    if (this.telemetrySubscriber) {
+      this.telemetrySubscriber.unsubscribe();
+      this.telemetrySubscriber = null;
+    }
+    super.destroy();
   }
 }
 

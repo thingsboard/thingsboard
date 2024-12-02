@@ -2,7 +2,7 @@
   "fqn": "charts.bars",
   "name": "Bars",
   "deprecated": true,
-  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAA8FBMVEUhlvNMr1Bqamp5eXl7e3t8fHx9fX1+fn5/f3+AgICCgoKDg4OEhISGhoaHh4eKioqMjIyNjY2Ojo6QkJCRkZGSkpKWlpaXl5ebm5udnZ2enp6goKChoaGkpKSnp6epqamsrKyurq6xsbGzs7O1tbW2tra3t7e4uLi7u7u9vb3BwcHCwsLDw8PGxsbKysrNzc3Ozs7R0dHS0tLT09PZ2dna2trc3Nzd3d3e3t7g4ODh4eHj4+Pk5OTm5ubn5+fo6Ojp6enu7u7w8PDz8/P0Qzb09PT29vb39/f5+fn6+vr7+/v8/Pz9/f3+/v7/wQf///+dc+aLAAAAAWJLR0RPbmZBSQAAAcFJREFUeNrt3ds2AgEYhuHsaSOZbAvZi0r2YYjCJOW7/7txZhkcDNbM6h/vdwfPmlX/ybtmEorJErGCeJLadz3rkKPpZamaLTp925DHdFvSpKelU9uQ/cLKhtcdk7YqtiHruevtojch7ZZtQ0o1dcdfRqXNqm1IbVU3OaVamm/YhvQW5zIXOknnC5JUt7qEpE5fUv/5HVePy2UHAgQIECBAgAABAgQIECBxgrwGHBAgQIAAAQIECBAgQIAAAQIECJC/QRIBN0iQ+66voDMLuRp2fQWdVUhvNun6CjqrkJ0Dx/UVdEYhzXzfcX0FnVFIrlSZ2mx/LOiMQuqHh6k972NBZ/fv13G/KeiCQkIu4358EL8UdBafSGwuOxAgQIAAAQIECJDYQB4CDggQIECAAAECBAgQIECAAAECBAgQIECA/BrSufn0DjqjkEZmLXkWaUEXEmThXMeFSAu68H4j5b1IC7rQILfZTqQFXViQ1nRTL1EWdCFBnmYuJUVZ0IUEWR1xHKcXZUEXFDLwBR2XHQgQIECAAAEC5H9ChgIOCBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgxiBmv+L6Bl9pkxYph15gAAAAAElFTkSuQmCC",
+  "image": "tb-image;/api/images/system/bars_system_widget_image.png",
   "description": "Displays latest values of the attributes or time series data for multiple entities as separate bars.",
   "descriptor": {
     "type": "latest",
@@ -21,9 +21,21 @@
     "settingsDirective": "tb-chart-widget-settings",
     "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"First\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.15479322438769105,\"funcBody\":\"var value = (prevValue-50) + Math.random() * 2 - 1;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value+50;\"},{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Second\",\"color\":\"#4caf50\",\"settings\":{},\"_hash\":0.545701115289893,\"funcBody\":\"var value = (prevValue-20) + Math.random() * 2 - 1;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value+20;\"},{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Third\",\"color\":\"#f44336\",\"settings\":{},\"_hash\":0.2592906835158064,\"funcBody\":\"var value = (prevValue-40) + Math.random() * 2 - 1;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value+40;\"},{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Fourth\",\"color\":\"#ffc107\",\"settings\":{},\"_hash\":0.12880275585455747,\"funcBody\":\"var value = (prevValue-50) + Math.random() * 2 - 1;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 100;\\n}\\nreturn value+50;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":true,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{},\"title\":\"Bars\"}"
   },
-  "externalId": null,
   "tags": [
     "bar",
     "bar chart"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/bars_system_widget_image.png",
+      "title": "\"Bars\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "bars_system_widget_image.png",
+      "publicResourceKey": "SxwRobFycH0Ew9uKDc5Xyi1Obz7pDjj7",
+      "mediaType": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAA8FBMVEUhlvNMr1Bqamp5eXl7e3t8fHx9fX1+fn5/f3+AgICCgoKDg4OEhISGhoaHh4eKioqMjIyNjY2Ojo6QkJCRkZGSkpKWlpaXl5ebm5udnZ2enp6goKChoaGkpKSnp6epqamsrKyurq6xsbGzs7O1tbW2tra3t7e4uLi7u7u9vb3BwcHCwsLDw8PGxsbKysrNzc3Ozs7R0dHS0tLT09PZ2dna2trc3Nzd3d3e3t7g4ODh4eHj4+Pk5OTm5ubn5+fo6Ojp6enu7u7w8PDz8/P0Qzb09PT29vb39/f5+fn6+vr7+/v8/Pz9/f3+/v7/wQf///+dc+aLAAAAAWJLR0RPbmZBSQAAAcFJREFUeNrt3ds2AgEYhuHsaSOZbAvZi0r2YYjCJOW7/7txZhkcDNbM6h/vdwfPmlX/ybtmEorJErGCeJLadz3rkKPpZamaLTp925DHdFvSpKelU9uQ/cLKhtcdk7YqtiHruevtojch7ZZtQ0o1dcdfRqXNqm1IbVU3OaVamm/YhvQW5zIXOknnC5JUt7qEpE5fUv/5HVePy2UHAgQIECBAgAABAgQIECBxgrwGHBAgQIAAAQIECBAgQIAAAQIECJC/QRIBN0iQ+66voDMLuRp2fQWdVUhvNun6CjqrkJ0Dx/UVdEYhzXzfcX0FnVFIrlSZ2mx/LOiMQuqHh6k972NBZ/fv13G/KeiCQkIu4358EL8UdBafSGwuOxAgQIAAAQIECJDYQB4CDggQIECAAAECBAgQIECAAAECBAgQIECA/BrSufn0DjqjkEZmLXkWaUEXEmThXMeFSAu68H4j5b1IC7rQILfZTqQFXViQ1nRTL1EWdCFBnmYuJUVZ0IUEWR1xHKcXZUEXFDLwBR2XHQgQIECAAAEC5H9ChgIOCBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBAgxiBmv+L6Bl9pkxYph15gAAAAAElFTkSuQmCC",
+      "public": true
+    }
   ]
 }

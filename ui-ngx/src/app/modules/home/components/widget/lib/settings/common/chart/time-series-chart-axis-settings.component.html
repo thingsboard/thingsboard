@@ -17,12 +17,11 @@
 -->
 <ng-container [formGroup]="axisSettingsFormGroup">
   <div class="tb-form-panel stroked tb-slide-toggle">
-    <mat-expansion-panel class="tb-settings" [(expanded)]="alwaysExpanded || settingsExpanded"
+    <mat-expansion-panel class="tb-settings" [expanded]="alwaysExpanded || settingsExpanded"
                          [disabled]="alwaysExpanded || !axisSettingsFormGroup.get('show').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="show" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="show" (click)="$event.stopPropagation()">
             {{ 'widgets.time-series-chart.axis.show' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
@@ -30,7 +29,7 @@
       <ng-template matExpansionPanelContent>
         <div class="tb-form-row column-xs">
           <div class="fixed-title-width" translate>widgets.time-series-chart.axis.label</div>
-          <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div class="flex flex-1 flex-row items-center justify-start gap-2">
             <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
               <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
             </mat-form-field>
@@ -69,7 +68,7 @@
           </mat-form-field>
         </div>
         <div *ngIf="axisType === 'yAxis' && advanced" class="tb-form-row">
-          <tb-js-func fxFlex
+          <tb-js-func class="flex-1"
                       formControlName="ticksGenerator"
                       [globalVariables]="functionScopeVariables"
                       [functionArgs]="['extent']"
@@ -82,7 +81,7 @@
             <mat-slide-toggle class="mat-slide" formControlName="showTickLabels">
               <div translate>widgets.time-series-chart.axis.tick-labels</div>
             </mat-slide-toggle>
-            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <div class="flex flex-row items-center justify-start gap-2">
               <tb-auto-date-format-settings *ngIf="axisType === 'xAxis'"
                                             formControlName="ticksFormat"
                                             [defaultValues]="defaultXAxisTicksFormat">
@@ -100,7 +99,7 @@
             </div>
           </div>
           <div *ngIf="axisType === 'yAxis' && advanced" class="tb-form-row no-border">
-            <tb-js-func fxFlex
+            <tb-js-func class="flex-1"
               formControlName="ticksFormatter"
               [globalVariables]="functionScopeVariables"
               [functionArgs]="['value']"
@@ -162,7 +161,7 @@
     <div *ngIf="axisType === 'yAxis'" class="tb-form-panel no-border no-padding-top">
       <div class="tb-form-row space-between column-xs">
         <div translate>widgets.chart.chart-axis.scale</div>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="flex flex-row items-center justify-start gap-2">
           <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-min</div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="min"

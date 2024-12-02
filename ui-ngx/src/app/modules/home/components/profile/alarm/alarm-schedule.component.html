@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section [formGroup]="alarmScheduleForm" fxLayout="column">
+<section [formGroup]="alarmScheduleForm" class="flex flex-col">
   <mat-form-field class="mat-block">
     <mat-select formControlName="type" required placeholder="{{ 'device-profile.schedule-type' | translate }}">
       <mat-option *ngFor="let alarmScheduleType of alarmScheduleTypes" [value]="alarmScheduleType">
@@ -35,13 +35,13 @@
     <section *ngIf="alarmScheduleForm.get('type').value === alarmScheduleType.SPECIFIC_TIME">
       <tb-alarm-dynamic-value formControlName = 'dynamicValue' helpId = 'device-profile/alarm_specific_schedule_format'></tb-alarm-dynamic-value>
       <div class="tb-small" style="margin-bottom: 0.5em" translate>device-profile.schedule-days</div>
-      <div fxLayout="column" fxLayout.gt-md="row" fxLayoutGap="8px">
-        <div fxLayout="row" fxLayoutGap="8px">
+      <div class="flex flex-col gap-2 gt-md:flex-row">
+        <div class="flex flex-row gap-2">
           <mat-checkbox *ngFor="let day of firstRowDays" [formControl]="weeklyRepeatControl(day)">
             {{ dayOfWeekTranslationsArray[day] | translate }}
           </mat-checkbox>
         </div>
-        <div fxLayout="row" fxLayoutGap="8px">
+        <div class="flex flex-row gap-2">
           <mat-checkbox *ngFor="let day of secondRowDays" [formControl]="weeklyRepeatControl(day)">
             {{ dayOfWeekTranslationsArray[day] | translate }}
           </mat-checkbox>
@@ -50,22 +50,22 @@
       <tb-error style="display: block;" [error]="alarmScheduleForm.get('daysOfWeek').hasError('dayOfWeeks')
                   ? ('device-profile.schedule-days-of-week-required' | translate) : ''"></tb-error>
       <div class="tb-small" style="margin-bottom: 0.5em" translate>device-profile.schedule-time</div>
-      <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-        <div fxLayout="row" fxLayoutGap="8px" fxFlex.gt-md>
-          <mat-form-field fxFlex.xs fxFlex.sm="150px" fxFlex.md="150px" fxFlex.gt-md>
+      <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+        <div class="flex flex-row gap-2 gt-md:flex-1">
+          <mat-form-field class="flex-1 sm:min-w-37.5 sm:max-w-37.5 sm:basis-37.5 md:min-w-37.5 md:max-w-37.5 md:basis-37.5">
             <mat-label translate>device-profile.schedule-time-from</mat-label>
             <mat-datetimepicker-toggle [for]="startTimePicker" matPrefix></mat-datetimepicker-toggle>
             <mat-datetimepicker #startTimePicker type="time" openOnFocus="true"></mat-datetimepicker>
             <input required matInput formControlName="startsOn" [matDatetimepicker]="startTimePicker">
           </mat-form-field>
-          <mat-form-field fxFlex.xs fxFlex.sm="150px" fxFlex.md="150px" fxFlex.gt-md>
+          <mat-form-field class="flex-1 sm:min-w-37.5 sm:max-w-37.5 sm:basis-37.5 md:min-w-37.5 md:max-w-37.5 md:basis-37.5">
             <mat-label translate>device-profile.schedule-time-to</mat-label>
             <mat-datetimepicker-toggle [for]="endTimePicker" matPrefix></mat-datetimepicker-toggle>
             <mat-datetimepicker #endTimePicker type="time" openOnFocus="true"></mat-datetimepicker>
             <input required matInput formControlName="endsOn" [matDatetimepicker]="endTimePicker">
           </mat-form-field>
         </div>
-        <div fxFlex fxLayoutAlign="center center" style="margin: auto">
+        <div class="flex flex-1 items-center justify-center" style="margin: auto">
           <div style="text-align: center"
                [innerHTML]="getSchedulerRangeText(alarmScheduleForm)">
           </div>
@@ -75,26 +75,26 @@
     <section *ngIf="alarmScheduleForm.get('type').value === alarmScheduleType.CUSTOM">
       <tb-alarm-dynamic-value formControlName = 'dynamicValue' helpId = 'device-profile/alarm_custom_schedule_format'></tb-alarm-dynamic-value>
       <div class="tb-small" style="margin-bottom: 0.5em" translate>device-profile.schedule-days</div>
-      <div *ngFor="let day of allDays" fxLayout="column" formArrayName="items" fxLayoutGap="1em">
-        <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" [formGroupName]="''+day" fxLayoutAlign="start center" fxLayoutAlign.xs="center start">
-          <mat-checkbox formControlName="enabled" fxFlex="17" (change)="changeCustomScheduler($event, day)">
+      <div *ngFor="let day of allDays" class="flex flex-col gap-4" formArrayName="items">
+        <div class="flex flex-row items-center justify-start gap-2 xs:flex-col xs:items-start xs:justify-center" [formGroupName]="''+day">
+          <mat-checkbox formControlName="enabled" class="max-w-17% flex-full" (change)="changeCustomScheduler($event, day)">
             {{ dayOfWeekTranslationsArray[day] | translate }}
           </mat-checkbox>
-          <div fxLayout="row" fxLayoutGap="8px" fxFlex>
-            <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+          <div class="flex flex-1 flex-row gap-2">
+            <mat-form-field class="xs:flex-1 sm:min-w-25 sm:max-w-25 sm:flex-1 sm:basis-25 md:min-w-25 md:max-w-25 md:flex-1 md:basis-25">
               <mat-label translate>device-profile.schedule-time-from</mat-label>
               <mat-datetimepicker-toggle [for]="startTimePicker" matPrefix></mat-datetimepicker-toggle>
               <mat-datetimepicker #startTimePicker type="time" openOnFocus="true"></mat-datetimepicker>
               <input required matInput formControlName="startsOn" [matDatetimepicker]="startTimePicker">
             </mat-form-field>
-            <mat-form-field fxFlex.xs fxFlex.sm="100px" fxFlex.md="100px">
+            <mat-form-field class="xs:flex-1 sm:min-w-25 sm:max-w-25 sm:flex-1 sm:basis-25 md:min-w-25 md:max-w-25 md:flex-1 md:basis-25">
               <mat-label translate>device-profile.schedule-time-to</mat-label>
               <mat-datetimepicker-toggle [for]="endTimePicker" matPrefix></mat-datetimepicker-toggle>
               <mat-datetimepicker #endTimePicker type="time" openOnFocus="true"></mat-datetimepicker>
               <input required matInput formControlName="endsOn" [matDatetimepicker]="endTimePicker">
             </mat-form-field>
           </div>
-          <div fxFlex fxLayoutAlign="center center"
+          <div class="flex flex-1 items-center justify-center"
                style="text-align: center"
                [innerHTML]="getSchedulerRangeText(itemsSchedulerForm.at(day))">
           </div>

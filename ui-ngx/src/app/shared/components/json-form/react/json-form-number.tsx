@@ -16,7 +16,8 @@
 import * as React from 'react';
 import ThingsboardBaseComponent from './json-form-base-component';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
-import { TextField } from '@material-ui/core';
+import { TextField } from '@mui/material';
+import { ChangeEvent } from 'react';
 
 interface ThingsboardNumberState extends JsonFormFieldState {
   focused: boolean;
@@ -25,7 +26,7 @@ interface ThingsboardNumberState extends JsonFormFieldState {
 
 class ThingsboardNumber extends React.Component<JsonFormFieldProps, ThingsboardNumberState> {
 
-  constructor(props) {
+  constructor(props: JsonFormFieldProps) {
     super(props);
     this.preValidationCheck = this.preValidationCheck.bind(this);
     this.onBlur = this.onBlur.bind(this);
@@ -36,7 +37,7 @@ class ThingsboardNumber extends React.Component<JsonFormFieldProps, ThingsboardN
     };
   }
 
-  isNumeric(n) {
+  isNumeric(n: any) {
     return n === null || n === '' || !isNaN(n) && isFinite(n);
   }
 
@@ -48,10 +49,10 @@ class ThingsboardNumber extends React.Component<JsonFormFieldProps, ThingsboardN
     this.setState({focused: true});
   }
 
-  preValidationCheck(e) {
+  preValidationCheck(e: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) {
     if (this.isNumeric(e.target.value)) {
       this.setState({
-        lastSuccessfulValue: e.target.value
+        lastSuccessfulValue: Number(e.target.value)
       });
       this.props.onChangeValidate(e);
     }
@@ -78,6 +79,7 @@ class ThingsboardNumber extends React.Component<JsonFormFieldProps, ThingsboardN
     return (
       <div>
         <TextField
+          variant={'standard'}
           className={fieldClass}
           label={this.props.form.title}
           type='number'

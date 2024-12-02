@@ -32,19 +32,21 @@ import {
   RuleNotificationDialogComponent,
   RuleNotificationDialogData
 } from '@home/pages/notification/rule/rule-notification-dialog.component';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Injectable } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 
 @Injectable()
-export class RuleTableConfigResolver implements Resolve<EntityTableConfig<NotificationRule>> {
+export class RuleTableConfigResolver  {
 
   private readonly config: EntityTableConfig<NotificationRule> = new EntityTableConfig<NotificationRule>();
 
   constructor(private notificationService: NotificationService,
               private translate: TranslateService,
               private dialog: MatDialog,
-              private datePipe: DatePipe) {
+              private datePipe: DatePipe,
+              private customTranslate: CustomTranslatePipe) {
 
     this.config.entityType = EntityType.NOTIFICATION_RULE;
     this.config.detailsPanelEnabled = false;
@@ -81,7 +83,7 @@ export class RuleTableConfigResolver implements Resolve<EntityTableConfig<Notifi
         (rule) => this.translate.instant(TriggerTypeTranslationMap.get(rule.triggerType)) || '',
         () => ({}), true),
       new EntityTableColumn<NotificationRule>('additionalConfig.description', 'notification.description', '30%',
-        (target) => target.additionalConfig?.description || '',
+        (target) => this.customTranslate.transform(target.additionalConfig?.description || ''),
         () => ({}), false)
     );
   }

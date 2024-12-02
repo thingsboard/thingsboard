@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ComponentFactory, Inject, Injectable, Optional, Type } from '@angular/core';
+import { Inject, Injectable, Optional, Type } from '@angular/core';
 import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
 import { WidgetService } from '@core/http/widget.service';
 import { forkJoin, from, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
@@ -28,7 +28,13 @@ import {
 } from '@home/models/widget-component.models';
 import cssjs from '@core/css/css';
 import { UtilsService } from '@core/services/utils.service';
-import { ModulesWithFactories, ResourcesService } from '@core/services/resources.service';
+import {
+  componentTypeBySelector,
+  flatModulesWithComponents,
+  ModulesWithComponents,
+  modulesWithComponentsToTypes,
+  ResourcesService
+} from '@core/services/resources.service';
 import {
   IWidgetSettingsComponent,
   Widget,
@@ -55,7 +61,6 @@ import { HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 import { widgetSettingsComponentsMap } from '@home/components/widget/lib/settings/widget-settings.module';
 import { basicWidgetConfigComponentsMap } from '@home/components/widget/config/basic/basic-widget-config.module';
 import { IBasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
-import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
 
 @Injectable()
 export class WidgetComponentService {
@@ -124,11 +129,13 @@ export class WidgetComponentService {
       w.tinycolor = tinycolor;
       w.cssjs = cssjs;
       w.moment = moment;
-      w.$ = $;
-      w.jQuery = $;
 
       const widgetModulesTasks: Observable<any>[] = [];
-      widgetModulesTasks.push(from(import('jquery.terminal')));
+      widgetModulesTasks.push(from(import('jquery.terminal')).pipe(
+        tap((mod) => {
+          mod.default(window, $);
+        })
+      ));
 
       widgetModulesTasks.push(from(import('flot/src/jquery.flot.js')).pipe(
         mergeMap(() => {
@@ -323,12 +330,12 @@ export class WidgetComponentService {
     this.cssParser.cssPreviewNamespace = widgetNamespace;
     this.cssParser.createStyleElement(widgetNamespace, widgetInfo.templateCss);
     const resourceTasks: Observable<string>[] = [];
-    const modulesTasks: Observable<ModulesWithFactories | string>[] = [];
+    const modulesTasks: Observable<ModulesWithComponents | string>[] = [];
     if (widgetInfo.resources.length > 0) {
       widgetInfo.resources.filter(r => r.isModule).forEach(
         (resource) => {
           modulesTasks.push(
-            this.resources.loadFactories(resource.url, this.modulesMap).pipe(
+            this.resources.loadModulesWithComponents(resource.url, this.modulesMap).pipe(
               catchError((e: Error) => of(e?.message ? e.message : `Failed to load widget resource module: '${resource.url}'`))
             )
           );
@@ -345,7 +352,7 @@ export class WidgetComponentService {
       }
     );
 
-    let modulesObservable: Observable<string | ModulesWithFactories>;
+    let modulesObservable: Observable<string | ModulesWithComponents>;
     if (modulesTasks.length) {
       modulesObservable = forkJoin(modulesTasks).pipe(
         map(res => {
@@ -353,20 +360,13 @@ export class WidgetComponentService {
           if (msg) {
             return msg as string;
           } else {
-            const modulesWithFactoriesList = res as ModulesWithFactories[];
-            const resModulesWithFactories: ModulesWithFactories = {
-              modules: modulesWithFactoriesList.map(mf => mf.modules).flat(),
-              factories: modulesWithFactoriesList.map(mf => mf.factories).flat()
-            };
-            if (modules && modules.length) {
-              resModulesWithFactories.modules = resModulesWithFactories.modules.concat(modules);
-            }
-            return resModulesWithFactories;
+            const modulesWithComponentsList = res as ModulesWithComponents[];
+            return flatModulesWithComponents(modulesWithComponentsList);
           }
         })
       );
     } else {
-      modulesObservable = modules && modules.length ? of({modules, factories: []}) : of({modules: [], factories: []});
+      modulesObservable = of({modules: [], standaloneComponents: []});
     }
 
     resourceTasks.push(
@@ -375,11 +375,15 @@ export class WidgetComponentService {
           if (typeof resolvedModules === 'string') {
             return of(resolvedModules);
           } else {
-            this.registerWidgetSettingsForms(widgetInfo, resolvedModules.factories);
+            this.registerWidgetSettingsForms(widgetInfo, resolvedModules);
+            let imports = modulesWithComponentsToTypes(resolvedModules);
+            if (modules && modules.length) {
+              imports = imports.concat(modules);
+            }
             return this.dynamicComponentFactoryService.createDynamicComponent(
               class DynamicWidgetComponentInstance extends DynamicWidgetComponent {},
               widgetInfo.templateHtml,
-              resolvedModules.modules
+              imports
             ).pipe(
               map((componentType) => {
                 widgetInfo.componentType = componentType;
@@ -401,7 +405,7 @@ export class WidgetComponentService {
             errors = msgs.filter(msg => msg && msg.length > 0);
           }
           if (errors && errors.length) {
-            return throwError(errors);
+            return throwError(() => errors);
           } else {
             return of(null);
           }
@@ -409,7 +413,7 @@ export class WidgetComponentService {
     ));
   }
 
-  private registerWidgetSettingsForms(widgetInfo: WidgetInfo, factories: ComponentFactory<any>[]) {
+  private registerWidgetSettingsForms(widgetInfo: WidgetInfo, modulesWithComponents: ModulesWithComponents) {
     const directives: string[] = [];
     const basicDirectives: string[] = [];
     if (widgetInfo.settingsDirective && widgetInfo.settingsDirective.length) {
@@ -425,17 +429,19 @@ export class WidgetComponentService {
       basicDirectives.push(widgetInfo.basicModeDirective);
     }
 
-    this.expandSettingComponentMap(widgetSettingsComponentsMap, directives, factories);
-    this.expandSettingComponentMap(basicWidgetConfigComponentsMap, basicDirectives, factories);
+    this.expandSettingComponentMap(widgetSettingsComponentsMap, directives, modulesWithComponents);
+    this.expandSettingComponentMap(basicWidgetConfigComponentsMap, basicDirectives, modulesWithComponents);
   }
 
   private expandSettingComponentMap(settingsComponentsMap: {[key: string]: Type<IWidgetSettingsComponent | IBasicWidgetConfigComponent>},
-                                    directives: string[], factories: ComponentFactory<any>[]): void {
+                                    directives: string[], modulesWithComponents: ModulesWithComponents): void {
     if (directives.length) {
-      factories.filter((factory) => directives.includes(factory.selector))
-        .forEach((foundFactory) => {
-          settingsComponentsMap[foundFactory.selector] = foundFactory.componentType;
-        });
+      directives.forEach(selector => {
+        const compType = componentTypeBySelector(modulesWithComponents, selector);
+        if (compType) {
+          settingsComponentsMap[selector] = compType;
+        }
+      });
     }
   }
 

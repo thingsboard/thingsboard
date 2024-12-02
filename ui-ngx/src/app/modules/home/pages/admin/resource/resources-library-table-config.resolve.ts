@@ -21,7 +21,7 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import { Resolve, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { Resource, ResourceInfo, ResourceType, ResourceTypeTranslationMap } from '@shared/models/resource.models';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
@@ -39,7 +39,7 @@ import { map } from 'rxjs/operators';
 import { ResourcesTableHeaderComponent } from '@home/pages/admin/resource/resources-table-header.component';
 
 @Injectable()
-export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableConfig<Resource, PageLink, ResourceInfo>> {
+export class ResourcesLibraryTableConfigResolver  {
 
   private readonly config: EntityTableConfig<Resource, PageLink, ResourceInfo> = new EntityTableConfig<Resource, PageLink, ResourceInfo>();
   private readonly resourceTypesTranslationMap = ResourceTypeTranslationMap;
@@ -84,7 +84,7 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
     this.config.deleteEntitiesContent = () => this.translate.instant('resource.delete-resources-text');
 
     this.config.entitiesFetchFunction = pageLink => this.resourceService.getResources(pageLink, this.config.componentsData.resourceType);
-    this.config.loadEntity = id => this.resourceService.getResourceInfo(id.id);
+    this.config.loadEntity = id => this.resourceService.getResourceInfoById(id.id);
     this.config.saveEntity = resource => this.saveResource(resource);
     this.config.deleteEntity = id => this.resourceService.deleteResource(id.id);
 

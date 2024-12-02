@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<table class="tb-legend" [ngClass]="isRowDirection ? 'tb-legend-row' : 'tb-legend-column'">
+<table class="tb-legend" [class.tb-legend-row]="isRowDirection" [class.tb-legend-column]="!isRowDirection">
   <thead>
   <tr class="tb-legend-header" *ngIf="!isRowDirection">
     <th colspan="2"></th>
@@ -29,11 +29,12 @@
   <tbody>
     <ng-container *ngIf="!isRowDirection">
       <tr class="tb-legend-keys" *ngFor="let legendKey of legendKeys()">
-        <td><span class="tb-legend-line" [ngStyle]="{backgroundColor: legendKey.dataKey.color}"></span></td>
+        <td><span class="tb-legend-line" [style.background-color]="legendKey.dataKey.color"></span></td>
         <td class="tb-legend-label"
             (click)="toggleHideData(legendKey.dataIndex)"
             [innerHTML]="legendKey.dataKey.label | safe: 'html'"
-            [ngClass]="{ 'tb-hidden-label': legendKey.dataKey.hidden, 'tb-horizontal': isHorizontal }">
+            [class.tb-hidden-label]="legendKey.dataKey.hidden"
+            [class.tb-horizontal]="isHorizontal">
         </td>
         <td class="tb-legend-value" *ngIf="legendConfig.showMin === true"
             [innerHTML]="legendData.data[legendKey.dataIndex].min | safe: 'html'"></td>
@@ -47,14 +48,14 @@
             [innerHTML]="legendData.data[legendKey.dataIndex].latest | safe: 'html'"></td>
       </tr>
     </ng-container>
-    <tr *ngIf="isRowDirection" class="tb-legend-keys" [ngClass]="{ 'tb-row-direction': !displayHeader }">
+    <tr *ngIf="isRowDirection" class="tb-legend-keys" [class.tb-row-direction]="!displayHeader">
       <td></td>
       <td *ngFor="let legendKey of legendKeys()">
-        <span class="tb-legend-line" [ngStyle]="{backgroundColor: legendKey.dataKey.color}"></span>
+        <span class="tb-legend-line" [style.background-color]="legendKey.dataKey.color"></span>
         <span class="tb-legend-label"
               [innerHTML]="legendKey.dataKey.label | safe: 'html'"
               (click)="toggleHideData(legendKey.dataIndex)"
-              [ngClass]="{ 'tb-hidden-label': legendKey.dataKey.hidden}">
+              [class.tb-hidden-label]="legendKey.dataKey.hidden">
         </span>
       </td>
     </tr>

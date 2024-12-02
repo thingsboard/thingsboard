@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>3.7.1-SNAPSHOT</version>
+    <version>3.9.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -69,13 +69,13 @@
         <apache-httpclient.version>4.5.14</apache-httpclient.version>
         <apache-httpcore.version>4.4.16</apache-httpcore.version>
         <joda-time.version>2.12.7</joda-time.version>
-        <jackson.version>2.17.0</jackson.version>
-        <jackson-databind.version>2.17.0</jackson-databind.version>
+        <jackson.version>2.17.2</jackson.version>
+        <jackson-databind.version>2.17.2</jackson-databind.version>
         <fasterxml-classmate.version>1.7.0</fasterxml-classmate.version>
         <auth0-jwt.version>4.4.0</auth0-jwt.version>
         <json-schema-validator.version>2.2.14</json-schema-validator.version>
-        <californium.version>3.11.0</californium.version>
-        <leshan.version>2.0.0-M14</leshan.version>
+        <californium.version>3.12.1</californium.version>
+        <leshan.version>2.0.0-M15</leshan.version>
         <gson.version>2.10.1</gson.version>
         <freemarker.version>2.3.32</freemarker.version>
         <mail.version>2.0.1</mail.version>
@@ -83,7 +83,7 @@
         <zookeeper.version>3.9.2</zookeeper.version>
         <protobuf.version>3.25.3</protobuf.version> <!-- A Major v4 does not support by the pubsub yet-->
         <grpc.version>1.63.0</grpc.version>
-        <tbel.version>1.2.3</tbel.version>
+        <tbel.version>1.2.4</tbel.version>
         <lombok.version>1.18.32</lombok.version>
         <paho.client.version>1.2.5</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
@@ -163,7 +163,7 @@
         <slack-api.version>1.39.0</slack-api.version>
         <oshi.version>6.6.0</oshi.version>
         <google-oauth-client.version>1.35.0</google-oauth-client.version>
-        <apache-xmlgraphics.version>1.17</apache-xmlgraphics.version>
+        <weisj-jsvg.version>1.6.1</weisj-jsvg.version>
         <drewnoakes-metadata-extractor.version>2.19.0</drewnoakes-metadata-extractor.version>
         <firebase-admin.version>9.2.0</firebase-admin.version>
     </properties>
@@ -849,6 +849,7 @@
                             <exclude>.run/**</exclude>
                             <exclude>**/NetworkReceive.java</exclude>
                             <exclude>**/lwm2m-registry/**</exclude>
+                            <exclude>src/main/data/resources/**</exclude>
                         </excludes>
                         <mapping>
                             <proto>JAVADOC_STYLE</proto>
@@ -2262,20 +2263,9 @@
                 <version>${google-oauth-client.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.xmlgraphics</groupId>
-                <artifactId>batik-transcoder</artifactId>
-                <version>${apache-xmlgraphics.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>commons-logging</groupId>
-                        <artifactId>commons-logging</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.xmlgraphics</groupId>
-                <artifactId>batik-codec</artifactId>
-                <version>${apache-xmlgraphics.version}</version>
+                <groupId>com.github.weisj</groupId>
+                <artifactId>jsvg</artifactId>
+                <version>${weisj-jsvg.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.drewnoakes</groupId>

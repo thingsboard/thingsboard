@@ -17,16 +17,16 @@
 -->
 <form class="tb-node-script-test-dialog"
       [formGroup]="nodeScriptTestFormGroup" (ngSubmit)="save()">
-  <mat-toolbar fxLayout="row" color="primary">
+  <mat-toolbar class="flex flex-row" color="primary">
     <h2>{{ 'rulenode.test-script-function' | translate }} ({{ (scriptLang === scriptLanguage.JS ? 'rulenode.script-lang-java-script' : 'rulenode.script-lang-tbel') | translate }})</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
-  <div mat-dialog-content fxFlex style="position: relative;">
+  <div mat-dialog-content class="flex-1" style="position: relative;">
     <div class="tb-absolute-fill">
       <div #topPanel class="tb-split tb-split-vertical">
         <div #topLeftPanel class="tb-split tb-content">
@@ -34,8 +34,8 @@
             <div class="tb-editor-area-title-panel">
               <label translate>rulenode.message</label>
             </div>
-            <div formGroupName="payload" fxLayout="column" style="height: 100%;">
-              <div fxLayout="row">
+            <div formGroupName="payload" class="flex flex-col" style="height: 100%;">
+              <div class="flex flex-row">
                 <tb-message-type-autocomplete
                   style="margin-bottom: 0; min-width: 300px;"
                   formControlName="msgType"
@@ -44,7 +44,7 @@
               </div>
               <tb-json-content
                 #payloadContent
-                fxFlex
+                class="flex-1"
                 formControlName="msg"
                 label="{{ 'rulenode.message' | translate }}"
                 [contentType]="contentTypes.JSON"
@@ -62,6 +62,7 @@
             <tb-key-val-map
               subscriptSizing="dynamic"
               formControlName="metadata"
+              [isValueRequired]="false"
               titleText="rulenode.metadata">
             </tb-key-val-map>
           </div>
@@ -70,7 +71,7 @@
       <div #bottomPanel class="tb-split tb-split-vertical">
         <div #bottomLeftPanel class="tb-split tb-content">
           <div class="tb-resize-container">
-            <div class="tb-editor-area-title-panel tb-js-function" [ngClass]="{'tb-js-function-help': data.helpId}">
+            <div class="tb-editor-area-title-panel tb-js-function" [class.tb-js-function-help]="data.helpId">
               <label>{{ functionTitle }}</label>
             </div>
             <tb-js-func
@@ -92,7 +93,7 @@
               <label translate>rulenode.output</label>
             </div>
             <tb-json-content
-              fxFlex
+              class="flex-1"
               formControlName="output"
               label="{{ 'rulenode.output' | translate }}"
               [contentType]="contentTypes.JSON"
@@ -105,14 +106,14 @@
       </div>
     </div>
   </div>
-  <div mat-dialog-actions fxLayout="row">
+  <div mat-dialog-actions class="flex flex-row">
     <button mat-button mat-raised-button color="primary"
             type="button"
             (click)="test()"
             [disabled]="(isLoading$ | async) || nodeScriptTestFormGroup.invalid">
       {{ 'rulenode.test' | translate }}
     </button>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-button color="primary"
             type="button"
             cdkFocusInitial

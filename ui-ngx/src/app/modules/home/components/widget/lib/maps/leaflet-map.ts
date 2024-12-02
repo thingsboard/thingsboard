@@ -14,10 +14,10 @@
 /// limitations under the License.
 ///
 
-import L, { FeatureGroup, LatLngBounds, LatLngTuple, Projection } from 'leaflet';
+import L, { FeatureGroup, LatLngBounds, LatLngTuple, PointExpression, Projection } from 'leaflet';
 import tinycolor from 'tinycolor2';
 import 'leaflet-providers';
-import { MarkerClusterGroup, MarkerClusterGroupOptions } from 'leaflet.markercluster/dist/leaflet.markercluster';
+import 'leaflet.markercluster';
 import '@geoman-io/leaflet-geoman-free';
 
 import {
@@ -41,7 +41,8 @@ import {
   entitiesParseName,
   isCutPolygon,
   isJSON,
-  isValidLatLng
+  isValidLatLng,
+  LabelSettings
 } from '@home/components/widget/lib/maps/maps-utils';
 import { checkLngLat, createLoadingDiv } from '@home/components/widget/lib/maps/common-maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
@@ -76,7 +77,7 @@ export default abstract class LeafletMap {
     options: WidgetUnitedMapSettings;
     bounds: L.LatLngBounds;
     datasources: FormattedData[];
-    markersCluster: MarkerClusterGroup;
+    markersCluster: L.MarkerClusterGroup;
     points: FeatureGroup;
     markersData: FormattedData[] = [];
     polygonsData: FormattedData[] = [];
@@ -99,9 +100,7 @@ export default abstract class LeafletMap {
     selectedEntity: FormattedData;
     ignoreUpdateBounds = false;
     initDragModeIgnoreUpdateBoundsSet = false;
-  // eslint-disable-next-line @typescript-eslint/dot-notation
     southWest = new L.LatLng(-Projection.SphericalMercator['MAX_LATITUDE'], -180);
-  // eslint-disable-next-line @typescript-eslint/dot-notation
     northEast = new L.LatLng(Projection.SphericalMercator['MAX_LATITUDE'], 180);
     saveLocation: (e: FormattedData, values: {[key: string]: any}) => Observable<any>;
     saveMarkerLocation: (e: FormattedData, lat?: number, lng?: number) => Observable<any>;
@@ -109,7 +108,7 @@ export default abstract class LeafletMap {
     translateService: TranslateService;
     tooltipInstances: ITooltipsterInstance[] = [];
 
-    clusteringSettings: MarkerClusterGroupOptions;
+    clusteringSettings: L.MarkerClusterGroupOptions;
 
     protected constructor(public ctx: WidgetContext,
                           public $container: HTMLElement,
@@ -185,13 +184,13 @@ export default abstract class LeafletMap {
         if (markerClusteringSettings.maxZoom && markerClusteringSettings.maxZoom >= 0 && markerClusteringSettings.maxZoom < 19) {
             this.clusteringSettings.disableClusteringAtZoom = Math.floor(markerClusteringSettings.maxZoom);
         }
-        this.markersCluster = new MarkerClusterGroup(this.clusteringSettings);
+        this.markersCluster = new L.MarkerClusterGroup(this.clusteringSettings);
       }
     }
 
     private selectEntityWithoutLocationDialog(shapes: L.PM.SUPPORTED_SHAPES): Observable<FormattedData> {
-      let entities;
-      let labelSettings;
+      let entities: FormattedData[];
+      let labelSettings: LabelSettings;
       switch (shapes) {
         case 'Polygon':
         case 'Rectangle':
@@ -244,8 +243,8 @@ export default abstract class LeafletMap {
         if (data !== null) {
           this.selectedEntity = data;
           this.toggleDrawMode(type);
-          let tooltipText;
-          let customTranslation;
+          let tooltipText: string;
+          let customTranslation: L.PM.Translations;
           switch (type) {
             case 'tbMarker':
               tooltipText = this.translateService.instant('widgets.maps.tooltips.placeMarker', {entityName: data.entityParseName});
@@ -310,7 +309,7 @@ export default abstract class LeafletMap {
         this.map.pm.Toolbar.copyDrawControl('Marker', {
           name: 'tbMarker',
           afterClick: () => this.selectEntityWithoutLocation('tbMarker'),
-          disabled: true,
+          disabled: false,
           actions
         });
       }
@@ -336,14 +335,14 @@ export default abstract class LeafletMap {
         this.map.pm.Toolbar.copyDrawControl('Rectangle', {
           name: 'tbRectangle',
           afterClick: () => this.selectEntityWithoutLocation('tbRectangle'),
-          disabled: true,
+          disabled: false,
           actions: rectangleActions
         });
 
         this.map.pm.Toolbar.copyDrawControl('Polygon', {
           name: 'tbPolygon',
           afterClick: () => this.selectEntityWithoutLocation('tbPolygon'),
-          disabled: true,
+          disabled: false,
           actions: polygonActions
         });
       }
@@ -426,7 +425,7 @@ export default abstract class LeafletMap {
         switch (e.shape) {
           case 'tbMarker':
             // @ts-ignore
-            this.saveLocation(this.selectedEntity, this.convertToCustomFormat(e.layer.getLatLng())).subscribe(() => {});
+            this.saveLocation(this.selectedEntity, this.convertToCustomFormat(e.marker.getLatLng())).subscribe(() => {});
             break;
           case 'tbRectangle':
           case 'tbPolygon':
@@ -567,8 +566,8 @@ export default abstract class LeafletMap {
         }
         $(this.ctx.$container)
           .find('a[role="button"]:not(.leaflet-pm-action)')
-          .each((index, element) => {
-            let title;
+          .each((_index, element) => {
+            let title: string;
             if (element.title) {
               title = element.title;
               $(element).removeAttr('title');
@@ -589,7 +588,12 @@ export default abstract class LeafletMap {
                 },
                 side: 'right',
                 distance: 2,
-                trackOrigin: true
+                trackOrigin: true,
+                functionBefore: (instance, helper) => {
+                  if (helper.origin.ariaDisabled === 'true' || helper.origin.parentElement.classList.contains('active')) {
+                    return false;
+                  }
+                },
               }
             );
             this.tooltipInstances.push(tooltip.tooltipster('instance'));
@@ -623,7 +627,7 @@ export default abstract class LeafletMap {
         return this.map.getCenter();
     }
 
-    fitBounds(bounds: LatLngBounds, padding?: LatLngTuple) {
+    fitBounds(bounds: LatLngBounds, padding?: PointExpression) {
         if (bounds.isValid()) {
             this.bounds = !!this.bounds ? this.bounds.extend(bounds) : bounds;
             if (!this.options.fitMapBounds && this.options.defaultZoomLevel) {
@@ -669,7 +673,7 @@ export default abstract class LeafletMap {
       return L.latLng(position.x, position.y) as L.LatLng;
     }
 
-    convertPosition(data: FormattedData, dsData: FormattedData[]): L.LatLng {
+    convertPosition(data: FormattedData, _dsData: FormattedData[]): L.LatLng {
       const position = this.extractPosition(data);
       if (position) {
         return this.positionToLatLng(position);
@@ -1075,7 +1079,7 @@ export default abstract class LeafletMap {
             }
         });
         const toDelete: string[] = [];
-        this.polylines.forEach((v, mKey) => {
+        this.polylines.forEach((_v, mKey) => {
           if (!keys.includes(mKey)) {
             toDelete.push(mKey);
           }
@@ -1145,7 +1149,7 @@ export default abstract class LeafletMap {
       }
     });
     const toDelete: string[] = [];
-    this.polygons.forEach((v, mKey) => {
+    this.polygons.forEach((_v, mKey) => {
       if (!keys.includes(mKey)) {
         toDelete.push(mKey);
       }

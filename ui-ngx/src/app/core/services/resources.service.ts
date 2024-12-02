@@ -15,16 +15,19 @@
 ///
 
 import {
-  Compiler,
-  ComponentFactory,
+  createNgModule,
   Inject,
   Injectable,
   Injector,
-  ModuleWithComponentFactories,
-  Type, ɵNG_MOD_DEF
+  Type,
+  ɵComponentDef,
+  ɵCssSelectorList,
+  ɵNG_COMP_DEF,
+  ɵNG_MOD_DEF,
+  ɵNgModuleDef
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import { forkJoin, Observable, ReplaySubject, throwError } from 'rxjs';
+import { forkJoin, from, Observable, ReplaySubject, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { TbResourceId } from '@shared/models/id/tb-resource-id';
@@ -35,13 +38,58 @@ import { selectIsAuthenticated } from '@core/auth/auth.selectors';
 import { AppState } from '@core/core.state';
 import { map, tap } from 'rxjs/operators';
 import { RequestConfig } from '@core/http/http-utils';
+import { getFlexLayoutModule } from '@app/shared/legacy/flex-layout.models';
+import { isJSResource, removeTbResourcePrefix } from '@shared/models/resource.models';
 
-declare const System;
-
-export interface ModulesWithFactories {
-  modules: Type<any>[];
-  factories: ComponentFactory<any>[];
+export interface ModuleInfo {
+  module: ɵNgModuleDef<any>;
+  components: ɵComponentDef<any>[];
 }
+
+export interface ModulesWithComponents {
+  modules: ModuleInfo[];
+  standaloneComponents: ɵComponentDef<any>[];
+}
+
+export const flatModulesWithComponents = (modulesWithComponentsList: ModulesWithComponents[]): ModulesWithComponents => {
+  const modulesWithComponents: ModulesWithComponents = {
+    modules: [],
+    standaloneComponents: []
+  };
+  for (const m of modulesWithComponentsList) {
+    for (const module of m.modules) {
+      if (!modulesWithComponents.modules.some(m1 => m1.module === module.module)) {
+        modulesWithComponents.modules.push(module);
+      }
+    }
+    for (const comp of m.standaloneComponents) {
+      if (!modulesWithComponents.standaloneComponents.includes(comp)) {
+        modulesWithComponents.standaloneComponents.push(comp);
+      }
+    }
+  }
+  return modulesWithComponents;
+}
+
+export const modulesWithComponentsToTypes = (modulesWithComponents: ModulesWithComponents): Type<any>[] =>
+  [...modulesWithComponents.modules.map(m => m.module.type),
+    ...modulesWithComponents.standaloneComponents.map(c => c.type)];
+
+export const componentTypeBySelector = (modulesWithComponents: ModulesWithComponents, selector: string): Type<any> | undefined => {
+  let found = modulesWithComponents.standaloneComponents.find(c => matchesSelector(c.selectors, selector));
+  if (!found) {
+    for (const m of modulesWithComponents.modules) {
+      found = m.components.find(c => matchesSelector(c.selectors, selector));
+      if (found) {
+        break;
+      }
+    }
+  }
+  return found?.type;
+}
+
+const matchesSelector = (selectors: ɵCssSelectorList, selector: string) =>
+  selectors.some(s => s.some(s1 => typeof s1 === 'string' && s1 === selector));
 
 @Injectable({
   providedIn: 'root'
@@ -50,16 +98,15 @@ export class ResourcesService {
 
   private loadedJsonResources: { [url: string]: ReplaySubject<any> } = {};
   private loadedResources: { [url: string]: ReplaySubject<void> } = {};
-  private loadedModulesAndFactories: { [url: string]: ReplaySubject<ModulesWithFactories> } = {};
+  private loadedModulesWithComponents: { [url: string]: ReplaySubject<ModulesWithComponents> } = {};
 
   private anchor = this.document.getElementsByTagName('head')[0] || this.document.getElementsByTagName('body')[0];
 
-  constructor(@Inject(DOCUMENT) private readonly document: any,
+  constructor(@Inject(DOCUMENT) private readonly document: Document,
               protected store: Store<AppState>,
-              private compiler: Compiler,
               private http: HttpClient,
               private injector: Injector) {
-    this.store.pipe(select(selectIsAuthenticated)).subscribe(() => this.clearModulesCache());
+    this.store.pipe(select(selectIsAuthenticated)).subscribe(() => this.clearModulesWithComponentsCache());
   }
 
   public loadJsonResource<T>(url: string, postProcess?: (data: T) => T): Observable<T> {
@@ -93,7 +140,7 @@ export class ResourcesService {
       return this.loadedResources[url].asObservable();
     }
 
-    let fileType;
+    let fileType: string;
     const match = /[./](css|less|html|htm|js)?(([?#]).*)?$/.exec(url);
     if (match !== null) {
       fileType = match[1];
@@ -137,53 +184,58 @@ export class ResourcesService {
     );
   }
 
-  public loadFactories(resourceId: string | TbResourceId, modulesMap: IModulesMap): Observable<ModulesWithFactories> {
+  public loadModulesWithComponents(resourceId: string | TbResourceId, modulesMap: IModulesMap): Observable<ModulesWithComponents> {
     const url = this.getDownloadUrl(resourceId);
-    if (this.loadedModulesAndFactories[url]) {
-      return this.loadedModulesAndFactories[url].asObservable();
+    if (this.loadedModulesWithComponents[url]) {
+      return this.loadedModulesWithComponents[url].asObservable();
     }
-    modulesMap.init();
     const meta = this.getMetaInfo(resourceId);
-    const subject = new ReplaySubject<ModulesWithFactories>();
-    this.loadedModulesAndFactories[url] = subject;
-    import('@angular/compiler').then(
+    const subject = new ReplaySubject<ModulesWithComponents>();
+    this.loadedModulesWithComponents[url] = subject;
+
+    forkJoin(
+      [
+        modulesMap.init(),
+        from(import('@angular/compiler'))
+      ]
+    ).subscribe(
       () => {
+        // @ts-ignore
         System.import(url, undefined, meta).then(
-          (module) => {
-            const modules = this.extractNgModules(module);
-            if (modules.length) {
-              const tasks: Promise<ModuleWithComponentFactories<any>>[] = [];
-              for (const m of modules) {
-                tasks.push(this.compiler.compileModuleAndAllComponentsAsync(m));
-              }
-              forkJoin(tasks).subscribe({
-                next: (compiled) => {
-                  try {
-                    const componentFactories: ComponentFactory<any>[] = [];
-                    for (const c of compiled) {
-                      c.ngModuleFactory.create(this.injector);
-                      componentFactories.push(...c.componentFactories);
+          (module: any) => {
+            try {
+              const modulesWithComponents = this.extractModulesWithComponents(module);
+              this.patchModulesWithFlexLayout(modulesWithComponents).subscribe(
+                {
+                  next: modules => {
+                    if (modules.modules.length || modules.standaloneComponents.length) {
+                      try {
+                        for (const module of modules.modules) {
+                          createNgModule(module.module.type, this.injector);
+                        }
+                        this.loadedModulesWithComponents[url].next(modulesWithComponents);
+                        this.loadedModulesWithComponents[url].complete();
+                      } catch (e) {
+                        console.log(`Unable to parse module from url: ${url}`, e);
+                        this.loadedModulesWithComponents[url].error(new Error(`Unable to parse module from url: ${url}`));
+                      }
+                    } else {
+                      this.loadedModulesWithComponents[url].error(new Error(`Module '${url}' doesn't have exported modules or components!`));
                     }
-                    const modulesWithFactories: ModulesWithFactories = {
-                      modules,
-                      factories: componentFactories
-                    };
-                    this.loadedModulesAndFactories[url].next(modulesWithFactories);
-                    this.loadedModulesAndFactories[url].complete();
-                  } catch (e) {
-                    this.loadedModulesAndFactories[url].error(new Error(`Unable to init module from url: ${url}`));
+                  },
+                  error: err => {
+                    console.log(`Unable to patch module with flexLayout, module url: ${url}`, err);
+                    this.loadedModulesWithComponents[url].error(new Error(`Unable to patch module with flexLayout, module url: ${url}`));
                   }
-                },
-                error: (e) => {
-                  this.loadedModulesAndFactories[url].error(new Error(`Unable to compile module from url: ${url}`));
                 }
-              });
-            } else {
-              this.loadedModulesAndFactories[url].error(new Error(`Module '${url}' doesn't have default export!`));
+              );
+            } catch (e) {
+              console.log(`Unable to parse module from url: ${url}`, e);
+              this.loadedModulesWithComponents[url].error(new Error(`Unable to parse module from url: ${url}`));
             }
           },
-          (e) => {
-            this.loadedModulesAndFactories[url].error(new Error(`Unable to load module from url: ${url}`));
+          () => {
+            this.loadedModulesWithComponents[url].error(new Error(`Unable to load module from url: ${url}`));
           }
         );
       }
@@ -192,7 +244,7 @@ export class ResourcesService {
       tap({
         next: () => System.delete(url),
         error: () => {
-          delete this.loadedModulesAndFactories[url];
+          delete this.loadedModulesWithComponents[url];
           System.delete(url);
         },
         complete: () => System.delete(url)
@@ -200,41 +252,98 @@ export class ResourcesService {
     );
   }
 
-  private extractNgModules(module: any, modules: Type<any>[] = []): Type<any>[] {
-    try {
-      let potentialModules = [module];
-      let currentScanDepth = 0;
 
-      while (potentialModules.length && currentScanDepth < 10) {
-        const newPotentialModules = [];
-        for (const potentialModule of potentialModules) {
-          if (potentialModule && (ɵNG_MOD_DEF in potentialModule)) {
-            modules.push(potentialModule);
-          } else {
-            for (const k of Object.keys(potentialModule)) {
-              if (!this.isPrimitive(potentialModule[k])) {
-                newPotentialModules.push(potentialModule[k]);
-              }
+  private extractModulesWithComponents(module: any,
+                                       modulesWithComponents: ModulesWithComponents = {
+                                         modules: [],
+                                         standaloneComponents: []
+                                       },
+                                       visitedModules: Set<any> = new Set<any>()): ModulesWithComponents {
+    if (module && ['object', 'function'].includes(typeof module) && !visitedModules.has(module)) {
+      visitedModules.add(module);
+      if (ɵNG_MOD_DEF in module) {
+        const moduleDef: ɵNgModuleDef<any> = module[ɵNG_MOD_DEF];
+        const moduleInfo: ModuleInfo = {
+          module: moduleDef,
+          components: []
+        }
+        modulesWithComponents.modules.push(moduleInfo);
+        const exportsDecl = moduleDef.exports;
+        let exports: Type<any>[];
+        if (Array.isArray(exportsDecl)) {
+          exports = exportsDecl;
+        } else {
+          exports = exportsDecl();
+        }
+        for (const element of exports) {
+          if (ɵNG_COMP_DEF in element) {
+            const component: ɵComponentDef<any> = element[ɵNG_COMP_DEF];
+            if (!component.standalone) {
+              moduleInfo.components.push(component);
+            } else {
+              modulesWithComponents.standaloneComponents.push(component);
             }
+          } else {
+            this.extractModulesWithComponents(module, modulesWithComponents, visitedModules);
           }
         }
-        potentialModules = newPotentialModules;
-        currentScanDepth++;
+      } else if (ɵNG_COMP_DEF in module) {
+        const component: ɵComponentDef<any> = module[ɵNG_COMP_DEF];
+        if (component.standalone) {
+          if (!modulesWithComponents.standaloneComponents.includes(component)) {
+            modulesWithComponents.standaloneComponents.push(component);
+          }
+        }
+      } else {
+        for (const k of Object.keys(module)) {
+          const val = module[k];
+          if (val && ['object', 'function'].includes(typeof val)) {
+            this.extractModulesWithComponents(val, modulesWithComponents, visitedModules);
+          }
+        }
       }
-    } catch (e) {
-      console.log('Could not load NgModule', e);
     }
-    return modules;
+    return modulesWithComponents;
   }
 
-  private isPrimitive(test) {
-    return test !== Object(test);
+  private patchModulesWithFlexLayout(modulesWithComponents: ModulesWithComponents): Observable<ModulesWithComponents> {
+    return getFlexLayoutModule().pipe(
+      map((flexLayoutModule) => {
+        modulesWithComponents.modules.forEach(m => {
+          if (Array.isArray(m.module.imports)) {
+            if (!m.module.imports.includes(flexLayoutModule)) {
+              m.module.imports.push(flexLayoutModule);
+            }
+          } else {
+            const imports = m.module.imports();
+            if (!imports.includes(flexLayoutModule)) {
+              imports.push(flexLayoutModule);
+              m.module.imports = imports;
+            }
+          }
+        });
+        modulesWithComponents.standaloneComponents.forEach(c => {
+          if (Array.isArray(c.dependencies)) {
+            if (!c.dependencies.includes(flexLayoutModule)) {
+              c.dependencies.push(flexLayoutModule);
+            }
+          } else {
+            const dependencies = c.dependencies();
+            if (!dependencies.includes(flexLayoutModule)) {
+              dependencies.push(flexLayoutModule);
+              c.dependencies = dependencies;
+            }
+          }
+        });
+        return modulesWithComponents;
+      })
+    );
   }
 
   private loadResourceByType(type: 'css' | 'js', url: string): Observable<any> {
     const subject = new ReplaySubject<void>();
     this.loadedResources[url] = subject;
-    let el;
+    let el: any;
     let loaded = false;
     switch (type) {
       case 'js':
@@ -250,7 +359,7 @@ export class ResourcesService {
         el.href = url;
         break;
     }
-    el.onload = el.onreadystatechange = (e) => {
+    el.onload = el.onreadystatechange = () => {
       if (el.readyState && !/^c|loade/.test(el.readyState) || loaded) { return; }
       el.onload = el.onreadystatechange = null;
       loaded = true;
@@ -269,11 +378,11 @@ export class ResourcesService {
     if (isObject(resourceId)) {
       return `/api/resource/js/${(resourceId as TbResourceId).id}/download`;
     }
-    return resourceId as string;
+    return removeTbResourcePrefix(resourceId as string);
   }
 
   private getMetaInfo(resourceId: string | TbResourceId): object {
-    if (isObject(resourceId)) {
+    if (isObject(resourceId) || (typeof resourceId === 'string' && isJSResource(resourceId))) {
       return {
         additionalHeaders: {
           'X-Authorization': `Bearer ${AuthService.getJwtToken()}`
@@ -282,7 +391,7 @@ export class ResourcesService {
     }
   }
 
-  private clearModulesCache() {
-    this.loadedModulesAndFactories = {};
+  private clearModulesWithComponentsCache() {
+    this.loadedModulesWithComponents = {};
   }
 }

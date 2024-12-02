@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
+import org.thingsboard.server.common.data.query.OriginatorAlarmFilter;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.Dao;
 
@@ -110,4 +111,7 @@ public interface AlarmDao extends Dao<Alarm> {
     PageData<EntitySubtype> findTenantAlarmTypes(UUID tenantId, PageLink pageLink);
 
     boolean removeAlarmTypesIfNoAlarmsPresent(UUID tenantId, Set<String> types);
+
+    List<UUID> findActiveOriginatorAlarms(TenantId tenantId, OriginatorAlarmFilter originatorAlarmFilter, int limit);
+
 }
