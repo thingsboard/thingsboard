@@ -34,14 +34,11 @@
         {{ 'rulenode.name-max-length' | translate }}
       </mat-error>
     </mat-form-field>
-    <section class="flex flex-row max-w-xs mb-5">
-      <tb-debug-config-button
+    <section class="mb-5 flex max-w-xs flex-row">
+      <tb-debug-settings-button
         class="mr-2"
-        [debugAll]="ruleNode.debugAll"
-        [debugFailures]="ruleNode.debugFailures"
-        [debugAllUntil]="ruleNode.debugAllUntil"
+        formControlName="debugSettings"
         [debugLimitsConfiguration]="ruleChainDebugPerTenantLimitsConfiguration"
-        (onDebugConfigChanged)="onDebugConfigChanged($event)"
       />
       <button mat-stroked-button
               class="tb-rounded-btn flex-1"

@@ -99,7 +99,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     this.loadDataOnInit = false;
     this.tableTitle = '';
     this.useTimePageLink = true;
-    this.defaultTimewindowInterval = this.maxDebugModeDurationMinutes ? historyInterval(this.maxDebugModeDurationMinutes * MINUTE) : historyInterval(DAY);
+    const defaultInterval = this.maxDebugModeDurationMinutes ? Math.min(this.maxDebugModeDurationMinutes * MINUTE, DAY) : DAY;
+    this.defaultTimewindowInterval = historyInterval(defaultInterval);
     this.detailsPanelEnabled = false;
     this.selectionEnabled = false;
     this.searchEnabled = false;
