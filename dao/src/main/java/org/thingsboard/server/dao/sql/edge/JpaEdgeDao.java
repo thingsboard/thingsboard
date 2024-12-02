@@ -65,6 +65,15 @@ public class JpaEdgeDao extends JpaAbstractDao<EdgeEntity, Edge> implements Edge
     }
 
     @Override
+    public PageData<EdgeId> findEdgeIdsByTenantId(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(
+                edgeRepository.findIdsByTenantId(
+                        tenantId,
+                        pageLink.getTextSearch(),
+                        DaoUtil.toPageable(pageLink))).mapData(EdgeId::fromUUID);
+    }
+
+    @Override
     public PageData<Edge> findEdgesByTenantId(UUID tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(
                 edgeRepository.findByTenantId(

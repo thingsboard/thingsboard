@@ -71,8 +71,8 @@ public class MobileAppBundleServiceImpl extends AbstractEntityService implements
             return savedMobileApp;
         } catch (Exception e) {
             checkConstraintViolation(e,
-                    Map.of("android_app_id_unq_key", "Android mobile app already exists in another bundle!",
-                            "ios_app_id_unq_key", "IOS mobile app already exists in another bundle!"));
+                    Map.of("mobile_app_bundle_android_app_id_key", "Android mobile app is already configured in another bundle!",
+                            "mobile_app_bundle_ios_app_id_key", "IOS mobile app is already configured in another bundle!"));
             throw e;
         }
     }

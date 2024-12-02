@@ -188,7 +188,8 @@ export class MobileBundleTableConfigResolver {
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: {
           afterAdd,
-          appSecret: data.androidApp?.appSecret || data.iosApp?.appSecret
+          androidApp: data.androidApp,
+          iosApp: data.iosApp
         }
       }).afterClosed()
         .subscribe(() => {

@@ -40,7 +40,8 @@
           background: #F3F6FA;
           border-color: $tb-primary-color;
           padding-right: 38px;
-          overflow: scroll;
+          overflow: hidden;
+          overflow-x: auto;
           padding-bottom: 4px;
           min-height: 42px;
           scrollbar-width: thin;
@@ -51,7 +52,7 @@
           }
         }
       }
-      button.clipboard-btn {
+      button.clipboard-btn, button.clipboard-btn.multiline {
         right: -2px;
         p {
           color: $tb-primary-color;
@@ -70,8 +71,8 @@
             width: 18px;
             height: 18px;
             background: $tb-primary-color;
-            mask-image: url(/src/assets/copy-code-icon.svg);
-            -webkit-mask-image: url(/src/assets/copy-code-icon.svg);
+            mask-image: url(/assets/copy-code-icon.svg);
+            -webkit-mask-image: url(/assets/copy-code-icon.svg);
             mask-repeat: no-repeat;
             -webkit-mask-repeat: no-repeat;
           }

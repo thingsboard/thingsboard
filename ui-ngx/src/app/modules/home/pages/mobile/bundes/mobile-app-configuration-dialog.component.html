@@ -51,6 +51,16 @@
     <tb-markdown usePlainMarkdown containerClass="tb-command-code"
                  [data]=createMarkDownCommand(configureApi)></tb-markdown>
   </div>
+  <div class="tb-form-panel stroked" *ngIf="setApplication">
+    <div class="tb-form-panel-title" translate>mobile.configuration-step.configure-package-title</div>
+    <div translate>mobile.configuration-step.configure-package-text</div>
+    <div translate>mobile.configuration-step.configure-package-text-install</div>
+    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                 [data]=createMarkDownCommand(flutterInstallRenameCommand)></tb-markdown>
+    <div translate>mobile.configuration-step.configure-package-run-commands</div>
+    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                 [data]=createMarkDownCommand(renameCommands)></tb-markdown>
+  </div>
   <div class="tb-form-panel stroked">
     <div class="tb-form-panel-title" translate>mobile.configuration-step.run-app-title</div>
     <div translate>mobile.configuration-step.run-app-text</div>
@@ -62,7 +72,7 @@
       <div class="flex-1" translate>mobile.configuration-step.more-information</div>
       <a mat-stroked-button
          color="primary"
-         href="https://docs.flutter.dev/get-started/install"
+         href="https://docs.flutter.dev/learn-flutter"
          target="_blank">
         <mat-icon class="tb-mat-24">rocket_launch</mat-icon>{{ 'mobile.configuration-step.getting-started' | translate }}
       </a>

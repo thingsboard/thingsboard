@@ -148,7 +148,7 @@
       </mat-form-field>
       <mat-form-field appearance="outline" *ngIf="entityForm.get('platformType').value === PlatformType.ANDROID">
         <mat-label translate>mobile.sha256-certificate-fingerprints</mat-label>
-        <input matInput [required]="entityForm.get('status').value === MobileAppStatus.PUBLISHED" formControlName="sha256CertFingerprints">
+        <input matInput [required]="entityForm.get('status').value !== MobileAppStatus.DRAFT" formControlName="sha256CertFingerprints">
         <tb-copy-button
           matSuffix
           miniButton="false"
@@ -166,7 +166,7 @@
       </mat-form-field>
       <mat-form-field appearance="outline" *ngIf="entityForm.get('platformType').value === PlatformType.IOS">
         <mat-label translate>mobile.app-id</mat-label>
-        <input matInput [required]="entityForm.get('status').value === MobileAppStatus.PUBLISHED" formControlName="appId">
+        <input matInput [required]="entityForm.get('status').value !== MobileAppStatus.DRAFT" formControlName="appId">
         <tb-copy-button
           matSuffix
           miniButton="false"
