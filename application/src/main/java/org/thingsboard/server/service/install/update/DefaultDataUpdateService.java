@@ -34,6 +34,7 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.component.RuleNodeClassInfo;
+import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.utils.TbNodeUpgradeUtils;
 
 import java.util.ArrayList;
@@ -57,9 +58,14 @@ public class DefaultDataUpdateService implements DataUpdateService {
     @Autowired
     JpaExecutorService jpaExecutorService;
 
+    @Autowired
+    private InstallScripts installScripts;
+
     @Override
     public void updateData() throws Exception {
         log.info("Updating data ...");
+        //TODO: should be cleaned after each release
+        installScripts.updateResourcesUsage();
         log.info("Data updated.");
     }
 

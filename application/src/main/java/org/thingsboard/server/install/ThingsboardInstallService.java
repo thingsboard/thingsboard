@@ -99,21 +99,18 @@ public class ThingsboardInstallService {
                 if ("cassandra-latest-to-postgres".equals(upgradeFromVersion)) {
                     log.info("Migrating ThingsBoard latest timeseries data from cassandra to SQL database ...");
                     latestMigrateService.migrate();
-                } else if (upgradeFromVersion.equals("3.6.2-images")) {
-                    installScripts.updateImages();
                 } else {
                     databaseSchemaVersionService.validateSchemaSettings();
                     //TODO DON'T FORGET to update SUPPORTED_VERSIONS_FROM in DatabaseSchemaVersionService,
                     // this list should include last version and can include previous versions without upgrade
                     String fromVersion = databaseSchemaVersionService.getDbSchemaVersion();
                     String toVersion = databaseSchemaVersionService.getPackageSchemaVersion();
-                    cacheCleanupService.clearCache();
                     log.info("Upgrading ThingsBoard from version {} to {} ...", fromVersion, toVersion);
-                    databaseEntitiesUpgradeService.upgradeDatabase();
-//                    dataUpdateService.updateData();
-                    installScripts.updateResourcesUsage();
-
+                    cacheCleanupService.clearCache();
                     entityDatabaseSchemaService.createDatabaseSchema(false);
+                    databaseEntitiesUpgradeService.upgradeDatabase();
+                    dataUpdateService.updateData(); //TODO: update data should be cleaned after each release
+
                     entityDatabaseSchemaService.createOrUpdateViewsAndFunctions();
                     entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
                     entityDatabaseSchemaService.createDatabaseIndexes();

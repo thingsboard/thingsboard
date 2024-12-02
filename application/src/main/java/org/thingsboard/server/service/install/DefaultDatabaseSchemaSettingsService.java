@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.annotation.Profile;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
@@ -71,13 +70,8 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
 
     @Deprecated(forRemoval = true, since = "3.9.0")
     private void createProductIfNotExists() {
-        boolean isCommunityEdition;
-        try {
-            jdbcTemplate.queryForObject("SELECT 1 FROM information_schema.tables WHERE table_name = 'integration'", Integer.class);
-            isCommunityEdition = false;
-        } catch (EmptyResultDataAccessException e) {
-            isCommunityEdition = true;
-        }
+        boolean isCommunityEdition = jdbcTemplate.queryForList(
+                "SELECT 1 FROM information_schema.tables WHERE table_name = 'integration'", Integer.class).isEmpty();
         String product = isCommunityEdition ? "CE" : "PE";
         jdbcTemplate.execute("ALTER TABLE tb_schema_settings ADD COLUMN IF NOT EXISTS product varchar(2) DEFAULT '" + product + "'");
     }
@@ -140,7 +134,7 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
     }
 
     private void onSchemaSettingsError(String message) {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> log.info(message)));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> log.error(message)));
         throw new RuntimeException(message);
     }
 }
