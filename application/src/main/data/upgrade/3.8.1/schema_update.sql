@@ -31,7 +31,7 @@ ALTER TABLE rule_node ADD COLUMN IF NOT EXISTS debug_settings varchar(1024) DEFA
 DO
 $$
     BEGIN
-        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'rule_node' AND column_name = 'debug_settings')
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'rule_node' AND column_name = 'debug_mode')
             THEN
                 UPDATE rule_node SET debug_settings = '{"failuresEnabled": true, "allEnabledUntil": ' || cast((extract(epoch from now()) + 900) * 1000 as bigint) || '}' WHERE debug_mode = true; -- 15 minutes according to thingsboard.yml default settings.
                 ALTER TABLE rule_node DROP COLUMN debug_mode;
