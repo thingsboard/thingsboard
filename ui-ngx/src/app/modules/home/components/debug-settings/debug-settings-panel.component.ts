@@ -121,6 +121,7 @@ export class DebugSettingsPanelComponent extends PageComponent implements OnInit
       this.onSettingsApplied.emit({
         allEnabled: false,
         failuresEnabled: this.onFailuresControl.value,
+        allEnabledUntil: this.allEnabledUntil,
       });
     }
   }
