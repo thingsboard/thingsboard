@@ -65,6 +65,7 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxUsers: [null, [Validators.required, Validators.min(0)]],
       maxDashboards: [null, [Validators.required, Validators.min(0)]],
       maxRuleChains: [null, [Validators.required, Validators.min(0)]],
+      maxEdges: [null, [Validators.required, Validators.min(0)]],
       maxResourcesInBytes: [null, [Validators.required, Validators.min(0)]],
       maxOtaPackagesInBytes: [null, [Validators.required, Validators.min(0)]],
       maxResourceSize: [null, [Validators.required, Validators.min(0)]],
