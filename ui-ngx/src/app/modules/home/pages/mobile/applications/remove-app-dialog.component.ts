@@ -24,6 +24,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormBuilder } from '@angular/forms';
 import { MobileAppService } from '@core/http/mobile-app.service';
+import { mergeMap } from 'rxjs';
+import { MobileAppStatus } from '@shared/models/mobile-app.models';
 
 export interface MobileAppDeleteDialogData {
   id: string;
@@ -58,6 +60,17 @@ export class RemoveAppDialogComponent extends DialogComponent<RemoveAppDialogCom
 
   cancel(): void {
     this.dialogRef.close(false);
+  }
+
+  suspend(): void {
+    this.mobileAppService.getMobileAppInfoById(this.data.id).pipe(
+      mergeMap(value => {
+        value.status = MobileAppStatus.SUSPENDED;
+        return this.mobileAppService.saveMobileApp(value)
+      })
+    ).subscribe(() => {
+      this.dialogRef.close(true);
+    });
   }
 
   delete(): void {

@@ -152,12 +152,10 @@
                      autocomplete="new-username"/>
             </mat-form-field>
             <div class="flex items-center justify-between" style="height: 50px; padding-bottom: 20px" [class.!hidden]="mailSettings.get('providerId').value === 'SENDGRID'">
-              <mat-button-toggle-group class="tb-notification-unread-toggle-group"
-                                       style="width: 250px;"
-                                       formControlName="enableOauth2">
-                <mat-button-toggle class="flex-1" [value]=false>{{ 'admin.oauth2.basic' | translate }}</mat-button-toggle>
-                <mat-button-toggle class="flex-1" [value]=true>{{ 'admin.oauth2.oauth2' | translate }}</mat-button-toggle>
-              </mat-button-toggle-group>
+              <tb-toggle-select class="w-52" formControlName="enableOauth2" appearance="fill">
+                <tb-toggle-option [value]=false>{{ 'admin.oauth2.basic' | translate }}</tb-toggle-option>
+                <tb-toggle-option [value]=true>{{ 'admin.oauth2.oauth2' | translate }}</tb-toggle-option>
+              </tb-toggle-select>
               <div class="details-buttons" *ngIf="helpLink && mailSettings.get('enableOauth2').value">
                 <div [tb-help]="helpLink"></div>
               </div>

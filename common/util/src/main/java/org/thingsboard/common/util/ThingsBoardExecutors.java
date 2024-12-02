@@ -17,6 +17,9 @@ package org.thingsboard.common.util;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class ThingsBoardExecutors {
 
@@ -46,6 +49,18 @@ public class ThingsBoardExecutors {
 
     public static ExecutorService newWorkStealingPool(int parallelism, Class clazz) {
         return newWorkStealingPool(parallelism, clazz.getSimpleName());
+    }
+
+    /*
+     * executor with limited tasks queue size
+     * */
+    public static ExecutorService newLimitedTasksExecutor(int threads, int maxQueueSize, String name) {
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(threads, threads,
+                60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(maxQueueSize),
+                ThingsBoardThreadFactory.forName(name),
+                new ThreadPoolExecutor.CallerRunsPolicy());
+        executor.allowCoreThreadTimeOut(true);
+        return executor;
     }
 
 }

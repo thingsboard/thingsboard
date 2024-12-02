@@ -114,6 +114,8 @@ export class MobileAppTableConfigResolver  {
     this.config.entitiesFetchFunction = pageLink => this.mobileAppService.getTenantMobileAppInfos(pageLink);
     this.config.loadEntity = id => this.mobileAppService.getMobileAppInfoById(id.id);
     this.config.saveEntity = (mobileApp) => this.mobileAppService.saveMobileApp(mobileApp);
+    this.config.deleteEntityTitle = (mobileApp) => this.translate.instant('mobile.delete-application-title-short', {name: mobileApp.name});
+    this.config.deleteEntityContent = () => this.translate.instant('mobile.delete-application-text-short');
     this.config.deleteEntity = id => this.mobileAppService.deleteMobileApp(id.id);
 
     this.config.cellActionDescriptors = this.configureCellActions();
@@ -138,19 +140,23 @@ export class MobileAppTableConfigResolver  {
     if ($event) {
       $event.stopPropagation();
     }
-    this.dialog.open<RemoveAppDialogComponent, MobileAppDeleteDialogData,
-      MobileAppBundleInfo>(RemoveAppDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        id: entity.id.id
-      }
-    }).afterClosed()
-      .subscribe((res) => {
-        if (res) {
-          this.config.updateData();
+    if(entity.status === MobileAppStatus.PUBLISHED) {
+      this.dialog.open<RemoveAppDialogComponent, MobileAppDeleteDialogData,
+        MobileAppBundleInfo>(RemoveAppDialogComponent, {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          id: entity.id.id
         }
-      });
+      }).afterClosed()
+        .subscribe((res) => {
+          if (res) {
+            this.config.updateData();
+          }
+        });
+    } else {
+      this.config.getTable().deleteEntity($event, entity);
+    }
   }
 
   private mobileStatus(status: MobileAppStatus): string {
