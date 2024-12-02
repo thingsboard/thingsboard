@@ -26,4 +26,12 @@
   .mat-mdc-select-value {
     min-width: 100px;
   }
+  .mat-mdc-form-field-has-icon-suffix {
+    .mat-mdc-text-field-wrapper:has(.mat-mdc-form-field-icon-suffix:empty) {
+      padding-right: 12px;
+    }
+    .mat-mdc-form-field-icon-suffix:empty {
+      padding: 0;
+    }
+  }
 }
