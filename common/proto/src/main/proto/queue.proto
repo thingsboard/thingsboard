@@ -608,6 +608,7 @@ enum SessionCloseReason {
   CREDENTIALS_UPDATED = 1;
   MAX_CONCURRENT_SESSIONS_LIMIT_REACHED = 2;
   SESSION_TIMEOUT = 3;
+  RPC_DELIVERY_TIMEOUT = 4;
 }
 
 message SessionCloseNotificationProto {
