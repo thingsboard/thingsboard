@@ -25,15 +25,15 @@ import {
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { UntypedFormBuilder } from '@angular/forms';
+import { FormBuilder } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
-import { MINUTE, SECOND } from '@shared/models/time/time.models';
+import { SECOND } from '@shared/models/time/time.models';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { of, shareReplay, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DebugSettings } from '@shared/models/entity.models';
-import { map, startWith, switchMap, tap } from 'rxjs/operators';
+import { distinctUntilChanged, map, startWith, switchMap, takeWhile } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-debug-settings-panel',
@@ -67,19 +67,33 @@ export class DebugSettingsPanelComponent extends PageComponent implements OnInit
       if (value) {
         return of(true);
       } else {
-        return timer(0, SECOND).pipe(map(() => this.allEnabledUntil > new Date().getTime()));
+        return timer(0, SECOND).pipe(
+          map(() => this.allEnabledUntil > new Date().getTime()),
+          takeWhile(value => value, true)
+        );
       }
     }),
-    tap(isDebugOn => this.debugAllControl.patchValue(isDebugOn, { emitEvent: false })),
+    takeUntilDestroyed(),
     shareReplay(1),
   );
 
   onConfigApplied = new EventEmitter<DebugSettings>();
 
-  constructor(private fb: UntypedFormBuilder, private cd: ChangeDetectorRef) {
+  constructor(private fb: FormBuilder,
+              private cd: ChangeDetectorRef) {
     super();
 
-    this.observeDebugAllChange();
+    this.debugAllControl.valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe(value => {
+      this.allEnabled = value;
+      this.cd.markForCheck();
+    });
+
+    this.isDebugAllActive$.pipe(
+      distinctUntilChanged(),
+      takeUntilDestroyed()
+    ).subscribe(isDebugOn => this.debugAllControl.patchValue(isDebugOn, {emitEvent: false}))
   }
 
   ngOnInit(): void {
@@ -95,22 +109,12 @@ export class DebugSettingsPanelComponent extends PageComponent implements OnInit
   onApply(): void {
     this.onConfigApplied.emit({
       allEnabled: this.debugAllControl.value,
-      failuresEnabled: this.onFailuresControl.value,
-      allEnabledUntil: this.allEnabledUntil
+      failuresEnabled: this.onFailuresControl.value
     });
   }
 
   onReset(): void {
     this.debugAllControl.patchValue(true);
-    this.allEnabledUntil = 0;
     this.cd.markForCheck();
-  }
-
-  private observeDebugAllChange(): void {
-    this.debugAllControl.valueChanges.pipe(takeUntilDestroyed()).subscribe(value => {
-      this.allEnabledUntil = value? new Date().getTime() + this.maxDebugModeDurationMinutes * MINUTE : 0;
-      this.allEnabled = value;
-      this.cd.markForCheck();
-    });
   }
 }

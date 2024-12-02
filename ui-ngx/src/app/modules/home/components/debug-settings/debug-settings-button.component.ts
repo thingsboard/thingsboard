@@ -14,15 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  Component,
-  Input,
-  Renderer2,
-  ViewContainerRef,
-  DestroyRef,
-  ChangeDetectionStrategy,
-  forwardRef
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, Input, Renderer2, ViewContainerRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
@@ -33,15 +25,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { of, shareReplay, timer } from 'rxjs';
 import { SECOND } from '@shared/models/time/time.models';
 import { DebugSettings } from '@shared/models/entity.models';
-import { map, startWith, switchMap } from 'rxjs/operators';
+import { map, startWith, switchMap, takeWhile } from 'rxjs/operators';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { AppState } from '@core/core.state';
 import { Store } from '@ngrx/store';
-import {
-  ControlValueAccessor,
-  FormBuilder,
-  NG_VALUE_ACCESSOR,
-} from '@angular/forms';
+import { ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
   selector: 'tb-debug-settings-button',
@@ -70,16 +58,22 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
     allEnabled: [false],
     allEnabledUntil: []
   });
+
   disabled = false;
+
   isDebugAllActive$ = this.debugSettingsFormGroup.get('allEnabled').valueChanges.pipe(
     startWith(this.debugSettingsFormGroup.get('allEnabled').value),
     switchMap(value => {
       if (value) {
         return of(true);
       } else {
-        return timer(0, SECOND).pipe(map(() => this.allEnabledUntil > new Date().getTime()));
+        return timer(0, SECOND).pipe(
+          map(() => this.allEnabledUntil > new Date().getTime()),
+          takeWhile(value => value, true)
+        );
       }
     }),
+    takeUntilDestroyed(),
     shareReplay(1)
   );
 
@@ -91,10 +85,11 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
               private renderer: Renderer2,
               private store: Store<AppState>,
               private viewContainerRef: ViewContainerRef,
-              private destroyRef: DestroyRef,
               private fb: FormBuilder,
   ) {
-    this.debugSettingsFormGroup.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(value => {
+    this.debugSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe(value => {
       this.propagateChange(value);
     })
   }
@@ -131,7 +126,7 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
         {},
         {}, {}, true);
       debugStrategyPopover.tbComponentRef.instance.popover = debugStrategyPopover;
-      debugStrategyPopover.tbComponentRef.instance.onConfigApplied.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((settings: DebugSettings) => {
+      debugStrategyPopover.tbComponentRef.instance.onConfigApplied.subscribe((settings: DebugSettings) => {
         this.debugSettingsFormGroup.patchValue(settings);
         debugStrategyPopover.hide();
       });
@@ -146,6 +141,7 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
 
   writeValue(settings: DebugSettings): void {
     this.debugSettingsFormGroup.patchValue(settings, {emitEvent: false});
+    this.debugSettingsFormGroup.get('allEnabled').updateValueAndValidity({onlySelf: true});
   }
 
   setDisabledState(isDisabled: boolean): void {
