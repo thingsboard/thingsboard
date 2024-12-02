@@ -60,6 +60,7 @@ export class DebugSettingsPanelComponent extends PageComponent implements OnInit
 
   maxMessagesCount: string;
   maxTimeFrameSec: string;
+  initialAllEnabled: boolean;
 
   isDebugAllActive$ = this.debugAllControl.valueChanges.pipe(
     startWith(this.debugAllControl.value),
@@ -77,7 +78,7 @@ export class DebugSettingsPanelComponent extends PageComponent implements OnInit
     shareReplay(1),
   );
 
-  onConfigApplied = new EventEmitter<DebugSettings>();
+  onSettingsApplied = new EventEmitter<DebugSettings>();
 
   constructor(private fb: FormBuilder,
               private cd: ChangeDetectorRef) {
@@ -100,6 +101,8 @@ export class DebugSettingsPanelComponent extends PageComponent implements OnInit
     this.maxMessagesCount = this.debugLimitsConfiguration?.split(':')[0];
     this.maxTimeFrameSec = this.debugLimitsConfiguration?.split(':')[1];
     this.onFailuresControl.patchValue(this.failuresEnabled);
+    this.debugAllControl.patchValue(this.allEnabled);
+    this.initialAllEnabled = this.allEnabled || this.allEnabledUntil > new Date().getTime();
   }
 
   onCancel(): void {
@@ -107,14 +110,24 @@ export class DebugSettingsPanelComponent extends PageComponent implements OnInit
   }
 
   onApply(): void {
-    this.onConfigApplied.emit({
-      allEnabled: this.debugAllControl.value,
-      failuresEnabled: this.onFailuresControl.value
-    });
+    const isDebugAllChanged = this.initialAllEnabled !== this.debugAllControl.value || this.initialAllEnabled !== this.allEnabledUntil > new Date().getTime();
+    if (isDebugAllChanged) {
+      this.onSettingsApplied.emit({
+        allEnabled: this.allEnabled,
+        failuresEnabled: this.onFailuresControl.value,
+        allEnabledUntil: 0,
+      });
+    } else {
+      this.onSettingsApplied.emit({
+        allEnabled: false,
+        failuresEnabled: this.onFailuresControl.value,
+      });
+    }
   }
 
   onReset(): void {
     this.debugAllControl.patchValue(true);
+    this.allEnabledUntil = 0;
     this.cd.markForCheck();
   }
 }

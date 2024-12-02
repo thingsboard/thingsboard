@@ -126,7 +126,7 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
         {},
         {}, {}, true);
       debugStrategyPopover.tbComponentRef.instance.popover = debugStrategyPopover;
-      debugStrategyPopover.tbComponentRef.instance.onConfigApplied.subscribe((settings: DebugSettings) => {
+      debugStrategyPopover.tbComponentRef.instance.onSettingsApplied.subscribe((settings: DebugSettings) => {
         this.debugSettingsFormGroup.patchValue(settings);
         debugStrategyPopover.hide();
       });
