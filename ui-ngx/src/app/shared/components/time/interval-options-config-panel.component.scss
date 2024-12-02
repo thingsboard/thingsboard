@@ -29,18 +29,15 @@
 
     .tb-form-table-header-cell, .tb-form-table-row-cell {
       &.tb-interval {
-        flex: 1 1 100%;
+        flex: 1 1 30%;
         min-width: calc(30% - 8px);
-        max-width: calc(30% - 8px);
         @media #{$mat-gt-md} {
           min-width: calc(30% - 12px);
-          max-width: calc(30% - 12px);
         }
       }
       &.tb-agg-interval {
-        flex: 1 1 100%;
+        flex: 1 1 70%;
         min-width: 70%;
-        max-width: 70%;
       }
     }
 
