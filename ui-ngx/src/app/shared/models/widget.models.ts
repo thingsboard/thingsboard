@@ -621,27 +621,27 @@ export interface WidgetMobileActionResult<T extends MobileActionResult> {
 }
 
 export interface ProcessImageDescriptor {
-  processImageFunction: string;
+  processImageFunction: TbFunction;
 }
 
 export interface ProcessLaunchResultDescriptor {
-  processLaunchResultFunction?: string;
+  processLaunchResultFunction?: TbFunction;
 }
 
 export interface LaunchMapDescriptor extends ProcessLaunchResultDescriptor {
-  getLocationFunction: string;
+  getLocationFunction: TbFunction;
 }
 
 export interface ScanQrCodeDescriptor {
-  processQrCodeFunction: string;
+  processQrCodeFunction: TbFunction;
 }
 
 export interface MakePhoneCallDescriptor extends ProcessLaunchResultDescriptor {
-  getPhoneNumberFunction: string;
+  getPhoneNumberFunction: TbFunction;
 }
 
 export interface GetLocationDescriptor {
-  processLocationFunction: string;
+  processLocationFunction: TbFunction;
 }
 
 export type WidgetMobileActionDescriptors = ProcessImageDescriptor &
@@ -652,8 +652,8 @@ export type WidgetMobileActionDescriptors = ProcessImageDescriptor &
 
 export interface WidgetMobileActionDescriptor extends WidgetMobileActionDescriptors {
   type: WidgetMobileActionType;
-  handleErrorFunction?: string;
-  handleEmptyResultFunction?: string;
+  handleErrorFunction?: TbFunction;
+  handleEmptyResultFunction?: TbFunction;
 }
 
 export interface CustomActionDescriptor {
