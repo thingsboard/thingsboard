@@ -1,6 +1,6 @@
 {
   "fqn": "two_segment_button",
-  "name": "Two segment button",
+  "name": "Two-segment button",
   "deprecated": false,
   "image": "tb-image;/api/images/system/two-segment-button.svg",
   "description": "Facilitates navigation to other dashboards, states, or custom actions. Configurable settings allow for on-click action definition and conditions for button activation or deactivation. It offers various layouts and custom styling options for different stat",
