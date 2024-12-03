@@ -17,6 +17,7 @@ package org.thingsboard.server.service.subscription;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
@@ -24,7 +25,7 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 
 @Data
-@AllArgsConstructor
+@RequiredArgsConstructor
 public abstract class TbSubscription<T> {
 
     /** Cache the hash code */

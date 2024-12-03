@@ -3793,7 +3793,7 @@
         "downlink-topic-name": "Naam van downlink-onderwerp",
         "downlink-topic-name-required": "De naam van het downlink-onderwerp is vereist"
     },
-   
+
     "item": {
         "selected": "Geselecteerd"
     },
@@ -4419,7 +4419,7 @@
         "system": "Systeem",
         "title": "Titel",
         "title-required": "Titel is vereist.",
-        "title-max-length": "Titel moet kleiner zijn dan 256 tekens",
+        "title-max-length": "Titel moet kleiner zijn dan 256 tekens"
     },
     "rpc": {
         "error": {
