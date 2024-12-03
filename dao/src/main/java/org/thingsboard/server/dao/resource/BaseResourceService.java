@@ -402,13 +402,13 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     @Override
-    public boolean updateResourcesUsage(Dashboard dashboard) {
+    public boolean updateResourcesUsage(TenantId tenantId, Dashboard dashboard) {
         Map<String, String> links = getResourcesLinks(dashboard.getResources());
-        return updateResourcesUsage(dashboard.getTenantId(), List.of(dashboard.getConfiguration()), List.of(DASHBOARD_RESOURCES_MAPPING), links);
+        return updateResourcesUsage(tenantId, List.of(dashboard.getConfiguration()), List.of(DASHBOARD_RESOURCES_MAPPING), links);
     }
 
     @Override
-    public boolean updateResourcesUsage(WidgetTypeDetails widgetTypeDetails) {
+    public boolean updateResourcesUsage(TenantId tenantId, WidgetTypeDetails widgetTypeDetails) {
         Map<String, String> links = getResourcesLinks(widgetTypeDetails.getResources());
         List<JsonNode> jsonNodes = new ArrayList<>(2);
         List<Map<String, String>> mappings = new ArrayList<>(2);
@@ -422,7 +422,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
             mappings.add(WIDGET_DEFAULT_CONFIG_RESOURCES_MAPPING);
         }
 
-        boolean updated = updateResourcesUsage(widgetTypeDetails.getTenantId(), jsonNodes, mappings, links);
+        boolean updated = updateResourcesUsage(tenantId, jsonNodes, mappings, links);
         if (defaultConfig != null) {
             widgetTypeDetails.setDefaultConfig(defaultConfig);
         }
@@ -474,12 +474,12 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     @Override
-    public Collection<TbResourceInfo> getUsedResources(Dashboard dashboard) {
-        return getUsedResources(dashboard.getTenantId(), List.of(dashboard.getConfiguration()), List.of(DASHBOARD_RESOURCES_MAPPING)).values();
+    public Collection<TbResourceInfo> getUsedResources(TenantId tenantId, Dashboard dashboard) {
+        return getUsedResources(tenantId, List.of(dashboard.getConfiguration()), List.of(DASHBOARD_RESOURCES_MAPPING)).values();
     }
 
     @Override
-    public Collection<TbResourceInfo> getUsedResources(WidgetTypeDetails widgetTypeDetails) {
+    public Collection<TbResourceInfo> getUsedResources(TenantId tenantId, WidgetTypeDetails widgetTypeDetails) {
         List<JsonNode> jsonNodes = new ArrayList<>(2);
         List<Map<String, String>> mappings = new ArrayList<>(2);
 
@@ -492,7 +492,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
             mappings.add(WIDGET_DEFAULT_CONFIG_RESOURCES_MAPPING);
         }
 
-        return getUsedResources(widgetTypeDetails.getTenantId(), jsonNodes, mappings).values();
+        return getUsedResources(tenantId, jsonNodes, mappings).values();
     }
 
     private Map<TbResourceId, TbResourceInfo> getUsedResources(TenantId tenantId, List<JsonNode> jsonNodes, List<Map<String, String>> mappings) {
@@ -543,30 +543,33 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         for (int i = 0; i < jsonNodes.size(); i++) {
             JsonNode jsonNode = jsonNodes.get(i);
             // processing by mappings first
-            JacksonUtil.replaceByMapping(jsonNode, mappings.get(i), Collections.emptyMap(), (name, urlNode) -> {
-                String value = null;
-                if (urlNode.isTextual()) { // link is in the right place
-                    value = urlNode.asText();
-                } else {
-                    JsonNode id = urlNode.get("id"); // old structure is used
-                    if (id != null && id.isTextual()) {
-                        value = id.asText();
+            if (i <= mappings.size() - 1) {
+                JacksonUtil.replaceByMapping(jsonNode, mappings.get(i), Collections.emptyMap(), (name, urlNode) -> {
+                    String value = null;
+                    if (urlNode.isTextual()) { // link is in the right place
+                        value = urlNode.asText();
+                    } else {
+                        JsonNode id = urlNode.get("id"); // old structure is used
+                        if (id != null && id.isTextual()) {
+                            value = id.asText();
+                        }
                     }
-                }
 
-                if (StringUtils.isNotBlank(value)) {
-                    value = processor.apply(value);
-                } else {
-                    value = "";
-                }
+                    if (StringUtils.isNotBlank(value)) {
+                        value = processor.apply(value);
+                    } else {
+                        value = "";
+                    }
 
-                JsonNode newValue = new TextNode(value);
-                if (!newValue.toString().equals(urlNode.toString())) {
-                    updated.set(true);
-                    log.trace("Replaced by mapping '{}' ({}) with '{}'", value, name, newValue);
-                }
-                return newValue;
-            });
+                    JsonNode newValue = new TextNode(value);
+                    if (!newValue.toString().equals(urlNode.toString())) {
+                        updated.set(true);
+                        log.trace("Replaced by mapping '{}' ({}) with '{}'", value, name, newValue);
+                    }
+                    return newValue;
+                });
+            }
+
 
             // processing all
             JacksonUtil.replaceAll(jsonNode, "", (name, value) -> {
@@ -597,7 +600,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
                 importResources(dashboard.getTenantId(), dashboard.getResources());
             }
             imageService.updateImagesUsage(dashboard);
-            updateResourcesUsage(dashboard);
+            updateResourcesUsage(dashboard.getTenantId(), dashboard);
 
             data = JacksonUtil.writeValueAsBytes(dashboard);
         }
