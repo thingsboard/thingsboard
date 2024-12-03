@@ -111,14 +111,14 @@ public class ThingsboardInstallService {
                     databaseEntitiesUpgradeService.upgradeDatabase();
                     // All new tables that do not have any data will be automatically created here.
                     entityDatabaseSchemaService.createDatabaseSchema(false);
-                    // Runs upgrade scripts that are not possible in plain SQL.
-                    // TODO: clear after each release
-                    dataUpdateService.updateData();
                     // Re-create all views, functions.
                     entityDatabaseSchemaService.createOrUpdateViewsAndFunctions();
                     entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
                     // Creates missing indexes.
                     entityDatabaseSchemaService.createDatabaseIndexes();
+                    // Runs upgrade scripts that are not possible in plain SQL.
+                    // TODO: cleanup update code after each release
+                    dataUpdateService.updateData();
                     log.info("Updating system data...");
                     dataUpdateService.upgradeRuleNodes();
                     systemDataLoaderService.loadSystemWidgets();
