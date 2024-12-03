@@ -117,9 +117,10 @@ public class HousekeeperService {
             throw new IllegalArgumentException("Unsupported task type " + taskType);
         }
 
+        Future<Object> future = null;
         try {
             long startTs = System.currentTimeMillis();
-            Future<Object> future = taskExecutor.submit(() -> {
+            future = taskExecutor.submit(() -> {
                 taskProcessor.process((T) task);
                 return null;
             });
@@ -137,7 +138,7 @@ public class HousekeeperService {
             if (e instanceof ExecutionException) {
                 error = e.getCause();
             } else if (e instanceof TimeoutException) {
-                error = new TimeoutException("Timeout after " + config.getTaskProcessingTimeout() + " seconds");
+                error = new TimeoutException("Timeout after " + config.getTaskProcessingTimeout() + " ms");
             }
 
             if (msg.getTask().getAttempt() < config.getMaxReprocessingAttempts()) {
@@ -153,6 +154,10 @@ public class HousekeeperService {
                         .build());
             }
             statsService.ifPresent(statsService -> statsService.reportFailure(taskType, msg));
+        } finally {
+            if (future != null && !future.isDone()) {
+                future.cancel(true);
+            }
         }
     }
 
