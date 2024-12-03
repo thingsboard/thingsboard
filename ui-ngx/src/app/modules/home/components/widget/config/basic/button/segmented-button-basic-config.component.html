@@ -1,0 +1,271 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="segmentedButtonWidgetConfigForm">
+  <tb-datasources
+    *ngIf="!widgetEditMode"
+    [configMode]="basicMode"
+    hideDatasourceLabel
+    hideDataKeys
+    forceSingleDatasource
+    formControlName="datasources">
+  </tb-datasources>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.action-button.behavior</div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.button-state.selected-state-hint' | translate}}" translate>widgets.button-state.selected-state</div>
+      <tb-get-value-action-settings class="flex-1"
+                                    panelTitle="{{ 'widgets.button-state.selected-state' | translate }}"
+                                    [valueType]="valueType.BOOLEAN"
+                                    trueLabel="{{ 'widgets.button-state.first' | translate }}"
+                                    falseLabel="{{ 'widgets.button-state.second' | translate }}"
+                                    stateLabel="{{ 'widgets.button-state.initial' | translate }}"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="initialState"></tb-get-value-action-settings>
+    </div>
+
+    <div class="tb-form-row">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.action-button.button-click-hint' | translate}}" translate>widgets.action-button.first-button-click</div>
+      <tb-widget-action-settings class="flex-1"
+                                 panelTitle="{{ 'widgets.action-button.first-button-click' | translate }}"
+                                 [callbacks]="callbacks"
+                                 [widgetType]="widgetType"
+                                 formControlName="leftButtonClick">
+      </tb-widget-action-settings>
+    </div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.action-button.button-click-hint' | translate}}" translate>widgets.action-button.second-button-click</div>
+      <tb-widget-action-settings class="flex-1"
+                                 panelTitle="{{ 'widgets.action-button.second-button-click' | translate }}"
+                                 [callbacks]="callbacks"
+                                 [widgetType]="widgetType"
+                                 formControlName="rightButtonClick">
+      </tb-widget-action-settings>
+    </div>
+
+    <div class="tb-form-row">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.button-state.disabled-state-hint' | translate}}" translate>widgets.button-state.disabled-state</div>
+      <tb-get-value-action-settings class="flex-1"
+                                    panelTitle="{{ 'widgets.button-state.disabled-state' | translate }}"
+                                    [valueType]="valueType.BOOLEAN"
+                                    stateLabel="{{ 'widgets.button-state.disabled' | translate }}"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="disabledState"></tb-get-value-action-settings>
+    </div>
+  </div>
+  <div class="tb-form-panel" formGroupName="appearance">
+    <div class="tb-form-panel-title" translate>widget-config.appearance</div>
+
+    <tb-image-cards-select rowHeight="3:1"
+
+                           [cols]="{columns: 2,
+                                    breakpoints: {
+                                      'lt-sm': 1
+                                    }}"
+                           label="{{ 'widgets.segmented-button.layout' | translate }}" formControlName="layout">
+      <tb-image-cards-select-option *ngFor="let layout of segmentedButtonLayouts"
+                                    [value]="layout"
+                                    [image]="segmentedButtonLayoutImageMap.get(layout)">
+        {{ segmentedButtonLayoutTranslationMap.get(layout) | translate }}
+      </tb-image-cards-select-option>
+    </tb-image-cards-select>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide" formControlName="autoScale">
+        {{ 'widgets.button.auto-scale' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <div class="tb-form-row space-between">
+      <div translate>widgets.segmented-button.card-border</div>
+      <div class="flex flex-row items-center gap-2">
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="cardBorder" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+          <div matSuffix class="lt-md:!hidden">px</div>
+        </mat-form-field>
+        <tb-color-input asBoxInput
+                        formControlName="cardBorderColor">
+        </tb-color-input>
+      </div>
+    </div>
+  </div>
+
+  <div class="tb-form-panel" formGroupName="appearance">
+    <div class="flex flex-row items-center justify-between">
+      <div class="tb-form-panel-title" translate>widgets.segmented-button.button-appearance</div>
+      <tb-toggle-select [(ngModel)]="segmentedButtonAppearanceType" [ngModelOptions]="{standalone: true}">
+        <tb-toggle-option value="first">{{ 'widgets.segmented-button.first' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="second">{{ 'widgets.segmented-button.second' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+    <div class="tb-form-panel no-border no-padding" formGroupName="leftAppearance" [class.!hidden]="segmentedButtonAppearanceType !== 'first'">
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showLabel">
+          {{ 'widgets.button.label' | translate }}
+        </mat-slide-toggle>
+        <div class="flex flex-1 flex-row items-center justify-start gap-2">
+          <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+          <tb-font-settings formControlName="labelFont"
+                            [previewText]="segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.label').value">
+          </tb-font-settings>
+        </div>
+      </div>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showIcon">
+          {{ 'widgets.button.icon' | translate }}
+        </mat-slide-toggle>
+        <div class="flex flex-1 flex-row items-center justify-start gap-2">
+          <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+            <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+          <tb-css-unit-select class="flex-1" formControlName="iconSizeUnit"></tb-css-unit-select>
+          <tb-material-icon-select asBoxInput
+                                   iconClearButton
+                                   formControlName="icon">
+          </tb-material-icon-select>
+        </div>
+      </div>
+    </div>
+
+    <div class="tb-form-panel no-border no-padding" formGroupName="rightAppearance" [class.!hidden]="segmentedButtonAppearanceType !== 'second'">
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showLabel">
+          {{ 'widgets.button.label' | translate }}
+        </mat-slide-toggle>
+        <div class="flex flex-1 flex-row items-center justify-start gap-2">
+          <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+          <tb-font-settings formControlName="labelFont"
+                            [previewText]="segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.label').value">
+          </tb-font-settings>
+        </div>
+      </div>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showIcon">
+          {{ 'widgets.button.icon' | translate }}
+        </mat-slide-toggle>
+        <div class="flex flex-1 flex-row items-center justify-start gap-2">
+          <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+            <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+          <tb-css-unit-select class="flex-1" formControlName="iconSizeUnit"></tb-css-unit-select>
+          <tb-material-icon-select asBoxInput
+                                   iconClearButton
+                                   formControlName="icon">
+          </tb-material-icon-select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tb-form-panel" formGroupName="appearance">
+    <div class="flex flex-row items-center justify-between">
+      <div class="tb-form-panel-title" translate>widgets.segmented-button.color-styles</div>
+      <tb-toggle-select [(ngModel)]="segmentedButtonColorStylesType" [ngModelOptions]="{standalone: true}">
+        <tb-toggle-option value="selected">{{ 'widgets.segmented-button.selected' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="unselected">{{ 'widgets.segmented-button.unselected' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+    <div class="tb-form-panel no-border no-padding" formGroupName="selectedStyle" [class.!hidden]="segmentedButtonColorStylesType !== 'selected'">
+      <div class="tb-form-row space-between column-xs">
+        <div>{{ 'widgets.button.color-palette' | translate }}</div>
+        <div class="flex flex-row items-center justify-start gap-3">
+          <div class="flex flex-row items-center justify-start gap-2">
+            <div translate>widgets.button.main</div>
+            <tb-color-input asBoxInput
+                            formControlName="mainColor">
+            </tb-color-input>
+          </div>
+          <mat-divider vertical></mat-divider>
+          <div class="flex flex-row items-center justify-start gap-2">
+            <div translate>widgets.button.background</div>
+            <tb-color-input asBoxInput
+                            formControlName="backgroundColor">
+            </tb-color-input>
+          </div>
+        </div>
+      </div>
+      <div class="tb-form-panel stroked" formGroupName="customStyle">
+        <mat-expansion-panel class="tb-settings">
+          <mat-expansion-panel-header class="flex flex-row flex-wrap">
+            <mat-panel-title>
+              <div class="tb-form-panel-title" translate>widgets.button.custom-styles</div>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+            <div class="tb-form-row space-between" *ngFor="let state of widgetButtonToggleStates">
+              <div>{{ widgetButtonToggleStatesTranslationsMap.get(state) | translate }}</div>
+              <tb-widget-button-toggle-custom-style
+                [value]="true"
+                [state]="state"
+                [appearance]="segmentedButtonWidgetConfigForm.get('appearance').value"
+                [autoScale]="true"
+                [formControlName]="state">
+              </tb-widget-button-toggle-custom-style>
+            </div>
+          </ng-template>
+        </mat-expansion-panel>
+      </div>
+    </div>
+    <div class="tb-form-panel no-border no-padding" formGroupName="unselectedStyle" [class.!hidden]="segmentedButtonColorStylesType !== 'unselected'">
+      <div class="tb-form-row space-between column-xs">
+        <div>{{ 'widgets.button.color-palette' | translate }}</div>
+        <div class="flex flex-row items-center justify-start gap-3">
+          <div class="flex flex-row items-center justify-start gap-2">
+            <div translate>widgets.button.main</div>
+            <tb-color-input asBoxInput
+                            formControlName="mainColor">
+            </tb-color-input>
+          </div>
+          <mat-divider vertical></mat-divider>
+          <div class="flex flex-row items-center justify-start gap-2">
+            <div translate>widgets.button.background</div>
+            <tb-color-input asBoxInput
+                            formControlName="backgroundColor">
+            </tb-color-input>
+          </div>
+        </div>
+      </div>
+      <div class="tb-form-panel stroked" formGroupName="customStyle">
+        <mat-expansion-panel class="tb-settings">
+          <mat-expansion-panel-header class="flex flex-row flex-wrap">
+            <mat-panel-title>
+              <div class="tb-form-panel-title" translate>widgets.button.custom-styles</div>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+            <div class="tb-form-row space-between" *ngFor="let state of widgetButtonToggleStates">
+              <div>{{ widgetButtonToggleStatesTranslationsMap.get(state) | translate }}</div>
+              <tb-widget-button-toggle-custom-style
+                [value]="false"
+                [state]="state"
+                [appearance]="segmentedButtonWidgetConfigForm.get('appearance').value"
+                [autoScale]="true"
+                [formControlName]="state">
+              </tb-widget-button-toggle-custom-style>
+            </div>
+          </ng-template>
+        </mat-expansion-panel>
+      </div>
+    </div>
+  </div>
+</ng-container>
