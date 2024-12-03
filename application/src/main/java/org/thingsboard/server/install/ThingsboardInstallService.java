@@ -100,7 +100,7 @@ public class ThingsboardInstallService {
                     log.info("Migrating ThingsBoard latest timeseries data from cassandra to SQL database ...");
                     latestMigrateService.migrate();
                 } else {
-                    // TODO DON'T FORGET to update SUPPORTED_VERSIONS_FROM in DefaultDatabaseSchemaSettingsService,
+                    // TODO DON'T FORGET to update SUPPORTED_VERSIONS_FROM in DefaultDatabaseSchemaSettingsService
                     databaseSchemaVersionService.validateSchemaSettings();
                     String fromVersion = databaseSchemaVersionService.getDbSchemaVersion();
                     String toVersion = databaseSchemaVersionService.getPackageSchemaVersion();
