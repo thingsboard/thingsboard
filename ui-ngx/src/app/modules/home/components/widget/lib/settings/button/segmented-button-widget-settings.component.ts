@@ -52,7 +52,7 @@ export class SegmentedButtonWidgetSettingsComponent extends WidgetSettingsCompon
     return this.segmentedButtonLayoutBorderMap.get(this.segmentedButtonWidgetSettingsForm.get('appearance.layout').value);
   }
 
-  segmentedButtonAppearanceType: SegmentedButtonAppearanceType = 'left';
+  segmentedButtonAppearanceType: SegmentedButtonAppearanceType = 'first';
   segmentedButtonColorStylesType: SegmentedButtonColorStylesType = 'selected';
 
   widgetButtonToggleStates = Object.keys(WidgetButtonToggleState) as WidgetButtonToggleState[];

@@ -27,12 +27,12 @@
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.action-button.behavior</div>
     <div class="tb-form-row">
-      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.button-state.initial-state-hint' | translate}}" translate>widgets.button-state.initial-state</div>
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.button-state.selected-state-hint' | translate}}" translate>widgets.button-state.selected-state</div>
       <tb-get-value-action-settings class="flex-1"
-                                    panelTitle="{{ 'widgets.button-state.initial-state' | translate }}"
+                                    panelTitle="{{ 'widgets.button-state.selected-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
-                                    trueLabel="{{ 'widgets.button-state.left' | translate }}"
-                                    falseLabel="{{ 'widgets.button-state.right' | translate }}"
+                                    trueLabel="{{ 'widgets.button-state.first' | translate }}"
+                                    falseLabel="{{ 'widgets.button-state.second' | translate }}"
                                     stateLabel="{{ 'widgets.button-state.initial' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
@@ -41,18 +41,18 @@
     </div>
 
     <div class="tb-form-row">
-      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.action-button.button-click-hint' | translate}}" translate>widgets.action-button.left-button-click</div>
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.action-button.button-click-hint' | translate}}" translate>widgets.action-button.first-button-click</div>
       <tb-widget-action-settings class="flex-1"
-                                 panelTitle="{{ 'widgets.action-button.left-button-click' | translate }}"
+                                 panelTitle="{{ 'widgets.action-button.first-button-click' | translate }}"
                                  [callbacks]="callbacks"
                                  [widgetType]="widgetType"
                                  formControlName="leftButtonClick">
       </tb-widget-action-settings>
     </div>
     <div class="tb-form-row">
-      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.action-button.button-click-hint' | translate}}" translate>widgets.action-button.right-button-click</div>
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.action-button.button-click-hint' | translate}}" translate>widgets.action-button.second-button-click</div>
       <tb-widget-action-settings class="flex-1"
-                                 panelTitle="{{ 'widgets.action-button.right-button-click' | translate }}"
+                                 panelTitle="{{ 'widgets.action-button.second-button-click' | translate }}"
                                  [callbacks]="callbacks"
                                  [widgetType]="widgetType"
                                  formControlName="rightButtonClick">
@@ -110,11 +110,11 @@
     <div class="flex flex-row items-center justify-between">
       <div class="tb-form-panel-title" translate>widgets.segmented-button.button-appearance</div>
       <tb-toggle-select [(ngModel)]="segmentedButtonAppearanceType" [ngModelOptions]="{standalone: true}">
-        <tb-toggle-option value="left">{{ 'widgets.segmented-button.left' | translate }}</tb-toggle-option>
-        <tb-toggle-option value="right">{{ 'widgets.segmented-button.right' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="first">{{ 'widgets.segmented-button.first' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="second">{{ 'widgets.segmented-button.second' | translate }}</tb-toggle-option>
       </tb-toggle-select>
     </div>
-    <div class="tb-form-panel no-border no-padding" formGroupName="leftAppearance" [class.!hidden]="segmentedButtonAppearanceType !== 'left'">
+    <div class="tb-form-panel no-border no-padding" formGroupName="leftAppearance" [class.!hidden]="segmentedButtonAppearanceType !== 'first'">
       <div class="tb-form-row">
         <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showLabel">
           {{ 'widgets.button.label' | translate }}
@@ -145,7 +145,7 @@
       </div>
     </div>
 
-    <div class="tb-form-panel no-border no-padding" formGroupName="rightAppearance" [class.!hidden]="segmentedButtonAppearanceType !== 'right'">
+    <div class="tb-form-panel no-border no-padding" formGroupName="rightAppearance" [class.!hidden]="segmentedButtonAppearanceType !== 'second'">
       <div class="tb-form-row">
         <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showLabel">
           {{ 'widgets.button.label' | translate }}

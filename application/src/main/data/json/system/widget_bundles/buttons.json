@@ -11,7 +11,7 @@
     "action_button",
     "command_button",
     "toggle_button",
-    "segmented_button",
+    "two_segment_button",
     "power_button"
   ]
 }

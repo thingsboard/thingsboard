@@ -28,12 +28,12 @@ import { ComponentStyle } from '@shared/models/widget-settings.models';
 import { MatButtonToggleChange } from '@angular/material/button-toggle';
 
 @Component({
-  selector: 'tb-segmented-button-widget',
-  templateUrl: './segmented-button-widget.component.html',
-  styleUrls: ['../action/action-widget.scss', './segmented-button-widget.component.scss'],
+  selector: 'tb-two-segment-button-widget',
+  templateUrl: './two-segment-button-widget.component.html',
+  styleUrls: ['../action/action-widget.scss', './two-segment-button-widget.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class SegmentedButtonWidgetComponent extends
+export class TwoSegmentButtonWidgetComponent extends
   BasicActionWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
 
   settings: SegmentedButtonWidgetSettings;

@@ -49,7 +49,7 @@ export class SegmentedButtonBasicConfigComponent extends BasicWidgetConfigCompon
     return getTargetDeviceFromDatasources(datasources);
   }
 
-  segmentedButtonAppearanceType: SegmentedButtonAppearanceType = 'left';
+  segmentedButtonAppearanceType: SegmentedButtonAppearanceType = 'first';
   segmentedButtonColorStylesType: SegmentedButtonColorStylesType = 'selected';
 
   widgetButtonToggleStates = Object.keys(WidgetButtonToggleState) as WidgetButtonToggleState[];

@@ -32,7 +32,7 @@ export enum SegmentedButtonLayout {
   rounded = 'rounded'
 }
 
-export type SegmentedButtonAppearanceType = 'left' | 'right';
+export type SegmentedButtonAppearanceType = 'first' | 'second';
 export type SegmentedButtonColorStylesType = 'selected' | 'unselected';
 
 export const segmentedButtonLayouts = Object.keys(SegmentedButtonLayout) as SegmentedButtonLayout[];

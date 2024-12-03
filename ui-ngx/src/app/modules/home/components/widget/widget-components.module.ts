@@ -87,7 +87,7 @@ import {
 } from '@home/components/widget/lib/cards/notification-type-filter-panel.component';
 import { EllipsisChipListDirective } from '@shared/directives/ellipsis-chip-list.directive';
 import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/scada-symbol-widget.component';
-import { SegmentedButtonWidgetComponent } from '@home/components/widget/lib/button/segmented-button-widget.component';
+import { TwoSegmentButtonWidgetComponent } from '@home/components/widget/lib/button/two-segment-button-widget.component';
 
 @NgModule({
   declarations: [
@@ -125,7 +125,7 @@ import { SegmentedButtonWidgetComponent } from '@home/components/widget/lib/butt
     BarChartWithLabelsWidgetComponent,
     SingleSwitchWidgetComponent,
     ActionButtonWidgetComponent,
-    SegmentedButtonWidgetComponent,
+    TwoSegmentButtonWidgetComponent,
     CommandButtonWidgetComponent,
     PowerButtonWidgetComponent,
     SliderWidgetComponent,
@@ -187,7 +187,7 @@ import { SegmentedButtonWidgetComponent } from '@home/components/widget/lib/butt
     BarChartWithLabelsWidgetComponent,
     SingleSwitchWidgetComponent,
     ActionButtonWidgetComponent,
-    SegmentedButtonWidgetComponent,
+    TwoSegmentButtonWidgetComponent,
     CommandButtonWidgetComponent,
     PowerButtonWidgetComponent,
     SliderWidgetComponent,

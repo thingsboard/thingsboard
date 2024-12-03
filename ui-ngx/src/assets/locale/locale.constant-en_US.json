@@ -5622,10 +5622,10 @@
             "behavior": "Behavior",
             "on-click": "On click",
             "on-click-hint": "Action triggered when the button is clicked",
-            "left-button-click": "Left button click",
-            "left-button-click-hint": "Action while pressing on left button.",
-            "right-button-click": "Right button click",
-            "right-button-click-hint": "Action while pressing on right button.",
+            "first-button-click": "First button click",
+            "first-button-click-hint": "Action while pressing on first button.",
+            "second-button-click": "Second button click",
+            "second-button-click-hint": "Action while pressing on second button.",
             "button-click-hint": "Action while pressing on widget."
         },
         "command-button": {
@@ -5677,8 +5677,8 @@
             "layout-rounded": "Rounded",
             "card-border": "Card border",
             "button-appearance": "Button appearance",
-            "left": "Left",
-            "right": "Right",
+            "first": "First",
+            "second": "Second",
             "color-styles": "Color styles",
             "selected": "Selected",
             "unselected": "Unselected"
@@ -5710,16 +5710,16 @@
             "activated-state-hint": "Configure condition under which the button is active.",
             "disabled-state": "Disabled state",
             "disabled-state-hint": "Configure condition under which the button is disabled.",
-            "initial-state": "Initial button",
-            "initial-state-hint": "Action to get the initial state of the component",
+            "selected-state": "Select button",
+            "selected-state-hint": "Configure condition under which the button is select.",
             "enabled": "Enabled",
             "hovered": "Hovered",
             "pressed": "Pressed",
             "activated": "Activated",
             "disabled": "Disabled",
-            "initial": "Left button",
-            "left": "Left",
-            "right": "Right"
+            "initial": "First button",
+            "first": "First",
+            "second": "Second"
         },
         "background": {
             "background": "Background",
