@@ -68,6 +68,7 @@ export interface OAuth2RegistrationInfo {
 }
 
 export enum ClientAuthenticationMethod {
+  NONE = 'NONE',
   BASIC = 'BASIC',
   POST = 'POST'
 }

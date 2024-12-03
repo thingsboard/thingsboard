@@ -38,6 +38,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -70,6 +71,7 @@ import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DE
 import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_INFO_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_SUB_TYPE;
 import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_TYPE;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
@@ -229,6 +231,8 @@ public class TbResourceController extends BaseController {
                                                  @RequestParam int page,
                                                  @Parameter(description = RESOURCE_TYPE, schema = @Schema(allowableValues = {"LWM2M_MODEL", "JKS", "PKCS_12", "JS_MODULE"}))
                                                  @RequestParam(required = false) String resourceType,
+                                                 @Parameter(description = RESOURCE_SUB_TYPE, schema = @Schema(allowableValues = {"EXTENSION", "MODULE"}))
+                                                 @RequestParam(required = false) String resourceSubType,
                                                  @Parameter(description = RESOURCE_TEXT_SEARCH_DESCRIPTION)
                                                  @RequestParam(required = false) String textSearch,
                                                  @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "title", "resourceType", "tenantId"}))
@@ -241,8 +245,12 @@ public class TbResourceController extends BaseController {
         Set<ResourceType> resourceTypes = new HashSet<>();
         if (StringUtils.isNotEmpty(resourceType)) {
             resourceTypes.add(ResourceType.valueOf(resourceType));
+            if (StringUtils.isNotEmpty(resourceSubType)) {
+                filter.resourceSubTypes(Set.of(ResourceSubType.valueOf(resourceSubType)));
+            }
         } else {
             Collections.addAll(resourceTypes, ResourceType.values());
+            resourceTypes.remove(ResourceType.JS_MODULE);
             resourceTypes.remove(ResourceType.IMAGE);
             resourceTypes.remove(ResourceType.DASHBOARD);
         }

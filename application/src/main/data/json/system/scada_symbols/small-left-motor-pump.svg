@@ -70,7 +70,7 @@
       "falseLabel": null,
       "stateLabel": "{i18n:scada.symbol.warning}",
       "defaultGetValueSettings": {
-        "action": "DO_NOTHING",
+        "action": "GET_ALARM_STATUS",
         "defaultValue": false,
         "executeRpc": {
           "method": "getState",
@@ -84,6 +84,15 @@
         },
         "getTimeSeries": {
           "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": [
+            "MAJOR",
+            "MINOR",
+            "WARNING",
+            "INDETERMINATE"
+          ],
+          "typeList": null
         },
         "dataToValue": {
           "type": "NONE",
@@ -105,7 +114,7 @@
       "falseLabel": null,
       "stateLabel": "{i18n:scada.symbol.critical}",
       "defaultGetValueSettings": {
-        "action": "DO_NOTHING",
+        "action": "GET_ALARM_STATUS",
         "defaultValue": false,
         "executeRpc": {
           "method": "getState",
@@ -119,6 +128,12 @@
         },
         "getTimeSeries": {
           "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": [
+            "CRITICAL"
+          ],
+          "typeList": null
         },
         "dataToValue": {
           "type": "NONE",

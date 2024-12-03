@@ -525,11 +525,11 @@
             "signings-key-base64": "Signing key must be base64 format.",
             "expiration-time": "Token expiration time (sec)",
             "expiration-time-required": "Token expiration time is required.",
-            "expiration-time-pattern": "Token expiration time be a positive integer.",
+            "expiration-time-max": "Maximum allowed time is 2147483647 seconds(68 years).",
             "expiration-time-min": "Minimum time is 60 seconds (1 minute).",
             "refresh-expiration-time": "Refresh token expiration time (sec)",
             "refresh-expiration-time-required": "Refresh token expiration time is required.",
-            "refresh-expiration-time-pattern": "Refresh token expiration time be a positive integer.",
+            "refresh-expiration-time-max": "Maximum allowed time is 2147483647 seconds (68 years).",
             "refresh-expiration-time-min": "Minimum time is 900 seconds (15 minute).",
             "refresh-expiration-time-less-token": "Refresh token time must be greater token time.",
             "generate-key": "Generate key",
@@ -989,6 +989,20 @@
         "type-timeseries-deleted": "Telemetry deleted",
         "type-sms-sent": "SMS sent"
     },
+    "debug-config": {
+        "min": "{{number}} min",
+        "label": "Debug configuration",
+        "on-failure": "Failures only (24/7)",
+        "all-messages": "All messages ({{time}})",
+        "failures": "Failures",
+        "all": "All",
+        "hint": {
+            "main": "All node debug messages rate limited with:",
+            "main-limited": "All node debug messages will be rate-limited, with a maximum of {{msg}} messages allowed per {{sec}} seconds.",
+            "on-failure": "Save all failure debug events without time limit.",
+            "all-messages": "Save all debug events during time limit."
+        }
+    },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
         "html-message": "You have unsaved changes.<br/>Are you sure you want to leave this page?",
@@ -1019,11 +1033,13 @@
         "enter-password": "Enter password",
         "enter-search": "Enter search",
         "created-time": "Created time",
+        "disabled": "Disabled",
         "loading": "Loading...",
         "proceed": "Proceed",
         "open-details-page": "Open details page",
         "not-found": "Not found",
-        "documentation": "Documentation"
+        "documentation": "Documentation",
+        "time-left": "{{time}} left"
     },
     "content-type": {
         "json": "Json",
@@ -3163,7 +3179,7 @@
             "critical": "Critical",
             "critical-click": "Critical click",
             "critical-state-hint": "Indicates whether component is in critical state.",
-            "critical-state-animation": "Critical state animation",
+            "critical-state-animation": "Alarm state animation",
             "critical-state-animation-hint": "Whether to enable blinking animation when component is in critical state.",
             "animation": "Animation",
             "broken": "Broken",
@@ -3188,6 +3204,7 @@
             "top-right-connector": "Top right connector",
             "running-color": "Running color",
             "stopped-color": "Stopped color",
+            "stopped": "Stopped",
             "warning-color": "Warning color",
             "critical-color": "Critical color",
             "opened": "Opened",
@@ -3287,7 +3304,9 @@
             "low-critical-state": "Low Critical state",
             "show-low-critical-scale": "Show Low Critical state",
             "low-critical-scale": "Low Critical state",
-            "low-critical-state-hint": "Double value indicates a low critical range up to the min value scale."
+            "low-critical-state-hint": "Double value indicates a low critical range up to the min value scale.",
+            "colors": "Colors",
+            "alarm-colors": "Alarm colors"
         }
     },
     "item": {
@@ -3297,7 +3316,21 @@
         "no-return-error": "Function must return value!",
         "return-type-mismatch": "Function must return value of '{{type}}' type!",
         "tidy": "Tidy",
-        "mini": "Mini"
+        "mini": "Mini",
+        "modules": "Modules",
+        "remove-module": "Remove module",
+        "no-modules": "No modules configured",
+        "add-module": "Add module",
+        "module-alias": "Alias",
+        "module-resource": "JS module resource",
+        "not-unique-module-aliases-error": "Modules aliases must be unique!",
+        "show-module-info": "Show module info",
+        "show-module-source-code": "Show module source code",
+        "module-members": "Module members",
+        "module-no-members": "Module has no exported members",
+        "module-load-error": "Module load error",
+        "source-code": "Source code",
+        "source-code-load-error": "Source code load error"
     },
     "key-val": {
         "key": "Key",
@@ -4085,7 +4118,36 @@
             "js-module": "JS module",
             "lwm2m-model": "LWM2M model",
             "pkcs-12": "PKCS #12"
+        },
+        "resource-sub-type": "Sub-type",
+        "sub-type": {
+            "image": "image",
+            "scada-symbol": "Scada symbol",
+            "extension": "Extension",
+            "module": "Module"
         }
+    },
+    "javascript": {
+        "add": "Add JavaScript resource",
+        "delete": "Delete JavaScript resource",
+        "delete-javascript-resource-text": "Be careful, after the confirmation the JavaScript resource will become unrecoverable.",
+        "delete-javascript-resource-title": "Are you sure you want to delete the JavaScript resource '{{resourceTitle}}'?",
+        "delete-javascript-resources-action-title": "Delete JavaScript { count, plural, =1 {1 resource} other {# resources} }",
+        "delete-javascript-resources-text": "Please note that the selected JavaScript resources, even if they are used in JavaScript functions, will be deleted.",
+        "delete-javascript-resources-title": "Are you sure you want to delete JavaScript { count, plural, =1 {1 resource} other {# resources} }?",
+        "download": "Download JavaScript resource",
+        "upload-from-file": "Upload JavaScript from file",
+        "resource-file": "JavaScript resource file",
+        "drop-file": "Drop a JavaScript file or click to select a file to upload.",
+        "drop-resource-file-or": "Drag and drop a JavaScript file or",
+        "javascript-library": "JavaScript library",
+        "javascript-type": "JavaScript type",
+        "javascript-resource-details": "JavaScript resource details",
+        "search": "Search JavaScript resources",
+        "selected-javascript-resources": "{ count, plural, =1 {1 JavaScript resource} other {# JavaScript resources} } selected",
+        "no-javascript-resource-text": "No JavaScript resources found",
+        "all-types": "All",
+        "module-script": "Module script"
     },
     "rpc": {
       "error": {
@@ -4182,7 +4244,7 @@
         "deselect-all": "Deselect all",
         "rulenode-details": "Rule node details",
         "debug-mode": "Debug mode",
-        "singleton-mode": "Singleton mode",
+        "singleton": "Singleton",
         "configuration": "Configuration",
         "link": "Link",
         "link-details": "Rule node link details",
@@ -4393,6 +4455,7 @@
         "tenant-profiles": "Tenant profiles",
         "add": "Add tenant profile",
         "add-profile": "Add profile",
+        "debug": "Debug",
         "edit": "Edit tenant profile",
         "tenant-profile-details": "Tenant profile details",
         "no-tenant-profiles-text": "No tenant profiles found",
@@ -4463,6 +4526,8 @@
         "maximum-ota-packages-sum-data-size": "Maximum total size of OTA package files (bytes)",
         "maximum-ota-package-sum-data-size-required": "Maximum total size of OTA package files is required.",
         "maximum-ota-package-sum-data-size-range": "Maximum total size of OTA package files can't be negative",
+        "maximum-debug-duration-min": "Maximum debug duration (min)",
+        "maximum-debug-duration-min-range": "Maximum debug duration can't be negative",
         "rest-requests-for-tenant": "REST requests for tenant",
         "transport-tenant-telemetry-msg-rate-limit": "Transport tenant telemetry messages",
         "transport-tenant-telemetry-data-points-rate-limit": "Transport tenant telemetry data points",
@@ -7377,6 +7442,7 @@
             "get-dashboard-state": "Get dashboard state",
             "add-time-series": "Add time series",
             "execute-rpc-text": "Execute RPC method '{{methodName}}'",
+            "get-time-series-text": "Use time series '{{key}}'",
             "get-attribute-text": "Use attribute '{{key}}'",
             "get-alarm-status-text": "Use alarm status",
             "get-dashboard-state-text": "Use dashboard state",

@@ -44,6 +44,7 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { HasTenantId, HasVersion } from '@shared/models/entity.models';
 import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
+import { TbFunction } from '@shared/models/js-function.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -151,7 +152,7 @@ export interface WidgetTypeDescriptor {
   resources: Array<WidgetResource>;
   templateHtml: string;
   templateCss: string;
-  controllerScript: string;
+  controllerScript: TbFunction;
   settingsSchema?: string | any;
   dataKeySettingsSchema?: string | any;
   latestDataKeySettingsSchema?: string | any;
@@ -333,8 +334,8 @@ export interface KeyInfo {
   comparisonResultType?: ComparisonResultType;
   label?: string;
   color?: string;
-  funcBody?: string;
-  postFuncBody?: string;
+  funcBody?: TbFunction;
+  postFuncBody?: TbFunction;
   units?: string;
   decimals?: number;
 }
@@ -656,7 +657,7 @@ export interface WidgetMobileActionDescriptor extends WidgetMobileActionDescript
 }
 
 export interface CustomActionDescriptor {
-  customFunction?: string;
+  customFunction?: TbFunction;
   customResources?: Array<WidgetResource>;
   customHtml?: string;
   customCss?: string;
@@ -693,7 +694,7 @@ export interface WidgetActionDescriptor extends WidgetAction {
   icon: string;
   displayName?: string;
   useShowWidgetActionFunction?: boolean;
-  showWidgetActionFunction?: string;
+  showWidgetActionFunction?: TbFunction;
   columnIndex?: number;
 }
 

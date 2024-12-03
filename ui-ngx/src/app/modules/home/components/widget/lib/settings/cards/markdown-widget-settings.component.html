@@ -21,6 +21,7 @@
   </mat-slide-toggle>
   <tb-js-func [class.!hidden]="!markdownWidgetSettingsForm.get('useMarkdownTextFunction').value"
               formControlName="markdownTextFunction"
+              withModules
               [globalVariables]="functionScopeVariables"
               [functionArgs]="['data', 'ctx']"
               functionTitle="{{ 'widgets.markdown.markdown-text-function' | translate }}"

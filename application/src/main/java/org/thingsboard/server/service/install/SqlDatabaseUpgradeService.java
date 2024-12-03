@@ -52,7 +52,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
 
     @Override
     public void upgradeDatabase() {
-        log.info("Updating schema ...");
+        log.info("Updating schema...");
         loadSql(getSchemaUpdateFile("basic"));
         log.info("Schema updated.");
     }

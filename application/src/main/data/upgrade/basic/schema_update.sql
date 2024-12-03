@@ -25,6 +25,22 @@ UPDATE user_credentials c SET failed_login_attempts = (SELECT (additional_info::
 UPDATE tb_user SET additional_info = (additional_info::jsonb - 'lastLoginTs' - 'failedLoginAttempts' - 'userCredentialsEnabled')::text
   WHERE additional_info IS NOT NULL AND additional_info != 'null';
 
+-- UPDATE RULE NODE DEBUG MODE TO DEBUG STRATEGY START
+
+ALTER TABLE rule_node ADD COLUMN IF NOT EXISTS debug_settings varchar(1024) DEFAULT null;
+DO
+$$
+    BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'rule_node' AND column_name = 'debug_mode')
+            THEN
+                UPDATE rule_node SET debug_settings = '{"failuresEnabled": true, "allEnabledUntil": ' || cast((extract(epoch from now()) + 900) * 1000 as bigint) || '}' WHERE debug_mode = true; -- 15 minutes according to thingsboard.yml default settings.
+                ALTER TABLE rule_node DROP COLUMN debug_mode;
+        END IF;
+    END
+$$;
+
+-- UPDATE RULE NODE DEBUG MODE TO DEBUG STRATEGY END
+
 
 -- CREATE MOBILE APP BUNDLES FROM EXISTING APPS
 
@@ -177,3 +193,9 @@ $$
         ALTER TABLE qr_code_settings DROP COLUMN IF EXISTS android_config, DROP COLUMN IF EXISTS ios_config;
     END;
 $$;
+
+-- UPDATE RESOURCE JS_MODULE SUB TYPE START
+
+UPDATE resource SET resource_sub_type = 'EXTENSION' WHERE resource_type = 'JS_MODULE' AND resource_sub_type IS NULL;
+
+-- UPDATE RESOURCE JS_MODULE SUB TYPE END

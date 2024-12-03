@@ -120,6 +120,8 @@ import { DASHBOARD_PAGE_COMPONENT_TOKEN } from '@home/components/tokens';
 import { MODULES_MAP } from '@shared/models/constants';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
+import { CompiledTbFunction, compileTbFunction, isNotEmptyTbFunction } from '@shared/models/js-function.models';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'tb-widget',
@@ -208,7 +210,8 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
               private mobileService: MobileService,
               private raf: RafService,
               private ngZone: NgZone,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private http: HttpClient) {
     super(store);
     this.cssParser.testMode = false;
   }
@@ -269,36 +272,48 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     };
 
     this.widgetContext.customHeaderActions = [];
+
     const headerActionsDescriptors = this.getActionDescriptors(widgetActionSources.headerButton.value);
-    headerActionsDescriptors.forEach((descriptor) =>
-    {
+
+    const customHeaderActions$ = headerActionsDescriptors.map((descriptor) => {
       let useShowWidgetHeaderActionFunction = descriptor.useShowWidgetActionFunction || false;
-      let showWidgetHeaderActionFunction: ShowWidgetHeaderActionFunction = null;
-      if (useShowWidgetHeaderActionFunction && isNotEmptyStr(descriptor.showWidgetActionFunction)) {
-        try {
-          showWidgetHeaderActionFunction =
-            new Function('widgetContext', 'data', descriptor.showWidgetActionFunction) as ShowWidgetHeaderActionFunction;
-        } catch (e) {
-          useShowWidgetHeaderActionFunction = false;
-        }
+      let showWidgetHeaderActionFunction$: Observable<CompiledTbFunction<ShowWidgetHeaderActionFunction>>;
+      if (useShowWidgetHeaderActionFunction && isNotEmptyTbFunction(descriptor.showWidgetActionFunction)) {
+        showWidgetHeaderActionFunction$ = compileTbFunction(this.http, descriptor.showWidgetActionFunction, 'widgetContext', 'data');
+      } else {
+        showWidgetHeaderActionFunction$ = of(null);
       }
-      const headerAction: WidgetHeaderAction = {
-        name: descriptor.name,
-        displayName: descriptor.displayName,
-        icon: descriptor.icon,
-        descriptor,
-        useShowWidgetHeaderActionFunction,
-        showWidgetHeaderActionFunction,
-        onAction: $event => {
-          const entityInfo = this.getActiveEntityInfo();
-          const entityId = entityInfo ? entityInfo.entityId : null;
-          const entityName = entityInfo ? entityInfo.entityName : null;
-          const entityLabel = entityInfo ? entityInfo.entityLabel : null;
-          this.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
-        }
-      };
-      this.widgetContext.customHeaderActions.push(headerAction);
+      return showWidgetHeaderActionFunction$.pipe(
+        catchError(() => { return of(null) }),
+        map(showWidgetHeaderActionFunction => {
+          if (!showWidgetHeaderActionFunction) {
+            useShowWidgetHeaderActionFunction = false;
+          }
+          const headerAction: WidgetHeaderAction = {
+            name: descriptor.name,
+            displayName: descriptor.displayName,
+            icon: descriptor.icon,
+            descriptor,
+            useShowWidgetHeaderActionFunction,
+            showWidgetHeaderActionFunction,
+            onAction: $event => {
+              const entityInfo = this.getActiveEntityInfo();
+              const entityId = entityInfo ? entityInfo.entityId : null;
+              const entityName = entityInfo ? entityInfo.entityName : null;
+              const entityLabel = entityInfo ? entityInfo.entityLabel : null;
+              this.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
+            }
+          };
+          return headerAction;
+        })
+      );
     });
+
+    if (customHeaderActions$.length) {
+      forkJoin(customHeaderActions$).subscribe((customHeaderActions) => {
+        this.widgetContext.customHeaderActions.push(...customHeaderActions);
+      });
+    }
 
     this.subscriptionContext = new WidgetSubscriptionContext(this.widgetContext.dashboard);
     this.subscriptionContext.timeService = this.timeService;
@@ -1108,17 +1123,25 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         break;
       case WidgetActionType.custom:
         const customFunction = descriptor.customFunction;
-        if (customFunction && customFunction.length > 0) {
-          try {
-            if (!additionalParams) {
-              additionalParams = {};
+        if (isNotEmptyTbFunction(customFunction)) {
+          compileTbFunction(this.http, customFunction, '$event', 'widgetContext', 'entityId',
+            'entityName', 'additionalParams', 'entityLabel').subscribe(
+            {
+              next: (compiled) => {
+                try {
+                  if (!additionalParams) {
+                    additionalParams = {};
+                  }
+                  compiled.execute($event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
+                } catch (e) {
+                  console.error(e);
+                }
+              },
+              error: (err) => {
+                console.error(err);
+              }
             }
-            const customActionFunction = new Function('$event', 'widgetContext', 'entityId',
-              'entityName', 'additionalParams', 'entityLabel', customFunction);
-            customActionFunction($event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
-          } catch (e) {
-            console.error(e);
-          }
+          )
         }
         break;
       case WidgetActionType.customPretty:
@@ -1133,18 +1156,26 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
         }
         this.loadCustomActionResources(actionNamespace, customCss, customResources, descriptor).subscribe({
           next: () => {
-            if (isDefined(customPrettyFunction) && customPrettyFunction.length > 0) {
-              try {
-                if (!additionalParams) {
-                  additionalParams = {};
+            if (isNotEmptyTbFunction(customPrettyFunction)) {
+              compileTbFunction(this.http, customPrettyFunction, '$event', 'widgetContext', 'entityId',
+                'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel').subscribe(
+                {
+                  next: (compiled) => {
+                    try {
+                      if (!additionalParams) {
+                        additionalParams = {};
+                      }
+                      this.widgetContext.customDialog.setAdditionalImports(descriptor.customImports);
+                      compiled.execute($event, this.widgetContext, entityId, entityName, htmlTemplate, additionalParams, entityLabel);
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  },
+                  error: (err) => {
+                    console.error(err);
+                  }
                 }
-                const customActionPrettyFunction = new Function('$event', 'widgetContext', 'entityId',
-                  'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel', customPrettyFunction);
-                this.widgetContext.customDialog.setAdditionalImports(descriptor.customImports);
-                customActionPrettyFunction($event, this.widgetContext, entityId, entityName, htmlTemplate, additionalParams, entityLabel);
-              } catch (e) {
-                console.error(e);
-              }
+              )
             }
           },
           error: (errorMessages: string[]) => {

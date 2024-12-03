@@ -24,7 +24,6 @@ import {
 import { WidgetContext } from '@home/models/widget-component.models';
 import { BehaviorSubject, forkJoin, Observable, Observer, of, Subscription, throwError } from 'rxjs';
 import { catchError, delay, map, share, take } from 'rxjs/operators';
-import { UtilsService } from '@core/services/utils.service';
 import { AfterViewInit, ChangeDetectorRef, Directive, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import {
   DataToValueSettings,
@@ -45,6 +44,7 @@ import { ValueType } from '@shared/models/constants';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { isDefinedAndNotNull } from '@core/utils';
+import { parseError } from '@shared/models/error.models';
 
 @Directive()
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
@@ -110,7 +110,7 @@ export abstract class BasicActionWidgetComponent implements OnInit, OnDestroy, A
         }
       },
       error: (err: any) => {
-        const message = parseError(this.ctx, err);
+        const message = parseError(err);
         this.onError(message);
         if (valueObserver?.error) {
           valueObserver.error(err);
@@ -152,7 +152,7 @@ export abstract class BasicActionWidgetComponent implements OnInit, OnDestroy, A
         if (setValueObserver?.error) {
           setValueObserver.error(err);
         }
-        const message = parseError(this.ctx, err);
+        const message = parseError(err);
         this.onError(message);
       }
     });
@@ -214,7 +214,7 @@ export abstract class ValueAction {
                         protected settings: ValueActionSettings) {}
 
   protected handleError(err: any): Error {
-    const reason = parseError(this.ctx, err);
+    const reason = parseError(err);
     let errorMessage = this.ctx.translate.instant('widgets.value-action.error.failed-to-perform-action',
       {actionLabel: this.settings.actionLabel});
     if (reason) {
@@ -709,15 +709,12 @@ export class TimeSeriesValueSetter<V> extends TelemetryValueSetter<V> {
 
 }
 
-const parseError = (ctx: WidgetContext, err: any): string =>
-  ctx.$injector.get(UtilsService).parseException(err).message || 'Unknown Error';
-
 const handleRpcError = (ctx: WidgetContext, err: any): Error => {
   let reason: string;
   if (ctx.defaultSubscription.rpcErrorText) {
     reason = ctx.defaultSubscription.rpcErrorText;
   } else {
-    reason = parseError(ctx, err);
+    reason = parseError(err);
   }
   return new Error(reason);
 };

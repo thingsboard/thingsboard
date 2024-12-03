@@ -222,6 +222,8 @@ import { AggregationTypeSelectComponent } from '@shared/components/time/aggregat
 import { AggregationOptionsConfigPanelComponent } from '@shared/components/time/aggregation/aggregation-options-config-panel.component';
 import { IntervalOptionsConfigPanelComponent } from '@shared/components/time/interval-options-config-panel.component';
 import { GroupingIntervalOptionsComponent } from '@shared/components/time/aggregation/grouping-interval-options.component';
+import { JsFuncModulesComponent } from '@shared/components/js-func-modules.component';
+import { JsFuncModuleRowComponent } from '@shared/components/js-func-module-row.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -341,6 +343,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     JsonObjectViewComponent,
     JsonContentComponent,
     JsFuncComponent,
+    JsFuncModulesComponent,
+    JsFuncModuleRowComponent,
     CssComponent,
     HtmlComponent,
     SvgXmlComponent,
@@ -550,6 +554,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     JsonObjectViewComponent,
     JsonContentComponent,
     JsFuncComponent,
+    JsFuncModulesComponent,
+    JsFuncModuleRowComponent,
     CssComponent,
     HtmlComponent,
     SvgXmlComponent,
