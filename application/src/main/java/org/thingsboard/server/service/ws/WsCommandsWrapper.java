@@ -26,6 +26,7 @@ import org.thingsboard.server.service.ws.notification.cmd.MarkNotificationsAsRea
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsCountSubCmd;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsSubCmd;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationsUnsubCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v1.RpcCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.AttributesSubscriptionCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.GetHistoryCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.TimeseriesSubscriptionCmd;
@@ -68,6 +69,7 @@ public class WsCommandsWrapper {
             @Type(name = "ENTITY_DATA_UNSUBSCRIBE", value = EntityDataUnsubscribeCmd.class),
             @Type(name = "ENTITY_COUNT_UNSUBSCRIBE", value = EntityCountUnsubscribeCmd.class),
             @Type(name = "NOTIFICATIONS_UNSUBSCRIBE", value = NotificationsUnsubCmd.class),
+            @Type(name = "RPC", value = RpcCmd.class),
             @Type(name = "ALARM_STATUS_UNSUBSCRIBE", value = AlarmStatusUnsubscribeCmd.class),
     })
     private List<WsCmd> cmds;
