@@ -32,6 +32,8 @@ import java.util.List;
 public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSettingsService {
 
     private static final String CURRENT_PRODUCT = "CE";
+    // This list should include all versions which are compatible for the upgrade.
+    // The compatibility cycle usually breaks when we have some scripts written in Java that may not work after new release.
     private static final List<String> SUPPORTED_VERSIONS_FOR_UPGRADE = List.of("3.8.0", "3.8.1");
 
     private final BuildProperties buildProperties;
