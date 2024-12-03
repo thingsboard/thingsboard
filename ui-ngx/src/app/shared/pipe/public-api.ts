@@ -25,3 +25,4 @@ export * from './file-size.pipe';
 export * from './selectable-columns.pipe';
 export * from './image.pipe';
 export * from './key-value-not-empty.pipe';
+export * from './duration-left.pipe';
