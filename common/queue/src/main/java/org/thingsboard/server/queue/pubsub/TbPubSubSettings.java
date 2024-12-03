@@ -26,11 +26,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.concurrent.Executors;
 
 @Slf4j
 @ConditionalOnExpression("'${queue.type:null}'=='pubsub'")
@@ -71,7 +70,7 @@ public class TbPubSubSettings {
             threadPoolSize = THREADS_PER_CPU * Runtime.getRuntime().availableProcessors();
         }
         executorProvider = FixedExecutorProvider
-                .create(Executors.newScheduledThreadPool(threadPoolSize, ThingsBoardThreadFactory.forName("pubsub-queue-executor")));
+                .create(ThingsBoardExecutors.newScheduledThreadPool(threadPoolSize, "pubsub-queue-executor"));
     }
 
     @PreDestroy
