@@ -30,6 +30,7 @@
   <tb-js-func required
               [class.!hidden]="!qrCodeWidgetSettingsForm.get('useQrCodeTextFunction').value"
               formControlName="qrCodeTextFunction"
+              withModules
               [globalVariables]="functionScopeVariables"
               [functionArgs]="['data']"
               functionTitle="{{ 'widgets.qr-code.qr-code-text-function' | translate }}"

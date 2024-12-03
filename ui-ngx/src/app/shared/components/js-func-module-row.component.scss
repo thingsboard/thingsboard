@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
-
-public enum ResourceSubType {
-    IMAGE,
-    SCADA_SYMBOL,
-    EXTENSION,
-    MODULE
+.tb-js-func-module-row {
+  .tb-alias-field {
+    flex: 1 1 25%;
+  }
+  .tb-module-link-field {
+    flex: 1 1 75%;
+  }
 }

@@ -29,6 +29,37 @@ $previewSize: 100px !default;
       display: flex;
       padding-bottom: 0;
     }
+    &.tb-button {
+      padding: 0;
+      gap: 0;
+      .tb-title {
+        display: none;
+      }
+      .tb-file-select-container {
+        width: auto;
+        height: auto;
+        .tb-file-clear-container {
+          display: none;
+        }
+        .tb-flow-drop {
+          height: auto;
+          border: none;
+          border-radius: 0;
+          .upload-label {
+            padding: 0;
+            .drop-label-icon {
+              display: none;
+            }
+            .drop-label-text {
+              display: none;
+            }
+          }
+        }
+      }
+      .tb-file-info-container {
+        display: none;
+      }
+    }
   }
 
   .tb-file-select-container {
@@ -114,10 +145,12 @@ $previewSize: 100px !default;
 
 :host ::ng-deep {
   button.mat-mdc-button.mat-mdc-button-base.browse-file {
-    padding: 0;
-    min-width: 0;
-    height: 24px;
-    font-size: 16px;
+    &:not(.tb-ignore-browse-file-button-style) {
+      padding: 0;
+      min-width: 0;
+      height: 24px;
+      font-size: 16px;
+    }
     label {
       display: block;
       cursor: pointer;

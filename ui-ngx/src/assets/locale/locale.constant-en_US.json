@@ -3315,7 +3315,21 @@
         "no-return-error": "Function must return value!",
         "return-type-mismatch": "Function must return value of '{{type}}' type!",
         "tidy": "Tidy",
-        "mini": "Mini"
+        "mini": "Mini",
+        "modules": "Modules",
+        "remove-module": "Remove module",
+        "no-modules": "No modules configured",
+        "add-module": "Add module",
+        "module-alias": "Alias",
+        "module-resource": "JS module resource",
+        "not-unique-module-aliases-error": "Modules aliases must be unique!",
+        "show-module-info": "Show module info",
+        "show-module-source-code": "Show module source code",
+        "module-members": "Module members",
+        "module-no-members": "Module has no exported members",
+        "module-load-error": "Module load error",
+        "source-code": "Source code",
+        "source-code-load-error": "Source code load error"
     },
     "key-val": {
         "key": "Key",
@@ -4103,7 +4117,36 @@
             "js-module": "JS module",
             "lwm2m-model": "LWM2M model",
             "pkcs-12": "PKCS #12"
+        },
+        "resource-sub-type": "Sub-type",
+        "sub-type": {
+            "image": "image",
+            "scada-symbol": "Scada symbol",
+            "extension": "Extension",
+            "module": "Module"
         }
+    },
+    "javascript": {
+        "add": "Add JavaScript resource",
+        "delete": "Delete JavaScript resource",
+        "delete-javascript-resource-text": "Be careful, after the confirmation the JavaScript resource will become unrecoverable.",
+        "delete-javascript-resource-title": "Are you sure you want to delete the JavaScript resource '{{resourceTitle}}'?",
+        "delete-javascript-resources-action-title": "Delete JavaScript { count, plural, =1 {1 resource} other {# resources} }",
+        "delete-javascript-resources-text": "Please note that the selected JavaScript resources, even if they are used in JavaScript functions, will be deleted.",
+        "delete-javascript-resources-title": "Are you sure you want to delete JavaScript { count, plural, =1 {1 resource} other {# resources} }?",
+        "download": "Download JavaScript resource",
+        "upload-from-file": "Upload JavaScript from file",
+        "resource-file": "JavaScript resource file",
+        "drop-file": "Drop a JavaScript file or click to select a file to upload.",
+        "drop-resource-file-or": "Drag and drop a JavaScript file or",
+        "javascript-library": "JavaScript library",
+        "javascript-type": "JavaScript type",
+        "javascript-resource-details": "JavaScript resource details",
+        "search": "Search JavaScript resources",
+        "selected-javascript-resources": "{ count, plural, =1 {1 JavaScript resource} other {# JavaScript resources} } selected",
+        "no-javascript-resource-text": "No JavaScript resources found",
+        "all-types": "All",
+        "module-script": "Module script"
     },
     "rpc": {
       "error": {

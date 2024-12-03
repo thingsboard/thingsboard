@@ -33,6 +33,9 @@ import { RepositoryAdminSettingsComponent } from '@home/pages/admin/repository-a
 import { AutoCommitAdminSettingsComponent } from '@home/pages/admin/auto-commit-admin-settings.component';
 import { TwoFactorAuthSettingsComponent } from '@home/pages/admin/two-factor-auth-settings.component';
 import { OAuth2Module } from '@home/pages/admin/oauth2/oauth2.module';
+import { JsLibraryTableHeaderComponent } from '@home/pages/admin/resource/js-library-table-header.component';
+import { JsResourceComponent } from '@home/pages/admin/resource/js-resource.component';
+import { NgxFlowModule } from '@flowjs/ngx-flow';
 
 @NgModule({
   declarations:
@@ -45,17 +48,20 @@ import { OAuth2Module } from '@home/pages/admin/oauth2/oauth2.module';
       HomeSettingsComponent,
       ResourcesLibraryComponent,
       ResourcesTableHeaderComponent,
+      JsResourceComponent,
+      JsLibraryTableHeaderComponent,
       QueueComponent,
       RepositoryAdminSettingsComponent,
       AutoCommitAdminSettingsComponent,
       TwoFactorAuthSettingsComponent
     ],
-    imports: [
-        CommonModule,
-        SharedModule,
-        HomeComponentsModule,
-        AdminRoutingModule,
-        OAuth2Module
-    ]
+  imports: [
+    CommonModule,
+    SharedModule,
+    HomeComponentsModule,
+    AdminRoutingModule,
+    OAuth2Module,
+    NgxFlowModule
+  ]
 })
 export class AdminModule { }

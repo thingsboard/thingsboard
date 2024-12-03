@@ -85,9 +85,7 @@ const widgetEditorCompletions: TbEditorCompletions = {
       },
       ...widgetContextCompletions
     }
-  }},
-  ...widgetContextCompletions,
-  ...serviceCompletions
+  }}
 };
 
 export const widgetEditorCompleter = new TbEditorCompleter(widgetEditorCompletions);

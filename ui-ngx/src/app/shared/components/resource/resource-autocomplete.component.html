@@ -15,10 +15,12 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="resourceFormGroup" class="mat-block"
-                [appearance]="appearance"
+<mat-form-field [formGroup]="resourceFormGroup"
+                [class]="{'tb-inline-field': inlineField, 'flex': inlineField}"
+                class="mat-block"
+                [appearance]="inlineField ? 'outline' : appearance"
                 [hideRequiredMarker]="hideRequiredMarker"
-                [subscriptSizing]="subscriptSizing">
+                [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing">
   <input matInput type="text"
          #resourceInput
          formControlName="resource"

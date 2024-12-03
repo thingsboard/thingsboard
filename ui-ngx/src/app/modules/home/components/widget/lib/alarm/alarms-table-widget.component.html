@@ -70,7 +70,7 @@
                           [indeterminate]="alarmsDatasource.selection.hasValue() && !(alarmsDatasource.isAllSelected() | async)">
             </mat-checkbox>
           </mat-header-cell>
-          <mat-cell *matCellDef="let alarm; let row = index" [style]="rowStyle(alarm, row)">
+          <mat-cell *matCellDef="let alarm; let row = index" [style]="rowStyle(alarm, row) | async">
             <mat-checkbox (click)="$event.stopPropagation();"
                           (change)="$event ? alarmsDatasource.toggleSelection(alarm) : null"
                           [checked]="alarmsDatasource.isSelected(alarm)">
@@ -82,10 +82,10 @@
             {{ column.title }}
           </mat-header-cell>
           <mat-cell *matCellDef="let alarm; let row = index"
-                    [style]="cellStyle(alarm, column, row)"
+                    [style]="cellStyle(alarm, column, row) | async"
                     (click)="onCellClick($event, alarm, column, $index)"
                     [class.tb-pointer]="columnHasCellClick($index)">
-            <span [innerHTML]="cellContent(alarm, column, row)"></span>
+            <span [innerHTML]="cellContent(alarm, column, row) | async"></span>
             <ng-container *ngIf="column.entityKey.key === 'assignee'">
               <span class="assignee-cell flex flex-row items-center justify-start">
                 <span *ngIf="alarm.assigneeId && checkAssigneeHasName(alarm.assignee); else unassigned"
@@ -129,7 +129,7 @@
               </div>
             </ng-container>
           </mat-header-cell>
-          <mat-cell *matCellDef="let alarm; let row = index" [style]="rowStyle(alarm, row)">
+          <mat-cell *matCellDef="let alarm; let row = index" [style]="rowStyle(alarm, row) | async">
             <ng-container *ngIf="alarmsDatasource.countCellButtonAction">
               <div [class.lt-lg:!hidden]="showCellActionsMenu && alarmsDatasource.countCellButtonAction !== 1" class="flex flex-row items-stretch justify-end"
                    [style.min-width]="(alarmsDatasource.countCellButtonAction * 48) + 'px'">
@@ -171,7 +171,7 @@
                  [class.invisible]="alarmsDatasource.dataLoading"
                  [class.tb-pointer]="hasRowAction"
                  *matRowDef="let alarm; columns: displayedColumns; let row = index"
-                 [style]="rowStyle(alarm, row)"
+                 [style]="rowStyle(alarm, row) | async"
                  (click)="onRowClick($event, alarm)"></mat-row>
       </table>
       <span [class.!hidden]="(alarmsDatasource.isEmpty() | async) === false || alarmsDatasource.dataLoading"

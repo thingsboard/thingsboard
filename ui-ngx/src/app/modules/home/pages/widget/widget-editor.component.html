@@ -308,6 +308,13 @@
             <div class="tb-resize-container" tb-fullscreen [fullscreen]="javascriptFullscreen">
               <div class="tb-editor-area-title-panel">
                 <label translate>widget.javascript</label>
+                <button mat-icon-button class="tb-mat-32"
+                        #editModulesButton
+                        (click)="editControllerScriptModules($event, editModulesButton)"
+                        matTooltip="{{'js-func.modules' | translate}}"
+                        matTooltipPosition="above">
+                  <tb-icon color="primary" matButtonIcon>mdi:application-braces-outline</tb-icon>
+                </button>
                 <button mat-button (click)="beautifyJs()">
                   {{ 'widget.tidy' | translate }}
                 </button>
