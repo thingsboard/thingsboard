@@ -138,7 +138,6 @@ public class HousekeeperService {
             if (e instanceof ExecutionException) {
                 error = e.getCause();
             } else if (e instanceof TimeoutException) {
-                future.cancel(true); // interrupting the task
                 error = new TimeoutException("Timeout after " + config.getTaskProcessingTimeout() + " ms");
             }
 
@@ -155,6 +154,10 @@ public class HousekeeperService {
                         .build());
             }
             statsService.ifPresent(statsService -> statsService.reportFailure(taskType, msg));
+        } finally {
+            if (future != null && !future.isDone()) {
+                future.cancel(true);
+            }
         }
     }
 
