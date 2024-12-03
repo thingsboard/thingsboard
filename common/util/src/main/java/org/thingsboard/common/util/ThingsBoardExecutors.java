@@ -16,8 +16,10 @@
 package org.thingsboard.common.util;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -61,6 +63,14 @@ public class ThingsBoardExecutors {
                 new ThreadPoolExecutor.CallerRunsPolicy());
         executor.allowCoreThreadTimeOut(true);
         return executor;
+    }
+
+    public static ScheduledExecutorService newSingleThreadScheduledExecutor(String name) {
+        return Executors.unconfigurableScheduledExecutorService(new ThingsBoardScheduledThreadPoolExecutor(1, ThingsBoardThreadFactory.forName(name)));
+    }
+
+    public static ScheduledExecutorService newScheduledThreadPool(int corePoolSize, String name) {
+        return new ThingsBoardScheduledThreadPoolExecutor(corePoolSize, ThingsBoardThreadFactory.forName(name));
     }
 
 }

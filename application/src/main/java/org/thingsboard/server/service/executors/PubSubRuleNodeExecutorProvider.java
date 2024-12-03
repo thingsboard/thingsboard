@@ -21,10 +21,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.ExecutorProvider;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 @Lazy
@@ -46,7 +45,7 @@ public class PubSubRuleNodeExecutorProvider implements ExecutorProvider {
         if (threadPoolSize == null) {
             threadPoolSize = THREADS_PER_CPU * Runtime.getRuntime().availableProcessors();
         }
-        executor = Executors.newScheduledThreadPool(threadPoolSize, ThingsBoardThreadFactory.forName("pubsub-rule-nodes"));
+        executor = ThingsBoardExecutors.newScheduledThreadPool(threadPoolSize, "pubsub-rule-nodes");
     }
 
     @Override
