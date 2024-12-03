@@ -218,6 +218,10 @@ import { CountryAutocompleteComponent } from '@shared/components/country-autocom
 import { CountryData } from '@shared/models/country.models';
 import { SvgXmlComponent } from '@shared/components/svg-xml.component';
 import { DatapointsLimitComponent } from '@shared/components/time/datapoints-limit.component';
+import { AggregationTypeSelectComponent } from '@shared/components/time/aggregation/aggregation-type-select.component';
+import { AggregationOptionsConfigPanelComponent } from '@shared/components/time/aggregation/aggregation-options-config-panel.component';
+import { IntervalOptionsConfigPanelComponent } from '@shared/components/time/interval-options-config-panel.component';
+import { GroupingIntervalOptionsComponent } from '@shared/components/time/aggregation/grouping-interval-options.component';
 import { JsFuncModulesComponent } from '@shared/components/js-func-modules.component';
 import { JsFuncModuleRowComponent } from '@shared/components/js-func-module-row.component';
 
@@ -305,10 +309,14 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TimewindowPanelComponent,
     TimewindowConfigDialogComponent,
     TimeintervalComponent,
+    GroupingIntervalOptionsComponent,
     TimezoneComponent,
     TimezonePanelComponent,
     QuickTimeIntervalComponent,
     DatapointsLimitComponent,
+    AggregationTypeSelectComponent,
+    AggregationOptionsConfigPanelComponent,
+    IntervalOptionsConfigPanelComponent,
     DashboardSelectComponent,
     DashboardSelectPanelComponent,
     DatetimePeriodComponent,
@@ -514,10 +522,14 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TimewindowPanelComponent,
     TimewindowConfigDialogComponent,
     TimeintervalComponent,
+    GroupingIntervalOptionsComponent,
     TimezoneComponent,
     TimezonePanelComponent,
     QuickTimeIntervalComponent,
     DatapointsLimitComponent,
+    AggregationTypeSelectComponent,
+    AggregationOptionsConfigPanelComponent,
+    IntervalOptionsConfigPanelComponent,
     DashboardSelectComponent,
     DatetimePeriodComponent,
     DatetimeComponent,

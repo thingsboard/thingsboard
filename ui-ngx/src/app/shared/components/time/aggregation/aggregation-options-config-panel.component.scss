@@ -13,23 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 :host {
-  background-color: #fff;
+  .tb-aggregation-options-form {
+    height: 100%;
+    max-width: 350px;
 
-  .tb-timewindow-form {
-    overflow: hidden;
+    .tb-form-table {
+      overflow: hidden;
+    }
 
-    &-content {
+    .tb-form-table-body {
       overflow-y: auto;
+    }
 
-      tb-timeinterval,
-      tb-quick-time-interval,
-      tb-datetime-period,
-      tb-datapoints-limit,
-      tb-aggregation-type-select {
-        flex: 1;
+    .tb-form-hint {
+      flex-shrink: 0;
+    }
+
+    .mdc-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .mat-mdc-list-item.mdc-list-item--with-leading-checkbox.mdc-list-item--with-one-line {
+        height: 40px;
       }
     }
   }
 }
+

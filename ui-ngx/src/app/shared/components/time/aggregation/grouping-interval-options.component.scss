@@ -13,23 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import '../../../../../scss/constants';
 
 :host {
-  background-color: #fff;
+  .agg-interval {
+    max-width: 180px;
+  }
 
-  .tb-timewindow-form {
-    overflow: hidden;
-
-    &-content {
-      overflow-y: auto;
-
-      tb-timeinterval,
-      tb-quick-time-interval,
-      tb-datetime-period,
-      tb-datapoints-limit,
-      tb-aggregation-type-select {
-        flex: 1;
-      }
-    }
+  @media #{$mat-xs} {
+    min-width: 0;
+    width: 100%;
   }
 }
+

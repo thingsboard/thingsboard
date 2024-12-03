@@ -15,16 +15,16 @@
     limitations under the License.
 
 -->
-<section class="interval-section flex flex-1 flex-row" [formGroup]="quickIntervalFormGroup">
-  <mat-form-field class="flex-1" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
-    <mat-label *ngIf="displayLabel" translate>timewindow.interval</mat-label>
-    <mat-select formControlName="interval">
-      <mat-option *ngFor="let interval of intervals" [value]="interval">
-        {{ timeIntervalTranslationMap.get(interval) | translate}}
-      </mat-option>
-    </mat-select>
-    <ng-container matSuffix>
-      <ng-content select="[matSuffix]"></ng-content>
-    </ng-container>
-  </mat-form-field>
-</section>
+<mat-form-field [formGroup]="aggregationTypeFormGroup"
+                [subscriptSizing]="subscriptSizing" [appearance]="appearance"
+                class="flex flex-1">
+  <mat-label *ngIf="displayLabel">{{ label }}</mat-label>
+  <mat-select [required]="required" formControlName="aggregationType">
+    <mat-option *ngFor="let type of aggregationTypes" [value]="type">
+      {{ displayAggregationTypeFn(type) }}
+    </mat-option>
+  </mat-select>
+  <ng-container matSuffix>
+    <ng-content select="[matSuffix]"></ng-content>
+  </ng-container>
+</mat-form-field>
