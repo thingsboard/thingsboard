@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2024 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,9 +17,6 @@ package org.thingsboard.common.util;
 
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
@@ -33,66 +30,34 @@ final class ThingsBoardScheduledThreadPoolExecutor extends ScheduledThreadPoolEx
     }
 
     @Override
-    protected void afterExecute(Runnable r, Throwable t) {
-        super.afterExecute(r, t);
-        logExceptionsAfterExecute(r, t);
-    }
-
-    private static void logExceptionsAfterExecute(Runnable r, Throwable directThrowable) {
-        Throwable wrappedThrowable = extractThrowableWrappedInFuture(r);
-        if (wrappedThrowable != null) {
-            if (wrappedThrowable instanceof CancellationException) {
-                log.debug("Task was cancelled.", wrappedThrowable);
-            } else {
-                log.error("Uncaught error occurred during task execution!", wrappedThrowable);
-            }
-        }
-
-        if (directThrowable != null) { // should never be true since ScheduledThreadPoolExecutor wraps tasks in Future's
-            log.error("Caught direct throwable from task submitted to the scheduled thread pool executor!", directThrowable);
-        }
-    }
-
-    private static Throwable extractThrowableWrappedInFuture(Runnable runnable) {
-        if (runnable instanceof Future<?> future && future.isDone()) {
-            try {
-                future.get();
-            } catch (InterruptedException e) { // should not happen due to isDone() check
-                throw new AssertionError("InterruptedException caught after isDone() check on a future", e);
-            } catch (CancellationException e) {
-                return e;
-            } catch (ExecutionException e) {
-                return e.getCause();
-            }
-        }
-        return null;
-    }
-
-    @Override
     public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit) {
         if (command == null) { // preserve the original NPE behavior of ScheduledThreadPoolExecutor with a more helpful message
-            throw new NullPointerException("command is null");
+            throw new NullPointerException("Command is null");
         }
-        return super.scheduleAtFixedRate(new SafePeriodicRunnable(command), initialDelay, period, unit);
+        return super.scheduleAtFixedRate(new PeriodicRunnable(command), initialDelay, period, unit);
     }
 
     @Override
     public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
         if (command == null) { // preserve the original NPE behavior of ScheduledThreadPoolExecutor with a more helpful message
-            throw new NullPointerException("command is null");
+            throw new NullPointerException("Command is null");
         }
-        return super.scheduleWithFixedDelay(new SafePeriodicRunnable(command), initialDelay, delay, unit);
+        return super.scheduleWithFixedDelay(new PeriodicRunnable(command), initialDelay, delay, unit);
     }
 
-    private record SafePeriodicRunnable(Runnable runnable) implements Runnable {
+    private record PeriodicRunnable(Runnable runnable) implements Runnable {
 
         public void run() {
             try {
                 runnable.run();
-            } catch (Exception ex) {
-                log.error("Uncaught exception occurred during periodic task execution!", ex);
+            } catch (Exception e) {
+                // Log exceptions but do not propagate it. This ensures that subsequent scheduled tasks will still run.
+                log.error("Uncaught exception occurred during periodic task execution!", e);
+            } catch (Throwable th) {
+                // Log and rethrow other serious issues that are not regular Exceptions.
+                log.error("Critical exception occurred during periodic task execution!", th);
+                throw th;
             }
-            // Intentionally, no catch block for Throwable; uncaught Throwables will be handled in afterExecute()
         }
 
     }

@@ -25,8 +25,11 @@ import java.util.concurrent.TimeUnit;
 
 public class ThingsBoardExecutors {
 
+    /** Cannot instantiate. */
+    private ThingsBoardExecutors(){}
+
     /**
-     * Method forked from ExecutorService to provide thread poll name
+     * Method forked from ExecutorService to provide thread pool name
      *
      * Creates a thread pool that maintains enough threads to support
      * the given parallelism level, and may use multiple queues to
