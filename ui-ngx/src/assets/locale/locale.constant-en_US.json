@@ -988,6 +988,20 @@
         "type-timeseries-deleted": "Telemetry deleted",
         "type-sms-sent": "SMS sent"
     },
+    "debug-config": {
+        "min": "{{number}} min",
+        "label": "Debug configuration",
+        "on-failure": "Failures only (24/7)",
+        "all-messages": "All messages ({{time}})",
+        "failures": "Failures",
+        "all": "All",
+        "hint": {
+            "main": "All node debug messages rate limited with:",
+            "main-limited": "All node debug messages will be rate-limited, with a maximum of {{msg}} messages allowed per {{sec}} seconds.",
+            "on-failure": "Save all failure debug events without time limit.",
+            "all-messages": "Save all debug events during time limit."
+        }
+    },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
         "html-message": "You have unsaved changes.<br/>Are you sure you want to leave this page?",
@@ -1018,11 +1032,13 @@
         "enter-password": "Enter password",
         "enter-search": "Enter search",
         "created-time": "Created time",
+        "disabled": "Disabled",
         "loading": "Loading...",
         "proceed": "Proceed",
         "open-details-page": "Open details page",
         "not-found": "Not found",
-        "documentation": "Documentation"
+        "documentation": "Documentation",
+        "time-left": "{{time}} left"
     },
     "content-type": {
         "json": "Json",
@@ -3162,7 +3178,7 @@
             "critical": "Critical",
             "critical-click": "Critical click",
             "critical-state-hint": "Indicates whether component is in critical state.",
-            "critical-state-animation": "Critical state animation",
+            "critical-state-animation": "Alarm state animation",
             "critical-state-animation-hint": "Whether to enable blinking animation when component is in critical state.",
             "animation": "Animation",
             "broken": "Broken",
@@ -3187,6 +3203,7 @@
             "top-right-connector": "Top right connector",
             "running-color": "Running color",
             "stopped-color": "Stopped color",
+            "stopped": "Stopped",
             "warning-color": "Warning color",
             "critical-color": "Critical color",
             "opened": "Opened",
@@ -3286,7 +3303,9 @@
             "low-critical-state": "Low Critical state",
             "show-low-critical-scale": "Show Low Critical state",
             "low-critical-scale": "Low Critical state",
-            "low-critical-state-hint": "Double value indicates a low critical range up to the min value scale."
+            "low-critical-state-hint": "Double value indicates a low critical range up to the min value scale.",
+            "colors": "Colors",
+            "alarm-colors": "Alarm colors"
         }
     },
     "item": {
@@ -4224,7 +4243,7 @@
         "deselect-all": "Deselect all",
         "rulenode-details": "Rule node details",
         "debug-mode": "Debug mode",
-        "singleton-mode": "Singleton mode",
+        "singleton": "Singleton",
         "configuration": "Configuration",
         "link": "Link",
         "link-details": "Rule node link details",
@@ -4435,6 +4454,7 @@
         "tenant-profiles": "Tenant profiles",
         "add": "Add tenant profile",
         "add-profile": "Add profile",
+        "debug": "Debug",
         "edit": "Edit tenant profile",
         "tenant-profile-details": "Tenant profile details",
         "no-tenant-profiles-text": "No tenant profiles found",
@@ -4505,6 +4525,8 @@
         "maximum-ota-packages-sum-data-size": "Maximum total size of OTA package files (bytes)",
         "maximum-ota-package-sum-data-size-required": "Maximum total size of OTA package files is required.",
         "maximum-ota-package-sum-data-size-range": "Maximum total size of OTA package files can't be negative",
+        "maximum-debug-duration-min": "Maximum debug duration (min)",
+        "maximum-debug-duration-min-range": "Maximum debug duration can't be negative",
         "rest-requests-for-tenant": "REST requests for tenant",
         "transport-tenant-telemetry-msg-rate-limit": "Transport tenant telemetry messages",
         "transport-tenant-telemetry-data-points-rate-limit": "Transport tenant telemetry data points",
@@ -7410,6 +7432,7 @@
             "get-dashboard-state": "Get dashboard state",
             "add-time-series": "Add time series",
             "execute-rpc-text": "Execute RPC method '{{methodName}}'",
+            "get-time-series-text": "Use time series '{{key}}'",
             "get-attribute-text": "Use attribute '{{key}}'",
             "get-alarm-status-text": "Use alarm status",
             "get-dashboard-state-text": "Use dashboard state",

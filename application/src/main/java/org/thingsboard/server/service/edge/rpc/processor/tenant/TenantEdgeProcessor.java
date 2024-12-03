@@ -43,7 +43,7 @@ public class TenantEdgeProcessor extends BaseEdgeProcessor {
     private TenantMsgConstructorFactory tenantMsgConstructorFactory;
 
     public DownlinkMsg convertTenantEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
-        TenantId tenantId = new TenantId(edgeEvent.getEntityId());
+        TenantId tenantId = TenantId.fromUUID(edgeEvent.getEntityId());
         var msgConstructor = ((TenantMsgConstructor) tenantMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion));
         if (EdgeEventActionType.UPDATED.equals(edgeEvent.getAction())) {
             Tenant tenant = edgeCtx.getTenantService().findTenantById(tenantId);

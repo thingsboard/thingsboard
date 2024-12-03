@@ -1270,6 +1270,24 @@ pre.tb-highlight {
   .no-wrap {
     white-space: nowrap;
   }
+
+  .tb-rounded-btn {
+    border-radius: 20px;
+    padding: 0 16px;
+
+    &:not(.active, :disabled) {
+      color: rgba(0, 0, 0, 0.76);
+      background-color: rgba(0, 0, 0, 0.06);
+    }
+
+    &.active:not(:disabled) {
+      --mdc-outlined-button-outline-color: $primary;
+    }
+
+    &:disabled {
+      background: rgba(0, 0, 0, 0.06);
+    }
+  }
 }
 
 /***************
