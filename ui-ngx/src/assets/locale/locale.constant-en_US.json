@@ -3179,7 +3179,7 @@
             "critical-click": "Critical click",
             "critical-state-hint": "Indicates whether component is in critical state.",
             "critical-state-animation": "Alarm state animation",
-            "critical-state-animation-hint": "Whether to enable blinking animation when component is in critical state.",
+            "critical-state-animation-hint": "Whether to enable blinking animation when component is in alarm state.",
             "animation": "Animation",
             "broken": "Broken",
             "broken-hint": "Indicates whether component is broken.",
