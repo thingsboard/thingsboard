@@ -100,19 +100,24 @@ public class ThingsboardInstallService {
                     log.info("Migrating ThingsBoard latest timeseries data from cassandra to SQL database ...");
                     latestMigrateService.migrate();
                 } else {
+                    // TODO DON'T FORGET to update SUPPORTED_VERSIONS_FROM in DefaultDatabaseSchemaSettingsService
                     databaseSchemaVersionService.validateSchemaSettings();
-                    //TODO DON'T FORGET to update SUPPORTED_VERSIONS_FROM in DatabaseSchemaVersionService,
-                    // this list should include last version and can include previous versions without upgrade
                     String fromVersion = databaseSchemaVersionService.getDbSchemaVersion();
                     String toVersion = databaseSchemaVersionService.getPackageSchemaVersion();
                     log.info("Upgrading ThingsBoard from version {} to {} ...", fromVersion, toVersion);
                     cacheCleanupService.clearCache();
-                    entityDatabaseSchemaService.createDatabaseSchema(false);
+                    // Apply the schema_update.sql script. The script may include DDL statements to change structure
+                    // of *existing* tables and DML statements to manipulate the DB records.
                     databaseEntitiesUpgradeService.upgradeDatabase();
-                    dataUpdateService.updateData(); //TODO: update data should be cleaned after each release
-
+                    // All new tables that do not have any data will be automatically created here.
+                    entityDatabaseSchemaService.createDatabaseSchema(false);
+                    // Runs upgrade scripts that are not possible in plain SQL.
+                    // TODO: clear after each release
+                    dataUpdateService.updateData();
+                    // Re-create all views, functions.
                     entityDatabaseSchemaService.createOrUpdateViewsAndFunctions();
                     entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
+                    // Creates missing indexes.
                     entityDatabaseSchemaService.createDatabaseIndexes();
                     log.info("Updating system data...");
                     dataUpdateService.upgradeRuleNodes();

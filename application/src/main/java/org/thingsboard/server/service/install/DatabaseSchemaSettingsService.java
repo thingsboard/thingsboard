@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.install;
 
 public interface DatabaseSchemaSettingsService {
+
     void validateSchemaSettings();
 
     void createSchemaSettings();
@@ -25,4 +26,5 @@ public interface DatabaseSchemaSettingsService {
     String getPackageSchemaVersion();
 
     String getDbSchemaVersion();
+
 }
