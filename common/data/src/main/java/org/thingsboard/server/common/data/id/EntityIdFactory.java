@@ -111,6 +111,8 @@ public class EntityIdFactory {
                 return new MobileAppId(uuid);
             case DOMAIN:
                 return new DomainId(uuid);
+            case MOBILE_APP_BUNDLE:
+                return new MobileAppBundleId(uuid);
         }
         throw new IllegalArgumentException("EntityType " + type + " is not supported!");
     }
@@ -118,7 +120,7 @@ public class EntityIdFactory {
     public static EntityId getByEdgeEventTypeAndUuid(EdgeEventType edgeEventType, UUID uuid) {
         switch (edgeEventType) {
             case TENANT:
-                return new TenantId(uuid);
+                return TenantId.fromUUID(uuid);
             case CUSTOMER:
                 return new CustomerId(uuid);
             case USER:

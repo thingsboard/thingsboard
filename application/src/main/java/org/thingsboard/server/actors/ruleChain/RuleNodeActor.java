@@ -37,7 +37,8 @@ public class RuleNodeActor extends RuleEngineComponentActor<RuleNodeId, RuleNode
     private final RuleChainId ruleChainId;
     private final RuleNodeId ruleNodeId;
 
-    private RuleNodeActor(ActorSystemContext systemContext, TenantId tenantId, RuleChainId ruleChainId, String ruleChainName, RuleNodeId ruleNodeId) {
+    private RuleNodeActor(ActorSystemContext systemContext, TenantId tenantId,
+                          RuleChainId ruleChainId, String ruleChainName, RuleNodeId ruleNodeId) {
         super(systemContext, tenantId, ruleNodeId);
         this.ruleChainName = ruleChainName;
         this.ruleChainId = ruleChainId;
@@ -46,7 +47,7 @@ public class RuleNodeActor extends RuleEngineComponentActor<RuleNodeId, RuleNode
 
     @Override
     protected RuleNodeActorMessageProcessor createProcessor(TbActorCtx ctx) {
-        return new RuleNodeActorMessageProcessor(tenantId, this.ruleChainName, ruleNodeId, systemContext, ctx.getParentRef(), ctx);
+        return new RuleNodeActorMessageProcessor(tenantId, this.ruleChainName, ruleNodeId, systemContext, ctx);
     }
 
     @Override
@@ -118,7 +119,6 @@ public class RuleNodeActor extends RuleEngineComponentActor<RuleNodeId, RuleNode
             this.ruleChainId = ruleChainId;
             this.ruleChainName = ruleChainName;
             this.ruleNodeId = ruleNodeId;
-
         }
 
         @Override

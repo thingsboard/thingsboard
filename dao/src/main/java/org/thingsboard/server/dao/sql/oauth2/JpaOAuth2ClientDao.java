@@ -75,13 +75,13 @@ public class JpaOAuth2ClientDao extends JpaAbstractDao<OAuth2ClientEntity, OAuth
     }
 
     @Override
-    public List<OAuth2Client> findByMobileAppId(UUID mobileAppId) {
-        return DaoUtil.convertDataList(repository.findByMobileAppId(mobileAppId));
+    public List<OAuth2Client> findByMobileAppBundleId(UUID mobileAppBundleId) {
+        return DaoUtil.convertDataList(repository.findByMobileAppBundleId(mobileAppBundleId));
     }
 
     @Override
-    public String findAppSecret(UUID id, String pkgName) {
-        return repository.findAppSecret(id, pkgName);
+    public String findAppSecret(UUID id, String pkgName, PlatformType platformType) {
+        return repository.findAppSecret(id, pkgName, platformType);
     }
 
     @Override

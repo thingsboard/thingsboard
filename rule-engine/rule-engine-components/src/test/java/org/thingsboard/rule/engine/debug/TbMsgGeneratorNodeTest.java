@@ -29,7 +29,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -53,7 +53,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
@@ -79,8 +78,6 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
     private final RuleNodeId RULE_NODE_ID = new RuleNodeId(UUID.fromString("1c649392-1f53-4377-b12f-1ba172611746"));
     private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("4470dfc2-f621-42b2-b82c-b5776d424140"));
 
-    private final ThingsBoardThreadFactory factory = ThingsBoardThreadFactory.forName("msg-generator-node-test");
-
     private TbMsgGeneratorNode node;
     private TbMsgGeneratorNodeConfiguration config;
     private ScheduledExecutorService executorService;
@@ -94,7 +91,7 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
     public void setUp() {
         node = spy(new TbMsgGeneratorNode());
         config = new TbMsgGeneratorNodeConfiguration().defaultConfiguration();
-        executorService = Executors.newSingleThreadScheduledExecutor(factory);
+        executorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("msg-generator-node-test");
     }
 
     @AfterEach

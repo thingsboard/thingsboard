@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.edge.rpc.processor.tenant;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.Tenant;
@@ -30,6 +31,7 @@ import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.constructor.tenant.TenantMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.tenant.TenantMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 @Slf4j
@@ -37,28 +39,27 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 @TbCoreComponent
 public class TenantEdgeProcessor extends BaseEdgeProcessor {
 
+    @Autowired
+    private TenantMsgConstructorFactory tenantMsgConstructorFactory;
+
     public DownlinkMsg convertTenantEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
-        TenantId tenantId = new TenantId(edgeEvent.getEntityId());
-        DownlinkMsg downlinkMsg = null;
+        TenantId tenantId = TenantId.fromUUID(edgeEvent.getEntityId());
+        var msgConstructor = ((TenantMsgConstructor) tenantMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion));
         if (EdgeEventActionType.UPDATED.equals(edgeEvent.getAction())) {
-            Tenant tenant = tenantService.findTenantById(tenantId);
+            Tenant tenant = edgeCtx.getTenantService().findTenantById(tenantId);
             if (tenant != null) {
                 UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                TenantUpdateMsg tenantUpdateMsg = ((TenantMsgConstructor)
-                        tenantMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion))
-                        .constructTenantUpdateMsg(msgType, tenant);
-                TenantProfile tenantProfile = tenantProfileService.findTenantProfileById(tenantId, tenant.getTenantProfileId());
-                TenantProfileUpdateMsg tenantProfileUpdateMsg = ((TenantMsgConstructor)
-                        tenantMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion))
-                        .constructTenantProfileUpdateMsg(msgType, tenantProfile, edgeVersion);
-                downlinkMsg = DownlinkMsg.newBuilder()
+                TenantUpdateMsg tenantUpdateMsg = msgConstructor.constructTenantUpdateMsg(msgType, tenant);
+                TenantProfile tenantProfile = edgeCtx.getTenantProfileService().findTenantProfileById(tenantId, tenant.getTenantProfileId());
+                TenantProfileUpdateMsg tenantProfileUpdateMsg = msgConstructor.constructTenantProfileUpdateMsg(msgType, tenantProfile, edgeVersion);
+                return DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addTenantUpdateMsg(tenantUpdateMsg)
                         .addTenantProfileUpdateMsg(tenantProfileUpdateMsg)
                         .build();
             }
         }
-        return downlinkMsg;
+        return null;
     }
 
 }

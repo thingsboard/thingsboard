@@ -99,8 +99,8 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
     this.jwtSecuritySettingsFormGroup = this.fb.group({
       tokenIssuer: ['', Validators.required],
       tokenSigningKey: ['', [Validators.required, this.base64Format]],
-      tokenExpirationTime: [0, [Validators.required, Validators.pattern('[0-9]*'), Validators.min(60)]],
-      refreshTokenExpTime: [0, [Validators.required, Validators.pattern('[0-9]*'), Validators.min(900)]]
+      tokenExpirationTime: [0, [Validators.required, Validators.min(60), Validators.max(2147483647)]],
+      refreshTokenExpTime: [0, [Validators.required, Validators.min(900), Validators.max(2147483647)]]
     }, {validators: this.refreshTokenTimeGreatTokenTime.bind(this)});
     this.jwtSecuritySettingsFormGroup.get('tokenExpirationTime').valueChanges.subscribe(
       () => this.jwtSecuritySettingsFormGroup.get('refreshTokenExpTime').updateValueAndValidity({onlySelf: true})

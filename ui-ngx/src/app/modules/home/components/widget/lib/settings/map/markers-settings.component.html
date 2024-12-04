@@ -30,6 +30,7 @@
     </section>
     <tb-js-func [class.!hidden]="provider !== mapProvider.image"
                 formControlName="posFunction"
+                withModules
                 minHeight="100px"
                 [globalVariables]="functionScopeVariables"
                 [functionArgs]="['origXPos', 'origYPos', 'data', 'dsData', 'dsIndex', 'aspect']"
@@ -63,6 +64,7 @@
           </tb-html>
           <tb-js-func [class.!hidden]="!markersSettingsFormGroup.get('useLabelFunction').value"
                       formControlName="labelFunction"
+                      withModules
                       [globalVariables]="functionScopeVariables"
                       [functionArgs]="['data', 'dsData', 'dsIndex']"
                       functionTitle="{{ 'widgets.maps.label-function' | translate }}"
@@ -106,6 +108,7 @@
           </tb-html>
           <tb-js-func [class.!hidden]="!markersSettingsFormGroup.get('useTooltipFunction').value"
                       formControlName="tooltipFunction"
+                      withModules
                       [globalVariables]="functionScopeVariables"
                       [functionArgs]="['data', 'dsData', 'dsIndex']"
                       functionTitle="{{ 'widgets.maps.tooltip-function' | translate }}"
@@ -144,6 +147,7 @@
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
           <tb-js-func formControlName="colorFunction"
+                      withModules
                       [globalVariables]="functionScopeVariables"
                       [functionArgs]="['data', 'dsData', 'dsIndex']"
                       functionTitle="{{ 'widgets.maps.color-function' | translate }}"
@@ -177,6 +181,7 @@
           </mat-form-field>
           <tb-js-func [class.!hidden]="!markersSettingsFormGroup.get('useMarkerImageFunction').value"
                       formControlName="markerImageFunction"
+                      withModules
                       [globalVariables]="functionScopeVariables"
                       [functionArgs]="['data', 'images', 'dsData', 'dsIndex']"
                       functionTitle="{{ 'widgets.maps.marker-image-function' | translate }}"

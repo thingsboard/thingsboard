@@ -115,7 +115,7 @@ public class SemaphoreWithTbMsgQueue {
                 }
                 TbMsg msg = tbMsgTbContext.msg();
                 TbContext ctx = tbMsgTbContext.ctx();
-                log.warn("[{}] Failed to process message: {}", entityId, msg, t);
+                log.debug("[{}] Failed to process message: {}", entityId, msg, t);
                 ctx.tellFailure(msg, t); // you are not allowed to throw here, because queue will remain unprocessed
                 continue; // We are probably the last who process the queue. We have to continue poll until get successful callback or queue is empty
             }

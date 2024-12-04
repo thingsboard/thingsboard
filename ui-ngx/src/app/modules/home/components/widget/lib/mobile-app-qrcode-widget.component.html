@@ -27,13 +27,13 @@
          [class.row-reverse]="mobileAppSettings?.qrCodeConfig.badgePosition === badgePosition.LEFT">
       <div class="tb-qrcode" (click)="navigateByDeepLink($event)" [innerHTML]="qrCodeSVG | safe: 'html'"></div>
       <div class="tb-badges" [class.tb-no-interaction]="previewMode"
-           *ngIf="(mobileAppSettings?.iosConfig.enabled || mobileAppSettings?.androidConfig.enabled) &&
+           *ngIf="(mobileAppSettings?.iosEnabled || mobileAppSettings?.androidEnabled) &&
                     mobileAppSettings?.qrCodeConfig.badgeEnabled && showBadgeContainer">
-        <a *ngIf="mobileAppSettings?.iosConfig.enabled" [href]="appStoreLink" target="_blank">
+        <a *ngIf="mobileAppSettings?.iosEnabled" [href]="appStoreLink" target="_blank">
           <img alt="{{ 'widgets.mobile-app-qr-code.download-on-the-app-store' | translate }}"
                src="assets/android-ios-stores-badges/ios_store_en_black_badge.svg">
         </a>
-        <a *ngIf="mobileAppSettings?.androidConfig.enabled" [href]="googlePlayLink" target="_blank">
+        <a *ngIf="mobileAppSettings?.androidEnabled" [href]="googlePlayLink" target="_blank">
           <img alt="{{ 'widgets.mobile-app-qr-code.get-it-on-google-play' | translate }}"
                src="assets/android-ios-stores-badges/android_store_en_black_badge.svg">
         </a>

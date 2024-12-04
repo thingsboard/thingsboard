@@ -243,7 +243,7 @@ export class JsonFormComponent implements ControlValueAccessor, Validator, OnCha
 
   private onHelpClick(event: MouseEvent, helpId: string, helpVisibleFn: (visible: boolean) => void, helpReadyFn: (ready: boolean) => void) {
     const trigger = event.currentTarget as Element;
-    this.popoverService.toggleHelpPopover(trigger, this.renderer, this.viewContainerRef, helpId, '', helpVisibleFn, helpReadyFn);
+    this.popoverService.toggleHelpPopover(trigger, this.renderer, this.viewContainerRef, helpId, '', '', null, helpVisibleFn, helpReadyFn);
   }
 
   private updateAndRender() {

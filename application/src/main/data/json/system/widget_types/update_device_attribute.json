@@ -2,7 +2,7 @@
   "fqn": "control_widgets.update_attributes",
   "name": "Update device attribute",
   "deprecated": false,
-  "image": "data:image/png;base64,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",
+  "image": "tb-image;/api/images/system/update_device_attribute_system_widget_image.png",
   "description": "Allows to send shared attribute update when user press the button.",
   "descriptor": {
     "type": "rpc",
@@ -17,7 +17,6 @@
     "settingsDirective": "tb-update-device-attribute-widget-settings",
     "defaultConfig": "{\"showTitle\":false,\"backgroundColor\":\"#e6e7e8\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"styleButton\":{\"isRaised\":true,\"isPrimary\":false},\"entityParameters\":\"{}\",\"entityAttributeType\":\"SERVER_SCOPE\",\"buttonText\":\"Update device attribute\"},\"title\":\"Update device attribute\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{},\"targetDeviceAliases\":[]}"
   },
-  "externalId": null,
   "tags": [
     "command",
     "downlink",
@@ -30,5 +29,18 @@
     "subroutine call",
     "inter-process communication",
     "server request"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/update_device_attribute_system_widget_image.png",
+      "title": "\"Update device attribute\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "update_device_attribute_system_widget_image.png",
+      "publicResourceKey": "WhJC8NtPUdmMbUqrAnjVXK4t3pDnH1oi",
+      "mediaType": "image/png",
+      "data": "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",
+      "public": true
+    }
   ]
 }

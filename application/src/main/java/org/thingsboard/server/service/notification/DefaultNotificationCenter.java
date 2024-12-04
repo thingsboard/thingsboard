@@ -40,7 +40,9 @@ import org.thingsboard.server.common.data.notification.NotificationRequestConfig
 import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
+import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.info.GeneralNotificationInfo;
+import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.settings.UserNotificationSettings;
@@ -217,6 +219,21 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         }
     }
 
+    @Override
+    public void sendSystemNotification(TenantId tenantId, NotificationTargetId targetId, NotificationType type, NotificationInfo info) {
+        log.debug("[{}] Sending {} system notification to {}: {}", tenantId, type, targetId, info);
+        NotificationTemplate notificationTemplate = notificationTemplateService.findTenantOrSystemNotificationTemplate(tenantId, type)
+                .orElseThrow(() -> new IllegalArgumentException("No notification template found for type " + type));
+        NotificationRequest notificationRequest = NotificationRequest.builder()
+                .tenantId(TenantId.SYS_TENANT_ID)
+                .targets(List.of(targetId.getId()))
+                .templateId(notificationTemplate.getId())
+                .info(info)
+                .originatorEntityId(TenantId.SYS_TENANT_ID)
+                .build();
+        processNotificationRequest(TenantId.SYS_TENANT_ID, notificationRequest, null);
+    }
+
     private void processNotificationRequestAsync(NotificationProcessingContext ctx, List<NotificationTarget> targets, FutureCallback<NotificationRequestStats> callback) {
         notificationExecutor.submit(() -> {
             long startTs = System.currentTimeMillis();
@@ -271,7 +288,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                     }, 256);
                 } else {
                     recipients = new PageDataIterable<>(pageLink -> {
-                        return notificationTargetService.findRecipientsForNotificationTargetConfig(ctx.getTenantId(), targetConfig, pageLink);
+                        return notificationTargetService.findRecipientsForNotificationTargetConfig(target.getTenantId(), targetConfig, pageLink);
                     }, 256);
                 }
             }
