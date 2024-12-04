@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-segmented-button-widget" [class.no-pointer-events]="ctx.isEdit">
+<div class="tb-segmented-button-widget">
   <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   <div class="tb-segmented-button-container">
     <tb-widget-button-toggle
@@ -23,6 +23,7 @@
       [appearance]="appearance"
       [autoScale]="autoScale"
       [disabled]="disabled || (loading$ | async)"
+      [disableEvents]="ctx.isEdit"
       [value]="value"
       [ctx]="ctx"
       (clicked)="onClick($event)">
