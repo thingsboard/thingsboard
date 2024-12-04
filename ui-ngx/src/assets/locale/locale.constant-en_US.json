@@ -6215,7 +6215,20 @@
             "connector-state-param-key": "Connector state parameter key",
             "message": "Message",
             "level": "Level",
-            "created-time": "Created time"
+            "created-time": "Created time",
+            "statistics": {
+                "attributes": "Attributes",
+                "telemetry": "Telemetry",
+                "storage-message-count": "Storage message count",
+                "messages-received-from-platform": "Messages received from platform",
+                "pushed-datapoints": "Pushed datapoints",
+                "messages-pulled-from-storage": "Messages pulled from storage",
+                "messages-pushed-to-platform": "Messages pushed to platform",
+                "messages-sent-to-platform": "Messages sent to platform",
+                "process-cpu-usage": "Gateway process CPU usage",
+                "memory": "Gateway memory",
+                "free-disk": "Gateway free disk"
+            }
         },
         "gauge": {
             "default-color": "Default color",
