@@ -116,7 +116,7 @@ public class InMemoryTbTransportQueueFactory implements TbTransportQueueFactory 
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsg>> createToUsageStatsServiceMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsgPack>> createToUsageStatsServiceMsgProducer() {
         return new InMemoryTbQueueProducer<>(storage, topicService.buildTopicName(coreSettings.getUsageStatsTopic()));
     }
 

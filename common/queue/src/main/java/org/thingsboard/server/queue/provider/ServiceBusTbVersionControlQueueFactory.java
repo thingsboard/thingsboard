@@ -62,7 +62,7 @@ public class ServiceBusTbVersionControlQueueFactory implements TbVersionControlQ
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsg>> createToUsageStatsServiceMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsgPack>> createToUsageStatsServiceMsgProducer() {
         return new TbServiceBusProducerTemplate<>(coreAdmin, serviceBusSettings, topicService.buildTopicName(coreSettings.getUsageStatsTopic()));
     }
 

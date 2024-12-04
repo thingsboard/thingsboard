@@ -27,7 +27,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperService
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsgPack;
 import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -38,7 +38,7 @@ public class TbVersionControlProducerProvider implements TbQueueProducerProvider
 
     private final TbVersionControlQueueFactory tbQueueProvider;
     private TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toTbCoreNotifications;
-    private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> toUsageStats;
+    private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsgPack>> toUsageStats;
     private TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> toHousekeeper;
 
     public TbVersionControlProducerProvider(TbVersionControlQueueFactory tbQueueProvider) {
@@ -98,7 +98,7 @@ public class TbVersionControlProducerProvider implements TbQueueProducerProvider
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> getTbUsageStatsMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsgPack>> getTbUsageStatsMsgProducer() {
         return toUsageStats;
     }
 

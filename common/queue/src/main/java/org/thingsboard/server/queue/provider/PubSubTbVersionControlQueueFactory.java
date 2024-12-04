@@ -62,7 +62,7 @@ public class PubSubTbVersionControlQueueFactory implements TbVersionControlQueue
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsg>> createToUsageStatsServiceMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsgPack>> createToUsageStatsServiceMsgProducer() {
         return new TbPubSubProducerTemplate<>(coreAdmin, pubSubSettings, topicService.buildTopicName(coreSettings.getUsageStatsTopic()));
     }
 
