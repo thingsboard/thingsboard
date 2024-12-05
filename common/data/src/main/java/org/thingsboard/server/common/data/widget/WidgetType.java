@@ -50,7 +50,8 @@ public class WidgetType extends BaseWidgetType {
 
     @JsonIgnore
     public JsonNode getDefaultConfig() {
-        return Optional.ofNullable(descriptor.get("defaultConfig"))
+        return Optional.ofNullable(descriptor)
+                .map(descriptor -> descriptor.get("defaultConfig"))
                 .filter(JsonNode::isTextual).map(JsonNode::asText)
                 .map(json -> {
                     try {
