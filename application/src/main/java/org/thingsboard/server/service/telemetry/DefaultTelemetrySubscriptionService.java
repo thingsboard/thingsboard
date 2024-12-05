@@ -212,16 +212,15 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
     private void updateTelemetryInCalculatedFields(TenantId tenantId, EntityId entityId, List<? extends KvEntry> telemetry) {
         EntityType entityType = entityId.getEntityType();
-        if (EntityType.DEVICE.equals(entityType) || EntityType.ASSET.equals(entityType)) {
-            EntityId profileId;
+        if (EntityType.DEVICE.equals(entityType) || EntityType.ASSET.equals(entityType) || EntityType.CUSTOMER.equals(entityType) || EntityType.TENANT.equals(entityType)) {
+            EntityId profileId = null;
             if (EntityType.ASSET.equals(entityType)) {
                 profileId = assetProfileCache.get(tenantId, (AssetId) entityId).getId();
-            } else {
+            } else if (EntityType.DEVICE.equals(entityType)) {
                 profileId = deviceProfileCache.get(tenantId, (DeviceId) entityId).getId();
             }
-            List<CalculatedFieldLink> cfLinks = new ArrayList<>();
-            cfLinks.addAll(calculatedFieldService.findAllCalculatedFieldLinksByEntityId(tenantId, entityId));
-            cfLinks.addAll(calculatedFieldService.findAllCalculatedFieldLinksByEntityId(tenantId, profileId));
+            List<CalculatedFieldLink> cfLinks = new ArrayList<>(calculatedFieldService.findAllCalculatedFieldLinksByEntityId(tenantId, entityId));
+            Optional.ofNullable(profileId).ifPresent(id -> cfLinks.addAll(calculatedFieldService.findAllCalculatedFieldLinksByEntityId(tenantId, id)));
             if (!cfLinks.isEmpty()) {
                 cfLinks.forEach(link -> {
                     CalculatedFieldId calculatedFieldId = link.getCalculatedFieldId();
