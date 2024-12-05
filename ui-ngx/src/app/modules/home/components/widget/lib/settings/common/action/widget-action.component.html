@@ -18,7 +18,7 @@
 <div class="tb-form-panel no-padding no-border" [formGroup]="widgetActionFormGroup">
   <div class="tb-form-row">
     <div translate>widget-config.action</div>
-    <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-select required formControlName="type" placeholder="{{ 'widget-config.set' | translate }}">
         <mat-option *ngFor="let actionType of widgetActionTypes" [value]="actionType">
           {{ widgetActionTypeTranslations.get(widgetActionType[actionType]) | translate }}
@@ -30,7 +30,7 @@
     <ng-template [ngSwitchCase]="widgetActionType.openDashboard">
       <div class="tb-form-row">
         <div class="fixed-title-width">{{ 'widget-action.target-dashboard' | translate }}*</div>
-        <tb-dashboard-autocomplete fxFlex
+        <tb-dashboard-autocomplete class="flex-1"
             formControlName="targetDashboardId"
             required
             requiredText="widget-action.target-dashboard-required"
@@ -49,7 +49,7 @@
           <span>{{ 'widget-action.target-dashboard-state' | translate }}</span>
           <span *ngIf="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState">*</span>
         </div>
-        <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic"
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic"
                         [class.tb-suffix-absolute]="!actionTypeFormGroup.get('targetDashboardStateId').value">
           <input matInput type="text" placeholder="{{ 'widget-action.target-dashboard-state' | translate }}"
                  #dashboardStateInput
@@ -85,7 +85,7 @@
     <ng-template [ngSwitchCase]="widgetActionType.openURL">
       <div class="tb-form-row">
         <div class="tb-required">{{ 'widget-action.URL' | translate }}</div>
-        <mat-form-field fxFlex style="margin-left: 9px" appearance="outline" subscriptSizing="dynamic">
+        <mat-form-field class="flex-1" style="margin-left: 9px" appearance="outline" subscriptSizing="dynamic">
           <input matInput placeholder="{{ 'widget-config.set' | translate }}" formControlName="url">
           <mat-icon matSuffix
                     matTooltipPosition="above"
@@ -127,7 +127,7 @@
       </div>
       <div class="tb-form-row" *ngIf="actionTypeFormGroup.get('setEntityId').value">
         <div class="fixed-title-width">{{ 'alias.state-entity-parameter-name' | translate }}</div>
-        <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
           <input matInput
                  placeholder="{{ 'alias.default-entity-parameter-name' | translate }}"
                  formControlName="stateEntityParamName">
@@ -138,7 +138,7 @@
                                  widgetActionFormGroup.get('type').value : ''">
       <div class="tb-form-row">
         <div class="fixed-title-width">{{ 'widget-action.state-display-type' | translate }}</div>
-        <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="stateDisplayType">
             <mat-option *ngFor="let displayType of allStateDisplayTypes" [value]="displayType">
               {{ stateDisplayTypeName(displayType) }}
@@ -150,7 +150,7 @@
         <ng-template [ngSwitchCase]="'separateDialog'">
           <div class="tb-form-row">
             <div class="fixed-title-width">{{ 'widget-action.dialog-title' | translate }}</div>
-            <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+            <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
               <input matInput placeholder="{{ 'widget-config.set' | translate }}" formControlName="dialogTitle">
             </mat-form-field>
           </div>
@@ -191,7 +191,7 @@
         <ng-template [ngSwitchCase]="'popover'">
           <div class="tb-form-row">
             <div class="fixed-title-width">{{ 'widget-action.popover-preferred-placement' | translate }}</div>
-            <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+            <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
               <mat-select formControlName="popoverPreferredPlacement">
                 <mat-option *ngFor="let placement of allPopoverPlacements" [value]="placement">
                   {{ popoverPlacementName(placement) }}
@@ -237,6 +237,7 @@
           [globalVariables]="functionScopeVariables"
           [validationArgs]="[]"
           [editorCompleter]="customActionEditorCompleter"
+          withModules
           helpId="widget/action/custom_action_fn"
       ></tb-js-func>
     </ng-template>

@@ -68,17 +68,21 @@ import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.domain.DomainService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.mobile.MobileAppBundleService;
+import org.thingsboard.server.dao.mobile.MobileAppService;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateReadExecutor;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateWriteExecutor;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
+import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.queue.QueueStatsService;
@@ -372,6 +376,22 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
+    private OAuth2ClientService oAuth2ClientService;
+
+    @Autowired
+    @Getter
+    private DomainService domainService;
+
+    @Autowired
+    @Getter
+    private MobileAppService mobileAppService;
+
+    @Autowired
+    @Getter
+    private MobileAppBundleService mobileAppBundleService;
+
+    @Autowired
+    @Getter
     private SlackService slackService;
 
     @Lazy
@@ -549,6 +569,10 @@ public class ActorSystemContext {
     @Value("${actors.rpc.submit_strategy:BURST}")
     @Getter
     private String rpcSubmitStrategy;
+
+    @Value("${actors.rpc.close_session_on_rpc_delivery_timeout:false}")
+    @Getter
+    private boolean closeTransportSessionOnRpcDeliveryTimeout;
 
     @Value("${actors.rpc.response_timeout_ms:30000}")
     @Getter

@@ -18,7 +18,8 @@
 <form style="width: 800px;">
   <mat-toolbar color="primary">
     <h2 translate>widget.select-widget-type</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
+    <div tb-help="widgetTypes"></div>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -30,7 +31,7 @@
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content>
     <fieldset [disabled]="(isLoading$ | async)">
-      <div fxLayout="column" fxLayoutGap="16px" fxLayout.gt-sm="row" fxLayoutAlign="center center">
+      <div class="flex flex-col items-center justify-center gap-4 gt-sm:flex-row">
         <button *ngFor="let type of allWidgetTypes;" class="tb-card-button" mat-raised-button color="primary"
                 type="button"
                 (click)="typeSelected(widgetTypes[type])">
@@ -42,7 +43,7 @@
       </div>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

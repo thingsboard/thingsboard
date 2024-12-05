@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.math;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Data

@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.QueueStatsId;
@@ -24,9 +27,6 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 import java.util.UUID;
 
 @Data
@@ -61,7 +61,7 @@ public class QueueStatsEntity extends BaseSqlEntity<QueueStats> {
     public QueueStats toData() {
         QueueStats queueStats = new QueueStats(new QueueStatsId(getUuid()));
         queueStats.setCreatedTime(createdTime);
-        queueStats.setTenantId(new TenantId(tenantId));
+        queueStats.setTenantId(TenantId.fromUUID(tenantId));
         queueStats.setQueueName(queueName);
         queueStats.setServiceId(serviceId);
         return queueStats;

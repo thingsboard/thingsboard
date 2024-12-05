@@ -6,16 +6,16 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "sourceMap": true,
+    "esModuleInterop": true,
     "declaration": false,
-    "downlevelIteration": true,
     "experimentalDecorators": true,
     "moduleResolution": "node",
     "importHelpers": true,
     "target": "ES2022",
     "module": "es2020",
     "emitDecoratorMetadata": true,
-    "allowSyntheticDefaultImports": true,
     "jsx": "react",
+    "resolveJsonModule": true,
     "typeRoots": [
       "node_modules/@types",
       "src/typings"

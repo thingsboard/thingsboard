@@ -329,11 +329,9 @@ export const resolveCssSize = (strSize?: string): [number, cssUnit] => {
   }
   let resolvedUnit: cssUnit;
   let resolvedSize = strSize;
-  for (const unit of cssUnits) {
-    if (strSize.endsWith(unit)) {
-      resolvedUnit = unit;
-      break;
-    }
+  const unitMatch = strSize.match(new RegExp(`(${cssUnits.join('|')})$`));
+  if (unitMatch) {
+    resolvedUnit = unitMatch[0] as cssUnit;
   }
   if (resolvedUnit) {
     resolvedSize = strSize.substring(0, strSize.length - resolvedUnit.length);
@@ -934,6 +932,24 @@ export interface BackgroundSettings {
   color?: string;
   overlay: OverlaySettings;
 }
+
+export const isBackgroundSettings = (background: any): background is BackgroundSettings => {
+  if (background && background.type && background.overlay && background.overlay.color) {
+    return true;
+  } else {
+    return false;
+  }
+};
+
+export const colorBackground = (color: string): BackgroundSettings => ({
+  type: BackgroundType.color,
+  color,
+  overlay: {
+    enabled: false,
+    color: 'rgba(255,255,255,0.72)',
+    blur: 3
+  }
+});
 
 export const iconStyle = (size: number | string, sizeUnit: cssUnit = 'px'): ComponentStyle => {
   const iconSize = typeof size === 'number' ? size + sizeUnit : size;

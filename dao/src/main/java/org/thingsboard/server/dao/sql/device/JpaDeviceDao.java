@@ -22,7 +22,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceIdInfo;
 import org.thingsboard.server.common.data.DeviceInfo;
@@ -79,14 +78,6 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
     @Override
     public DeviceInfo findDeviceInfoById(TenantId tenantId, UUID deviceId) {
         return DaoUtil.getData(deviceRepository.findDeviceInfoById(deviceId));
-    }
-
-    @Override
-    @Transactional
-    public Device saveAndFlush(TenantId tenantId, Device device) {
-        Device result = this.save(tenantId, device);
-        deviceRepository.flush();
-        return result;
     }
 
     @Override
@@ -188,10 +179,9 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
                                                                            OtaPackageType type,
                                                                            PageLink pageLink) {
         Pageable pageable = DaoUtil.toPageable(pageLink);
-        String searchText = pageLink.getTextSearch();
         Page<DeviceEntity> page = OtaPackageUtil.getByOtaPackageType(
-                () -> deviceRepository.findByTenantIdAndTypeAndFirmwareIdIsNull(tenantId, deviceProfileId, searchText, pageable),
-                () -> deviceRepository.findByTenantIdAndTypeAndSoftwareIdIsNull(tenantId, deviceProfileId, searchText, pageable),
+                () -> deviceRepository.findByTenantIdAndTypeAndFirmwareIdIsNull(tenantId, deviceProfileId, pageable),
+                () -> deviceRepository.findByTenantIdAndTypeAndSoftwareIdIsNull(tenantId, deviceProfileId, pageable),
                 type
         );
         return DaoUtil.toPageData(page);

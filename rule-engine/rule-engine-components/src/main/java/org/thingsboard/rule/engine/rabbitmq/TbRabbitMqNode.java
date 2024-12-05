@@ -51,6 +51,10 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 )
 public class TbRabbitMqNode extends TbAbstractExternalNode {
 
+    private static final String supportedPropertiesStr = String.join(", ",
+            "BASIC", "TEXT_PLAIN", "MINIMAL_BASIC", "MINIMAL_PERSISTENT_BASIC", "PERSISTENT_BASIC", "PERSISTENT_TEXT_PLAIN"
+    );
+
     private static final Charset UTF8 = StandardCharsets.UTF_8;
 
     private static final String ERROR = "error";
@@ -64,16 +68,7 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         super.init(ctx);
         this.config = TbNodeUtils.convert(configuration, TbRabbitMqNodeConfiguration.class);
-        ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost(this.config.getHost());
-        factory.setPort(this.config.getPort());
-        factory.setVirtualHost(this.config.getVirtualHost());
-        factory.setUsername(this.config.getUsername());
-        factory.setPassword(this.config.getPassword());
-        factory.setAutomaticRecoveryEnabled(this.config.isAutomaticRecoveryEnabled());
-        factory.setConnectionTimeout(this.config.getConnectionTimeout());
-        factory.setHandshakeTimeout(this.config.getHandshakeTimeout());
-        this.config.getClientProperties().forEach((k,v) -> factory.getClientProperties().put(k,v));
+        ConnectionFactory factory = getConnectionFactory();
         try {
             this.connection = factory.newConnection();
             this.channel = this.connection.createChannel();
@@ -88,6 +83,20 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
         withCallback(publishMessageAsync(ctx, tbMsg),
                 m -> tellSuccess(ctx, m),
                 t -> tellFailure(ctx, processException(tbMsg, t), t));
+    }
+
+    ConnectionFactory getConnectionFactory() {
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost(this.config.getHost());
+        factory.setPort(this.config.getPort());
+        factory.setVirtualHost(this.config.getVirtualHost());
+        factory.setUsername(this.config.getUsername());
+        factory.setPassword(this.config.getPassword());
+        factory.setAutomaticRecoveryEnabled(this.config.isAutomaticRecoveryEnabled());
+        factory.setConnectionTimeout(this.config.getConnectionTimeout());
+        factory.setHandshakeTimeout(this.config.getHandshakeTimeout());
+        this.config.getClientProperties().forEach((k, v) -> factory.getClientProperties().put(k, v));
+        return factory;
     }
 
     private ListenableFuture<TbMsg> publishMessageAsync(TbContext ctx, TbMsg msg) {
@@ -132,7 +141,7 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
         }
     }
 
-    private static AMQP.BasicProperties convert(String name) throws TbNodeException {
+    static AMQP.BasicProperties convert(String name) throws TbNodeException {
         switch (name) {
             case "BASIC":
                 return MessageProperties.BASIC;
@@ -147,7 +156,8 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
             case "PERSISTENT_TEXT_PLAIN":
                 return MessageProperties.PERSISTENT_TEXT_PLAIN;
             default:
-                throw new TbNodeException("Message Properties: '" + name + "' is undefined!");
+                throw new TbNodeException("Undefined message properties type '" + name +
+                        "'! Only " + supportedPropertiesStr + " message properties types are supported!");
         }
     }
 }

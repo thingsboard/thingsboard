@@ -20,6 +20,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { DeviceCredentialMQTTBasic } from '@shared/models/device.models';
 import { Lwm2mSecurityConfigModels } from '@shared/models/lwm2m-security-config.models';
 import { TenantId } from '@shared/models/id/tenant-id';
+import { RuleChainMetaData } from '@shared/models/rule-chain.models';
 
 export interface EntityInfo {
   name?: string;
@@ -187,3 +188,19 @@ export const entityFields: {[fieldName: string]: EntityField} = {
 export interface HasTenantId {
   tenantId?: TenantId;
 }
+
+export interface HasVersion {
+  version?: number;
+}
+
+export interface HasDebugSettings {
+  debugSettings?: DebugSettings;
+}
+
+export interface DebugSettings {
+  failuresEnabled?: boolean;
+  allEnabled?: boolean;
+  allEnabledUntil?: number;
+}
+
+export type VersionedEntity = EntityInfoData & HasVersion | RuleChainMetaData;

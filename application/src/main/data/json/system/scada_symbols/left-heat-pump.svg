@@ -1,0 +1,1050 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="800" height="600" fill="none" version="1.1" viewBox="0 0 800 600"><tb:metadata xmlns=""><![CDATA[{
+  "title": "Left heat pump",
+  "description": "Left heat pump with configurable connectors, running animation and various states.",
+  "searchTags": [
+    "pump",
+    "heat"
+  ],
+  "widgetSizeX": 4,
+  "widgetSizeY": 3,
+  "stateRenderFunction": "var levelUpButton = ctx.tags.levelUpButton;\nvar levelDownButton = ctx.tags.levelDownButton;\nvar levelArrowUp = ctx.tags.levelArrowUp;\nvar levelArrowDown = ctx.tags.levelArrowDown;\nvar powerButtonBackground = ctx.tags.powerButtonBackground;\nvar powerButtonIcons = ctx.tags.powerButtonIcon;\n\nvar temperature = ctx.values.temperature;\nvar running = ctx.values.running;\nvar minTemperature = ctx.properties.minTemperature;\nvar maxTemperature = ctx.properties.maxTemperature;\nvar disabledPowerColor = ctx.properties.disabledPowerButtonBackground;\nvar enabledPowerColor = ctx.properties.powerButtonBackground;\n\nvar levelUpEnabled = running && temperature < maxTemperature;\nvar levelDownEnabled = running && temperature > minTemperature;\n\nif (running) {\n    powerButtonBackground[0].attr({fill: enabledPowerColor});\n    powerButtonIcons.forEach(e => e.attr({fill: disabledPowerColor}));\n} else {\n    powerButtonBackground[0].attr({fill: disabledPowerColor});\n    powerButtonIcons.forEach(e => e.attr({fill: enabledPowerColor}));\n}\n\nif (levelUpEnabled) {\n    ctx.api.enable(levelUpButton);\n    levelArrowUp[0].attr({fill: '#647484'});\n} else {\n    ctx.api.disable(levelUpButton);\n    levelArrowUp[0].attr({fill: '#777'});\n}\n   \nif (levelDownEnabled) {\n    ctx.api.enable(levelDownButton);\n    levelArrowDown[0].attr({fill: '#647484'});\n} else {\n    ctx.api.disable(levelDownButton);\n    levelArrowDown[0].attr({fill: '#777'});\n}",
+  "tags": [
+    {
+      "tag": "background",
+      "stateRenderFunction": "var color = ctx.properties.heatPumpColor;\nelement.attr({fill: color});",
+      "actions": null
+    },
+    {
+      "tag": "clickArea",
+      "stateRenderFunction": null,
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'click');"
+        }
+      }
+    },
+    {
+      "tag": "fan",
+      "stateRenderFunction": "var running = ctx.values.running;\nvar speed = ctx.values.rotationAnimationSpeed;\nvar fanRotate = ctx.api.cssAnimation(element);\nif (running) {\n    if (!fanRotate) {\n        fanRotate = ctx.api.cssAnimate(element, 2000)\n                                      .rotate(360).loop().speed(speed);\n    } else {\n        fanRotate.speed(speed).play();\n    }\n} else {\n    if (fanRotate) {\n        fanRotate.pause();\n    }\n}\n",
+      "actions": null
+    },
+    {
+      "tag": "fan-blade",
+      "stateRenderFunction": "var color = ctx.properties.stoppedColor;\nif (ctx.values.critical) {\n    color = ctx.properties.criticalColor;\n} else if (ctx.values.warning) {\n    color = ctx.properties.warningColor;\n} else if (ctx.values.running) {\n    color = ctx.properties.runningColor;\n}\nelement.attr({fill: color});\n\nvar elementCriticalAnimation = element.remember('criticalAnimation');\nvar criticalAnimation = ctx.values.critical && ctx.values.criticalAnimation;\n\nif (elementCriticalAnimation !== criticalAnimation) {\n    element.remember('criticalAnimation', criticalAnimation);\n    if (criticalAnimation) {\n        ctx.api.cssAnimate(element, 500).attr({opacity: 0.15}).loop(0, true);\n    } else {\n        ctx.api.resetCssAnimation(element);\n    }\n}",
+      "actions": null
+    },
+    {
+      "tag": "levelDownButton",
+      "stateRenderFunction": null,
+      "actions": {
+        "click": {
+          "actionFunction": "if (ctx.values.running) {\n    var temperature = ctx.values.temperature; \n    var minTemperature = ctx.properties.minTemperature;\n    var step = ctx.properties.temperatureStep;\n    \n    var newTemperature = Math.max(minTemperature, temperature - step);\n    ctx.api.setValue('temperature', newTemperature);\n    ctx.api.callAction(event, 'updateTemperatureState', newTemperature, {\n        error: () => {\n            ctx.api.setValue('temperature', temperature);\n        }\n    });\n}"
+        }
+      }
+    },
+    {
+      "tag": "levelUpButton",
+      "stateRenderFunction": null,
+      "actions": {
+        "click": {
+          "actionFunction": "if (ctx.values.running) {\n    var temperature = ctx.values.temperature; \n    var maxTemperature = ctx.properties.maxTemperature;\n    var minTemperature = ctx.properties.minTemperature;\n    var step = ctx.properties.temperatureStep;\n    var newTemperature = temperature || minTemperature === 0 ? Math.min(maxTemperature, temperature + step) : minTemperature;\n    ctx.api.setValue('temperature', newTemperature);\n    ctx.api.callAction(event, 'updateTemperatureState', newTemperature, {\n        error: () => {\n            ctx.api.setValue('temperature', temperature);\n        }\n    });\n}"
+        }
+      }
+    },
+    {
+      "tag": "pipe-background",
+      "stateRenderFunction": "var color = ctx.properties.pipeColor;\nelement.attr({fill: color});",
+      "actions": null
+    },
+    {
+      "tag": "power-button",
+      "stateRenderFunction": null,
+      "actions": {
+        "click": {
+          "actionFunction": "var rinning = ctx.values.running;\nvar action = rinning ? 'stop' : 'run';\n\nctx.api.callAction(event, action, undefined, {\n  next: () => {\n     ctx.api.setValue('running', !rinning);\n  }\n});"
+        }
+      }
+    },
+    {
+      "tag": "value-box-background",
+      "stateRenderFunction": "var color = ctx.properties.valueBoxBackground;\nelement.attr({fill: color});",
+      "actions": null
+    },
+    {
+      "tag": "value-text",
+      "stateRenderFunction": "var valueTextFont = ctx.properties.valueTextFont;\nvar valueTextColor = ctx.properties.valueTextColor;\nvar units = ctx.properties.valueUnits ? ctx.properties.units : null;\nvar currentVolume = ctx.values.temperature;\nvar decimals = Math.floor(ctx.properties.temperatureStep) === ctx.properties.temperatureStep;\nvar valueText = ctx.api.formatValue(currentVolume, decimals ? 0 : 1, units, !decimals);\nctx.api.font(element, valueTextFont, valueTextColor);\nctx.api.text(element, valueText);",
+      "actions": null
+    }
+  ],
+  "behavior": [
+    {
+      "id": "running",
+      "name": "{i18n:scada.symbol.running}",
+      "hint": "{i18n:scada.symbol.running-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.running}",
+      "defaultGetValueSettings": {
+        "action": "GET_ATTRIBUTE",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "running"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "temperature",
+      "name": "{i18n:scada.symbol.temperature}",
+      "hint": "{i18n:scada.symbol.temperature-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "DOUBLE",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": {
+        "action": "GET_TIME_SERIES",
+        "defaultValue": null,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "temperature"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "updateTemperatureState",
+      "name": "{i18n:scada.symbol.update-temperature}",
+      "hint": "{i18n:scada.symbol.update-temperature-hint}",
+      "group": null,
+      "type": "action",
+      "valueType": "DOUBLE",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": {
+        "action": "ADD_TIME_SERIES",
+        "executeRpc": {
+          "method": "setState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "setAttribute": {
+          "scope": "SERVER_SCOPE",
+          "key": "state"
+        },
+        "putTimeSeries": {
+          "key": "temperature"
+        },
+        "valueToData": {
+          "type": "VALUE",
+          "constantValue": false,
+          "valueToDataFunction": "/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;"
+        }
+      },
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "run",
+      "name": "{i18n:scada.symbol.run}",
+      "hint": "{i18n:scada.symbol.run-hint}",
+      "group": null,
+      "type": "action",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": {
+        "action": "SET_ATTRIBUTE",
+        "executeRpc": {
+          "method": "setState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "setAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "running"
+        },
+        "putTimeSeries": {
+          "key": "state"
+        },
+        "valueToData": {
+          "type": "CONSTANT",
+          "constantValue": true,
+          "valueToDataFunction": "/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;"
+        }
+      },
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "stop",
+      "name": "{i18n:scada.symbol.stop}",
+      "hint": "{i18n:scada.symbol.stop-hint}",
+      "group": null,
+      "type": "action",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": {
+        "action": "SET_ATTRIBUTE",
+        "executeRpc": {
+          "method": "setState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "setAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "running"
+        },
+        "putTimeSeries": {
+          "key": "state"
+        },
+        "valueToData": {
+          "type": "CONSTANT",
+          "constantValue": false,
+          "valueToDataFunction": "/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;"
+        }
+      },
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "warning",
+      "name": "{i18n:scada.symbol.warning-state}",
+      "hint": "{i18n:scada.symbol.warning-state-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.warning}",
+      "defaultGetValueSettings": {
+        "action": "GET_ALARM_STATUS",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": [
+            "MAJOR",
+            "MINOR",
+            "WARNING",
+            "INDETERMINATE"
+          ],
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "critical",
+      "name": "{i18n:scada.symbol.critical-state}",
+      "hint": "{i18n:scada.symbol.critical-state-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.critical}",
+      "defaultGetValueSettings": {
+        "action": "GET_ALARM_STATUS",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": [
+            "CRITICAL"
+          ],
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "criticalAnimation",
+      "name": "{i18n:scada.symbol.critical-state-animation}",
+      "hint": "{i18n:scada.symbol.critical-state-animation-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.animation}",
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "key": "state",
+          "scope": null
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "compareToValue": true,
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "rotationAnimationSpeed",
+      "name": "{i18n:scada.symbol.rotation-animation-speed}",
+      "hint": "{i18n:scada.symbol.rotation-animation-speed-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "DOUBLE",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": 1,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "click",
+      "name": "{i18n:scada.symbol.on-click}",
+      "hint": "{i18n:scada.symbol.on-click-hint}",
+      "group": null,
+      "type": "widgetAction",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "targetDashboardStateId": null,
+        "openRightLayout": false,
+        "setEntityId": false,
+        "stateEntityParamName": null
+      }
+    }
+  ],
+  "properties": [
+    {
+      "id": "minTemperature",
+      "name": "{i18n:scada.symbol.temperature}",
+      "type": "number",
+      "default": 10,
+      "required": true,
+      "subLabel": "Min",
+      "divider": true,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "column-xs",
+      "fieldClass": "",
+      "min": 0,
+      "max": null,
+      "step": 1
+    },
+    {
+      "id": "maxTemperature",
+      "name": "{i18n:scada.symbol.temperature}",
+      "type": "number",
+      "default": 45,
+      "required": true,
+      "subLabel": "Max",
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": 0,
+      "max": null,
+      "step": 1
+    },
+    {
+      "id": "temperatureStep",
+      "name": "{i18n:scada.symbol.temperature-step}",
+      "type": "number",
+      "default": 1,
+      "required": true,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": 0.5
+    },
+    {
+      "id": "valueTextColor",
+      "name": "{i18n:scada.symbol.value-text}",
+      "type": "color",
+      "default": "#000000C2",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "valueTextFont",
+      "name": "{i18n:scada.symbol.value-text}",
+      "type": "font",
+      "default": {
+        "size": 40,
+        "sizeUnit": "px",
+        "family": "Roboto",
+        "weight": "500",
+        "style": "normal"
+      },
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "valueUnits",
+      "name": "{i18n:scada.symbol.value-units}",
+      "type": "switch",
+      "default": false,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "units",
+      "name": "{i18n:scada.symbol.value-units}",
+      "type": "units",
+      "default": "°C",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "valueBoxBackground",
+      "name": "{i18n:scada.symbol.value-box-background}",
+      "type": "color",
+      "default": "#FFFFFF",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "powerButtonBackground",
+      "name": "{i18n:scada.symbol.power-button-background}",
+      "type": "color",
+      "default": "#1ABB48",
+      "required": null,
+      "subLabel": "Enabled",
+      "divider": true,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "column-xs",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "disabledPowerButtonBackground",
+      "name": "{i18n:scada.symbol.power-button-background}",
+      "type": "color",
+      "default": "#FFFFFF",
+      "required": null,
+      "subLabel": "Disabled",
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "runningColor",
+      "name": "{i18n:scada.symbol.running-color}",
+      "type": "color",
+      "default": "#1C943E",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "stoppedColor",
+      "name": "{i18n:scada.symbol.stopped-color}",
+      "type": "color",
+      "default": "#696969",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "warningColor",
+      "name": "{i18n:scada.symbol.warning-color}",
+      "type": "color",
+      "default": "#FAA405",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "criticalColor",
+      "name": "{i18n:scada.symbol.critical-color}",
+      "type": "color",
+      "default": "#D12730",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "heatPumpColor",
+      "name": "{i18n:scada.symbol.heat-pump-color}",
+      "type": "color",
+      "default": "#E5E5E5",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "pipeColor",
+      "name": "{i18n:scada.symbol.pipe-color}",
+      "type": "color",
+      "default": "#FFFFFF",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    }
+  ]
+}]]></tb:metadata>
+<rect x="250" y="571" width="300" height="29" rx="7" fill="#fff"/><rect x="250" y="571" width="300" height="29" rx="7" fill="url(#paint0_linear_1826_356092)" style="fill:url(#paint0_linear_1826_356092)"/><rect x="251.5" y="572.5" width="297" height="26" rx="5.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><path d="m303 545h194l32 26h-258z" fill="#fff"/><path d="m303 545h194l32 26h-258z" fill="url(#paint1_linear_1826_356092)" style="fill:url(#paint1_linear_1826_356092)"/><path d="m275.22 569.5 28.308-23h192.93l28.308 23z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect x="37" width="763" height="545" rx="12" fill="#e5e5e5"/><rect x="37" width="763" height="545" rx="12" fill="url(#paint2_linear_1826_356092)" style="fill:url(#paint2_linear_1826_356092)"/><rect x="38.5" y="1.5" width="760" height="542" rx="10.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><path d="m37 12c0-6.6274 5.3726-12 12-12h739c6.627 0 12 5.3726 12 12v521c0 6.627-5.373 12-12 12h-739c-6.6274 0-12-5.373-12-12z" fill="#4a4848" fill-opacity=".5"/><rect x="1.5" y="51.5" width="11" height="97" rx="5.5" fill="#d9d9d9" stroke="#727171" stroke-width="3"/><path d="m14 64h658v72h-658z" fill="#fff" tb:tag="pipe-background"/><path d="m14 64h658v72h-658z" fill="url(#paint17_linear_1826_356092)" style="fill:url(#paint17_linear_1826_356092)"/><path d="m15.5 65.5h655v69h-655z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect x="1.5" y="251.5" width="11" height="97" rx="5.5" fill="#d9d9d9" stroke="#727171" stroke-width="3"/><path d="m14 264h82v72h-82z" fill="#fff" tb:tag="pipe-background"/><path d="m14 264h82v72h-82z" fill="url(#paint25_linear_1826_356092)" style="fill:url(#paint25_linear_1826_356092)"/><path d="m15.5 265.5h79v69h-79z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect x="37" width="763" height="545" rx="12" fill="#e5e5e5" tb:tag="background"/><rect x="37" width="763" height="545" rx="12" fill="url(#paint2_linear_1826_356092)" style="fill:url(#paint2_linear_1826_356092)"/><rect x="38.5" y="1.5" width="760" height="542" rx="10.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><g filter="url(#filter0_d_1826_356092)">
+  <path d="m37 12c0-6.6274 5.3726-12 12-12h739c6.627 0 12 5.3726 12 12v521c0 6.627-5.373 12-12 12h-161.7c-0.532 0-1.002-0.027-1.529-0.1-13.196-1.836-202.34-29.137-319.77-101.9-151.45-93.843-252.83-258.48-266.44-281.34-1.0718-1.801-1.5648-3.765-1.5648-5.86z" fill="#e5e5e5" tb:tag="background"/>
+  <path d="m37 12c0-6.6274 5.3726-12 12-12h739c6.627 0 12 5.3726 12 12v521c0 6.627-5.373 12-12 12h-161.7c-0.532 0-1.002-0.027-1.529-0.1-13.196-1.836-202.34-29.137-319.77-101.9-151.45-93.843-252.83-258.48-266.44-281.34-1.0718-1.801-1.5648-3.765-1.5648-5.86z" fill="url(#paint2_linear_1826_356092)" style="fill:url(#paint2_linear_1826_356092)"/>
+  <path d="m38.5 12c0-5.799 4.701-10.5 10.5-10.5h739c5.799 0 10.5 4.701 10.5 10.5v521c0 5.799-4.701 10.5-10.5 10.5h-161.7c-0.475 0-0.875-0.024-1.322-0.086-6.567-0.913-57.094-8.188-120.64-24.32-63.568-16.138-140.03-41.11-198.55-77.369-151.12-93.639-252.35-258-265.94-280.83-0.922-1.549-1.3538-3.244-1.3538-5.093z" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
+ </g><g filter="url(#filter2_ii_1826_356092)">
+  <path d="m124 82c0-6.6274 5.373-12 12-12h157c6.627 0 12 5.3726 12 12v56c0 6.627-5.373 12-12 12h-157c-6.627 0-12-5.373-12-12z" fill="#fff" tb:tag="value-box-background"/>
+  <path d="m125 82c0-6.0751 4.925-11 11-11h157c6.075 0 11 4.9249 11 11v56c0 6.075-4.925 11-11 11h-157c-6.075 0-11-4.925-11-11z" stroke="#fff" stroke-width="2"/>
+  <text x="214.69531" y="113.5625" fill="#000000" font-family="Roboto" font-size="40px" font-weight="500" tb:tag="value-text" xml:space="preserve" text-anchor="middle"><tspan dominant-baseline="middle">27</tspan></text>
+ </g><circle cx="530" cy="280.2" r="180" fill="#b6b4b4"/><circle cx="530" cy="280.2" r="180" fill="url(#paint34_radial_1826_356092)" style="fill:url(#paint34_radial_1826_356092)"/><circle cx="530" cy="280.2" r="178.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><g transform="translate(349.75 99.867)" tb:tag="fan">
+  <circle cx="180" cy="180.2" r="180" fill="#b6b4b4"/>
+  <circle cx="180" cy="180.2" r="178.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
+  <circle cx="180" cy="180.2" r="180" fill="url(#paint0_radial_2156_297796)" style="fill:url(#paint0_radial_2156_297796)"/>
+  <g fill="#1c943e" filter="url(#filter0_i_2156_297796)">
+   <path d="m162.45 272.72c-12.534-22.386 4.659-55.098 12.57-72.678 5.14-0.653 4.849-0.958 16.333-2.834 1.64-0.268 19.237 10.828 33.189 10.442 13.953-0.387 43.406-6.31 54.781 12.202 11.374 18.512 8.359 48.668-36.52 72.471-44.879 23.802-69.19 0.335-80.353-19.603z" tb:tag="fan-blade"/>
+   <path d="m114.19 101.25c25.288 4.328 39.917 38.264 48.614 55.469-2.723 4.408-2.303 4.373-8.065 14.483-0.823 1.444-20.515 8.152-28.987 19.244-8.472 11.093-22.384 37.721-43.93 34.927-21.547-2.794-43.101-24.098-33.394-73.963 9.7068-49.864 43.24-54.015 65.763-50.16z" tb:tag="fan-blade"/>
+   <path d="m278.85 148.75c-15.152 20.705-52.05 18.663-71.327 18.775-2.731-4.403-2.888-4.012-9.366-13.677-0.926-1.381 1.852-21.998-4.298-34.527-6.151-12.53-23.78-36.857-11.67-54.896 12.11-18.04 40.79-27.831 81.093 3.0948 40.302 30.926 29.062 62.791 15.568 81.231z" tb:tag="fan-blade"/>
+  </g>
+ </g><circle transform="rotate(99.288)" cx="190.2" cy="-567.54" r="4" fill="#b54747"/><mask id="path-91-inside-1_1826_356092" fill="#ffffff">
+  <path d="m710 280.2c0 99.411-80.589 180-180 180s-180-80.589-180-180 80.589-180 180-180 180 80.589 180 180zm-331.96 0c0 83.926 68.035 151.96 151.96 151.96s151.96-68.035 151.96-151.96-68.035-151.96-151.96-151.96-151.96 68.036-151.96 151.96z"/>
+ </mask><path d="m710 280.2c0 99.411-80.589 180-180 180s-180-80.589-180-180 80.589-180 180-180 180 80.589 180 180zm-331.96 0c0 83.926 68.035 151.96 151.96 151.96s151.96-68.035 151.96-151.96-68.035-151.96-151.96-151.96-151.96 68.036-151.96 151.96z" fill="#fff"/><path d="m710 280.2c0 99.411-80.589 180-180 180s-180-80.589-180-180 80.589-180 180-180 180 80.589 180 180zm-331.96 0c0 83.926 68.035 151.96 151.96 151.96s151.96-68.035 151.96-151.96-68.035-151.96-151.96-151.96-151.96 68.036-151.96 151.96z" fill="url(#paint35_linear_1826_356092)" style="fill:url(#paint35_linear_1826_356092)"/><path d="m710 280.2c0 99.411-80.589 180-180 180s-180-80.589-180-180 80.589-180 180-180 180 80.589 180 180zm-331.96 0c0 83.926 68.035 151.96 151.96 151.96s151.96-68.035 151.96-151.96-68.035-151.96-151.96-151.96-151.96 68.036-151.96 151.96z" mask="url(#path-91-inside-1_1826_356092)" stroke="#000" stroke-opacity=".12" stroke-width="8"/><g stroke-width="3.2143">
+  <line x1="531.6" x2="531.6" y1="116.27" y2="254.49" stroke="url(#paint36_linear_1826_356092)" style="stroke:url(#paint36_linear_1826_356092)"/>
+  <line x1="531.6" x2="531.6" y1="305.91" y2="444.13" stroke="url(#paint37_linear_1826_356092)" style="stroke:url(#paint37_linear_1826_356092)"/>
+  <line x1="555.71" x2="693.93" y1="278.59" y2="278.59" stroke="url(#paint38_linear_1826_356092)" style="stroke:url(#paint38_linear_1826_356092)"/>
+  <line x1="366.07" x2="504.28" y1="278.59" y2="278.59" stroke="url(#paint39_linear_1826_356092)" style="stroke:url(#paint39_linear_1826_356092)"/>
+  <path d="m414.28 162.88 96.755 97.696" stroke="url(#paint40_linear_1826_356092)" style="stroke:url(#paint40_linear_1826_356092)"/>
+  <line x1="550.42" x2="650.06" y1="298.35" y2="397.99" stroke="url(#paint41_linear_1826_356092)" style="stroke:url(#paint41_linear_1826_356092)"/>
+  <line x1="413.15" x2="509.58" y1="394.78" y2="298.35" stroke="url(#paint42_linear_1826_356092)" style="stroke:url(#paint42_linear_1826_356092)"/>
+  <path d="m551.36 259.78 97.565-95.292" stroke="url(#paint43_linear_1826_356092)" style="stroke:url(#paint43_linear_1826_356092)"/>
+ </g><path d="m699.06 278.91c0 1.949-1.58 3.529-3.529 3.529s-3.529-1.58-3.529-3.529 1.58-3.529 3.529-3.529 3.529 1.58 3.529 3.529z" fill="url(#paint44_linear_1826_356092)" style="fill:url(#paint44_linear_1826_356092)"/><circle cx="690.28" cy="323.11" r="3.5292" fill="url(#paint45_linear_1826_356092)" style="fill:url(#paint45_linear_1826_356092)"/><circle cx="673.77" cy="363.02" r="3.5292" fill="url(#paint46_linear_1826_356092)" style="fill:url(#paint46_linear_1826_356092)"/><path d="m652.46 397.21c0 1.95-1.581 3.53-3.53 3.53s-3.529-1.58-3.529-3.53c0-1.949 1.58-3.529 3.529-3.529s3.53 1.58 3.53 3.529z" fill="url(#paint47_linear_1826_356092)" style="fill:url(#paint47_linear_1826_356092)"/><circle cx="612.99" cy="423.87" r="3.5292" fill="url(#paint48_linear_1826_356092)" style="fill:url(#paint48_linear_1826_356092)"/><circle cx="572.97" cy="440.47" r="3.5292" fill="url(#paint49_linear_1826_356092)" style="fill:url(#paint49_linear_1826_356092)"/><path d="m534.82 445.74c0 1.949-1.58 3.529-3.53 3.529-1.949 0-3.529-1.58-3.529-3.529s1.58-3.529 3.529-3.529c1.95 0 3.53 1.58 3.53 3.529z" fill="url(#paint50_linear_1826_356092)" style="fill:url(#paint50_linear_1826_356092)"/><circle cx="486.42" cy="440.31" r="3.5292" fill="url(#paint51_linear_1826_356092)" style="fill:url(#paint51_linear_1826_356092)"/><circle cx="446.52" cy="423.59" r="3.5292" fill="url(#paint52_linear_1826_356092)" style="fill:url(#paint52_linear_1826_356092)"/><path d="m415.59 395.92c0 1.949-1.581 3.529-3.53 3.529s-3.529-1.58-3.529-3.529 1.58-3.529 3.529-3.529 3.53 1.58 3.53 3.529z" fill="url(#paint53_linear_1826_356092)" style="fill:url(#paint53_linear_1826_356092)"/><circle cx="386.07" cy="362.73" r="3.5292" fill="url(#paint54_linear_1826_356092)" style="fill:url(#paint54_linear_1826_356092)"/><circle cx="369.68" cy="322.95" r="3.5292" fill="url(#paint55_linear_1826_356092)" style="fill:url(#paint55_linear_1826_356092)"/><circle cx="364.12" cy="278.9" r="3.5292" fill="url(#paint56_linear_1826_356092)" style="fill:url(#paint56_linear_1826_356092)"/><circle cx="370.03" cy="236.13" r="3.5292" fill="url(#paint57_linear_1826_356092)" style="fill:url(#paint57_linear_1826_356092)"/><circle cx="386.66" cy="196.66" r="3.5292" fill="url(#paint58_linear_1826_356092)" style="fill:url(#paint58_linear_1826_356092)"/><circle cx="413.51" cy="162.1" r="3.5292" fill="url(#paint59_linear_1826_356092)" style="fill:url(#paint59_linear_1826_356092)"/><circle cx="447.58" cy="136.21" r="3.5292" fill="url(#paint60_linear_1826_356092)" style="fill:url(#paint60_linear_1826_356092)"/><circle cx="488.31" cy="119.6" r="3.5292" fill="url(#paint61_linear_1826_356092)" style="fill:url(#paint61_linear_1826_356092)"/><circle cx="531.96" cy="114.33" r="3.5292" fill="url(#paint62_linear_1826_356092)" style="fill:url(#paint62_linear_1826_356092)"/><circle cx="574.57" cy="120.38" r="3.5292" fill="url(#paint63_linear_1826_356092)" style="fill:url(#paint63_linear_1826_356092)"/><circle cx="613.91" cy="137.08" r="3.5292" fill="url(#paint64_linear_1826_356092)" style="fill:url(#paint64_linear_1826_356092)"/><circle cx="648.51" cy="164.13" r="3.5292" fill="url(#paint65_linear_1826_356092)" style="fill:url(#paint65_linear_1826_356092)"/><circle cx="674.35" cy="198.42" r="3.5292" fill="url(#paint66_linear_1826_356092)" style="fill:url(#paint66_linear_1826_356092)"/><circle cx="690.76" cy="239.12" r="3.5292" fill="url(#paint67_linear_1826_356092)" style="fill:url(#paint67_linear_1826_356092)"/><g filter="url(#filter6_i_1826_356092)">
+  <circle cx="529.56" cy="279.76" r="49.821" stroke="#afafaf" stroke-width="3.2143"/>
+ </g><g filter="url(#filter7_i_1826_356092)">
+  <circle cx="529.56" cy="279.76" r="88.393" stroke="#afafaf" stroke-width="3.2143"/>
+ </g><g filter="url(#filter8_i_1826_356092)">
+  <circle cx="529.56" cy="279.76" r="126.96" stroke="#afafaf" stroke-width="3.2143"/>
+ </g><circle cx="530" cy="280.2" r="32.143" fill="#e0e0e0"/><circle transform="rotate(90 554.91 279.4)" cx="554.91" cy="279.4" r="3.2143" fill="url(#paint68_linear_1826_356092)" style="fill:url(#paint68_linear_1826_356092)"/><circle transform="rotate(135 548.18 297.25)" cx="548.18" cy="297.25" r="3.2143" fill="url(#paint69_linear_1826_356092)" style="fill:url(#paint69_linear_1826_356092)"/><circle transform="rotate(180.22 530.7 305.11)" cx="530.7" cy="305.11" r="3.2143" fill="url(#paint70_linear_1826_356092)" style="fill:url(#paint70_linear_1826_356092)"/><circle transform="rotate(225.21 512.89 298.32)" cx="512.89" cy="298.32" r="3.2143" fill="url(#paint71_linear_1826_356092)" style="fill:url(#paint71_linear_1826_356092)"/><circle transform="rotate(-89.558 505.08 280.81)" cx="505.08" cy="280.81" r="3.2143" fill="url(#paint72_linear_1826_356092)" style="fill:url(#paint72_linear_1826_356092)"/><circle transform="rotate(-44.584 511.93 263.03)" cx="511.93" cy="263.03" r="3.2143" fill="url(#paint73_linear_1826_356092)" style="fill:url(#paint73_linear_1826_356092)"/><circle transform="rotate(45.624 547.24 262.19)" cx="547.24" cy="262.19" r="3.2143" fill="url(#paint74_linear_1826_356092)" style="fill:url(#paint74_linear_1826_356092)"/><circle cx="529.2" cy="255.29" r="3.2143" fill="url(#paint75_linear_1826_356092)" style="fill:url(#paint75_linear_1826_356092)"/><path d="m293.18 0s-256.83 0-256.83 91.259v447.25c0 3.6111 6.8379 6.3205 15.273 6.3205h733.1c8.4344 0 15.273-2.7094 15.273-6.3205v-447.25c0-91.259-252.27-91.259-252.27-91.259h-129.55zm256.09 110.6c-4.9204 0-8.9092 1.7075-8.9092 3.8138v409.17c0 2.1063 3.9888 3.8138 8.9092 3.8138h56c4.9204 0 8.9092-1.7075 8.9092-3.8138v-409.17c0-2.1063-3.9888-3.8138-8.9092-3.8138z" fill="#000" fill-opacity="0" tb:tag="clickArea"/><g filter="url(#filter1_i_1826_356092)" tb:tag="power-button">
+  <path d="m206 440c0 22.644-18.355 41-40.998 41s-40.998-18.356-40.998-41 18.355-41 40.998-41 40.998 18.356 40.998 41z" fill="#1c943e" tb:tag="powerButtonBackground"/>
+  <path d="m205.1 440c0 22.151-17.956 40.107-40.105 40.107s-40.105-17.956-40.105-40.107 17.956-40.107 40.105-40.107 40.105 17.956 40.105 40.107z" stroke="#fff" stroke-width="1.7857"/>
+  <path d="m161.03 426.64c0-0.91-0.867-1.572-1.71-1.231-5.712 2.306-9.751 7.988-9.751 14.632 0 8.689 6.908 15.732 15.43 15.732 8.521 0 15.429-7.043 15.429-15.732 0-6.644-4.04-12.327-9.752-14.633-0.843-0.34-1.71 0.321-1.71 1.231 0 0.594 0.383 1.115 0.929 1.348 4.594 1.958 7.855 6.592 7.855 12.054 0 7.259-5.758 13.054-12.751 13.054-6.994 0-12.751-5.795-12.751-13.054 0-5.462 3.26-10.095 7.853-12.054 0.547-0.233 0.929-0.753 0.929-1.347z" clip-rule="evenodd" fill="#fff" fill-rule="evenodd" tb:tag="powerButtonIcon"/>
+  <path d="m164.12 423.31c0-0.487 0.395-0.881 0.882-0.881s0.882 0.394 0.882 0.881v14.457c0 0.487-0.395 0.881-0.882 0.881s-0.882-0.394-0.882-0.881z" fill="#fff" tb:tag="powerButtonIcon"/>
+ </g><g filter="url(#filter3_i_1826_356092)" tb:tag="levelUpButton">
+  <path d="m209.3 201.99c0 22.639-18.424 40.991-41.151 40.991-22.726 0-41.15-18.352-41.15-40.991s18.424-40.991 41.15-40.991c22.727 0 41.151 18.352 41.151 40.991z" fill="#000" fill-opacity=".06"/>
+  <path d="m184.63 208.92c0.891 0 1.337-1.077 0.707-1.707l-16.128-16.128c-0.39-0.39-1.023-0.39-1.414 0l-16.127 16.128c-0.63 0.63-0.184 1.707 0.707 1.707z" fill="#647484" tb:tag="levelArrowUp"/>
+ </g><path d="m208.3 201.99c0 22.083-17.972 39.991-40.151 39.991-22.178 0-40.15-17.908-40.15-39.991s17.972-39.991 40.15-39.991c22.179 0 40.151 17.908 40.151 39.991z" stroke="#fff" stroke-width="2"/><g filter="url(#filter4_i_1826_356092)" tb:tag="levelDownButton">
+  <path d="m301.3 201.99c0 22.639-18.424 40.991-41.151 40.991-22.726 0-41.15-18.352-41.15-40.991s18.424-40.991 41.15-40.991c22.727 0 41.151 18.352 41.151 40.991z" fill="#000" fill-opacity=".06"/>
+  <path d="m276.63 194.08c0.891 0 1.337 1.077 0.707 1.707l-16.128 16.128c-0.39 0.39-1.023 0.39-1.414 0l-16.127-16.128c-0.63-0.63-0.184-1.707 0.707-1.707z" fill="#647484" tb:tag="levelArrowDown"/>
+ </g><path d="m300.3 201.99c0 22.083-17.972 39.991-40.151 39.991-22.178 0-40.15-17.908-40.15-39.991s17.972-39.991 40.15-39.991c22.179 0 40.151 17.908 40.151 39.991z" stroke="#fff" stroke-width="2"/><defs>
+  <filter id="filter0_d_1826_356092" x="33" y="0" width="771" height="553" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+   <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset dy="4"/>
+   <feGaussianBlur stdDeviation="2"/>
+   <feComposite in2="hardAlpha" operator="out"/>
+   <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
+   <feBlend in2="BackgroundImageFix" result="effect1_dropShadow_1826_356092"/>
+   <feBlend in="SourceGraphic" in2="effect1_dropShadow_1826_356092" result="shape"/>
+  </filter>
+  <filter id="filter1_i_1826_356092" x="119.54" y="399" width="86.46" height="86.464" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+   <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+   <feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset dx="-4.46429" dy="4.46429"/>
+   <feGaussianBlur stdDeviation="3.57143"/>
+   <feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"/>
+   <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.15 0"/>
+   <feBlend in2="shape" result="effect1_innerShadow_1826_356092"/>
+  </filter>
+  <filter id="filter2_ii_1826_356092" x="122" y="68" width="185" height="84" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+   <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+   <feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset dx="-2" dy="2"/>
+   <feGaussianBlur stdDeviation="3"/>
+   <feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"/>
+   <feColorMatrix values="0 0 0 0 0.445833 0 0 0 0 0.445833 0 0 0 0 0.445833 0 0 0 0.5 0"/>
+   <feBlend in2="shape" result="effect1_innerShadow_1826_356092"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset dx="2" dy="-2"/>
+   <feGaussianBlur stdDeviation="2"/>
+   <feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"/>
+   <feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.5 0"/>
+   <feBlend in2="effect1_innerShadow_1826_356092" result="effect2_innerShadow_1826_356092"/>
+  </filter>
+  <filter id="filter3_i_1826_356092" x="122.54" y="161" width="86.765" height="86.447" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+   <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+   <feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset dx="-4.46429" dy="4.46429"/>
+   <feGaussianBlur stdDeviation="3.57143"/>
+   <feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"/>
+   <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.15 0"/>
+   <feBlend in2="shape" result="effect1_innerShadow_1826_356092"/>
+  </filter>
+  <filter id="filter4_i_1826_356092" x="214.54" y="161" width="86.765" height="86.447" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+   <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+   <feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset dx="-4.46429" dy="4.46429"/>
+   <feGaussianBlur stdDeviation="3.57143"/>
+   <feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"/>
+   <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.15 0"/>
+   <feBlend in2="shape" result="effect1_innerShadow_1826_356092"/>
+  </filter>
+  <filter id="filter6_i_1826_356092" x="478.13" y="228.33" width="106.07" height="106.07" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+   <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+   <feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset dx="3.21429" dy="3.21429"/>
+   <feGaussianBlur stdDeviation="1.60714"/>
+   <feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"/>
+   <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
+   <feBlend in2="shape" result="effect1_innerShadow_1826_356092"/>
+  </filter>
+  <filter id="filter7_i_1826_356092" x="439.56" y="189.76" width="183.21" height="183.21" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+   <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+   <feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset dx="3.21429" dy="3.21429"/>
+   <feGaussianBlur stdDeviation="1.60714"/>
+   <feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"/>
+   <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
+   <feBlend in2="shape" result="effect1_innerShadow_1826_356092"/>
+  </filter>
+  <filter id="filter8_i_1826_356092" x="400.99" y="151.19" width="260.36" height="260.36" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+   <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+   <feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset dx="3.21429" dy="3.21429"/>
+   <feGaussianBlur stdDeviation="1.60714"/>
+   <feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"/>
+   <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
+   <feBlend in2="shape" result="effect1_innerShadow_1826_356092"/>
+  </filter>
+  <linearGradient id="paint0_linear_1826_356092" x1="256.82" x2="267.38" y1="585.5" y2="639.46" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" stop-opacity=".2" offset="0"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint1_linear_1826_356092" x1="529" x2="273.43" y1="558.16" y2="533.16" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" offset="0"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".26388"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".41759"/>
+   <stop stop-color="#fff" stop-opacity="0" offset=".49829"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".58094"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".71855"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint2_linear_1826_356092" x1="800" x2="37" y1="256.15" y2="257.65" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#020202" stop-opacity=".35" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".02629"/>
+   <stop stop-color="#fff" stop-opacity=".12" offset=".11617"/>
+   <stop stop-color="#fff" stop-opacity=".3" offset=".49829"/>
+   <stop stop-color="#fff" stop-opacity=".12" offset=".88762"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".96591"/>
+   <stop stop-color="#020202" stop-opacity=".35" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint17_linear_1826_356092" x1="185.08" x2="185.03" y1="64" y2="136.01" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" offset="0"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".26388"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".41759"/>
+   <stop stop-color="#fff" stop-opacity="0" offset=".49829"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".58094"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".71855"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint25_linear_1826_356092" x1="35.32" x2="34.921" y1="264" y2="336" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" offset="0"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".26388"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".41759"/>
+   <stop stop-color="#fff" stop-opacity="0" offset=".49829"/>
+   <stop stop-color="#727171" stop-opacity=".1" offset=".58094"/>
+   <stop stop-color="#727171" stop-opacity=".35" offset=".71855"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+  <radialGradient id="paint34_radial_1826_356092" cx="0" cy="0" r="1" gradientTransform="matrix(-180 -.84824 .85021 -180.42 530 280.62)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#020202" stop-opacity=".35" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".36906"/>
+   <stop stop-color="#fff" stop-opacity=".12" offset=".70499"/>
+   <stop stop-color="#fff" stop-opacity=".15" offset=".99966"/>
+  </radialGradient>
+  <linearGradient id="paint35_linear_1826_356092" x1="408.5" x2="660.5" y1="145.2" y2="419.7" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#727171" stop-opacity=".4" offset="0"/>
+   <stop stop-color="#727171" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint36_linear_1826_356092" x1="531" x2="530" y1="178.95" y2="178.95" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#D0D0D0" offset="0"/>
+   <stop stop-color="#6A6A6A" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint37_linear_1826_356092" x1="531" x2="530" y1="368.59" y2="368.59" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#D0D0D0" offset="0"/>
+   <stop stop-color="#6A6A6A" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint38_linear_1826_356092" x1="618.39" x2="618.39" y1="279.2" y2="280.2" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#D0D0D0" offset="0"/>
+   <stop stop-color="#6A6A6A" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint39_linear_1826_356092" x1="428.75" x2="428.75" y1="279.2" y2="280.2" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#D0D0D0" offset="0"/>
+   <stop stop-color="#6A6A6A" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint40_linear_1826_356092" x1="459.48" x2="457.2" y1="206.74" y2="209.01" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#D0D0D0" offset="0"/>
+   <stop stop-color="#6A6A6A" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint41_linear_1826_356092" x1="595.18" x2="594.47" y1="343.97" y2="344.67" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#D0D0D0" offset="0"/>
+   <stop stop-color="#6A6A6A" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint42_linear_1826_356092" x1="457.31" x2="458.01" y1="351.48" y2="352.18" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#D0D0D0" offset="0"/>
+   <stop stop-color="#6A6A6A" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint43_linear_1826_356092" x1="594.28" x2="597.5" y1="214.31" y2="217.52" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#D0D0D0" offset="0"/>
+   <stop stop-color="#6A6A6A" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint44_linear_1826_356092" x1="698.18" x2="692.89" y1="276.26" y2="281.55" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint45_linear_1826_356092" x1="692.93" x2="687.64" y1="320.47" y2="325.76" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint46_linear_1826_356092" x1="676.42" x2="671.12" y1="360.37" y2="365.67" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint47_linear_1826_356092" x1="651.58" x2="646.28" y1="394.56" y2="399.85" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint48_linear_1826_356092" x1="615.63" x2="610.34" y1="421.23" y2="426.52" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint49_linear_1826_356092" x1="575.61" x2="570.32" y1="437.83" y2="443.12" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint50_linear_1826_356092" x1="533.94" x2="528.65" y1="443.09" y2="448.38" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint51_linear_1826_356092" x1="489.07" x2="483.78" y1="437.66" y2="442.95" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint52_linear_1826_356092" x1="449.17" x2="443.87" y1="420.94" y2="426.24" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint53_linear_1826_356092" x1="414.71" x2="409.42" y1="393.27" y2="398.56" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint54_linear_1826_356092" x1="388.72" x2="383.42" y1="360.09" y2="365.38" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint55_linear_1826_356092" x1="372.32" x2="367.03" y1="320.31" y2="325.6" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint56_linear_1826_356092" x1="366.77" x2="361.47" y1="276.25" y2="281.55" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint57_linear_1826_356092" x1="372.68" x2="367.39" y1="233.49" y2="238.78" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint58_linear_1826_356092" x1="389.3" x2="384.01" y1="194.02" y2="199.31" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint59_linear_1826_356092" x1="416.16" x2="410.87" y1="159.45" y2="164.75" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint60_linear_1826_356092" x1="450.23" x2="444.93" y1="133.57" y2="138.86" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint61_linear_1826_356092" x1="490.96" x2="485.67" y1="116.96" y2="122.25" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint62_linear_1826_356092" x1="534.6" x2="529.31" y1="111.68" y2="116.98" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint63_linear_1826_356092" x1="577.21" x2="571.92" y1="117.73" y2="123.02" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint64_linear_1826_356092" x1="616.56" x2="611.26" y1="134.43" y2="139.73" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint65_linear_1826_356092" x1="651.16" x2="645.86" y1="161.48" y2="166.78" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint66_linear_1826_356092" x1="677" x2="671.71" y1="195.77" y2="201.07" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint67_linear_1826_356092" x1="693.41" x2="688.11" y1="236.47" y2="241.76" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#B6B6B6" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint68_linear_1826_356092" x1="552.5" x2="557.32" y1="276.99" y2="281.81" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#aaa" offset="0"/>
+   <stop stop-color="#747373" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint69_linear_1826_356092" x1="544.44" x2="551.26" y1="297.16" y2="297.16" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#aaa" offset="0"/>
+   <stop stop-color="#747373" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint70_linear_1826_356092" x1="528.21" x2="533.01" y1="307.54" y2="302.7" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#aaa" offset="0"/>
+   <stop stop-color="#747373" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint71_linear_1826_356092" x1="512.47" x2="512.44" y1="301.64" y2="294.82" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#aaa" offset="0"/>
+   <stop stop-color="#747373" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint72_linear_1826_356092" x1="507.32" x2="502.46" y1="283.21" y2="278.42" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#aaa" offset="0"/>
+   <stop stop-color="#747373" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint73_linear_1826_356092" x1="514.84" x2="508.02" y1="262.92" y2="262.97" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#aaa" offset="0"/>
+   <stop stop-color="#747373" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint74_linear_1826_356092" x1="546.61" x2="546.68" y1="258.71" y2="265.53" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#aaa" offset="0"/>
+   <stop stop-color="#747373" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint75_linear_1826_356092" x1="531.61" x2="526.79" y1="252.88" y2="257.7" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#aaa" offset="0"/>
+   <stop stop-color="#747373" offset="1"/>
+  </linearGradient>
+  <radialGradient id="paint0_radial_2156_297796" cx="0" cy="0" r="1" gradientTransform="matrix(-180 -.84824 .85021 -180.42 180 180.62)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#020202" stop-opacity=".35" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".36906"/>
+   <stop stop-color="#fff" stop-opacity=".12" offset=".70499"/>
+   <stop stop-color="#fff" stop-opacity=".15" offset=".99966"/>
+  </radialGradient>
+  <filter id="filter0_i_2156_297796" x="46.03" y="47.527" width="245.24" height="267.69" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+   <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+   <feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset dy="12.8571"/>
+   <feGaussianBlur stdDeviation="6.42857"/>
+   <feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"/>
+   <feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.25 0"/>
+   <feBlend in2="shape" result="effect1_innerShadow_2156_297796"/>
+  </filter>
+ </defs>
+</svg>

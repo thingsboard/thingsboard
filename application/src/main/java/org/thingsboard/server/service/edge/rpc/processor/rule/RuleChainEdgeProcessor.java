@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.edge.rpc.processor.rule;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -30,21 +31,26 @@ import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.constructor.rule.RuleChainMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.rule.RuleChainMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
-import static org.thingsboard.server.service.edge.DefaultEdgeNotificationService.EDGE_IS_ROOT_BODY_KEY;
+import static org.thingsboard.server.dao.edge.EdgeServiceImpl.EDGE_IS_ROOT_BODY_KEY;
 
 @Slf4j
 @Component
 @TbCoreComponent
 public class RuleChainEdgeProcessor extends BaseEdgeProcessor {
 
+    @Autowired
+    private RuleChainMsgConstructorFactory ruleChainMsgConstructorFactory;
+
     public DownlinkMsg convertRuleChainEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         RuleChainId ruleChainId = new RuleChainId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
+        var msgConstructor = (RuleChainMsgConstructor) ruleChainMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion);
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED, ASSIGNED_TO_EDGE -> {
-                RuleChain ruleChain = ruleChainService.findRuleChainById(edgeEvent.getTenantId(), ruleChainId);
+                RuleChain ruleChain = edgeCtx.getRuleChainService().findRuleChainById(edgeEvent.getTenantId(), ruleChainId);
                 if (ruleChain != null) {
                     boolean isRoot = false;
                     if (edgeEvent.getBody() != null && edgeEvent.getBody().get(EDGE_IS_ROOT_BODY_KEY) != null) {
@@ -54,23 +60,28 @@ public class RuleChainEdgeProcessor extends BaseEdgeProcessor {
                         }
                     }
                     if (!isRoot) {
-                        Edge edge = edgeService.findEdgeById(edgeEvent.getTenantId(), edgeEvent.getEdgeId());
+                        Edge edge = edgeCtx.getEdgeService().findEdgeById(edgeEvent.getTenantId(), edgeEvent.getEdgeId());
                         isRoot = edge.getRootRuleChainId().equals(ruleChainId);
                     }
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    RuleChainUpdateMsg ruleChainUpdateMsg = ((RuleChainMsgConstructor)
-                            ruleChainMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion))
-                            .constructRuleChainUpdatedMsg(msgType, ruleChain, isRoot);
-                    downlinkMsg = DownlinkMsg.newBuilder()
+                    RuleChainUpdateMsg ruleChainUpdateMsg = msgConstructor.constructRuleChainUpdatedMsg(msgType, ruleChain, isRoot);
+
+                    DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addRuleChainUpdateMsg(ruleChainUpdateMsg)
-                            .build();
+                            .addRuleChainUpdateMsg(ruleChainUpdateMsg);
+
+                    RuleChainMetaData ruleChainMetaData = edgeCtx.getRuleChainService().loadRuleChainMetaData(edgeEvent.getTenantId(), ruleChainId);
+                    RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = msgConstructor
+                            .constructRuleChainMetadataUpdatedMsg(edgeEvent.getTenantId(), msgType, ruleChainMetaData, edgeVersion);
+                    if (ruleChainMetadataUpdateMsg != null) {
+                        builder.addRuleChainMetadataUpdateMsg(ruleChainMetadataUpdateMsg);
+                    }
+                    downlinkMsg = builder.build();
                 }
             }
             case DELETED, UNASSIGNED_FROM_EDGE -> downlinkMsg = DownlinkMsg.newBuilder()
                     .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                    .addRuleChainUpdateMsg(((RuleChainMsgConstructor) ruleChainMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion))
-                            .constructRuleChainDeleteMsg(ruleChainId))
+                    .addRuleChainUpdateMsg(msgConstructor.constructRuleChainDeleteMsg(ruleChainId))
                     .build();
         }
         return downlinkMsg;
@@ -78,22 +89,21 @@ public class RuleChainEdgeProcessor extends BaseEdgeProcessor {
 
     public DownlinkMsg convertRuleChainMetadataEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         RuleChainId ruleChainId = new RuleChainId(edgeEvent.getEntityId());
-        RuleChain ruleChain = ruleChainService.findRuleChainById(edgeEvent.getTenantId(), ruleChainId);
-        DownlinkMsg downlinkMsg = null;
+        RuleChain ruleChain = edgeCtx.getRuleChainService().findRuleChainById(edgeEvent.getTenantId(), ruleChainId);
+        var msgConstructor = (RuleChainMsgConstructor) ruleChainMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion);
         if (ruleChain != null) {
-            RuleChainMetaData ruleChainMetaData = ruleChainService.loadRuleChainMetaData(edgeEvent.getTenantId(), ruleChainId);
+            RuleChainMetaData ruleChainMetaData = edgeCtx.getRuleChainService().loadRuleChainMetaData(edgeEvent.getTenantId(), ruleChainId);
             UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-            RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = ((RuleChainMsgConstructor)
-                    ruleChainMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion))
+            RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = msgConstructor
                     .constructRuleChainMetadataUpdatedMsg(edgeEvent.getTenantId(), msgType, ruleChainMetaData, edgeVersion);
             if (ruleChainMetadataUpdateMsg != null) {
-                downlinkMsg = DownlinkMsg.newBuilder()
+                return DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addRuleChainMetadataUpdateMsg(ruleChainMetadataUpdateMsg)
                         .build();
             }
         }
-        return downlinkMsg;
+        return null;
     }
 
 }

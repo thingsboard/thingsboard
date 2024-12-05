@@ -16,7 +16,7 @@
 
 -->
 <div [formGroup]="targetDeviceFormGroup" class="tb-form-panel">
-  <div fxLayout="row" fxLayoutAlign="space-between center">
+  <div class="flex flex-row items-center justify-between">
     <div class="tb-form-panel-title" translate>widget-config.target-device</div>
     <tb-toggle-select formControlName="type">
       <tb-toggle-option [value]="targetDeviceType.device">{{ 'device.device' | translate }}</tb-toggle-option>
@@ -24,13 +24,13 @@
     </tb-toggle-select>
   </div>
   <tb-entity-autocomplete *ngIf="targetDeviceFormGroup.get('type').value === targetDeviceType.device"
-                          [required]="!widgetEditMode"
+                          [required]="(!widgetEditMode && !targetDeviceOptional)"
                           [entityType]="entityType.DEVICE"
                           formControlName="deviceId">
   </tb-entity-autocomplete>
   <tb-entity-alias-select
     *ngIf="targetDeviceFormGroup.get('type').value === targetDeviceType.entity"
-    [tbRequired]="!widgetEditMode"
+    [tbRequired]="(!widgetEditMode && !targetDeviceOptional)"
     [aliasController]="aliasController"
     [callbacks]="entityAliasSelectCallbacks"
     formControlName="entityAliasId">

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.queue.kafka;
 
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +36,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.TbProperty;
 import org.thingsboard.server.queue.util.PropertyUtils;
 
-import javax.annotation.PreDestroy;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +49,8 @@ import java.util.Properties;
 @ConfigurationProperties(prefix = "queue.kafka")
 @Component
 public class TbKafkaSettings {
+
+    private static final List<String> DYNAMIC_TOPICS = List.of("tb_edge_event.notifications");
 
     @Value("${queue.kafka.bootstrap.servers}")
     private String servers;
@@ -151,6 +153,7 @@ public class TbKafkaSettings {
         Properties props = toProps();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxPollRecords);
+        props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, sessionTimeoutMs);
         props.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, maxPartitionFetchBytes);
         props.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, fetchMaxBytes);
         props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, maxPollIntervalMs);
@@ -163,6 +166,15 @@ public class TbKafkaSettings {
         consumerPropertiesPerTopic
                 .getOrDefault(topic, Collections.emptyList())
                 .forEach(kv -> props.put(kv.getKey(), kv.getValue()));
+
+        if (topic != null) {
+            DYNAMIC_TOPICS.stream()
+                    .filter(topic::startsWith)
+                    .findFirst()
+                    .ifPresent(prefix -> consumerPropertiesPerTopic.getOrDefault(prefix, Collections.emptyList())
+                            .forEach(kv -> props.put(kv.getKey(), kv.getValue())));
+        }
+
         return props;
     }
 
@@ -193,8 +205,6 @@ public class TbKafkaSettings {
         }
 
         props.put(CommonClientConfigs.REQUEST_TIMEOUT_MS_CONFIG, requestTimeoutMs);
-        props.put(CommonClientConfigs.SESSION_TIMEOUT_MS_CONFIG, sessionTimeoutMs);
-
         props.putAll(PropertyUtils.getProps(otherInline));
 
         if (other != null) {

@@ -28,7 +28,6 @@ import {
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   CoapDeviceProfileTransportConfiguration,
   coapDeviceTypeTranslationMap,
@@ -74,7 +73,6 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
   coapTransportConfigurationFormGroup: UntypedFormGroup;
 
   private destroy$ = new Subject<void>();
-  private requiredValue: boolean;
 
   private transportPayloadTypeConfiguration = this.fb.group({
     transportPayloadType: [TransportPayloadType.JSON, Validators.required],
@@ -83,15 +81,6 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
     deviceRpcRequestProtoSchema: [defaultRpcRequestSchema, Validators.required],
     deviceRpcResponseProtoSchema: [defaultRpcResponseSchema, Validators.required]
   });
-
-  get required(): boolean {
-    return this.requiredValue;
-  }
-
-  @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
 
   @Input()
   disabled: boolean;

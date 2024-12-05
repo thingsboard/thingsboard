@@ -1,0 +1,58 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-form-field [formGroup]="countryFormGroup" class="mat-block" subscriptSizing="{{subscriptSizing}}" [appearance]="appearance">
+  <mat-label>{{ labelText }}</mat-label>
+  <input matInput type="text"
+         #countryInput
+         formControlName="country"
+         (focusin)="onFocus()"
+         (blur)="onTouched()"
+         [required]="required"
+         [matAutocomplete]="countryAutocomplete">
+  <button *ngIf="countryFormGroup.get('country').value && !disabled"
+          type="button"
+          matSuffix mat-icon-button aria-label="Clear"
+          (click)="clear()">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+  <mat-autocomplete class="tb-autocomplete"
+                    #countryAutocomplete="matAutocomplete"
+                    [displayWith]="displayCountryFn">
+    <mat-option *ngFor="let country of filteredCountries | async" [value]="country">
+      <span style="font-size: 20px;padding-right: 4px;">{{country.flag}}</span>
+      <span [innerHTML]="country.name | highlight:searchText"></span>
+    </mat-option>
+    <mat-option *ngIf="!(filteredCountries | async)?.length" [value]="null" class="tb-not-found">
+      <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+        <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
+          <span translate>contact.no-country-found</span>
+        </div>
+        <ng-template #searchNotEmpty>
+          <span>
+              {{ 'contact.no-country-matching' | translate:
+            {country: (searchText | truncate: true: 6: &apos;...&apos;)} }}
+          </span>
+        </ng-template>
+      </div>
+    </mat-option>
+  </mat-autocomplete>
+  <mat-hint *ngIf="autocompleteHint">{{ autocompleteHint }}</mat-hint>
+  <mat-error *ngIf="countryFormGroup.get('country').hasError('required')">
+    {{ requiredText }}
+  </mat-error>
+</mat-form-field>

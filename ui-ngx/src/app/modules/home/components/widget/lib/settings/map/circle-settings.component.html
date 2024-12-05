@@ -19,20 +19,18 @@
   <fieldset class="fields-group fields-group-slider">
     <legend class="group-title" translate>widgets.maps.circle-settings</legend>
     <mat-expansion-panel class="tb-settings" [expanded]="circleSettingsFormGroup.get('showCircle').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle formControlName="showCircle" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle formControlName="showCircle" (click)="$event.stopPropagation()">
             {{ 'widgets.maps.show-circle' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <tb-datasources-key-autocomplete fxFlex
-                                         required
+        <tb-datasources-key-autocomplete required
                                          [datasources]="widget?.config?.datasources"
                                          label="widgets.maps.circle-key-name"
                                          formControlName="circleKeyName">
@@ -43,14 +41,13 @@
         <fieldset class="fields-group fields-group-slider">
           <legend class="group-title" translate>widgets.maps.circle-label</legend>
           <mat-expansion-panel class="tb-settings" [expanded]="circleSettingsFormGroup.get('showCircleLabel').value">
-            <mat-expansion-panel-header fxLayout="row wrap">
+            <mat-expansion-panel-header class="flex-wrap">
               <mat-panel-title>
-                <mat-slide-toggle formControlName="showCircleLabel" (click)="$event.stopPropagation()"
-                                  fxLayoutAlign="center">
+                <mat-slide-toggle formControlName="showCircleLabel" (click)="$event.stopPropagation()">
                   {{ 'widgets.maps.show-circle-label' | translate }}
                 </mat-slide-toggle>
               </mat-panel-title>
-              <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+              <mat-panel-description class="justify-end xs:!hidden" translate>
                 widget-config.advanced-settings
               </mat-panel-description>
             </mat-expansion-panel-header>
@@ -58,13 +55,14 @@
               <mat-slide-toggle formControlName="useCircleLabelFunction" class="slide-block">
                 {{ 'widgets.maps.use-circle-label-function' | translate }}
               </mat-slide-toggle>
-              <tb-html [fxShow]="!circleSettingsFormGroup.get('useCircleLabelFunction').value"
+              <tb-html [class.!hidden]="circleSettingsFormGroup.get('useCircleLabelFunction').value"
                        formControlName="circleLabel"
                        minHeight="100px"
                        label="{{ 'widgets.maps.circle-label-pattern' | translate }}">
               </tb-html>
-              <tb-js-func [fxShow]="circleSettingsFormGroup.get('useCircleLabelFunction').value"
+              <tb-js-func [class.!hidden]="!circleSettingsFormGroup.get('useCircleLabelFunction').value"
                           formControlName="circleLabelFunction"
+                          withModules
                           [globalVariables]="functionScopeVariables"
                           [functionArgs]="['data', 'dsData', 'dsIndex']"
                           functionTitle="{{ 'widgets.maps.circle-label-function' | translate }}"
@@ -76,19 +74,18 @@
         <fieldset class="fields-group fields-group-slider">
           <legend class="group-title" translate>widgets.maps.circle-tooltip</legend>
           <mat-expansion-panel class="tb-settings" [expanded]="circleSettingsFormGroup.get('showCircleTooltip').value">
-            <mat-expansion-panel-header fxLayout="row wrap">
+            <mat-expansion-panel-header class="flex-wrap">
               <mat-panel-title>
-                <mat-slide-toggle formControlName="showCircleTooltip" (click)="$event.stopPropagation()"
-                                  fxLayoutAlign="center">
+                <mat-slide-toggle formControlName="showCircleTooltip" (click)="$event.stopPropagation()">
                   {{ 'widgets.maps.show-circle-tooltip' | translate }}
                 </mat-slide-toggle>
               </mat-panel-title>
-              <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+              <mat-panel-description class="justify-end xs:!hidden" translate>
                 widget-config.advanced-settings
               </mat-panel-description>
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
-              <mat-form-field fxFlex class="mat-block">
+              <mat-form-field class="flex-1">
                 <mat-label translate>widgets.maps.show-tooltip-action</mat-label>
                 <mat-select required formControlName="showCircleTooltipAction">
                   <mat-option *ngFor="let action of showTooltipActions" [value]="action">
@@ -102,13 +99,14 @@
               <mat-slide-toggle formControlName="useCircleTooltipFunction" class="slide-block">
                 {{ 'widgets.maps.use-circle-tooltip-function' | translate }}
               </mat-slide-toggle>
-              <tb-html [fxShow]="!circleSettingsFormGroup.get('useCircleTooltipFunction').value"
+              <tb-html [class.!hidden]="circleSettingsFormGroup.get('useCircleTooltipFunction').value"
                        formControlName="circleTooltipPattern"
                        minHeight="100px"
                        label="{{ 'widgets.maps.circle-tooltip-pattern' | translate }}">
               </tb-html>
-              <tb-js-func [fxShow]="circleSettingsFormGroup.get('useCircleTooltipFunction').value"
+              <tb-js-func [class.!hidden]="!circleSettingsFormGroup.get('useCircleTooltipFunction').value"
                           formControlName="circleTooltipFunction"
+                          withModules
                           [globalVariables]="functionScopeVariables"
                           [functionArgs]="['data', 'dsData', 'dsIndex']"
                           functionTitle="{{ 'widgets.maps.circle-tooltip-function' | translate }}"
@@ -119,32 +117,32 @@
         </fieldset>
         <fieldset class="fields-group">
           <legend class="group-title" translate>widgets.maps.circle-fill-color</legend>
-          <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
+          <section class="!flex flex-col gt-xs:flex-row gt-xs:gap-2">
             <tb-color-input
-              fxFlex
+              class="flex-1"
               formControlName="circleFillColor"
               icon="format_color_fill"
               label="{{ 'widgets.maps.circle-fill-color' | translate }}" openOnInput colorClearButton>
             </tb-color-input>
-            <mat-form-field fxFlex class="mat-block">
+            <mat-form-field class="flex-1">
               <mat-label translate>widgets.maps.circle-fill-color-opacity</mat-label>
               <input matInput type="number" min="0" max="1" formControlName="circleFillColorOpacity">
             </mat-form-field>
           </section>
           <mat-expansion-panel class="tb-settings" [expanded]="circleSettingsFormGroup.get('useCircleFillColorFunction').value">
-            <mat-expansion-panel-header fxLayout="row wrap">
+            <mat-expansion-panel-header class="flex-wrap">
               <mat-panel-title>
-                <mat-slide-toggle formControlName="useCircleFillColorFunction" (click)="$event.stopPropagation()"
-                                  fxLayoutAlign="center">
+                <mat-slide-toggle formControlName="useCircleFillColorFunction" (click)="$event.stopPropagation()">
                   {{ 'widgets.maps.use-circle-fill-color-function' | translate }}
                 </mat-slide-toggle>
               </mat-panel-title>
-              <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+              <mat-panel-description class="justify-end xs:!hidden" translate>
                 widget-config.advanced-settings
               </mat-panel-description>
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
               <tb-js-func formControlName="circleFillColorFunction"
+                          withModules
                           [globalVariables]="functionScopeVariables"
                           [functionArgs]="['data', 'dsData', 'dsIndex']"
                           functionTitle="{{ 'widgets.maps.circle-fill-color-function' | translate }}"
@@ -155,36 +153,36 @@
         </fieldset>
         <fieldset class="fields-group">
           <legend class="group-title" translate>widgets.maps.circle-stroke</legend>
-          <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
+          <section class="!flex flex-col gt-xs:flex-row gt-xs:gap-2">
             <tb-color-input
-              fxFlex
+              class="flex-1"
               formControlName="circleStrokeColor"
               icon="format_color_fill"
               label="{{ 'widgets.maps.stroke-color' | translate }}" openOnInput colorClearButton>
             </tb-color-input>
-            <mat-form-field fxFlex class="mat-block">
+            <mat-form-field class="flex-1">
               <mat-label translate>widgets.maps.stroke-opacity</mat-label>
               <input matInput type="number" min="0" max="1" formControlName="circleStrokeOpacity">
             </mat-form-field>
-            <mat-form-field fxFlex class="mat-block">
+            <mat-form-field class="flex-1">
               <mat-label translate>widgets.maps.stroke-weight</mat-label>
               <input matInput type="number" min="0" formControlName="circleStrokeWeight">
             </mat-form-field>
           </section>
           <mat-expansion-panel class="tb-settings" [expanded]="circleSettingsFormGroup.get('useCircleStrokeColorFunction').value">
-            <mat-expansion-panel-header fxLayout="row wrap">
+            <mat-expansion-panel-header class="flex-wrap">
               <mat-panel-title>
-                <mat-slide-toggle formControlName="useCircleStrokeColorFunction" (click)="$event.stopPropagation()"
-                                  fxLayoutAlign="center">
+                <mat-slide-toggle formControlName="useCircleStrokeColorFunction" (click)="$event.stopPropagation()">
                   {{ 'widgets.maps.use-circle-stroke-color-function' | translate }}
                 </mat-slide-toggle>
               </mat-panel-title>
-              <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+              <mat-panel-description class="justify-end xs:!hidden" translate>
                 widget-config.advanced-settings
               </mat-panel-description>
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
               <tb-js-func formControlName="circleStrokeColorFunction"
+                          withModules
                           [globalVariables]="functionScopeVariables"
                           [functionArgs]="['data', 'dsData', 'dsIndex']"
                           functionTitle="{{ 'widgets.maps.circle-stroke-color-function' | translate }}"

@@ -32,5 +32,6 @@ public interface EdgeRpcService {
 
     void deleteEdge(TenantId tenantId, EdgeId edgeId);
 
-    void processSyncRequest(ToEdgeSyncRequest request, Consumer<FromEdgeSyncResponse> responseConsumer);
+    void processSyncRequest(TenantId tenantId, EdgeId edgeId, Consumer<FromEdgeSyncResponse> responseConsumer);
+
 }

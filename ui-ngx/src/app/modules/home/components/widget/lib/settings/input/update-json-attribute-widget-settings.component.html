@@ -18,15 +18,15 @@
 <section class="tb-widget-settings" [formGroup]="updateJsonAttributeWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.general-settings</legend>
-    <mat-form-field fxFlex class="mat-block">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>widgets.input-widgets.widget-title</mat-label>
       <input matInput formControlName="widgetTitle">
     </mat-form-field>
-    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
-      <mat-slide-toggle fxFlex fxFlex.gt-xs="25" formControlName="showLabel">
+    <section class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
+      <mat-slide-toggle class="flex-1 gt-xs:max-w-25% gt-xs:flex-full" formControlName="showLabel">
         {{ 'widgets.input-widgets.show-label' | translate }}
       </mat-slide-toggle>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.input-widgets.label</mat-label>
         <input matInput formControlName="labelValue">
       </mat-form-field>
@@ -37,8 +37,8 @@
   </fieldset>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.attribute-settings</legend>
-    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-      <mat-form-field fxFlex class="mat-block">
+    <section class="flex flex-row xs:flex-col gt-xs:gap-2">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.input-widgets.widget-mode</mat-label>
         <mat-select formControlName="widgetMode">
           <mat-option [value]="'ATTRIBUTE'">
@@ -49,7 +49,7 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field [fxShow]="updateJsonAttributeWidgetSettingsForm.get('widgetMode').value === 'ATTRIBUTE'" fxFlex class="mat-block">
+      <mat-form-field [class.!hidden]="updateJsonAttributeWidgetSettingsForm.get('widgetMode').value !== 'ATTRIBUTE'" class="mat-block flex-1">
         <mat-label translate>widgets.input-widgets.attribute-scope</mat-label>
         <mat-select formControlName="attributeScope">
           <mat-option [value]="'SERVER_SCOPE'">

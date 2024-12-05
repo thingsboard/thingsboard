@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { Resolve, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import {
   CellActionDescriptorType,
   DateEntityTableColumn,
@@ -40,7 +40,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Injectable()
-export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<OtaPackage, PageLink, OtaPackageInfo>> {
+export class OtaUpdateTableConfigResolve  {
 
   private readonly config: EntityTableConfig<OtaPackage, PageLink, OtaPackageInfo> =
     new EntityTableConfig<OtaPackage, PageLink, OtaPackageInfo>();

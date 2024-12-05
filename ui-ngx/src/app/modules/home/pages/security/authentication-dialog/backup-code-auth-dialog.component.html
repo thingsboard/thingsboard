@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<mat-toolbar fxLayout="row" color="primary">
+<mat-toolbar class="flex flex-row" color="primary">
   <h2 translate>security.2fa.dialog.get-backup-code-title</h2>
-  <span fxFlex></span>
+  <span class="flex-1"></span>
   <button mat-icon-button
           (click)="closeDialog()"
           type="button">
@@ -29,12 +29,12 @@
 <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
 <div mat-dialog-content tb-toast class="backup-code">
   <p class="mat-body-2 description" translate>security.2fa.dialog.backup-code-description</p>
-  <div class="container" fxLayout="row wrap">
-    <div *ngFor="let code of backupCode?.codes; even as $even" fxFlex="50" class="code" [ngClass]="{'even': $even}">
+  <div class="container flex flex-row flex-wrap">
+    <div *ngFor="let code of backupCode?.codes; even as $even" class="code max-w-50% flex-full" [class.even]="$even">
       {{ code }}
     </div>
   </div>
-  <div fxLayout="row" fxLayoutAlign="center start"  fxLayoutGap="16px" class="action-buttons">
+  <div class="action-buttons flex flex-row items-center justify-start gap-4">
     <button type="button" mat-stroked-button color="primary" (click)="downloadFile()">
       {{ 'security.2fa.dialog.download-txt' | translate }}
     </button>
@@ -43,7 +43,7 @@
     </button>
   </div>
   <p class="mat-body-2 description" translate>security.2fa.dialog.backup-code-warn</p>
-  <div fxLayout="row" fxLayoutAlign="end start">
+  <div class="flex flex-row items-start justify-end">
     <button type="button" mat-raised-button color="primary" (click)="closeDialog()">
       {{ 'action.done' | translate }}
     </button>

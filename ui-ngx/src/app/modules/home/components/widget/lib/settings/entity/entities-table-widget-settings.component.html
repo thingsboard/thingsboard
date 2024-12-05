@@ -20,7 +20,7 @@
     <div class="tb-form-panel-title" translate>widgets.table.table-header</div>
     <div class="tb-form-row">
       <div class="fixed-title-width">{{ 'widgets.table.entities-table-title' | translate }}</div>
-      <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
         <input matInput formControlName="entitiesTitle" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
@@ -45,7 +45,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="displayEntityName">
         {{ 'widgets.table.display-entity-name' | translate }}
       </mat-slide-toggle>
-      <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
         <input matInput formControlName="entityNameColumnTitle" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
@@ -53,7 +53,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="displayEntityLabel">
         {{ 'widgets.table.display-entity-label' | translate }}
       </mat-slide-toggle>
-      <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
         <input matInput formControlName="entityLabelColumnTitle" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
@@ -70,7 +70,7 @@
         {{ 'widgets.table.show-cell-actions-menu-mobile' | translate }}
       </mat-slide-toggle>
     </div>
-    <mat-form-field fxFlex subscriptSizing="dynamic">
+    <mat-form-field class="flex-1" subscriptSizing="dynamic">
       <mat-label translate>widgets.table.hidden-cell-button-display-mode</mat-label>
       <mat-select formControlName="reserveSpaceForHiddenAction">
         <mat-option [value]="'true'">
@@ -81,7 +81,7 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
-    <mat-form-field fxFlex subscriptSizing="dynamic">
+    <mat-form-field class="flex-1" subscriptSizing="dynamic">
       <mat-label translate>widgets.table.default-sort-order</mat-label>
       <input matInput formControlName="defaultSortOrder">
     </mat-form-field>
@@ -101,20 +101,20 @@
   <div class="tb-form-panel tb-slide-toggle">
     <div class="tb-form-panel-title" translate>widgets.table.rows</div>
     <mat-expansion-panel class="tb-settings" [expanded]="entitiesTableWidgetSettingsForm.get('useRowStyleFunction').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="useRowStyleFunction" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="useRowStyleFunction" (click)="$event.stopPropagation()">
             {{ 'widgets.table.use-row-style-function' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxFlex="40" fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="flex max-w-40% flex-full items-center justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <tb-js-func required
                     formControlName="rowStyleFunction"
+                    withModules
                     [globalVariables]="functionScopeVariables"
                     [functionArgs]="['entity', 'ctx']"
                     functionTitle="{{ 'widgets.table.row-style-function' | translate }}"

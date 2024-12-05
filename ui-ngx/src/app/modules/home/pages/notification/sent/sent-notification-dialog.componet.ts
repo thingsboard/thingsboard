@@ -77,6 +77,30 @@ export class SentNotificationDialogComponent extends
 
   showRefresh = false;
 
+  tinyMceOptions: Record<string, any> = {
+    base_url: '/assets/tinymce',
+    suffix: '.min',
+    plugins: ['autoresize'],
+    menubar: false,
+    toolbar: false,
+    statusbar: false,
+    resize: false,
+    readonly: true,
+    height: 400,
+    autofocus: false,
+    branding: false,
+    promotion: false,
+    setup: (ed) => {
+      ed.on('PreInit', () => {
+        const document = $(ed.iframeElement.contentDocument);
+        const body = $('#tinymce', document);
+        body.attr({contenteditable: false});
+        body.css('pointerEvents', 'none');
+        body.css('userSelect', 'none');
+      })
+    }
+  };
+
   private authUser: AuthUser = getCurrentAuthUser(this.store);
 
   private allowNotificationDeliveryMethods: Array<NotificationDeliveryMethod>;

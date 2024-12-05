@@ -365,6 +365,12 @@ import {
 import {
   UnreadNotificationWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/unread-notification-widget-settings.component';
+import {
+ScadaSymbolWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/scada/scada-symbol-widget-settings.component';
+import {
+  SegmentedButtonWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/button/segmented-button-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -480,6 +486,7 @@ import {
     BarChartWithLabelsWidgetSettingsComponent,
     SingleSwitchWidgetSettingsComponent,
     ActionButtonWidgetSettingsComponent,
+    SegmentedButtonWidgetSettingsComponent,
     CommandButtonWidgetSettingsComponent,
     PowerButtonWidgetSettingsComponent,
     SliderWidgetSettingsComponent,
@@ -495,6 +502,7 @@ import {
     LabelCardWidgetSettingsComponent,
     LabelValueCardWidgetSettingsComponent,
     UnreadNotificationWidgetSettingsComponent,
+    ScadaSymbolWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -615,6 +623,7 @@ import {
     BarChartWithLabelsWidgetSettingsComponent,
     SingleSwitchWidgetSettingsComponent,
     ActionButtonWidgetSettingsComponent,
+    SegmentedButtonWidgetSettingsComponent,
     CommandButtonWidgetSettingsComponent,
     PowerButtonWidgetSettingsComponent,
     SliderWidgetSettingsComponent,
@@ -629,7 +638,8 @@ import {
     RadarChartWidgetSettingsComponent,
     LabelCardWidgetSettingsComponent,
     LabelValueCardWidgetSettingsComponent,
-    UnreadNotificationWidgetSettingsComponent
+    UnreadNotificationWidgetSettingsComponent,
+    ScadaSymbolWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -718,6 +728,7 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-bar-chart-with-labels-widget-settings': BarChartWithLabelsWidgetSettingsComponent,
   'tb-single-switch-widget-settings': SingleSwitchWidgetSettingsComponent,
   'tb-action-button-widget-settings': ActionButtonWidgetSettingsComponent,
+  'tb-segmented-button-widget-settings': SegmentedButtonWidgetSettingsComponent,
   'tb-command-button-widget-settings': CommandButtonWidgetSettingsComponent,
   'tb-power-button-widget-settings': PowerButtonWidgetSettingsComponent,
   'tb-slider-widget-settings': SliderWidgetSettingsComponent,
@@ -731,5 +742,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-radar-chart-widget-settings': RadarChartWidgetSettingsComponent,
   'tb-label-card-widget-settings': LabelCardWidgetSettingsComponent,
   'tb-label-value-card-widget-settings': LabelValueCardWidgetSettingsComponent,
-  'tb-unread-notification-widget-settings': UnreadNotificationWidgetSettingsComponent
+  'tb-unread-notification-widget-settings': UnreadNotificationWidgetSettingsComponent,
+  'tb-scada-symbol-widget-settings': ScadaSymbolWidgetSettingsComponent
 };

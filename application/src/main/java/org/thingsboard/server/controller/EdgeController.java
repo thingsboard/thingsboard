@@ -478,8 +478,7 @@ public class EdgeController extends BaseController {
             edgeId = checkNotNull(edgeId);
             SecurityUser user = getCurrentUser();
             TenantId tenantId = user.getTenantId();
-            ToEdgeSyncRequest request = new ToEdgeSyncRequest(UUID.randomUUID(), tenantId, edgeId);
-            edgeRpcServiceOpt.get().processSyncRequest(request, fromEdgeSyncResponse -> reply(response, fromEdgeSyncResponse));
+            edgeRpcServiceOpt.get().processSyncRequest(tenantId, edgeId, fromEdgeSyncResponse -> reply(response, fromEdgeSyncResponse));
         } else {
             throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
         }
@@ -490,7 +489,7 @@ public class EdgeController extends BaseController {
         if (fromEdgeSyncResponse.isSuccess()) {
             response.setResult(new ResponseEntity<>(HttpStatus.OK));
         } else {
-            response.setErrorResult(new ThingsboardException("Edge is not connected", ThingsboardErrorCode.GENERAL));
+            response.setErrorResult(new ThingsboardException(fromEdgeSyncResponse.getError(), ThingsboardErrorCode.GENERAL));
         }
     }
 

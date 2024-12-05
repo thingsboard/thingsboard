@@ -155,6 +155,15 @@ import { GradientComponent } from '@home/components/widget/lib/settings/common/g
 import {
   ValueSourceDataKeyComponent
 } from '@home/components/widget/lib/settings/common/value-source-data-key.component';
+import {
+  ScadaSymbolObjectSettingsComponent
+} from '@home/components/widget/lib/settings/common/scada/scada-symbol-object-settings.component';
+import {
+  WidgetButtonToggleCustomStyleComponent
+} from '@home/components/widget/lib/settings/common/button/widget-button-toggle-custom-style.component';
+import {
+  WidgetButtonToggleCustomStylePanelComponent
+} from '@home/components/widget/lib/settings/common/button/widget-button-toggle-custom-style-panel.component';
 
 @NgModule({
   declarations: [
@@ -193,7 +202,9 @@ import {
     WidgetActionSettingsPanelComponent,
     WidgetButtonAppearanceComponent,
     WidgetButtonCustomStyleComponent,
+    WidgetButtonToggleCustomStyleComponent,
     WidgetButtonCustomStylePanelComponent,
+    WidgetButtonToggleCustomStylePanelComponent,
     TimeSeriesChartAxisSettingsComponent,
     TimeSeriesChartThresholdsPanelComponent,
     TimeSeriesChartThresholdRowComponent,
@@ -211,6 +222,7 @@ import {
     TimeSeriesChartStateRowComponent,
     TimeSeriesChartGridSettingsComponent,
     StatusWidgetStateSettingsComponent,
+    ScadaSymbolObjectSettingsComponent,
     DataKeyInputComponent,
     EntityAliasInputComponent,
     AdvancedRangeComponent,
@@ -257,7 +269,9 @@ import {
     WidgetActionSettingsPanelComponent,
     WidgetButtonAppearanceComponent,
     WidgetButtonCustomStyleComponent,
+    WidgetButtonToggleCustomStyleComponent,
     WidgetButtonCustomStylePanelComponent,
+    WidgetButtonToggleCustomStylePanelComponent,
     TimeSeriesChartAxisSettingsComponent,
     TimeSeriesChartThresholdsPanelComponent,
     TimeSeriesChartThresholdRowComponent,
@@ -275,6 +289,7 @@ import {
     TimeSeriesChartStateRowComponent,
     TimeSeriesChartGridSettingsComponent,
     StatusWidgetStateSettingsComponent,
+    ScadaSymbolObjectSettingsComponent,
     DataKeyInputComponent,
     EntityAliasInputComponent,
     AdvancedRangeComponent,

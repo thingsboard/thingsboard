@@ -57,7 +57,7 @@ public class AssetProfileInfo extends EntityInfo {
 
     public AssetProfileInfo(UUID uuid, UUID tenantId, String name, String image, UUID defaultDashboardId) {
         super(EntityIdFactory.getByTypeAndUuid(EntityType.ASSET_PROFILE, uuid), name);
-        this.tenantId = new TenantId(tenantId);
+        this.tenantId = TenantId.fromUUID(tenantId);
         this.image = image;
         this.defaultDashboardId = defaultDashboardId != null ? new DashboardId(defaultDashboardId) : null;
     }

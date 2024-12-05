@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 
-import { Resolve, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import {
   checkBoxCell,
   DateEntityTableColumn,
@@ -41,7 +41,7 @@ import { Direction } from '@shared/models/page/sort-order';
 import { WidgetsBundleTabsComponent } from '@home/pages/widget/widgets-bundle-tabs.component';
 
 @Injectable()
-export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableConfig<WidgetsBundle>> {
+export class WidgetsBundlesTableConfigResolver  {
 
   private readonly config: EntityTableConfig<WidgetsBundle> = new EntityTableConfig<WidgetsBundle>();
 

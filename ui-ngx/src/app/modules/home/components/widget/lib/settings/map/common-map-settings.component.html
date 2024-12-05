@@ -18,30 +18,30 @@
 <section class="tb-widget-settings" [formGroup]="commonMapSettingsFormGroup">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.maps.common-map-settings</legend>
-    <section  fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-      <tb-datasources-key-autocomplete fxFlex
-                                       [fxShow]="provider === mapProvider.image"
+    <section class="!flex flex-col gt-xs:flex-row gt-xs:gap-2">
+      <tb-datasources-key-autocomplete class="flex-1"
+                                       [class.!hidden]="provider !== mapProvider.image"
                                        required
                                        [datasources]="widget?.config?.datasources"
                                        label="widgets.maps.x-pos-key-name"
                                        formControlName="xPosKeyName">
       </tb-datasources-key-autocomplete>
-      <tb-datasources-key-autocomplete fxFlex
-                                       [fxShow]="provider === mapProvider.image"
+      <tb-datasources-key-autocomplete class="flex-1"
+                                       [class.!hidden]="provider !== mapProvider.image"
                                        required
                                        [datasources]="widget?.config?.datasources"
                                        label="widgets.maps.y-pos-key-name"
                                        formControlName="yPosKeyName">
       </tb-datasources-key-autocomplete>
-      <tb-datasources-key-autocomplete fxFlex
-                                       [fxShow]="provider !== mapProvider.image"
+      <tb-datasources-key-autocomplete class="flex-1"
+                                       [class.!hidden]="provider === mapProvider.image"
                                        required
                                        [datasources]="widget?.config?.datasources"
                                        label="widgets.maps.latitude-key-name"
                                        formControlName="latKeyName">
       </tb-datasources-key-autocomplete>
-      <tb-datasources-key-autocomplete fxFlex
-                                       [fxShow]="provider !== mapProvider.image"
+      <tb-datasources-key-autocomplete class="flex-1"
+                                       [class.!hidden]="provider === mapProvider.image"
                                        required
                                        [datasources]="widget?.config?.datasources"
                                        label="widgets.maps.longitude-key-name"
@@ -49,24 +49,24 @@
       </tb-datasources-key-autocomplete>
     </section>
     <mat-expansion-panel class="tb-settings">
-      <mat-expansion-panel-header fxLayout="row wrap">
-        <mat-panel-description fxLayoutAlign="end center" translate>
+      <mat-expansion-panel-header class="flex-wrap">
+        <mat-panel-description class="justify-end" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <section [fxShow]="provider !== mapProvider.image" fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-          <mat-form-field fxFlex class="mat-block">
+        <section [class.!hidden]="provider === mapProvider.image" class="flex flex-row xs:flex-col gt-xs:gap-2">
+          <mat-form-field class="flex-1">
             <mat-label translate>widgets.maps.default-map-zoom-level</mat-label>
             <input matInput type="number" min="0" max="20" step="1" formControlName="defaultZoomLevel">
           </mat-form-field>
-          <mat-form-field fxFlex class="mat-block">
+          <mat-form-field class="flex-1">
             <mat-label translate>widgets.maps.default-map-center-position</mat-label>
             <input matInput formControlName="defaultCenterPosition">
           </mat-form-field>
         </section>
-        <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" style="margin-bottom: 15px;">
-          <section fxFlex fxLayout="column">
+        <section class="mb-3.5 flex flex-row xs:flex-col gt-xs:gap-2">
+          <section class="flex flex-1 flex-col">
             <mat-slide-toggle formControlName="disableScrollZooming" class="slide-block">
               {{ 'widgets.maps.disable-scroll-zooming' | translate }}
             </mat-slide-toggle>
@@ -76,17 +76,17 @@
             <mat-slide-toggle formControlName="disableZoomControl" class="slide-block">
               {{ 'widgets.maps.disable-zoom-control-buttons' | translate }}
             </mat-slide-toggle>
-            <mat-slide-toggle [fxShow]="provider !== mapProvider.image" formControlName="fitMapBounds" class="slide-block">
+            <mat-slide-toggle [class.!hidden]="provider === mapProvider.image" formControlName="fitMapBounds" class="slide-block">
               {{ 'widgets.maps.fit-map-bounds' | translate }}
             </mat-slide-toggle>
           </section>
-          <section fxFlex fxLayout="column">
-            <mat-slide-toggle [fxShow]="provider !== mapProvider.image" formControlName="useDefaultCenterPosition" class="slide-block">
+          <section class="flex-1" [class.!hidden]="provider === mapProvider.image">
+            <mat-slide-toggle formControlName="useDefaultCenterPosition" class="slide-block">
               {{ 'widgets.maps.use-default-map-center-position' | translate }}
             </mat-slide-toggle>
           </section>
         </section>
-        <mat-form-field fxFlex class="mat-block">
+        <mat-form-field class="mat-block">
           <mat-label translate>widgets.maps.entities-limit</mat-label>
           <input matInput type="number" min="1" step="1" formControlName="mapPageSize">
         </mat-form-field>

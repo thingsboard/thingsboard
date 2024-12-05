@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-select class="default-state-controller" [fxShow]="displayStateSelection()"
+<mat-select class="default-state-controller" [class.!hidden]="!displayStateSelection()"
     [(ngModel)]="stateObject[0].id" (ngModelChange)="selectedStateIdChanged()">
   <mat-option *ngFor="let stateKv of states | keyvalue" [value]="stateKv.key">
     {{getStateName(stateKv.key, stateKv.value)}}

@@ -47,7 +47,7 @@ public class CertPemCredentials implements ClientCredentials {
     protected String caCert;
     private String cert;
     private String privateKey;
-    private String password = "";
+    private String password;
 
     @Override
     public CredentialsType getType() {

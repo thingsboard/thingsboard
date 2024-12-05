@@ -15,6 +15,7 @@
  */
 package org.thingsboard.monitoring.service;
 
+import jakarta.annotation.PostConstruct;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,6 @@ import org.thingsboard.monitoring.data.MonitoredServiceKey;
 import org.thingsboard.monitoring.service.transport.TransportHealthChecker;
 import org.thingsboard.monitoring.util.TbStopWatch;
 
-import jakarta.annotation.PostConstruct;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -100,7 +100,10 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
             reporter.reportLatency(Latencies.LOG_IN, stopWatch.getTime());
 
             try (WsClient wsClient = wsClientFactory.createClient(accessToken)) {
+                stopWatch.start();
                 wsClient.subscribeForTelemetry(devices, TransportHealthChecker.TEST_TELEMETRY_KEY).waitForReply();
+                reporter.reportLatency(Latencies.WS_SUBSCRIBE, stopWatch.getTime());
+
                 for (BaseHealthChecker<C, T> healthChecker : healthCheckers) {
                     check(healthChecker, wsClient);
                 }

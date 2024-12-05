@@ -32,19 +32,21 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { RecipientTableHeaderComponent } from '@home/pages/notification/recipient/recipient-table-header.component';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Injectable } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 
 @Injectable()
-export class RecipientTableConfigResolver implements Resolve<EntityTableConfig<NotificationTarget>> {
+export class RecipientTableConfigResolver  {
 
   private readonly config: EntityTableConfig<NotificationTarget> = new EntityTableConfig<NotificationTarget>();
 
   constructor(private notificationService: NotificationService,
               private translate: TranslateService,
               private dialog: MatDialog,
-              private datePipe: DatePipe) {
+              private datePipe: DatePipe,
+              private customTranslate: CustomTranslatePipe) {
 
     this.config.entityType = EntityType.NOTIFICATION_TARGET;
     this.config.detailsPanelEnabled = false;
@@ -82,7 +84,7 @@ export class RecipientTableConfigResolver implements Resolve<EntityTableConfig<N
         (target) => this.translate.instant(NotificationTargetTypeTranslationMap.get(target.configuration.type)),
         () => ({}), false),
       new EntityTableColumn<NotificationTarget>('configuration.description', 'notification.description', '60%',
-      (target) => target.configuration.description || '',
+      (target) => this.customTranslate.transform(target.configuration.description || ''),
       () => ({}), false)
     );
   }

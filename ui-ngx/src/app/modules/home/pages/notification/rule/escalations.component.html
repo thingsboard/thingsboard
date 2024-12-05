@@ -15,13 +15,12 @@
     limitations under the License.
 
 -->
-<div fxLayout="column">
-  <div class="tb-tenant-profile-queues"
-       fxLayout="row" style="align-items: center"
+<div class="flex flex-col">
+  <div class="tb-tenant-profile-queues flex flex-row items-center"
        *ngFor="let escalationControl of escalationsFormArray.controls;
        let $index = index; last as isLast;"
-       [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
-    <tb-escalation-form fxFlex
+       [class.pb-2]="!isLast">
+    <tb-escalation-form class="flex-1"
                         [formControl]="escalationControl"
                         [systemEscalation]="$index === 0">
     </tb-escalation-form>
@@ -35,8 +34,8 @@
     </button>
   </div>
   <div *ngIf="!escalationsFormArray.controls.length">
-      <span translate fxLayoutAlign="center center"
-            class="tb-prompt">notification.no-rule</span>
+      <span translate
+            class="tb-prompt flex items-center justify-center">notification.no-rule</span>
   </div>
   <div *ngIf="!disabled" style="padding: 16px 0;">
     <button mat-raised-button color="primary"

@@ -19,20 +19,18 @@
   <fieldset class="fields-group fields-group-slider">
     <legend class="group-title" translate>widgets.maps.polygon-settings</legend>
     <mat-expansion-panel class="tb-settings" [expanded]="polygonSettingsFormGroup.get('showPolygon').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle formControlName="showPolygon" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle formControlName="showPolygon" (click)="$event.stopPropagation()">
             {{ 'widgets.maps.show-polygon' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <tb-datasources-key-autocomplete fxFlex
-                                         required
+        <tb-datasources-key-autocomplete required
                                          [datasources]="widget?.config?.datasources"
                                          label="widgets.maps.polygon-key-name"
                                          formControlName="polygonKeyName">
@@ -43,14 +41,13 @@
         <fieldset class="fields-group fields-group-slider">
           <legend class="group-title" translate>widgets.maps.polygon-label</legend>
           <mat-expansion-panel class="tb-settings" [expanded]="polygonSettingsFormGroup.get('showPolygonLabel').value">
-            <mat-expansion-panel-header fxLayout="row wrap">
+            <mat-expansion-panel-header class="flex-wrap">
               <mat-panel-title>
-                <mat-slide-toggle formControlName="showPolygonLabel" (click)="$event.stopPropagation()"
-                                  fxLayoutAlign="center">
+                <mat-slide-toggle formControlName="showPolygonLabel" (click)="$event.stopPropagation()">
                   {{ 'widgets.maps.show-polygon-label' | translate }}
                 </mat-slide-toggle>
               </mat-panel-title>
-              <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+              <mat-panel-description class="justify-end xs:!hidden" translate>
                 widget-config.advanced-settings
               </mat-panel-description>
             </mat-expansion-panel-header>
@@ -58,13 +55,14 @@
               <mat-slide-toggle formControlName="usePolygonLabelFunction" class="slide-block">
                 {{ 'widgets.maps.use-polygon-label-function' | translate }}
               </mat-slide-toggle>
-              <tb-html [fxShow]="!polygonSettingsFormGroup.get('usePolygonLabelFunction').value"
+              <tb-html [class.!hidden]="polygonSettingsFormGroup.get('usePolygonLabelFunction').value"
                        formControlName="polygonLabel"
                        minHeight="100px"
                        label="{{ 'widgets.maps.polygon-label-pattern' | translate }}">
               </tb-html>
-              <tb-js-func [fxShow]="polygonSettingsFormGroup.get('usePolygonLabelFunction').value"
+              <tb-js-func [class.!hidden]="!polygonSettingsFormGroup.get('usePolygonLabelFunction').value"
                           formControlName="polygonLabelFunction"
+                          withModules
                           [globalVariables]="functionScopeVariables"
                           [functionArgs]="['data', 'dsData', 'dsIndex']"
                           functionTitle="{{ 'widgets.maps.polygon-label-function' | translate }}"
@@ -76,19 +74,18 @@
         <fieldset class="fields-group fields-group-slider">
           <legend class="group-title" translate>widgets.maps.polygon-tooltip</legend>
           <mat-expansion-panel class="tb-settings" [expanded]="polygonSettingsFormGroup.get('showPolygonTooltip').value">
-            <mat-expansion-panel-header fxLayout="row wrap">
+            <mat-expansion-panel-header class="flex-wrap">
               <mat-panel-title>
-                <mat-slide-toggle formControlName="showPolygonTooltip" (click)="$event.stopPropagation()"
-                                  fxLayoutAlign="center">
+                <mat-slide-toggle formControlName="showPolygonTooltip" (click)="$event.stopPropagation()">
                   {{ 'widgets.maps.show-polygon-tooltip' | translate }}
                 </mat-slide-toggle>
               </mat-panel-title>
-              <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+              <mat-panel-description class="justify-end xs:!hidden" translate>
                 widget-config.advanced-settings
               </mat-panel-description>
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
-              <mat-form-field fxFlex class="mat-block">
+              <mat-form-field class="mat-block">
                 <mat-label translate>widgets.maps.show-tooltip-action</mat-label>
                 <mat-select required formControlName="showPolygonTooltipAction">
                   <mat-option *ngFor="let action of showTooltipActions" [value]="action">
@@ -102,13 +99,14 @@
               <mat-slide-toggle formControlName="usePolygonTooltipFunction" class="slide-block">
                 {{ 'widgets.maps.use-polygon-tooltip-function' | translate }}
               </mat-slide-toggle>
-              <tb-html [fxShow]="!polygonSettingsFormGroup.get('usePolygonTooltipFunction').value"
+              <tb-html [class.!hidden]="polygonSettingsFormGroup.get('usePolygonTooltipFunction').value"
                        formControlName="polygonTooltipPattern"
                        minHeight="100px"
                        label="{{ 'widgets.maps.polygon-tooltip-pattern' | translate }}">
               </tb-html>
-              <tb-js-func [fxShow]="polygonSettingsFormGroup.get('usePolygonTooltipFunction').value"
+              <tb-js-func [class.!hidden]="!polygonSettingsFormGroup.get('usePolygonTooltipFunction').value"
                           formControlName="polygonTooltipFunction"
+                          withModules
                           [globalVariables]="functionScopeVariables"
                           [functionArgs]="['data', 'dsData', 'dsIndex']"
                           functionTitle="{{ 'widgets.maps.polygon-tooltip-function' | translate }}"
@@ -119,32 +117,32 @@
         </fieldset>
         <fieldset class="fields-group">
           <legend class="group-title" translate>widgets.maps.polygon-color</legend>
-          <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
+          <section class="!flex flex-col gt-xs:flex-row gt-xs:gap-2">
             <tb-color-input
-              fxFlex
+              class="flex-1"
               formControlName="polygonColor"
               icon="format_color_fill"
               label="{{ 'widgets.maps.polygon-color' | translate }}" openOnInput colorClearButton>
             </tb-color-input>
-            <mat-form-field fxFlex class="mat-block">
+            <mat-form-field class="flex-1">
               <mat-label translate>widgets.maps.polygon-opacity</mat-label>
               <input matInput type="number" min="0" max="1" formControlName="polygonOpacity">
             </mat-form-field>
           </section>
           <mat-expansion-panel class="tb-settings" [expanded]="polygonSettingsFormGroup.get('usePolygonColorFunction').value">
-            <mat-expansion-panel-header fxLayout="row wrap">
+            <mat-expansion-panel-header class="flex-wrap">
               <mat-panel-title>
-                <mat-slide-toggle formControlName="usePolygonColorFunction" (click)="$event.stopPropagation()"
-                                  fxLayoutAlign="center">
+                <mat-slide-toggle formControlName="usePolygonColorFunction" (click)="$event.stopPropagation()">
                   {{ 'widgets.maps.use-polygon-color-function' | translate }}
                 </mat-slide-toggle>
               </mat-panel-title>
-              <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+              <mat-panel-description class="justify-end xs:!hidden" translate>
                 widget-config.advanced-settings
               </mat-panel-description>
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
               <tb-js-func formControlName="polygonColorFunction"
+                          withModules
                           [globalVariables]="functionScopeVariables"
                           [functionArgs]="['data', 'dsData', 'dsIndex']"
                           functionTitle="{{ 'widgets.maps.polygon-color-function' | translate }}"
@@ -155,36 +153,36 @@
         </fieldset>
         <fieldset class="fields-group">
           <legend class="group-title" translate>widgets.maps.polygon-stroke</legend>
-          <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
+          <section class="!flex flex-col gt-xs:flex-row gt-xs:gap-2">
             <tb-color-input
-              fxFlex
+              class="flex-1"
               formControlName="polygonStrokeColor"
               icon="format_color_fill"
               label="{{ 'widgets.maps.stroke-color' | translate }}" openOnInput colorClearButton>
             </tb-color-input>
-            <mat-form-field fxFlex class="mat-block">
+            <mat-form-field class="flex-1">
               <mat-label translate>widgets.maps.stroke-opacity</mat-label>
               <input matInput type="number" min="0" max="1" formControlName="polygonStrokeOpacity">
             </mat-form-field>
-            <mat-form-field fxFlex class="mat-block">
+            <mat-form-field class="flex-1">
               <mat-label translate>widgets.maps.stroke-weight</mat-label>
               <input matInput type="number" min="0" formControlName="polygonStrokeWeight">
             </mat-form-field>
           </section>
           <mat-expansion-panel class="tb-settings" [expanded]="polygonSettingsFormGroup.get('usePolygonStrokeColorFunction').value">
-            <mat-expansion-panel-header fxLayout="row wrap">
+            <mat-expansion-panel-header class="flex-wrap">
               <mat-panel-title>
-                <mat-slide-toggle formControlName="usePolygonStrokeColorFunction" (click)="$event.stopPropagation()"
-                                  fxLayoutAlign="center">
+                <mat-slide-toggle formControlName="usePolygonStrokeColorFunction" (click)="$event.stopPropagation()">
                   {{ 'widgets.maps.use-polygon-stroke-color-function' | translate }}
                 </mat-slide-toggle>
               </mat-panel-title>
-              <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+              <mat-panel-description class="justify-end xs:!hidden" translate>
                 widget-config.advanced-settings
               </mat-panel-description>
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
               <tb-js-func formControlName="polygonStrokeColorFunction"
+                          withModules
                           [globalVariables]="functionScopeVariables"
                           [functionArgs]="['data', 'dsData', 'dsIndex']"
                           functionTitle="{{ 'widgets.maps.polygon-stroke-color-function' | translate }}"

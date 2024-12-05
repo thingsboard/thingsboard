@@ -19,10 +19,9 @@
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [(expanded)]="settingsExpanded"
                          [disabled]="!animationSettingsFormGroup.get('animation').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="animation" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="animation" (click)="$event.stopPropagation()">
             {{ 'widgets.chart.animation.animation' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>

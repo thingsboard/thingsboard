@@ -21,7 +21,7 @@ import { beautifyHtml } from '@shared/models/beautify.models';
 
 class ThingsboardHtml extends React.Component<JsonFormFieldProps, JsonFormFieldState> {
 
-    constructor(props) {
+    constructor(props: JsonFormFieldProps) {
         super(props);
         this.onTidyHtml = this.onTidyHtml.bind(this);
     }

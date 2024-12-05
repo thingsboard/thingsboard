@@ -1,0 +1,147 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-scada-symbol-behavior-settings-panel" [formGroup]="behaviorFormGroup">
+  <div class="tb-scada-symbol-behavior-settings-title">{{ panelTitle | translate }}</div>
+  <div class="tb-scada-symbol-behavior-settings-panel-content">
+    <div class="tb-form-row">
+      <div class="fixed-title-width" translate>scada.behavior.id</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <input required matInput formControlName="id" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" translate>scada.behavior.name</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <input required matInput formControlName="name" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" translate>scada.behavior.hint</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="hint" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" translate>scada.behavior.group-title</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="group" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" translate>scada.behavior.type</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="type">
+          <mat-option *ngFor="let type of scadaSymbolBehaviorTypes" [value]="type">
+            {{ scadaSymbolBehaviorTypeTranslations.get(type) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div *ngIf="[ScadaSymbolBehaviorType.value, ScadaSymbolBehaviorType.action].includes(behaviorFormGroup.get('type').value)" class="tb-form-row">
+      <div class="fixed-title-width" translate>scada.behavior.value-type</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-value-type flex">
+        <mat-select formControlName="valueType">
+          <mat-select-trigger *ngIf="behaviorFormGroup.get('valueType').value">
+            <div class="tb-value-type-row">
+              <mat-icon class="tb-mat-18" svgIcon="{{ valueTypesMap.get(behaviorFormGroup.get('valueType').value).icon }}"></mat-icon>
+              <span>{{ valueTypesMap.get(behaviorFormGroup.get('valueType').value).name | translate }}</span>
+            </div>
+          </mat-select-trigger>
+          <mat-option *ngFor="let valueType of valueTypes" [value]="valueType">
+            <mat-icon class="tb-mat-20" svgIcon="{{ valueTypesMap.get(valueType).icon }}"></mat-icon>
+            <span>{{ valueTypesMap.get(valueType).name | translate }}</span>
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <ng-container *ngIf="behaviorFormGroup.get('type').value === ScadaSymbolBehaviorType.value">
+      <ng-container *ngIf="behaviorFormGroup.get('valueType').value ===  ValueType.BOOLEAN">
+        <div class="tb-form-row">
+          <div class="fixed-title-width" translate>scada.behavior.true-label</div>
+          <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="trueLabel" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row">
+          <div class="fixed-title-width" translate>scada.behavior.false-label</div>
+          <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="falseLabel" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row">
+          <div class="fixed-title-width" translate>scada.behavior.state-label</div>
+          <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="stateLabel" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+        </div>
+      </ng-container>
+      <div class="tb-form-row">
+        <div class="fixed-title-width" translate>scada.behavior.default-settings</div>
+        <tb-get-value-action-settings class="flex-1"
+                                      panelTitle="{{ behaviorFormGroup.get('name').value | customTranslate }}"
+                                      [valueType]="behaviorFormGroup.get('valueType').value"
+                                      [trueLabel]="behaviorFormGroup.get('trueLabel').value | customTranslate"
+                                      [falseLabel]="behaviorFormGroup.get('falseLabel').value | customTranslate"
+                                      [stateLabel]="behaviorFormGroup.get('stateLabel').value | customTranslate"
+                                      [aliasController]="aliasController"
+                                      [widgetType]="widgetType.rpc"
+                                      formControlName="defaultGetValueSettings">
+        </tb-get-value-action-settings>
+      </div>
+    </ng-container>
+    <ng-container *ngIf="behaviorFormGroup.get('type').value === ScadaSymbolBehaviorType.action">
+      <div class="tb-form-row">
+        <div class="fixed-title-width" translate>scada.behavior.default-settings</div>
+        <tb-set-value-action-settings class="flex-1"
+                                      panelTitle="{{ behaviorFormGroup.get('name').value | customTranslate }}"
+                                      [valueType]="behaviorFormGroup.get('valueType').value"
+                                      [aliasController]="aliasController"
+                                      [widgetType]="widgetType.rpc"
+                                      formControlName="defaultSetValueSettings">
+        </tb-set-value-action-settings>
+      </div>
+    </ng-container>
+    <ng-container *ngIf="behaviorFormGroup.get('type').value === ScadaSymbolBehaviorType.widgetAction">
+      <div class="tb-form-row">
+        <div class="fixed-title-width" translate>scada.behavior.default-settings</div>
+        <tb-widget-action-settings class="flex-1"
+                                   panelTitle="{{ behaviorFormGroup.get('name').value | customTranslate }}"
+                                   [callbacks]="callbacks"
+                                   [widgetType]="widgetType.rpc"
+                                   formControlName="defaultWidgetActionSettings">
+        </tb-widget-action-settings>
+      </div>
+    </ng-container>
+  </div>
+  <div class="tb-scada-symbol-behavior-settings-panel-buttons">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ (disabled ? 'action.close' : 'action.cancel') | translate }}
+    </button>
+    <button *ngIf="!disabled"
+            mat-raised-button
+            color="primary"
+            type="button"
+            (click)="applyBehaviorSettings()"
+            [disabled]="behaviorFormGroup.invalid || !behaviorFormGroup.dirty">
+      {{ (isAdd ? 'action.add' : 'action.apply') | translate }}
+    </button>
+  </div>
+</div>

@@ -1,0 +1,53 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-toolbar color="primary">
+  <h2 class="main-label">
+    {{ data.message }}
+  </h2>
+  <span class="flex-1"></span>
+  <button mat-icon-button
+          (click)="onCancel()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<div mat-dialog-content>
+  <div class="message-container">
+    <span>
+      {{ 'entity.version-conflict.link' | translate:{ entityType: entityTypeLabel | translate } }}
+      <a class="cursor-pointer" (click)="onLinkClick($event)">{{ 'entity.link' | translate }}</a>.
+    </span>
+    <br/>
+    <span>{{ 'entity.version-conflict.message' | translate }}</span>
+  </div>
+</div>
+<div mat-dialog-actions class="flex flex-row items-center justify-end">
+  <button mat-button color="primary"
+          type="button"
+          (click)="onDiscard()"
+          cdkFocusInitial
+  >
+    {{ 'entity.version-conflict.discard' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          type="submit"
+          (click)="onConfirm()"
+  >
+    {{ 'entity.version-conflict.overwrite' | translate }}
+  </button>
+</div>

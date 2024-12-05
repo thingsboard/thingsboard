@@ -15,18 +15,19 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="markdownWidgetSettingsForm" fxLayout="column">
+<section class="tb-widget-settings flex flex-col" [formGroup]="markdownWidgetSettingsForm">
   <mat-slide-toggle class="mat-slide" formControlName="useMarkdownTextFunction">
     {{ 'widgets.markdown.use-markdown-text-function' | translate }}
   </mat-slide-toggle>
-  <tb-js-func [fxShow]="markdownWidgetSettingsForm.get('useMarkdownTextFunction').value"
+  <tb-js-func [class.!hidden]="!markdownWidgetSettingsForm.get('useMarkdownTextFunction').value"
               formControlName="markdownTextFunction"
+              withModules
               [globalVariables]="functionScopeVariables"
               [functionArgs]="['data', 'ctx']"
               functionTitle="{{ 'widgets.markdown.markdown-text-function' | translate }}"
               helpId="widget/lib/markdown/markdown_text_fn">
   </tb-js-func>
-  <tb-markdown-editor [fxShow]="!markdownWidgetSettingsForm.get('useMarkdownTextFunction').value"
+  <tb-markdown-editor [class.!hidden]="markdownWidgetSettingsForm.get('useMarkdownTextFunction').value"
                       formControlName="markdownTextPattern"
                       label="{{ 'widgets.markdown.markdown-text-pattern' | translate }}"
                       helpId="widget/editor/widget_js_markdown_pattern">

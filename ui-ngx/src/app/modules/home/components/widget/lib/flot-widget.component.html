@@ -15,16 +15,16 @@
     limitations under the License.
 
 -->
-<div class="tb-absolute-fill" [fxLayout]="legendContainerLayoutType">
+<div class="tb-absolute-fill flex" [class]="legendContainerLayoutType">
   <tb-legend *ngIf="displayLegend && isLegendFirst"
-             [ngStyle]="legendStyle"
+             [style]="legendStyle"
              [legendConfig]="legendConfig"
              [legendData]="legendData"
              (legendKeyHiddenChange)="onLegendKeyHiddenChange($event)">
   </tb-legend>
-  <div fxFlex #flotElement></div>
+  <div class="flex-1" #flotElement></div>
   <tb-legend *ngIf="displayLegend && !isLegendFirst"
-             [ngStyle]="legendStyle"
+             [style]="legendStyle"
              [legendConfig]="legendConfig"
              [legendData]="legendData"
              (legendKeyHiddenChange)="onLegendKeyHiddenChange($event)">

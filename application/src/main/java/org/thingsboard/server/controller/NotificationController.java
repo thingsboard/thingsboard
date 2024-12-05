@@ -266,6 +266,12 @@ public class NotificationController extends BaseController {
         }
         notificationRequest.setTenantId(user.getTenantId());
         checkEntity(notificationRequest.getId(), notificationRequest, NOTIFICATION);
+        List<NotificationTargetId> targets = notificationRequest.getTargets().stream()
+                .map(NotificationTargetId::new)
+                .toList();
+        for (NotificationTargetId targetId : targets) {
+            checkNotificationTargetId(targetId, Operation.READ);
+        }
 
         notificationRequest.setOriginatorEntityId(user.getId());
         notificationRequest.setInfo(null);
@@ -300,9 +306,15 @@ public class NotificationController extends BaseController {
         request.setOriginatorEntityId(user.getId());
         List<NotificationTarget> targets = request.getTargets().stream()
                 .map(NotificationTargetId::new)
-                .map(targetId -> notificationTargetService.findNotificationTargetById(user.getTenantId(), targetId))
+                .map(targetId -> {
+                    NotificationTarget target = notificationTargetService.findNotificationTargetById(user.getTenantId(), targetId);
+                    if (target == null) {
+                        throw new IllegalArgumentException("Notification target for id " + targetId + " not found");
+                    }
+                    return target;
+                })
                 .sorted(Comparator.comparing(target -> target.getConfiguration().getType()))
-                .collect(Collectors.toList());
+                .toList();
 
         NotificationRequestPreview preview = new NotificationRequestPreview();
 
@@ -310,6 +322,8 @@ public class NotificationController extends BaseController {
         Map<String, Integer> recipientsCountByTarget = new LinkedHashMap<>();
         Map<NotificationTargetType, NotificationRecipient> firstRecipient = new HashMap<>();
         for (NotificationTarget target : targets) {
+            checkEntity(getCurrentUser(), target, Operation.READ);
+
             int recipientsCount;
             List<NotificationRecipient> recipientsPart;
             NotificationTargetType targetType = target.getConfiguration().getType();

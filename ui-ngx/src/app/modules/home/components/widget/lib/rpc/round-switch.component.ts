@@ -24,7 +24,6 @@ import { isDefined } from '@core/utils';
 import { IWidgetSubscription, SubscriptionInfo, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { DatasourceType, widgetType } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { ResizeObserver } from '@juggle/resize-observer';
 
 type RetrieveValueMethod = 'rpc' | 'attribute' | 'timeseries';
 

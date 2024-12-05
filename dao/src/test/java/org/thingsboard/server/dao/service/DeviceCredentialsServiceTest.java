@@ -180,7 +180,7 @@ public class DeviceCredentialsServiceTest extends AbstractServiceTest {
         Assert.assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
         deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
         deviceCredentials.setCredentialsId("access_token");
-        deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
+        deviceCredentials = deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
         DeviceCredentials foundDeviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, savedDevice.getId());
         Assert.assertEquals(deviceCredentials, foundDeviceCredentials);
         deviceService.deleteDevice(tenantId, savedDevice.getId());

@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 @Service
 @TbCoreComponent
@@ -38,7 +39,7 @@ public class DefaultTbAssetProfileService extends AbstractTbEntityService implem
     private final AssetProfileService assetProfileService;
 
     @Override
-    public AssetProfile save(AssetProfile assetProfile, User user) throws Exception {
+    public AssetProfile save(AssetProfile assetProfile, SecurityUser user) throws Exception {
         ActionType actionType = assetProfile.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = assetProfile.getTenantId();
         try {

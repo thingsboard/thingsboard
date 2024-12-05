@@ -39,7 +39,7 @@
       <mat-slide-toggle class="mat-slide" formControlName="showValue">
         {{ 'widgets.progress-bar.value' | translate }}
       </mat-slide-toggle>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <tb-font-settings formControlName="valueFont"
                           [previewText]="valuePreviewFn">
         </tb-font-settings>
@@ -52,7 +52,7 @@
     </div>
     <div class="tb-form-row space-between  column-xs">
       <div>{{ 'widgets.progress-bar.range' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <div class="tb-small-label" translate>widgets.progress-bar.min</div>
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="tickMin" type="number" placeholder="{{ 'widget-config.set' | translate }}">
@@ -67,7 +67,7 @@
       <mat-slide-toggle class="mat-slide" formControlName="showTicks">
         {{ 'widgets.progress-bar.range-ticks' | translate }}
       </mat-slide-toggle>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <tb-font-settings formControlName="ticksFont"
                           previewText="100">
         </tb-font-settings>

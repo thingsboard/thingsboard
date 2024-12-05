@@ -15,8 +15,15 @@
  */
 package org.thingsboard.server.common.msg.edge;
 
-import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
-import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.MsgType;
 
-public interface EdgeSessionMsg extends TenantAwareMsg, ToAllNodesMsg {
+import java.io.Serializable;
+
+public interface EdgeSessionMsg extends Serializable {
+
+    TenantId getTenantId();
+
+    MsgType getMsgType();
+
 }

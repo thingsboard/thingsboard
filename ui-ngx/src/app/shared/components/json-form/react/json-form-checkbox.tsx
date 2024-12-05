@@ -15,9 +15,9 @@
  */
 import * as React from 'react';
 import ThingsboardBaseComponent from './json-form-base-component';
-import Checkbox from '@material-ui/core/Checkbox';
+import Checkbox from '@mui/material/Checkbox';
 import { JsonFormFieldProps, JsonFormFieldState } from './json-form.models.js';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormControlLabel from '@mui/material/FormControlLabel';
 
 class ThingsboardCheckbox extends React.Component<JsonFormFieldProps, JsonFormFieldState> {
     render() {
@@ -26,11 +26,12 @@ class ThingsboardCheckbox extends React.Component<JsonFormFieldProps, JsonFormFi
           <FormControlLabel
             control={
               <Checkbox
+                color={'secondary'}
                 name={this.props.form.key.slice(-1)[0] + ''}
                 value={this.props.form.key.slice(-1)[0]}
                 checked={this.props.value || false}
                 disabled={this.props.form.readonly}
-                onChange={(e, checked) => {
+                onChange={(e) => {
                   this.props.onChangeValidate(e);
                 }}
               />

@@ -30,16 +30,16 @@
   </ng-container>
 </ng-template>
 <ng-template #alarmFilterPanel>
-  <form fxLayout="column" class="mat-content mat-padding" (ngSubmit)="update()">
+  <form class="mat-content mat-padding flex flex-col" (ngSubmit)="update()">
     <ng-container *ngTemplateOutlet="alarmFilter"></ng-container>
-    <div fxLayout="row" class="tb-panel-actions" fxLayoutAlign="end center">
+    <div class="tb-panel-actions flex flex-row items-center justify-end">
       <button type="button"
               mat-button
               color="primary"
               (click)="reset()">
         {{ 'action.reset' | translate }}
       </button>
-      <span fxFlex></span>
+      <span class="flex-1"></span>
       <button type="button"
               mat-button
               (click)="cancel()">
@@ -73,7 +73,7 @@
       </mat-chip-listbox>
     </div>
     <div class="tb-form-row column-xs">
-      <div class="fixed-title-width" ngClass.xs="filters-title-mobile" translate>alarm.alarm-type-list</div>
+      <div class="fixed-title-width" translate>alarm.alarm-type-list</div>
       <tb-entity-subtype-list subscriptSizing="dynamic"
                               formControlName="typeList"
                               appearance="outline"
@@ -83,7 +83,7 @@
     </div>
     <div class="tb-form-row column-xs">
       <div class="fixed-title-width" translate>alarm.assignee</div>
-      <tb-alarm-assignee-select fxFlex inline="true"
+      <tb-alarm-assignee-select class="flex-1" inline="true"
                                 [userMode]="userMode"
         formControlName="assigneeId">
       </tb-alarm-assignee-select>

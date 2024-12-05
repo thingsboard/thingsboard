@@ -15,17 +15,20 @@
     limitations under the License.
 
 -->
-<div class="tb-led-indicator" fxLayout="column">
-  <div fxFlex="20" #ledTitleContainer class="title-container" fxLayout="row" fxLayoutAlign="center center" [fxShow]="showTitle">
+<div class="tb-led-indicator flex flex-col">
+  <div #ledTitleContainer class="title-container flex max-h-20% flex-full flex-row items-center justify-center" [class.!hidden]="!showTitle">
     <span #ledTitle class="led-title">{{title}}</span>
   </div>
-  <div fxFlex="{{showTitle ? 80 : 100}}"
-       [ngStyle]="{paddingTop: showTitle ? '5px': '10px'}" #ledContainer id="led-container" fxLayout="column" fxLayoutAlign="center center">
+  <div class="flex flex-full flex-col items-center justify-center"
+       [class]="{
+          'max-h-80%': showTitle,
+          'max-h-100%': !showTitle
+       }"
+       [style.padding-top]="showTitle ? '5px': '10px'" #ledContainer id="led-container">
     <div #led class="led">
     </div>
   </div>
-  <div #ledErrorContainer class="error-container" [ngStyle]="{'background': error?.length ? 'rgba(255,255,255,0.25)' : 'none'}"
-       fxLayout="row" fxLayoutAlign="center center">
+  <div #ledErrorContainer class="error-container flex flex-row items-center justify-center" [style.background]="error?.length ? 'rgba(255,255,255,0.25)' : 'none'">
     <span #ledError class="led-error">{{ error }}</span>
   </div>
   <div #textMeasure id="text-measure"></div>

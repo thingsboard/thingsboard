@@ -1,0 +1,31 @@
+{
+  "widgetsBundle": {
+    "alias": "general_high_performance_scada_symbol",
+    "title": "General high-performance SCADA symbols",
+    "image": "tb-image:aHBfc2NhZGFfZ2VuZXJhbF9zeW1ib2xzX3N5c3RlbV9idW5kbGVfaW1hZ2UucG5n:IkdlbmVyYWwgaGlnaC1wZXJmb3JtYW5jZSBTQ0FEQSBzdW1ib2xzIiBzeXN0ZW0gYnVuZGxlIGltYWdl:SU1BR0U=;data:image/png;base64,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",
+    "scada": true,
+    "description": "Bundle with high-performance SCADA symbols",
+    "order": 9400,
+    "name": "General high-performance SCADA symbols"
+  },
+  "widgetTypeFqns": [
+    "hp_control_panel",
+    "hp_simple_horizontal_scale",
+    "hp_dynamic_horizontal_scale",
+    "hp_simple_vertical_scale",
+    "hp_dynamic_vertical_scale",
+    "hp_long_horizontal_connector",
+    "hp_long_vertical_connector",
+    "hp_horizontal_connector",
+    "hp_vertical_connector",
+    "hp_top_right_elbow_connector",
+    "hp_left_bottom_elbow_connector",
+    "hp_bottom_right_elbow_connector",
+    "hp_left_top_elbow_connector",
+    "hp_cross_connector",
+    "hp_bottom_tee_connector",
+    "hp_right_tee_connector",
+    "hp_left_tee_connector",
+    "hp_top_tee_connector"
+  ]
+}

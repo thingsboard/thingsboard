@@ -17,9 +17,9 @@ package org.thingsboard.server.service.housekeeper.processor;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
+import org.thingsboard.server.dao.event.EventService;
 
 @Component
 @RequiredArgsConstructor

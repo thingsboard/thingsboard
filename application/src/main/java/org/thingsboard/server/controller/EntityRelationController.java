@@ -16,11 +16,8 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -82,7 +79,23 @@ public class EntityRelationController extends BaseController {
     @RequestMapping(value = "/relation", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
     public void saveRelation(@Parameter(description = "A JSON value representing the relation.", required = true)
-                             @RequestBody EntityRelation relation) throws ThingsboardException {
+                                       @RequestBody EntityRelation relation) throws ThingsboardException {
+        doSave(relation);
+    }
+
+    @ApiOperation(value = "Create Relation (saveRelationV2)",
+            notes = "Creates or updates a relation between two entities in the platform. " +
+                    "Relations unique key is a combination of from/to entity id and relation type group and relation type. " +
+                    SECURITY_CHECKS_ENTITIES_DESCRIPTION)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/v2/relation", method = RequestMethod.POST)
+    @ResponseStatus(value = HttpStatus.OK)
+    public EntityRelation saveRelationV2(@Parameter(description = "A JSON value representing the relation.", required = true)
+                                         @RequestBody EntityRelation relation) throws ThingsboardException {
+        return doSave(relation);
+    }
+
+    private EntityRelation doSave(EntityRelation relation) throws ThingsboardException {
         checkNotNull(relation);
         checkCanCreateRelation(relation.getFrom());
         checkCanCreateRelation(relation.getTo());
@@ -90,7 +103,7 @@ public class EntityRelationController extends BaseController {
             relation.setTypeGroup(RelationTypeGroup.COMMON);
         }
 
-        tbEntityRelationService.save(getTenantId(), getCurrentUser().getCustomerId(), relation, getCurrentUser());
+        return tbEntityRelationService.save(getTenantId(), getCurrentUser().getCustomerId(), relation, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete Relation (deleteRelation)",
@@ -104,6 +117,24 @@ public class EntityRelationController extends BaseController {
                                @Parameter(description = RELATION_TYPE_GROUP_PARAM_DESCRIPTION) @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup,
                                @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam(TO_ID) String strToId,
                                @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(TO_TYPE) String strToType) throws ThingsboardException {
+        doDelete(strFromId, strFromType, strRelationType, strRelationTypeGroup, strToId, strToType);
+    }
+
+    @ApiOperation(value = "Delete Relation (deleteRelationV2)",
+            notes = "Deletes a relation between two entities in the platform. " + SECURITY_CHECKS_ENTITIES_DESCRIPTION)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/v2/relation", method = RequestMethod.DELETE, params = {FROM_ID, FROM_TYPE, RELATION_TYPE, TO_ID, TO_TYPE})
+    @ResponseStatus(value = HttpStatus.OK)
+    public EntityRelation deleteRelationV2(@Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam(FROM_ID) String strFromId,
+                                         @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(FROM_TYPE) String strFromType,
+                                         @Parameter(description = RELATION_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(RELATION_TYPE) String strRelationType,
+                                         @Parameter(description = RELATION_TYPE_GROUP_PARAM_DESCRIPTION) @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup,
+                                         @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam(TO_ID) String strToId,
+                                         @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(TO_TYPE) String strToType) throws ThingsboardException {
+        return doDelete(strFromId, strFromType, strRelationType, strRelationTypeGroup, strToId, strToType);
+    }
+
+    private EntityRelation doDelete(String strFromId, String strFromType, String strRelationType, String strRelationTypeGroup, String strToId, String strToType) throws ThingsboardException {
         checkParameter(FROM_ID, strFromId);
         checkParameter(FROM_TYPE, strFromType);
         checkParameter(RELATION_TYPE, strRelationType);
@@ -116,7 +147,7 @@ public class EntityRelationController extends BaseController {
 
         RelationTypeGroup relationTypeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         EntityRelation relation = new EntityRelation(fromId, toId, strRelationType, relationTypeGroup);
-        tbEntityRelationService.delete(getTenantId(), getCurrentUser().getCustomerId(), relation, getCurrentUser());
+        return tbEntityRelationService.delete(getTenantId(), getCurrentUser().getCustomerId(), relation, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete common relations (deleteCommonRelations)",

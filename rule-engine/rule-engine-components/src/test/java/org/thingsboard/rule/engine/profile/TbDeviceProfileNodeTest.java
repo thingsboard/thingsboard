@@ -20,13 +20,17 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -80,6 +84,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -87,8 +92,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class TbDeviceProfileNodeTest {
+public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
 
+    @Spy
     private TbDeviceProfileNode node;
 
     @Mock
@@ -1721,6 +1727,37 @@ public class TbDeviceProfileNodeTest {
                     .alarm(alarm)
                     .build();
         });
+    }
+
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                // default config for version 1 with upgrade from version 0
+                Arguments.of(0,
+                        "{\"persistAlarmRulesState\":false,\"fetchAlarmRulesStateOnStart\":false}",
+                        true,
+                        "{\"persistAlarmRulesState\":false,\"fetchAlarmRulesStateOnStart\":false}"),
+                // config for version 1 with upgrade from version 0 (persistAlarmRulesState and fetchAlarmRulesStateOnStart - true)
+                Arguments.of(0,
+                        "{\"persistAlarmRulesState\":true,\"fetchAlarmRulesStateOnStart\":true}",
+                        false,
+                        "{\"persistAlarmRulesState\":true,\"fetchAlarmRulesStateOnStart\":true}"),
+                // config for version 1 with upgrade from version 0 (persistAlarmRulesState - true, fetchAlarmRulesStateOnStart - false)
+                Arguments.of(0,
+                        "{\"persistAlarmRulesState\":true,\"fetchAlarmRulesStateOnStart\":false}",
+                        false,
+                        "{\"persistAlarmRulesState\":true,\"fetchAlarmRulesStateOnStart\":false}"),
+                // config for version 1 with upgrade from version 0 (persistAlarmRulesState - false, fetchAlarmRulesStateOnStart - true)
+                Arguments.of(0,
+                        "{\"persistAlarmRulesState\":false,\"fetchAlarmRulesStateOnStart\":true}",
+                        true,
+                        "{\"persistAlarmRulesState\":false,\"fetchAlarmRulesStateOnStart\":false}")
+        );
+
+    }
+
+    @Override
+    protected TbNode getTestNode() {
+        return node;
     }
 
 }

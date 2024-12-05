@@ -18,18 +18,19 @@
 <section class="tb-widget-settings" [formGroup]="markersSettingsFormGroup">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.maps.markers-settings</legend>
-    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-      <mat-form-field fxFlex class="mat-block">
+    <section class="!flex flex-row xs:flex-col gt-xs:gap-2">
+      <mat-form-field class="flex-1">
         <mat-label translate>widgets.maps.marker-offset-x</mat-label>
         <input matInput type="number" formControlName="markerOffsetX">
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="flex-1">
         <mat-label translate>widgets.maps.marker-offset-y</mat-label>
         <input matInput type="number" formControlName="markerOffsetY">
       </mat-form-field>
     </section>
-    <tb-js-func [fxShow]="provider === mapProvider.image"
+    <tb-js-func [class.!hidden]="provider !== mapProvider.image"
                 formControlName="posFunction"
+                withModules
                 minHeight="100px"
                 [globalVariables]="functionScopeVariables"
                 [functionArgs]="['origXPos', 'origYPos', 'data', 'dsData', 'dsIndex', 'aspect']"
@@ -42,14 +43,13 @@
     <fieldset class="fields-group fields-group-slider">
       <legend class="group-title" translate>widgets.maps.label</legend>
       <mat-expansion-panel class="tb-settings" [expanded]="markersSettingsFormGroup.get('showLabel').value">
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex-wrap">
           <mat-panel-title>
-            <mat-slide-toggle formControlName="showLabel" (click)="$event.stopPropagation()"
-                              fxLayoutAlign="center">
+            <mat-slide-toggle formControlName="showLabel" (click)="$event.stopPropagation()">
               {{ 'widgets.maps.show-label' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>
-          <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+          <mat-panel-description class="justify-end xs:!hidden" translate>
             widget-config.advanced-settings
           </mat-panel-description>
         </mat-expansion-panel-header>
@@ -57,13 +57,14 @@
           <mat-slide-toggle formControlName="useLabelFunction" class="slide-block">
             {{ 'widgets.maps.use-label-function' | translate }}
           </mat-slide-toggle>
-          <tb-html [fxShow]="!markersSettingsFormGroup.get('useLabelFunction').value"
+          <tb-html [class.!hidden]="markersSettingsFormGroup.get('useLabelFunction').value"
                    formControlName="label"
                    minHeight="100px"
                    label="{{ 'widgets.maps.label-pattern' | translate }}">
           </tb-html>
-          <tb-js-func [fxShow]="markersSettingsFormGroup.get('useLabelFunction').value"
+          <tb-js-func [class.!hidden]="!markersSettingsFormGroup.get('useLabelFunction').value"
                       formControlName="labelFunction"
+                      withModules
                       [globalVariables]="functionScopeVariables"
                       [functionArgs]="['data', 'dsData', 'dsIndex']"
                       functionTitle="{{ 'widgets.maps.label-function' | translate }}"
@@ -75,19 +76,18 @@
     <fieldset class="fields-group fields-group-slider">
       <legend class="group-title" translate>widgets.maps.tooltip</legend>
       <mat-expansion-panel class="tb-settings" [expanded]="markersSettingsFormGroup.get('showTooltip').value">
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex-wrap">
           <mat-panel-title>
-            <mat-slide-toggle formControlName="showTooltip" (click)="$event.stopPropagation()"
-                              fxLayoutAlign="center">
+            <mat-slide-toggle formControlName="showTooltip" (click)="$event.stopPropagation()">
               {{ 'widgets.maps.show-tooltip' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>
-          <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+          <mat-panel-description class="justify-end xs:!hidden" translate>
             widget-config.advanced-settings
           </mat-panel-description>
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
-          <mat-form-field fxFlex class="mat-block">
+          <mat-form-field class="mat-block">
             <mat-label translate>widgets.maps.show-tooltip-action</mat-label>
             <mat-select required formControlName="showTooltipAction">
               <mat-option *ngFor="let action of showTooltipActions" [value]="action">
@@ -101,24 +101,25 @@
           <mat-slide-toggle formControlName="useTooltipFunction" class="slide-block">
             {{ 'widgets.maps.use-tooltip-function' | translate }}
           </mat-slide-toggle>
-          <tb-html [fxShow]="!markersSettingsFormGroup.get('useTooltipFunction').value"
+          <tb-html [class.!hidden]="markersSettingsFormGroup.get('useTooltipFunction').value"
                    formControlName="tooltipPattern"
                    minHeight="100px"
                    label="{{ 'widgets.maps.tooltip-pattern' | translate }}">
           </tb-html>
-          <tb-js-func [fxShow]="markersSettingsFormGroup.get('useTooltipFunction').value"
+          <tb-js-func [class.!hidden]="!markersSettingsFormGroup.get('useTooltipFunction').value"
                       formControlName="tooltipFunction"
+                      withModules
                       [globalVariables]="functionScopeVariables"
                       [functionArgs]="['data', 'dsData', 'dsIndex']"
                       functionTitle="{{ 'widgets.maps.tooltip-function' | translate }}"
                       helpId="widget/lib/map/tooltip_fn">
           </tb-js-func>
-          <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-            <mat-form-field fxFlex class="mat-block">
+          <section class="flex flex-row xs:flex-col gt-xs:gap-2">
+            <mat-form-field class="flex-1">
               <mat-label translate>widgets.maps.tooltip-offset-x</mat-label>
               <input matInput type="number" formControlName="tooltipOffsetX">
             </mat-form-field>
-            <mat-form-field fxFlex class="mat-block">
+            <mat-form-field class="flex-1">
               <mat-label translate>widgets.maps.tooltip-offset-y</mat-label>
               <input matInput type="number" formControlName="tooltipOffsetY">
             </mat-form-field>
@@ -134,19 +135,19 @@
         label="{{ 'widgets.maps.color' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
       <mat-expansion-panel class="tb-settings" [expanded]="markersSettingsFormGroup.get('useColorFunction').value">
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex-wrap">
           <mat-panel-title>
-            <mat-slide-toggle formControlName="useColorFunction" (click)="$event.stopPropagation()"
-                              fxLayoutAlign="center">
+            <mat-slide-toggle formControlName="useColorFunction" (click)="$event.stopPropagation()">
               {{ 'widgets.maps.use-color-function' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>
-          <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+          <mat-panel-description class="justify-end xs:!hidden" translate>
             widget-config.advanced-settings
           </mat-panel-description>
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
           <tb-js-func formControlName="colorFunction"
+                      withModules
                       [globalVariables]="functionScopeVariables"
                       [functionArgs]="['data', 'dsData', 'dsIndex']"
                       functionTitle="{{ 'widgets.maps.color-function' | translate }}"
@@ -158,35 +159,35 @@
     <fieldset class="fields-group fields-group-slider">
       <legend class="group-title" translate>widgets.maps.marker-image</legend>
       <mat-expansion-panel class="tb-settings" expanded>
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex-wrap">
           <mat-panel-title>
-            <mat-slide-toggle formControlName="useMarkerImageFunction" (click)="$event.stopPropagation()"
-                              fxLayoutAlign="center">
+            <mat-slide-toggle formControlName="useMarkerImageFunction" (click)="$event.stopPropagation()">
               {{ 'widgets.maps.use-marker-image-function' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>
-          <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+          <mat-panel-description class="justify-end xs:!hidden" translate>
             widget-config.advanced-settings
           </mat-panel-description>
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
-          <tb-gallery-image-input [fxShow]="!markersSettingsFormGroup.get('useMarkerImageFunction').value"
+          <tb-gallery-image-input [class.!hidden]="markersSettingsFormGroup.get('useMarkerImageFunction').value"
                           label="{{ 'widgets.maps.custom-marker-image' | translate }}"
                           formControlName="markerImage">
           </tb-gallery-image-input>
-          <mat-form-field [fxShow]="!markersSettingsFormGroup.get('useMarkerImageFunction').value"
-                          fxFlex class="mat-block">
+          <mat-form-field [class.!hidden]="markersSettingsFormGroup.get('useMarkerImageFunction').value"
+                          class="mat-block">
             <mat-label translate>widgets.maps.custom-marker-image-size</mat-label>
             <input matInput type="number" min="1" formControlName="markerImageSize">
           </mat-form-field>
-          <tb-js-func [fxShow]="markersSettingsFormGroup.get('useMarkerImageFunction').value"
+          <tb-js-func [class.!hidden]="!markersSettingsFormGroup.get('useMarkerImageFunction').value"
                       formControlName="markerImageFunction"
+                      withModules
                       [globalVariables]="functionScopeVariables"
                       [functionArgs]="['data', 'images', 'dsData', 'dsIndex']"
                       functionTitle="{{ 'widgets.maps.marker-image-function' | translate }}"
                       helpId="widget/lib/map/marker_image_fn">
           </tb-js-func>
-          <tb-multiple-gallery-image-input [fxShow]="markersSettingsFormGroup.get('useMarkerImageFunction').value"
+          <tb-multiple-gallery-image-input [class.!hidden]="!markersSettingsFormGroup.get('useMarkerImageFunction').value"
                                            label="{{ 'widgets.maps.marker-images' | translate }}"
                                            formControlName="markerImages">
           </tb-multiple-gallery-image-input>

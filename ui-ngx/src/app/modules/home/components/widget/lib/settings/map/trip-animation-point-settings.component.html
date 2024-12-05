@@ -19,44 +19,43 @@
   <fieldset class="fields-group fields-group-slider">
     <legend class="group-title" translate>widgets.maps.points-settings</legend>
     <mat-expansion-panel class="tb-settings" [expanded]="tripAnimationPointSettingsFormGroup.get('showPoints').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle formControlName="showPoints" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle formControlName="showPoints" (click)="$event.stopPropagation()">
             {{ 'widgets.maps.show-points' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px">
+        <section class="flex flex-col gt-xs:flex-row gt-xs:gap-2">
           <tb-color-input
-            fxFlex
+            class="flex-1"
             formControlName="pointColor"
             icon="format_color_fill"
             label="{{ 'widgets.maps.point-color' | translate }}" openOnInput colorClearButton>
           </tb-color-input>
-          <mat-form-field fxFlex class="mat-block">
+          <mat-form-field class="flex-1">
             <mat-label translate>widgets.maps.point-size</mat-label>
             <input matInput type="number" min="1" formControlName="pointSize">
           </mat-form-field>
         </section>
         <mat-expansion-panel class="tb-settings" [expanded]="tripAnimationPointSettingsFormGroup.get('useColorPointFunction').value">
-          <mat-expansion-panel-header fxLayout="row wrap">
+          <mat-expansion-panel-header class="flex-wrap">
             <mat-panel-title>
-              <mat-slide-toggle formControlName="useColorPointFunction" (click)="$event.stopPropagation()"
-                                fxLayoutAlign="center">
+              <mat-slide-toggle formControlName="useColorPointFunction" (click)="$event.stopPropagation()">
                 {{ 'widgets.maps.use-point-color-function' | translate }}
               </mat-slide-toggle>
             </mat-panel-title>
-            <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+            <mat-panel-description class="justify-end xs:!hidden" translate>
               widget-config.advanced-settings
             </mat-panel-description>
           </mat-expansion-panel-header>
           <ng-template matExpansionPanelContent>
             <tb-js-func formControlName="colorPointFunction"
+                        withModules
                         [globalVariables]="functionScopeVariables"
                         [functionArgs]="['data', 'dsData', 'dsIndex']"
                         functionTitle="{{ 'widgets.maps.point-color-function' | translate }}"
@@ -65,19 +64,19 @@
           </ng-template>
         </mat-expansion-panel>
         <mat-expansion-panel class="tb-settings" [expanded]="tripAnimationPointSettingsFormGroup.get('usePointAsAnchor').value">
-          <mat-expansion-panel-header fxLayout="row wrap">
+          <mat-expansion-panel-header class="flex-wrap">
             <mat-panel-title>
-              <mat-slide-toggle formControlName="usePointAsAnchor" (click)="$event.stopPropagation()"
-                                fxLayoutAlign="center">
+              <mat-slide-toggle formControlName="usePointAsAnchor" (click)="$event.stopPropagation()">
                 {{ 'widgets.maps.use-point-as-anchor' | translate }}
               </mat-slide-toggle>
             </mat-panel-title>
-            <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+            <mat-panel-description class="justify-end xs:!hidden" translate>
               widget-config.advanced-settings
             </mat-panel-description>
           </mat-expansion-panel-header>
           <ng-template matExpansionPanelContent>
             <tb-js-func formControlName="pointAsAnchorFunction"
+                        withModules
                         [globalVariables]="functionScopeVariables"
                         [functionArgs]="['data', 'dsData', 'dsIndex']"
                         functionTitle="{{ 'widgets.maps.point-as-anchor-function' | translate }}"

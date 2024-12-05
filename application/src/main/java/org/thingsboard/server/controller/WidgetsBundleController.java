@@ -36,8 +36,9 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.dao.resource.ImageService;
+import org.thingsboard.server.common.data.widget.WidgetsBundleFilter;
 import org.thingsboard.server.config.annotations.ApiOperation;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.widgets.bundle.TbWidgetsBundleService;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -72,6 +73,7 @@ public class WidgetsBundleController extends BaseController {
 
     private static final String WIDGET_BUNDLE_DESCRIPTION = "Widget Bundle represents a group(bundle) of widgets. Widgets are grouped into bundle by type or use case. ";
     private static final String FULL_SEARCH_PARAM_DESCRIPTION = "Optional boolean parameter indicating extended search of widget bundles by description and by name / description of related widget types";
+    private static final String SCADA_FIRST_PARAM_DESCRIPTION = "Optional boolean parameter indicating whether to fetch widgets bundles with SCADA symbols first. Works only when fullSearch parameter is enabled";
     private static final String TENANT_BUNDLES_ONLY_DESCRIPTION = "Optional boolean parameter to include only tenant-level bundles without system";
 
     @ApiOperation(value = "Get Widget Bundle (getWidgetsBundleById)",
@@ -198,16 +200,22 @@ public class WidgetsBundleController extends BaseController {
             @Parameter(description = TENANT_BUNDLES_ONLY_DESCRIPTION)
             @RequestParam(required = false) Boolean tenantOnly,
             @Parameter(description = FULL_SEARCH_PARAM_DESCRIPTION)
-            @RequestParam(required = false) Boolean fullSearch) throws ThingsboardException {
+            @RequestParam(required = false) Boolean fullSearch,
+            @Parameter(description = SCADA_FIRST_PARAM_DESCRIPTION)
+            @RequestParam(required = false) Boolean scadaFirst) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        WidgetsBundleFilter widgetsBundleFilter = WidgetsBundleFilter.builder()
+                .tenantId(getTenantId())
+                .fullSearch(fullSearch != null && fullSearch)
+                .scadaFirst(scadaFirst != null && scadaFirst)
+                .build();
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
-            return checkNotNull(widgetsBundleService.findSystemWidgetsBundlesByPageLink(getTenantId(), fullSearch != null && fullSearch, pageLink));
+            return checkNotNull(widgetsBundleService.findSystemWidgetsBundlesByPageLink(widgetsBundleFilter, pageLink));
         } else {
-            TenantId tenantId = getCurrentUser().getTenantId();
             if (tenantOnly != null && tenantOnly) {
-                return checkNotNull(widgetsBundleService.findTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, fullSearch != null && fullSearch, pageLink));
+                return checkNotNull(widgetsBundleService.findTenantWidgetsBundlesByTenantIdAndPageLink(widgetsBundleFilter, pageLink));
             } else {
-                return checkNotNull(widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, fullSearch != null && fullSearch, pageLink));
+                return checkNotNull(widgetsBundleService.findAllTenantWidgetsBundlesByTenantIdAndPageLink(widgetsBundleFilter, pageLink));
             }
         }
     }

@@ -30,9 +30,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { providerClass } from '@home/components/widget/lib/maps/providers/public-api';
-import { isDefined, isDefinedAndNotNull, parseFunction } from '@core/utils';
+import { isDefined, isDefinedAndNotNull, parseFunction, parseTbFunction } from '@core/utils';
 import L from 'leaflet';
-import { forkJoin, Observable, of } from 'rxjs';
+import { firstValueFrom, forkJoin, from, Observable, of } from 'rxjs';
 import { AttributeService } from '@core/http/attribute.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
@@ -40,12 +40,18 @@ import { AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/tel
 // @dynamic
 export class MapWidgetController implements MapWidgetInterface {
 
+    private updatePending = false;
+    private latestUpdatePending = false;
+    private resizePending = false;
+    private destroyed = false;
+
     constructor(
         public mapProvider: MapProviders,
         private drawRoutes: boolean,
         public ctx: WidgetContext,
         $element: HTMLElement,
-        isEdit?: boolean
+        isEdit = false,
+        mapLoaded?: (map: LeafletMap) => void
     ) {
         if (this.map) {
             this.map.map.remove();
@@ -56,37 +62,53 @@ export class MapWidgetController implements MapWidgetInterface {
         if (!$element) {
             $element = ctx.$container[0];
         }
-        this.settings = this.initSettings(ctx.settings, isEdit);
-        this.settings.tooltipAction = this.getDescriptors('tooltipAction');
-        this.settings.markerClick = this.getDescriptors('markerClick');
-        this.settings.polygonClick = this.getDescriptors('polygonClick');
-        this.settings.circleClick = this.getDescriptors('circleClick');
+        from(this.initSettings(ctx.settings, isEdit)).subscribe(settings => {
+          if (!this.destroyed) {
+            this.settings = settings;
+            this.settings.tooltipAction = this.getDescriptors('tooltipAction');
+            this.settings.markerClick = this.getDescriptors('markerClick');
+            this.settings.polygonClick = this.getDescriptors('polygonClick');
+            this.settings.circleClick = this.getDescriptors('circleClick');
 
-        const MapClass = providerClass[this.provider];
-        if (!MapClass) {
-            return;
-        }
-        parseWithTranslation.setTranslate(this.translate);
-        this.map = new MapClass(this.ctx, $element, this.settings);
-        (this.ctx as any).mapInstance = this.map;
-        this.map.saveMarkerLocation = this.setMarkerLocation.bind(this);
-        this.map.savePolygonLocation = this.savePolygonLocation.bind(this);
-        this.map.saveLocation = this.saveLocation.bind(this);
-        let pageSize = this.settings.mapPageSize;
-        if (isDefinedAndNotNull(this.ctx.widgetConfig.pageSize)) {
-          pageSize = Math.max(pageSize, this.ctx.widgetConfig.pageSize);
-        }
-        this.pageLink = {
-          page: 0,
-          pageSize,
-          textSearch: null,
-          dynamic: true
-        };
-        this.map.setLoading(true);
-        this.ctx.defaultSubscription.paginatedDataSubscriptionUpdated.subscribe(() => {
-          this.map.resetState();
+            const MapClass = providerClass[this.provider];
+            if (!MapClass) {
+              return;
+            }
+            parseWithTranslation.setTranslate(this.translate);
+            this.map = new MapClass(this.ctx, $element, this.settings);
+            (this.ctx as any).mapInstance = this.map;
+            this.map.saveMarkerLocation = this.setMarkerLocation.bind(this);
+            this.map.savePolygonLocation = this.savePolygonLocation.bind(this);
+            this.map.saveLocation = this.saveLocation.bind(this);
+            let pageSize = this.settings.mapPageSize;
+            if (isDefinedAndNotNull(this.ctx.widgetConfig.pageSize)) {
+              pageSize = Math.max(pageSize, this.ctx.widgetConfig.pageSize);
+            }
+            this.pageLink = {
+              page: 0,
+              pageSize,
+              textSearch: null,
+              dynamic: true
+            };
+            this.map.setLoading(true);
+            this.ctx.defaultSubscription.paginatedDataSubscriptionUpdated.subscribe(() => {
+              this.map.resetState();
+            });
+            this.ctx.defaultSubscription.subscribeAllForPaginatedData(this.pageLink, null);
+            if (this.updatePending) {
+              this.update();
+            }
+            if (this.latestUpdatePending) {
+              this.latestDataUpdate();
+            }
+            if (this.resizePending) {
+              this.resize();
+            }
+            if (mapLoaded) {
+              mapLoaded(this.map);
+            }
+          }
         });
-        this.ctx.defaultSubscription.subscribeAllForPaginatedData(this.pageLink, null);
     }
 
     map: LeafletMap;
@@ -150,7 +172,7 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     setMarkerLocation(e: FormattedData, lat?: number, lng?: number) {
-      let markerValue;
+      let markerValue: {[p: string]: any};
       if (isDefined(lat) && isDefined(lng)) {
         const point = lat != null && lng !== null ? L.latLng(lat, lng) : null;
         markerValue = this.map.convertToCustomFormat(point);
@@ -169,7 +191,7 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     savePolygonLocation(e: FormattedData, coordinates?: Array<any>) {
-      let polygonValue;
+      let polygonValue: {[p: string]: any};
       if (isDefined(coordinates)) {
         polygonValue = this.map.convertToPolygonFormat(coordinates);
       } else {
@@ -233,27 +255,27 @@ export class MapWidgetController implements MapWidgetInterface {
       }
     }
 
-    initSettings(settings: UnitedMapSettings, isEditMap?: boolean): WidgetUnitedMapSettings {
+    async initSettings(settings: UnitedMapSettings, isEditMap?: boolean): Promise<WidgetUnitedMapSettings> {
         const functionParams = ['data', 'dsData', 'dsIndex'];
         this.provider = settings.provider || this.mapProvider;
         const parsedOptions: Partial<WidgetUnitedMapSettings> = {
             provider: this.provider,
-            parsedLabelFunction: parseFunction(settings.labelFunction, functionParams),
-            parsedTooltipFunction: parseFunction(settings.tooltipFunction, functionParams),
-            parsedColorFunction: parseFunction(settings.colorFunction, functionParams),
-            parsedColorPointFunction: parseFunction(settings.colorPointFunction, functionParams),
-            parsedStrokeOpacityFunction: parseFunction(settings.strokeOpacityFunction, functionParams),
-            parsedStrokeWeightFunction: parseFunction(settings.strokeWeightFunction, functionParams),
-            parsedPolygonLabelFunction: parseFunction(settings.polygonLabelFunction, functionParams),
-            parsedPolygonColorFunction: parseFunction(settings.polygonColorFunction, functionParams),
-            parsedPolygonStrokeColorFunction: parseFunction(settings.polygonStrokeColorFunction, functionParams),
-            parsedPolygonTooltipFunction: parseFunction(settings.polygonTooltipFunction, functionParams),
-            parsedCircleLabelFunction: parseFunction(settings.circleLabelFunction, functionParams),
-            parsedCircleStrokeColorFunction: parseFunction(settings.circleStrokeColorFunction, functionParams),
-            parsedCircleFillColorFunction: parseFunction(settings.circleFillColorFunction, functionParams),
-            parsedCircleTooltipFunction: parseFunction(settings.circleTooltipFunction, functionParams),
-            parsedMarkerImageFunction: parseFunction(settings.markerImageFunction, ['data', 'images', 'dsData', 'dsIndex']),
-            parsedClusterMarkerFunction: parseFunction(settings.clusterMarkerFunction, ['data', 'childCount']),
+            parsedLabelFunction: await firstValueFrom(parseTbFunction(this.ctx.http, settings.labelFunction, functionParams)),
+            parsedTooltipFunction: await firstValueFrom(parseTbFunction(this.ctx.http, settings.tooltipFunction, functionParams)),
+            parsedColorFunction: await firstValueFrom(parseTbFunction(this.ctx.http, settings.colorFunction, functionParams)),
+            parsedColorPointFunction: await firstValueFrom(parseTbFunction(this.ctx.http, settings.colorPointFunction, functionParams)),
+            parsedStrokeOpacityFunction: await firstValueFrom(parseTbFunction(this.ctx.http, settings.strokeOpacityFunction, functionParams)),
+            parsedStrokeWeightFunction: await firstValueFrom(parseTbFunction(this.ctx.http, settings.strokeWeightFunction, functionParams)),
+            parsedPolygonLabelFunction: await firstValueFrom(parseTbFunction(this.ctx.http, settings.polygonLabelFunction, functionParams)),
+            parsedPolygonColorFunction: await firstValueFrom(parseTbFunction(this.ctx.http, settings.polygonColorFunction, functionParams)),
+            parsedPolygonStrokeColorFunction: await firstValueFrom(parseTbFunction(this.ctx.http, settings.polygonStrokeColorFunction, functionParams)),
+            parsedPolygonTooltipFunction: await firstValueFrom(parseTbFunction(this.ctx.http, settings.polygonTooltipFunction, functionParams)),
+            parsedCircleLabelFunction: await firstValueFrom(parseTbFunction(this.ctx.http, settings.circleLabelFunction, functionParams)),
+            parsedCircleStrokeColorFunction: await firstValueFrom(parseTbFunction(this.ctx.http, settings.circleStrokeColorFunction, functionParams)),
+            parsedCircleFillColorFunction: await firstValueFrom(parseTbFunction(this.ctx.http, settings.circleFillColorFunction, functionParams)),
+            parsedCircleTooltipFunction: await firstValueFrom(parseTbFunction(this.ctx.http, settings.circleTooltipFunction, functionParams)),
+            parsedMarkerImageFunction: await firstValueFrom(parseTbFunction(this.ctx.http, settings.markerImageFunction, ['data', 'images', 'dsData', 'dsIndex'])),
+            parsedClusterMarkerFunction: await firstValueFrom(parseTbFunction(this.ctx.http, settings.clusterMarkerFunction, ['data', 'childCount'])),
             // labelColor: this.ctx.widgetConfig.color,
             // polygonLabelColor: this.ctx.widgetConfig.color,
             polygonKeyName: (settings as any).polKeyName ? (settings as any).polKeyName : settings.polygonKeyName,
@@ -277,20 +299,36 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     update() {
+      if (this.map) {
+        this.updatePending = false;
         this.map.updateData(this.drawRoutes);
         this.map.setLoading(false);
+      } else {
+        this.updatePending = true;
+      }
     }
 
     latestDataUpdate() {
-      this.map.updateData(this.drawRoutes);
+      if (this.map) {
+        this.latestUpdatePending = false;
+        this.map.updateData(this.drawRoutes);
+      } else {
+        this.latestUpdatePending = true;
+      }
     }
 
     resize() {
-      this.map.onResize();
-      this.map?.invalidateSize();
+      if (this.map) {
+        this.resizePending = false;
+        this.map.onResize();
+        this.map.invalidateSize();
+      } else {
+        this.resizePending = true;
+      }
     }
 
     destroy() {
+      this.destroyed = true;
       if (this.map) {
         this.map.remove();
       }

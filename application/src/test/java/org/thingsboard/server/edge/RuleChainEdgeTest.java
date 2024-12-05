@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.rule.engine.util.TbMsgSource;
+import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -38,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -186,6 +188,18 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
     }
 
     @Test
+    public void testUpdateRootRuleChain() throws Exception {
+        edgeImitator.expectMessageAmount(2);
+        updateRootRuleChainMetadata();
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        Optional<RuleChainUpdateMsg> ruleChainUpdateMsgOpt = edgeImitator.findMessageByType(RuleChainUpdateMsg.class);
+        Assert.assertTrue(ruleChainUpdateMsgOpt.isPresent());
+        Optional<RuleChainMetadataUpdateMsg> ruleChainMetadataUpdateMsgOpt = edgeImitator.findMessageByType(RuleChainMetadataUpdateMsg.class);
+        Assert.assertTrue(ruleChainMetadataUpdateMsgOpt.isPresent());
+    }
+
+    @Test
     public void testSetRootRuleChain() throws Exception {
         // create rule chain
         RuleChain ruleChain = new RuleChain();
@@ -193,7 +207,7 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
         ruleChain.setType(RuleChainType.EDGE);
         RuleChain savedRuleChain = doPost("/api/ruleChain", ruleChain, RuleChain.class);
 
-        edgeImitator.expectMessageAmount(2);
+        edgeImitator.expectMessageAmount(4);
         doPost("/api/edge/" + edge.getUuidId()
                 + "/ruleChain/" + savedRuleChain.getUuidId(), RuleChain.class);
         RuleChainMetaData metaData = createRuleChainMetadata(savedRuleChain);
@@ -201,7 +215,7 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
 
         // set new rule chain as root
         RuleChainId currentRootRuleChainId = edge.getRootRuleChainId();
-        edgeImitator.expectMessageAmount(1);
+        edgeImitator.expectMessageAmount(2);
         doPost("/api/edge/" + edge.getUuidId()
                 + "/" + savedRuleChain.getUuidId() + "/root", Edge.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
@@ -216,7 +230,7 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
 
         // update metadata for root rule chain
         edgeImitator.expectMessageAmount(1);
-        metaData.getNodes().forEach(n -> n.setDebugMode(true));
+        metaData.getNodes().forEach(n -> n.setDebugSettings(DebugSettings.all()));
         doPost("/api/ruleChain/metadata", metaData, RuleChainMetaData.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
         ruleChainUpdateMsgOpt = edgeImitator.findMessageByType(RuleChainUpdateMsg.class);

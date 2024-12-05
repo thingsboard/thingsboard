@@ -15,21 +15,21 @@
     limitations under the License.
 
 -->
-<section fxLayout="column" class="tb-kv-map" [formGroup]="kvListFormGroup">
+<section class="tb-kv-map flex flex-col" [formGroup]="kvListFormGroup">
   <label translate class="tb-title">{{ titleText }}</label>
-  <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px"
+  <div class="flex flex-row items-center justify-start gap-2"
        formArrayName="keyVals"
        *ngFor="let keyValControl of keyValsFormArray().controls; let $index = index">
-    <mat-form-field fxFlex class="mat-block" subscriptSizing="{{ subscriptSizing }}">
+    <mat-form-field class="mat-block flex-1" subscriptSizing="{{ subscriptSizing }}">
       <input [formControl]="keyValControl.get('key')" matInput required
              placeholder="{{ (keyPlaceholderText ? keyPlaceholderText : 'key-val.key') | translate }}"/>
     </mat-form-field>
-    <mat-form-field fxFlex class="mat-block" subscriptSizing="{{ subscriptSizing }}">
-      <input [formControl]="keyValControl.get('value')" matInput required
+    <mat-form-field class="mat-block flex-1" subscriptSizing="{{ subscriptSizing }}">
+      <input [formControl]="keyValControl.get('value')" matInput [required]="isValueRequired"
              placeholder="{{ (valuePlaceholderText ? valuePlaceholderText : 'key-val.value') | translate }}"/>
     </mat-form-field>
     <button mat-icon-button color="primary"
-            [fxShow]="!disabled"
+            [class.!hidden]="disabled"
             type="button"
             (click)="removeKeyVal($index)"
             [disabled]="isLoading$ | async"
@@ -38,12 +38,14 @@
       <mat-icon>close</mat-icon>
     </button>
   </div>
-  <span [fxShow]="!keyValsFormArray().length"
-        fxLayoutAlign="center center" [ngClass]="{'disabled': disabled}"
-        class="no-data-found" translate>{{noDataText ? noDataText : 'key-val.no-data'}}</span>
+  <span [class]="{
+          'disabled': disabled,
+          '!hidden': keyValsFormArray().length
+        }"
+        class="no-data-found flex items-center justify-center" translate>{{noDataText ? noDataText : 'key-val.no-data'}}</span>
   <div style="margin-top: 8px;">
     <button mat-button mat-raised-button color="primary"
-            [fxShow]="!disabled"
+            [class.!hidden]="disabled"
             [disabled]="isLoading$ | async"
             (click)="addKeyVal()"
             type="button"

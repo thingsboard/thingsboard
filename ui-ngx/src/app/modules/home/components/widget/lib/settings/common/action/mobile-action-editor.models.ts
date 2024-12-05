@@ -15,8 +15,9 @@
 ///
 
 import { WidgetMobileActionType } from '@shared/models/widget.models';
+import { TbFunction } from '@shared/models/js-function.models';
 
-const processImageFunctionTemplate =
+const processImageFunctionTemplate: TbFunction =
   '// Function body to process image obtained as a result of mobile action (take photo, take image from gallery, etc.). \n' +
   '// - imageUrl - image URL in base64 data format\n\n' +
   'showImageDialog(\'--TITLE--\', imageUrl);\n' +
@@ -49,24 +50,24 @@ const processImageFunctionTemplate =
   '  imageDialogTemplate =\n' +
   '    \'<div aria-label="Image">\' +\n' +
   '    \'<form #theForm="ngForm">\' +\n' +
-  '    \'<mat-toolbar fxLayout="row" color="primary">\' +\n' +
+  '    \'<mat-toolbar class="flex flex-row" color="primary">\' +\n' +
   '    \'<h2>{{title}}</h2>\' +\n' +
-  '    \'<span fxFlex></span>\' +\n' +
+  '    \'<span class="flex-1"></span>\' +\n' +
   '    \'<button mat-icon-button (click)="close()">\' +\n' +
   '    \'<mat-icon>close</mat-icon>\' +\n' +
   '    \'</button>\' +\n' +
   '    \'</mat-toolbar>\' +\n' +
   '    \'<div mat-dialog-content>\' +\n' +
   '    \'<div class="mat-content mat-padding">\' +\n' +
-  '    \'<div fxLayout="column" fxFlex>\' +\n' +
+  '    \'<div class="flex flex-1 flex-col">\' +\n' +
   '    \'<div style="padding-top: 20px;">\' +\n' +
   '    \'<img [src]="imageUrl" style="height: 300px;"/>\' +\n' +
   '    \'</div>\' +\n' +
   '    \'</div>\' +\n' +
   '    \'</div>\' +\n' +
   '    \'</div>\' +\n' +
-  '    \'<div mat-dialog-actions fxLayout="row">\' +\n' +
-  '    \'<span fxFlex></span>\' +\n' +
+  '    \'<div mat-dialog-actions class="flex flex-row">\' +\n' +
+  '    \'<span class="flex-1"></span>\' +\n' +
   '    \'<button mat-button (click)="close()" style="margin-right:20px;">Close</button>\' +\n' +
   '    \'</div>\' +\n' +
   '    \'</form>\' +\n' +
@@ -82,7 +83,7 @@ const processImageFunctionTemplate =
   '  }\n' +
   '}\n';
 
-const processLaunchResultFunctionTemplate =
+const processLaunchResultFunctionTemplate: TbFunction =
   // eslint-disable-next-line max-len
   '// Optional function body to process result of attempt to launch external mobile application (for ex. map application or phone call application). \n' +
   '// - launched - boolean value indicating if the external application was successfully launched.\n\n' +
@@ -94,7 +95,7 @@ const processLaunchResultFunctionTemplate =
   '    }, 100);\n' +
   '}\n';
 
-const processQrCodeFunction =
+const processQrCodeFunction: TbFunction =
   '// Function body to process result of QR code scanning. \n' +
   '// - code - scanned QR code\n' +
   '// - format - scanned QR code format\n\n' +
@@ -106,7 +107,7 @@ const processQrCodeFunction =
   '    }, 100);\n' +
   '}\n';
 
-const processLocationFunction =
+const processLocationFunction: TbFunction =
   '// Function body to process current location of the phone. \n' +
   '// - latitude - phone location latitude\n' +
   '// - longitude - phone location longitude\n\n' +
@@ -137,7 +138,7 @@ const processLocationFunction =
   '    }, 100);\n' +
   '}';
 
-const handleEmptyResultFunctionTemplate =
+const handleEmptyResultFunctionTemplate: TbFunction =
   '// Optional function body to handle empty result. \n' +
   '// Usually this happens when user cancels the action (for ex. by pressing phone back button). \n\n' +
   'showEmptyResultDialog(\'--MESSAGE--\');\n' +
@@ -148,7 +149,7 @@ const handleEmptyResultFunctionTemplate =
   '    }, 100);\n' +
   '}\n';
 
-const handleErrorFunctionTemplate =
+const handleErrorFunctionTemplate: TbFunction =
   '// Optional function body to handle error occurred while mobile action execution \n' +
   '// - error - Error message\n\n' +
   'showErrorDialog(\'--TITLE--\', error);\n' +
@@ -159,7 +160,7 @@ const handleErrorFunctionTemplate =
   '    }, 100);\n' +
   '}\n';
 
-const getLocationFunctionTemplate =
+const getLocationFunctionTemplate: TbFunction =
   '// Function body that should return location as array of two numbers (latitude, longitude) for further processing by mobile action.\n' +
   '// Usually location can be obtained from entity attributes/telemetry. \n\n' +
   'return getLocationFromEntityAttributes();\n' +
@@ -182,7 +183,7 @@ const getLocationFunctionTemplate =
   '    }\n' +
   '}\n';
 
-const getPhoneNumberFunctionTemplate =
+const getPhoneNumberFunctionTemplate: TbFunction =
   '// Function body that should return phone number for further processing by mobile action.\n' +
   '// Usually phone number can be obtained from entity attributes/telemetry. \n\n' +
   'return getPhoneNumberFromEntityAttributes();\n' +
@@ -204,7 +205,7 @@ const getPhoneNumberFunctionTemplate =
   '    }\n' +
   '}\n';
 
-export const getDefaultProcessImageFunction = (type: WidgetMobileActionType): string => {
+export const getDefaultProcessImageFunction = (type: WidgetMobileActionType): TbFunction => {
   let title: string;
   switch (type) {
     case WidgetMobileActionType.takePictureFromGallery:
@@ -220,7 +221,7 @@ export const getDefaultProcessImageFunction = (type: WidgetMobileActionType): st
   return processImageFunctionTemplate.replace('--TITLE--', title);
 };
 
-export const getDefaultProcessLaunchResultFunction = (type: WidgetMobileActionType): string => {
+export const getDefaultProcessLaunchResultFunction = (type: WidgetMobileActionType): TbFunction => {
   let title: string;
   switch (type) {
     case WidgetMobileActionType.mapLocation:
@@ -244,7 +245,7 @@ export const getDefaultGetLocationFunction = () => getLocationFunctionTemplate;
 
 export const getDefaultGetPhoneNumberFunction = () => getPhoneNumberFunctionTemplate;
 
-export const getDefaultHandleEmptyResultFunction = (type: WidgetMobileActionType): string => {
+export const getDefaultHandleEmptyResultFunction = (type: WidgetMobileActionType): TbFunction => {
   let message = 'Mobile action was cancelled!';
   switch (type) {
     case WidgetMobileActionType.takePictureFromGallery:
@@ -275,7 +276,7 @@ export const getDefaultHandleEmptyResultFunction = (type: WidgetMobileActionType
   return handleEmptyResultFunctionTemplate.replace('--MESSAGE--', message);
 };
 
-export const getDefaultHandleErrorFunction = (type: WidgetMobileActionType): string => {
+export const getDefaultHandleErrorFunction = (type: WidgetMobileActionType): TbFunction => {
   let title = 'Mobile action failed';
   switch (type) {
     case WidgetMobileActionType.takePictureFromGallery:

@@ -36,15 +36,14 @@ public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
             switch (relationUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
-                    if (isEntityExists(tenantId, entityRelation.getTo())
-                            && isEntityExists(tenantId, entityRelation.getFrom())) {
-                        relationService.saveRelation(tenantId, entityRelation);
+                    if (isEntityExists(tenantId, entityRelation.getTo()) && isEntityExists(tenantId, entityRelation.getFrom())) {
+                        edgeCtx.getRelationService().saveRelation(tenantId, entityRelation);
                     } else {
                         log.warn("[{}] Skipping relating update msg because from/to entity doesn't exists on edge, {}", tenantId, relationUpdateMsg);
                     }
                     break;
                 case ENTITY_DELETED_RPC_MESSAGE:
-                    relationService.deleteRelation(tenantId, entityRelation);
+                    edgeCtx.getRelationService().deleteRelation(tenantId, entityRelation);
                     break;
                 case UNRECOGNIZED:
                 default:

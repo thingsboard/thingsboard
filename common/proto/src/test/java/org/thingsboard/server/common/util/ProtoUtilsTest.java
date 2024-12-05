@@ -25,6 +25,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
@@ -34,6 +35,8 @@ import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConf
 import org.thingsboard.server.common.data.device.data.DeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -54,6 +57,7 @@ import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileConfiguration;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
+import org.thingsboard.server.common.msg.edge.EdgeHighPriorityMsg;
 import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
 import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
@@ -111,6 +115,13 @@ class ProtoUtilsTest {
     }
 
     @Test
+    void protoEdgeHighPrioritySerialization() {
+        EdgeHighPriorityMsg msg = new EdgeHighPriorityMsg(tenantId, EdgeUtils.constructEdgeEvent(tenantId, edgeId,
+                EdgeEventType.DEVICE, EdgeEventActionType.ADDED, deviceId, JacksonUtil.newObjectNode()));
+        assertThat(ProtoUtils.fromProto(ProtoUtils.toProto(msg))).as("deserialized").isEqualTo(msg);
+    }
+
+    @Test
     void protoEdgeEventUpdateSerialization() {
         EdgeEventUpdateMsg msg = new EdgeEventUpdateMsg(tenantId, edgeId);
         assertThat(ProtoUtils.fromProto(ProtoUtils.toProto(msg))).as("deserialized").isEqualTo(msg);
@@ -118,13 +129,13 @@ class ProtoUtilsTest {
 
     @Test
     void protoToEdgeSyncRequestSerialization() {
-        ToEdgeSyncRequest msg = new ToEdgeSyncRequest(id, tenantId, edgeId);
+        ToEdgeSyncRequest msg = new ToEdgeSyncRequest(id, tenantId, edgeId, "serviceId");
         assertThat(ProtoUtils.fromProto(ProtoUtils.toProto(msg))).as("deserialized").isEqualTo(msg);
     }
 
     @Test
     void protoFromEdgeSyncResponseSerialization() {
-        FromEdgeSyncResponse msg = new FromEdgeSyncResponse(id, tenantId, edgeId, true);
+        FromEdgeSyncResponse msg = new FromEdgeSyncResponse(id, tenantId, edgeId, true, "Error Msg");
         assertThat(ProtoUtils.fromProto(ProtoUtils.toProto(msg))).as("deserialized").isEqualTo(msg);
     }
 

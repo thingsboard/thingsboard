@@ -19,7 +19,13 @@ import { MarkerIconInfo, MarkerIconReadyFunction, MarkerImageInfo, WidgetMarkers
 import { bindPopupActions, createTooltip } from './maps-utils';
 import { loadImageWithAspect, parseWithTranslation } from './common-maps-utils';
 import tinycolor from 'tinycolor2';
-import { fillDataPattern, isDefined, isDefinedAndNotNull, processDataPattern, safeExecute } from '@core/utils';
+import {
+  fillDataPattern,
+  isDefined,
+  isDefinedAndNotNull,
+  processDataPattern,
+  safeExecuteTbFunction
+} from '@core/utils';
 import LeafletMap from './leaflet-map';
 import { FormattedData } from '@shared/models/widget.models';
 import { ImagePipe } from '@shared/pipe/image.pipe';
@@ -30,7 +36,7 @@ export class Marker {
     private editing = false;
 
     leafletMarker: L.Marker;
-    labelOffset: L.LatLngTuple;
+    labelOffset: L.PointTuple;
     tooltipOffset: L.LatLngTuple;
     markerOffset: L.LatLngTuple;
     tooltip: L.Popup;
@@ -40,10 +46,10 @@ export class Marker {
               private location: L.LatLng,
               private settings: Partial<WidgetMarkersSettings>,
               private data?: FormattedData,
-              private dataSources?,
+              private dataSources?: FormattedData[],
               private onDragendListener?,
               snappable = false) {
-        this.leafletMarker = L.marker(location, {
+        this.leafletMarker = L.marker(this.location, {
           pmIgnore: !settings.draggableMarker,
           snapIgnore: !snappable,
           tbMarkerData: this.data
@@ -78,7 +84,7 @@ export class Marker {
         }
 
         if (settings.draggableMarker && onDragendListener) {
-          this.leafletMarker.on('pm:dragstart', (e) => {
+          this.leafletMarker.on('pm:dragstart', () => {
             (this.leafletMarker.dragging as any)._draggable = { _moved: true };
             (this.leafletMarker.dragging as any)._enabled = true;
             this.editing = true;
@@ -101,7 +107,7 @@ export class Marker {
     updateMarkerTooltip(data: FormattedData) {
       if (!this.map.markerTooltipText || this.settings.useTooltipFunction) {
         const pattern = this.settings.useTooltipFunction ?
-          safeExecute(this.settings.parsedTooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) : this.settings.tooltipPattern;
+          safeExecuteTbFunction(this.settings.parsedTooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) : this.settings.tooltipPattern;
         this.map.markerTooltipText = parseWithTranslation.prepareProcessPattern(pattern, true);
         this.map.replaceInfoTooltipMarker = processDataPattern(this.map.markerTooltipText, data);
       }
@@ -123,7 +129,7 @@ export class Marker {
         if (settings.showLabel) {
             if (!this.map.markerLabelText || settings.useLabelFunction) {
               const pattern = settings.useLabelFunction ?
-                safeExecute(settings.parsedLabelFunction, [this.data, this.dataSources, this.data.dsIndex]) : settings.label;
+                safeExecuteTbFunction(settings.parsedLabelFunction, [this.data, this.dataSources, this.data.dsIndex]) : settings.label;
               this.map.markerLabelText = parseWithTranslation.prepareProcessPattern(pattern, true);
               this.map.replaceInfoLabelMarker = processDataPattern(this.map.markerLabelText, this.data);
             }
@@ -134,7 +140,7 @@ export class Marker {
         }
     }
 
-    updateMarkerColor(color) {
+    updateMarkerColor(color: tinycolor.Instance) {
         this.createDefaultMarkerIcon(color, (iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
         });
@@ -165,11 +171,11 @@ export class Marker {
           return;
         }
         const currentImage: MarkerImageInfo = this.settings.useMarkerImageFunction ?
-            safeExecute(this.settings.parsedMarkerImageFunction,
+          safeExecuteTbFunction(this.settings.parsedMarkerImageFunction,
                 [this.data, this.settings.markerImages, this.dataSources, this.data.dsIndex]) : this.settings.currentImage;
         let currentColor = this.settings.tinyColor;
         if (this.settings.useColorFunction) {
-          const functionColor = safeExecute(this.settings.parsedColorFunction,
+          const functionColor = safeExecuteTbFunction(this.settings.parsedColorFunction,
             [this.data, this.dataSources, this.data.dsIndex]);
           if (isDefinedAndNotNull(functionColor)) {
             currentColor = tinycolor(functionColor);
@@ -179,8 +185,8 @@ export class Marker {
           loadImageWithAspect(this.map.ctx.$injector.get(ImagePipe), currentImage.url).subscribe(
                 (aspectImage) => {
                     if (aspectImage?.aspect) {
-                        let width;
-                        let height;
+                        let width: number;
+                        let height: number;
                         if (aspectImage.aspect > 1) {
                             width = currentImage.size;
                             height = currentImage.size / aspectImage.aspect;
@@ -263,7 +269,7 @@ export class Marker {
                  this.leafletMarker.addTo(map))*/
     }
 
-    extendBoundsWithMarker(bounds) {
+    extendBoundsWithMarker(bounds: L.LatLngBounds) {
         bounds.extend(this.leafletMarker.getLatLng());
     }
 
@@ -271,7 +277,7 @@ export class Marker {
         return this.leafletMarker.getLatLng();
     }
 
-    setMarkerPosition(latLng) {
+    setMarkerPosition(latLng: L.LatLngExpression) {
         this.leafletMarker.setLatLng(latLng);
     }
 }

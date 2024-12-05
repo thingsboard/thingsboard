@@ -38,7 +38,7 @@ services:
     ${EXTRA_HOSTS}
   postgres:
     restart: always
-    image: "postgres:15"
+    image: "postgres:16"
     ports:
       - "5432"
     environment:

@@ -48,6 +48,8 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.util.TbPair;
+import org.thingsboard.server.common.msg.gateway.metrics.GatewayMetadata;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
@@ -62,6 +64,7 @@ import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
+import org.thingsboard.server.transport.mqtt.gateway.GatewayMetricsService;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState;
 
 import java.util.ArrayList;
@@ -114,6 +117,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     protected final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
     protected final ChannelHandlerContext channel;
     protected final DeviceSessionCtx deviceSessionCtx;
+    protected final GatewayMetricsService gatewayMetricsService;
 
     @Getter
     @Setter
@@ -131,6 +135,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         this.mqttQoSMap = deviceSessionCtx.getMqttQoSMap();
         this.channel = deviceSessionCtx.getChannel();
         this.overwriteDevicesActivity = overwriteDevicesActivity;
+        this.gatewayMetricsService = deviceSessionCtx.getContext().getGatewayMetricsService();
     }
 
     ConcurrentReferenceHashMap<String, Lock> createWeakMap() {
@@ -380,7 +385,13 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
 
     private void processPostTelemetryMsg(T deviceCtx, JsonElement msg, String deviceName, int msgId) {
         try {
-            TransportProtos.PostTelemetryMsg postTelemetryMsg = JsonConverter.convertToTelemetryProto(msg.getAsJsonArray());
+            long systemTs = System.currentTimeMillis();
+            TbPair<TransportProtos.PostTelemetryMsg, List<GatewayMetadata>> gatewayPayloadPair = JsonConverter.convertToGatewayTelemetry(msg.getAsJsonArray(), systemTs);
+            TransportProtos.PostTelemetryMsg postTelemetryMsg = gatewayPayloadPair.getFirst();
+            List<GatewayMetadata> metadata = gatewayPayloadPair.getSecond();
+            if (!CollectionUtils.isEmpty(metadata)) {
+                gatewayMetricsService.process(deviceSessionCtx.getSessionInfo(), gateway.getDeviceId(), metadata, systemTs);
+            }
             transportService.process(deviceCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(channel, deviceName, msgId, postTelemetryMsg));
         } catch (Throwable e) {
             log.warn("[{}][{}][{}] Failed to convert telemetry: [{}]", gateway.getTenantId(), gateway.getDeviceId(), deviceName, msg, e);

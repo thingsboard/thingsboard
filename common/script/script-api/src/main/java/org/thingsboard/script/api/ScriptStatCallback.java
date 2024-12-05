@@ -16,10 +16,10 @@
 package org.thingsboard.script.api;
 
 import com.google.common.util.concurrent.FutureCallback;
+import jakarta.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import jakarta.annotation.Nullable;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 

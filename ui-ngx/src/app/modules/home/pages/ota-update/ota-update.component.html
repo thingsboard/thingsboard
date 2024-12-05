@@ -15,31 +15,31 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons" fxLayout.xs="column">
-  <button mat-raised-button color="primary" fxFlex.xs
+<div class="tb-details-buttons xs:flex xs:flex-col">
+  <button mat-raised-button color="primary" class="xs:flex-1"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'open')"
-          [fxShow]="!isEdit && !isDetailsPage">
+          [class.!hidden]="isEdit || isDetailsPage">
     {{'common.open-details-page' | translate }}
   </button>
-  <button mat-raised-button color="primary" fxFlex.xs
+  <button mat-raised-button color="primary" class="xs:flex-1"
           [disabled]="(isLoading$ | async) || !(entity?.hasData && !entity?.url)"
           (click)="onEntityAction($event, 'uploadPackage')"
-          [fxShow]="!isEdit">
+          [class.!hidden]="isEdit">
     {{ 'ota-update.download' | translate }}
   </button>
-  <button mat-raised-button color="primary" fxFlex.xs
+  <button mat-raised-button color="primary" class="xs:flex-1"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
-          [fxShow]="!hideDelete() && !isEdit">
+          [class.!hidden]="hideDelete() || isEdit">
     {{ 'ota-update.delete' | translate }}
   </button>
-  <div fxLayout="row" fxLayout.xs="column">
+  <div class="flex flex-row xs:flex-col">
     <button mat-raised-button
             ngxClipboard
             (cbOnSuccess)="onPackageIdCopied()"
             [cbContent]="entity?.id?.id"
-            [fxShow]="!isEdit">
+            [class.!hidden]="isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>ota-update.copyId</span>
     </button>
@@ -47,7 +47,7 @@
             ngxClipboard
             (cbOnSuccess)="onPackageChecksumCopied()"
             [cbContent]="entity?.checksum"
-            [fxShow]="!isEdit && entity?.checksum">
+            [class.!hidden]="isEdit || !entity?.checksum">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>ota-update.copy-checksum</span>
     </button>
@@ -55,17 +55,17 @@
             ngxClipboard
             (cbOnSuccess)="onPackageDirectUrlCopied()"
             [cbContent]="entity?.url"
-            [fxShow]="!isEdit && entity?.url">
+            [class.!hidden]="isEdit || !entity?.url">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>ota-update.copy-direct-url</span>
     </button>
   </div>
 </div>
-<div class="mat-padding" fxLayout="column" fxLayoutGap="8px">
+<div class="mat-padding flex flex-col gap-2">
   <form [formGroup]="entityForm">
-    <fieldset [disabled]="(isLoading$ | async) || !isEdit" fxLayout="column">
-      <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
-        <mat-form-field class="mat-block" fxFlex="45">
+    <fieldset [disabled]="(isLoading$ | async) || !isEdit" class="flex flex-col">
+      <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+        <mat-form-field class="mat-block flex-full gt-xs:max-w-45%">
           <mat-label translate>ota-update.title</mat-label>
           <input matInput formControlName="title" type="text" required [readonly]="!isAdd">
           <mat-error *ngIf="entityForm.get('title').hasError('required')">
@@ -75,7 +75,7 @@
             {{ 'ota-update.title-max-length' | translate }}
           </mat-error>
         </mat-form-field>
-        <mat-form-field class="mat-block" fxFlex>
+        <mat-form-field class="mat-block flex-1">
           <mat-label translate>ota-update.version</mat-label>
           <input matInput formControlName="version" type="text" required [readonly]="!isAdd">
           <mat-error *ngIf="entityForm.get('version').hasError('required')">
@@ -86,7 +86,7 @@
           </mat-error>
         </mat-form-field>
       </div>
-      <mat-form-field class="mat-block" fxFlex style="margin-bottom: 8px">
+      <mat-form-field class="mat-block flex-1" style="margin-bottom: 8px">
         <mat-label translate>ota-update.version-tag</mat-label>
         <input matInput formControlName="tag" type="text" [readonly]="!isAdd">
         <mat-hint *ngIf="isAdd" translate>ota-update.version-tag-hint</mat-hint>
@@ -94,7 +94,8 @@
       <tb-device-profile-autocomplete
         formControlName="deviceProfileId"
         required
-        [ngStyle]="{'padding-bottom': isAdd ? '16px': 0}"
+        [class.pb-4]="isAdd"
+        [class.pb-0]="!isAdd"
         [hint]="'ota-update.chose-compatible-device-profile'"
         [editProfileEnabled]="false"
         [addNewProfile]="false"
@@ -110,7 +111,7 @@
       </mat-form-field>
       <section *ngIf="isAdd">
         <div class="mat-caption" style="margin: -8px 0 8px;" translate>ota-update.warning-after-save-no-edit</div>
-        <mat-radio-group formControlName="isURL" fxLayoutGap="16px">
+        <mat-radio-group formControlName="isURL" class="gap-4">
           <mat-radio-button [value]="false">{{ "ota-update.upload-binary-file" | translate }}</mat-radio-button>
           <mat-radio-button [value]="true">{{ "ota-update.use-external-url" | translate }}</mat-radio-button>
         </mat-radio-group>
@@ -128,10 +129,9 @@
             {{ 'ota-update.auto-generate-checksum' | translate }}
           </mat-checkbox>
         </section>
-        <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayoutGap.sm="8px"
-             fxLayout.xs="column" fxLayout.md="column"
+        <div class="flex flex-row xs:flex-col sm:gap-2 md:flex-col gt-xs:gap-2"
              *ngIf="!(isAdd && this.entityForm.get('generateChecksum').value)">
-          <mat-form-field class="mat-block" fxFlex="33">
+          <mat-form-field class="mat-block flex-full gt-xs:max-w-33%">
             <mat-label translate>ota-update.checksum-algorithm</mat-label>
             <mat-select formControlName="checksumAlgorithm">
               <mat-option *ngFor="let checksumAlgorithm of checksumAlgorithms" [value]="checksumAlgorithm">
@@ -139,23 +139,23 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <mat-form-field class="mat-block" fxFlex>
+          <mat-form-field class="mat-block flex-1">
             <mat-label translate>ota-update.checksum</mat-label>
             <input matInput formControlName="checksum" type="text">
             <mat-hint *ngIf="isAdd" translate>ota-update.checksum-hint</mat-hint>
           </mat-form-field>
         </div>
         <section *ngIf="!isAdd">
-          <div fxLayout="row" fxLayoutGap.gt-md="8px" fxLayoutGap.sm="8px" fxLayout.xs="column" fxLayout.md="column">
-            <mat-form-field class="mat-block" fxFlex="33">
+          <div class="flex flex-row xs:flex-col sm:gap-2 md:flex-col gt-md:gap-2">
+            <mat-form-field class="mat-block flex-full gt-xs:max-w-33%">
               <mat-label translate>ota-update.file-name</mat-label>
               <input matInput formControlName="fileName" type="text">
             </mat-form-field>
-            <mat-form-field class="mat-block" fxFlex>
+            <mat-form-field class="mat-block flex-1">
               <mat-label translate>ota-update.file-size-bytes</mat-label>
               <input matInput formControlName="dataSize" type="text">
             </mat-form-field>
-            <mat-form-field class="mat-block" fxFlex>
+            <mat-form-field class="mat-block flex-1">
               <mat-label translate>ota-update.content-type</mat-label>
               <input matInput formControlName="contentType" type="text">
             </mat-form-field>

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.secure;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.elements.auth.RawPublicKeyIdentity;
@@ -47,7 +48,6 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
 import org.thingsboard.server.transport.lwm2m.server.store.TbMainSecurityStore;
 
-import jakarta.annotation.PostConstruct;
 import javax.security.auth.x500.X500Principal;
 import java.net.InetSocketAddress;
 import java.security.PublicKey;

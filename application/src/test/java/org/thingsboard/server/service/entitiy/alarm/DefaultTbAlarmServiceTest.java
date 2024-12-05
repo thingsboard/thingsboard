@@ -37,7 +37,6 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.edge.EdgeService;
@@ -46,7 +45,6 @@ import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -129,7 +127,7 @@ public class DefaultTbAlarmServiceTest {
     public void testDelete() {
         service.delete(new Alarm(), new User());
 
-        verify(logEntityActionService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.ALARM_DELETE), any());
+        verify(logEntityActionService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.ALARM_DELETE), any(), any());
         verify(alarmSubscriptionService, times(1)).deleteAlarm(any(), any());
     }
 
@@ -164,16 +162,13 @@ public class DefaultTbAlarmServiceTest {
         AlarmInfo alarm = new AlarmInfo();
         alarm.setId(new AlarmId(UUID.randomUUID()));
 
-        when(alarmService.findAlarmIdsByAssigneeId(any(), any(), any()))
-                .thenReturn(new PageData<>(List.of(alarm.getId()), 0, 1, false))
-                .thenReturn(new PageData<>(Collections.EMPTY_LIST, 0, 0, false));
         when(alarmSubscriptionService.unassignAlarm(any(), any(), anyLong()))
                 .thenReturn(AlarmApiCallResult.builder().successful(true).modified(true).alarm(alarm).build());
 
         User user = new User();
         user.setEmail("testEmail@gmail.com");
         user.setId(new UserId(UUID.randomUUID()));
-        service.unassignDeletedUserAlarms(new TenantId(UUID.randomUUID()), user.getId(), user.getTitle(), System.currentTimeMillis());
+        service.unassignDeletedUserAlarms(new TenantId(UUID.randomUUID()), user.getId(), user.getTitle(), List.of(alarm.getUuidId()), System.currentTimeMillis());
 
         ObjectNode commentNode = JacksonUtil.newObjectNode();
         commentNode.put("subtype", "ASSIGN");

@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { Resolve, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { TenantProfile } from '@shared/models/tenant.model';
 import {
   checkBoxCell,
@@ -33,9 +33,10 @@ import { TenantProfileComponent } from '@home/components/profile/tenant-profile.
 import { TenantProfileTabsComponent } from './tenant-profile-tabs.component';
 import { DialogService } from '@core/services/dialog.service';
 import { ImportExportService } from '@shared/import-export/import-export.service';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 
 @Injectable()
-export class TenantProfilesTableConfigResolver implements Resolve<EntityTableConfig<TenantProfile>> {
+export class TenantProfilesTableConfigResolver  {
 
   private readonly config: EntityTableConfig<TenantProfile> = new EntityTableConfig<TenantProfile>();
 
@@ -44,7 +45,8 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
               private translate: TranslateService,
               private datePipe: DatePipe,
               private router: Router,
-              private dialogService: DialogService) {
+              private dialogService: DialogService,
+              private customTranslate: CustomTranslatePipe) {
 
     this.config.entityType = EntityType.TENANT_PROFILE;
     this.config.entityComponent = TenantProfileComponent;
@@ -55,7 +57,8 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
     this.config.columns.push(
       new DateEntityTableColumn<TenantProfile>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<TenantProfile>('name', 'tenant-profile.name', '40%'),
-      new EntityTableColumn<TenantProfile>('description', 'tenant-profile.description', '60%'),
+      new EntityTableColumn<TenantProfile>('description', 'tenant-profile.description', '60%',
+        entity => this.customTranslate.transform(entity.description || '')),
       new EntityTableColumn<TenantProfile>('isDefault', 'tenant-profile.default', '60px',
         entity => {
           return checkBoxCell(entity.default);

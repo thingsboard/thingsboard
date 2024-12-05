@@ -233,7 +233,8 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
                                 "\"enableProxy\": false,\"useSystemProxyProperties\": false,\"proxyScheme\": null,\"proxyHost\": null," +
                                 "\"proxyPort\": 0,\"proxyUser\": null,\"proxyPassword\": null,\"readTimeoutMs\": 0," +
                                 "\"maxParallelRequestsCount\": 0,\"headers\": {\"Content-Type\": \"application/json\"}," +
-                                "\"credentials\": {\"type\": \"anonymous\"}}"),
+                                "\"credentials\": {\"type\": \"anonymous\"}," +
+                                "\"maxInMemoryBufferSizeInKb\": 256}"),
                 // config for version 2 with upgrade from version 1
                 Arguments.of(1,
                         "{\"restEndpointUrlPattern\":\"http://localhost/api\",\"requestMethod\": \"POST\"," +
@@ -249,7 +250,24 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
                                 "\"enableProxy\": false,\"useSystemProxyProperties\": false,\"proxyScheme\": null,\"proxyHost\": null," +
                                 "\"proxyPort\": 0,\"proxyUser\": null,\"proxyPassword\": null,\"readTimeoutMs\": 0," +
                                 "\"maxParallelRequestsCount\": 0,\"headers\": {\"Content-Type\": \"application/json\"}," +
-                                "\"credentials\": {\"type\": \"anonymous\"}}")
+                                "\"credentials\": {\"type\": \"anonymous\"}," +
+                                "\"maxInMemoryBufferSizeInKb\": 256}"),
+                // config for version 3 with upgrade from version 2
+                Arguments.of(2,
+                        "{\"restEndpointUrlPattern\":\"http://localhost/api\",\"requestMethod\": \"POST\"," +
+                                "\"useSimpleClientHttpFactory\": false,\"parseToPlainText\": false,\"ignoreRequestBody\": false," +
+                                "\"enableProxy\": false,\"useSystemProxyProperties\": false,\"proxyScheme\": null,\"proxyHost\": null," +
+                                "\"proxyPort\": 0,\"proxyUser\": null,\"proxyPassword\": null,\"readTimeoutMs\": 0," +
+                                "\"maxParallelRequestsCount\": 0,\"headers\": {\"Content-Type\": \"application/json\"}," +
+                                "\"credentials\": {\"type\": \"anonymous\"}}",
+                        true,
+                        "{\"restEndpointUrlPattern\":\"http://localhost/api\",\"requestMethod\": \"POST\"," +
+                                "\"useSimpleClientHttpFactory\": false,\"parseToPlainText\": false,\"ignoreRequestBody\": false," +
+                                "\"enableProxy\": false,\"useSystemProxyProperties\": false,\"proxyScheme\": null,\"proxyHost\": null," +
+                                "\"proxyPort\": 0,\"proxyUser\": null,\"proxyPassword\": null,\"readTimeoutMs\": 0," +
+                                "\"maxParallelRequestsCount\": 0,\"headers\": {\"Content-Type\": \"application/json\"}," +
+                                "\"credentials\": {\"type\": \"anonymous\"}," +
+                                "\"maxInMemoryBufferSizeInKb\": 256}")
         );
     }
 

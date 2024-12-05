@@ -18,7 +18,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
-  ElementRef,
+  ElementRef, NgZone,
   OnDestroy,
   OnInit,
   Renderer2,
@@ -28,7 +28,6 @@ import {
 import { BasicActionWidgetComponent, ValueSetter } from '@home/components/widget/lib/action/action-widget.models';
 import { backgroundStyle, ComponentStyle, overlayStyle } from '@shared/models/widget-settings.models';
 import { Observable } from 'rxjs';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ValueType } from '@shared/models/constants';
@@ -73,7 +72,8 @@ export class PowerButtonWidgetComponent extends
   constructor(protected imagePipe: ImagePipe,
               protected sanitizer: DomSanitizer,
               private renderer: Renderer2,
-              protected cd: ChangeDetectorRef) {
+              protected cd: ChangeDetectorRef,
+              protected zone: NgZone) {
     super(cd);
   }
 
@@ -179,8 +179,10 @@ export class PowerButtonWidgetComponent extends
     this.renderer.setStyle(this.svgShape.node, 'overflow', 'visible');
     this.renderer.setStyle(this.svgShape.node, 'user-select', 'none');
 
-    this.powerButtonSvgShape = PowerButtonShape.fromSettings(this.ctx, this.svgShape,
-      this.settings, this.value, this.disabledState, () => this.onClick());
+    this.zone.run(() => {
+      this.powerButtonSvgShape = PowerButtonShape.fromSettings(this.ctx, this.svgShape,
+        this.settings, this.value, this.disabledState, () => this.onClick());
+    });
 
     this.shapeResize$ = new ResizeObserver(() => {
       this.onResize();
