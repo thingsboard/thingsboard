@@ -40,8 +40,8 @@
                     dndDraggingSourceClass="tb-chip-dragging"
                     [removable]="!disabled && !isCountDatasource"
                     (removed)="remove(key)">
-        <div dndDragImageRef fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="4px" class="tb-attribute-chip"
-             [ngClass]="{'tb-dragging-chip-image': $index === dragIndex}">
+        <div dndDragImageRef class="tb-attribute-chip flex flex-row items-center justify-start gap-1"
+             [class.tb-dragging-chip-image]="$index === dragIndex">
           <div class="tb-absolute-fill tb-dragging-chip-image-fill"></div>
           <div dndHandle *ngIf="!disabled && !dragDisabled" class="tb-chip-drag-handle">
             <mat-icon class="tb-mat-18">drag_indicator</mat-icon>
@@ -71,7 +71,7 @@
               </strong>
             </div>
           </div>
-          <div *ngIf="!hideDataKeyColor" fxHide.xs style="padding: 3px;">
+          <div *ngIf="!hideDataKeyColor" class="xs:!hidden" style="padding: 3px;">
             <div #keyColorButton class="tb-color-preview small box" (click)="openColorPickerPopup(key, $event, keyColorButton)">
               <div class="tb-color-result" [style]="{background: key.color}"></div>
             </div>
@@ -89,7 +89,7 @@
         </div>
       </mat-chip-row>
       <input matInput type="text" placeholder="{{ !disabled && (!maxDataKeysSet || keys.length < maxDataKeys) ? secondaryPlaceholder : '' }}"
-             [ngClass]="{'tb-dragging': dragIndex > -1}"
+             [class.tb-dragging]="dragIndex > -1"
              style="max-width: 200px;"
              #keyInput
              formControlName="key"
@@ -136,8 +136,7 @@
         </div>
         <ng-template #searchNotEmpty>
           <span>
-            {{ translate.get('entity.no-key-matching',
-              {key: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
+            {{ 'entity.no-key-matching' | translate : {key: searchText | truncate: true: 6: &apos;...&apos;} }}
           </span>
           <span *ngIf="!isEntityDatasource; else createEntityKey">
             <a translate (click)="createKey(searchText)">entity.create-new-key</a>

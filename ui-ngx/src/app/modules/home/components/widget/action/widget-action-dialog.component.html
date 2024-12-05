@@ -18,7 +18,7 @@
 <form [formGroup]="widgetActionFormGroup" (ngSubmit)="save()" style="width: 900px;">
   <mat-toolbar color="primary">
     <h2>{{ (isAdd ? 'widget-config.add-action' : 'widget-config.edit-action' ) | translate }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -33,7 +33,7 @@
       <div class="tb-form-panel no-padding no-border">
         <div class="tb-form-row">
           <div class="fixed-title-width">{{'widget-config.action-source' | translate}}*</div>
-          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select required formControlName="actionSourceId" placeholder="{{ 'widget-config.select-action-source' | translate }}">
               <mat-option *ngFor="let actionSourceItem of data.actionsData.actionSources | keyvalue" [value]="actionSourceItem.key">
                 {{ actionSourceName(actionSourceItem.value) }}
@@ -52,7 +52,7 @@
         </div>
         <div class="tb-form-row" *ngIf="widgetActionFormGroup.get('actionSourceId').value === 'cellClick'">
           <div class="fixed-title-width">{{'widget-config.column-index' | translate}}*</div>
-          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select #columnIndexSelect formControlName="columnIndex" placeholder="{{ columnIndexPlaceholderText }}">
               <mat-option *ngFor="let column of configuredColumns; let $index = index"
                           [value]="$index"
@@ -73,7 +73,7 @@
         </div>
         <div class="tb-form-row">
           <div class="fixed-title-width">{{'widget-config.action-name' | translate}}*</div>
-          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <input required matInput formControlName="name" placeholder="{{ 'widget-config.set' | translate }}">
             <mat-icon matSuffix
                       matTooltipPosition="above"
@@ -97,10 +97,9 @@
         <div class="tb-form-panel stroked tb-slide-toggle" *ngIf="displayShowWidgetActionForm()">
           <mat-expansion-panel class="tb-settings" [expanded]="widgetActionFormGroup.get('useShowWidgetActionFunction').value"
                                [disabled]="!widgetActionFormGroup.get('useShowWidgetActionFunction').value">
-            <mat-expansion-panel-header fxLayout="row wrap">
+            <mat-expansion-panel-header class="flex flex-row flex-wrap">
               <mat-panel-title>
-                <mat-slide-toggle class="mat-slide" formControlName="useShowWidgetActionFunction" (click)="$event.stopPropagation()"
-                                  fxLayoutAlign="center">
+                <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="useShowWidgetActionFunction" (click)="$event.stopPropagation()">
                   {{ 'widget-config.show-hide-action-using-function' | translate }}
                 </mat-slide-toggle>
               </mat-panel-title>
@@ -108,6 +107,7 @@
             <ng-template matExpansionPanelContent>
               <tb-js-func formControlName="showWidgetActionFunction"
                           functionTitle="{{ 'widget-config.show-action-function' | translate }}"
+                          withModules
                           [helpId]="getWidgetActionFunctionHelpId()"
                           [functionArgs]="['widgetContext', 'data']"
                           [globalVariables]="functionScopeVariables"
@@ -126,7 +126,7 @@
       </div>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

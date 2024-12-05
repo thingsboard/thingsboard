@@ -18,6 +18,7 @@ package org.thingsboard.server.service.edge.rpc.processor.relation;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
@@ -34,6 +35,7 @@ import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.service.edge.rpc.constructor.relation.RelationMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.relation.RelationMsgConstructorFactory;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -42,6 +44,9 @@ import java.util.Set;
 
 @Slf4j
 public abstract class RelationEdgeProcessor extends BaseRelationProcessor implements RelationProcessor {
+
+    @Autowired
+    private RelationMsgConstructorFactory relationMsgConstructorFactory;
 
     @Override
     public ListenableFuture<Void> processRelationMsgFromEdge(TenantId tenantId, Edge edge, RelationUpdateMsg relationUpdateMsg) {
@@ -74,8 +79,8 @@ public abstract class RelationEdgeProcessor extends BaseRelationProcessor implem
         EdgeId originatorEdgeId = safeGetEdgeId(edgeNotificationMsg.getOriginatorEdgeIdMSB(), edgeNotificationMsg.getOriginatorEdgeIdLSB());
 
         Set<EdgeId> uniqueEdgeIds = new HashSet<>();
-        uniqueEdgeIds.addAll(edgeService.findAllRelatedEdgeIds(tenantId, relation.getTo()));
-        uniqueEdgeIds.addAll(edgeService.findAllRelatedEdgeIds(tenantId, relation.getFrom()));
+        uniqueEdgeIds.addAll(edgeCtx.getEdgeService().findAllRelatedEdgeIds(tenantId, relation.getTo()));
+        uniqueEdgeIds.addAll(edgeCtx.getEdgeService().findAllRelatedEdgeIds(tenantId, relation.getFrom()));
         uniqueEdgeIds.remove(originatorEdgeId);
         if (uniqueEdgeIds.isEmpty()) {
             return Futures.immediateFuture(null);

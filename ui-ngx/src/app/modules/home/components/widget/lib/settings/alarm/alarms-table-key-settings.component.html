@@ -20,7 +20,7 @@
     <div class="tb-form-panel-title" translate>widgets.table.column-settings</div>
     <div class="tb-form-row">
       <div class="fixed-title-width">{{ 'widgets.table.custom-title' | translate }}</div>
-      <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
         <input matInput formControlName="customTitle" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
@@ -62,20 +62,20 @@
   </div>
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="alarmsTableKeySettingsForm.get('useCellStyleFunction').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="useCellStyleFunction" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="useCellStyleFunction" (click)="$event.stopPropagation()">
             {{ 'widgets.table.use-cell-style-function' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxFlex="40" fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="flex max-w-40% flex-full items-center justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <tb-js-func required
                     formControlName="cellStyleFunction"
+                    withModules
                     [globalVariables]="functionScopeVariables"
                     [functionArgs]="['value', 'alarm', 'ctx']"
                     functionTitle="{{ 'widgets.table.cell-style-function' | translate }}"
@@ -86,20 +86,20 @@
   </div>
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="alarmsTableKeySettingsForm.get('useCellContentFunction').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="useCellContentFunction" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="useCellContentFunction" (click)="$event.stopPropagation()">
             {{ 'widgets.table.use-cell-content-function' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxFlex="40" fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="flex max-w-40% flex-full items-center justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <tb-js-func required
                     formControlName="cellContentFunction"
+                    withModules
                     [globalVariables]="functionScopeVariables"
                     [functionArgs]="['value', 'alarm', 'ctx']"
                     functionTitle="{{ 'widgets.table.cell-content-function' | translate }}"

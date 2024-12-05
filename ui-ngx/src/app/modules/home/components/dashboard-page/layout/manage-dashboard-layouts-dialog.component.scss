@@ -30,7 +30,6 @@ $tb-warn: mat.m2-get-color-from-palette(map-get($tb-theme, warn), text);
   .tb-hint-group {
     padding: 0;
     margin-top: -14px;
-    display: block;
   }
 
   .tb-layout-preview {
@@ -181,6 +180,11 @@ $tb-warn: mat.m2-get-color-from-palette(map-get($tb-theme, warn), text);
     }
     .mat-button-toggle {
       border: none !important;
+    }
+    .mat-button-toggle-label-content {
+      .mat-pseudo-checkbox {
+        display: none;
+      }
     }
   }
 }

@@ -37,6 +37,11 @@
       "actions": null
     },
     {
+      "tag": "scale-background",
+      "stateRenderFunction": "if (!ctx.properties.scale) {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
       "tag": "top-layer",
       "stateRenderFunction": "if (ctx.properties.transparent || !ctx.properties.scale) {\n    element.hide();\n}",
       "actions": null
@@ -137,7 +142,7 @@
       "falseLabel": null,
       "stateLabel": "{i18n:scada.symbol.warning}",
       "defaultGetValueSettings": {
-        "action": "DO_NOTHING",
+        "action": "GET_ALARM_STATUS",
         "defaultValue": false,
         "executeRpc": {
           "method": "getState",
@@ -146,16 +151,25 @@
           "persistentPollingInterval": 1000
         },
         "getAttribute": {
-          "key": "state",
-          "scope": null
+          "scope": null,
+          "key": "state"
         },
         "getTimeSeries": {
           "key": "state"
         },
+        "getAlarmStatus": {
+          "severityList": [
+            "MAJOR",
+            "MINOR",
+            "WARNING",
+            "INDETERMINATE"
+          ],
+          "typeList": null
+        },
         "dataToValue": {
           "type": "NONE",
-          "compareToValue": true,
-          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
         }
       },
       "defaultSetValueSettings": null,
@@ -172,7 +186,7 @@
       "falseLabel": null,
       "stateLabel": "{i18n:scada.symbol.critical}",
       "defaultGetValueSettings": {
-        "action": "DO_NOTHING",
+        "action": "GET_ALARM_STATUS",
         "defaultValue": false,
         "executeRpc": {
           "method": "getState",
@@ -181,16 +195,22 @@
           "persistentPollingInterval": 1000
         },
         "getAttribute": {
-          "key": "state",
-          "scope": null
+          "scope": null,
+          "key": "state"
         },
         "getTimeSeries": {
           "key": "state"
         },
+        "getAlarmStatus": {
+          "severityList": [
+            "CRITICAL"
+          ],
+          "typeList": null
+        },
         "dataToValue": {
           "type": "NONE",
-          "compareToValue": true,
-          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
         }
       },
       "defaultSetValueSettings": null,
@@ -555,7 +575,7 @@
     }
   ]
 }]]></tb:metadata>
-<path d="m174 600c-174 0-174-151.63-174-239 4.9551e-6 -1.386 9.6938e-6 -2.741 1.4223e-5 -4.065 1.18e-8 -4e-3 -1.4223e-5 -113.93-1.4223e-5 -113.94 0-87.373-8.3346e-7 -243 174-243h653.5c173 0 172.5 156.06 172.5 243v118c0 86.939 0 239-172.5 239h-653.5z" fill="#E5E5E5" tb:tag="background"/><path d="m174 600c-174 0-174-151.63-174-239 4.9551e-6 -1.386 9.6938e-6 -2.741 1.4223e-5 -4.065 1.18e-8 -4e-3 -1.4223e-5 -113.93-1.4223e-5 -113.94 0-87.373-8.3346e-7 -243 174-243h653.5c173 0 172.5 156.06 172.5 243v118c0 86.939 0 239-172.5 239h-653.5z" fill="url(#paint0_linear_1694_158298)"/><path d="m177.27 0.4874c198.56-1.0967 560.65 1.9e-5 640.18 0 79.522-1.9e-5 183.55 15 183.55 220v169c0 192.5-105.53 211.5-184.55 211.5s-516.64-0.5-639.18-0.5c-122.53 0-176.55-68.001-176.55-219 5.26e-4 -151-6.59e-4 -49.502-2.47e-4 -119s-22.006-260.91 176.55-262.01z" fill="#4A4848" fill-opacity=".5"/><mask id="mask0_1694_158298" x="17" y="16" width="968" height="570" style="mask-type:alpha" maskUnits="userSpaceOnUse">
+<path d="m174 600c-174 0-174-151.63-174-239 4.9551e-6 -1.386 9.6938e-6 -2.741 1.4223e-5 -4.065 1.18e-8 -4e-3 -1.4223e-5 -113.93-1.4223e-5 -113.94 0-87.373-8.3346e-7 -243 174-243h653.5c173 0 172.5 156.06 172.5 243v118c0 86.939 0 239-172.5 239h-653.5z" fill="#E5E5E5" tb:tag="background"/><path d="m174 600c-174 0-174-151.63-174-239 4.9551e-6 -1.386 9.6938e-6 -2.741 1.4223e-5 -4.065 1.18e-8 -4e-3 -1.4223e-5 -113.93-1.4223e-5 -113.94 0-87.373-8.3346e-7 -243 174-243h653.5c173 0 172.5 156.06 172.5 243v118c0 86.939 0 239-172.5 239h-653.5z" fill="url(#paint0_linear_1694_158298)"/><path d="m177.27 0.4874c198.56-1.0967 560.65 1.9e-5 640.18 0 79.522-1.9e-5 183.55 15 183.55 220v169c0 192.5-105.53 211.5-184.55 211.5s-516.64-0.5-639.18-0.5c-122.53 0-176.55-68.001-176.55-219 5.26e-4 -151-6.59e-4 -49.502-2.47e-4 -119s-22.006-260.91 176.55-262.01z" fill="#4A4848" fill-opacity=".5" tb:tag="scale-background"/><mask id="mask0_1694_158298" x="17" y="16" width="968" height="570" style="mask-type:alpha" maskUnits="userSpaceOnUse">
   <path d="m178.68 16h654.82c117.67 0 151.5 98.586 151.5 184.16v204.18c0 135.62-68.502 181.66-162.5 181.66h-627.98c-129 0-177.5-66.558-177.5-181.66s0.0023-129.32 0-212.19c-3e-4 -9.509-5.4994-176.16 161.66-176.16z" fill="#D9D9D9"/>
  </mask><g mask="url(#mask0_1694_158298)">
   <rect transform="scale(1,-1)" x="9" y="-585" width="984" height="200" fill="#1EC1F4" fill-opacity=".5" tb:tag="fluid-background"/>

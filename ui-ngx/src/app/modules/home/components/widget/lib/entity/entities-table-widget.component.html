@@ -16,15 +16,15 @@
 
 -->
 <div class="tb-table-widget tb-absolute-fill">
-  <div fxFlex fxLayout="column" class="tb-absolute-fill">
-    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode">
+  <div class="tb-absolute-fill flex flex-1 flex-col">
+    <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
                 matTooltip="{{ 'action.search' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>search</mat-icon>
         </button>
-        <mat-form-field fxFlex>
+        <mat-form-field class="flex-1">
           <mat-label>&nbsp;</mat-label>
           <input #searchInput matInput
                  [formControl]="textSearch"
@@ -37,71 +37,75 @@
         </button>
       </div>
     </mat-toolbar>
-    <div fxFlex class="table-container">
+    <div class="table-container flex-1">
       <table mat-table [dataSource]="entityDatasource" [trackBy]="trackByEntityId"
                  matSort [matSortActive]="sortOrderProperty" [matSortDirection]="pageLinkSortDirection()" matSortDisableClear>
         <ng-container [matColumnDef]="column.def" *ngFor="let column of columns; let $index = index; trackBy: trackByColumnDef;">
-          <mat-header-cell [ngStyle]="headerStyle(column)" *matHeaderCellDef mat-sort-header [disabled]="!column.sortable"> {{ column.title }} </mat-header-cell>
+          <mat-header-cell [style]="headerStyle(column)" *matHeaderCellDef mat-sort-header [disabled]="!column.sortable"> {{ column.title }} </mat-header-cell>
             <mat-cell *matCellDef="let entity; let row = index"
-                      [innerHTML]="cellContent(entity, column, row)"
-                      [ngStyle]="cellStyle(entity, column, row)"
+                      [innerHTML]="cellContent(entity, column, row) | async"
+                      [style]="cellStyle(entity, column, row) | async"
                       (click)="onCellClick($event, entity, column, $index)"
                       [class.tb-pointer]="columnHasCellClick($index)">
             </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" [stickyEnd]="enableStickyAction">
-          <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (entityDatasource.countCellButtonAction * 48) + 'px',
-                                                                maxWidth: (entityDatasource.countCellButtonAction * 48) + 'px',
-                                                                width: (entityDatasource.countCellButtonAction * 48) + 'px' }">
+          <mat-header-cell *matHeaderCellDef>
+            <ng-container *ngIf="entityDatasource.countCellButtonAction">
+              <div class="gt-md:!hidden" style="min-width: 48px;">
+              </div>
+              <div class="lt-lg:!hidden"
+                   [style.min-width]="(entityDatasource.countCellButtonAction * 48) + 'px'">
+              </div>
+            </ng-container>
           </mat-header-cell>
-          <mat-cell *matCellDef="let entity; let row = index" [style]="rowStyle(entity, row)" [ngStyle.gt-md]="{ minWidth: (entityDatasource.countCellButtonAction * 48) + 'px',
-                                                                maxWidth: (entityDatasource.countCellButtonAction * 48) + 'px',
-                                                                width: (entityDatasource.countCellButtonAction * 48) + 'px' }">
-            <div [fxHide]="showCellActionsMenu && entityDatasource.countCellButtonAction !== 1" fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
-              <ng-container *ngFor="let actionDescriptor of entity.actionCellButtons; trackBy: trackByActionCellDescriptionId">
-                <span *ngIf="!actionDescriptor.icon" style="width: 48px;"></span>
-                <button mat-icon-button [disabled]="isLoading$ | async"
-                        *ngIf="actionDescriptor.icon"
-                        matTooltip="{{ actionDescriptor.displayName }}"
-                        matTooltipPosition="above"
-                        (click)="onActionButtonClick($event, entity, actionDescriptor)">
-                  <tb-icon>{{actionDescriptor.icon}}</tb-icon>
-                </button>
-              </ng-container>
-            </div>
-            <div fxHide [fxShow.lt-lg]="showCellActionsMenu && entityDatasource.countCellButtonAction !== 1" *ngIf="entity.hasActions">
-              <button mat-icon-button
-                      (click)="$event.stopPropagation(); ctx.detectChanges();"
-                      [matMenuTriggerFor]="cellActionsMenu">
-                <mat-icon class="material-icons">more_vert</mat-icon>
-              </button>
-              <mat-menu #cellActionsMenu="matMenu" xPosition="before">
+          <mat-cell *matCellDef="let entity; let row = index" [style]="rowStyle(entity, row) | async">
+            <ng-container *ngIf="entityDatasource.countCellButtonAction">
+              <div [class.lt-lg:!hidden]="showCellActionsMenu && entityDatasource.countCellButtonAction !== 1" class="flex flex-row items-stretch justify-end"
+                   [style.min-width]="(entityDatasource.countCellButtonAction * 48) + 'px'">
                 <ng-container *ngFor="let actionDescriptor of entity.actionCellButtons; trackBy: trackByActionCellDescriptionId">
-                  <button mat-menu-item *ngIf="actionDescriptor.icon"
-                          [disabled]="isLoading$ | async"
+                  <span *ngIf="!actionDescriptor.icon" style="width: 48px;"></span>
+                  <button mat-icon-button [disabled]="isLoading$ | async"
+                          *ngIf="actionDescriptor.icon"
+                          matTooltip="{{ actionDescriptor.displayName }}"
+                          matTooltipPosition="above"
                           (click)="onActionButtonClick($event, entity, actionDescriptor)">
-                    <tb-icon matMenuItemIcon>{{actionDescriptor.icon}}</tb-icon>
-                    <span>{{ actionDescriptor.displayName }}</span>
+                    <tb-icon>{{actionDescriptor.icon}}</tb-icon>
                   </button>
                 </ng-container>
-              </mat-menu>
-            </div>
+              </div>
+              <div [class.!hidden]="!showCellActionsMenu || entityDatasource.countCellButtonAction === 1" class="gt-md:!hidden" *ngIf="entity.hasActions">
+                <button mat-icon-button
+                        (click)="$event.stopPropagation(); ctx.detectChanges();"
+                        [matMenuTriggerFor]="cellActionsMenu">
+                  <mat-icon class="material-icons">more_vert</mat-icon>
+                </button>
+                <mat-menu #cellActionsMenu="matMenu" xPosition="before">
+                  <ng-container *ngFor="let actionDescriptor of entity.actionCellButtons; trackBy: trackByActionCellDescriptionId">
+                    <button mat-menu-item *ngIf="actionDescriptor.icon"
+                            [disabled]="isLoading$ | async"
+                            (click)="onActionButtonClick($event, entity, actionDescriptor)">
+                      <tb-icon matMenuItemIcon>{{actionDescriptor.icon}}</tb-icon>
+                      <span>{{ actionDescriptor.displayName }}</span>
+                    </button>
+                  </ng-container>
+                </mat-menu>
+              </div>
+            </ng-container>
           </mat-cell>
         </ng-container>
         <mat-header-row *matHeaderRowDef="displayedColumns; sticky: enableStickyHeader"></mat-header-row>
-        <mat-row [ngClass]="{'tb-current-entity': entityDatasource.isCurrentEntity(entity),
-                             'invisible': entityDatasource.dataLoading,
-                             'tb-pointer': hasRowAction}"
+        <mat-row [class.tb-current-entity]="entityDatasource.isCurrentEntity(entity)"
+                 [class.invisible]="entityDatasource.dataLoading"
+                 [class.tb-pointer]="hasRowAction"
                  *matRowDef="let entity; columns: displayedColumns; let row = index"
-                 [ngStyle]="rowStyle(entity, row)"
+                 [style]="rowStyle(entity, row) | async"
                  (click)="onRowClick($event, entity)" (dblclick)="onRowClick($event, entity, true)"></mat-row>
       </table>
-      <span [fxShow]="(entityDatasource.isEmpty() | async) && !entityDatasource.dataLoading"
-            fxLayoutAlign="center center"
-            class="no-data-found">{{ noDataDisplayMessageText }}</span>
-      <span [fxShow]="entityDatasource.dataLoading"
-            fxLayoutAlign="center center"
-            class="no-data-found">{{ 'common.loading' | translate }}</span>
+      <span [class.!hidden]="(entityDatasource.isEmpty() | async) === false || entityDatasource.dataLoading"
+            class="no-data-found flex items-center justify-center">{{ noDataDisplayMessageText }}</span>
+      <span [class.!hidden]="!entityDatasource.dataLoading"
+            class="no-data-found flex items-center justify-center">{{ 'common.loading' | translate }}</span>
     </div>
     <mat-divider *ngIf="displayPagination"></mat-divider>
     <mat-paginator *ngIf="displayPagination"

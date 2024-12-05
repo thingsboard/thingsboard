@@ -17,15 +17,23 @@
 import {
   AttributeData,
   AttributeScope,
-  LatestTelemetry,
-  TelemetrySubscriber,
+  LatestTelemetry, SharedTelemetrySubscriber,
   TelemetryType,
   telemetryTypeTranslationsShort
 } from '@shared/models/telemetry/telemetry.models';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { BehaviorSubject, forkJoin, Observable, Observer, of, Subscription, throwError } from 'rxjs';
+import {
+  BehaviorSubject,
+  forkJoin,
+  Observable,
+  Observer,
+  of,
+  ReplaySubject,
+  Subscription,
+  switchMap,
+  throwError
+} from 'rxjs';
 import { catchError, delay, map, share, take } from 'rxjs/operators';
-import { UtilsService } from '@core/services/utils.service';
 import { AfterViewInit, ChangeDetectorRef, Directive, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import {
   DataToValueSettings,
@@ -46,6 +54,9 @@ import { ValueType } from '@shared/models/constants';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { isDefinedAndNotNull } from '@core/utils';
+import { parseError } from '@shared/models/error.models';
+import { CompiledTbFunction, compileTbFunction } from '@shared/models/js-function.models';
+import { HttpClient } from '@angular/common/http';
 
 @Directive()
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
@@ -111,7 +122,7 @@ export abstract class BasicActionWidgetComponent implements OnInit, OnDestroy, A
         }
       },
       error: (err: any) => {
-        const message = parseError(this.ctx, err);
+        const message = parseError(err);
         this.onError(message);
         if (valueObserver?.error) {
           valueObserver.error(err);
@@ -153,7 +164,7 @@ export abstract class BasicActionWidgetComponent implements OnInit, OnDestroy, A
         if (setValueObserver?.error) {
           setValueObserver.error(err);
         }
-        const message = parseError(this.ctx, err);
+        const message = parseError(err);
         this.onError(message);
       }
     });
@@ -164,46 +175,57 @@ type DataToValueFunction<V> = (data: any) => V;
 
 export class DataToValueConverter<V> {
 
-  private readonly dataToValueFunction: DataToValueFunction<V>;
+  private readonly dataToValueFunction$: Observable<CompiledTbFunction<DataToValueFunction<V>>>;
   private readonly compareToValue: any;
 
-  constructor(private settings: DataToValueSettings,
+  constructor(private http: HttpClient,
+              private settings: DataToValueSettings,
               private valueType: ValueType) {
     this.compareToValue = settings.compareToValue;
     switch (settings.type) {
       case DataToValueType.FUNCTION:
-        try {
-          this.dataToValueFunction = new Function('data', settings.dataToValueFunction) as DataToValueFunction<V>;
-        } catch (e) {
-          this.dataToValueFunction = (data) => data;
-        }
+        this.dataToValueFunction$ = compileTbFunction(this.http, settings.dataToValueFunction, 'data').pipe(
+          catchError(() => {
+            return of(new CompiledTbFunction((data: any) => data, []));
+          }),
+          share({
+            connector: () => new ReplaySubject(1),
+            resetOnError: false,
+            resetOnComplete: false,
+            resetOnRefCountZero: false
+          })
+        );
         break;
       case DataToValueType.NONE:
         break;
     }
   }
 
-  dataToValue(data: any): V {
-    let result: V;
+  dataToValue(data: any): Observable<V> {
+    let result: Observable<V>;
     switch (this.settings.type) {
       case DataToValueType.FUNCTION:
-        result = data;
-        try {
-          let input = data;
-          if (!!data) {
-            try {
-              input = JSON.parse(data);
-            } catch (_e) {}
-          }
-          result = this.dataToValueFunction(input);
-        } catch (_e) {}
+        result = this.dataToValueFunction$.pipe(
+          map((dataToValueFunction) => {
+            let input = data;
+            if (!!data) {
+              try {
+                input = JSON.parse(data);
+              } catch (_e) {}
+            }
+            return dataToValueFunction.execute(input);
+          }),
+          catchError(() => of(data))
+        );
         break;
       case DataToValueType.NONE:
-        result = data;
+        result = of(data);
         break;
     }
     if (this.valueType === ValueType.BOOLEAN) {
-      result = (result === this.compareToValue) as any;
+      result = result.pipe(
+        map(val => (val === this.compareToValue) as V)
+      );
     }
     return result;
   }
@@ -215,7 +237,7 @@ export abstract class ValueAction {
                         protected settings: ValueActionSettings) {}
 
   protected handleError(err: any): Error {
-    const reason = parseError(this.ctx, err);
+    const reason = parseError(err);
     let errorMessage = this.ctx.translate.instant('widgets.value-action.error.failed-to-perform-action',
       {actionLabel: this.settings.actionLabel});
     if (reason) {
@@ -243,6 +265,8 @@ export abstract class ValueGetter<V> extends ValueAction {
         return new AttributeValueGetter<V>(ctx, settings, valueType, valueObserver, simulated);
       case GetValueAction.GET_TIME_SERIES:
         return new TimeSeriesValueGetter<V>(ctx, settings, valueType, valueObserver, simulated);
+      case GetValueAction.GET_ALARM_STATUS:
+        return new AlarmStatusValueGetter<V>(ctx, settings, valueType, valueObserver, simulated);
       case GetValueAction.GET_DASHBOARD_STATE:
         return new DashboardStateGetter<V>(ctx, settings, valueType, valueObserver, simulated);
     }
@@ -258,18 +282,18 @@ export abstract class ValueGetter<V> extends ValueAction {
                         protected valueObserver: Partial<Observer<V>>,
                         protected simulated: boolean) {
     super(ctx, settings);
-    if (this.settings.action !== GetValueAction.DO_NOTHING) {
-      this.dataConverter = new DataToValueConverter<V>(settings.dataToValue, valueType);
+    if (this.settings.action !== GetValueAction.DO_NOTHING && this.settings.action !== GetValueAction.GET_ALARM_STATUS) {
+      this.dataConverter = new DataToValueConverter<V>(ctx.http, settings.dataToValue, valueType);
     }
   }
 
   getValue(): Observable<V> {
     const valueObservable: Observable<V> = this.doGetValue().pipe(
-      map((data) => {
+      switchMap((data) => {
         if (this.dataConverter) {
           return this.dataConverter.dataToValue(data);
         } else {
-          return data;
+          return of(data);
         }
       }),
       catchError(err => {
@@ -307,9 +331,10 @@ type ValueToDataFunction<V> = (value: V) => any;
 export class ValueToDataConverter<V> {
 
   private readonly constantValue: any;
-  private readonly valueToDataFunction: ValueToDataFunction<V>;
+  private readonly valueToDataFunction$: Observable<CompiledTbFunction<ValueToDataFunction<V>>>;
 
-  constructor(protected settings: ValueToDataSettings) {
+  constructor(private http: HttpClient,
+              private settings: ValueToDataSettings) {
     switch (settings.type) {
       case ValueToDataType.VALUE:
         break;
@@ -317,31 +342,38 @@ export class ValueToDataConverter<V> {
         this.constantValue = this.settings.constantValue;
         break;
       case ValueToDataType.FUNCTION:
-        try {
-          this.valueToDataFunction = new Function('value', settings.valueToDataFunction) as ValueToDataFunction<V>;
-        } catch (e) {
-          this.valueToDataFunction = (data) => data;
-        }
+        this.valueToDataFunction$ = compileTbFunction(this.http, settings.valueToDataFunction, 'value').pipe(
+          catchError(() => {
+            return of(new CompiledTbFunction((value: any) => value, []));
+          }),
+          share({
+            connector: () => new ReplaySubject(1),
+            resetOnError: false,
+            resetOnComplete: false,
+            resetOnRefCountZero: false
+          })
+        );
         break;
       case ValueToDataType.NONE:
         break;
     }
   }
 
-  valueToData(value: V): any {
+  valueToData(value: V): Observable<any> {
     switch (this.settings.type) {
       case ValueToDataType.VALUE:
-        return value;
+        return of(value);
       case ValueToDataType.CONSTANT:
-        return this.constantValue;
+        return of(this.constantValue);
       case ValueToDataType.FUNCTION:
-        let result = value;
-        try {
-          result = this.valueToDataFunction(value);
-        } catch (e) {}
-        return result;
+        return this.valueToDataFunction$.pipe(
+          map((valueToDataFunction) => {
+            return valueToDataFunction.execute(value);
+          }),
+          catchError(() => of(value))
+        );
       case ValueToDataType.NONE:
-        return null;
+        return of(null);
     }
   }
 }
@@ -367,14 +399,15 @@ export abstract class ValueSetter<V> extends ValueAction {
                         protected settings: SetValueSettings,
                         protected simulated: boolean) {
     super(ctx, settings);
-    this.valueToDataConverter = new ValueToDataConverter<V>(settings.valueToData);
+    this.valueToDataConverter = new ValueToDataConverter<V>(ctx.http, settings.valueToData);
   }
 
   setValue(value: V): Observable<any> {
     if (this.simulated) {
       return of(null).pipe(delay(500));
     } else {
-      return this.doSetValue(this.valueToDataConverter.valueToData(value)).pipe(
+      return this.valueToDataConverter.valueToData(value).pipe(
+        switchMap(data => this.doSetValue(data)),
         catchError(err => {
           throw this.handleError(err);
         })
@@ -436,7 +469,7 @@ export class ExecuteRpcValueGetter<V> extends ValueGetter<V> {
 export abstract class TelemetryValueGetter<V, S extends TelemetryValueSettings> extends ValueGetter<V> {
 
   protected targetEntityId: EntityId;
-  private telemetrySubscriber: TelemetrySubscriber;
+  private telemetrySubscriber: SharedTelemetrySubscriber;
 
   protected constructor(protected ctx: WidgetContext,
                         protected settings: GetValueSettings<V>,
@@ -470,10 +503,10 @@ export abstract class TelemetryValueGetter<V, S extends TelemetryValueSettings> 
 
   private subscribeForTelemetryValue(): Observable<V> {
     this.telemetrySubscriber =
-      TelemetrySubscriber.createEntityAttributesSubscription(this.ctx.telemetryWsService, this.targetEntityId,
+      SharedTelemetrySubscriber.createEntityAttributesSubscription(this.ctx.telemetryWsService, this.targetEntityId,
         this.scope(), this.ctx.ngZone, [this.getTelemetryValueSettings().key]);
     this.telemetrySubscriber.subscribe();
-    return this.telemetrySubscriber.attributeData$().pipe(
+    return this.telemetrySubscriber.attributeData$.pipe(
       map((data) => {
         let value: V = null;
         const entry = data.find(attr => attr.key === this.getTelemetryValueSettings().key);
@@ -535,6 +568,58 @@ export class TimeSeriesValueGetter<V> extends TelemetryValueGetter<V, TelemetryV
 
   protected getTelemetryValueSettings(): TelemetryValueSettings {
     return this.settings.getTimeSeries;
+  }
+}
+
+export class AlarmStatusValueGetter<V> extends ValueGetter<V> {
+
+  protected targetEntityId: EntityId;
+  private telemetrySubscriber: SharedTelemetrySubscriber;
+
+  constructor(protected ctx: WidgetContext,
+                        protected settings: GetValueSettings<V>,
+                        protected valueType: ValueType,
+                        protected valueObserver: Partial<Observer<V>>,
+                        protected simulated: boolean) {
+    super(ctx, settings, valueType, valueObserver, simulated);
+    const entityInfo = this.ctx.defaultSubscription.getFirstEntityInfo();
+    this.targetEntityId = entityInfo?.entityId;
+  }
+
+  protected doGetValue(): Observable<boolean> {
+    if (this.simulated) {
+      return of(false).pipe(delay(100));
+    } else {
+      if (!this.targetEntityId && !this.ctx.defaultSubscription.rpcEnabled) {
+        return throwError(() => new Error(this.ctx.translate.instant('widgets.value-action.error.target-entity-is-not-set')));
+      }
+      if (this.targetEntityId) {
+        return this.subscribeForTelemetryValue();
+      } else {
+        return of(null);
+      }
+    }
+  }
+
+  private subscribeForTelemetryValue(): Observable<boolean> {
+    this.telemetrySubscriber =
+      SharedTelemetrySubscriber.createAlarmStatusSubscription(this.ctx.telemetryWsService, this.targetEntityId,
+        this.ctx.ngZone, this.settings.getAlarmStatus.severityList, this.settings.getAlarmStatus.typeList);
+    this.telemetrySubscriber.subscribe();
+    return this.telemetrySubscriber.alarmStatus$.pipe(
+      map((data) => {
+        return data.active;
+      })
+    );
+  }
+
+
+  destroy() {
+    if (this.telemetrySubscriber) {
+      this.telemetrySubscriber.unsubscribe();
+      this.telemetrySubscriber = null;
+    }
+    super.destroy();
   }
 }
 
@@ -656,15 +741,12 @@ export class TimeSeriesValueSetter<V> extends TelemetryValueSetter<V> {
 
 }
 
-const parseError = (ctx: WidgetContext, err: any): string =>
-  ctx.$injector.get(UtilsService).parseException(err).message || 'Unknown Error';
-
 const handleRpcError = (ctx: WidgetContext, err: any): Error => {
   let reason: string;
   if (ctx.defaultSubscription.rpcErrorText) {
     reason = ctx.defaultSubscription.rpcErrorText;
   } else {
-    reason = parseError(ctx, err);
+    reason = parseError(err);
   }
   return new Error(reason);
 };

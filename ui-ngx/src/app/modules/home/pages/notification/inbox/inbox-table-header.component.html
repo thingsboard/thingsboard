@@ -15,13 +15,11 @@
     limitations under the License.
 
 -->
-<div fxFlex="100" fxLayout="row" fxLayoutAlign="start center">
-  <mat-button-toggle-group class="tb-notification-unread-toggle-group"
-                           style="width: 180px;"
-                           [ngModel]="entitiesTableConfig.componentsData.unreadOnly"
-                           (ngModelChange)="changeUnreadOnly($event)">
-    <mat-button-toggle fxFlex [value]=true>{{ 'notification.unread' | translate }}</mat-button-toggle>
-    <mat-button-toggle fxFlex [value]=false>{{ 'notification.all' | translate }}</mat-button-toggle>
-  </mat-button-toggle-group>
-
+<div class="flex flex-full flex-row items-center justify-start">
+  <tb-toggle-select class="w-44" appearance="fill"
+                    [ngModel]="entitiesTableConfig.componentsData.unreadOnly"
+                    (ngModelChange)="changeUnreadOnly($event)">
+    <tb-toggle-option [value]=true>{{ 'notification.unread' | translate }}</tb-toggle-option>
+    <tb-toggle-option [value]=false>{{ 'notification.all' | translate }}</tb-toggle-option>
+  </tb-toggle-select>
 </div>

@@ -77,8 +77,8 @@
         {{ 'widgets.time-series-chart.series.point.point-label' | translate }}
       </div>
     </mat-slide-toggle>
-    <div fxLayout="row" fxFlex.lt-md fxLayoutAlign="start center" fxLayoutGap="8px">
-      <mat-form-field class="medium-width" fxFlex.lt-md appearance="outline" subscriptSizing="dynamic">
+    <div class="flex flex-row items-center justify-start gap-2 lt-md:flex-1">
+      <mat-form-field class="medium-width lt-md:flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="pointLabelPosition">
           <mat-option *ngFor="let position of chartLabelPositions" [value]="position">
             {{ chartLabelPositionTranslations.get(position) | translate }}

@@ -15,21 +15,19 @@
     limitations under the License.
 
 -->
-<div class="tb-images tb-absolute-fill" [ngClass]="{'tb-dialog-mode': dialogMode, 'mat-padding': !dialogMode}">
-  <div fxFlex fxLayout="column" class="tb-images-content" [ngClass]="{'tb-outlined-border': pageMode}">
-    <mat-toolbar class="mat-mdc-table-toolbar"
-                 fxLayout.lt-lg="column" fxLayoutAlign.lt-lg="start stretch"
-                 [fxShow]="!textSearchMode && (mode === 'grid' || dataSource?.selection.isEmpty())" [ngClass.lt-lg]="{'multi-row': !isSysAdmin}">
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+<div class="tb-images tb-absolute-fill" [class.tb-dialog-mode]="dialogMode" [class.mat-padding]="!dialogMode">
+  <div class="tb-images-content flex flex-1 flex-col" [class.tb-outlined-border]="pageMode">
+    <mat-toolbar class="mat-mdc-table-toolbar lt-lg:flex lt-lg:flex-col lt-lg:items-stretch lt-lg:justify-start"
+                 [class.!hidden]="textSearchMode || !(mode === 'grid' || dataSource?.selection.isEmpty())"
+                 [class.multi-row]="!isSysAdmin">
+      <div class="flex flex-1 flex-row items-center justify-start">
         <div class="mat-toolbar-tools">
-          <div fxHide fxShow.gt-sm class="tb-images-title">
+          <div class="tb-images-title lt-md:!hidden">
             <div tbTruncateWithTooltip>{{ (isScada ? 'scada.symbols' : 'image.gallery') | translate }}</div>
             <div *ngIf="isScada" tb-help="scada"></div>
           </div>
-          <div class="tb-images-view-type-toolbar"
-               fxLayout="row"
-               fxLayoutAlign="start center">
-            <div class="tb-toolbar-button" [ngClass]="{'tb-selected' : mode === 'list'}">
+          <div class="tb-images-view-type-toolbar flex flex-row items-center justify-start">
+            <div class="tb-toolbar-button" [class.tb-selected]="mode === 'list'">
               <button mat-icon-button
                       (click)="setMode('list')"
                       matTooltip="{{'image.list-mode' | translate }}"
@@ -37,7 +35,7 @@
                 <mat-icon>view_list</mat-icon>
               </button>
             </div>
-            <div class="tb-toolbar-button" [ngClass]="{'tb-selected' : mode === 'grid'}">
+            <div class="tb-toolbar-button" [class.tb-selected]="mode === 'grid'">
               <button mat-icon-button
                       (click)="setMode('grid');"
                       matTooltip="{{'image.grid-mode' | translate }}"
@@ -47,13 +45,13 @@
             </div>
           </div>
           <mat-slide-toggle *ngIf="!isSysAdmin"
-                            fxHide fxShow.gt-md
+                            class="lt-lg:!hidden"
                             [ngModel]="includeSystemImages"
                             (ngModelChange)="includeSystemImagesChanged($event)">{{ (isScada ? 'scada.include-system-symbols' : 'image.include-system-images') | translate }}</mat-slide-toggle>
         </div>
-        <section fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap.gt-md="16px">
-          <span fxFlex></span>
-          <section fxLayout="row" fxLayoutAlign="start center">
+        <section class="flex flex-1 flex-row items-center justify-start gt-md:gap-4">
+          <span class="flex-1"></span>
+          <section class="flex flex-row items-center justify-start">
             <button [disabled]="isLoading$ | async"
                     mat-icon-button
                     (click)="enterFilterMode()"
@@ -75,7 +73,8 @@
                     matTooltipPosition="above">
               <tb-icon>mdi:file-import</tb-icon>
             </button>
-            <button [fxHide]="!(dialogMode && isScada)" fxShow.lt-lg
+            <button [class.!hidden]="dialogMode && isScada"
+                    class="gt-md:!hidden"
                     [disabled]="isLoading$ | async"
                     mat-icon-button
                     color="primary"
@@ -85,7 +84,8 @@
               <mat-icon>add</mat-icon>
             </button>
           </section>
-          <button fxHide [fxShow.gt-md]="!(dialogMode && isScada)"
+          <button [class.!hidden]="dialogMode && isScada"
+                  class="lt-lg:!hidden"
                   [disabled]="isLoading$ | async"
                   mat-flat-button
                   color="primary"
@@ -94,18 +94,18 @@
           </button>
         </section>
       </div>
-      <mat-slide-toggle *ngIf="!isSysAdmin" fxHide fxShow.lt-lg
+      <mat-slide-toggle *ngIf="!isSysAdmin" class="gt-md:!hidden"
                         [ngModel]="includeSystemImages"
                         (ngModelChange)="includeSystemImagesChanged($event)">{{ (isScada ? 'scada.include-system-symbols' : 'image.include-system-images') | translate }}</mat-slide-toggle>
     </mat-toolbar>
-    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode && (mode === 'grid' || dataSource?.selection.isEmpty())">
+    <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode || !(mode === 'grid' || dataSource?.selection.isEmpty())">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
                 matTooltip="{{ (isScada ? 'scada.search' : 'image.search' ) | translate }}"
                 matTooltipPosition="above">
           <mat-icon>search</mat-icon>
         </button>
-        <mat-form-field fxFlex>
+        <mat-form-field class="flex-1">
           <mat-label>&nbsp;</mat-label>
           <input #searchInput matInput
                  [formControl]="textSearch"
@@ -118,12 +118,12 @@
         </button>
       </div>
     </mat-toolbar>
-    <mat-toolbar class="mat-mdc-table-toolbar" color="primary" [fxShow]="mode === 'list' && !dataSource?.selection.isEmpty()">
+    <mat-toolbar class="mat-mdc-table-toolbar" color="primary" [class.!hidden]="mode !== 'list' || dataSource?.selection.isEmpty()">
       <div class="mat-toolbar-tools">
         <span>
           {{ translate.get((isScada ? 'scada.selected-symbols' : 'image.selected-images' ), {count: dataSource?.selection.selected.length}) | async }}
         </span>
-        <span fxFlex></span>
+        <span class="flex-1"></span>
         <button mat-icon-button [disabled]="isLoading$ | async"
                 matTooltip="{{ 'action.delete' | translate }}"
                 matTooltipPosition="above"
@@ -132,8 +132,8 @@
         </button>
       </div>
     </mat-toolbar>
-    <div fxFlex *ngIf="mode === 'list'" fxLayout="column">
-      <div fxFlex class="table-container">
+    <div *ngIf="mode === 'list'" class="flex flex-1 flex-col min-h-0">
+      <div class="table-container flex-1">
         <table mat-table [dataSource]="dataSource" [trackBy]="trackByEntity"
                matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
           <ng-container matColumnDef="select" sticky>
@@ -145,7 +145,7 @@
             </mat-header-cell>
             <mat-cell *matCellDef="let image">
               <mat-checkbox (click)="$event.stopPropagation()"
-                            [fxShow]="deleteEnabled(image)"
+                            [class.!hidden]="!deleteEnabled(image)"
                             (change)="$event ? dataSource.selection.toggle(image) : null"
                             [checked]="dataSource.selection.isSelected(image)">
               </mat-checkbox>
@@ -190,10 +190,22 @@
             </mat-cell>
           </ng-container>
           <ng-container matColumnDef="actions" stickyEnd>
-            <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: actionColumnWidth, maxWidth: actionColumnWidth, width: actionColumnWidth }">
+            <mat-header-cell *matHeaderCellDef
+                             [class.gt-md:min-w-60]="!isScada"
+                             [class.gt-md:max-w-60]="!isScada"
+                             [class.gt-md:w-60]="!isScada"
+                             [class.gt-md:min-w-48]="isScada"
+                             [class.gt-md:max-w-48]="isScada"
+                             [class.gt-md:w-48]="isScada">
             </mat-header-cell>
-            <mat-cell *matCellDef="let image" [ngStyle.gt-md]="{ minWidth: actionColumnWidth, maxWidth: actionColumnWidth, width: actionColumnWidth }">
-              <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
+            <mat-cell *matCellDef="let image"
+                      [class.gt-md:min-w-60]="!isScada"
+                      [class.gt-md:max-w-60]="!isScada"
+                      [class.gt-md:w-60]="!isScada"
+                      [class.gt-md:min-w-48]="isScada"
+                      [class.gt-md:max-w-48]="isScada"
+                      [class.gt-md:w-48]="isScada">
+              <div class="flex flex-1 flex-row items-stretch justify-end lt-lg:!hidden">
                 <button mat-icon-button [disabled]="isLoading$ | async"
                         matTooltip="{{ (isScada ? 'scada.download-symbol' : 'image.download-image' ) | translate }}"
                         matTooltipPosition="above"
@@ -225,7 +237,7 @@
                   <mat-icon>delete</mat-icon>
                 </button>
               </div>
-              <div fxHide fxShow.lt-lg>
+              <div class="gt-md:!hidden">
                 <button mat-icon-button
                         (click)="$event.stopPropagation()"
                         [matMenuTriggerFor]="cellActionsMenu">
@@ -258,7 +270,7 @@
                   </button>
                   <button mat-menu-item
                           [disabled]="isLoading$ | async"
-                          [fxShow]="deleteEnabled(image)"
+                          [class.!hidden]="!deleteEnabled(image)"
                           (click)="deleteImage($event, image)">
                     <mat-icon>delete</mat-icon>
                     <span>{{ (isScada ? 'scada.delete-symbol' : 'image.delete-image' ) | translate }}</span>
@@ -275,18 +287,17 @@
                       (click)="selectImage($event, image)">{{ 'action.select' | translate }}</button>
             </mat-cell>
           </ng-container>
-          <mat-header-row [ngClass]="{'mat-row-select': true}" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
-          <mat-row [fxShow]="!dataSource.dataLoading"
-                   [ngClass]="{'mat-row-select': true,
-                               'mat-selected': dataSource.selection.isSelected(image)}"
+          <mat-header-row class="mat-row-select" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+          <mat-row class="mat-row-select"
+                   [class.!hidden]="dataSource.dataLoading"
+                   [class.mat-selected]="dataSource.selection.isSelected(image)"
                    *matRowDef="let image; columns: displayedColumns;" (click)="rowClick($event, image)"></mat-row>
         </table>
         <ng-container *ngIf="(dataSource.isEmpty() | async) && !dataSource.dataLoading">
           <ng-container *ngTemplateOutlet="noImages"></ng-container>
         </ng-container>
-        <span [fxShow]="dataSource.dataLoading"
-              fxLayoutAlign="center center"
-              class="no-data-found">{{ 'common.loading' | translate }}</span>
+        <span [class.!hidden]="!dataSource.dataLoading"
+              class="no-data-found flex items-center justify-center">{{ 'common.loading' | translate }}</span>
       </div>
       <mat-divider></mat-divider>
       <mat-paginator [length]="dataSource.total() | async"
@@ -296,8 +307,8 @@
                      [hidePageSize]="hidePageSize"
                      showFirstLastButtons></mat-paginator>
     </div>
-    <div *ngIf="mode === 'grid'" fxFlex [ngClass]="{'mat-padding': !dialogMode}" fxLayout="column">
-      <tb-scroll-grid fxFlex
+    <div *ngIf="mode === 'grid'" class="flex flex-1 flex-col" [class.mat-padding]="!dialogMode">
+      <tb-scroll-grid class="flex-1"
         [columns]="gridColumns"
         [itemSize]="gridImagesItemSizeStrategy"
         [fetchFunction]="gridImagesFetchFunction"
@@ -311,8 +322,7 @@
   </div>
 </div>
 <ng-template #loadingImages>
-  <div fxLayout="column"
-       fxLayoutAlign="center center" class="tb-absolute-fill">
+  <div class="tb-absolute-fill flex flex-col items-center justify-center">
         <span>
           {{ 'common.loading' | translate }}
         </span>

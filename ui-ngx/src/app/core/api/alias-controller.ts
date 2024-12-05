@@ -61,6 +61,9 @@ export class AliasController implements IAliasController {
   resolvedAliases: { [aliasId: string]: AliasInfo } = {};
   resolvedAliasesObservable: { [aliasId: string]: Observable<AliasInfo> } = {};
 
+  resolvedDevices: { [deviceId: string]: EntityInfo } = {};
+  resolvedDevicesObservable: { [deviceId: string]: Observable<EntityInfo> } = {};
+
   resolvedAliasesToStateEntities: { [aliasId: string]: StateEntityInfo } = {};
 
   constructor(private utils: UtilsService,
@@ -261,9 +264,35 @@ export class AliasController implements IAliasController {
   }
 
   resolveSingleEntityInfoForDeviceId(deviceId: string): Observable<EntityInfo> {
-    const entityFilter = singleEntityFilterFromDeviceId(deviceId);
-    return this.entityService.findSingleEntityInfoByEntityFilter(entityFilter,
-      {ignoreLoading: true, ignoreErrors: true});
+    let entityInfo = this.resolvedDevices[deviceId];
+    if (entityInfo) {
+      return of(entityInfo);
+    } else if (this.resolvedDevicesObservable[deviceId]) {
+      return this.resolvedDevicesObservable[deviceId];
+    } else {
+      const resolvedDeviceSubject = new ReplaySubject<EntityInfo>();
+      this.resolvedDevicesObservable[deviceId] = resolvedDeviceSubject.asObservable();
+      const entityFilter = singleEntityFilterFromDeviceId(deviceId);
+      this.entityService.findSingleEntityInfoByEntityFilter(entityFilter,
+        {ignoreLoading: true, ignoreErrors: true}).subscribe(
+        (resolvedEntityInfo) => {
+          this.resolvedDevices[deviceId] = resolvedEntityInfo;
+          delete this.resolvedDevicesObservable[deviceId];
+          resolvedDeviceSubject.next(resolvedEntityInfo);
+          resolvedDeviceSubject.complete();
+        },
+        () => {
+          resolvedDeviceSubject.error(null);
+          delete this.resolvedDevicesObservable[deviceId];
+        }
+      );
+      entityInfo = this.resolvedDevices[deviceId];
+      if (entityInfo) {
+        return of(entityInfo);
+      } else {
+        return this.resolvedDevicesObservable[deviceId];
+      }
+    }
   }
 
   resolveSingleEntityInfoForTargetDevice(targetDevice: TargetDevice): Observable<EntityInfo> {

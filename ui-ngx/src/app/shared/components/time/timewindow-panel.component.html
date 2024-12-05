@@ -31,7 +31,8 @@
     <ng-container *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME">
       <section class="tb-form-panel stroked" *ngIf="realtimeIntervalSelectionAvailable; else timezoneSelectionPanel">
         <div class="tb-flex space-between"
-             [ngClass]="{'align-end': realtimeTypeSelectionAvailable, 'align-center': !realtimeTypeSelectionAvailable }">
+             [class.align-end]="realtimeTypeSelectionAvailable"
+             [class.align-center]="!realtimeTypeSelectionAvailable">
           <div class="tb-flex-xs column">
             <div class="tb-form-panel-title">{{ 'timewindow.timewindow' | translate }}</div>
             <ng-container formGroupName="realtime" *ngIf="realtimeTypeSelectionAvailable">
@@ -50,7 +51,8 @@
             formControlName="timewindowMs"
             subscriptSizing="dynamic"
             appearance="outline"
-            [disabledAdvanced]="timewindow.realtime.disableCustomInterval"
+            [allowedIntervals]="realtimeAllowedLastIntervals"
+            [disabledAdvanced]="realtimeDisableCustomInterval"
             [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
                               timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
           </tb-timeinterval>
@@ -62,6 +64,7 @@
             onlyCurrentInterval="true"
             subscriptSizing="dynamic"
             appearance="outline"
+            [allowedIntervals]="realtimeAllowedQuickIntervals"
             [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
                               timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
           </tb-quick-time-interval>
@@ -72,7 +75,8 @@
     <ng-container *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY">
       <section class="tb-form-panel stroked" *ngIf="historyIntervalSelectionAvailable; else timezoneSelectionPanel">
         <div class="tb-flex space-between"
-             [ngClass]="{'align-end': historyTypeSelectionAvailable, 'align-center': !historyTypeSelectionAvailable }">
+             [class.align-end]="historyTypeSelectionAvailable"
+             [class.align-center]="!historyTypeSelectionAvailable">
           <div class="tb-flex-xs column">
             <div class="tb-form-panel-title">{{ 'timewindow.timewindow' | translate }}</div>
             <ng-container formGroupName="history" *ngIf="historyTypeSelectionAvailable">
@@ -93,7 +97,8 @@
             formControlName="timewindowMs"
             subscriptSizing="dynamic"
             appearance="outline"
-            [disabledAdvanced]="timewindow.history.disableCustomInterval"
+            [allowedIntervals]="historyAllowedLastIntervals"
+            [disabledAdvanced]="historyDisableCustomInterval"
             [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
                             timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
           </tb-timeinterval>
@@ -114,6 +119,7 @@
             formControlName="quickInterval"
             subscriptSizing="dynamic"
             appearance="outline"
+            [allowedIntervals]="historyAllowedQuickIntervals"
             [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
                           timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
           </tb-quick-time-interval>
@@ -125,13 +131,9 @@
       <ng-container formGroupName="aggregation">
         <section class="tb-form-row column-xs space-between same-padding" *ngIf="isEdit || !timewindow.hideAggregation">
           <div class="fixed-title-width-180">{{ 'aggregation.aggregation' | translate }}</div>
-          <mat-form-field class="flex" subscriptSizing="dynamic" appearance="outline">
-            <mat-select formControlName="type">
-              <mat-option *ngFor="let aggregation of aggregations" [value]="aggregation">
-                {{ aggregationTypesTranslations.get(aggregationTypes[aggregation]) | translate }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
+          <tb-aggregation-type-select class="flex" subscriptSizing="dynamic" appearance="outline" displayLabel="false"
+                                      formControlName="type" [allowedAggregationTypes]="allowedAggTypes">
+          </tb-aggregation-type-select>
         </section>
 
         <section class="tb-form-row column-xs space-between same-padding"
@@ -143,27 +145,29 @@
         </section>
       </ng-container>
 
-      <section class="tb-form-row column-xs same-padding" [fxShow]="(isEdit || !timewindow.hideAggInterval)
-       && timewindowForm.get('aggregation.type').value !== aggregationTypes.NONE">
+      <section class="tb-form-row column-xs same-padding" *ngIf="timewindowForm.get('aggregation.type').value !== aggregationTypes.NONE"
+               [class.!hidden]="!(isEdit || !timewindow.hideAggInterval)">
         <ng-container formGroupName="realtime" *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME">
           <tb-timeinterval
             formControlName="interval"
-            [min]="minRealtimeAggInterval()" [max]="maxRealtimeAggInterval()"
+            [min]="minRealtimeAggInterval" [max]="maxRealtimeAggInterval"
+            [allowedIntervals]="realtimeAllowedAggIntervals"
             useCalendarIntervals
             subscriptSizing="dynamic"
             appearance="outline"
-            [disabledAdvanced]="timewindow.realtime.disableCustomGroupInterval">
+            [disabledAdvanced]="realtimeDisableCustomGroupInterval">
             <div class="fixed-title-width-180">{{ 'aggregation.group-interval' | translate }}</div>
           </tb-timeinterval>
         </ng-container>
         <ng-container formGroupName="history" *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY">
           <tb-timeinterval
             formControlName="interval"
-            [min]="minHistoryAggInterval()" [max]="maxHistoryAggInterval()"
+            [min]="minHistoryAggInterval" [max]="maxHistoryAggInterval"
+            [allowedIntervals]="historyAllowedAggIntervals"
             useCalendarIntervals
             subscriptSizing="dynamic"
             appearance="outline"
-            [disabledAdvanced]="timewindow.history.disableCustomGroupInterval">
+            [disabledAdvanced]="historyDisableCustomGroupInterval">
             <div class="fixed-title-width-180">{{ 'aggregation.group-interval' | translate }}</div>
           </tb-timeinterval>
         </ng-container>

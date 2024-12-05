@@ -14,12 +14,9 @@
 /// limitations under the License.
 ///
 
-// eslint-disable-next-line @typescript-eslint/triple-slash-reference
-/// <reference path="../../../../src/typings/rawloader.typings.d.ts" />
-
 import { Inject, Injectable, NgZone, Renderer2 } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
-import { ExceptionData } from '@app/shared/models/error.models';
+import { ExceptionData, parseException } from '@app/shared/models/error.models';
 import {
   base64toObj,
   base64toString,
@@ -40,28 +37,20 @@ import { WindowMessage } from '@shared/models/window-message.model';
 import { TranslateService } from '@ngx-translate/core';
 import { customTranslationsPrefix, i18nPrefix } from '@app/shared/models/constants';
 import { DataKey, Datasource, DatasourceType, KeyInfo } from '@shared/models/widget.models';
-import { DataKeyType } from '@app/shared/models/telemetry/telemetry.models';
-import {
-  alarmFields,
-  alarmSeverityTranslations,
-  alarmStatusTranslations
-} from '@shared/models/alarm.models';
+import { DataKeyType, SharedTelemetrySubscriber } from '@app/shared/models/telemetry/telemetry.models';
+import { alarmFields, alarmSeverityTranslations, alarmStatusTranslations } from '@shared/models/alarm.models';
 import { materialColors } from '@app/shared/models/material.models';
 import { WidgetInfo } from '@home/models/widget-component.models';
 import jsonSchemaDefaults from 'json-schema-defaults';
 import { Observable } from 'rxjs';
 import { publishReplay, refCount } from 'rxjs/operators';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
-import {
-  AttributeData,
-  LatestTelemetry,
-  TelemetrySubscriber,
-  TelemetryType
-} from '@shared/models/telemetry/telemetry.models';
+import { AttributeData, LatestTelemetry, TelemetryType } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { DatePipe, DOCUMENT } from '@angular/common';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
 import cssjs from '@core/css/css';
+import { isNotEmptyTbFunction } from '@shared/models/js-function.models';
 
 const i18nRegExp = new RegExp(`{${i18nPrefix}:[^{}]+}`, 'g');
 
@@ -223,42 +212,7 @@ export class UtilsService {
   }
 
   public parseException(exception: any, lineOffset?: number): ExceptionData {
-    const data: ExceptionData = {};
-    if (exception) {
-      if (typeof exception === 'string') {
-        data.message = exception;
-      } else if (exception instanceof String) {
-        data.message = exception.toString();
-      } else {
-        if (exception.name) {
-          data.name = exception.name;
-        } else {
-          data.name = 'UnknownError';
-        }
-        if (exception.message) {
-          data.message = exception.message;
-        }
-        if (exception.lineNumber) {
-          data.lineNumber = exception.lineNumber;
-          if (exception.columnNumber) {
-            data.columnNumber = exception.columnNumber;
-          }
-        } else if (exception.stack) {
-          const lineInfoRegexp = /(.*<anonymous>):(\d*)(:)?(\d*)?/g;
-          const lineInfoGroups = lineInfoRegexp.exec(exception.stack);
-          if (lineInfoGroups != null && lineInfoGroups.length >= 3) {
-            if (isUndefined(lineOffset)) {
-              lineOffset = -2;
-            }
-            data.lineNumber = Number(lineInfoGroups[2]) + lineOffset;
-            if (lineInfoGroups.length >= 5) {
-              data.columnNumber = Number(lineInfoGroups[4]);
-            }
-          }
-        }
-      }
-    }
-    return data;
+    return parseException(exception, lineOffset);
   }
 
   public customTranslation(translationValue: string, defaultValue: string): string {
@@ -335,7 +289,7 @@ export class UtilsService {
     } else if (index > -1) {
       dataKey.color = this.getMaterialColor(index);
     }
-    if (keyInfo.postFuncBody && keyInfo.postFuncBody.length) {
+    if (isNotEmptyTbFunction(keyInfo.postFuncBody)) {
       dataKey.usePostProcessing = true;
       dataKey.postFuncBody = keyInfo.postFuncBody;
     }
@@ -483,13 +437,13 @@ export class UtilsService {
     if (!entityId && ctx.datasources.length > 0) {
       entityId = this.getEntityIdFromDatasource(ctx.datasources[0]);
     }
-    const subscription = TelemetrySubscriber.createEntityAttributesSubscription(ctx.telemetryWsService, entityId, type, ctx.ngZone, keys);
+    const subscription = SharedTelemetrySubscriber.createEntityAttributesSubscription(ctx.telemetryWsService, entityId, type, ctx.ngZone, keys);
     if (!ctx.telemetrySubscribers) {
       ctx.telemetrySubscribers = [];
     }
     ctx.telemetrySubscribers.push(subscription);
     subscription.subscribe();
-    return subscription.attributeData$().pipe(
+    return subscription.attributeData$.pipe(
       publishReplay(1),
       refCount()
     );

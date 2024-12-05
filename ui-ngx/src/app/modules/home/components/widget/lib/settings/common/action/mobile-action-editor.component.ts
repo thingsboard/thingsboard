@@ -41,6 +41,7 @@ import {
   getDefaultProcessQrCodeFunction
 } from '@home/components/widget/lib/settings/common/action/mobile-action-editor.models';
 import { WidgetService } from '@core/http/widget.service';
+import { TbFunction } from '@shared/models/js-function.models';
 
 @Component({
   selector: 'tb-mobile-action-editor',
@@ -159,7 +160,7 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
     }
     this.mobileActionTypeFormGroup = this.fb.group({});
     if (type) {
-      let processLaunchResultFunction: string;
+      let processLaunchResultFunction: TbFunction;
       switch (type) {
         case WidgetMobileActionType.takePictureFromGallery:
         case WidgetMobileActionType.takePhoto:

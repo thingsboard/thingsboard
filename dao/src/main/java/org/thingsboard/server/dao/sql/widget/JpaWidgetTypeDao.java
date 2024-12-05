@@ -186,8 +186,8 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
     }
 
     @Override
-    public List<WidgetTypeDetails> findWidgetTypesInfosByTenantIdAndResourceId(UUID tenantId, UUID tbResourceId) {
-        return DaoUtil.convertDataList(widgetTypeRepository.findWidgetTypesInfosByTenantIdAndResourceId(tenantId, tbResourceId));
+    public List<String> findWidgetTypesNamesByTenantIdAndResourceLink(UUID tenantId, String link) {
+        return widgetTypeRepository.findNamesByTenantIdAndResourceLink(tenantId, link);
     }
 
     @Override

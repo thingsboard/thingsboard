@@ -17,7 +17,7 @@
 -->
 <mat-toolbar color="primary">
   <h2>{{ dialogTitle | translate }}</h2>
-  <span fxFlex></span>
+  <span class="flex-1"></span>
   <div tb-help="ruleNotifications"></div>
   <button mat-icon-button
           (click)="cancel()"
@@ -27,8 +27,8 @@
 </mat-toolbar>
 <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
 </mat-progress-bar>
-<div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
-<div mat-dialog-content ngStyle.xs="padding: 0;">
+<div style="height: 4px;" *ngIf="(isLoading$ | async) === false"></div>
+<div mat-dialog-content class="xs:p-0">
   <mat-horizontal-stepper [linear]="true" labelPosition="end" #addNotificationRule [orientation]="(stepperOrientation | async)"
                           (selectionChange)="changeStep($event)">
     <ng-template matStepperIcon="edit">
@@ -94,7 +94,7 @@
           <section formGroupName="triggerConfig">
             <section formGroupName="clearRule">
               <div class="mat-body-2" translate>notification.stop-escalation-alarm-status-become</div>
-              <mat-form-field fxFlex class="mat-block" floatLabel="always" style="margin-right: 48px">
+              <mat-form-field class="mat-block flex-1" floatLabel="always" style="margin-right: 48px">
                 <mat-label translate>alarm.alarm-status-list</mat-label>
                 <mat-select formControlName="alarmStatuses" multiple
                             placeholder="{{ !alarmTemplateForm.get('triggerConfig.clearRule.alarmStatuses').value?.length ? ('alarm.any-status' | translate) : '' }}">
@@ -123,7 +123,7 @@
               formControlName="alarmTypes">
             </tb-string-items-list>
 
-            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+            <mat-form-field class="mat-block flex-1" floatLabel="always">
               <mat-label translate>alarm.alarm-severity-list</mat-label>
               <mat-select formControlName="alarmSeverities" multiple
                           placeholder="{{ !alarmTemplateForm.get('triggerConfig.alarmSeverities').value?.length ? ('alarm.any-severity' | translate) : '' }}">
@@ -133,7 +133,7 @@
               </mat-select>
             </mat-form-field>
           </fieldset>
-          <mat-form-field fxFlex class="mat-block">
+          <mat-form-field class="mat-block flex-1">
             <mat-label translate>notification.notify-on</mat-label>
             <mat-select formControlName="notifyOn" multiple>
               <mat-option *ngFor="let alarmAction of alarmActions" [value]="alarmAction">
@@ -161,13 +161,11 @@
       <ng-template matStepLabel>{{ 'notification.device-activity-trigger-settings' | translate }}</ng-template>
       <form [formGroup]="deviceInactivityTemplateForm">
         <section formGroupName="triggerConfig">
-          <div fxFlex fxLayoutAlign="center center">
-            <mat-button-toggle-group class="tb-notification-unread-toggle-group"
-                                     style="width: 250px;"
-                                     formControlName="filterByDevice">
-              <mat-button-toggle fxFlex [value]=true>{{ 'device.device' | translate }}</mat-button-toggle>
-              <mat-button-toggle fxFlex [value]=false>{{ 'device-profile.device-profile' | translate }}</mat-button-toggle>
-            </mat-button-toggle-group>
+          <div class="mb-4 flex justify-center">
+            <tb-toggle-select class="w-60" appearance="fill" formControlName="filterByDevice">
+              <tb-toggle-option [value]=true>{{ 'device.device' | translate }}</tb-toggle-option>
+              <tb-toggle-option [value]=false>{{ 'device-profile.device-profile' | translate }}</tb-toggle-option>
+            </tb-toggle-select>
           </div>
           <ng-container *ngIf="deviceInactivityTemplateForm.get('triggerConfig.filterByDevice').value; else deviceProfile">
             <tb-entity-list
@@ -189,7 +187,7 @@
               [entityType]="entityType.DEVICE_PROFILE">
             </tb-entity-list>
           </ng-template>
-          <mat-form-field fxFlex class="mat-block">
+          <mat-form-field class="mat-block flex-1">
             <mat-label translate>notification.notify-on</mat-label>
             <mat-select formControlName="notifyOn" multiple>
               <mat-option *ngFor="let deviceEvent of deviceEvents" [value]="deviceEvent">
@@ -223,8 +221,8 @@
                                [allowedEntityTypes]="allowEntityTypeForEntityAction"
                                formControlName="entityTypes">
           </tb-entity-type-list>
-          <section fxLayout="column" fxLayoutGap="8px">
-            <span fxFlex translate>notification.status</span>
+          <section class="flex flex-col gap-2">
+            <span class="flex-1" translate>notification.status</span>
             <mat-slide-toggle formControlName="created">{{ 'notification.created' | translate }}</mat-slide-toggle>
             <mat-slide-toggle formControlName="updated">{{ 'notification.updated' | translate }}</mat-slide-toggle>
             <mat-slide-toggle formControlName="deleted">{{ 'notification.deleted' | translate }}</mat-slide-toggle>
@@ -256,7 +254,7 @@
               formControlName="alarmTypes">
             </tb-string-items-list>
 
-            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+            <mat-form-field class="mat-block flex-1" floatLabel="always">
               <mat-label translate>alarm.alarm-severity-list</mat-label>
               <mat-select formControlName="alarmSeverities" multiple
                           placeholder="{{ !alarmCommentTemplateForm.get('triggerConfig.alarmSeverities').value?.length ? ('alarm.any-severity' | translate) : '' }}">
@@ -265,7 +263,7 @@
                 </mat-option>
               </mat-select>
             </mat-form-field>
-            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+            <mat-form-field class="mat-block flex-1" floatLabel="always">
               <mat-label translate>alarm.alarm-status-list</mat-label>
               <mat-select formControlName="alarmStatuses" multiple
                           placeholder="{{ !alarmCommentTemplateForm.get('triggerConfig.alarmStatuses').value?.length ? ('alarm.any-status' | translate) : '' }}">
@@ -275,7 +273,7 @@
               </mat-select>
             </mat-form-field>
           </fieldset>
-          <section fxLayout="column">
+          <section class="flex flex-col">
             <mat-slide-toggle formControlName="onlyUserComments" style="margin-bottom: 12px;">
               {{ 'notification.notify-only-user-comments' | translate }}
             </mat-slide-toggle>
@@ -309,7 +307,7 @@
               formControlName="alarmTypes">
             </tb-string-items-list>
 
-            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+            <mat-form-field class="mat-block flex-1" floatLabel="always">
               <mat-label translate>alarm.alarm-severity-list</mat-label>
               <mat-select formControlName="alarmSeverities" multiple
                           placeholder="{{ !alarmAssignmentTemplateForm.get('triggerConfig.alarmSeverities').value?.length ? ('alarm.any-severity' | translate) : '' }}">
@@ -318,7 +316,7 @@
                 </mat-option>
               </mat-select>
             </mat-form-field>
-            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+            <mat-form-field class="mat-block flex-1" floatLabel="always">
               <mat-label translate>alarm.alarm-status-list</mat-label>
               <mat-select formControlName="alarmStatuses" multiple
                           placeholder="{{ !alarmAssignmentTemplateForm.get('triggerConfig.alarmStatuses').value?.length ? ('alarm.any-status' | translate) : '' }}">
@@ -328,7 +326,7 @@
               </mat-select>
             </mat-form-field>
           </fieldset>
-          <mat-form-field fxFlex class="mat-block">
+          <mat-form-field class="mat-block flex-1">
             <mat-label translate>notification.notify-on</mat-label>
             <mat-select formControlName="notifyOn" multiple>
               <mat-option *ngFor="let alarmAssignmentAction of alarmAssignmentActions" [value]="alarmAssignmentAction">
@@ -365,7 +363,7 @@
               hint="{{ 'notification.rule-chain-list-rule-hint' | translate }}"
               [entityType]="entityType.RULE_CHAIN">
             </tb-entity-list>
-            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+            <mat-form-field class="mat-block flex-1" floatLabel="always">
               <mat-label translate>rulechain.rulechain-events</mat-label>
               <mat-select formControlName="ruleChainEvents" multiple
                           placeholder="{{ !ruleEngineEventsTemplateForm.get('triggerConfig.ruleChainEvents').value?.length ? ('event.all-events' | translate) : '' }}">
@@ -384,7 +382,7 @@
               {{ 'notification.track-rule-node-events' | translate }}
             </mat-slide-toggle>
             <section *ngIf="ruleEngineEventsTemplateForm.get('triggerConfig.trackRuleNodeEvents').value">
-              <mat-form-field fxFlex class="mat-block" floatLabel="always">
+              <mat-form-field class="mat-block flex-1" floatLabel="always">
                 <mat-label translate>rulenode.rule-node-events</mat-label>
                 <mat-select formControlName="ruleNodeEvents" multiple
                             placeholder="{{ !ruleEngineEventsTemplateForm.get('triggerConfig.ruleNodeEvents').value?.length ? ('event.all-events' | translate) : '' }}">
@@ -425,7 +423,7 @@
               hint="{{ 'notification.edge-list-rule-hint' | translate }}"
               [entityType]="entityType.EDGE">
             </tb-entity-list>
-            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+            <mat-form-field class="mat-block flex-1" floatLabel="always">
               <mat-label translate>notification.notify-on</mat-label>
               <mat-select formControlName="notifyOn" multiple
                           placeholder="{{ !edgeConnectionTemplateForm.get('triggerConfig.notifyOn').value?.length ? ('event.all-events' | translate) : '' }}">
@@ -482,11 +480,10 @@
                                ignoreAuthorityFilter
                                [allowedEntityTypes]="allowEntityTypeForEntitiesLimit">
           </tb-entity-type-list>
-          <div class="limit-slider-container" fxLayout="row" fxLayoutAlign="start center"
-               fxLayout.xs="column"  fxLayoutAlign.xs="stretch">
+          <div class="limit-slider-container flex flex-row items-center justify-start xs:flex-col xs:items-stretch">
             <label translate>notification.threshold</label>
-            <div fxLayout="row" fxLayoutAlign="start center" fxFlex>
-              <mat-slider fxFlex min="0" max="1" step="0.01" discrete [displayWith]="formatLabel">
+            <div class="flex flex-1 flex-row items-center justify-start">
+              <mat-slider class="flex-1" min="0" max="1" step="0.01" discrete [displayWith]="formatLabel">
                 <input matSliderThumb formControlName="threshold">
               </mat-slider>
               <mat-form-field class="limit-slider-value">
@@ -514,7 +511,7 @@
       <ng-template matStepLabel>{{ 'notification.api-usage-trigger-settings' | translate }}</ng-template>
       <form [formGroup]="apiUsageLimitTemplateForm">
         <section formGroupName="triggerConfig">
-          <mat-form-field fxFlex class="mat-block" subscriptSizing="dynamic">
+          <mat-form-field class="mat-block flex-1" subscriptSizing="dynamic">
             <mat-label translate>api-usage.api-features</mat-label>
             <mat-select formControlName="apiFeatures" multiple>
               <mat-option *ngFor="let apiFeature of apiFeatures" [value]="apiFeature">
@@ -523,7 +520,7 @@
             </mat-select>
             <mat-hint>{{ 'notification.api-feature-hint' | translate }}</mat-hint>
           </mat-form-field>
-          <mat-form-field fxFlex class="mat-block">
+          <mat-form-field class="mat-block flex-1">
             <mat-label translate>notification.notify-on</mat-label>
             <mat-select formControlName="notifyOn" multiple>
               <mat-option *ngFor="let apiUsageStateValue of apiUsageStateValues" [value]="apiUsageStateValue">
@@ -597,10 +594,10 @@
   </mat-horizontal-stepper>
 </div>
 <mat-divider></mat-divider>
-<div mat-dialog-actions fxLayout="row">
+<div mat-dialog-actions class="flex flex-row">
   <button mat-stroked-button *ngIf="selectedIndex > 0"
           (click)="backStep()">{{ 'action.back' | translate }}</button>
-  <span fxFlex></span>
+  <span class="flex-1"></span>
   <button mat-raised-button
           color="primary"
           (click)="nextStep()">{{ nextStepLabel() | translate }}</button>

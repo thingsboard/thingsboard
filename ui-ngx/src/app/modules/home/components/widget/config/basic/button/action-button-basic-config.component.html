@@ -28,7 +28,7 @@
     <div class="tb-form-panel-title" translate>widgets.action-button.behavior</div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.action-button.on-click-hint' | translate}}" translate>widgets.action-button.on-click</div>
-      <tb-widget-action-settings fxFlex
+      <tb-widget-action-settings class="flex-1"
                                  panelTitle="{{ 'widgets.action-button.on-click' | translate }}"
                                  [callbacks]="callbacks"
                                  [widgetType]="widgetType"
@@ -37,7 +37,7 @@
     </div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.button-state.activated-state-hint' | translate}}" translate>widgets.button-state.activated-state</div>
-      <tb-get-value-action-settings fxFlex
+      <tb-get-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.button-state.activated-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
                                     stateLabel="{{ 'widgets.button-state.activated' | translate }}"
@@ -48,7 +48,7 @@
     </div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.button-state.disabled-state-hint' | translate}}" translate>widgets.button-state.disabled-state</div>
-      <tb-get-value-action-settings fxFlex
+      <tb-get-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.button-state.disabled-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
                                     stateLabel="{{ 'widgets.button-state.disabled' | translate }}"

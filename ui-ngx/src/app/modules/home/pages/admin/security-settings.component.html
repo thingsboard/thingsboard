@@ -20,7 +20,7 @@
     <mat-card-title>
       <span class="mat-headline-5" translate>admin.security-settings</span>
     </mat-card-title>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <div tb-help="securitySettings"></div>
   </mat-card-header>
   <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
@@ -89,8 +89,8 @@
         <fieldset class="fields-group">
           <legend class="group-title" translate>admin.password-policy</legend>
           <section formGroupName="passwordPolicy">
-            <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-              <mat-form-field fxFlex class="mat-block">
+            <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+              <mat-form-field class="mat-block flex-1">
                 <mat-label translate>admin.minimum-password-length</mat-label>
                 <input matInput type="number"
                        formControlName="minimumLength"
@@ -108,7 +108,7 @@
                   {{ 'admin.minimum-password-length-range' | translate }}
                 </mat-error>
               </mat-form-field>
-              <mat-form-field fxFlex class="mat-block" subscriptSizing="dynamic">
+              <mat-form-field class="mat-block flex-1" subscriptSizing="dynamic">
                 <mat-label translate>admin.maximum-password-length</mat-label>
                 <input matInput type="number" formControlName="maximumLength" step="1" min="6"/>
                 <mat-hint></mat-hint>
@@ -120,8 +120,8 @@
                 </mat-error>
               </mat-form-field>
             </div>
-            <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-              <mat-form-field fxFlex class="mat-block">
+            <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+              <mat-form-field class="mat-block flex-1">
                 <mat-label translate>admin.minimum-uppercase-letters</mat-label>
                 <input matInput type="number"
                        formControlName="minimumUppercaseLetters"
@@ -132,7 +132,7 @@
                   {{ 'admin.minimum-uppercase-letters-range' | translate }}
                 </mat-error>
               </mat-form-field>
-              <mat-form-field fxFlex class="mat-block">
+              <mat-form-field class="mat-block flex-1">
                 <mat-label translate>admin.minimum-lowercase-letters</mat-label>
                 <input matInput type="number"
                        formControlName="minimumLowercaseLetters"
@@ -144,8 +144,8 @@
                 </mat-error>
               </mat-form-field>
             </div>
-            <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-              <mat-form-field fxFlex class="mat-block">
+            <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+              <mat-form-field class="mat-block flex-1">
                 <mat-label translate>admin.minimum-digits</mat-label>
                 <input matInput type="number"
                        formControlName="minimumDigits"
@@ -155,7 +155,7 @@
                   {{ 'admin.minimum-digits-range' | translate }}
                 </mat-error>
               </mat-form-field>
-              <mat-form-field fxFlex class="mat-block">
+              <mat-form-field class="mat-block flex-1">
                 <mat-label translate>admin.minimum-special-characters</mat-label>
                 <input matInput type="number"
                        formControlName="minimumSpecialCharacters"
@@ -167,8 +167,8 @@
                 </mat-error>
               </mat-form-field>
             </div>
-            <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-              <mat-form-field fxFlex class="mat-block">
+            <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+              <mat-form-field class="mat-block flex-1">
                 <mat-label translate>admin.password-expiration-period-days</mat-label>
                 <input matInput type="number"
                        formControlName="passwordExpirationPeriodDays"
@@ -179,7 +179,7 @@
                   {{ 'admin.password-expiration-period-days-range' | translate }}
                 </mat-error>
               </mat-form-field>
-              <mat-form-field fxFlex class="mat-block">
+              <mat-form-field class="mat-block flex-1">
                 <mat-label translate>admin.password-reuse-frequency-days</mat-label>
                 <input matInput type="number"
                        formControlName="passwordReuseFrequencyDays"
@@ -191,11 +191,11 @@
                 </mat-error>
               </mat-form-field>
             </div>
-            <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-              <mat-checkbox fxFlex formControlName="allowWhitespaces" style="margin-bottom: 16px">
+            <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+              <mat-checkbox class="flex-1" formControlName="allowWhitespaces" style="margin-bottom: 16px">
                 <mat-label translate>admin.allow-whitespace</mat-label>
               </mat-checkbox>
-              <mat-checkbox fxFlex formControlName="forceUserToResetPasswordIfNotValid" style="margin-bottom: 16px">
+              <mat-checkbox class="flex-1" formControlName="forceUserToResetPasswordIfNotValid" style="margin-bottom: 16px">
                 <mat-label tb-hint-tooltip-icon="{{'admin.force-reset-password-if-no-valid-hint' | translate}}">
                   {{'admin.force-reset-password-if-no-valid' | translate}}
                 </mat-label>
@@ -203,7 +203,7 @@
             </div>
           </section>
         </fieldset>
-        <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px" class="layout-wrap" style="margin-top: 16px">
+        <div class="flex flex-row flex-wrap items-center justify-end gap-2" style="margin-top: 16px">
           <button mat-button color="primary"
                   [disabled]="securitySettingsFormGroup.pristine"
                   (click)="discardSetting()"
@@ -222,21 +222,21 @@
     <mat-card-title>
       <span class="mat-headline-5" translate>admin.jwt.security-settings</span>
     </mat-card-title>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <div tb-help="jwtSecuritySettings"></div>
   </mat-card-header>
   <mat-card-content style="padding-top: 16px;">
     <form [formGroup]="jwtSecuritySettingsFormGroup" (ngSubmit)="saveJwtSettings()" autocomplete="off">
-      <fieldset [disabled]="isLoading$ | async" fxLayout="column" fxLayoutGap="8px">
-        <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
-          <mat-form-field fxFlex class="mat-block">
+      <fieldset [disabled]="isLoading$ | async" class="flex flex-col gap-2">
+        <div class="flex flex-row gap-2 xs:flex-col">
+          <mat-form-field class="mat-block flex-1" subscriptSizing="dynamic">
             <mat-label translate>admin.jwt.issuer-name</mat-label>
             <input matInput required formControlName="tokenIssuer"/>
             <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('tokenIssuer').hasError('required')">
               {{ 'admin.jwt.issuer-name-required' | translate }}
             </mat-error>
           </mat-form-field>
-          <mat-form-field fxFlex class="mat-block">
+          <mat-form-field class="mat-block flex-1" subscriptSizing="dynamic">
             <mat-label translate>admin.jwt.signings-key</mat-label>
             <input matInput (focus)="markAsTouched()" required formControlName="tokenSigningKey"/>
             <button type="button"
@@ -259,34 +259,36 @@
             </mat-error>
           </mat-form-field>
         </div>
-        <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
-          <mat-form-field fxFlex class="mat-block">
+        <div class="flex flex-row gap-2 xs:flex-col">
+          <mat-form-field class="mat-block flex-1" subscriptSizing="dynamic">
             <mat-label translate>admin.jwt.expiration-time</mat-label>
             <input matInput type="number" required
                    formControlName="tokenExpirationTime"
                    step="1"
-                   min="0"/>
+                   min="60"/>
+            <mat-hint></mat-hint>
             <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('tokenExpirationTime').hasError('required')">
               {{ 'admin.jwt.expiration-time-required' | translate }}
             </mat-error>
-            <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('tokenExpirationTime').hasError('pattern')">
-              {{ 'admin.jwt.expiration-time-pattern' | translate }}
+            <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('tokenExpirationTime').hasError('max')">
+              {{ 'admin.jwt.expiration-time-max' | translate }}
             </mat-error>
             <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('tokenExpirationTime').hasError('min')">
               {{ 'admin.jwt.expiration-time-min' | translate }}
             </mat-error>
           </mat-form-field>
-          <mat-form-field fxFlex class="mat-block">
+          <mat-form-field class="mat-block flex-1" subscriptSizing="dynamic">
             <mat-label translate>admin.jwt.refresh-expiration-time</mat-label>
             <input matInput type="number" required
                    formControlName="refreshTokenExpTime"
                    step="1"
-                   min="0"/>
+                   min="900"/>
+            <mat-hint></mat-hint>
             <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('refreshTokenExpTime').hasError('required')">
               {{ 'admin.jwt.refresh-expiration-time-required' | translate }}
             </mat-error>
-            <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('refreshTokenExpTime').hasError('pattern')">
-              {{ 'admin.jwt.refresh-expiration-time-pattern' | translate }}
+            <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('refreshTokenExpTime').hasError('max')">
+              {{ 'admin.jwt.refresh-expiration-time-max' | translate }}
             </mat-error>
             <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('refreshTokenExpTime').hasError('min')">
               {{ 'admin.jwt.refresh-expiration-time-min' | translate }}
@@ -296,7 +298,7 @@
             </mat-error>
           </mat-form-field>
         </div>
-        <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px" class="layout-wrap">
+        <div class="flex flex-row flex-wrap items-center justify-end gap-2">
           <button mat-button color="primary"
                   [disabled]="jwtSecuritySettingsFormGroup.pristine"
                   (click)="discardJwtSetting()"

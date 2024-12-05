@@ -16,15 +16,15 @@
 
 -->
 <div class="tb-table-widget tb-absolute-fill">
-  <div fxFlex fxLayout="column" class="tb-absolute-fill">
-    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode">
+  <div class="tb-absolute-fill flex flex-1 flex-col">
+    <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
                 matTooltip="{{ 'action.search' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>search</mat-icon>
         </button>
-        <mat-form-field fxFlex>
+        <mat-form-field class="flex-1">
           <mat-label>&nbsp;</mat-label>
           <input #searchInput matInput
                  [formControl]="textSearch"
@@ -37,78 +37,84 @@
         </button>
       </div>
     </mat-toolbar>
-    <mat-tab-group [ngClass]="{'tb-headless': sources.length === 1}" fxFlex
+    <mat-tab-group [class.tb-headless]="sources.length === 1"
+                   class="flex-1"
                    mat-stretch-tabs="false"
                    [(selectedIndex)]="sourceIndex" (selectedIndexChange)="onSourceIndexChanged()">
       <mat-tab *ngFor="let source of sources; trackBy: trackBySourcesIndex; let index = index;" [label]="getTabLabel(source)">
         <ng-template [ngIf]="isActiveTab(index)">
-          <div fxFlex class="table-container">
+          <div class="table-container flex-1">
             <table mat-table [dataSource]="source.timeseriesDatasource" [trackBy]="trackByRowTimestamp"
                        matSort [matSortActive]="source.pageLink.sortOrder.property" [matSortDirection]="source.pageLink.sortDirection()" matSortDisableClear>
               <ng-container *ngIf="showTimestamp" [matColumnDef]="'0'">
                 <mat-header-cell *matHeaderCellDef mat-sort-header>Timestamp</mat-header-cell>
                 <mat-cell *matCellDef="let row; let rowIndex = index"
-                          [innerHTML]="cellContent(source, null, 0, row, row[0], rowIndex)"
-                          [ngStyle]="cellStyle(source, null, 0, row, row[0], rowIndex)">
+                          [innerHTML]="cellContent(source, null, 0, row, row[0], rowIndex) | async"
+                          [style]="cellStyle(source, null, 0, row, row[0], rowIndex) | async">
                 </mat-cell>
               </ng-container>
               <ng-container [matColumnDef]="h.index + ''" *ngFor="let h of source.header; trackBy: trackByColumnIndex;">
                 <mat-header-cell *matHeaderCellDef mat-sort-header [disabled]="!h.sortable"> {{ h.dataKey.label }} </mat-header-cell>
                 <mat-cell *matCellDef="let row; let rowIndex = index"
-                          [innerHTML]="cellContent(source, h, h.index, row, row[h.index], rowIndex)"
-                          [ngStyle]="cellStyle(source, h, h.index, row, row[h.index], rowIndex)">
+                          [innerHTML]="cellContent(source, h, h.index, row, row[h.index], rowIndex) | async"
+                          [style]="cellStyle(source, h, h.index, row, row[h.index], rowIndex) | async">
                 </mat-cell>
               </ng-container>
               <ng-container matColumnDef="actions" [stickyEnd]="enableStickyAction">
-                <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (source.timeseriesDatasource.countCellButtonAction * 40) + 'px',
-                                                                      maxWidth: (source.timeseriesDatasource.countCellButtonAction * 40) + 'px',
-                                                                      width: (source.timeseriesDatasource.countCellButtonAction * 40) + 'px' }">
+                <mat-header-cell *matHeaderCellDef>
+                  <ng-container *ngIf="source.timeseriesDatasource.countCellButtonAction">
+                    <div class="gt-md:!hidden" style="min-width: 40px;">
+                    </div>
+                    <div class="lt-lg:!hidden"
+                         [style.min-width]="(source.timeseriesDatasource.countCellButtonAction * 40) + 'px'">
+                    </div>
+                  </ng-container>
                 </mat-header-cell>
-                <mat-cell *matCellDef="let row; let rowIndex = index" [style]="rowStyle(source, row, rowIndex)" [ngStyle.gt-md]="{ minWidth: (source.timeseriesDatasource.countCellButtonAction * 40) + 'px',
-                                                                   maxWidth: (source.timeseriesDatasource.countCellButtonAction * 40) + 'px',
-                                                                   width: (source.timeseriesDatasource.countCellButtonAction * 40) + 'px' }">
-                  <div [fxHide]="showCellActionsMenu && source.timeseriesDatasource.countCellButtonAction !== 1" fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
-                    <ng-container *ngFor="let actionDescriptor of row.actionCellButtons; trackBy: trackByActionCellDescriptionId">
-                      <span *ngIf="!actionDescriptor.icon" style="width: 40px;"></span>
-                      <button *ngIf="actionDescriptor.icon"
-                              class="tb-mat-40"
-                              mat-icon-button [disabled]="isLoading$ | async"
-                              matTooltip="{{ actionDescriptor.displayName }}"
-                              matTooltipPosition="above"
-                              (click)="onActionButtonClick($event, row, actionDescriptor)">
-                        <tb-icon>{{actionDescriptor.icon}}</tb-icon>
-                      </button>
-                    </ng-container>
-                  </div>
-                  <div fxHide [fxShow.lt-lg]="showCellActionsMenu && source.timeseriesDatasource.countCellButtonAction !== 1" *ngIf="row.hasActions">
-                    <button mat-icon-button
-                            class="tb-mat-40"
-                            (click)="$event.stopPropagation(); ctx.detectChanges();"
-                            [matMenuTriggerFor]="cellActionsMenu">
-                      <mat-icon class="material-icons">more_vert</mat-icon>
-                    </button>
-                    <mat-menu #cellActionsMenu="matMenu" xPosition="before">
+                <mat-cell *matCellDef="let row; let rowIndex = index" [style]="rowStyle(source, row, rowIndex) | async">
+                  <ng-container *ngIf="source.timeseriesDatasource.countCellButtonAction">
+                    <div [class.lt-lg:!hidden]="showCellActionsMenu && source.timeseriesDatasource.countCellButtonAction !== 1" class="flex flex-row items-stretch justify-end"
+                         [style.min-width]="(source.timeseriesDatasource.countCellButtonAction * 40) + 'px'">
                       <ng-container *ngFor="let actionDescriptor of row.actionCellButtons; trackBy: trackByActionCellDescriptionId">
-                        <button mat-menu-item *ngIf="actionDescriptor.icon"
-                                [disabled]="isLoading$ | async"
+                        <span *ngIf="!actionDescriptor.icon" style="width: 40px;"></span>
+                        <button *ngIf="actionDescriptor.icon"
+                                class="tb-mat-40"
+                                mat-icon-button [disabled]="isLoading$ | async"
+                                matTooltip="{{ actionDescriptor.displayName }}"
+                                matTooltipPosition="above"
                                 (click)="onActionButtonClick($event, row, actionDescriptor)">
-                          <tb-icon matMenuItemIcon>{{actionDescriptor.icon}}</tb-icon>
-                          <span>{{ actionDescriptor.displayName }}</span>
+                          <tb-icon>{{actionDescriptor.icon}}</tb-icon>
                         </button>
                       </ng-container>
-                    </mat-menu>
-                  </div>
+                    </div>
+                    <div [class.!hidden]="!showCellActionsMenu || source.timeseriesDatasource.countCellButtonAction === 1" class="gt-md:!hidden" *ngIf="row.hasActions">
+                      <button mat-icon-button
+                              class="tb-mat-40"
+                              (click)="$event.stopPropagation(); ctx.detectChanges();"
+                              [matMenuTriggerFor]="cellActionsMenu">
+                        <mat-icon class="material-icons">more_vert</mat-icon>
+                      </button>
+                      <mat-menu #cellActionsMenu="matMenu" xPosition="before">
+                        <ng-container *ngFor="let actionDescriptor of row.actionCellButtons; trackBy: trackByActionCellDescriptionId">
+                          <button mat-menu-item *ngIf="actionDescriptor.icon"
+                                  [disabled]="isLoading$ | async"
+                                  (click)="onActionButtonClick($event, row, actionDescriptor)">
+                            <tb-icon matMenuItemIcon>{{actionDescriptor.icon}}</tb-icon>
+                            <span>{{ actionDescriptor.displayName }}</span>
+                          </button>
+                        </ng-container>
+                      </mat-menu>
+                    </div>
+                  </ng-container>
                 </mat-cell>
               </ng-container>
               <mat-header-row *matHeaderRowDef="source.displayedColumns; sticky: enableStickyHeader"></mat-header-row>
-              <mat-row [ngClass]="{'tb-pointer': hasRowAction}"
+              <mat-row [class.tb-pointer]="hasRowAction"
                        *matRowDef="let row; columns: source.displayedColumns; let rowIndex = index"
-                       [ngStyle]="rowStyle(source, row, rowIndex)"
+                       [style]="rowStyle(source, row, rowIndex) | async"
                        (click)="onRowClick($event, row)"></mat-row>
             </table>
-            <span [fxShow]="source.timeseriesDatasource.isEmpty() | async"
-                  fxLayoutAlign="center center"
-                  class="no-data-found">{{ noDataDisplayMessageText }}</span>
+            <span [class.!hidden]="(source.timeseriesDatasource.isEmpty() | async) === false"
+                  class="no-data-found flex items-center justify-center">{{ noDataDisplayMessageText }}</span>
           </div>
           <mat-divider *ngIf="displayPagination"></mat-divider>
           <mat-paginator *ngIf="displayPagination"

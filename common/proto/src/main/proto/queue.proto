@@ -58,6 +58,7 @@ enum EntityTypeProto {
   OAUTH2_CLIENT         = 35;
   DOMAIN                = 36;
   MOBILE_APP            = 37;
+  MOBILE_APP_BUNDLE     = 38;
 }
 
 /**
@@ -607,6 +608,7 @@ enum SessionCloseReason {
   CREDENTIALS_UPDATED = 1;
   MAX_CONCURRENT_SESSIONS_LIMIT_REACHED = 2;
   SESSION_TIMEOUT = 3;
+  RPC_DELIVERY_TIMEOUT = 4;
 }
 
 message SessionCloseNotificationProto {
@@ -1126,6 +1128,18 @@ message ComponentLifecycleMsgProto {
   ComponentLifecycleEvent event = 6;
 }
 
+message EdgeEventMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string entityType = 3;
+  string action = 4;
+  optional int64 edgeIdMSB = 5;
+  optional int64 edgeIdLSB = 6;
+  optional int64 entityIdMSB = 7;
+  optional int64 entityIdLSB = 8;
+  optional string body = 9;
+}
+
 message EdgeNotificationMsgProto {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
@@ -1521,7 +1535,6 @@ message ToCoreNotificationMsg {
   RestApiCallResponseMsgProto restApiCallResponseMsg = 50;
 }
 
-
 /* Messages to Edge queue that are handled by ThingsBoard Core Service */
 message ToEdgeMsg {
   EdgeNotificationMsgProto edgeNotificationMsg = 1;
@@ -1533,6 +1546,10 @@ message ToEdgeNotificationMsg {
   ToEdgeSyncRequestMsgProto toEdgeSyncRequest = 3;
   FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 4;
   ComponentLifecycleMsgProto componentLifecycle = 5;
+}
+
+message ToEdgeEventNotificationMsg {
+  EdgeEventMsgProto edgeEventMsg = 1;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */

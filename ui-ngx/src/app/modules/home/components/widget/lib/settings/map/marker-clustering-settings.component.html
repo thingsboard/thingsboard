@@ -19,14 +19,13 @@
   <fieldset class="fields-group fields-group-slider">
     <legend class="group-title" translate>widgets.maps.markers-clustering-settings</legend>
     <mat-expansion-panel class="tb-settings" [expanded]="markerClusteringSettingsFormGroup.get('useClusterMarkers').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle formControlName="useClusterMarkers" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle formControlName="useClusterMarkers" (click)="$event.stopPropagation()">
             {{ 'widgets.maps.use-map-markers-clustering' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
@@ -34,21 +33,21 @@
         <mat-slide-toggle formControlName="zoomOnClick" class="slide-block">
           {{ 'widgets.maps.zoom-on-cluster-click' | translate }}
         </mat-slide-toggle>
-        <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-          <mat-form-field fxFlex class="mat-block">
+        <section class="flex flex-row xs:flex-col gt-xs:gap-2">
+          <mat-form-field class="flex-1">
             <mat-label translate>widgets.maps.max-cluster-zoom</mat-label>
             <input matInput type="number" min="0" max="18" step="1" formControlName="maxZoom">
           </mat-form-field>
-          <mat-form-field fxFlex class="mat-block">
+          <mat-form-field class="flex-1">
             <mat-label translate>widgets.maps.max-cluster-radius-pixels</mat-label>
             <input matInput type="number" min="0" formControlName="maxClusterRadius">
           </mat-form-field>
         </section>
-        <section class="flex-gap-xs" fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px" fxLayoutGap.xs="16px">
-          <mat-slide-toggle fxFlex formControlName="animate" class="slide-block">
+        <section class="flex-gap-xs flex flex-col gap-2 xs:gap-4 gt-xs:flex-row">
+          <mat-slide-toggle formControlName="animate" class="slide-block flex-1">
             {{ 'widgets.maps.cluster-zoom-animation' | translate }}
           </mat-slide-toggle>
-          <mat-slide-toggle fxFlex formControlName="showCoverageOnHover" class="slide-block">
+          <mat-slide-toggle formControlName="showCoverageOnHover" class="slide-block flex-1">
             {{ 'widgets.maps.show-markers-bounds-on-cluster-mouse-over' | translate }}
           </mat-slide-toggle>
         </section>
@@ -67,19 +66,19 @@
         <fieldset class="fields-group fields-group-slider">
           <legend class="group-title" translate>widgets.maps.clustering-markers</legend>
           <mat-expansion-panel class="tb-settings" [expanded]="markerClusteringSettingsFormGroup.get('useIconCreateFunction').value">
-            <mat-expansion-panel-header fxLayout="row wrap">
+            <mat-expansion-panel-header class="flex-wrap">
               <mat-panel-title>
-                <mat-slide-toggle formControlName="useIconCreateFunction" (click)="$event.stopPropagation()"
-                                  fxLayoutAlign="center">
+                <mat-slide-toggle formControlName="useIconCreateFunction" (click)="$event.stopPropagation()">
                   {{ 'widgets.maps.use-icon-create-function' | translate }}
                 </mat-slide-toggle>
               </mat-panel-title>
-              <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+              <mat-panel-description class="justify-end xs:!hidden" translate>
                 widget-config.advanced-settings
               </mat-panel-description>
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
               <tb-js-func formControlName="clusterMarkerFunction"
+                          withModules
                           [globalVariables]="functionScopeVariables"
                           [functionArgs]="['data', 'childCount']"
                           functionTitle="{{ 'widgets.maps.marker-color-function' | translate }}"

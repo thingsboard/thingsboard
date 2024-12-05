@@ -40,7 +40,6 @@ import org.thingsboard.server.service.sync.vc.GitRepository.Diff;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
@@ -173,7 +172,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     @Override
     public String getFileContentAtCommit(TenantId tenantId, String relativePath, String versionId) throws IOException {
         GitRepository repository = checkRepository(tenantId);
-        return repository.getFileContentAtCommit(relativePath, versionId);
+        return new String(repository.getFileContentAtCommit(relativePath, versionId), StandardCharsets.UTF_8);
     }
 
     @Override
@@ -203,7 +202,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
         GitRepository gitRepository = Optional.ofNullable(repositories.get(tenantId))
                 .orElseThrow(() -> new IllegalStateException("Repository is not initialized"));
 
-        if (!Files.exists(Path.of(gitRepository.getDirectory()))) {
+        if (!GitRepository.exists(gitRepository.getDirectory())) {
             try {
                 return openOrCloneRepository(tenantId, gitRepository.getSettings(), false);
             } catch (Exception e) {
@@ -283,22 +282,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     private GitRepository openOrCloneRepository(TenantId tenantId, RepositorySettings settings, boolean fetch) throws Exception {
         log.debug("[{}] Init tenant repository started.", tenantId);
         Path repositoryDirectory = Path.of(repositoriesFolder, settings.isLocalOnly() ? "local_" + settings.getRepositoryUri() : tenantId.getId().toString());
-
-        GitRepository repository;
-        if (Files.exists(repositoryDirectory)) {
-            repository = GitRepository.open(repositoryDirectory.toFile(), settings);
-            if (fetch) {
-                repository.fetch();
-            }
-        } else {
-            Files.createDirectories(repositoryDirectory);
-            if (settings.isLocalOnly()) {
-                repository = GitRepository.create(settings, repositoryDirectory.toFile());
-            } else {
-                repository = GitRepository.clone(settings, repositoryDirectory.toFile());
-            }
-        }
-
+        GitRepository repository = GitRepository.openOrClone(repositoryDirectory, settings, fetch);
         repositories.put(tenantId, repository);
         log.debug("[{}] Init tenant repository completed.", tenantId);
         return repository;

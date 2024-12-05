@@ -61,7 +61,7 @@ public class QueueStatsEntity extends BaseSqlEntity<QueueStats> {
     public QueueStats toData() {
         QueueStats queueStats = new QueueStats(new QueueStatsId(getUuid()));
         queueStats.setCreatedTime(createdTime);
-        queueStats.setTenantId(new TenantId(tenantId));
+        queueStats.setTenantId(TenantId.fromUUID(tenantId));
         queueStats.setQueueName(queueName);
         queueStats.setServiceId(serviceId);
         return queueStats;

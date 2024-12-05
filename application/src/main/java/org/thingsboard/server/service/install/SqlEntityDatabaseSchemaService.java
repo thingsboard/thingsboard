@@ -53,10 +53,4 @@ public class SqlEntityDatabaseSchemaService extends SqlAbstractDatabaseSchemaSer
         executeQueryFromFile(SCHEMA_VIEWS_AND_FUNCTIONS_SQL);
     }
 
-    @Override
-    public void createCustomerTitleUniqueConstraintIfNotExists() {
-        executeQuery("DO $$ BEGIN IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'customer_title_unq_key') THEN " +
-                "ALTER TABLE customer ADD CONSTRAINT customer_title_unq_key UNIQUE(tenant_id, title); END IF; END; $$;",
-                "create 'customer_title_unq_key' constraint if it doesn't already exist!");
-    }
 }

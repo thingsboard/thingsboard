@@ -40,6 +40,7 @@ enum EdgeVersion {
   V_3_6_4 = 6;
   V_3_7_0 = 7;
   V_3_8_0 = 8;
+  V_3_9_0 = 9;
 }
 
 /**
@@ -168,11 +169,12 @@ message RuleNodeProto {
   int64 idLSB = 2;
   string type = 3;
   string name = 4;
-  bool debugMode = 5;
+  bool debugMode = 5 [deprecated = true];
   string configuration = 6;
   string additionalInfo = 7;
   bool singletonMode = 8;
   int32 configurationVersion = 9;
+  string debugSettings = 10;
 }
 
 message NodeConnectionInfoProto {

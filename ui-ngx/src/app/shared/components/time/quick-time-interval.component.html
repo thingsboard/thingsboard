@@ -15,13 +15,16 @@
     limitations under the License.
 
 -->
-<section class="interval-section" fxLayout="row" fxFlex>
-  <mat-form-field fxFlex [subscriptSizing]="subscriptSizing" [appearance]="appearance">
+<section class="interval-section flex flex-1 flex-row" [formGroup]="quickIntervalFormGroup">
+  <mat-form-field class="flex-1" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
     <mat-label *ngIf="displayLabel" translate>timewindow.interval</mat-label>
-    <mat-select [disabled]="disabled" [(ngModel)]="modelValue" (ngModelChange)="onIntervalChange()">
+    <mat-select formControlName="interval">
       <mat-option *ngFor="let interval of intervals" [value]="interval">
         {{ timeIntervalTranslationMap.get(interval) | translate}}
       </mat-option>
     </mat-select>
+    <ng-container matSuffix>
+      <ng-content select="[matSuffix]"></ng-content>
+    </ng-container>
   </mat-form-field>
 </section>

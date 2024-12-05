@@ -32,7 +32,7 @@
       <ng-template [ngSwitchCase]="setValueAction.EXECUTE_RPC">
         <div class="tb-form-row" formGroupName="executeRpc">
           <div class="fixed-title-width" >{{ 'widgets.value-action.method' | translate }}*</div>
-          <mat-form-field class="flex tb-suffix-absolute" appearance="outline" subscriptSizing="dynamic">
+          <mat-form-field class="tb-suffix-absolute flex" appearance="outline" subscriptSizing="dynamic">
             <input matInput required formControlName="method" placeholder="{{ 'widget-config.set' | translate }}">
             <mat-icon matSuffix
                       matTooltipPosition="above"
@@ -61,7 +61,7 @@
           <div class="tb-form-row">
             <div class="fixed-title-width" >{{ 'widgets.value-action.attribute-key' | translate }}*</div>
             <tb-device-key-autocomplete
-              fxFlex
+              class="flex-1"
               formControlName="key"
               required
               requiredText="widgets.value-action.attribute-key-required"
@@ -79,7 +79,7 @@
           <div class="tb-form-row">
             <div class="fixed-title-width" >{{ 'widgets.value-action.time-series-key' | translate }}*</div>
             <tb-device-key-autocomplete
-              fxFlex
+              class="flex-1"
               formControlName="key"
               required
               requiredText="widgets.value-action.time-series-key-required"
@@ -96,7 +96,7 @@
       <div class="tb-form-row no-padding no-border column-xs">
         <div class="fixed-title-width">{{ (setValueSettingsFormGroup.get('action').value === setValueAction.EXECUTE_RPC ?
           'widgets.value-action.parameters' : 'widgets.value-action.value') | translate }}</div>
-        <tb-toggle-select fxFlex formControlName="type">
+        <tb-toggle-select class="flex-1" formControlName="type">
           <tb-toggle-option *ngIf="valueType !== ValueType.BOOLEAN" [value]="valueToDataType.VALUE">{{ 'widgets.value-action.converter-value' | translate }}</tb-toggle-option>
           <tb-toggle-option *ngIf="valueType === ValueType.BOOLEAN" [value]="valueToDataType.CONSTANT">{{ 'widgets.value-action.converter-constant' | translate }}</tb-toggle-option>
           <tb-toggle-option [value]="valueToDataType.FUNCTION">{{ 'widgets.value-action.converter-function' | translate }}</tb-toggle-option>
@@ -105,7 +105,7 @@
         </tb-toggle-select>
       </div>
       <tb-value-input *ngIf="setValueSettingsFormGroup.get('valueToData').get('type').value === valueToDataType.CONSTANT"
-                      fxFlex
+                      class="flex-1"
                       [layout]="{
                               layout: 'row',
                               breakpoints: {xs: 'column'}
@@ -114,6 +114,7 @@
       </tb-value-input>
       <tb-js-func *ngIf="setValueSettingsFormGroup.get('valueToData').get('type').value === valueToDataType.FUNCTION"
                   formControlName="valueToDataFunction"
+                  withModules
                   required
                   [globalVariables]="functionScopeVariables"
                   [functionArgs]="['value']"
@@ -124,10 +125,10 @@
     <div *ngIf="setValueSettingsFormGroup.get('action').value === setValueAction.EXECUTE_RPC"
          class="tb-form-panel no-border tb-slide-toggle" formGroupName="executeRpc">
       <mat-expansion-panel class="tb-settings no-padding">
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
           <mat-panel-title>
           </mat-panel-title>
-          <mat-panel-description fxLayoutAlign="end center" translate>
+          <mat-panel-description class="flex items-center justify-end" translate>
             widget-config.advanced-settings
           </mat-panel-description>
         </mat-expansion-panel-header>
@@ -152,10 +153,9 @@
             <mat-expansion-panel class="tb-settings"
                                  [expanded]="setValueSettingsFormGroup.get('executeRpc').get('requestPersistent').value"
                                  [disabled]="!setValueSettingsFormGroup.get('executeRpc').get('requestPersistent').value">
-              <mat-expansion-panel-header fxLayout="row wrap">
+              <mat-expansion-panel-header class="flex flex-row flex-wrap">
                 <mat-panel-title>
-                  <mat-slide-toggle class="mat-slide" formControlName="requestPersistent" (click)="$event.stopPropagation()"
-                                    fxLayoutAlign="center">
+                  <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="requestPersistent" (click)="$event.stopPropagation()">
                     {{ 'widgets.value-action.request-persistent' | translate }}
                   </mat-slide-toggle>
                 </mat-panel-title>

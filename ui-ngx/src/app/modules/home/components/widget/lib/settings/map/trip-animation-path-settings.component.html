@@ -18,36 +18,36 @@
 <section class="tb-widget-settings" [formGroup]="tripAnimationPathSettingsFormGroup">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.maps.path-settings</legend>
-    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px">
+    <section class="!flex flex-col gt-xs:flex-row gt-xs:gap-2">
       <tb-color-input
-        fxFlex
+        class="flex-1"
         formControlName="color"
         icon="format_color_fill"
         label="{{ 'widgets.maps.path-color' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="flex-1">
         <mat-label translate>widgets.maps.stroke-weight</mat-label>
         <input matInput type="number" min="0" formControlName="strokeWeight">
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="flex-1">
         <mat-label translate>widgets.maps.stroke-opacity</mat-label>
         <input matInput type="number" min="0" max="1" formControlName="strokeOpacity">
       </mat-form-field>
     </section>
     <mat-expansion-panel class="tb-settings" [expanded]="tripAnimationPathSettingsFormGroup.get('useColorFunction').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle formControlName="useColorFunction" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle formControlName="useColorFunction" (click)="$event.stopPropagation()">
             {{ 'widgets.maps.use-path-color-function' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <tb-js-func formControlName="colorFunction"
+                    withModules
                     [globalVariables]="functionScopeVariables"
                     [functionArgs]="['data', 'dsData', 'dsIndex']"
                     functionTitle="{{ 'widgets.maps.path-color-function' | translate }}"
@@ -58,20 +58,19 @@
     <fieldset class="fields-group fields-group-slider">
       <legend class="group-title" translate>widgets.maps.path-decorator</legend>
       <mat-expansion-panel class="tb-settings" [expanded]="tripAnimationPathSettingsFormGroup.get('usePolylineDecorator').value">
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex-wrap">
           <mat-panel-title>
-            <mat-slide-toggle formControlName="usePolylineDecorator" (click)="$event.stopPropagation()"
-                              fxLayoutAlign="center">
+            <mat-slide-toggle formControlName="usePolylineDecorator" (click)="$event.stopPropagation()">
               {{ 'widgets.maps.use-path-decorator' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>
-          <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+          <mat-panel-description class="justify-end xs:!hidden" translate>
             widget-config.advanced-settings
           </mat-panel-description>
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
-          <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px">
-            <mat-form-field fxFlex class="mat-block">
+          <section class="flex flex-col gt-xs:flex-row gt-xs:gap-2">
+            <mat-form-field class="flex-1">
               <mat-label translate>widgets.maps.decorator-symbol</mat-label>
               <mat-select required formControlName="decoratorSymbol">
                 <mat-option *ngFor="let symbol of polylineDecoratorSymbols" [value]="symbol">
@@ -79,32 +78,32 @@
                 </mat-option>
               </mat-select>
             </mat-form-field>
-            <mat-form-field fxFlex class="mat-block">
+            <mat-form-field class="flex-1">
               <mat-label translate>widgets.maps.decorator-symbol-size</mat-label>
               <input matInput type="number" min="1" formControlName="decoratorSymbolSize">
             </mat-form-field>
           </section>
-          <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px" fxLayoutAlign.gt-xs="start center">
-            <mat-slide-toggle fxFlex formControlName="useDecoratorCustomColor">
+          <section class="flex flex-col gap-2 gt-xs:flex-row gt-xs:items-center">
+            <mat-slide-toggle class="flex-1" formControlName="useDecoratorCustomColor">
               {{ 'widgets.maps.use-path-decorator-custom-color' | translate }}
             </mat-slide-toggle>
             <tb-color-input
-              fxFlex
+              class="flex-1"
               formControlName="decoratorCustomColor"
               icon="format_color_fill"
               label="{{ 'widgets.maps.decorator-custom-color' | translate }}" openOnInput colorClearButton>
             </tb-color-input>
           </section>
-          <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px">
-            <mat-form-field fxFlex class="mat-block">
+          <section class="flex flex-col gt-xs:flex-row gt-xs:gap-2">
+            <mat-form-field class="flex-1">
               <mat-label translate>widgets.maps.decorator-offset</mat-label>
               <input matInput formControlName="decoratorOffset">
             </mat-form-field>
-            <mat-form-field fxFlex class="mat-block">
+            <mat-form-field class="flex-1">
               <mat-label translate>widgets.maps.end-decorator-offset</mat-label>
               <input matInput formControlName="endDecoratorOffset">
             </mat-form-field>
-            <mat-form-field fxFlex class="mat-block">
+            <mat-form-field class="flex-1">
               <mat-label translate>widgets.maps.decorator-repeat</mat-label>
               <input matInput formControlName="decoratorRepeat">
             </mat-form-field>

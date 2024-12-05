@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<mat-toolbar fxLayout="row" color="primary">
+<mat-toolbar class="flex flex-row" color="primary">
   <h2 translate>security.2fa.dialog.enable-totp-title</h2>
-  <span fxFlex></span>
+  <span class="flex-1"></span>
   <button mat-icon-button
           (click)="closeDialog()"
           type="button">
@@ -37,7 +37,7 @@
       <div>
         <p class="mat-body-2" translate>security.2fa.dialog.totp-step-description-open</p>
         <p class="mat-body-2" translate>security.2fa.dialog.totp-step-description-install</p>
-        <div fxLayout="row" fxLayoutAlign="end center">
+        <div class="flex flex-row items-center justify-end">
           <button mat-raised-button
                   type="button"
                   color="primary"
@@ -49,11 +49,11 @@
     </mat-step>
     <mat-step [stepControl]="totpConfigForm">
       <ng-template matStepLabel>{{ 'security.2fa.dialog.verification-step-label' | translate }}</ng-template>
-      <form [formGroup]="totpConfigForm" fxLayoutAlign="start center" fxLayout="column" (ngSubmit)="onSaveConfig()">
+      <form [formGroup]="totpConfigForm" class="flex flex-col items-center justify-start" (ngSubmit)="onSaveConfig()">
         <p class="mat-body qr-code-description" translate>security.2fa.dialog.scan-qr-code</p>
-        <canvas fxFlex #canvas [ngStyle]="{display: totpAuthURL ? 'block' : 'none'}"></canvas>
+        <canvas class="flex-1" #canvas [style.display]="totpAuthURL ? 'block' : 'none'"></canvas>
         <p class="mat-body qr-code-description" style="margin-top: 30px;" translate>security.2fa.dialog.enter-verification-code</p>
-        <mat-form-field fxFlex class="mat-block code-container">
+        <mat-form-field class="mat-block code-container flex-1">
           <input matInput formControlName="verificationCode"
                  maxlength="6" type="text" required
                  inputmode="numeric" pattern="[0-9]*"
@@ -64,7 +64,7 @@
           </mat-error>
         </mat-form-field>
       </form>
-      <div fxLayout="row" fxLayoutAlign="end center">
+      <div class="flex flex-row items-center justify-end">
         <button mat-raised-button
                 type="button"
                 color="primary"
@@ -79,7 +79,7 @@
       <div>
         <h3 class="result-title" translate>security.2fa.dialog.success</h3>
         <p class="mat-body result-description" translate>security.2fa.dialog.activation-step-description-totp</p>
-        <div fxLayout="row" fxLayoutAlign="end center">
+        <div class="flex flex-row items-center justify-end">
           <button mat-raised-button
                   type="button"
                   color="primary"

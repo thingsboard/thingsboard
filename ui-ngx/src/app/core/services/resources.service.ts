@@ -27,7 +27,7 @@ import {
   ɵNgModuleDef
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import { Observable, ReplaySubject, throwError } from 'rxjs';
+import { forkJoin, from, Observable, ReplaySubject, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { TbResourceId } from '@shared/models/id/tb-resource-id';
@@ -38,6 +38,8 @@ import { selectIsAuthenticated } from '@core/auth/auth.selectors';
 import { AppState } from '@core/core.state';
 import { map, tap } from 'rxjs/operators';
 import { RequestConfig } from '@core/http/http-utils';
+import { getFlexLayoutModule } from '@app/shared/legacy/flex-layout.models';
+import { isJSResource, removeTbResourcePrefix } from '@shared/models/resource.models';
 
 export interface ModuleInfo {
   module: ɵNgModuleDef<any>;
@@ -187,26 +189,46 @@ export class ResourcesService {
     if (this.loadedModulesWithComponents[url]) {
       return this.loadedModulesWithComponents[url].asObservable();
     }
-    modulesMap.init();
     const meta = this.getMetaInfo(resourceId);
     const subject = new ReplaySubject<ModulesWithComponents>();
     this.loadedModulesWithComponents[url] = subject;
-    import('@angular/compiler').then(
+
+    forkJoin(
+      [
+        modulesMap.init(),
+        from(import('@angular/compiler'))
+      ]
+    ).subscribe(
       () => {
         // @ts-ignore
         System.import(url, undefined, meta).then(
           (module: any) => {
             try {
               const modulesWithComponents = this.extractModulesWithComponents(module);
-              if (modulesWithComponents.modules.length || modulesWithComponents.standaloneComponents.length) {
-                for (const module of modulesWithComponents.modules) {
-                  createNgModule(module.module.type, this.injector);
+              this.patchModulesWithFlexLayout(modulesWithComponents).subscribe(
+                {
+                  next: modules => {
+                    if (modules.modules.length || modules.standaloneComponents.length) {
+                      try {
+                        for (const module of modules.modules) {
+                          createNgModule(module.module.type, this.injector);
+                        }
+                        this.loadedModulesWithComponents[url].next(modulesWithComponents);
+                        this.loadedModulesWithComponents[url].complete();
+                      } catch (e) {
+                        console.log(`Unable to parse module from url: ${url}`, e);
+                        this.loadedModulesWithComponents[url].error(new Error(`Unable to parse module from url: ${url}`));
+                      }
+                    } else {
+                      this.loadedModulesWithComponents[url].error(new Error(`Module '${url}' doesn't have exported modules or components!`));
+                    }
+                  },
+                  error: err => {
+                    console.log(`Unable to patch module with flexLayout, module url: ${url}`, err);
+                    this.loadedModulesWithComponents[url].error(new Error(`Unable to patch module with flexLayout, module url: ${url}`));
+                  }
                 }
-                this.loadedModulesWithComponents[url].next(modulesWithComponents);
-                this.loadedModulesWithComponents[url].complete();
-              } else {
-                this.loadedModulesWithComponents[url].error(new Error(`Module '${url}' doesn't have exported modules or components!`));
-              }
+              );
             } catch (e) {
               console.log(`Unable to parse module from url: ${url}`, e);
               this.loadedModulesWithComponents[url].error(new Error(`Unable to parse module from url: ${url}`));
@@ -284,6 +306,40 @@ export class ResourcesService {
     return modulesWithComponents;
   }
 
+  private patchModulesWithFlexLayout(modulesWithComponents: ModulesWithComponents): Observable<ModulesWithComponents> {
+    return getFlexLayoutModule().pipe(
+      map((flexLayoutModule) => {
+        modulesWithComponents.modules.forEach(m => {
+          if (Array.isArray(m.module.imports)) {
+            if (!m.module.imports.includes(flexLayoutModule)) {
+              m.module.imports.push(flexLayoutModule);
+            }
+          } else {
+            const imports = m.module.imports();
+            if (!imports.includes(flexLayoutModule)) {
+              imports.push(flexLayoutModule);
+              m.module.imports = imports;
+            }
+          }
+        });
+        modulesWithComponents.standaloneComponents.forEach(c => {
+          if (Array.isArray(c.dependencies)) {
+            if (!c.dependencies.includes(flexLayoutModule)) {
+              c.dependencies.push(flexLayoutModule);
+            }
+          } else {
+            const dependencies = c.dependencies();
+            if (!dependencies.includes(flexLayoutModule)) {
+              dependencies.push(flexLayoutModule);
+              c.dependencies = dependencies;
+            }
+          }
+        });
+        return modulesWithComponents;
+      })
+    );
+  }
+
   private loadResourceByType(type: 'css' | 'js', url: string): Observable<any> {
     const subject = new ReplaySubject<void>();
     this.loadedResources[url] = subject;
@@ -322,11 +378,11 @@ export class ResourcesService {
     if (isObject(resourceId)) {
       return `/api/resource/js/${(resourceId as TbResourceId).id}/download`;
     }
-    return resourceId as string;
+    return removeTbResourcePrefix(resourceId as string);
   }
 
   private getMetaInfo(resourceId: string | TbResourceId): object {
-    if (isObject(resourceId)) {
+    if (isObject(resourceId) || (typeof resourceId === 'string' && isJSResource(resourceId))) {
       return {
         additionalHeaders: {
           'X-Authorization': `Bearer ${AuthService.getJwtToken()}`
