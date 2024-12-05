@@ -403,6 +403,9 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
 
     @Override
     public boolean updateResourcesUsage(TenantId tenantId, Dashboard dashboard) {
+        if (dashboard.getConfiguration() == null) {
+            return false;
+        }
         Map<String, String> links = getResourcesLinks(dashboard.getResources());
         return updateResourcesUsage(tenantId, List.of(dashboard.getConfiguration()), List.of(DASHBOARD_RESOURCES_MAPPING), links);
     }
@@ -413,8 +416,10 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         List<JsonNode> jsonNodes = new ArrayList<>(2);
         List<Map<String, String>> mappings = new ArrayList<>(2);
 
-        jsonNodes.add(widgetTypeDetails.getDescriptor());
-        mappings.add(WIDGET_RESOURCES_MAPPING);
+        if (widgetTypeDetails.getDescriptor() != null) {
+            jsonNodes.add(widgetTypeDetails.getDescriptor());
+            mappings.add(WIDGET_RESOURCES_MAPPING);
+        }
 
         JsonNode defaultConfig = widgetTypeDetails.getDefaultConfig();
         if (defaultConfig != null) {
