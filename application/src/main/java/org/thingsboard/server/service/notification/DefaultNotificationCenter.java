@@ -417,7 +417,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     }
 
     @Override
-    public Set<NotificationDeliveryMethod> getAvailableDeliveryMethods(TenantId tenantId) {
+    public List<NotificationDeliveryMethod> getAvailableDeliveryMethods(TenantId tenantId) {
         return channels.values().stream()
                 .filter(channel -> {
                     try {
@@ -428,7 +428,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                     }
                 })
                 .map(NotificationChannel::getDeliveryMethod)
-                .collect(Collectors.toSet());
+                .sorted().toList();
     }
 
     @Override
