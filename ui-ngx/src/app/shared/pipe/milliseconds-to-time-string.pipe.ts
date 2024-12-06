@@ -62,7 +62,7 @@ export class MillisecondsToTimeStringPipe implements PipeTransform {
       if (value > 0) {
         timeString += this.translate.instant(shortFormat ? `timewindow.${shortKey}` : `timewindow.${key}`, { [key]: value });
         if (onlyFirstDigit) {
-          return timeString;
+          return timeString.trim();
         }
       }
     }

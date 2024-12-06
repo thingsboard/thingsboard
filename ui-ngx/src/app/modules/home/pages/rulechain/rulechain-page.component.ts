@@ -1417,7 +1417,7 @@ export class RuleChainPageComponent extends PageComponent
   }
 
   isDebugSettingsEnabled(): boolean {
-    const res = this.ruleChainModel.nodes.find(({ debugSettings }) => debugSettings && this.isDebugSettingsActive(debugSettings));
+    const res = this.ruleChainModel.nodes.find((node) => node?.debugSettings && this.isDebugSettingsActive(node.debugSettings));
     return typeof res !== 'undefined';
   }
 
@@ -1425,7 +1425,7 @@ export class RuleChainPageComponent extends PageComponent
     let changed = false;
     this.ruleChainModel.nodes.forEach((node) => {
       if (node.component.type !== RuleNodeType.INPUT) {
-        const nodeHasActiveDebugSettings = node.debugSettings && this.isDebugSettingsActive(node.debugSettings);
+        const nodeHasActiveDebugSettings = node?.debugSettings && this.isDebugSettingsActive(node.debugSettings);
         changed = changed || nodeHasActiveDebugSettings;
         if (nodeHasActiveDebugSettings) {
           node.debugSettings = { allEnabled: false, failuresEnabled: false, allEnabledUntil: 0 };
@@ -1437,8 +1437,8 @@ export class RuleChainPageComponent extends PageComponent
     }
   }
 
-  private isDebugSettingsActive({ allEnabled = false, failuresEnabled = false, allEnabledUntil = 0 }: DebugSettings): boolean {
-    return allEnabled || failuresEnabled || allEnabledUntil > new Date().getTime();
+  private isDebugSettingsActive(debugSettings: DebugSettings): boolean {
+    return debugSettings.allEnabled || debugSettings.failuresEnabled || debugSettings.allEnabledUntil > new Date().getTime();
   }
 
   validate() {
