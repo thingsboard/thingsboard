@@ -16,10 +16,12 @@
 package org.thingsboard.server.service.install.update;
 
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -42,6 +44,8 @@ import org.thingsboard.server.dao.widget.WidgetTypeDao;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -86,44 +90,60 @@ public class ResourcesUpdater {
         log.debug("Created/updated system images and resources for default dashboard '{}'", defaultDashboard.getTitle());
     }
 
+    @SneakyThrows
     public void updateDashboardsResources() {
         log.info("Updating resources usage in dashboards");
-        var dashboards = new PageDataIterable<>(dashboardService::findAllDashboardsIds, 512);
-        int totalCount = 0;
-        int updatedCount = 0;
-        for (DashboardId dashboardId : dashboards) {
-            Dashboard dashboard = dashboardService.findDashboardById(TenantId.SYS_TENANT_ID, dashboardId);
-            boolean updated = resourceService.updateResourcesUsage(dashboard); // will convert resources ids to new structure
-            if (updated) {
-                dashboardService.saveDashboard(dashboard);
-                updatedCount++;
-            }
-            totalCount++;
+        var executor = ThingsBoardExecutors.newLimitedTasksExecutor(4, 4, "dashboards-resources-upgrade");
 
-            if (totalCount % 1000 == 0) {
-                log.info("Processed {} dashboards, updated {}", totalCount, updatedCount);
-            }
+        var dashboards = new PageDataIterable<>(dashboardService::findAllDashboardsIds, 512);
+        AtomicInteger totalCount = new AtomicInteger();
+        AtomicInteger updatedCount = new AtomicInteger();
+        for (DashboardId dashboardId : dashboards) {
+            executor.submit(() -> {
+                Dashboard dashboard = dashboardService.findDashboardById(TenantId.SYS_TENANT_ID, dashboardId);
+                boolean updated = resourceService.updateResourcesUsage(dashboard.getTenantId(), dashboard); // will convert resources ids to new structure
+                if (updated) {
+                    dashboardService.saveDashboard(dashboard);
+                    updatedCount.incrementAndGet();
+                }
+                if (totalCount.incrementAndGet() % 1000 == 0) {
+                    log.info("Processed {} dashboards, updated {}", totalCount, updatedCount);
+                }
+            });
+        }
+
+        executor.shutdown();
+        if (!executor.awaitTermination(10, TimeUnit.MINUTES)) {
+            throw new RuntimeException("Dashboards resources update timeout"); // just in case, should happen
         }
         log.info("Updated {} dashboards", updatedCount);
     }
 
+    @SneakyThrows
     public void updateWidgetsResources() {
         log.info("Updating resources usage in widgets");
-        int totalCount = 0;
-        int updatedCount = 0;
+        var executor = ThingsBoardExecutors.newLimitedTasksExecutor(4, 4, "widgets-resources-upgrade");
+
+        AtomicInteger totalCount = new AtomicInteger();
+        AtomicInteger updatedCount = new AtomicInteger();
         var widgets = new PageDataIterable<>(widgetTypeService::findAllWidgetTypesIds, 512);
         for (WidgetTypeId widgetTypeId : widgets) {
-            WidgetTypeDetails widgetTypeDetails = widgetTypeService.findWidgetTypeDetailsById(TenantId.SYS_TENANT_ID, widgetTypeId);
-            boolean updated = resourceService.updateResourcesUsage(widgetTypeDetails);
-            if (updated) {
-                widgetTypeService.saveWidgetType(widgetTypeDetails);
-                updatedCount++;
-            }
-            totalCount++;
+            executor.submit(() -> {
+                WidgetTypeDetails widgetTypeDetails = widgetTypeService.findWidgetTypeDetailsById(TenantId.SYS_TENANT_ID, widgetTypeId);
+                boolean updated = resourceService.updateResourcesUsage(widgetTypeDetails.getTenantId(), widgetTypeDetails);
+                if (updated) {
+                    widgetTypeService.saveWidgetType(widgetTypeDetails);
+                    updatedCount.incrementAndGet();
+                }
+                if (totalCount.incrementAndGet() % 200 == 0) {
+                    log.info("Processed {} widgets, updated {}", totalCount, updatedCount);
+                }
+            });
+        }
 
-            if (totalCount % 200 == 0) {
-                log.info("Processed {} widgets, updated {}", totalCount, updatedCount);
-            }
+        executor.shutdown();
+        if (!executor.awaitTermination(10, TimeUnit.MINUTES)) {
+            throw new RuntimeException("Widgets resources update timeout");
         }
         log.info("Updated {} widgets", updatedCount);
     }

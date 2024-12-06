@@ -80,13 +80,13 @@ public interface ResourceService extends EntityDaoService {
 
     TbResourceInfo findSystemOrTenantResourceByEtag(TenantId tenantId, ResourceType resourceType, String etag);
 
-    boolean updateResourcesUsage(Dashboard dashboard);
+    boolean updateResourcesUsage(TenantId tenantId, Dashboard dashboard);
 
-    boolean updateResourcesUsage(WidgetTypeDetails widgetTypeDetails);
+    boolean updateResourcesUsage(TenantId tenantId, WidgetTypeDetails widgetTypeDetails);
 
-    Collection<TbResourceInfo> getUsedResources(Dashboard dashboard);
+    Collection<TbResourceInfo> getUsedResources(TenantId tenantId, Dashboard dashboard);
 
-    Collection<TbResourceInfo> getUsedResources(WidgetTypeDetails widgetTypeDetails);
+    Collection<TbResourceInfo> getUsedResources(TenantId tenantId, WidgetTypeDetails widgetTypeDetails);
 
     TbResource createOrUpdateSystemResource(ResourceType resourceType, String resourceKey, byte[] data);
 

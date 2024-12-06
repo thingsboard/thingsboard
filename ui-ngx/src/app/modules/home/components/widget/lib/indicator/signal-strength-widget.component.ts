@@ -168,6 +168,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
     }
 
     this.noSignalRssiValue = this.settings.noSignalRssiValue ?? -100;
+    this.rssi = this.noSignalRssiValue;
 
     this.activeBarsColor = ColorProcessor.fromSettings(this.settings.activeBarsColor);
     const inactiveBarsColor = tinycolor(this.settings.inactiveBarsColor);
@@ -259,7 +260,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
         this.tooltipValueText = formatValue(value, this.decimals, this.units, false);
       }
     } else {
-      this.rssi = -100;
+      this.rssi = this.noSignalRssiValue;
       if (this.showTooltipValue) {
         this.tooltipValueText = 'N/A';
       }

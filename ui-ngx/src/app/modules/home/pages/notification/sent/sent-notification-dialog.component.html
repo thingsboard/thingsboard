@@ -213,7 +213,7 @@
           <div class="notification-content">
             <div class="subject">{{ preview.processedTemplates.EMAIL.subject }}</div>
             <mat-divider></mat-divider>
-            <div class="html-content" [innerHTML]="(preview.processedTemplates.EMAIL.body | safe: 'html')"></div>
+            <editor [init]="tinyMceOptions" [initialValue]="preview.processedTemplates.EMAIL.body"></editor>
           </div>
         </section>
         <section class="preview-group notification tb-form-panel stroked no-gap" *ngIf="preview.processedTemplates.SLACK?.enabled">

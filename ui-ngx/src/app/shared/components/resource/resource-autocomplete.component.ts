@@ -26,6 +26,7 @@ import {
   prependTbResourcePrefix,
   removeTbResourcePrefix,
   ResourceInfo,
+  ResourceSubType,
   ResourceType
 } from '@shared/models/resource.models';
 import { TbResourceId } from '@shared/models/id/tb-resource-id';
@@ -60,6 +61,10 @@ export class ResourceAutocompleteComponent implements ControlValueAccessor, OnIn
   subscriptSizing: SubscriptSizing = 'fixed';
 
   @Input()
+  @coerceBoolean()
+  inlineField: boolean;
+
+  @Input()
   placeholder: string;
 
   @Input()
@@ -69,6 +74,9 @@ export class ResourceAutocompleteComponent implements ControlValueAccessor, OnIn
   @Input()
   @coerceBoolean()
   allowAutocomplete = false;
+
+  @Input()
+  subType = ResourceSubType.EXTENSION;
 
   resourceFormGroup = this.fb.group({
     resource: this.fb.control<string|ResourceInfo>(null)
@@ -80,6 +88,7 @@ export class ResourceAutocompleteComponent implements ControlValueAccessor, OnIn
 
   @ViewChild('resourceInput', {static: true}) resourceInput: ElementRef;
 
+  resource: ResourceInfo;
   private modelValue: string;
   private dirty = false;
 
@@ -100,10 +109,13 @@ export class ResourceAutocompleteComponent implements ControlValueAccessor, OnIn
         tap(value => {
           let modelValue: string;
           if (isObject(value)) {
-            modelValue = prependTbResourcePrefix((value as ResourceInfo).link);
-          } else if (isEmptyStr(value)) {
+            this.resource = value as ResourceInfo;
+            modelValue = prependTbResourcePrefix(this.resource.link);
+          } else if (isEmptyStr(value) || this.subType !== ResourceSubType.EXTENSION) {
+            this.resource = null;
             modelValue = null;
           } else {
+            this.resource = null;
             modelValue = value as string;
           }
           this.updateView(modelValue);
@@ -139,10 +151,12 @@ export class ResourceAutocompleteComponent implements ControlValueAccessor, OnIn
       if (isObject(value) && typeof value !== 'string' && (value as TbResourceId).id) {
         this.resourceService.getResourceInfoById(value.id, {ignoreLoading: true, ignoreErrors: true}).subscribe({
           next: resource => {
+            this.resource = resource;
             this.modelValue = prependTbResourcePrefix(resource.link);
             this.resourceFormGroup.get('resource').patchValue(resource, {emitEvent: false});
           },
           error: () => {
+            this.resource = null;
             this.modelValue = '';
             this.resourceFormGroup.get('resource').patchValue('');
           }
@@ -152,10 +166,12 @@ export class ResourceAutocompleteComponent implements ControlValueAccessor, OnIn
         const params = extractParamsFromJSResourceUrl(url);
         this.resourceService.getResourceInfo(params.type, params.scope, params.key, {ignoreLoading: true, ignoreErrors: true}).subscribe({
           next: resource => {
+            this.resource = resource;
             this.modelValue = value;
             this.resourceFormGroup.get('resource').patchValue(resource, {emitEvent: false});
           },
           error: () => {
+            this.resource = null;
             this.modelValue = '';
             this.resourceFormGroup.get('resource').patchValue('');
           }
@@ -196,7 +212,7 @@ export class ResourceAutocompleteComponent implements ControlValueAccessor, OnIn
 
   private fetchResources(searchText?: string): Observable<Array<ResourceInfo>> {
     this.searchText = searchText;
-    return this.resourceService.getResources(new PageLink(50, 0, searchText), ResourceType.JS_MODULE, {ignoreLoading: true}).pipe(
+    return this.resourceService.getResources(new PageLink(50, 0, searchText), ResourceType.JS_MODULE, this.subType, {ignoreLoading: true}).pipe(
       catchError(() => of(null)),
       map(data => data.data)
     );

@@ -36,7 +36,7 @@
   <button mat-button color="primary"
           type="button"
           [disabled]="(isLoading$ | async)"
-          (click)="cancel()" cdkFocusInitial>
+          (click)="suspend()" cdkFocusInitial>
     {{ 'action.suspend' | translate }}
   </button>
   <button mat-button mat-raised-button color="warn"

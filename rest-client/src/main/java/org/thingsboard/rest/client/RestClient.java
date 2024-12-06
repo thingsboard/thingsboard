@@ -1358,13 +1358,17 @@ public class RestClient implements Closeable {
                 }, params).getBody();
     }
 
-    public PageData<DeviceInfo> getTenantDeviceInfos(String type, DeviceProfileId deviceProfileId, PageLink pageLink) {
+    public PageData<DeviceInfo> getTenantDeviceInfos(String type, Boolean active, DeviceProfileId deviceProfileId, PageLink pageLink) {
         Map<String, String> params = new HashMap<>();
         params.put("type", type);
         params.put("deviceProfileId", deviceProfileId != null ? deviceProfileId.toString() : null);
+        if (active != null) {
+            params.put("active", active.toString());
+        }
         addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
-                baseURL + "/api/tenant/deviceInfos?type={type}&deviceProfileId={deviceProfileId}&" + getUrlParams(pageLink),
+                baseURL + "/api/tenant/deviceInfos?type={type}&deviceProfileId={deviceProfileId}&"
+                        + (active != null ? "active={active}&" : "") + getUrlParams(pageLink),
                 HttpMethod.GET, HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<DeviceInfo>>() {
                 }, params).getBody();

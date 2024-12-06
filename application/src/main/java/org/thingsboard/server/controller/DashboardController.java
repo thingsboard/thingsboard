@@ -22,8 +22,10 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,6 +33,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -67,6 +70,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DASHBOARD_ID_PARAM_DESCRIPTION;
@@ -149,17 +153,20 @@ public class DashboardController extends BaseController {
     )
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/dashboard/{dashboardId}")
-    public Dashboard getDashboardById(@Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
+    public void getDashboardById(@Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
                                       @PathVariable(DASHBOARD_ID) String strDashboardId,
                                       @Parameter(description = INCLUDE_RESOURCES_DESCRIPTION)
-                                      @RequestParam(value = INCLUDE_RESOURCES, required = false) boolean includeResources) throws ThingsboardException {
+                                      @RequestParam(value = INCLUDE_RESOURCES, required = false) boolean includeResources,
+                                      @RequestHeader(name = HttpHeaders.ACCEPT_ENCODING, required = false) String acceptEncodingHeader,
+                                      HttpServletResponse response) throws Exception {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.READ);
         if (includeResources) {
             dashboard.setResources(tbResourceService.exportResources(dashboard, getCurrentUser()));
         }
-        return dashboard;
+        response.setContentType(APPLICATION_JSON_VALUE);
+        compressResponseWithGzipIFAccepted(acceptEncodingHeader, response, JacksonUtil.writeValueAsBytes(dashboard));
     }
 
     @ApiOperation(value = "Create Or Update Dashboard (saveDashboard)",
@@ -171,11 +178,15 @@ public class DashboardController extends BaseController {
                     TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @PostMapping(value = "/dashboard")
-    public Dashboard saveDashboard(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the dashboard.")
-                                   @RequestBody Dashboard dashboard) throws Exception {
+    public void saveDashboard(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the dashboard.")
+                                   @RequestBody Dashboard dashboard,
+                                   @RequestHeader(name = HttpHeaders.ACCEPT_ENCODING, required = false) String acceptEncodingHeader,
+                                   HttpServletResponse response) throws Exception {
         dashboard.setTenantId(getTenantId());
         checkEntity(dashboard.getId(), dashboard, Resource.DASHBOARD);
-        return tbDashboardService.save(dashboard, getCurrentUser());
+        var savedDashboard = tbDashboardService.save(dashboard, getCurrentUser());
+        response.setContentType(APPLICATION_JSON_VALUE);
+        compressResponseWithGzipIFAccepted(acceptEncodingHeader, response, JacksonUtil.writeValueAsBytes(savedDashboard));
     }
 
     @ApiOperation(value = "Delete the Dashboard (deleteDashboard)",
@@ -408,12 +419,13 @@ public class DashboardController extends BaseController {
                     "If 'homeDashboardId' parameter is not set on the User and Customer levels then checks the same parameter for the Tenant that owns the user. "
                     + DASHBOARD_DEFINITION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/dashboard/home", method = RequestMethod.GET)
-    @ResponseBody
-    public HomeDashboard getHomeDashboard() throws ThingsboardException {
+    @GetMapping(value = "/dashboard/home")
+    public void getHomeDashboard(@RequestHeader(name = HttpHeaders.ACCEPT_ENCODING, required = false) String acceptEncodingHeader,
+                                 HttpServletResponse response) throws Exception {
         SecurityUser securityUser = getCurrentUser();
+        response.setContentType(APPLICATION_JSON_VALUE);
         if (securityUser.isSystemAdmin()) {
-            return null;
+            return;
         }
         User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
         JsonNode additionalInfo = user.getAdditionalInfo();
@@ -431,7 +443,9 @@ public class DashboardController extends BaseController {
                 homeDashboard = extractHomeDashboardFromAdditionalInfo(additionalInfo);
             }
         }
-        return homeDashboard;
+        if (homeDashboard != null) {
+            compressResponseWithGzipIFAccepted(acceptEncodingHeader, response, JacksonUtil.writeValueAsBytes(homeDashboard));
+        }
     }
 
     @ApiOperation(value = "Get Home Dashboard Info (getHomeDashboardInfo)",

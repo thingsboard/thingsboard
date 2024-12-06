@@ -19,10 +19,9 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +34,7 @@ public class DefaultSchedulerComponent implements SchedulerComponent {
 
     @PostConstruct
     public void init() {
-        schedulerExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("queue-scheduler"));
+        schedulerExecutor = ThingsBoardExecutors.newSingleThreadScheduledExecutor("queue-scheduler");
     }
 
     @PreDestroy
@@ -54,19 +53,11 @@ public class DefaultSchedulerComponent implements SchedulerComponent {
     }
 
     public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit) {
-        return schedulerExecutor.scheduleAtFixedRate(() -> runSafely(command), initialDelay, period, unit);
+        return schedulerExecutor.scheduleAtFixedRate(command, initialDelay, period, unit);
     }
 
     public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
-        return schedulerExecutor.scheduleWithFixedDelay(() -> runSafely(command), initialDelay, delay, unit);
-    }
-
-    private void runSafely(Runnable command) {
-        try {
-            command.run();
-        } catch (Throwable t) {
-            log.error("Unexpected error occurred while executing task!", t);
-        }
+        return schedulerExecutor.scheduleWithFixedDelay(command, initialDelay, delay, unit);
     }
 
 }

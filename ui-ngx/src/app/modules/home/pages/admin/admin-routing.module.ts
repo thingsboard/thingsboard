@@ -45,6 +45,7 @@ import { ImageService } from '@core/http/image.service';
 import { ScadaSymbolData } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import { MenuId } from '@core/services/menu.models';
 import { catchError } from 'rxjs/operators';
+import { JsLibraryTableConfigResolver } from '@home/pages/admin/resource/js-library-table-config.resolver';
 
 export const scadaSymbolResolver: ResolveFn<ScadaSymbolData> =
   (route: ActivatedRouteSnapshot,
@@ -174,6 +175,43 @@ const routes: Routes = [
             },
             resolve: {
               entitiesTableConfig: ResourcesLibraryTableConfigResolver
+            }
+          }
+        ]
+      },
+      {
+        path: 'javascript-library',
+        data: {
+          breadcrumb: {
+            menuId: MenuId.javascript_library
+          }
+        },
+        children: [
+          {
+            path: '',
+            component: EntitiesTableComponent,
+            data: {
+              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
+              title: 'javascript.javascript-library',
+            },
+            resolve: {
+              entitiesTableConfig: JsLibraryTableConfigResolver
+            }
+          },
+          {
+            path: ':entityId',
+            component: EntityDetailsPageComponent,
+            canDeactivate: [ConfirmOnExitGuard],
+            data: {
+              breadcrumb: {
+                labelFunction: entityDetailsPageBreadcrumbLabelFunction,
+                icon: 'mdi:language-javascript'
+              } as BreadCrumbConfig<EntityDetailsPageComponent>,
+              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
+              title: 'javascript.javascript-library'
+            },
+            resolve: {
+              entitiesTableConfig: JsLibraryTableConfigResolver
             }
           }
         ]
@@ -393,6 +431,7 @@ const routes: Routes = [
   exports: [RouterModule],
   providers: [
     ResourcesLibraryTableConfigResolver,
+    JsLibraryTableConfigResolver,
     QueuesTableConfigResolver
   ]
 })

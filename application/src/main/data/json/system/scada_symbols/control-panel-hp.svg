@@ -19,7 +19,7 @@
     },
     {
       "tag": "offButton",
-      "stateRenderFunction": "var offButtonChildren = element.children();\nif(ctx.values.value){\n  ctx.api.enable(element);\n  offButtonChildren[0].fill(ctx.properties.defaultButtonColor);\n} else {\n  ctx.api.disable(element);\n    offButtonChildren[0].fill(ctx.properties.activeButtonColor);\n}\n\noffButtonChildren[1].stroke(ctx.properties.borderButtonColor);\n\nif (!ctx.properties.label) {\n    element.transform({translateY: -60});\n}",
+      "stateRenderFunction": "var offButtonChildren = element.children();\nif(ctx.values.value){\n  ctx.api.enable(element);\n  offButtonChildren[0].fill(ctx.properties.defaultButtonColor);\n} else {\n  ctx.api.disable(element);\n    offButtonChildren[0].fill(ctx.properties.activeButtonColor);\n}\n\noffButtonChildren[1].stroke(ctx.properties.borderButtonColor);\n\nif (!ctx.properties.label) {\n    element.transform({translateY: -37});\n}",
       "actions": {
         "click": {
           "actionFunction": "ctx.api.disable(element);\nctx.api.callAction(event, 'offUpdateState', undefined, {\n  next: () => {\n     ctx.api.setValue('value', false);\n  },\n  error: () => {\n     ctx.api.enable(element);\n  }  \n});"
@@ -33,7 +33,7 @@
     },
     {
       "tag": "onButton",
-      "stateRenderFunction": "var onButtonChildren = element.children();\nif(ctx.values.value){\n    ctx.api.disable(element);\n    onButtonChildren[0].fill(ctx.properties.activeButtonColor);\n} else {\n    ctx.api.enable(element);\n    onButtonChildren[0].fill(ctx.properties.defaultButtonColor);\n}\nonButtonChildren[1].stroke(ctx.properties.borderButtonColor);\nif (!ctx.properties.label) {\n    element.transform({translateY: -60});\n}",
+      "stateRenderFunction": "var onButtonChildren = element.children();\nif(ctx.values.value){\n    ctx.api.disable(element);\n    onButtonChildren[0].fill(ctx.properties.activeButtonColor);\n} else {\n    ctx.api.enable(element);\n    onButtonChildren[0].fill(ctx.properties.defaultButtonColor);\n}\nonButtonChildren[1].stroke(ctx.properties.borderButtonColor);\nif (!ctx.properties.label) {\n    element.transform({translateY: -37});\n}",
       "actions": {
         "click": {
           "actionFunction": "ctx.api.disable(element);\nctx.api.callAction(event, 'onUpdateState', undefined, {\n  next: () => {\n     ctx.api.setValue('value', true);\n  },\n  error: () => {\n     ctx.api.enable(element);\n  }  \n});"
@@ -320,13 +320,13 @@
     }
   ]
 }]]></tb:metadata>
-<rect width="400" height="200" rx="8" fill="#dedede" tb:tag="background"/><rect x="1" y="1" width="398" height="198" rx="7" stroke="#000" stroke-opacity=".87" stroke-width="2"/><text x="198.7832" y="57.511719" fill="#000000" font-family="Roboto" font-size="56px" font-weight="400" text-anchor="middle" tb:tag="label" xml:space="preserve"><tspan dominant-baseline="middle">Heat pump</tspan></text><g transform="translate(-11 -36.996)" tb:tag="onButton">
-  <rect x="40" y="137" width="156" height="72" rx="9.8143" fill="#999" style="stroke-width:.95761"/>
-  <path d="m40.957 146.03c0-4.4589 3.9482-8.0734 8.8189-8.0734h136.45c4.8707 0 8.8189 3.6144 8.8189 8.0734v53.938c0 4.4589-3.9482 8.0743-8.8189 8.0743h-136.45c-4.8707 0-8.8189-3.6153-8.8189-8.0743z" shape-rendering="crispEdges" stroke="#999" stroke-width="1.9147"/>
-  <text x="118.48975" y="176.07759" fill="#000000" font-family="Roboto" font-size="34px" font-weight="500" text-anchor="middle" tb:tag="onLabel" xml:space="preserve"><tspan dominant-baseline="middle">On</tspan></text>
- </g><g transform="translate(-6,-36.996)" tb:tag="offButton">
-  <rect x="220" y="137" width="156" height="72" rx="9.8143" fill="#dedede" style="stroke-width:.95761"/>
-  <path d="m220.96 146.03c0-4.4589 3.9482-8.0734 8.8189-8.0734h136.45c4.8707 0 8.8189 3.6144 8.8189 8.0734v53.938c0 4.4589-3.9482 8.0743-8.8189 8.0743h-136.45c-4.8707 0-8.8189-3.6153-8.8189-8.0743z" shape-rendering="crispEdges" stroke="#999" stroke-width="1.9147"/>
-  <text x="296.72168" y="176.37642" fill="#000000" font-family="Roboto" font-size="34px" font-weight="500" text-anchor="middle" tb:tag="offLabel" xml:space="preserve"><tspan dominant-baseline="middle">Off</tspan></text>
+<rect width="400" height="200" rx="8" fill="#dedede" tb:tag="background"/><rect x="1" y="1" width="398" height="198" rx="7" stroke="#000" stroke-opacity=".87" stroke-width="2"/><text x="198.7832" y="57.511719" fill="#000000" font-family="Roboto" font-size="56px" font-weight="400" text-anchor="middle" tb:tag="label" xml:space="preserve"><tspan dominant-baseline="middle">Heat pump</tspan></text><g tb:tag="onButton">
+  <rect x="29" y="100" width="156" height="72" rx="9.8143" fill="#999" style="stroke-width:.95761"/>
+  <path d="m29.957 109.03c0-4.4589 3.9482-8.0734 8.8189-8.0734h136.45c4.8707 0 8.8189 3.6144 8.8189 8.0734v53.938c0 4.4589-3.9482 8.0743-8.8189 8.0743h-136.45c-4.8707 0-8.8189-3.6153-8.8189-8.0743z" shape-rendering="crispEdges" stroke="#999" stroke-width="1.9147"/>
+  <text x="107.44609" y="138.7375" fill="#000000" font-family="Roboto" font-size="34px" font-weight="500" text-anchor="middle" tb:tag="onLabel" xml:space="preserve"><tspan dominant-baseline="middle">On</tspan></text>
+ </g><g tb:tag="offButton">
+  <rect x="214" y="100" width="156" height="72" rx="9.8143" fill="#dedede" style="stroke-width:.95761"/>
+  <path d="m214.96 109.03c0-4.4589 3.9482-8.0734 8.8189-8.0734h136.45c4.8707 0 8.8189 3.6144 8.8189 8.0734v53.938c0 4.4589-3.9482 8.0743-8.8189 8.0743h-136.45c-4.8707 0-8.8189-3.6153-8.8189-8.0743z" shape-rendering="crispEdges" stroke="#999" stroke-width="1.9147"/>
+  <text x="290.68408" y="139.33516" fill="#000000" font-family="Roboto" font-size="34px" font-weight="500" text-anchor="middle" tb:tag="offLabel" xml:space="preserve"><tspan dominant-baseline="middle">Off</tspan></text>
  </g>
 </svg>

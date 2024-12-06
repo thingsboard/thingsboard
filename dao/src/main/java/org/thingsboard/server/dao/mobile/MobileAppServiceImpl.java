@@ -43,7 +43,6 @@ import java.util.Optional;
 public class MobileAppServiceImpl extends AbstractEntityService implements MobileAppService {
 
     private static final String PLATFORM_TYPE_IS_REQUIRED = "Platform type is required if package name is specified";
-    private static final String MOBILE_APP_BUNDLE_CONSTRAINT = "The mobile app referenced by the mobile bundle cannot be deleted!";
 
     @Autowired
     private MobileAppDao mobileAppDao;
@@ -68,15 +67,8 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
     @Override
     public void deleteMobileAppById(TenantId tenantId, MobileAppId mobileAppId) {
         log.trace("Executing deleteMobileAppById [{}]", mobileAppId.getId());
-        try {
-            mobileAppDao.removeById(tenantId, mobileAppId.getId());
-            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(mobileAppId).build());
-        } catch (Exception e) {
-            checkConstraintViolation(e,
-                    Map.of("fk_android_app_id", MOBILE_APP_BUNDLE_CONSTRAINT,
-                            "fk_ios_app_id", MOBILE_APP_BUNDLE_CONSTRAINT));
-            throw e;
-        }
+        mobileAppDao.removeById(tenantId, mobileAppId.getId());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(mobileAppId).build());
     }
 
     @Override

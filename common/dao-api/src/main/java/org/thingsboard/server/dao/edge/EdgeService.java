@@ -32,7 +32,6 @@ import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface EdgeService extends EntityDaoService {
 
@@ -55,6 +54,8 @@ public interface EdgeService extends EntityDaoService {
     Edge unassignEdgeFromCustomer(TenantId tenantId, EdgeId edgeId);
 
     void deleteEdge(TenantId tenantId, EdgeId edgeId);
+
+    PageData<EdgeId> findEdgeIdsByTenantId(TenantId tenantId, PageLink pageLink);
 
     PageData<Edge> findEdgesByTenantId(TenantId tenantId, PageLink pageLink);
 

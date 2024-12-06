@@ -24,6 +24,8 @@ import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TenantProfileType;
 
+import java.io.Serial;
+
 @Schema
 @AllArgsConstructor
 @NoArgsConstructor
@@ -31,6 +33,7 @@ import org.thingsboard.server.common.data.TenantProfileType;
 @Data
 public class DefaultTenantProfileConfiguration implements TenantProfileConfiguration {
 
+    @Serial
     private static final long serialVersionUID = -7134932690332578595L;
 
     private long maxDevices;
@@ -39,6 +42,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxUsers;
     private long maxDashboards;
     private long maxRuleChains;
+    private long maxEdges;
     private long maxResourcesInBytes;
     private long maxOtaPackagesInBytes;
     private long maxResourceSize;
@@ -91,6 +95,8 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxDPStorageDays;
     @Schema(example = "50")
     private int maxRuleNodeExecutionsPerMessage;
+    @Schema(example = "15")
+    private int maxDebugModeDurationMinutes;
     @Schema(example = "0")
     private long maxEmails;
     @Schema(example = "true")
@@ -131,27 +137,18 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
 
     @Override
     public long getProfileThreshold(ApiUsageRecordKey key) {
-        switch (key) {
-            case TRANSPORT_MSG_COUNT:
-                return maxTransportMessages;
-            case TRANSPORT_DP_COUNT:
-                return maxTransportDataPoints;
-            case JS_EXEC_COUNT:
-                return maxJSExecutions;
-            case TBEL_EXEC_COUNT:
-                return maxTbelExecutions;
-            case RE_EXEC_COUNT:
-                return maxREExecutions;
-            case STORAGE_DP_COUNT:
-                return maxDPStorageDays;
-            case EMAIL_EXEC_COUNT:
-                return maxEmails;
-            case SMS_EXEC_COUNT:
-                return maxSms;
-            case CREATED_ALARMS_COUNT:
-                return maxCreatedAlarms;
-        }
-        return 0L;
+        return switch (key) {
+            case TRANSPORT_MSG_COUNT -> maxTransportMessages;
+            case TRANSPORT_DP_COUNT -> maxTransportDataPoints;
+            case JS_EXEC_COUNT -> maxJSExecutions;
+            case TBEL_EXEC_COUNT -> maxTbelExecutions;
+            case RE_EXEC_COUNT -> maxREExecutions;
+            case STORAGE_DP_COUNT -> maxDPStorageDays;
+            case EMAIL_EXEC_COUNT -> maxEmails;
+            case SMS_EXEC_COUNT -> maxSms;
+            case CREATED_ALARMS_COUNT -> maxCreatedAlarms;
+            default -> 0L;
+        };
     }
 
     @Override
@@ -170,22 +167,16 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     }
 
     public long getEntitiesLimit(EntityType entityType) {
-        switch (entityType) {
-            case DEVICE:
-                return maxDevices;
-            case ASSET:
-                return maxAssets;
-            case CUSTOMER:
-                return maxCustomers;
-            case USER:
-                return maxUsers;
-            case DASHBOARD:
-                return maxDashboards;
-            case RULE_CHAIN:
-                return maxRuleChains;
-            default:
-                return 0;
-        }
+        return switch (entityType) {
+            case DEVICE -> maxDevices;
+            case ASSET -> maxAssets;
+            case CUSTOMER -> maxCustomers;
+            case USER -> maxUsers;
+            case DASHBOARD -> maxDashboards;
+            case RULE_CHAIN -> maxRuleChains;
+            case EDGE -> maxEdges;
+            default -> 0;
+        };
     }
 
     @Override
@@ -197,4 +188,5 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     public int getMaxRuleNodeExecsPerMessage() {
         return maxRuleNodeExecutionsPerMessage;
     }
+
 }

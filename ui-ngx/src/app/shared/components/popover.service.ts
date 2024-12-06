@@ -29,6 +29,7 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ComponentType } from '@angular/cdk/portal';
 import { HELP_MARKDOWN_COMPONENT_TOKEN } from '@shared/components/tokens';
 import { CdkOverlayOrigin } from '@angular/cdk/overlay';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class TbPopoverService {
@@ -113,6 +114,8 @@ export class TbPopoverService {
 
   toggleHelpPopover(trigger: Element, renderer: Renderer2, hostView: ViewContainerRef, helpId = '',
                     helpContent = '',
+                    helpContentBase64 = '',
+                    asyncHelpContent: Observable<string> = null,
                     visibleFn: (visible: boolean) => void = () => {},
                     readyFn: (ready: boolean) => void = () => {},
                     preferredPlacement: PopoverPreferredPlacement = 'bottom',
@@ -144,6 +147,8 @@ export class TbPopoverService {
       component.tbComponentContext = {
         helpId,
         helpContent,
+        helpContentBase64,
+        asyncHelpContent,
         style: helpStyle,
         visible: true
       };

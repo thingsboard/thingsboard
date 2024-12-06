@@ -193,4 +193,14 @@ export interface HasVersion {
   version?: number;
 }
 
+export interface HasDebugSettings {
+  debugSettings?: DebugSettings;
+}
+
+export interface DebugSettings {
+  failuresEnabled?: boolean;
+  allEnabled?: boolean;
+  allEnabledUntil?: number;
+}
+
 export type VersionedEntity = EntityInfoData & HasVersion | RuleChainMetaData;
