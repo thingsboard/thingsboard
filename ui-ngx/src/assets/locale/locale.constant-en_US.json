@@ -990,15 +990,13 @@
         "type-sms-sent": "SMS sent"
     },
     "debug-config": {
-        "min": "{{number}} min",
         "label": "Debug configuration",
         "on-failure": "Failures only (24/7)",
         "all-messages": "All messages ({{time}})",
         "failures": "Failures",
-        "all": "All",
         "hint": {
             "main": "All node debug messages rate limited with:",
-            "main-limited": "All node debug messages will be rate-limited, with a maximum of {{msg}} messages allowed per {{sec}} seconds.",
+            "main-limited": "All node debug messages will be rate-limited, with a maximum of {{msg}} messages allowed per {{time}}.",
             "on-failure": "Save all failure debug events without time limit.",
             "all-messages": "Save all debug events during time limit."
         }
@@ -4293,7 +4291,7 @@
         "output": "Output",
         "test": "Test",
         "help": "Help",
-        "reset-debug-mode": "Reset debug mode in all nodes",
+        "reset-debug-settings": "Reset debug settings in all nodes",
         "test-with-this-message": "{{test}} with this message",
         "queue-hint": "Select a queue for message forwarding to another queue.  'Main' queue is used by default.",
         "queue-singleton-hint": "Select a queue for message forwarding in multi-instance environments. 'Main' queue is used by default."
@@ -4743,6 +4741,7 @@
         "sec": "{{ sec }} sec",
         "sec-short": "{{ sec }}s",
         "short": {
+            "years": "{ years, plural, =1 {1 year } other {# years } }",
             "days": "{ days, plural, =1 {1 day } other {# days } }",
             "hours": "{ hours, plural, =1 {1 hour } other {# hours } }",
             "minutes": "{{minutes}} min ",

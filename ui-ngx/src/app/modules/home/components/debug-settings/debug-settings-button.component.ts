@@ -14,18 +14,26 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, forwardRef, Input, Renderer2, ViewContainerRef } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  forwardRef,
+  Input,
+  Renderer2,
+  signal,
+  ViewContainerRef
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { MatButton } from '@angular/material/button';
 import { DebugSettingsPanelComponent } from './debug-settings-panel.component';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { of, shareReplay, timer } from 'rxjs';
-import { SECOND } from '@shared/models/time/time.models';
+import { MINUTE, SECOND } from '@shared/models/time/time.models';
 import { DebugSettings } from '@shared/models/entity.models';
-import { map, startWith, switchMap, takeWhile } from 'rxjs/operators';
+import { map, switchMap, takeWhile } from 'rxjs/operators';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { AppState } from '@core/core.state';
 import { Store } from '@ngrx/store';
@@ -60,11 +68,11 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
   });
 
   disabled = false;
+  allEnabled = signal(false);
 
-  isDebugAllActive$ = this.debugSettingsFormGroup.get('allEnabled').valueChanges.pipe(
-    startWith(null),
-    switchMap(() => {
-      if (this.allEnabled) {
+  isDebugAllActive$ = toObservable(this.allEnabled).pipe(
+    switchMap((value) => {
+      if (value) {
         return of(true);
       } else {
         return timer(0, SECOND).pipe(
@@ -77,7 +85,7 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
     shareReplay(1)
   );
 
-  readonly maxDebugModeDurationMinutes = getCurrentAuthState(this.store).maxDebugModeDurationMinutes;
+  readonly maxDebugModeDuration = getCurrentAuthState(this.store).maxDebugModeDurationMinutes * MINUTE;
 
   private propagateChange: (settings: DebugSettings) => void = () => {};
 
@@ -91,15 +99,15 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
       takeUntilDestroyed()
     ).subscribe(value => {
       this.propagateChange(value);
-    })
+    });
+
+    this.debugSettingsFormGroup.get('allEnabled').valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe(value => this.allEnabled.set(value));
   }
 
   get failuresEnabled(): boolean {
     return this.debugSettingsFormGroup.get('failuresEnabled').value;
-  }
-
-  get allEnabled(): boolean {
-    return this.debugSettingsFormGroup.get('allEnabled').value;
   }
 
   get allEnabledUntil(): number {
@@ -120,7 +128,7 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
         this.viewContainerRef, DebugSettingsPanelComponent, 'bottom', true, null,
         {
           ...debugSettings,
-          maxDebugModeDurationMinutes: this.maxDebugModeDurationMinutes,
+          maxDebugModeDuration: this.maxDebugModeDuration,
           debugLimitsConfiguration: this.debugLimitsConfiguration
         },
         {},
@@ -141,6 +149,7 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
 
   writeValue(settings: DebugSettings): void {
     this.debugSettingsFormGroup.patchValue(settings, {emitEvent: false});
+    this.allEnabled.set(settings?.allEnabled);
     this.debugSettingsFormGroup.get('allEnabled').updateValueAndValidity({onlySelf: true});
   }
 

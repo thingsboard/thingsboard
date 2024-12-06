@@ -305,7 +305,7 @@ export class ItemBufferService {
         connectors: [],
         additionalInfo: origNode.additionalInfo,
         configuration: origNode.configuration,
-        debugMode: origNode.debugMode,
+        debugSettings: origNode.debugSettings,
         x: origNode.x,
         y: origNode.y,
         name: origNode.name,

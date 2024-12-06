@@ -23,10 +23,9 @@
         [disabled]="disabled"
         (click)="openDebugStrategyPanel($event, matButton)">
   <mat-icon [color]="debugSettingsFormGroup.disabled ? 'inherit' : 'primary'">bug_report</mat-icon>
-  <span *ngIf="!failuresEnabled && !(isDebugAllActive$ | async)" translate>common.disabled</span>
-  <span *ngIf="(isDebugAllActive$ | async) && failuresEnabled" translate>debug-config.all</span>
-  <span *ngIf="(isDebugAllActive$ | async) && !failuresEnabled">
-    {{ !allEnabled ? (allEnabledUntil | durationLeft) : ('debug-config.min' | translate: { number:  maxDebugModeDurationMinutes }) }}
-  </span>
-  <span *ngIf="!(isDebugAllActive$ | async) && failuresEnabled" translate>debug-config.failures</span>
+  @if (isDebugAllActive$ | async) {
+    {{ !allEnabled() ? (allEnabledUntil | durationLeft) : (maxDebugModeDuration | milliSecondsToTimeString: true : true).trim() }}
+  } @else {
+    {{ failuresEnabled ? ('debug-config.failures' | translate) : ('common.disabled' | translate) }}
+  }
 </button>
