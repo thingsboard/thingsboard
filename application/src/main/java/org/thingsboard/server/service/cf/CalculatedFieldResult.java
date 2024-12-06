@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.cf;
+package org.thingsboard.server.service.cf;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.AttributeScope;
+
+import java.util.Map;
 
 @Data
-public class CalculatedFieldCtx {
+public final class CalculatedFieldResult {
 
-    private CalculatedFieldId calculatedFieldId;
-    private EntityId entityId;
-    private CalculatedFieldState state;
+    private String type;
+    private AttributeScope scope;
+    private Map<String, Object> resultMap;
 
-    public CalculatedFieldCtx() {
-    }
-
-    public CalculatedFieldCtx(CalculatedFieldId calculatedFieldId, EntityId entityId, CalculatedFieldState state) {
-        this.calculatedFieldId = calculatedFieldId;
-        this.entityId = entityId;
-        this.state = state;
+    public CalculatedFieldResult(String type, AttributeScope scope, Map<String, Object> resultMap) {
+        this.type = type;
+        this.scope = scope;
+        this.resultMap = resultMap == null ? Map.of() : Map.copyOf(resultMap);
     }
 }

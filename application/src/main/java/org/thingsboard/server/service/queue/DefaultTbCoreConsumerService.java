@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.LifecycleEvent;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -86,7 +87,7 @@ import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
-import org.thingsboard.server.service.entitiy.cf.TbCalculatedFieldService;
+import org.thingsboard.server.service.cf.CalculatedFieldExecutionService;
 import org.thingsboard.server.service.notification.NotificationSchedulerService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
@@ -150,13 +151,14 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private final TbImageService imageService;
     private final RuleEngineCallService ruleEngineCallService;
     private final TbCoreConsumerStats stats;
-    private final TbCalculatedFieldService calculatedFieldService;
+    private final CalculatedFieldExecutionService calculatedFieldExecutionService;
 
     private MainQueueConsumerManager<TbProtoQueueMsg<ToCoreMsg>, CoreQueueConfig> mainConsumer;
     private QueueConsumerManager<TbProtoQueueMsg<ToUsageStatsServiceMsg>> usageStatsConsumer;
     private QueueConsumerManager<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> firmwareStatesConsumer;
 
     private volatile ListeningExecutorService deviceActivityEventsExecutor;
+    private volatile ListeningExecutorService calculatedFieldsExecutor;
 
     public DefaultTbCoreConsumerService(TbCoreQueueFactory tbCoreQueueFactory,
                                         ActorSystemContext actorContext,
@@ -179,7 +181,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         NotificationRuleProcessor notificationRuleProcessor,
                                         TbImageService imageService,
                                         RuleEngineCallService ruleEngineCallService,
-                                        TbCalculatedFieldService calculatedFieldService) {
+                                        CalculatedFieldExecutionService calculatedFieldExecutionService) {
         super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService,
                 eventPublisher, jwtSettingsService);
         this.stateService = stateService;
@@ -195,13 +197,14 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         this.imageService = imageService;
         this.ruleEngineCallService = ruleEngineCallService;
         this.queueFactory = tbCoreQueueFactory;
-        this.calculatedFieldService = calculatedFieldService;
+        this.calculatedFieldExecutionService = calculatedFieldExecutionService;
     }
 
     @PostConstruct
     public void init() {
         super.init("tb-core");
         this.deviceActivityEventsExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-device-activity-events-executor")));
+        this.calculatedFieldsExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-calculated-fields-executor")));
 
         this.mainConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<ToCoreMsg>, CoreQueueConfig>builder()
                 .queueKey(new QueueKey(ServiceType.TB_CORE))
@@ -315,6 +318,12 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                         forwardToEventService(toCoreMsg.getLifecycleEventMsg(), callback);
                     } else if (toCoreMsg.hasCalculatedFieldMsg()) {
                         forwardToCalculatedFieldService(toCoreMsg.getCalculatedFieldMsg(), callback);
+                    } else if (toCoreMsg.hasEntityProfileUpdateMsg()) {
+                        forwardToCalculatedFieldService(toCoreMsg.getEntityProfileUpdateMsg(), callback);
+                    } else if (toCoreMsg.hasEntityAddMsg()) {
+                        forwardToCalculatedFieldService(toCoreMsg.getEntityAddMsg(), callback);
+                    } else if (toCoreMsg.hasEntityDeleteMsg()) {
+                        forwardToCalculatedFieldService(toCoreMsg.getEntityDeleteMsg(), callback);
                     }
                 } catch (Throwable e) {
                     log.warn("[{}] Failed to process message: {}", id, msg, e);
@@ -668,11 +677,46 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private void forwardToCalculatedFieldService(TransportProtos.CalculatedFieldMsgProto calculatedFieldMsg, TbCallback callback) {
         var tenantId = toTenantId(calculatedFieldMsg.getTenantIdMSB(), calculatedFieldMsg.getTenantIdLSB());
         var calculatedFieldId = new CalculatedFieldId(new UUID(calculatedFieldMsg.getCalculatedFieldIdMSB(), calculatedFieldMsg.getCalculatedFieldIdLSB()));
-        ListenableFuture<?> future = deviceActivityEventsExecutor.submit(() -> calculatedFieldService.onCalculatedFieldMsg(calculatedFieldMsg, callback));
+        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onCalculatedFieldMsg(calculatedFieldMsg, callback));
         DonAsynchron.withCallback(future,
                 __ -> callback.onSuccess(),
                 t -> {
                     log.warn("[{}] Failed to process calculated field message for calculated field [{}]", tenantId.getId(), calculatedFieldId.getId(), t);
+                    callback.onFailure(t);
+                });
+    }
+
+    private void forwardToCalculatedFieldService(TransportProtos.EntityProfileUpdateMsgProto profileUpdateMsg, TbCallback callback) {
+        var tenantId = toTenantId(profileUpdateMsg.getTenantIdMSB(), profileUpdateMsg.getTenantIdLSB());
+        var entityId = EntityIdFactory.getByTypeAndUuid(profileUpdateMsg.getEntityProfileType(), new UUID(profileUpdateMsg.getEntityIdMSB(), profileUpdateMsg.getEntityIdLSB()));
+        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onEntityProfileChanged(profileUpdateMsg, callback));
+        DonAsynchron.withCallback(future,
+                __ -> callback.onSuccess(),
+                t -> {
+                    log.warn("[{}] Failed to process device type updated message for device [{}]", tenantId.getId(), entityId.getId(), t);
+                    callback.onFailure(t);
+                });
+    }
+
+    private void forwardToCalculatedFieldService(TransportProtos.EntityAddMsgProto entityCreateMsg, TbCallback callback) {
+        var tenantId = toTenantId(entityCreateMsg.getTenantIdMSB(), entityCreateMsg.getTenantIdLSB());
+        var entityId = EntityIdFactory.getByTypeAndUuid(entityCreateMsg.getEntityType(), new UUID(entityCreateMsg.getEntityIdMSB(), entityCreateMsg.getEntityIdLSB()));
+        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onEntityAdded(entityCreateMsg, callback));
+        DonAsynchron.withCallback(future,
+                __ -> callback.onSuccess(),
+                t -> {
+                    log.warn("[{}] Failed to process entity create message for entityId [{}]", tenantId.getId(), entityId.getId(), t);
+                    callback.onFailure(t);
+                });
+    }
+
+    private void forwardToCalculatedFieldService(TransportProtos.EntityDeleteMsg entityDeleteMsg, TbCallback callback) {
+        var entityId = EntityIdFactory.getByTypeAndUuid(entityDeleteMsg.getEntityType(), new UUID(entityDeleteMsg.getEntityIdMSB(), entityDeleteMsg.getEntityIdLSB()));
+        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onEntityDeleted(entityDeleteMsg, callback));
+        DonAsynchron.withCallback(future,
+                __ -> callback.onSuccess(),
+                t -> {
+                    log.warn("Failed to process entity delete message for entity [{}]", entityId, t);
                     callback.onFailure(t);
                 });
     }

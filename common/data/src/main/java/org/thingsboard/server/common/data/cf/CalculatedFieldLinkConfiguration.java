@@ -17,13 +17,13 @@ package org.thingsboard.server.common.data.cf;
 
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 @Data
 public class CalculatedFieldLinkConfiguration {
 
-    private List<String> attributes = new ArrayList<>();
-    private List<String> timeSeries = new ArrayList<>();
+    private Map<String, String> attributes = new HashMap<>();
+    private Map<String, String> timeSeries = new HashMap<>();
 
 }

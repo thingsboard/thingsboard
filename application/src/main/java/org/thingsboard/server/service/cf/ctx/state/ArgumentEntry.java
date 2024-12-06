@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf;
+package org.thingsboard.server.service.cf.ctx.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.JsonNode;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -32,24 +31,23 @@ import java.util.UUID;
         property = "type"
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = SimpleCalculatedFieldConfiguration.class, name = "SIMPLE")
+        @JsonSubTypes.Type(value = SingleValueArgumentEntry.class, name = "SINGLE_VALUE"),
+        @JsonSubTypes.Type(value = LastRecordsArgumentEntry.class, name = "LAST_RECORDS")
 })
-public interface CalculatedFieldConfiguration {
+public interface ArgumentEntry {
 
     @JsonIgnore
-    CalculatedFieldType getType();
+    ArgumentType getType();
 
-    Map<String, BaseCalculatedFieldConfiguration.Argument> getArguments();
+    Object getValue();
 
-    BaseCalculatedFieldConfiguration.Output getOutput();
+    static ArgumentEntry createSingleValueArgument(KvEntry kvEntry) {
+        return new SingleValueArgumentEntry(kvEntry);
+    }
 
-    @JsonIgnore
-    List<EntityId> getReferencedEntities();
-
-    @JsonIgnore
-    CalculatedFieldLinkConfiguration getReferencedEntityConfig(EntityId entityId);
-
-    @JsonIgnore
-    JsonNode calculatedFieldConfigToJson(EntityType entityType, UUID entityId);
+    static ArgumentEntry createLastRecordsArgument(List<TsKvEntry> kvEntries) {
+        return new LastRecordsArgumentEntry(kvEntries.stream().
+                collect(Collectors.toMap(TsKvEntry::getTs, TsKvEntry::getValue, (oldValue, newValue) -> newValue, TreeMap::new)));
+    }
 
 }

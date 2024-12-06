@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf;
+package org.thingsboard.server.service.cf.ctx.state;
 
-public enum CalculatedFieldType {
-
-    SIMPLE, SCRIPT, LAST_RECORDS
-
+public enum ArgumentType {
+    SINGLE_VALUE, LAST_RECORDS
 }

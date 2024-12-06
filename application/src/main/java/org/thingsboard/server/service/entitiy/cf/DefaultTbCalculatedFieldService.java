@@ -15,65 +15,28 @@
  */
 package org.thingsboard.server.service.entitiy.cf;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.ListeningScheduledExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.ThingsBoardExecutors;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.cf.BaseCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
-import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.page.PageDataIterable;
-import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
-import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateEntityId;
 
@@ -84,109 +47,6 @@ import static org.thingsboard.server.dao.service.Validator.validateEntityId;
 public class DefaultTbCalculatedFieldService extends AbstractTbEntityService implements TbCalculatedFieldService {
 
     private final CalculatedFieldService calculatedFieldService;
-    private final AttributesService attributesService;
-    private final TimeseriesService timeseriesService;
-    private final RocksDBService rocksDBService;
-    private ListeningScheduledExecutorService scheduledExecutor;
-
-    private ListeningExecutorService calculatedFieldExecutor;
-    private ListeningExecutorService calculatedFieldCallbackExecutor;
-
-    private final ConcurrentMap<CalculatedFieldId, CalculatedField> calculatedFields = new ConcurrentHashMap<>();
-    private final ConcurrentMap<CalculatedFieldId, List<CalculatedFieldLink>> calculatedFieldLinks = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, CalculatedFieldCtx> states = new ConcurrentHashMap<>();
-
-    @Value("${calculatedField.initFetchPackSize:50000}")
-    @Getter
-    private int initFetchPackSize;
-
-    @Value("10")
-    @Getter
-    private int defaultCalculatedFieldCheckIntervalInSec;
-
-    @PostConstruct
-    public void init() {
-        // from AbstractPartitionBasedService
-        scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("calculated-field-scheduled")));
-        ///
-        calculatedFieldExecutor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(
-                Math.max(4, Runtime.getRuntime().availableProcessors()), "calculated-field"));
-        calculatedFieldCallbackExecutor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(
-                Math.max(4, Runtime.getRuntime().availableProcessors()), "calculated-field-callback"));
-        scheduledExecutor.scheduleWithFixedDelay(this::fetchCalculatedFields, 0, defaultCalculatedFieldCheckIntervalInSec, TimeUnit.SECONDS);
-    }
-
-    @PreDestroy
-    public void stop() {
-        // from AbstractPartitionBasedService
-        if (scheduledExecutor != null) {
-            scheduledExecutor.shutdown();
-        }
-        ///
-        if (calculatedFieldExecutor != null) {
-            calculatedFieldExecutor.shutdownNow();
-        }
-        if (calculatedFieldCallbackExecutor != null) {
-            calculatedFieldCallbackExecutor.shutdownNow();
-        }
-    }
-
-    @Override
-    public void onCalculatedFieldMsg(TransportProtos.CalculatedFieldMsgProto proto, TbCallback callback) {
-        try {
-            TenantId tenantId = TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
-            CalculatedFieldId calculatedFieldId = new CalculatedFieldId(new UUID(proto.getCalculatedFieldIdMSB(), proto.getCalculatedFieldIdLSB()));
-            log.info("Received CalculatedFieldMsgProto for processing: tenantId=[{}], calculatedFieldId=[{}]", tenantId, calculatedFieldId);
-            if (proto.getDeleted()) {
-                log.warn("Executing onCalculatedFieldDelete, calculatedFieldId=[{}]", calculatedFieldId);
-                onCalculatedFieldDelete(calculatedFieldId, callback);
-                callback.onSuccess();
-            }
-            CalculatedField cf = calculatedFieldService.findById(tenantId, calculatedFieldId);
-            if (proto.getUpdated()) {
-                log.info("Executing onCalculatedFieldUpdate, calculatedFieldId=[{}]", calculatedFieldId);
-                boolean shouldReinit = onCalculatedFieldUpdate(cf, callback);
-                if (!shouldReinit) {
-                    return;
-                }
-            }
-            List<CalculatedFieldLink> links = calculatedFieldService.findAllCalculatedFieldLinksById(tenantId, calculatedFieldId);
-            if (cf != null) {
-                EntityId entityId = cf.getEntityId();
-                calculatedFields.put(calculatedFieldId, cf);
-                calculatedFieldLinks.put(calculatedFieldId, links);
-                switch (entityId.getEntityType()) {
-                    case ASSET, DEVICE -> {
-                        log.info("Initializing state for entity: tenantId=[{}], entityId=[{}]", tenantId, entityId);
-                        initializeStateForEntity(tenantId, cf, entityId, callback);
-                    }
-                    case ASSET_PROFILE -> {
-                        log.info("Initializing state for all assets in profile: tenantId=[{}], assetProfileId=[{}]", tenantId, entityId);
-                        PageDataIterable<AssetId> assetIds = new PageDataIterable<>(pageLink ->
-                                assetService.findAssetIdsByTenantIdAndAssetProfileId(tenantId, (AssetProfileId) entityId, pageLink), initFetchPackSize);
-                        assetIds.forEach(assetId -> initializeStateForEntity(tenantId, cf, assetId, callback));
-                    }
-                    case DEVICE_PROFILE -> {
-                        log.info("Initializing state for all devices in profile: tenantId=[{}], deviceProfileId=[{}]", tenantId, entityId);
-                        PageDataIterable<DeviceId> deviceIds = new PageDataIterable<>(pageLink ->
-                                deviceService.findDeviceIdsByTenantIdAndDeviceProfileId(tenantId, (DeviceProfileId) entityId, pageLink), initFetchPackSize);
-                        deviceIds.forEach(deviceId -> initializeStateForEntity(tenantId, cf, deviceId, callback));
-                    }
-                    default ->
-                            throw new IllegalArgumentException("Entity type '" + calculatedFieldId.getEntityType() + "' does not support calculated fields.");
-                }
-            } else {
-                //Calculated field was probably deleted while message was in queue;
-                log.warn("Calculated field not found, possibly deleted: {}", calculatedFieldId);
-                callback.onSuccess();
-            }
-            callback.onSuccess();
-            log.info("Successfully processed calculated field message for calculatedFieldId: [{}]", calculatedFieldId);
-        } catch (Exception e) {
-            log.trace("Failed to process calculated field msg: [{}]", proto, e);
-            callback.onFailure(e);
-        }
-    }
 
     @Override
     public CalculatedField save(CalculatedField calculatedField, SecurityUser user) throws ThingsboardException {
@@ -224,58 +84,6 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
         }
     }
 
-    private void onCalculatedFieldDelete(CalculatedFieldId calculatedFieldId, TbCallback callback) {
-        try {
-            calculatedFieldLinks.remove(calculatedFieldId);
-            calculatedFields.remove(calculatedFieldId);
-            states.keySet().removeIf(ctxId -> ctxId.startsWith(calculatedFieldId.getId().toString()));
-            List<String> statesToRemove = states.keySet().stream()
-                    .filter(key -> key.startsWith(calculatedFieldId.getId().toString()))
-                    .collect(Collectors.toList());
-            rocksDBService.deleteAll(statesToRemove);
-        } catch (Exception e) {
-            log.trace("Failed to delete calculated field: [{}]", calculatedFieldId, e);
-            callback.onFailure(e);
-        }
-    }
-
-    private boolean onCalculatedFieldUpdate(CalculatedField newCalculatedField, TbCallback callback) {
-        CalculatedField oldCalculatedField = calculatedFields.get(newCalculatedField.getId());
-        boolean shouldReinit = true;
-        if (hasSignificantChanges(oldCalculatedField, newCalculatedField)) {
-            onCalculatedFieldDelete(newCalculatedField.getId(), callback);
-        } else {
-            calculatedFields.put(newCalculatedField.getId(), newCalculatedField);
-            callback.onSuccess();
-            shouldReinit = false;
-        }
-        return shouldReinit;
-    }
-
-    private boolean hasSignificantChanges(CalculatedField oldCalculatedField, CalculatedField newCalculatedField) {
-        if (oldCalculatedField == null) {
-            return true;
-        }
-        boolean entityIdChanged = !oldCalculatedField.getEntityId().equals(newCalculatedField.getEntityId());
-        boolean typeChanged = !oldCalculatedField.getType().equals(newCalculatedField.getType());
-        CalculatedFieldConfiguration oldConfig = oldCalculatedField.getConfiguration();
-        CalculatedFieldConfiguration newConfig = newCalculatedField.getConfiguration();
-        boolean argumentsChanged = !oldConfig.getArguments().equals(newConfig.getArguments());
-        boolean outputTypeChanged = !oldConfig.getOutput().getType().equals(newConfig.getOutput().getType());
-        boolean outputExpressionChanged = !oldConfig.getOutput().getExpression().equals(newConfig.getOutput().getExpression());
-
-        return entityIdChanged || typeChanged || argumentsChanged || outputTypeChanged || outputExpressionChanged;
-    }
-
-    private void fetchCalculatedFields() {
-        PageDataIterable<CalculatedField> cfs = new PageDataIterable<>(calculatedFieldService::findAllCalculatedFields, initFetchPackSize);
-        cfs.forEach(cf -> calculatedFields.putIfAbsent(cf.getId(), cf));
-        PageDataIterable<CalculatedFieldLink> cfls = new PageDataIterable<>(calculatedFieldService::findAllCalculatedFieldLinks, initFetchPackSize);
-        cfls.forEach(link -> calculatedFieldLinks.computeIfAbsent(link.getCalculatedFieldId(), id -> new ArrayList<>()).add(link));
-        rocksDBService.getAll().forEach((ctxId, ctx) -> states.put(ctxId, JacksonUtil.fromString(ctx, CalculatedFieldCtx.class)));
-        states.keySet().removeIf(ctxId -> calculatedFields.keySet().stream().noneMatch(id -> ctxId.startsWith(id.toString())));
-    }
-
     private void checkEntityExistence(TenantId tenantId, EntityId entityId) {
         switch (entityId.getEntityType()) {
             case ASSET, DEVICE, ASSET_PROFILE, DEVICE_PROFILE ->
@@ -303,72 +111,6 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
             default ->
                     throw new IllegalArgumentException("Calculated fields do not support entity type '" + entityId.getEntityType() + "' for referenced entities.");
         };
-    }
-
-    private void initializeStateForEntity(TenantId tenantId, CalculatedField calculatedField, EntityId entityId, TbCallback callback) {
-        Map<String, BaseCalculatedFieldConfiguration.Argument> arguments = calculatedField.getConfiguration().getArguments();
-        Map<String, String> argumentValues = new HashMap<>();
-        arguments.forEach((key, argument) -> Futures.addCallback(fetchArgumentValue(tenantId, argument), new FutureCallback<>() {
-            @Override
-            public void onSuccess(Optional<? extends KvEntry> result) {
-                String value = result.map(KvEntry::getValueAsString).orElse(argument.getDefaultValue());
-                argumentValues.put(key, value);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                log.warn("Failed to initialize state for entity: [{}]", entityId, t);
-                callback.onFailure(t);
-            }
-        }, calculatedFieldCallbackExecutor));
-
-        updateOrInitializeState(calculatedField, entityId, argumentValues);
-
-    }
-
-    private ListenableFuture<Optional<? extends KvEntry>> fetchArgumentValue(TenantId tenantId, BaseCalculatedFieldConfiguration.Argument argument) {
-        return switch (argument.getType()) {
-            case "ATTRIBUTES" -> Futures.transform(
-                    attributesService.find(tenantId, argument.getEntityId(), AttributeScope.SERVER_SCOPE, argument.getKey()),
-                    result -> result.map(entry -> (KvEntry) entry),
-                    MoreExecutors.directExecutor());
-            case "TIME_SERIES" -> Futures.transform(
-                    timeseriesService.findLatest(tenantId, argument.getEntityId(), argument.getKey()),
-                    result -> result.map(entry -> (KvEntry) entry),
-                    MoreExecutors.directExecutor());
-            default -> throw new IllegalArgumentException("Invalid argument type '" + argument.getType() + "'.");
-        };
-    }
-
-    private void updateOrInitializeState(CalculatedField calculatedField, EntityId entityId, Map<String, String> argumentValues) {
-        String ctxId = generateCtxId(calculatedField.getId(), entityId);
-        CalculatedFieldCtx calculatedFieldCtx = states.computeIfAbsent(ctxId,
-                ctx -> new CalculatedFieldCtx(calculatedField.getId(), calculatedField.getEntityId(), null));
-
-        CalculatedFieldState state = calculatedFieldCtx.getState();
-        if (state != null) {
-            state.performCalculation(argumentValues, calculatedField.getConfiguration(), false);
-        } else {
-            CalculatedFieldState newState = createStateByType(calculatedField.getType());
-            newState.performCalculation(argumentValues, calculatedField.getConfiguration(), true);
-            state = newState;
-        }
-        calculatedFieldCtx.setState(state);
-
-        states.put(ctxId, calculatedFieldCtx);
-        rocksDBService.put(ctxId, Objects.requireNonNull(JacksonUtil.writeValueAsString(calculatedFieldCtx)));
-    }
-
-    private CalculatedFieldState createStateByType(CalculatedFieldType calculatedFieldType) {
-        return switch (calculatedFieldType) {
-            case SIMPLE -> new SimpleCalculatedFieldState();
-            default ->
-                    throw new IllegalArgumentException("Invalid calculated field type '" + calculatedFieldType + "'.");
-        };
-    }
-
-    private String generateCtxId(CalculatedFieldId calculatedFieldId, EntityId entityId) {
-        return calculatedFieldId.getId() + "_" + entityId.getId();
     }
 
 }

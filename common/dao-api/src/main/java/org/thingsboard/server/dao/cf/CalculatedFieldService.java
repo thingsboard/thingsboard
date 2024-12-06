@@ -36,6 +36,8 @@ public interface CalculatedFieldService extends EntityDaoService {
 
     ListenableFuture<CalculatedField> findCalculatedFieldByIdAsync(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
+    List<CalculatedFieldId> findCalculatedFieldIdsByEntityId(TenantId tenantId, EntityId entityId);
+
     List<CalculatedField> findAllCalculatedFields();
 
     PageData<CalculatedField> findAllCalculatedFields(PageLink pageLink);
@@ -54,10 +56,16 @@ public interface CalculatedFieldService extends EntityDaoService {
 
     List<CalculatedFieldLink> findAllCalculatedFieldLinksById(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
+    List<CalculatedFieldLink> findAllCalculatedFieldLinksByEntityId(TenantId tenantId, EntityId entityId);
+
     ListenableFuture<List<CalculatedFieldLink>> findAllCalculatedFieldLinksByIdAsync(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
     PageData<CalculatedFieldLink> findAllCalculatedFieldLinks(PageLink pageLink);
 
     boolean referencedInAnyCalculatedField(TenantId tenantId, EntityId referencedEntityId);
+
+    boolean referencedInAnyCalculatedFieldIncludingEntityId(TenantId tenantId, EntityId referencedEntityId);
+
+    boolean existsCalculatedFieldByEntityId(TenantId tenantId, EntityId entityId);
 
 }

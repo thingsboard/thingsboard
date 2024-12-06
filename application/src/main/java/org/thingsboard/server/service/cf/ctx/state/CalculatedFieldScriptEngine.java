@@ -13,10 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf;
+package org.thingsboard.server.service.cf.ctx.state;
 
-public enum CalculatedFieldType {
+import com.google.common.util.concurrent.ListenableFuture;
 
-    SIMPLE, SCRIPT, LAST_RECORDS
+import java.util.Map;
+
+public interface CalculatedFieldScriptEngine {
+
+    ListenableFuture<Object> executeScriptAsync(Object[] args);
+
+    ListenableFuture<Map<String, Object>> executeToMapAsync(Object[] args);
+
+    ListenableFuture<Map<String, Object>> executeToMapTransform(Object result);
+
+    void destroy();
 
 }
