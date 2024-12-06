@@ -31,10 +31,11 @@ import { OtaPackageService } from '@core/http/ota-package.service';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { emptyPageData } from '@shared/models/page/page-data';
-import { getEntityDetailsPageURL } from '@core/utils';
+import { getEntityDetailsPageURL, isDefinedAndNotNull } from '@core/utils';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 @Component({
   selector: 'tb-ota-package-autocomplete',
@@ -76,7 +77,7 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
       if (this.deviceProfile) {
         this.reset();
       }
-      this.deviceProfile = value;
+      this.deviceProfile = value ? value :NULL_UUID;
     }
   }
 
