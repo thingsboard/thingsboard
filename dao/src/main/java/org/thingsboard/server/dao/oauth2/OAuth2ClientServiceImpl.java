@@ -64,7 +64,7 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
 
     @Override
     public List<OAuth2ClientLoginInfo> findOAuth2ClientLoginInfosByMobilePkgNameAndPlatformType(String pkgName, PlatformType platformType) {
-        log.trace("Executing findOAuth2ClientLoginInfosByMobilePkgNameAndPlatformType pkgName=[{}] platformType=[{}]",pkgName, platformType);
+        log.trace("Executing findOAuth2ClientLoginInfosByMobilePkgNameAndPlatformType pkgName=[{}] platformType=[{}]", pkgName, platformType);
         return oauth2ClientDao.findEnabledByPkgNameAndPlatformType(pkgName, platformType)
                 .stream()
                 .map(OAuth2Utils::toClientLoginInfo)
