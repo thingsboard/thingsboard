@@ -19,11 +19,9 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.KvEntry;
 
 import javax.script.ScriptException;
 import java.util.Map;
@@ -53,9 +51,8 @@ public class CalculatedFieldTbelScriptEngine implements CalculatedFieldScriptEng
     }
 
     @Override
-    public ListenableFuture<Object> executeScriptAsync(Map<String, ArgumentEntry> arguments) {
-        log.trace("execute script async, arguments {}", arguments);
-        Object[] args = arguments.values().stream().map(ArgumentEntry::getValue).toArray();
+    public ListenableFuture<Object> executeScriptAsync(Object[] args) {
+        log.trace("Executing script async, args {}", args);
         return Futures.transformAsync(tbelInvokeService.invokeScript(tenantId, null, this.scriptId, args),
                 o -> {
                     try {
@@ -73,8 +70,8 @@ public class CalculatedFieldTbelScriptEngine implements CalculatedFieldScriptEng
     }
 
     @Override
-    public ListenableFuture<Map<String, Object>> executeToMapAsync(Map<String, ArgumentEntry> arguments) {
-        return Futures.transformAsync(executeScriptAsync(arguments), this::executeToMapTransform, MoreExecutors.directExecutor());
+    public ListenableFuture<Map<String, Object>> executeToMapAsync(Object[] args) {
+        return Futures.transformAsync(executeScriptAsync(args), this::executeToMapTransform, MoreExecutors.directExecutor());
     }
 
     @Override

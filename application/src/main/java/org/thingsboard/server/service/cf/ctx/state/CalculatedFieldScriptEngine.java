@@ -21,9 +21,9 @@ import java.util.Map;
 
 public interface CalculatedFieldScriptEngine {
 
-    ListenableFuture<Object> executeScriptAsync(Map<String, ArgumentEntry> arguments);
+    ListenableFuture<Object> executeScriptAsync(Object[] args);
 
-    ListenableFuture<Map<String, Object>> executeToMapAsync(Map<String, ArgumentEntry> arguments);
+    ListenableFuture<Map<String, Object>> executeToMapAsync(Object[] args);
 
     ListenableFuture<Map<String, Object>> executeToMapTransform(Object result);
 
