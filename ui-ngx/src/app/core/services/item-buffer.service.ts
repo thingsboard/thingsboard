@@ -305,7 +305,11 @@ export class ItemBufferService {
         connectors: [],
         additionalInfo: origNode.additionalInfo,
         configuration: origNode.configuration,
-        debugSettings: origNode.debugSettings,
+        debugSettings: {
+          failuresEnabled: origNode.debugSettings?.failuresEnabled,
+          allEnabled: origNode.debugSettings?.allEnabled || origNode.debugSettings?.allEnabledUntil > new Date().getTime(),
+          allEnabledUntil: 0
+        },
         x: origNode.x,
         y: origNode.y,
         name: origNode.name,
