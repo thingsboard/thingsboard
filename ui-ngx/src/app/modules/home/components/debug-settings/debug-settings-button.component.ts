@@ -16,6 +16,7 @@
 
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   forwardRef,
   Input,
@@ -94,6 +95,7 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
               private store: Store<AppState>,
               private viewContainerRef: ViewContainerRef,
               private fb: FormBuilder,
+              private cd : ChangeDetectorRef,
   ) {
     this.debugSettingsFormGroup.valueChanges.pipe(
       takeUntilDestroyed()
@@ -136,6 +138,7 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
       debugStrategyPopover.tbComponentRef.instance.popover = debugStrategyPopover;
       debugStrategyPopover.tbComponentRef.instance.onSettingsApplied.subscribe((settings: DebugSettings) => {
         this.debugSettingsFormGroup.patchValue(settings);
+        this.cd.markForCheck();
         debugStrategyPopover.hide();
       });
     }

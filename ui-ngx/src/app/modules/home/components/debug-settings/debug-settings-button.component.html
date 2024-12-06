@@ -26,6 +26,6 @@
   @if (isDebugAllActive$ | async) {
     {{ !allEnabled() ? (allEnabledUntil | durationLeft) : (maxDebugModeDuration | milliSecondsToTimeString: true : true) }}
   } @else {
-    {{ failuresEnabled ? 'debug-config.failures' : 'common.disabled' | translate }}
+    {{ (failuresEnabled ? 'debug-config.failures' : 'common.disabled') | translate }}
   }
 </button>
