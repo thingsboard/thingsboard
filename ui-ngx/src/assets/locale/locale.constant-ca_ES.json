@@ -3651,8 +3651,7 @@
         "metadata-required": "Les entrades de metadades no poden estar buides.",
         "output": "Sortida",
         "test": "Test",
-        "help": "Ajuda",
-        "reset-debug-mode": "Restablir el mode de depuració a tots els nodes"
+        "help": "Ajuda"
     },
     "role": {
         "role": "Rol",

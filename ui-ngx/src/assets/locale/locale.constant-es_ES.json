@@ -3529,7 +3529,6 @@
         "output": "Salida",
         "test": "Test",
         "help": "Ayuda",
-        "reset-debug-mode": "Restablecer el modo de depuración en todos los nodos",
         "test-with-this-message": "{{test}} con este mensaje"
     },
     "timezone": {

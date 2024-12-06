@@ -2768,8 +2768,7 @@
         "metadata-required": "元資料項不能為空。",
         "output": "輸出",
         "test": "測試",
-        "help": "幫助",
-        "reset-debug-mode": "重置所有節點中的調試模式"
+        "help": "幫助"
     },
     "timezone": {
         "timezone": "時區",

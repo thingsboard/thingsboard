@@ -4602,7 +4602,6 @@
         "output": "الإخراج",
         "test": "اختبار",
         "help": "مساعدة",
-        "reset-debug-mode": "إعادة تعيين وضع التصحيح في جميع العقد",
         "test-with-this-message": "{{test}} مع هذه الرسالة"
     },
     "role": {

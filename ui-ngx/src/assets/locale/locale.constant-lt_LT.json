@@ -4504,7 +4504,6 @@
         "output": "Output",
         "test": "Test",
         "help": "Help",
-        "reset-debug-mode": "Reset debug mode in all nodes",
         "test-with-this-message": "{{test}} with this message"
     },
     "role": {

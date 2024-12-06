@@ -1879,8 +1879,7 @@
     "metadata-required": "Vnosi metapodatkov ne smejo biti prazni.",
     "output": "Izdelek",
     "test": "Test",
-    "help": "Pomoč",
-    "reset-debug-mode": "Ponastavi način za odpravljanje napak v vseh vozliščih"
+    "help": "Pomoč"
   },
   "timezone": {
     "timezone": "Časovni pas",

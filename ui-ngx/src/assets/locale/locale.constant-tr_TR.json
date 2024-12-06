@@ -2447,8 +2447,7 @@
     "metadata-required": "Meta veri girişleri boş bırakılamaz.",
     "output": "Çıktı",
     "test": "Ölçek",
-    "help": "Yardım et",
-    "reset-debug-mode": "Tüm düğümlerde hata ayıklama modunu sıfırla"
+    "help": "Yardım et"
   },
   "timezone": {
     "timezone": "Saat dilimi",
