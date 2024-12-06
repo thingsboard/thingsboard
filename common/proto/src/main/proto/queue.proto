@@ -61,6 +61,20 @@ enum EntityTypeProto {
   MOBILE_APP_BUNDLE     = 38;
 }
 
+enum ApiUsageRecordKeyProto {
+  TRANSPORT_MSG_COUNT  = 0;
+  TRANSPORT_DP_COUNT   = 1;
+  STORAGE_DP_COUNT     = 2;
+  RE_EXEC_COUNT        = 3;
+  JS_EXEC_COUNT        = 4;
+  TBEL_EXEC_COUNT      = 5;
+  EMAIL_EXEC_COUNT     = 6;
+  SMS_EXEC_COUNT       = 7;
+  CREATED_ALARMS_COUNT = 8;
+  ACTIVE_DEVICES       = 9;
+  INACTIVE_DEVICES     = 10;
+}
+
 /**
  * Service Discovery Data Structures;
  */
@@ -1588,8 +1602,8 @@ message ToTransportMsg {
   repeated QueueDeleteMsg queueDeleteMsgs = 16;
 }
 
-message UsageStatsKVProto{
-  string key = 1;
+message UsageStatsKVProto {
+  ApiUsageRecordKeyProto key = 1;
   int64 value = 2;
 }
 
@@ -1602,6 +1616,10 @@ message ToUsageStatsServiceMsg {
   int64 customerIdMSB = 6;
   int64 customerIdLSB = 7;
   string serviceId = 8;
+}
+
+message ToUsageStatsServiceMsgPack {
+  repeated ToUsageStatsServiceMsg msgs = 1;
 }
 
 message ToOtaPackageStateServiceMsg {
