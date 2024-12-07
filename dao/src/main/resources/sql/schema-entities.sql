@@ -896,7 +896,7 @@ CREATE TABLE IF NOT EXISTS queue_stats (
 );
 
 CREATE TABLE IF NOT EXISTS qr_code_settings (
-    id uuid NOT NULL CONSTRAINT mobile_app_settings_pkey PRIMARY KEY,
+    id uuid NOT NULL CONSTRAINT qr_code_settings_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     tenant_id uuid NOT NULL,
     use_default_app boolean,
