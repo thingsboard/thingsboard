@@ -54,6 +54,8 @@ public abstract class AbstractCoapIntegrationTest extends AbstractTransportInteg
 
     protected final byte[] EMPTY_PAYLOAD = new byte[0];
     protected CoapTestClient client;
+    protected static final String PAYLOAD_VALUES_STR = "{\"key1\":\"value1\", \"key2\":true, \"key3\": 3.0, \"key4\": 4," +
+            " \"key5\": {\"someNumber\": 42, \"someArray\": [1,2,3], \"someNestedObject\": {\"key\": \"value\"}}}";
 
     protected void processAfterTest() throws Exception {
         if (client != null) {
