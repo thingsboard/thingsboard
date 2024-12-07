@@ -42,7 +42,8 @@ import java.util.Objects;
         nodeDescription = "Log incoming messages using JS script for transformation Message into String",
         nodeDetails = "Transform incoming Message with configured JS function to String and log final value into Thingsboard log file. " +
                 "Message payload can be accessed via <code>msg</code> property. For example <code>'temperature = ' + msg.temperature ;</code>. " +
-                "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>.",
+                "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeLogConfig",
         icon = "menu"

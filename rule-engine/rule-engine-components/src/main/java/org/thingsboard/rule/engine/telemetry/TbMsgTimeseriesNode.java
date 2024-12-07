@@ -56,7 +56,8 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_RE
                 "In the case of sequential processing, the platform guarantees that the messages are processed in the order of their submission to the queue. " +
                 "However, the timestamp of the messages originated by multiple devices/servers may be unsynchronized long before they are pushed to the queue. " +
                 "The DB layer has certain optimizations to ignore the updates of the \"attributes\" and \"latest values\" tables if the new record has a timestamp that is older than the previous record. " +
-                "So, to make sure that all the messages will be processed correctly, one should enable this parameter for sequential message processing scenarios.",
+                "So, to make sure that all the messages will be processed correctly, one should enable this parameter for sequential message processing scenarios.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeTimeseriesConfig",
         icon = "file_upload"
