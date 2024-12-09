@@ -33,7 +33,6 @@ import { TbResourceId } from '@shared/models/id/tb-resource-id';
 import { ResourceService } from '@core/http/resource.service';
 import { PageLink } from '@shared/models/page/page-link';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
-import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-resource-autocomplete',
@@ -98,8 +97,7 @@ export class ResourceAutocompleteComponent implements ControlValueAccessor, OnIn
   private propagateChange: (value: any) => void = () => {};
 
   constructor(private fb: FormBuilder,
-              private resourceService: ResourceService,
-              public translate: TranslateService) {
+              private resourceService: ResourceService) {
   }
 
   ngOnInit(): void {
