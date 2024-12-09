@@ -49,7 +49,7 @@
           </div>
           <ng-template #searchNotEmpty>
           <span>
-              {{ translate.get('js-func.no-js-module-matching', {module: searchText}) | async }}
+              {{ 'js-func.no-js-module-matching' | translate: {module: searchText | truncate: true: 6: &apos;...&apos;} }}
           </span>
           </ng-template>
         </div>
