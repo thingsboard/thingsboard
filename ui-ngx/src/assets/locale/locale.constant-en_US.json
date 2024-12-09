@@ -3552,7 +3552,7 @@
         "tablet-959": "Tablet (max 959px)",
         "max-element-number": "Max elements number",
         "page-name": "Page name",
-        "page-nam-required": "Page name is required.",
+        "page-name-required": "Page name is required.",
         "page-type": "Page type",
         "pages-types": {
             "dashboard": "Dashboard",
@@ -3562,7 +3562,7 @@
         "url": "URL",
         "url-pattern": "Invalid URL",
         "path": "Path",
-        "path-pattern": "Path pattern",
+        "path-pattern": "Invalid path",
         "custom-page": "Custom page",
         "edit-page": "Edit page",
         "edit-custom-page": "Edit custom page",
