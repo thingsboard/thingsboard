@@ -3333,8 +3333,8 @@
         "module-load-error": "Module load error",
         "source-code": "Source code",
         "source-code-load-error": "Source code load error",
-        "no-js-module-text": "No JS module found",
-        "no-js-module-matching": "No JS module matching '{{module}}' were found."
+        "no-js-module-text": "No JS modules found",
+        "no-js-module-matching": "No JS modules matching '{{module}}' were found."
     },
     "key-val": {
         "key": "Key",
