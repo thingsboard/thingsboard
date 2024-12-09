@@ -77,7 +77,7 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
       if (this.deviceProfile) {
         this.reset();
       }
-      this.deviceProfile = value ? value : NULL_UUID;
+      this.deviceProfile = value ?? NULL_UUID;
     }
   }
 
