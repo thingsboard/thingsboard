@@ -79,6 +79,8 @@ export class ResourceAutocompleteComponent implements ControlValueAccessor, OnIn
   @Input()
   subType = ResourceSubType.EXTENSION;
 
+  ResourceSubType = ResourceSubType;
+
   resourceFormGroup = this.fb.group({
     resource: this.fb.control<string|ResourceInfo>(null)
   });
