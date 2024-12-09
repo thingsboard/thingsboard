@@ -97,6 +97,7 @@
 :host ::ng-deep {
   .tb-usage-items-progress {
     .mat-mdc-progress-bar {
+      overflow: hidden;
       .mdc-linear-progress__bar-inner {
         border-top-width: 8px;
       }
