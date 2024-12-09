@@ -13,10 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf;
+package org.thingsboard.server.service.cf.ctx;
 
-public enum CalculatedFieldType {
+import lombok.Data;
+import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 
-    SIMPLE, SCRIPT, LAST_RECORDS
+@Data
+public class CalculatedFieldEntityCtx {
+
+    private CalculatedFieldEntityCtxId id;
+    private CalculatedFieldState state;
+
+    public CalculatedFieldEntityCtx() {
+    }
+
+    public CalculatedFieldEntityCtx(CalculatedFieldEntityCtxId id, CalculatedFieldState state) {
+        this.id = id;
+        this.state = state;
+    }
 
 }

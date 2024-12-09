@@ -13,10 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf;
+package org.thingsboard.server.common.data.cf.configuration;
 
-public enum CalculatedFieldType {
+import lombok.Data;
+import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.id.EntityId;
 
-    SIMPLE, SCRIPT, LAST_RECORDS
+@Data
+public class Argument {
+
+    private EntityId entityId;
+    private String key;
+    private String type;
+    private AttributeScope scope;
+    private String defaultValue;
+
+    private int limit;
+    private long timeWindow;
 
 }
