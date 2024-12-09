@@ -39,11 +39,9 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -83,6 +81,7 @@ import org.thingsboard.server.service.partition.AbstractPartitionBasedService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -117,6 +116,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     private final ConcurrentMap<CalculatedFieldId, CalculatedFieldCtx> calculatedFieldsCtx = new ConcurrentHashMap<>();
     private final ConcurrentMap<CalculatedFieldEntityCtxId, CalculatedFieldEntityCtx> states = new ConcurrentHashMap<>();
 
+    private final ConcurrentMap<EntityId, Set<EntityId>> profileEntities = new ConcurrentHashMap<>();
     private final ConcurrentMap<TenantId, List<KvEntry>> tenantStorage = new ConcurrentHashMap<>();
     private final ConcurrentMap<CustomerId, List<KvEntry>> customerStorage = new ConcurrentHashMap<>();
 
@@ -194,17 +194,9 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
                         log.info("Initializing state for entity: tenantId=[{}], entityId=[{}]", tenantId, entityId);
                         initializeStateForEntity(calculatedFieldCtx, entityId, callback);
                     }
-                    case ASSET_PROFILE -> {
-                        log.info("Initializing state for all assets in profile: tenantId=[{}], assetProfileId=[{}]", tenantId, entityId);
-                        PageDataIterable<AssetId> assetIds = new PageDataIterable<>(pageLink ->
-                                assetService.findAssetIdsByTenantIdAndAssetProfileId(tenantId, (AssetProfileId) entityId, pageLink), initFetchPackSize);
-                        assetIds.forEach(assetId -> initializeStateForEntity(calculatedFieldCtx, assetId, callback));
-                    }
-                    case DEVICE_PROFILE -> {
-                        log.info("Initializing state for all devices in profile: tenantId=[{}], deviceProfileId=[{}]", tenantId, entityId);
-                        PageDataIterable<DeviceId> deviceIds = new PageDataIterable<>(pageLink ->
-                                deviceService.findDeviceIdsByTenantIdAndDeviceProfileId(tenantId, (DeviceProfileId) entityId, pageLink), initFetchPackSize);
-                        deviceIds.forEach(deviceId -> initializeStateForEntity(calculatedFieldCtx, deviceId, callback));
+                    case ASSET_PROFILE, DEVICE_PROFILE -> {
+                        log.info("Initializing state for all entities in profile: tenantId=[{}], profileId=[{}]", tenantId, entityId);
+                        getOrFetchFromDBProfileEntities(tenantId, entityId).forEach(assetId -> initializeStateForEntity(calculatedFieldCtx, assetId, callback));
                     }
                     default ->
                             throw new IllegalArgumentException("Entity type '" + calculatedFieldId.getEntityType() + "' does not support calculated fields.");
@@ -241,10 +233,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
                 case ASSET_PROFILE, DEVICE_PROFILE -> {
                     boolean isCommonEntity = calculatedField.getConfiguration().getReferencedEntities().contains(entityId);
                     if (isCommonEntity) {
-                        PageDataIterable<? extends EntityId> entities = cfEntityId.getEntityType() == EntityType.ASSET_PROFILE
-                                ? new PageDataIterable<>(pageLink -> assetService.findAssetIdsByTenantIdAndAssetProfileId(tenantId, (AssetProfileId) cfEntityId, pageLink), initFetchPackSize)
-                                : new PageDataIterable<>(pageLink -> deviceService.findDeviceIdsByTenantIdAndDeviceProfileId(tenantId, (DeviceProfileId) cfEntityId, pageLink), initFetchPackSize);
-                        entities.forEach(id -> updateOrInitializeState(calculatedFieldCtx, id, argumentValues));
+                        getOrFetchFromDBProfileEntities(tenantId, cfEntityId).forEach(id -> updateOrInitializeState(calculatedFieldCtx, id, argumentValues));
                     } else {
                         updateOrInitializeState(calculatedFieldCtx, entityId, argumentValues);
                     }
@@ -266,6 +255,9 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             EntityId newProfileId = EntityIdFactory.getByTypeAndUuid(proto.getEntityProfileType(), new UUID(proto.getNewProfileIdMSB(), proto.getNewProfileIdLSB()));
             log.info("Received EntityProfileUpdateMsgProto for processing: tenantId=[{}], entityId=[{}]", tenantId, entityId);
 
+            profileEntities.get(oldProfileId).remove(entityId);
+            profileEntities.computeIfAbsent(newProfileId, id -> new HashSet<>()).add(entityId);
+
             calculatedFieldService.findCalculatedFieldIdsByEntityId(tenantId, oldProfileId)
                     .forEach(cfId -> {
                         CalculatedFieldEntityCtxId ctxId = new CalculatedFieldEntityCtxId(cfId.getId(), entityId.getId());
@@ -280,39 +272,28 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     }
 
     @Override
-    public void onEntityAdded(TransportProtos.EntityAddMsgProto proto, TbCallback callback) {
+    public void onProfileEntityMsg(TransportProtos.ProfileEntityMsgProto proto, TbCallback callback) {
         try {
             TenantId tenantId = TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
             EntityId entityId = EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
             EntityId profileId = EntityIdFactory.getByTypeAndUuid(proto.getEntityProfileType(), new UUID(proto.getProfileIdMSB(), proto.getProfileIdLSB()));
-            log.info("Received EntityCreateMsgProto for processing: tenantId=[{}], entityId=[{}]", tenantId, entityId);
-
-            initializeStateForEntityByProfile(tenantId, entityId, profileId, callback);
+            log.info("Received ProfileEntityMsgProto for processing: tenantId=[{}], entityId=[{}]", tenantId, entityId);
+            if (proto.getDeleted()) {
+                log.info("Executing profile entity deleted msg,  tenantId=[{}], entityId=[{}]", tenantId, entityId);
+                profileEntities.get(profileId).remove(entityId);
+                List<String> statesToRemove = states.keySet().stream()
+                        .filter(ctxEntityId -> ctxEntityId.entityId().equals(entityId.getId()))
+                        .map(JacksonUtil::writeValueAsString)
+                        .toList();
+                states.keySet().removeIf(ctxEntityId -> ctxEntityId.entityId().equals(entityId.getId()));
+                rocksDBService.deleteAll(statesToRemove);
+            } else {
+                log.info("Executing profile entity added msg,  tenantId=[{}], entityId=[{}]", tenantId, entityId);
+                profileEntities.computeIfAbsent(profileId, id -> new HashSet<>()).add(entityId);
+                initializeStateForEntityByProfile(tenantId, entityId, profileId, callback);
+            }
         } catch (Exception e) {
-            log.trace("Failed to process entity type update msg: [{}]", proto, e);
-        }
-    }
-
-    private void initializeStateForEntityByProfile(TenantId tenantId, EntityId entityId, EntityId profileId, TbCallback callback) {
-        calculatedFieldService.findCalculatedFieldIdsByEntityId(tenantId, profileId)
-                .stream()
-                .map(cfId -> calculatedFieldsCtx.computeIfAbsent(cfId, id -> new CalculatedFieldCtx(calculatedFieldService.findById(tenantId, id), tbelInvokeService)))
-                .forEach(cfCtx -> initializeStateForEntity(cfCtx, entityId, callback));
-    }
-
-    @Override
-    public void onEntityDeleted(TransportProtos.EntityDeleteMsg proto, TbCallback callback) {
-        try {
-            EntityId entityId = EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
-            log.info("Received EntityDeleteMsg for processing: entityId=[{}]", entityId);
-            List<String> statesToRemove = states.keySet().stream()
-                    .filter(ctxEntityId -> ctxEntityId.entityId().equals(entityId.getId()))
-                    .map(JacksonUtil::writeValueAsString)
-                    .toList();
-            states.keySet().removeIf(ctxEntityId -> ctxEntityId.entityId().equals(entityId.getId()));
-            rocksDBService.deleteAll(statesToRemove);
-        } catch (Exception e) {
-            log.trace("Failed to process entity type update msg: [{}]", proto, e);
+            log.trace("Failed to process profile entity msg: [{}]", proto, e);
         }
     }
 
@@ -350,6 +331,24 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         return calculatedFields.computeIfAbsent(calculatedFieldId, cfId -> calculatedFieldService.findById(tenantId, calculatedFieldId));
     }
 
+    private Set<EntityId> getOrFetchFromDBProfileEntities(TenantId tenantId, EntityId entityProfileId) {
+        return switch (entityProfileId.getEntityType()) {
+            case ASSET_PROFILE -> profileEntities.computeIfAbsent(entityProfileId, profileId -> {
+                Set<EntityId> assetIds = new HashSet<>();
+                (new PageDataIterable<>(pageLink ->
+                        assetService.findAssetIdsByTenantIdAndAssetProfileId(tenantId, (AssetProfileId) profileId, pageLink), initFetchPackSize)).forEach(assetIds::add);
+                return assetIds;
+            });
+            case DEVICE_PROFILE -> profileEntities.computeIfAbsent(entityProfileId, profileId -> {
+                Set<EntityId> deviceIds = new HashSet<>();
+                (new PageDataIterable<>(pageLink ->
+                        deviceService.findDeviceIdsByTenantIdAndDeviceProfileId(tenantId, (DeviceProfileId) entityProfileId, pageLink), initFetchPackSize)).forEach(deviceIds::add);
+                return deviceIds;
+            });
+            default -> throw new IllegalArgumentException("Entity type should be ASSET_PROFILE or DEVICE_PROFILE.");
+        };
+    }
+
     private boolean hasSignificantChanges(CalculatedField oldCalculatedField, CalculatedField newCalculatedField) {
         if (oldCalculatedField == null) {
             return true;
@@ -363,6 +362,13 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         boolean expressionChanged = !oldConfig.getExpression().equals(newConfig.getExpression());
 
         return entityIdChanged || typeChanged || argumentsChanged || outputTypeChanged || expressionChanged;
+    }
+
+    private void initializeStateForEntityByProfile(TenantId tenantId, EntityId entityId, EntityId profileId, TbCallback callback) {
+        calculatedFieldService.findCalculatedFieldIdsByEntityId(tenantId, profileId)
+                .stream()
+                .map(cfId -> calculatedFieldsCtx.computeIfAbsent(cfId, id -> new CalculatedFieldCtx(calculatedFieldService.findById(tenantId, id), tbelInvokeService)))
+                .forEach(cfCtx -> initializeStateForEntity(cfCtx, entityId, callback));
     }
 
     private void initializeStateForEntity(CalculatedFieldCtx calculatedFieldCtx, EntityId entityId, TbCallback callback) {

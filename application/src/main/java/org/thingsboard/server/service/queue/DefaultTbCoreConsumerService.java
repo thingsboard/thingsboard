@@ -320,10 +320,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                         forwardToCalculatedFieldService(toCoreMsg.getCalculatedFieldMsg(), callback);
                     } else if (toCoreMsg.hasEntityProfileUpdateMsg()) {
                         forwardToCalculatedFieldService(toCoreMsg.getEntityProfileUpdateMsg(), callback);
-                    } else if (toCoreMsg.hasEntityAddMsg()) {
-                        forwardToCalculatedFieldService(toCoreMsg.getEntityAddMsg(), callback);
-                    } else if (toCoreMsg.hasEntityDeleteMsg()) {
-                        forwardToCalculatedFieldService(toCoreMsg.getEntityDeleteMsg(), callback);
+                    } else if (toCoreMsg.hasProfileEntityMsg()) {
+                        forwardToCalculatedFieldService(toCoreMsg.getProfileEntityMsg(), callback);
                     }
                 } catch (Throwable e) {
                     log.warn("[{}] Failed to process message: {}", id, msg, e);
@@ -698,25 +696,14 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 });
     }
 
-    private void forwardToCalculatedFieldService(TransportProtos.EntityAddMsgProto entityCreateMsg, TbCallback callback) {
-        var tenantId = toTenantId(entityCreateMsg.getTenantIdMSB(), entityCreateMsg.getTenantIdLSB());
-        var entityId = EntityIdFactory.getByTypeAndUuid(entityCreateMsg.getEntityType(), new UUID(entityCreateMsg.getEntityIdMSB(), entityCreateMsg.getEntityIdLSB()));
-        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onEntityAdded(entityCreateMsg, callback));
+    private void forwardToCalculatedFieldService(TransportProtos.ProfileEntityMsgProto profileEntityMsgProto, TbCallback callback) {
+        var tenantId = toTenantId(profileEntityMsgProto.getTenantIdMSB(), profileEntityMsgProto.getTenantIdLSB());
+        var entityId = EntityIdFactory.getByTypeAndUuid(profileEntityMsgProto.getEntityType(), new UUID(profileEntityMsgProto.getEntityIdMSB(), profileEntityMsgProto.getEntityIdLSB()));
+        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onProfileEntityMsg(profileEntityMsgProto, callback));
         DonAsynchron.withCallback(future,
                 __ -> callback.onSuccess(),
                 t -> {
-                    log.warn("[{}] Failed to process entity create message for entityId [{}]", tenantId.getId(), entityId.getId(), t);
-                    callback.onFailure(t);
-                });
-    }
-
-    private void forwardToCalculatedFieldService(TransportProtos.EntityDeleteMsg entityDeleteMsg, TbCallback callback) {
-        var entityId = EntityIdFactory.getByTypeAndUuid(entityDeleteMsg.getEntityType(), new UUID(entityDeleteMsg.getEntityIdMSB(), entityDeleteMsg.getEntityIdLSB()));
-        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onEntityDeleted(entityDeleteMsg, callback));
-        DonAsynchron.withCallback(future,
-                __ -> callback.onSuccess(),
-                t -> {
-                    log.warn("Failed to process entity delete message for entity [{}]", entityId, t);
+                    log.warn("[{}] Failed to process profile entity message for entityId [{}]", tenantId.getId(), entityId.getId(), t);
                     callback.onFailure(t);
                 });
     }

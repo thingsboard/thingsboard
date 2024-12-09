@@ -32,8 +32,6 @@ public interface CalculatedFieldExecutionService {
 
     void onEntityProfileChanged(TransportProtos.EntityProfileUpdateMsgProto proto, TbCallback callback);
 
-    void onEntityAdded(TransportProtos.EntityAddMsgProto proto, TbCallback callback);
-
-    void onEntityDeleted(TransportProtos.EntityDeleteMsg proto, TbCallback callback);
+    void onProfileEntityMsg(TransportProtos.ProfileEntityMsgProto proto, TbCallback callback);
 
 }

@@ -794,7 +794,7 @@ message EntityProfileUpdateMsgProto {
   int64 newProfileIdLSB = 10;
 }
 
-message EntityAddMsgProto {
+message ProfileEntityMsgProto {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
   string entityType = 3;
@@ -803,6 +803,8 @@ message EntityAddMsgProto {
   string entityProfileType = 6;
   int64 profileIdMSB = 7;
   int64 profileIdLSB = 8;
+  bool added = 9;
+  bool deleted = 10;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
@@ -1538,8 +1540,7 @@ message ToCoreMsg {
   DeviceInactivityProto deviceInactivityMsg = 52;
   CalculatedFieldMsgProto calculatedFieldMsg = 53;
   EntityProfileUpdateMsgProto entityProfileUpdateMsg = 54;
-  EntityAddMsgProto entityAddMsg = 55;
-  EntityDeleteMsg entityDeleteMsg = 56;
+  ProfileEntityMsgProto profileEntityMsg = 55;
 }
 
 /* High priority messages with low latency are handled by ThingsBoard Core Service separately */

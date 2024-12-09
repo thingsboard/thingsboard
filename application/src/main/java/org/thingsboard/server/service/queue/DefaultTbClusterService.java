@@ -404,7 +404,7 @@ public class DefaultTbClusterService implements TbClusterService {
     private void handleEntityDelete(TenantId tenantId, EntityId entityId, EntityId profileId) {
         boolean cfExistsByProfile = calculatedFieldService.existsCalculatedFieldByEntityId(tenantId, profileId);
         if (cfExistsByProfile) {
-            sendEntityDeletedEvent(tenantId, entityId);
+            sendProfileEntityEvent(tenantId, entityId, profileId, false, true);
         }
     }
 
@@ -667,7 +667,7 @@ public class DefaultTbClusterService implements TbClusterService {
     private void handleEntityCreate(TenantId tenantId, EntityId entityId, EntityId profileId) {
         boolean cfExistsByProfile = calculatedFieldService.existsCalculatedFieldByEntityId(tenantId, profileId);
         if (cfExistsByProfile) {
-            sendEntityAddedEvent(tenantId, entityId, profileId);
+            sendProfileEntityEvent(tenantId, entityId, profileId, true, false);
         }
     }
 
@@ -844,8 +844,8 @@ public class DefaultTbClusterService implements TbClusterService {
         pushMsgToCore(tenantId, entityId, ToCoreMsg.newBuilder().setEntityProfileUpdateMsg(msg).build(), null);
     }
 
-    private void sendEntityAddedEvent(TenantId tenantId, EntityId entityId, EntityId profileId) {
-        TransportProtos.EntityAddMsgProto.Builder builder = TransportProtos.EntityAddMsgProto.newBuilder();
+    private void sendProfileEntityEvent(TenantId tenantId, EntityId entityId, EntityId profileId, boolean added, boolean deleted) {
+        TransportProtos.ProfileEntityMsgProto.Builder builder = TransportProtos.ProfileEntityMsgProto.newBuilder();
         builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
         builder.setEntityType(entityId.getEntityType().name());
@@ -854,16 +854,10 @@ public class DefaultTbClusterService implements TbClusterService {
         builder.setEntityProfileType(profileId.getEntityType().name());
         builder.setProfileIdMSB(profileId.getId().getMostSignificantBits());
         builder.setProfileIdLSB(profileId.getId().getLeastSignificantBits());
-        TransportProtos.EntityAddMsgProto msg = builder.build();
-        pushMsgToCore(tenantId, entityId, ToCoreMsg.newBuilder().setEntityAddMsg(msg).build(), null);
-    }
-
-    private void sendEntityDeletedEvent(TenantId tenantId, EntityId entityId) {
-        TransportProtos.EntityDeleteMsg.Builder builder = TransportProtos.EntityDeleteMsg.newBuilder();
-        builder.setEntityType(entityId.getEntityType().name());
-        builder.setEntityIdMSB(entityId.getId().getMostSignificantBits());
-        builder.setEntityIdLSB(entityId.getId().getLeastSignificantBits());
-        pushMsgToCore(tenantId, entityId, ToCoreMsg.newBuilder().setEntityDeleteMsg(builder).build(), null);
+        builder.setAdded(added);
+        builder.setDeleted(deleted);
+        TransportProtos.ProfileEntityMsgProto msg = builder.build();
+        pushMsgToCore(tenantId, entityId, ToCoreMsg.newBuilder().setProfileEntityMsg(msg).build(), null);
     }
 
 }
