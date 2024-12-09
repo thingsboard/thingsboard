@@ -41,8 +41,24 @@
     <mat-option *ngFor="let resource of filteredResources$ | async" [value]="resource">
       <span [innerHTML]="resource.title | highlight:searchText"></span>
     </mat-option>
-    <mat-option *ngIf="!(filteredResources$ | async)?.length" [value]="searchText">
-      {{ searchText }}
-    </mat-option>
+    <ng-container *ngIf="subType !== ResourceSubType.EXTENSION; else extensionNoText">
+      <mat-option *ngIf="!(filteredResources$ | async)?.length" [value]="null">
+        <div (click)="$event.stopPropagation()">
+          <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
+            <span>{{ 'js-func.no-js-module-text' | translate }}</span>
+          </div>
+          <ng-template #searchNotEmpty>
+          <span>
+              {{ 'js-func.no-js-module-matching' | translate: {module: searchText | truncate: true: 6: &apos;...&apos;} }}
+          </span>
+          </ng-template>
+        </div>
+      </mat-option>
+    </ng-container>
+    <ng-template #extensionNoText>
+      <mat-option *ngIf="!(filteredResources$ | async)?.length" [value]="searchText">
+        {{ searchText }}
+      </mat-option>
+    </ng-template>
   </mat-autocomplete>
 </mat-form-field>
