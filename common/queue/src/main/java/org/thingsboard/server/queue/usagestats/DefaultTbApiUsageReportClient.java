@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.queue.usagestats;
 
+import com.google.common.collect.Lists;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +53,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.IntStream;
 
 @Component
 @Slf4j
@@ -155,13 +155,13 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
     }
 
     private List<ToUsageStatsServiceMsgPack> toMsgPack(List<ToUsageStatsServiceMsg> list) {
-        return IntStream.range(0, (list.size() + packSize - 1) / packSize)
-                .mapToObj(i -> {
-                    var packList = list.subList(i * packSize, Math.min((i + 1) * packSize, list.size()));
-                    var pack = ToUsageStatsServiceMsgPack.newBuilder();
-                    pack.addAllMsgs(packList);
-                    return pack.build();
-                }).toList();
+        return Lists.partition(list, packSize)
+                .stream()
+                .map(partition ->
+                        ToUsageStatsServiceMsgPack.newBuilder()
+                                .addAllMsgs(partition)
+                                .build())
+                .toList();
     }
 
     @Override
