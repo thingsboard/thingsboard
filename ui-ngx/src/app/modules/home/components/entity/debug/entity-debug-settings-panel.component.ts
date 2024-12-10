@@ -36,8 +36,8 @@ import { EntityDebugSettings } from '@shared/models/entity.models';
 import { distinctUntilChanged, map, startWith, switchMap, takeWhile } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-debug-settings-panel',
-  templateUrl: './debug-settings-panel.component.html',
+  selector: 'tb-entity-debug-settings-panel',
+  templateUrl: './entity-debug-settings-panel.component.html',
   standalone: true,
   imports: [
     SharedModule,
@@ -46,9 +46,9 @@ import { distinctUntilChanged, map, startWith, switchMap, takeWhile } from 'rxjs
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DebugSettingsPanelComponent extends PageComponent implements OnInit {
+export class EntityDebugSettingsPanelComponent extends PageComponent implements OnInit {
 
-  @Input() popover: TbPopoverComponent<DebugSettingsPanelComponent>;
+  @Input() popover: TbPopoverComponent<EntityDebugSettingsPanelComponent>;
   @Input({ transform: booleanAttribute }) failuresEnabled = false;
   @Input({ transform: booleanAttribute }) allEnabled = false;
   @Input() allEnabledUntil = 0;

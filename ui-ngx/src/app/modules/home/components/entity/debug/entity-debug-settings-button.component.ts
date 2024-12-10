@@ -29,7 +29,7 @@ import { SharedModule } from '@shared/shared.module';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { MatButton } from '@angular/material/button';
-import { DebugSettingsPanelComponent } from './debug-settings-panel.component';
+import { EntityDebugSettingsPanelComponent } from './entity-debug-settings-panel.component';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { of, shareReplay, timer } from 'rxjs';
 import { SECOND, MINUTE } from '@shared/models/time/time.models';
@@ -41,8 +41,8 @@ import { Store } from '@ngrx/store';
 import { ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
-  selector: 'tb-debug-settings-button',
-  templateUrl: './debug-settings-button.component.html',
+  selector: 'tb-entity-debug-settings-button',
+  templateUrl: './entity-debug-settings-button.component.html',
   standalone: true,
   imports: [
     CommonModule,
@@ -52,13 +52,13 @@ import { ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR } from '@angular/f
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DebugSettingsButtonComponent),
+      useExisting: forwardRef(() => EntityDebugSettingsButtonComponent),
       multi: true
     },
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DebugSettingsButtonComponent implements ControlValueAccessor {
+export class EntityDebugSettingsButtonComponent implements ControlValueAccessor {
 
   @Input() debugLimitsConfiguration: string;
 
@@ -127,7 +127,7 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
       this.popoverService.hidePopover(trigger);
     } else {
       const debugStrategyPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, DebugSettingsPanelComponent, 'bottom', true, null,
+        this.viewContainerRef, EntityDebugSettingsPanelComponent, 'bottom', true, null,
         {
           ...debugSettings,
           maxDebugModeDuration: this.maxDebugModeDuration,
