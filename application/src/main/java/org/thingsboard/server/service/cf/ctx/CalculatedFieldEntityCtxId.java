@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf;
+package org.thingsboard.server.service.cf.ctx;
 
-public enum CalculatedFieldType {
+import java.util.UUID;
 
-    SIMPLE, SCRIPT, LAST_RECORDS
-
+public record CalculatedFieldEntityCtxId(UUID cfId, UUID entityId) {
 }

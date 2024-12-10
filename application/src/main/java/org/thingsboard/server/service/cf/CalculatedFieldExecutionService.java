@@ -13,30 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.cf;
+package org.thingsboard.server.service.cf;
 
-import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.gen.transport.TransportProtos;
 
-import java.util.List;
+import java.util.Map;
 
-public interface CalculatedFieldDao extends Dao<CalculatedField> {
+public interface CalculatedFieldExecutionService {
 
-    List<CalculatedField> findAllByTenantId(TenantId tenantId);
+    void onCalculatedFieldMsg(TransportProtos.CalculatedFieldMsgProto proto, TbCallback callback);
 
-    List<CalculatedFieldId> findCalculatedFieldIdsByEntityId(TenantId tenantId, EntityId entityId);
+    void onTelemetryUpdate(TenantId tenantId, EntityId entityId, CalculatedFieldId calculatedFieldId, Map<String, KvEntry> updatedTelemetry);
 
-    List<CalculatedField> findAll();
+    void onEntityProfileChanged(TransportProtos.EntityProfileUpdateMsgProto proto, TbCallback callback);
 
-    PageData<CalculatedField> findAll(PageLink pageLink);
-
-    List<CalculatedField> removeAllByEntityId(TenantId tenantId, EntityId entityId);
-
-    boolean existsByEntityId(TenantId tenantId, EntityId entityId);
+    void onProfileEntityMsg(TransportProtos.ProfileEntityMsgProto proto, TbCallback callback);
 
 }

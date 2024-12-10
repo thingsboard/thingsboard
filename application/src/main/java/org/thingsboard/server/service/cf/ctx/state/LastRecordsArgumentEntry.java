@@ -13,10 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf;
+package org.thingsboard.server.service.cf.ctx.state;
 
-public enum CalculatedFieldType {
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-    SIMPLE, SCRIPT, LAST_RECORDS
+import java.util.TreeMap;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class LastRecordsArgumentEntry implements ArgumentEntry {
+
+    private TreeMap<Long, Object> tsRecords;
+
+    @Override
+    public ArgumentType getType() {
+        return ArgumentType.LAST_RECORDS;
+    }
+
+    @JsonIgnore
+    @Override
+    public Object getValue() {
+        return tsRecords;
+    }
 
 }
