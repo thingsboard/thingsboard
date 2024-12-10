@@ -52,14 +52,14 @@ export class DebugSettingsPanelComponent extends PageComponent implements OnInit
   @Input({ transform: booleanAttribute }) failuresEnabled = false;
   @Input({ transform: booleanAttribute }) allEnabled = false;
   @Input() allEnabledUntil = 0;
-  @Input() maxDebugModeDurationMinutes: number;
+  @Input() maxDebugModeDuration: number;
   @Input() debugLimitsConfiguration: string;
 
   onFailuresControl = this.fb.control(false);
   debugAllControl = this.fb.control(false);
 
   maxMessagesCount: string;
-  maxTimeFrameSec: string;
+  maxTimeFrameDuration: number;
   initialAllEnabled: boolean;
 
   isDebugAllActive$ = this.debugAllControl.valueChanges.pipe(
@@ -99,7 +99,7 @@ export class DebugSettingsPanelComponent extends PageComponent implements OnInit
 
   ngOnInit(): void {
     this.maxMessagesCount = this.debugLimitsConfiguration?.split(':')[0];
-    this.maxTimeFrameSec = this.debugLimitsConfiguration?.split(':')[1];
+    this.maxTimeFrameDuration = parseInt(this.debugLimitsConfiguration?.split(':')[1]) * SECOND;
     this.onFailuresControl.patchValue(this.failuresEnabled);
     this.debugAllControl.patchValue(this.allEnabled);
     this.initialAllEnabled = this.allEnabled || this.allEnabledUntil > new Date().getTime();
@@ -128,6 +128,7 @@ export class DebugSettingsPanelComponent extends PageComponent implements OnInit
 
   onReset(): void {
     this.debugAllControl.patchValue(true);
+    this.debugAllControl.markAsDirty();
     this.allEnabledUntil = 0;
     this.cd.markForCheck();
   }
