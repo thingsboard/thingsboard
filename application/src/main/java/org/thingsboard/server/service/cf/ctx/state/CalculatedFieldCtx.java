@@ -51,7 +51,7 @@ public class CalculatedFieldCtx {
         this.output = configuration.getOutput();
         this.expression = configuration.getExpression();
         this.tbelInvokeService = tbelInvokeService;
-        if (CalculatedFieldType.SCRIPT.equals(calculatedField.getType())) {
+        if (!CalculatedFieldType.SIMPLE.equals(calculatedField.getType())) {
             this.calculatedFieldScriptEngine = initEngine(tenantId, expression, tbelInvokeService);
         }
     }

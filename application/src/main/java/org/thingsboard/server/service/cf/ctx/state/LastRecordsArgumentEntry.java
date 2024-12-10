@@ -37,7 +37,7 @@ public class LastRecordsArgumentEntry implements ArgumentEntry {
     @JsonIgnore
     @Override
     public Object getValue() {
-        return tsRecords.values();
+        return tsRecords;
     }
 
 }

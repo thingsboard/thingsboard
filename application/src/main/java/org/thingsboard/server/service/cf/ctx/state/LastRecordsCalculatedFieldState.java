@@ -17,13 +17,13 @@ package org.thingsboard.server.service.cf.ctx.state;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Data;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -56,23 +56,24 @@ public class LastRecordsCalculatedFieldState extends BaseCalculatedFieldState {
 
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
-        Map<String, Object> resultMap = new HashMap<>();
-        arguments.forEach((key, argumentEntry) -> {
-            Argument argument = ctx.getArguments().get(key);
-            TreeMap<Long, Object> tsRecords = ((LastRecordsArgumentEntry) argumentEntry).getTsRecords();
-            if (tsRecords.size() > argument.getLimit()) {
-                tsRecords.pollFirstEntry();
-            }
-            long necessaryIntervalTs = calculateIntervalStart(System.currentTimeMillis(), argument.getTimeWindow());
-            tsRecords.entrySet().removeIf(tsRecord -> calculateIntervalStart(tsRecord.getKey(), argument.getTimeWindow()) < necessaryIntervalTs);
-            resultMap.put(key, tsRecords);
-        });
-        Output output = ctx.getOutput();
-        return Futures.immediateFuture(new CalculatedFieldResult(output.getType(), output.getScope(), resultMap));
-    }
-
-    private long calculateIntervalStart(long ts, long interval) {
-        return (ts / interval) * interval;
+        if (isValid(ctx.getArguments())) {
+            arguments.forEach((key, argumentEntry) -> {
+                Argument argument = ctx.getArguments().get(key);
+                TreeMap<Long, Object> tsRecords = ((LastRecordsArgumentEntry) argumentEntry).getTsRecords();
+                if (tsRecords.size() > argument.getLimit()) {
+                    tsRecords.pollFirstEntry();
+                }
+                tsRecords.entrySet().removeIf(tsRecord -> tsRecord.getKey() < System.currentTimeMillis() - argument.getTimeWindow());
+            });
+            Object[] args = arguments.values().stream().map(ArgumentEntry::getValue).toArray();
+            ListenableFuture<Map<String, Object>> resultFuture = ctx.getCalculatedFieldScriptEngine().executeToMapAsync(args);
+            Output output = ctx.getOutput();
+            return Futures.transform(resultFuture,
+                    result -> new CalculatedFieldResult(output.getType(), output.getScope(), result),
+                    MoreExecutors.directExecutor()
+            );
+        }
+        return null;
     }
 
 }

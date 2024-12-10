@@ -37,10 +37,10 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
 
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
-        Output output = ctx.getOutput();
         if (isValid(ctx.getArguments())) {
             Object[] args = arguments.values().stream().map(ArgumentEntry::getValue).toArray();
             ListenableFuture<Map<String, Object>> resultFuture = ctx.getCalculatedFieldScriptEngine().executeToMapAsync(args);
+            Output output = ctx.getOutput();
             return Futures.transform(resultFuture,
                     result -> new CalculatedFieldResult(output.getType(), output.getScope(), result),
                     MoreExecutors.directExecutor()
