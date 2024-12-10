@@ -24,7 +24,7 @@ import { DebugSettingsPanelComponent } from './debug-settings-panel.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { of, shareReplay, timer } from 'rxjs';
 import { SECOND } from '@shared/models/time/time.models';
-import { DebugSettings } from '@shared/models/entity.models';
+import { EntityDebugSettings } from '@shared/models/entity.models';
 import { map, startWith, switchMap, takeWhile } from 'rxjs/operators';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { AppState } from '@core/core.state';
@@ -79,7 +79,7 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
 
   readonly maxDebugModeDurationMinutes = getCurrentAuthState(this.store).maxDebugModeDurationMinutes;
 
-  private propagateChange: (settings: DebugSettings) => void = () => {};
+  private propagateChange: (settings: EntityDebugSettings) => void = () => {};
 
   constructor(private popoverService: TbPopoverService,
               private renderer: Renderer2,
@@ -126,20 +126,20 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
         {},
         {}, {}, true);
       debugStrategyPopover.tbComponentRef.instance.popover = debugStrategyPopover;
-      debugStrategyPopover.tbComponentRef.instance.onSettingsApplied.subscribe((settings: DebugSettings) => {
+      debugStrategyPopover.tbComponentRef.instance.onSettingsApplied.subscribe((settings: EntityDebugSettings) => {
         this.debugSettingsFormGroup.patchValue(settings);
         debugStrategyPopover.hide();
       });
     }
   }
 
-  registerOnChange(fn: (settings: DebugSettings) => void): void {
+  registerOnChange(fn: (settings: EntityDebugSettings) => void): void {
     this.propagateChange = fn;
   }
 
   registerOnTouched(_: () => void): void {}
 
-  writeValue(settings: DebugSettings): void {
+  writeValue(settings: EntityDebugSettings): void {
     this.debugSettingsFormGroup.patchValue(settings, {emitEvent: false});
     this.debugSettingsFormGroup.get('allEnabled').updateValueAndValidity({onlySelf: true});
   }

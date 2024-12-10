@@ -32,7 +32,7 @@ import { SECOND } from '@shared/models/time/time.models';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { of, shareReplay, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DebugSettings } from '@shared/models/entity.models';
+import { EntityDebugSettings } from '@shared/models/entity.models';
 import { distinctUntilChanged, map, startWith, switchMap, takeWhile } from 'rxjs/operators';
 
 @Component({
@@ -78,7 +78,7 @@ export class DebugSettingsPanelComponent extends PageComponent implements OnInit
     shareReplay(1),
   );
 
-  onSettingsApplied = new EventEmitter<DebugSettings>();
+  onSettingsApplied = new EventEmitter<EntityDebugSettings>();
 
   constructor(private fb: FormBuilder,
               private cd: ChangeDetectorRef) {
