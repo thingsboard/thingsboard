@@ -61,15 +61,12 @@ public class TbJsFilterNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ctx.logJsEvalRequest();
         withCallback(scriptEngine.executeFilterAsync(msg),
                 filterResult -> {
-                    ctx.logJsEvalResponse();
                     ctx.tellNext(msg, filterResult ? TbNodeConnectionType.TRUE : TbNodeConnectionType.FALSE);
                 },
                 t -> {
                     ctx.tellFailure(msg, t);
-                    ctx.logJsEvalFailure();
                 }, ctx.getDbCallbackExecutor());
     }
 

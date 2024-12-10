@@ -373,12 +373,6 @@ public interface TbContext {
 
     ScriptEngine createScriptEngine(ScriptLanguage scriptLang, String script, String... argNames);
 
-    void logJsEvalRequest();
-
-    void logJsEvalResponse();
-
-    void logJsEvalFailure();
-
     String getServiceId();
 
     EventLoopGroup getSharedEventLoop();

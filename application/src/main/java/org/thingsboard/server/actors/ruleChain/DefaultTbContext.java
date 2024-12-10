@@ -609,27 +609,6 @@ public class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public void logJsEvalRequest() {
-        if (mainCtx.isStatisticsEnabled()) {
-            mainCtx.getJsInvokeStats().incrementRequests();
-        }
-    }
-
-    @Override
-    public void logJsEvalResponse() {
-        if (mainCtx.isStatisticsEnabled()) {
-            mainCtx.getJsInvokeStats().incrementResponses();
-        }
-    }
-
-    @Override
-    public void logJsEvalFailure() {
-        if (mainCtx.isStatisticsEnabled()) {
-            mainCtx.getJsInvokeStats().incrementFailures();
-        }
-    }
-
-    @Override
     public String getServiceId() {
         return mainCtx.getServiceInfoProvider().getServiceId();
     }

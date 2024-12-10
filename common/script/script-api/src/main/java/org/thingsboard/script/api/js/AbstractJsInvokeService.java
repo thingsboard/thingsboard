@@ -26,6 +26,7 @@ import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.stats.StatsType;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
 
@@ -117,4 +118,8 @@ public abstract class AbstractJsInvokeService extends AbstractScriptInvokeServic
                 .hash().toString();
     }
 
+    @Override
+    protected StatsType getStatsType() {
+        return StatsType.JS_INVOKE;
+    }
 }

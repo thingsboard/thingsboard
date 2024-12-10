@@ -62,17 +62,14 @@ public class TbJsSwitchNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ctx.logJsEvalRequest();
         Futures.addCallback(scriptEngine.executeSwitchAsync(msg), new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable Set<String> result) {
-                ctx.logJsEvalResponse();
                 processSwitch(ctx, msg, result);
             }
 
             @Override
             public void onFailure(Throwable t) {
-                ctx.logJsEvalFailure();
                 ctx.tellFailure(msg, t);
             }
         }, MoreExecutors.directExecutor()); //usually runs in a callbackExecutor
