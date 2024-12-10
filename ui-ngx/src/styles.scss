@@ -544,10 +544,10 @@ pre.tb-highlight {
 
   .layout-padding, .layout-padding > * {
     @media #{$mat-lt-sm} {
-      padding: 4px;
+      padding: 0 4px;
     }
     @media #{$mat-gt-xs} {
-      padding: 8px;
+      padding: 0 8px;
     }
   }
 
