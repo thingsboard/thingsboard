@@ -29,11 +29,11 @@ import { SharedModule } from '@shared/shared.module';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { MatButton } from '@angular/material/button';
-import { DebugSettingsPanelComponent } from './debug-settings-panel.component';
+import { EntityDebugSettingsPanelComponent } from './entity-debug-settings-panel.component';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { of, shareReplay, timer } from 'rxjs';
-import { MINUTE, SECOND } from '@shared/models/time/time.models';
-import { DebugSettings } from '@shared/models/entity.models';
+import { SECOND, MINUTE } from '@shared/models/time/time.models';
+import { EntityDebugSettings } from '@shared/models/entity.models';
 import { map, switchMap, takeWhile } from 'rxjs/operators';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { AppState } from '@core/core.state';
@@ -41,8 +41,8 @@ import { Store } from '@ngrx/store';
 import { ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
-  selector: 'tb-debug-settings-button',
-  templateUrl: './debug-settings-button.component.html',
+  selector: 'tb-entity-debug-settings-button',
+  templateUrl: './entity-debug-settings-button.component.html',
   standalone: true,
   imports: [
     CommonModule,
@@ -52,13 +52,13 @@ import { ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR } from '@angular/f
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DebugSettingsButtonComponent),
+      useExisting: forwardRef(() => EntityDebugSettingsButtonComponent),
       multi: true
     },
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DebugSettingsButtonComponent implements ControlValueAccessor {
+export class EntityDebugSettingsButtonComponent implements ControlValueAccessor {
 
   @Input() debugLimitsConfiguration: string;
 
@@ -88,7 +88,7 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
 
   readonly maxDebugModeDuration = getCurrentAuthState(this.store).maxDebugModeDurationMinutes * MINUTE;
 
-  private propagateChange: (settings: DebugSettings) => void = () => {};
+  private propagateChange: (settings: EntityDebugSettings) => void = () => {};
 
   constructor(private popoverService: TbPopoverService,
               private renderer: Renderer2,
@@ -127,7 +127,7 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
       this.popoverService.hidePopover(trigger);
     } else {
       const debugStrategyPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, DebugSettingsPanelComponent, 'bottom', true, null,
+        this.viewContainerRef, EntityDebugSettingsPanelComponent, 'bottom', true, null,
         {
           ...debugSettings,
           maxDebugModeDuration: this.maxDebugModeDuration,
@@ -136,7 +136,7 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
         {},
         {}, {}, true);
       debugStrategyPopover.tbComponentRef.instance.popover = debugStrategyPopover;
-      debugStrategyPopover.tbComponentRef.instance.onSettingsApplied.subscribe((settings: DebugSettings) => {
+      debugStrategyPopover.tbComponentRef.instance.onSettingsApplied.subscribe((settings: EntityDebugSettings) => {
         this.debugSettingsFormGroup.patchValue(settings);
         this.cd.markForCheck();
         debugStrategyPopover.hide();
@@ -144,13 +144,13 @@ export class DebugSettingsButtonComponent implements ControlValueAccessor {
     }
   }
 
-  registerOnChange(fn: (settings: DebugSettings) => void): void {
+  registerOnChange(fn: (settings: EntityDebugSettings) => void): void {
     this.propagateChange = fn;
   }
 
   registerOnTouched(_: () => void): void {}
 
-  writeValue(settings: DebugSettings): void {
+  writeValue(settings: EntityDebugSettings): void {
     this.debugSettingsFormGroup.patchValue(settings, {emitEvent: false});
     this.allEnabled.set(settings?.allEnabled);
     this.debugSettingsFormGroup.get('allEnabled').updateValueAndValidity({onlySelf: true});
