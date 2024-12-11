@@ -149,7 +149,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                     return; // if originated by rule - just ignore delivery method
                 }
             }
-            if (ruleId == null) {
+            if (ruleId == null && !notificationTemplate.getNotificationType().isSystem()) {
                 if (targets.stream().noneMatch(target -> target.getConfiguration().getType().getSupportedDeliveryMethods().contains(deliveryMethod))) {
                     throw new IllegalArgumentException("Recipients for " + deliveryMethod.getName() + " delivery method not chosen");
                 }
