@@ -15,6 +15,8 @@
  */
 package org.thingsboard.rule.engine.transform;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +32,9 @@ import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.List;
@@ -43,6 +47,8 @@ import static org.thingsboard.rule.engine.transform.OriginatorSource.RELATED;
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
         name = "change originator",
+        version = 1,
+        relationTypes = {"Not Found", TbNodeConnectionType.SUCCESS, TbNodeConnectionType.FAILURE},
         configClazz = TbChangeOriginatorNodeConfiguration.class,
         nodeDescription = "Change message originator to Tenant/Customer/Related Entity/Alarm Originator/Entity by name pattern.",
         nodeDetails = "Configuration: <ul><li><strong>Customer</strong> - use customer of incoming message originator as new originator. " +
@@ -78,6 +84,15 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
         }, ctx.getDbCallbackExecutor());
     }
 
+    @Override
+    protected void transformFailure(TbContext ctx, TbMsg msg, Throwable t) {
+        if (config.isTellNotFound() && t instanceof NoSuchElementException) {
+            ctx.tellNext(msg, "Not Found");
+        } else {
+            ctx.tellFailure(msg, t);
+        }
+    }
+
     private ListenableFuture<? extends EntityId> getNewOriginator(TbContext ctx, TbMsg msg) {
         switch (config.getOriginatorSource()) {
             case CUSTOMER:
@@ -91,12 +106,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
             case ENTITY:
                 EntityType entityType = EntityType.valueOf(config.getEntityType());
                 String entityName = TbNodeUtils.processPattern(config.getEntityNamePattern(), msg);
-                try {
-                    EntityId targetEntity = EntitiesByNameAndTypeLoader.findEntityId(ctx, entityType, entityName);
-                    return Futures.immediateFuture(targetEntity);
-                } catch (IllegalStateException e) {
-                    return Futures.immediateFailedFuture(e);
-                }
+                return Futures.immediateFuture(EntitiesByNameAndTypeLoader.findEntityId(ctx, entityType, entityName));
             default:
                 return Futures.immediateFailedFuture(new IllegalStateException("Unexpected originator source " + config.getOriginatorSource()));
         }
@@ -122,6 +132,23 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
             }
             EntitiesByNameAndTypeLoader.checkEntityType(EntityType.valueOf(conf.getEntityType()));
         }
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                String tellNotFound = "tellNotFound";
+                if (!oldConfiguration.has(tellNotFound)) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).put(tellNotFound, false);
+                }
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
 }

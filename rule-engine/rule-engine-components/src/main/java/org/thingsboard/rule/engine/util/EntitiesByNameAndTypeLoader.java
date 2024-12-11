@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.List;
+import java.util.Optional;
 
 public class EntitiesByNameAndTypeLoader {
 
@@ -52,10 +53,7 @@ public class EntitiesByNameAndTypeLoader {
             default:
                 throw new IllegalStateException("Unexpected entity type " + entityType.name());
         }
-        if (targetEntity == null) {
-            throw new IllegalStateException("Failed to find " + entityType.getNormalName().toLowerCase() + " with name '" + entityName + "'!");
-        }
-        return targetEntity.getId();
+        return Optional.ofNullable(targetEntity).map(BaseData::getId).orElse(null);
     }
 
     public static void checkEntityType(EntityType entityType) {
