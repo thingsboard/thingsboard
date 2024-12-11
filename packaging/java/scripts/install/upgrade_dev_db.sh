@@ -28,13 +28,7 @@ case $i in
 esac
 done
 
-if [[ -z "${FROM_VERSION// }" ]]; then
-    echo "--fromVersion parameter is invalid or unspecified!"
-    echo "Usage: upgrade_dev_db.sh --fromVersion={VERSION}"
-    exit 1
-else
-    fromVersion="${FROM_VERSION// }"
-fi
+fromVersion="${FROM_VERSION// }"
 
 BASE=${project.basedir}/target
 CONF_FOLDER=${BASE}/conf
