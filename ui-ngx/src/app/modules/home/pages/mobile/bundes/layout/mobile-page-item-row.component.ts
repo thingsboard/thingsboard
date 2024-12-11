@@ -270,8 +270,8 @@ export class MobilePageItemRowComponent implements ControlValueAccessor, OnInit,
 
   private updateModel() {
     this.modelValue.visible = this.mobilePageRowForm.get('visible').value;
-    const label = this.mobilePageRowForm.get('label').value.trim();
-    if (label) {
+    const label = this.mobilePageRowForm.get('label').value;
+    if (label?.trim()) {
       this.modelValue.label = label;
     } else {
       delete this.modelValue.label;
