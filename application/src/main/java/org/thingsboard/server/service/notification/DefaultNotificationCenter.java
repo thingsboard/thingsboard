@@ -225,13 +225,13 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         NotificationTemplate notificationTemplate = notificationTemplateService.findTenantOrSystemNotificationTemplate(tenantId, type)
                 .orElseThrow(() -> new IllegalArgumentException("No notification template found for type " + type));
         NotificationRequest notificationRequest = NotificationRequest.builder()
-                .tenantId(TenantId.SYS_TENANT_ID)
+                .tenantId(tenantId)
                 .targets(List.of(targetId.getId()))
                 .templateId(notificationTemplate.getId())
                 .info(info)
                 .originatorEntityId(TenantId.SYS_TENANT_ID)
                 .build();
-        processNotificationRequest(TenantId.SYS_TENANT_ID, notificationRequest, null);
+        processNotificationRequest(tenantId, notificationRequest, null);
     }
 
     private void processNotificationRequestAsync(NotificationProcessingContext ctx, List<NotificationTarget> targets, FutureCallback<NotificationRequestStats> callback) {
