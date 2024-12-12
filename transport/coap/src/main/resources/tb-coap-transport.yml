@@ -198,6 +198,10 @@ coap:
     # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
     # - A value that are > 4: MultiNodeConnectionIdGenerator is used
     connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:}"
+    # Specify the MTU (Maximum Transmission Unit).
+    max_transmission_unit: "${COAP_DTLS_MAX_TRANSMISSION_UNIT:1024}"
+    # DTLS maximum fragment length (RFC 6066)
+    max_fragment_length: "${COAP_DTLS_MAX_FRAGMENT_LENGTH:1024}"
     # Server DTLS credentials
     credentials:
       # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
