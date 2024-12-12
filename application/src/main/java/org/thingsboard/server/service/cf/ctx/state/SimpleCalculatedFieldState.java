@@ -57,7 +57,7 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
             Output output = ctx.getOutput();
             return Futures.immediateFuture(new CalculatedFieldResult(output.getType(), output.getScope(), Map.of(output.getName(), expressionResult)));
         }
-        return null;
+        return Futures.immediateFuture(null);
     }
 
 }

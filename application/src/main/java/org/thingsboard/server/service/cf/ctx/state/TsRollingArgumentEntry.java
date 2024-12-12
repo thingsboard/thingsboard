@@ -25,13 +25,13 @@ import java.util.TreeMap;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class LastRecordsArgumentEntry implements ArgumentEntry {
+public class TsRollingArgumentEntry implements ArgumentEntry {
 
     private TreeMap<Long, Object> tsRecords;
 
     @Override
     public ArgumentType getType() {
-        return ArgumentType.LAST_RECORDS;
+        return ArgumentType.TS_ROLLING;
     }
 
     @JsonIgnore

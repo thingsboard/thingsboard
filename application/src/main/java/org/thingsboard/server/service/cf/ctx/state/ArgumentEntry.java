@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = SingleValueArgumentEntry.class, name = "SINGLE_VALUE"),
-        @JsonSubTypes.Type(value = LastRecordsArgumentEntry.class, name = "LAST_RECORDS")
+        @JsonSubTypes.Type(value = TsRollingArgumentEntry.class, name = "TS_ROLLING")
 })
 public interface ArgumentEntry {
 
@@ -45,8 +45,8 @@ public interface ArgumentEntry {
         return new SingleValueArgumentEntry(kvEntry);
     }
 
-    static ArgumentEntry createLastRecordsArgument(List<TsKvEntry> kvEntries) {
-        return new LastRecordsArgumentEntry(kvEntries.stream().
+    static ArgumentEntry createTsRollingArgument(List<TsKvEntry> kvEntries) {
+        return new TsRollingArgumentEntry(kvEntries.stream().
                 collect(Collectors.toMap(TsKvEntry::getTs, TsKvEntry::getValue, (oldValue, newValue) -> newValue, TreeMap::new)));
     }
 

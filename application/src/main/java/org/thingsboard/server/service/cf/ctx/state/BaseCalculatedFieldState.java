@@ -17,7 +17,6 @@ package org.thingsboard.server.service.cf.ctx.state;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
@@ -36,15 +35,22 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
         if (arguments == null) {
             arguments = new HashMap<>();
         }
-        arguments.putAll(
-                argumentValues.entrySet().stream()
-                        .peek(entry -> {
-                            if (entry.getValue() instanceof LastRecordsArgumentEntry) {
-                                throw new IllegalArgumentException("Last records argument entry is not allowed for single calculated field state");
-                            }
-                        })
-                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
-        );
+        argumentValues.forEach((key, argumentEntry) -> {
+            ArgumentEntry existingArgumentEntry = arguments.get(key);
+            if (existingArgumentEntry != null) {
+                if (existingArgumentEntry instanceof SingleValueArgumentEntry) {
+                    arguments.put(key, argumentEntry);
+                } else if (existingArgumentEntry instanceof TsRollingArgumentEntry existingTsRollingArgumentEntry) {
+                    if (argumentEntry instanceof TsRollingArgumentEntry tsRollingArgumentEntry) {
+                        existingTsRollingArgumentEntry.getTsRecords().putAll(tsRollingArgumentEntry.getTsRecords());
+                    } else if (argumentEntry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
+                        existingTsRollingArgumentEntry.getTsRecords().put(singleValueArgumentEntry.getTs(), singleValueArgumentEntry.getValue());
+                    }
+                }
+            } else {
+                arguments.put(key, argumentEntry);
+            }
+        });
     }
 
 }

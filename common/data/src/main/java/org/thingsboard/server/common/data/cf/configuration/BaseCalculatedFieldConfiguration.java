@@ -69,10 +69,10 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
             Argument argument = entry.getValue();
             if (argument.getEntityId().equals(entityId)) {
                 switch (argument.getType()) {
-                    case "ATTRIBUTES":
+                    case "ATTRIBUTE":
                         linkConfiguration.getAttributes().put(entry.getKey(), argument.getKey());
                         break;
-                    case "TIME_SERIES":
+                    case "TS_LATEST", "TS_ROLLING":
                         linkConfiguration.getTimeSeries().put(entry.getKey(), argument.getKey());
                         break;
                 }

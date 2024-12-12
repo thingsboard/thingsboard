@@ -16,5 +16,5 @@
 package org.thingsboard.server.service.cf.ctx.state;
 
 public enum ArgumentType {
-    SINGLE_VALUE, LAST_RECORDS
+    SINGLE_VALUE, TS_ROLLING
 }

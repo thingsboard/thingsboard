@@ -73,12 +73,12 @@ import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
-import org.thingsboard.server.service.cf.ctx.state.LastRecordsCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SimpleCalculatedFieldState;
 import org.thingsboard.server.service.partition.AbstractPartitionBasedService;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -435,41 +435,41 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         EntityId entityId = EntityType.DEVICE_PROFILE.equals(argumentEntityId.getEntityType()) || EntityType.ASSET_PROFILE.equals(argumentEntityId.getEntityType())
                 ? targetEntityId
                 : argumentEntityId;
-        if (CalculatedFieldType.LAST_RECORDS.equals(calculatedFieldCtx.getCfType())) {
-            return fetchLastRecords(tenantId, entityId, argument);
-        }
         return fetchKvEntry(tenantId, entityId, argument);
     }
 
-    private ListenableFuture<ArgumentEntry> fetchLastRecords(TenantId tenantId, EntityId entityId, Argument argument) {
+    private ListenableFuture<ArgumentEntry> fetchKvEntry(TenantId tenantId, EntityId entityId, Argument argument) {
+        return switch (argument.getType()) {
+            case "TS_ROLLING" -> fetchTsRolling(tenantId, entityId, argument);
+            case "ATTRIBUTE" -> transformSingleValueArgument(
+                    Futures.transform(
+                            attributesService.find(tenantId, entityId, argument.getScope(), argument.getKey()),
+                            result -> result.or(() -> Optional.of(new BaseAttributeKvEntry(System.currentTimeMillis(), createDefaultKvEntry(argument)))),
+                            calculatedFieldCallbackExecutor)
+            );
+            case "TS_LATEST" -> transformSingleValueArgument(
+                    Futures.transform(
+                            timeseriesService.findLatest(tenantId, entityId, argument.getKey()),
+                            result -> result.or(() -> Optional.of(new BasicTsKvEntry(System.currentTimeMillis(), createDefaultKvEntry(argument)))),
+                            calculatedFieldCallbackExecutor));
+            default -> throw new IllegalArgumentException("Invalid argument type '" + argument.getType() + "'.");
+        };
+    }
+
+    private ListenableFuture<ArgumentEntry> fetchTsRolling(TenantId tenantId, EntityId entityId, Argument argument) {
         long currentTime = System.currentTimeMillis();
         long timeWindow = argument.getTimeWindow() == 0 ? System.currentTimeMillis() : argument.getTimeWindow();
         long startTs = currentTime - timeWindow;
         int limit = argument.getLimit() == 0 ? MAX_LAST_RECORDS_VALUE : argument.getLimit();
 
         ReadTsKvQuery query = new BaseReadTsKvQuery(argument.getKey(), startTs, currentTime, 0, limit, Aggregation.NONE);
-        ListenableFuture<List<TsKvEntry>> lastRecordsFuture = timeseriesService.findAll(tenantId, entityId, List.of(query));
+        ListenableFuture<List<TsKvEntry>> tsRollingFuture = timeseriesService.findAll(tenantId, entityId, List.of(query));
 
-        return Futures.transform(lastRecordsFuture, ArgumentEntry::createLastRecordsArgument, calculatedFieldExecutor);
+        return Futures.transform(tsRollingFuture, tsRolling -> tsRolling == null ? ArgumentEntry.createTsRollingArgument(Collections.emptyList()) : ArgumentEntry.createTsRollingArgument(tsRolling), calculatedFieldCallbackExecutor);
     }
 
-    private ListenableFuture<ArgumentEntry> fetchKvEntry(TenantId tenantId, EntityId entityId, Argument argument) {
-        ListenableFuture<Optional<? extends KvEntry>> kvEntryFuture = switch (argument.getType()) {
-            case "ATTRIBUTES" -> Futures.transform(
-                    attributesService.find(tenantId, entityId, argument.getScope(), argument.getKey()),
-                    result -> result.or(() -> Optional.of(
-                            new BaseAttributeKvEntry(System.currentTimeMillis(), createDefaultKvEntry(argument))
-                    )),
-                    MoreExecutors.directExecutor());
-            case "TIME_SERIES" -> Futures.transform(
-                    timeseriesService.findLatest(tenantId, entityId, argument.getKey()),
-                    result -> result.or(() -> Optional.of(
-                            new BasicTsKvEntry(System.currentTimeMillis(), createDefaultKvEntry(argument))
-                    )),
-                    calculatedFieldExecutor);
-            default -> throw new IllegalArgumentException("Invalid argument type '" + argument.getType() + "'.");
-        };
-        return Futures.transform(kvEntryFuture, kvEntry -> ArgumentEntry.createSingleValueArgument(kvEntry.orElse(null)), calculatedFieldExecutor);
+    private ListenableFuture<ArgumentEntry> transformSingleValueArgument(ListenableFuture<Optional<? extends KvEntry>> kvEntryFuture) {
+        return Futures.transform(kvEntryFuture, kvEntry -> ArgumentEntry.createSingleValueArgument(kvEntry.orElse(null)), calculatedFieldCallbackExecutor);
     }
 
     private KvEntry createDefaultKvEntry(Argument argument) {
@@ -547,7 +547,6 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         return switch (calculatedFieldType) {
             case SIMPLE -> new SimpleCalculatedFieldState();
             case SCRIPT -> new ScriptCalculatedFieldState();
-            case LAST_RECORDS -> new LastRecordsCalculatedFieldState();
         };
     }
 

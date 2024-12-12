@@ -21,7 +21,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
-import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.Map;
@@ -34,7 +33,6 @@ import java.util.Map;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = SimpleCalculatedFieldState.class, name = "SIMPLE"),
         @JsonSubTypes.Type(value = ScriptCalculatedFieldState.class, name = "SCRIPT"),
-        @JsonSubTypes.Type(value = LastRecordsCalculatedFieldState.class, name = "LAST_RECORDS")
 })
 public interface CalculatedFieldState {
 

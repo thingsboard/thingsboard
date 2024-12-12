@@ -21,10 +21,12 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.Map;
+import java.util.TreeMap;
 
 @Data
 @Slf4j
@@ -38,6 +40,16 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
         if (isValid(ctx.getArguments())) {
+            arguments.forEach((key, argumentEntry) -> {
+                if (argumentEntry instanceof TsRollingArgumentEntry) {
+                    Argument argument = ctx.getArguments().get(key);
+                    TreeMap<Long, Object> tsRecords = ((TsRollingArgumentEntry) argumentEntry).getTsRecords();
+                    if (tsRecords.size() > argument.getLimit()) {
+                        tsRecords.pollFirstEntry();
+                    }
+                    tsRecords.entrySet().removeIf(tsRecord -> tsRecord.getKey() < System.currentTimeMillis() - argument.getTimeWindow());
+                }
+            });
             Object[] args = arguments.values().stream().map(ArgumentEntry::getValue).toArray();
             ListenableFuture<Map<String, Object>> resultFuture = ctx.getCalculatedFieldScriptEngine().executeToMapAsync(args);
             Output output = ctx.getOutput();
@@ -46,7 +58,7 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
                     MoreExecutors.directExecutor()
             );
         }
-        return null;
+        return Futures.immediateFuture(null);
     }
 
 }
