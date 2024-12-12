@@ -69,10 +69,10 @@ public class TbCoapDtlsSettings {
     @Value("${coap.dtls.connection_id_length:}")
     private Integer cIdLength;
 
-    @Value("${coap.dtls.max_transmission_unit:}")
+    @Value("${coap.dtls.max_transmission_unit:1024}")
     private Integer maxTransmissionUnit;
 
-    @Value("${coap.dtls.max_fragment_length:}")
+    @Value("${coap.dtls.max_fragment_length:1024}")
     private Integer maxFragmentLength;
 
     @Bean
