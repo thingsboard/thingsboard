@@ -123,7 +123,7 @@ public class TbCoapDtlsSettings {
         if (maxFragmentLength != null) {
             Length length = fromLength(maxFragmentLength);
             if (length != null) {
-                configBuilder.set(DTLS_MAX_FRAGMENT_LENGTH, fromLength(maxFragmentLength));
+                configBuilder.set(DTLS_MAX_FRAGMENT_LENGTH, length);
             }
         }
         configBuilder.setAdvancedCertificateVerifier(
