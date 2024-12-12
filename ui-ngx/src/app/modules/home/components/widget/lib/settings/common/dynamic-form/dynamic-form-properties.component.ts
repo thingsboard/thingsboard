@@ -15,7 +15,7 @@
 ///
 
 import {
-  Component,
+  Component, DestroyRef,
   forwardRef,
   HostBinding,
   Input,
@@ -35,42 +35,60 @@ import {
   UntypedFormGroup,
   Validator
 } from '@angular/forms';
-import { ScadaSymbolProperty, ScadaSymbolPropertyType } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
-import {
-  propertyValid,
-  ScadaSymbolPropertyRowComponent
-} from '@home/pages/scada-symbol/metadata-components/scada-symbol-property-row.component';
 import { TranslateService } from '@ngx-translate/core';
+import { FormProperty, FormPropertyType } from '@shared/models/dynamic-form.models';
+import {
+  DynamicFormPropertyRowComponent,
+  propertyValid
+} from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-property-row.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-scada-symbol-metadata-properties',
-  templateUrl: './scada-symbol-properties.component.html',
-  styleUrls: ['./scada-symbol-properties.component.scss'],
+  selector: 'tb-dynamic-form-properties',
+  templateUrl: './dynamic-form-properties.component.html',
+  styleUrls: ['./dynamic-form-properties.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ScadaSymbolPropertiesComponent),
+      useExisting: forwardRef(() => DynamicFormPropertiesComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ScadaSymbolPropertiesComponent),
+      useExisting: forwardRef(() => DynamicFormPropertiesComponent),
       multi: true
     }
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class ScadaSymbolPropertiesComponent implements ControlValueAccessor, OnInit, Validator {
+export class DynamicFormPropertiesComponent implements ControlValueAccessor, OnInit, Validator {
 
   @HostBinding('style.display') styleDisplay = 'flex';
   @HostBinding('style.overflow') styleOverflow = 'hidden';
+  @HostBinding('style.height')
+  get containerHeight(): string {
+    return this.fillHeight ? '100%': 'auto';
+  }
 
-  @ViewChildren(ScadaSymbolPropertyRowComponent)
-  propertyRows: QueryList<ScadaSymbolPropertyRowComponent>;
+  @ViewChildren(DynamicFormPropertyRowComponent)
+  propertyRows: QueryList<DynamicFormPropertyRowComponent>;
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  @coerceBoolean()
+  noBorder = false;
+
+  @Input()
+  @coerceBoolean()
+  noMargin = false;
+
+  @Input()
+  @coerceBoolean()
+  fillHeight = false;
 
   booleanPropertyIds: string[] = [];
 
@@ -85,6 +103,7 @@ export class ScadaSymbolPropertiesComponent implements ControlValueAccessor, OnI
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef,
               private translate: TranslateService) {
   }
 
@@ -92,13 +111,15 @@ export class ScadaSymbolPropertiesComponent implements ControlValueAccessor, OnI
     this.propertiesFormGroup = this.fb.group({
       properties: this.fb.array([])
     });
-    this.propertiesFormGroup.valueChanges.subscribe(
+    this.propertiesFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => {
-        let properties: ScadaSymbolProperty[] = this.propertiesFormGroup.get('properties').value;
+        let properties: FormProperty[] = this.propertiesFormGroup.get('properties').value;
         if (properties) {
           properties = properties.filter(p => propertyValid(p));
         }
-        this.booleanPropertyIds = properties.filter(p => p.type === ScadaSymbolPropertyType.switch).map(p => p.id);
+        this.booleanPropertyIds = properties.filter(p => p.type === FormPropertyType.switch).map(p => p.id);
         properties.forEach((p, i) => {
           if (p.disableOnProperty && !this.booleanPropertyIds.includes(p.disableOnProperty)) {
             p.disableOnProperty = null;
@@ -127,10 +148,10 @@ export class ScadaSymbolPropertiesComponent implements ControlValueAccessor, OnI
     }
   }
 
-  writeValue(value: ScadaSymbolProperty[] | undefined): void {
+  writeValue(value: FormProperty[] | undefined): void {
     const properties= value || [];
     this.propertiesFormGroup.setControl('properties', this.preparePropertiesFormArray(properties), {emitEvent: false});
-    this.booleanPropertyIds = properties.filter(p => p.type === ScadaSymbolPropertyType.switch).map(p => p.id);
+    this.booleanPropertyIds = properties.filter(p => p.type === FormPropertyType.switch).map(p => p.id);
   }
 
   public validate(c: UntypedFormControl) {
@@ -141,7 +162,7 @@ export class ScadaSymbolPropertiesComponent implements ControlValueAccessor, OnI
     for (const control of notUniqueControls) {
       control.updateValueAndValidity({onlySelf: false, emitEvent: false});
       if (control.hasError('propertyIdNotUnique')) {
-        this.errorText = this.translate.instant('scada.property.not-unique-property-ids-error');
+        this.errorText = this.translate.instant('dynamic-form.property.not-unique-property-ids-error');
       }
     }
     const valid =  this.propertiesFormGroup.valid;
@@ -185,10 +206,10 @@ export class ScadaSymbolPropertiesComponent implements ControlValueAccessor, OnI
   }
 
   addProperty() {
-    const property: ScadaSymbolProperty = {
+    const property: FormProperty = {
       id: '',
       name: '',
-      type: ScadaSymbolPropertyType.text,
+      type: FormPropertyType.text,
       default: ''
     };
     const propertiesArray = this.propertiesFormGroup.get('properties') as UntypedFormArray;
@@ -202,7 +223,7 @@ export class ScadaSymbolPropertiesComponent implements ControlValueAccessor, OnI
     });
   }
 
-  private preparePropertiesFormArray(properties: ScadaSymbolProperty[] | undefined): UntypedFormArray {
+  private preparePropertiesFormArray(properties: FormProperty[] | undefined): UntypedFormArray {
     const propertiesControls: Array<AbstractControl> = [];
     if (properties) {
       properties.forEach((property) => {

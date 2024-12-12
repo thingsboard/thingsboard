@@ -18,7 +18,11 @@
 <div [formGroup]="widgetSettingsFormGroup">
   <ng-container #definedSettingsContent></ng-container>
   <div class="tb-settings-directive-error" *ngIf="definedDirectiveError">{{definedDirectiveError}}</div>
-  <tb-json-form *ngIf="useJsonForm()" #jsonFormComponent
+  <tb-json-form *ngIf="useJsonForm()"
     formControlName="settings">
   </tb-json-form>
+  <tb-dynamic-form *ngIf="useDynamicForm()"
+    [properties]="settingsForm"
+    formControlName="settings">
+  </tb-dynamic-form>
 </div>

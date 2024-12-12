@@ -27,14 +27,13 @@ import {
   ScadaSymbolBehavior,
   ScadaSymbolBehaviorType,
   scadaSymbolContentData,
-  ScadaSymbolMetadata,
-  ScadaSymbolProperty,
-  ScadaSymbolPropertyType
+  ScadaSymbolMetadata
 } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { TbEditorCompletion, TbEditorCompletions } from '@shared/models/ace/completion.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { AceHighlightRule, AceHighlightRules } from '@shared/models/ace/ace.models';
 import { HelpLinks, ValueType } from '@shared/models/constants';
+import { formPropertyCompletions } from '@shared/models/dynamic-form.models';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
 import ITooltipsterHelper = JQueryTooltipster.ITooltipsterHelper;
@@ -1141,11 +1140,8 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
     meta: 'object',
     type: 'object',
     description: 'An object holding all defined SCADA symbol properties.',
-    children: {}
+    children: formPropertyCompletions(metadata.properties, customTranslate)
   };
-  for (const property of metadata.properties) {
-    properties.children[property.id] = scadaSymbolPropertyCompletion(property, customTranslate);
-  }
   const values: TbEditorCompletion = {
     meta: 'object',
     type: 'object',
@@ -1441,18 +1437,6 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
   };
 };
 
-const scadaSymbolPropertyCompletion = (property: ScadaSymbolProperty, customTranslate: CustomTranslatePipe): TbEditorCompletion => {
-  let description = customTranslate.transform(property.name, property.name);
-  if (property.subLabel) {
-    description += ` <small>${customTranslate.transform(property.subLabel, property.subLabel)}</small>`;
-  }
-  return {
-    meta: 'property',
-    description,
-    type: scadaSymbolPropertyCompletionType(property.type)
-  };
-};
-
 const scadaSymbolValueCompletion = (value: ScadaSymbolBehavior, customTranslate: CustomTranslatePipe): TbEditorCompletion => {
   const description = customTranslate.transform(value.name, value.name);
   return {
@@ -1460,27 +1444,6 @@ const scadaSymbolValueCompletion = (value: ScadaSymbolBehavior, customTranslate:
     description,
     type: scadaSymbolValueCompletionType(value.valueType)
   };
-};
-
-const scadaSymbolPropertyCompletionType = (type: ScadaSymbolPropertyType): string => {
-  switch (type) {
-    case ScadaSymbolPropertyType.text:
-      return 'string';
-    case ScadaSymbolPropertyType.number:
-      return 'number';
-    case ScadaSymbolPropertyType.switch:
-      return 'boolean';
-    case ScadaSymbolPropertyType.color:
-      return 'color string';
-    case ScadaSymbolPropertyType.color_settings:
-      return 'ColorProcessor';
-    case ScadaSymbolPropertyType.font:
-      return 'Font';
-    case ScadaSymbolPropertyType.units:
-      return 'units string';
-    case ScadaSymbolPropertyType.icon:
-      return 'icon string';
-  }
 };
 
 const scadaSymbolValueCompletionType = (type: ValueType): string => {

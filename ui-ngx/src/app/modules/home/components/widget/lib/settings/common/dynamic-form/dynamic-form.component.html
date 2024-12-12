@@ -1,0 +1,117 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div [class.!hidden]="!propertyGroups?.length && !propertiesContent.children?.length" class="tb-form-panel" [class.stroked]="stroked"
+     [formGroup]="propertiesFormGroup">
+  <div *ngIf="title" class="tb-form-panel-title">{{ title }}</div>
+  <ng-container #propertiesContent><ng-content select=".tb-properties-content"></ng-content></ng-container>
+  <ng-container *ngFor="let propertyGroup of propertyGroups">
+    <ng-container *ngIf="propertyGroup.visible">
+      <div *ngIf="propertyGroup.title" class="tb-form-panel stroked">
+        <mat-expansion-panel class="tb-settings" expanded>
+          <mat-expansion-panel-header class="flex flex-row flex-wrap">
+            <mat-panel-title>
+              <div class="tb-form-panel-title">{{ propertyGroup.title | customTranslate }}</div>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+            <ng-container *ngTemplateOutlet="propertyContainersTpl; context:{propertyContainers: propertyGroup.containers}"></ng-container>
+          </ng-template>
+        </mat-expansion-panel>
+      </div>
+      <ng-container *ngIf="!propertyGroup.title">
+        <ng-container *ngTemplateOutlet="propertyContainersTpl; context:{propertyContainers: propertyGroup.containers}"></ng-container>
+      </ng-container>
+    </ng-container>
+  </ng-container>
+</div>
+
+<ng-template #propertyContainersTpl let-propertyContainers="propertyContainers">
+  <ng-container *ngFor="let propertyContainer of propertyContainers" [formGroup]="propertiesFormGroup">
+    <ng-container *ngIf="propertyContainer.type === FormPropertyContainerType.row && propertyContainer.visible">
+      <ng-container *ngTemplateOutlet="propertyRowTpl;context:{propertyRow: propertyContainer}">
+      </ng-container>
+    </ng-container>
+    <tb-dynamic-form *ngIf="propertyContainer.type === FormPropertyContainerType.fieldset && propertyContainer.visible"
+                     formControlName="{{ propertyContainer.property.id }}"
+                     title="{{ propertyContainer.label | customTranslate }}"
+                     stroked
+                     [properties]="propertyContainer.properties">
+    </tb-dynamic-form>
+  </ng-container>
+</ng-template>
+
+<ng-template #propertyRowTpl let-propertyRow="propertyRow">
+  <div [formGroup]="propertiesFormGroup" class="tb-form-row space-between flex-wrap overflow-auto" [class]="propertyRow.rowClass">
+    <mat-slide-toggle *ngIf="propertyRow.switch && propertyRow.switch.visible"
+                      class="mat-slide fixed-title-width margin" formControlName="{{ propertyRow.switch.id }}">
+      {{ propertyRow.label | customTranslate }}
+    </mat-slide-toggle>
+    <div *ngIf="!propertyRow.switch" class="fixed-title-width fixed-title-height">{{ propertyRow.label | customTranslate }}</div>
+    <div *ngIf="propertyRow.properties.length" class="tb-flex row flex-end align-center">
+      <ng-container *ngFor="let property of propertyRow.properties">
+        <ng-container *ngIf="property.visible">
+          <div *ngIf="property.subLabel" class="tb-small-label">{{ property.subLabel | customTranslate }}</div>
+          <mat-form-field  *ngIf="property.type === FormPropertyType.text" [class]="property.fieldClass" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="{{ property.id }}" [required]="property.required" placeholder="{{ 'widget-config.set' | translate }}">
+            <div class="lt-md:!hidden" matSuffix *ngIf="property.fieldSuffix">{{ property.fieldSuffix | customTranslate }}</div>
+          </mat-form-field>
+          <mat-form-field  *ngIf="property.type === FormPropertyType.select" [class]="property.fieldClass || 'medium-width'" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="{{ property.id }}" [multiple]="property.multiple">
+              <mat-option *ngFor="let item of property.items" [value]="item.value">
+                {{ item.label | customTranslate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <tb-color-input *ngIf="property.type === FormPropertyType.color"
+                          [required]="property.required"
+                          [class]="property.fieldClass"
+                          asBoxInput
+                          colorClearButton
+                          formControlName="{{ property.id }}">
+          </tb-color-input>
+          <tb-color-settings *ngIf="property.type === FormPropertyType.color_settings"
+                             [class]="property.fieldClass"
+                             formControlName="{{ property.id }}"
+                             settingsKey="{{ property.name | customTranslate }}">
+          </tb-color-settings>
+          <mat-form-field  *ngIf="property.type === FormPropertyType.number" [class]="property.fieldClass" appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="{{ property.id }}" [required]="property.required"
+                   [min]="property.min" [max]="property.max" [step]="property.step"
+                   type="number" placeholder="{{ 'widget-config.set' | translate }}">
+            <div class="lt-md:!hidden" matSuffix *ngIf="property.fieldSuffix">{{ property.fieldSuffix | customTranslate }}</div>
+          </mat-form-field>
+          <tb-font-settings *ngIf="property.type === FormPropertyType.font"
+                            [class]="property.fieldClass"
+                            formControlName="{{ property.id }}"
+                            clearButton
+                            disabledLineHeight>
+          </tb-font-settings>
+          <tb-unit-input *ngIf="property.type === FormPropertyType.units"
+                         [class]="property.fieldClass"
+                         [required]="property.required"
+                         formControlName="{{ property.id }}"></tb-unit-input>
+          <tb-material-icon-select *ngIf="property.type === FormPropertyType.icon"
+                                   asBoxInput
+                                   formControlName="{{ property.id }}">
+          </tb-material-icon-select>
+          <mat-divider *ngIf="property.divider" vertical></mat-divider>
+        </ng-container>
+      </ng-container>
+    </div>
+  </div>
+</ng-template>

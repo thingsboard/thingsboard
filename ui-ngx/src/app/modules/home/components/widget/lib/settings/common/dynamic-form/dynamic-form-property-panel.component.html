@@ -1,0 +1,251 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-dynamic-form-property-settings-panel" [formGroup]="propertyFormGroup">
+  <div class="tb-dynamic-form-property-settings-title">{{ panelTitle | translate }}</div>
+  <div class="tb-dynamic-form-property-settings-panel-content">
+    <div class="tb-form-row">
+      <div class="fixed-title-width" translate>dynamic-form.property.id</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <input required matInput formControlName="id" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" translate>dynamic-form.property.name</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <input required matInput formControlName="name" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" translate>dynamic-form.property.group-title</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="group" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" translate>dynamic-form.property.type</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="type">
+          <mat-option *ngFor="let type of formPropertyTypes" [value]="type">
+            {{ formPropertyTypeTranslations.get(type) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div *ngIf="propertyFormGroup.get('type').value === FormPropertyType.number" class="tb-form-row space-between">
+      <div translate>dynamic-form.property.number-settings</div>
+      <div class="flex flex-1 flex-row items-center justify-end gap-2">
+        <div class="tb-small-label" translate>dynamic-form.property.min</div>
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+          <input matInput formControlName="min"
+                 type="number" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <mat-divider vertical></mat-divider>
+        <div class="tb-small-label" translate>dynamic-form.property.max</div>
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+          <input matInput formControlName="max"
+                 type="number" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <mat-divider vertical></mat-divider>
+        <div class="tb-small-label" translate>dynamic-form.property.step</div>
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+          <input matInput formControlName="step" min="0"
+                 type="number" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+    </div>
+    <div *ngIf="propertyFormGroup.get('type').value === FormPropertyType.fieldset" class="tb-form-panel stroked">
+      <mat-expansion-panel class="tb-settings" expanded>
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
+          <mat-panel-title>
+            {{ 'dynamic-form.property.properties' | translate }}
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <tb-dynamic-form-properties formControlName="properties" noBorder noMargin>
+          </tb-dynamic-form-properties>
+        </ng-template>
+      </mat-expansion-panel>
+    </div>
+    <ng-container *ngIf="propertyFormGroup.get('type').value === FormPropertyType.select">
+      <div class="tb-form-panel stroked">
+        <mat-expansion-panel class="tb-settings" expanded>
+          <mat-expansion-panel-header class="flex flex-row flex-wrap">
+            <mat-panel-title>
+              {{ 'dynamic-form.property.select-options' | translate }}
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+            <div class="tb-form-row space-between">
+              <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="multiple">
+                {{ 'dynamic-form.property.enable-multiple-select' | translate }}
+              </mat-slide-toggle>
+            </div>
+            <tb-dynamic-form-select-items
+              formControlName="items">
+            </tb-dynamic-form-select-items>
+          </ng-template>
+        </mat-expansion-panel>
+      </div>
+    </ng-container>
+    <div *ngIf="propertyFormGroup.get('type').value !== FormPropertyType.fieldset" class="tb-form-row space-between">
+      <div class="fixed-title-width" translate>dynamic-form.property.default-value</div>
+      <mat-form-field  *ngIf="propertyFormGroup.get('type').value === FormPropertyType.text"
+                       class="flex"
+                       appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="default" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+      <tb-color-input *ngIf="propertyFormGroup.get('type').value === FormPropertyType.color"
+                      asBoxInput
+                      colorClearButton
+                      formControlName="default">
+      </tb-color-input>
+      <tb-color-settings *ngIf="propertyFormGroup.get('type').value === FormPropertyType.color_settings"
+                         formControlName="default"
+                         settingsKey="{{ propertyFormGroup.get('id').value }}">
+      </tb-color-settings>
+      <mat-form-field  *ngIf="propertyFormGroup.get('type').value === FormPropertyType.number"
+                       appearance="outline"
+                       class="number"
+                       subscriptSizing="dynamic">
+        <input matInput formControlName="default"
+               [min]="propertyFormGroup.get('min').value"
+               [max]="propertyFormGroup.get('max').value"
+               [step]="propertyFormGroup.get('step').value"
+               type="number" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+      <tb-font-settings *ngIf="propertyFormGroup.get('type').value === FormPropertyType.font"
+                        formControlName="default"
+                        clearButton
+                        disabledLineHeight>
+      </tb-font-settings>
+      <tb-unit-input *ngIf="propertyFormGroup.get('type').value === FormPropertyType.units"
+                     formControlName="default"></tb-unit-input>
+      <tb-value-input *ngIf="propertyFormGroup.get('type').value === FormPropertyType.switch"
+                      [valueType]="ValueType.BOOLEAN"
+                      formControlName="default"></tb-value-input>
+      <tb-material-icon-select *ngIf="propertyFormGroup.get('type').value === FormPropertyType.icon"
+                               asBoxInput
+                               formControlName="default">
+      </tb-material-icon-select>
+      <mat-form-field *ngIf="propertyFormGroup.get('type').value === FormPropertyType.select" class="medium-width"
+                      appearance="outline" subscriptSizing="dynamic">
+        <mat-select *ngIf="!propertyFormGroup.get('multiple').value" formControlName="default">
+          <mat-option *ngFor="let item of propertyFormGroup.get('items').value" [value]="item.value">
+            {{ item.label | customTranslate }}
+          </mat-option>
+        </mat-select>
+        <mat-select *ngIf="propertyFormGroup.get('multiple').value" formControlName="default" multiple>
+          <mat-option *ngFor="let item of propertyFormGroup.get('items').value" [value]="item.value">
+            {{ item.label | customTranslate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div *ngIf="propertyFormGroup.get('type').value !== FormPropertyType.fieldset" class="tb-form-row space-between">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="required">
+        {{ 'dynamic-form.property.value-required' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <div class="tb-form-panel stroked">
+      <mat-expansion-panel class="tb-settings">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
+          <mat-panel-title>
+            {{ 'dynamic-form.property.advanced-ui-settings' | translate }}
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <div *ngIf="propertyFormGroup.get('type').value !== FormPropertyType.fieldset" class="tb-form-row space-between">
+            <div class="fixed-title-width" translate>dynamic-form.property.sub-label</div>
+            <mat-form-field  class="flex"
+                             appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="subLabel" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+          </div>
+          <div *ngIf="propertyFormGroup.get('type').value !== FormPropertyType.fieldset" class="tb-form-row space-between">
+            <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="divider">
+              {{ 'dynamic-form.property.vertical-divider-after' | translate }}
+            </mat-slide-toggle>
+          </div>
+          <div *ngIf="[FormPropertyType.number, FormPropertyType.text].includes(propertyFormGroup.get('type').value)"
+               class="tb-form-row space-between">
+            <div class="fixed-title-width" translate>dynamic-form.property.input-field-suffix</div>
+            <mat-form-field  class="flex"
+                             appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="fieldSuffix" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row space-between">
+            <div class="fixed-title-width" translate>dynamic-form.property.disable-on-property</div>
+            <mat-form-field  class="flex" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="disableOnProperty" placeholder="{{ 'widget-config.set' | translate }}">
+                <mat-option [value]="null"></mat-option>
+                <mat-option *ngFor="let prop of booleanPropertyIds" [value]="prop">
+                  {{ prop }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row">
+            <tb-js-func
+              class="flex-1"
+              formControlName="condition"
+              [functionArgs]="['property', 'model']"
+              functionTitle="{{ 'dynamic-form.property.display-condition-function' | translate }}">
+            </tb-js-func>
+          </div>
+          <div *ngIf="propertyFormGroup.get('type').value !== FormPropertyType.fieldset" class="tb-form-row">
+            <div class="fixed-title-width" translate>dynamic-form.property.property-row-classes</div>
+            <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="rowClass" multiple placeholder="{{ 'widget-config.set' | translate }}">
+                <mat-option *ngFor="let clazz of formPropertyRowClasses" [value]="clazz">
+                  {{ clazz }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div *ngIf="![FormPropertyType.fieldset, FormPropertyType.switch].includes(propertyFormGroup.get('type').value)" class="tb-form-row">
+            <div class="fixed-title-width" translate>dynamic-form.property.property-field-classes</div>
+            <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="fieldClass" multiple placeholder="{{ 'widget-config.set' | translate }}">
+                <mat-option *ngFor="let clazz of formPropertyFieldClasses" [value]="clazz">
+                  {{ clazz }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </ng-template>
+      </mat-expansion-panel>
+    </div>
+  </div>
+  <div class="tb-dynamic-form-property-settings-panel-buttons">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ (disabled ? 'action.close' : 'action.cancel') | translate }}
+    </button>
+    <button *ngIf="!disabled"
+            mat-raised-button
+            color="primary"
+            type="button"
+            (click)="applyPropertySettings()"
+            [disabled]="propertyFormGroup.invalid || !propertyFormGroup.dirty">
+      {{ (isAdd ? 'action.add' : 'action.apply') | translate }}
+    </button>
+  </div>
+</div>

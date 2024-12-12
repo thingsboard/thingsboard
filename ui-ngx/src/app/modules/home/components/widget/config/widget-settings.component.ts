@@ -40,13 +40,14 @@ import { Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { JsonFormComponent } from '@shared/components/json-form/json-form.component';
 import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
-import { IWidgetSettingsComponent, Widget, WidgetSettings } from '@shared/models/widget.models';
+import { DynamicFormData, IWidgetSettingsComponent, Widget, WidgetSettings } from '@shared/models/widget.models';
 import { widgetSettingsComponentsMap } from '@home/components/widget/lib/settings/widget-settings.module';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { WidgetService } from '@core/http/widget.service';
 import { IAliasController } from '@core/api/widget-api.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
+import { FormProperty } from '@shared/models/dynamic-form.models';
 
 @Component({
   selector: 'tb-widget-settings',
@@ -66,8 +67,6 @@ import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-con
 export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy, OnChanges, Validator {
 
   @ViewChild('definedSettingsContent', {read: ViewContainerRef, static: true}) definedSettingsContainer: ViewContainerRef;
-
-  @ViewChild('jsonFormComponent') jsonFormComponent: JsonFormComponent;
 
   @Input()
   disabled: boolean;
@@ -91,6 +90,8 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy,
 
   definedDirectiveError: string;
 
+  settingsForm?: FormProperty[];
+
   widgetSettingsFormGroup: UntypedFormGroup;
 
   changeSubscription: Subscription;
@@ -98,7 +99,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy,
   private definedSettingsComponentRef: ComponentRef<IWidgetSettingsComponent>;
   private definedSettingsComponent: IWidgetSettingsComponent;
 
-  private widgetSettingsFormData: JsonFormComponentData;
+  private widgetSettingsFormData: JsonFormComponentData | DynamicFormData;
   private propagateChange = (_v: any) => { };
 
   constructor(private translate: TranslateService,
@@ -165,8 +166,13 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy,
     }
   }
 
-  writeValue(value: JsonFormComponentData): void {
+  writeValue(value: JsonFormComponentData | DynamicFormData): void {
     this.widgetSettingsFormData = value;
+    if ('settingsForm' in this.widgetSettingsFormData) {
+      this.settingsForm = this.widgetSettingsFormData.settingsForm;
+    } else {
+      this.settingsForm = null;
+    }
     if (this.changeSubscription) {
       this.changeSubscription.unsubscribe();
       this.changeSubscription = null;
@@ -181,10 +187,12 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy,
         this.updateModel(settings);
       });
     } else {
-      this.widgetSettingsFormGroup.get('settings').patchValue(this.widgetSettingsFormData, {emitEvent: false});
+      const settingsValue = this.useJsonForm() ? this.widgetSettingsFormData : this.widgetSettingsFormData.model;
+      this.widgetSettingsFormGroup.get('settings').patchValue(settingsValue, {emitEvent: false});
       this.changeSubscription = this.widgetSettingsFormGroup.get('settings').valueChanges.subscribe(
-        (widgetSettingsFormData: JsonFormComponentData) => {
-          this.updateModel(widgetSettingsFormData.model);
+        (data: JsonFormComponentData | WidgetSettings) => {
+          const settings = this.useJsonForm() ? data.model : data;
+          this.updateModel(settings);
         }
       );
     }
@@ -196,7 +204,11 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy,
   }
 
   useJsonForm(): boolean {
-    return !this.settingsDirective || !this.settingsDirective.length;
+    return (!this.settingsDirective || !this.settingsDirective.length) && !this.settingsForm?.length;
+  }
+
+  useDynamicForm(): boolean {
+    return (!this.settingsDirective || !this.settingsDirective.length) && !!this.settingsForm?.length;
   }
 
   private updateModel(settings: WidgetSettings) {
@@ -246,7 +258,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy,
           }
         };
       }
-    } else if (this.useJsonForm()) {
+    } else if (this.useJsonForm() || this.useDynamicForm()) {
       if (!this.widgetSettingsFormGroup.get('settings').valid) {
         return {
           widgetSettings: {

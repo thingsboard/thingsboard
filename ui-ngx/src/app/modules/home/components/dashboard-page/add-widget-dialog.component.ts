@@ -30,6 +30,7 @@ import { isDefined, isDefinedAndNotNull, isString } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import { jsonFormSchemaToFormProperties } from '@shared/models/dynamic-form.models';
 
 export interface AddWidgetDialogData {
   dashboard: Dashboard;
@@ -108,6 +109,7 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
     const dataKeySettingsFunction: DataKeySettingsFunction = typeParameters?.dataKeySettingsFunction;
     const actionSources = widgetInfo.actionSources;
     const isDataEnabled = isDefined(widgetInfo.typeParameters) ? !widgetInfo.typeParameters.useCustomDatasources : true;
+    let settingsForm = jsonFormSchemaToFormProperties(rawSettingsSchema);
     let settingsSchema;
     if (!rawSettingsSchema || rawSettingsSchema === '') {
       settingsSchema = {};
@@ -142,6 +144,7 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
       typeParameters,
       actionSources,
       isDataEnabled,
+      settingsForm,
       settingsSchema,
       dataKeySettingsSchema,
       latestDataKeySettingsSchema,

@@ -21,8 +21,10 @@ import {
   EventEmitter,
   Inject,
   OnDestroy,
-  OnInit, Renderer2,
-  ViewChild, ViewContainerRef,
+  OnInit,
+  Renderer2,
+  ViewChild,
+  ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
 import { Store } from '@ngrx/store';
@@ -65,12 +67,13 @@ import { Observable } from 'rxjs/internal/Observable';
 import { catchError, map, tap } from 'rxjs/operators';
 import { beautifyCss, beautifyHtml, beautifyJs } from '@shared/models/beautify.models';
 import { HttpClient, HttpStatusCode } from '@angular/common/http';
-import Timeout = NodeJS.Timeout;
-import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { loadModulesCompleter } from '@shared/models/js-function.models';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { JsFuncModulesComponent } from '@shared/components/js-func-modules.component';
 import { MatIconButton } from '@angular/material/button';
+import { formPropertyCompletions, jsonFormSchemaToFormProperties } from '@shared/models/dynamic-form.models';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import Timeout = NodeJS.Timeout;
 
 // @dynamic
 @Component({
@@ -197,6 +200,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
+              private customTranslate: CustomTranslatePipe,
               private http: HttpClient) {
     super(store);
 
@@ -222,6 +226,9 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     if (this.widgetTypeDetails) {
       const config = JSON.parse(this.widget.defaultConfig);
       this.widget.defaultConfig = JSON.stringify(config);
+    }
+    if (!this.widget.settingsForm?.length) {
+      this.widget.settingsForm = jsonFormSchemaToFormProperties(this.widget.settingsSchema);
     }
     this.origWidget = deepClone(this.widget);
     if (!this.widgetTypeDetails) {
@@ -405,6 +412,11 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
         this.jsEditor.on('change', () => {
           this.cleanupJsErrors();
         });
+        if (!(this.jsEditor as any).completer) {
+          this.jsEditor.execCommand("startAutocomplete");
+          (this.jsEditor as any).completer.detach();
+        }
+        (this.jsEditor as any).completer.popup.container.style.width = '500px';
         this.initialCompleters = this.jsEditor.completers || [];
       })
     ));
@@ -873,6 +885,11 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.isDirty = true;
   }
 
+  settingsFormUpdated() {
+    this.isDirty = true;
+    this.updateControllerScriptCompleters();
+  }
+
   editControllerScriptModules($event: Event, button: MatIconButton) {
     if ($event) {
       $event.stopPropagation();
@@ -951,7 +968,8 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     const modulesCompleterObservable = loadModulesCompleter(this.http, this.controllerScriptModules);
     modulesCompleterObservable.subscribe((modulesCompleter) => {
       const completers: Ace.Completer[] = [];
-      completers.push(widgetEditorCompleter);
+      const formPropertiesCompletions = formPropertyCompletions(this.widget.settingsForm || [], this.customTranslate);
+      completers.push(widgetEditorCompleter(formPropertiesCompletions));
       if (modulesCompleter) {
         completers.push(modulesCompleter);
       }

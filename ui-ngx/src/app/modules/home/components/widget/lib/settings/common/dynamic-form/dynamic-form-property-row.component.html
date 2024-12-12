@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div [formGroup]="propertyRowFormGroup" class="tb-form-table-row tb-scada-symbol-metadata-property-row">
+<div [formGroup]="propertyRowFormGroup" class="tb-form-table-row tb-dynamic-form-property-row">
   <mat-form-field class="tb-inline-field tb-id-field" appearance="outline" subscriptSizing="dynamic">
     <input #idInput required matInput formControlName="id" placeholder="{{ 'widget-config.set' | translate }}">
   </mat-form-field>
@@ -24,8 +24,8 @@
   </mat-form-field>
   <mat-form-field class="tb-inline-field tb-type-field fixed-height" appearance="outline" subscriptSizing="dynamic">
     <mat-select formControlName="type">
-      <mat-option *ngFor="let type of scadaSymbolPropertyTypes" [value]="type">
-        {{ scadaSymbolPropertyTypeTranslations.get(type) | translate }}
+      <mat-option *ngFor="let type of formPropertyTypes" [value]="type">
+        {{ formPropertyTypeTranslations.get(type) | translate }}
       </mat-option>
     </mat-select>
   </mat-form-field>
@@ -34,7 +34,7 @@
             mat-icon-button
             #editButton
             (click)="editProperty($event, editButton)"
-            matTooltip="{{ 'scada.property.property-settings' | translate }}"
+            matTooltip="{{ 'dynamic-form.property.property-settings' | translate }}"
             matTooltipPosition="above">
       <mat-icon>settings</mat-icon>
     </button>
@@ -42,7 +42,7 @@
             type="button"
             mat-icon-button
             (click)="propertyRemoved.emit()"
-            matTooltip="{{ 'scada.property.remove-property' | translate }}"
+            matTooltip="{{ 'dynamic-form.property.remove-property' | translate }}"
             matTooltipPosition="above">
       <mat-icon>delete</mat-icon>
     </button>

@@ -29,6 +29,7 @@ import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { jsonFormSchemaToFormProperties } from '@shared/models/dynamic-form.models';
 
 @Component({
   selector: 'tb-edit-widget',
@@ -146,6 +147,7 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
     const dataKeySettingsFunction: DataKeySettingsFunction = typeParameters?.dataKeySettingsFunction;
     const actionSources = widgetInfo.actionSources;
     const isDataEnabled = isDefined(widgetInfo.typeParameters) ? !widgetInfo.typeParameters.useCustomDatasources : true;
+    const settingsForm = jsonFormSchemaToFormProperties(rawSettingsSchema);
     let settingsSchema;
     if (!rawSettingsSchema || rawSettingsSchema === '') {
       settingsSchema = {};
@@ -173,6 +175,7 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
       typeParameters,
       actionSources,
       isDataEnabled,
+      settingsForm,
       settingsSchema,
       dataKeySettingsSchema,
       latestDataKeySettingsSchema,

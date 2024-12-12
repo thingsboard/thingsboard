@@ -106,6 +106,7 @@ import { UserSettingsService } from '@core/http/user-settings.service';
 import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { UtilsService } from '@core/services/utils.service';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
+import { FormProperty } from '@shared/models/dynamic-form.models';
 
 export interface IWidgetAction {
   name: string;
@@ -577,6 +578,7 @@ export interface WidgetConfigComponentData {
   typeParameters: WidgetTypeParameters;
   actionSources: {[actionSourceId: string]: WidgetActionSource};
   isDataEnabled: boolean;
+  settingsForm: FormProperty[];
   settingsSchema: JsonSettingsSchema;
   dataKeySettingsSchema: JsonSettingsSchema;
   latestDataKeySettingsSchema: JsonSettingsSchema;

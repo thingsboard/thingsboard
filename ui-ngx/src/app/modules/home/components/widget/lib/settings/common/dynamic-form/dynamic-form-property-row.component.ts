@@ -16,7 +16,7 @@
 
 import {
   ChangeDetectorRef,
-  Component,
+  Component, DestroyRef,
   ElementRef,
   EventEmitter,
   forwardRef,
@@ -39,38 +39,39 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
-import {
-  ScadaSymbolProperty,
-  ScadaSymbolPropertyType,
-  scadaSymbolPropertyTypes,
-  scadaSymbolPropertyTypeTranslations
-} from '@home/components/widget/lib/scada/scada-symbol.models';
 import { deepClone } from '@core/utils';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { constantColor, Font } from '@shared/models/widget-settings.models';
 import {
-  ScadaSymbolPropertyPanelComponent
-} from '@home/pages/scada-symbol/metadata-components/scada-symbol-property-panel.component';
+  FormProperty,
+  FormPropertyType,
+  formPropertyTypes,
+  formPropertyTypeTranslations
+} from '@shared/models/dynamic-form.models';
 import {
-  ScadaSymbolPropertiesComponent
-} from '@home/pages/scada-symbol/metadata-components/scada-symbol-properties.component';
+  DynamicFormPropertiesComponent
+} from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-properties.component';
+import {
+  DynamicFormPropertyPanelComponent
+} from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-property-panel.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-export const propertyValid = (property: ScadaSymbolProperty): boolean => !(!property.id || !property.name || !property.type);
+export const propertyValid = (property: FormProperty): boolean => !(!property.id || !property.name || !property.type);
 
-export const defaultPropertyValue = (type: ScadaSymbolPropertyType): any => {
+export const defaultPropertyValue = (type: FormPropertyType): any => {
   switch (type) {
-    case ScadaSymbolPropertyType.text:
+    case FormPropertyType.text:
       return '';
-    case ScadaSymbolPropertyType.number:
+    case FormPropertyType.number:
       return 0;
-    case ScadaSymbolPropertyType.switch:
+    case FormPropertyType.switch:
       return false;
-    case ScadaSymbolPropertyType.color:
+    case FormPropertyType.color:
       return '#000';
-    case ScadaSymbolPropertyType.color_settings:
+    case FormPropertyType.color_settings:
       return constantColor('#000');
-    case ScadaSymbolPropertyType.font:
+    case FormPropertyType.font:
       return {
         size: 12,
         sizeUnit: 'px',
@@ -79,32 +80,35 @@ export const defaultPropertyValue = (type: ScadaSymbolPropertyType): any => {
         style: 'normal',
         lineHeight: '1'
       } as Font;
-    case ScadaSymbolPropertyType.units:
+    case FormPropertyType.units:
       return '';
-    case ScadaSymbolPropertyType.icon:
+    case FormPropertyType.icon:
       return 'star';
+    case FormPropertyType.fieldset:
+    case FormPropertyType.select:
+      return null;
   }
 };
 
 @Component({
-  selector: 'tb-scada-symbol-metadata-property-row',
-  templateUrl: './scada-symbol-property-row.component.html',
-  styleUrls: ['./scada-symbol-property-row.component.scss'],
+  selector: 'tb-dynamic-form-property-row',
+  templateUrl: './dynamic-form-property-row.component.html',
+  styleUrls: ['./dynamic-form-property-row.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ScadaSymbolPropertyRowComponent),
+      useExisting: forwardRef(() => DynamicFormPropertyRowComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ScadaSymbolPropertyRowComponent),
+      useExisting: forwardRef(() => DynamicFormPropertyRowComponent),
       multi: true
     }
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class ScadaSymbolPropertyRowComponent implements ControlValueAccessor, OnInit, Validator {
+export class DynamicFormPropertyRowComponent implements ControlValueAccessor, OnInit, Validator {
 
   @ViewChild('idInput')
   idInput: ElementRef<HTMLInputElement>;
@@ -112,8 +116,8 @@ export class ScadaSymbolPropertyRowComponent implements ControlValueAccessor, On
   @ViewChild('editButton')
   editButton: MatButton;
 
-  scadaSymbolPropertyTypes = scadaSymbolPropertyTypes;
-  scadaSymbolPropertyTypeTranslations = scadaSymbolPropertyTypeTranslations;
+  formPropertyTypes = formPropertyTypes;
+  formPropertyTypeTranslations = formPropertyTypeTranslations;
 
   @Input()
   disabled: boolean;
@@ -129,16 +133,17 @@ export class ScadaSymbolPropertyRowComponent implements ControlValueAccessor, On
 
   propertyRowFormGroup: UntypedFormGroup;
 
-  modelValue: ScadaSymbolProperty;
+  modelValue: FormProperty;
 
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef,
               private cd: ChangeDetectorRef,
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
-              private propertiesComponent: ScadaSymbolPropertiesComponent) {
+              private propertiesComponent: DynamicFormPropertiesComponent) {
   }
 
   ngOnInit() {
@@ -147,10 +152,14 @@ export class ScadaSymbolPropertyRowComponent implements ControlValueAccessor, On
       name: [null, [Validators.required]],
       type: [null, [Validators.required]]
     });
-    this.propertyRowFormGroup.valueChanges.subscribe(
+    this.propertyRowFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.updateModel()
     );
-    this.propertyRowFormGroup.get('type').valueChanges.subscribe((newType: ScadaSymbolPropertyType) => {
+    this.propertyRowFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((newType: FormPropertyType) => {
       this.onTypeChanged(newType);
     });
   }
@@ -171,7 +180,7 @@ export class ScadaSymbolPropertyRowComponent implements ControlValueAccessor, On
     }
   }
 
-  writeValue(value: ScadaSymbolProperty): void {
+  writeValue(value: FormProperty): void {
     this.modelValue = value;
     this.propertyRowFormGroup.patchValue(
       {
@@ -197,14 +206,14 @@ export class ScadaSymbolPropertyRowComponent implements ControlValueAccessor, On
         booleanPropertyIds: this.booleanPropertyIds,
         property: deepClone(this.modelValue)
       };
-      const scadaSymbolPropertyPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, ScadaSymbolPropertyPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
+      const dynamicFormPropertyPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, DynamicFormPropertyPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
         ctx,
         {},
         {}, {}, true);
-      scadaSymbolPropertyPanelPopover.tbComponentRef.instance.popover = scadaSymbolPropertyPanelPopover;
-      scadaSymbolPropertyPanelPopover.tbComponentRef.instance.propertySettingsApplied.subscribe((property) => {
-        scadaSymbolPropertyPanelPopover.hide();
+      dynamicFormPropertyPanelPopover.tbComponentRef.instance.popover = dynamicFormPropertyPanelPopover;
+      dynamicFormPropertyPanelPopover.tbComponentRef.instance.propertySettingsApplied.subscribe((property) => {
+        dynamicFormPropertyPanelPopover.hide();
         this.propertyRowFormGroup.patchValue(
           {
             id: property.id,
@@ -215,7 +224,7 @@ export class ScadaSymbolPropertyRowComponent implements ControlValueAccessor, On
         this.modelValue = property;
         this.propagateChange(this.modelValue);
       });
-      scadaSymbolPropertyPanelPopover.tbDestroy.subscribe(() => {
+      dynamicFormPropertyPanelPopover.tbDestroy.subscribe(() => {
         if (!propertyValid(this.modelValue)) {
           editCanceled();
         }
@@ -244,7 +253,7 @@ export class ScadaSymbolPropertyRowComponent implements ControlValueAccessor, On
         propertyIdNotUnique: true
       };
     }
-    const property: ScadaSymbolProperty = {...this.modelValue, ...this.propertyRowFormGroup.value};
+    const property: FormProperty = {...this.modelValue, ...this.propertyRowFormGroup.value};
     if (!propertyValid(property)) {
       return {
         property: true
@@ -269,13 +278,13 @@ export class ScadaSymbolPropertyRowComponent implements ControlValueAccessor, On
     };
   }
 
-  private onTypeChanged(newType: ScadaSymbolPropertyType) {
+  private onTypeChanged(newType: FormPropertyType) {
     this.modelValue = {...this.modelValue, ...{type: newType}};
     this.modelValue.default = defaultPropertyValue(newType);
   }
 
   private updateModel() {
-    const value: ScadaSymbolProperty = this.propertyRowFormGroup.value;
+    const value: FormProperty = this.propertyRowFormGroup.value;
     this.modelValue = {...this.modelValue, ...value};
     this.propagateChange(this.modelValue);
   }

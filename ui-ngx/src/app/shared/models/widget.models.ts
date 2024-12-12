@@ -45,6 +45,7 @@ import { HasTenantId, HasVersion } from '@shared/models/entity.models';
 import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 import { TbFunction } from '@shared/models/js-function.models';
+import { FormProperty } from '@shared/models/dynamic-form.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -153,6 +154,7 @@ export interface WidgetTypeDescriptor {
   templateHtml: string;
   templateCss: string;
   controllerScript: TbFunction;
+  settingsForm?: FormProperty[];
   settingsSchema?: string | any;
   dataKeySettingsSchema?: string | any;
   latestDataKeySettingsSchema?: string | any;
@@ -828,6 +830,12 @@ export interface JsonSettingsSchema {
   schema?: JsonSchema;
   form?: any[];
   groupInfoes?: GroupInfo[];
+}
+
+export interface DynamicFormData {
+  settingsForm?: FormProperty[];
+  model?: any;
+  settingsDirective?: string;
 }
 
 export interface WidgetPosition {

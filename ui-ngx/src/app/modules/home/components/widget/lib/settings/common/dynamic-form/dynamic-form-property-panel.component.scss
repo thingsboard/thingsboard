@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../../../../scss/constants';
+@import '../../../../../../../../../scss/constants';
 
-.tb-scada-symbol-property-settings-panel {
+.tb-dynamic-form-property-settings-panel {
   width: 540px;
   display: flex;
   flex-direction: column;
@@ -23,7 +23,7 @@
   @media #{$mat-lt-md} {
     width: 90vw;
   }
-  .tb-scada-symbol-property-settings-panel-content {
+  .tb-dynamic-form-property-settings-panel-content {
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -31,14 +31,14 @@
     margin: -10px;
     padding: 10px;
   }
-  .tb-scada-symbol-property-settings-title {
+  .tb-dynamic-form-property-settings-title {
     font-size: 16px;
     font-weight: 500;
     line-height: 24px;
     letter-spacing: 0.25px;
     color: rgba(0, 0, 0, 0.87);
   }
-  .tb-scada-symbol-property-settings-panel-buttons {
+  .tb-dynamic-form-property-settings-panel-buttons {
     height: 40px;
     display: flex;
     flex-direction: row;
