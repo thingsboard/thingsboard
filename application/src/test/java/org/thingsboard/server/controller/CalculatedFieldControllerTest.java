@@ -140,7 +140,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
 
         Argument argument = new Argument();
         argument.setEntityId(referencedEntityId);
-        argument.setType("TIME_SERIES");
+        argument.setType("TS_LATEST");
         argument.setKey("temperature");
 
         config.setArguments(Map.of("T", argument));
@@ -149,7 +149,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
 
         Output output = new Output();
         output.setName("output");
-        output.setType("TIME_SERIES");
+        output.setType("TS_LATEST");
 
         config.setOutput(output);
 
