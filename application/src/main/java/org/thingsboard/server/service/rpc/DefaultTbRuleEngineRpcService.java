@@ -132,7 +132,7 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
         TransportProtos.RestApiCallResponseMsgProto msg = TransportProtos.RestApiCallResponseMsgProto.newBuilder()
                 .setRequestIdMSB(requestId.getMostSignificantBits())
                 .setRequestIdLSB(requestId.getLeastSignificantBits())
-                .setResponse(TbMsg.toByteString(tbMsg))
+                .setResponseProto(TbMsg.toProto(tbMsg))
                 .build();
         clusterService.pushNotificationToCore(serviceId, msg, null);
     }

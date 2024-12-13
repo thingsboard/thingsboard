@@ -50,7 +50,7 @@ class DefaultTbRuleEngineRpcServiceTest {
         var restApiCallResponseMsgProto = TransportProtos.RestApiCallResponseMsgProto.newBuilder()
                 .setRequestIdMSB(requestId.getMostSignificantBits())
                 .setRequestIdLSB(requestId.getLeastSignificantBits())
-                .setResponse(TbMsg.toByteString(msg))
+                .setResponseProto(TbMsg.toProto(msg))
                 .build();
 
         // WHEN

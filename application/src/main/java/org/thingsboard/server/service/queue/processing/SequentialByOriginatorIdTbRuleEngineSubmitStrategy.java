@@ -34,7 +34,12 @@ public class SequentialByOriginatorIdTbRuleEngineSubmitStrategy extends Sequenti
     @Override
     protected EntityId getEntityId(TransportProtos.ToRuleEngineMsg msg) {
         try {
-            MsgProtos.TbMsgProto proto = MsgProtos.TbMsgProto.parseFrom(msg.getTbMsg());
+            MsgProtos.TbMsgProto proto;
+            if (msg.getTbMsg().isEmpty()) {
+                proto = msg.getTbMsgProto();
+            } else {
+                proto = MsgProtos.TbMsgProto.parseFrom(msg.getTbMsg());
+            }
             return EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
         } catch (InvalidProtocolBufferException e) {
             log.warn("[{}] Failed to parse TbMsg: {}", queueName, msg);
