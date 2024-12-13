@@ -14,25 +14,18 @@
 /// limitations under the License.
 ///
 
-import {
-  AfterViewInit,
-  Directive,
-  ElementRef,
-  Input,
-  OnDestroy,
-  OnInit,
-  Renderer2,
-} from '@angular/core';
-import { fromEvent, Subject } from 'rxjs';
-import { filter, takeUntil, tap } from 'rxjs/operators';
+import { AfterViewInit, Directive, ElementRef, Input, OnInit, Renderer2 } from '@angular/core';
 import { MatTooltip, TooltipPosition } from '@angular/material/tooltip';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Directive({
   selector: '[tbTruncateWithTooltip]',
-  providers: [MatTooltip],
+  hostDirectives: [{
+    directive: MatTooltip,
+    inputs: ['matTooltipClass', 'matTooltipTouchGestures'],
+  }]
 })
-export class TruncateWithTooltipDirective implements OnInit, AfterViewInit, OnDestroy {
+export class TruncateWithTooltipDirective implements OnInit, AfterViewInit {
 
   @Input('tbTruncateWithTooltip')
   text: string;
@@ -44,48 +37,31 @@ export class TruncateWithTooltipDirective implements OnInit, AfterViewInit, OnDe
   @Input()
   position: TooltipPosition = 'above';
 
-  private destroy$ = new Subject<void>();
-
   constructor(
-    private elementRef: ElementRef,
+    private elementRef: ElementRef<HTMLElement>,
     private renderer: Renderer2,
     private tooltip: MatTooltip
   ) {}
 
   ngOnInit(): void {
-    this.observeMouseEvents();
     this.applyTruncationStyles();
+    this.tooltip.position = this.position;
+    this.showTooltipOnOverflow(this);
   }
 
   ngAfterViewInit(): void {
-    this.tooltip.position = this.position;
+    this.tooltip.message = this.text || this.elementRef.nativeElement.innerText;
   }
 
-  ngOnDestroy(): void {
-    if (this.tooltip._isTooltipVisible()) {
-      this.hideTooltip();
-    }
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
-  private observeMouseEvents(): void {
-    fromEvent(this.elementRef.nativeElement, 'mouseenter')
-      .pipe(
-        filter(() => this.tooltipEnabled),
-        filter(() => this.isOverflown(this.elementRef.nativeElement)),
-        tap(() => this.showTooltip()),
-        takeUntil(this.destroy$),
-      )
-      .subscribe();
-    fromEvent(this.elementRef.nativeElement, 'mouseleave')
-      .pipe(
-        filter(() => this.tooltipEnabled),
-        filter(() => this.tooltip._isTooltipVisible()),
-        tap(() => this.hideTooltip()),
-        takeUntil(this.destroy$),
-      )
-      .subscribe();
+  private showTooltipOnOverflow(ctx: TruncateWithTooltipDirective) {
+    ctx.tooltip.show = (function(old) {
+      function extendsFunction() {
+        if (ctx.tooltipEnabled && ctx.isOverflown()) {
+          old.apply(ctx.tooltip, arguments);
+        }
+      }
+      return extendsFunction;
+    })(ctx.tooltip.show);
   }
 
   private applyTruncationStyles(): void {
@@ -94,16 +70,7 @@ export class TruncateWithTooltipDirective implements OnInit, AfterViewInit, OnDe
     this.renderer.setStyle(this.elementRef.nativeElement, 'text-overflow', 'ellipsis');
   }
 
-  private isOverflown(element: HTMLElement): boolean {
-    return element.clientWidth < element.scrollWidth;
-  }
-
-  private showTooltip(): void {
-    this.tooltip.message = this.text || this.elementRef.nativeElement.innerText;
-    this.tooltip.show();
-  }
-
-  private hideTooltip(): void {
-    this.tooltip.hide();
+  private isOverflown(): boolean {
+    return this.elementRef.nativeElement.clientWidth < this.elementRef.nativeElement.scrollWidth;
   }
 }
