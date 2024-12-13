@@ -15,28 +15,13 @@
  */
 package org.thingsboard.server.dao.service.validator;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.domain.DomainDao;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
 @Component
 public class DomainDataValidator extends AbstractHasOtaPackageValidator<Domain> {
-
-    @Autowired
-    private DomainDao domainDao;
-
-    @Override
-    protected Domain validateUpdate(TenantId tenantId, Domain domain) {
-        Domain old = domainDao.findById(domain.getTenantId(), domain.getId().getId());
-        if (old == null) {
-            throw new DataValidationException("Can't update non existing domain!");
-        }
-        return old;
-    }
 
     @Override
     protected void validateDataImpl(TenantId tenantId, Domain domain) {
