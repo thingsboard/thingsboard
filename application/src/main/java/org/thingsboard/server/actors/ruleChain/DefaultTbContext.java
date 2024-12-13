@@ -173,7 +173,10 @@ public class DefaultTbContext implements TbContext {
         if (!msg.isValid()) {
             return;
         }
-        TbMsg tbMsg = msg.copyWithRuleChainId(ruleChainId);
+        TbMsg tbMsg = msg.copy()
+                .ruleChainId(ruleChainId)
+                .ruleNodeId(null)
+                .build();
         tbMsg.pushToStack(nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId());
         TopicPartitionInfo tpi = mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getQueueName(), getTenantId(), tbMsg.getOriginator());
         doEnqueue(tpi, tbMsg, new SimpleTbQueueCallback(md -> ack(msg), t -> tellFailure(msg, t)));
