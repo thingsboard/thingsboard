@@ -117,10 +117,10 @@ public class TbCoapDtlsSettings {
                 configBuilder.set(DTLS_CONNECTION_ID_NODE_ID, null);
             }
         }
-        if (maxTransmissionUnit != null) {
+        if (maxTransmissionUnit > 0) {
             configBuilder.set(DTLS_MAX_TRANSMISSION_UNIT, maxTransmissionUnit);
         }
-        if (maxFragmentLength != null) {
+        if (maxFragmentLength > 0) {
             Length length = fromLength(maxFragmentLength);
             if (length != null) {
                 configBuilder.set(DTLS_MAX_FRAGMENT_LENGTH, length);
