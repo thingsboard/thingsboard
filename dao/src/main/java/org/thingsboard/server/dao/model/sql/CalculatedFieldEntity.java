@@ -24,9 +24,10 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
-import org.thingsboard.server.common.data.cf.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -119,12 +120,10 @@ public class CalculatedFieldEntity extends BaseSqlEntity<CalculatedField> implem
     }
 
     private CalculatedFieldConfiguration readCalculatedFieldConfiguration(JsonNode config, EntityType entityType, UUID entityId) {
-        switch (CalculatedFieldType.valueOf(type)) {
-            case SIMPLE:
-                return new SimpleCalculatedFieldConfiguration(config, entityType, entityId);
-            default:
-                throw new IllegalArgumentException("Unsupported calculated field type: " + type + "!");
-        }
+        return switch (CalculatedFieldType.valueOf(type)) {
+            case SIMPLE -> new SimpleCalculatedFieldConfiguration(config, entityType, entityId);
+            case SCRIPT -> new ScriptCalculatedFieldConfiguration(config, entityType, entityId);
+        };
     }
 
 }

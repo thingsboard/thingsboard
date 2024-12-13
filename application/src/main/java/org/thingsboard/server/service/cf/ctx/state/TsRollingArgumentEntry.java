@@ -13,25 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.cf;
+package org.thingsboard.server.service.cf.ctx.state;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.EntityId;
+import lombok.NoArgsConstructor;
+
+import java.util.TreeMap;
 
 @Data
-public class CalculatedFieldCtx {
+@NoArgsConstructor
+@AllArgsConstructor
+public class TsRollingArgumentEntry implements ArgumentEntry {
 
-    private CalculatedFieldId calculatedFieldId;
-    private EntityId entityId;
-    private CalculatedFieldState state;
+    private TreeMap<Long, Object> tsRecords;
 
-    public CalculatedFieldCtx() {
+    @Override
+    public ArgumentType getType() {
+        return ArgumentType.TS_ROLLING;
     }
 
-    public CalculatedFieldCtx(CalculatedFieldId calculatedFieldId, EntityId entityId, CalculatedFieldState state) {
-        this.calculatedFieldId = calculatedFieldId;
-        this.entityId = entityId;
-        this.state = state;
+    @JsonIgnore
+    @Override
+    public Object getValue() {
+        return tsRecords;
     }
+
 }

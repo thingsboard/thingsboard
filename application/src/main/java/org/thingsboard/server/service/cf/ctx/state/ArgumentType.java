@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api;
+package org.thingsboard.server.service.cf.ctx.state;
 
-public enum ScriptType {
-    RULE_NODE_SCRIPT, CALCULATED_FIELD_SCRIPT
+public enum ArgumentType {
+    SINGLE_VALUE, TS_ROLLING
 }

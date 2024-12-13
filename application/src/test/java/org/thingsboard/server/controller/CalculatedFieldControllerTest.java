@@ -22,9 +22,11 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
-import org.thingsboard.server.common.data.cf.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.security.Authority;
@@ -136,16 +138,18 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
     private CalculatedFieldConfiguration getCalculatedFieldConfig(EntityId referencedEntityId) {
         SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
 
-        SimpleCalculatedFieldConfiguration.Argument argument = new SimpleCalculatedFieldConfiguration.Argument();
+        Argument argument = new Argument();
         argument.setEntityId(referencedEntityId);
-        argument.setType("TIME_SERIES");
+        argument.setType("TS_LATEST");
         argument.setKey("temperature");
 
         config.setArguments(Map.of("T", argument));
 
-        SimpleCalculatedFieldConfiguration.Output output = new SimpleCalculatedFieldConfiguration.Output();
-        output.setType("TIME_SERIES");
-        output.setExpression("T - (100 - H) / 5");
+        config.setExpression("T - (100 - H) / 5");
+
+        Output output = new Output();
+        output.setName("output");
+        output.setType("TS_LATEST");
 
         config.setOutput(output);
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.cf;
+package org.thingsboard.server.service.cf;
 
 import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.RocksDB;
@@ -21,6 +21,7 @@ import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.utils.RocksDBConfig;
 
@@ -31,6 +32,7 @@ import java.util.Map;
 
 @Service
 @Slf4j
+@ConditionalOnExpression("'${service.type:null}'=='monolith'")
 public class RocksDBService {
 
     private final RocksDB db;

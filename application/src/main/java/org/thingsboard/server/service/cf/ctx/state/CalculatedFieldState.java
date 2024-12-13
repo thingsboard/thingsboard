@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf;
+package org.thingsboard.server.service.cf.ctx.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.JsonNode;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.EntityId;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -32,24 +31,22 @@ import java.util.UUID;
         property = "type"
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = SimpleCalculatedFieldConfiguration.class, name = "SIMPLE")
+        @JsonSubTypes.Type(value = SimpleCalculatedFieldState.class, name = "SIMPLE"),
+        @JsonSubTypes.Type(value = ScriptCalculatedFieldState.class, name = "SCRIPT"),
 })
-public interface CalculatedFieldConfiguration {
+public interface CalculatedFieldState {
 
     @JsonIgnore
     CalculatedFieldType getType();
 
-    Map<String, BaseCalculatedFieldConfiguration.Argument> getArguments();
+    Map<String, ArgumentEntry> getArguments();
 
-    BaseCalculatedFieldConfiguration.Output getOutput();
+    default boolean isValid(Map<String, Argument> arguments) {
+        return getArguments().keySet().containsAll(arguments.keySet());
+    }
 
-    @JsonIgnore
-    List<EntityId> getReferencedEntities();
+    void initState(Map<String, ArgumentEntry> argumentValues);
 
-    @JsonIgnore
-    CalculatedFieldLinkConfiguration getReferencedEntityConfig(EntityId entityId);
-
-    @JsonIgnore
-    JsonNode calculatedFieldConfigToJson(EntityType entityType, UUID entityId);
+    ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx);
 
 }

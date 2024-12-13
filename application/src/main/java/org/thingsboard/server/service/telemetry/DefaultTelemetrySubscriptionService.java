@@ -32,7 +32,11 @@ import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -40,6 +44,7 @@ import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -47,10 +52,14 @@ import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.util.KvUtils;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.service.cf.CalculatedFieldExecutionService;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
+import org.thingsboard.server.service.profile.TbAssetProfileCache;
+import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
 import java.util.ArrayList;
@@ -64,6 +73,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 /**
  * Created by ashvayka on 27.03.18.
@@ -77,6 +87,10 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     private final TbEntityViewService tbEntityViewService;
     private final TbApiUsageReportClient apiUsageClient;
     private final TbApiUsageStateService apiUsageStateService;
+    private final CalculatedFieldService calculatedFieldService;
+    private final CalculatedFieldExecutionService calculatedFieldExecutionService;
+    private final TbAssetProfileCache assetProfileCache;
+    private final TbDeviceProfileCache deviceProfileCache;
 
     private ExecutorService tsCallBackExecutor;
 
@@ -87,12 +101,20 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                                TimeseriesService tsService,
                                                @Lazy TbEntityViewService tbEntityViewService,
                                                TbApiUsageReportClient apiUsageClient,
-                                               TbApiUsageStateService apiUsageStateService) {
+                                               TbApiUsageStateService apiUsageStateService,
+                                               CalculatedFieldService calculatedFieldService,
+                                               CalculatedFieldExecutionService calculatedFieldExecutionService,
+                                               TbAssetProfileCache assetProfileCache,
+                                               TbDeviceProfileCache deviceProfileCache) {
         this.attrService = attrService;
         this.tsService = tsService;
         this.tbEntityViewService = tbEntityViewService;
         this.apiUsageClient = apiUsageClient;
         this.apiUsageStateService = apiUsageStateService;
+        this.calculatedFieldService = calculatedFieldService;
+        this.calculatedFieldExecutionService = calculatedFieldExecutionService;
+        this.assetProfileCache = assetProfileCache;
+        this.deviceProfileCache = deviceProfileCache;
     }
 
     @PostConstruct
@@ -179,12 +201,62 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         addMainCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
         addEntityViewCallback(tenantId, entityId, ts);
+        updateTelemetryInCalculatedFields(tenantId, entityId, ts);
     }
 
     private void saveWithoutLatestAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Integer> callback) {
         ListenableFuture<Integer> saveFuture = tsService.saveWithoutLatest(tenantId, entityId, ts, ttl);
         addMainCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
+    }
+
+    private void updateTelemetryInCalculatedFields(TenantId tenantId, EntityId entityId, List<? extends KvEntry> telemetry) {
+        EntityType entityType = entityId.getEntityType();
+        if (EntityType.DEVICE.equals(entityType) || EntityType.ASSET.equals(entityType) || EntityType.CUSTOMER.equals(entityType) || EntityType.TENANT.equals(entityType)) {
+            EntityId profileId = null;
+            if (EntityType.ASSET.equals(entityType)) {
+                profileId = assetProfileCache.get(tenantId, (AssetId) entityId).getId();
+            } else if (EntityType.DEVICE.equals(entityType)) {
+                profileId = deviceProfileCache.get(tenantId, (DeviceId) entityId).getId();
+            }
+            List<CalculatedFieldLink> cfLinks = new ArrayList<>(calculatedFieldService.findAllCalculatedFieldLinksByEntityId(tenantId, entityId));
+            Optional.ofNullable(profileId).ifPresent(id -> cfLinks.addAll(calculatedFieldService.findAllCalculatedFieldLinksByEntityId(tenantId, id)));
+            if (!cfLinks.isEmpty()) {
+                cfLinks.forEach(link -> {
+                    CalculatedFieldId calculatedFieldId = link.getCalculatedFieldId();
+                    Map<String, String> attributes = link.getConfiguration().getAttributes();
+                    Map<String, String> timeSeries = link.getConfiguration().getTimeSeries();
+                    Map<String, KvEntry> updatedTelemetry = telemetry.stream()
+                            .filter(entry -> attributes.containsValue(entry.getKey()) || timeSeries.containsValue(entry.getKey()))
+                            .collect(Collectors.toMap(
+                                    entry -> getMappedKey(entry, attributes, timeSeries),
+                                    entry -> entry,
+                                    (v1, v2) -> v1
+                            ));
+
+                    if (!updatedTelemetry.isEmpty()) {
+                        calculatedFieldExecutionService.onTelemetryUpdate(tenantId, entityId, calculatedFieldId, updatedTelemetry);
+                    }
+                });
+            }
+        }
+    }
+
+    private String getMappedKey(KvEntry entry, Map<String, String> attributes, Map<String, String> timeSeries) {
+        if (entry instanceof AttributeKvEntry) {
+            return attributes.entrySet().stream()
+                    .filter(attr -> attr.getValue().equals(entry.getKey()))
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .orElse(entry.getKey());
+        } else if (entry instanceof TsKvEntry) {
+            return timeSeries.entrySet().stream()
+                    .filter(ts -> ts.getValue().equals(entry.getKey()))
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .orElse(entry.getKey());
+        }
+        return entry.getKey();
     }
 
     private void addEntityViewCallback(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
@@ -263,6 +335,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         ListenableFuture<List<Long>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
         addVoidCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onAttributesUpdate(tenantId, entityId, scope, attributes, notifyDevice));
+        updateTelemetryInCalculatedFields(tenantId, entityId, attributes);
     }
 
     @Override
@@ -270,6 +343,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         ListenableFuture<List<Long>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
         addVoidCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onAttributesUpdate(tenantId, entityId, scope.name(), attributes, notifyDevice));
+        updateTelemetryInCalculatedFields(tenantId, entityId, attributes);
     }
 
     @Override
@@ -283,6 +357,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         ListenableFuture<List<Long>> saveFuture = tsService.saveLatest(tenantId, entityId, ts);
         addVoidCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
+        updateTelemetryInCalculatedFields(tenantId, entityId, ts);
     }
 
     @Override

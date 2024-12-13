@@ -13,8 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api;
+package org.thingsboard.server.service.cf.ctx;
 
-public enum ScriptType {
-    RULE_NODE_SCRIPT, CALCULATED_FIELD_SCRIPT
+import lombok.Data;
+import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
+
+@Data
+public class CalculatedFieldEntityCtx {
+
+    private CalculatedFieldEntityCtxId id;
+    private CalculatedFieldState state;
+
+    public CalculatedFieldEntityCtx() {
+    }
+
+    public CalculatedFieldEntityCtx(CalculatedFieldEntityCtxId id, CalculatedFieldState state) {
+        this.id = id;
+        this.state = state;
+    }
+
 }

@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -84,7 +85,10 @@ public class EntityStateSourcingListener {
         ComponentLifecycleEvent lifecycleEvent = isCreated ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED;
 
         switch (entityType) {
-            case ASSET, ASSET_PROFILE, ENTITY_VIEW, NOTIFICATION_RULE -> {
+            case ASSET -> {
+                onAssetUpdate(event.getEntity(), event.getOldEntity());
+            }
+            case ASSET_PROFILE, ENTITY_VIEW, NOTIFICATION_RULE -> {
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, lifecycleEvent);
             }
             case RULE_CHAIN -> {
@@ -142,7 +146,11 @@ public class EntityStateSourcingListener {
         log.debug("[{}][{}][{}] Handling entity deletion event: {}", tenantId, entityType, entityId, event);
 
         switch (entityType) {
-            case ASSET, ASSET_PROFILE, ENTITY_VIEW, CUSTOMER, EDGE, NOTIFICATION_RULE -> {
+            case ASSET -> {
+                Asset asset = (Asset) event.getEntity();
+                tbClusterService.onAssetDeleted(tenantId, asset, null);
+            }
+            case ASSET_PROFILE, ENTITY_VIEW, CUSTOMER, EDGE, NOTIFICATION_RULE -> {
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
             }
             case NOTIFICATION_REQUEST -> {
@@ -248,6 +256,15 @@ public class EntityStateSourcingListener {
             oldDevice = (Device) oldEntity;
         }
         tbClusterService.onDeviceUpdated(device, oldDevice);
+    }
+
+    private void onAssetUpdate(Object entity, Object oldEntity) {
+        Asset asset = (Asset) entity;
+        Asset oldAsset = null;
+        if (oldEntity instanceof Asset) {
+            oldAsset = (Asset) oldEntity;
+        }
+        tbClusterService.onAssetUpdated(asset, oldAsset);
     }
 
     private void onEdgeEvent(TenantId tenantId, EntityId entityId, Object entity, ComponentLifecycleEvent lifecycleEvent) {

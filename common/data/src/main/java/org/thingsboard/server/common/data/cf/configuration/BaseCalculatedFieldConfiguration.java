@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf;
+package org.thingsboard.server.common.data.cf.configuration;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Data;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 
@@ -38,6 +40,7 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
     private final ObjectMapper mapper = new ObjectMapper();
 
     protected Map<String, Argument> arguments;
+    protected String expression;
     protected Output output;
 
     public BaseCalculatedFieldConfiguration() {
@@ -46,6 +49,7 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
     public BaseCalculatedFieldConfiguration(JsonNode config, EntityType entityType, UUID entityId) {
         BaseCalculatedFieldConfiguration calculatedFieldConfig = toCalculatedFieldConfig(config, entityType, entityId);
         this.arguments = calculatedFieldConfig.getArguments();
+        this.expression = calculatedFieldConfig.getExpression();
         this.output = calculatedFieldConfig.getOutput();
     }
 
@@ -60,18 +64,20 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
     @Override
     public CalculatedFieldLinkConfiguration getReferencedEntityConfig(EntityId entityId) {
         CalculatedFieldLinkConfiguration linkConfiguration = new CalculatedFieldLinkConfiguration();
-        arguments.values().stream()
-                .filter(argument -> argument.getEntityId().equals(entityId))
-                .forEach(argument -> {
-                    switch (argument.getType()) {
-                        case "ATTRIBUTES":
-                            linkConfiguration.getAttributes().add(argument.getKey());
-                            break;
-                        case "TIME_SERIES":
-                            linkConfiguration.getTimeSeries().add(argument.getKey());
-                            break;
-                    }
-                });
+
+        for (Map.Entry<String, Argument> entry : arguments.entrySet()) {
+            Argument argument = entry.getValue();
+            if (argument.getEntityId().equals(entityId)) {
+                switch (argument.getType()) {
+                    case "ATTRIBUTE":
+                        linkConfiguration.getAttributes().put(entry.getKey(), argument.getKey());
+                        break;
+                    case "TS_LATEST", "TS_ROLLING":
+                        linkConfiguration.getTimeSeries().put(entry.getKey(), argument.getKey());
+                        break;
+                }
+            }
+        }
 
         return linkConfiguration;
     }
@@ -93,31 +99,26 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
             }
             argumentNode.put("key", argument.getKey());
             argumentNode.put("type", argument.getType());
+            argumentNode.put("scope", String.valueOf(argument.getScope()));
             argumentNode.put("defaultValue", argument.getDefaultValue());
+            argumentNode.put("limit", String.valueOf(argument.getLimit()));
+            argumentNode.put("timeWindow", String.valueOf(argument.getTimeWindow()));
         });
+
+        if (expression != null) {
+            configNode.put("expression", expression);
+        }
 
         if (output != null) {
             ObjectNode outputNode = configNode.putObject("output");
+            outputNode.put("name", output.getName());
             outputNode.put("type", output.getType());
-            outputNode.put("expression", output.getExpression());
+            if (output.getScope() != null) {
+                outputNode.put("scope", String.valueOf(output.getScope()));
+            }
         }
 
         return configNode;
-    }
-
-    @Data
-    public static class Argument {
-        private EntityId entityId;
-        private String key;
-        private String type;
-        private String defaultValue;
-    }
-
-    @Data
-    public static class Output {
-        private String name;
-        private String type;
-        private String expression;
     }
 
     private BaseCalculatedFieldConfiguration toCalculatedFieldConfig(JsonNode config, EntityType entityType, UUID entityId) {
@@ -141,17 +142,38 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
                 }
                 argument.setKey(argumentNode.get("key").asText());
                 argument.setType(argumentNode.get("type").asText());
-                argument.setDefaultValue(argumentNode.get("defaultValue").asText());
+                JsonNode scope = argumentNode.get("scope");
+                if (scope != null && !scope.isNull() && !scope.asText().equals("null")) {
+                    argument.setScope(AttributeScope.valueOf(scope.asText()));
+                }
+                if (argumentNode.hasNonNull("defaultValue")) {
+                    argument.setDefaultValue(argumentNode.get("defaultValue").asText());
+                }
+                if (argumentNode.hasNonNull("limit")) {
+                    argument.setLimit(argumentNode.get("limit").asInt());
+                }
+                if (argumentNode.hasNonNull("timeWindow")) {
+                    argument.setTimeWindow(argumentNode.get("timeWindow").asInt());
+                }
                 arguments.put(key, argument);
             });
         }
         this.setArguments(arguments);
 
+        JsonNode expressionNode = config.get("expression");
+        if (expressionNode != null && expressionNode.isTextual()) {
+            this.setExpression(expressionNode.asText());
+        }
+
         JsonNode outputNode = config.get("output");
         if (outputNode != null) {
             Output output = new Output();
+            output.setName(outputNode.get("name").asText());
             output.setType(outputNode.get("type").asText());
-            output.setExpression(outputNode.get("expression").asText());
+            JsonNode scope = outputNode.get("scope");
+            if (scope != null && !scope.isNull() && !scope.asText().equals("null")) {
+                output.setScope(AttributeScope.valueOf(scope.asText()));
+            }
             this.setOutput(output);
         }
 
