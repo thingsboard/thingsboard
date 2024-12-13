@@ -163,7 +163,7 @@ class TbCreateAlarmNodeTest {
 
         var ruleNodeSelfId = new RuleNodeId(Uuids.timeBased());
 
-        var incomingMsg = TbMsg.builder()
+        var incomingMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(msgOriginator)
                 .metaData(metadata.copy())
@@ -322,7 +322,7 @@ class TbCreateAlarmNodeTest {
 
         var ruleNodeSelfId = new RuleNodeId(Uuids.timeBased());
 
-        var incomingMsg = TbMsg.builder()
+        var incomingMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(msgOriginator)
                 .metaData(metadata.copy())
@@ -518,7 +518,7 @@ class TbCreateAlarmNodeTest {
 
         var ruleNodeSelfId = new RuleNodeId(Uuids.timeBased());
 
-        var incomingMsg = TbMsg.builder()
+        var incomingMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(msgOriginator)
                 .metaData(metadata.copy())
@@ -695,7 +695,7 @@ class TbCreateAlarmNodeTest {
 
         var ruleNodeSelfId = new RuleNodeId(Uuids.timeBased());
 
-        var incomingMsg = TbMsg.builder()
+        var incomingMsg = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(msgOriginator)
                 .metaData(metadata.copy())
@@ -887,7 +887,7 @@ class TbCreateAlarmNodeTest {
                 .details(newAlarmDetails)
                 .build();
 
-        var incomingMsg = TbMsg.builder()
+        var incomingMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(msgOriginator)
                 .metaData(metadata.copy())
@@ -1073,7 +1073,7 @@ class TbCreateAlarmNodeTest {
                 .details(alarmDetails)
                 .build();
 
-        var incomingMsg = TbMsg.builder()
+        var incomingMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(msgOriginator)
                 .metaData(metadata.copy())
@@ -1219,7 +1219,7 @@ class TbCreateAlarmNodeTest {
         // GIVEN
         config = config.defaultConfiguration();
 
-        var incomingMsg = TbMsg.builder()
+        var incomingMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(msgOriginator)
                 .metaData(metadata.copy())

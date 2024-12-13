@@ -85,7 +85,7 @@ public class TbDeviceStateNodeTest {
         metaData.putValue("ts", String.valueOf(METADATA_TS));
         var data = JacksonUtil.newObjectNode();
         data.put("humidity", 58.3);
-        msg = TbMsg.builder()
+        msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(metaData.copy())
@@ -212,7 +212,7 @@ public class TbDeviceStateNodeTest {
                 return unsupportedType;
             }
         };
-        var msg = TbMsg.builder()
+        var msg = TbMsg.newMsg()
                 .type(TbMsgType.ENTITY_CREATED)
                 .originator(nonDeviceOriginator)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -246,7 +246,7 @@ public class TbDeviceStateNodeTest {
         given(ctxMock.getDeviceStateManager()).willReturn(deviceStateManagerMock);
 
         long msgTs = METADATA_TS + 1;
-        msg = TbMsg.builder()
+        msg = TbMsg.newMsg()
                 .ts(msgTs)
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)

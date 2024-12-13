@@ -208,7 +208,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
             JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
             metaData.putValue("ts", tsKv.getTs() + "");
             var defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
-            TbMsg tbMsg = TbMsg.builder()
+            TbMsg tbMsg = TbMsg.newMsg()
                     .queueName(defaultQueueAndRuleChain.getKey())
                     .type(TbMsgType.POST_TELEMETRY_REQUEST)
                     .originator(entityId)
@@ -261,7 +261,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         SettableFuture<Void> futureToSet = SettableFuture.create();
         JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
         var defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
-        TbMsg tbMsg = TbMsg.builder()
+        TbMsg tbMsg = TbMsg.newMsg()
                 .queueName(defaultQueueAndRuleChain.getKey())
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(entityId)
@@ -299,7 +299,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
             @Override
             public void onSuccess(@Nullable Void tmp) {
                 var defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
-                TbMsg tbMsg = TbMsg.builder()
+                TbMsg tbMsg = TbMsg.newMsg()
                         .queueName(defaultQueueAndRuleChain.getKey())
                         .type(TbMsgType.ATTRIBUTES_UPDATED)
                         .originator(entityId)

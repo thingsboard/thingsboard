@@ -63,7 +63,7 @@ public class TbMsgCountNodeTest {
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("1b21c7cc-0c9e-4ab1-b867-99451599e146"));
     private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("04dfbd38-10e5-47b7-925f-11e795db89e1"));
 
-    private final TbMsg tickMsg = TbMsg.builder()
+    private final TbMsg tickMsg = TbMsg.newMsg()
             .type(TbMsgType.MSG_COUNT_SELF_MSG)
             .originator(RULE_NODE_ID)
             .metaData(TbMsgMetaData.EMPTY.copy())
@@ -125,7 +125,7 @@ public class TbMsgCountNodeTest {
 
         var expectedProcessedMsgs = new ArrayList<TbMsg>();
         for (int i = 0; i < msgCount; i++) {
-            var msg = TbMsg.builder()
+            var msg = TbMsg.newMsg()
                     .type(TbMsgType.POST_TELEMETRY_REQUEST)
                     .originator(DEVICE_ID)
                     .metaData(TbMsgMetaData.EMPTY.copy())
@@ -152,7 +152,7 @@ public class TbMsgCountNodeTest {
         then(ctxMock).should().enqueueForTellNext(msgWithCounterCaptor.capture(), eq(TbNodeConnectionType.SUCCESS));
         TbMsg resultedMsg = msgWithCounterCaptor.getValue();
         String expectedData = "{\"messageCount_tb-rule-engine\":" + currentMsgNumber + "}";
-        TbMsg expectedMsg = TbMsg.builder()
+        TbMsg expectedMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(TENANT_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())

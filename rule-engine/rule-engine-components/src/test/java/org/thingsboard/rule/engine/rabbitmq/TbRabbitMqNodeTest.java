@@ -147,7 +147,7 @@ public class TbRabbitMqNodeTest {
         given(ctxMock.getExternalCallExecutor()).willReturn(executor);
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(metaData.copy())
@@ -183,7 +183,7 @@ public class TbRabbitMqNodeTest {
         given(ctxMock.getExternalCallExecutor()).willReturn(executor);
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -211,7 +211,7 @@ public class TbRabbitMqNodeTest {
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
         TbMsgMetaData metaData = new TbMsgMetaData();
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(metaData.copy())

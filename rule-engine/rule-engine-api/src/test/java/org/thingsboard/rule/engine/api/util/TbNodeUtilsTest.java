@@ -44,7 +44,7 @@ public class TbNodeUtilsTest {
         ObjectNode node = JacksonUtil.newObjectNode();
         node.put("data_key", "data_value");
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(TenantId.SYS_TENANT_ID)
                 .metaData(md.copy())
@@ -63,7 +63,7 @@ public class TbNodeUtilsTest {
         ObjectNode node = JacksonUtil.newObjectNode();
         node.put("key", "data_value");
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(TenantId.SYS_TENANT_ID)
                 .metaData(md.copy())
@@ -82,7 +82,7 @@ public class TbNodeUtilsTest {
         ObjectNode node = JacksonUtil.newObjectNode();
         node.put("key", "data_value");
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(TenantId.SYS_TENANT_ID)
                 .metaData(md.copy())
@@ -108,7 +108,7 @@ public class TbNodeUtilsTest {
         ObjectNode node = JacksonUtil.newObjectNode();
         node.set("key1", key1Node);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(TenantId.SYS_TENANT_ID)
                 .metaData(md.copy())
@@ -134,7 +134,7 @@ public class TbNodeUtilsTest {
         ObjectNode node = JacksonUtil.newObjectNode();
         node.set("key1", key1Node);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(TenantId.SYS_TENANT_ID)
                 .metaData(md.copy())

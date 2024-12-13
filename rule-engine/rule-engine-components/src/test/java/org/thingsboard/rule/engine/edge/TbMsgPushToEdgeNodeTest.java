@@ -85,7 +85,7 @@ public class TbMsgPushToEdgeNodeTest {
         Mockito.when(ctx.getEdgeService()).thenReturn(edgeService);
         Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, deviceId, new PageLink(RELATED_EDGES_CACHE_ITEMS))).thenReturn(new PageData<>());
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -113,7 +113,7 @@ public class TbMsgPushToEdgeNodeTest {
         PageData<EdgeId> edgePageData = new PageData<>(List.of(edgeId), 1, 1, false);
         Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, userId, new PageLink(RELATED_EDGES_CACHE_ITEMS))).thenReturn(edgePageData);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.ATTRIBUTES_UPDATED)
                 .originator(userId)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -151,7 +151,7 @@ public class TbMsgPushToEdgeNodeTest {
         Mockito.when(ctx.getDbCallbackExecutor()).thenReturn(dbCallbackExecutor);
         Mockito.when(edgeEventService.saveAsync(any())).thenReturn(SettableFuture.create());
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(event)
                 .originator(new EdgeId(UUID.randomUUID()))
                 .metaData(metaData.copy())

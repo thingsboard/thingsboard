@@ -142,7 +142,7 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setRestEndpointUrlPattern(String.format("http://localhost:%d%s", server.getLocalPort(), path));
         initWithConfig(config);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
                 .metaData(metaData.copy())
@@ -211,7 +211,7 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setRestEndpointUrlPattern(String.format("http://localhost:%d%s", server.getLocalPort(), path));
         initWithConfig(config);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
                 .metaData(metaData.copy())

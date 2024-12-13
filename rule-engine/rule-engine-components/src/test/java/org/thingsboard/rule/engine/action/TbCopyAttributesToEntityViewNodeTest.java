@@ -106,7 +106,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
     public void givenExistingClientAttributes_whenOnMsg_thenCopyAttributesToView() {
         EntityView entityView = getEntityView(CLIENT_TELEMETRY_ENTITY_VIEW);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.SERVER_SCOPE.name())).copy())
@@ -143,7 +143,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
     public void givenExistingServerAttributesAndMsgTypeAttributesDeleted_whenOnMsg_thenDeleteAttributesFromView() {
         EntityView entityView = getEntityView(SERVER_TELEMETRY_ENTITY_VIEW);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(ATTRIBUTES_DELETED)
                 .originator(DEVICE_ID)
                 .metaData(new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.SERVER_SCOPE.name())).copy())
@@ -177,7 +177,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
     public void givenNonMatchedSharedAttributesAndMsgTypeIsAttributesDeleted_whenOnMsg_thenNoAttributesDeleteFromView() {
         EntityView entityView = getEntityView(SHARED_TELEMETRY_ENTITY_VIEW);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.ATTRIBUTES_DELETED)
                 .originator(DEVICE_ID)
                 .metaData(new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.SHARED_SCOPE.name())).copy())
@@ -197,7 +197,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
     public void givenNonMatchedAttributesAndMsgTypeIsPostAttributesRequest_whenOnMsg_thenCopyNoAttributesToView() {
         EntityView entityView = getEntityView(CLIENT_TELEMETRY_ENTITY_VIEW);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.SERVER_SCOPE.name())).copy())
@@ -232,7 +232,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
         );
         mockEntityViewLookup(entityView);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(ATTRIBUTES_DELETED)
                 .originator(DEVICE_ID)
                 .metaData(new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.SERVER_SCOPE.name())).copy())
@@ -248,7 +248,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
     @ParameterizedTest
     @EnumSource(TbMsgType.class)
     public void givenMsgTypeAndEmptyMetadata_whenOnMsg_thenVerifyFailureMsg(TbMsgType msgType) {
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(msgType)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())

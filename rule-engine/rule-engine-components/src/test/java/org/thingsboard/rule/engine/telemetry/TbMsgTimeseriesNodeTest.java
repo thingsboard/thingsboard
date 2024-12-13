@@ -96,7 +96,7 @@ public class TbMsgTimeseriesNodeTest {
     @EnumSource(TbMsgType.class)
     public void givenMsgTypeAndEmptyMsgData_whenOnMsg_thenVerifyFailureMsg(TbMsgType msgType) throws TbNodeException {
         init();
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(msgType)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -127,7 +127,7 @@ public class TbMsgTimeseriesNodeTest {
                     "humidity": 77
                 }
                 """;
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -169,7 +169,7 @@ public class TbMsgTimeseriesNodeTest {
                 """;
         long ts = System.currentTimeMillis();
         var metadata = Map.of("ts", String.valueOf(ts));
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(new TbMsgMetaData(metadata).copy())
@@ -212,7 +212,7 @@ public class TbMsgTimeseriesNodeTest {
                 """;
         var metadata = new TbMsgMetaData();
         metadata.putValue("TTL", ttlFromMd);
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(metadata.copy())

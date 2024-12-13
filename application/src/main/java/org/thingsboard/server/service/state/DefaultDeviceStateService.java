@@ -857,7 +857,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             if (!persistToTelemetry) {
                 md.putValue(SCOPE, SERVER_SCOPE);
             }
-            TbMsg tbMsg = TbMsg.builder()
+            TbMsg tbMsg = TbMsg.newMsg()
                     .type(msgType)
                     .originator(stateData.getDeviceId())
                     .customerId(stateData.getCustomerId())

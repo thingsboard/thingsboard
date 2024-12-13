@@ -246,7 +246,7 @@ public class TbGetAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
     public void givenFetchLatestTimeseriesToDataAndDataIsNotJsonObject_whenOnMsg_thenException() throws Exception {
         // GIVEN
         node = initNode(TbMsgSource.DATA, true, true);
-        var msg = TbMsg.builder()
+        var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(ORIGINATOR_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -347,7 +347,7 @@ public class TbGetAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
         msgMetaData.putValue("client_attr_metadata", "client_attr_3");
         msgMetaData.putValue("server_attr_metadata", "server_attr_3");
 
-        return TbMsg.builder()
+        return TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(entityId)
                 .metaData(msgMetaData.copy())

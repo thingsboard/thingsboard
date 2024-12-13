@@ -103,7 +103,7 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
             EntityId originator = (EntityId) (invocationOnMock.getArguments())[2];
             TbMsgMetaData metaData = (TbMsgMetaData) (invocationOnMock.getArguments())[3];
             String data = (String) (invocationOnMock.getArguments())[4];
-            return TbMsg.builder()
+            return TbMsg.newMsg()
                     .type(type)
                     .originator(originator)
                     .metaData(metaData.copy().copy())
@@ -457,7 +457,7 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
         dataNode.put("deviceId", deviceId.getId().toString());
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("ts", String.valueOf(ts));
-        return TbMsg.builder()
+        return TbMsg.newMsg()
                 .queueName(DataConstants.MAIN_QUEUE_NAME)
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)

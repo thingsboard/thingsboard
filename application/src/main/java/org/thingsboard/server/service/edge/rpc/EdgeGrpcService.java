@@ -575,7 +575,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 md.putValue("edgeName", edge.getName());
                 md.putValue("edgeType", edge.getType());
             }
-            TbMsg tbMsg = TbMsg.builder()
+            TbMsg tbMsg = TbMsg.newMsg()
                     .type(msgType)
                     .originator(edgeId)
                     .metaData(md.copy())

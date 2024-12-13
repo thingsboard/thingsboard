@@ -105,7 +105,7 @@ class TbSnsNodeTest {
         given(publishResultMock.getSdkResponseMetadata()).willReturn(responseMetadataMock);
         given(responseMetadataMock.getRequestId()).willReturn(requestId);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(metaData.copy())
@@ -148,7 +148,7 @@ class TbSnsNodeTest {
         ListenableFuture<TbMsg> failedFuture = Futures.immediateFailedFuture(new RuntimeException(errorMsg));
         given(listeningExecutor.executeAsync(any(Callable.class))).willReturn(failedFuture);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())

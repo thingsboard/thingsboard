@@ -164,7 +164,7 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
             md.putValue(NOTIFY_DEVICE_METADATA_KEY, mdValue);
         }
         // dummy list with one ts kv to pass the empty list check.
-        var testTbMsg = TbMsg.builder()
+        var testTbMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
                 .metaData(md.copy())

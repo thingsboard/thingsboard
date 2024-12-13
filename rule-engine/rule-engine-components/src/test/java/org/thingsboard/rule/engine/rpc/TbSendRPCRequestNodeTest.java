@@ -107,7 +107,7 @@ public class TbSendRPCRequestNodeTest {
 
         TbMsgMetaData msgMetadata = new TbMsgMetaData();
         msgMetadata.putValue("oneway", mdKeyValue);
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
                 .originator(DEVICE_ID)
                 .metaData(msgMetadata.copy())
@@ -133,7 +133,7 @@ public class TbSendRPCRequestNodeTest {
         given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
         given(ctxMock.getTenantId()).willReturn(TENANT_ID);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -159,7 +159,7 @@ public class TbSendRPCRequestNodeTest {
         given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
         given(ctxMock.getTenantId()).willReturn(TENANT_ID);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.TO_SERVER_RPC_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -185,7 +185,7 @@ public class TbSendRPCRequestNodeTest {
                   "requestId": 12345
                 }
                 """;
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.TO_SERVER_RPC_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -205,7 +205,7 @@ public class TbSendRPCRequestNodeTest {
         String requestUUID = "b795a241-5a30-48fb-92d5-46b864d47130";
         TbMsgMetaData metadata = new TbMsgMetaData();
         metadata.putValue("requestUUID", requestUUID);
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
                 .originator(DEVICE_ID)
                 .metaData(metadata.copy())
@@ -225,7 +225,7 @@ public class TbSendRPCRequestNodeTest {
 
         TbMsgMetaData metadata = new TbMsgMetaData();
         metadata.putValue("requestUUID", requestUUID);
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
                 .originator(DEVICE_ID)
                 .metaData(metadata.copy())
@@ -245,7 +245,7 @@ public class TbSendRPCRequestNodeTest {
         String originServiceId = "service-id-123";
         TbMsgMetaData metadata = new TbMsgMetaData();
         metadata.putValue("originServiceId", originServiceId);
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
                 .originator(DEVICE_ID)
                 .metaData(metadata.copy())
@@ -265,7 +265,7 @@ public class TbSendRPCRequestNodeTest {
 
         TbMsgMetaData metadata = new TbMsgMetaData();
         metadata.putValue("originServiceId", originServiceId);
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
                 .originator(DEVICE_ID)
                 .metaData(metadata.copy())
@@ -285,7 +285,7 @@ public class TbSendRPCRequestNodeTest {
         String expirationTime = "2000000000000";
         TbMsgMetaData metadata = new TbMsgMetaData();
         metadata.putValue(DataConstants.EXPIRATION_TIME, expirationTime);
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
                 .originator(DEVICE_ID)
                 .metaData(metadata.copy())
@@ -305,7 +305,7 @@ public class TbSendRPCRequestNodeTest {
 
         TbMsgMetaData metadata = new TbMsgMetaData();
         metadata.putValue(DataConstants.EXPIRATION_TIME, expirationTime);
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
                 .originator(DEVICE_ID)
                 .metaData(metadata.copy())
@@ -325,7 +325,7 @@ public class TbSendRPCRequestNodeTest {
         Integer retries = 3;
         TbMsgMetaData metadata = new TbMsgMetaData();
         metadata.putValue(DataConstants.RETRIES, String.valueOf(retries));
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
                 .originator(DEVICE_ID)
                 .metaData(metadata.copy())
@@ -345,7 +345,7 @@ public class TbSendRPCRequestNodeTest {
 
         TbMsgMetaData metadata = new TbMsgMetaData();
         metadata.putValue(DataConstants.RETRIES, retries);
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
                 .originator(DEVICE_ID)
                 .metaData(metadata.copy())
@@ -363,7 +363,7 @@ public class TbSendRPCRequestNodeTest {
         given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
         given(ctxMock.getTenantId()).willReturn(TENANT_ID);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(msgType)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -387,7 +387,7 @@ public class TbSendRPCRequestNodeTest {
 
         TbMsgMetaData metadata = new TbMsgMetaData();
         metadata.putValue(DataConstants.PERSISTENT, isPersisted);
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
                 .originator(DEVICE_ID)
                 .metaData(metadata.copy())
@@ -416,7 +416,7 @@ public class TbSendRPCRequestNodeTest {
 
     @Test
     public void givenRpcResponseWithoutError_whenOnMsg_thenSendsRpcRequest() {
-        TbMsg outMsg = TbMsg.builder()
+        TbMsg outMsg = TbMsg.newMsg()
                 .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -436,7 +436,7 @@ public class TbSendRPCRequestNodeTest {
             return null;
         }).given(rpcServiceMock).sendRpcRequestToDevice(any(RuleEngineDeviceRpcRequest.class), any(Consumer.class));
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -450,7 +450,7 @@ public class TbSendRPCRequestNodeTest {
 
     @Test
     public void givenRpcResponseWithError_whenOnMsg_thenTellFailure() {
-        TbMsg outMsg = TbMsg.builder()
+        TbMsg outMsg = TbMsg.newMsg()
                 .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -469,7 +469,7 @@ public class TbSendRPCRequestNodeTest {
             return null;
         }).given(rpcServiceMock).sendRpcRequestToDevice(any(RuleEngineDeviceRpcRequest.class), any(Consumer.class));
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -486,7 +486,7 @@ public class TbSendRPCRequestNodeTest {
     public void givenOriginatorIsNotDevice_whenOnMsg_thenThrowsException(EntityType entityType) {
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, "ac21a1bb-eabf-4463-8313-24bea1f498d9");
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(entityId)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -504,7 +504,7 @@ public class TbSendRPCRequestNodeTest {
     @ParameterizedTest
     @ValueSource(strings = {"method", "params"})
     public void givenMethodOrParamsAreNotPresent_whenOnMsg_thenThrowsException(String key) {
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())

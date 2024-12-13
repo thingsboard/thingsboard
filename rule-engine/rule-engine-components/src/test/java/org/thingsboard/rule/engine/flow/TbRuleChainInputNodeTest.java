@@ -300,7 +300,7 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     private TbMsg getMsg(EntityId entityId) {
-        return TbMsg.builder()
+        return TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(entityId)
                 .metaData(TbMsgMetaData.EMPTY.copy())

@@ -306,7 +306,7 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     private TbMsg getTbMsg(EntityId originator) {
-        return TbMsg.builder()
+        return TbMsg.newMsg()
                 .type(TbMsgType.NA)
                 .originator(originator)
                 .metaData(TbMsgMetaData.EMPTY.copy())

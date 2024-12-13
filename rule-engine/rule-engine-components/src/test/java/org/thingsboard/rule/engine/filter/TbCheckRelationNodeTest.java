@@ -66,7 +66,7 @@ class TbCheckRelationNodeTest extends AbstractRuleNodeUpgradeTest {
     private final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
     private final DeviceId ORIGINATOR_ID = new DeviceId(UUID.randomUUID());
     private final TestDbCallbackExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
-    private final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.builder()
+    private final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg()
             .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
             .originator(ORIGINATOR_ID)
             .metaData(TbMsgMetaData.EMPTY.copy())

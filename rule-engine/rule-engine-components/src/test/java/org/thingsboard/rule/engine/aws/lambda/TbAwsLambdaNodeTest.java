@@ -145,7 +145,7 @@ public class TbAwsLambdaNodeTest {
         config.setFunctionName(functionName);
         config.setQualifier(qualifier);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(metadata.copy())
@@ -202,7 +202,7 @@ public class TbAwsLambdaNodeTest {
         init();
         config.setTellFailureIfFuncThrowsExc(true);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -243,7 +243,7 @@ public class TbAwsLambdaNodeTest {
     public void givenExceptionWasThrownInsideFunctionAndTellFailureIfFuncThrowsExcIsFalse_whenOnMsg_thenTellSuccess() {
         init();
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -281,7 +281,7 @@ public class TbAwsLambdaNodeTest {
     public void givenPayloadFromResultIsNull_whenOnMsg_thenTellFailure() {
         init();
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -320,7 +320,7 @@ public class TbAwsLambdaNodeTest {
     @Test
     public void givenExceptionWasThrownOnAWS_whenOnMsg_thenTellFailure() {
         init();
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())

@@ -74,7 +74,7 @@ public class TbMsgCountNode implements TbNode {
             TbMsgMetaData metaData = new TbMsgMetaData();
             metaData.putValue("delta", Long.toString(System.currentTimeMillis() - lastScheduledTs + delay));
 
-            TbMsg tbMsg = TbMsg.builder()
+            TbMsg tbMsg = TbMsg.newMsg()
                     .queueName(msg.getQueueName())
                     .type(TbMsgType.POST_TELEMETRY_REQUEST)
                     .originator(ctx.getTenantId())

@@ -159,7 +159,7 @@ public class TbGetCustomerDetailsNodeTest {
     public void givenMsgDataIsNotAnJsonObjectAndFetchToData_whenOnMsg_thenException() {
         // GIVEN
         node.fetchTo = TbMsgSource.DATA;
-        msg = TbMsg.builder()
+        msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -463,7 +463,7 @@ public class TbGetCustomerDetailsNodeTest {
 
         var msgData = "{\"dataKey1\":123,\"dataKey2\":\"dataValue2\"}";
 
-        msg = TbMsg.builder()
+        msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
                 .metaData(msgMetaData.copy())

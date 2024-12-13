@@ -343,7 +343,7 @@ public abstract class BaseEdgeProcessor {
 
     protected void pushEntityEventToRuleEngine(TenantId tenantId, EntityId entityId, CustomerId customerId,
                                                TbMsgType msgType, String msgData, TbMsgMetaData metaData) {
-        TbMsg tbMsg = TbMsg.builder()
+        TbMsg tbMsg = TbMsg.newMsg()
                 .type(msgType)
                 .originator(entityId)
                 .customerId(customerId)

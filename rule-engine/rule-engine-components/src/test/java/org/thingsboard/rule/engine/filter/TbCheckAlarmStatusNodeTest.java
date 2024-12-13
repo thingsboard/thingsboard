@@ -174,7 +174,7 @@ class TbCheckAlarmStatusNodeTest {
     }
 
     private TbMsg getTbMsg(String msgData) {
-        return TbMsg.builder()
+        return TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())

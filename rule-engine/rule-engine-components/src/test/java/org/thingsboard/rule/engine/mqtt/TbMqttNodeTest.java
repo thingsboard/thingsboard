@@ -283,7 +283,7 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
             return null;
         }).given(future).addListener(any());
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(metaData.copy())
@@ -327,7 +327,7 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
             return null;
         }).given(future).addListener(any());
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())

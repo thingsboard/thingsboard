@@ -188,7 +188,7 @@ public class TbKafkaNodeTest {
         ReflectionTestUtils.setField(node, "initError", new ThingsboardKafkaClientError(errorMsg));
 
         // WHEN
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -217,7 +217,7 @@ public class TbKafkaNodeTest {
 
         // WHEN
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -242,7 +242,7 @@ public class TbKafkaNodeTest {
         // GIVEN
         config.setTopicPattern(topicPattern);
         config.setKeyPattern(keyPattern);
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(metaData.copy())
@@ -293,7 +293,7 @@ public class TbKafkaNodeTest {
 
         // WHEN
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -323,7 +323,7 @@ public class TbKafkaNodeTest {
 
         // WHEN
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -356,7 +356,7 @@ public class TbKafkaNodeTest {
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("key", "value");
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(metaData.copy())

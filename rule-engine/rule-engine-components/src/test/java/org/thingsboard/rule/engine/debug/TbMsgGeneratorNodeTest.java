@@ -190,7 +190,7 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
         given(ctxMock.createScriptEngine(any(), any(), any(), any(), any())).willReturn(scriptEngineMock);
 
         // creation of tickMsg
-        TbMsg tickMsg = TbMsg.builder()
+        TbMsg tickMsg = TbMsg.newMsg()
                 .type(TbMsgType.GENERATOR_NODE_SELF_MSG)
                 .originator(RULE_NODE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -208,7 +208,7 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
         }).given(ctxMock).tellSelf(any(), any(Long.class));
 
         // creation of first message
-        TbMsg firstMsg = TbMsg.builder()
+        TbMsg firstMsg = TbMsg.newMsg()
                 .type(TbMsg.EMPTY_STRING)
                 .originator(RULE_NODE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -218,7 +218,7 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
 
         // creation of generated message
         TbMsgMetaData metaData = new TbMsgMetaData(Map.of("data", "40"));
-        TbMsg generatedMsg = TbMsg.builder()
+        TbMsg generatedMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(RULE_NODE_ID)
                 .metaData(metaData.copy())
@@ -227,7 +227,7 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
         given(scriptEngineMock.executeGenerateAsync(any())).willReturn(Futures.immediateFuture(generatedMsg));
 
         // creation of prev message
-        TbMsg prevMsg = TbMsg.builder()
+        TbMsg prevMsg = TbMsg.newMsg()
                 .type(generatedMsg.getType())
                 .originator(RULE_NODE_ID)
                 .metaData(generatedMsg.getMetaData().copy())

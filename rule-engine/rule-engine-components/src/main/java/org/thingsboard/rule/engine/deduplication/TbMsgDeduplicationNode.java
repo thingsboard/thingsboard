@@ -154,7 +154,7 @@ public class TbMsgDeduplicationNode implements TbNode {
                             iterator.remove();
                         }
                     }
-                    deduplicationResults.add(TbMsg.builder()
+                    deduplicationResults.add(TbMsg.newMsg()
                             .queueName(queueName)
                             .type(config.getOutMsgType())
                             .originator(deduplicationId)
@@ -178,7 +178,7 @@ public class TbMsgDeduplicationNode implements TbNode {
                     }
                     if (resultMsg != null) {
                         String queueName1 = queueName != null ? queueName : resultMsg.getQueueName();
-                        deduplicationResults.add(TbMsg.builder()
+                        deduplicationResults.add(TbMsg.newMsg()
                                 .queueName(queueName1)
                                 .type(resultMsg.getType())
                                 .originator(resultMsg.getOriginator())

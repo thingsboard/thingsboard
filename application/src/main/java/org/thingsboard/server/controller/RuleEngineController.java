@@ -169,7 +169,7 @@ public class RuleEngineController extends BaseController {
                     metaData.put("serviceId", serviceInfoProvider.getServiceId());
                     metaData.put("requestUUID", requestId.toString());
                     metaData.put("expirationTime", Long.toString(expTime));
-                    TbMsg msg = TbMsg.builder()
+                    TbMsg msg = TbMsg.newMsg()
                             .queueName(queueName)
                             .type(TbMsgType.REST_API_REQUEST)
                             .originator(entityId)

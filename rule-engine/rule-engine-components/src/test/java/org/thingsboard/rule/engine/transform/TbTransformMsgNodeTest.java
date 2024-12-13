@@ -61,7 +61,7 @@ public class TbTransformMsgNodeTest {
 
         RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
         RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(null)
                 .metaData(metaData.copy())
@@ -70,7 +70,7 @@ public class TbTransformMsgNodeTest {
                 .ruleChainId(ruleChainId)
                 .ruleNodeId(ruleNodeId)
                 .build();
-        TbMsg transformedMsg = TbMsg.builder()
+        TbMsg transformedMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(null)
                 .metaData(metaData.copy())
@@ -97,7 +97,7 @@ public class TbTransformMsgNodeTest {
 
         RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
         RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(null)
                 .metaData(metaData.copy())

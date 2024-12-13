@@ -164,7 +164,7 @@ class TbGpsGeofencingActionNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private TbMsg getTbMsg(EntityId entityId, TbMsgMetaData metadata, double latitude, double longitude) {
         String data = "{\"latitude\": " + latitude + ", \"longitude\": " + longitude + "}";
-        return TbMsg.builder()
+        return TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(entityId)
                 .metaData(metadata.copy())

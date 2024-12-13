@@ -178,7 +178,7 @@ public class TbDeviceProfileNode implements TbNode {
 
     protected void scheduleAlarmHarvesting(TbContext ctx, TbMsg msg) {
         CustomerId customerId = msg != null ? msg.getCustomerId() : null;
-        TbMsg periodicCheck = TbMsg.builder()
+        TbMsg periodicCheck = TbMsg.newMsg()
                 .type(TbMsgType.DEVICE_PROFILE_PERIODIC_SELF_MSG)
                 .originator(ctx.getTenantId())
                 .customerId(customerId)
@@ -209,7 +209,7 @@ public class TbDeviceProfileNode implements TbNode {
     }
 
     protected void onProfileUpdate(DeviceProfile profile) {
-        ctx.tellSelf(TbMsg.builder()
+        ctx.tellSelf(TbMsg.newMsg()
                 .type(TbMsgType.DEVICE_PROFILE_UPDATE_SELF_MSG)
                 .originator(ctx.getTenantId())
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -223,7 +223,7 @@ public class TbDeviceProfileNode implements TbNode {
         if (deviceProfile != null) {
             msgData.put("deviceProfileId", deviceProfile.getId().getId().toString());
         }
-        ctx.tellSelf(TbMsg.builder()
+        ctx.tellSelf(TbMsg.newMsg()
                 .type(TbMsgType.DEVICE_UPDATE_SELF_MSG)
                 .originator(ctx.getTenantId())
                 .metaData(TbMsgMetaData.EMPTY.copy())

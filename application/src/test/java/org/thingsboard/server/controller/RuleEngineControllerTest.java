@@ -62,7 +62,7 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
     @Test
     public void testHandleRuleEngineRequestWithMsgOriginatorUser() throws Exception {
         loginSysAdmin();
-        TbMsg responseMsg = TbMsg.builder()
+        TbMsg responseMsg = TbMsg.newMsg()
                 .type(TbMsgType.REST_API_REQUEST)
                 .originator(currentUserId)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -91,7 +91,7 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
         Device device = createDevice("Test", "123");
         DeviceId deviceId = device.getId();
-        TbMsg responseMsg = TbMsg.builder()
+        TbMsg responseMsg = TbMsg.newMsg()
                 .type(TbMsgType.REST_API_REQUEST)
                 .originator(deviceId)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -120,7 +120,7 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
         Device device = createDevice("Test", "123");
         DeviceId deviceId = device.getId();
-        TbMsg responseMsg = TbMsg.builder()
+        TbMsg responseMsg = TbMsg.newMsg()
                 .type(TbMsgType.REST_API_REQUEST)
                 .originator(deviceId)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -171,7 +171,7 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
         Device device = createDevice("Test", "123");
         DeviceId deviceId = device.getId();
-        TbMsg responseMsg = TbMsg.builder()
+        TbMsg responseMsg = TbMsg.newMsg()
                 .queueName(DataConstants.HP_QUEUE_NAME)
                 .type(TbMsgType.REST_API_REQUEST)
                 .originator(deviceId)
@@ -216,7 +216,7 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
         assignDeviceToCustomer(deviceId, customerId);
         loginCustomerUser();
 
-        TbMsg responseMsg = TbMsg.builder()
+        TbMsg responseMsg = TbMsg.newMsg()
                 .type(TbMsgType.REST_API_REQUEST)
                 .originator(deviceId)
                 .customerId(customerId)

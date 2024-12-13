@@ -743,7 +743,7 @@ public class TenantControllerTest extends AbstractControllerTest {
     }
 
     private TbMsg publishTbMsg(TenantId tenantId, TopicPartitionInfo tpi) {
-        TbMsg tbMsg = TbMsg.builder()
+        TbMsg tbMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(tenantId)
                 .metaData(TbMsgMetaData.EMPTY.copy())

@@ -89,7 +89,7 @@ class TbMsgTypeSwitchNodeTest {
     }
 
     private TbMsg getTbMsg(TbMsgType msgType) {
-        return TbMsg.builder()
+        return TbMsg.newMsg()
                 .type(msgType)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())

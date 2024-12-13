@@ -92,7 +92,7 @@ public class TbSendRPCReplyNodeTest {
     public void sendReplyToTransport() {
         when(ctx.getRpcService()).thenReturn(rpcService);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
                 .metaData(getDefaultMetadata().copy())
@@ -118,7 +118,7 @@ public class TbSendRPCReplyNodeTest {
         TbMsgMetaData defaultMetadata = getDefaultMetadata();
         defaultMetadata.putValue(DataConstants.EDGE_ID, UUID.randomUUID().toString());
         defaultMetadata.putValue(DataConstants.DEVICE_ID, UUID.randomUUID().toString());
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
                 .metaData(defaultMetadata.copy())
@@ -138,7 +138,7 @@ public class TbSendRPCReplyNodeTest {
     @EnumSource(EntityType.class)
     public void testOriginatorEntityTypes(EntityType entityType) {
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, "0f386739-210f-4e23-8739-23f84a172adc");
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(entityId)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -157,7 +157,7 @@ public class TbSendRPCReplyNodeTest {
     @ParameterizedTest
     @MethodSource
     public void testForAvailabilityOfMetadataAndDataValues(TbMsgMetaData metaData, String errorMsg) {
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
                 .metaData(metaData.copy())

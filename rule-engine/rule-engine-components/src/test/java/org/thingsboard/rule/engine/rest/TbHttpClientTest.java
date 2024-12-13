@@ -140,13 +140,13 @@ public class TbHttpClientTest {
 
         var httpClient = new TbHttpClient(config, eventLoop);
 
-        var msg = TbMsg.builder()
+        var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(new DeviceId(EntityId.NULL_UUID))
                 .metaData(TbMsgMetaData.EMPTY.copy())
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
-        var successMsg = TbMsg.builder()
+        var successMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(msg.getOriginator())
                 .metaData(msg.getMetaData().copy())

@@ -67,7 +67,7 @@ public class TbAckNodeTest {
     public void givenMsg_whenOnMsg_thenAckAndTellSuccess() throws TbNodeException {
         node.init(ctxMock, nodeConfiguration);
         DeviceId deviceId = new DeviceId(UUID.fromString("5770153d-6ca2-4447-8a54-5d8a4538e052"));
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
                 .metaData(TbMsgMetaData.EMPTY.copy())

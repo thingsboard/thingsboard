@@ -362,7 +362,7 @@ public class DefaultTransportApiService implements TransportApiService {
 
                 DeviceId deviceId = device.getId();
                 JsonNode entityNode = JacksonUtil.valueToTree(device);
-                TbMsg tbMsg = TbMsg.builder()
+                TbMsg tbMsg = TbMsg.newMsg()
                         .type(TbMsgType.ENTITY_CREATED)
                         .originator(deviceId)
                         .customerId(customerId)

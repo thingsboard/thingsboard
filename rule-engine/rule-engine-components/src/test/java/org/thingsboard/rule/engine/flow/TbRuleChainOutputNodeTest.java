@@ -74,7 +74,7 @@ public class TbRuleChainOutputNodeTest {
 
         node.init(ctxMock, nodeConfiguration);
         DeviceId deviceId = new DeviceId(UUID.fromString("f514da88-79b3-46da-9f02-1747c5e84f44"));
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
                 .metaData(TbMsgMetaData.EMPTY.copy())

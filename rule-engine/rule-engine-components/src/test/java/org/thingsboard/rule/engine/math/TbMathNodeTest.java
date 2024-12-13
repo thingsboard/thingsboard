@@ -173,7 +173,7 @@ public class TbMathNodeTest {
         metaData.putValue("key2", "argumentA");
         ObjectNode msgNode = JacksonUtil.newObjectNode()
                 .put("key3", "argumentB").put("argumentA", 2).put("argumentB", 2);
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
                 .metaData(metaData.copy())
@@ -186,7 +186,7 @@ public class TbMathNodeTest {
         metaData.putValue("key2", "argumentC");
         msgNode = JacksonUtil.newObjectNode()
                 .put("key3", "argumentD").put("argumentC", 4).put("argumentD", 3);
-        msg = TbMsg.builder()
+        msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
                 .metaData(metaData.copy())
@@ -238,7 +238,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "b")
         );
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -306,7 +306,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a")
         );
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -334,7 +334,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "b")
         );
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -362,7 +362,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "b")
         );
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -391,7 +391,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.TIME_SERIES, "b")
         );
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -424,7 +424,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a")
         );
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -451,7 +451,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a")
         );
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -478,7 +478,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a")
         );
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -509,7 +509,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a")
         );
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -539,7 +539,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a")
         );
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -575,7 +575,7 @@ public class TbMathNodeTest {
                 new TbMathResult(TbMathArgumentType.MESSAGE_METADATA, "result", 3, false, false, null),
                 tbMathArgument
         );
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -600,7 +600,7 @@ public class TbMathNodeTest {
                 new TbMathResult(TbMathArgumentType.TIME_SERIES, "result", 3, true, false, DataConstants.SERVER_SCOPE),
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "TestKey")
         );
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -620,7 +620,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a")
         );
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -645,7 +645,7 @@ public class TbMathNodeTest {
         CountDownLatch slowProcessingLatch = new CountDownLatch(1);
 
         List<TbMsg> slowMsgList = IntStream.range(0, 5)
-                .mapToObj(x -> TbMsg.builder()
+                .mapToObj(x -> TbMsg.newMsg()
                                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                                 .originator(originatorSlow)
                                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -653,7 +653,7 @@ public class TbMathNodeTest {
                                 .build())
                 .toList();
         List<TbMsg> fastMsgList = IntStream.range(0, 2)
-                .mapToObj(x -> TbMsg.builder()
+                .mapToObj(x -> TbMsg.newMsg()
                                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                                 .originator(originatorFast)
                                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -725,7 +725,7 @@ public class TbMathNodeTest {
         CountDownLatch slowProcessingLatch = new CountDownLatch(1);
 
         List<TbMsg> slowMsgList = IntStream.range(0, 5)
-                .mapToObj(x -> TbMsg.builder()
+                .mapToObj(x -> TbMsg.newMsg()
                                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                                 .originator(originatorSlow)
                                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -803,7 +803,7 @@ public class TbMathNodeTest {
                 })
                 .toList();
         ctxNodes.forEach(ctxNode -> ruleEngineDispatcherExecutor.executeAsync(() -> ctxNode.getRight()
-                .onMsg(ctxNode.getLeft(), TbMsg.builder()
+                .onMsg(ctxNode.getLeft(), TbMsg.newMsg()
                         .type(TbMsgType.POST_TELEMETRY_REQUEST)
                         .originator(originator)
                         .metaData(TbMsgMetaData.EMPTY.copy())

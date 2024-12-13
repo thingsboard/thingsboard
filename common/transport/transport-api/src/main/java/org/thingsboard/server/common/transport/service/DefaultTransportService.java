@@ -1136,7 +1136,7 @@ public class DefaultTransportService extends TransportActivityManager implements
             queueName = deviceProfile.getDefaultQueueName();
         }
 
-        TbMsg tbMsg = TbMsg.builder()
+        TbMsg tbMsg = TbMsg.newMsg()
                 .queueName(queueName)
                 .type(tbMsgType)
                 .originator(deviceId)

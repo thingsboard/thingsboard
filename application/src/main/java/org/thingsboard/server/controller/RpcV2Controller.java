@@ -239,7 +239,7 @@ public class RpcV2Controller extends AbstractRpcController {
             rpcService.deleteRpc(getTenantId(), rpcId);
             rpc.setStatus(RpcStatus.DELETED);
 
-            TbMsg msg = TbMsg.builder()
+            TbMsg msg = TbMsg.newMsg()
                     .type(TbMsgType.RPC_DELETED)
                     .originator(rpc.getDeviceId())
                     .metaData(TbMsgMetaData.EMPTY.copy())

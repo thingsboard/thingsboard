@@ -44,7 +44,7 @@ import static org.mockito.Mockito.verify;
 class TbCheckMessageNodeTest {
 
     private static final DeviceId DEVICE_ID = new DeviceId(UUID.randomUUID());
-    private static final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.builder()
+    private static final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg()
             .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
             .originator(DEVICE_ID)
             .metaData(TbMsgMetaData.EMPTY.copy())
@@ -201,7 +201,7 @@ class TbCheckMessageNodeTest {
         metadata.putValue(DataConstants.DEVICE_NAME, "Test Device");
         metadata.putValue(DataConstants.DEVICE_TYPE, DataConstants.DEFAULT_DEVICE_TYPE);
         metadata.putValue("ts", String.valueOf(System.currentTimeMillis()));
-        return TbMsg.builder()
+        return TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(metadata.copy())

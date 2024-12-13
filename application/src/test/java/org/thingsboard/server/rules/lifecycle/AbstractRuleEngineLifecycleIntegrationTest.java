@@ -142,7 +142,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         log.warn("attr updated");
         TbMsgCallback tbMsgCallback = Mockito.mock(TbMsgCallback.class);
         Mockito.when(tbMsgCallback.isMsgValid()).thenReturn(true);
-        TbMsg tbMsg = TbMsg.builder()
+        TbMsg tbMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(device.getId())
                 .metaData(TbMsgMetaData.EMPTY.copy())

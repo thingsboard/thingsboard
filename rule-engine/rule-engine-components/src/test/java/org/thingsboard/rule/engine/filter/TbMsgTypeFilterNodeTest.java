@@ -97,7 +97,7 @@ class TbMsgTypeFilterNodeTest {
     }
 
     private TbMsg getTbMsg(EntityId entityId, TbMsgType msgType) {
-        return TbMsg.builder()
+        return TbMsg.newMsg()
                 .type(msgType)
                 .originator(entityId)
                 .metaData(TbMsgMetaData.EMPTY.copy())

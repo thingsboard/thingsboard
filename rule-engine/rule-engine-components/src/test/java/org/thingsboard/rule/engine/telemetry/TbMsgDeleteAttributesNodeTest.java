@@ -139,7 +139,7 @@ public class TbMsgDeleteAttributesNodeTest {
         }
         final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\"}";
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(deviceId)
                 .metaData(metaData.copy())

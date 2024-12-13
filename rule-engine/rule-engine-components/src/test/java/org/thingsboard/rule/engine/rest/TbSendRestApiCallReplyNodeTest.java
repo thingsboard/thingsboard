@@ -89,7 +89,7 @@ public class TbSendRestApiCallReplyNodeTest {
         Map<String, String> metadata = Map.of(
                 requestIdAttribute, requestUUIDStr,
                 serviceIdAttribute, serviceIdStr);
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.REST_API_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(new TbMsgMetaData(metadata).copy())
@@ -114,7 +114,7 @@ public class TbSendRestApiCallReplyNodeTest {
     @ParameterizedTest
     @MethodSource
     public void givenInvalidRequest_whenOnMsg_thenTellFailure(TbMsgMetaData metaData, String data, String errorMsg) {
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.REST_API_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(metaData.copy())

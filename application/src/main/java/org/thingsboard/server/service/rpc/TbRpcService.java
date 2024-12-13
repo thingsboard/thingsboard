@@ -63,7 +63,7 @@ public class TbRpcService {
     }
 
     private void pushRpcMsgToRuleEngine(TenantId tenantId, Rpc rpc) {
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.valueOf("RPC_" + rpc.getStatus().name()))
                 .originator(rpc.getDeviceId())
                 .metaData(TbMsgMetaData.EMPTY.copy())

@@ -183,7 +183,7 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
         entityNode.put(DataConstants.ADDITIONAL_INFO, msg.getAdditionalInfo());
 
         try {
-            TbMsg tbMsg = TbMsg.builder()
+            TbMsg tbMsg = TbMsg.newMsg()
                     .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
                     .originator(msg.getDeviceId())
                     .customerId(Optional.ofNullable(currentUser).map(User::getCustomerId).orElse(null))

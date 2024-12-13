@@ -131,7 +131,7 @@ public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest 
 
     void saveLatestTsForAssetAndDevice(List<Device> devices, Asset asset, int idx) throws ExecutionException, InterruptedException, TimeoutException {
         for (Device device : devices) {
-            TbMsg tbMsg = TbMsg.builder()
+            TbMsg tbMsg = TbMsg.newMsg()
                     .type(TbMsgType.POST_TELEMETRY_REQUEST)
                     .originator(device.getId())
                     .metaData(getTbMsgMetadata(device.getName(), ts.get(idx)).copy())

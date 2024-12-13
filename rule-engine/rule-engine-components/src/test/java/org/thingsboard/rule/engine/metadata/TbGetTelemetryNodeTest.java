@@ -182,7 +182,7 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
 
         // WHEN-THEN
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -210,7 +210,7 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         long endTs = 1719220353000L;
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("mdStartInterval", String.valueOf(startTs));
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(metaData.copy())
@@ -237,7 +237,7 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         given(timeseriesServiceMock.findAll(any(TenantId.class), any(EntityId.class), anyList())).willReturn(Futures.immediateFuture(Collections.emptyList()));
 
         // WHEN
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -266,7 +266,7 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         // WHEN
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("mdTsKey", "humidity");
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(metaData.copy())
@@ -296,7 +296,7 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         given(timeseriesServiceMock.findAll(any(TenantId.class), any(EntityId.class), anyList())).willReturn(Futures.immediateFuture(Collections.emptyList()));
 
         // WHEN
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -331,7 +331,7 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         given(timeseriesServiceMock.findAll(any(TenantId.class), any(EntityId.class), anyList())).willReturn(Futures.immediateFuture(Collections.emptyList()));
 
         // WHEN
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -376,7 +376,7 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         given(timeseriesServiceMock.findAll(any(TenantId.class), any(EntityId.class), anyList())).willReturn(Futures.immediateFuture(Collections.emptyList()));
 
         // WHEN
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -417,7 +417,7 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
         // WHEN-THEN
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -451,7 +451,7 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         given(timeseriesServiceMock.findAll(any(TenantId.class), any(EntityId.class), anyList())).willReturn(Futures.immediateFuture(tsKvEntries));
 
         // WHEN
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -487,7 +487,7 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         given(timeseriesServiceMock.findAll(any(TenantId.class), any(EntityId.class), anyList())).willReturn(Futures.immediateFuture(tsKvEntries));
 
         // WHEN
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())

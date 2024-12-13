@@ -253,7 +253,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     private void pushProvisionEventToRuleEngine(ProvisionRequest request, Device device, TbMsgType type) {
         try {
             JsonNode entityNode = JacksonUtil.valueToTree(request);
-            TbMsg msg = TbMsg.builder()
+            TbMsg msg = TbMsg.newMsg()
                     .type(type)
                     .originator(device.getId())
                     .customerId(device.getCustomerId())
@@ -269,7 +269,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
     private void pushDeviceCreatedEventToRuleEngine(Device device) {
         try {
             ObjectNode entityNode = JacksonUtil.OBJECT_MAPPER.valueToTree(device);
-            TbMsg msg = TbMsg.builder()
+            TbMsg msg = TbMsg.newMsg()
                     .type(TbMsgType.ENTITY_CREATED)
                     .originator(device.getId())
                     .customerId(device.getCustomerId())

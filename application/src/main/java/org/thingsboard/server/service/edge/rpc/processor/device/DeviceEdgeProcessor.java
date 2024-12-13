@@ -190,7 +190,7 @@ public abstract class DeviceEdgeProcessor extends BaseDeviceProcessor implements
             ObjectNode data = JacksonUtil.newObjectNode();
             data.put("method", deviceRpcCallMsg.getRequestMsg().getMethod());
             data.put("params", deviceRpcCallMsg.getRequestMsg().getParams());
-            TbMsg tbMsg = TbMsg.builder()
+            TbMsg tbMsg = TbMsg.newMsg()
                     .type(TbMsgType.TO_SERVER_RPC_REQUEST)
                     .originator(deviceId)
                     .metaData(metaData.copy())

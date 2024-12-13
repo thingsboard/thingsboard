@@ -107,7 +107,7 @@ class TbSqsNodeTest {
 
         mockSendingMsgRequest();
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(metaData.copy())
@@ -148,7 +148,7 @@ class TbSqsNodeTest {
 
         mockSendingMsgRequest();
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(metaData.copy())
@@ -196,7 +196,7 @@ class TbSqsNodeTest {
         given(sendMessageResultMock.getMD5OfMessageAttributes()).willReturn(messageAttributesMd5);
         given(sendMessageResultMock.getSequenceNumber()).willReturn(sequenceNumber);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -236,7 +236,7 @@ class TbSqsNodeTest {
         ListenableFuture<TbMsg> failedFuture = Futures.immediateFailedFuture(new RuntimeException(errorMsg));
         given(listeningExecutor.executeAsync(any(Callable.class))).willReturn(failedFuture);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())

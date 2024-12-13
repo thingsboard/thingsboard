@@ -384,7 +384,7 @@ public class RuleChainController extends BaseController {
                 }
                 engine = new RuleNodeTbelScriptEngine(getTenantId(), tbelInvokeService, script, argNames);
             }
-            TbMsg inMsg = TbMsg.builder()
+            TbMsg inMsg = TbMsg.newMsg()
                     .type(msgType)
                     .originator(null)
                     .metaData(new TbMsgMetaData(metadata).copy())

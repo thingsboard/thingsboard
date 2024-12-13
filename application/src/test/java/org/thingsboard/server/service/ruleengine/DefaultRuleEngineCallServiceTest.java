@@ -85,7 +85,7 @@ public class DefaultRuleEngineCallServiceTest {
         metaData.put("serviceId", "core");
         metaData.put("requestUUID", requestId.toString());
         metaData.put("expirationTime", Long.toString(expTime));
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .queueName(DataConstants.MAIN_QUEUE_NAME)
                 .type(TbMsgType.REST_API_REQUEST)
                 .originator(TENANT_ID)
@@ -119,7 +119,7 @@ public class DefaultRuleEngineCallServiceTest {
         metaData.put("serviceId", "core");
         metaData.put("requestUUID", requestId.toString());
         metaData.put("expirationTime", Long.toString(expTime));
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .queueName(DataConstants.MAIN_QUEUE_NAME)
                 .type(TbMsgType.REST_API_REQUEST)
                 .originator(TENANT_ID)

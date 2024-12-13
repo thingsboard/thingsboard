@@ -99,8 +99,13 @@ public final class TbMsg implements Serializable {
      */
     @Deprecated(since = "3.6.0")
     public static TbMsg transformMsg(TbMsg tbMsg, String type, EntityId originator, TbMsgMetaData metaData, String data) {
-        return new TbMsg(tbMsg.queueName, tbMsg.id, tbMsg.ts, null, type, originator, tbMsg.customerId, metaData.copy(), tbMsg.dataType,
-                data, tbMsg.ruleChainId, tbMsg.ruleNodeId, tbMsg.correlationId, tbMsg.partition, tbMsg.ctx.copy(), tbMsg.callback);
+        return tbMsg.transform()
+                .type(type)
+                .originator(originator)
+                .metaData(metaData)
+                .data(data)
+                .ctx(tbMsg.ctx)
+                .build();
     }
 
     public static TbMsg transformMsg(TbMsg tbMsg, TbMsgType type, EntityId originator, TbMsgMetaData metaData, String data) {
@@ -347,12 +352,12 @@ public final class TbMsg implements Serializable {
         return false;
     }
 
-    public static TbMsgBuilder builder() {
+    public static TbMsgBuilder newMsg() {
         return new TbMsgBuilder();
     }
 
-    public TbMsgBuilder toBuilder() {
-        return new TbMsgBuilder()
+    public TbMsgBuilder transform() {
+        return new TbMsgTransformer()
                 .queueName(this.queueName)
                 .id(this.id)
                 .ts(this.ts)
@@ -371,7 +376,23 @@ public final class TbMsg implements Serializable {
                 .callback(this.callback);
     }
 
-    public static class TbMsgBuilder {
+    private static class TbMsgTransformer extends TbMsgBuilder {
+
+        @Override
+        public TbMsgTransformer metaData(TbMsgMetaData metaData) {
+            super.metaData(metaData.copy());
+            return this;
+        }
+
+        @Override
+        public TbMsgTransformer ctx(TbMsgProcessingCtx ctx) {
+            super.ctx(ctx.copy());
+            return this;
+        }
+
+    }
+
+    private static class TbMsgBuilder {
 
         private String queueName;
         private UUID id;
@@ -415,6 +436,7 @@ public final class TbMsg implements Serializable {
         @Deprecated
         public TbMsgBuilder type(String type) {
             this.type = type;
+            this.internalType = null;
             return this;
         }
 

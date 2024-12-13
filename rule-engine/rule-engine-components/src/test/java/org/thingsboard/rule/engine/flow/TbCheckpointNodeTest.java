@@ -87,7 +87,7 @@ public class TbCheckpointNodeTest extends AbstractRuleNodeUpgradeTest {
         given(ctxMock.getQueueName()).willReturn(queueName);
 
         node.init(ctxMock, nodeConfiguration);
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -106,7 +106,7 @@ public class TbCheckpointNodeTest extends AbstractRuleNodeUpgradeTest {
         given(ctxMock.getQueueName()).willReturn(DataConstants.HP_QUEUE_NAME);
 
         node.init(ctxMock, nodeConfiguration);
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())

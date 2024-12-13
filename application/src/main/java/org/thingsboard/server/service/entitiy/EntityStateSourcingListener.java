@@ -250,7 +250,7 @@ public class EntityStateSourcingListener {
     private void pushAssignedFromNotification(Tenant currentTenant, TenantId newTenantId, Device assignedDevice) {
         String data = JacksonUtil.toString(JacksonUtil.valueToTree(assignedDevice));
         if (data != null) {
-            TbMsg tbMsg = TbMsg.builder()
+            TbMsg tbMsg = TbMsg.newMsg()
                     .type(TbMsgType.ENTITY_ASSIGNED_FROM_TENANT)
                     .originator(assignedDevice.getId())
                     .customerId(assignedDevice.getCustomerId())

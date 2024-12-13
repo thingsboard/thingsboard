@@ -172,7 +172,7 @@ public class EntityActionService {
                 if (tenantId != null && !tenantId.isSysTenantId()) {
                     processNotificationRules(tenantId, entityId, entity, actionType, user, additionalInfo);
                 }
-                TbMsg tbMsg = TbMsg.builder()
+                TbMsg tbMsg = TbMsg.newMsg()
                         .type(msgType.get())
                         .originator(entityId)
                         .customerId(customerId)

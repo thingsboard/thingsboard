@@ -96,7 +96,7 @@ class TbOriginatorTypeFilterNodeTest {
     }
 
     private TbMsg getTbMsg(EntityId entityId) {
-        return TbMsg.builder()
+        return TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(entityId)
                 .metaData(TbMsgMetaData.EMPTY.copy())

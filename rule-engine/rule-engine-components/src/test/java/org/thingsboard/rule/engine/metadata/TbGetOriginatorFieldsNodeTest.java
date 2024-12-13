@@ -135,7 +135,7 @@ public class TbGetOriginatorFieldsNodeTest {
     public void givenMsgDataIsNotAnJsonObjectAndFetchToData_whenOnMsg_thenException() {
         // GIVEN
         node.fetchTo = TbMsgSource.DATA;
-        msg = TbMsg.builder()
+        msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -169,7 +169,7 @@ public class TbGetOriginatorFieldsNodeTest {
         node.fetchTo = TbMsgSource.DATA;
         var msgMetaData = new TbMsgMetaData();
         var msgData = "{\"temp\":42,\"humidity\":77}";
-        msg = TbMsg.builder()
+        msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
                 .metaData(msgMetaData.copy())
@@ -216,7 +216,7 @@ public class TbGetOriginatorFieldsNodeTest {
         node.fetchTo = TbMsgSource.DATA;
         var msgMetaData = new TbMsgMetaData();
         var msgData = "{\"temp\":42,\"humidity\":77}";
-        msg = TbMsg.builder()
+        msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
                 .metaData(msgMetaData.copy())
@@ -264,7 +264,7 @@ public class TbGetOriginatorFieldsNodeTest {
                 "testKey1", "testValue1",
                 "testKey2", "123"));
         var msgData = "[\"value1\",\"value2\"]";
-        msg = TbMsg.builder()
+        msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
                 .metaData(msgMetaData.copy())
@@ -317,7 +317,7 @@ public class TbGetOriginatorFieldsNodeTest {
                 "testKey1", "testValue1",
                 "testKey2", "123"));
         var msgData = "[\"value1\",\"value2\"]";
-        msg = TbMsg.builder()
+        msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
                 .metaData(msgMetaData.copy())
@@ -380,7 +380,7 @@ public class TbGetOriginatorFieldsNodeTest {
                 "testKey1", "testValue1",
                 "testKey2", "123"));
         var msgData = "[\"value1\",\"value2\"]";
-        msg = TbMsg.builder()
+        msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(new DashboardId(UUID.randomUUID()))
                 .metaData(msgMetaData.copy())

@@ -363,7 +363,7 @@ public class DefaultTbContext implements TbContext {
 
     @Override
     public TbMsg newMsg(String queueName, String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data) {
-        return TbMsg.builder()
+        return TbMsg.newMsg()
                 .queueName(queueName)
                 .type(type)
                 .originator(originator)
@@ -387,7 +387,7 @@ public class DefaultTbContext implements TbContext {
 
     @Override
     public TbMsg newMsg(String queueName, TbMsgType type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data) {
-        return TbMsg.builder()
+        return TbMsg.newMsg()
                 .queueName(queueName)
                 .type(type)
                 .originator(originator)
@@ -510,7 +510,7 @@ public class DefaultTbContext implements TbContext {
             defaultQueueName = profile.getDefaultQueueName();
             defaultRuleChainId = profile.getDefaultRuleChainId();
         }
-        return TbMsg.builder()
+        return TbMsg.newMsg()
                 .queueName(defaultQueueName)
                 .type(action)
                 .originator(id)
@@ -536,7 +536,7 @@ public class DefaultTbContext implements TbContext {
             defaultQueueName = profile.getDefaultQueueName();
             defaultRuleChainId = profile.getDefaultRuleChainId();
         }
-        return TbMsg.builder()
+        return TbMsg.newMsg()
                 .queueName(defaultQueueName)
                 .type(actionMsgType)
                 .originator(id)

@@ -103,7 +103,7 @@ public class TbMsgToEmailNodeTest {
         }
 
         var msgDataStr = "{\"temperature\": " + EXPECTED_TEMPERATURE + "}";
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
                 .metaData(md.copy())

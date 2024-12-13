@@ -115,7 +115,7 @@ public class TbGetDeviceAttrNodeTest extends AbstractRuleNodeUpgradeTest {
         given(deviceServiceMock.findDevicesByQuery(any(TenantId.class), any(DeviceSearchQuery.class))).willReturn(Futures.immediateFuture(Collections.emptyList()));
         given(ctxMock.getDbCallbackExecutor()).willReturn(executor);
 
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
                 .metaData(TbMsgMetaData.EMPTY.copy())

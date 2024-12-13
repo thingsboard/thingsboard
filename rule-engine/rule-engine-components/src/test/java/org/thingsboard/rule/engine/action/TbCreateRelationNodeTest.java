@@ -486,7 +486,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
 
         var mockMethodCallsMap = mockEntityServiceCallsCreateEntityIfNotExistsEnabled();
-        var entityCreatedMsg = TbMsg.builder()
+        var entityCreatedMsg = TbMsg.newMsg()
                 .type(TbMsgType.ENTITY_CREATED)
                 .originator(entityId)
                 .metaData(TbMsgMetaData.EMPTY.copy())
@@ -681,7 +681,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     private TbMsg getTbMsg(EntityId originator, TbMsgMetaData metaData) {
-        return TbMsg.builder()
+        return TbMsg.newMsg()
                 .type(TbMsgType.NA)
                 .originator(originator)
                 .metaData(metaData.copy())

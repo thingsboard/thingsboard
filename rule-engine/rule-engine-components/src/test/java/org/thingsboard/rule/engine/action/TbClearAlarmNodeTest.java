@@ -91,7 +91,7 @@ class TbClearAlarmNodeTest {
     void alarmCanBeCleared() {
         initWithClearAlarmScript();
         metadata.putValue("key", "value");
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(msgOriginator)
                 .metaData(metadata.copy())
@@ -148,7 +148,7 @@ class TbClearAlarmNodeTest {
     void alarmCanBeClearedWithAlarmOriginator() {
         initWithClearAlarmScript();
         metadata.putValue("key", "value");
-        TbMsg msg = TbMsg.builder()
+        TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(alarmOriginator)
                 .metaData(metadata.copy())
