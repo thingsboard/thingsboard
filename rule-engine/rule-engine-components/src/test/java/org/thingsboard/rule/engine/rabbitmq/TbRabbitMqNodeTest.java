@@ -227,7 +227,9 @@ public class TbRabbitMqNodeTest {
                 () -> then(ctxMock).should().tellFailure(actualMsg.capture(), throwable.capture());
         verifyTellFailure.run();
         metaData.putValue("error", RuntimeException.class + ": " + errorMsg);
-        TbMsg expectedMsg = TbMsg.transformMsgMetadata(msg, metaData);
+        TbMsg expectedMsg = msg.transform()
+                .metaData(metaData)
+                .build();
         assertThat(actualMsg.getValue()).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);
         assertThat(throwable.getValue()).isInstanceOf(RuntimeException.class).hasMessage(errorMsg);
     }

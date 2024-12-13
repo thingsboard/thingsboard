@@ -465,7 +465,9 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temperature", "[{\"ts\":" + (ts - 5) + ",\"value\":23.1},{\"ts\":" + (ts - 4) + ",\"value\":22.4}]");
         metaData.putValue("humidity", "[{\"ts\":" + (ts - 4) + ",\"value\":55.5}]");
-        TbMsg expectedMsg = TbMsg.transformMsgMetadata(msg, metaData);
+        TbMsg expectedMsg = msg.transform()
+                .metaData(metaData)
+                .build();
         assertThat(actualMsg.getValue()).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);
     }
 
@@ -501,7 +503,9 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("temperature", "\"22.4\"");
         metaData.putValue("humidity", "\"55.5\"");
-        TbMsg expectedMsg = TbMsg.transformMsgMetadata(msg, metaData);
+        TbMsg expectedMsg = msg.transform()
+                .metaData(metaData)
+                .build();
         assertThat(actualMsg.getValue()).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);
     }
 

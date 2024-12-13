@@ -176,7 +176,10 @@ public class TbAwsLambdaNodeTest {
         assertThat(invokeRequestCaptor.getValue().getQualifier()).isEqualTo(expectedQualifier);
         TbMsgMetaData resultMsgMetadata = metadata.copy();
         resultMsgMetadata.putValue("requestId", requestIdStr);
-        TbMsg resultedMsg = TbMsg.transformMsg(msg, resultMsgMetadata, funcResponsePayload);
+        TbMsg resultedMsg = msg.transform()
+                .metaData(resultMsgMetadata)
+                .data(funcResponsePayload)
+                .build();
         assertThat(msgCaptor.getValue()).usingRecursiveComparison()
                 .ignoringFields("ctx")
                 .isEqualTo(resultedMsg);
@@ -231,7 +234,9 @@ public class TbAwsLambdaNodeTest {
         verify(ctx).tellFailure(msgCaptor.capture(), throwableCaptor.capture());
 
         var metadata = Map.of("error", RuntimeException.class + ": " + errorMsg, "requestId", requestIdStr);
-        TbMsg resultedMsg = TbMsg.transformMsgMetadata(msg, new TbMsgMetaData(metadata));
+        TbMsg resultedMsg = msg.transform()
+                .metaData(new TbMsgMetaData(metadata))
+                .build();
 
         assertThat(msgCaptor.getValue()).usingRecursiveComparison()
                 .ignoringFields("ctx")
@@ -270,7 +275,10 @@ public class TbAwsLambdaNodeTest {
         verify(ctx).tellSuccess(msgCaptor.capture());
 
         Map<String, String> metadata = Map.of("requestId", requestIdStr);
-        TbMsg resultedMsg = TbMsg.transformMsg(msg, new TbMsgMetaData(metadata), payload);
+        TbMsg resultedMsg = msg.transform()
+                .metaData(new TbMsgMetaData(metadata))
+                .data(payload)
+                .build();
 
         assertThat(msgCaptor.getValue()).usingRecursiveComparison()
                 .ignoringFields("ctx")
@@ -309,7 +317,9 @@ public class TbAwsLambdaNodeTest {
         verify(ctx).tellFailure(msgCaptor.capture(), throwableCaptor.capture());
 
         var metadata = Map.of("error", RuntimeException.class + ": " + errorMsg, "requestId", requestIdStr);
-        TbMsg resultedMsg = TbMsg.transformMsgMetadata(msg, new TbMsgMetaData(metadata));
+        TbMsg resultedMsg = msg.transform()
+                .metaData(new TbMsgMetaData(metadata))
+                .build();
 
         assertThat(msgCaptor.getValue()).usingRecursiveComparison()
                 .ignoringFields("ctx")

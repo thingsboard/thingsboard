@@ -182,7 +182,9 @@ public class TbChangeOriginatorNodeTest {
                 .metaData(TbMsgMetaData.EMPTY.copy())
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
-        TbMsg expectedMsg = TbMsg.transformMsgOriginator(msg, CUSTOMER_ID);
+        TbMsg expectedMsg = msg.transform()
+                .originator(CUSTOMER_ID)
+                .build();
 
         given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.getDeviceService()).willReturn(deviceServiceMock);
@@ -210,7 +212,9 @@ public class TbChangeOriginatorNodeTest {
                 .metaData(TbMsgMetaData.EMPTY.copy())
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
-        TbMsg expectedMsg = TbMsg.transformMsgOriginator(msg, TENANT_ID);
+        TbMsg expectedMsg = msg.transform()
+                .originator(TENANT_ID)
+                .build();
 
         given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.getTenantId()).willReturn(TENANT_ID);
@@ -274,7 +278,9 @@ public class TbChangeOriginatorNodeTest {
                 .metaData(TbMsgMetaData.EMPTY.copy())
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
-        TbMsg expectedMsg = TbMsg.transformMsgOriginator(msg, DEVICE_ID);
+        TbMsg expectedMsg = msg.transform()
+                .originator(DEVICE_ID)
+                .build();
 
         given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.getAlarmService()).willReturn(alarmServiceMock);
@@ -305,7 +311,9 @@ public class TbChangeOriginatorNodeTest {
                 .metaData(metaData.copy())
                 .data(data)
                 .build();
-        TbMsg expectedMsg = TbMsg.transformMsgOriginator(msg, ASSET_ID);
+        TbMsg expectedMsg = msg.transform()
+                .originator(ASSET_ID)
+                .build();
 
         given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.getAssetService()).willReturn(assetServiceMock);

@@ -138,7 +138,9 @@ class TbPubSubNodeTest {
         ArgumentCaptor<TbMsg> actualMsg = ArgumentCaptor.forClass(TbMsg.class);
         then(ctxMock).should().enqueueForTellNext(actualMsg.capture(), eq(TbNodeConnectionType.SUCCESS));
         metaData.putValue("messageId", messageId);
-        TbMsg expectedMsg = TbMsg.transformMsgMetadata(msg, metaData);
+        TbMsg expectedMsg = msg.transform()
+                .metaData(metaData)
+                .build();
         assertThat(actualMsg.getValue())
                 .usingRecursiveComparison()
                 .ignoringFields("ctx")
@@ -184,7 +186,9 @@ class TbPubSubNodeTest {
         ArgumentCaptor<TbMsg> actualMsg = ArgumentCaptor.forClass(TbMsg.class);
         then(ctxMock).should().tellSuccess(actualMsg.capture());
         metadata.putValue("messageId", messageId);
-        TbMsg expectedMsg = TbMsg.transformMsgMetadata(msg, metadata);
+        TbMsg expectedMsg = msg.transform()
+                .metaData(metadata)
+                .build();
         assertThat(actualMsg.getValue())
                 .usingRecursiveComparison()
                 .ignoringFields("ctx")
@@ -216,7 +220,9 @@ class TbPubSubNodeTest {
         ArgumentCaptor<Throwable> actualError = ArgumentCaptor.forClass(Throwable.class);
         then(ctxMock).should().tellFailure(actualMsg.capture(), actualError.capture());
         metaData.putValue("error", RuntimeException.class + ": " + errorMsg);
-        TbMsg expectedMsg = TbMsg.transformMsgMetadata(msg, metaData);
+        TbMsg expectedMsg = msg.transform()
+                .metaData(metaData)
+                .build();
         assertThat(actualMsg.getValue())
                 .usingRecursiveComparison()
                 .ignoringFields("ctx")
@@ -249,7 +255,9 @@ class TbPubSubNodeTest {
         ArgumentCaptor<Throwable> actualError = ArgumentCaptor.forClass(Throwable.class);
         then(ctxMock).should().enqueueForTellFailure(actualMsg.capture(), actualError.capture());
         metaData.putValue("error", RuntimeException.class + ": " + errorMsg);
-        TbMsg expectedMsg = TbMsg.transformMsgMetadata(msg, metaData);
+        TbMsg expectedMsg = msg.transform()
+                .metaData(metaData)
+                .build();
         assertThat(actualMsg.getValue())
                 .usingRecursiveComparison()
                 .ignoringFields("ctx")

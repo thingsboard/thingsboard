@@ -439,7 +439,9 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         var md = getMetadataWithNameTemplate();
         var msg = getTbMsg(originatorId, md);
 
-        var msgAfterOriginatorChanged = TbMsg.transformMsgOriginator(msg, originatorId);
+        var msgAfterOriginatorChanged = msg.transform()
+                .originator(originatorId)
+                .build();
         when(ctxMock.transformMsgOriginator(any(), any())).thenReturn(msgAfterOriginatorChanged);
 
         // WHEN

@@ -377,7 +377,12 @@ public class DefaultTbContext implements TbContext {
 
     @Override
     public TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data) {
-        return TbMsg.transformMsg(origMsg, type, originator, metaData, data);
+        return origMsg.transform()
+                .type(type)
+                .originator(originator)
+                .metaData(metaData)
+                .data(data)
+                .build();
     }
 
     @Override
@@ -401,17 +406,27 @@ public class DefaultTbContext implements TbContext {
 
     @Override
     public TbMsg transformMsg(TbMsg origMsg, TbMsgType type, EntityId originator, TbMsgMetaData metaData, String data) {
-        return TbMsg.transformMsg(origMsg, type, originator, metaData, data);
+        return origMsg.transform()
+                .type(type)
+                .originator(originator)
+                .metaData(metaData)
+                .data(data)
+                .build();
     }
 
     @Override
     public TbMsg transformMsg(TbMsg origMsg, TbMsgMetaData metaData, String data) {
-        return TbMsg.transformMsg(origMsg, metaData, data);
+        return origMsg.transform()
+                .metaData(metaData)
+                .data(data)
+                .build();
     }
 
     @Override
     public TbMsg transformMsgOriginator(TbMsg origMsg, EntityId originator) {
-        return TbMsg.transformMsgOriginator(origMsg, originator);
+        return origMsg.transform()
+                .originator(originator)
+                .build();
     }
 
     @Override

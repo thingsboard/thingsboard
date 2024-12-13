@@ -371,7 +371,7 @@ public class DefaultTbClusterServiceTest {
         clusterService.pushMsgToRuleEngine(tenantId, deviceId, requestMsg, false, callback);
 
         verify(producerProvider).getRuleEngineMsgProducer();
-        TbMsg expectedMsg = TbMsg.transformMsgQueueName(requestMsg, DataConstants.MAIN_QUEUE_NAME);
+        TbMsg expectedMsg = requestMsg.transform(DataConstants.MAIN_QUEUE_NAME);
         ArgumentCaptor<TbMsg> actualMsg = ArgumentCaptor.forClass(TbMsg.class);
         verify(ruleEngineProducerService).sendToRuleEngine(eq(tbREQueueProducer), eq(tenantId), actualMsg.capture(), eq(callback));
         assertThat(actualMsg.getValue()).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);

@@ -340,7 +340,9 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
         then(mqttClientMock).should().publish(mqttNodeConfig.getTopicPattern(), Unpooled.wrappedBuffer(expectedData.getBytes(StandardCharsets.UTF_8)), MqttQoS.AT_LEAST_ONCE, false);
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("error", RuntimeException.class + ": " + errorMsg);
-        TbMsg expectedMsg = TbMsg.transformMsgMetadata(msg, metaData);
+        TbMsg expectedMsg = msg.transform()
+                .metaData(metaData)
+                .build();
         ArgumentCaptor<TbMsg> actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         then(ctxMock).should().tellFailure(actualMsgCaptor.capture(), eq(exception));
         TbMsg actualMsg = actualMsgCaptor.getValue();

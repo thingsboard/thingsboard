@@ -436,7 +436,9 @@ public class TbKafkaNodeTest {
         metaData.putValue("offset", String.valueOf(OFFSET));
         metaData.putValue("partition", String.valueOf(PARTITION));
         metaData.putValue("topic", expectedTopic);
-        TbMsg expectedMsg = TbMsg.transformMsgMetadata(originalMsg, metaData);
+        TbMsg expectedMsg = originalMsg.transform()
+                .metaData(metaData)
+                .build();
         assertThat(actualMsg)
                 .usingRecursiveComparison()
                 .ignoringFields("ctx")
@@ -446,7 +448,9 @@ public class TbKafkaNodeTest {
     private void verifyOutgoingFailureMsg(String errorMsg, TbMsg actualMsg, TbMsg originalMsg) {
         TbMsgMetaData metaData = originalMsg.getMetaData();
         metaData.putValue("error", RuntimeException.class + ": " + errorMsg);
-        TbMsg expectedMsg = TbMsg.transformMsgMetadata(originalMsg, metaData);
+        TbMsg expectedMsg = originalMsg.transform()
+                .metaData(metaData)
+                .build();
         assertThat(actualMsg).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);
     }
 
