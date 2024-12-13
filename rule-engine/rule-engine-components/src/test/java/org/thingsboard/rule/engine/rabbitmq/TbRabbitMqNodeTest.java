@@ -147,7 +147,12 @@ public class TbRabbitMqNodeTest {
         given(ctxMock.getExternalCallExecutor()).willReturn(executor);
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, data);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .metaData(metaData.copy())
+                .data(data)
+                .build();
         node.onMsg(ctxMock, msg);
 
         then(ctxMock).should().ack(msg);
@@ -178,7 +183,12 @@ public class TbRabbitMqNodeTest {
         given(ctxMock.getExternalCallExecutor()).willReturn(executor);
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         node.onMsg(ctxMock, msg);
 
         then(ctxMock).should(never()).ack(any(TbMsg.class));
@@ -201,7 +211,12 @@ public class TbRabbitMqNodeTest {
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
         TbMsgMetaData metaData = new TbMsgMetaData();
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .metaData(metaData.copy())
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         node.onMsg(ctxMock, msg);
 
         then(ctxMock).should(forceAck ? times(1) : never()).ack(any(TbMsg.class));

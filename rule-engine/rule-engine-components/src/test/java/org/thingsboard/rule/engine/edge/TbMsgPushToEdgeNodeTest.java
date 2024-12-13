@@ -85,8 +85,15 @@ public class TbMsgPushToEdgeNodeTest {
         Mockito.when(ctx.getEdgeService()).thenReturn(edgeService);
         Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, deviceId, new PageLink(RELATED_EDGES_CACHE_ITEMS))).thenReturn(new PageData<>());
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg);
 
@@ -106,8 +113,15 @@ public class TbMsgPushToEdgeNodeTest {
         PageData<EdgeId> edgePageData = new PageData<>(List.of(edgeId), 1, 1, false);
         Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, userId, new PageLink(RELATED_EDGES_CACHE_ITEMS))).thenReturn(edgePageData);
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.ATTRIBUTES_UPDATED, userId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.ATTRIBUTES_UPDATED)
+                .originator(userId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg);
 
@@ -137,8 +151,15 @@ public class TbMsgPushToEdgeNodeTest {
         Mockito.when(ctx.getDbCallbackExecutor()).thenReturn(dbCallbackExecutor);
         Mockito.when(edgeEventService.saveAsync(any())).thenReturn(SettableFuture.create());
 
-        TbMsg msg = TbMsg.newMsg(event, new EdgeId(UUID.randomUUID()), metaData,
-                TbMsgDataType.JSON, "{\"lastConnectTs\":1}", null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(event)
+                .originator(new EdgeId(UUID.randomUUID()))
+                .metaData(metaData.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data("{\"lastConnectTs\":1}")
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg);
 

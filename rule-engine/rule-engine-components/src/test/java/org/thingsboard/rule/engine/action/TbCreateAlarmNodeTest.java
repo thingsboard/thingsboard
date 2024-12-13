@@ -163,7 +163,12 @@ class TbCreateAlarmNodeTest {
 
         var ruleNodeSelfId = new RuleNodeId(Uuids.timeBased());
 
-        var incomingMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, msgOriginator, metadata, "{\"temperature\": 50}");
+        var incomingMsg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(msgOriginator)
+                .metaData(metadata.copy())
+                .data("{\"temperature\": 50}")
+                .build();
 
         Alarm existingAlarm = null;
 
@@ -317,7 +322,12 @@ class TbCreateAlarmNodeTest {
 
         var ruleNodeSelfId = new RuleNodeId(Uuids.timeBased());
 
-        var incomingMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, msgOriginator, metadata, "{\"temperature\": 50, \"alarmType\": \"" + alarmType + "\"}");
+        var incomingMsg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(msgOriginator)
+                .metaData(metadata.copy())
+                .data("{\"temperature\": 50, \"alarmType\": \"" + alarmType + "\"}")
+                .build();
 
         var existingClearedAlarm = Alarm.builder()
                 .tenantId(tenantId)
@@ -508,7 +518,12 @@ class TbCreateAlarmNodeTest {
 
         var ruleNodeSelfId = new RuleNodeId(Uuids.timeBased());
 
-        var incomingMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, msgOriginator, metadata, "{\"temperature\": 50, \"alarmSeverity\": \"" + newAlarmSeverity.name() + "\"}");
+        var incomingMsg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(msgOriginator)
+                .metaData(metadata.copy())
+                .data("{\"temperature\": 50, \"alarmSeverity\": \"" + newAlarmSeverity.name() + "\"}")
+                .build();
 
         var existingAlarmId = new AlarmId(Uuids.timeBased());
         var existingActiveAlarm = Alarm.builder()
@@ -680,7 +695,12 @@ class TbCreateAlarmNodeTest {
 
         var ruleNodeSelfId = new RuleNodeId(Uuids.timeBased());
 
-        var incomingMsg = TbMsg.newMsg(TbMsgType.ALARM, msgOriginator, metadata, JacksonUtil.toString(alarmFromIncomingMessage));
+        var incomingMsg = TbMsg.builder()
+                .type(TbMsgType.ALARM)
+                .originator(msgOriginator)
+                .metaData(metadata.copy())
+                .data(JacksonUtil.toString(alarmFromIncomingMessage))
+                .build();
 
         var existingClearedAlarm = Alarm.builder()
                 .tenantId(tenantId)
@@ -867,7 +887,12 @@ class TbCreateAlarmNodeTest {
                 .details(newAlarmDetails)
                 .build();
 
-        var incomingMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, msgOriginator, metadata, JacksonUtil.toString(alarmFromIncomingMessage));
+        var incomingMsg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(msgOriginator)
+                .metaData(metadata.copy())
+                .data(JacksonUtil.toString(alarmFromIncomingMessage))
+                .build();
 
         var existingAlarmId = new AlarmId(Uuids.timeBased());
         var existingActiveAlarm = Alarm.builder()
@@ -1048,7 +1073,12 @@ class TbCreateAlarmNodeTest {
                 .details(alarmDetails)
                 .build();
 
-        var incomingMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, msgOriginator, metadata, JacksonUtil.toString(alarmFromIncomingMessage));
+        var incomingMsg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(msgOriginator)
+                .metaData(metadata.copy())
+                .data(JacksonUtil.toString(alarmFromIncomingMessage))
+                .build();
 
         var existingAlarmId = new AlarmId(Uuids.timeBased());
         var existingActiveAlarm = Alarm.builder()
@@ -1189,7 +1219,12 @@ class TbCreateAlarmNodeTest {
         // GIVEN
         config = config.defaultConfiguration();
 
-        var incomingMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, msgOriginator, metadata, "{\"temperature\": 50}");
+        var incomingMsg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(msgOriginator)
+                .metaData(metadata.copy())
+                .data("{\"temperature\": 50}")
+                .build();
 
         given(ctxMock.getTenantId()).willReturn(tenantId);
         given(ctxMock.getAlarmService()).willReturn(alarmServiceMock);

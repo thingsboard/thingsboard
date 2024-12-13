@@ -283,7 +283,12 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
             return null;
         }).given(future).addListener(any());
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, data);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .metaData(metaData.copy())
+                .data(data)
+                .build();
         mqttNode.onMsg(ctxMock, msg);
 
         then(ctxMock).should().ack(msg);
@@ -322,7 +327,12 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
             return null;
         }).given(future).addListener(any());
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, "\"string\"");
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data("\"string\"")
+                .build();
         mqttNode.onMsg(ctxMock, msg);
 
         then(ctxMock).should(never()).ack(msg);

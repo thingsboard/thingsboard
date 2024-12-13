@@ -90,7 +90,12 @@ class TbOriginatorTypeSwitchNodeTest {
     }
 
     private TbMsg getTbMsg(EntityId entityId) {
-        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        return TbMsg.builder()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(entityId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
     }
 
 }

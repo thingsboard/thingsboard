@@ -92,8 +92,15 @@ public class TbSendRPCReplyNodeTest {
     public void sendReplyToTransport() {
         when(ctx.getRpcService()).thenReturn(rpcService);
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, getDefaultMetadata(),
-                TbMsgDataType.JSON, DUMMY_DATA, null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(getDefaultMetadata().copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(DUMMY_DATA)
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg);
 
@@ -111,8 +118,15 @@ public class TbSendRPCReplyNodeTest {
         TbMsgMetaData defaultMetadata = getDefaultMetadata();
         defaultMetadata.putValue(DataConstants.EDGE_ID, UUID.randomUUID().toString());
         defaultMetadata.putValue(DataConstants.DEVICE_ID, UUID.randomUUID().toString());
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, defaultMetadata,
-                TbMsgDataType.JSON, DUMMY_DATA, null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(defaultMetadata.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(DUMMY_DATA)
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg);
 
@@ -124,7 +138,12 @@ public class TbSendRPCReplyNodeTest {
     @EnumSource(EntityType.class)
     public void testOriginatorEntityTypes(EntityType entityType) {
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, "0f386739-210f-4e23-8739-23f84a172adc");
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, entityId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(entityId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
 
         node.onMsg(ctx, msg);
 
@@ -138,7 +157,12 @@ public class TbSendRPCReplyNodeTest {
     @ParameterizedTest
     @MethodSource
     public void testForAvailabilityOfMetadataAndDataValues(TbMsgMetaData metaData, String errorMsg) {
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, metaData, TbMsg.EMPTY_STRING);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(metaData.copy())
+                .data(TbMsg.EMPTY_STRING)
+                .build();
 
         node.onMsg(ctx, msg);
 

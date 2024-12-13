@@ -362,13 +362,17 @@ public class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public TbMsg newMsg(String queueName, String type, EntityId originator, TbMsgMetaData metaData, String data) {
-        return newMsg(queueName, type, originator, null, metaData, data);
-    }
-
-    @Override
     public TbMsg newMsg(String queueName, String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data) {
-        return TbMsg.newMsg(queueName, type, originator, customerId, metaData, data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId());
+        return TbMsg.builder()
+                .queueName(queueName)
+                .type(type)
+                .originator(originator)
+                .customerId(customerId)
+                .metaData(metaData.copy())
+                .data(data)
+                .ruleChainId(nodeCtx.getSelf().getRuleChainId())
+                .ruleNodeId(nodeCtx.getSelf().getId())
+                .build();
     }
 
     @Override
@@ -383,7 +387,16 @@ public class DefaultTbContext implements TbContext {
 
     @Override
     public TbMsg newMsg(String queueName, TbMsgType type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data) {
-        return TbMsg.newMsg(queueName, type, originator, customerId, metaData, data, nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId());
+        return TbMsg.builder()
+                .queueName(queueName)
+                .type(type)
+                .originator(originator)
+                .customerId(customerId)
+                .metaData(metaData.copy())
+                .data(data)
+                .ruleChainId(nodeCtx.getSelf().getRuleChainId())
+                .ruleNodeId(nodeCtx.getSelf().getId())
+                .build();
     }
 
     @Override
@@ -497,7 +510,15 @@ public class DefaultTbContext implements TbContext {
             defaultQueueName = profile.getDefaultQueueName();
             defaultRuleChainId = profile.getDefaultRuleChainId();
         }
-        return TbMsg.newMsg(defaultQueueName, action, id, msgMetaData, msgData, defaultRuleChainId, null);
+        return TbMsg.builder()
+                .queueName(defaultQueueName)
+                .type(action)
+                .originator(id)
+                .metaData(msgMetaData.copy())
+                .data(msgData)
+                .ruleChainId(defaultRuleChainId)
+                .ruleNodeId(null)
+                .build();
     }
 
     public <E, I extends EntityId, K extends HasRuleEngineProfile> TbMsg entityActionMsg(E entity, I id, RuleNodeId ruleNodeId, TbMsgType actionMsgType, K profile) {
@@ -515,7 +536,15 @@ public class DefaultTbContext implements TbContext {
             defaultQueueName = profile.getDefaultQueueName();
             defaultRuleChainId = profile.getDefaultRuleChainId();
         }
-        return TbMsg.newMsg(defaultQueueName, actionMsgType, id, msgMetaData, msgData, defaultRuleChainId, null);
+        return TbMsg.builder()
+                .queueName(defaultQueueName)
+                .type(actionMsgType)
+                .originator(id)
+                .metaData(msgMetaData.copy())
+                .data(msgData)
+                .ruleChainId(defaultRuleChainId)
+                .ruleNodeId(null)
+                .build();
     }
 
     @Override

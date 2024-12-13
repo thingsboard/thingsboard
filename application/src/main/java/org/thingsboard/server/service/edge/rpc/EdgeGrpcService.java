@@ -575,7 +575,13 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 md.putValue("edgeName", edge.getName());
                 md.putValue("edgeType", edge.getType());
             }
-            TbMsg tbMsg = TbMsg.newMsg(msgType, edgeId, md, TbMsgDataType.JSON, data);
+            TbMsg tbMsg = TbMsg.builder()
+                    .type(msgType)
+                    .originator(edgeId)
+                    .metaData(md.copy())
+                    .dataType(TbMsgDataType.JSON)
+                    .data(data)
+                    .build();
             clusterService.pushMsgToRuleEngine(tenantId, edgeId, tbMsg, null);
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to push {}", tenantId, edge.getId(), msgType, e);

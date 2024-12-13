@@ -154,12 +154,13 @@ public class TbMsgDeduplicationNode implements TbNode {
                             iterator.remove();
                         }
                     }
-                    deduplicationResults.add(TbMsg.newMsg(
-                            queueName,
-                            config.getOutMsgType(),
-                            deduplicationId,
-                            getMetadata(),
-                            getMergedData(pack)));
+                    deduplicationResults.add(TbMsg.builder()
+                            .queueName(queueName)
+                            .type(config.getOutMsgType())
+                            .originator(deduplicationId)
+                            .metaData(getMetadata().copy())
+                            .data(getMergedData(pack))
+                            .build());
                 } else {
                     TbMsg resultMsg = null;
                     boolean searchMin = DeduplicationStrategy.FIRST.equals(config.getStrategy());
@@ -176,13 +177,15 @@ public class TbMsgDeduplicationNode implements TbNode {
                         }
                     }
                     if (resultMsg != null) {
-                        deduplicationResults.add(TbMsg.newMsg(
-                                queueName != null ? queueName : resultMsg.getQueueName(),
-                                resultMsg.getType(),
-                                resultMsg.getOriginator(),
-                                resultMsg.getCustomerId(),
-                                resultMsg.getMetaData(),
-                                resultMsg.getData()));
+                        String queueName1 = queueName != null ? queueName : resultMsg.getQueueName();
+                        deduplicationResults.add(TbMsg.builder()
+                                .queueName(queueName1)
+                                .type(resultMsg.getType())
+                                .originator(resultMsg.getOriginator())
+                                .customerId(resultMsg.getCustomerId())
+                                .metaData(resultMsg.getMetaData().copy())
+                                .data(resultMsg.getData())
+                                .build());
                     }
                 }
                 packBoundsOpt = findValidPack(msgList, deduplicationTimeoutMs);

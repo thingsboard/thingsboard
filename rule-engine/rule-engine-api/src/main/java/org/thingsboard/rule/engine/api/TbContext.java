@@ -192,9 +192,6 @@ public interface TbContext {
 
     void ack(TbMsg tbMsg);
 
-    @Deprecated(since = "3.6.0", forRemoval = true)
-    TbMsg newMsg(String queueName, String type, EntityId originator, TbMsgMetaData metaData, String data);
-
     /**
      * Creates a new TbMsg instance with the specified parameters.
      *

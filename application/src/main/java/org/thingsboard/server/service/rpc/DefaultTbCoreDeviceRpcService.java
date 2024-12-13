@@ -183,7 +183,14 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
         entityNode.put(DataConstants.ADDITIONAL_INFO, msg.getAdditionalInfo());
 
         try {
-            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, msg.getDeviceId(), Optional.ofNullable(currentUser).map(User::getCustomerId).orElse(null), metaData, TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
+            TbMsg tbMsg = TbMsg.builder()
+                    .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
+                    .originator(msg.getDeviceId())
+                    .customerId(Optional.ofNullable(currentUser).map(User::getCustomerId).orElse(null))
+                    .metaData(metaData.copy())
+                    .dataType(TbMsgDataType.JSON)
+                    .data(JacksonUtil.toString(entityNode))
+                    .build();
             clusterService.pushMsgToRuleEngine(msg.getTenantId(), msg.getDeviceId(), tbMsg, null);
         } catch (IllegalArgumentException e) {
             throw new RuntimeException(e);

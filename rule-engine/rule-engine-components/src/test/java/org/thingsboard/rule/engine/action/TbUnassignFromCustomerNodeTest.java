@@ -294,7 +294,12 @@ class TbUnassignFromCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     private TbMsg getTbMsg(EntityId originator) {
-        return TbMsg.newMsg(TbMsgType.NA, originator, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        return TbMsg.builder()
+                .type(TbMsgType.NA)
+                .originator(originator)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
     }
 
     private static EntityId toOriginator(EntityType type) {

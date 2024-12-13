@@ -85,7 +85,13 @@ public class DefaultRuleEngineCallServiceTest {
         metaData.put("serviceId", "core");
         metaData.put("requestUUID", requestId.toString());
         metaData.put("expirationTime", Long.toString(expTime));
-        TbMsg msg = TbMsg.newMsg(DataConstants.MAIN_QUEUE_NAME, TbMsgType.REST_API_REQUEST, TENANT_ID, new TbMsgMetaData(metaData), "{\"key\":\"value\"}");
+        TbMsg msg = TbMsg.builder()
+                .queueName(DataConstants.MAIN_QUEUE_NAME)
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(TENANT_ID)
+                .metaData(new TbMsgMetaData(metaData).copy())
+                .data("{\"key\":\"value\"}")
+                .build();
 
         Consumer<TbMsg> anyConsumer = TbMsg::getData;
         doAnswer(invocation -> {
@@ -113,7 +119,13 @@ public class DefaultRuleEngineCallServiceTest {
         metaData.put("serviceId", "core");
         metaData.put("requestUUID", requestId.toString());
         metaData.put("expirationTime", Long.toString(expTime));
-        TbMsg msg = TbMsg.newMsg(DataConstants.MAIN_QUEUE_NAME, TbMsgType.REST_API_REQUEST, TENANT_ID, new TbMsgMetaData(metaData), "{\"key\":\"value\"}");
+        TbMsg msg = TbMsg.builder()
+                .queueName(DataConstants.MAIN_QUEUE_NAME)
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(TENANT_ID)
+                .metaData(new TbMsgMetaData(metaData).copy())
+                .data("{\"key\":\"value\"}")
+                .build();
 
         Consumer<TbMsg> anyConsumer = TbMsg::getData;
         doAnswer(invocation -> {

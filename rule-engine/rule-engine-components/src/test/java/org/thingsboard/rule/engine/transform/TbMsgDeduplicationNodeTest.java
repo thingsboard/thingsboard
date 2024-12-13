@@ -103,7 +103,12 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
             EntityId originator = (EntityId) (invocationOnMock.getArguments())[2];
             TbMsgMetaData metaData = (TbMsgMetaData) (invocationOnMock.getArguments())[3];
             String data = (String) (invocationOnMock.getArguments())[4];
-            return TbMsg.newMsg(type, originator, metaData.copy(), data);
+            return TbMsg.builder()
+                    .type(type)
+                    .originator(originator)
+                    .metaData(metaData.copy().copy())
+                    .data(data)
+                    .build();
         }).when(ctx).newMsg(isNull(), eq(TbMsgType.DEDUPLICATION_TIMEOUT_SELF_MSG), nullable(EntityId.class), any(TbMsgMetaData.class), any(String.class));
         node = spy(new TbMsgDeduplicationNode());
         config = new TbMsgDeduplicationNodeConfiguration().defaultConfiguration();
@@ -452,12 +457,13 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
         dataNode.put("deviceId", deviceId.getId().toString());
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("ts", String.valueOf(ts));
-        return TbMsg.newMsg(
-                DataConstants.MAIN_QUEUE_NAME,
-                TbMsgType.POST_TELEMETRY_REQUEST,
-                deviceId,
-                metaData,
-                JacksonUtil.toString(dataNode));
+        return TbMsg.builder()
+                .queueName(DataConstants.MAIN_QUEUE_NAME)
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(metaData.copy())
+                .data(JacksonUtil.toString(dataNode))
+                .build();
     }
 
     private String getMergedData(List<TbMsg> msgs) {

@@ -95,7 +95,12 @@ public class DeviceStateTest {
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), any())).thenAnswer(invocationOnMock -> {
             TbMsgType type = invocationOnMock.getArgument(1);
             String data = invocationOnMock.getArgument(invocationOnMock.getArguments().length - 1);
-            return TbMsg.newMsg(type, null, TbMsgMetaData.EMPTY, data);
+            return TbMsg.builder()
+                    .type(type)
+                    .originator(null)
+                    .metaData(TbMsgMetaData.EMPTY.copy())
+                    .data(data)
+                    .build();
         });
 
     }
@@ -107,8 +112,12 @@ public class DeviceStateTest {
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
         DeviceState deviceState = createDeviceState(deviceId, alarmConfig);
 
-        TbMsg attributeUpdateMsg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST,
-                deviceId, TbMsgMetaData.EMPTY, "{ \"enabled\": false }");
+        TbMsg attributeUpdateMsg = TbMsg.builder()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data("{ \"enabled\": false }")
+                .build();
 
         deviceState.process(ctx, attributeUpdateMsg);
 
@@ -116,11 +125,21 @@ public class DeviceStateTest {
         verify(ctx).enqueueForTellNext(resultMsgCaptor.capture(), eq("Alarm Created"));
         Alarm alarm = JacksonUtil.fromString(resultMsgCaptor.getValue().getData(), Alarm.class);
 
-        deviceState.process(ctx, TbMsg.newMsg(TbMsgType.ALARM_CLEAR, deviceId, TbMsgMetaData.EMPTY, JacksonUtil.toString(alarm)));
+        deviceState.process(ctx, TbMsg.builder()
+                .type(TbMsgType.ALARM_CLEAR)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(JacksonUtil.toString(alarm))
+                .build());
         reset(ctx);
 
         String deletedAttributes = "{ \"attributes\": [ \"other\" ] }";
-        deviceState.process(ctx, TbMsg.newMsg(TbMsgType.ATTRIBUTES_DELETED, deviceId, TbMsgMetaData.EMPTY, deletedAttributes));
+        deviceState.process(ctx, TbMsg.builder()
+                .type(TbMsgType.ATTRIBUTES_DELETED)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(deletedAttributes)
+                .build());
         verify(ctx, never()).enqueueForTellNext(any(), anyString());
     }
 
@@ -130,17 +149,31 @@ public class DeviceStateTest {
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
         DeviceState deviceState = createDeviceState(deviceId, alarmConfig);
 
-        TbMsg attributeUpdateMsg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST,
-                deviceId, TbMsgMetaData.EMPTY, "{ \"enabled\": false }");
+        TbMsg attributeUpdateMsg = TbMsg.builder()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data("{ \"enabled\": false }")
+                .build();
 
         deviceState.process(ctx, attributeUpdateMsg);
         ArgumentCaptor<TbMsg> resultMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx).enqueueForTellNext(resultMsgCaptor.capture(), eq("Alarm Created"));
         Alarm alarm = JacksonUtil.fromString(resultMsgCaptor.getValue().getData(), Alarm.class);
 
-        deviceState.process(ctx, TbMsg.newMsg(TbMsgType.ALARM_CLEAR, deviceId, TbMsgMetaData.EMPTY, JacksonUtil.toString(alarm)));
+        deviceState.process(ctx, TbMsg.builder()
+                .type(TbMsgType.ALARM_CLEAR)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(JacksonUtil.toString(alarm))
+                .build());
 
-        TbMsg alarmDeleteNotification = TbMsg.newMsg(TbMsgType.ALARM_DELETE, deviceId, TbMsgMetaData.EMPTY, JacksonUtil.toString(alarm));
+        TbMsg alarmDeleteNotification = TbMsg.builder()
+                .type(TbMsgType.ALARM_DELETE)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(JacksonUtil.toString(alarm))
+                .build();
         assertDoesNotThrow(() -> {
             deviceState.process(ctx, alarmDeleteNotification);
         });

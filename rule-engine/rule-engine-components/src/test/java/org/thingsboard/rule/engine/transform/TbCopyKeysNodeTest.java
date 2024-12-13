@@ -196,7 +196,13 @@ public class TbCopyKeysNodeTest {
                 "voltageDataValue", "220",
                 "city", "NY"
         );
-        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, new TbMsgMetaData(mdMap), data, callback);
+        return TbMsg.builder()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(entityId)
+                .metaData(new TbMsgMetaData(mdMap).copy())
+                .data(data)
+                .callback(callback)
+                .build();
     }
 
 }

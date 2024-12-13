@@ -65,14 +65,14 @@ public class TbMsgDelayNode implements TbNode {
             TbMsg pendingMsg = pendingMsgs.remove(UUID.fromString(msg.getData()));
             if (pendingMsg != null) {
                 ctx.enqueueForTellNext(
-                        TbMsg.newMsg(
-                                pendingMsg.getQueueName(),
-                                pendingMsg.getType(),
-                                pendingMsg.getOriginator(),
-                                pendingMsg.getCustomerId(),
-                                pendingMsg.getMetaData(),
-                                pendingMsg.getData()
-                        ),
+                        TbMsg.builder()
+                                .queueName(pendingMsg.getQueueName())
+                                .type(pendingMsg.getType())
+                                .originator(pendingMsg.getOriginator())
+                                .customerId(pendingMsg.getCustomerId())
+                                .metaData(pendingMsg.getMetaData().copy())
+                                .data(pendingMsg.getData())
+                                .build(),
                         TbNodeConnectionType.SUCCESS
                 );
             }

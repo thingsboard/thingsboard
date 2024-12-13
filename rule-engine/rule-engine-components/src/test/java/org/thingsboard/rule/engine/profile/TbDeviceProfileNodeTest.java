@@ -127,8 +127,13 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
-        TbMsg msg = TbMsg.newMsg("123456789", deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data));
+        TbMsg msg = TbMsg.builder()
+                .type("123456789")
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .build();
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
         verify(ctx, Mockito.never()).tellFailure(Mockito.any(), Mockito.any());
@@ -146,8 +151,15 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
         verify(ctx, Mockito.never()).tellFailure(Mockito.any(), Mockito.any());
@@ -198,26 +210,50 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm")).thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
 
-        TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg theMsg = TbMsg.builder()
+                .type(TbMsgType.ALARM)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString())).thenReturn(theMsg);
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
         verify(ctx).enqueueForTellNext(theMsg, "Alarm Created");
         verify(ctx, Mockito.never()).tellFailure(Mockito.any(), Mockito.any());
 
-        TbMsg theMsg2 = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, "2");
+        TbMsg theMsg2 = TbMsg.builder()
+                .type(TbMsgType.ALARM)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data("2")
+                .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString())).thenReturn(theMsg2);
 
         registerCreateAlarmMock(alarmService.updateAlarm(any()), false);
 
         Thread.sleep(1);
-        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg2 = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
         node.onMsg(ctx, msg2);
         verify(ctx).tellSuccess(msg2);
         verify(ctx).enqueueForTellNext(theMsg2, "Alarm Updated");
@@ -274,19 +310,36 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm1")).thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
 
-        TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg theMsg = TbMsg.builder()
+                .type(TbMsgType.ALARM)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString())).thenReturn(theMsg);
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
         verify(ctx).enqueueForTellNext(theMsg, "Alarm Created");
         verify(ctx, Mockito.never()).tellFailure(Mockito.any(), Mockito.any());
 
-        TbMsg theMsg2 = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg theMsg2 = TbMsg.builder()
+                .type(TbMsgType.ALARM)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString())).thenReturn(theMsg2);
 
         AlarmInfo alarm = new AlarmInfo(new Alarm(new AlarmId(UUID.randomUUID())));
@@ -305,8 +358,15 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         when(alarmService.updateAlarm(any())).thenReturn(result);
 
         data.put("temperature", 52);
-        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg2 = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
         node.onMsg(ctx, msg2);
         verify(ctx).tellSuccess(msg2);
         verify(ctx).enqueueForTellNext(theMsg2, "Alarm Severity Updated");
@@ -380,14 +440,26 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(attrListListenableFuture);
 
-        TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg theMsg = TbMsg.builder()
+                .type(TbMsgType.ALARM)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         Mockito.when(ctx.newMsg(Mockito.any(), Mockito.any(TbMsgType.class), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 21);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -468,14 +540,26 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), Mockito.any(AttributeScope.class), Mockito.anyString()))
                 .thenReturn(attrListListenableFuture);
 
-        TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg theMsg = TbMsg.builder()
+                .type(TbMsgType.ALARM)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 21);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -538,14 +622,26 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
 
-        TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg theMsg = TbMsg.builder()
+                .type(TbMsgType.ALARM)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -634,14 +730,26 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFuture);
 
-        TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg theMsg = TbMsg.builder()
+                .type(TbMsgType.ALARM)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -655,8 +763,15 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
 
         Thread.sleep(halfOfAlarmDelay + 1);
 
-        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg2 = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg2);
         verify(ctx).tellSuccess(msg2);
@@ -760,14 +875,26 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listNoDurationAttribute);
 
-        TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg theMsg = TbMsg.builder()
+                .type(TbMsgType.ALARM)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 150);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -781,8 +908,15 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
 
         Thread.sleep(halfOfAlarmDelay + 1);
 
-        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg2 = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg2);
         verify(ctx).tellSuccess(msg2);
@@ -871,14 +1005,26 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFuture);
 
-        TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg theMsg = TbMsg.builder()
+                .type(TbMsgType.ALARM)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 150);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -886,8 +1032,15 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         verify(ctx, Mockito.never()).tellNext(theMsg, "Alarm Created");
 
         data.put("temperature", 151);
-        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg2 = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg2);
         verify(ctx).tellSuccess(msg2);
@@ -989,14 +1142,26 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listNoDurationAttribute);
 
-        TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg theMsg = TbMsg.builder()
+                .type(TbMsgType.ALARM)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 150);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -1004,8 +1169,15 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         verify(ctx, Mockito.never()).tellNext(theMsg, "Alarm Created");
 
         data.put("temperature", 151);
-        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg2 = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg2);
         verify(ctx).tellSuccess(msg2);
@@ -1086,14 +1258,26 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFuture);
 
-        TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg theMsg = TbMsg.builder()
+                .type(TbMsgType.ALARM)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -1107,8 +1291,15 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
 
         Thread.sleep(halfOfAlarmDelay + 1);
 
-        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg2 = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg2);
         verify(ctx).tellSuccess(msg2);
@@ -1185,14 +1376,26 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFuture);
 
-        TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg theMsg = TbMsg.builder()
+                .type(TbMsgType.ALARM)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -1268,14 +1471,26 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureActiveSchedule);
 
-        TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg theMsg = TbMsg.builder()
+                .type(TbMsgType.ALARM)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
 //        Mockito.reset(ctx);
 
@@ -1365,12 +1580,24 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureInactiveSchedule);
 
-        TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg theMsg = TbMsg.builder()
+                .type(TbMsgType.ALARM)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_STRING)
+                .build();
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -1444,14 +1671,26 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         Mockito.when(attributesService.find(eq(tenantId), eq(customerId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(optionalListenableFutureWithLess);
 
-        TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg theMsg = TbMsg.builder()
+                .type(TbMsgType.ALARM)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 25);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -1518,14 +1757,26 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(optionalListenableFutureWithLess);
 
-        TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg theMsg = TbMsg.builder()
+                .type(TbMsgType.ALARM)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 40);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -1602,14 +1853,26 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(optionalListenableFutureWithLess);
 
-        TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg theMsg = TbMsg.builder()
+                .type(TbMsgType.ALARM)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 150L);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -1688,14 +1951,26 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(optionalListenableFutureWithLess);
 
-        TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg theMsg = TbMsg.builder()
+                .type(TbMsgType.ALARM)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 150L);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+        TbMsg msg = TbMsg.builder()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .metaData(TbMsgMetaData.EMPTY.copy())
+                .dataType(TbMsgDataType.JSON)
+                .data(JacksonUtil.toString(data))
+                .ruleChainId(null)
+                .ruleNodeId(null)
+                .build();
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
