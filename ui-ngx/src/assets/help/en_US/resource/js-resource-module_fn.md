@@ -23,7 +23,7 @@ Or functions:
 ```javascript
 export const getStatusStyles = (value) => {
   let color;
-  if (value === "true") {
+  if (value) {
     color = 'rgb(39, 134, 34)';
   } else {
     color = 'rgb(255, 0, 0)';
