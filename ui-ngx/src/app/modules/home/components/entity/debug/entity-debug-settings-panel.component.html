@@ -16,26 +16,26 @@
 
 -->
 <div class="flex max-w-sm flex-col gap-3 p-2">
-  <div class="tb-form-panel-title" translate>debug-config.label</div>
+  <div class="tb-form-panel-title" translate>debug-settings.label</div>
   <div class="hint-container">
     <div class="tb-form-hint tb-primary-fill tb-flex center">
       @if (debugLimitsConfiguration) {
-        {{ 'debug-config.hint.main-limited' | translate: { msg: maxMessagesCount, time: (maxTimeFrameDuration | milliSecondsToTimeString: true : true) } }}
+        {{ 'debug-settings.hint.main-limited' | translate: { entity: entityLabel, msg: maxMessagesCount, time: (maxTimeFrameDuration | milliSecondsToTimeString: true : true) } }}
       } @else {
-        {{ 'debug-config.hint.main' | translate }}
+        {{ 'debug-settings.hint.main' | translate }}
       }
     </div>
   </div>
   <div class="flex flex-col gap-3">
     <mat-slide-toggle class="mat-slide" [formControl]="onFailuresControl">
-      <div tb-hint-tooltip-icon="{{ 'debug-config.hint.on-failure' | translate }}">
-        {{ 'debug-config.on-failure' | translate }}
+      <div tb-hint-tooltip-icon="{{ 'debug-settings.hint.on-failure' | translate }}">
+        {{ 'debug-settings.on-failure' | translate }}
       </div>
     </mat-slide-toggle>
     <div class="align-center flex justify-between">
       <mat-slide-toggle class="mat-slide" [formControl]="debugAllControl">
-        <div tb-hint-tooltip-icon="{{ 'debug-config.hint.all-messages' | translate }}">
-          {{ 'debug-config.all-messages' | translate: { time: (isDebugAllActive$ | async) && !allEnabled ? (allEnabledUntil | durationLeft) : (maxDebugModeDuration | milliSecondsToTimeString: true : true) } }}
+        <div tb-hint-tooltip-icon="{{ 'debug-settings.hint.all-messages' | translate }}">
+          {{ 'debug-settings.all-messages' | translate: { time: (isDebugAllActive$ | async) && !allEnabled ? (allEnabledUntil | durationLeft) : (maxDebugModeDuration | milliSecondsToTimeString: true : true) } }}
         </div>
       </mat-slide-toggle>
       <button mat-icon-button *ngIf="(isDebugAllActive$ | async) && !allEnabled"

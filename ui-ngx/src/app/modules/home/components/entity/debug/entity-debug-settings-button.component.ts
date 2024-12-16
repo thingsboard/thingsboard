@@ -21,7 +21,6 @@ import {
   forwardRef,
   Input,
   Renderer2,
-  signal,
   ViewContainerRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -30,8 +29,8 @@ import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { MatButton } from '@angular/material/button';
 import { EntityDebugSettingsPanelComponent } from './entity-debug-settings-panel.component';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { of, shareReplay, timer } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { BehaviorSubject, of, shareReplay, timer } from 'rxjs';
 import { SECOND, MINUTE } from '@shared/models/time/time.models';
 import { EntityDebugSettings } from '@shared/models/entity.models';
 import { map, switchMap, takeWhile } from 'rxjs/operators';
@@ -61,6 +60,7 @@ import { ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR } from '@angular/f
 export class EntityDebugSettingsButtonComponent implements ControlValueAccessor {
 
   @Input() debugLimitsConfiguration: string;
+  @Input() entityLabel = 'entity';
 
   debugSettingsFormGroup = this.fb.group({
     failuresEnabled: [false],
@@ -69,9 +69,10 @@ export class EntityDebugSettingsButtonComponent implements ControlValueAccessor 
   });
 
   disabled = false;
-  allEnabled = signal(false);
+  private allEnabledSubject = new BehaviorSubject(false);
+  allEnabled$ = this.allEnabledSubject.asObservable();
 
-  isDebugAllActive$ = toObservable(this.allEnabled).pipe(
+  isDebugAllActive$ = this.allEnabled$.pipe(
     switchMap((value) => {
       if (value) {
         return of(true);
@@ -105,7 +106,7 @@ export class EntityDebugSettingsButtonComponent implements ControlValueAccessor 
 
     this.debugSettingsFormGroup.get('allEnabled').valueChanges.pipe(
       takeUntilDestroyed()
-    ).subscribe(value => this.allEnabled.set(value));
+    ).subscribe(value => this.allEnabledSubject.next(value));
   }
 
   get failuresEnabled(): boolean {
@@ -131,7 +132,8 @@ export class EntityDebugSettingsButtonComponent implements ControlValueAccessor 
         {
           ...debugSettings,
           maxDebugModeDuration: this.maxDebugModeDuration,
-          debugLimitsConfiguration: this.debugLimitsConfiguration
+          debugLimitsConfiguration: this.debugLimitsConfiguration,
+          entityLabel: this.entityLabel
         },
         {},
         {}, {}, true);
@@ -152,7 +154,7 @@ export class EntityDebugSettingsButtonComponent implements ControlValueAccessor 
 
   writeValue(settings: EntityDebugSettings): void {
     this.debugSettingsFormGroup.patchValue(settings, {emitEvent: false});
-    this.allEnabled.set(settings?.allEnabled);
+    this.allEnabledSubject.next(settings?.allEnabled);
     this.debugSettingsFormGroup.get('allEnabled').updateValueAndValidity({onlySelf: true});
   }
 
