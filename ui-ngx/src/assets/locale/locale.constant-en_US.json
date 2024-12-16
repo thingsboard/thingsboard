@@ -3551,6 +3551,7 @@
         "max-element-number": "Max elements number",
         "page-name": "Page name",
         "page-name-required": "Page name is required.",
+        "page-name-cannot-contain-only-spaces": "Page name cannot contain only spaces.",
         "page-type": "Page type",
         "pages-types": {
             "dashboard": "Dashboard",
@@ -3558,9 +3559,9 @@
             "custom": "Custom"
         },
         "url": "URL",
-        "url-pattern": "Invalid URL",
+        "invalid-url-format": "Invalid URL format",
         "path": "Path",
-        "path-pattern": "Invalid path",
+        "invalid-path-format": "Invalid path format",
         "custom-page": "Custom page",
         "edit-page": "Edit page",
         "edit-custom-page": "Edit custom page",

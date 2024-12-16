@@ -99,7 +99,7 @@ export class MobilePageItemRowComponent implements ControlValueAccessor, OnInit,
   mobilePageRowForm = this.fb.group({
     visible: [true, []],
     icon: ['', []],
-    label: ['', []],
+    label: ['', [Validators.pattern(/\S/)]],
     type: [MobilePageType.DEFAULT]
   });
 
