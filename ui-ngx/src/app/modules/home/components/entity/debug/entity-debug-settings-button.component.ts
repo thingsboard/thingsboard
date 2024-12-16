@@ -60,7 +60,7 @@ import { ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR } from '@angular/f
 export class EntityDebugSettingsButtonComponent implements ControlValueAccessor {
 
   @Input() debugLimitsConfiguration: string;
-  @Input() entityLabel = 'entity';
+  @Input() entityLabel: string;
 
   debugSettingsFormGroup = this.fb.group({
     failuresEnabled: [false],

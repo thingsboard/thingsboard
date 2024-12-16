@@ -994,6 +994,7 @@
         "on-failure": "Failures only (24/7)",
         "all-messages": "All messages ({{time}})",
         "failures": "Failures",
+        "entity": "entity",
         "rule-node": "rule node",
         "hint": {
             "main": "All node debug messages rate limited with:",

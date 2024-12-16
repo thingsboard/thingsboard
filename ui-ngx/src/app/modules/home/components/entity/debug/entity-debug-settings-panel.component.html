@@ -20,7 +20,7 @@
   <div class="hint-container">
     <div class="tb-form-hint tb-primary-fill tb-flex center">
       @if (debugLimitsConfiguration) {
-        {{ 'debug-settings.hint.main-limited' | translate: { entity: entityLabel, msg: maxMessagesCount, time: (maxTimeFrameDuration | milliSecondsToTimeString: true : true) } }}
+        {{ 'debug-settings.hint.main-limited' | translate: { entity: entityLabel ?? ('debug-settings.entity' | translate), msg: maxMessagesCount, time: (maxTimeFrameDuration | milliSecondsToTimeString: true : true) } }}
       } @else {
         {{ 'debug-settings.hint.main' | translate }}
       }

@@ -51,7 +51,7 @@ export class EntityDebugSettingsPanelComponent extends PageComponent implements 
   @Input() popover: TbPopoverComponent<EntityDebugSettingsPanelComponent>;
   @Input({ transform: booleanAttribute }) failuresEnabled = false;
   @Input({ transform: booleanAttribute }) allEnabled = false;
-  @Input() entityLabel = 'entity';
+  @Input() entityLabel: string;
   @Input() allEnabledUntil = 0;
   @Input() maxDebugModeDuration: number;
   @Input() debugLimitsConfiguration: string;
