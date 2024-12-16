@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
@@ -128,7 +129,7 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
                     // Device was updated and new firmware is different from previous firmware.
                     send(device.getTenantId(), device.getId(), newFirmwareId, System.currentTimeMillis(), FIRMWARE);
                 }
-            } else if (oldFirmwareId != null){
+            } else if (oldFirmwareId != null) {
                 // Device was updated and new firmware is not set.
                 remove(device, FIRMWARE);
             }
@@ -155,7 +156,7 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
                     // Device was updated and new firmware is different from previous firmware.
                     send(device.getTenantId(), device.getId(), newSoftwareId, System.currentTimeMillis(), SOFTWARE);
                 }
-            } else if (oldSoftwareId != null){
+            } else if (oldSoftwareId != null) {
                 // Device was updated and new firmware is not set.
                 remove(device, SOFTWARE);
             }
@@ -261,17 +262,23 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
         telemetry.add(new BasicTsKvEntry(ts, new LongDataEntry(getTargetTelemetryKey(firmware.getType(), TS), ts)));
         telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(getTelemetryKey(firmware.getType(), STATE), OtaPackageUpdateStatus.QUEUED.name())));
 
-        telemetryService.saveAndNotify(tenantId, deviceId, telemetry, new FutureCallback<>() {
-            @Override
-            public void onSuccess(@Nullable Void tmp) {
-                log.trace("[{}] Success save firmware status!", deviceId);
-            }
+        telemetryService.save(TimeseriesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .entries(telemetry)
+                .saveLatest(true)
+                .callback(new FutureCallback<Void>() {
+                    @Override
+                    public void onSuccess(@Nullable Void tmp) {
+                        log.trace("[{}] Success save firmware status!", deviceId);
+                    }
 
-            @Override
-            public void onFailure(Throwable t) {
-                log.error("[{}] Failed to save firmware status!", deviceId, t);
-            }
-        });
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.error("[{}] Failed to save firmware status!", deviceId, t);
+                    }
+                })
+                .build());
     }
 
 
@@ -282,19 +289,25 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
 
         BasicTsKvEntry status = new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(getTelemetryKey(otaPackageType, STATE), OtaPackageUpdateStatus.INITIATED.name()));
 
-        telemetryService.saveAndNotify(tenantId, deviceId, Collections.singletonList(status), new FutureCallback<>() {
-            @Override
-            public void onSuccess(@Nullable Void tmp) {
-                log.trace("[{}] Success save telemetry with target {} for device!", deviceId, otaPackage);
-                updateAttributes(device, otaPackage, ts, tenantId, deviceId, otaPackageType);
-            }
+        telemetryService.save(TimeseriesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .entries(Collections.singletonList(status))
+                .saveLatest(true)
+                .callback(new FutureCallback<Void>() {
+                    @Override
+                    public void onSuccess(@Nullable Void tmp) {
+                        log.trace("[{}] Success save telemetry with target {} for device!", deviceId, otaPackage);
+                        updateAttributes(device, otaPackage, ts, tenantId, deviceId, otaPackageType);
+                    }
 
-            @Override
-            public void onFailure(Throwable t) {
-                log.error("[{}] Failed to save telemetry with target {} for device!", deviceId, otaPackage, t);
-                updateAttributes(device, otaPackage, ts, tenantId, deviceId, otaPackageType);
-            }
-        });
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.error("[{}] Failed to save telemetry with target {} for device!", deviceId, otaPackage, t);
+                        updateAttributes(device, otaPackage, ts, tenantId, deviceId, otaPackageType);
+                    }
+                })
+                .build());
     }
 
     private void updateAttributes(Device device, OtaPackageInfo otaPackage, long ts, TenantId tenantId, DeviceId deviceId, OtaPackageType otaPackageType) {
@@ -368,4 +381,5 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
                     }
                 });
     }
+
 }

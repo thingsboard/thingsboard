@@ -31,6 +31,7 @@ import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -54,10 +55,8 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.assertArg;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -127,19 +126,23 @@ public class TbMsgTimeseriesNodeTest {
         when(ctxMock.getTelemetryService()).thenReturn(telemetryServiceMock);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
         doAnswer(invocation -> {
-            TelemetryNodeCallback callback = invocation.getArgument(5);
-            callback.onSuccess(null);
+            TimeseriesSaveRequest request = invocation.getArgument(0);
+            request.getCallback().onSuccess(null);
             return null;
-        }).when(telemetryServiceMock).saveAndNotify(any(), any(), any(), anyList(), anyLong(), any());
+        }).when(telemetryServiceMock).save(any());
 
         node.onMsg(ctxMock, msg);
 
         List<TsKvEntry> expectedList = getTsKvEntriesListWithTs(data, System.currentTimeMillis());
-        ArgumentCaptor<List<TsKvEntry>> entryListCaptor = ArgumentCaptor.forClass(List.class);
-        verify(telemetryServiceMock).saveAndNotify(eq(TENANT_ID), isNull(), eq(DEVICE_ID), entryListCaptor.capture(),
-                eq(tenantProfileDefaultStorageTtl), any(TelemetryNodeCallback.class));
-        assertThat(entryListCaptor.getValue()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("ts")
-                .containsExactlyElementsOf(expectedList);
+        verify(telemetryServiceMock).save(assertArg(request -> {
+            assertThat(request.getTenantId()).isEqualTo(TENANT_ID);
+            assertThat(request.getCustomerId()).isNull();
+            assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);
+            assertThat(request.getEntries()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("ts").containsExactlyElementsOf(expectedList);
+            assertThat(request.getTtl()).isEqualTo(tenantProfileDefaultStorageTtl);
+            assertThat(request.isSaveLatest()).isTrue();
+            assertThat(request.getCallback()).isInstanceOf(TelemetryNodeCallback.class);
+        }));
         verify(ctxMock).tellSuccess(msg);
         verifyNoMoreInteractions(ctxMock, telemetryServiceMock);
     }
@@ -164,18 +167,23 @@ public class TbMsgTimeseriesNodeTest {
         when(ctxMock.getTelemetryService()).thenReturn(telemetryServiceMock);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
         doAnswer(invocation -> {
-            TelemetryNodeCallback callback = invocation.getArgument(5);
-            callback.onSuccess(null);
+            TimeseriesSaveRequest request = invocation.getArgument(0);
+            request.getCallback().onSuccess(null);
             return null;
-        }).when(telemetryServiceMock).saveWithoutLatestAndNotify(any(), any(), any(), anyList(), anyLong(), any());
+        }).when(telemetryServiceMock).save(any());
 
         node.onMsg(ctxMock, msg);
 
         List<TsKvEntry> expectedList = getTsKvEntriesListWithTs(data, ts);
-        ArgumentCaptor<List<TsKvEntry>> entryListCaptor = ArgumentCaptor.forClass(List.class);
-        verify(telemetryServiceMock).saveWithoutLatestAndNotify(
-                eq(TENANT_ID), isNull(), eq(DEVICE_ID), entryListCaptor.capture(), eq(ttlFromConfig), any(TelemetryNodeCallback.class));
-        assertThat(entryListCaptor.getValue()).containsExactlyElementsOf(expectedList);
+        verify(telemetryServiceMock).save(assertArg(request -> {
+            assertThat(request.getTenantId()).isEqualTo(TENANT_ID);
+            assertThat(request.getCustomerId()).isNull();
+            assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);
+            assertThat(request.getEntries()).containsExactlyElementsOf(expectedList);
+            assertThat(request.getTtl()).isEqualTo(ttlFromConfig);
+            assertThat(request.isSaveLatest()).isFalse();
+            assertThat(request.getCallback()).isInstanceOf(TelemetryNodeCallback.class);
+        }));
         verify(ctxMock).tellSuccess(msg);
         verifyNoMoreInteractions(ctxMock, telemetryServiceMock);
     }
@@ -200,7 +208,14 @@ public class TbMsgTimeseriesNodeTest {
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metadata, data);
         node.onMsg(ctxMock, msg);
 
-        verify(telemetryServiceMock).saveAndNotify(eq(TENANT_ID), isNull(), eq(DEVICE_ID), anyList(), eq(expectedTtl), any(TelemetryNodeCallback.class));
+        verify(telemetryServiceMock).save(assertArg(request -> {
+            assertThat(request.getTenantId()).isEqualTo(TENANT_ID);
+            assertThat(request.getCustomerId()).isNull();
+            assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);
+            assertThat(request.getTtl()).isEqualTo(expectedTtl);
+            assertThat(request.isSaveLatest()).isTrue();
+            assertThat(request.getCallback()).isInstanceOf(TelemetryNodeCallback.class);
+        }));
     }
 
     private static Stream<Arguments> givenTtlFromConfigAndTtlFromMd_whenOnMsg_thenVerifyTtl() {

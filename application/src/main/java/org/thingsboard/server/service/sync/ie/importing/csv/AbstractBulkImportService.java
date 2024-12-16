@@ -32,6 +32,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
@@ -206,20 +207,28 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
         accessValidator.validateEntityAndCallback(user, Operation.WRITE_TELEMETRY, entity.getId(), (result, tenantId, entityId) -> {
             TenantProfile tenantProfile = tenantProfileCache.get(tenantId);
             long tenantTtl = TimeUnit.DAYS.toSeconds(((DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration()).getDefaultStorageTtlDays());
-            tsSubscriptionService.saveAndNotify(tenantId, user.getCustomerId(), entityId, timeseries, tenantTtl, new FutureCallback<Void>() {
-                @Override
-                public void onSuccess(@Nullable Void tmp) {
-                    entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null, null,
-                            ActionType.TIMESERIES_UPDATED, null, timeseries);
-                }
+            tsSubscriptionService.save(TimeseriesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .customerId(user.getCustomerId())
+                    .entityId(entityId)
+                    .entries(timeseries)
+                    .ttl(tenantTtl)
+                    .saveLatest(true)
+                    .callback(new FutureCallback<Void>() {
+                        @Override
+                        public void onSuccess(@Nullable Void tmp) {
+                            entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null, null,
+                                    ActionType.TIMESERIES_UPDATED, null, timeseries);
+                        }
 
-                @Override
-                public void onFailure(Throwable t) {
-                    entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null, null,
-                            ActionType.TIMESERIES_UPDATED, BaseController.toException(t), timeseries);
-                    throw new RuntimeException(t);
-                }
-            });
+                        @Override
+                        public void onFailure(Throwable t) {
+                            entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null, null,
+                                    ActionType.TIMESERIES_UPDATED, BaseController.toException(t), timeseries);
+                            throw new RuntimeException(t);
+                        }
+                    })
+                    .build());
         });
     }
 

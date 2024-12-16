@@ -47,7 +47,6 @@ import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -73,6 +72,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.assertArg;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.BDDMockito.willReturn;
@@ -460,14 +460,16 @@ public class TbMathNodeTest {
         );
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, TbMsgMetaData.EMPTY, JacksonUtil.newObjectNode().put("a", 5).toString());
-        when(telemetryService.saveAndNotify(any(), any(), any(TsKvEntry.class)))
-                .thenReturn(Futures.immediateFuture(null));
+        when(telemetryService.saveAndNotify(any())).thenReturn(Futures.immediateFuture(null));
 
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
-        verify(telemetryService, times(1)).saveAndNotify(any(), any(), any(TsKvEntry.class));
+        verify(telemetryService, times(1)).saveAndNotify(assertArg(request -> {
+            assertThat(request.getEntries()).size().isOne();
+            assertThat(request.isSaveLatest()).isTrue();
+        }));
 
         TbMsg resultMsg = msgCaptor.getValue();
         assertNotNull(resultMsg);
@@ -485,14 +487,16 @@ public class TbMathNodeTest {
         );
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, TbMsgMetaData.EMPTY, JacksonUtil.newObjectNode().put("a", 5).toString());
-        when(telemetryService.saveAndNotify(any(), any(), any(TsKvEntry.class)))
-                .thenReturn(Futures.immediateFuture(null));
+        when(telemetryService.saveAndNotify(any())).thenReturn(Futures.immediateFuture(null));
 
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
-        verify(telemetryService, times(1)).saveAndNotify(any(), any(), any(TsKvEntry.class));
+        verify(telemetryService, times(1)).saveAndNotify(assertArg(request -> {
+            assertThat(request.getEntries()).size().isOne();
+            assertThat(request.isSaveLatest()).isTrue();
+        }));
 
         TbMsg resultMsg = msgCaptor.getValue();
         assertNotNull(resultMsg);
