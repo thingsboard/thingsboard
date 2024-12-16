@@ -23,9 +23,9 @@ import java.util.Map;
 @Data
 public final class CalculatedFieldResult {
 
-    private String type;
-    private AttributeScope scope;
-    private Map<String, Object> resultMap;
+    private final String type;
+    private final AttributeScope scope;
+    private final Map<String, Object> resultMap;
 
     public CalculatedFieldResult(String type, AttributeScope scope, Map<String, Object> resultMap) {
         this.type = type;

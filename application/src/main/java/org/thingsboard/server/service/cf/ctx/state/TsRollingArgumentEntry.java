@@ -40,4 +40,8 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
         return tsRecords;
     }
 
+    @Override
+    public boolean hasUpdatedValue(ArgumentEntry entry) {
+        return !tsRecords.containsKey(((SingleValueArgumentEntry) entry).getTs());
+    }
 }

@@ -16,18 +16,17 @@
 package org.thingsboard.server.service.cf.ctx.state;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 @Data
+@NoArgsConstructor
 public class SingleValueArgumentEntry implements ArgumentEntry {
 
     private long ts;
     private Object value;
-
-    public SingleValueArgumentEntry() {
-    }
 
     public SingleValueArgumentEntry(KvEntry entry) {
         if (entry instanceof TsKvEntry) {
@@ -48,4 +47,8 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
         return value;
     }
 
+    @Override
+    public boolean hasUpdatedValue(ArgumentEntry entry) {
+        return this.ts != ((SingleValueArgumentEntry) entry).getTs();
+    }
 }

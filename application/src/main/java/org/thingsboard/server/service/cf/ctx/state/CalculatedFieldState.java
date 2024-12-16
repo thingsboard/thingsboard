@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
-import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.Map;
@@ -41,11 +40,7 @@ public interface CalculatedFieldState {
 
     Map<String, ArgumentEntry> getArguments();
 
-    default boolean isValid(Map<String, Argument> arguments) {
-        return getArguments().keySet().containsAll(arguments.keySet());
-    }
-
-    void initState(Map<String, ArgumentEntry> argumentValues);
+    boolean updateState(Map<String, ArgumentEntry> argumentValues);
 
     ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx);
 

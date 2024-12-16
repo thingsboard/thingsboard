@@ -15,20 +15,19 @@
  */
 package org.thingsboard.server.service.cf;
 
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
-import java.util.Map;
+import java.util.List;
 
 public interface CalculatedFieldExecutionService {
 
     void onCalculatedFieldMsg(TransportProtos.CalculatedFieldMsgProto proto, TbCallback callback);
 
-    void onTelemetryUpdate(TenantId tenantId, EntityId entityId, CalculatedFieldId calculatedFieldId, Map<String, KvEntry> updatedTelemetry);
+    void onTelemetryUpdate(TenantId tenantId, EntityId entityId, List<? extends KvEntry> telemetry);
 
     void onEntityProfileChanged(TransportProtos.EntityProfileUpdateMsgProto proto, TbCallback callback);
 
