@@ -24,8 +24,8 @@
         (click)="openDebugStrategyPanel($event, matButton)">
   <mat-icon [color]="debugSettingsFormGroup.disabled ? 'inherit' : 'primary'">bug_report</mat-icon>
   @if (isDebugAllActive$ | async) {
-    {{ !allEnabled() ? (allEnabledUntil | durationLeft) : (maxDebugModeDuration | milliSecondsToTimeString: true : true) }}
+    {{ (allEnabled$ | async) === false ? (allEnabledUntil | durationLeft) : (maxDebugModeDuration | milliSecondsToTimeString: true : true) }}
   } @else {
-    {{ (failuresEnabled ? 'debug-config.failures' : 'common.disabled') | translate }}
+    {{ (failuresEnabled ? 'debug-settings.failures' : 'common.disabled') | translate }}
   }
 </button>
