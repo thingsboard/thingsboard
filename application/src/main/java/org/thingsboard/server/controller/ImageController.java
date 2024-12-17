@@ -61,7 +61,9 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.io.ByteArrayOutputStream;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.GZIPOutputStream;
 
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -70,6 +72,7 @@ import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_INC
 import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
+import static org.thingsboard.server.dao.util.ImageUtils.mediaTypeToFileExtension;
 
 @Slf4j
 @RestController
@@ -179,15 +182,17 @@ public class ImageController extends BaseController {
                                                            @PathVariable String type,
                                                            @Parameter(description = IMAGE_KEY_PARAM_DESCRIPTION, required = true)
                                                            @PathVariable String key,
-                                                           @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws Exception {
-        return downloadIfChanged(type, key, etag, false);
+                                                           @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag,
+                                                           @RequestHeader(name = HttpHeaders.ACCEPT_ENCODING, required = false) String acceptEncodingHeader) throws Exception {
+        return downloadIfChanged(type, key, etag, acceptEncodingHeader, false);
     }
 
     @GetMapping(value = "/api/images/public/{publicResourceKey}", produces = "image/*")
     public ResponseEntity<ByteArrayResource> downloadPublicImage(@PathVariable String publicResourceKey,
-                                                                 @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws Exception {
+                                                                 @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag,
+                                                                 @RequestHeader(name = HttpHeaders.ACCEPT_ENCODING, required = false) String acceptEncodingHeader) throws Exception {
         ImageCacheKey cacheKey = ImageCacheKey.forPublicImage(publicResourceKey);
-        return downloadIfChanged(cacheKey, etag, () -> imageService.getPublicImageInfoByKey(publicResourceKey));
+        return downloadIfChanged(cacheKey, etag, acceptEncodingHeader, () -> imageService.getPublicImageInfoByKey(publicResourceKey));
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
@@ -213,8 +218,9 @@ public class ImageController extends BaseController {
                                                                   @PathVariable String type,
                                                                   @Parameter(description = IMAGE_KEY_PARAM_DESCRIPTION, required = true)
                                                                   @PathVariable String key,
-                                                                  @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws Exception {
-        return downloadIfChanged(type, key, etag, true);
+                                                                  @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag,
+                                                                  @RequestHeader(name = HttpHeaders.ACCEPT_ENCODING, required = false) String acceptEncodingHeader) throws Exception {
+        return downloadIfChanged(type, key, etag, acceptEncodingHeader, true);
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
@@ -268,12 +274,12 @@ public class ImageController extends BaseController {
         return (result.isSuccess() ? ResponseEntity.ok() : ResponseEntity.badRequest()).body(result);
     }
 
-    private ResponseEntity<ByteArrayResource> downloadIfChanged(String type, String key, String etag, boolean preview) throws Exception {
+    private ResponseEntity<ByteArrayResource> downloadIfChanged(String type, String key, String etag, String acceptEncodingHeader, boolean preview) throws Exception {
         ImageCacheKey cacheKey = ImageCacheKey.forImage(getTenantId(type), key, preview);
-        return downloadIfChanged(cacheKey, etag, () -> checkImageInfo(type, key, Operation.READ));
+        return downloadIfChanged(cacheKey, etag, acceptEncodingHeader, () -> checkImageInfo(type, key, Operation.READ));
     }
 
-    private ResponseEntity<ByteArrayResource> downloadIfChanged(ImageCacheKey cacheKey, String etag, ThrowingSupplier<TbResourceInfo> imageInfoSupplier) throws Exception {
+    private ResponseEntity<ByteArrayResource> downloadIfChanged(ImageCacheKey cacheKey, String etag, String acceptEncodingHeader, ThrowingSupplier<TbResourceInfo> imageInfoSupplier) throws Exception {
         if (StringUtils.isNotEmpty(etag)) {
             etag = StringUtils.remove(etag, '\"'); // etag is wrapped in double quotes due to HTTP specification
             if (etag.equals(tbImageService.getETag(cacheKey))) {
@@ -294,7 +300,6 @@ public class ImageController extends BaseController {
         tbImageService.putETag(cacheKey, descriptor.getEtag());
         var result = ResponseEntity.ok()
                 .header("Content-Type", descriptor.getMediaType())
-                .contentLength(data.length)
                 .eTag(descriptor.getEtag());
         if (!cacheKey.isPublic()) {
             result
@@ -308,7 +313,19 @@ public class ImageController extends BaseController {
         } else {
             result.cacheControl(CacheControl.noCache());
         }
-        return result.body(new ByteArrayResource(data));
+        var responseData = data;
+        if (mediaTypeToFileExtension(descriptor.getMediaType()).equals("svg") &&
+                StringUtils.isNotEmpty(acceptEncodingHeader) && acceptEncodingHeader.contains("gzip")) {
+            result.header(HttpHeaders.CONTENT_ENCODING, "gzip");
+            var outputStream = new ByteArrayOutputStream();
+            try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(outputStream)) {
+                gzipOutputStream.write(data);
+                gzipOutputStream.finish();
+            }
+            responseData = outputStream.toByteArray();
+        }
+        result.contentLength(responseData.length);
+        return result.body(new ByteArrayResource(responseData));
     }
 
     private TbResourceInfo checkImageInfo(String imageType, String key, Operation operation) throws ThingsboardException {

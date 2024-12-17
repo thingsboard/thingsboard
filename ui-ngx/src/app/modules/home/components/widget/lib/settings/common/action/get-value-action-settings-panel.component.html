@@ -138,6 +138,7 @@
       </div>
       <tb-js-func *ngIf="getValueSettingsFormGroup.get('dataToValue').get('type').value === dataToValueType.FUNCTION"
                   formControlName="dataToValueFunction"
+                  withModules
                   required
                   [globalVariables]="functionScopeVariables"
                   [functionArgs]="['data']"

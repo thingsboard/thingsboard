@@ -3179,8 +3179,10 @@
             "critical": "Critical",
             "critical-click": "Critical click",
             "critical-state-hint": "Indicates whether component is in critical state.",
-            "critical-state-animation": "Alarm state animation",
+            "critical-state-animation": "Critical state animation",
             "critical-state-animation-hint": "Whether to enable blinking animation when component is in critical state.",
+            "warning-critical-state-animation": "Warning/Critical state animation",
+            "warning-critical-state-animation-hint": "Whether to enable blinking animation when component is in warning or critical state.",
             "animation": "Animation",
             "broken": "Broken",
             "broken-hint": "Indicates whether component is broken.",
@@ -5705,7 +5707,12 @@
         "action-button": {
             "behavior": "Behavior",
             "on-click": "On click",
-            "on-click-hint": "Action triggered when the button is clicked"
+            "on-click-hint": "Action triggered when the button is clicked",
+            "first-button-click": "First button click",
+            "first-button-click-hint": "Action while pressing on first button.",
+            "second-button-click": "Second button click",
+            "second-button-click-hint": "Action while pressing on second button.",
+            "button-click-hint": "Action while pressing on widget."
         },
         "command-button": {
             "behavior": "Behavior",
@@ -5750,6 +5757,18 @@
             "vertical-fill": "Vertical fill",
             "button-appearance": "Button appearance"
         },
+        "segmented-button": {
+            "layout": "Layout",
+            "layout-squared": "Squared",
+            "layout-rounded": "Rounded",
+            "card-border": "Card border",
+            "button-appearance": "Button appearance",
+            "first": "First",
+            "second": "Second",
+            "color-styles": "Color styles",
+            "selected": "Selected",
+            "unselected": "Unselected"
+        },
         "button": {
             "layout": "Layout",
             "outlined": "Outlined",
@@ -5763,6 +5782,7 @@
             "color-palette": "Color palette",
             "main": "Main",
             "background": "Background",
+            "border": "Border",
             "custom-styles": "Custom styles",
             "clear-style": "Clear style",
             "shadow": "Shadow",
@@ -5776,11 +5796,16 @@
             "activated-state-hint": "Configure condition under which the button is active.",
             "disabled-state": "Disabled state",
             "disabled-state-hint": "Configure condition under which the button is disabled.",
+            "selected-state": "Select button",
+            "selected-state-hint": "Configure condition under which the button is select.",
             "enabled": "Enabled",
             "hovered": "Hovered",
             "pressed": "Pressed",
             "activated": "Activated",
-            "disabled": "Disabled"
+            "disabled": "Disabled",
+            "initial": "First button",
+            "first": "First",
+            "second": "Second"
         },
         "background": {
             "background": "Background",

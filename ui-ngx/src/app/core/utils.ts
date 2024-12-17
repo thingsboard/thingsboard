@@ -711,21 +711,6 @@ export function safeExecuteTbFunction<T extends GenericFunction>(func: CompiledT
   return res;
 }
 
-
-export function safeExecute(func: (...args: any[]) => any, params = []) {
-  let res = null;
-  if (func && typeof (func) === 'function') {
-    try {
-      res = func(...params);
-    }
-    catch (err) {
-      console.log('error in external function:', err);
-      res = null;
-    }
-  }
-  return res;
-}
-
 export function padValue(val: any, dec: number): string {
   let strVal;
   let n;

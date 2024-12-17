@@ -306,8 +306,8 @@
     },
     {
       "id": "criticalAnimation",
-      "name": "{i18n:scada.symbol.critical-state-animation}",
-      "hint": "{i18n:scada.symbol.critical-state-animation-hint}",
+      "name": "{i18n:scada.symbol.warning-critical-state-animation}",
+      "hint": "{i18n:scada.symbol.warning-critical-state-animation-hint}",
       "group": null,
       "type": "value",
       "valueType": "BOOLEAN",

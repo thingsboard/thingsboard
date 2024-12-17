@@ -62,6 +62,7 @@
               </tb-html>
               <tb-js-func [class.!hidden]="!circleSettingsFormGroup.get('useCircleLabelFunction').value"
                           formControlName="circleLabelFunction"
+                          withModules
                           [globalVariables]="functionScopeVariables"
                           [functionArgs]="['data', 'dsData', 'dsIndex']"
                           functionTitle="{{ 'widgets.maps.circle-label-function' | translate }}"
@@ -105,6 +106,7 @@
               </tb-html>
               <tb-js-func [class.!hidden]="!circleSettingsFormGroup.get('useCircleTooltipFunction').value"
                           formControlName="circleTooltipFunction"
+                          withModules
                           [globalVariables]="functionScopeVariables"
                           [functionArgs]="['data', 'dsData', 'dsIndex']"
                           functionTitle="{{ 'widgets.maps.circle-tooltip-function' | translate }}"
@@ -140,6 +142,7 @@
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
               <tb-js-func formControlName="circleFillColorFunction"
+                          withModules
                           [globalVariables]="functionScopeVariables"
                           [functionArgs]="['data', 'dsData', 'dsIndex']"
                           functionTitle="{{ 'widgets.maps.circle-fill-color-function' | translate }}"
@@ -179,6 +182,7 @@
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
               <tb-js-func formControlName="circleStrokeColorFunction"
+                          withModules
                           [globalVariables]="functionScopeVariables"
                           [functionArgs]="['data', 'dsData', 'dsIndex']"
                           functionTitle="{{ 'widgets.maps.circle-stroke-color-function' | translate }}"

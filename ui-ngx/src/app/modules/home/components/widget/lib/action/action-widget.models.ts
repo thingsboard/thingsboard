@@ -22,7 +22,17 @@ import {
   telemetryTypeTranslationsShort
 } from '@shared/models/telemetry/telemetry.models';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { BehaviorSubject, forkJoin, Observable, Observer, of, Subscription, throwError } from 'rxjs';
+import {
+  BehaviorSubject,
+  forkJoin,
+  Observable,
+  Observer,
+  of,
+  ReplaySubject,
+  Subscription,
+  switchMap,
+  throwError
+} from 'rxjs';
 import { catchError, delay, map, share, take } from 'rxjs/operators';
 import { AfterViewInit, ChangeDetectorRef, Directive, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import {
@@ -45,6 +55,8 @@ import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.m
 import { EntityId } from '@shared/models/id/entity-id';
 import { isDefinedAndNotNull } from '@core/utils';
 import { parseError } from '@shared/models/error.models';
+import { CompiledTbFunction, compileTbFunction } from '@shared/models/js-function.models';
+import { HttpClient } from '@angular/common/http';
 
 @Directive()
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
@@ -163,46 +175,57 @@ type DataToValueFunction<V> = (data: any) => V;
 
 export class DataToValueConverter<V> {
 
-  private readonly dataToValueFunction: DataToValueFunction<V>;
+  private readonly dataToValueFunction$: Observable<CompiledTbFunction<DataToValueFunction<V>>>;
   private readonly compareToValue: any;
 
-  constructor(private settings: DataToValueSettings,
+  constructor(private http: HttpClient,
+              private settings: DataToValueSettings,
               private valueType: ValueType) {
     this.compareToValue = settings.compareToValue;
     switch (settings.type) {
       case DataToValueType.FUNCTION:
-        try {
-          this.dataToValueFunction = new Function('data', settings.dataToValueFunction) as DataToValueFunction<V>;
-        } catch (e) {
-          this.dataToValueFunction = (data) => data;
-        }
+        this.dataToValueFunction$ = compileTbFunction(this.http, settings.dataToValueFunction, 'data').pipe(
+          catchError(() => {
+            return of(new CompiledTbFunction((data: any) => data, []));
+          }),
+          share({
+            connector: () => new ReplaySubject(1),
+            resetOnError: false,
+            resetOnComplete: false,
+            resetOnRefCountZero: false
+          })
+        );
         break;
       case DataToValueType.NONE:
         break;
     }
   }
 
-  dataToValue(data: any): V {
-    let result: V;
+  dataToValue(data: any): Observable<V> {
+    let result: Observable<V>;
     switch (this.settings.type) {
       case DataToValueType.FUNCTION:
-        result = data;
-        try {
-          let input = data;
-          if (!!data) {
-            try {
-              input = JSON.parse(data);
-            } catch (_e) {}
-          }
-          result = this.dataToValueFunction(input);
-        } catch (_e) {}
+        result = this.dataToValueFunction$.pipe(
+          map((dataToValueFunction) => {
+            let input = data;
+            if (!!data) {
+              try {
+                input = JSON.parse(data);
+              } catch (_e) {}
+            }
+            return dataToValueFunction.execute(input);
+          }),
+          catchError(() => of(data))
+        );
         break;
       case DataToValueType.NONE:
-        result = data;
+        result = of(data);
         break;
     }
     if (this.valueType === ValueType.BOOLEAN) {
-      result = (result === this.compareToValue) as any;
+      result = result.pipe(
+        map(val => (val === this.compareToValue) as V)
+      );
     }
     return result;
   }
@@ -260,17 +283,17 @@ export abstract class ValueGetter<V> extends ValueAction {
                         protected simulated: boolean) {
     super(ctx, settings);
     if (this.settings.action !== GetValueAction.DO_NOTHING && this.settings.action !== GetValueAction.GET_ALARM_STATUS) {
-      this.dataConverter = new DataToValueConverter<V>(settings.dataToValue, valueType);
+      this.dataConverter = new DataToValueConverter<V>(ctx.http, settings.dataToValue, valueType);
     }
   }
 
   getValue(): Observable<V> {
     const valueObservable: Observable<V> = this.doGetValue().pipe(
-      map((data) => {
+      switchMap((data) => {
         if (this.dataConverter) {
           return this.dataConverter.dataToValue(data);
         } else {
-          return data;
+          return of(data);
         }
       }),
       catchError(err => {
@@ -308,9 +331,10 @@ type ValueToDataFunction<V> = (value: V) => any;
 export class ValueToDataConverter<V> {
 
   private readonly constantValue: any;
-  private readonly valueToDataFunction: ValueToDataFunction<V>;
+  private readonly valueToDataFunction$: Observable<CompiledTbFunction<ValueToDataFunction<V>>>;
 
-  constructor(protected settings: ValueToDataSettings) {
+  constructor(private http: HttpClient,
+              private settings: ValueToDataSettings) {
     switch (settings.type) {
       case ValueToDataType.VALUE:
         break;
@@ -318,31 +342,38 @@ export class ValueToDataConverter<V> {
         this.constantValue = this.settings.constantValue;
         break;
       case ValueToDataType.FUNCTION:
-        try {
-          this.valueToDataFunction = new Function('value', settings.valueToDataFunction) as ValueToDataFunction<V>;
-        } catch (e) {
-          this.valueToDataFunction = (data) => data;
-        }
+        this.valueToDataFunction$ = compileTbFunction(this.http, settings.valueToDataFunction, 'value').pipe(
+          catchError(() => {
+            return of(new CompiledTbFunction((value: any) => value, []));
+          }),
+          share({
+            connector: () => new ReplaySubject(1),
+            resetOnError: false,
+            resetOnComplete: false,
+            resetOnRefCountZero: false
+          })
+        );
         break;
       case ValueToDataType.NONE:
         break;
     }
   }
 
-  valueToData(value: V): any {
+  valueToData(value: V): Observable<any> {
     switch (this.settings.type) {
       case ValueToDataType.VALUE:
-        return value;
+        return of(value);
       case ValueToDataType.CONSTANT:
-        return this.constantValue;
+        return of(this.constantValue);
       case ValueToDataType.FUNCTION:
-        let result = value;
-        try {
-          result = this.valueToDataFunction(value);
-        } catch (e) {}
-        return result;
+        return this.valueToDataFunction$.pipe(
+          map((valueToDataFunction) => {
+            return valueToDataFunction.execute(value);
+          }),
+          catchError(() => of(value))
+        );
       case ValueToDataType.NONE:
-        return null;
+        return of(null);
     }
   }
 }
@@ -368,14 +399,15 @@ export abstract class ValueSetter<V> extends ValueAction {
                         protected settings: SetValueSettings,
                         protected simulated: boolean) {
     super(ctx, settings);
-    this.valueToDataConverter = new ValueToDataConverter<V>(settings.valueToData);
+    this.valueToDataConverter = new ValueToDataConverter<V>(ctx.http, settings.valueToData);
   }
 
   setValue(value: V): Observable<any> {
     if (this.simulated) {
       return of(null).pipe(delay(500));
     } else {
-      return this.doSetValue(this.valueToDataConverter.valueToData(value)).pipe(
+      return this.valueToDataConverter.valueToData(value).pipe(
+        switchMap(data => this.doSetValue(data)),
         catchError(err => {
           throw this.handleError(err);
         })

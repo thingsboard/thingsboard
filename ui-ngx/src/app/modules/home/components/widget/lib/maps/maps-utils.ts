@@ -15,13 +15,11 @@
 ///
 
 import L from 'leaflet';
-import {
-  GenericFunction,
-  ShowTooltipAction, WidgetToolipSettings
-} from './map-models';
+import { GenericFunction, ShowTooltipAction, WidgetToolipSettings } from './map-models';
 import { Datasource, FormattedData } from '@app/shared/models/widget.models';
-import { fillDataPattern, isDefinedAndNotNull, isString, processDataPattern, safeExecute } from '@core/utils';
+import { fillDataPattern, isDefinedAndNotNull, isString, processDataPattern, safeExecuteTbFunction } from '@core/utils';
 import { parseWithTranslation } from '@home/components/widget/lib/maps/common-maps-utils';
+import { CompiledTbFunction } from '@shared/models/js-function.models';
 
 export function createTooltip(target: L.Layer,
                               settings: Partial<WidgetToolipSettings>,
@@ -90,7 +88,7 @@ export function isJSON(data: string): boolean {
 export interface LabelSettings {
   showLabel: boolean;
   useLabelFunction: boolean;
-  parsedLabelFunction: GenericFunction;
+  parsedLabelFunction: CompiledTbFunction<GenericFunction>;
   label: string;
 }
 
@@ -98,7 +96,7 @@ export function entitiesParseName(entities: FormattedData[], labelSettings: Labe
   const div = document.createElement('div');
   for (const entity of entities) {
     if (labelSettings?.showLabel) {
-      const pattern = labelSettings.useLabelFunction ? safeExecute(labelSettings.parsedLabelFunction,
+      const pattern = labelSettings.useLabelFunction ? safeExecuteTbFunction(labelSettings.parsedLabelFunction,
         [entity, entities, entity.dsIndex]) : labelSettings.label;
       const markerLabelText = parseWithTranslation.prepareProcessPattern(pattern, true);
       const replaceInfoLabelMarker = processDataPattern(pattern, entity);
