@@ -43,7 +43,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
@@ -145,8 +144,7 @@ public class TbMathNode implements TbNode {
         return ctx.getTelemetryService().saveAndNotify(TimeseriesSaveRequest.builder()
                 .tenantId(ctx.getTenantId())
                 .entityId(msg.getOriginator())
-                .entries(Collections.singletonList(basicTsKvEntry))
-                .saveLatest(true)
+                .entry(basicTsKvEntry)
                 .build());
     }
 

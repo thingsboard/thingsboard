@@ -807,11 +807,8 @@ public class WebsocketApiTest extends AbstractControllerTest {
         CountDownLatch latch = new CountDownLatch(1);
         tsService.save(TimeseriesSaveRequest.builder()
                 .tenantId(device.getTenantId())
-                .customerId(null)
                 .entityId(device.getId())
                 .entries(tsData)
-                .ttl(0)
-                .saveLatest(true)
                 .callback(new FutureCallback<Void>() {
                     @Override
                     public void onSuccess(@Nullable Void result) {

@@ -27,6 +27,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.FeaturesInfo;
@@ -71,9 +72,9 @@ import static org.thingsboard.common.util.SystemUtil.getTotalMemory;
 @Slf4j
 public class DefaultSystemInfoService extends TbApplicationEventListener<PartitionChangeEvent> implements SystemInfoService {
 
-    public static final FutureCallback<Integer> CALLBACK = new FutureCallback<>() {
+    public static final FutureCallback<Void> CALLBACK = new FutureCallback<>() {
         @Override
-        public void onSuccess(@Nullable Integer result) {
+        public void onSuccess(@Nullable Void result) {
         }
 
         @Override
@@ -200,7 +201,13 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
 
     private void doSave(List<TsKvEntry> telemetry) {
         ApiUsageState apiUsageState = apiUsageStateClient.getApiUsageState(TenantId.SYS_TENANT_ID);
-        telemetryService.saveAndNotifyInternal(TenantId.SYS_TENANT_ID, apiUsageState.getId(), telemetry, systemInfoTtlSeconds, CALLBACK);
+        telemetryService.saveInternal(TimeseriesSaveRequest.builder()
+                .tenantId(TenantId.SYS_TENANT_ID)
+                .entityId(apiUsageState.getId())
+                .entries(telemetry)
+                .ttl(systemInfoTtlSeconds)
+                .callback(CALLBACK)
+                .build());
     }
 
     private List<SystemInfoData> getSystemData(ServiceInfo serviceInfo) {

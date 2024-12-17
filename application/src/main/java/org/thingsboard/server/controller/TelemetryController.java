@@ -679,7 +679,6 @@ public class TelemetryController extends BaseController {
                     .entityId(entityId)
                     .entries(entries)
                     .ttl(tenantTtl)
-                    .saveLatest(true)
                     .callback(new FutureCallback<Void>() {
                         @Override
                         public void onSuccess(@Nullable Void tmp) {

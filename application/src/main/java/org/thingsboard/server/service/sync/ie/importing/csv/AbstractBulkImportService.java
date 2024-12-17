@@ -213,8 +213,7 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
                     .entityId(entityId)
                     .entries(timeseries)
                     .ttl(tenantTtl)
-                    .saveLatest(true)
-                    .callback(new FutureCallback<Void>() {
+                    .callback(new FutureCallback<>() {
                         @Override
                         public void onSuccess(@Nullable Void tmp) {
                             entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null, null,

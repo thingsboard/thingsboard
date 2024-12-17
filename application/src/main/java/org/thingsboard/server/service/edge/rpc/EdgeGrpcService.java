@@ -69,7 +69,6 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -507,8 +506,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             tsSubService.save(TimeseriesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(edgeId)
-                    .entries(Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry(key, value))))
-                    .saveLatest(true)
+                    .entry(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry(key, value)))
                     .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
                     .build());
         } else {
@@ -522,8 +520,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             tsSubService.save(TimeseriesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(edgeId)
-                    .entries(Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry(key, value))))
-                    .saveLatest(true)
+                    .entry(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry(key, value)))
                     .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
                     .build());
         } else {

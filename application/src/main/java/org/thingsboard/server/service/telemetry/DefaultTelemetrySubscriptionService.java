@@ -117,6 +117,22 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     @Override
+    public void save(TimeseriesSaveRequest request) {
+        TenantId tenantId = request.getTenantId();
+        EntityId entityId = request.getEntityId();
+        checkInternalEntity(entityId);
+        boolean sysTenant = TenantId.SYS_TENANT_ID.equals(tenantId) || tenantId == null;
+        if (sysTenant || apiUsageStateService.getApiUsageState(tenantId).isDbStorageEnabled()) {
+            KvUtils.validate(request.getEntries(), valueNoXssValidation);
+            FutureCallback<Integer> callback = getApiUsageCallback(tenantId, request.getCustomerId(), sysTenant, request.getCallback());
+            ListenableFuture<Integer> future = saveInternal(request);
+            Futures.addCallback(future, callback, tsCallBackExecutor);
+        } else {
+            request.getCallback().onFailure(new RuntimeException("DB storage writes are disabled due to API limits!"));
+        }
+    }
+
+    @Override
     public ListenableFuture<Void> saveAndNotify(TimeseriesSaveRequest request) {
         SettableFuture<Void> future = SettableFuture.create();
         request.setCallback(new VoidFutureCallback(future));
@@ -125,58 +141,22 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     @Override
-    public void save(TimeseriesSaveRequest request) {
+    public ListenableFuture<Integer> saveInternal(TimeseriesSaveRequest request) {
         TenantId tenantId = request.getTenantId();
         EntityId entityId = request.getEntityId();
-        checkInternalEntity(entityId);
-        boolean sysTenant = TenantId.SYS_TENANT_ID.equals(tenantId) || tenantId == null;
-        if (sysTenant || apiUsageStateService.getApiUsageState(tenantId).isDbStorageEnabled()) {
-            KvUtils.validate(request.getEntries(), valueNoXssValidation);
-            FutureCallback<Integer> callback = getCallback(tenantId, request.getCustomerId(), sysTenant, request.getCallback());
-            if (request.isSaveLatest()) {
-                saveAndNotifyInternal(tenantId, entityId, request.getEntries(), request.getTtl(), callback);
-            } else {
-                saveWithoutLatestAndNotifyInternal(tenantId, entityId, request.getEntries(), request.getTtl(), callback);
-            }
+        ListenableFuture<Integer> saveFuture;
+        if (request.isSaveLatest()) {
+            saveFuture = tsService.save(tenantId, entityId, request.getEntries(), request.getTtl());
         } else {
-            request.getCallback().onFailure(new RuntimeException("DB storage writes are disabled due to API limits!"));
+            saveFuture = tsService.saveWithoutLatest(tenantId, entityId, request.getEntries(), request.getTtl());
         }
-    }
 
-    private FutureCallback<Integer> getCallback(TenantId tenantId, CustomerId customerId, boolean sysTenant, FutureCallback<Void> callback) {
-        return new FutureCallback<>() {
-            @Override
-            public void onSuccess(Integer result) {
-                if (!sysTenant && result != null && result > 0) {
-                    apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.STORAGE_DP_COUNT, result);
-                }
-                callback.onSuccess(null);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                callback.onFailure(t);
-            }
-        };
-    }
-
-    @Override
-    public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, FutureCallback<Integer> callback) {
-        saveAndNotifyInternal(tenantId, entityId, ts, 0L, callback);
-    }
-
-    @Override
-    public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Integer> callback) {
-        ListenableFuture<Integer> saveFuture = tsService.save(tenantId, entityId, ts, ttl);
-        addMainCallback(saveFuture, callback);
-        addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
-        addEntityViewCallback(tenantId, entityId, ts);
-    }
-
-    private void saveWithoutLatestAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Integer> callback) {
-        ListenableFuture<Integer> saveFuture = tsService.saveWithoutLatest(tenantId, entityId, ts, ttl);
-        addMainCallback(saveFuture, callback);
-        addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
+        addMainCallback(saveFuture, request.getCallback());
+        addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, request.getEntries()));
+        if (request.isSaveLatest()) {
+            addEntityViewCallback(tenantId, entityId, request.getEntries());
+        }
+        return saveFuture;
     }
 
     private void addEntityViewCallback(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
@@ -452,11 +432,11 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         }, tsCallBackExecutor);
     }
 
-    private <S> void addMainCallback(ListenableFuture<S> saveFuture, final FutureCallback<S> callback) {
+    private <S> void addMainCallback(ListenableFuture<S> saveFuture, final FutureCallback<Void> callback) {
         Futures.addCallback(saveFuture, new FutureCallback<S>() {
             @Override
             public void onSuccess(@Nullable S result) {
-                callback.onSuccess(result);
+                callback.onSuccess(null);
             }
 
             @Override
@@ -470,6 +450,23 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         if (EntityType.API_USAGE_STATE.equals(entityId.getEntityType())) {
             throw new RuntimeException("Can't update API Usage State!");
         }
+    }
+
+    private FutureCallback<Integer> getApiUsageCallback(TenantId tenantId, CustomerId customerId, boolean sysTenant, FutureCallback<Void> callback) {
+        return new FutureCallback<>() {
+            @Override
+            public void onSuccess(Integer result) {
+                if (!sysTenant && result != null && result > 0) {
+                    apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.STORAGE_DP_COUNT, result);
+                }
+                callback.onSuccess(null);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                callback.onFailure(t);
+            }
+        };
     }
 
     private static class VoidFutureCallback implements FutureCallback<Void> {

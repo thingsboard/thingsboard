@@ -18,7 +18,8 @@ package org.thingsboard.rule.engine.api;
 import com.google.common.util.concurrent.FutureCallback;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -26,15 +27,17 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 import java.util.List;
 
-@Data
+@Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class TimeseriesSaveRequest {
+
     private final TenantId tenantId;
     private final CustomerId customerId;
     private final EntityId entityId;
     private final List<TsKvEntry> entries;
     private final long ttl;
     private final boolean saveLatest;
+    @Setter
     private FutureCallback<Void> callback;
 
     public static Builder builder() {
@@ -49,7 +52,7 @@ public class TimeseriesSaveRequest {
         private List<TsKvEntry> entries;
         private long ttl;
         private FutureCallback<Void> callback;
-        private boolean saveLatest;
+        private boolean saveLatest = true;
 
         Builder() {}
 

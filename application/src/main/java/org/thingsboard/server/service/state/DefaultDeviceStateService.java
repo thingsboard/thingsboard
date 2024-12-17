@@ -38,6 +38,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -866,10 +867,13 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
 
     private void save(DeviceId deviceId, String key, long value) {
         if (persistToTelemetry) {
-            tsSubService.saveAndNotifyInternal(
-                    TenantId.SYS_TENANT_ID, deviceId,
-                    Collections.singletonList(new BasicTsKvEntry(getCurrentTimeMillis(), new LongDataEntry(key, value))),
-                    telemetryTtl, new TelemetrySaveCallback<>(deviceId, key, value));
+            tsSubService.saveInternal(TimeseriesSaveRequest.builder()
+                    .tenantId(TenantId.SYS_TENANT_ID)
+                    .entityId(deviceId)
+                    .entry(new BasicTsKvEntry(getCurrentTimeMillis(), new LongDataEntry(key, value)))
+                    .ttl(telemetryTtl)
+                    .callback(new TelemetrySaveCallback<>(deviceId, key, value))
+                    .build());
         } else {
             tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, AttributeScope.SERVER_SCOPE, key, value, new TelemetrySaveCallback<>(deviceId, key, value));
         }
@@ -877,10 +881,13 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
 
     private void save(DeviceId deviceId, String key, boolean value) {
         if (persistToTelemetry) {
-            tsSubService.saveAndNotifyInternal(
-                    TenantId.SYS_TENANT_ID, deviceId,
-                    Collections.singletonList(new BasicTsKvEntry(getCurrentTimeMillis(), new BooleanDataEntry(key, value))),
-                    telemetryTtl, new TelemetrySaveCallback<>(deviceId, key, value));
+            tsSubService.saveInternal(TimeseriesSaveRequest.builder()
+                    .tenantId(TenantId.SYS_TENANT_ID)
+                    .entityId(deviceId)
+                    .entry(new BasicTsKvEntry(getCurrentTimeMillis(), new BooleanDataEntry(key, value)))
+                    .ttl(telemetryTtl)
+                    .callback(new TelemetrySaveCallback<>(deviceId, key, value))
+                    .build());
         } else {
             tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, AttributeScope.SERVER_SCOPE, key, value, new TelemetrySaveCallback<>(deviceId, key, value));
         }

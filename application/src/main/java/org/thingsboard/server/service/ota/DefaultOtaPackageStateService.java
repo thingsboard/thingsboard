@@ -55,7 +55,6 @@ import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -266,7 +265,6 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
                 .tenantId(tenantId)
                 .entityId(deviceId)
                 .entries(telemetry)
-                .saveLatest(true)
                 .callback(new FutureCallback<Void>() {
                     @Override
                     public void onSuccess(@Nullable Void tmp) {
@@ -292,9 +290,8 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
         telemetryService.save(TimeseriesSaveRequest.builder()
                 .tenantId(tenantId)
                 .entityId(deviceId)
-                .entries(Collections.singletonList(status))
-                .saveLatest(true)
-                .callback(new FutureCallback<Void>() {
+                .entry(status)
+                .callback(new FutureCallback<>() {
                     @Override
                     public void onSuccess(@Nullable Void tmp) {
                         log.trace("[{}] Success save telemetry with target {} for device!", deviceId, otaPackage);
