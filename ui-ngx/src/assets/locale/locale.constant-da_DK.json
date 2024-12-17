@@ -2642,8 +2642,7 @@
     "metadata-required": "Metadataposter må ikke være tomme.",
     "output": "Output",
     "test": "Test",
-    "help": "Hjælp",
-    "reset-debug-mode": "Nulstil debug-tilstand i alle knuder"
+    "help": "Hjælp"
   },
   "role": {
     "role": "Rolle",

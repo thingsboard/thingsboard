@@ -20,7 +20,7 @@
   <div class="hint-container">
     <div class="tb-form-hint tb-primary-fill tb-flex center">
       @if (debugLimitsConfiguration) {
-        {{ 'debug-config.hint.main-limited' | translate: { msg: maxMessagesCount, sec: maxTimeFrameSec } }}
+        {{ 'debug-config.hint.main-limited' | translate: { msg: maxMessagesCount, time: (maxTimeFrameDuration | milliSecondsToTimeString: true : true) } }}
       } @else {
         {{ 'debug-config.hint.main' | translate }}
       }
@@ -35,7 +35,7 @@
     <div class="align-center flex justify-between">
       <mat-slide-toggle class="mat-slide" [formControl]="debugAllControl">
         <div tb-hint-tooltip-icon="{{ 'debug-config.hint.all-messages' | translate }}">
-          {{ 'debug-config.all-messages' | translate: { time: (isDebugAllActive$ | async) && !allEnabled ? (allEnabledUntil | durationLeft) : ('debug-config.min' | translate: { number:  maxDebugModeDurationMinutes }) } }}
+          {{ 'debug-config.all-messages' | translate: { time: (isDebugAllActive$ | async) && !allEnabled ? (allEnabledUntil | durationLeft) : (maxDebugModeDuration | milliSecondsToTimeString: true : true) } }}
         </div>
       </mat-slide-toggle>
       <button mat-icon-button *ngIf="(isDebugAllActive$ | async) && !allEnabled"
@@ -58,6 +58,7 @@
     <button mat-raised-button
             color="primary"
             type="button"
+            [disabled]="(isLoading$ | async) || !onFailuresControl.dirty && !debugAllControl.dirty"
             (click)="onApply()">
       {{ 'action.apply' | translate }}
     </button>
