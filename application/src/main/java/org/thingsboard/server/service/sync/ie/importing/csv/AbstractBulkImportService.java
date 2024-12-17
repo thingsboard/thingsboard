@@ -32,6 +32,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -237,23 +238,27 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
         List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(kvsEntry.getValue()));
 
         accessValidator.validateEntityAndCallback(user, Operation.WRITE_ATTRIBUTES, entity.getId(), (result, tenantId, entityId) -> {
-            tsSubscriptionService.saveAndNotify(tenantId, entityId, AttributeScope.valueOf(scope), attributes, new FutureCallback<>() {
+            tsSubscriptionService.save(AttributesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .entityId(entityId)
+                    .scope(AttributeScope.valueOf(scope))
+                    .entries(attributes)
+                    .callback(new FutureCallback<>() {
+                        @Override
+                        public void onSuccess(Void unused) {
+                            entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null,
+                                    null, ActionType.ATTRIBUTES_UPDATED, null, AttributeScope.valueOf(scope), attributes);
+                        }
 
-                @Override
-                public void onSuccess(Void unused) {
-                    entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null,
-                            null, ActionType.ATTRIBUTES_UPDATED, null, AttributeScope.valueOf(scope), attributes);
-                }
-
-                @Override
-                public void onFailure(Throwable throwable) {
-                    entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null,
-                            null, ActionType.ATTRIBUTES_UPDATED, BaseController.toException(throwable),
-                            AttributeScope.valueOf(scope), attributes);
-                    throw new RuntimeException(throwable);
-                }
-
-            });
+                        @Override
+                        public void onFailure(Throwable throwable) {
+                            entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null,
+                                    null, ActionType.ATTRIBUTES_UPDATED, BaseController.toException(throwable),
+                                    AttributeScope.valueOf(scope), attributes);
+                            throw new RuntimeException(throwable);
+                        }
+                    })
+                    .build());
         });
     }
 

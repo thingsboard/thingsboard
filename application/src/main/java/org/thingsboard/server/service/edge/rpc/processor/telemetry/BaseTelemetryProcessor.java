@@ -31,6 +31,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
@@ -277,16 +278,29 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
         List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(json));
         String scope = metaData.getValue("scope");
-        tsSubService.saveAndNotify(tenantId, entityId, AttributeScope.valueOf(scope), attributes, new FutureCallback<Void>() {
-            @Override
-            public void onSuccess(@Nullable Void tmp) {
-                var defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
-                TbMsg tbMsg = TbMsg.newMsg(defaultQueueAndRuleChain.getKey(), TbMsgType.ATTRIBUTES_UPDATED, entityId,
-                        customerId, metaData, gson.toJson(json), defaultQueueAndRuleChain.getValue(), null);
-                edgeCtx.getClusterService().pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
+        tsSubService.save(AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(entityId)
+                .scope(AttributeScope.valueOf(scope))
+                .entries(attributes)
+                .callback(new FutureCallback<>() {
                     @Override
-                    public void onSuccess(TbQueueMsgMetadata metadata) {
-                        futureToSet.set(null);
+                    public void onSuccess(@Nullable Void tmp) {
+                        var defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
+                        TbMsg tbMsg = TbMsg.newMsg(defaultQueueAndRuleChain.getKey(), TbMsgType.ATTRIBUTES_UPDATED, entityId,
+                                customerId, metaData, gson.toJson(json), defaultQueueAndRuleChain.getValue(), null);
+                        edgeCtx.getClusterService().pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
+                            @Override
+                            public void onSuccess(TbQueueMsgMetadata metadata) {
+                                futureToSet.set(null);
+                            }
+
+                            @Override
+                            public void onFailure(Throwable t) {
+                                log.error("[{}] Can't process attributes update [{}]", tenantId, msg, t);
+                                futureToSet.setException(t);
+                            }
+                        });
                     }
 
                     @Override
@@ -294,15 +308,8 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
                         log.error("[{}] Can't process attributes update [{}]", tenantId, msg, t);
                         futureToSet.setException(t);
                     }
-                });
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                log.error("[{}] Can't process attributes update [{}]", tenantId, msg, t);
-                futureToSet.setException(t);
-            }
-        });
+                })
+                .build());
         return futureToSet;
     }
 

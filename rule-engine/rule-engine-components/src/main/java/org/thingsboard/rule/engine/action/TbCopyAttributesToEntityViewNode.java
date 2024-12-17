@@ -23,6 +23,7 @@ import com.google.gson.JsonPrimitive;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -112,8 +113,13 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
                                         Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(JsonParser.parseString(msg.getData()));
                                         List<AttributeKvEntry> filteredAttributes =
                                                 attributes.stream().filter(attr -> attributeContainsInEntityView(scope, attr.getKey(), entityView)).collect(Collectors.toList());
-                                        ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), entityView.getId(), scope, filteredAttributes,
-                                                getFutureCallback(ctx, msg, entityView));
+                                        ctx.getTelemetryService().save(AttributesSaveRequest.builder()
+                                                .tenantId(ctx.getTenantId())
+                                                .entityId(entityView.getId())
+                                                .scope(scope)
+                                                .entries(filteredAttributes)
+                                                .callback(getFutureCallback(ctx, msg, entityView))
+                                                .build());
                                     }
                                 }
                             }

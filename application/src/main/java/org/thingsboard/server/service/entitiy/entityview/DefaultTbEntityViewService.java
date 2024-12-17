@@ -25,6 +25,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ConcurrentReferenceHashMap;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
@@ -273,36 +274,41 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
             return Futures.transform(getAttrFuture, attributeKvEntries -> {
                 List<AttributeKvEntry> attributes;
                 if (attributeKvEntries != null && !attributeKvEntries.isEmpty()) {
-                    attributes =
-                            attributeKvEntries.stream()
-                                    .filter(attributeKvEntry -> {
-                                        long startTime = entityView.getStartTimeMs();
-                                        long endTime = entityView.getEndTimeMs();
-                                        long lastUpdateTs = attributeKvEntry.getLastUpdateTs();
-                                        return startTime == 0 && endTime == 0 ||
-                                                (endTime == 0 && startTime < lastUpdateTs) ||
-                                                (startTime == 0 && endTime > lastUpdateTs) ||
-                                                (startTime < lastUpdateTs && endTime > lastUpdateTs);
-                                    }).collect(Collectors.toList());
-                    tsSubService.saveAndNotify(entityView.getTenantId(), entityId, scope, attributes, new FutureCallback<Void>() {
-                        @Override
-                        public void onSuccess(@Nullable Void tmp) {
-                            try {
-                                logAttributesUpdated(entityView.getTenantId(), user, entityId, scope, attributes, null);
-                            } catch (ThingsboardException e) {
-                                log.error("Failed to log attribute updates", e);
-                            }
-                        }
+                    attributes = attributeKvEntries.stream()
+                            .filter(attributeKvEntry -> {
+                                long startTime = entityView.getStartTimeMs();
+                                long endTime = entityView.getEndTimeMs();
+                                long lastUpdateTs = attributeKvEntry.getLastUpdateTs();
+                                return startTime == 0 && endTime == 0 ||
+                                        (endTime == 0 && startTime < lastUpdateTs) ||
+                                        (startTime == 0 && endTime > lastUpdateTs) ||
+                                        (startTime < lastUpdateTs && endTime > lastUpdateTs);
+                            }).collect(Collectors.toList());
+                    tsSubService.save(AttributesSaveRequest.builder()
+                            .tenantId(entityView.getTenantId())
+                            .entityId(entityId)
+                            .scope(scope)
+                            .entries(attributes)
+                            .callback(new FutureCallback<>() {
+                                @Override
+                                public void onSuccess(@Nullable Void tmp) {
+                                    try {
+                                        logAttributesUpdated(entityView.getTenantId(), user, entityId, scope, attributes, null);
+                                    } catch (ThingsboardException e) {
+                                        log.error("Failed to log attribute updates", e);
+                                    }
+                                }
 
-                        @Override
-                        public void onFailure(Throwable t) {
-                            try {
-                                logAttributesUpdated(entityView.getTenantId(), user, entityId, scope, attributes, t);
-                            } catch (ThingsboardException e) {
-                                log.error("Failed to log attribute updates", e);
-                            }
-                        }
-                    });
+                                @Override
+                                public void onFailure(Throwable t) {
+                                    try {
+                                        logAttributesUpdated(entityView.getTenantId(), user, entityId, scope, attributes, t);
+                                    } catch (ThingsboardException e) {
+                                        log.error("Failed to log attribute updates", e);
+                                    }
+                                }
+                            })
+                            .build());
                 }
                 return null;
             }, MoreExecutors.directExecutor());

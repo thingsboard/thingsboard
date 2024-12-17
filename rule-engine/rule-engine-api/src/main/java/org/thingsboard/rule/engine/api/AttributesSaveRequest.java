@@ -20,25 +20,26 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import org.thingsboard.server.common.data.id.CustomerId;
+import lombok.ToString;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 import java.util.List;
 
 @Getter
+@ToString
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class TimeseriesSaveRequest {
+public class AttributesSaveRequest {
 
     private final TenantId tenantId;
-    private final CustomerId customerId;
     private final EntityId entityId;
-    private final List<TsKvEntry> entries;
-    private final long ttl;
-    private final boolean saveLatest;
+    private final AttributeScope scope;
+    private final List<AttributeKvEntry> entries; // todo: rename to attributes? same with timeseries
+    private final boolean notifyDevice;
     @Setter
     private FutureCallback<Void> callback;
 
@@ -49,12 +50,11 @@ public class TimeseriesSaveRequest {
     public static class Builder {
 
         private TenantId tenantId;
-        private CustomerId customerId;
         private EntityId entityId;
-        private List<TsKvEntry> entries;
-        private long ttl;
+        private AttributeScope scope;
+        private List<AttributeKvEntry> entries;
+        private boolean notifyDevice = true;
         private FutureCallback<Void> callback;
-        private boolean saveLatest = true;
 
         Builder() {}
 
@@ -63,36 +63,41 @@ public class TimeseriesSaveRequest {
             return this;
         }
 
-        public Builder customerId(CustomerId customerId) {
-            this.customerId = customerId;
-            return this;
-        }
-
         public Builder entityId(EntityId entityId) {
             this.entityId = entityId;
             return this;
         }
 
-        public Builder entries(List<TsKvEntry> entries) {
+        public Builder scope(AttributeScope scope) {
+            this.scope = scope;
+            return this;
+        }
+
+        @Deprecated
+        public Builder scope(String scope) {
+            try {
+                this.scope = AttributeScope.valueOf(scope);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid attribute scope '" + scope + "'");
+            }
+            return this;
+        }
+
+        public Builder entries(List<AttributeKvEntry> entries) {
             this.entries = entries;
             return this;
         }
 
-        public Builder entry(TsKvEntry entry) {
+        public Builder entry(AttributeKvEntry entry) {
             return entries(List.of(entry));
         }
 
         public Builder entry(KvEntry kvEntry) {
-            return entry(new BasicTsKvEntry(System.currentTimeMillis(), kvEntry));
+            return entry(new BaseAttributeKvEntry(kvEntry, System.currentTimeMillis()));
         }
 
-        public Builder ttl(long ttl) {
-            this.ttl = ttl;
-            return this;
-        }
-
-        public Builder saveLatest(boolean saveLatest) {
-            this.saveLatest = saveLatest;
+        public Builder notifyDevice(boolean notifyDevice) {
+            this.notifyDevice = notifyDevice;
             return this;
         }
 
@@ -101,8 +106,8 @@ public class TimeseriesSaveRequest {
             return this;
         }
 
-        public TimeseriesSaveRequest build() {
-            return new TimeseriesSaveRequest(tenantId, customerId, entityId, entries, ttl, saveLatest, callback);
+        public AttributesSaveRequest build() {
+            return new AttributesSaveRequest(tenantId, entityId, scope, entries, notifyDevice, callback);
         }
 
     }

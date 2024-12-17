@@ -25,6 +25,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.ThrowingConsumer;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
@@ -129,12 +130,12 @@ public class TbMsgTimeseriesNodeTest {
             TimeseriesSaveRequest request = invocation.getArgument(0);
             request.getCallback().onSuccess(null);
             return null;
-        }).when(telemetryServiceMock).save(any());
+        }).when(telemetryServiceMock).save(any(TimeseriesSaveRequest.class));
 
         node.onMsg(ctxMock, msg);
 
         List<TsKvEntry> expectedList = getTsKvEntriesListWithTs(data, System.currentTimeMillis());
-        verify(telemetryServiceMock).save(assertArg(request -> {
+        verify(telemetryServiceMock).save(assertArg((ThrowingConsumer<TimeseriesSaveRequest>) request -> {
             assertThat(request.getTenantId()).isEqualTo(TENANT_ID);
             assertThat(request.getCustomerId()).isNull();
             assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);
@@ -170,12 +171,12 @@ public class TbMsgTimeseriesNodeTest {
             TimeseriesSaveRequest request = invocation.getArgument(0);
             request.getCallback().onSuccess(null);
             return null;
-        }).when(telemetryServiceMock).save(any());
+        }).when(telemetryServiceMock).save(any(TimeseriesSaveRequest.class));
 
         node.onMsg(ctxMock, msg);
 
         List<TsKvEntry> expectedList = getTsKvEntriesListWithTs(data, ts);
-        verify(telemetryServiceMock).save(assertArg(request -> {
+        verify(telemetryServiceMock).save(assertArg((ThrowingConsumer<TimeseriesSaveRequest>) request -> {
             assertThat(request.getTenantId()).isEqualTo(TENANT_ID);
             assertThat(request.getCustomerId()).isNull();
             assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);
@@ -208,7 +209,7 @@ public class TbMsgTimeseriesNodeTest {
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metadata, data);
         node.onMsg(ctxMock, msg);
 
-        verify(telemetryServiceMock).save(assertArg(request -> {
+        verify(telemetryServiceMock).save(assertArg((ThrowingConsumer<TimeseriesSaveRequest>) request -> {
             assertThat(request.getTenantId()).isEqualTo(TENANT_ID);
             assertThat(request.getCustomerId()).isNull();
             assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);

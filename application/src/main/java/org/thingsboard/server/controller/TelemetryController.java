@@ -47,6 +47,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -625,19 +626,25 @@ public class TelemetryController extends BaseController {
             }
             SecurityUser user = getCurrentUser();
             return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.WRITE_ATTRIBUTES, entityIdSrc, (result, tenantId, entityId) -> {
-                tsSubService.saveAndNotify(tenantId, entityId, scope, attributes, new FutureCallback<Void>() {
-                    @Override
-                    public void onSuccess(@Nullable Void tmp) {
-                        logAttributesUpdated(user, entityId, scope, attributes, null);
-                        result.setResult(new ResponseEntity(HttpStatus.OK));
-                    }
+                tsSubService.save(AttributesSaveRequest.builder()
+                        .tenantId(tenantId)
+                        .entityId(entityId)
+                        .scope(scope)
+                        .entries(attributes)
+                        .callback(new FutureCallback<>() {
+                            @Override
+                            public void onSuccess(@Nullable Void tmp) {
+                                logAttributesUpdated(user, entityId, scope, attributes, null);
+                                result.setResult(new ResponseEntity(HttpStatus.OK));
+                            }
 
-                    @Override
-                    public void onFailure(Throwable t) {
-                        logAttributesUpdated(user, entityId, scope, attributes, t);
-                        AccessValidator.handleError(t, result, HttpStatus.INTERNAL_SERVER_ERROR);
-                    }
-                });
+                            @Override
+                            public void onFailure(Throwable t) {
+                                logAttributesUpdated(user, entityId, scope, attributes, t);
+                                AccessValidator.handleError(t, result, HttpStatus.INTERNAL_SERVER_ERROR);
+                            }
+                        })
+                        .build());
             });
         } else {
             return getImmediateDeferredResult("Request is not a JSON object", HttpStatus.BAD_REQUEST);

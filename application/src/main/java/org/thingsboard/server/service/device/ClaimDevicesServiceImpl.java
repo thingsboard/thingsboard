@@ -28,6 +28,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
@@ -37,7 +38,6 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -178,11 +178,12 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                 return Futures.immediateFuture(new ReclaimResult(unassignedCustomer));
             }
             SettableFuture<ReclaimResult> result = SettableFuture.create();
-            telemetryService.saveAndNotify(
-                    tenantId, savedDevice.getId(), AttributeScope.SERVER_SCOPE, List.of(
-                            new BaseAttributeKvEntry(new BooleanDataEntry(CLAIM_ATTRIBUTE_NAME, true), System.currentTimeMillis())
-                    ),
-                    new FutureCallback<>() {
+            telemetryService.save(AttributesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .entityId(savedDevice.getId())
+                    .scope(AttributeScope.SERVER_SCOPE)
+                    .entry(new BooleanDataEntry(CLAIM_ATTRIBUTE_NAME, true))
+                    .callback(new FutureCallback<>() {
                         @Override
                         public void onSuccess(@Nullable Void tmp) {
                             result.set(new ReclaimResult(unassignedCustomer));
@@ -192,7 +193,8 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                         public void onFailure(Throwable t) {
                             result.setException(t);
                         }
-                    });
+                    })
+                    .build());
             return result;
         }
         cacheEviction(device.getId());

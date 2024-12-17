@@ -24,6 +24,7 @@ import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -38,6 +39,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -150,15 +152,20 @@ public class TbMathNode implements TbNode {
 
     private ListenableFuture<Void> saveAttribute(TbContext ctx, TbMsg msg, double result, TbMathResult mathResultDef) {
         AttributeScope attributeScope = getAttributeScope(mathResultDef.getAttributeScope());
+        KvEntry kvEntry;
         if (isIntegerResult(mathResultDef, config.getOperation())) {
             var value = toIntValue(result);
-            return ctx.getTelemetryService().saveAttrAndNotify(
-                    ctx.getTenantId(), msg.getOriginator(), attributeScope, mathResultDef.getKey(), value);
+            kvEntry = new LongDataEntry(mathResultDef.getKey(), value);
         } else {
             var value = toDoubleValue(mathResultDef, result);
-            return ctx.getTelemetryService().saveAttrAndNotify(
-                    ctx.getTenantId(), msg.getOriginator(), attributeScope, mathResultDef.getKey(), value);
+            kvEntry = new DoubleDataEntry(mathResultDef.getKey(), value);
         }
+        return ctx.getTelemetryService().saveAttrAndNotify(AttributesSaveRequest.builder()
+                .tenantId(ctx.getTenantId())
+                .entityId(msg.getOriginator())
+                .scope(attributeScope)
+                .entry(kvEntry)
+                .build());
     }
 
     private boolean isIntegerResult(TbMathResult mathResultDef, TbRuleNodeMathFunctionType function) {

@@ -20,6 +20,7 @@ import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -346,17 +347,23 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
 
         remove(device, otaPackageType, attrToRemove);
 
-        telemetryService.saveAndNotify(tenantId, deviceId, AttributeScope.SHARED_SCOPE, attributes, new FutureCallback<>() {
-            @Override
-            public void onSuccess(@Nullable Void tmp) {
-                log.trace("[{}] Success save attributes with target firmware!", deviceId);
-            }
+        telemetryService.save(AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(AttributeScope.SHARED_SCOPE)
+                .entries(attributes)
+                .callback(new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(@Nullable Void tmp) {
+                        log.trace("[{}] Success save attributes with target firmware!", deviceId);
+                    }
 
-            @Override
-            public void onFailure(Throwable t) {
-                log.error("[{}] Failed to save attributes with target firmware!", deviceId, t);
-            }
-        });
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.error("[{}] Failed to save attributes with target firmware!", deviceId, t);
+                    }
+                })
+                .build());
     }
 
     private void remove(Device device, OtaPackageType otaPackageType) {

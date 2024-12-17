@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
@@ -38,12 +39,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
-import org.thingsboard.server.common.data.kv.DoubleDataEntry;
-import org.thingsboard.server.common.data.kv.LongDataEntry;
-import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -57,7 +53,6 @@ import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -159,89 +154,18 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         return saveFuture;
     }
 
-    private void addEntityViewCallback(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
-        if (EntityType.DEVICE.equals(entityId.getEntityType()) || EntityType.ASSET.equals(entityId.getEntityType())) {
-            Futures.addCallback(this.tbEntityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId),
-                    new FutureCallback<>() {
-                        @Override
-                        public void onSuccess(@Nullable List<EntityView> result) {
-                            if (result != null && !result.isEmpty()) {
-                                Map<String, List<TsKvEntry>> tsMap = new HashMap<>();
-                                for (TsKvEntry entry : ts) {
-                                    tsMap.computeIfAbsent(entry.getKey(), s -> new ArrayList<>()).add(entry);
-                                }
-                                for (EntityView entityView : result) {
-                                    List<String> keys = entityView.getKeys() != null && entityView.getKeys().getTimeseries() != null ?
-                                            entityView.getKeys().getTimeseries() : new ArrayList<>(tsMap.keySet());
-                                    List<TsKvEntry> entityViewLatest = new ArrayList<>();
-                                    long startTs = entityView.getStartTimeMs();
-                                    long endTs = entityView.getEndTimeMs() == 0 ? Long.MAX_VALUE : entityView.getEndTimeMs();
-                                    for (String key : keys) {
-                                        List<TsKvEntry> entries = tsMap.get(key);
-                                        if (entries != null) {
-                                            Optional<TsKvEntry> tsKvEntry = entries.stream()
-                                                    .filter(entry -> entry.getTs() > startTs && entry.getTs() <= endTs)
-                                                    .max(Comparator.comparingLong(TsKvEntry::getTs));
-                                            tsKvEntry.ifPresent(entityViewLatest::add);
-                                        }
-                                    }
-                                    if (!entityViewLatest.isEmpty()) {
-                                        saveLatestAndNotify(tenantId, entityView.getId(), entityViewLatest, new FutureCallback<>() {
-                                            @Override
-                                            public void onSuccess(@Nullable Void tmp) {
-                                            }
-
-                                            @Override
-                                            public void onFailure(Throwable t) {
-                                            }
-                                        });
-                                    }
-                                }
-                            }
-                        }
-
-                        @Override
-                        public void onFailure(Throwable t) {
-                            log.error("Error while finding entity views by tenantId and entityId", t);
-                        }
-                    }, MoreExecutors.directExecutor());
-        }
+    @Override
+    public void save(AttributesSaveRequest request) {
+        checkInternalEntity(request.getEntityId());
+        saveInternal(request);
     }
 
     @Override
-    public void saveAndNotify(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, FutureCallback<Void> callback) {
-        saveAndNotify(tenantId, entityId, scope, attributes, true, callback);
-    }
-
-    @Override
-    public void saveAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, List<AttributeKvEntry> attributes, FutureCallback<Void> callback) {
-        saveAndNotify(tenantId, entityId, scope, attributes, true, callback);
-    }
-
-    @Override
-    public void saveAndNotify(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice, FutureCallback<Void> callback) {
-        checkInternalEntity(entityId);
-        saveAndNotifyInternal(tenantId, entityId, scope, attributes, notifyDevice, callback);
-    }
-
-    @Override
-    public void saveAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, List<AttributeKvEntry> attributes, boolean notifyDevice, FutureCallback<Void> callback) {
-        checkInternalEntity(entityId);
-        saveAndNotifyInternal(tenantId, entityId, scope, attributes, notifyDevice, callback);
-    }
-
-    @Override
-    public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice, FutureCallback<Void> callback) {
-        ListenableFuture<List<Long>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
-        addVoidCallback(saveFuture, callback);
-        addWsCallback(saveFuture, success -> onAttributesUpdate(tenantId, entityId, scope, attributes, notifyDevice));
-    }
-
-    @Override
-    public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, AttributeScope scope, List<AttributeKvEntry> attributes, boolean notifyDevice, FutureCallback<Void> callback) {
-        ListenableFuture<List<Long>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
-        addVoidCallback(saveFuture, callback);
-        addWsCallback(saveFuture, success -> onAttributesUpdate(tenantId, entityId, scope.name(), attributes, notifyDevice));
+    public void saveInternal(AttributesSaveRequest request) {
+        log.trace("Executing saveInternal [{}]", request);
+        ListenableFuture<List<Long>> saveFuture = attrService.save(request.getTenantId(), request.getEntityId(), request.getScope(), request.getEntries());
+        addVoidCallback(saveFuture, request.getCallback());
+        addWsCallback(saveFuture, success -> onAttributesUpdate(request.getTenantId(), request.getEntityId(), request.getScope().name(), request.getEntries(), request.isNotifyDevice()));
     }
 
     @Override
@@ -318,57 +242,61 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         addWsCallback(deleteFuture, list -> onTimeSeriesDelete(tenantId, entityId, keys, list));
     }
 
-
     @Override
-    public void saveAttrAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, String key, long value, FutureCallback<Void> callback) {
-        saveAndNotify(tenantId, entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new LongDataEntry(key, value)
-                , System.currentTimeMillis())), callback);
-    }
-
-    @Override
-    public void saveAttrAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, String key, String value, FutureCallback<Void> callback) {
-        saveAndNotify(tenantId, entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry(key, value)
-                , System.currentTimeMillis())), callback);
-    }
-
-    @Override
-    public void saveAttrAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, String key, double value, FutureCallback<Void> callback) {
-        saveAndNotify(tenantId, entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new DoubleDataEntry(key, value)
-                , System.currentTimeMillis())), callback);
-    }
-
-    @Override
-    public void saveAttrAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, String key, boolean value, FutureCallback<Void> callback) {
-        saveAndNotify(tenantId, entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new BooleanDataEntry(key, value)
-                , System.currentTimeMillis())), callback);
-    }
-
-    @Override
-    public ListenableFuture<Void> saveAttrAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, String key, long value) {
+    public ListenableFuture<Void> saveAttrAndNotify(AttributesSaveRequest request) {
         SettableFuture<Void> future = SettableFuture.create();
-        saveAttrAndNotify(tenantId, entityId, scope, key, value, new VoidFutureCallback(future));
+        request.setCallback(new VoidFutureCallback(future));
+        save(request);
         return future;
     }
 
-    @Override
-    public ListenableFuture<Void> saveAttrAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, String key, String value) {
-        SettableFuture<Void> future = SettableFuture.create();
-        saveAttrAndNotify(tenantId, entityId, scope, key, value, new VoidFutureCallback(future));
-        return future;
-    }
+    private void addEntityViewCallback(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
+        if (EntityType.DEVICE.equals(entityId.getEntityType()) || EntityType.ASSET.equals(entityId.getEntityType())) {
+            Futures.addCallback(this.tbEntityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId),
+                    new FutureCallback<>() {
+                        @Override
+                        public void onSuccess(@Nullable List<EntityView> result) {
+                            if (result != null && !result.isEmpty()) {
+                                Map<String, List<TsKvEntry>> tsMap = new HashMap<>();
+                                for (TsKvEntry entry : ts) {
+                                    tsMap.computeIfAbsent(entry.getKey(), s -> new ArrayList<>()).add(entry);
+                                }
+                                for (EntityView entityView : result) {
+                                    List<String> keys = entityView.getKeys() != null && entityView.getKeys().getTimeseries() != null ?
+                                            entityView.getKeys().getTimeseries() : new ArrayList<>(tsMap.keySet());
+                                    List<TsKvEntry> entityViewLatest = new ArrayList<>();
+                                    long startTs = entityView.getStartTimeMs();
+                                    long endTs = entityView.getEndTimeMs() == 0 ? Long.MAX_VALUE : entityView.getEndTimeMs();
+                                    for (String key : keys) {
+                                        List<TsKvEntry> entries = tsMap.get(key);
+                                        if (entries != null) {
+                                            Optional<TsKvEntry> tsKvEntry = entries.stream()
+                                                    .filter(entry -> entry.getTs() > startTs && entry.getTs() <= endTs)
+                                                    .max(Comparator.comparingLong(TsKvEntry::getTs));
+                                            tsKvEntry.ifPresent(entityViewLatest::add);
+                                        }
+                                    }
+                                    if (!entityViewLatest.isEmpty()) {
+                                        saveLatestAndNotify(tenantId, entityView.getId(), entityViewLatest, new FutureCallback<>() {
+                                            @Override
+                                            public void onSuccess(@Nullable Void tmp) {
+                                            }
 
-    @Override
-    public ListenableFuture<Void> saveAttrAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, String key, double value) {
-        SettableFuture<Void> future = SettableFuture.create();
-        saveAttrAndNotify(tenantId, entityId, scope, key, value, new VoidFutureCallback(future));
-        return future;
-    }
+                                            @Override
+                                            public void onFailure(Throwable t) {
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        }
 
-    @Override
-    public ListenableFuture<Void> saveAttrAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, String key, boolean value) {
-        SettableFuture<Void> future = SettableFuture.create();
-        saveAttrAndNotify(tenantId, entityId, scope, key, value, new VoidFutureCallback(future));
-        return future;
+                        @Override
+                        public void onFailure(Throwable t) {
+                            log.error("Error while finding entity views by tenantId and entityId", t);
+                        }
+                    }, MoreExecutors.directExecutor());
+        }
     }
 
     private void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice) {

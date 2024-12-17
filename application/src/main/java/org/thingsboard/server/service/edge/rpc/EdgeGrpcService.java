@@ -32,6 +32,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -42,7 +43,6 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -506,11 +506,17 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             tsSubService.save(TimeseriesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(edgeId)
-                    .entry(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry(key, value)))
+                    .entry(new LongDataEntry(key, value))
                     .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
                     .build());
         } else {
-            tsSubService.saveAttrAndNotify(tenantId, edgeId, AttributeScope.SERVER_SCOPE, key, value, new AttributeSaveCallback(tenantId, edgeId, key, value));
+            tsSubService.save(AttributesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .entityId(edgeId)
+                    .scope(AttributeScope.SERVER_SCOPE)
+                    .entry(new LongDataEntry(key, value))
+                    .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
+                    .build());
         }
     }
 
@@ -520,11 +526,17 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             tsSubService.save(TimeseriesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(edgeId)
-                    .entry(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry(key, value)))
+                    .entry(new BooleanDataEntry(key, value))
                     .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
                     .build());
         } else {
-            tsSubService.saveAttrAndNotify(tenantId, edgeId, AttributeScope.SERVER_SCOPE, key, value, new AttributeSaveCallback(tenantId, edgeId, key, value));
+            tsSubService.save(AttributesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .entityId(edgeId)
+                    .scope(AttributeScope.SERVER_SCOPE)
+                    .entry(new BooleanDataEntry(key, value))
+                    .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
+                    .build());
         }
     }
 
