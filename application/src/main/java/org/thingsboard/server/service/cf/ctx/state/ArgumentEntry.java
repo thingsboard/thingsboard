@@ -52,4 +52,7 @@ public interface ArgumentEntry {
                 collect(Collectors.toMap(TsKvEntry::getTs, TsKvEntry::getValue, (oldValue, newValue) -> newValue, TreeMap::new)));
     }
 
+    @JsonIgnore
+    ArgumentEntry copy();
+
 }

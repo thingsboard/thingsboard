@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -23,6 +24,7 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class SingleValueArgumentEntry implements ArgumentEntry {
 
     private long ts;
@@ -51,4 +53,10 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     public boolean hasUpdatedValue(ArgumentEntry entry) {
         return this.ts != ((SingleValueArgumentEntry) entry).getTs();
     }
+
+    @Override
+    public ArgumentEntry copy() {
+        return new SingleValueArgumentEntry(this.ts, this.value);
+    }
+
 }

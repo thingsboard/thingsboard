@@ -42,25 +42,24 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
             if (existingArgumentEntry != null) {
                 if (existingArgumentEntry instanceof SingleValueArgumentEntry) {
                     if (existingArgumentEntry.hasUpdatedValue(argumentEntry)) {
-                        arguments.put(key, argumentEntry);
+                        arguments.put(key, argumentEntry.copy());
                         stateUpdated.set(true);
                     }
                 } else if (existingArgumentEntry instanceof TsRollingArgumentEntry existingTsRollingArgumentEntry) {
                     if (argumentEntry instanceof TsRollingArgumentEntry tsRollingArgumentEntry) {
                         if (existingArgumentEntry.hasUpdatedValue(argumentEntry)) {
-                            existingTsRollingArgumentEntry.getTsRecords().putAll(tsRollingArgumentEntry.getTsRecords());
+                            existingTsRollingArgumentEntry.addAllTsRecords(tsRollingArgumentEntry.getTsRecords());
                             stateUpdated.set(true);
                         }
                     } else if (argumentEntry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
                         if (existingArgumentEntry.hasUpdatedValue(argumentEntry)) {
-                            existingTsRollingArgumentEntry.getTsRecords().put(singleValueArgumentEntry.getTs(), singleValueArgumentEntry.getValue());
+                            existingTsRollingArgumentEntry.addTsRecord(singleValueArgumentEntry.getTs(), singleValueArgumentEntry.getValue());
                             stateUpdated.set(true);
                         }
-
                     }
                 }
             } else {
-                arguments.put(key, argumentEntry);
+                arguments.put(key, argumentEntry.copy());
                 stateUpdated.set(true);
             }
         });
