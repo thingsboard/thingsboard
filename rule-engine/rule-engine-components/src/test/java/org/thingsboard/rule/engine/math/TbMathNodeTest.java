@@ -30,14 +30,17 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.ThrowingConsumer;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.verification.Timeout;
 import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -76,6 +79,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -433,15 +437,17 @@ public class TbMathNodeTest {
         );
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, TbMsgMetaData.EMPTY, JacksonUtil.newObjectNode().put("a", 5).toString());
-
-        when(telemetryService.saveAttrAndNotify(any()))
-                .thenReturn(Futures.immediateFuture(null));
+        doAnswer(invocation -> {
+            AttributesSaveRequest request = invocation.getArgument(0);
+            request.getCallback().onSuccess(null);
+            return null;
+        }).when(telemetryService).save(any(AttributesSaveRequest.class));
 
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
-        verify(telemetryService, times(1)).saveAttrAndNotify(assertArg(request -> {
+        verify(telemetryService, times(1)).save(assertArg((ThrowingConsumer<AttributesSaveRequest>) request -> {
             assertThat(request.getEntries()).singleElement().extracting(KvEntry::getValue).isInstanceOf(Double.class);
         }));
 
@@ -461,13 +467,17 @@ public class TbMathNodeTest {
         );
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, TbMsgMetaData.EMPTY, JacksonUtil.newObjectNode().put("a", 5).toString());
-        when(telemetryService.saveAndNotify(any())).thenReturn(Futures.immediateFuture(null));
+        doAnswer(invocation -> {
+            TimeseriesSaveRequest request = invocation.getArgument(0);
+            request.getCallback().onSuccess(null);
+            return null;
+        }).when(telemetryService).save(any(TimeseriesSaveRequest.class));
 
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
-        verify(telemetryService, times(1)).saveAndNotify(assertArg(request -> {
+        verify(telemetryService, times(1)).save(assertArg((ThrowingConsumer<TimeseriesSaveRequest>) request -> {
             assertThat(request.getEntries()).size().isOne();
             assertThat(request.isSaveLatest()).isTrue();
         }));
@@ -488,13 +498,17 @@ public class TbMathNodeTest {
         );
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, TbMsgMetaData.EMPTY, JacksonUtil.newObjectNode().put("a", 5).toString());
-        when(telemetryService.saveAndNotify(any())).thenReturn(Futures.immediateFuture(null));
+        doAnswer(invocation -> {
+            TimeseriesSaveRequest request = invocation.getArgument(0);
+            request.getCallback().onSuccess(null);
+            return null;
+        }).when(telemetryService).save(any(TimeseriesSaveRequest.class));
 
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
-        verify(telemetryService, times(1)).saveAndNotify(assertArg(request -> {
+        verify(telemetryService, times(1)).save(assertArg((ThrowingConsumer<TimeseriesSaveRequest>) request -> {
             assertThat(request.getEntries()).size().isOne();
             assertThat(request.isSaveLatest()).isTrue();
         }));

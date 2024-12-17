@@ -16,10 +16,10 @@
 package org.thingsboard.rule.engine.api;
 
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.SettableFuture;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -38,10 +38,9 @@ public class AttributesSaveRequest {
     private final TenantId tenantId;
     private final EntityId entityId;
     private final AttributeScope scope;
-    private final List<AttributeKvEntry> entries; // todo: rename to attributes? same with timeseries
+    private final List<AttributeKvEntry> entries;
     private final boolean notifyDevice;
-    @Setter
-    private FutureCallback<Void> callback;
+    private final FutureCallback<Void> callback;
 
     public static Builder builder() {
         return new Builder();
@@ -104,6 +103,20 @@ public class AttributesSaveRequest {
         public Builder callback(FutureCallback<Void> callback) {
             this.callback = callback;
             return this;
+        }
+
+        public Builder future(SettableFuture<Void> future) {
+            return callback(new FutureCallback<>() {
+                @Override
+                public void onSuccess(Void result) {
+                    future.set(result);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    future.setException(t);
+                }
+            });
         }
 
         public AttributesSaveRequest build() {

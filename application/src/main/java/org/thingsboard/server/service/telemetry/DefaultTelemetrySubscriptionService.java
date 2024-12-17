@@ -19,7 +19,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -128,14 +127,6 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     @Override
-    public ListenableFuture<Void> saveAndNotify(TimeseriesSaveRequest request) {
-        SettableFuture<Void> future = SettableFuture.create();
-        request.setCallback(new VoidFutureCallback(future));
-        save(request);
-        return future;
-    }
-
-    @Override
     public ListenableFuture<Integer> saveInternal(TimeseriesSaveRequest request) {
         TenantId tenantId = request.getTenantId();
         EntityId entityId = request.getEntityId();
@@ -240,14 +231,6 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         ListenableFuture<List<TsKvLatestRemovingResult>> deleteFuture = tsService.remove(tenantId, entityId, deleteTsKvQueries);
         addVoidCallback(deleteFuture, callback);
         addWsCallback(deleteFuture, list -> onTimeSeriesDelete(tenantId, entityId, keys, list));
-    }
-
-    @Override
-    public ListenableFuture<Void> saveAttrAndNotify(AttributesSaveRequest request) {
-        SettableFuture<Void> future = SettableFuture.create();
-        request.setCallback(new VoidFutureCallback(future));
-        save(request);
-        return future;
     }
 
     private void addEntityViewCallback(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
@@ -395,25 +378,6 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                 callback.onFailure(t);
             }
         };
-    }
-
-    private static class VoidFutureCallback implements FutureCallback<Void> {
-        private final SettableFuture<Void> future;
-
-        public VoidFutureCallback(SettableFuture<Void> future) {
-            this.future = future;
-        }
-
-        @Override
-        public void onSuccess(Void result) {
-            future.set(null);
-        }
-
-        @Override
-        public void onFailure(Throwable t) {
-            future.setException(t);
-        }
-
     }
 
 }

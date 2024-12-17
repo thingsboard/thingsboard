@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.api;
 
 import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -33,13 +32,9 @@ public interface RuleEngineTelemetryService {
 
     void save(TimeseriesSaveRequest request);
 
-    ListenableFuture<Void> saveAndNotify(TimeseriesSaveRequest request);
-
     void save(AttributesSaveRequest request);
 
     void saveLatestAndNotify(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, FutureCallback<Void> callback);
-
-    ListenableFuture<Void> saveAttrAndNotify(AttributesSaveRequest request);
 
     void deleteAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, List<String> keys, FutureCallback<Void> callback);
 

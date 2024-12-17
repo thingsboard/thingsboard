@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
@@ -143,11 +144,14 @@ public class TbMathNode implements TbNode {
 
     private ListenableFuture<Void> saveTimeSeries(TbContext ctx, TbMsg msg, double result, TbMathResult mathResultDef) {
         final BasicTsKvEntry basicTsKvEntry = new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry(mathResultDef.getKey(), result));
-        return ctx.getTelemetryService().saveAndNotify(TimeseriesSaveRequest.builder()
+        SettableFuture<Void> future = SettableFuture.create();
+        ctx.getTelemetryService().save(TimeseriesSaveRequest.builder()
                 .tenantId(ctx.getTenantId())
                 .entityId(msg.getOriginator())
                 .entry(basicTsKvEntry)
+                .future(future)
                 .build());
+        return future;
     }
 
     private ListenableFuture<Void> saveAttribute(TbContext ctx, TbMsg msg, double result, TbMathResult mathResultDef) {
@@ -160,12 +164,15 @@ public class TbMathNode implements TbNode {
             var value = toDoubleValue(mathResultDef, result);
             kvEntry = new DoubleDataEntry(mathResultDef.getKey(), value);
         }
-        return ctx.getTelemetryService().saveAttrAndNotify(AttributesSaveRequest.builder()
+        SettableFuture<Void> future = SettableFuture.create();
+        ctx.getTelemetryService().save(AttributesSaveRequest.builder()
                 .tenantId(ctx.getTenantId())
                 .entityId(msg.getOriginator())
                 .scope(attributeScope)
                 .entry(kvEntry)
+                .future(future)
                 .build());
+        return future;
     }
 
     private boolean isIntegerResult(TbMathResult mathResultDef, TbRuleNodeMathFunctionType function) {

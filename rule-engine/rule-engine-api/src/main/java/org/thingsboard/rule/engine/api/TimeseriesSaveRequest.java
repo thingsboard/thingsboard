@@ -16,10 +16,10 @@
 package org.thingsboard.rule.engine.api;
 
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.SettableFuture;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -39,8 +39,7 @@ public class TimeseriesSaveRequest {
     private final List<TsKvEntry> entries;
     private final long ttl;
     private final boolean saveLatest;
-    @Setter
-    private FutureCallback<Void> callback;
+    private final FutureCallback<Void> callback;
 
     public static Builder builder() {
         return new Builder();
@@ -99,6 +98,20 @@ public class TimeseriesSaveRequest {
         public Builder callback(FutureCallback<Void> callback) {
             this.callback = callback;
             return this;
+        }
+
+        public Builder future(SettableFuture<Void> future) {
+            return callback(new FutureCallback<>() {
+                @Override
+                public void onSuccess(Void result) {
+                    future.set(result);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    future.setException(t);
+                }
+            });
         }
 
         public TimeseriesSaveRequest build() {
