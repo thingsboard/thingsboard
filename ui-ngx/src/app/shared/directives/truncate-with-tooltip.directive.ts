@@ -14,9 +14,11 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Directive, ElementRef, Input, OnInit, Renderer2 } from '@angular/core';
+import { booleanAttribute, Directive, ElementRef, input, OnInit, Renderer2 } from '@angular/core';
 import { MatTooltip, TooltipPosition } from '@angular/material/tooltip';
-import { coerceBoolean } from '@shared/decorators/coercion';
+import { ContentObserver } from '@angular/cdk/observers';
+import { merge } from 'rxjs';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 
 @Directive({
   selector: '[tbTruncateWithTooltip]',
@@ -25,38 +27,37 @@ import { coerceBoolean } from '@shared/decorators/coercion';
     inputs: ['matTooltipClass', 'matTooltipTouchGestures'],
   }]
 })
-export class TruncateWithTooltipDirective implements OnInit, AfterViewInit {
+export class TruncateWithTooltipDirective implements OnInit {
 
-  @Input('tbTruncateWithTooltip')
-  text: string;
+  text = input<string>(undefined, {alias: 'tbTruncateWithTooltip'});
 
-  @Input()
-  @coerceBoolean()
-  tooltipEnabled = true;
+  tooltipEnabled = input(true, {transform: booleanAttribute});
 
-  @Input()
-  position: TooltipPosition = 'above';
+  position = input<TooltipPosition>('above');
 
   constructor(
     private elementRef: ElementRef<HTMLElement>,
     private renderer: Renderer2,
-    private tooltip: MatTooltip
-  ) {}
+    private tooltip: MatTooltip,
+    private contentObserver: ContentObserver
+  ) {
+    merge(toObservable(this.text), this.contentObserver.observe(this.elementRef)).pipe(
+      takeUntilDestroyed()
+    ).subscribe(() => {
+      this.tooltip.message = this.text() || this.elementRef.nativeElement.innerText
+    })
+  }
 
   ngOnInit(): void {
     this.applyTruncationStyles();
-    this.tooltip.position = this.position;
+    this.tooltip.position = this.position();
     this.showTooltipOnOverflow(this);
-  }
-
-  ngAfterViewInit(): void {
-    this.tooltip.message = this.text || this.elementRef.nativeElement.innerText;
   }
 
   private showTooltipOnOverflow(ctx: TruncateWithTooltipDirective) {
     ctx.tooltip.show = (function(old) {
       function extendsFunction() {
-        if (ctx.tooltipEnabled && ctx.isOverflown()) {
+        if (ctx.tooltipEnabled() && ctx.isOverflown()) {
           old.apply(ctx.tooltip, arguments);
         }
       }
