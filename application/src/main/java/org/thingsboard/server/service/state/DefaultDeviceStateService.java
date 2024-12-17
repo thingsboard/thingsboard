@@ -877,7 +877,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
 
     private void save(DeviceId deviceId, KvEntry kvEntry, long ts) {
         if (persistToTelemetry) {
-            tsSubService.saveInternal(TimeseriesSaveRequest.builder()
+            tsSubService.saveTimeseriesInternal(TimeseriesSaveRequest.builder()
                     .tenantId(TenantId.SYS_TENANT_ID)
                     .entityId(deviceId)
                     .entry(new BasicTsKvEntry(ts, kvEntry))
@@ -885,7 +885,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     .callback(new TelemetrySaveCallback<>(deviceId, kvEntry))
                     .build());
         } else {
-            tsSubService.save(AttributesSaveRequest.builder()
+            tsSubService.saveAttributes(AttributesSaveRequest.builder()
                     .tenantId(TenantId.SYS_TENANT_ID)
                     .entityId(deviceId)
                     .scope(AttributeScope.SERVER_SCOPE)

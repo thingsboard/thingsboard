@@ -145,7 +145,7 @@ public class TbMathNode implements TbNode {
     private ListenableFuture<Void> saveTimeSeries(TbContext ctx, TbMsg msg, double result, TbMathResult mathResultDef) {
         final BasicTsKvEntry basicTsKvEntry = new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry(mathResultDef.getKey(), result));
         SettableFuture<Void> future = SettableFuture.create();
-        ctx.getTelemetryService().save(TimeseriesSaveRequest.builder()
+        ctx.getTelemetryService().saveTimeseries(TimeseriesSaveRequest.builder()
                 .tenantId(ctx.getTenantId())
                 .entityId(msg.getOriginator())
                 .entry(basicTsKvEntry)
@@ -165,7 +165,7 @@ public class TbMathNode implements TbNode {
             kvEntry = new DoubleDataEntry(mathResultDef.getKey(), value);
         }
         SettableFuture<Void> future = SettableFuture.create();
-        ctx.getTelemetryService().save(AttributesSaveRequest.builder()
+        ctx.getTelemetryService().saveAttributes(AttributesSaveRequest.builder()
                 .tenantId(ctx.getTenantId())
                 .entityId(msg.getOriginator())
                 .scope(attributeScope)

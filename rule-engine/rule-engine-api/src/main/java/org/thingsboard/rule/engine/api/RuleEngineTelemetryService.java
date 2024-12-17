@@ -16,11 +16,9 @@
 package org.thingsboard.rule.engine.api;
 
 import com.google.common.util.concurrent.FutureCallback;
-import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 import java.util.Collection;
 import java.util.List;
@@ -30,15 +28,11 @@ import java.util.List;
  */
 public interface RuleEngineTelemetryService {
 
-    void save(TimeseriesSaveRequest request);
+    void saveTimeseries(TimeseriesSaveRequest request);
 
-    void save(AttributesSaveRequest request);
+    void saveAttributes(AttributesSaveRequest request);
 
-    void saveLatestAndNotify(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, FutureCallback<Void> callback);
-
-    void deleteAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, List<String> keys, FutureCallback<Void> callback);
-
-    void deleteAndNotify(TenantId tenantId, EntityId entityId, AttributeScope scope, List<String> keys, boolean notifyDevice, FutureCallback<Void> callback);
+    void deleteAttributes(AttributesDeleteRequest request);
 
     void deleteLatest(TenantId tenantId, EntityId entityId, List<String> keys, FutureCallback<Void> callback);
 

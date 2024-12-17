@@ -215,7 +215,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
             updateLock.unlock();
         }
         log.trace("[{}][{}] Saving new stats: {}", tenantId, ownerId, updatedEntries);
-        tsWsService.saveInternal(TimeseriesSaveRequest.builder()
+        tsWsService.saveTimeseriesInternal(TimeseriesSaveRequest.builder()
                 .tenantId(tenantId)
                 .entityId(usageState.getApiUsageState().getId())
                 .entries(updatedEntries)
@@ -327,7 +327,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
             }
         }
         if (!profileThresholds.isEmpty()) {
-            tsWsService.saveInternal(TimeseriesSaveRequest.builder()
+            tsWsService.saveTimeseriesInternal(TimeseriesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(id)
                     .entries(profileThresholds)
@@ -359,7 +359,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
         long ts = System.currentTimeMillis();
         List<TsKvEntry> stateTelemetry = new ArrayList<>();
         result.forEach((apiFeature, aState) -> stateTelemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(apiFeature.getApiStateKey(), aState.name()))));
-        tsWsService.saveInternal(TimeseriesSaveRequest.builder()
+        tsWsService.saveTimeseriesInternal(TimeseriesSaveRequest.builder()
                 .tenantId(state.getTenantId())
                 .entityId(state.getApiUsageState().getId())
                 .entries(stateTelemetry)
@@ -452,7 +452,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                 .map(key -> new BasicTsKvEntry(state.getCurrentCycleTs(), new LongDataEntry(key.getApiCountKey(), 0L)))
                 .collect(Collectors.toList());
 
-        tsWsService.saveInternal(TimeseriesSaveRequest.builder()
+        tsWsService.saveTimeseriesInternal(TimeseriesSaveRequest.builder()
                 .tenantId(state.getTenantId())
                 .entityId(state.getApiUsageState().getId())
                 .entries(counts)

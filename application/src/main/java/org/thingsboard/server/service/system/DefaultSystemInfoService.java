@@ -201,7 +201,7 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
 
     private void doSave(List<TsKvEntry> telemetry) {
         ApiUsageState apiUsageState = apiUsageStateClient.getApiUsageState(TenantId.SYS_TENANT_ID);
-        telemetryService.saveInternal(TimeseriesSaveRequest.builder()
+        telemetryService.saveTimeseriesInternal(TimeseriesSaveRequest.builder()
                 .tenantId(TenantId.SYS_TENANT_ID)
                 .entityId(apiUsageState.getId())
                 .entries(telemetry)

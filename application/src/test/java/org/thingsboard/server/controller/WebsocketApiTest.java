@@ -806,7 +806,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
     private void sendTelemetry(Device device, List<TsKvEntry> tsData) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-        tsService.save(TimeseriesSaveRequest.builder()
+        tsService.saveTimeseries(TimeseriesSaveRequest.builder()
                 .tenantId(device.getTenantId())
                 .entityId(device.getId())
                 .entries(tsData)
@@ -833,7 +833,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
     private void sendAttributes(TenantId tenantId, EntityId entityId, TbAttributeSubscriptionScope scope, List<AttributeKvEntry> attrData) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-        tsService.save(AttributesSaveRequest.builder()
+        tsService.saveAttributes(AttributesSaveRequest.builder()
                 .tenantId(tenantId)
                 .entityId(entityId)
                 .scope(scope.getAttributeScope())

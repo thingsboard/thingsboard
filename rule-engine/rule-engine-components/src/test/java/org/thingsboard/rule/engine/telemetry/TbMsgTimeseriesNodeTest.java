@@ -130,12 +130,12 @@ public class TbMsgTimeseriesNodeTest {
             TimeseriesSaveRequest request = invocation.getArgument(0);
             request.getCallback().onSuccess(null);
             return null;
-        }).when(telemetryServiceMock).save(any(TimeseriesSaveRequest.class));
+        }).when(telemetryServiceMock).saveTimeseries(any(TimeseriesSaveRequest.class));
 
         node.onMsg(ctxMock, msg);
 
         List<TsKvEntry> expectedList = getTsKvEntriesListWithTs(data, System.currentTimeMillis());
-        verify(telemetryServiceMock).save(assertArg((ThrowingConsumer<TimeseriesSaveRequest>) request -> {
+        verify(telemetryServiceMock).saveTimeseries(assertArg(request -> {
             assertThat(request.getTenantId()).isEqualTo(TENANT_ID);
             assertThat(request.getCustomerId()).isNull();
             assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);
@@ -171,12 +171,12 @@ public class TbMsgTimeseriesNodeTest {
             TimeseriesSaveRequest request = invocation.getArgument(0);
             request.getCallback().onSuccess(null);
             return null;
-        }).when(telemetryServiceMock).save(any(TimeseriesSaveRequest.class));
+        }).when(telemetryServiceMock).saveTimeseries(any(TimeseriesSaveRequest.class));
 
         node.onMsg(ctxMock, msg);
 
         List<TsKvEntry> expectedList = getTsKvEntriesListWithTs(data, ts);
-        verify(telemetryServiceMock).save(assertArg((ThrowingConsumer<TimeseriesSaveRequest>) request -> {
+        verify(telemetryServiceMock).saveTimeseries(assertArg(request -> {
             assertThat(request.getTenantId()).isEqualTo(TENANT_ID);
             assertThat(request.getCustomerId()).isNull();
             assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);
@@ -209,7 +209,7 @@ public class TbMsgTimeseriesNodeTest {
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metadata, data);
         node.onMsg(ctxMock, msg);
 
-        verify(telemetryServiceMock).save(assertArg((ThrowingConsumer<TimeseriesSaveRequest>) request -> {
+        verify(telemetryServiceMock).saveTimeseries(assertArg(request -> {
             assertThat(request.getTenantId()).isEqualTo(TENANT_ID);
             assertThat(request.getCustomerId()).isNull();
             assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);

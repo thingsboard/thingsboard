@@ -89,7 +89,7 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
                     if (!tsList.isEmpty()) {
                         long ttl = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getQueueStatsTtlDays);
                         ttl = TimeUnit.DAYS.toSeconds(ttl);
-                        tsService.saveInternal(TimeseriesSaveRequest.builder()
+                        tsService.saveTimeseriesInternal(TimeseriesSaveRequest.builder()
                                 .tenantId(tenantId)
                                 .entityId(queueStatsId)
                                 .entries(tsList)
@@ -109,7 +109,7 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
                 TsKvEntry tsKv = new BasicTsKvEntry(e.getTs(), new JsonDataEntry(RULE_ENGINE_EXCEPTION, e.toJsonString(maxErrorMessageLength)));
                 long ttl = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getRuleEngineExceptionsTtlDays);
                 ttl = TimeUnit.DAYS.toSeconds(ttl);
-                tsService.saveInternal(TimeseriesSaveRequest.builder()
+                tsService.saveTimeseriesInternal(TimeseriesSaveRequest.builder()
                         .tenantId(tenantId)
                         .entityId(getQueueStatsId(tenantId, queueName))
                         .entry(tsKv)

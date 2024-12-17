@@ -24,7 +24,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -211,7 +210,7 @@ public class DefaultDeviceStateServiceTest {
         service.onDeviceConnect(tenantId, deviceId, lastConnectTime);
 
         // THEN
-        then(telemetrySubscriptionService).should().save(argThat((ArgumentMatcher<AttributesSaveRequest>) request ->
+        then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
                 request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
                         request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
                         request.getEntries().get(0).getKey().equals(LAST_CONNECT_TIME) &&
@@ -298,7 +297,7 @@ public class DefaultDeviceStateServiceTest {
         service.onDeviceDisconnect(tenantId, deviceId, lastDisconnectTime);
 
         // THEN
-        then(telemetrySubscriptionService).should().save(argThat((ArgumentMatcher<AttributesSaveRequest>) request ->
+        then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
                 request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
                         request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
                         request.getEntries().get(0).getKey().equals(LAST_DISCONNECT_TIME) &&
@@ -421,13 +420,13 @@ public class DefaultDeviceStateServiceTest {
         service.onDeviceInactivity(tenantId, deviceId, lastInactivityTime);
 
         // THEN
-        then(telemetrySubscriptionService).should().save(argThat((ArgumentMatcher<AttributesSaveRequest>) request ->
+        then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
                 request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
                         request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
                         request.getEntries().get(0).getKey().equals(INACTIVITY_ALARM_TIME) &&
                         request.getEntries().get(0).getValue().equals(lastInactivityTime)
         ));
-        then(telemetrySubscriptionService).should().save(argThat((ArgumentMatcher<AttributesSaveRequest>) request ->
+        then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
                 request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
                         request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
                         request.getEntries().get(0).getKey().equals(ACTIVITY_STATE) &&
@@ -465,12 +464,12 @@ public class DefaultDeviceStateServiceTest {
         service.updateInactivityStateIfExpired(System.currentTimeMillis(), deviceId, deviceStateData);
 
         // THEN
-        then(telemetrySubscriptionService).should().save(argThat((ArgumentMatcher<AttributesSaveRequest>) request ->
+        then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
                 request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
                         request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
                         request.getEntries().get(0).getKey().equals(INACTIVITY_ALARM_TIME)
         ));
-        then(telemetrySubscriptionService).should().save(argThat((ArgumentMatcher<AttributesSaveRequest>) request ->
+        then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
                 request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
                         request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
                         request.getEntries().get(0).getKey().equals(ACTIVITY_STATE) &&
@@ -627,7 +626,7 @@ public class DefaultDeviceStateServiceTest {
         long newTimeout = System.currentTimeMillis() - deviceState.getLastActivityTime() + increase;
 
         service.onDeviceInactivityTimeoutUpdate(tenantId, deviceId, newTimeout);
-        verify(telemetrySubscriptionService, never()).save(argThat((ArgumentMatcher<AttributesSaveRequest>) request ->
+        verify(telemetrySubscriptionService, never()).saveAttributes(argThat(request ->
                 request.getEntityId().equals(deviceId) && request.getEntries().get(0).getKey().equals(ACTIVITY_STATE)
         ));
         Thread.sleep(defaultTimeout + increase);
@@ -668,7 +667,7 @@ public class DefaultDeviceStateServiceTest {
 
         long newTimeout = 1;
         Thread.sleep(newTimeout);
-        verify(telemetrySubscriptionService, never()).save(argThat((ArgumentMatcher<AttributesSaveRequest>) request ->
+        verify(telemetrySubscriptionService, never()).saveAttributes(argThat(request ->
                 request.getEntityId().equals(deviceId) && request.getEntries().get(0).getKey().equals(ACTIVITY_STATE)
         ));
     }
@@ -730,13 +729,13 @@ public class DefaultDeviceStateServiceTest {
         long newTimeout = 1;
 
         service.onDeviceInactivityTimeoutUpdate(tenantId, deviceId, newTimeout);
-        verify(telemetrySubscriptionService, never()).save(argThat((ArgumentMatcher<AttributesSaveRequest>) request ->
+        verify(telemetrySubscriptionService, never()).saveAttributes(argThat(request ->
                 request.getEntityId().equals(deviceId) && request.getEntries().get(0).getKey().equals(ACTIVITY_STATE)
         ));
     }
 
     private void activityVerify(boolean isActive) {
-        verify(telemetrySubscriptionService).save(argThat((ArgumentMatcher<AttributesSaveRequest>) request ->
+        verify(telemetrySubscriptionService).saveAttributes(argThat(request ->
                 request.getEntityId().equals(deviceId) &&
                         request.getEntries().get(0).getKey().equals(ACTIVITY_STATE) &&
                         request.getEntries().get(0).getValue().equals(isActive)
@@ -786,7 +785,7 @@ public class DefaultDeviceStateServiceTest {
         // THEN
         assertThat(deviceState.isActive()).isEqualTo(true);
         assertThat(deviceState.getLastActivityTime()).isEqualTo(lastReportedActivity);
-        then(telemetrySubscriptionService).should().save(argThat((ArgumentMatcher<AttributesSaveRequest>) request ->
+        then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
                 request.getEntityId().equals(deviceId) &&
                         request.getEntries().get(0).getKey().equals(LAST_ACTIVITY_TIME) &&
                         request.getEntries().get(0).getValue().equals(lastReportedActivity)
@@ -794,7 +793,7 @@ public class DefaultDeviceStateServiceTest {
 
         assertThat(deviceState.getLastInactivityAlarmTime()).isEqualTo(expectedInactivityAlarmTime);
         if (shouldSetInactivityAlarmTimeToZero) {
-            then(telemetrySubscriptionService).should().save(argThat((ArgumentMatcher<AttributesSaveRequest>) request ->
+            then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
                     request.getEntityId().equals(deviceId) &&
                             request.getEntries().get(0).getKey().equals(INACTIVITY_ALARM_TIME) &&
                             request.getEntries().get(0).getValue().equals(0L)
@@ -802,7 +801,7 @@ public class DefaultDeviceStateServiceTest {
         }
 
         if (shouldUpdateActivityStateToActive) {
-            then(telemetrySubscriptionService).should().save(argThat((ArgumentMatcher<AttributesSaveRequest>) request ->
+            then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
                     request.getEntityId().equals(deviceId) &&
                             request.getEntries().get(0).getKey().equals(ACTIVITY_STATE) &&
                             request.getEntries().get(0).getValue().equals(true)
@@ -886,7 +885,7 @@ public class DefaultDeviceStateServiceTest {
         assertThat(deviceState.getInactivityTimeout()).isEqualTo(newInactivityTimeout);
         assertThat(deviceState.isActive()).isEqualTo(expectedActivityState);
         if (activityState && !expectedActivityState) {
-            then(telemetrySubscriptionService).should().save(argThat((ArgumentMatcher<AttributesSaveRequest>) request ->
+            then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
                     request.getEntityId().equals(deviceId) && request.getEntries().get(0).getKey().equals(ACTIVITY_STATE) &&
                             request.getEntries().get(0).getValue().equals(false)
             ));
@@ -984,7 +983,7 @@ public class DefaultDeviceStateServiceTest {
         assertThat(state.getLastInactivityAlarmTime()).isEqualTo(expectedLastInactivityAlarmTime);
 
         if (shouldUpdateActivityStateToInactive) {
-            then(telemetrySubscriptionService).should().save(argThat((ArgumentMatcher<AttributesSaveRequest>) request ->
+            then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
                     request.getEntityId().equals(deviceId) && request.getEntries().get(0).getKey().equals(ACTIVITY_STATE) &&
                             request.getEntries().get(0).getValue().equals(false)
             ));
@@ -1002,7 +1001,7 @@ public class DefaultDeviceStateServiceTest {
             assertThat(actualNotification.getDeviceId()).isEqualTo(deviceId);
             assertThat(actualNotification.isActive()).isFalse();
 
-            then(telemetrySubscriptionService).should().save(argThat((ArgumentMatcher<AttributesSaveRequest>) request ->
+            then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
                     request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
                             request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
                             request.getEntries().get(0).getKey().equals(INACTIVITY_ALARM_TIME) &&
@@ -1133,7 +1132,7 @@ public class DefaultDeviceStateServiceTest {
         // THEN
         await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(service.deviceStates.get(deviceId).getState().isActive()).isEqualTo(false);
-            then(telemetrySubscriptionService).should().save(argThat((ArgumentMatcher<AttributesSaveRequest>) request ->
+            then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
                     request.getEntityId().equals(deviceId) && request.getEntries().get(0).getKey().equals(ACTIVITY_STATE) &&
                             request.getEntries().get(0).getValue().equals(false)
             ));
@@ -1164,7 +1163,7 @@ public class DefaultDeviceStateServiceTest {
 
         // THEN
         ArgumentCaptor<AttributesSaveRequest> attributeRequestCaptor = ArgumentCaptor.forClass(AttributesSaveRequest.class);
-        then(telemetrySubscriptionService).should(times(2)).save(attributeRequestCaptor.capture());
+        then(telemetrySubscriptionService).should(times(2)).saveAttributes(attributeRequestCaptor.capture());
 
         await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(service.deviceStates.get(deviceId).getState().isActive()).isEqualTo(true);
@@ -1231,7 +1230,7 @@ public class DefaultDeviceStateServiceTest {
         // THEN
         await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(service.deviceStates.get(deviceId).getState().isActive()).isEqualTo(true);
-            then(telemetrySubscriptionService).should().save(argThat((ArgumentMatcher<AttributesSaveRequest>) request ->
+            then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
                     request.getEntityId().equals(deviceId) && request.getEntries().get(0).getKey().equals(ACTIVITY_STATE) &&
                             request.getEntries().get(0).getValue().equals(true)
             ));

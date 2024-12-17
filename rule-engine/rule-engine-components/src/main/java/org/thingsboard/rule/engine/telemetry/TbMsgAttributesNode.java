@@ -119,7 +119,7 @@ public class TbMsgAttributesNode implements TbNode {
         FutureCallback<Void> callback = sendAttributesUpdateNotification ?
                 new AttributesUpdateNodeCallback(ctx, msg, scope.name(), attributes) :
                 new TelemetryNodeCallback(ctx, msg);
-        ctx.getTelemetryService().save(AttributesSaveRequest.builder()
+        ctx.getTelemetryService().saveAttributes(AttributesSaveRequest.builder()
                 .tenantId(ctx.getTenantId())
                 .entityId(msg.getOriginator())
                 .scope(scope)

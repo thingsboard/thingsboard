@@ -20,26 +20,23 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.thingsboard.server.common.data.id.CustomerId;
+import lombok.ToString;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 import java.util.List;
 
 @Getter
+@ToString
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class TimeseriesSaveRequest {
+public class AttributesDeleteRequest {
 
     private final TenantId tenantId;
-    private final CustomerId customerId;
     private final EntityId entityId;
-    private final List<TsKvEntry> entries;
-    private final long ttl;
-    private final boolean saveLatest;
-    private final boolean onlyLatest;
+    private final AttributeScope scope;
+    private final List<String> keys;
+    private final boolean notifyDevice;
     private final FutureCallback<Void> callback;
 
     public static Builder builder() {
@@ -49,13 +46,11 @@ public class TimeseriesSaveRequest {
     public static class Builder {
 
         private TenantId tenantId;
-        private CustomerId customerId;
         private EntityId entityId;
-        private List<TsKvEntry> entries;
-        private long ttl;
+        private AttributeScope scope;
+        private List<String> keys;
+        private boolean notifyDevice;
         private FutureCallback<Void> callback;
-        private boolean saveLatest = true;
-        private boolean onlyLatest;
 
         Builder() {}
 
@@ -64,42 +59,33 @@ public class TimeseriesSaveRequest {
             return this;
         }
 
-        public Builder customerId(CustomerId customerId) {
-            this.customerId = customerId;
-            return this;
-        }
-
         public Builder entityId(EntityId entityId) {
             this.entityId = entityId;
             return this;
         }
 
-        public Builder entries(List<TsKvEntry> entries) {
-            this.entries = entries;
+        public Builder scope(AttributeScope scope) {
+            this.scope = scope;
             return this;
         }
 
-        public Builder entry(TsKvEntry entry) {
-            return entries(List.of(entry));
-        }
-
-        public Builder entry(KvEntry kvEntry) {
-            return entry(new BasicTsKvEntry(System.currentTimeMillis(), kvEntry));
-        }
-
-        public Builder ttl(long ttl) {
-            this.ttl = ttl;
+        @Deprecated
+        public Builder scope(String scope) {
+            try {
+                this.scope = AttributeScope.valueOf(scope);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid attribute scope '" + scope + "'");
+            }
             return this;
         }
 
-        public Builder saveLatest(boolean saveLatest) {
-            this.saveLatest = saveLatest;
+        public Builder keys(List<String> keys) {
+            this.keys = keys;
             return this;
         }
 
-        public Builder onlyLatest(boolean onlyLatest) {
-            this.onlyLatest = onlyLatest;
-            this.saveLatest = true;
+        public Builder notifyDevice(boolean notifyDevice) {
+            this.notifyDevice = notifyDevice;
             return this;
         }
 
@@ -122,8 +108,8 @@ public class TimeseriesSaveRequest {
             });
         }
 
-        public TimeseriesSaveRequest build() {
-            return new TimeseriesSaveRequest(tenantId, customerId, entityId, entries, ttl, saveLatest, onlyLatest, callback);
+        public AttributesDeleteRequest build() {
+            return new AttributesDeleteRequest(tenantId, entityId, scope, keys, notifyDevice, callback);
         }
 
     }

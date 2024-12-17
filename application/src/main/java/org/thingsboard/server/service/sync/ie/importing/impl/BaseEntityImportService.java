@@ -258,7 +258,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                         })
                         .collect(Collectors.toList());
                 // fixme: attributes are saved outside the transaction
-                tsSubService.save(AttributesSaveRequest.builder()
+                tsSubService.saveAttributes(AttributesSaveRequest.builder()
                         .tenantId(user.getTenantId())
                         .entityId(entity.getId())
                         .scope(scope)

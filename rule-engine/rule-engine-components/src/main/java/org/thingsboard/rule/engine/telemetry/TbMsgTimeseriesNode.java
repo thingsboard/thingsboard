@@ -105,7 +105,7 @@ public class TbMsgTimeseriesNode implements TbNode {
         if (ttl == 0L) {
             ttl = tenantProfileDefaultStorageTtl;
         }
-        ctx.getTelemetryService().save(TimeseriesSaveRequest.builder()
+        ctx.getTelemetryService().saveTimeseries(TimeseriesSaveRequest.builder()
                 .tenantId(ctx.getTenantId())
                 .customerId(msg.getCustomerId())
                 .entityId(msg.getOriginator())

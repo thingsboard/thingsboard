@@ -441,13 +441,13 @@ public class TbMathNodeTest {
             AttributesSaveRequest request = invocation.getArgument(0);
             request.getCallback().onSuccess(null);
             return null;
-        }).when(telemetryService).save(any(AttributesSaveRequest.class));
+        }).when(telemetryService).saveAttributes(any(AttributesSaveRequest.class));
 
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
-        verify(telemetryService, times(1)).save(assertArg((ThrowingConsumer<AttributesSaveRequest>) request -> {
+        verify(telemetryService, times(1)).saveAttributes(assertArg(request -> {
             assertThat(request.getEntries()).singleElement().extracting(KvEntry::getValue).isInstanceOf(Double.class);
         }));
 
@@ -471,13 +471,13 @@ public class TbMathNodeTest {
             TimeseriesSaveRequest request = invocation.getArgument(0);
             request.getCallback().onSuccess(null);
             return null;
-        }).when(telemetryService).save(any(TimeseriesSaveRequest.class));
+        }).when(telemetryService).saveTimeseries(any(TimeseriesSaveRequest.class));
 
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
-        verify(telemetryService, times(1)).save(assertArg((ThrowingConsumer<TimeseriesSaveRequest>) request -> {
+        verify(telemetryService, times(1)).saveTimeseries(assertArg(request -> {
             assertThat(request.getEntries()).size().isOne();
             assertThat(request.isSaveLatest()).isTrue();
         }));
@@ -502,13 +502,13 @@ public class TbMathNodeTest {
             TimeseriesSaveRequest request = invocation.getArgument(0);
             request.getCallback().onSuccess(null);
             return null;
-        }).when(telemetryService).save(any(TimeseriesSaveRequest.class));
+        }).when(telemetryService).saveTimeseries(any(TimeseriesSaveRequest.class));
 
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
-        verify(telemetryService, times(1)).save(assertArg((ThrowingConsumer<TimeseriesSaveRequest>) request -> {
+        verify(telemetryService, times(1)).saveTimeseries(assertArg(request -> {
             assertThat(request.getEntries()).size().isOne();
             assertThat(request.isSaveLatest()).isTrue();
         }));

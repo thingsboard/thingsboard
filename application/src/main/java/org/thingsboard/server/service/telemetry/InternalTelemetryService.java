@@ -17,13 +17,12 @@ package org.thingsboard.server.service.telemetry;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
-import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 import java.util.List;
 
@@ -32,16 +31,11 @@ import java.util.List;
  */
 public interface InternalTelemetryService extends RuleEngineTelemetryService {
 
-    ListenableFuture<Integer> saveInternal(TimeseriesSaveRequest request);
+    ListenableFuture<Integer> saveTimeseriesInternal(TimeseriesSaveRequest request);
 
-    void saveInternal(AttributesSaveRequest request);
+    void saveAttributesInternal(AttributesSaveRequest request);
 
-    void saveLatestAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, FutureCallback<Void> callback);
-
-    @Deprecated(since = "3.7.0")
-    void deleteAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice, FutureCallback<Void> callback);
-
-    void deleteAndNotifyInternal(TenantId tenantId, EntityId entityId, AttributeScope scope, List<String> keys, boolean notifyDevice, FutureCallback<Void> callback);
+    void deleteAttributesInternal(AttributesDeleteRequest request);
 
     void deleteLatestInternal(TenantId tenantId, EntityId entityId, List<String> keys, FutureCallback<Void> callback);
 

@@ -278,7 +278,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
         List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(json));
         String scope = metaData.getValue("scope");
-        tsSubService.save(AttributesSaveRequest.builder()
+        tsSubService.saveAttributes(AttributesSaveRequest.builder()
                 .tenantId(tenantId)
                 .entityId(entityId)
                 .scope(AttributeScope.valueOf(scope))

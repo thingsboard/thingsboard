@@ -503,14 +503,14 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void save(TenantId tenantId, EdgeId edgeId, String key, long value) {
         log.debug("[{}][{}] Updating long edge telemetry [{}] [{}]", tenantId, edgeId, key, value);
         if (persistToTelemetry) {
-            tsSubService.save(TimeseriesSaveRequest.builder()
+            tsSubService.saveTimeseries(TimeseriesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(edgeId)
                     .entry(new LongDataEntry(key, value))
                     .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
                     .build());
         } else {
-            tsSubService.save(AttributesSaveRequest.builder()
+            tsSubService.saveAttributes(AttributesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(edgeId)
                     .scope(AttributeScope.SERVER_SCOPE)
@@ -523,14 +523,14 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void save(TenantId tenantId, EdgeId edgeId, String key, boolean value) {
         log.debug("[{}][{}] Updating boolean edge telemetry [{}] [{}]", tenantId, edgeId, key, value);
         if (persistToTelemetry) {
-            tsSubService.save(TimeseriesSaveRequest.builder()
+            tsSubService.saveTimeseries(TimeseriesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(edgeId)
                     .entry(new BooleanDataEntry(key, value))
                     .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
                     .build());
         } else {
-            tsSubService.save(AttributesSaveRequest.builder()
+            tsSubService.saveAttributes(AttributesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(edgeId)
                     .scope(AttributeScope.SERVER_SCOPE)

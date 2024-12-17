@@ -20,6 +20,7 @@ import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
@@ -262,7 +263,7 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
         telemetry.add(new BasicTsKvEntry(ts, new LongDataEntry(getTargetTelemetryKey(firmware.getType(), TS), ts)));
         telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(getTelemetryKey(firmware.getType(), STATE), OtaPackageUpdateStatus.QUEUED.name())));
 
-        telemetryService.save(TimeseriesSaveRequest.builder()
+        telemetryService.saveTimeseries(TimeseriesSaveRequest.builder()
                 .tenantId(tenantId)
                 .entityId(deviceId)
                 .entries(telemetry)
@@ -288,7 +289,7 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
 
         BasicTsKvEntry status = new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(getTelemetryKey(otaPackageType, STATE), OtaPackageUpdateStatus.INITIATED.name()));
 
-        telemetryService.save(TimeseriesSaveRequest.builder()
+        telemetryService.saveTimeseries(TimeseriesSaveRequest.builder()
                 .tenantId(tenantId)
                 .entityId(deviceId)
                 .entry(status)
@@ -347,7 +348,7 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
 
         remove(device, otaPackageType, attrToRemove);
 
-        telemetryService.save(AttributesSaveRequest.builder()
+        telemetryService.saveAttributes(AttributesSaveRequest.builder()
                 .tenantId(tenantId)
                 .entityId(deviceId)
                 .scope(AttributeScope.SHARED_SCOPE)
@@ -371,8 +372,12 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
     }
 
     private void remove(Device device, OtaPackageType otaPackageType, List<String> attributesKeys) {
-        telemetryService.deleteAndNotify(device.getTenantId(), device.getId(), AttributeScope.SHARED_SCOPE, attributesKeys,
-                new FutureCallback<>() {
+        telemetryService.deleteAttributes(AttributesDeleteRequest.builder()
+                .tenantId(device.getTenantId())
+                .entityId(device.getId())
+                .scope(AttributeScope.SHARED_SCOPE)
+                .keys(attributesKeys)
+                .callback(new FutureCallback<>() {
                     @Override
                     public void onSuccess(@Nullable Void tmp) {
                         log.trace("[{}] Success remove target {} attributes!", device.getId(), otaPackageType);
@@ -383,7 +388,8 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
                     public void onFailure(Throwable t) {
                         log.error("[{}] Failed to remove target {} attributes!", device.getId(), otaPackageType, t);
                     }
-                });
+                })
+                .build());
     }
 
 }

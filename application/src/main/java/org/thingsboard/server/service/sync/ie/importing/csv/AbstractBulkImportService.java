@@ -208,7 +208,7 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
         accessValidator.validateEntityAndCallback(user, Operation.WRITE_TELEMETRY, entity.getId(), (result, tenantId, entityId) -> {
             TenantProfile tenantProfile = tenantProfileCache.get(tenantId);
             long tenantTtl = TimeUnit.DAYS.toSeconds(((DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration()).getDefaultStorageTtlDays());
-            tsSubscriptionService.save(TimeseriesSaveRequest.builder()
+            tsSubscriptionService.saveTimeseries(TimeseriesSaveRequest.builder()
                     .tenantId(tenantId)
                     .customerId(user.getCustomerId())
                     .entityId(entityId)
@@ -238,7 +238,7 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
         List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(kvsEntry.getValue()));
 
         accessValidator.validateEntityAndCallback(user, Operation.WRITE_ATTRIBUTES, entity.getId(), (result, tenantId, entityId) -> {
-            tsSubscriptionService.save(AttributesSaveRequest.builder()
+            tsSubscriptionService.saveAttributes(AttributesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(entityId)
                     .scope(AttributeScope.valueOf(scope))

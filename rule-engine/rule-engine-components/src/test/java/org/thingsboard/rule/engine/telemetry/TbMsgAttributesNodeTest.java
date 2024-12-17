@@ -22,10 +22,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ThrowingConsumer;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
-import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -171,7 +169,7 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
 
         node.saveAttr(testAttrList, ctxMock, testTbMsg, AttributeScope.SHARED_SCOPE, false);
 
-        verify(telemetryServiceMock, times(1)).save(assertArg((ThrowingConsumer<AttributesSaveRequest>) request -> {
+        verify(telemetryServiceMock, times(1)).saveAttributes(assertArg(request -> {
             assertThat(request.getTenantId()).isEqualTo(tenantId);
             assertThat(request.getEntityId()).isEqualTo(deviceId);
             assertThat(request.getScope()).isEqualTo(AttributeScope.SHARED_SCOPE);

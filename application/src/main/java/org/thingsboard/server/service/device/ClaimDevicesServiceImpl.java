@@ -28,6 +28,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -178,7 +179,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                 return Futures.immediateFuture(new ReclaimResult(unassignedCustomer));
             }
             SettableFuture<ReclaimResult> result = SettableFuture.create();
-            telemetryService.save(AttributesSaveRequest.builder()
+            telemetryService.saveAttributes(AttributesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(savedDevice.getId())
                     .scope(AttributeScope.SERVER_SCOPE)
@@ -223,18 +224,13 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
             cache.evict(data.getKey());
         }
         SettableFuture<Void> result = SettableFuture.create();
-        telemetryService.deleteAndNotify(device.getTenantId(),
-                device.getId(), AttributeScope.SERVER_SCOPE, Arrays.asList(CLAIM_ATTRIBUTE_NAME, CLAIM_DATA_ATTRIBUTE_NAME), new FutureCallback<>() {
-                    @Override
-                    public void onSuccess(@Nullable Void tmp) {
-                        result.set(tmp);
-                    }
-
-                    @Override
-                    public void onFailure(Throwable t) {
-                        result.setException(t);
-                    }
-                });
+        telemetryService.deleteAttributes(AttributesDeleteRequest.builder()
+                .tenantId(device.getTenantId())
+                .entityId(device.getId())
+                .scope(AttributeScope.SERVER_SCOPE)
+                .keys(Arrays.asList(CLAIM_ATTRIBUTE_NAME, CLAIM_DATA_ATTRIBUTE_NAME))
+                .future(result)
+                .build());
         return result;
     }
 

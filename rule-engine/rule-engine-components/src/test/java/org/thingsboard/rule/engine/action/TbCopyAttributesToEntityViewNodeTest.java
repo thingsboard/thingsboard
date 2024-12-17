@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.action;
 
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,9 +23,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.ThrowingConsumer;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
@@ -56,7 +55,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.assertArg;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -118,7 +116,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
             AttributesSaveRequest request = invocation.getArgument(0);
             request.getCallback().onSuccess(null);
             return null;
-        }).when(telemetryServiceMock).save(any(AttributesSaveRequest.class));
+        }).when(telemetryServiceMock).saveAttributes(any(AttributesSaveRequest.class));
         TbMsg newMsg = TbMsg.newMsg(msg, msg.getQueueName(), msg.getRuleChainId(), msg.getRuleNodeId());
         // TODO: use newMsg() with any(TbMsgType.class), replace in other tests as well.
         doAnswer(invocation -> newMsg).when(ctxMock).newMsg(any(), any(String.class), any(), any(), any(), any());
@@ -126,7 +124,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
         node.onMsg(ctxMock, msg);
 
         verify(entityViewServiceMock).findEntityViewsByTenantIdAndEntityIdAsync(eq(TENANT_ID), eq(DEVICE_ID));
-        verify(telemetryServiceMock).save(assertArg((ThrowingConsumer<AttributesSaveRequest>) request -> {
+        verify(telemetryServiceMock).saveAttributes(assertArg(request -> {
             assertThat(request.getTenantId()).isEqualTo(TENANT_ID);
             assertThat(request.getEntityId()).isEqualTo(ENTITY_VIEW_ID);
             assertThat(request.getScope()).isEqualTo(AttributeScope.CLIENT_SCOPE);
@@ -151,21 +149,23 @@ public class TbCopyAttributesToEntityViewNodeTest {
         mockEntityViewLookup(entityView);
         when(ctxMock.getTelemetryService()).thenReturn(telemetryServiceMock);
         doAnswer(invocation -> {
-            FutureCallback<Void> callback = invocation.getArgument(4);
-            callback.onSuccess(null);
+            AttributesDeleteRequest request = invocation.getArgument(0);
+            request.getCallback().onSuccess(null);
             return null;
-        }).when(telemetryServiceMock).deleteAndNotify(any(), any(), any(AttributeScope.class), anyList(), any(FutureCallback.class));
+        }).when(telemetryServiceMock).deleteAttributes(any());
         TbMsg newMsg = TbMsg.newMsg(msg, msg.getQueueName(), msg.getRuleChainId(), msg.getRuleNodeId());
         doAnswer(invocation -> newMsg).when(ctxMock).newMsg(any(), any(String.class), any(), any(), any(), any());
 
         node.onMsg(ctxMock, msg);
 
         verify(entityViewServiceMock).findEntityViewsByTenantIdAndEntityIdAsync(eq(TENANT_ID), eq(DEVICE_ID));
-        ArgumentCaptor<List<String>> filteredAttributesCaptor = ArgumentCaptor.forClass(List.class);
-        verify(telemetryServiceMock).deleteAndNotify(eq(TENANT_ID), eq(ENTITY_VIEW_ID), eq(AttributeScope.SERVER_SCOPE), filteredAttributesCaptor.capture(), any(FutureCallback.class));
-        List<String> filteredAttributesCaptorValue = filteredAttributesCaptor.getValue();
-        assertThat(filteredAttributesCaptorValue.size()).isEqualTo(1);
-        assertThat(filteredAttributesCaptorValue.get(0)).isEqualTo("serverAttribute1");
+        verify(telemetryServiceMock).deleteAttributes(assertArg(request -> {
+            assertThat(request.getTenantId()).isEqualTo(TENANT_ID);
+            assertThat(request.getEntityId()).isEqualTo(ENTITY_VIEW_ID);
+            assertThat(request.getScope()).isEqualTo(AttributeScope.SERVER_SCOPE);
+            assertThat(request.getKeys().size()).isEqualTo(1);
+            assertThat(request.getKeys().get(0)).isEqualTo("serverAttribute1");
+        }));
         verify(ctxMock).ack(eq(msg));
         verify(ctxMock).enqueueForTellNext(eq(newMsg), eq(TbNodeConnectionType.SUCCESS));
         verifyNoMoreInteractions(ctxMock, entityViewServiceMock, telemetryServiceMock);
@@ -202,14 +202,14 @@ public class TbCopyAttributesToEntityViewNodeTest {
             AttributesSaveRequest request = invocation.getArgument(0);
             request.getCallback().onSuccess(null);
             return null;
-        }).when(telemetryServiceMock).save(any(AttributesSaveRequest.class));
+        }).when(telemetryServiceMock).saveAttributes(any(AttributesSaveRequest.class));
         TbMsg newMsg = TbMsg.newMsg(msg, msg.getQueueName(), msg.getRuleChainId(), msg.getRuleNodeId());
         doAnswer(invocation -> newMsg).when(ctxMock).newMsg(any(), any(String.class), any(), any(), any(), any());
 
         node.onMsg(ctxMock, msg);
 
         verify(entityViewServiceMock).findEntityViewsByTenantIdAndEntityIdAsync(eq(TENANT_ID), eq(DEVICE_ID));
-        verify(telemetryServiceMock).save(assertArg((ThrowingConsumer<AttributesSaveRequest>) request -> {
+        verify(telemetryServiceMock).saveAttributes(assertArg(request -> {
             assertThat(request.getTenantId()).isEqualTo(TENANT_ID);
             assertThat(request.getEntityId()).isEqualTo(ENTITY_VIEW_ID);
             assertThat(request.getScope()).isEqualTo(AttributeScope.CLIENT_SCOPE);
