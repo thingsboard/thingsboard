@@ -80,6 +80,7 @@
                      (fileNameChanged)="entityForm?.get('fileName').patchValue($event)">
       </tb-file-input>
       <tb-js-func *ngIf="entityForm.get('resourceSubType').value === ResourceSubType.MODULE"
+                  helpId="resource/js-resource-module_fn"
                   formControlName="content"
                   required
                   hideBrackets
