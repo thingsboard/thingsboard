@@ -105,7 +105,7 @@ export class AuditLogDetailsDialogComponent extends DialogComponent<AuditLogDeta
     let newWidth = 600;
     if (content && content.length > 0) {
       const lines = content.split('\n');
-      newHeight = 17 * lines.length + 16;
+      newHeight = 18 * lines.length + 16;
       let maxLineLength = 0;
       lines.forEach((row) => {
         const line = row.replace(/\t/g, '    ').replace(/\n/g, '');
