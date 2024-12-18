@@ -13,53 +13,56 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.rpc.processor.widget;
+package org.thingsboard.server.service.edge.rpc.processor.notification;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.id.WidgetsBundleId;
-import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.common.data.id.NotificationTemplateId;
+import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
+import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
+import org.thingsboard.server.gen.edge.v1.NotificationTemplateUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
-import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
-import java.util.List;
-
-@Component
 @Slf4j
+@Component
 @TbCoreComponent
-public class WidgetBundleEdgeProcessor extends BaseEdgeProcessor {
+public class NotificationTemplateEdgeProcessor extends BaseEdgeProcessor {
+
+    @Autowired
+    private NotificationTemplateService notificationTemplateService;
 
     @Override
     public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
-        WidgetsBundleId widgetsBundleId = new WidgetsBundleId(edgeEvent.getEntityId());
+        NotificationTemplateId notificationTemplateId = new NotificationTemplateId(edgeEvent.getEntityId());
+        DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED -> {
-                WidgetsBundle widgetsBundle = edgeCtx.getWidgetsBundleService().findWidgetsBundleById(edgeEvent.getTenantId(), widgetsBundleId);
-                if (widgetsBundle != null) {
-                    List<String> widgets = edgeCtx.getWidgetTypeService().findWidgetFqnsByWidgetsBundleId(edgeEvent.getTenantId(), widgetsBundleId);
+                NotificationTemplate notificationTemplate = notificationTemplateService.findNotificationTemplateById(edgeEvent.getTenantId(), notificationTemplateId);
+                if (notificationTemplate != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    WidgetsBundleUpdateMsg widgetsBundleUpdateMsg = EdgeMsgConstructorUtils.constructWidgetsBundleUpdateMsg(msgType, widgetsBundle, widgets);
-                    return DownlinkMsg.newBuilder()
+                    NotificationTemplateUpdateMsg notificationTemplateUpdateMsg = EdgeMsgConstructorUtils.constructNotificationTemplateUpdateMsg(msgType, notificationTemplate);
+                    downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
+                            .addNotificationTemplateUpdateMsg(notificationTemplateUpdateMsg)
                             .build();
                 }
             }
             case DELETED -> {
-                WidgetsBundleUpdateMsg widgetsBundleUpdateMsg = EdgeMsgConstructorUtils.constructWidgetsBundleDeleteMsg(widgetsBundleId);
-                return DownlinkMsg.newBuilder()
+                NotificationTemplateUpdateMsg notificationTemplateUpdateMsg = EdgeMsgConstructorUtils.constructNotificationTemplateDeleteMsg(notificationTemplateId);
+                downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
+                        .addNotificationTemplateUpdateMsg(notificationTemplateUpdateMsg)
                         .build();
             }
         }
-        return null;
+        return downlinkMsg;
     }
 
 }

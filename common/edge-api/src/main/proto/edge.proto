@@ -41,6 +41,7 @@ enum EdgeVersion {
   V_3_7_0 = 7;
   V_3_8_0 = 8;
   V_3_9_0 = 9;
+  V_4_0_0 = 10;
 }
 
 /**
@@ -92,12 +93,10 @@ message ConnectResponseMsg {
 }
 
 message SyncRequestMsg {
-  bool syncRequired = 1 [deprecated = true];
   optional bool fullSync = 2;
 }
 
-message SyncCompletedMsg {
-}
+message SyncCompletedMsg {}
 
 message EdgeConfiguration {
   int64 edgeIdMSB = 1;
@@ -120,7 +119,7 @@ enum UpdateMsgType {
   ENTITY_DELETED_RPC_MESSAGE = 2;
   ALARM_ACK_RPC_MESSAGE = 3;
   ALARM_CLEAR_RPC_MESSAGE = 4;
-  ENTITY_MERGE_RPC_MESSAGE = 5 [deprecated = true];
+  // use 6 as a next number
 }
 
 message EntityDataProto {
@@ -143,68 +142,18 @@ message RuleChainUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  string name = 4 [deprecated = true];
-  optional int64 firstRuleNodeIdMSB = 5 [deprecated = true];
-  optional int64 firstRuleNodeIdLSB = 6 [deprecated = true];
-  bool root = 7 [deprecated = true];
-  bool debugMode = 8 [deprecated = true];
-  string configuration = 9 [deprecated = true];
   string entity = 10;
 }
 
 message RuleChainMetadataUpdateMsg {
   UpdateMsgType msgType = 1;
-  int64 ruleChainIdMSB = 2 [deprecated = true];
-  int64 ruleChainIdLSB = 3 [deprecated = true];
-  int32 firstNodeIndex = 4 [deprecated = true];
-  repeated RuleNodeProto nodes = 5 [deprecated = true];
-  repeated NodeConnectionInfoProto connections = 6 [deprecated = true];
-  repeated RuleChainConnectionInfoProto ruleChainConnections = 7 [deprecated = true];
   string entity = 8;
-}
-
-message RuleNodeProto {
-  option deprecated = true;
-  int64 idMSB = 1;
-  int64 idLSB = 2;
-  string type = 3;
-  string name = 4;
-  bool debugMode = 5 [deprecated = true];
-  string configuration = 6;
-  string additionalInfo = 7;
-  bool singletonMode = 8;
-  int32 configurationVersion = 9;
-  string debugSettings = 10;
-}
-
-message NodeConnectionInfoProto {
-  option deprecated = true;
-  int32 fromIndex = 1;
-  int32 toIndex = 2;
-  string type = 3;
-}
-
-message RuleChainConnectionInfoProto {
-  option deprecated = true;
-  int32 fromIndex = 1;
-  int64 targetRuleChainIdMSB = 2;
-  int64 targetRuleChainIdLSB = 3;
-  string type = 4;
-  string additionalInfo = 5;
 }
 
 message DashboardUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  optional int64 customerIdMSB = 4 [deprecated = true];
-  optional int64 customerIdLSB = 5 [deprecated = true];
-  string title = 6 [deprecated = true];
-  string configuration = 7 [deprecated = true];
-  optional string assignedCustomers = 8 [deprecated = true];
-  optional string image = 9 [deprecated = true];
-  optional int32 mobileOrder = 10 [deprecated = true];
-  bool mobileHide = 11 [deprecated = true];
   string entity = 12;
 }
 
@@ -212,20 +161,6 @@ message DeviceUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  optional int64 customerIdMSB = 4 [deprecated = true];
-  optional int64 customerIdLSB = 5 [deprecated = true];
-  optional int64 deviceProfileIdMSB = 6 [deprecated = true];
-  optional int64 deviceProfileIdLSB = 7 [deprecated = true];
-  string name = 8 [deprecated = true];
-  string type = 9 [deprecated = true];
-  optional string label = 10 [deprecated = true];
-  optional string additionalInfo = 11 [deprecated = true];
-  optional string conflictName = 12 [deprecated = true];
-  optional int64 firmwareIdMSB = 13 [deprecated = true];
-  optional int64 firmwareIdLSB = 14 [deprecated = true];
-  optional bytes deviceDataBytes = 15 [deprecated = true];
-  optional int64 softwareIdMSB = 16 [deprecated = true];
-  optional int64 softwareIdLSB = 17 [deprecated = true];
   string entity = 18;
 }
 
@@ -233,24 +168,6 @@ message DeviceProfileUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  string name = 4 [deprecated = true];
-  optional string description = 5 [deprecated = true];
-  bool default = 6 [deprecated = true];
-  string type = 7 [deprecated = true];
-  optional string transportType = 8 [deprecated = true];
-  optional string provisionType = 9 [deprecated = true];
-  int64 defaultRuleChainIdMSB = 10 [deprecated = true];
-  int64 defaultRuleChainIdLSB = 11 [deprecated = true];
-  string defaultQueueName = 12 [deprecated = true];
-  bytes profileDataBytes = 13 [deprecated = true];
-  optional string provisionDeviceKey = 14 [deprecated = true];
-  optional bytes image = 15 [deprecated = true];
-  optional int64 firmwareIdMSB = 16 [deprecated = true];
-  optional int64 firmwareIdLSB = 17 [deprecated = true];
-  optional int64 softwareIdMSB = 18 [deprecated = true];
-  optional int64 softwareIdLSB = 19 [deprecated = true];
-  optional int64 defaultDashboardIdMSB = 20 [deprecated = true];
-  optional int64 defaultDashboardIdLSB = 21 [deprecated = true];
   string entity = 22;
 }
 
@@ -258,24 +175,10 @@ message AssetProfileUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  string name = 4 [deprecated = true];
-  optional string description = 5 [deprecated = true];
-  bool default = 6 [deprecated = true];
-  int64 defaultRuleChainIdMSB = 7 [deprecated = true];
-  int64 defaultRuleChainIdLSB = 8 [deprecated = true];
-  int64 defaultDashboardIdMSB = 9 [deprecated = true];
-  int64 defaultDashboardIdLSB = 10 [deprecated = true];
-  optional string defaultQueueName = 11 [deprecated = true];
-  optional bytes image = 12 [deprecated = true];
   string entity = 13;
 }
 
 message DeviceCredentialsUpdateMsg {
-  int64 deviceIdMSB = 1 [deprecated = true];
-  int64 deviceIdLSB = 2 [deprecated = true];
-  string credentialsType = 3 [deprecated = true];
-  string credentialsId = 4 [deprecated = true];
-  optional string credentialsValue = 5 [deprecated = true];
   string entity = 6;
 }
 
@@ -283,14 +186,6 @@ message AssetUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  optional int64 customerIdMSB = 4 [deprecated = true];
-  optional int64 customerIdLSB = 5 [deprecated = true];
-  string name = 6 [deprecated = true];
-  string type = 7 [deprecated = true];
-  optional string label = 8 [deprecated = true];
-  optional string additionalInfo = 9 [deprecated = true];
-  optional int64 assetProfileIdMSB = 10 [deprecated = true];
-  optional int64 assetProfileIdLSB = 11 [deprecated = true];
   string entity = 12;
 }
 
@@ -298,14 +193,6 @@ message EntityViewUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  optional int64 customerIdMSB = 4 [deprecated = true];
-  optional int64 customerIdLSB = 5 [deprecated = true];
-  string name = 6 [deprecated = true];
-  string type = 7 [deprecated = true];
-  int64 entityIdMSB = 8 [deprecated = true];
-  int64 entityIdLSB = 9 [deprecated = true];
-  EdgeEntityType entityType = 10 [deprecated = true];
-  optional string additionalInfo = 11 [deprecated = true];
   string entity = 12;
 }
 
@@ -313,20 +200,6 @@ message AlarmUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  string name = 4 [deprecated = true];
-  string type = 5 [deprecated = true];
-  string originatorType = 6 [deprecated = true];
-  string originatorName = 7 [deprecated = true];
-  string severity = 8 [deprecated = true];
-  string status = 9 [deprecated = true];
-  int64 startTs = 10 [deprecated = true];
-  int64 endTs = 11 [deprecated = true];
-  int64 ackTs = 12 [deprecated = true];
-  int64 clearTs = 13 [deprecated = true];
-  string details = 14 [deprecated = true];
-  bool propagate = 15 [deprecated = true];
-  bool propagateToOwner = 16 [deprecated = true];
-  bool propagateToTenant = 17 [deprecated = true];
   string entity = 18;
 }
 
@@ -339,30 +212,11 @@ message CustomerUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  string title = 4 [deprecated = true];
-  optional string country = 5 [deprecated = true];
-  optional string state = 6 [deprecated = true];
-  optional string city = 7 [deprecated = true];
-  optional string address = 8 [deprecated = true];
-  optional string address2 = 9 [deprecated = true];
-  optional string zip = 10 [deprecated = true];
-  optional string phone = 11 [deprecated = true];
-  optional string email = 12 [deprecated = true];
-  optional string additionalInfo = 13 [deprecated = true];
   string entity = 14;
 }
 
 message RelationUpdateMsg {
   UpdateMsgType msgType = 1;
-  int64 fromIdMSB = 2 [deprecated = true];
-  int64 fromIdLSB = 3 [deprecated = true];
-  string fromEntityType = 4 [deprecated = true];
-  int64 toIdMSB = 5 [deprecated = true];
-  int64 toIdLSB = 6 [deprecated = true];
-  string toEntityType = 7 [deprecated = true];
-  string type = 8 [deprecated = true];
-  optional string typeGroup = 9 [deprecated = true];
-  string additionalInfo = 10 [deprecated = true];
   string entity = 11;
 }
 
@@ -370,13 +224,6 @@ message UserUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  optional int64 customerIdMSB = 4 [deprecated = true];
-  optional int64 customerIdLSB = 5 [deprecated = true];
-  string email = 6 [deprecated = true];
-  string authority = 7 [deprecated = true];
-  optional string firstName = 8 [deprecated = true];
-  optional string lastName = 9 [deprecated = true];
-  optional string additionalInfo = 10 [deprecated = true];
   string entity = 11;
 }
 
@@ -384,13 +231,7 @@ message WidgetsBundleUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  string title = 4 [deprecated = true];
-  string alias = 5 [deprecated = true];
-  optional bytes image = 6 [deprecated = true];
-  bool isSystem = 7 [deprecated = true];
-  optional string description = 8 [deprecated = true];
   optional string widgets = 9;
-  optional int32 order = 10 [deprecated = true];
   string entity = 11;
 }
 
@@ -398,63 +239,24 @@ message WidgetTypeUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  optional string bundleAlias = 4 [deprecated = true];
-  optional string alias = 5 [deprecated = true];
-  optional string name = 6 [deprecated = true];
-  optional string descriptorJson = 7 [deprecated = true];
-  bool isSystem = 8 [deprecated = true];
-  optional string image = 9 [deprecated = true];
-  optional string description = 10 [deprecated = true];
-  optional string fqn = 11 [deprecated = true];
-  bool deprecated = 12 [deprecated = true];
-  repeated string tags = 13 [deprecated = true];
   string entity = 14;
 }
 
 message AdminSettingsUpdateMsg {
-  bool isSystem = 1 [deprecated = true];
-  string key = 2 [deprecated = true];
-  string jsonValue = 3 [deprecated = true];
   string entity = 4;
 }
 
 message UserCredentialsUpdateMsg {
-  int64 userIdMSB = 1 [deprecated = true];
-  int64 userIdLSB = 2 [deprecated = true];
-  bool enabled = 3 [deprecated = true];
-  string password = 4 [deprecated = true];
   string entity = 5;
 }
 
 message TenantUpdateMsg {
   UpdateMsgType msgType = 1;
-  int64 idMSB = 2 [deprecated = true];
-  int64 idLSB = 3 [deprecated = true];
-  string title = 4 [deprecated = true];
-  int64 profileIdMSB = 5 [deprecated = true];
-  int64 profileIdLSB = 6 [deprecated = true];
-  string region = 7 [deprecated = true];
-  optional string country = 8 [deprecated = true];
-  optional string state = 9 [deprecated = true];
-  optional string city = 10 [deprecated = true];
-  optional string address = 11 [deprecated = true];
-  optional string address2 = 12 [deprecated = true];
-  optional string zip = 13 [deprecated = true];
-  optional string phone = 14 [deprecated = true];
-  optional string email = 15 [deprecated = true];
-  optional string additionalInfo = 16 [deprecated = true];
   string entity = 17;
 }
 
 message TenantProfileUpdateMsg {
   UpdateMsgType msgType = 1;
-  int64 idMSB = 2 [deprecated = true];
-  int64 idLSB = 3 [deprecated = true];
-  string name = 4 [deprecated = true];
-  optional string description = 5 [deprecated = true];
-  bool default = 6 [deprecated = true];
-  bool isolatedRuleChain = 7 [deprecated = true];
-  bytes profileDataBytes = 8 [deprecated = true];
   string entity = 9;
 }
 
@@ -462,13 +264,6 @@ message ResourceUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  string title = 4 [deprecated = true];
-  string resourceType = 5 [deprecated = true];
-  string resourceKey = 6 [deprecated = true];
-  string fileName = 7 [deprecated = true];
-  optional string data = 8 [deprecated = true];
-  optional string etag = 9 [deprecated = true];
-  bool isSystem = 10 [deprecated = true];
   string entity = 11;
 }
 
@@ -535,12 +330,6 @@ message DeviceCredentialsRequestMsg {
   int64 deviceIdLSB = 2;
 }
 
-message DeviceProfileDevicesRequestMsg {
-  option deprecated = true;
-  int64 deviceProfileIdMSB = 1;
-  int64 deviceProfileIdLSB = 2;
-}
-
 message WidgetBundleTypesRequestMsg {
   int64 widgetBundleIdMSB = 1;
   int64 widgetBundleIdLSB = 2;
@@ -579,29 +368,10 @@ message RpcResponseMsg {
   string error = 2;
 }
 
-enum EdgeEntityType {
-  DEVICE = 0;
-  ASSET = 1;
-}
-
 message OtaPackageUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  int64 deviceProfileIdMSB = 4 [deprecated = true];
-  int64 deviceProfileIdLSB = 5 [deprecated = true];
-  string type = 6 [deprecated = true];
-  string title = 7 [deprecated = true];
-  string version = 8 [deprecated = true];
-  string tag = 9 [deprecated = true];
-  optional string url = 10 [deprecated = true];
-  optional string fileName = 11 [deprecated = true];
-  optional string contentType = 12 [deprecated = true];
-  optional string checksumAlgorithm = 13 [deprecated = true];
-  optional string checksum = 14 [deprecated = true];
-  optional int64 dataSize = 15 [deprecated = true];
-  optional bytes data = 16 [deprecated = true];
-  optional string additionalInfo = 17 [deprecated = true];
   string entity = 18;
 }
 
@@ -609,32 +379,7 @@ message QueueUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  int64 tenantIdMSB = 4 [deprecated = true];
-  int64 tenantIdLSB = 5 [deprecated = true];
-  string name = 6 [deprecated = true];
-  string topic = 7 [deprecated = true];
-  int32 pollInterval = 8 [deprecated = true];
-  int32 partitions = 9 [deprecated = true];
-  bool consumerPerPartition = 10 [deprecated = true];
-  int64 packProcessingTimeout = 11 [deprecated = true];
-  SubmitStrategyProto submitStrategy = 12 [deprecated = true];
-  ProcessingStrategyProto processingStrategy = 13 [deprecated = true];
   string entity = 14;
-}
-
-message SubmitStrategyProto {
-  option deprecated = true;
-  string type = 1;
-  int32 batchSize = 2;
-}
-
-message ProcessingStrategyProto {
-  option deprecated = true;
-  string type = 1;
-  int32 retries = 2;
-  double failurePercentage = 3;
-  int64 pauseBetweenRetries = 4;
-  int64 maxPauseBetweenRetries = 5;
 }
 
 /**
@@ -654,7 +399,6 @@ message UplinkMsg {
   repeated UserCredentialsRequestMsg userCredentialsRequestMsg = 10;
   repeated DeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 11;
   repeated DeviceRpcCallMsg deviceRpcCallMsg = 12;
-  repeated DeviceProfileDevicesRequestMsg deviceProfileDevicesRequestMsg = 13 [deprecated = true];
   repeated WidgetBundleTypesRequestMsg widgetBundleTypesRequestMsg = 14;
   repeated EntityViewsRequestMsg entityViewsRequestMsg = 15;
   repeated AssetUpdateMsg assetUpdateMsg = 16;

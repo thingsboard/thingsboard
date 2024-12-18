@@ -17,11 +17,11 @@ package org.thingsboard.server.service.edge;
 
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.alarm.AlarmService;
@@ -55,34 +55,28 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.EdgeEventStorageSettings;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
-import org.thingsboard.server.service.edge.rpc.constructor.asset.AssetMsgConstructorFactory;
-import org.thingsboard.server.service.edge.rpc.constructor.device.DeviceMsgConstructorFactory;
-import org.thingsboard.server.service.edge.rpc.constructor.edge.EdgeMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.processor.alarm.AlarmEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.alarm.AlarmEdgeProcessorFactory;
+import org.thingsboard.server.service.edge.rpc.processor.EdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.alarm.AlarmProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.alarm.comment.AlarmCommentProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.asset.AssetEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.asset.AssetEdgeProcessorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.asset.profile.AssetProfileEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.asset.profile.AssetProfileEdgeProcessorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.customer.CustomerEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.dashboard.DashboardEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.dashboard.DashboardEdgeProcessorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.device.DeviceEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.device.DeviceEdgeProcessorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.device.profile.DeviceProfileEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.device.profile.DeviceProfileEdgeProcessorFactory;
-import org.thingsboard.server.service.edge.rpc.processor.edge.EdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.edge.EdgeEntityProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewProcessorFactory;
-import org.thingsboard.server.service.edge.rpc.processor.notification.NotificationEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.oauth2.OAuth2EdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.notification.NotificationRuleEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.notification.NotificationTargetEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.notification.NotificationTemplateEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.oauth2.DomainEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.oauth2.OAuth2ClientEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.ota.OtaPackageEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.queue.QueueEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.relation.RelationEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.relation.RelationEdgeProcessorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.resource.ResourceEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.resource.ResourceEdgeProcessorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.rule.RuleChainEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.rule.RuleChainMetadataEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.settings.AdminSettingsEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.telemetry.TelemetryEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.tenant.TenantEdgeProcessor;
@@ -93,11 +87,50 @@ import org.thingsboard.server.service.edge.rpc.processor.widget.WidgetTypeEdgePr
 import org.thingsboard.server.service.edge.rpc.sync.EdgeRequestsService;
 import org.thingsboard.server.service.executors.GrpcCallbackExecutorService;
 
+import javax.annotation.PostConstruct;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 @Lazy
 @Data
 @Component
 @TbCoreComponent
 public class EdgeContextComponent {
+
+    private Map<EdgeEventType, EdgeProcessor> processorMap;
+
+    @PostConstruct
+    private void initProcessorMap() {
+        Map<EdgeEventType, EdgeProcessor> map = new HashMap<>();
+        map.put(EdgeEventType.ADMIN_SETTINGS, adminSettingsProcessor);
+        map.put(EdgeEventType.ALARM, alarmProcessor);
+        map.put(EdgeEventType.ALARM_COMMENT, alarmCommentProcessor);
+        map.put(EdgeEventType.ASSET, assetProcessor);
+        map.put(EdgeEventType.ASSET_PROFILE, assetProfileProcessor);
+        map.put(EdgeEventType.CUSTOMER, customerProcessor);
+        map.put(EdgeEventType.DASHBOARD, dashboardProcessor);
+        map.put(EdgeEventType.DEVICE, deviceProcessor);
+        map.put(EdgeEventType.DEVICE_PROFILE, deviceProfileProcessor);
+        map.put(EdgeEventType.DOMAIN, domainProcessor);
+        map.put(EdgeEventType.EDGE, edgeEntityProcessor);
+        map.put(EdgeEventType.ENTITY_VIEW, entityViewProcessor);
+        map.put(EdgeEventType.NOTIFICATION_RULE, notificationRuleProcessor);
+        map.put(EdgeEventType.NOTIFICATION_TARGET, notificationTargetProcessor);
+        map.put(EdgeEventType.NOTIFICATION_TEMPLATE, notificationTemplateProcessor);
+        map.put(EdgeEventType.OTA_PACKAGE, otaPackageProcessor);
+        map.put(EdgeEventType.QUEUE, queueProcessor);
+        map.put(EdgeEventType.RELATION, relationProcessor);
+        map.put(EdgeEventType.RULE_CHAIN, ruleChainProcessor);
+        map.put(EdgeEventType.RULE_CHAIN_METADATA, ruleChainMetadataProcessor);
+        map.put(EdgeEventType.TB_RESOURCE, resourceProcessor);
+        map.put(EdgeEventType.TENANT, tenantProcessor);
+        map.put(EdgeEventType.TENANT_PROFILE, tenantProfileProcessor);
+        map.put(EdgeEventType.USER, userProcessor);
+        map.put(EdgeEventType.WIDGETS_BUNDLE, widgetBundleProcessor);
+        map.put(EdgeEventType.WIDGET_TYPE, widgetTypeProcessor);
+        this.processorMap = Collections.unmodifiableMap(map);
+    }
 
     // services
     @Autowired
@@ -205,7 +238,10 @@ public class EdgeContextComponent {
     private AdminSettingsEdgeProcessor adminSettingsProcessor;
 
     @Autowired
-    private AlarmEdgeProcessor alarmProcessor;
+    private AlarmProcessor alarmProcessor;
+
+    @Autowired
+    private AlarmCommentProcessor alarmCommentProcessor;
 
     @Autowired
     private AssetEdgeProcessor assetProcessor;
@@ -226,19 +262,28 @@ public class EdgeContextComponent {
     private DeviceProfileEdgeProcessor deviceProfileProcessor;
 
     @Autowired
-    private EdgeProcessor edgeProcessor;
+    private EdgeEntityProcessor edgeEntityProcessor;
 
     @Autowired
     private EntityViewEdgeProcessor entityViewProcessor;
 
     @Autowired
-    private NotificationEdgeProcessor notificationEdgeProcessor;
+    private NotificationRuleProcessor ruleProcessor;
 
     @Autowired
-    private NotificationRuleProcessor notificationRuleProcessor;
+    private NotificationRuleEdgeProcessor notificationRuleProcessor;
 
     @Autowired
-    private OAuth2EdgeProcessor oAuth2EdgeProcessor;
+    private NotificationTargetEdgeProcessor notificationTargetProcessor;
+
+    @Autowired
+    private NotificationTemplateEdgeProcessor notificationTemplateProcessor;
+
+    @Autowired
+    private DomainEdgeProcessor domainProcessor;
+
+    @Autowired
+    private OAuth2ClientEdgeProcessor oAuth2ClientProcessor;
 
     @Autowired
     private OtaPackageEdgeProcessor otaPackageProcessor;
@@ -254,6 +299,9 @@ public class EdgeContextComponent {
 
     @Autowired
     private RuleChainEdgeProcessor ruleChainProcessor;
+
+    @Autowired
+    private RuleChainMetadataEdgeProcessor ruleChainMetadataProcessor;
 
     @Autowired
     private TelemetryEdgeProcessor telemetryProcessor;
@@ -273,44 +321,6 @@ public class EdgeContextComponent {
     @Autowired
     private WidgetTypeEdgeProcessor widgetTypeProcessor;
 
-    // msg constructors
-    @Autowired
-    private EdgeMsgConstructor edgeMsgConstructor;
-
-    // factories
-    @Autowired
-    private AlarmEdgeProcessorFactory alarmEdgeProcessorFactory;
-
-    @Autowired
-    private AssetEdgeProcessorFactory assetEdgeProcessorFactory;
-
-    @Autowired
-    private AssetMsgConstructorFactory assetMsgConstructorFactory;
-
-    @Autowired
-    private AssetProfileEdgeProcessorFactory assetProfileEdgeProcessorFactory;
-
-    @Autowired
-    private DashboardEdgeProcessorFactory dashboardEdgeProcessorFactory;
-
-    @Autowired
-    private DeviceEdgeProcessorFactory deviceEdgeProcessorFactory;
-
-    @Autowired
-    private DeviceMsgConstructorFactory deviceMsgConstructorFactory;
-
-    @Autowired
-    private DeviceProfileEdgeProcessorFactory deviceProfileEdgeProcessorFactory;
-
-    @Autowired
-    private EntityViewProcessorFactory entityViewProcessorFactory;
-
-    @Autowired
-    private RelationEdgeProcessorFactory relationEdgeProcessorFactory;
-
-    @Autowired
-    private ResourceEdgeProcessorFactory resourceEdgeProcessorFactory;
-
     // config
     @Autowired
     private EdgeEventStorageSettings edgeEventStorageSettings;
@@ -318,5 +328,13 @@ public class EdgeContextComponent {
     // callback
     @Autowired
     private GrpcCallbackExecutorService grpcCallbackExecutorService;
+
+    public EdgeProcessor getProcessor(EdgeEventType edgeEventType) {
+        EdgeProcessor processor = processorMap.get(edgeEventType);
+        if (processor == null) {
+            throw new UnsupportedOperationException("No processor found for EdgeEventType: " + edgeEventType);
+        }
+        return processor;
+    }
 
 }
