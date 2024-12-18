@@ -31,7 +31,7 @@ import { OtaPackageService } from '@core/http/ota-package.service';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { emptyPageData } from '@shared/models/page/page-data';
-import { getEntityDetailsPageURL } from '@core/utils';
+import { getEntityDetailsPageURL, isDefinedAndNotNull } from '@core/utils';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
@@ -64,19 +64,19 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
     this.reset();
   }
 
-  private deviceProfile: string;
+  private deviceProfileIdValue: string;
 
   get deviceProfileId(): string {
-    return this.deviceProfile;
+    return this.deviceProfileIdValue;
   }
 
   @Input()
   set deviceProfileId(value: string) {
-    if (this.deviceProfile !== value) {
-      if (this.deviceProfile) {
+    if (this.deviceProfileIdValue !== value) {
+      if (this.deviceProfileIdValue) {
         this.reset();
       }
-      this.deviceProfile = value;
+      this.deviceProfileIdValue = value;
     }
   }
 
@@ -257,16 +257,20 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
   }
 
   fetchPackages(searchText?: string): Observable<Array<OtaPackageInfo>> {
-    this.searchText = searchText;
-    const pageLink = new PageLink(50, 0, searchText, {
-      property: 'title',
-      direction: Direction.ASC
-    });
-    return this.otaPackageService.getOtaPackagesInfoByDeviceProfileId(pageLink, this.deviceProfileId, this.type,
-      {ignoreLoading: true}).pipe(
-      catchError(() => of(emptyPageData<OtaPackageInfo>())),
-      map((data) => data && data.data.length ? data.data : null)
-    );
+    if (isDefinedAndNotNull(this.deviceProfileId)) {
+      this.searchText = searchText;
+      const pageLink = new PageLink(50, 0, searchText, {
+        property: 'title',
+        direction: Direction.ASC
+      });
+      return this.otaPackageService.getOtaPackagesInfoByDeviceProfileId(pageLink, this.deviceProfileId, this.type,
+        {ignoreLoading: true}).pipe(
+        catchError(() => of(emptyPageData<OtaPackageInfo>())),
+        map((data) => data && data.data.length ? data.data : null)
+      );
+    } else {
+      return of([]);
+    }
   }
 
   clear() {

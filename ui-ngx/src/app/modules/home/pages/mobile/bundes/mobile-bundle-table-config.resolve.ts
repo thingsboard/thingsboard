@@ -24,13 +24,13 @@ import {
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
 import { MobileAppBundleInfo } from '@shared/models/mobile-app.models';
-import { ActivatedRouteSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { Direction } from '@shared/models/page/sort-order';
 import { MobileBundleTableHeaderComponent } from '@home/pages/mobile/bundes/mobile-bundle-table-header.component';
 import { DatePipe } from '@angular/common';
 import { MobileAppService } from '@core/http/mobile-app.service';
-import { map, take } from 'rxjs/operators';
+import { finalize, map, skip, take, takeUntil } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { MatDialog } from '@angular/material/dialog';
@@ -52,11 +52,14 @@ export class MobileBundleTableConfigResolver {
 
   private readonly config: EntityTableConfig<MobileAppBundleInfo> = new EntityTableConfig<MobileAppBundleInfo>();
 
+  private openingEditDialog = false;
+
   constructor(
     private datePipe: DatePipe,
     private mobileAppService: MobileAppService,
     private translate : TranslateService,
     private dialog: MatDialog,
+    private router: Router,
     private store: Store<AppState>
   ) {
     this.config.selectionEnabled = false;
@@ -108,9 +111,15 @@ export class MobileBundleTableConfigResolver {
 
     this.config.handleRowClick = ($event, bundle) => {
       $event?.stopPropagation();
-      this.mobileAppService.getMobileAppBundleInfoById(bundle.id.id).subscribe(appBundleInfo => {
-        this.editBundle($event, appBundleInfo);
-      })
+      if (!this.openingEditDialog) {
+        this.openingEditDialog = true;
+        this.mobileAppService.getMobileAppBundleInfoById(bundle.id.id).pipe(
+          takeUntil(this.router.events.pipe(skip(1))),
+          finalize(() => {this.openingEditDialog = false;})
+        ).subscribe(
+          appBundleInfo => this.editBundle($event, appBundleInfo)
+        );
+      }
       return true;
     };
 

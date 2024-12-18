@@ -413,23 +413,27 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                         if (Boolean.TRUE.equals(sessionNewEvents.get(edgeId))) {
                             log.trace("[{}][{}] Set session new events flag to false", tenantId, edgeId.getId());
                             sessionNewEvents.put(edgeId, false);
-                            processEdgeEventMigrationIfNeeded(session, edgeId);
                             session.processHighPriorityEvents();
-                            Futures.addCallback(session.processEdgeEvents(), new FutureCallback<>() {
-                                @Override
-                                public void onSuccess(Boolean newEventsAdded) {
-                                    if (Boolean.TRUE.equals(newEventsAdded)) {
-                                        sessionNewEvents.put(edgeId, true);
+                            processEdgeEventMigrationIfNeeded(session, edgeId);
+                            if (Boolean.TRUE.equals(edgeEventsMigrationProcessed.get(edgeId))) {
+                                Futures.addCallback(session.processEdgeEvents(), new FutureCallback<>() {
+                                    @Override
+                                    public void onSuccess(Boolean newEventsAdded) {
+                                        if (Boolean.TRUE.equals(newEventsAdded)) {
+                                            sessionNewEvents.put(edgeId, true);
+                                        }
+                                        scheduleEdgeEventsCheck(session);
                                     }
-                                    scheduleEdgeEventsCheck(session);
-                                }
 
-                                @Override
-                                public void onFailure(Throwable t) {
-                                    log.warn("[{}] Failed to process edge events for edge [{}]!", tenantId, session.getEdge().getId().getId(), t);
-                                    scheduleEdgeEventsCheck(session);
-                                }
-                            }, ctx.getGrpcCallbackExecutorService());
+                                    @Override
+                                    public void onFailure(Throwable t) {
+                                        log.warn("[{}] Failed to process edge events for edge [{}]!", tenantId, session.getEdge().getId().getId(), t);
+                                        scheduleEdgeEventsCheck(session);
+                                    }
+                                }, ctx.getGrpcCallbackExecutorService());
+                            } else {
+                                scheduleEdgeEventsCheck(session);
+                            }
                         } else {
                             scheduleEdgeEventsCheck(session);
                         }
@@ -457,8 +461,6 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 scheduleEdgeEventsCheck(session);
             } else if (Boolean.FALSE.equals(eventsExist)) {
                 edgeEventsMigrationProcessed.put(edgeId, true);
-            } else {
-                scheduleEdgeEventsCheck(session);
             }
         }
     }

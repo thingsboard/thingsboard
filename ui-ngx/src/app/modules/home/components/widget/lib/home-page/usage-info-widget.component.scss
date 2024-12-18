@@ -44,12 +44,19 @@
   }
 
   .tb-usage-items-progress {
+    --mdc-linear-progress-track-height: 8px;
+    --mdc-linear-progress-active-indicator-height: 8px;
     width: 34px;
     @media #{$mat-md} {
       display: none;
     }
+    .mat-mdc-progress-bar {
+      &.critical {
+        --mdc-linear-progress-track-color: rgba(209, 39, 48, 0.06);
+        --mdc-linear-progress-active-indicator-color: #D12730;
+      }
+    }
     .mdc-linear-progress {
-      height: 8px;
       margin-top: 6px;
       margin-bottom: 6px;
       border-radius: 2px;
@@ -91,23 +98,5 @@
 
   .tb-usage-item-counts {
     color: rgba(0, 0, 0, 0.76);
-  }
-}
-
-:host ::ng-deep {
-  .tb-usage-items-progress {
-    .mat-mdc-progress-bar {
-      .mdc-linear-progress__bar-inner {
-        border-top-width: 8px;
-      }
-      &.critical {
-        .mdc-linear-progress__buffer-bar {
-          background: rgba(209, 39, 48, 0.06);
-        }
-        .mdc-linear-progress__bar-inner {
-          border-top-color: #D12730;
-        }
-      }
-    }
   }
 }
