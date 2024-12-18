@@ -135,7 +135,7 @@ public abstract class EdgeGrpcSession implements Closeable {
     private StreamObserver<RequestMsg> inputStream;
     private StreamObserver<ResponseMsg> outputStream;
 
-    private boolean connected;
+    private volatile boolean connected;
     private volatile boolean syncCompleted;
 
     private EdgeVersion edgeVersion;
@@ -536,13 +536,15 @@ public abstract class EdgeGrpcSession implements Closeable {
 
     public void processHighPriorityEvents() {
         try {
-            List<EdgeEvent> highPriorityEvents = new ArrayList<>();
-            EdgeEvent event;
-            while ((event = highPriorityQueue.poll()) != null) {
-                highPriorityEvents.add(event);
+            if (isConnected() && isSyncCompleted()) {
+                List<EdgeEvent> highPriorityEvents = new ArrayList<>();
+                EdgeEvent event;
+                while ((event = highPriorityQueue.poll()) != null) {
+                    highPriorityEvents.add(event);
+                }
+                List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(highPriorityEvents);
+                sendDownlinkMsgsPack(downlinkMsgsPack).get();
             }
-            List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(highPriorityEvents);
-            sendDownlinkMsgsPack(downlinkMsgsPack).get();
         } catch (Exception e) {
             log.error("[{}] Failed to process high priority events", sessionId, e);
         }
