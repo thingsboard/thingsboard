@@ -18,12 +18,19 @@ package org.thingsboard.server.transport.coap.security.sql;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Test;
+import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.transport.coap.security.AbstractCoapSecurityJksIntegrationTest;
+import org.thingsboard.server.transport.coap.security.AbstractCoapSecurityIntegrationTest;
 
 @Slf4j
 @DaoSqlTest
-public class CoapClientX509SecurityJksIntegrationTest extends AbstractCoapSecurityJksIntegrationTest {
+@TestPropertySource(properties = {
+        "coap.dtls.credentials.type=KEYSTORE",
+        "coap.dtls.credentials.keystore.store_file=coap/credentials/coapserverTest.jks",
+        "coap.dtls.credentials.keystore.key_password=server_ks_password",
+        "coap.dtls.credentials.keystore.key_alias=server",
+})
+public class CoapClientX509SecurityJksIntegrationTest extends AbstractCoapSecurityIntegrationTest {
 
     @After
     public void afterTest() throws Exception {

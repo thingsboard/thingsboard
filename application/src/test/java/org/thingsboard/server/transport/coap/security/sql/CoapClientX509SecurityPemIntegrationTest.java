@@ -18,13 +18,14 @@ package org.thingsboard.server.transport.coap.security.sql;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Test;
+import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.transport.coap.security.AbstractCoapSecurityPemIntegrationTest;
+import org.thingsboard.server.transport.coap.security.AbstractCoapSecurityIntegrationTest;
 
 @Slf4j
 @DaoSqlTest
-public class CoapClientX509SecurityPemIntegrationTest extends AbstractCoapSecurityPemIntegrationTest {
+public class CoapClientX509SecurityPemIntegrationTest extends AbstractCoapSecurityIntegrationTest {
 
     @After
     public void afterTest() throws Exception {

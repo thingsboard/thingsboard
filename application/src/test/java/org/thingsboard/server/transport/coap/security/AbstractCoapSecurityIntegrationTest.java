@@ -25,6 +25,7 @@ import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.dtls.CertificateType;
 import org.eclipse.californium.scandium.dtls.x509.SingleCertificateProvider;
 import org.junit.Assert;
+import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.CoapDeviceType;
 import org.thingsboard.server.common.data.Device;
@@ -45,7 +46,6 @@ import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 
@@ -64,23 +64,26 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 @Slf4j
+@TestPropertySource(properties = {
+        "coap.enabled=true",
+        "coap.dtls.enabled=true",
+        "coap.dtls.credentials.pem.cert_file=coap/credentials/server/cert.pem",
+        "device.connectivity.coaps.enabled=true",
+        "service.integrations.supported=ALL",
+        "transport.coap.enabled=true",
+})
 public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIntegrationTest {
     private static final String COAPS_BASE_URL = "coaps://localhost:5684/api/v1/";
     protected final String CREDENTIALS_PATH = "coap/credentials/";
     protected final String CREDENTIALS_PATH_CLIENT = CREDENTIALS_PATH + "client/";
     protected final String CREDENTIALS_PATH_CLIENT_CERT_PEM = CREDENTIALS_PATH_CLIENT + "cert.pem";
     protected final String CREDENTIALS_PATH_CLIENT_KEY_PEM = CREDENTIALS_PATH_CLIENT + "key.pem";
-    protected static final String SERVER_JKS_FOR_TEST = "coapserver";
-    protected static final String SERVER_STORE_PWD = "server_ks_password";
-    protected static final String SERVER_CERT_ALIAS = "server";
-    protected final X509Certificate serverX509Cert;
-    protected final PublicKey serverPublicKeyFromCert;
     protected final X509Certificate clientX509CertTrust;                                        // client certificate signed by intermediate, rootCA with a good CN ("host name")
     protected final PrivateKey clientPrivateKeyFromCertTrust;                                   // client private key used for X509 and RPK
     protected final X509Certificate clientX509CertTrustNo;                                      // client certificate signed by intermediate, rootCA with a good CN ("host name")
     protected final PrivateKey clientPrivateKeyFromCertTrustNo;
 
-    protected static final String CLIENT_JKS_FOR_TEST = "coapclient";
+    protected static final String CLIENT_JKS_FOR_TEST = "coapclientTest";
     protected static final String CLIENT_STORE_PWD = "client_ks_password";
     protected static final String CLIENT_ALIAS_CERT_TRUST = "client_alias_00000000";
     protected static final String CLIENT_ALIAS_CERT_TRUST_NO = "client_alias_trust_no";
@@ -103,19 +106,6 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
             // No trust
             clientPrivateKeyFromCertTrustNo = (PrivateKey) clientKeyStore.getKey(CLIENT_ALIAS_CERT_TRUST_NO, clientKeyStorePwd);
             clientX509CertTrustNo = (X509Certificate) clientKeyStore.getCertificate(CLIENT_ALIAS_CERT_TRUST_NO);
-        } catch (GeneralSecurityException | IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        // create server credentials
-        try {
-            char[] serverKeyStorePwd = SERVER_STORE_PWD.toCharArray();
-            KeyStore serverKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            try (InputStream serverKeyStoreFile = this.getClass().getClassLoader().getResourceAsStream(CREDENTIALS_PATH + SERVER_JKS_FOR_TEST + ".jks")) {
-                serverKeyStore.load(serverKeyStoreFile, serverKeyStorePwd);
-            }
-            this.serverX509Cert = (X509Certificate) serverKeyStore.getCertificate(SERVER_CERT_ALIAS);
-            this.serverPublicKeyFromCert = serverX509Cert.getPublicKey();
         } catch (GeneralSecurityException | IOException e) {
             throw new RuntimeException(e);
         }
