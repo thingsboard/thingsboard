@@ -20,11 +20,12 @@ import org.junit.After;
 import org.junit.Test;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.transport.coap.security.AbstractCoapSecurityIntegrationJavaTest;
+import org.thingsboard.server.transport.coap.security.AbstractCoapSecurityIntegrationTest;
+import org.thingsboard.server.transport.coap.security.AbstractCoapSecurityPemIntegrationTest;
 
 @Slf4j
 @DaoSqlTest
-public class CoapClientX509SecurityIntegrationJavaTest extends AbstractCoapSecurityIntegrationJavaTest {
+public class CoapClientX509SecurityPemIntegrationTest extends AbstractCoapSecurityPemIntegrationTest {
 
     @After
     public void afterTest() throws Exception {
@@ -32,19 +33,11 @@ public class CoapClientX509SecurityIntegrationJavaTest extends AbstractCoapSecur
     }
 
     @Test
-    public void testX509NoTrustFromJksConnectCoapSuccessUpdateAttributesSuccess() throws Exception {
-        clientX509FromJksUpdateAttributesTest();
-    }
-
-    @Test
     public void testX509NoTrustFromPathConnectCoapSuccessUpdateAttributesSuccess() throws Exception {
-        log.warn("start");
         clientX509FromPathUpdateFeatureTypeTest(FeatureType.ATTRIBUTES);
     }
     @Test
     public void testX509NoTrustFromPathConnectCoapSuccessUpdateTelemetrySuccess() throws Exception {
-        log.warn("start test");
-        System.out.println("Start test");
         clientX509FromPathUpdateFeatureTypeTest(FeatureType.TELEMETRY);
     }
 }
