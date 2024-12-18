@@ -29,6 +29,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -804,19 +806,24 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
     private void sendTelemetry(Device device, List<TsKvEntry> tsData) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-        tsService.saveAndNotify(device.getTenantId(), null, device.getId(), tsData, 0, new FutureCallback<Void>() {
-            @Override
-            public void onSuccess(@Nullable Void result) {
-                log.debug("sendTelemetry callback onSuccess");
-                latch.countDown();
-            }
+        tsService.saveTimeseries(TimeseriesSaveRequest.builder()
+                .tenantId(device.getTenantId())
+                .entityId(device.getId())
+                .entries(tsData)
+                .callback(new FutureCallback<Void>() {
+                    @Override
+                    public void onSuccess(@Nullable Void result) {
+                        log.debug("sendTelemetry callback onSuccess");
+                        latch.countDown();
+                    }
 
-            @Override
-            public void onFailure(Throwable t) {
-                log.error("Failed to send telemetry", t);
-                latch.countDown();
-            }
-        });
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.error("Failed to send telemetry", t);
+                        latch.countDown();
+                    }
+                })
+                .build());
         assertThat(latch.await(TIMEOUT, TimeUnit.SECONDS)).as("await sendTelemetry callback");
     }
 
@@ -826,19 +833,26 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
     private void sendAttributes(TenantId tenantId, EntityId entityId, TbAttributeSubscriptionScope scope, List<AttributeKvEntry> attrData) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-        tsService.saveAndNotify(tenantId, entityId, scope.getAttributeScope(), attrData, new FutureCallback<Void>() {
-            @Override
-            public void onSuccess(@Nullable Void result) {
-                log.debug("sendAttributes callback onSuccess");
-                latch.countDown();
-            }
+        tsService.saveAttributes(AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(entityId)
+                .scope(scope.getAttributeScope())
+                .entries(attrData)
+                .callback(new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(@Nullable Void result) {
+                        log.debug("sendAttributes callback onSuccess");
+                        latch.countDown();
+                    }
 
-            @Override
-            public void onFailure(Throwable t) {
-                log.error("Failed to sendAttributes", t);
-                latch.countDown();
-            }
-        });
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.error("Failed to sendAttributes", t);
+                        latch.countDown();
+                    }
+                })
+                .build());
         assertThat(latch.await(TIMEOUT, TimeUnit.SECONDS)).as("await sendAttributes callback").isTrue();
     }
+
 }

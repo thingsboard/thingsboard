@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.id.QueueStatsId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -37,7 +38,6 @@ import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.queue.TbRuleEngineConsumerStats;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -53,9 +53,9 @@ import java.util.stream.Collectors;
 public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsService {
 
     public static final String RULE_ENGINE_EXCEPTION = "ruleEngineException";
-    public static final FutureCallback<Integer> CALLBACK = new FutureCallback<Integer>() {
+    public static final FutureCallback<Void> CALLBACK = new FutureCallback<Void>() {
         @Override
-        public void onSuccess(@Nullable Integer result) {
+        public void onSuccess(@Nullable Void result) {
 
         }
 
@@ -89,7 +89,13 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
                     if (!tsList.isEmpty()) {
                         long ttl = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getQueueStatsTtlDays);
                         ttl = TimeUnit.DAYS.toSeconds(ttl);
-                        tsService.saveAndNotifyInternal(tenantId, queueStatsId, tsList, ttl, CALLBACK);
+                        tsService.saveTimeseriesInternal(TimeseriesSaveRequest.builder()
+                                .tenantId(tenantId)
+                                .entityId(queueStatsId)
+                                .entries(tsList)
+                                .ttl(ttl)
+                                .callback(CALLBACK)
+                                .build());
                     }
                 }
             } catch (Exception e) {
@@ -103,7 +109,13 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
                 TsKvEntry tsKv = new BasicTsKvEntry(e.getTs(), new JsonDataEntry(RULE_ENGINE_EXCEPTION, e.toJsonString(maxErrorMessageLength)));
                 long ttl = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getRuleEngineExceptionsTtlDays);
                 ttl = TimeUnit.DAYS.toSeconds(ttl);
-                tsService.saveAndNotifyInternal(tenantId, getQueueStatsId(tenantId, queueName), Collections.singletonList(tsKv), ttl, CALLBACK);
+                tsService.saveTimeseriesInternal(TimeseriesSaveRequest.builder()
+                        .tenantId(tenantId)
+                        .entityId(getQueueStatsId(tenantId, queueName))
+                        .entry(tsKv)
+                        .ttl(ttl)
+                        .callback(CALLBACK)
+                        .build());
             } catch (Exception e2) {
                 if (!"Asset is referencing to non-existent tenant!".equalsIgnoreCase(e2.getMessage())) {
                     log.debug("[{}] Failed to store the statistics", tenantId, e2);

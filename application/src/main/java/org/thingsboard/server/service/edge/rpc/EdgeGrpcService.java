@@ -32,6 +32,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -41,7 +43,6 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -68,7 +69,6 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -505,24 +505,40 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void save(TenantId tenantId, EdgeId edgeId, String key, long value) {
         log.debug("[{}][{}] Updating long edge telemetry [{}] [{}]", tenantId, edgeId, key, value);
         if (persistToTelemetry) {
-            tsSubService.saveAndNotify(
-                    tenantId, edgeId,
-                    Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry(key, value))),
-                    new AttributeSaveCallback(tenantId, edgeId, key, value));
+            tsSubService.saveTimeseries(TimeseriesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .entityId(edgeId)
+                    .entry(new LongDataEntry(key, value))
+                    .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
+                    .build());
         } else {
-            tsSubService.saveAttrAndNotify(tenantId, edgeId, AttributeScope.SERVER_SCOPE, key, value, new AttributeSaveCallback(tenantId, edgeId, key, value));
+            tsSubService.saveAttributes(AttributesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .entityId(edgeId)
+                    .scope(AttributeScope.SERVER_SCOPE)
+                    .entry(new LongDataEntry(key, value))
+                    .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
+                    .build());
         }
     }
 
     private void save(TenantId tenantId, EdgeId edgeId, String key, boolean value) {
         log.debug("[{}][{}] Updating boolean edge telemetry [{}] [{}]", tenantId, edgeId, key, value);
         if (persistToTelemetry) {
-            tsSubService.saveAndNotify(
-                    tenantId, edgeId,
-                    Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry(key, value))),
-                    new AttributeSaveCallback(tenantId, edgeId, key, value));
+            tsSubService.saveTimeseries(TimeseriesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .entityId(edgeId)
+                    .entry(new BooleanDataEntry(key, value))
+                    .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
+                    .build());
         } else {
-            tsSubService.saveAttrAndNotify(tenantId, edgeId, AttributeScope.SERVER_SCOPE, key, value, new AttributeSaveCallback(tenantId, edgeId, key, value));
+            tsSubService.saveAttributes(AttributesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .entityId(edgeId)
+                    .scope(AttributeScope.SERVER_SCOPE)
+                    .entry(new BooleanDataEntry(key, value))
+                    .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
+                    .build());
         }
     }
 
