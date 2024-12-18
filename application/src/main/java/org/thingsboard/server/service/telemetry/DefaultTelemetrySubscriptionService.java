@@ -23,13 +23,16 @@ import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
+import org.thingsboard.rule.engine.api.TimeseriesDeleteRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.EntityType;
@@ -38,7 +41,6 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -51,7 +53,6 @@ import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -60,6 +61,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 /**
  * Created by ashvayka on 27.03.18.
@@ -177,38 +179,26 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     @Override
-    public void deleteLatest(TenantId tenantId, EntityId entityId, List<String> keys, FutureCallback<Void> callback) {
-        checkInternalEntity(entityId);
-        deleteLatestInternal(tenantId, entityId, keys, callback);
+    public void deleteTimeseries(TimeseriesDeleteRequest request) {
+        checkInternalEntity(request.getEntityId());
+        deleteTimeseriesInternal(request);
     }
 
     @Override
-    public void deleteLatestInternal(TenantId tenantId, EntityId entityId, List<String> keys, FutureCallback<Void> callback) {
-        ListenableFuture<List<TsKvLatestRemovingResult>> deleteFuture = tsService.removeLatest(tenantId, entityId, keys);
-        addMainCallback(deleteFuture, callback);
-    }
-
-    @Override
-    public void deleteAllLatest(TenantId tenantId, EntityId entityId, FutureCallback<Collection<String>> callback) {
-        ListenableFuture<Collection<String>> deleteFuture = tsService.removeAllLatest(tenantId, entityId);
-        Futures.addCallback(deleteFuture, new FutureCallback<Collection<String>>() {
-            @Override
-            public void onSuccess(@Nullable Collection<String> result) {
-                callback.onSuccess(result);
+    public void deleteTimeseriesInternal(TimeseriesDeleteRequest request) {
+        if (CollectionUtils.isNotEmpty(request.getKeys())) {
+            ListenableFuture<List<TsKvLatestRemovingResult>> deleteFuture;
+            if (request.getDeleteHistoryQueries() == null) {
+                deleteFuture = tsService.removeLatest(request.getTenantId(), request.getEntityId(), request.getKeys());
+            } else {
+                deleteFuture = tsService.remove(request.getTenantId(), request.getEntityId(), request.getDeleteHistoryQueries());
+                addWsCallback(deleteFuture, result -> onTimeSeriesDelete(request.getTenantId(), request.getEntityId(), request.getKeys(), result));
             }
-
-            @Override
-            public void onFailure(Throwable t) {
-                callback.onFailure(t);
-            }
-        }, tsCallBackExecutor);
-    }
-
-    @Override
-    public void deleteTimeseriesAndNotify(TenantId tenantId, EntityId entityId, List<String> keys, List<DeleteTsKvQuery> deleteTsKvQueries, FutureCallback<Void> callback) {
-        ListenableFuture<List<TsKvLatestRemovingResult>> deleteFuture = tsService.remove(tenantId, entityId, deleteTsKvQueries);
-        addMainCallback(deleteFuture, callback);
-        addWsCallback(deleteFuture, list -> onTimeSeriesDelete(tenantId, entityId, keys, list));
+            addMainCallback(deleteFuture, __ -> request.getCallback().onSuccess(request.getKeys()), request.getCallback()::onFailure);
+        } else {
+            ListenableFuture<List<String>> deleteFuture = tsService.removeAllLatest(request.getTenantId(), request.getEntityId());
+            addMainCallback(deleteFuture, request.getCallback()::onSuccess, request.getCallback()::onFailure);
+        }
     }
 
     private void addEntityViewCallback(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
@@ -314,17 +304,11 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
     private <S> void addMainCallback(ListenableFuture<S> saveFuture, final FutureCallback<Void> callback) {
         if (callback == null) return;
-        Futures.addCallback(saveFuture, new FutureCallback<S>() {
-            @Override
-            public void onSuccess(@Nullable S result) {
-                callback.onSuccess(null);
-            }
+        addMainCallback(saveFuture, result -> callback.onSuccess(null), callback::onFailure);
+    }
 
-            @Override
-            public void onFailure(Throwable t) {
-                callback.onFailure(t);
-            }
-        }, tsCallBackExecutor);
+    private <S> void addMainCallback(ListenableFuture<S> saveFuture, Consumer<S> onSuccess, Consumer<Throwable> onFailure) {
+        DonAsynchron.withCallback(saveFuture, onSuccess, onFailure, tsCallBackExecutor);
     }
 
     private void checkInternalEntity(EntityId entityId) {

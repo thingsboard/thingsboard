@@ -15,16 +15,12 @@
  */
 package org.thingsboard.server.service.telemetry;
 
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
+import org.thingsboard.rule.engine.api.TimeseriesDeleteRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-
-import java.util.List;
 
 /**
  * Created by ashvayka on 27.03.18.
@@ -35,8 +31,8 @@ public interface InternalTelemetryService extends RuleEngineTelemetryService {
 
     void saveAttributesInternal(AttributesSaveRequest request);
 
-    void deleteAttributesInternal(AttributesDeleteRequest request);
+    void deleteTimeseriesInternal(TimeseriesDeleteRequest request);
 
-    void deleteLatestInternal(TenantId tenantId, EntityId entityId, List<String> keys, FutureCallback<Void> callback);
+    void deleteAttributesInternal(AttributesDeleteRequest request);
 
 }

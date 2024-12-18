@@ -49,6 +49,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
+import org.thingsboard.rule.engine.api.TimeseriesDeleteRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -521,19 +522,25 @@ public class TelemetryController extends BaseController {
             for (String key : keys) {
                 deleteTsKvQueries.add(new BaseDeleteTsKvQuery(key, deleteFromTs, deleteToTs, rewriteLatestIfDeleted, deleteLatest));
             }
-            tsSubService.deleteTimeseriesAndNotify(tenantId, entityId, keys, deleteTsKvQueries, new FutureCallback<>() {
-                @Override
-                public void onSuccess(@Nullable Void tmp) {
-                    logTimeseriesDeleted(user, entityId, keys, deleteFromTs, deleteToTs, null);
-                    result.setResult(new ResponseEntity<>(HttpStatus.OK));
-                }
+            tsSubService.deleteTimeseries(TimeseriesDeleteRequest.builder()
+                    .tenantId(tenantId)
+                    .entityId(entityId)
+                    .keys(keys)
+                    .deleteHistoryQueries(deleteTsKvQueries)
+                    .callback(new FutureCallback<>() {
+                        @Override
+                        public void onSuccess(@Nullable List<String> tmp) {
+                            logTimeseriesDeleted(user, entityId, keys, deleteFromTs, deleteToTs, null);
+                            result.setResult(new ResponseEntity<>(HttpStatus.OK));
+                        }
 
-                @Override
-                public void onFailure(Throwable t) {
-                    logTimeseriesDeleted(user, entityId, keys, deleteFromTs, deleteToTs, t);
-                    result.setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
-                }
-            });
+                        @Override
+                        public void onFailure(Throwable t) {
+                            logTimeseriesDeleted(user, entityId, keys, deleteFromTs, deleteToTs, t);
+                            result.setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+                        }
+                    })
+                    .build());
         });
     }
 
