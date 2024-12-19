@@ -118,6 +118,7 @@ public class EdgeContextComponent {
         map.put(EdgeEventType.NOTIFICATION_RULE, notificationRuleProcessor);
         map.put(EdgeEventType.NOTIFICATION_TARGET, notificationTargetProcessor);
         map.put(EdgeEventType.NOTIFICATION_TEMPLATE, notificationTemplateProcessor);
+        map.put(EdgeEventType.OAUTH2_CLIENT, oAuth2ClientProcessor);
         map.put(EdgeEventType.OTA_PACKAGE, otaPackageProcessor);
         map.put(EdgeEventType.QUEUE, queueProcessor);
         map.put(EdgeEventType.RELATION, relationProcessor);
