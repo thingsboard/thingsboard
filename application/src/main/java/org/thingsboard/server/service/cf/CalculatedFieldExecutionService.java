@@ -29,7 +29,9 @@ public interface CalculatedFieldExecutionService {
 
     void onTelemetryUpdate(TenantId tenantId, EntityId entityId, List<? extends KvEntry> telemetry);
 
-    void onEntityProfileChanged(TransportProtos.EntityProfileUpdateMsgProto proto, TbCallback callback);
+    void onCalculatedFieldStateMsg(TransportProtos.CalculatedFieldStateMsgProto proto, TbCallback callback);
+
+    void onEntityProfileChangedMsg(TransportProtos.EntityProfileUpdateMsgProto proto, TbCallback callback);
 
     void onProfileEntityMsg(TransportProtos.ProfileEntityMsgProto proto, TbCallback callback);
 
