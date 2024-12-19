@@ -16,6 +16,7 @@
 
 import {
   Component,
+  DestroyRef,
   forwardRef,
   HostBinding,
   Input,
@@ -42,6 +43,7 @@ import {
   ScadaSymbolPropertyRowComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-property-row.component';
 import { TranslateService } from '@ngx-translate/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-scada-symbol-metadata-properties',
@@ -85,14 +87,17 @@ export class ScadaSymbolPropertiesComponent implements ControlValueAccessor, OnI
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: UntypedFormBuilder,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
     this.propertiesFormGroup = this.fb.group({
       properties: this.fb.array([])
     });
-    this.propertiesFormGroup.valueChanges.subscribe(
+    this.propertiesFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => {
         let properties: ScadaSymbolProperty[] = this.propertiesFormGroup.get('properties').value;
         if (properties) {

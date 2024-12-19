@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -28,6 +28,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { isNumber } from '@core/utils';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface GpioItem {
   pin: number;
@@ -87,7 +88,8 @@ export class GpioItemComponent extends PageComponent implements OnInit, ControlV
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -101,7 +103,9 @@ export class GpioItemComponent extends PageComponent implements OnInit, ControlV
     if (this.hasColor) {
       this.gpioItemFormGroup.addControl('color', this.fb.control(null, [Validators.required]));
     }
-    this.gpioItemFormGroup.valueChanges.subscribe(() => {
+    this.gpioItemFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }
