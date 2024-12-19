@@ -174,7 +174,12 @@ class TbCheckAlarmStatusNodeTest {
     }
 
     private TbMsg getTbMsg(String msgData) {
-        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, msgData);
+        return TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(msgData)
+                .build();
     }
 
 }

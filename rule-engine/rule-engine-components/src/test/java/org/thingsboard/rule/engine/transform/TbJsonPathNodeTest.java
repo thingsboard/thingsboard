@@ -171,6 +171,12 @@ public class TbJsonPathNodeTest {
         Map<String, String> mdMap = Map.of("country", "US",
                 "city", "NY"
         );
-        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, new TbMsgMetaData(mdMap), data, callback);
+        return TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(entityId)
+                .copyMetaData(new TbMsgMetaData(mdMap))
+                .data(data)
+                .callback(callback)
+                .build();
     }
 }

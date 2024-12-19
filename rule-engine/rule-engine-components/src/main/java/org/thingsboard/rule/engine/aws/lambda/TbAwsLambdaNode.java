@@ -132,14 +132,19 @@ public class TbAwsLambdaNode extends TbAbstractExternalNode {
         TbMsgMetaData metaData = originalMsg.getMetaData().copy();
         metaData.putValue("requestId", invokeResult.getSdkResponseMetadata().getRequestId());
         String data = getPayload(invokeResult);
-        return TbMsg.transformMsg(originalMsg, metaData, data);
+        return originalMsg.transform()
+                .metaData(metaData)
+                .data(data)
+                .build();
     }
 
     private TbMsg processException(TbMsg origMsg, InvokeResult invokeResult, Throwable t) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue("error", t.getClass() + ": " + t.getMessage());
         metaData.putValue("requestId", invokeResult.getSdkResponseMetadata().getRequestId());
-        return TbMsg.transformMsgMetadata(origMsg, metaData);
+        return origMsg.transform()
+                .metaData(metaData)
+                .build();
     }
 
     @Override

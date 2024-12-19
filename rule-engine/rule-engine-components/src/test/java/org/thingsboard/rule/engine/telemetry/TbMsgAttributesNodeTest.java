@@ -164,7 +164,12 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
             md.putValue(NOTIFY_DEVICE_METADATA_KEY, mdValue);
         }
         // dummy list with one ts kv to pass the empty list check.
-        var testTbMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, md, TbMsg.EMPTY_STRING);
+        var testTbMsg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(md)
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         List<AttributeKvEntry> testAttrList = List.of(new BaseAttributeKvEntry(0L, new StringDataEntry("testKey", "testValue")));
 
         node.saveAttr(testAttrList, ctxMock, testTbMsg, AttributeScope.SHARED_SCOPE, false);

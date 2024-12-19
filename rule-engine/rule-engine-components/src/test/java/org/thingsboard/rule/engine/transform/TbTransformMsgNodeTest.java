@@ -61,8 +61,24 @@ public class TbTransformMsgNodeTest {
 
         RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
         RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, null, metaData, TbMsgDataType.JSON,rawJson, ruleChainId, ruleNodeId);
-        TbMsg transformedMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, null, metaData, TbMsgDataType.JSON, "{new}", ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(null)
+                .copyMetaData(metaData)
+                .dataType(TbMsgDataType.JSON)
+                .data(rawJson)
+                .ruleChainId(ruleChainId)
+                .ruleNodeId(ruleNodeId)
+                .build();
+        TbMsg transformedMsg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(null)
+                .copyMetaData(metaData)
+                .dataType(TbMsgDataType.JSON)
+                .data("{new}")
+                .ruleChainId(ruleChainId)
+                .ruleNodeId(ruleNodeId)
+                .build();
         when(scriptEngine.executeUpdateAsync(msg)).thenReturn(Futures.immediateFuture(Collections.singletonList(transformedMsg)));
 
         node.onMsg(ctx, msg);
@@ -81,7 +97,15 @@ public class TbTransformMsgNodeTest {
 
         RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
         RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, null, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(null)
+                .copyMetaData(metaData)
+                .dataType(TbMsgDataType.JSON)
+                .data(rawJson)
+                .ruleChainId(ruleChainId)
+                .ruleNodeId(ruleNodeId)
+                .build();
         when(scriptEngine.executeUpdateAsync(msg)).thenReturn(Futures.immediateFailedFuture(new IllegalStateException("error")));
 
         node.onMsg(ctx, msg);

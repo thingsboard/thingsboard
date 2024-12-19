@@ -107,7 +107,12 @@ class TbSqsNodeTest {
 
         mockSendingMsgRequest();
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(metaData)
+                .data(data)
+                .build();
         node.onMsg(ctxMock, msg);
 
         SendMessageRequest sendMsgRequest = new SendMessageRequest()
@@ -143,7 +148,12 @@ class TbSqsNodeTest {
 
         mockSendingMsgRequest();
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(metaData)
+                .data(data)
+                .build();
         node.onMsg(ctxMock, msg);
 
         Map<String, MessageAttributeValue> messageAttributes = new HashMap<>();
@@ -186,7 +196,12 @@ class TbSqsNodeTest {
         given(sendMessageResultMock.getMD5OfMessageAttributes()).willReturn(messageAttributesMd5);
         given(sendMessageResultMock.getSequenceNumber()).willReturn(sequenceNumber);
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         node.onMsg(ctxMock, msg);
 
         then(ctxMock).should().ack(msg);
@@ -221,7 +236,12 @@ class TbSqsNodeTest {
         ListenableFuture<TbMsg> failedFuture = Futures.immediateFailedFuture(new RuntimeException(errorMsg));
         given(listeningExecutor.executeAsync(any(Callable.class))).willReturn(failedFuture);
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         node.onMsg(ctxMock, msg);
 
         then(ctxMock).should(never()).enqueueForTellNext(any(), any(String.class));

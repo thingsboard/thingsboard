@@ -250,8 +250,14 @@ public class EntityStateSourcingListener {
     private void pushAssignedFromNotification(Tenant currentTenant, TenantId newTenantId, Device assignedDevice) {
         String data = JacksonUtil.toString(JacksonUtil.valueToTree(assignedDevice));
         if (data != null) {
-            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.ENTITY_ASSIGNED_FROM_TENANT, assignedDevice.getId(),
-                    assignedDevice.getCustomerId(), getMetaDataForAssignedFrom(currentTenant), TbMsgDataType.JSON, data);
+            TbMsg tbMsg = TbMsg.newMsg()
+                    .type(TbMsgType.ENTITY_ASSIGNED_FROM_TENANT)
+                    .originator(assignedDevice.getId())
+                    .customerId(assignedDevice.getCustomerId())
+                    .copyMetaData(getMetaDataForAssignedFrom(currentTenant))
+                    .dataType(TbMsgDataType.JSON)
+                    .data(data)
+                    .build();
             tbClusterService.pushMsgToRuleEngine(newTenantId, assignedDevice.getId(), tbMsg, null);
         }
     }

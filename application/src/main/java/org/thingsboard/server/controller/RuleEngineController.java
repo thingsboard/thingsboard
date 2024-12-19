@@ -169,7 +169,14 @@ public class RuleEngineController extends BaseController {
                     metaData.put("serviceId", serviceInfoProvider.getServiceId());
                     metaData.put("requestUUID", requestId.toString());
                     metaData.put("expirationTime", Long.toString(expTime));
-                    TbMsg msg = TbMsg.newMsg(queueName, TbMsgType.REST_API_REQUEST, entityId, currentUser.getCustomerId(), new TbMsgMetaData(metaData), requestBody);
+                    TbMsg msg = TbMsg.newMsg()
+                            .queueName(queueName)
+                            .type(TbMsgType.REST_API_REQUEST)
+                            .originator(entityId)
+                            .customerId(currentUser.getCustomerId())
+                            .copyMetaData(new TbMsgMetaData(metaData))
+                            .data(requestBody)
+                            .build();
                     ruleEngineCallService.processRestApiCallToRuleEngine(currentUser.getTenantId(), requestId, msg, queueName != null,
                             reply -> reply(new LocalRequestMetaData(msg, currentUser, result), reply));
                 }

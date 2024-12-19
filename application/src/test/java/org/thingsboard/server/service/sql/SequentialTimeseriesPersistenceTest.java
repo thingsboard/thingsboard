@@ -131,11 +131,13 @@ public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest 
 
     void saveLatestTsForAssetAndDevice(List<Device> devices, Asset asset, int idx) throws ExecutionException, InterruptedException, TimeoutException {
         for (Device device : devices) {
-            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST,
-                    device.getId(),
-                    getTbMsgMetadata(device.getName(), ts.get(idx)),
-                    TbMsgDataType.JSON,
-                    getTbMsgData(msgValue.get(idx)));
+            TbMsg tbMsg = TbMsg.newMsg()
+                    .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                    .originator(device.getId())
+                    .copyMetaData(getTbMsgMetadata(device.getName(), ts.get(idx)))
+                    .dataType(TbMsgDataType.JSON)
+                    .data(getTbMsgData(msgValue.get(idx)))
+                    .build();
             saveDeviceTsEntry(device.getId(), tbMsg, msgValue.get(idx));
             saveAssetTsEntry(asset, device.getName(), msgValue.get(idx), TbMsgTimeseriesNode.computeTs(tbMsg, configuration.isUseServerTs()));
             idx++;
