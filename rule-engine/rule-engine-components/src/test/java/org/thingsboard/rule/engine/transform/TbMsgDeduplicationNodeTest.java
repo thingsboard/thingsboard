@@ -106,7 +106,7 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
             return TbMsg.newMsg()
                     .type(type)
                     .originator(originator)
-                    .copyMetaData(metaData.copy())
+                    .copyMetaData(metaData)
                     .data(data)
                     .build();
         }).when(ctx).newMsg(isNull(), eq(TbMsgType.DEDUPLICATION_TIMEOUT_SELF_MSG), nullable(EntityId.class), any(TbMsgMetaData.class), any(String.class));
