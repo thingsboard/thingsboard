@@ -26,8 +26,6 @@ import { NotificationRule, TriggerTypeTranslationMap } from '@shared/models/noti
 import { NotificationService } from '@core/http/notification.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
-import { EntityAction } from '@home/models/entity/entity-component.models';
-import { RuleTableHeaderComponent } from '@home/pages/notification/rule/rule-table-header.component';
 import {
   RuleNotificationDialogComponent,
   RuleNotificationDialogData
@@ -36,6 +34,7 @@ import { ActivatedRouteSnapshot } from '@angular/router';
 import { Injectable } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class RuleTableConfigResolver  {
@@ -50,11 +49,13 @@ export class RuleTableConfigResolver  {
 
     this.config.entityType = EntityType.NOTIFICATION_RULE;
     this.config.detailsPanelEnabled = false;
-    this.config.addEnabled = false;
+    this.config.addAsTextButton = true;
     this.config.rowPointer = true;
 
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.NOTIFICATION_RULE);
     this.config.entityResources = {} as EntityTypeResource<NotificationRule>;
+
+    this.config.addEntity = () => this.editRule(null, null, true);
 
     this.config.entitiesFetchFunction = pageLink => this.notificationService.getNotificationRules(pageLink);
 
@@ -65,13 +66,15 @@ export class RuleTableConfigResolver  {
     this.config.deleteEntity = id => this.notificationService.deleteNotificationRule(id.id);
 
     this.config.cellActionDescriptors = this.configureCellActions();
-    this.config.headerComponent = RuleTableHeaderComponent;
-    this.config.onEntityAction = action => this.onTargetAction(action);
 
     this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
     this.config.handleRowClick = ($event, rule) => {
-      this.editRule($event, rule);
+      this.editRule($event, rule).subscribe((res) => {
+        if (res) {
+          this.config.updateData();
+        }
+      });
       return true;
     };
 
@@ -88,7 +91,7 @@ export class RuleTableConfigResolver  {
     );
   }
 
-  resolve(route: ActivatedRouteSnapshot): EntityTableConfig<NotificationRule> {
+  resolve(_route: ActivatedRouteSnapshot): EntityTableConfig<NotificationRule> {
     return this.config;
   }
 
@@ -110,11 +113,9 @@ export class RuleTableConfigResolver  {
     }];
   }
 
-  private editRule($event: Event, rule: NotificationRule, isAdd = false, isCopy = false) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.dialog.open<RuleNotificationDialogComponent, RuleNotificationDialogData,
+  private editRule($event: Event, rule: NotificationRule, isAdd = false, isCopy = false): Observable<NotificationRule> {
+    $event?.stopPropagation();
+    return this.dialog.open<RuleNotificationDialogComponent, RuleNotificationDialogData,
       NotificationRule>(RuleNotificationDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
@@ -123,21 +124,7 @@ export class RuleTableConfigResolver  {
         isCopy,
         rule
       }
-    }).afterClosed()
-      .subscribe((res) => {
-        if (res) {
-          this.config.updateData();
-        }
-      });
-  }
-
-  private onTargetAction(action: EntityAction<NotificationRule>): boolean {
-    switch (action.action) {
-      case 'add':
-        this.editRule(action.event, action.entity, true);
-        return true;
-    }
-    return false;
+    }).afterClosed();
   }
 
   private toggleEnableMode($event: Event, rule: NotificationRule): void {
