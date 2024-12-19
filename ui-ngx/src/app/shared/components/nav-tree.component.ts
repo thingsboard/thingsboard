@@ -149,7 +149,7 @@ export class NavTreeComponent implements OnInit {
 
       this.treeElement = $('.tb-nav-tree-container', this.elementRef.nativeElement).jstree(config);
 
-      this.treeElement.on('changed.jstree', (e: any, data) => {
+      this.treeElement.on('select_node.jstree', (e: any, data) => {
         const node: NavTreeNode = data.instance.get_selected(true)[0];
         if (this.onNodeSelected) {
           this.ngZone.run(() => this.onNodeSelected(node, e as Event));
