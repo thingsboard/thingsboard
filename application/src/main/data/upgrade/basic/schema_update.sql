@@ -193,6 +193,17 @@ $$
     END;
 $$;
 
+-- update constraint name
+DO
+$$
+    BEGIN
+        ALTER TABLE domain DROP CONSTRAINT IF EXISTS domain_unq_key;
+        IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'domain_name_key') THEN
+            ALTER TABLE domain ADD CONSTRAINT domain_name_key UNIQUE (name);
+        END IF;
+    END;
+$$;
+
 -- UPDATE RESOURCE JS_MODULE SUB TYPE START
 
 UPDATE resource SET resource_sub_type = 'EXTENSION' WHERE resource_type = 'JS_MODULE' AND resource_sub_type IS NULL;
