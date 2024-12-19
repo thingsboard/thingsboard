@@ -1493,9 +1493,7 @@ swagger:
 
 # Queue configuration parameters
 queue:
-  # in-memory or kafka (Apache Kafka). The following queue types are deprecated and will no longer be supported in ThingsBoard 4.0:
-  # aws-sqs (AWS SQS), pubsub (PubSub), service-bus (Azure Service Bus), rabbitmq (RabbitMQ)
-  type: "${TB_QUEUE_TYPE:in-memory}"
+  type: "${TB_QUEUE_TYPE:in-memory}" # in-memory or kafka (Apache Kafka)
   prefix: "${TB_QUEUE_PREFIX:}" # Global queue prefix. If specified, prefix is added before default topic name: 'prefix.default_topic_name'. Prefix is applied to all topics (and consumer groups for kafka).
   in_memory:
     stats:
@@ -1624,122 +1622,6 @@ queue:
       print-interval-ms: "${TB_QUEUE_KAFKA_CONSUMER_STATS_MIN_PRINT_INTERVAL_MS:60000}"
       # Time to wait for the stats-loading requests to Kafka to finish
       kafka-response-timeout-ms: "${TB_QUEUE_KAFKA_CONSUMER_STATS_RESPONSE_TIMEOUT_MS:1000}"
-  aws_sqs:
-    # Use the default credentials provider for AWS SQS
-    use_default_credential_provider_chain: "${TB_QUEUE_AWS_SQS_USE_DEFAULT_CREDENTIAL_PROVIDER_CHAIN:false}"
-    # Access key ID from AWS IAM user
-    access_key_id: "${TB_QUEUE_AWS_SQS_ACCESS_KEY_ID:YOUR_KEY}"
-    # Secret access key from AWS IAM user
-    secret_access_key: "${TB_QUEUE_AWS_SQS_SECRET_ACCESS_KEY:YOUR_SECRET}"
-    # Region from AWS account
-    region: "${TB_QUEUE_AWS_SQS_REGION:YOUR_REGION}"
-    # Number of threads per each AWS SQS queue in consumer
-    threads_per_topic: "${TB_QUEUE_AWS_SQS_THREADS_PER_TOPIC:1}"
-    # Thread pool size for aws_sqs queue producer executor provider. Default value equals to AmazonSQSAsyncClient.DEFAULT_THREAD_POOL_SIZE
-    producer_thread_pool_size: "${TB_QUEUE_AWS_SQS_EXECUTOR_THREAD_POOL_SIZE:50}"
-    queue-properties:
-      # AWS SQS queue properties. VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
-      rule-engine: "${TB_QUEUE_AWS_SQS_RE_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
-      # AWS SQS queue properties. VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
-      core: "${TB_QUEUE_AWS_SQS_CORE_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
-      # AWS SQS queue properties. VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
-      transport-api: "${TB_QUEUE_AWS_SQS_TA_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
-      # AWS SQS queue properties. VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
-      notifications: "${TB_QUEUE_AWS_SQS_NOTIFICATIONS_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
-      # VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800
-      js-executor: "${TB_QUEUE_AWS_SQS_JE_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
-      # VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
-      ota-updates: "${TB_QUEUE_AWS_SQS_OTA_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
-      # VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
-      version-control: "${TB_QUEUE_AWS_SQS_VC_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
-      # VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
-      edge: "${TB_QUEUE_AWS_SQS_EDGE_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
-  pubsub:
-    # Project ID from Google Cloud
-    project_id: "${TB_QUEUE_PUBSUB_PROJECT_ID:YOUR_PROJECT_ID}"
-    # API Credentials in JSON format
-    service_account: "${TB_QUEUE_PUBSUB_SERVICE_ACCOUNT:YOUR_SERVICE_ACCOUNT}"
-    # Message size for PubSub queue.Value in bytes
-    max_msg_size: "${TB_QUEUE_PUBSUB_MAX_MSG_SIZE:1048576}"
-    # Number of messages per consumer
-    max_messages: "${TB_QUEUE_PUBSUB_MAX_MESSAGES:1000}"
-    # Thread pool size for pubsub queue executor provider. If set to 0 - default pubsub executor provider value will be used (5 * number of available processors)
-    executor_thread_pool_size: "${TB_QUEUE_PUBSUB_EXECUTOR_THREAD_POOL_SIZE:0}"
-    queue-properties:
-      # Pub/Sub properties for Rule Engine subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
-      rule-engine: "${TB_QUEUE_PUBSUB_RE_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
-      # Pub/Sub properties for Core subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
-      core: "${TB_QUEUE_PUBSUB_CORE_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
-      # Pub/Sub properties for Transport API subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
-      transport-api: "${TB_QUEUE_PUBSUB_TA_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
-      # Pub/Sub properties for Version Control subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
-      notifications: "${TB_QUEUE_PUBSUB_NOTIFICATIONS_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
-      # PubSub queue properties
-      js-executor: "${TB_QUEUE_PUBSUB_JE_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
-      # Pub/Sub properties for Transport Api subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
-      version-control: "${TB_QUEUE_PUBSUB_VC_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
-      # Pub/Sub properties for Edge subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
-      edge: "${TB_QUEUE_PUBSUB_EDGE_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
-  service_bus:
-    # Azure namespace
-    namespace_name: "${TB_QUEUE_SERVICE_BUS_NAMESPACE_NAME:YOUR_NAMESPACE_NAME}"
-    # Azure Service Bus Shared Access Signatures key name
-    sas_key_name: "${TB_QUEUE_SERVICE_BUS_SAS_KEY_NAME:YOUR_SAS_KEY_NAME}"
-    # Azure Service Bus Shared Access Signatures key
-    sas_key: "${TB_QUEUE_SERVICE_BUS_SAS_KEY:YOUR_SAS_KEY}"
-    # Number of messages per a consumer
-    max_messages: "${TB_QUEUE_SERVICE_BUS_MAX_MESSAGES:1000}"
-    queue-properties:
-      # Azure Service Bus properties for Rule Engine queues
-      rule-engine: "${TB_QUEUE_SERVICE_BUS_RE_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
-      # Azure Service Bus properties for Core queues
-      core: "${TB_QUEUE_SERVICE_BUS_CORE_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
-      # Azure Service Bus properties for Transport Api queues
-      transport-api: "${TB_QUEUE_SERVICE_BUS_TA_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
-      # Azure Service Bus properties for Notification queues
-      notifications: "${TB_QUEUE_SERVICE_BUS_NOTIFICATIONS_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
-      # Azure Service Bus queue properties
-      js-executor: "${TB_QUEUE_SERVICE_BUS_JE_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
-      # Azure Service Bus properties for Version Control queues
-      version-control: "${TB_QUEUE_SERVICE_BUS_VC_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
-      # Azure Service Bus properties for Edge queues
-      edge: "${TB_QUEUE_SERVICE_BUS_EDGE_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
-  rabbitmq:
-    # By default empty
-    exchange_name: "${TB_QUEUE_RABBIT_MQ_EXCHANGE_NAME:}"
-    # RabbitMQ host used to establish connection
-    host: "${TB_QUEUE_RABBIT_MQ_HOST:localhost}"
-    # RabbitMQ host used to establish a connection
-    port: "${TB_QUEUE_RABBIT_MQ_PORT:5672}"
-    # Virtual hosts provide logical grouping and separation of resources
-    virtual_host: "${TB_QUEUE_RABBIT_MQ_VIRTUAL_HOST:/}"
-    # Username for RabbitMQ user account
-    username: "${TB_QUEUE_RABBIT_MQ_USERNAME:YOUR_USERNAME}"
-    # User password for RabbitMQ user account
-    password: "${TB_QUEUE_RABBIT_MQ_PASSWORD:YOUR_PASSWORD}"
-    # Network connection between clients and RabbitMQ nodes can fail. RabbitMQ Java client supports automatic recovery of connections and topology (queues, exchanges, bindings, and consumers)
-    automatic_recovery_enabled: "${TB_QUEUE_RABBIT_MQ_AUTOMATIC_RECOVERY_ENABLED:false}"
-    # The connection timeout for the RabbitMQ connection factory
-    connection_timeout: "${TB_QUEUE_RABBIT_MQ_CONNECTION_TIMEOUT:60000}"
-    # RabbitMQ has a timeout for connection handshake. When clients run in heavily constrained environments, it may be necessary to increase the timeout
-    handshake_timeout: "${TB_QUEUE_RABBIT_MQ_HANDSHAKE_TIMEOUT:10000}"
-    # The maximum number of messages returned in a single call of doPoll() method
-    max_poll_messages: "${TB_QUEUE_RABBIT_MQ_MAX_POLL_MESSAGES:1}"
-    queue-properties:
-      # RabbitMQ properties for Rule Engine queues
-      rule-engine: "${TB_QUEUE_RABBIT_MQ_RE_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
-      # RabbitMQ properties for Core queues
-      core: "${TB_QUEUE_RABBIT_MQ_CORE_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
-      # RabbitMQ properties for Transport API queues
-      transport-api: "${TB_QUEUE_RABBIT_MQ_TA_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
-      # RabbitMQ properties for Notification queues
-      notifications: "${TB_QUEUE_RABBIT_MQ_NOTIFICATIONS_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
-      # RabbitMQ queue properties
-      js-executor: "${TB_QUEUE_RABBIT_MQ_JE_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
-      # RabbitMQ properties for Version Control queues
-      version-control: "${TB_QUEUE_RABBIT_MQ_VC_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
-      # RabbitMQ properties for Edge queues
-      edge: "${TB_QUEUE_RABBIT_MQ_EDGE_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
   partitions:
     hash_function_name: "${TB_QUEUE_PARTITIONS_HASH_FUNCTION_NAME:murmur3_128}" # murmur3_32, murmur3_128 or sha256
   transport_api:
@@ -1760,7 +1642,7 @@ queue:
     # Interval in milliseconds to poll api response from transport microservices
     response_poll_interval: "${TB_QUEUE_TRANSPORT_RESPONSE_POLL_INTERVAL_MS:25}"
   core:
-    # Default topic name of Kafka, RabbitMQ, etc. queue
+    # Default topic name
     topic: "${TB_QUEUE_CORE_TOPIC:tb_core}"
     # Interval in milliseconds to poll messages by Core microservices
     poll-interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
@@ -1777,7 +1659,7 @@ queue:
       pack-interval-ms: "${TB_QUEUE_CORE_OTA_PACK_INTERVAL_MS:60000}"
       # The size of OTA updates notifications fetched from the queue. The queue stores pairs of firmware and device ids
       pack-size: "${TB_QUEUE_CORE_OTA_PACK_SIZE:100}"
-    # Stats topic name for queue Kafka, RabbitMQ, etc.
+    # Stats topic name
     usage-stats-topic: "${TB_QUEUE_US_TOPIC:tb_usage_stats}"
     stats:
       # Enable/disable statistics for Core microservices
@@ -1808,7 +1690,7 @@ queue:
         print-interval-ms: "${TB_HOUSEKEEPER_STATS_PRINT_INTERVAL_MS:60000}"
 
   vc:
-    # Default topic name for Kafka, RabbitMQ, etc.
+    # Default topic name
     topic: "${TB_QUEUE_VC_TOPIC:tb_version_control}"
     # Number of partitions to associate with this queue. Used for scaling the number of messages that can be processed in parallel
     partitions: "${TB_QUEUE_VC_PARTITIONS:10}"
@@ -1818,7 +1700,7 @@ queue:
     pack-processing-timeout: "${TB_QUEUE_VC_PACK_PROCESSING_TIMEOUT_MS:180000}"
     # Timeout for a request to VC-executor (for a request for the version of the entity, for a commit charge, etc.)
     request-timeout: "${TB_QUEUE_VC_REQUEST_TIMEOUT:180000}"
-    # Queue settings for Kafka, RabbitMQ, etc. Limit for single message size
+    # Limit for single queue message size
     msg-chunk-size: "${TB_QUEUE_VC_MSG_CHUNK_SIZE:250000}"
   js:
     # JS Eval request topic
@@ -1859,7 +1741,7 @@ queue:
     # Interval in milliseconds to poll messages
     poll_interval: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_POLL_INTERVAL_MS:25}"
   edge:
-    # Default topic name for Kafka, RabbitMQ, etc.
+    # Default topic name
     topic: "${TB_QUEUE_EDGE_TOPIC:tb_edge}"
     # Amount of partitions used by Edge services
     partitions: "${TB_QUEUE_EDGE_PARTITIONS:10}"
