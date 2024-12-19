@@ -18,6 +18,7 @@ package org.thingsboard.server.service.edge.rpc.processor.device;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -40,7 +41,7 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
         boolean deviceNameUpdated = false;
         deviceCreationLock.lock();
         try {
-            Device device = constructDeviceFromUpdateMsg(tenantId, deviceId, deviceUpdateMsg);
+            Device device =JacksonUtil.fromString(deviceUpdateMsg.getEntity(), Device.class, true);
             if (device == null) {
                 throw new RuntimeException("[{" + tenantId + "}] deviceUpdateMsg {" + deviceUpdateMsg + "} cannot be converted to device");
             }
@@ -78,7 +79,7 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
     }
 
     protected void updateDeviceCredentials(TenantId tenantId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg) {
-        DeviceCredentials deviceCredentials = constructDeviceCredentialsFromUpdateMsg(tenantId, deviceCredentialsUpdateMsg);
+        DeviceCredentials deviceCredentials = JacksonUtil.fromString(deviceCredentialsUpdateMsg.getEntity(), DeviceCredentials.class, true);
         if (deviceCredentials == null) {
             throw new RuntimeException("[{" + tenantId + "}] deviceCredentialsUpdateMsg {" + deviceCredentialsUpdateMsg + "} cannot be converted to device credentials");
         }
@@ -107,10 +108,6 @@ public abstract class BaseDeviceProcessor extends BaseEdgeProcessor {
         }
     }
 
-    protected abstract Device constructDeviceFromUpdateMsg(TenantId tenantId, DeviceId deviceId, DeviceUpdateMsg deviceUpdateMsg);
-
     protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, Device device, DeviceUpdateMsg deviceUpdateMsg);
-
-    protected abstract DeviceCredentials constructDeviceCredentialsFromUpdateMsg(TenantId tenantId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg);
 
 }

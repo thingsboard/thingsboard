@@ -70,7 +70,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.thingsboard.server.dao.edge.BaseRelatedEdgesService.RELATED_EDGES_CACHE_ITEMS;
 
 @Slf4j
-public abstract class BaseEdgeProcessor {
+public abstract class BaseEdgeProcessor implements EdgeProcessor {
 
     protected static final Lock deviceCreationLock = new ReentrantLock();
     protected static final Lock assetCreationLock = new ReentrantLock();
@@ -187,6 +187,7 @@ public abstract class BaseEdgeProcessor {
         };
     }
 
+    @Override
     public ListenableFuture<Void> processEntityNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
         EdgeEventType type = EdgeEventType.valueOf(edgeNotificationMsg.getType());
         EdgeEventActionType actionType = EdgeEventActionType.valueOf(edgeNotificationMsg.getAction());

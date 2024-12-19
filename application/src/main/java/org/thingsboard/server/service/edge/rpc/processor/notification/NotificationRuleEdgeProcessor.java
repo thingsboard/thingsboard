@@ -13,53 +13,56 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.rpc.processor.widget;
+package org.thingsboard.server.service.edge.rpc.processor.notification;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.id.WidgetsBundleId;
-import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.common.data.id.NotificationRuleId;
+import org.thingsboard.server.common.data.notification.rule.NotificationRule;
+import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
+import org.thingsboard.server.gen.edge.v1.NotificationRuleUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
-import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
-import java.util.List;
-
-@Component
 @Slf4j
+@Component
 @TbCoreComponent
-public class WidgetBundleEdgeProcessor extends BaseEdgeProcessor {
+public class NotificationRuleEdgeProcessor extends BaseEdgeProcessor {
+
+    @Autowired
+    private NotificationRuleService notificationRuleService;
 
     @Override
     public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
-        WidgetsBundleId widgetsBundleId = new WidgetsBundleId(edgeEvent.getEntityId());
+        NotificationRuleId notificationRuleId = new NotificationRuleId(edgeEvent.getEntityId());
+        DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED -> {
-                WidgetsBundle widgetsBundle = edgeCtx.getWidgetsBundleService().findWidgetsBundleById(edgeEvent.getTenantId(), widgetsBundleId);
-                if (widgetsBundle != null) {
-                    List<String> widgets = edgeCtx.getWidgetTypeService().findWidgetFqnsByWidgetsBundleId(edgeEvent.getTenantId(), widgetsBundleId);
+                NotificationRule notificationRule = notificationRuleService.findNotificationRuleById(edgeEvent.getTenantId(), notificationRuleId);
+                if (notificationRule != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    WidgetsBundleUpdateMsg widgetsBundleUpdateMsg = EdgeMsgConstructorUtils.constructWidgetsBundleUpdateMsg(msgType, widgetsBundle, widgets);
-                    return DownlinkMsg.newBuilder()
+                    NotificationRuleUpdateMsg notificationRuleUpdateMsg = EdgeMsgConstructorUtils.constructNotificationRuleUpdateMsg(msgType, notificationRule);
+                    downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
+                            .addNotificationRuleUpdateMsg(notificationRuleUpdateMsg)
                             .build();
                 }
             }
             case DELETED -> {
-                WidgetsBundleUpdateMsg widgetsBundleUpdateMsg = EdgeMsgConstructorUtils.constructWidgetsBundleDeleteMsg(widgetsBundleId);
-                return DownlinkMsg.newBuilder()
+                NotificationRuleUpdateMsg notificationRuleUpdateMsg = EdgeMsgConstructorUtils.constructNotificationRuleDeleteMsg(notificationRuleId);
+                downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
+                        .addNotificationRuleUpdateMsg(notificationRuleUpdateMsg)
                         .build();
             }
         }
-        return null;
+        return downlinkMsg;
     }
 
 }

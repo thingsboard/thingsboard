@@ -13,49 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.rpc.processor.widget;
+package org.thingsboard.server.service.edge.rpc.processor.oauth2;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.id.WidgetsBundleId;
-import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
+import org.thingsboard.server.gen.edge.v1.OAuth2ClientUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
-import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
-import java.util.List;
-
-@Component
 @Slf4j
+@Component
 @TbCoreComponent
-public class WidgetBundleEdgeProcessor extends BaseEdgeProcessor {
+public class OAuth2ClientEdgeProcessor extends BaseEdgeProcessor {
 
     @Override
     public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
-        WidgetsBundleId widgetsBundleId = new WidgetsBundleId(edgeEvent.getEntityId());
+        OAuth2ClientId oAuth2ClientId = new OAuth2ClientId(edgeEvent.getEntityId());
+
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED -> {
-                WidgetsBundle widgetsBundle = edgeCtx.getWidgetsBundleService().findWidgetsBundleById(edgeEvent.getTenantId(), widgetsBundleId);
-                if (widgetsBundle != null) {
-                    List<String> widgets = edgeCtx.getWidgetTypeService().findWidgetFqnsByWidgetsBundleId(edgeEvent.getTenantId(), widgetsBundleId);
+                boolean isPropagateToEdge = edgeCtx.getOAuth2ClientService().isPropagateOAuth2ClientToEdge(edgeEvent.getTenantId(), oAuth2ClientId);
+                if (!isPropagateToEdge) {
+                    return null;
+                }
+                OAuth2Client oAuth2Client = edgeCtx.getOAuth2ClientService().findOAuth2ClientById(edgeEvent.getTenantId(), oAuth2ClientId);
+                if (oAuth2Client != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    WidgetsBundleUpdateMsg widgetsBundleUpdateMsg = EdgeMsgConstructorUtils.constructWidgetsBundleUpdateMsg(msgType, widgetsBundle, widgets);
+                    OAuth2ClientUpdateMsg oAuth2ClientUpdateMsg = EdgeMsgConstructorUtils.constructOAuth2ClientUpdateMsg(msgType, oAuth2Client);
                     return DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
+                            .addOAuth2ClientUpdateMsg(oAuth2ClientUpdateMsg)
                             .build();
                 }
             }
             case DELETED -> {
-                WidgetsBundleUpdateMsg widgetsBundleUpdateMsg = EdgeMsgConstructorUtils.constructWidgetsBundleDeleteMsg(widgetsBundleId);
+                OAuth2ClientUpdateMsg oAuth2ClientDeleteMsg = EdgeMsgConstructorUtils.constructOAuth2ClientDeleteMsg(oAuth2ClientId);
                 return DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
+                        .addOAuth2ClientUpdateMsg(oAuth2ClientDeleteMsg)
                         .build();
             }
         }
