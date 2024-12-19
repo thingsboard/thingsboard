@@ -64,7 +64,7 @@ public interface ImageService {
 
     boolean updateImagesUsage(WidgetTypeDetails widgetType);
 
-    void inlineImage(HasImage entity);
+    <T extends HasImage> T inlineImage(T entity);
 
     Collection<TbResourceInfo> getUsedImages(Dashboard dashboard);
 

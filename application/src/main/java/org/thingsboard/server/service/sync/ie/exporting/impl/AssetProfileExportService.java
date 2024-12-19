@@ -34,7 +34,6 @@ public class AssetProfileExportService extends BaseEntityExportService<AssetProf
         assetProfile.setDefaultDashboardId(getExternalIdOrElseInternal(ctx, assetProfile.getDefaultDashboardId()));
         assetProfile.setDefaultRuleChainId(getExternalIdOrElseInternal(ctx, assetProfile.getDefaultRuleChainId()));
         assetProfile.setDefaultEdgeRuleChainId(getExternalIdOrElseInternal(ctx, assetProfile.getDefaultEdgeRuleChainId()));
-        imageService.inlineImage(assetProfile);
     }
 
     @Override
