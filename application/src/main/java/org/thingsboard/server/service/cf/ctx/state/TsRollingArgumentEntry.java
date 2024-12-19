@@ -16,18 +16,26 @@
 package org.thingsboard.server.service.cf.ctx.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.math.NumberUtils;
 
+import java.util.Map;
 import java.util.TreeMap;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
+@Slf4j
 public class TsRollingArgumentEntry implements ArgumentEntry {
 
-    private TreeMap<Long, Object> tsRecords;
+    private static final int MAX_ROLLING_ARGUMENT_ENTRY_SIZE = 1000;
+
+    private TreeMap<Long, Object> tsRecords = new TreeMap<>();
+
+    public TsRollingArgumentEntry(TreeMap<Long, Object> tsRecords) {
+        addAllTsRecords(tsRecords);
+    }
 
     @Override
     public ArgumentType getType() {
@@ -38,6 +46,33 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
     @Override
     public Object getValue() {
         return tsRecords;
+    }
+
+    @Override
+    public boolean hasUpdatedValue(ArgumentEntry entry) {
+        return !tsRecords.containsKey(((SingleValueArgumentEntry) entry).getTs());
+    }
+
+    @Override
+    public ArgumentEntry copy() {
+        return new TsRollingArgumentEntry(new TreeMap<>(tsRecords));
+    }
+
+    public void addTsRecord(Long key, Object value) {
+        if (NumberUtils.isParsable(value.toString())) {
+            tsRecords.put(key, value);
+            if (tsRecords.size() > MAX_ROLLING_ARGUMENT_ENTRY_SIZE) {
+                tsRecords.pollFirstEntry();
+            }
+        } else {
+            log.warn("Argument type 'TS_ROLLING' only supports numeric values.");
+        }
+    }
+
+    public void addAllTsRecords(Map<Long, Object> newRecords) {
+        for (Map.Entry<Long, Object> entry : newRecords.entrySet()) {
+            addTsRecord(entry.getKey(), entry.getValue());
+        }
     }
 
 }

@@ -41,6 +41,8 @@ public interface ArgumentEntry {
 
     Object getValue();
 
+    boolean hasUpdatedValue(ArgumentEntry entry);
+
     static ArgumentEntry createSingleValueArgument(KvEntry kvEntry) {
         return new SingleValueArgumentEntry(kvEntry);
     }
@@ -49,5 +51,8 @@ public interface ArgumentEntry {
         return new TsRollingArgumentEntry(kvEntries.stream().
                 collect(Collectors.toMap(TsKvEntry::getTs, TsKvEntry::getValue, (oldValue, newValue) -> newValue, TreeMap::new)));
     }
+
+    @JsonIgnore
+    ArgumentEntry copy();
 
 }
