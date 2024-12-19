@@ -738,7 +738,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
                     .setTenantIdMSB(tenantId.getMostSignificantBits())
                     .setTenantIdLSB(tenantId.getLeastSignificantBits())
                     .addRelationTypes("Success")
-                    .setTbMsg(TbMsg.toByteString(tbMsg))
+                    .setTbMsgProto(TbMsg.toProto(tbMsg))
                     .build());
         }
 

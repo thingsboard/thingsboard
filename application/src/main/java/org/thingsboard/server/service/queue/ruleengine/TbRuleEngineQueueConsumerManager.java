@@ -170,7 +170,7 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
                 new TbMsgPackCallback(id, tenantId, packCtx, stats.getTimer(tenantId, SUCCESSFUL_STATUS), stats.getTimer(tenantId, FAILED_STATUS)) :
                 new TbMsgPackCallback(id, tenantId, packCtx);
         try {
-            if (!toRuleEngineMsg.getTbMsg().isEmpty()) {
+            if (!toRuleEngineMsg.getTbMsg().isEmpty() || toRuleEngineMsg.getTbMsgProto().isInitialized()) {
                 forwardToRuleEngineActor(config.getName(), tenantId, toRuleEngineMsg, callback);
             } else {
                 callback.onSuccess();
@@ -181,7 +181,7 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
     }
 
     private void forwardToRuleEngineActor(String queueName, TenantId tenantId, ToRuleEngineMsg toRuleEngineMsg, TbMsgCallback callback) {
-        TbMsg tbMsg = TbMsg.fromBytes(queueName, toRuleEngineMsg.getTbMsg().toByteArray(), callback);
+        TbMsg tbMsg = TbMsg.fromProto(queueName, toRuleEngineMsg.getTbMsgProto(), toRuleEngineMsg.getTbMsg(), callback);
         QueueToRuleEngineMsg msg;
         ProtocolStringList relationTypesList = toRuleEngineMsg.getRelationTypesList();
         Set<String> relationTypes;
@@ -199,7 +199,7 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
         log.info("[{}] {} to process [{}] messages", queueKey, prefix, map.size());
         for (Map.Entry<UUID, TbProtoQueueMsg<ToRuleEngineMsg>> pending : map.entrySet()) {
             ToRuleEngineMsg tmp = pending.getValue().getValue();
-            TbMsg tmpMsg = TbMsg.fromBytes(config.getName(), tmp.getTbMsg().toByteArray(), TbMsgCallback.EMPTY);
+            TbMsg tmpMsg = TbMsg.fromProto(config.getName(), tmp.getTbMsgProto(), tmp.getTbMsg(), TbMsgCallback.EMPTY);
             RuleNodeInfo ruleNodeInfo = ctx.getLastVisitedRuleNode(pending.getKey());
             if (printAll) {
                 log.trace("[{}][{}] {} to process message: {}, Last Rule Node: {}", queueKey, TenantId.fromUUID(new UUID(tmp.getTenantIdMSB(), tmp.getTenantIdLSB())), prefix, tmpMsg, ruleNodeInfo);
@@ -228,7 +228,13 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
                     }
                     for (TbProtoQueueMsg<ToRuleEngineMsg> msg : msgs) {
                         try {
-                            MsgProtos.TbMsgProto tbMsgProto = MsgProtos.TbMsgProto.parseFrom(msg.getValue().getTbMsg().toByteArray());
+                            MsgProtos.TbMsgProto tbMsgProto;
+                            if (msg.getValue().getTbMsg().isEmpty()) {
+                                tbMsgProto = msg.getValue().getTbMsgProto();
+                            } else {
+                                tbMsgProto = MsgProtos.TbMsgProto.parseFrom(msg.getValue().getTbMsg());
+                            }
+
                             EntityId originator = EntityIdFactory.getByTypeAndUuid(tbMsgProto.getEntityType(), new UUID(tbMsgProto.getEntityIdMSB(), tbMsgProto.getEntityIdLSB()));
 
                             TopicPartitionInfo tpi = ctx.getPartitionService().resolve(ServiceType.TB_RULE_ENGINE, config.getName(), TenantId.SYS_TENANT_ID, originator);
