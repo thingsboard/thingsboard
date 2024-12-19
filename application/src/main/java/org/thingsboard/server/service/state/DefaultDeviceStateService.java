@@ -861,7 +861,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     .type(msgType)
                     .originator(stateData.getDeviceId())
                     .customerId(stateData.getCustomerId())
-                    .metaData(md.copy())
+                    .copyMetaData(md)
                     .dataType(TbMsgDataType.JSON)
                     .data(data)
                     .build();

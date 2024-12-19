@@ -47,7 +47,7 @@ class TbCheckMessageNodeTest {
     private static final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg()
             .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
             .originator(DEVICE_ID)
-            .metaData(TbMsgMetaData.EMPTY.copy())
+            .copyMetaData(TbMsgMetaData.EMPTY)
             .data(TbMsg.EMPTY_JSON_OBJECT)
             .build();
 
@@ -204,7 +204,7 @@ class TbCheckMessageNodeTest {
         return TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(DEVICE_ID)
-                .metaData(metadata.copy())
+                .copyMetaData(metadata)
                 .data(data)
                 .build();
     }

@@ -213,10 +213,9 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
                     .type(TbMsgType.POST_TELEMETRY_REQUEST)
                     .originator(entityId)
                     .customerId(customerId)
-                    .metaData(metaData.copy())
+                    .copyMetaData(metaData)
                     .data(gson.toJson(json))
                     .ruleChainId(defaultQueueAndRuleChain.getValue())
-                    .ruleNodeId(null)
                     .build();
             edgeCtx.getClusterService().pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
                 @Override
@@ -266,10 +265,9 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(entityId)
                 .customerId(customerId)
-                .metaData(metaData.copy())
+                .copyMetaData(metaData)
                 .data(gson.toJson(json))
                 .ruleChainId(defaultQueueAndRuleChain.getValue())
-                .ruleNodeId(null)
                 .build();
         edgeCtx.getClusterService().pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
             @Override
@@ -304,10 +302,9 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
                         .type(TbMsgType.ATTRIBUTES_UPDATED)
                         .originator(entityId)
                         .customerId(customerId)
-                        .metaData(metaData.copy())
+                        .copyMetaData(metaData)
                         .data(gson.toJson(json))
                         .ruleChainId(defaultQueueAndRuleChain.getValue())
-                        .ruleNodeId(null)
                         .build();
                 edgeCtx.getClusterService().pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
                     @Override

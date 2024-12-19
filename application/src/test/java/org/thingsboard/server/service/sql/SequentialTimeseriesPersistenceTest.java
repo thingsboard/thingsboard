@@ -134,7 +134,7 @@ public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest 
             TbMsg tbMsg = TbMsg.newMsg()
                     .type(TbMsgType.POST_TELEMETRY_REQUEST)
                     .originator(device.getId())
-                    .metaData(getTbMsgMetadata(device.getName(), ts.get(idx)).copy())
+                    .copyMetaData(getTbMsgMetadata(device.getName(), ts.get(idx)))
                     .dataType(TbMsgDataType.JSON)
                     .data(getTbMsgData(msgValue.get(idx)))
                     .build();

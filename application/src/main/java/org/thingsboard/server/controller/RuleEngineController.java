@@ -174,7 +174,7 @@ public class RuleEngineController extends BaseController {
                             .type(TbMsgType.REST_API_REQUEST)
                             .originator(entityId)
                             .customerId(currentUser.getCustomerId())
-                            .metaData(new TbMsgMetaData(metaData).copy())
+                            .copyMetaData(new TbMsgMetaData(metaData))
                             .data(requestBody)
                             .build();
                     ruleEngineCallService.processRestApiCallToRuleEngine(currentUser.getTenantId(), requestId, msg, queueName != null,

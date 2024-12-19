@@ -172,7 +172,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(msgData)
                 .build();
 
@@ -192,7 +192,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_ARRAY)
                 .build();
 
@@ -213,7 +213,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
 
@@ -242,7 +242,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(msgData)
                 .build();
 
@@ -277,7 +277,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(msgData)
                 .build();
 
@@ -312,7 +312,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(msgData)
                 .build();
 
@@ -351,7 +351,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         var firstMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
-                .metaData(firstMsgMetaData.copy())
+                .copyMetaData(firstMsgMetaData)
                 .data(msgData)
                 .build();
 
@@ -382,7 +382,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         var secondMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
-                .metaData(secondMsgMetaData.copy())
+                .copyMetaData(secondMsgMetaData)
                 .data(msgData)
                 .build();
 
@@ -418,7 +418,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(msgData)
                 .build();
 
@@ -451,7 +451,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(msgData)
                 .build();
 
@@ -488,7 +488,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(msgData)
                 .build();
 
@@ -517,7 +517,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(msgData)
                 .build();
 
@@ -547,7 +547,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(msgData)
                 .build();
 
@@ -577,7 +577,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(msgData)
                 .build();
 
@@ -625,7 +625,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
             return TbMsg.newMsg()
                     .type(TbMsgType.POST_TELEMETRY_REQUEST)
                     .originator(DUMMY_DEVICE_ORIGINATOR)
-                    .metaData(TbMsgMetaData.EMPTY.copy())
+                    .copyMetaData(TbMsgMetaData.EMPTY)
                     .data(msgData)
                     .build();
         }).toList();
@@ -675,7 +675,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(msgData)
                 .build();
 

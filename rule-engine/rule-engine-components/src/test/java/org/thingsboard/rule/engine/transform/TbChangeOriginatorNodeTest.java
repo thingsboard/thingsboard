@@ -179,7 +179,7 @@ public class TbChangeOriginatorNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
         TbMsg expectedMsg = msg.transform()
@@ -209,7 +209,7 @@ public class TbChangeOriginatorNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(ASSET_ID)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
         TbMsg expectedMsg = msg.transform()
@@ -236,7 +236,7 @@ public class TbChangeOriginatorNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(ASSET_ID)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
 
@@ -275,7 +275,7 @@ public class TbChangeOriginatorNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(alarmId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
         TbMsg expectedMsg = msg.transform()
@@ -308,7 +308,7 @@ public class TbChangeOriginatorNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
-                .metaData(metaData.copy())
+                .copyMetaData(metaData)
                 .data(data)
                 .build();
         TbMsg expectedMsg = msg.transform()
@@ -351,7 +351,7 @@ public class TbChangeOriginatorNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
-                .metaData(metaData.copy())
+                .copyMetaData(metaData)
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
 

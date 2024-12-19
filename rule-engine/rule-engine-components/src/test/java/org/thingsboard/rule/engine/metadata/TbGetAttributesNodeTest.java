@@ -249,7 +249,7 @@ public class TbGetAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
         var msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(ORIGINATOR_ID)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_ARRAY)
                 .build();
 
@@ -350,7 +350,7 @@ public class TbGetAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
         return TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(entityId)
-                .metaData(msgMetaData.copy())
+                .copyMetaData(msgMetaData)
                 .data(JacksonUtil.toString(msgData))
                 .build();
     }

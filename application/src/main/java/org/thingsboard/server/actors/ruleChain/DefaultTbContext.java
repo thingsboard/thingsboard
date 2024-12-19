@@ -175,7 +175,7 @@ public class DefaultTbContext implements TbContext {
         }
         TbMsg tbMsg = msg.copy()
                 .ruleChainId(ruleChainId)
-                .ruleNodeId(null)
+                .resetRuleNodeId()
                 .build();
         tbMsg.pushToStack(nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId());
         TopicPartitionInfo tpi = mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getQueueName(), getTenantId(), tbMsg.getOriginator());
@@ -371,7 +371,7 @@ public class DefaultTbContext implements TbContext {
                 .type(type)
                 .originator(originator)
                 .customerId(customerId)
-                .metaData(metaData.copy())
+                .copyMetaData(metaData)
                 .data(data)
                 .ruleChainId(nodeCtx.getSelf().getRuleChainId())
                 .ruleNodeId(nodeCtx.getSelf().getId())
@@ -400,7 +400,7 @@ public class DefaultTbContext implements TbContext {
                 .type(type)
                 .originator(originator)
                 .customerId(customerId)
-                .metaData(metaData.copy())
+                .copyMetaData(metaData)
                 .data(data)
                 .ruleChainId(nodeCtx.getSelf().getRuleChainId())
                 .ruleNodeId(nodeCtx.getSelf().getId())
@@ -532,10 +532,9 @@ public class DefaultTbContext implements TbContext {
                 .queueName(defaultQueueName)
                 .type(action)
                 .originator(id)
-                .metaData(msgMetaData.copy())
+                .copyMetaData(msgMetaData)
                 .data(msgData)
                 .ruleChainId(defaultRuleChainId)
-                .ruleNodeId(null)
                 .build();
     }
 
@@ -558,10 +557,9 @@ public class DefaultTbContext implements TbContext {
                 .queueName(defaultQueueName)
                 .type(actionMsgType)
                 .originator(id)
-                .metaData(msgMetaData.copy())
+                .copyMetaData(msgMetaData)
                 .data(msgData)
                 .ruleChainId(defaultRuleChainId)
-                .ruleNodeId(null)
                 .build();
     }
 

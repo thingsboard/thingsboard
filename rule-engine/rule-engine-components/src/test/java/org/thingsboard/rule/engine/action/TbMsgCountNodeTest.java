@@ -66,7 +66,7 @@ public class TbMsgCountNodeTest {
     private final TbMsg tickMsg = TbMsg.newMsg()
             .type(TbMsgType.MSG_COUNT_SELF_MSG)
             .originator(RULE_NODE_ID)
-            .metaData(TbMsgMetaData.EMPTY.copy())
+            .copyMetaData(TbMsgMetaData.EMPTY)
             .data(TbMsg.EMPTY_STRING)
             .build();
 
@@ -128,7 +128,7 @@ public class TbMsgCountNodeTest {
             var msg = TbMsg.newMsg()
                     .type(TbMsgType.POST_TELEMETRY_REQUEST)
                     .originator(DEVICE_ID)
-                    .metaData(TbMsgMetaData.EMPTY.copy())
+                    .copyMetaData(TbMsgMetaData.EMPTY)
                     .data(TbMsg.EMPTY_STRING)
                     .build();
             if (msgWithCounterSent.get()) {
@@ -155,7 +155,7 @@ public class TbMsgCountNodeTest {
         TbMsg expectedMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(TENANT_ID)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(expectedData)
                 .build();
         assertThat(resultedMsg).usingRecursiveComparison()

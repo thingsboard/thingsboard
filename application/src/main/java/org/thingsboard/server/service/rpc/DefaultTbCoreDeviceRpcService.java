@@ -187,7 +187,7 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
                     .type(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE)
                     .originator(msg.getDeviceId())
                     .customerId(Optional.ofNullable(currentUser).map(User::getCustomerId).orElse(null))
-                    .metaData(metaData.copy())
+                    .copyMetaData(metaData)
                     .dataType(TbMsgDataType.JSON)
                     .data(JacksonUtil.toString(entityNode))
                     .build();

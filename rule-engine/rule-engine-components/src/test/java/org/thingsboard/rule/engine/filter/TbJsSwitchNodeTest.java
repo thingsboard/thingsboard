@@ -62,7 +62,7 @@ public class TbJsSwitchNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(null)
-                .metaData(metaData.copy())
+                .copyMetaData(metaData)
                 .dataType(TbMsgDataType.JSON)
                 .data(rawJson)
                 .ruleChainId(ruleChainId)

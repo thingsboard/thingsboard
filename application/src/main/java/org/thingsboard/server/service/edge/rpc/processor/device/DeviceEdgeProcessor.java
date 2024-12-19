@@ -193,7 +193,7 @@ public abstract class DeviceEdgeProcessor extends BaseDeviceProcessor implements
             TbMsg tbMsg = TbMsg.newMsg()
                     .type(TbMsgType.TO_SERVER_RPC_REQUEST)
                     .originator(deviceId)
-                    .metaData(metaData.copy())
+                    .copyMetaData(metaData)
                     .dataType(TbMsgDataType.JSON)
                     .data(JacksonUtil.toString(data))
                     .build();

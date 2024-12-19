@@ -167,7 +167,7 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
         var testTbMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(md.copy())
+                .copyMetaData(md)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
         List<AttributeKvEntry> testAttrList = List.of(new BaseAttributeKvEntry(0L, new StringDataEntry("testKey", "testValue")));

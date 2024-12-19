@@ -79,7 +79,7 @@ public class TbMsgCountNode implements TbNode {
                     .type(TbMsgType.POST_TELEMETRY_REQUEST)
                     .originator(ctx.getTenantId())
                     .customerId(msg.getCustomerId())
-                    .metaData(metaData.copy())
+                    .copyMetaData(metaData)
                     .data(gson.toJson(telemetryJson))
                     .build();
             ctx.enqueueForTellNext(tbMsg, TbNodeConnectionType.SUCCESS);

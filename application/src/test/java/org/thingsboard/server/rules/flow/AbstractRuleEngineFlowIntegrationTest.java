@@ -187,7 +187,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         TbMsg tbMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(device.getId())
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .callback(tbMsgCallback)
                 .build();
@@ -318,7 +318,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         TbMsg tbMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(device.getId())
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .callback(tbMsgCallback)
                 .build();

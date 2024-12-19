@@ -109,7 +109,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(DEVICE_ID)
-                .metaData(new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.SERVER_SCOPE.name())).copy())
+                .copyMetaData(new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.SERVER_SCOPE.name())))
                 .data("{\"clientAttribute1\": 100, \"clientAttribute2\": \"value2\"}")
                 .build();
 
@@ -146,7 +146,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(ATTRIBUTES_DELETED)
                 .originator(DEVICE_ID)
-                .metaData(new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.SERVER_SCOPE.name())).copy())
+                .copyMetaData(new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.SERVER_SCOPE.name())))
                 .data("{\"attributes\": [\"serverAttribute1\"]}")
                 .build();
 
@@ -180,7 +180,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.ATTRIBUTES_DELETED)
                 .originator(DEVICE_ID)
-                .metaData(new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.SHARED_SCOPE.name())).copy())
+                .copyMetaData(new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.SHARED_SCOPE.name())))
                 .data("{\"attributes\": [\"anotherAttribute\"]}")
                 .build();
 
@@ -200,7 +200,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(DEVICE_ID)
-                .metaData(new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.SERVER_SCOPE.name())).copy())
+                .copyMetaData(new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.SERVER_SCOPE.name())))
                 .data("{\"clientAttribute2\": \"value2\"}")
                 .build();
 
@@ -235,7 +235,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(ATTRIBUTES_DELETED)
                 .originator(DEVICE_ID)
-                .metaData(new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.SERVER_SCOPE.name())).copy())
+                .copyMetaData(new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.SERVER_SCOPE.name())))
                 .data("{\"attributes\": [\"serverAttribute1\"]}")
                 .build();
         node.onMsg(ctxMock, msg);
@@ -251,7 +251,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(msgType)
                 .originator(DEVICE_ID)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
 

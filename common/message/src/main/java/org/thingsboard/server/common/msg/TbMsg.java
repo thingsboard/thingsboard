@@ -88,7 +88,7 @@ public final class TbMsg implements Serializable {
     public TbMsg transform(String queueName) {
         return transform()
                 .queueName(queueName)
-                .ruleNodeId(null)
+                .resetRuleNodeId()
                 .build();
     }
 
@@ -415,6 +415,11 @@ public final class TbMsg implements Serializable {
             return this;
         }
 
+        public TbMsgBuilder copyMetaData(TbMsgMetaData metaData) {
+            this.metaData = metaData.copy();
+            return this;
+        }
+
         public TbMsgBuilder dataType(TbMsgDataType dataType) {
             this.dataType = dataType;
             return this;
@@ -433,6 +438,10 @@ public final class TbMsg implements Serializable {
         public TbMsgBuilder ruleNodeId(RuleNodeId ruleNodeId) {
             this.ruleNodeId = ruleNodeId;
             return this;
+        }
+
+        public TbMsgBuilder resetRuleNodeId() {
+            return ruleNodeId(null);
         }
 
         public TbMsgBuilder correlationId(UUID correlationId) {

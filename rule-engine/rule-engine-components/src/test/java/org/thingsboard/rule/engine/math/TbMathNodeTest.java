@@ -176,7 +176,7 @@ public class TbMathNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
-                .metaData(metaData.copy())
+                .copyMetaData(metaData)
                 .data(msgNode.toString())
                 .build();
 
@@ -189,7 +189,7 @@ public class TbMathNodeTest {
         msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
-                .metaData(metaData.copy())
+                .copyMetaData(metaData)
                 .data(msgNode.toString())
                 .build();
 
@@ -241,7 +241,7 @@ public class TbMathNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(JacksonUtil.newObjectNode().put("a", arg1).put("b", arg2).toString())
                 .build();
 
@@ -309,7 +309,7 @@ public class TbMathNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(JacksonUtil.newObjectNode().put("a", arg1).toString())
                 .build();
 
@@ -337,7 +337,7 @@ public class TbMathNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString())
                 .build();
 
@@ -365,7 +365,7 @@ public class TbMathNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString())
                 .build();
 
@@ -394,7 +394,7 @@ public class TbMathNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(JacksonUtil.newObjectNode().toString())
                 .build();
 
@@ -427,7 +427,7 @@ public class TbMathNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(JacksonUtil.newObjectNode().put("a", 5).toString())
                 .build();
 
@@ -454,7 +454,7 @@ public class TbMathNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(JacksonUtil.newObjectNode().put("a", 5).toString())
                 .build();
 
@@ -481,7 +481,7 @@ public class TbMathNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(JacksonUtil.newObjectNode().put("a", 5).toString())
                 .build();
 
@@ -512,7 +512,7 @@ public class TbMathNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(JacksonUtil.newObjectNode().put("a", 5).toString())
                 .build();
         when(telemetryService.saveAndNotify(any(), any(), any(TsKvEntry.class)))
@@ -542,7 +542,7 @@ public class TbMathNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(JacksonUtil.newObjectNode().put("a", 5).toString())
                 .build();
         when(telemetryService.saveAndNotify(any(), any(), any(TsKvEntry.class)))
@@ -578,7 +578,7 @@ public class TbMathNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(JacksonUtil.newObjectNode().put("a", 10).toString())
                 .build();
 
@@ -603,7 +603,7 @@ public class TbMathNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(JacksonUtil.newObjectNode().put("a", 10).toString())
                 .build();
         node.onMsg(ctx, msg);
@@ -623,7 +623,7 @@ public class TbMathNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_ARRAY)
                 .build();
         node.onMsg(ctx, msg);
@@ -648,7 +648,7 @@ public class TbMathNodeTest {
                 .mapToObj(x -> TbMsg.newMsg()
                                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                                 .originator(originatorSlow)
-                                .metaData(TbMsgMetaData.EMPTY.copy())
+                                .copyMetaData(TbMsgMetaData.EMPTY)
                                 .data(JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString())
                                 .build())
                 .toList();
@@ -656,7 +656,7 @@ public class TbMathNodeTest {
                 .mapToObj(x -> TbMsg.newMsg()
                                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                                 .originator(originatorFast)
-                                .metaData(TbMsgMetaData.EMPTY.copy())
+                                .copyMetaData(TbMsgMetaData.EMPTY)
                                 .data(JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString())
                                 .build())
                 .toList();
@@ -728,7 +728,7 @@ public class TbMathNodeTest {
                 .mapToObj(x -> TbMsg.newMsg()
                                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                                 .originator(originatorSlow)
-                                .metaData(TbMsgMetaData.EMPTY.copy())
+                                .copyMetaData(TbMsgMetaData.EMPTY)
                                 .data(JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString())
                                 .build())
                 .collect(Collectors.toList());
@@ -806,7 +806,7 @@ public class TbMathNodeTest {
                 .onMsg(ctxNode.getLeft(), TbMsg.newMsg()
                         .type(TbMsgType.POST_TELEMETRY_REQUEST)
                         .originator(originator)
-                        .metaData(TbMsgMetaData.EMPTY.copy())
+                        .copyMetaData(TbMsgMetaData.EMPTY)
                         .data("{\"a\":2,\"b\":2}")
                         .build())));
         ctxNodes.forEach(ctxNode -> verify(ctxNode.getRight(), timeout(TIMEOUT)).onMsg(eq(ctxNode.getLeft()), any()));

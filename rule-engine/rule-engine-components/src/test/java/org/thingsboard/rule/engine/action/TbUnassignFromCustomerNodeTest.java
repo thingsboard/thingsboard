@@ -297,7 +297,7 @@ class TbUnassignFromCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
         return TbMsg.newMsg()
                 .type(TbMsgType.NA)
                 .originator(originator)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
     }

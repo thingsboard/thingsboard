@@ -193,7 +193,7 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg tickMsg = TbMsg.newMsg()
                 .type(TbMsgType.GENERATOR_NODE_SELF_MSG)
                 .originator(RULE_NODE_ID)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
         given(ctxMock.newMsg(null, TbMsgType.GENERATOR_NODE_SELF_MSG, RULE_NODE_ID, null, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING)).willReturn(tickMsg);
@@ -211,7 +211,7 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg firstMsg = TbMsg.newMsg()
                 .type(TbMsg.EMPTY_STRING)
                 .originator(RULE_NODE_ID)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
         given(ctxMock.newMsg(null, TbMsg.EMPTY_STRING, RULE_NODE_ID, null, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT)).willReturn(firstMsg);
@@ -221,7 +221,7 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg generatedMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(RULE_NODE_ID)
-                .metaData(metaData.copy())
+                .copyMetaData(metaData)
                 .data("{ \"temp\": 42, \"humidity\": 77 }")
                 .build();
         given(scriptEngineMock.executeGenerateAsync(any())).willReturn(Futures.immediateFuture(generatedMsg));
@@ -230,7 +230,7 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg prevMsg = TbMsg.newMsg()
                 .type(generatedMsg.getType())
                 .originator(RULE_NODE_ID)
-                .metaData(generatedMsg.getMetaData().copy())
+                .copyMetaData(generatedMsg.getMetaData())
                 .data(generatedMsg.getData())
                 .build();
         given(ctxMock.newMsg(null, generatedMsg.getType(), RULE_NODE_ID, null, generatedMsg.getMetaData(), generatedMsg.getData())).willReturn(prevMsg);

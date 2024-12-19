@@ -167,7 +167,7 @@ class TbGpsGeofencingActionNodeTest extends AbstractRuleNodeUpgradeTest {
         return TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(entityId)
-                .metaData(metadata.copy())
+                .copyMetaData(metadata)
                 .data(data)
                 .build();
     }

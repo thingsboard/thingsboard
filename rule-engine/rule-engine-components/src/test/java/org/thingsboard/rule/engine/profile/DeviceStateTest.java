@@ -97,8 +97,7 @@ public class DeviceStateTest {
             String data = invocationOnMock.getArgument(invocationOnMock.getArguments().length - 1);
             return TbMsg.newMsg()
                     .type(type)
-                    .originator(null)
-                    .metaData(TbMsgMetaData.EMPTY.copy())
+                    .copyMetaData(TbMsgMetaData.EMPTY)
                     .data(data)
                     .build();
         });
@@ -115,7 +114,7 @@ public class DeviceStateTest {
         TbMsg attributeUpdateMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data("{ \"enabled\": false }")
                 .build();
 
@@ -128,7 +127,7 @@ public class DeviceStateTest {
         deviceState.process(ctx, TbMsg.newMsg()
                 .type(TbMsgType.ALARM_CLEAR)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(JacksonUtil.toString(alarm))
                 .build());
         reset(ctx);
@@ -137,7 +136,7 @@ public class DeviceStateTest {
         deviceState.process(ctx, TbMsg.newMsg()
                 .type(TbMsgType.ATTRIBUTES_DELETED)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(deletedAttributes)
                 .build());
         verify(ctx, never()).enqueueForTellNext(any(), anyString());
@@ -152,7 +151,7 @@ public class DeviceStateTest {
         TbMsg attributeUpdateMsg = TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data("{ \"enabled\": false }")
                 .build();
 
@@ -164,14 +163,14 @@ public class DeviceStateTest {
         deviceState.process(ctx, TbMsg.newMsg()
                 .type(TbMsgType.ALARM_CLEAR)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(JacksonUtil.toString(alarm))
                 .build());
 
         TbMsg alarmDeleteNotification = TbMsg.newMsg()
                 .type(TbMsgType.ALARM_DELETE)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(JacksonUtil.toString(alarm))
                 .build();
         assertDoesNotThrow(() -> {

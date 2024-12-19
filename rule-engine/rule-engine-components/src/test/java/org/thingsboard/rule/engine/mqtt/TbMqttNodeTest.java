@@ -286,7 +286,7 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
-                .metaData(metaData.copy())
+                .copyMetaData(metaData)
                 .data(data)
                 .build();
         mqttNode.onMsg(ctxMock, msg);
@@ -330,7 +330,7 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data("\"string\"")
                 .build();
         mqttNode.onMsg(ctxMock, msg);

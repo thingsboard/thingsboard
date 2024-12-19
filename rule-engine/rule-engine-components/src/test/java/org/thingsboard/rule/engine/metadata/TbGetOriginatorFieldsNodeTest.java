@@ -138,7 +138,7 @@ public class TbGetOriginatorFieldsNodeTest {
         msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_ARRAY)
                 .build();
 
@@ -172,7 +172,7 @@ public class TbGetOriginatorFieldsNodeTest {
         msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
-                .metaData(msgMetaData.copy())
+                .copyMetaData(msgMetaData)
                 .data(msgData)
                 .build();
 
@@ -219,7 +219,7 @@ public class TbGetOriginatorFieldsNodeTest {
         msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
-                .metaData(msgMetaData.copy())
+                .copyMetaData(msgMetaData)
                 .data(msgData)
                 .build();
 
@@ -267,7 +267,7 @@ public class TbGetOriginatorFieldsNodeTest {
         msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
-                .metaData(msgMetaData.copy())
+                .copyMetaData(msgMetaData)
                 .data(msgData)
                 .build();
 
@@ -320,7 +320,7 @@ public class TbGetOriginatorFieldsNodeTest {
         msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DUMMY_DEVICE_ORIGINATOR)
-                .metaData(msgMetaData.copy())
+                .copyMetaData(msgMetaData)
                 .data(msgData)
                 .build();
 
@@ -383,7 +383,7 @@ public class TbGetOriginatorFieldsNodeTest {
         msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(new DashboardId(UUID.randomUUID()))
-                .metaData(msgMetaData.copy())
+                .copyMetaData(msgMetaData)
                 .data(msgData)
                 .build();
 

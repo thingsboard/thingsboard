@@ -176,7 +176,7 @@ public class EntityActionService {
                         .type(msgType.get())
                         .originator(entityId)
                         .customerId(customerId)
-                        .metaData(metaData.copy())
+                        .copyMetaData(metaData)
                         .dataType(TbMsgDataType.JSON)
                         .data(JacksonUtil.toString(entityNode))
                         .build();

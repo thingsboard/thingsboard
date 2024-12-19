@@ -49,7 +49,7 @@ class DefaultTbRuleEngineRpcServiceTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.REST_API_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
         var restApiCallResponseMsgProto = TransportProtos.RestApiCallResponseMsgProto.newBuilder()

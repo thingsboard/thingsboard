@@ -386,8 +386,7 @@ public class RuleChainController extends BaseController {
             }
             TbMsg inMsg = TbMsg.newMsg()
                     .type(msgType)
-                    .originator(null)
-                    .metaData(new TbMsgMetaData(metadata).copy())
+                    .copyMetaData(new TbMsgMetaData(metadata))
                     .dataType(TbMsgDataType.JSON)
                     .data(data)
                     .build();

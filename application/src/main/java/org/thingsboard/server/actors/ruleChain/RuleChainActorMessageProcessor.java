@@ -219,7 +219,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                 targetCtx = firstNode;
                 msg = msg.copy()
                         .ruleChainId(entityId)
-                        .ruleNodeId(null)
+                        .resetRuleNodeId()
                         .build();
             } else {
                 targetCtx = nodeActors.get(targetId);
@@ -356,7 +356,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                 putToQueue(tpi, msg.copy()
                         .id(UUID.randomUUID())
                         .ruleChainId(new RuleChainId(target.getId()))
-                        .ruleNodeId(null)
+                        .resetRuleNodeId()
                         .build(), callbackWrapper);
                 break;
         }

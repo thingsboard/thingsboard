@@ -295,7 +295,7 @@ public class DefaultTbClusterServiceTest {
                 .queueName(DataConstants.HP_QUEUE_NAME)
                 .type(TbMsgType.REST_API_REQUEST)
                 .originator(tenantId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
 
@@ -314,7 +314,7 @@ public class DefaultTbClusterServiceTest {
         TbMsg requestMsg = TbMsg.newMsg()
                 .type(TbMsgType.REST_API_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
         TbQueueCallback callback = mock(TbQueueCallback.class);
@@ -336,7 +336,7 @@ public class DefaultTbClusterServiceTest {
                 .queueName(DataConstants.HP_QUEUE_NAME)
                 .type(TbMsgType.REST_API_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
 
@@ -361,7 +361,7 @@ public class DefaultTbClusterServiceTest {
         TbMsg requestMsg = TbMsg.newMsg()
                 .type(TbMsgType.REST_API_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
 

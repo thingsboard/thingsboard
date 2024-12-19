@@ -451,7 +451,7 @@ class TbGpsGeofencingFilterNodeTest {
         return TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(entityId)
-                .metaData(metadata.copy())
+                .copyMetaData(metadata)
                 .data(data)
                 .build();
     }
@@ -460,7 +460,7 @@ class TbGpsGeofencingFilterNodeTest {
         return TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(entityId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_ARRAY)
                 .build();
     }

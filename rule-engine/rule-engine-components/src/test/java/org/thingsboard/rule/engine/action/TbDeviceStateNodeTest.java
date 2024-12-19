@@ -88,7 +88,7 @@ public class TbDeviceStateNodeTest {
         msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
-                .metaData(metaData.copy())
+                .copyMetaData(metaData)
                 .data(JacksonUtil.toString(data))
                 .build();
     }
@@ -215,7 +215,7 @@ public class TbDeviceStateNodeTest {
         var msg = TbMsg.newMsg()
                 .type(TbMsgType.ENTITY_CREATED)
                 .originator(nonDeviceOriginator)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
 
@@ -250,7 +250,7 @@ public class TbDeviceStateNodeTest {
                 .ts(msgTs)
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(DEVICE_ID)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
 

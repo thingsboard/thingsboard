@@ -130,7 +130,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type("123456789")
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
                 .build();
@@ -154,11 +154,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -213,7 +211,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg theMsg = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString())).thenReturn(theMsg);
@@ -223,11 +221,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -237,7 +233,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg theMsg2 = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data("2")
                 .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString())).thenReturn(theMsg2);
@@ -248,11 +244,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg2 = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
         node.onMsg(ctx, msg2);
         verify(ctx).tellSuccess(msg2);
@@ -313,7 +307,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg theMsg = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString())).thenReturn(theMsg);
@@ -323,11 +317,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -337,7 +329,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg theMsg2 = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString())).thenReturn(theMsg2);
@@ -361,11 +353,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg2 = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
         node.onMsg(ctx, msg2);
         verify(ctx).tellSuccess(msg2);
@@ -443,7 +433,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg theMsg = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
         Mockito.when(ctx.newMsg(Mockito.any(), Mockito.any(TbMsgType.class), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
@@ -454,11 +444,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
 
         node.onMsg(ctx, msg);
@@ -543,7 +531,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg theMsg = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
@@ -554,11 +542,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
 
         node.onMsg(ctx, msg);
@@ -625,7 +611,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg theMsg = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
@@ -636,11 +622,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
 
         node.onMsg(ctx, msg);
@@ -733,7 +717,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg theMsg = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
@@ -744,11 +728,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
 
         node.onMsg(ctx, msg);
@@ -766,11 +748,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg2 = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
 
         node.onMsg(ctx, msg2);
@@ -878,7 +858,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg theMsg = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
@@ -889,11 +869,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
 
         node.onMsg(ctx, msg);
@@ -911,11 +889,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg2 = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
 
         node.onMsg(ctx, msg2);
@@ -1008,7 +984,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg theMsg = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
@@ -1019,11 +995,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
 
         node.onMsg(ctx, msg);
@@ -1035,11 +1009,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg2 = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
 
         node.onMsg(ctx, msg2);
@@ -1145,7 +1117,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg theMsg = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
@@ -1156,11 +1128,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
 
         node.onMsg(ctx, msg);
@@ -1172,11 +1142,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg2 = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
 
         node.onMsg(ctx, msg2);
@@ -1261,7 +1229,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg theMsg = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
@@ -1272,11 +1240,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
 
         node.onMsg(ctx, msg);
@@ -1294,11 +1260,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg2 = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
 
         node.onMsg(ctx, msg2);
@@ -1379,7 +1343,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg theMsg = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
@@ -1390,11 +1354,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
 
         node.onMsg(ctx, msg);
@@ -1474,7 +1436,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg theMsg = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
@@ -1485,11 +1447,10 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
+
                 .build();
 
 //        Mockito.reset(ctx);
@@ -1583,7 +1544,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg theMsg = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
 
@@ -1592,11 +1553,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
 
         node.onMsg(ctx, msg);
@@ -1674,7 +1633,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg theMsg = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
@@ -1685,11 +1644,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
 
         node.onMsg(ctx, msg);
@@ -1760,7 +1717,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg theMsg = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
@@ -1771,11 +1728,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
 
         node.onMsg(ctx, msg);
@@ -1848,7 +1803,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 .thenReturn(device);
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
-        Mockito.when(attributesService.find(eq(tenantId), eq(customerId),  Mockito.any(AttributeScope.class), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), Mockito.any(AttributeScope.class), Mockito.anyString()))
                 .thenReturn(emptyOptionalFuture);
         Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(optionalListenableFutureWithLess);
@@ -1856,7 +1811,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg theMsg = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
@@ -1867,11 +1822,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
 
         node.onMsg(ctx, msg);
@@ -1954,7 +1907,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg theMsg = TbMsg.newMsg()
                 .type(TbMsgType.ALARM)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
         when(ctx.newMsg(any(), any(TbMsgType.class), any(), any(), any(), Mockito.anyString()))
@@ -1965,11 +1918,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .dataType(TbMsgDataType.JSON)
                 .data(JacksonUtil.toString(data))
-                .ruleChainId(null)
-                .ruleNodeId(null)
                 .build();
 
         node.onMsg(ctx, msg);

@@ -47,7 +47,7 @@ public class TbNodeUtilsTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(TenantId.SYS_TENANT_ID)
-                .metaData(md.copy())
+                .copyMetaData(md)
                 .data(JacksonUtil.toString(node))
                 .build();
         String result = TbNodeUtils.processPattern(pattern, msg);
@@ -66,7 +66,7 @@ public class TbNodeUtilsTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(TenantId.SYS_TENANT_ID)
-                .metaData(md.copy())
+                .copyMetaData(md)
                 .data(JacksonUtil.toString(node))
                 .build();
         String result = TbNodeUtils.processPattern(pattern, msg);
@@ -85,7 +85,7 @@ public class TbNodeUtilsTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(TenantId.SYS_TENANT_ID)
-                .metaData(md.copy())
+                .copyMetaData(md)
                 .data(JacksonUtil.toString(node))
                 .build();
         String result = TbNodeUtils.processPattern(pattern, msg);
@@ -111,7 +111,7 @@ public class TbNodeUtilsTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(TenantId.SYS_TENANT_ID)
-                .metaData(md.copy())
+                .copyMetaData(md)
                 .data(JacksonUtil.toString(node))
                 .build();
         String result = TbNodeUtils.processPattern(pattern, msg);
@@ -137,7 +137,7 @@ public class TbNodeUtilsTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(TenantId.SYS_TENANT_ID)
-                .metaData(md.copy())
+                .copyMetaData(md)
                 .data(JacksonUtil.toString(node))
                 .build();
         String result = TbNodeUtils.processPattern(pattern, msg);

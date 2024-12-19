@@ -53,7 +53,7 @@ public class TbLogNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(TenantId.SYS_TENANT_ID)
-                .metaData(metaData.copy())
+                .copyMetaData(metaData)
                 .data(data)
                 .build();
 
@@ -74,7 +74,7 @@ public class TbLogNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(TenantId.SYS_TENANT_ID)
-                .metaData(metaData.copy())
+                .copyMetaData(metaData)
                 .data("")
                 .build();
 
@@ -95,7 +95,7 @@ public class TbLogNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(TenantId.SYS_TENANT_ID)
-                .metaData(metaData.copy())
+                .copyMetaData(metaData)
                 .data(null)
                 .build();
 

@@ -199,7 +199,7 @@ public class TbCopyKeysNodeTest {
         return TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(entityId)
-                .metaData(new TbMsgMetaData(mdMap).copy())
+                .copyMetaData(new TbMsgMetaData(mdMap))
                 .data(data)
                 .callback(callback)
                 .build();

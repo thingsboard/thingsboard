@@ -106,7 +106,7 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
             return TbMsg.newMsg()
                     .type(type)
                     .originator(originator)
-                    .metaData(metaData.copy().copy())
+                    .copyMetaData(metaData.copy())
                     .data(data)
                     .build();
         }).when(ctx).newMsg(isNull(), eq(TbMsgType.DEDUPLICATION_TIMEOUT_SELF_MSG), nullable(EntityId.class), any(TbMsgMetaData.class), any(String.class));
@@ -461,7 +461,7 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
                 .queueName(DataConstants.MAIN_QUEUE_NAME)
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(deviceId)
-                .metaData(metaData.copy())
+                .copyMetaData(metaData)
                 .data(JacksonUtil.toString(dataNode))
                 .build();
     }

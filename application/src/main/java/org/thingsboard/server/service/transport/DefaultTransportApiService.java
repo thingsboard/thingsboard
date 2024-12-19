@@ -366,7 +366,7 @@ public class DefaultTransportApiService implements TransportApiService {
                         .type(TbMsgType.ENTITY_CREATED)
                         .originator(deviceId)
                         .customerId(customerId)
-                        .metaData(metaData.copy())
+                        .copyMetaData(metaData)
                         .dataType(TbMsgDataType.JSON)
                         .data(JacksonUtil.toString(entityNode))
                         .build();

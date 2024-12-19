@@ -254,7 +254,7 @@ public class EntityStateSourcingListener {
                     .type(TbMsgType.ENTITY_ASSIGNED_FROM_TENANT)
                     .originator(assignedDevice.getId())
                     .customerId(assignedDevice.getCustomerId())
-                    .metaData(getMetaDataForAssignedFrom(currentTenant).copy())
+                    .copyMetaData(getMetaDataForAssignedFrom(currentTenant))
                     .dataType(TbMsgDataType.JSON)
                     .data(data)
                     .build();

@@ -142,7 +142,7 @@ public class TbMsgDeleteAttributesNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
                 .originator(deviceId)
-                .metaData(metaData.copy())
+                .copyMetaData(metaData)
                 .data(data)
                 .callback(callback)
                 .build();

@@ -66,7 +66,7 @@ public class TbRpcService {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.valueOf("RPC_" + rpc.getStatus().name()))
                 .originator(rpc.getDeviceId())
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(JacksonUtil.toString(rpc))
                 .build();
         tbClusterService.pushMsgToRuleEngine(tenantId, rpc.getDeviceId(), msg, null);

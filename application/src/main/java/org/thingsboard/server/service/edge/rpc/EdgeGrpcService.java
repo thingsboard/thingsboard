@@ -578,7 +578,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             TbMsg tbMsg = TbMsg.newMsg()
                     .type(msgType)
                     .originator(edgeId)
-                    .metaData(md.copy())
+                    .copyMetaData(md)
                     .dataType(TbMsgDataType.JSON)
                     .data(data)
                     .build();

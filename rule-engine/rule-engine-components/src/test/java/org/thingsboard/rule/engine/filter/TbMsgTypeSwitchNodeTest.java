@@ -92,7 +92,7 @@ class TbMsgTypeSwitchNodeTest {
         return TbMsg.newMsg()
                 .type(msgType)
                 .originator(DEVICE_ID)
-                .metaData(TbMsgMetaData.EMPTY.copy())
+                .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
     }

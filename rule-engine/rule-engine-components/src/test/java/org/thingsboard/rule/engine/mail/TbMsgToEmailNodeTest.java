@@ -106,7 +106,7 @@ public class TbMsgToEmailNodeTest {
         TbMsg msg = TbMsg.newMsg()
                 .type(TbMsgType.POST_TELEMETRY_REQUEST)
                 .originator(originator)
-                .metaData(md.copy())
+                .copyMetaData(md)
                 .data(msgDataStr)
                 .build();
 

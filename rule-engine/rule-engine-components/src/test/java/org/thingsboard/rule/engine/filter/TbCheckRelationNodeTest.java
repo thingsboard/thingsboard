@@ -69,7 +69,7 @@ class TbCheckRelationNodeTest extends AbstractRuleNodeUpgradeTest {
     private final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg()
             .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
             .originator(ORIGINATOR_ID)
-            .metaData(TbMsgMetaData.EMPTY.copy())
+            .copyMetaData(TbMsgMetaData.EMPTY)
             .data(TbMsg.EMPTY_JSON_OBJECT)
             .build();
 
