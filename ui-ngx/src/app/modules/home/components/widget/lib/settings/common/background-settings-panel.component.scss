@@ -17,6 +17,8 @@
 
 .tb-background-settings-panel {
   width: 620px;
+  min-height: 300px;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   gap: 16px;
