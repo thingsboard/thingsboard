@@ -109,7 +109,8 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
     const dataKeySettingsFunction: DataKeySettingsFunction = typeParameters?.dataKeySettingsFunction;
     const actionSources = widgetInfo.actionSources;
     const isDataEnabled = isDefined(widgetInfo.typeParameters) ? !widgetInfo.typeParameters.useCustomDatasources : true;
-    let settingsForm = jsonFormSchemaToFormProperties(rawSettingsSchema);
+    const rawSettingsForm = widgetInfo.typeSettingsForm || widgetInfo.settingsForm;
+    const settingsForm = rawSettingsForm?.length ? rawSettingsForm : jsonFormSchemaToFormProperties(rawSettingsSchema);
     let settingsSchema;
     if (!rawSettingsSchema || rawSettingsSchema === '') {
       settingsSchema = {};

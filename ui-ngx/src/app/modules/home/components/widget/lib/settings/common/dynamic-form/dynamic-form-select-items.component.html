@@ -27,6 +27,7 @@
          [cdkDropListDisabled]="!dragEnabled"
          (cdkDropListDropped)="selectItemDrop($event)">
       <div cdkDrag [cdkDragDisabled]="!dragEnabled"
+           [class.tb-draggable]="!disabled"
            [class.tb-draggable-form-table-row]="!disabled"
            *ngFor="let selectItemControl of selectItemsFormArray().controls; trackBy: trackBySelectItem; let $index = index;">
         <tb-dynamic-form-select-item-row class="flex-1"

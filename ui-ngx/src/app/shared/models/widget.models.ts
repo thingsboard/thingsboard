@@ -195,6 +195,7 @@ export interface WidgetTypeParameters {
 
 export interface WidgetControllerDescriptor {
   widgetTypeFunction?: any;
+  settingsForm?: FormProperty[];
   settingsSchema?: string | any;
   dataKeySettingsSchema?: string | any;
   latestDataKeySettingsSchema?: string | any;

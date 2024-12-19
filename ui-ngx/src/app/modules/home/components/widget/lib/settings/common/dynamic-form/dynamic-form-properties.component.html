@@ -28,6 +28,7 @@
          [cdkDropListDisabled]="!dragEnabled"
          (cdkDropListDropped)="propertyDrop($event)">
       <div cdkDrag [cdkDragDisabled]="!dragEnabled"
+           [class.tb-draggable]="!disabled"
            [class.tb-draggable-form-table-row]="!disabled"
            *ngFor="let propertyControl of propertiesFormArray().controls; trackBy: trackByProperty; let $index = index;">
         <tb-dynamic-form-property-row class="flex-1"

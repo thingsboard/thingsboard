@@ -37,10 +37,9 @@ import {
 } from '@angular/forms';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { TranslateService } from '@ngx-translate/core';
-import { FormProperty, FormPropertyType } from '@shared/models/dynamic-form.models';
+import { FormProperty, FormPropertyType, propertyValid } from '@shared/models/dynamic-form.models';
 import {
-  DynamicFormPropertyRowComponent,
-  propertyValid
+  DynamicFormPropertyRowComponent
 } from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-property-row.component';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -136,7 +135,7 @@ export class DynamicFormPropertiesComponent implements ControlValueAccessor, OnI
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -154,7 +153,7 @@ export class DynamicFormPropertiesComponent implements ControlValueAccessor, OnI
     this.booleanPropertyIds = properties.filter(p => p.type === FormPropertyType.switch).map(p => p.id);
   }
 
-  public validate(c: UntypedFormControl) {
+  public validate(_c: UntypedFormControl) {
     this.errorText = '';
     const propertiesArray = this.propertiesFormGroup.get('properties') as UntypedFormArray;
     const notUniqueControls =
@@ -189,15 +188,15 @@ export class DynamicFormPropertiesComponent implements ControlValueAccessor, OnI
   propertyDrop(event: CdkDragDrop<string[]>) {
     const propertiesArray = this.propertiesFormGroup.get('properties') as UntypedFormArray;
     const property = propertiesArray.at(event.previousIndex);
-    propertiesArray.removeAt(event.previousIndex);
-    propertiesArray.insert(event.currentIndex, property);
+    propertiesArray.removeAt(event.previousIndex, {emitEvent: false});
+    propertiesArray.insert(event.currentIndex, property, {emitEvent: true});
   }
 
   propertiesFormArray(): UntypedFormArray {
     return this.propertiesFormGroup.get('properties') as UntypedFormArray;
   }
 
-  trackByProperty(index: number, propertyControl: AbstractControl): any {
+  trackByProperty(_index: number, propertyControl: AbstractControl): any {
     return propertyControl;
   }
 

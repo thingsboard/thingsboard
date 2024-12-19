@@ -112,6 +112,7 @@ export class WidgetComponentService {
             templateHtml: this.utils.editWidgetInfo.templateHtml,
             templateCss: this.utils.editWidgetInfo.templateCss,
             controllerScript: this.utils.editWidgetInfo.controllerScript,
+            settingsForm: this.utils.editWidgetInfo.settingsForm,
             settingsSchema: this.utils.editWidgetInfo.settingsSchema,
             dataKeySettingsSchema: this.utils.editWidgetInfo.dataKeySettingsSchema,
             latestDataKeySettingsSchema: this.utils.editWidgetInfo.latestDataKeySettingsSchema,
@@ -298,6 +299,9 @@ export class WidgetComponentService {
           this.loadWidgetResources(widgetInfo, widgetNamespace, [SharedModule, WidgetComponentsModule, this.homeComponentsModule]).subscribe(
             {
               next: () => {
+                if (widgetControllerDescriptor.settingsForm) {
+                  widgetInfo.typeSettingsForm = widgetControllerDescriptor.settingsForm;
+                }
                 if (widgetControllerDescriptor.settingsSchema) {
                   widgetInfo.typeSettingsSchema = widgetControllerDescriptor.settingsSchema;
                 }
@@ -539,6 +543,9 @@ export class WidgetComponentService {
         const result: WidgetControllerDescriptor = {
           widgetTypeFunction: widgetType
         };
+        if (isFunction(widgetTypeInstance.getSettingsForm)) {
+          result.settingsForm = widgetTypeInstance.getSettingsForm();
+        }
         if (isFunction(widgetTypeInstance.getSettingsSchema)) {
           result.settingsSchema = widgetTypeInstance.getSettingsSchema();
         }

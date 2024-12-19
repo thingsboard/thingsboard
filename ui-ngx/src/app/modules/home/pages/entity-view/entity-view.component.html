@@ -148,17 +148,15 @@
           </mat-expansion-panel>
         </mat-accordion>
       </div>
-      <tb-datetime
-        dateText="entity-view.start-date"
-        timeText="entity-view.start-ts"
-        [maxDate]="maxStartTimeMs | async"
-        formControlName="startTimeMs"
+      <tb-datetime class="block"
+                   dateText="{{ 'entity-view.start-ts' | translate }}"
+                   [maxDate]="maxStartTimeMs | async"
+                   formControlName="startTimeMs"
       ></tb-datetime>
-      <tb-datetime
-        dateText="entity-view.end-date"
-        timeText="entity-view.end-ts"
-        [minDate]="minEndTimeMs | async"
-        formControlName="endTimeMs"
+      <tb-datetime class="block"
+                   dateText="{{ 'entity-view.end-ts' | translate }}"
+                   [minDate]="minEndTimeMs | async"
+                   formControlName="endTimeMs"
       ></tb-datetime>
       <div formGroupName="additionalInfo">
         <mat-form-field class="mat-block">

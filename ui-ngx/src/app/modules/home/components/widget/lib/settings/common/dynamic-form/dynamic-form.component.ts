@@ -44,11 +44,15 @@ import {
   FormPropertyContainerType,
   FormPropertyGroup,
   FormPropertyType,
+  isInputFieldPropertyType,
   PropertyConditionFunction,
   toPropertyGroups
 } from '@shared/models/dynamic-form.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import { ContentType } from '@shared/models/constants';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'tb-dynamic-form',
@@ -69,9 +73,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 })
 export class DynamicFormComponent implements OnInit, OnChanges, ControlValueAccessor, Validator {
 
+  isInputFieldPropertyType = isInputFieldPropertyType;
+
   FormPropertyContainerType = FormPropertyContainerType;
 
   FormPropertyType = FormPropertyType;
+
+  ContentType = ContentType;
 
   @Input()
   disabled: boolean;
@@ -84,7 +92,19 @@ export class DynamicFormComponent implements OnInit, OnChanges, ControlValueAcce
 
   @Input()
   @coerceBoolean()
+  isArrayItem = false;
+
+  @Input()
+  @coerceBoolean()
   stroked = false;
+
+  @Input()
+  @coerceBoolean()
+  noPadding = false;
+
+  @Input()
+  @coerceBoolean()
+  noBorder = false;
 
   private modelValue: {[id: string]: any};
 
@@ -97,6 +117,8 @@ export class DynamicFormComponent implements OnInit, OnChanges, ControlValueAcce
   propertyGroups: FormPropertyGroup[];
 
   constructor(protected store: Store<AppState>,
+              private customTranslate: CustomTranslatePipe,
+              private sanitizer: DomSanitizer,
               private destroyRef: DestroyRef,
               private fb: UntypedFormBuilder,
               private cd: ChangeDetectorRef) {
@@ -173,26 +195,28 @@ export class DynamicFormComponent implements OnInit, OnChanges, ControlValueAcce
           }
         }
       }
-      this.propertyGroups = toPropertyGroups(this.properties);
+      this.propertyGroups = toPropertyGroups(this.properties, this.isArrayItem, this.customTranslate, this.sanitizer);
       for (const property of this.properties) {
-        if (property.disableOnProperty) {
-          if (!this.validatorTriggers.includes(property.disableOnProperty)) {
-            this.validatorTriggers.push(property.disableOnProperty);
+        if (property.type !== FormPropertyType.htmlSection) {
+          if (property.disableOnProperty) {
+            if (!this.validatorTriggers.includes(property.disableOnProperty)) {
+              this.validatorTriggers.push(property.disableOnProperty);
+            }
           }
-        }
-        const validators: ValidatorFn[] = [];
-        if (property.required) {
-          validators.push(Validators.required);
-        }
-        if (property.type === FormPropertyType.number) {
-          if (isDefinedAndNotNull(property.min)) {
-            validators.push(Validators.min(property.min));
+          const validators: ValidatorFn[] = [];
+          if (property.required) {
+            validators.push(Validators.required);
           }
-          if (isDefinedAndNotNull(property.max)) {
-            validators.push(Validators.max(property.max));
+          if (property.type === FormPropertyType.number) {
+            if (isDefinedAndNotNull(property.min)) {
+              validators.push(Validators.min(property.min));
+            }
+            if (isDefinedAndNotNull(property.max)) {
+              validators.push(Validators.max(property.max));
+            }
           }
+          this.propertiesFormGroup.addControl(property.id, this.fb.control(null, validators), {emitEvent: false});
         }
-        this.propertiesFormGroup.addControl(property.id, this.fb.control(null, validators), {emitEvent: false});
       }
     }
     this.setupValue();
@@ -216,7 +240,7 @@ export class DynamicFormComponent implements OnInit, OnChanges, ControlValueAcce
       }
       this.propertyGroups.forEach(g => {
         g.containers.forEach(container => {
-          if (container.type === FormPropertyContainerType.fieldset) {
+          if ([FormPropertyContainerType.fieldset, FormPropertyContainerType.field, FormPropertyContainerType.htmlSection, FormPropertyContainerType.array].includes(container.type)) {
             container.visible = container.property.visible;
           } else {
             container.visible = container.switch?.visible || container.properties.some(p => p.visible);
@@ -233,12 +257,14 @@ export class DynamicFormComponent implements OnInit, OnChanges, ControlValueAcce
   private updateControlsState() {
     if (this.properties) {
       for (let property of this.properties) {
-        const control = this.propertiesFormGroup.get(property.id);
-        if (property.visible && !property.disabled) {
-          control.enable({emitEvent: false});
-          control.updateValueAndValidity({emitEvent: false});
-        } else {
-          control.disable({emitEvent: false});
+        if (property.type !== FormPropertyType.htmlSection) {
+          const control = this.propertiesFormGroup.get(property.id);
+          if (property.visible && !property.disabled) {
+            control.enable({emitEvent: false});
+            control.updateValueAndValidity({emitEvent: false});
+          } else {
+            control.disable({emitEvent: false});
+          }
         }
       }
     }

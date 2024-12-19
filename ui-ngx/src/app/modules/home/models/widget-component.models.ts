@@ -561,6 +561,7 @@ export interface WidgetInfo extends WidgetTypeDescriptor, WidgetControllerDescri
   fullFqn: string;
   deprecated: boolean;
   scada: boolean;
+  typeSettingsForm?: FormProperty[];
   typeSettingsSchema?: string | any;
   typeDataKeySettingsSchema?: string | any;
   typeLatestDataKeySettingsSchema?: string | any;
@@ -644,6 +645,7 @@ export const ErrorWidgetType: WidgetInfo = {
 };
 
 export interface WidgetTypeInstance {
+  getSettingsForm?: () => FormProperty[];
   getSettingsSchema?: () => string;
   getDataKeySettingsSchema?: () => string;
   getLatestDataKeySettingsSchema?: () => string;
@@ -672,6 +674,7 @@ export const toWidgetInfo = (widgetTypeEntity: WidgetType): WidgetInfo => ({
   templateHtml: widgetTypeEntity.descriptor.templateHtml,
   templateCss: widgetTypeEntity.descriptor.templateCss,
   controllerScript: widgetTypeEntity.descriptor.controllerScript,
+  settingsForm: widgetTypeEntity.descriptor.settingsForm,
   settingsSchema: widgetTypeEntity.descriptor.settingsSchema,
   dataKeySettingsSchema: widgetTypeEntity.descriptor.dataKeySettingsSchema,
   latestDataKeySettingsSchema: widgetTypeEntity.descriptor.latestDataKeySettingsSchema,
@@ -701,6 +704,7 @@ export const toWidgetType = (widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId:
     templateHtml: widgetInfo.templateHtml,
     templateCss: widgetInfo.templateCss,
     controllerScript: widgetInfo.controllerScript,
+    settingsForm: widgetInfo.settingsForm,
     settingsSchema: widgetInfo.settingsSchema,
     dataKeySettingsSchema: widgetInfo.dataKeySettingsSchema,
     latestDataKeySettingsSchema: widgetInfo.latestDataKeySettingsSchema,

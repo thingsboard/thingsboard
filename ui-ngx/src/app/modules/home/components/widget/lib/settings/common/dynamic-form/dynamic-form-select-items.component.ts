@@ -109,7 +109,7 @@ export class DynamicFormSelectItemsComponent implements ControlValueAccessor, On
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -126,7 +126,7 @@ export class DynamicFormSelectItemsComponent implements ControlValueAccessor, On
     this.selectItemsFormGroup.setControl('selectItems', this.prepareSelectItemsFormArray(items), {emitEvent: false});
   }
 
-  public validate(c: UntypedFormControl) {
+  public validate(_c: UntypedFormControl) {
     this.errorText = '';
     const itemsArray = this.selectItemsFormGroup.get('selectItems') as UntypedFormArray;
     const notUniqueControls =
@@ -166,15 +166,15 @@ export class DynamicFormSelectItemsComponent implements ControlValueAccessor, On
   selectItemDrop(event: CdkDragDrop<string[]>) {
     const itemsArray = this.selectItemsFormGroup.get('selectItems') as UntypedFormArray;
     const item = itemsArray.at(event.previousIndex);
-    itemsArray.removeAt(event.previousIndex);
-    itemsArray.insert(event.currentIndex, item);
+    itemsArray.removeAt(event.previousIndex, {emitEvent: false});
+    itemsArray.insert(event.currentIndex, item, {emitEvent: true});
   }
 
   selectItemsFormArray(): UntypedFormArray {
     return this.selectItemsFormGroup.get('selectItems') as UntypedFormArray;
   }
 
-  trackBySelectItem(index: number, selectItemControl: AbstractControl): any {
+  trackBySelectItem(_index: number, selectItemControl: AbstractControl): any {
     return selectItemControl;
   }
 

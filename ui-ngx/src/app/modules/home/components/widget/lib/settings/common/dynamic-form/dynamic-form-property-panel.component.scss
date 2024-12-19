@@ -46,4 +46,25 @@
     justify-content: flex-end;
     align-items: flex-end;
   }
+
+  .tb-form-row.tb-radios-property {
+    &.direction-column {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+    .mat-mdc-radio-group {
+      overflow: hidden;
+      .mat-mdc-radio-button {
+        overflow: hidden;
+        .mdc-form-field {
+          overflow: hidden;
+          width: 100%;
+          .mdc-label {
+            overflow: hidden;
+          }
+        }
+      }
+    }
+  }
 }

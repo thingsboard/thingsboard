@@ -42,12 +42,12 @@ import {
 import { deepClone } from '@core/utils';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { constantColor, Font } from '@shared/models/widget-settings.models';
 import {
+  defaultPropertyValue,
   FormProperty,
   FormPropertyType,
   formPropertyTypes,
-  formPropertyTypeTranslations
+  formPropertyTypeTranslations, propertyValid
 } from '@shared/models/dynamic-form.models';
 import {
   DynamicFormPropertiesComponent
@@ -56,39 +56,6 @@ import {
   DynamicFormPropertyPanelComponent
 } from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-property-panel.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
-export const propertyValid = (property: FormProperty): boolean => !(!property.id || !property.name || !property.type);
-
-export const defaultPropertyValue = (type: FormPropertyType): any => {
-  switch (type) {
-    case FormPropertyType.text:
-      return '';
-    case FormPropertyType.number:
-      return 0;
-    case FormPropertyType.switch:
-      return false;
-    case FormPropertyType.color:
-      return '#000';
-    case FormPropertyType.color_settings:
-      return constantColor('#000');
-    case FormPropertyType.font:
-      return {
-        size: 12,
-        sizeUnit: 'px',
-        family: 'Roboto',
-        weight: 'normal',
-        style: 'normal',
-        lineHeight: '1'
-      } as Font;
-    case FormPropertyType.units:
-      return '';
-    case FormPropertyType.icon:
-      return 'star';
-    case FormPropertyType.fieldset:
-    case FormPropertyType.select:
-      return null;
-  }
-};
 
 @Component({
   selector: 'tb-dynamic-form-property-row',
@@ -168,7 +135,7 @@ export class DynamicFormPropertyRowComponent implements ControlValueAccessor, On
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -242,7 +209,7 @@ export class DynamicFormPropertyRowComponent implements ControlValueAccessor, On
     this.editProperty(null, this.editButton, true, onCanceled);
   }
 
-  public validate(c: UntypedFormControl) {
+  public validate(_c: UntypedFormControl) {
     const idControl = this.propertyRowFormGroup.get('id');
     if (idControl.hasError('propertyIdNotUnique')) {
       idControl.updateValueAndValidity({onlySelf: false, emitEvent: false});

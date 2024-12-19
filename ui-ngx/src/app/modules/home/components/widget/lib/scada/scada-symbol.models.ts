@@ -65,7 +65,12 @@ import { catchError, map, take, takeUntil } from 'rxjs/operators';
 import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
 import { MatIconRegistry } from '@angular/material/icon';
 import { RafService } from '@core/services/raf.service';
-import { defaultFormPropertyValue, FormProperty, FormPropertyType } from '@shared/models/dynamic-form.models';
+import {
+  defaultFormPropertyValue,
+  defaultPropertyValue,
+  FormProperty,
+  FormPropertyType
+} from '@shared/models/dynamic-form.models';
 
 export interface ScadaSymbolApi {
   generateElementId: () => string;
@@ -630,7 +635,9 @@ export class ScadaSymbolObject {
       elements.push(element);
     }
     for (const property of this.metadata.properties) {
-      this.context.properties[property.id] = this.getPropertyValue(property.id);
+      if (property.type !== FormPropertyType.htmlSection) {
+        this.context.properties[property.id] = this.getPropertyValue(this.metadata.properties, this.settings.properties, property.id);
+      }
     }
     for (const tag of this.metadata.tags) {
       if (tag.actions) {
@@ -967,9 +974,8 @@ export class ScadaSymbolObject {
     return Array.isArray(element) ? element : [element];
   }
 
-  private getProperty(...ids: string[]): FormProperty {
+  private getProperty(properties: FormProperty[], ...ids: string[]): FormProperty {
     let found: FormProperty;
-    let properties = this.metadata.properties;
     for (const id of ids) {
       if (properties) {
         found = properties.find(p => p.id === id);
@@ -985,9 +991,9 @@ export class ScadaSymbolObject {
     return found;
   }
 
-  private getSettingsValue(...ids: string[]): any {
+  private getSettingsValue(settings: {[id: string]: any}, ...ids: string[]): any {
     let found: any;
-    let properties = this.settings.properties;
+    let properties = settings;
     for (const id of ids) {
       if (properties) {
         found = properties[id];
@@ -1003,41 +1009,70 @@ export class ScadaSymbolObject {
     return found;
   }
 
-  private getPropertyValue(...ids: string[]): any {
-    const property = this.getProperty(...ids);
+  private getPropertyValue(properties: FormProperty[], settings: {[id: string]: any}, ...ids: string[]): any {
+    const property = this.getProperty(properties, ...ids);
     if (property) {
-      if (property.type === FormPropertyType.fieldset) {
+      if (property.type === FormPropertyType.array) {
+        const arrayValue = [];
+        if (property.arrayItemType !== FormPropertyType.htmlSection) {
+          const settingsValue = this.getSettingsValue(settings, ...ids);
+          if (settingsValue && Array.isArray(settingsValue)) {
+            for (const settingsElement of settingsValue) {
+              let value: any;
+              if (property.arrayItemType === FormPropertyType.fieldset) {
+                const propertyValue: {[id: string]: any} = {};
+                for (const childProperty of property.properties) {
+                  if (childProperty.type !== FormPropertyType.htmlSection) {
+                    propertyValue[childProperty.id] = this.getPropertyValue(property.properties, settingsElement, childProperty.id);
+                  }
+                }
+                value = propertyValue;
+              } else {
+                value = this.convertPropertyValue(property, settingsElement);
+              }
+              arrayValue.push(value);
+            }
+          }
+        }
+        return arrayValue;
+      } else if (property.type === FormPropertyType.fieldset) {
         const propertyValue: {[id: string]: any} = {};
         for (const childProperty of property.properties) {
-          propertyValue[childProperty.id] = this.getPropertyValue(...ids, childProperty.id);
+          if (childProperty.type !== FormPropertyType.htmlSection) {
+            propertyValue[childProperty.id] = this.getPropertyValue(properties, settings, ...ids, childProperty.id);
+          }
         }
         return propertyValue;
       } else {
-        const value = this.getSettingsValue(...ids);
-        if (isDefinedAndNotNull(value)) {
-          if (property.type === FormPropertyType.color_settings) {
-            return ColorProcessor.fromSettings(value);
-          } else if (property.type === FormPropertyType.text) {
-            const result = this.ctx.utilsService.customTranslation(value, value);
-            const entityInfo = this.ctx.defaultSubscription.getFirstEntityInfo();
-            return createLabelFromSubscriptionEntityInfo(entityInfo, result);
-          }
-          return value;
-        } else {
-          switch (property.type) {
-            case FormPropertyType.text:
-              return '';
-            case FormPropertyType.number:
-              return 0;
-            case FormPropertyType.color:
-              return '#000';
-            case FormPropertyType.color_settings:
-              return ColorProcessor.fromSettings(constantColor('#000'));
-          }
-        }
+        const value = this.getSettingsValue(settings, ...ids);
+        return this.convertPropertyValue(property, value);
       }
     } else {
       return '';
+    }
+  }
+
+  private convertPropertyValue(property: FormProperty, value: any): any {
+    if (isDefinedAndNotNull(value)) {
+      if (property.type === FormPropertyType.color_settings) {
+        return ColorProcessor.fromSettings(value);
+      } else if ([FormPropertyType.text, FormPropertyType.textarea].includes(property.type)) {
+        const result = this.ctx.utilsService.customTranslation(value, value);
+        const entityInfo = this.ctx.defaultSubscription.getFirstEntityInfo();
+        return createLabelFromSubscriptionEntityInfo(entityInfo, result);
+      }
+      return value;
+    } else {
+      switch (property.type) {
+        case FormPropertyType.color_settings:
+          return ColorProcessor.fromSettings(constantColor('#000'));
+        case FormPropertyType.font:
+        case FormPropertyType.units:
+        case FormPropertyType.icon:
+          return null;
+        default:
+          return defaultPropertyValue(property.type);
+      }
     }
   }
 }

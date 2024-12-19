@@ -54,6 +54,16 @@
       padding: 12px;
       gap: 8px;
     }
+    &.no-padding-right {
+      padding-right: 0;
+      .mat-expansion-panel {
+        &.tb-settings {
+          > .mat-expansion-panel-header {
+            padding-right: 16px;
+          }
+        }
+      }
+    }
     &.no-padding-bottom {
       padding-bottom: 0;
     }

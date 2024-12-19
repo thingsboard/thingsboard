@@ -180,6 +180,9 @@ import {
 import {
   DynamicFormSelectItemRowComponent
 } from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-select-item-row.component';
+import {
+  DynamicFormArrayComponent
+} from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-array.component';
 
 @NgModule({
   declarations: [
@@ -248,7 +251,8 @@ import {
     DynamicFormPropertyPanelComponent,
     DynamicFormSelectItemsComponent,
     DynamicFormSelectItemRowComponent,
-    DynamicFormComponent
+    DynamicFormComponent,
+    DynamicFormArrayComponent
   ],
   imports: [
     CommonModule,
@@ -321,7 +325,8 @@ import {
     DynamicFormPropertyPanelComponent,
     DynamicFormSelectItemsComponent,
     DynamicFormSelectItemRowComponent,
-    DynamicFormComponent
+    DynamicFormComponent,
+    DynamicFormArrayComponent
   ],
   providers: [
     ColorSettingsComponentService,

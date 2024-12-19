@@ -31,8 +31,7 @@
       </ng-template>
       <ng-template [ngSwitchCase]="valueTypeEnum.DATE_TIME">
         <tb-datetime formControlName="defaultValue"
-                     dateText="filter.date"
-                     timeText="filter.time"
+                     dateText="{{ 'filter.date' | translate }}"
                      required [showLabel]="false"></tb-datetime>
       </ng-template>
       <ng-template [ngSwitchCase]="valueTypeEnum.BOOLEAN">

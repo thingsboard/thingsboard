@@ -16,22 +16,36 @@
 
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { TbEditorCompletion, TbEditorCompletions } from '@shared/models/ace/completion.models';
-import { isString } from '@core/utils';
+import { deepClone, isDefinedAndNotNull, isString } from '@core/utils';
 import { JsonSchema, JsonSettingsSchema } from '@shared/models/widget.models';
 import JsonFormUtils from '@shared/components/json-form/react/json-form-utils';
 import { JsonFormData, KeyLabelItem } from '@shared/components/json-form/react/json-form.models';
+import { constantColor, Font } from '@shared/models/widget-settings.models';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 export enum FormPropertyType {
   text = 'text',
   number = 'number',
+  password = 'password',
+  textarea = 'textarea',
   switch = 'switch',
   select = 'select',
+  radios = 'radios',
+  datetime = 'datetime',
+  image = 'image',
+  javascript = 'javascript',
+  json = 'json',
+  html = 'html',
+  css = 'css',
+  markdown = 'markdown',
   color = 'color',
   color_settings = 'color_settings',
   font = 'font',
   units = 'units',
   icon = 'icon',
-  fieldset = 'fieldset'
+  fieldset = 'fieldset',
+  array = 'array',
+  htmlSection = 'htmlSection'
 }
 
 export const formPropertyTypes = Object.keys(FormPropertyType) as FormPropertyType[];
@@ -40,14 +54,26 @@ export const formPropertyTypeTranslations = new Map<FormPropertyType, string>(
   [
     [FormPropertyType.text, 'dynamic-form.property.type-text'],
     [FormPropertyType.number, 'dynamic-form.property.type-number'],
+    [FormPropertyType.password, 'dynamic-form.property.type-password'],
+    [FormPropertyType.textarea, 'dynamic-form.property.type-textarea'],
     [FormPropertyType.switch, 'dynamic-form.property.type-switch'],
     [FormPropertyType.select, 'dynamic-form.property.type-select'],
+    [FormPropertyType.radios, 'dynamic-form.property.type-radios'],
+    [FormPropertyType.datetime, 'dynamic-form.property.type-datetime'],
+    [FormPropertyType.image, 'dynamic-form.property.type-image'],
+    [FormPropertyType.javascript, 'dynamic-form.property.type-javascript'],
+    [FormPropertyType.json, 'dynamic-form.property.type-json'],
+    [FormPropertyType.html, 'dynamic-form.property.type-html'],
+    [FormPropertyType.css, 'dynamic-form.property.type-css'],
+    [FormPropertyType.markdown, 'dynamic-form.property.type-markdown'],
     [FormPropertyType.color, 'dynamic-form.property.type-color'],
     [FormPropertyType.color_settings, 'dynamic-form.property.type-color-settings'],
     [FormPropertyType.font, 'dynamic-form.property.type-font'],
     [FormPropertyType.units, 'dynamic-form.property.type-units'],
     [FormPropertyType.icon, 'dynamic-form.property.type-icon'],
-    [FormPropertyType.fieldset, 'dynamic-form.property.type-fieldset']
+    [FormPropertyType.fieldset, 'dynamic-form.property.type-fieldset'],
+    [FormPropertyType.array, 'dynamic-form.property.type-array'],
+    [FormPropertyType.htmlSection, 'dynamic-form.property.type-html-section']
   ]
 );
 
@@ -78,6 +104,10 @@ export interface FormPropertyBase {
   fieldClass?: string;
 }
 
+export interface FormTextareaProperty extends FormPropertyBase {
+  rows?: number;
+}
+
 export interface FormNumberProperty extends FormPropertyBase {
   min?: number;
   max?: number;
@@ -88,6 +118,11 @@ export interface FormFieldSetProperty extends FormPropertyBase {
   properties?: FormProperty[];
 }
 
+export interface FormArrayProperty extends FormPropertyBase {
+  arrayItemName?: string;
+  arrayItemType?: FormPropertyType;
+}
+
 export interface FormSelectItem {
   value: any;
   label: string;
@@ -95,33 +130,82 @@ export interface FormSelectItem {
 
 export interface FormSelectProperty extends FormPropertyBase {
   multiple?: boolean;
+  allowEmptyOption?: boolean;
   items?: FormSelectItem[];
 }
 
-export type FormProperty = FormPropertyBase & FormNumberProperty & FormSelectProperty & FormFieldSetProperty;
+export type FormPropertyDirection = 'row' | 'column';
+
+export interface FormRadiosProperty extends FormPropertyBase {
+  direction?: FormPropertyDirection;
+  items?: FormSelectItem[];
+}
+
+export type FormPropertyDateTimeType = 'date' | 'time' | 'datetime';
+
+export interface FormDateTimeProperty extends FormPropertyBase {
+  allowClear?: boolean;
+  dateTimeType?: FormPropertyDateTimeType;
+}
+
+export interface FormJavascriptProperty extends FormPropertyBase {
+  helpId?: string;
+}
+
+export interface FormMarkdownProperty extends FormPropertyBase {
+  helpId?: string;
+}
+
+export interface FormHtmlSection extends FormPropertyBase {
+  htmlClassList?: string[];
+  htmlContent?: string;
+}
+
+export type FormProperty = FormPropertyBase & FormTextareaProperty & FormNumberProperty & FormSelectProperty & FormRadiosProperty
+  & FormDateTimeProperty & FormJavascriptProperty & FormMarkdownProperty & FormFieldSetProperty & FormArrayProperty & FormHtmlSection;
 
 export enum FormPropertyContainerType {
+  field = 'field',
   row = 'row',
-  fieldset = 'fieldset'
+  fieldset = 'fieldset',
+  array = 'array',
+  htmlSection = 'htmlSection'
 }
 
 export interface FormPropertyContainerBase {
   type: FormPropertyContainerType;
   label: string;
-  properties: FormProperty[];
   visible: boolean;
 }
 
 export interface FormPropertyRow extends FormPropertyContainerBase {
+  properties?: FormProperty[];
   switch?: FormProperty;
   rowClass?: string;
+  propertiesRowClass?: string;
+}
+
+export interface FormPropertyField extends FormPropertyContainerBase {
+  property?: FormProperty;
 }
 
 export interface FormPropertyFieldset extends FormPropertyContainerBase {
   property?: FormProperty;
+  properties?: FormProperty[];
 }
 
-export type FormPropertyContainer = FormPropertyRow & FormPropertyFieldset;
+export interface FormPropertyArray extends FormPropertyContainerBase {
+  property?: FormProperty;
+  arrayItemProperty?: FormProperty;
+}
+
+export interface FormPropertyHtml extends FormPropertyContainerBase {
+  property?: FormProperty;
+  safeHtml?: SafeHtml;
+  htmlClass?: string;
+}
+
+export type FormPropertyContainer = FormPropertyField & FormPropertyRow & FormPropertyFieldset & FormPropertyHtml;
 
 export interface FormPropertyGroup {
   title?: string;
@@ -129,14 +213,22 @@ export interface FormPropertyGroup {
   visible: boolean;
 }
 
-export const toPropertyGroups = (properties: FormProperty[]): FormPropertyGroup[] => {
+export const toPropertyGroups = (properties: FormProperty[],
+                                 isArrayItem: boolean,
+                                 customTranslate: CustomTranslatePipe,
+                                 sanitizer: DomSanitizer): FormPropertyGroup[] => {
   const groups: {title: string, properties: FormProperty[]}[] = [];
   for (let property of properties) {
     if (!property.group) {
-      groups.push({
-        title: null,
-        properties: [property]
-      });
+      let group = groups.length ? groups[groups.length - 1] : null;
+      if (group && !group.title) {
+        group.properties.push(property);
+      } else {
+        groups.push({
+          title: null,
+          properties: [property]
+        });
+      }
     } else {
       let propertyGroup = groups.find(g => g.title === property.group);
       if (!propertyGroup) {
@@ -151,15 +243,35 @@ export const toPropertyGroups = (properties: FormProperty[]): FormPropertyGroup[
   }
   return groups.map(g => ({
     title: g.title,
-    containers: toPropertyContainers(g.properties),
+    containers: toPropertyContainers(g.properties, isArrayItem, customTranslate, sanitizer),
     visible: true
   }));
 };
 
-const toPropertyContainers = (properties: FormProperty[]): FormPropertyContainer[] => {
+const toPropertyContainers = (properties: FormProperty[],
+                              isArrayItem: boolean,
+                              customTranslate: CustomTranslatePipe,
+                              sanitizer: DomSanitizer): FormPropertyContainer[] => {
   const result: FormPropertyContainer[] = [];
   for (let property of properties) {
-    if (property.type === FormPropertyType.fieldset) {
+    if (property.type === FormPropertyType.array) {
+      const propertyArray: FormPropertyArray = {
+        property,
+        label: property.name,
+        type: FormPropertyContainerType.array,
+        visible: true
+      };
+      const arrayItemProperty = deepClone(property);
+      arrayItemProperty.name = property.arrayItemName;
+      arrayItemProperty.type = property.arrayItemType;
+      arrayItemProperty.required = true;
+      delete arrayItemProperty.disableOnProperty;
+      delete arrayItemProperty.condition;
+      delete arrayItemProperty.conditionFunction;
+      delete arrayItemProperty.group;
+      propertyArray.arrayItemProperty = arrayItemProperty;
+      result.push(propertyArray);
+    } else if (property.type === FormPropertyType.fieldset) {
       const propertyFieldset: FormPropertyFieldset = {
         property,
         label: property.name,
@@ -168,6 +280,24 @@ const toPropertyContainers = (properties: FormProperty[]): FormPropertyContainer
         visible: true
       };
       result.push(propertyFieldset);
+    } else if (property.type === FormPropertyType.htmlSection) {
+      const propertyHtml: FormPropertyHtml = {
+        property,
+        label: property.name,
+        type: FormPropertyContainerType.htmlSection,
+        htmlClass: property.htmlClassList ? property.htmlClassList.join(' ') : '',
+        safeHtml: sanitizer.bypassSecurityTrustHtml(property.htmlContent),
+        visible: true
+      };
+      result.push(propertyHtml);
+    } else if (isSingleFieldPropertyType(property.type) || isArrayItem) {
+      const propertyField: FormPropertyField = {
+        property,
+        label: property.name,
+        type: FormPropertyContainerType.field,
+        visible: true
+      };
+      result.push(propertyField);
     } else {
       let propertyRow =
         result.find(r => r.type === FormPropertyContainerType.row && r.label === property.name);
@@ -177,6 +307,7 @@ const toPropertyContainers = (properties: FormProperty[]): FormPropertyContainer
           type: FormPropertyContainerType.row,
           properties: [],
           rowClass: property.rowClass,
+          propertiesRowClass: 'row flex-end align-center',
           visible: true
         };
         result.push(propertyRow);
@@ -188,22 +319,60 @@ const toPropertyContainers = (properties: FormProperty[]): FormPropertyContainer
       }
     }
   }
+  for (let container of result.filter(c =>
+    c.type === FormPropertyContainerType.row && !c.switch && c.properties?.length === 1)) {
+    const property = container.properties[0];
+    if (isInputFieldPropertyType(property.type)) {
+      const labelText = customTranslate.transform(property.name);
+      if (property.type !== FormPropertyType.number && labelText.length > 40) {
+        container.type = FormPropertyContainerType.field;
+        container.property = property;
+        delete container.properties;
+        delete container.rowClass;
+      } else {
+        if (!container.rowClass) {
+          container.rowClass = 'column-xs';
+          container.propertiesRowClass = 'gt-xs:align-center xs:flex-col gt-xs:flex-row gt-xs:justify-end';
+        }
+      }
+    }
+  }
   return result;
+}
+
+export const isPropertyTypeAllowedForRow = (type: FormPropertyType): boolean => {
+  return !isSingleFieldPropertyType(type) && ![FormPropertyType.fieldset, FormPropertyType.array, FormPropertyType.htmlSection].includes(type);
+}
+
+export const isSingleFieldPropertyType = (type: FormPropertyType): boolean => {
+  return [FormPropertyType.radios, FormPropertyType.textarea, FormPropertyType.image, FormPropertyType.javascript, FormPropertyType.json, FormPropertyType.html,
+    FormPropertyType.css, FormPropertyType.markdown].includes(type);
+}
+
+export const isInputFieldPropertyType = (type: FormPropertyType): boolean => {
+  return [FormPropertyType.text, FormPropertyType.password, FormPropertyType.number, FormPropertyType.select, FormPropertyType.datetime,
+    FormPropertyType.textarea].includes(type);
 }
 
 export const defaultFormProperties = (properties: FormProperty[]): {[id: string]: any} => {
   const formProperties: {[id: string]: any} = {};
   for (const property of properties) {
-    formProperties[property.id] = defaultFormPropertyValue(property);
+    if (property.type !== FormPropertyType.htmlSection) {
+      formProperties[property.id] = defaultFormPropertyValue(property);
+    }
   }
   return formProperties;
 };
 
 export const defaultFormPropertyValue = (property: FormProperty): any => {
-  if (property.type === FormPropertyType.fieldset) {
+  if (property.type === FormPropertyType.array) {
+    return [];
+  } else if (property.type === FormPropertyType.fieldset) {
     const propertyValue: {[id: string]: any} = {};
     for (const childProperty of property.properties) {
-      propertyValue[childProperty.id] = defaultFormPropertyValue(childProperty);
+      if (childProperty.type !== FormPropertyType.htmlSection) {
+        propertyValue[childProperty.id] = defaultFormPropertyValue(childProperty);
+      }
     }
     return propertyValue;
   } else {
@@ -211,10 +380,58 @@ export const defaultFormPropertyValue = (property: FormProperty): any => {
   }
 }
 
+export const propertyValid = (property: FormProperty): boolean =>
+  !(!property.id || !property.name || !property.type || (property.type === FormPropertyType.array && !property.arrayItemType));
+
+export const defaultPropertyValue = (type: FormPropertyType): any => {
+  switch (type) {
+    case FormPropertyType.text:
+    case FormPropertyType.textarea:
+    case FormPropertyType.password:
+    case FormPropertyType.javascript:
+    case FormPropertyType.json:
+    case FormPropertyType.html:
+    case FormPropertyType.css:
+    case FormPropertyType.markdown:
+      return '';
+    case FormPropertyType.number:
+      return 0;
+    case FormPropertyType.switch:
+      return false;
+    case FormPropertyType.color:
+      return '#000';
+    case FormPropertyType.color_settings:
+      return constantColor('#000');
+    case FormPropertyType.font:
+      return {
+        size: 12,
+        sizeUnit: 'px',
+        family: 'Roboto',
+        weight: 'normal',
+        style: 'normal',
+        lineHeight: '1'
+      } as Font;
+    case FormPropertyType.units:
+      return '';
+    case FormPropertyType.icon:
+      return 'star';
+    case FormPropertyType.fieldset:
+    case FormPropertyType.array:
+    case FormPropertyType.select:
+    case FormPropertyType.radios:
+    case FormPropertyType.datetime:
+    case FormPropertyType.htmlSection:
+    case FormPropertyType.image:
+      return null;
+  }
+};
+
 export const formPropertyCompletions = (properties: FormProperty[], customTranslate: CustomTranslatePipe): TbEditorCompletions => {
   const propertiesCompletions: TbEditorCompletions = {};
   for (const property of properties) {
-    propertiesCompletions[property.id] = formPropertyCompletion(property, customTranslate);
+    if (property.type !== FormPropertyType.htmlSection) {
+      propertiesCompletions[property.id] = formPropertyCompletion(property, customTranslate);
+    }
   }
   return propertiesCompletions;
 }
@@ -224,37 +441,63 @@ export const formPropertyCompletion = (property: FormProperty, customTranslate: 
   if (property.subLabel) {
     description += ` <small>${customTranslate.transform(property.subLabel, property.subLabel)}</small>`;
   }
-  if (property.type === FormPropertyType.select) {
-    if (property.multiple) {
+  const isArray = property.type === FormPropertyType.array;
+  const type = isArray ? property.arrayItemType : property.type;
+  if (type === FormPropertyType.select) {
+    if (property.multiple || isArray) {
       description += '<br/><br/><code class="title"><b>Possible values of array element:</b></code>';
     } else {
       description += '<br/><br/><code class="title"><b>Possible values:</b></code>';
     }
     description += `<ul>${property.items.map(item => `<li>${item.value} <code style="font-size: 11px;">${typeof item.value}</code></li>`).join('\n')}</ul>`;
   }
+  if (type === FormPropertyType.datetime) {
+    if (isArray) {
+      description += '<br/><br/><code class="title">Stores array of time values in milliseconds since midnight, January 1, 1970 UTC.</code>';
+    } else {
+      description += '<br/><br/><code class="title">Stores time value in milliseconds since midnight, January 1, 1970 UTC.</code>';
+    }
+  }
   const completion: TbEditorCompletion = {
     meta: 'property',
     description,
     type: formPropertyCompletionType(property)
   };
-  if (property.type === FormPropertyType.fieldset) {
+  if (type === FormPropertyType.fieldset && !isArray) {
     completion.children = {};
     for (const childProperty of property.properties) {
-      completion.children[childProperty.id] = formPropertyCompletion(childProperty, customTranslate);
+      if (childProperty.type !== FormPropertyType.htmlSection) {
+        completion.children[childProperty.id] = formPropertyCompletion(childProperty, customTranslate);
+      }
     }
   }
   return completion;
 };
 
 const formPropertyCompletionType = (property: FormProperty): string => {
-  switch (property.type) {
+  const isArray = property.type === FormPropertyType.array;
+  const type = isArray ? property.arrayItemType : property.type;
+  let typeStr: string;
+  switch (type) {
     case FormPropertyType.text:
-      return 'string';
+    case FormPropertyType.password:
+    case FormPropertyType.textarea:
+      typeStr = 'string';
+      break;
     case FormPropertyType.number:
-      return 'number';
+      typeStr = 'number';
+      break;
     case FormPropertyType.switch:
-      return 'boolean';
+      typeStr = 'boolean';
+      break;
+    case FormPropertyType.datetime:
+      typeStr = 'number';
+      break;
+    case FormPropertyType.image:
+      typeStr = 'image URL string';
+      break;
     case FormPropertyType.select:
+    case FormPropertyType.radios:
       const items = property.items || [];
       const types: string[] = [];
       items.forEach(item => {
@@ -264,24 +507,53 @@ const formPropertyCompletionType = (property: FormProperty): string => {
         }
       });
       const typesString = types.length ? types.join(' | ') : 'string';
-      if (property.multiple) {
-        return `Array&lt;${typesString}&gt;`;
+      if (property.type === FormPropertyType.select && property.multiple) {
+        typeStr = `Array&lt;${typesString}&gt;`;
       } else {
-        return typesString;
+        typeStr = typesString;
       }
+      break;
     case FormPropertyType.color:
-      return 'color string';
+      typeStr = 'color string';
+      break;
     case FormPropertyType.color_settings:
-      return 'ColorProcessor';
+      typeStr = 'ColorProcessor';
+      break;
     case FormPropertyType.font:
-      return 'Font';
+      typeStr = 'Font';
+      break;
     case FormPropertyType.units:
-      return 'units string';
+      typeStr = 'units string';
+      break;
     case FormPropertyType.icon:
-      return 'icon string';
+      typeStr = 'icon string';
+      break;
     case FormPropertyType.fieldset:
-      return 'object';
+      typeStr = 'object';
+      break;
+    case FormPropertyType.javascript:
+      typeStr = 'JavaScript function body string';
+      break;
+    case FormPropertyType.json:
+      typeStr = 'JSON string';
+      break;
+    case FormPropertyType.html:
+      typeStr = 'HTML string';
+      break;
+    case FormPropertyType.css:
+      typeStr = 'CSS string';
+      break;
+    case FormPropertyType.markdown:
+      typeStr = 'Markdown string';
+      break;
+    default:
+      typeStr = 'unknown';
+      break;
   }
+  if (isArray) {
+    typeStr = `Array&lt;${typeStr}&gt;`;
+  }
+  return typeStr;
 };
 
 
@@ -322,13 +594,14 @@ const schemaFormToProperties = (schema: JsonSchema, theForm: any[], groupTitle?:
 
 const jsonFormDataToProperty = (form: JsonFormData, level: number, groupTitle?: string): FormProperty => {
   if (form.key && form.key.length > level) {
-    const property: FormProperty = {
-      id: form.key[level] + '',
-      name: form.title,
+    const id = form.key[level] + '';
+    let property: FormProperty = {
+      id,
+      name: form.title || id,
       group: groupTitle,
       type: null,
-      default: form.schema.default,
-      required: form.required
+      default: form.schema?.default || null,
+      required: isDefinedAndNotNull(form.required) ? form.required : false
     };
     if (form.condition?.length) {
       property.condition = `return ${form.condition};`;
@@ -340,6 +613,14 @@ const jsonFormDataToProperty = (form: JsonFormData, level: number, groupTitle?: 
       case 'text':
         property.type = FormPropertyType.text;
         property.fieldClass = 'flex';
+        break;
+      case 'password':
+        property.type = FormPropertyType.password;
+        property.fieldClass = 'flex';
+        break;
+      case 'textarea':
+        property.type = FormPropertyType.textarea;
+        property.rows = form.rows || form.rowsMax || 2;
         break;
       case 'checkbox':
         property.type = FormPropertyType.switch;
@@ -353,6 +634,7 @@ const jsonFormDataToProperty = (form: JsonFormData, level: number, groupTitle?: 
         }
         property.multiple = form.multiple;
         property.fieldClass = 'flex';
+        property.allowEmptyOption = isDefinedAndNotNull(form.allowClear) ? form.allowClear : false;
         break;
       case 'select':
         property.type = FormPropertyType.select;
@@ -363,6 +645,25 @@ const jsonFormDataToProperty = (form: JsonFormData, level: number, groupTitle?: 
         }
         property.multiple = false;
         property.fieldClass = 'flex';
+        property.allowEmptyOption = false;
+        break;
+      case 'radios':
+        property.type = FormPropertyType.radios;
+        if (form.titleMap?.length) {
+          property.items = form.titleMap.map(item => ({value: item.value, label: item.name}));
+        } else {
+          property.items = [];
+        }
+        property.direction = form.direction === 'row' ? 'row' : 'column';
+        break;
+      case 'date':
+        property.type = FormPropertyType.datetime;
+        property.dateTimeType = 'date';
+        property.fieldClass = 'flex';
+        property.allowClear = true;
+        break;
+      case 'image':
+        property.type = FormPropertyType.image;
         break;
       case 'color':
         property.type = FormPropertyType.color;
@@ -374,6 +675,44 @@ const jsonFormDataToProperty = (form: JsonFormData, level: number, groupTitle?: 
         property.type = FormPropertyType.fieldset;
         property.properties = form.items ? (form.items as JsonFormData[]).map(item =>
           jsonFormDataToProperty(item, level+1)).filter(p => p !== null) : [];
+        break;
+      case 'javascript':
+        property.type = FormPropertyType.javascript;
+        property.helpId = form.helpId;
+        break;
+      case 'json':
+        property.type = FormPropertyType.json;
+        break;
+      case 'html':
+        property.type = FormPropertyType.html;
+        break;
+      case 'css':
+        property.type = FormPropertyType.css;
+        break;
+      case 'markdown':
+        property.type = FormPropertyType.markdown;
+        break;
+      case 'help':
+        property.type = FormPropertyType.htmlSection;
+        property.htmlContent = form.description || '';
+        property.htmlClassList = form.htmlClass ? form.htmlClass.split(' ') : [];
+        break;
+      case 'array':
+        if (form.items?.length) {
+          const item: JsonFormData = form.items[0] as JsonFormData;
+          if (item.type !== 'array') {
+            const arrayProperty = jsonFormDataToProperty(item, 0);
+            arrayProperty.arrayItemType = arrayProperty.type;
+            arrayProperty.arrayItemName = arrayProperty.name;
+            arrayProperty.id = property.id;
+            arrayProperty.name = property.name;
+            arrayProperty.group = property.group;
+            arrayProperty.condition = property.condition;
+            arrayProperty.required = property.required;
+            property = arrayProperty;
+            property.type = FormPropertyType.array;
+          }
+        }
         break;
     }
     if (!property.type) {

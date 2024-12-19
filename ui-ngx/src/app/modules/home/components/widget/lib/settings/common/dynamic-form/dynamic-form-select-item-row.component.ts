@@ -40,7 +40,6 @@ import { FormSelectItem } from '@shared/models/dynamic-form.models';
 import {
   DynamicFormSelectItemsComponent
 } from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-select-items.component';
-import { TimeSeriesChartStateSourceType } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { ValueType } from '@shared/models/constants';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -105,7 +104,7 @@ export class DynamicFormSelectItemRowComponent implements ControlValueAccessor, 
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -128,7 +127,7 @@ export class DynamicFormSelectItemRowComponent implements ControlValueAccessor, 
     this.cd.markForCheck();
   }
 
-  public validate(c: UntypedFormControl) {
+  public validate(_c: UntypedFormControl) {
     const valueControl = this.selectItemRowFormGroup.get('value');
     if (valueControl.hasError('itemValueNotUnique')) {
       valueControl.updateValueAndValidity({onlySelf: false, emitEvent: false});
