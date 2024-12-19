@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import {
   WidgetButtonAppearance,
@@ -25,6 +25,7 @@ import {
 } from '@shared/components/button/widget-button.models';
 import { merge } from 'rxjs';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-widget-button-appearance',
@@ -72,7 +73,8 @@ export class WidgetButtonAppearanceComponent implements OnInit, ControlValueAcce
 
   private propagateChange = (_val: any) => {};
 
-  constructor(private fb: UntypedFormBuilder) {}
+  constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {}
 
   ngOnInit(): void {
     this.appearanceFormGroup = this.fb.group({
@@ -97,12 +99,16 @@ export class WidgetButtonAppearanceComponent implements OnInit, ControlValueAcce
       customStyle.addControl(state, this.fb.control(null, []));
     }
     this.appearanceFormGroup.addControl('customStyle', customStyle);
-    this.appearanceFormGroup.valueChanges.subscribe(() => {
+    this.appearanceFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
     merge(this.appearanceFormGroup.get('showLabel').valueChanges,
-          this.appearanceFormGroup.get('showIcon').valueChanges)
-    .subscribe(() => {
+          this.appearanceFormGroup.get('showIcon').valueChanges
+    ).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
   }

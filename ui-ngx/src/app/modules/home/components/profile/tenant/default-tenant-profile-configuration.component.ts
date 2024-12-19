@@ -128,7 +128,9 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       }
     );
 
-    this.defaultTenantProfileConfigurationFormGroup.valueChanges.subscribe(() => {
+    this.defaultTenantProfileConfigurationFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
       this.updateModel();
     });
   }

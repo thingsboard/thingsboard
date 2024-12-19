@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, forwardRef, Input, OnInit } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -23,6 +23,7 @@ import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 interface EntityListSelectModel {
   entityType: EntityType | AliasEntityType;
@@ -73,7 +74,8 @@ export class EntityListSelectComponent implements ControlValueAccessor, OnInit, 
   constructor(private store: Store<AppState>,
               private entityService: EntityService,
               public translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
 
     const entityTypes = this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes,
       this.useAliasEntityTypes);
@@ -98,12 +100,16 @@ export class EntityListSelectComponent implements ControlValueAccessor, OnInit, 
   }
 
   ngOnInit() {
-    this.entityListSelectFormGroup.get('entityType').valueChanges.subscribe(
+    this.entityListSelectFormGroup.get('entityType').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       (value) => {
         this.updateView(value, this.modelValue.ids);
       }
     );
-    this.entityListSelectFormGroup.get('entityIds').valueChanges.subscribe(
+    this.entityListSelectFormGroup.get('entityIds').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       (values) => {
         this.updateView(this.modelValue.entityType, values);
       }

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
+import { Component, DestroyRef, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -38,6 +38,7 @@ import {
   UserFilterInputInfo
 } from '@shared/models/query/query.models';
 import { isDefinedAndNotNull } from '@core/utils';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface UserFilterDialogData {
   filter: Filter;
@@ -66,7 +67,8 @@ export class UserFilterDialogComponent extends DialogComponent<UserFilterDialogC
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<UserFilterDialogComponent, Filter>,
               private fb: UntypedFormBuilder,
-              public translate: TranslateService) {
+              public translate: TranslateService,
+              private destroyRef: DestroyRef) {
     super(store, router, dialogRef);
     this.filter = data.filter;
     const userInputs = filterToUserFilterInfoList(this.filter, translate);
@@ -91,7 +93,9 @@ export class UserFilterDialogComponent extends DialogComponent<UserFilterDialogC
         userInput.valueType === EntityKeyValueType.NUMERIC ||
         userInput.valueType === EntityKeyValueType.DATE_TIME  ? [Validators.required] : []]
     });
-    userInputControl.get('value').valueChanges.subscribe(userValue => {
+    userInputControl.get('value').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(userValue => {
       (userInput.info.keyFilterPredicate as any).value.userValue = userValue;
     });
     return userInputControl;

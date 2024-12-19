@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, HostBinding, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, HostBinding, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -28,6 +28,7 @@ import {
 import { cssUnit, resolveCssSize } from '@shared/models/widget-settings.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { isDefinedAndNotNull } from '@core/utils';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-css-size-input',
@@ -82,14 +83,17 @@ export class CssSizeInputComponent implements OnInit, ControlValueAccessor, Vali
 
   private propagateChange = null;
 
-  constructor(private fb: UntypedFormBuilder) {}
+  constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {}
 
   ngOnInit(): void {
     this.cssSizeFormGroup = this.fb.group({
       size: [null, this.required ? [Validators.required, Validators.min(0)] : [Validators.min(0)]],
       unit: [null, []]
     });
-    this.cssSizeFormGroup.valueChanges.subscribe((value: {size: number; unit: cssUnit}) => {
+    this.cssSizeFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((value: {size: number; unit: cssUnit}) => {
       this.updateModel(value);
     });
   }

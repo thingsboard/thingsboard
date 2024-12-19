@@ -18,7 +18,7 @@ import { WidgetActionCallbacks } from '@home/components/widget/action/manage-wid
 import { DatasourceCallbacks } from '@home/components/widget/config/datasource.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import { Observable } from 'rxjs';
-import { AfterViewInit, Directive, EventEmitter, Inject, OnInit } from '@angular/core';
+import { AfterViewInit, DestroyRef, Directive, EventEmitter, inject, Inject, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -27,6 +27,7 @@ import { DataKey, DatasourceType, WidgetConfigMode, widgetType } from '@shared/m
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { isDefinedAndNotNull } from '@core/utils';
 import { IAliasController } from '@core/api/widget-api.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export type WidgetConfigCallbacks = DatasourceCallbacks & WidgetActionCallbacks;
 
@@ -77,6 +78,8 @@ export abstract class BasicWidgetConfigComponent extends PageComponent implement
   widgetConfigChangedEmitter = new EventEmitter<WidgetConfigComponentData>();
   widgetConfigChanged = this.widgetConfigChangedEmitter.asObservable();
 
+  protected destroyRef = inject(DestroyRef);
+
   protected constructor(@Inject(Store) protected store: Store<AppState>,
                         protected widgetConfigComponent: WidgetConfigComponent) {
     super(store);
@@ -104,11 +107,15 @@ export abstract class BasicWidgetConfigComponent extends PageComponent implement
       for (const part of path) {
         control = control.get(part);
       }
-      control.valueChanges.subscribe(() => {
+      control.valueChanges.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => {
         this.updateValidators(true, trigger);
       });
     }
-    this.configForm().valueChanges.subscribe(() => {
+    this.configForm().valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.onConfigChanged(this.prepareOutputConfig(this.configForm().getRawValue()));
     });
   }

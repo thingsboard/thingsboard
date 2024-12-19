@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { DateFormatSettings } from '@shared/models/widget-settings.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
@@ -22,6 +22,7 @@ import { UntypedFormControl, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { DatePipe } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-date-format-settings-panel',
@@ -46,13 +47,16 @@ export class DateFormatSettingsPanelComponent extends PageComponent implements O
   previewText = '';
 
   constructor(private date: DatePipe,
-              protected store: Store<AppState>) {
+              protected store: Store<AppState>,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
   ngOnInit(): void {
     this.dateFormatFormControl = new UntypedFormControl(this.dateFormat.format, [Validators.required]);
-    this.dateFormatFormControl.valueChanges.subscribe((value: string) => {
+    this.dateFormatFormControl.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((value: string) => {
       this.previewText = this.date.transform(Date.now(), value);
     });
     this.previewText = this.date.transform(Date.now(), this.dateFormat.format);

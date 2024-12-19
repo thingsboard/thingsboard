@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import {
   ColorSettings,
@@ -34,6 +34,7 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
 import { Datasource } from '@shared/models/widget.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-color-settings-panel',
@@ -91,7 +92,8 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
 
   constructor(private fb: UntypedFormBuilder,
               private widgetService: WidgetService,
-              protected store: Store<AppState>) {
+              protected store: Store<AppState>,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -105,7 +107,9 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
         colorFunction: [this.colorSettings?.colorFunction, []]
       }
     );
-    this.colorSettingsFormGroup.get('type').valueChanges.subscribe(() => {
+    this.colorSettingsFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       setTimeout(() => {this.popover?.updatePosition();}, 0);
     });
   }

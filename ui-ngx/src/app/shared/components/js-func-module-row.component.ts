@@ -17,11 +17,13 @@
 import {
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   EventEmitter,
   forwardRef,
   Input,
   OnInit,
-  Output, ViewChild,
+  Output,
+  ViewChild,
   ViewEncapsulation
 } from '@angular/core';
 import {
@@ -42,6 +44,7 @@ import { ResourceAutocompleteComponent } from '@shared/components/resource/resou
 import { HttpClient } from '@angular/common/http';
 import { loadModuleMarkdownDescription, loadModuleMarkdownSourceCode } from '@shared/models/js-function.models';
 import { TranslateService } from '@ngx-translate/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface JsFuncModuleRow {
   alias: string;
@@ -95,14 +98,17 @@ export class JsFuncModuleRowComponent implements ControlValueAccessor, OnInit, V
               private cd: ChangeDetectorRef,
               private modulesComponent: JsFuncModulesComponent,
               private http: HttpClient,
-              private translate: TranslateService) {}
+              private translate: TranslateService,
+              private destroyRef: DestroyRef) {}
 
   ngOnInit() {
     this.moduleRowFormGroup = this.fb.group({
       alias: [null, [this.moduleAliasValidator()]],
       moduleLink: [null, [Validators.required]]
     });
-    this.moduleRowFormGroup.valueChanges.subscribe(
+    this.moduleRowFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.updateModel()
     );
   }

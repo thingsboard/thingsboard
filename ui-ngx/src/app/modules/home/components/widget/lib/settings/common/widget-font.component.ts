@@ -14,12 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, HostBinding, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, HostBinding, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface WidgetFont {
   family: string;
@@ -63,7 +64,8 @@ export class WidgetFontComponent extends PageComponent implements OnInit, Contro
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -78,7 +80,9 @@ export class WidgetFontComponent extends PageComponent implements OnInit, Contro
     if (this.hasShadowColor) {
       this.widgetFontFormGroup.addControl('shadowColor', this.fb.control(null, []));
     }
-    this.widgetFontFormGroup.valueChanges.subscribe(() => {
+    this.widgetFontFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }

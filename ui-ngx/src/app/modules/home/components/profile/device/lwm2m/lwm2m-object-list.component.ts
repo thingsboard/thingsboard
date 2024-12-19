@@ -34,6 +34,7 @@ import { Direction } from '@shared/models/page/sort-order';
 import { isDefined, isDefinedAndNotNull, isObject, isString } from '@core/utils';
 import { PageLink } from '@shared/models/page/page-link';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-profile-lwm2m-object-list',
@@ -90,7 +91,9 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
       objectsList: [this.objectsList],
       objectLwm2m: ['']
     });
-    this.lwm2mListFormGroup.get('objectsList').valueChanges.subscribe((value) => {
+    this.lwm2mListFormGroup.get('objectsList').valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe((value) => {
       if (!value.length || (value.length && isObject(value[0]))) {
         let formValue = null;
         if (this.lwm2mListFormGroup.valid) {

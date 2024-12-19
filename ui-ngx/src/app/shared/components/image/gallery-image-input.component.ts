@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -35,6 +35,7 @@ import {
   ImageGalleryDialogComponent,
   ImageGalleryDialogData
 } from '@shared/components/image/image-gallery-dialog.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export enum ImageLinkType {
   none = 'none',
@@ -84,12 +85,15 @@ export class GalleryImageInputComponent extends PageComponent implements OnInit,
   constructor(protected store: Store<AppState>,
               private imageService: ImageService,
               private dialog: MatDialog,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
   ngOnInit() {
-    this.externalLinkControl.valueChanges.subscribe((value) => {
+    this.externalLinkControl.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((value) => {
       if (this.linkType === ImageLinkType.external) {
         this.updateModel(value);
       }

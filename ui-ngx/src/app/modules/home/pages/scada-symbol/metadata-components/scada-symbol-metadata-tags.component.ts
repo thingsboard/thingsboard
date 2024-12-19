@@ -16,6 +16,7 @@
 
 import {
   Component,
+  DestroyRef,
   forwardRef,
   HostBinding,
   Input,
@@ -42,6 +43,7 @@ import {
   ScadaSymbolMetadataTagComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tag.component';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 const tagIsEmpty = (tag: ScadaSymbolTag): boolean =>
   !tag.stateRenderFunction && !tag.actions?.click?.actionFunction;
@@ -90,7 +92,8 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
 
   private propagateChange = (_val: any) => {};
 
-  constructor(private fb: UntypedFormBuilder) {
+  constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
@@ -100,7 +103,9 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
     const tagsResult = this.setupTags();
     this.tagsFormGroup.setControl('tags', this.prepareTagsFormArray(tagsResult.tags), {emitEvent: false});
 
-    this.tagsFormGroup.valueChanges.subscribe(
+    this.tagsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => {
         let value: ScadaSymbolTag[] = this.tagsFormGroup.get('tags').value;
         if (value) {

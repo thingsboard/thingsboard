@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormBuilder,
@@ -34,6 +34,7 @@ import {
   GoogleMapType,
   googleMapTypeProviderTranslationMap
 } from '@home/components/widget/lib/maps/map-models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-google-map-provider-settings',
@@ -69,7 +70,8 @@ export class GoogleMapProviderSettingsComponent extends PageComponent implements
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -78,7 +80,9 @@ export class GoogleMapProviderSettingsComponent extends PageComponent implements
       gmApiKey: [null, [Validators.required]],
       gmDefaultMapType: [null, [Validators.required]]
     });
-    this.providerSettingsFormGroup.valueChanges.subscribe(() => {
+    this.providerSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }

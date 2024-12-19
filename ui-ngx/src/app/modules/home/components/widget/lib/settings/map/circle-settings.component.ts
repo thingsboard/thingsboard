@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormBuilder,
@@ -36,6 +36,7 @@ import {
 } from '@home/components/widget/lib/maps/map-models';
 import { WidgetService } from '@core/http/widget.service';
 import { Widget } from '@shared/models/widget.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-circle-settings',
@@ -77,7 +78,8 @@ export class CircleSettingsComponent extends PageComponent implements OnInit, Co
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private widgetService: WidgetService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -106,28 +108,44 @@ export class CircleSettingsComponent extends PageComponent implements OnInit, Co
       useCircleStrokeColorFunction: [null, []],
       circleStrokeColorFunction: [null, []]
     });
-    this.circleSettingsFormGroup.valueChanges.subscribe(() => {
+    this.circleSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
-    this.circleSettingsFormGroup.get('showCircle').valueChanges.subscribe(() => {
+    this.circleSettingsFormGroup.get('showCircle').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
-    this.circleSettingsFormGroup.get('showCircleLabel').valueChanges.subscribe(() => {
+    this.circleSettingsFormGroup.get('showCircleLabel').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
-    this.circleSettingsFormGroup.get('useCircleLabelFunction').valueChanges.subscribe(() => {
+    this.circleSettingsFormGroup.get('useCircleLabelFunction').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
-    this.circleSettingsFormGroup.get('showCircleTooltip').valueChanges.subscribe(() => {
+    this.circleSettingsFormGroup.get('showCircleTooltip').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
-    this.circleSettingsFormGroup.get('useCircleTooltipFunction').valueChanges.subscribe(() => {
+    this.circleSettingsFormGroup.get('useCircleTooltipFunction').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
-    this.circleSettingsFormGroup.get('useCircleFillColorFunction').valueChanges.subscribe(() => {
+    this.circleSettingsFormGroup.get('useCircleFillColorFunction').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
-    this.circleSettingsFormGroup.get('useCircleStrokeColorFunction').valueChanges.subscribe(() => {
+    this.circleSettingsFormGroup.get('useCircleStrokeColorFunction').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
     this.updateValidators(false);

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -32,6 +32,7 @@ import {
   timeSeriesChartStateValid,
   timeSeriesChartStateValidator
 } from '@home/components/widget/lib/chart/time-series-chart.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-time-series-chart-states-panel',
@@ -60,14 +61,17 @@ export class TimeSeriesChartStatesPanelComponent implements ControlValueAccessor
 
   private propagateChange = (_val: any) => {};
 
-  constructor(private fb: UntypedFormBuilder) {
+  constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
     this.statesFormGroup = this.fb.group({
       states: [this.fb.array([]), []]
     });
-    this.statesFormGroup.valueChanges.subscribe(
+    this.statesFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => {
         let states: TimeSeriesChartStateSettings[] = this.statesFormGroup.get('states').value;
         if (states) {

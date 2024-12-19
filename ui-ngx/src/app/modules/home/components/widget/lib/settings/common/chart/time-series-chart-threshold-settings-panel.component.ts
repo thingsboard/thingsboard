@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
@@ -33,6 +33,7 @@ import {
   chartShapes,
   chartShapeTranslations
 } from '@home/components/widget/lib/chart/chart.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-time-series-chart-threshold-settings-panel',
@@ -81,7 +82,8 @@ export class TimeSeriesChartThresholdSettingsPanelComponent implements OnInit {
 
   thresholdSettingsFormGroup: UntypedFormGroup;
 
-  constructor(private fb: UntypedFormBuilder) {
+  constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -108,7 +110,10 @@ export class TimeSeriesChartThresholdSettingsPanelComponent implements OnInit {
     merge(this.thresholdSettingsFormGroup.get('showLabel').valueChanges,
           this.thresholdSettingsFormGroup.get('enableLabelBackground').valueChanges,
           this.thresholdSettingsFormGroup.get('startSymbol').valueChanges,
-          this.thresholdSettingsFormGroup.get('endSymbol').valueChanges).subscribe(() => {
+          this.thresholdSettingsFormGroup.get('endSymbol').valueChanges
+    ).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
     this.updateValidators();

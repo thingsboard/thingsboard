@@ -18,14 +18,17 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { ContactBased } from '@shared/models/contact-based.model';
-import { AfterViewInit, ChangeDetectorRef, Directive } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, DestroyRef, Directive, inject } from '@angular/core';
 import { HasId } from '@shared/models/base-data';
 import { EntityComponent } from './entity.component';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { CountryData } from '@shared/models/country.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Directive()
 export abstract class ContactBasedComponent<T extends ContactBased<HasId>> extends EntityComponent<T> implements AfterViewInit {
+
+  protected destroyRef = inject(DestroyRef);
 
   protected constructor(protected store: Store<AppState>,
                         protected fb: UntypedFormBuilder,
@@ -65,7 +68,9 @@ export abstract class ContactBasedComponent<T extends ContactBased<HasId>> exten
   }
 
   ngAfterViewInit() {
-    this.entityForm.get('country').valueChanges.subscribe(
+    this.entityForm.get('country').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       (country) => {
         this.entityForm.get('zip').setValidators(this.zipValidators(country));
         this.entityForm.get('zip').updateValueAndValidity({onlySelf: true});

@@ -14,12 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-script-lang',
@@ -46,7 +47,8 @@ export class TbScriptLangComponent extends PageComponent implements ControlValue
   private propagateChange = null;
 
   constructor(protected store: Store<AppState>,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
     this.scriptLangFormGroup = this.fb.group({
       scriptLang: [null]
@@ -54,7 +56,9 @@ export class TbScriptLangComponent extends PageComponent implements ControlValue
   }
 
   ngOnInit() {
-    this.scriptLangFormGroup.get('scriptLang').valueChanges.subscribe(
+    this.scriptLangFormGroup.get('scriptLang').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       (scriptLang) => {
         this.updateView(scriptLang);
       }

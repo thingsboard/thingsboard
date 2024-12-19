@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormBuilder,
@@ -35,6 +35,7 @@ import {
   PolylineSettings
 } from '@home/components/widget/lib/maps/map-models';
 import { WidgetService } from '@core/http/widget.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-trip-animation-point-settings',
@@ -69,7 +70,8 @@ export class TripAnimationPointSettingsComponent extends PageComponent implement
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private widgetService: WidgetService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -84,16 +86,24 @@ export class TripAnimationPointSettingsComponent extends PageComponent implement
       pointAsAnchorFunction: [null, []],
       pointTooltipOnRightPanel: [null, []]
     });
-    this.tripAnimationPointSettingsFormGroup.valueChanges.subscribe(() => {
+    this.tripAnimationPointSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
-    this.tripAnimationPointSettingsFormGroup.get('showPoints').valueChanges.subscribe(() => {
+    this.tripAnimationPointSettingsFormGroup.get('showPoints').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
-    this.tripAnimationPointSettingsFormGroup.get('useColorPointFunction').valueChanges.subscribe(() => {
+    this.tripAnimationPointSettingsFormGroup.get('useColorPointFunction').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
-    this.tripAnimationPointSettingsFormGroup.get('usePointAsAnchor').valueChanges.subscribe(() => {
+    this.tripAnimationPointSettingsFormGroup.get('usePointAsAnchor').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
     this.updateValidators(false);

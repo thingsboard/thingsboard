@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -40,6 +40,7 @@ import { DataKey, Datasource, WidgetConfig } from '@shared/models/widget.models'
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { ValueSourceType } from '@shared/models/widget-settings.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-time-series-chart-thresholds-panel',
@@ -87,14 +88,17 @@ export class TimeSeriesChartThresholdsPanelComponent implements ControlValueAcce
 
   private propagateChange = (_val: any) => {};
 
-  constructor(private fb: UntypedFormBuilder) {
+  constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
     this.thresholdsFormGroup = this.fb.group({
       thresholds: [this.fb.array([]), []]
     });
-    this.thresholdsFormGroup.valueChanges.subscribe(
+    this.thresholdsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => {
         let thresholds: TimeSeriesChartThreshold[] = this.thresholdsFormGroup.get('thresholds').value;
         if (thresholds) {

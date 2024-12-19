@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -24,6 +24,7 @@ import {
 } from '@angular/forms';
 import { TimeSeriesChartGridSettings } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { WidgetService } from '@core/http/widget.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-time-series-chart-grid-settings',
@@ -51,7 +52,8 @@ export class TimeSeriesChartGridSettingsComponent implements OnInit, ControlValu
   public gridSettingsFormGroup: UntypedFormGroup;
 
   constructor(private fb: UntypedFormBuilder,
-              private widgetService: WidgetService,) {
+              private widgetService: WidgetService,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -61,11 +63,14 @@ export class TimeSeriesChartGridSettingsComponent implements OnInit, ControlValu
       borderWidth: [null, [Validators.min(0)]],
       borderColor: [null, []],
     });
-    this.gridSettingsFormGroup.valueChanges.subscribe(() => {
+    this.gridSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
-    this.gridSettingsFormGroup.get('show').valueChanges
-    .subscribe(() => {
+    this.gridSettingsFormGroup.get('show').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
   }
@@ -93,7 +98,9 @@ export class TimeSeriesChartGridSettingsComponent implements OnInit, ControlValu
       value, {emitEvent: false}
     );
     this.updateValidators();
-    this.gridSettingsFormGroup.get('show').valueChanges.subscribe((show) => {
+    this.gridSettingsFormGroup.get('show').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((show) => {
       this.settingsExpanded = show;
     });
   }

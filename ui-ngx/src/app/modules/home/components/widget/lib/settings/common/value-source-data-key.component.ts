@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, forwardRef, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -36,6 +36,7 @@ import {
   ValueSourceTypes,
   ValueSourceTypeTranslation
 } from '@shared/models/widget-settings.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-value-source-data-key',
@@ -81,7 +82,8 @@ export class ValueSourceDataKeyComponent extends PageComponent implements OnInit
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -93,16 +95,24 @@ export class ValueSourceDataKeyComponent extends PageComponent implements OnInit
     });
     this.latestKeyFormControl = this.fb.control(null, [Validators.required]);
     this.entityKeyFormControl = this.fb.control(null, [Validators.required]);
-    this.valueSourceFormGroup.valueChanges.subscribe(
+    this.valueSourceFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.updateModel()
     );
-    this.latestKeyFormControl.valueChanges.subscribe(
+    this.latestKeyFormControl.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.updateModel()
     );
-    this.entityKeyFormControl.valueChanges.subscribe(
+    this.entityKeyFormControl.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.updateModel()
     );
-    this.valueSourceFormGroup.get('type').valueChanges.subscribe(() => {
+    this.valueSourceFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
   }

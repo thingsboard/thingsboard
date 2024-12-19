@@ -14,13 +14,14 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DeviceConfiguration, DeviceProfileType } from '@shared/models/device.models';
 import { deepClone } from '@core/utils';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-device-configuration',
@@ -55,7 +56,8 @@ export class DeviceConfigurationComponent implements ControlValueAccessor, OnIni
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   registerOnChange(fn: any): void {
@@ -69,7 +71,9 @@ export class DeviceConfigurationComponent implements ControlValueAccessor, OnIni
     this.deviceConfigurationFormGroup = this.fb.group({
       configuration: [null, Validators.required]
     });
-    this.deviceConfigurationFormGroup.valueChanges.subscribe(() => {
+    this.deviceConfigurationFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }

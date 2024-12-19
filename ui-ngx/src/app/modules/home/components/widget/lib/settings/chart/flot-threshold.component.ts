@@ -15,7 +15,16 @@
 ///
 
 import { ValueSourceProperty } from '@home/components/widget/lib/settings/common/value-source.component';
-import { Component, EventEmitter, forwardRef, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  EventEmitter,
+  forwardRef,
+  Input,
+  OnInit,
+  Output,
+  ViewEncapsulation
+} from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -28,6 +37,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { IAliasController } from '@core/api/widget-api.models';
 import { TbFlotKeyThreshold } from '@home/components/widget/lib/flot-widget.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-flot-threshold',
@@ -60,7 +70,8 @@ export class FlotThresholdComponent extends PageComponent implements OnInit, Con
   public thresholdFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -70,7 +81,9 @@ export class FlotThresholdComponent extends PageComponent implements OnInit, Con
       lineWidth: [null, [Validators.min(0)]],
       color: [null, []]
     });
-    this.thresholdFormGroup.valueChanges.subscribe(() => {
+    this.thresholdFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }

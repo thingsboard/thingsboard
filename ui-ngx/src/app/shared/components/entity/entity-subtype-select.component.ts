@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, Subject, Subscription, throwError } from 'rxjs';
 import { map, mergeMap, startWith, tap, share } from 'rxjs/operators';
@@ -26,6 +26,7 @@ import { BroadcastService } from '@app/core/services/broadcast.service';
 import { SubscriptSizing } from '@angular/material/form-field';
 import { isNotEmptyStr } from '@core/utils';
 import { EntityService } from '@core/http/entity.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-entity-subtype-select',
@@ -80,7 +81,8 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
               private broadcast: BroadcastService,
               public translate: TranslateService,
               private fb: UntypedFormBuilder,
-              private entityService: EntityService) {
+              private entityService: EntityService,
+              private destroyRef: DestroyRef) {
     this.subTypeFormGroup = this.fb.group({
       subType: ['']
     });
@@ -135,7 +137,9 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
       mergeMap(() => this.getSubTypes())
     );
 
-    this.subTypeFormGroup.get('subType').valueChanges.subscribe(
+    this.subTypeFormGroup.get('subType').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       (value) => {
         let modelValue;
         if (!value || value === '') {

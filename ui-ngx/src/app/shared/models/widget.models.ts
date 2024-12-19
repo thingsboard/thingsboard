@@ -30,7 +30,7 @@ import {
 } from '@shared/models/query/query.models';
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { PageComponent } from '@shared/components/page.component';
-import { AfterViewInit, Directive, EventEmitter, Inject, OnInit, Type } from '@angular/core';
+import { AfterViewInit, DestroyRef, Directive, EventEmitter, inject, Inject, OnInit, Type } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
@@ -45,6 +45,7 @@ import { HasTenantId, HasVersion } from '@shared/models/entity.models';
 import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 import { TbFunction } from '@shared/models/js-function.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -909,6 +910,8 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
   settingsChangedEmitter = new EventEmitter<WidgetSettings>();
   settingsChanged = this.settingsChangedEmitter.asObservable();
 
+  protected destroyRef = inject(DestroyRef);
+
   protected constructor(@Inject(Store) protected store: Store<AppState>) {
     super(store);
   }
@@ -936,11 +939,15 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
       for (const part of path) {
         control = control.get(part);
       }
-      control.valueChanges.subscribe(() => {
+      control.valueChanges.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => {
         this.updateValidators(true, trigger);
       });
     }
-    this.settingsForm().valueChanges.subscribe(() => {
+    this.settingsForm().valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.onSettingsChanged(this.prepareOutputSettings(this.settingsForm().getRawValue()));
     });
   }

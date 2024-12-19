@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -25,6 +25,7 @@ import { catchError, map, mergeMap, publishReplay, refCount, tap } from 'rxjs/op
 import { DataKey } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { EntityService } from '@core/http/entity.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export declare type ValueSource = 'predefinedValue' | 'entityAttribute';
 
@@ -84,7 +85,8 @@ export class ValueSourceComponent extends PageComponent implements OnInit, Contr
 
   constructor(protected store: Store<AppState>,
               private entityService: EntityService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -95,10 +97,14 @@ export class ValueSourceComponent extends PageComponent implements OnInit, Contr
       attribute: [null, []],
       value: [null, []]
     });
-    this.valueSourceFormGroup.valueChanges.subscribe(() => {
+    this.valueSourceFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
-    this.valueSourceFormGroup.get('valueSource').valueChanges.subscribe(() => {
+    this.valueSourceFormGroup.get('valueSource').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
     this.updateValidators(false);

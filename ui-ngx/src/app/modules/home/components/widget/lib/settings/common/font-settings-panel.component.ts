@@ -16,6 +16,7 @@
 
 import {
   Component,
+  DestroyRef,
   ElementRef,
   EventEmitter,
   Input,
@@ -42,6 +43,7 @@ import { AppState } from '@core/core.state';
 import { Observable } from 'rxjs';
 import { map, startWith, tap } from 'rxjs/operators';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-font-settings-panel',
@@ -101,7 +103,8 @@ export class FontSettingsPanelComponent extends PageComponent implements OnInit 
   previewStyle: ComponentStyle = {};
 
   constructor(private fb: UntypedFormBuilder,
-              protected store: Store<AppState>) {
+              protected store: Store<AppState>,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -118,7 +121,9 @@ export class FontSettingsPanelComponent extends PageComponent implements OnInit 
       }
     );
     this.updatePreviewStyle(this.font);
-    this.fontFormGroup.valueChanges.subscribe((font: Font) => {
+    this.fontFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((font: Font) => {
       if (this.fontFormGroup.valid) {
         this.updatePreviewStyle(font);
         setTimeout(() => {this.popover?.updatePosition();}, 0);

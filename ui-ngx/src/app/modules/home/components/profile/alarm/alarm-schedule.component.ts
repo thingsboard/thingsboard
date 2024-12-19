@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -40,6 +40,7 @@ import {
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import { MatCheckboxChange } from '@angular/material/checkbox';
 import { getDefaultTimezone } from '@shared/models/time/time.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-alarm-schedule',
@@ -80,7 +81,8 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
 
   private propagateChange = (v: any) => { };
 
-  constructor(private fb: UntypedFormBuilder) {
+  constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -94,13 +96,17 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
       dynamicValue: [null]
     });
 
-    this.alarmScheduleForm.get('type').valueChanges.subscribe((type) => {
+    this.alarmScheduleForm.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((type) => {
       const defaultTimezone = getDefaultTimezone();
       this.alarmScheduleForm.reset({type, items: this.defaultItems, timezone: defaultTimezone}, {emitEvent: false});
       this.updateValidators(type, true);
       this.alarmScheduleForm.updateValueAndValidity();
     });
-    this.alarmScheduleForm.valueChanges.subscribe(() => {
+    this.alarmScheduleForm.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }
