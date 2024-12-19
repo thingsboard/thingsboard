@@ -110,7 +110,7 @@ export class BackgroundSettingsComponent implements OnInit, ControlValueAccessor
         backgroundSettings: this.modelValue
       };
      const backgroundSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, BackgroundSettingsPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
+        this.viewContainerRef, BackgroundSettingsPanelComponent, ['left'], true, null,
         ctx,
         {},
         {}, {}, true);
