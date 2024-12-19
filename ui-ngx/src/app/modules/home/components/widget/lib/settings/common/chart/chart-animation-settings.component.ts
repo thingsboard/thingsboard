@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -23,6 +23,7 @@ import {
   Validators
 } from '@angular/forms';
 import { chartAnimationEasings, ChartAnimationSettings } from '@home/components/widget/lib/chart/chart.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-chart-animation-settings',
@@ -51,7 +52,8 @@ export class ChartAnimationSettingsComponent implements OnInit, ControlValueAcce
 
   public animationSettingsFormGroup: UntypedFormGroup;
 
-  constructor(private fb: UntypedFormBuilder) {
+  constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -65,11 +67,14 @@ export class ChartAnimationSettingsComponent implements OnInit, ControlValueAcce
       animationEasingUpdate: [null, []],
       animationDelayUpdate: [null, [Validators.min(0)]]
     });
-    this.animationSettingsFormGroup.valueChanges.subscribe(() => {
+    this.animationSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
-    this.animationSettingsFormGroup.get('animation').valueChanges
-    .subscribe(() => {
+    this.animationSettingsFormGroup.get('animation').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
   }
@@ -97,7 +102,9 @@ export class ChartAnimationSettingsComponent implements OnInit, ControlValueAcce
       value, {emitEvent: false}
     );
     this.updateValidators();
-    this.animationSettingsFormGroup.get('animation').valueChanges.subscribe((animation) => {
+    this.animationSettingsFormGroup.get('animation').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((animation) => {
       this.settingsExpanded = animation;
     });
   }
