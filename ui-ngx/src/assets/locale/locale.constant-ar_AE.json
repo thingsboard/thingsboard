@@ -6016,7 +6016,6 @@
         "type": "نوع الأداة",
         "resources": "الموارد",
         "resource-url": "رابط JavaScript/CSS",
-        "resource-is-module": "هو وحدة",
         "remove-resource": "إزالة المورد",
         "add-resource": "إضافة مورد",
         "html": "HTML",
