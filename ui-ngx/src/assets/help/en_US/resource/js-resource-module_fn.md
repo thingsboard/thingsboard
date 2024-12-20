@@ -19,7 +19,7 @@ These modules can contain any JavaScript code, facilitating the reuse of specifi
 
 You can declare variables:
 ```javascript
-export const circle = '&#11044';
+export const circle = '&#11044;';
 {:copy-code}
 ```
 ```javascript
