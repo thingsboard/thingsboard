@@ -107,8 +107,6 @@ public class EdgeContextComponent {
             EdgeEventType eventType = processor.getEdgeEventType();
             if (eventType != null) {
                 processorMap.put(eventType, processor);
-            } else {
-                log.warn("Processor {} does not specify a supported EdgeEventType", processor.getClass().getSimpleName());
             }
         });
     }
