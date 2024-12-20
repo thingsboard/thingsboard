@@ -95,4 +95,9 @@ public class RelationEdgeProcessor extends BaseRelationProcessor implements Rela
                 .build();
     }
 
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.RELATION;
+    }
+
 }

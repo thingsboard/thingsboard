@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
@@ -60,6 +61,11 @@ public class WidgetBundleEdgeProcessor extends BaseEdgeProcessor {
             }
         }
         return null;
+    }
+
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.WIDGETS_BUNDLE;
     }
 
 }

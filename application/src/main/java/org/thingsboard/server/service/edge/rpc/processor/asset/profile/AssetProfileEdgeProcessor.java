@@ -136,4 +136,9 @@ public class AssetProfileEdgeProcessor extends BaseAssetProfileProcessor impleme
         assetProfile.setDefaultDashboardId(defaultDashboardUUID != null ? new DashboardId(defaultDashboardUUID) : null);
     }
 
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.ASSET_PROFILE;
+    }
+
 }

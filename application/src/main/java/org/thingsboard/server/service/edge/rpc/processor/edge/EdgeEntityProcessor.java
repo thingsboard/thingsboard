@@ -113,4 +113,9 @@ public class EdgeEntityProcessor extends BaseEdgeProcessor {
         return null;
     }
 
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.EDGE;
+    }
+
 }

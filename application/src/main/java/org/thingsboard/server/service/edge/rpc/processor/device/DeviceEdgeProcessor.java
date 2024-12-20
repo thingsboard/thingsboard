@@ -274,4 +274,9 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor implements DevicePr
         device.setCustomerId(customerUUID);
     }
 
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.DEVICE;
+    }
+
 }

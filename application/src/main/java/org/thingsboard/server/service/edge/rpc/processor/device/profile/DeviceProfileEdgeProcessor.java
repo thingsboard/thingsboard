@@ -136,4 +136,9 @@ public class DeviceProfileEdgeProcessor extends BaseDeviceProfileProcessor imple
         deviceProfile.setDefaultDashboardId(defaultDashboardUUID != null ? new DashboardId(defaultDashboardUUID) : null);
     }
 
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.DEVICE_PROFILE;
+    }
+
 }

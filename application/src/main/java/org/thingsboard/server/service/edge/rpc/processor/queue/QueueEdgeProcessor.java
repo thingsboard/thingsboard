@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
@@ -57,6 +58,11 @@ public class QueueEdgeProcessor extends BaseEdgeProcessor {
             }
         }
         return null;
+    }
+
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.QUEUE;
     }
 
 }

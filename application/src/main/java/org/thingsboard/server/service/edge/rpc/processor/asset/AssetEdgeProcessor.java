@@ -141,4 +141,9 @@ public class AssetEdgeProcessor extends BaseAssetProcessor implements AssetProce
         asset.setCustomerId(customerUUID);
     }
 
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.ASSET;
+    }
+
 }

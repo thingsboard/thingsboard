@@ -115,4 +115,9 @@ public class AlarmEdgeProcessor extends BaseAlarmProcessor implements AlarmProce
         return null;
     }
 
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.ALARM;
+    }
+
 }

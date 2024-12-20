@@ -95,4 +95,9 @@ public class CustomerEdgeProcessor extends BaseEdgeProcessor {
         }
     }
 
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.CUSTOMER;
+    }
+
 }

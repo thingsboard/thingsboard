@@ -98,4 +98,9 @@ public class ResourceEdgeProcessor extends BaseResourceProcessor implements Reso
         return null;
     }
 
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.TB_RESOURCE;
+    }
+
 }
