@@ -18,6 +18,10 @@ run_command "git pull"
 echo "Entferne Caches..."
 run_command "rm -rf ~/.m2/repository ~/.gradle/caches/ ui-ngx/node_modules"
 
+# Lizenz-Header überprüfen und formatieren
+echo "Formatiere Lizenz-Header..."
+run_command "mvn license:format"
+
 # Projekt mit Maven bauen
 echo "Baue das Projekt mit Maven..."
 run_command "mvn clean install -DskipTests -Ddockerfile.skip=false"
