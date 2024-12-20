@@ -807,6 +807,17 @@ message ProfileEntityMsgProto {
   bool deleted = 10;
 }
 
+message CalculatedFieldStateMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 calculatedFieldIdMSB = 3;
+  int64 calculatedFieldIdLSB = 4;
+  string entityType = 5;
+  int64 entityIdMSB = 6;
+  int64 entityIdLSB = 7;
+  string state = 8;
+}
+
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
 message SubscriptionInfoProto {
   int64 lastActivityTime = 1;
@@ -1541,6 +1552,7 @@ message ToCoreMsg {
   CalculatedFieldMsgProto calculatedFieldMsg = 53;
   EntityProfileUpdateMsgProto entityProfileUpdateMsg = 54;
   ProfileEntityMsgProto profileEntityMsg = 55;
+  CalculatedFieldStateMsgProto calculatedFieldStateMsg = 56;
 }
 
 /* High priority messages with low latency are handled by ThingsBoard Core Service separately */

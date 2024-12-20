@@ -35,7 +35,7 @@ public class CalculatedFieldCtx {
     private TenantId tenantId;
     private EntityId entityId;
     private CalculatedFieldType cfType;
-    private Map<String, Argument> arguments;
+    private final Map<String, Argument> arguments;
     private Output output;
     private String expression;
     private TbelInvokeService tbelInvokeService;

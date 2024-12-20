@@ -17,6 +17,7 @@ package org.thingsboard.server.service.cf.ctx.state;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
@@ -31,26 +32,38 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     }
 
     @Override
-    public void initState(Map<String, ArgumentEntry> argumentValues) {
+    public boolean updateState(Map<String, ArgumentEntry> argumentValues) {
         if (arguments == null) {
             arguments = new HashMap<>();
         }
+        AtomicBoolean stateUpdated = new AtomicBoolean(false);
         argumentValues.forEach((key, argumentEntry) -> {
             ArgumentEntry existingArgumentEntry = arguments.get(key);
             if (existingArgumentEntry != null) {
                 if (existingArgumentEntry instanceof SingleValueArgumentEntry) {
-                    arguments.put(key, argumentEntry);
+                    if (existingArgumentEntry.hasUpdatedValue(argumentEntry)) {
+                        arguments.put(key, argumentEntry.copy());
+                        stateUpdated.set(true);
+                    }
                 } else if (existingArgumentEntry instanceof TsRollingArgumentEntry existingTsRollingArgumentEntry) {
                     if (argumentEntry instanceof TsRollingArgumentEntry tsRollingArgumentEntry) {
-                        existingTsRollingArgumentEntry.getTsRecords().putAll(tsRollingArgumentEntry.getTsRecords());
+                        if (existingArgumentEntry.hasUpdatedValue(argumentEntry)) {
+                            existingTsRollingArgumentEntry.addAllTsRecords(tsRollingArgumentEntry.getTsRecords());
+                            stateUpdated.set(true);
+                        }
                     } else if (argumentEntry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
-                        existingTsRollingArgumentEntry.getTsRecords().put(singleValueArgumentEntry.getTs(), singleValueArgumentEntry.getValue());
+                        if (existingArgumentEntry.hasUpdatedValue(argumentEntry)) {
+                            existingTsRollingArgumentEntry.addTsRecord(singleValueArgumentEntry.getTs(), singleValueArgumentEntry.getValue());
+                            stateUpdated.set(true);
+                        }
                     }
                 }
             } else {
-                arguments.put(key, argumentEntry);
+                arguments.put(key, argumentEntry.copy());
+                stateUpdated.set(true);
             }
         });
+        return stateUpdated.get();
     }
 
 }

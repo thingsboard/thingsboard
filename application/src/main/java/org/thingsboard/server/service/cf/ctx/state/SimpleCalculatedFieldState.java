@@ -37,27 +37,24 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
 
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
-        if (isValid(ctx.getArguments())) {
-            String expression = ctx.getExpression();
-            ThreadLocal<Expression> customExpression = new ThreadLocal<>();
-            var expr = customExpression.get();
-            if (expr == null) {
-                expr = new ExpressionBuilder(expression)
-                        .implicitMultiplication(true)
-                        .variables(this.arguments.keySet())
-                        .build();
-                customExpression.set(expr);
-            }
-            Map<String, Double> variables = new HashMap<>();
-            this.arguments.forEach((k, v) -> variables.put(k, Double.parseDouble(v.getValue().toString())));
-            expr.setVariables(variables);
-
-            double expressionResult = expr.evaluate();
-
-            Output output = ctx.getOutput();
-            return Futures.immediateFuture(new CalculatedFieldResult(output.getType(), output.getScope(), Map.of(output.getName(), expressionResult)));
+        String expression = ctx.getExpression();
+        ThreadLocal<Expression> customExpression = new ThreadLocal<>();
+        var expr = customExpression.get();
+        if (expr == null) {
+            expr = new ExpressionBuilder(expression)
+                    .implicitMultiplication(true)
+                    .variables(this.arguments.keySet())
+                    .build();
+            customExpression.set(expr);
         }
-        return Futures.immediateFuture(null);
+        Map<String, Double> variables = new HashMap<>();
+        this.arguments.forEach((k, v) -> variables.put(k, Double.parseDouble(v.getValue().toString())));
+        expr.setVariables(variables);
+
+        double expressionResult = expr.evaluate();
+
+        Output output = ctx.getOutput();
+        return Futures.immediateFuture(new CalculatedFieldResult(output.getType(), output.getScope(), Map.of(output.getName(), expressionResult)));
     }
 
 }
