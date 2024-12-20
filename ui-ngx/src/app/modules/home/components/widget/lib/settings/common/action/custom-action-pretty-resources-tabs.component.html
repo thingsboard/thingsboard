@@ -31,7 +31,7 @@
           </tb-resource-autocomplete>
           <mat-checkbox [(ngModel)]="resource.isModule"
                         (ngModelChange)="notifyActionUpdated()">
-            {{ 'widget.resource-is-module' | translate }}
+            {{ 'widget.resource-is-extension' | translate }}
           </mat-checkbox>
           <button mat-icon-button color="primary"
                   [disabled]="isLoading$ | async"

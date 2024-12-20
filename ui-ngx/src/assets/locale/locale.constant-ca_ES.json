@@ -4453,7 +4453,6 @@
         "type": "Tipus",
         "resources": "Recursos",
         "resource-url": "URL JavaScript/CSS",
-        "resource-is-module": "És mòdul",
         "remove-resource": "Eliminar recurs",
         "add-resource": "Afegir recurs",
         "html": "HTML",

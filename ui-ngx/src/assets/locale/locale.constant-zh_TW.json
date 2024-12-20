@@ -3310,7 +3310,6 @@
         "type": "部件類型",
         "resources": "資源",
         "resource-url": "JavaScript/CSS URL",
-        "resource-is-module": "是模組",
         "remove-resource": "刪除資源",
         "add-resource": "增加資源",
         "html": "HTML",
