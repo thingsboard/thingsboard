@@ -88,7 +88,7 @@
 </ng-template>
 
 <ng-template #propertyRowTpl let-propertyRow="propertyRow">
-  <div [formGroup]="propertiesFormGroup" class="tb-form-row space-between flex-wrap overflow-auto" [class]="propertyRow.rowClass">
+  <div [formGroup]="propertiesFormGroup" class="tb-form-row space-between overflow-auto" [class]="propertyRow.rowClass">
     <mat-slide-toggle *ngIf="propertyRow.switch && propertyRow.switch.visible"
                       class="mat-slide fixed-title-width margin" formControlName="{{ propertyRow.switch.id }}">
       {{ propertyRow.label | customTranslate }}

@@ -21,7 +21,36 @@
       <div class="tb-form-table-header-cell tb-id-header" translate>dynamic-form.property.id</div>
       <div class="tb-form-table-header-cell tb-name-header" translate>dynamic-form.property.name</div>
       <div class="tb-form-table-header-cell tb-type-header" translate>dynamic-form.property.type</div>
-      <div class="tb-form-table-header-cell tb-actions-header" [class.disabled]="disabled"></div>
+      <div class="tb-form-table-header-cell tb-actions-header tb-form-table-row-cell-buttons justify-end" [class.disabled]="disabled">
+        <button mat-icon-button
+                *ngIf="!disabled && importExport"
+                type="button"
+                matTooltip="{{ 'dynamic-form.import-form' | translate }}"
+                matTooltipPosition="above"
+                (click)="import($event)">
+          <tb-icon>mdi:file-import</tb-icon>
+        </button>
+        <button mat-icon-button
+                *ngIf="!disabled && importExport"
+                [class.tb-hidden]="!propertiesFormArray().controls.length"
+                type="button"
+                [disabled]="!propertiesFormArray().controls.length"
+                matTooltip="{{ 'dynamic-form.export-form' | translate }}"
+                matTooltipPosition="above"
+                (click)="export($event)">
+          <tb-icon>mdi:file-export</tb-icon>
+        </button>
+        <button mat-icon-button
+                *ngIf="!disabled"
+                [class.tb-hidden]="!propertiesFormArray().controls.length"
+                type="button"
+                [disabled]="!propertiesFormArray().controls.length"
+                matTooltip="{{ 'dynamic-form.clear-form' | translate }}"
+                matTooltipPosition="above"
+                (click)="clear($event)">
+          <tb-icon>mdi:broom</tb-icon>
+        </button>
+      </div>
     </div>
     <div *ngIf="propertiesFormArray().controls.length; else noProperties" class="tb-form-table-body tb-drop-list"
          cdkDropList cdkDropListOrientation="vertical"

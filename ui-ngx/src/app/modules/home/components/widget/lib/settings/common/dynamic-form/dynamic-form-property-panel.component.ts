@@ -124,6 +124,8 @@ export class DynamicFormPropertyPanelComponent implements OnInit {
         properties: [this.property.properties, []],
         multiple: [this.property.multiple, []],
         allowEmptyOption: [this.property.allowEmptyOption, []],
+        minItems: [this.property.minItems, []],
+        maxItems: [this.property.maxItems, []],
         items: [this.property.items, []],
         helpId: [this.property.helpId, []],
         direction: [this.property.direction || 'column', []],
@@ -208,13 +210,19 @@ export class DynamicFormPropertyPanelComponent implements OnInit {
         const multiple: boolean = this.propertyFormGroup.get('multiple').value;
         if (multiple) {
           this.propertyFormGroup.get('allowEmptyOption').disable({emitEvent: false});
+          this.propertyFormGroup.get('minItems').enable({emitEvent: false});
+          this.propertyFormGroup.get('maxItems').enable({emitEvent: false});
         } else {
           this.propertyFormGroup.get('allowEmptyOption').enable({emitEvent: false});
+          this.propertyFormGroup.get('minItems').disable({emitEvent: false});
+          this.propertyFormGroup.get('maxItems').disable({emitEvent: false});
         }
       }
     } else {
       this.propertyFormGroup.get('multiple').disable({emitEvent: false});
       this.propertyFormGroup.get('allowEmptyOption').disable({emitEvent: false});
+      this.propertyFormGroup.get('minItems').disable({emitEvent: false});
+      this.propertyFormGroup.get('maxItems').disable({emitEvent: false});
       this.propertyFormGroup.get('items').disable({emitEvent: false});
     }
     if (type === FormPropertyType.datetime) {
@@ -290,7 +298,9 @@ export class DynamicFormPropertyPanelComponent implements OnInit {
           this.propertyFormGroup.get('default').patchValue(newVal, {emitEvent: false});
         }
         this.propertyFormGroup.get('allowEmptyOption').patchValue(false, {emitEvent: false});
-        this.propertyFormGroup.get('allowEmptyOption').disable({emitEvent: false});
+        this.propertyFormGroup.get('allowEmptyOption').disable({emitEvent: false})
+        this.propertyFormGroup.get('minItems').enable({emitEvent: false});
+        this.propertyFormGroup.get('maxItems').enable({emitEvent: false});
       } else {
         if (defaultValue && Array.isArray(defaultValue)) {
           const newVal = defaultValue.length ? defaultValue[0] : null;
@@ -299,6 +309,8 @@ export class DynamicFormPropertyPanelComponent implements OnInit {
           });
         }
         this.propertyFormGroup.get('allowEmptyOption').enable({emitEvent: false});
+        this.propertyFormGroup.get('minItems').disable({emitEvent: false});
+        this.propertyFormGroup.get('maxItems').disable({emitEvent: false});
       }
     }
   }

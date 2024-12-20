@@ -267,6 +267,22 @@
                 {{ 'dynamic-form.property.allow-empty-select-option' | translate }}
               </mat-slide-toggle>
             </div>
+            <div *ngIf="propertyItemType === FormPropertyType.select && propertyFormGroup.get('multiple').value" class="tb-form-row space-between">
+              <div translate>dynamic-form.property.selected-options-limit</div>
+              <div class="flex flex-1 flex-row items-center justify-end gap-2">
+                <div class="tb-small-label" translate>dynamic-form.property.min</div>
+                <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+                  <input matInput formControlName="minItems"
+                         type="number" placeholder="{{ 'widget-config.set' | translate }}">
+                </mat-form-field>
+                <mat-divider vertical></mat-divider>
+                <div class="tb-small-label" translate>dynamic-form.property.max</div>
+                <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+                  <input matInput formControlName="maxItems"
+                         type="number" placeholder="{{ 'widget-config.set' | translate }}">
+                </mat-form-field>
+              </div>
+            </div>
             <tb-dynamic-form-select-items
               formControlName="items">
             </tb-dynamic-form-select-items>

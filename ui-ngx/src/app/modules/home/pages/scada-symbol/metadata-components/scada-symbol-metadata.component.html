@@ -107,6 +107,8 @@
     </div>
     <div [class.!hidden]="selectedOption !== 'properties'" class="mat-content overflow-hidden">
       <tb-dynamic-form-properties
+        importExport
+        [exportFileName]="(modelValue?.title || 'scada-symbol') + '-properties'"
         formControlName="properties">
       </tb-dynamic-form-properties>
     </div>

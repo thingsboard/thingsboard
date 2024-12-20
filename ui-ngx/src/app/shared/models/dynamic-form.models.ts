@@ -132,6 +132,8 @@ export interface FormSelectProperty extends FormPropertyBase {
   multiple?: boolean;
   allowEmptyOption?: boolean;
   items?: FormSelectItem[];
+  minItems?: number;
+  maxItems?: number;
 }
 
 export type FormPropertyDirection = 'row' | 'column';
@@ -311,6 +313,11 @@ const toPropertyContainers = (properties: FormProperty[],
           visible: true
         };
         result.push(propertyRow);
+        const rowClasses = (propertyRow.rowClass || '').split(' ').filter(cls => cls.trim().length > 0);
+        if (!rowClasses.includes('flex-wrap')) {
+          rowClasses.push('flex-wrap');
+        }
+        propertyRow.rowClass = rowClasses.join(' ');
       }
       if (property.type === FormPropertyType.switch) {
         propertyRow.switch = property;
@@ -330,10 +337,18 @@ const toPropertyContainers = (properties: FormProperty[],
         delete container.properties;
         delete container.rowClass;
       } else {
-        if (!container.rowClass) {
-          container.rowClass = 'column-xs';
-          container.propertiesRowClass = 'gt-xs:align-center xs:flex-col gt-xs:flex-row gt-xs:justify-end';
+        container.propertiesRowClass = 'gt-xs:align-center xs:flex-col gt-xs:flex-row gt-xs:justify-end';
+        const rowClasses = (container.rowClass || '').split(' ').filter(cls => cls.trim().length > 0);
+        if (!rowClasses.includes('column-xs')) {
+          rowClasses.push('column-xs');
         }
+        if (property.fieldClass && property.fieldClass.split(' ').includes('flex')) {
+          container.propertiesRowClass += ' overflow-hidden';
+          if (rowClasses.includes('flex-wrap')) {
+            rowClasses.splice(rowClasses.indexOf('flex-wrap'), 1);
+          }
+        }
+        container.rowClass = rowClasses.join(' ');
       }
     }
   }
@@ -600,7 +615,7 @@ const jsonFormDataToProperty = (form: JsonFormData, level: number, groupTitle?: 
       name: form.title || id,
       group: groupTitle,
       type: null,
-      default: form.schema?.default || null,
+      default: (isDefinedAndNotNull(form.default) ? form.default : form.schema?.default) || null,
       required: isDefinedAndNotNull(form.required) ? form.required : false
     };
     if (form.condition?.length) {
@@ -635,6 +650,14 @@ const jsonFormDataToProperty = (form: JsonFormData, level: number, groupTitle?: 
         property.multiple = form.multiple;
         property.fieldClass = 'flex';
         property.allowEmptyOption = isDefinedAndNotNull(form.allowClear) ? form.allowClear : false;
+        if (property.multiple) {
+          if (typeof (form.schema as any)?.minItems === 'number') {
+            property.minItems = (form.schema as any).minItems;
+          }
+          if (typeof (form.schema as any)?.maxItems === 'number') {
+            property.maxItems = (form.schema as any).maxItems;
+          }
+        }
         break;
       case 'select':
         property.type = FormPropertyType.select;
@@ -699,17 +722,25 @@ const jsonFormDataToProperty = (form: JsonFormData, level: number, groupTitle?: 
         break;
       case 'array':
         if (form.items?.length) {
-          const item: JsonFormData = form.items[0] as JsonFormData;
-          if (item.type !== 'array') {
-            const arrayProperty = jsonFormDataToProperty(item, 0);
-            arrayProperty.arrayItemType = arrayProperty.type;
-            arrayProperty.arrayItemName = arrayProperty.name;
-            arrayProperty.id = property.id;
-            arrayProperty.name = property.name;
-            arrayProperty.group = property.group;
-            arrayProperty.condition = property.condition;
-            arrayProperty.required = property.required;
-            property = arrayProperty;
+          const arrayItemSchema = form.schema.items;
+          if (arrayItemSchema && arrayItemSchema.type && arrayItemSchema.type !== 'array') {
+            if (arrayItemSchema.type === 'object') {
+              property.arrayItemType = FormPropertyType.fieldset;
+              property.arrayItemName = '';
+              property.properties = form.items ? (form.items as JsonFormData[]).map(item =>
+                jsonFormDataToProperty(item, level+2)).filter(p => p !== null) : [];
+            } else {
+              const item: JsonFormData = form.items[0] as JsonFormData;
+              const arrayProperty = jsonFormDataToProperty(item, 0);
+              arrayProperty.arrayItemType = arrayProperty.type;
+              arrayProperty.arrayItemName = arrayProperty.name;
+              arrayProperty.id = property.id;
+              arrayProperty.name = property.name;
+              arrayProperty.group = property.group;
+              arrayProperty.condition = property.condition;
+              arrayProperty.required = property.required;
+              property = arrayProperty;
+            }
             property.type = FormPropertyType.array;
           }
         }

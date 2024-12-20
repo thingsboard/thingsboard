@@ -188,9 +188,11 @@
           </div>
           <div #topRightPanel class="tb-split tb-content">
             <mat-tab-group mat-stretch-tabs="false" dynamicHeight="true" style="width: 100%; height: 100%;">
-              <mat-tab label="{{ 'widget.settings-form-properties' | translate }}">
+              <mat-tab label="{{ 'widget.settings-form' | translate }}">
                 <div class="tb-resize-container" style="background-color: #fff;">
                   <tb-dynamic-form-properties
+                    importExport
+                    [exportFileName]="(widget.widgetName || 'widget') + '-settings-form'"
                     [(ngModel)]="widget.settingsForm"
                     (ngModelChange)="settingsFormUpdated()"
                     noBorder fillHeight>

@@ -1657,6 +1657,7 @@
             "min": "Min",
             "max": "Max",
             "step": "Step",
+            "selected-options-limit": "Selected options limit",
             "advanced-ui-settings": "Advanced UI settings",
             "disable-on-property": "Disable on property",
             "display-condition-function": "Display condition function",
@@ -1693,7 +1694,13 @@
             "item-type": "Item type",
             "item-name": "Item name",
             "no-items": "No items"
-        }
+        },
+        "clear-form": "Clear form",
+        "clear-form-prompt": "Are you sure you want to remove all form properties?",
+        "import-form": "Import form from JSON",
+        "export-form": "Export form to JSON",
+        "form-json-file": "Form JSON file",
+        "invalid-form-json-file-error": "Unable to import form from JSON: Invalid form JSON data structure."
     },
     "asset-profile": {
         "asset-profile": "Asset profile",
@@ -5473,7 +5480,7 @@
         "html": "HTML",
         "tidy": "Tidy",
         "css": "CSS",
-        "settings-form-properties": "Settings form properties",
+        "settings-form": "Settings form",
         "settings-schema": "Settings schema",
         "datakey-settings-schema": "Data key settings schema",
         "latest-datakey-settings-schema": "Latest data key settings schema",

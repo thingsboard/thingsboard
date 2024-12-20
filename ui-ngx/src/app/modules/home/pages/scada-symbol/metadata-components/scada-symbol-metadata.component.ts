@@ -90,7 +90,7 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
   @Input()
   tags: string[];
 
-  private modelValue: ScadaSymbolMetadata;
+  modelValue: ScadaSymbolMetadata;
 
   private propagateChange = null;
 

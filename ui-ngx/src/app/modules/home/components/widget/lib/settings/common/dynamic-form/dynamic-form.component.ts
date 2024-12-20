@@ -215,6 +215,16 @@ export class DynamicFormComponent implements OnInit, OnChanges, ControlValueAcce
               validators.push(Validators.max(property.max));
             }
           }
+          if (property.type === FormPropertyType.select) {
+            if (property.multiple) {
+              if (isDefinedAndNotNull(property.minItems)) {
+                validators.push(Validators.minLength(property.minItems));
+              }
+              if (isDefinedAndNotNull(property.maxItems)) {
+                validators.push(Validators.maxLength(property.maxItems));
+              }
+            }
+          }
           this.propertiesFormGroup.addControl(property.id, this.fb.control(null, validators), {emitEvent: false});
         }
       }

@@ -43,6 +43,8 @@ import {
 } from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-property-row.component';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ImportExportService } from '@shared/import-export/import-export.service';
+import { DialogService } from '@core/services/dialog.service';
 
 @Component({
   selector: 'tb-dynamic-form-properties',
@@ -89,6 +91,13 @@ export class DynamicFormPropertiesComponent implements ControlValueAccessor, OnI
   @coerceBoolean()
   fillHeight = false;
 
+  @Input()
+  @coerceBoolean()
+  importExport = false;
+
+  @Input()
+  exportFileName = 'form';
+
   booleanPropertyIds: string[] = [];
 
   propertiesFormGroup: UntypedFormGroup;
@@ -103,7 +112,9 @@ export class DynamicFormPropertiesComponent implements ControlValueAccessor, OnI
 
   constructor(private fb: UntypedFormBuilder,
               private destroyRef: DestroyRef,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private importExportService: ImportExportService,
+              private dialogService: DialogService) {
   }
 
   ngOnInit() {
@@ -114,10 +125,7 @@ export class DynamicFormPropertiesComponent implements ControlValueAccessor, OnI
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(
       () => {
-        let properties: FormProperty[] = this.propertiesFormGroup.get('properties').value;
-        if (properties) {
-          properties = properties.filter(p => propertyValid(p));
-        }
+        const properties = this.getProperties();
         this.booleanPropertyIds = properties.filter(p => p.type === FormPropertyType.switch).map(p => p.id);
         properties.forEach((p, i) => {
           if (p.disableOnProperty && !this.booleanPropertyIds.includes(p.disableOnProperty)) {
@@ -222,6 +230,38 @@ export class DynamicFormPropertiesComponent implements ControlValueAccessor, OnI
     });
   }
 
+  export($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const properties = this.getProperties();
+    this.importExportService.exportFormProperties(properties, this.exportFileName);
+  }
+
+  import($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.importExportService.importFormProperties().subscribe((properties) => {
+      if (properties) {
+        this.propertiesFormGroup.setControl('properties', this.preparePropertiesFormArray(properties), {emitEvent: true});
+      }
+    });
+  }
+
+  clear($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialogService.confirm(this.translate.instant('dynamic-form.clear-form'),
+      this.translate.instant('dynamic-form.clear-form-prompt'), null, this.translate.instant('action.clear'))
+    .subscribe((clear) => {
+      if (clear) {
+        (this.propertiesFormGroup.get('properties') as UntypedFormArray).clear({emitEvent: true});
+      }
+    });
+  }
+
   private preparePropertiesFormArray(properties: FormProperty[] | undefined): UntypedFormArray {
     const propertiesControls: Array<AbstractControl> = [];
     if (properties) {
@@ -230,5 +270,13 @@ export class DynamicFormPropertiesComponent implements ControlValueAccessor, OnI
       });
     }
     return this.fb.array(propertiesControls);
+  }
+
+  private getProperties(): FormProperty[] {
+    let properties: FormProperty[] = this.propertiesFormGroup.get('properties').value;
+    if (properties) {
+      properties = properties.filter(p => propertyValid(p));
+    }
+    return properties;
   }
 }
