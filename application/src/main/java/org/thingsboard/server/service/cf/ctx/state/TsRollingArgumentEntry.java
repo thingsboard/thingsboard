@@ -29,12 +29,21 @@ import java.util.TreeMap;
 @Slf4j
 public class TsRollingArgumentEntry implements ArgumentEntry {
 
+    public static final ArgumentEntry EMPTY = new TsRollingArgumentEntry(0);
+
     private static final int MAX_ROLLING_ARGUMENT_ENTRY_SIZE = 1000;
 
     private TreeMap<Long, Object> tsRecords = new TreeMap<>();
 
     public TsRollingArgumentEntry(TreeMap<Long, Object> tsRecords) {
         addAllTsRecords(tsRecords);
+    }
+
+    /**
+     * Internal constructor to create immutable TsRollingArgumentEntry.EMPTY
+     */
+    private TsRollingArgumentEntry(int ignored) {
+        this.tsRecords = new TreeMap<>();
     }
 
     @Override
@@ -50,7 +59,9 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
 
     @Override
     public boolean hasUpdatedValue(ArgumentEntry entry) {
-        return !tsRecords.containsKey(((SingleValueArgumentEntry) entry).getTs());
+        return entry instanceof SingleValueArgumentEntry ?
+                !tsRecords.containsKey(((SingleValueArgumentEntry) entry).getTs()) :
+                !tsRecords.keySet().containsAll(((TsRollingArgumentEntry) entry).getTsRecords().keySet());
     }
 
     @Override

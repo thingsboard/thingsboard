@@ -27,6 +27,8 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 @AllArgsConstructor
 public class SingleValueArgumentEntry implements ArgumentEntry {
 
+    public static final ArgumentEntry EMPTY = new SingleValueArgumentEntry(0);
+
     private long ts;
     private Object value;
 
@@ -37,6 +39,14 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
             this.ts = ((AttributeKvEntry) entry).getLastUpdateTs();
         }
         this.value = entry.getValue();
+    }
+
+    /**
+     * Internal constructor to create immutable SingleValueArgumentEntry.EMPTY
+     * */
+    private SingleValueArgumentEntry(int ignored) {
+        this.ts = System.currentTimeMillis();
+        this.value = null;
     }
 
     @Override
