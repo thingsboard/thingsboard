@@ -18,13 +18,14 @@ package org.thingsboard.server.service.edge.rpc.processor.dashboard;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -32,19 +33,17 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
-import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
-import org.thingsboard.server.service.edge.rpc.constructor.dashboard.DashboardMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.dashboard.DashboardMsgConstructorFactory;
+import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
 import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
-public abstract class DashboardEdgeProcessor extends BaseDashboardProcessor implements DashboardProcessor {
-
-    @Autowired
-    private DashboardMsgConstructorFactory dashboardMsgConstructorFactory;
+@Component
+@TbCoreComponent
+public class DashboardEdgeProcessor extends BaseDashboardProcessor implements DashboardProcessor {
 
     @Override
     public ListenableFuture<Void> processDashboardMsgFromEdge(TenantId tenantId, Edge edge, DashboardUpdateMsg dashboardUpdateMsg) {
@@ -101,15 +100,14 @@ public abstract class DashboardEdgeProcessor extends BaseDashboardProcessor impl
     }
 
     @Override
-    public DownlinkMsg convertDashboardEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
+    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
         DashboardId dashboardId = new DashboardId(edgeEvent.getEntityId());
-        var msgConstructor = (DashboardMsgConstructor) dashboardMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion);
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED, ASSIGNED_TO_EDGE, ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER -> {
                 Dashboard dashboard = edgeCtx.getDashboardService().findDashboardById(edgeEvent.getTenantId(), dashboardId);
                 if (dashboard != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    DashboardUpdateMsg dashboardUpdateMsg = msgConstructor.constructDashboardUpdatedMsg(msgType, dashboard);
+                    DashboardUpdateMsg dashboardUpdateMsg = EdgeMsgConstructorUtils.constructDashboardUpdatedMsg(msgType, dashboard);
                     return DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addDashboardUpdateMsg(dashboardUpdateMsg)
@@ -117,7 +115,7 @@ public abstract class DashboardEdgeProcessor extends BaseDashboardProcessor impl
                 }
             }
             case DELETED, UNASSIGNED_FROM_EDGE -> {
-                DashboardUpdateMsg dashboardUpdateMsg = msgConstructor.constructDashboardDeleteMsg(dashboardId);
+                DashboardUpdateMsg dashboardUpdateMsg = EdgeMsgConstructorUtils.constructDashboardDeleteMsg(dashboardId);
                 return DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addDashboardUpdateMsg(dashboardUpdateMsg)
@@ -131,6 +129,11 @@ public abstract class DashboardEdgeProcessor extends BaseDashboardProcessor impl
     protected Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, Set<ShortCustomerInfo> assignedCustomers) {
         // do nothing on cloud
         return assignedCustomers;
+    }
+
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.DASHBOARD;
     }
 
 }

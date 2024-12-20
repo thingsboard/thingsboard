@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.rpc.processor.tenant;
+package org.thingsboard.server.service.edge.rpc.processor.rule;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
-import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
-import org.thingsboard.server.common.data.id.TenantProfileId;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
-import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
@@ -33,28 +33,28 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 @Slf4j
 @Component
 @TbCoreComponent
-public class TenantProfileEdgeProcessor extends BaseEdgeProcessor {
+public class RuleChainMetadataEdgeProcessor extends BaseEdgeProcessor {
 
     @Override
     public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
-        TenantProfileId tenantProfileId = new TenantProfileId(edgeEvent.getEntityId());
-        if (EdgeEventActionType.UPDATED.equals(edgeEvent.getAction())) {
-            TenantProfile tenantProfile = edgeCtx.getTenantProfileService().findTenantProfileById(edgeEvent.getTenantId(), tenantProfileId);
-            if (tenantProfile != null) {
-                UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                TenantProfileUpdateMsg tenantProfileUpdateMsg = EdgeMsgConstructorUtils.constructTenantProfileUpdateMsg(msgType, tenantProfile);
-                return DownlinkMsg.newBuilder()
-                        .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addTenantProfileUpdateMsg(tenantProfileUpdateMsg)
-                        .build();
-            }
+        RuleChainId ruleChainId = new RuleChainId(edgeEvent.getEntityId());
+        RuleChain ruleChain = edgeCtx.getRuleChainService().findRuleChainById(edgeEvent.getTenantId(), ruleChainId);
+        if (ruleChain != null) {
+            RuleChainMetaData ruleChainMetaData = edgeCtx.getRuleChainService().loadRuleChainMetaData(edgeEvent.getTenantId(), ruleChainId);
+            UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
+            RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = EdgeMsgConstructorUtils
+                    .constructRuleChainMetadataUpdatedMsg(msgType, ruleChainMetaData);
+            return DownlinkMsg.newBuilder()
+                    .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
+                    .addRuleChainMetadataUpdateMsg(ruleChainMetadataUpdateMsg)
+                    .build();
         }
         return null;
     }
 
     @Override
     public EdgeEventType getEdgeEventType() {
-        return EdgeEventType.TENANT_PROFILE;
+        return EdgeEventType.RULE_CHAIN_METADATA;
     }
 
 }
