@@ -98,15 +98,23 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
         userService.resetFailedLoginAttempts(tenantId, userCredentials.getUserId());
 
+        // Added null checks for securitySettings and passwordPolicy before usage.
         SecuritySettings securitySettings = securitySettingsService.getSecuritySettings();
-        if (isPositiveInteger(securitySettings.getPasswordPolicy().getPasswordExpirationPeriodDays())) {
+        if (securitySettings == null || securitySettings.getPasswordPolicy() == null) {
+            log.warn("Security settings or password policy is null. Skipping password expiration validation.");
+            return; // Exit method safely if configuration is missing
+        }
+
+        UserPasswordPolicy passwordPolicy = securitySettings.getPasswordPolicy();
+        if (isPositiveInteger(passwordPolicy.getPasswordExpirationPeriodDays())) {
             if ((userCredentials.getCreatedTime()
-                    + TimeUnit.DAYS.toMillis(securitySettings.getPasswordPolicy().getPasswordExpirationPeriodDays()))
+                    + TimeUnit.DAYS.toMillis(passwordPolicy.getPasswordExpirationPeriodDays()))
                     < System.currentTimeMillis()) {
                 userCredentials = userService.requestExpiredPasswordReset(tenantId, userCredentials.getId());
                 throw new UserPasswordExpiredException("User password expired!", userCredentials.getResetToken());
             }
         }
+
     }
 
     @Override
@@ -155,7 +163,8 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
             JsonNode additionalInfo = userCredentials.getAdditionalInfo();
             if (additionalInfo instanceof ObjectNode && additionalInfo.has(UserServiceImpl.USER_PASSWORD_HISTORY)) {
                 JsonNode userPasswordHistoryJson = additionalInfo.get(UserServiceImpl.USER_PASSWORD_HISTORY);
-                Map<String, String> userPasswordHistoryMap = JacksonUtil.convertValue(userPasswordHistoryJson, new TypeReference<>() {});
+                Map<String, String> userPasswordHistoryMap = JacksonUtil.convertValue(userPasswordHistoryJson, new TypeReference<>() {
+                });
                 for (Map.Entry<String, String> entry : userPasswordHistoryMap.entrySet()) {
                     if (encoder.matches(password, entry.getValue()) && Long.parseLong(entry.getKey()) > passwordReuseFrequencyTs) {
                         throw new DataValidationException("Password was already used for the last " + passwordPolicy.getPasswordReuseFrequencyDays() + " days");
@@ -167,6 +176,11 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
 
     @Override
     public void validatePasswordByPolicy(String password, UserPasswordPolicy passwordPolicy) {
+        // Added a null check at the beginning of the method.
+        if (passwordPolicy == null) {
+            throw new DataValidationException("Password policy cannot be null.");
+        }
+
         List<Rule> passwordRules = new ArrayList<>();
 
         Integer maximumLength = passwordPolicy.getMaximumLength();
@@ -266,6 +280,12 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         }
         if (actionType == ActionType.LOGIN && e == null) {
             userService.updateLastLoginTs(user.getTenantId(), user.getId());
+        }
+
+        // Added a null check for the user parameter.
+        if (user == null) {
+            log.warn("User is null. Unable to log login action.");
+            return; // Exit the method safely
         }
         auditLogService.logEntityAction(
                 user.getTenantId(), user.getCustomerId(), user.getId(),
