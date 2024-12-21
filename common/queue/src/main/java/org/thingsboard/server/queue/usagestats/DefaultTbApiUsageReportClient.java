@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.queue.usagestats;
 
+import com.google.common.collect.Lists;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,10 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
+import org.thingsboard.server.common.util.ProtoUtils;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsgPack;
 import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsKVProto;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -38,7 +42,11 @@ import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,6 +65,8 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
     private boolean enabledPerCustomer;
     @Value("${usage.stats.report.interval:10}")
     private int interval;
+    @Value("${usage.stats.report.pack_size:1024}")
+    private int packSize;
 
     private final EnumMap<ApiUsageRecordKey, ConcurrentMap<ReportLevel, AtomicLong>> stats = new EnumMap<>(ApiUsageRecordKey.class);
 
@@ -64,7 +74,7 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
     private final TbServiceInfoProvider serviceInfoProvider;
     private final SchedulerComponent scheduler;
     private final TbQueueProducerProvider producerProvider;
-    private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> msgProducer;
+    private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToUsageStatsServiceMsgPack>> msgProducer;
 
     @PostConstruct
     private void init() {
@@ -110,29 +120,48 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
                 });
 
                 UsageStatsKVProto.Builder statsItem = UsageStatsKVProto.newBuilder()
-                        .setKey(key.name())
+                        .setKey(ProtoUtils.toProto(key))
                         .setValue(value);
                 statsMsg.addValues(statsItem.build());
             });
             statsForKey.clear();
         }
 
-        report.forEach(((parent, statsMsg) -> {
-            //TODO: figure out how to minimize messages into the queue. Maybe group by 100s of messages?
+        Map<TopicPartitionInfo, List<ToUsageStatsServiceMsg>> reportStatsPerTpi = new HashMap<>();
+
+        report.forEach((parent, statsMsg) -> {
             try {
                 TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, parent.getTenantId(), parent.getId())
                         .newByTopic(msgProducer.getDefaultTopic());
-                msgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), statsMsg.build()), null);
+                reportStatsPerTpi.computeIfAbsent(tpi, k -> new ArrayList<>()).add(statsMsg.build());
             } catch (TenantNotFoundException e) {
                 log.debug("Couldn't report usage stats for non-existing tenant: {}", e.getTenantId());
-            } catch (Exception e) {
-                log.warn("Failed to report usage stats for tenant {}", parent.getTenantId(), e);
             }
-        }));
+        });
+
+        reportStatsPerTpi.forEach((tpi, statsList) -> {
+            toMsgPack(statsList).forEach(pack -> {
+                try {
+                    msgProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), pack), null);
+                } catch (Exception e) {
+                    log.warn("Failed to report usage stats pack to TPI {}", tpi, e);
+                }
+            });
+        });
 
         if (!report.isEmpty()) {
             log.debug("Reporting API usage statistics for {} tenants and customers", report.size());
         }
+    }
+
+    private List<ToUsageStatsServiceMsgPack> toMsgPack(List<ToUsageStatsServiceMsg> list) {
+        return Lists.partition(list, packSize)
+                .stream()
+                .map(partition ->
+                        ToUsageStatsServiceMsgPack.newBuilder()
+                                .addAllMsgs(partition)
+                                .build())
+                .toList();
     }
 
     @Override
