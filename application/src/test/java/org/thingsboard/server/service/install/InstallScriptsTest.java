@@ -37,9 +37,8 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
-import org.thingsboard.server.service.install.update.ImagesUpdater;
+import org.thingsboard.server.service.install.update.ResourcesUpdater;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -68,7 +67,7 @@ class InstallScriptsTest {
     @MockBean
     ImageService imageService;
     @MockBean
-    ImagesUpdater imagesUpdater;
+    ResourcesUpdater resourcesUpdater;
     @SpyBean
     InstallScripts installScripts;
 
@@ -87,14 +86,14 @@ class InstallScriptsTest {
     }
 
     @Test
-    void testDefaultRuleChainsTemplates() throws IOException {
+    void testDefaultRuleChainsTemplates() {
         Path dir = installScripts.getTenantRuleChainsDir();
         installScripts.findRuleChainsFromPath(dir)
                 .forEach(this::validateRuleChainTemplate);
     }
 
     @Test
-    void testDefaultEdgeRuleChainsTemplates() throws IOException {
+    void testDefaultEdgeRuleChainsTemplates() {
         Path dir = installScripts.getEdgeRuleChainsDir();
         installScripts.findRuleChainsFromPath(dir)
                 .forEach(this::validateRuleChainTemplate);

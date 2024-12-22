@@ -60,6 +60,7 @@ import { BackgroundType, colorBackground, isBackgroundSettings } from '@shared/m
 import { MediaBreakpoints } from '@shared/models/constants';
 import { TranslateService } from '@ngx-translate/core';
 import { DashboardPageLayout } from '@home/components/dashboard-page/dashboard-page.models';
+import { maxGridsterCol, maxGridsterRow } from '@home/models/dashboard-component.models';
 
 @Injectable({
   providedIn: 'root'
@@ -636,7 +637,7 @@ export class DashboardUtilsService {
                            targetLayout: DashboardLayoutId,
                            widget: Widget,
                            originalColumns?: number,
-                           originalSize?: {sizeX: number; sizeY: number},
+                           originalSize?: WidgetSize,
                            row?: number,
                            column?: number,
                            breakpoint = 'default'): void {
@@ -661,8 +662,8 @@ export class DashboardUtilsService {
       mobileHeight: widget.config.mobileHeight,
       mobileHide: widget.config.mobileHide,
       desktopHide: widget.config.desktopHide,
-      preserveAspectRatio: widget.config.preserveAspectRatio,
-      resizable: widget.config.resizable
+      preserveAspectRatio: originalSize ? originalSize.preserveAspectRatio : widget.config.preserveAspectRatio,
+      resizable: originalSize ? originalSize.resizable : widget.config.resizable
     };
     if (isUndefined(originalColumns)) {
       originalColumns = 24;
@@ -682,6 +683,10 @@ export class DashboardUtilsService {
     if (row > -1 && column > - 1) {
       widgetLayout.row = row;
       widgetLayout.col = column;
+      if (this.hasWidgetCollision(widgetLayout.row, widgetLayout.col,
+                                  widgetLayout.sizeX, widgetLayout.sizeY, Object.values(layout.widgets))) {
+        this.widgetPossiblePosition(widgetLayout, layout);
+      }
     } else {
       row = 0;
       for (const w of Object.keys(layout.widgets)) {
@@ -701,6 +706,60 @@ export class DashboardUtilsService {
     widgetLayout.col = Math.floor(widgetLayout.col);
 
     layout.widgets[widget.id] = widgetLayout;
+  }
+
+  private widgetPossiblePosition(widgetLayout: WidgetLayout, layout: DashboardLayout) {
+    let bestRow = 0;
+    let bestCol = 0;
+
+    let maxCol = layout.gridSettings.minColumns || layout.gridSettings.columns || 0;
+    let maxRow = 0;
+
+    const widgetLayouts = Object.values(layout.widgets);
+
+    widgetLayouts.forEach(widget => {
+      maxCol = Math.max(maxCol, widget.col + widget.sizeX);
+      maxRow = Math.max(maxRow, widget.row + widget.sizeY);
+    })
+
+    for (; bestRow < maxRow; bestRow++) {
+      for (bestCol = 0; bestCol < maxCol; bestCol++) {
+        if (!this.hasWidgetCollision(bestRow, bestCol, widgetLayout.sizeX, widgetLayout.sizeY, widgetLayouts)) {
+          widgetLayout.row = bestRow;
+          widgetLayout.col = bestCol;
+          return;
+        }
+      }
+    }
+    const canAddToRows = maxGridsterRow >= maxRow + bestRow;
+    const canAddToColumns = maxGridsterCol >= maxCol + bestCol;
+    const addToRows = bestRow <= bestCol && canAddToRows;
+    if (!addToRows && canAddToColumns) {
+      widgetLayout.col = maxCol;
+      widgetLayout.row = 0;
+    } else if (canAddToRows) {
+      widgetLayout.row = maxRow;
+      widgetLayout.col = 0;
+    }
+  }
+
+  private hasWidgetCollision(row: number, col: number, sizeX: number, sizeY: number, widgetLayouts: WidgetLayout[]) {
+    const left = col;
+    const right = col + sizeX;
+    const top = row;
+    const bottom = row + sizeY;
+
+    for (const widget of widgetLayouts) {
+      const left2 = widget.col;
+      const right2 = widget.col + widget.sizeX;
+      const top2 = widget.row;
+      const bottom2 = widget.row + widget.sizeY;
+
+      if (left < right2 && right > left2 && top < bottom2 && bottom > top2) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public removeWidgetFromLayout(dashboard: Dashboard,
@@ -749,12 +808,57 @@ export class DashboardUtilsService {
         widget.sizeY = 1;
       }
     }
+    const widgets: WidgetLayout[] = [];
     for (const w of Object.keys(layout.widgets)) {
       const widget = layout.widgets[w];
       widget.row = Math.round(widget.row * ratio);
       widget.col = Math.round(widget.col * ratio);
-      widget.sizeX = Math.round(widget.sizeX * ratio);
-      widget.sizeY = Math.round(widget.sizeY * ratio);
+      widget.sizeX = Math.max(1, Math.round(widget.sizeX * ratio));
+      widget.sizeY = Math.max(1, Math.round(widget.sizeY * ratio));
+      widgets.push(widget);
+    }
+    widgets.sort((w1, w2) => {
+      let res = w1.col - w2.col;
+      if (res === 0) {
+        res = w1.row - w2.row;
+      }
+      return res;
+    });
+    for (const widget of widgets) {
+      for (const widget2 of widgets) {
+        if (widget !== widget2) {
+          const left = widget.col;
+          const right = widget.col + widget.sizeX;
+          const top = widget.row;
+          const bottom = widget.row + widget.sizeY;
+          const left2 = widget2.col;
+          const right2 = widget2.col + widget2.sizeX;
+          const top2 = widget2.row;
+          const bottom2 = widget2.row + widget2.sizeY;
+          if (left < right2 && right > left2 &&
+            top < bottom2 && bottom > top2 ) {
+            let horizontalOverlapFixed = false;
+            if (right - left2 === 1) {
+              if (widget.sizeX > 1) {
+                widget.sizeX--;
+                horizontalOverlapFixed = true;
+              } else if (widget2.sizeX > 1) {
+                widget2.col++;
+                widget2.sizeX--;
+                horizontalOverlapFixed = true;
+              }
+            }
+            if (!horizontalOverlapFixed && (bottom - top2) === 1) {
+              if (widget.sizeY > 1) {
+                widget.sizeY--;
+              } else if (widget2.sizeY > 1) {
+                widget2.row++;
+                widget2.sizeY--;
+              }
+            }
+          }
+        }
+      }
     }
   }
 
@@ -1020,7 +1124,9 @@ export class DashboardUtilsService {
     const widgetLayout = layout.widgets[widget.id];
     return {
       sizeX: widgetLayout.sizeX,
-      sizeY: widgetLayout.sizeY
+      sizeY: widgetLayout.sizeY,
+      preserveAspectRatio: widgetLayout.preserveAspectRatio,
+      resizable: widgetLayout.resizable
     };
   }
 

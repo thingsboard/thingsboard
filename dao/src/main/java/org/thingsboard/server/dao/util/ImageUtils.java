@@ -21,37 +21,37 @@ import com.drew.metadata.Metadata;
 import com.drew.metadata.Tag;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.github.weisj.jsvg.SVGDocument;
+import com.github.weisj.jsvg.SVGRenderingHints;
+import com.github.weisj.jsvg.attributes.ViewBox;
+import com.github.weisj.jsvg.geometry.size.FloatSize;
+import com.github.weisj.jsvg.parser.DefaultParserProvider;
+import com.github.weisj.jsvg.parser.LoaderContext;
+import com.github.weisj.jsvg.parser.SVGLoader;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.With;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
-import org.apache.batik.bridge.BridgeContext;
-import org.apache.batik.bridge.DocumentLoader;
-import org.apache.batik.bridge.GVTBuilder;
-import org.apache.batik.bridge.UserAgent;
-import org.apache.batik.bridge.UserAgentAdapter;
-import org.apache.batik.gvt.GraphicsNode;
-import org.apache.batik.transcoder.TranscoderInput;
-import org.apache.batik.transcoder.TranscoderOutput;
-import org.apache.batik.transcoder.image.PNGTranscoder;
-import org.apache.batik.util.XMLResourceDescriptor;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.StringUtils;
-import org.w3c.dom.Document;
 
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
-import java.awt.Color;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Slf4j
@@ -144,52 +144,32 @@ public class ImageUtils {
 
         BufferedImage thumbnail = new BufferedImage(preview.getWidth(), preview.getHeight(), BufferedImage.TYPE_INT_ARGB);
         thumbnail.getGraphics().drawImage(bufferedImage, 0, 0, preview.getWidth(), preview.getHeight(), null);
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ImageIO.write(thumbnail, "png", out);
+
+        byte[] pngThumbnail = toCompressedPngData(thumbnail);
 
         preview.setMediaType("image/png");
-        preview.setData(out.toByteArray());
-        preview.setSize(preview.getData().length);
+        preview.setData(pngThumbnail);
+        preview.setSize(pngThumbnail.length);
         image.setPreview(preview);
         return image;
     }
 
     public static ProcessedImage processSvgImage(byte[] data, String mediaType, int thumbnailMaxDimension) throws Exception {
-        SAXSVGDocumentFactory factory = new SAXSVGDocumentFactory(XMLResourceDescriptor.getXMLParserClassName());
-        Document document = factory.createDocument(null, new ByteArrayInputStream(data));
+        var imageData = removeScadaSymbolMetadata(data);
+
+        SVGLoader loader = new SVGLoader();
+        SVGDocument svgDocument = loader.load(new ByteArrayInputStream(imageData), null, LoaderContext.builder()
+                .parserProvider(new DefaultParserProvider())
+                .build());
+
         Integer width = null;
         Integer height = null;
-        String strWidth = document.getDocumentElement().getAttribute("width");
-        String strHeight = document.getDocumentElement().getAttribute("height");
-        if (StringUtils.isNotEmpty(strWidth) && StringUtils.isNotEmpty(strHeight)) {
-            try {
-                width = (int) Double.parseDouble(strWidth);
-                height = (int) Double.parseDouble(strHeight);
-            } catch (NumberFormatException ignored) {} // in case width and height are in %, mm, etc.
+        if (svgDocument != null) {
+            FloatSize imageSize = svgDocument.size();
+            width = (int) imageSize.width;
+            height = (int) imageSize.height;
         }
-        if (width == null || height == null) {
-            String viewBox = document.getDocumentElement().getAttribute("viewBox");
-            if (StringUtils.isNotEmpty(viewBox)) {
-                String[] viewBoxValues = viewBox.split(" ");
-                if (viewBoxValues.length > 3) {
-                    width = (int) Double.parseDouble(viewBoxValues[2]);
-                    height = (int) Double.parseDouble(viewBoxValues[3]);
-                }
-            }
-        }
-        if (width == null) {
-            UserAgent agent = new UserAgentAdapter();
-            DocumentLoader loader = new DocumentLoader(agent);
-            BridgeContext context = new BridgeContext(agent, loader);
-            context.setDynamic(true);
-            GVTBuilder builder = new GVTBuilder();
-            GraphicsNode root = builder.build(context, document);
-            var bounds = root.getPrimitiveBounds();
-            if (bounds != null) {
-                width = (int) bounds.getWidth();
-                height = (int) bounds.getHeight();
-            }
-        }
+
         ProcessedImage image = new ProcessedImage();
         image.setMediaType(mediaType);
         image.setWidth(width == null ? 0 : width);
@@ -197,32 +177,58 @@ public class ImageUtils {
         image.setData(data);
         image.setSize(data.length);
 
-        PNGTranscoder transcoder = new PNGTranscoder();
-        if (image.getSize() < 10240) { // if SVG is smaller than 10kB (average 250x250 PNG preview size)
-            return withPreviewAsOriginalImage(image);
+        if (imageData.length < 10240 || svgDocument == null) { // if SVG is smaller than 10kB (average 250x250 PNG preview size)
+            return withPreviewAsOriginalImage(image, imageData);
         } else if (image.getSize() > 102400 && image.getWidth() != 0) { // considering SVG image detailed after 100kB
-            // increasing preview dimensions
             thumbnailMaxDimension = 512;
-            int[] thumbnailDimensions = getThumbnailDimensions(image.getWidth(), image.getHeight(), thumbnailMaxDimension, false);
-            transcoder.addTranscodingHint(PNGTranscoder.KEY_WIDTH, (float) thumbnailDimensions[0]);
-            transcoder.addTranscodingHint(PNGTranscoder.KEY_HEIGHT, (float) thumbnailDimensions[1]);
-        } else {
-            transcoder.addTranscodingHint(PNGTranscoder.KEY_MAX_WIDTH, (float) thumbnailMaxDimension);
-            transcoder.addTranscodingHint(PNGTranscoder.KEY_MAX_HEIGHT, (float) thumbnailMaxDimension);
         }
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        transcoder.transcode(new TranscoderInput(new ByteArrayInputStream(data)), new TranscoderOutput(out));
-        byte[] pngThumbnail = out.toByteArray();
-
         ProcessedImage preview = new ProcessedImage();
-        preview.setWidth(thumbnailMaxDimension);
-        preview.setHeight(thumbnailMaxDimension);
+        int[] thumbnailDimensions = getThumbnailDimensions(image.getWidth(), image.getHeight(), thumbnailMaxDimension, false);
+        preview.setWidth(thumbnailDimensions[0]);
+        preview.setHeight(thumbnailDimensions[1]);
+
+        BufferedImage thumbnail = new BufferedImage(preview.getWidth(), preview.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = thumbnail.createGraphics();
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        graphics.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+        graphics.setRenderingHint(SVGRenderingHints.KEY_IMAGE_ANTIALIASING, SVGRenderingHints.VALUE_IMAGE_ANTIALIASING_ON);
+        graphics.setRenderingHint(SVGRenderingHints.KEY_SOFT_CLIPPING, SVGRenderingHints.VALUE_SOFT_CLIPPING_ON);
+        svgDocument.render((Component)null,graphics, new ViewBox(0, 0, preview.getWidth(), preview.getHeight()));
+        graphics.dispose();
+
+        byte[] pngThumbnail = toCompressedPngData(thumbnail);
+
+        if (imageData.length < pngThumbnail.length) { // set preview as original SVG if PNG thumbnail size is greater
+            return withPreviewAsOriginalImage(image, imageData);
+        }
+
         preview.setMediaType("image/png");
         preview.setData(pngThumbnail);
         preview.setSize(pngThumbnail.length);
         image.setPreview(preview);
         return image;
     }
+
+    public static byte[] toCompressedPngData(BufferedImage image) throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ImageTypeSpecifier type = ImageTypeSpecifier.createFromRenderedImage(image);
+        ImageWriter writer = ImageIO.getImageWriters(type, "png").next();
+        ImageWriteParam param = writer.getDefaultWriteParam();
+        if (param.canWriteCompressed()) {
+            param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+            param.setCompressionQuality(0.0f);
+        }
+        var output = ImageIO.createImageOutputStream(out);
+        writer.setOutput(output);
+        try {
+            writer.write(null, new IIOImage(image, null, null), param);
+        } finally {
+            writer.dispose();
+            output.flush();
+        }
+        return out.toByteArray();
+    }
+
 
     private static ProcessedImage previewAsOriginalImage(byte[] data, String mediaType) {
         ProcessedImage image = new ProcessedImage();
@@ -235,19 +241,32 @@ public class ImageUtils {
     }
 
     public static ProcessedImage withPreviewAsOriginalImage(ProcessedImage originalImage) {
-        originalImage.setPreview(originalImage.withData(null));
+        return withPreviewAsOriginalImage(originalImage, null);
+    }
+
+    public static ProcessedImage withPreviewAsOriginalImage(ProcessedImage originalImage, byte[] previewData) {
+        originalImage.setPreview(originalImage.withData(previewData));
+        if (previewData != null) {
+            originalImage.getPreview().setSize(previewData.length);
+        }
         return originalImage;
     }
 
     public static ScadaSymbolMetadataInfo processScadaSymbolMetadata(String fileName, byte[] data) throws Exception {
-        SAXSVGDocumentFactory factory = new SAXSVGDocumentFactory(XMLResourceDescriptor.getXMLParserClassName());
-        Document document = factory.createDocument(null, new ByteArrayInputStream(data));
-        var metaElements = document.getElementsByTagName("tb:metadata");
         JsonNode metaData = null;
-        if (metaElements.getLength() > 0) {
-            metaData = JacksonUtil.toJsonNode(metaElements.item(0).getTextContent());
+        String contents = new String(data, StandardCharsets.UTF_8);
+        var matcher = Pattern.compile("(?s)<tb:metadata[^>]*><!\\[CDATA\\[(.*)]]><\\/tb:metadata>").matcher(contents);
+        if (matcher.find()) {
+            var metadataContent = matcher.group(1);
+            metaData = JacksonUtil.toJsonNode(metadataContent);
         }
         return new ScadaSymbolMetadataInfo(fileName, metaData);
+    }
+
+    public static byte[] removeScadaSymbolMetadata(byte[] data) {
+        String contents = new String(data, StandardCharsets.UTF_8);
+        contents = contents.replaceFirst("(?s)<tb:metadata[^>]*>.*<\\/tb:metadata>", "");
+        return contents.getBytes(StandardCharsets.UTF_8);
     }
 
     private static int[] getThumbnailDimensions(int originalWidth, int originalHeight, int maxDimension, boolean originalIfSmaller) {

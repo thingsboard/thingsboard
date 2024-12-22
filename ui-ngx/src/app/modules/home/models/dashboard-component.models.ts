@@ -42,6 +42,7 @@ import { enumerable } from '@shared/decorators/enumerable';
 import { UtilsService } from '@core/services/utils.service';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ComponentStyle, iconStyle, textStyle } from '@shared/models/widget-settings.models';
+import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
 
 export interface WidgetsData {
   widgets: Array<Widget>;
@@ -56,11 +57,11 @@ export interface ContextMenuItem {
 }
 
 export interface DashboardContextMenuItem extends ContextMenuItem {
-  action: (contextMenuEvent: MouseEvent) => void;
+  action: (contextMenuEvent: TbContextMenuEvent) => void;
 }
 
 export interface WidgetContextMenuItem extends ContextMenuItem {
-  action: (contextMenuEvent: MouseEvent, widget: Widget) => void;
+  action: (contextMenuEvent: TbContextMenuEvent, widget: Widget) => void;
 }
 
 export interface DashboardCallbacks {
@@ -94,7 +95,7 @@ export interface IDashboardComponent {
   highlightWidget(widgetId: string, delay?: number);
   selectWidget(widgetId: string, delay?: number);
   getSelectedWidget(): Widget;
-  getEventGridPosition(event: Event): WidgetPosition;
+  getEventGridPosition(event: TbContextMenuEvent | KeyboardEvent): WidgetPosition;
   notifyGridsterOptionsChanged();
   pauseChangeNotifications();
   resumeChangeNotifications();
@@ -109,6 +110,9 @@ interface DashboardWidgetUpdateRecord {
   widgetId: string;
   operation: DashboardWidgetUpdateOperation;
 }
+
+export const maxGridsterCol = 3000;
+export const maxGridsterRow = 3000;
 
 export class DashboardWidgets implements Iterable<DashboardWidget> {
 
@@ -685,7 +689,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   private filterCustomHeaderAction(action: WidgetHeaderAction, data: FormattedData[]): boolean {
     if (action.useShowWidgetHeaderActionFunction) {
       try {
-        return action.showWidgetHeaderActionFunction(this.widgetContext, data);
+        return action.showWidgetHeaderActionFunction.execute(this.widgetContext, data);
       } catch (e) {
         console.warn('Failed to execute showWidgetHeaderActionFunction', e);
         return false;
@@ -760,7 +764,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     } else {
       res = this.sizeY;
     }
-    return Math.floor(res);
+    return Math.max(Math.floor(res), 1);
   }
 
   set rows(rows: number) {

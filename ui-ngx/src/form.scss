@@ -205,6 +205,12 @@
     &.space-between {
       justify-content: space-between;
     }
+    &.flex-wrap {
+      flex-wrap: wrap;
+    }
+    &.overflow-auto {
+      overflow: auto;
+    }
     .mat-divider-vertical {
       height: 56px;
       margin-top: -7px;
@@ -395,13 +401,11 @@
           padding-top: 8px;
           padding-bottom: 8px;
           min-height: 40px;
-          height: 40px;
           width: auto;
           .mdc-text-field__input, .mat-mdc-select {
             font-weight: 400;
             font-size: 14px;
             line-height: 20px;
-            vertical-align: middle;
           }
         }
         .mat-mdc-form-field-icon-prefix, .mat-mdc-form-field-icon-suffix,
@@ -645,6 +649,15 @@
         color: rgba(0, 0, 0, 0.38);
         &.tb-hidden {
           visibility: hidden;
+        }
+      }
+    }
+
+    .mat-mdc-form-field.tb-inline-field {
+      .mat-mdc-text-field-wrapper {
+        .mat-mdc-form-field-icon-prefix, .mat-mdc-form-field-icon-suffix,
+        .mat-datetimepicker-toggle {
+          line-height: normal;
         }
       }
     }

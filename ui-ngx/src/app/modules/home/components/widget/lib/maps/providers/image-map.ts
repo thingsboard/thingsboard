@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import L, { LatLngBounds, LatLngLiteral, LatLngTuple } from 'leaflet';
+import L, { LatLngBounds, LatLngLiteral, LatLngTuple, PointExpression } from 'leaflet';
 import LeafletMap from '../leaflet-map';
 import {
   CircleData,
@@ -23,18 +23,17 @@ import {
   PosFunction,
   WidgetUnitedMapSettings
 } from '../map-models';
-import { Observable, of, ReplaySubject, switchMap } from 'rxjs';
-import { catchError, map, mergeMap } from 'rxjs/operators';
-import {
-  calculateNewPointCoordinate, loadImageWithAspect
-} from '@home/components/widget/lib/maps/common-maps-utils';
+import { combineLatest, Observable, of, ReplaySubject, switchMap } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { calculateNewPointCoordinate, loadImageWithAspect } from '@home/components/widget/lib/maps/common-maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DataSet, DatasourceType, FormattedData, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { isDefinedAndNotNull, isEmptyStr, isNotEmptyStr, parseFunction } from '@core/utils';
+import { isDefinedAndNotNull, isEmptyStr, isNotEmptyStr, parseTbFunction } from '@core/utils';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { ImagePipe } from '@shared/pipe/image.pipe';
+import { CompiledTbFunction } from '@shared/models/js-function.models';
 
 const maxZoom = 4; // ?
 
@@ -45,13 +44,20 @@ export class ImageMap extends LeafletMap {
     width = 0;
     height = 0;
     imageUrl: string;
-    posFunction: PosFunction;
+    posFunction: CompiledTbFunction<PosFunction>;
 
     constructor(ctx: WidgetContext, $container: HTMLElement, options: WidgetUnitedMapSettings) {
         super(ctx, $container, options);
-        this.posFunction = parseFunction(options.posFunction,
-          ['origXPos', 'origYPos', 'data', 'dsData', 'dsIndex', 'aspect']) as PosFunction;
-        this.mapImage(options).subscribe((mapImage) => {
+
+        const initData = {
+          posFunction: parseTbFunction<PosFunction>(this.ctx.http, options.posFunction,
+            ['origXPos', 'origYPos', 'data', 'dsData', 'dsIndex', 'aspect']),
+          mapImage: this.mapImage(options)
+        };
+
+        combineLatest(initData).subscribe(inited => {
+          this.posFunction = inited.posFunction;
+          const mapImage = inited.mapImage;
           this.imageUrl = mapImage.imageUrl;
           this.aspect = mapImage.aspect;
           if (mapImage.update) {
@@ -135,7 +141,7 @@ export class ImageMap extends LeafletMap {
             }
           }
         ),
-        catchError((e) => this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl))
+        catchError(() => this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl))
       );
     }
 
@@ -158,13 +164,13 @@ export class ImageMap extends LeafletMap {
                   return this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl);
                 }
               }),
-            catchError((e) => this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl))
+            catchError(() => this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl))
           );
         })
       );
     }
 
-    updateBounds(updateImage?: boolean, lastCenterPos?) {
+    updateBounds(updateImage?: boolean, lastCenterPos?: L.Point) {
         const w = this.width;
         const h = this.height;
         this.southWest = this.pointToLatLng(0, h);
@@ -233,7 +239,7 @@ export class ImageMap extends LeafletMap {
       }
     }
 
-    fitBounds(bounds: LatLngBounds, padding?: LatLngTuple) { }
+    fitBounds(_bounds: LatLngBounds, _padding?: PointExpression) { }
 
     initMap(updateImage?: boolean) {
       if (!this.map && this.aspect > 0) {
@@ -271,10 +277,10 @@ export class ImageMap extends LeafletMap {
         position.y * this.height);
     }
 
-    convertPosition(data, dsData: FormattedData[]): L.LatLng {
+    convertPosition(data: FormattedData, dsData: FormattedData[]): L.LatLng {
       const position = this.extractPosition(data);
       if (position) {
-        const converted = this.posFunction(position.x, position.y, data, dsData, data.dsIndex, this.aspect) || {x: 0, y: 0};
+        const converted = this.posFunction.execute(position.x, position.y, data, dsData, data.dsIndex, this.aspect) || {x: 0, y: 0};
         return this.positionToLatLng(converted);
       } else {
         return null;
@@ -296,7 +302,7 @@ export class ImageMap extends LeafletMap {
       }).filter(el => !!el);
     }
 
-    pointToLatLng(x, y): L.LatLng {
+    pointToLatLng(x: number, y: number): L.LatLng {
         return L.CRS.Simple.pointToLatLng({ x, y } as L.PointExpression, maxZoom - 1);
     }
 
@@ -304,7 +310,7 @@ export class ImageMap extends LeafletMap {
         return L.CRS.Simple.latLngToPoint(latLng, maxZoom - 1);
     }
 
-    convertToCustomFormat(position: L.LatLng, offset = 0, width = this.width, height = this.height): {[key: string]: any} {
+    convertToCustomFormat(position: L.LatLng, _offset = 0, width = this.width, height = this.height): {[key: string]: any} {
       if (!position) {
         return {
           [this.options.xPosKeyName]: null,

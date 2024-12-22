@@ -17,16 +17,20 @@
 -->
 <fieldset class="tb-help-popup-button-container" *ngIf="!textMode">
   <div #toggleHelpButton
-       matTooltip="{{'help.show-help' | translate}}"
+       matTooltip="{{ helpIconTooltip }}"
        matTooltipPosition="above"
        style="border-radius: 50%"
        (click)="toggleHelp()">
     <button mat-icon-button
+            [disabled]="disabled()"
             color="primary"
-            class="tb-help-popup-button tb-mat-32"
+            class="tb-help-popup-button"
+            [class]="helpIconButtonClass"
             type="button">
-      <mat-icon class="material-icons">{{popoverVisible ? 'help' : 'help_outline'}}</mat-icon>
-      <mat-spinner *ngIf="popoverVisible && !popoverReady" class="tb-help-popup-button-loading" mode="indeterminate" diameter="20" strokeWidth="2"></mat-spinner>
+      <tb-icon matButtonIcon>{{popoverVisible ? helpOpenedIcon : helpIcon}}</tb-icon>
+      <div *ngIf="popoverVisible && !popoverReady" class="tb-help-popup-button-loading absolute inset-0 flex items-center justify-center">
+        <mat-spinner mode="indeterminate" diameter="20" strokeWidth="2"></mat-spinner>
+      </div>
     </button>
   </div>
 </fieldset>
@@ -34,6 +38,7 @@
   <div #toggleHelpTextButton
        (click)="toggleHelp()">
     <button mat-button
+            [disabled]="disabled()"
             type="button"
             color="primary"
             class="tb-help-popup-text-button"
@@ -44,7 +49,7 @@
           <span [style]="triggerStyle" [innerHTML]="triggerSafeHtml"></span>
         </ng-container>
         <mat-icon *ngIf="(!popoverVisible || popoverReady)"
-                  [ngClass]="hintMode ? 'tb-mat-12' : 'tb-mat-16'">open_in_new</mat-icon>
+                  [class]="hintMode ? 'tb-mat-12' : 'tb-mat-16'">open_in_new</mat-icon>
         <mat-spinner *ngIf="popoverVisible && !popoverReady" mode="indeterminate" [diameter]="hintMode ? 12 : 16" strokeWidth="2"></mat-spinner>
       </span>
     </button>

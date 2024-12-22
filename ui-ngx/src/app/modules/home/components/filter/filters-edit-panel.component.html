@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" class="mat-content mat-padding">
+<div class="mat-content mat-padding flex flex-col">
   <div *ngFor="let filter of filtersInfo | keyvalue; let last = last">
-    <div fxLayout="row" fxLayoutAlign="start center">
-      <mat-label fxFlex>{{filter.value.filter}}</mat-label>
+    <div class="flex flex-row items-center justify-start">
+      <mat-label class="flex-1">{{filter.value.filter}}</mat-label>
       <button mat-icon-button color="primary"
               style="min-width: 40px;"
               type="button"

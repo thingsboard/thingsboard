@@ -17,18 +17,18 @@
 -->
 <div style="height: min-content; max-height: 80vh;">
   <mat-card appearance="outlined" class="repository-settings"
-            [ngClass]="{'settings-card': !detailsMode}"
-            [ngStyle]="popoverComponent ? {boxShadow: 'none', maxWidth: '100%', minWidth: '100%', width: '800px'} : {}">
+            [class.settings-card]="!detailsMode"
+            [style]="popoverComponent ? {boxShadow: 'none', maxWidth: '100%', minWidth: '100%', width: '800px'} : {}">
     <mat-card-header>
       <mat-card-title>
         <span class="mat-headline-5" translate>admin.repository-settings</span>
       </mat-card-title>
-      <span fxFlex></span>
+      <span class="flex-1"></span>
       <div tb-help="repositorySettings"></div>
     </mat-card-header>
     <mat-progress-bar color="warn" mode="indeterminate" *ngIf="!hideLoadingBar && isLoading$ | async">
     </mat-progress-bar>
-    <div style="height: 4px;" *ngIf="hideLoadingBar || !(isLoading$ | async)"></div>
+    <div style="height: 4px;" *ngIf="hideLoadingBar || (isLoading$ | async) === false"></div>
     <mat-card-content style="padding-top: 16px;">
       <form [formGroup]="repositorySettingsForm" #formDirective="ngForm" (ngSubmit)="save()">
         <fieldset [disabled]="isLoading$ | async">
@@ -43,7 +43,7 @@
             <mat-label translate>admin.default-branch</mat-label>
             <input matInput formControlName="defaultBranch">
           </mat-form-field>
-          <div fxLayout="column">
+          <div class="flex flex-col">
             <mat-checkbox formControlName="readOnly">
               {{ 'admin.repository-read-only' | translate }}
             </mat-checkbox>
@@ -53,7 +53,7 @@
           </div>
           <fieldset [disabled]="isLoading$ | async" class="fields-group">
             <legend class="group-title" translate>admin.authentication-settings</legend>
-            <mat-form-field fxFlex class="mat-block">
+            <mat-form-field class="mat-block flex-1">
               <mat-label translate>admin.auth-method</mat-label>
               <mat-select required formControlName="authMethod">
                 <mat-option *ngFor="let method of repositoryAuthMethods" [value]="method">
@@ -61,8 +61,8 @@
                 </mat-option>
               </mat-select>
             </mat-form-field>
-            <section [fxShow]="repositorySettingsForm.get('authMethod').value === repositoryAuthMethod.USERNAME_PASSWORD" fxLayout="column">
-              <mat-form-field fxFlex class="mat-block">
+            <section [class.!hidden]="repositorySettingsForm.get('authMethod').value !== repositoryAuthMethod.USERNAME_PASSWORD" class="flex flex-col">
+              <mat-form-field class="mat-block flex-1">
                 <mat-label translate>common.username</mat-label>
                 <input matInput formControlName="username" placeholder="{{ 'common.enter-username' | translate }}"
                        autocomplete="new-username"/>
@@ -79,7 +79,7 @@
                 <mat-hint [innerHTML] = "'admin.auth-method-username-password-hint' | translate"></mat-hint>
               </mat-form-field>
             </section>
-            <section [fxShow]="repositorySettingsForm.get('authMethod').value === repositoryAuthMethod.PRIVATE_KEY" fxLayout="column">
+            <section [class.!hidden]="repositorySettingsForm.get('authMethod').value !== repositoryAuthMethod.PRIVATE_KEY" class="flex flex-col">
               <tb-file-input [existingFileName]="repositorySettingsForm.get('privateKeyFileName').value"
                              required
                              formControlName="privateKey"
@@ -99,12 +99,12 @@
               </mat-form-field>
             </section>
           </fieldset>
-          <div fxLayout="row" fxLayoutAlign="end center" fxLayout.xs="column" fxLayoutAlign.xs="end" fxLayoutGap="16px">
-            <button mat-raised-button color="warn" type="button" [fxShow]="settings !== null"
+          <div class="flex flex-row items-center justify-end gap-4 xs:flex-col xs:items-stretch xs:justify-end">
+            <button mat-raised-button color="warn" type="button" [class.!hidden]="!settings"
                     [disabled]="(isLoading$ | async)" (click)="delete(formDirective)">
               {{'action.delete' | translate}}
             </button>
-            <span fxFlex></span>
+            <span class="flex-1"></span>
             <button mat-raised-button type="button"
                     [disabled]="(isLoading$ | async) || repositorySettingsForm.invalid" (click)="checkAccess()">
               {{'admin.check-access' | translate}}

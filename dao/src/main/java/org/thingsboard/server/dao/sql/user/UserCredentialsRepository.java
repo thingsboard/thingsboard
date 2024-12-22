@@ -16,6 +16,8 @@
 package org.thingsboard.server.dao.sql.user;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.UserCredentialsEntity;
 
@@ -34,5 +36,20 @@ public interface UserCredentialsRepository extends JpaRepository<UserCredentials
 
     @Transactional
     void removeByUserId(UUID userId);
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE UserCredentialsEntity SET lastLoginTs = :lastLoginTs WHERE userId = :userId")
+    void updateLastLoginTsByUserId(UUID userId, long lastLoginTs);
+
+    @Transactional
+    @Query(value = "UPDATE user_credentials SET failed_login_attempts = coalesce(failed_login_attempts, 0) + 1 " +
+            "WHERE user_id = :userId RETURNING failed_login_attempts", nativeQuery = true)
+    int incrementFailedLoginAttemptsByUserId(UUID userId);
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE UserCredentialsEntity SET failedLoginAttempts = :failedLoginAttempts WHERE userId = :userId")
+    void updateFailedLoginAttemptsByUserId(UUID userId, int failedLoginAttempts);
 
 }

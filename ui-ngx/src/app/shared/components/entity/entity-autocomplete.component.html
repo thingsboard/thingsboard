@@ -15,7 +15,8 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="selectEntityFormGroup" class="mat-block" [appearance]="appearance">
+<mat-form-field [formGroup]="selectEntityFormGroup" class="mat-block" [appearance]="appearance" [subscriptSizing]="subscriptSizing"
+                [class]="additionalClasses">
   <mat-label>{{ label | translate }}</mat-label>
   <input matInput type="text"
          #entityInput
@@ -23,7 +24,7 @@
          (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="entityAutocomplete"
-         [fxShow]="!disabled || !selectEntityFormGroup.get('entity').value">
+         [class.!hidden]="disabled && selectEntityFormGroup.get('entity').value">
   <a *ngIf="selectEntityFormGroup.get('entity').value && disabled" aria-label="Open device profile" [routerLink]=entityURL>
     {{ displayEntityFn(selectEntityFormGroup.get('entity').value) }}
   </a>
@@ -32,6 +33,12 @@
           matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
+  </button>
+  <button mat-button color="primary" matSuffix
+          type="button"
+          *ngIf="allowCreateNew && !selectEntityFormGroup.get('entity').value && !disabled"
+          (click)="createNewEntity($event)">
+    <span style="white-space: nowrap">{{ 'entity.create-new' | translate }}</span>
   </button>
   <mat-autocomplete class="tb-autocomplete"
                     #entityAutocomplete="matAutocomplete"

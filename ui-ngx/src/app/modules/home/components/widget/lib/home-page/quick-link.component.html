@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<div fxLayout="row" *ngIf="addMode || editMode; else quickLinkTemplate">
-  <div fxFlex class="tb-edit-link" [ngClass]="{'edit-mode': editMode}" [formGroup]="editQuickLinkFormGroup" fxLayout="column">
-    <mat-form-field fxFlex class="mat-block">
+<div class="flex flex-row" *ngIf="addMode || editMode; else quickLinkTemplate">
+  <div class="tb-edit-link flex flex-1 flex-col" [class.edit-mode]="editMode" [formGroup]="editQuickLinkFormGroup">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>widgets.quick-links.quick-link</mat-label>
       <input matInput type="text"
              #linkInput
@@ -50,19 +50,19 @@
         {{ 'widgets.quick-links.quick-link-required' | translate }}
       </mat-error>
     </mat-form-field>
-    <div *ngIf="addMode" fxLayout="row" fxLayoutAlign="end" fxLayoutGap="8px">
+    <div *ngIf="addMode" class="flex flex-row items-stretch justify-end gap-2">
       <button *ngIf="!addOnly" mat-button color="primary" (click)="cancelAdd()">{{ 'action.cancel' | translate }}</button>
       <button mat-raised-button color="primary" (click)="add()">{{ 'action.add' | translate }}</button>
     </div>
   </div>
-  <div *ngIf="editMode" fxLayout="row" class="tb-edit-buttons">
+  <div *ngIf="editMode" class="tb-edit-buttons flex flex-row">
     <button mat-icon-button (click)="apply()"><tb-icon>check</tb-icon></button>
     <button mat-icon-button (click)="cancelEdit()"><tb-icon>close</tb-icon></button>
   </div>
 </div>
 <ng-template #quickLinkTemplate>
-  <div fxLayout="row">
-    <div fxFlex class="tb-link">
+  <div class="flex flex-row">
+    <div class="tb-link flex-1">
       <div class="tb-link-container">
         <div class="tb-link-icon-container">
           <tb-icon color="primary">{{ quickLink?.icon }}</tb-icon>
@@ -70,7 +70,7 @@
         <div class="tb-link-text">{{ displayLinkFn(quickLink) }}</div>
       </div>
     </div>
-    <div fxLayout="row" fxLayoutAlign="start center" class="tb-edit-buttons">
+    <div class="tb-edit-buttons flex flex-row items-center justify-start">
       <button mat-icon-button
               matTooltip="{{ 'action.edit' | translate }}"
               matTooltipPosition="above"

@@ -15,7 +15,6 @@
 ///
 
 import {
-  AfterViewInit,
   ChangeDetectorRef,
   Component,
   EventEmitter,
@@ -68,17 +67,18 @@ import { Authority } from '@shared/models/authority.enum';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import {
   UploadImageDialogComponent,
-  UploadImageDialogData, UploadImageDialogResult
+  UploadImageDialogData,
+  UploadImageDialogResult
 } from '@shared/components/image/upload-image-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-import { BackgroundType, colorBackground } from '@shared/models/widget-settings.models';
+import { colorBackground } from '@shared/models/widget-settings.models';
 import { GridType } from 'angular-gridster2';
 import {
-  SaveWidgetTypeAsDialogComponent, SaveWidgetTypeAsDialogData,
+  SaveWidgetTypeAsDialogComponent,
+  SaveWidgetTypeAsDialogData,
   SaveWidgetTypeAsDialogResult
 } from '@home/pages/widget/save-widget-type-as-dialog.component';
 import { WidgetService } from '@core/http/widget.service';
-import { de } from 'date-fns/locale';
 
 @Component({
   selector: 'tb-scada-symbol',
@@ -87,7 +87,7 @@ import { de } from 'date-fns/locale';
   encapsulation: ViewEncapsulation.None
 })
 export class ScadaSymbolComponent extends PageComponent
-  implements OnInit, OnDestroy, AfterViewInit, HasDirtyFlag, ScadaSymbolEditObjectCallbacks {
+  implements OnInit, OnDestroy, HasDirtyFlag, ScadaSymbolEditObjectCallbacks {
 
   widgetType = widgetType;
 
@@ -200,9 +200,6 @@ export class ScadaSymbolComponent extends PageComponent
     );
   }
 
-  ngAfterViewInit() {
-  }
-
   ngOnDestroy() {
     super.ngOnDestroy();
     this.destroy$.next();
@@ -211,6 +208,10 @@ export class ScadaSymbolComponent extends PageComponent
 
   onApplyScadaSymbolConfig() {
     if (this.scadaSymbolFormGroup.valid) {
+      if (this.symbolEditor.editorMode === 'xml') {
+        const tags = this.symbolEditor.getTags();
+        this.editObjectCallbacks.tagsUpdated(tags);
+      }
       const metadata: ScadaSymbolMetadata = this.scadaSymbolFormGroup.get('metadata').value;
       const scadaSymbolContent = this.prepareScadaSymbolContent(metadata);
       const file = createFileFromContent(scadaSymbolContent, this.symbolData.imageResource.fileName,
@@ -417,10 +418,21 @@ export class ScadaSymbolComponent extends PageComponent
               const descriptor = widget.descriptor;
               descriptor.sizeX = metadata.widgetSizeX;
               descriptor.sizeY = metadata.widgetSizeY;
-              descriptor.controllerScript = descriptor.controllerScript
-                    .replace(/previewWidth: '\d*px'/gm, `previewWidth: '${metadata.widgetSizeX * 100}px'`);
-              descriptor.controllerScript = descriptor.controllerScript
-                    .replace(/previewHeight: '\d*px'/gm, `previewHeight: '${metadata.widgetSizeY * 100 + 20}px'`);
+              let controllerScriptBody: string;
+              if (typeof descriptor.controllerScript === 'string') {
+                controllerScriptBody = descriptor.controllerScript;
+              } else {
+                controllerScriptBody = descriptor.controllerScript.body;
+              }
+              controllerScriptBody = controllerScriptBody
+                  .replace(/previewWidth: '\d*px'/gm, `previewWidth: '${metadata.widgetSizeX * 100}px'`);
+              controllerScriptBody = controllerScriptBody
+                  .replace(/previewHeight: '\d*px'/gm, `previewHeight: '${metadata.widgetSizeY * 100 + 20}px'`);
+              if (typeof descriptor.controllerScript === 'string') {
+                descriptor.controllerScript = controllerScriptBody;
+              } else {
+                descriptor.controllerScript.body = controllerScriptBody;
+              }
               const config: WidgetConfig = JSON.parse(descriptor.defaultConfig);
               config.title = saveWidgetAsData.widgetName;
               config.settings = config.settings || {};

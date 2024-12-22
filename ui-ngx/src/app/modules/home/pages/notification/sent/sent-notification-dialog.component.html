@@ -17,7 +17,7 @@
 -->
 <mat-toolbar color="primary">
   <h2>{{ dialogTitle | translate }}</h2>
-  <span fxFlex></span>
+  <span class="flex-1"></span>
   <div tb-help="sentNotification"></div>
   <button mat-icon-button
           (click)="cancel()"
@@ -38,7 +38,7 @@
     <mat-step [stepControl]="notificationRequestForm">
       <ng-template matStepLabel>{{ 'notification.setup' | translate }}</ng-template>
       <form [formGroup]="notificationRequestForm">
-        <div fxLayoutAlign="center">
+        <div class="flex items-stretch justify-center">
           <tb-toggle-select formControlName="useTemplate" appearance="fill">
             <tb-toggle-option  [value]="false">{{ 'notification.start-from-scratch' | translate }}</tb-toggle-option>
             <tb-toggle-option  [value]="true">{{ 'notification.use-template' | translate }}</tb-toggle-option>
@@ -58,7 +58,7 @@
             <section formGroupName="configuration">
               <div class="delivery-title">
                 <div>
-                  <label [ngClass]="{'tb-error': notificationRequestForm.get('template.configuration.deliveryMethodsTemplates').hasError('atLeastOne')}"
+                  <label [class.tb-error]="notificationRequestForm.get('template.configuration.deliveryMethodsTemplates').hasError('atLeastOne')"
                          class="tb-title tb-required">{{ "notification.delivery-methods" | translate }}</label>
                   <div class="tb-form-hint" translate>notification.at-least-one-should-be-selected</div>
                 </div>
@@ -123,7 +123,7 @@
           <mat-slide-toggle formControlName="enabled" class="toggle">
             {{ 'notification.scheduler-later' | translate }}
           </mat-slide-toggle>
-          <div *ngIf="notificationRequestForm.get('additionalConfig.enabled').value" fxLayout="column">
+          <div *ngIf="notificationRequestForm.get('additionalConfig.enabled').value" class="flex flex-col">
             <tb-timezone-select userTimezoneByDefault
                                 required
                                 formControlName="timezone">
@@ -132,7 +132,7 @@
               <mat-label translate>notification.time</mat-label>
               <mat-datetimepicker-toggle [for]="startTimePicker" matPrefix></mat-datetimepicker-toggle>
               <mat-datetimepicker #startTimePicker type="datetime" openOnFocus="true"></mat-datetimepicker>
-              <input required matInput fxFlex formControlName="time" [min]="minDate()" [max]="maxDate()" [matDatetimepicker]="startTimePicker">
+              <input required matInput class="flex-1" formControlName="time" [min]="minDate()" [max]="maxDate()" [matDatetimepicker]="startTimePicker">
             </mat-form-field>
           </div>
         </section>
@@ -161,7 +161,7 @@
       </div>
       <div *ngIf="preview" class="tb-form-panel no-padding no-border">
         <section class="preview-group tb-form-panel stroked no-gap">
-          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+          <div class="flex flex-row items-center justify-start gap-2">
             <tb-icon class="tb-mat-18">supervisor_account</tb-icon>
             <div class="tb-form-panel-title">{{ 'notification.recipients-count' | translate : {count: preview.totalRecipientsCount} }}</div>
           </div>
@@ -178,7 +178,7 @@
           </mat-chip-listbox>
         </section>
         <section class="preview-group notification tb-form-panel stroked no-gap" *ngIf="preview.processedTemplates.WEB?.enabled">
-          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+          <div class="flex flex-row items-center justify-start gap-2">
             <tb-icon class="tb-mat-18">mdi:bell-badge</tb-icon>
             <div class="tb-form-panel-title" translate>notification.delivery-method.web-preview</div>
           </div>
@@ -187,7 +187,7 @@
           </div>
         </section>
         <section class="preview-group notification tb-form-panel stroked no-gap" *ngIf="preview.processedTemplates.MOBILE_APP?.enabled">
-          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+          <div class="flex flex-row items-center justify-start gap-2">
             <tb-icon class="tb-mat-18">mdi:cellphone-text</tb-icon>
             <div class="tb-form-panel-title" translate>notification.delivery-method.mobile-app-preview</div>
           </div>
@@ -197,7 +197,7 @@
           </div>
         </section>
         <section class="preview-group notification tb-form-panel stroked no-gap" *ngIf="preview.processedTemplates.SMS?.enabled">
-          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+          <div class="flex flex-row items-center justify-start gap-2">
             <tb-icon class="tb-mat-18">mdi:message-processing</tb-icon>
             <div class="tb-form-panel-title" translate>notification.delivery-method.sms-preview</div>
           </div>
@@ -206,18 +206,18 @@
           </div>
         </section>
         <section class="preview-group notification tb-form-panel stroked no-gap" *ngIf="preview.processedTemplates.EMAIL?.enabled">
-          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+          <div class="flex flex-row items-center justify-start gap-2">
             <tb-icon class="tb-mat-18">mdi:email</tb-icon>
             <div class="tb-form-panel-title" translate>notification.delivery-method.email-preview</div>
           </div>
           <div class="notification-content">
             <div class="subject">{{ preview.processedTemplates.EMAIL.subject }}</div>
             <mat-divider></mat-divider>
-            <div class="html-content" [innerHTML]="(preview.processedTemplates.EMAIL.body | safe: 'html')"></div>
+            <editor [init]="tinyMceOptions" [initialValue]="preview.processedTemplates.EMAIL.body"></editor>
           </div>
         </section>
         <section class="preview-group notification tb-form-panel stroked no-gap" *ngIf="preview.processedTemplates.SLACK?.enabled">
-          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+          <div class="flex flex-row items-center justify-start gap-2">
             <tb-icon class="tb-mat-18">mdi:slack</tb-icon>
             <div class="tb-form-panel-title" translate>notification.delivery-method.slack-preview</div>
           </div>
@@ -226,13 +226,14 @@
           </div>
         </section>
         <section class="preview-group notification tb-form-panel stroked no-gap" *ngIf="preview.processedTemplates.MICROSOFT_TEAMS?.enabled">
-          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+          <div class="flex flex-row items-center justify-start gap-2">
             <tb-icon class="tb-mat-18">mdi:microsoft-teams</tb-icon>
             <div class="tb-form-panel-title" translate>notification.delivery-method.microsoft-teams-preview</div>
           </div>
-          <div class="notification-content mini">
+          <div class="notification-content mini" [style.background-color]="preview.processedTemplates.MICROSOFT_TEAMS?.themeColor">
             <div class="subject">{{ preview.processedTemplates.MICROSOFT_TEAMS.subject }}</div>
             {{ preview.processedTemplates.MICROSOFT_TEAMS.body }}
+            <button mat-raised-button>{{ preview.processedTemplates.MICROSOFT_TEAMS.button.text }}</button>
           </div>
         </section>
       </div>
@@ -243,7 +244,7 @@
 <div mat-dialog-actions class="tb-dialog-actions">
   <button mat-stroked-button *ngIf="selectedIndex > 0"
           (click)="backStep()">{{ 'action.back' | translate }}</button>
-  <span fxFlex></span>
+  <span class="flex-1"></span>
   <button mat-raised-button
           color="primary"
           (click)="nextStep()">{{ nextStepLabel() | translate }}</button>

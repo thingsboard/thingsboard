@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" [formGroup]="filterPredicateValueFormGroup">
-  <div fxFlex fxLayout="column" [fxShow]="!dynamicMode && !onlyUserDynamicSource">
-    <div fxLayout="column" [ngSwitch]="valueType">
+<div class="flex flex-1 flex-row items-center justify-start gap-2" [formGroup]="filterPredicateValueFormGroup">
+  <div class="flex flex-1 flex-col" [class.!hidden]="dynamicMode || onlyUserDynamicSource">
+    <div class="flex flex-col" [ngSwitch]="valueType">
       <ng-template [ngSwitchCase]="valueTypeEnum.STRING">
         <mat-form-field hideRequiredMarker class="mat-block">
           <input matInput formControlName="defaultValue" placeholder="{{'filter.value' | translate}}">
@@ -43,9 +43,9 @@
     </div>
     <div class="tb-hint">{{ hintText | translate }}</div>
   </div>
-  <div fxFlex fxLayout="column" [fxShow]="dynamicMode || onlyUserDynamicSource">
-    <div formGroupName="dynamicValue" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-      <div fxFlex="35" fxLayout="column">
+  <div class="flex flex-col flex-1" [class.!hidden]="!dynamicMode && !onlyUserDynamicSource">
+    <div formGroupName="dynamicValue" class="flex flex-row justify-start gap-2">
+      <div class="flex max-w-35% flex-full flex-col">
         <mat-form-field hideRequiredMarker class="mat-block">
           <mat-select formControlName="sourceType" placeholder="{{'filter.dynamic-source-type' | translate}}">
             <mat-option [value]="null">
@@ -58,14 +58,14 @@
         </mat-form-field>
         <div class="tb-hint" translate>filter.dynamic-source-type</div>
       </div>
-      <div fxFlex fxLayout="column">
+      <div class="flex flex-1 flex-col">
         <mat-form-field hideRequiredMarker class="mat-block">
           <input matInput formControlName="sourceAttribute" placeholder="{{'filter.source-attribute' | translate}}">
         </mat-form-field>
         <div class="tb-hint" translate>filter.source-attribute</div>
       </div>
       <div *ngIf="!allow && inheritMode"
-           fxLayout="column"
+           class="flex flex-col"
            style="padding-top: 6px">
         <mat-checkbox formControlName="inherit">
           {{ 'filter.inherit-owner' | translate}}

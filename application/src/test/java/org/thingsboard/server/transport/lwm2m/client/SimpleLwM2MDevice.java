@@ -20,7 +20,7 @@ import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
 import org.eclipse.leshan.client.servers.LwM2mServer;
 import org.eclipse.leshan.core.Destroyable;
 import org.eclipse.leshan.core.model.ObjectModel;
-import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.model.ResourceModel.Type;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.request.argument.Arguments;
 import org.eclipse.leshan.core.response.ExecuteResponse;
@@ -30,7 +30,6 @@ import org.eclipse.leshan.core.response.WriteResponse;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PrimitiveIterator;
@@ -46,9 +45,46 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
     private static final Random RANDOM = new Random();
     private static final int min = 5;
     private static final int max = 50;
-    private static final  PrimitiveIterator.OfInt randomIterator = new Random().ints(min,max + 1).iterator();
+    private static final PrimitiveIterator.OfInt randomIterator = new Random().ints(min, max + 1).iterator();
     private static final List<Integer> supportedResources = Arrays.asList(0, 1, 2, 3, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21);
+    /**
+     * 0: DC power
+     * 1: Internal Battery
+     * 2: External Battery
+     * 3: Fuel Cell
+     * 4: Power over Ethernet
+     * 5: USB
+     * 6: AC (Mains) power
+     * 7: Solar
+     */
+    private static final Map<Integer, Long> availablePowerSources =
+            Map.of(0, 0L, 1, 1L, 2, 7L);
+    private static Map<Integer, Long> powerSourceVoltage =
+            Map.of(0, 12000L, 1, 12400L, 7, 14600L);   //mV
+    private static Map<Integer, Long> powerSourceCurrent =
+            Map.of(0, 72000L, 1, 2000L, 7, 25000L);    // mA
 
+    /**
+     * 0=No error
+     * 1=Low battery power
+     * 2=External power supply off
+     * 3=GPS module failure
+     * 4=Low received signal strength
+     * 5=Out of memory
+     * 6=SMS failure
+     * 7=IP connectivity failure
+     * 8=Peripheral malfunction
+     * 9..15=Reserved for future use
+     * 16..32=Device specific error codes
+     *
+     * When the single Device Object Instance is initiated, there is only one error code Resource Instance whose value is equal to 0 that means no error.
+     * When the first error happens, the LwM2M Client changes error code Resource Instance to any non-zero value to indicate the error type.
+     * When any other error happens, a new error code Resource Instance is created.
+     * When an error associated with a Resource Instance is no longer present, that Resource Instance is deleted.
+     * When the single existing error is no longer present, the LwM2M Client returns to the original no error state where Instance 0 has value 0.
+     */
+    private static Map<Integer, Long> errorCode =
+            Map.of(0, 0L);    // 0-32
 
     public SimpleLwM2MDevice() {
     }
@@ -81,15 +117,17 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
             case 3:
                 return ReadResponse.success(resourceId, getFirmwareVersion());
             case 6:
-                return ReadResponse.success(resourceId, getAvailablePowerSources(), ResourceModel.Type.INTEGER);
+                return ReadResponse.success(resourceId, getAvailablePowerSources(), Type.INTEGER);
+            case 7:
+                return ReadResponse.success(resourceId, getPowerSourceVoltage(), Type.INTEGER);
+            case 8:
+                return ReadResponse.success(resourceId, getPowerSourceCurrent(), Type.INTEGER);
             case 9:
                 return ReadResponse.success(resourceId, getBatteryLevel());
             case 10:
                 return ReadResponse.success(resourceId, getMemoryFree());
             case 11:
-                Map<Integer, Long> errorCodes = new HashMap<>();
-                errorCodes.put(0, getErrorCode());
-                return ReadResponse.success(resourceId, errorCodes, ResourceModel.Type.INTEGER);
+                return ReadResponse.success(resourceId, getErrorCodes(), Type.INTEGER);
             case 14:
                 return ReadResponse.success(resourceId, getUtcOffset());
             case 15:
@@ -156,16 +194,19 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
         return "1.0.2";
     }
 
-    private long getErrorCode() {
-        return 0;
+    private Map<Integer, ?> getAvailablePowerSources() {
+        return availablePowerSources;
     }
 
-    private Map<Integer, Long> getAvailablePowerSources() {
-        Map<Integer, Long> availablePowerSources = new HashMap<>();
-        availablePowerSources.put(0, 1L);
-        availablePowerSources.put(1, 2L);
-        availablePowerSources.put(2, 5L);
-        return availablePowerSources;
+    private Map<Integer, ?> getPowerSourceVoltage() {
+        return powerSourceVoltage;
+    }
+    private Map<Integer, ?> getPowerSourceCurrent() {
+        return powerSourceCurrent;
+    }
+
+    private Map<Integer, ?> getErrorCodes() {
+        return errorCode;
     }
 
     private int getBatteryLevel() {

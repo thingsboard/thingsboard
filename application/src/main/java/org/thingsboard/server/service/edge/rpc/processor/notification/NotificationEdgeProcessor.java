@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.edge.rpc.processor.notification;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -25,18 +26,34 @@ import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
+import org.thingsboard.server.dao.notification.NotificationRuleService;
+import org.thingsboard.server.dao.notification.NotificationTargetService;
+import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.NotificationRuleUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.NotificationTargetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.NotificationTemplateUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.rpc.constructor.notification.NotificationMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 @Slf4j
 @Component
 @TbCoreComponent
 public class NotificationEdgeProcessor extends BaseEdgeProcessor {
+
+    @Autowired
+    protected NotificationRuleService notificationRuleService;
+
+    @Autowired
+    private NotificationTargetService notificationTargetService;
+
+    @Autowired
+    private NotificationTemplateService notificationTemplateService;
+
+    @Autowired
+    private NotificationMsgConstructor notificationMsgConstructor;
 
     public DownlinkMsg convertNotificationRuleToDownlink(EdgeEvent edgeEvent) {
         NotificationRuleId notificationRuleId = new NotificationRuleId(edgeEvent.getEntityId());

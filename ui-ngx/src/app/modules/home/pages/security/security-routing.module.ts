@@ -15,7 +15,7 @@
 ///
 
 import { Injectable, NgModule } from '@angular/core';
-import { Resolve, RouterModule, Routes } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 
 import { SecurityComponent } from './security.component';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
@@ -30,7 +30,7 @@ import { TwoFactorAuthProviderType } from '@shared/models/two-factor-auth.models
 import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
 
 @Injectable()
-export class UserProfileResolver implements Resolve<User> {
+export class UserProfileResolver  {
 
   constructor(private store: Store<AppState>,
               private userService: UserService) {
@@ -43,7 +43,7 @@ export class UserProfileResolver implements Resolve<User> {
 }
 
 @Injectable()
-export class UserTwoFAProvidersResolver implements Resolve<Array<TwoFactorAuthProviderType>> {
+export class UserTwoFAProvidersResolver  {
 
   constructor(private twoFactorAuthService: TwoFactorAuthenticationService) {
   }

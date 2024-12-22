@@ -41,7 +41,7 @@
       <ng-template [ngSwitchCase]="getValueAction.EXECUTE_RPC">
         <div class="tb-form-row" formGroupName="executeRpc">
           <div class="fixed-title-width" >{{ 'widgets.value-action.method' | translate }}*</div>
-          <mat-form-field class="flex tb-suffix-absolute" appearance="outline" subscriptSizing="dynamic">
+          <mat-form-field class="tb-suffix-absolute flex" appearance="outline" subscriptSizing="dynamic">
             <input matInput required formControlName="method" placeholder="{{ 'widget-config.set' | translate }}">
             <mat-icon matSuffix
                       matTooltipPosition="above"
@@ -73,7 +73,7 @@
           <div class="tb-form-row">
             <div class="fixed-title-width" >{{ 'widgets.value-action.attribute-key' | translate }}*</div>
             <tb-device-key-autocomplete
-              fxFlex
+              class="flex-1"
               formControlName="key"
               required
               requiredText="widgets.value-action.attribute-key-required"
@@ -91,7 +91,7 @@
           <div class="tb-form-row">
             <div class="fixed-title-width" >{{ 'widgets.value-action.time-series-key' | translate }}*</div>
             <tb-device-key-autocomplete
-              fxFlex
+              class="flex-1"
               formControlName="key"
               required
               requiredText="widgets.value-action.time-series-key-required"
@@ -103,18 +103,42 @@
           </div>
         </ng-container>
       </ng-template>
+      <ng-template [ngSwitchCase]="getValueAction.GET_ALARM_STATUS">
+        <ng-container formGroupName="getAlarmStatus">
+          <div class="tb-form-row space-between column-xs">
+            <div class="fixed-title-width" translate>alarm.alarm-severity</div>
+            <mat-chip-listbox multiple formControlName="severityList">
+              <mat-chip-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity">
+                {{ alarmSeverityTranslationMap.get(alarmSeverity) | translate }}
+              </mat-chip-option>
+            </mat-chip-listbox>
+          </div>
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width" translate>alarm.alarm-types</div>
+            <tb-entity-subtype-list subscriptSizing="dynamic"
+                                    formControlName="typeList"
+                                    appearance="outline"
+                                    class="flex-1"
+                                    [additionalClasses]="['tb-chips', 'flex']"
+                                    [entityType]="entityType.ALARM">
+            </tb-entity-subtype-list>
+          </div>
+        </ng-container>
+      </ng-template>
     </ng-container>
-    <div *ngIf="getValueSettingsFormGroup.get('action').value !== getValueAction.DO_NOTHING"
+    <div *ngIf="getValueSettingsFormGroup.get('action').value !== getValueAction.DO_NOTHING &&
+                getValueSettingsFormGroup.get('action').value !== getValueAction.GET_ALARM_STATUS"
           class="tb-form-panel stroked" formGroupName="dataToValue">
       <div class="tb-form-row no-padding no-border column-xs">
         <div class="fixed-title-width" translate>widgets.value-action.action-result-converter</div>
-        <tb-toggle-select fxFlex formControlName="type">
+        <tb-toggle-select class="flex-1" formControlName="type">
           <tb-toggle-option [value]="dataToValueType.NONE">{{ 'widgets.value-action.converter-none' | translate }}</tb-toggle-option>
           <tb-toggle-option [value]="dataToValueType.FUNCTION">{{ 'widgets.value-action.converter-function' | translate }}</tb-toggle-option>
         </tb-toggle-select>
       </div>
       <tb-js-func *ngIf="getValueSettingsFormGroup.get('dataToValue').get('type').value === dataToValueType.FUNCTION"
                   formControlName="dataToValueFunction"
+                  withModules
                   required
                   [globalVariables]="functionScopeVariables"
                   [functionArgs]="['data']"
@@ -124,7 +148,7 @@
       <div *ngIf="valueType === ValueType.BOOLEAN" class="tb-form-row align-start no-gap column-xs">
         <div class="fixed-title-width fixed-title-height">{{ 'widgets.value-action.state-when-result-is' | translate:{state: stateLabel} }}</div>
         <tb-value-input
-          fxFlex
+          class="flex-1"
           [valueType]="(getValueSettingsFormGroup.get('action').value === getValueAction.GET_DASHBOARD_STATE &&
                         getValueSettingsFormGroup.get('dataToValue').get('type').value === dataToValueType.NONE) ? ValueType.STRING : null"
           layout="column"
@@ -135,10 +159,10 @@
     <div *ngIf="getValueSettingsFormGroup.get('action').value === getValueAction.EXECUTE_RPC"
          class="tb-form-panel no-border tb-slide-toggle" formGroupName="executeRpc">
       <mat-expansion-panel class="tb-settings no-padding">
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
           <mat-panel-title>
           </mat-panel-title>
-          <mat-panel-description fxLayoutAlign="end center" translate>
+          <mat-panel-description class="flex items-center justify-end" translate>
             widget-config.advanced-settings
           </mat-panel-description>
         </mat-expansion-panel-header>
@@ -163,10 +187,9 @@
             <mat-expansion-panel class="tb-settings"
                                  [expanded]="getValueSettingsFormGroup.get('executeRpc').get('requestPersistent').value"
                                  [disabled]="!getValueSettingsFormGroup.get('executeRpc').get('requestPersistent').value">
-              <mat-expansion-panel-header fxLayout="row wrap">
+              <mat-expansion-panel-header class="flex flex-row flex-wrap">
                 <mat-panel-title>
-                  <mat-slide-toggle class="mat-slide" formControlName="requestPersistent" (click)="$event.stopPropagation()"
-                                    fxLayoutAlign="center">
+                  <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="requestPersistent" (click)="$event.stopPropagation()">
                     {{ 'widgets.value-action.request-persistent' | translate }}
                   </mat-slide-toggle>
                 </mat-panel-title>

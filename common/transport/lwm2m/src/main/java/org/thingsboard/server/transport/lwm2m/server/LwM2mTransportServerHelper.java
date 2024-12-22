@@ -36,6 +36,7 @@ import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,12 +59,12 @@ public class LwM2mTransportServerHelper {
         context.getTransportService().process(sessionInfo, postAttributeMsg, TransportServiceCallback.EMPTY);
     }
 
-    public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> kvList, SessionInfoProto sessionInfo) {
-        sendParametersOnThingsboardTelemetry(kvList, sessionInfo, null);
+    public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> kvList, SessionInfoProto sessionInfo, @Nullable Map<String, AtomicLong> keyTsLatestMaps){
+        sendParametersOnThingsboardTelemetry(kvList, sessionInfo, keyTsLatestMaps, null);
     }
 
-    public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> kvList, SessionInfoProto sessionInfo, @Nullable Map<String, AtomicLong> keyTsLatestMap) {
-        TransportProtos.TsKvListProto tsKvList = toTsKvList(kvList, keyTsLatestMap);
+    public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> kvList, SessionInfoProto sessionInfo, @Nullable Map<String, AtomicLong> keyTsLatestMap, @Nullable Instant ts) {
+        TransportProtos.TsKvListProto tsKvList = toTsKvList(kvList, keyTsLatestMap, ts);
 
         PostTelemetryMsg postTelemetryMsg = PostTelemetryMsg.newBuilder()
                 .addTsKvList(tsKvList)
@@ -72,9 +73,9 @@ public class LwM2mTransportServerHelper {
         context.getTransportService().process(sessionInfo, postTelemetryMsg, TransportServiceCallback.EMPTY);
     }
 
-    TransportProtos.TsKvListProto toTsKvList(List<TransportProtos.KeyValueProto> kvList, Map<String, AtomicLong> keyTsLatestMap) {
+    TransportProtos.TsKvListProto toTsKvList(List<TransportProtos.KeyValueProto> kvList, Map<String, AtomicLong> keyTsLatestMap, @Nullable Instant ts) {
         return TransportProtos.TsKvListProto.newBuilder()
-                .setTs(getTs(kvList, keyTsLatestMap))
+                .setTs(ts == null ? getTs(kvList, keyTsLatestMap) : ts.toEpochMilli())
                 .addAllKv(kvList)
                 .build();
     }

@@ -35,7 +35,10 @@ import {
 } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { FormControl } from '@angular/forms';
-import { removeScadaSymbolMetadata } from '@home/components/widget/lib/scada/scada-symbol.models';
+import {
+  parseScadaSymbolsTagsFromContent,
+  removeScadaSymbolMetadata
+} from '@home/components/widget/lib/scada/scada-symbol.models';
 
 export interface ScadaSymbolEditorData {
   scadaSymbolContent: string;
@@ -107,6 +110,11 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   ngOnInit(): void {
+    if (this.readonly) {
+      this.svgContentFormControl.disable({emitEvent: false});
+    } else {
+      this.svgContentFormControl.enable({emitEvent: false});
+    }
     this.svgContentFormControl.valueChanges.subscribe((svgContent) => {
       if (this.svgContent !== svgContent) {
         this.svgContent = svgContent;
@@ -164,6 +172,14 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
       return this.scadaSymbolEditObject?.getContent();
     } else {
       return this.svgContent;
+    }
+  }
+
+  getTags(): string[] {
+    if (this.editorMode === 'svg') {
+      return this.scadaSymbolEditObject?.getTags();
+    } else {
+      return parseScadaSymbolsTagsFromContent(this.svgContent);
     }
   }
 

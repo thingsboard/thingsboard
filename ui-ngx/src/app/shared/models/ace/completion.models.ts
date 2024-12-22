@@ -15,8 +15,9 @@
 ///
 
 import { Ace } from 'ace-builds';
+import { deepClone } from '@core/utils';
 
-export type tbMetaType = 'object' | 'function' | 'service' | 'property' | 'argument';
+export type tbMetaType = 'object' | 'function' | 'service' | 'property' | 'argument' | 'constant' | 'module';
 
 export type TbEditorCompletions = {[name: string]: TbEditorCompletion};
 
@@ -41,9 +42,9 @@ export interface TbEditorCompletion {
   children?: TbEditorCompletions;
 }
 
-interface TbEditorAceCompletion extends Ace.Completion {
+interface TbEditorAceCompletion extends Ace.SnippetCompletion {
   isTbEditorAceCompletion: true;
-  snippet: string;
+  title: string;
   description?: string;
   type?: string;
   args?: FunctionArg[];
@@ -124,10 +125,9 @@ export class TbEditorCompleter implements Ace.Completer {
     const aceCompletion: TbEditorAceCompletion = {
       isTbEditorAceCompletion: true,
       snippet: parentPrefix + name,
-      name,
+      title: name,
       caption: parentPrefix + name,
       score: 100000,
-      value: parentPrefix + name,
       meta: completion.meta,
       type: completion.type,
       description: completion.description,
@@ -139,14 +139,14 @@ export class TbEditorCompleter implements Ace.Completer {
 
   getDocTooltip(completion: TbEditorAceCompletion) {
     if (completion && completion.isTbEditorAceCompletion) {
-      return {
-        docHTML: this.createDocHTML(completion)
-      };
+      const aceCompletion = deepClone(completion);
+      aceCompletion.docHTML = this.createDocHTML(completion);
+      return aceCompletion;
     }
   }
 
   private createDocHTML(completion: TbEditorAceCompletion): string {
-    let title = `<b>${completion.name}</b>`;
+    let title = `<b>${completion.title}</b>`;
     if (completion.meta === 'function') {
       title += '(';
       if (completion.args) {

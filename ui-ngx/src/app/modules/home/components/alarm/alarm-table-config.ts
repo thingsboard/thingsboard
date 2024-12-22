@@ -31,14 +31,16 @@ import { forkJoin, Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import {
+  AlarmAssignee,
   AlarmInfo,
   AlarmQueryV2,
   AlarmSearchStatus,
   alarmSeverityColors,
   alarmSeverityTranslations,
   AlarmsMode,
-  AlarmStatus,
-  alarmStatusTranslations
+  alarmStatusTranslations,
+  getUserDisplayName,
+  getUserInitials
 } from '@app/shared/models/alarm.models';
 import { AlarmService } from '@app/core/http/alarm.service';
 import { DialogService } from '@core/services/dialog.service';
@@ -60,7 +62,7 @@ import {
   AlarmAssigneePanelData
 } from '@home/components/alarm/alarm-assignee-panel.component';
 import { ComponentPortal } from '@angular/cdk/portal';
-import { getEntityDetailsPageURL, isDefinedAndNotNull } from '@core/utils';
+import { getEntityDetailsPageURL, isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 import { UtilsService } from '@core/services/utils.service';
 import { AlarmFilterConfig } from '@shared/models/query/query.models';
 import { EntityService } from '@core/http/entity.service';
@@ -129,22 +131,15 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
         })));
     this.columns.push(
       new EntityTableColumn<AlarmInfo>('assignee', 'alarm.assignee', '240px',
-        (entity) => {
-          return this.getAssigneeTemplate(entity)
-        },
-        () => ({}),
-        false,
-        () => ({}),
-        (entity) => undefined,
-        false,
+        (entity) => this.getAssigneeTemplate(entity), () => ({}), false, () => ({}), () => undefined, false,
         {
           icon: 'keyboard_arrow_down',
           type: CellActionDescriptorType.DEFAULT,
-          isEnabled: (entity) => true,
+          isEnabled: () => true,
           name: this.translate.instant('alarm.assign'),
           onAction: ($event, entity) => this.openAlarmAssigneePanel($event, entity)
         })
-    )
+    );
     this.columns.push(
       new EntityTableColumn<AlarmInfo>('status', 'alarm.status', '25%',
         (entity) => this.translate.instant(alarmStatusTranslations.get(entity.status))));
@@ -177,7 +172,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
         isEnabled: true,
         onAction: ($event, entities) => this.deleteAlarms($event, entities)
       }
-    )
+    );
   }
 
   fetchAlarms(pageLink: TimePageLink): Observable<PageData<AlarmInfo>> {
@@ -216,61 +211,32 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
   }
 
   getAssigneeTemplate(entity: AlarmInfo): string {
-    return `
-      <span class="assignee-cell">
-      ${isDefinedAndNotNull(entity.assigneeId) ?
-        `<span class="assigned-container">
-          <span class="user-avatar" style="background-color: ${this.getAvatarBgColor(entity)}">
-            ${this.getUserInitials(entity)}
-          </span>
-          <span class="user-display-name">${this.getUserDisplayName(entity)}</span>
-        </span>`
-        :
-        `<span class="unassigned-container">
-          <mat-icon class="material-icons unassigned-icon">account_circle</mat-icon>
-          <span>${this.translate.instant('alarm.unassigned')}</span>
-        </span>`
-      }
-      </span>`
-  }
+    const hasAssigneeId = isDefinedAndNotNull(entity.assigneeId);
+    let templateContent: string;
 
-  getUserDisplayName(entity: AlarmInfo) {
-    let displayName = '';
-    if ((entity.assignee.firstName && entity.assignee.firstName.length > 0) ||
-      (entity.assignee.lastName && entity.assignee.lastName.length > 0)) {
-      if (entity.assignee.firstName) {
-        displayName += entity.assignee.firstName;
-      }
-      if (entity.assignee.lastName) {
-        if (displayName.length > 0) {
-          displayName += ' ';
-        }
-        displayName += entity.assignee.lastName;
-      }
+    if (hasAssigneeId && ((isNotEmptyStr(entity.assignee?.firstName) || isNotEmptyStr(entity.assignee?.lastName)) ||
+      isNotEmptyStr(entity.assignee?.email))) {
+      templateContent = `
+        <span class="assigned-container">
+         <span class="user-avatar" style="background-color: ${this.getAvatarBgColor(entity.assignee)}">
+           ${getUserInitials(entity.assignee)}
+         </span>
+         <span class="user-display-name">${getUserDisplayName(entity.assignee)}</span>
+        </span>`;
     } else {
-      displayName = entity.assignee.email;
+      templateContent = `
+        <span class="unassigned-container">
+         <mat-icon class="material-icons unassigned-icon">
+           ${hasAssigneeId ? 'no_accounts' : 'account_circle'}
+         </mat-icon>
+         <span>${this.translate.instant(hasAssigneeId ? 'alarm.user-deleted' : 'alarm.unassigned')}</span>
+        </span>`;
     }
-    return displayName;
+    return `<span class="assignee-cell">${templateContent}</span>`;
   }
 
-  getUserInitials(entity: AlarmInfo): string {
-    let initials = '';
-    if (entity.assignee.firstName && entity.assignee.firstName.length ||
-      entity.assignee.lastName && entity.assignee.lastName.length) {
-      if (entity.assignee.firstName) {
-        initials += entity.assignee.firstName.charAt(0);
-      }
-      if (entity.assignee.lastName) {
-        initials += entity.assignee.lastName.charAt(0);
-      }
-    } else {
-      initials += entity.assignee.email.charAt(0);
-    }
-    return initials.toUpperCase();
-  }
-
-  getAvatarBgColor(entity: AlarmInfo) {
-    return this.utilsService.stringToHslColor(this.getUserDisplayName(entity), 40, 60);
+  getAvatarBgColor(alarmAssignee: AlarmAssignee) {
+    return this.utilsService.stringToHslColor(getUserDisplayName(alarmAssignee), 40, 60);
   }
 
   openAlarmAssigneePanel($event: Event, entity: AlarmInfo) {
@@ -312,7 +278,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
       this.viewContainerRef, injector));
     componentRef.onDestroy(() => {
       if (componentRef.instance.reassigned) {
-        this.updateData()
+        this.updateData();
       }
     });
   }

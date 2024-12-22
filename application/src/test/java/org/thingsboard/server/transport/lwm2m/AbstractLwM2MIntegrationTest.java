@@ -21,18 +21,19 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.leshan.client.LeshanClient;
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.ResponseCode;
+import org.eclipse.leshan.server.registration.Registration;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
@@ -54,6 +55,7 @@ import org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryMappingC
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.AbstractLwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.NoSecLwM2MBootstrapServerCredential;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -70,9 +72,9 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.transport.AbstractTransportIntegrationTest;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
+import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
-import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -80,7 +82,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -88,6 +89,8 @@ import static org.awaitility.Awaitility.await;
 import static org.eclipse.leshan.client.object.Security.noSec;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_SUCCESS;
@@ -107,7 +110,10 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfil
 public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportIntegrationTest {
 
     @SpyBean
-    LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
+    protected LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
+
+    @SpyBean
+    protected DefaultLwM2mUplinkMsgHandler defaultUplinkMsgHandlerTest;
 
     @Autowired
     private LwM2mClientContext clientContextTest;
@@ -117,7 +123,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     public static final int securityPort = 5686;
     public static final int portBs = 5687;
     public static final int securityPortBs = 5688;
-    public static final int[] SERVERS_PORT_NUMBERS = {port, securityPort, portBs, securityPortBs};
 
     public static final String host = "localhost";
     public static final String hostBs = "localhost";
@@ -172,12 +177,10 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationLwm2mSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationLwm2mSuccessUpdate = new HashSet<>(Arrays.asList(ON_INIT, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS, ON_UPDATE_STARTED, ON_UPDATE_SUCCESS));
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationBsSuccess = new HashSet<>(Arrays.asList(ON_BOOTSTRAP_STARTED, ON_BOOTSTRAP_SUCCESS, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
-    protected DeviceProfile deviceProfile;
     protected ScheduledExecutorService executor;
     protected LwM2MTestClient lwM2MTestClient;
     private String[] resources;
     protected String deviceId;
-    protected boolean isWriteAttribute = false;
     protected boolean supportFormatOnly_SenMLJSON_SenMLCBOR = false;
 
     @Before
@@ -186,18 +189,15 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     }
 
     @After
-    public void after() {
-        clientDestroy();
-        executor.shutdownNow();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-        awaitServersDestroy();
+    public void after() throws Exception {
+        this.clientDestroy(true);
+        if (executor != null && !executor.isShutdown()) {
+            executor.shutdownNow();
+        }
     }
 
     private void init() throws Exception {
-        executor = Executors.newScheduledThreadPool(10, ThingsBoardThreadFactory.forName("test-lwm2m-scheduled"));
+        executor = ThingsBoardExecutors.newScheduledThreadPool(10, "test-lwm2m-scheduled");
         loginTenantAdmin();
         for (String resourceName : this.resources) {
             TbResource lwModel = new TbResource();
@@ -218,8 +218,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                                                     String endpoint,
                                                     boolean queueMode) throws Exception {
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITH_PARAMS, getBootstrapServerCredentialsNoSec(NONE));
-        createDeviceProfile(transportConfiguration);
-        Device device = createDevice(deviceCredentials, endpoint);
+        DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + endpoint, transportConfiguration);
+        Device device = createLwm2mDevice(deviceCredentials, endpoint, deviceProfile.getId());
 
         SingleEntityFilter sef = new SingleEntityFilter();
         sef.setSingleEntity(device.getId());
@@ -233,9 +233,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         getWsClient().waitForReply();
 
         getWsClient().registerWaitForUpdate();
-        createNewClient(security, null, false, endpoint, null, queueMode);
-        deviceId = device.getId().getId().toString();
-        awaitObserveReadAll(0, deviceId);
+        this.createNewClient(security, null, false, endpoint, null, queueMode, device.getId().getId().toString());
+        awaitObserveReadAll(0, lwM2MTestClient.getDeviceIdStr());
         String msg = getWsClient().waitForUpdate();
 
         EntityDataUpdate update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
@@ -255,29 +254,30 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
 
     }
 
-    protected void createDeviceProfile(Lwm2mDeviceProfileTransportConfiguration transportConfiguration) throws Exception {
-        deviceProfile = new DeviceProfile();
-        deviceProfile.setName("LwM2M");
-        deviceProfile.setType(DeviceProfileType.DEFAULT);
-        deviceProfile.setTenantId(tenantId);
-        deviceProfile.setTransportType(DeviceTransportType.LWM2M);
-        deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
-        deviceProfile.setDescription(deviceProfile.getName());
+    protected DeviceProfile createLwm2mDeviceProfile(String name, Lwm2mDeviceProfileTransportConfiguration transportConfiguration) throws Exception {
+        DeviceProfile lwm2mDeviceProfile = new DeviceProfile();
+        lwm2mDeviceProfile.setName(name);
+        lwm2mDeviceProfile.setType(DeviceProfileType.DEFAULT);
+        lwm2mDeviceProfile.setTenantId(tenantId);
+        lwm2mDeviceProfile.setTransportType(DeviceTransportType.LWM2M);
+        lwm2mDeviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
+        lwm2mDeviceProfile.setDescription(name);
 
         DeviceProfileData deviceProfileData = new DeviceProfileData();
         deviceProfileData.setConfiguration(new DefaultDeviceProfileConfiguration());
         deviceProfileData.setProvisionConfiguration(new DisabledDeviceProfileProvisionConfiguration(null));
         deviceProfileData.setTransportConfiguration(transportConfiguration);
-        deviceProfile.setProfileData(deviceProfileData);
+        lwm2mDeviceProfile.setProfileData(deviceProfileData);
 
-        deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
-        Assert.assertNotNull(deviceProfile);
+        lwm2mDeviceProfile = doPost("/api/deviceProfile", lwm2mDeviceProfile, DeviceProfile.class);
+        Assert.assertNotNull(lwm2mDeviceProfile);
+        return lwm2mDeviceProfile;
     }
 
-    protected Device createDevice(LwM2MDeviceCredentials credentials, String endpoint) throws Exception {
+    protected Device createLwm2mDevice(LwM2MDeviceCredentials credentials, String endpoint, DeviceProfileId deviceProfileId) throws Exception {
         Device device = new Device();
         device.setName(endpoint);
-        device.setDeviceProfileId(deviceProfile.getId());
+        device.setDeviceProfileId(deviceProfileId);
         device.setTenantId(tenantId);
         device = doPost("/api/device", device, Device.class);
         Assert.assertNotNull(device);
@@ -302,33 +302,37 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     }
 
     public void createNewClient(Security security, Security securityBs, boolean isRpc,
-                                String endpoint) throws Exception {
-        this.createNewClient(security, securityBs, isRpc, endpoint, null, false);
+                                String endpoint, String deviceIdStr) throws Exception {
+        this.createNewClient(security, securityBs, isRpc, endpoint, null, false, deviceIdStr);
     }
 
     public void createNewClient(Security security, Security securityBs, boolean isRpc,
-                                String endpoint, Integer clientDtlsCidLength) throws Exception {
-        this.createNewClient(security, securityBs, isRpc, endpoint, clientDtlsCidLength, false);
+                                String endpoint, Integer clientDtlsCidLength, String deviceIdStr) throws Exception {
+        this.createNewClient(security, securityBs, isRpc, endpoint, clientDtlsCidLength, false, deviceIdStr);
     }
 
     public void createNewClient(Security security, Security securityBs, boolean isRpc,
-                                String endpoint, Integer clientDtlsCidLength, boolean queueMode) throws Exception {
-        this.clientDestroy();
+                                String endpoint, Integer clientDtlsCidLength, boolean queueMode, String deviceIdStr) throws Exception {
+        this.clientDestroy(false);
         lwM2MTestClient = new LwM2MTestClient(this.executor, endpoint);
 
         try (ServerSocket socket = new ServerSocket(0)) {
             int clientPort = socket.getLocalPort();
             lwM2MTestClient.init(security, securityBs, clientPort, isRpc,
-                    this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest, isWriteAttribute,
+                    this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest,
                     clientDtlsCidLength, queueMode, supportFormatOnly_SenMLJSON_SenMLCBOR);
         }
+        lwM2MTestClient.setDeviceIdStr(deviceIdStr);
     }
 
-    private void clientDestroy() {
+    private void clientDestroy(boolean isAfter) {
         try {
             if (lwM2MTestClient != null) {
+                if (isAfter) {
+                    sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
+                    awaitDeleteDevice(lwM2MTestClient.getDeviceIdStr());
+                }
                 lwM2MTestClient.destroy();
-                awaitClientDestroy(lwM2MTestClient.getLeshanClient());
             }
         } catch (Exception e) {
             log.error("Failed client Destroy", e);
@@ -385,35 +389,19 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         return credentials;
     }
 
-    private static void awaitServersDestroy() {
-        await("One of servers ports number is not free")
-                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .until(() -> isServerPortsAvailable() == null);
-    }
-
-    private static String isServerPortsAvailable() {
-        for (int port : SERVERS_PORT_NUMBERS) {
-            try (ServerSocket serverSocket = new ServerSocket(port)) {
-                serverSocket.close();
-                Assert.assertEquals(true, serverSocket.isClosed());
-            } catch (IOException e) {
-                log.warn(String.format("Port %n still in use", port));
-                return (String.format("Port %n still in use", port));
-            }
-        }
-        return null;
-    }
-
-    private static void awaitClientDestroy(LeshanClient leshanClient) {
-        await("Destroy LeshanClient: delete All is registered Servers.")
-                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .until(() -> leshanClient.getRegisteredServers().size() == 0);
-    }
-
     protected  void awaitObserveReadAll(int cntObserve, String deviceIdStr) throws Exception {
         await("ObserveReadAll: countObserve " + cntObserve)
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> cntObserve == getCntObserveAll(deviceIdStr));
+    }
+    protected  void awaitDeleteDevice(String deviceIdStr) throws Exception {
+        await("Delete device with id:  " + deviceIdStr)
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    doDelete("/api/device/" + deviceIdStr)
+                            .andExpect(status().isOk());
+                   return HttpStatus.NOT_FOUND.value() == doGet("/api/device/" + deviceIdStr).andReturn().getResponse().getStatus();
+                });
     }
 
     protected Integer getCntObserveAll(String deviceIdStr) throws Exception {
@@ -428,7 +416,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         String actualResultCancelAll = sendObserveOK("ObserveCancelAll", null, deviceIdStr);
         ObjectNode rpcActualResultCancelAll = JacksonUtil.fromString(actualResultCancelAll, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResultCancelAll.get("result").asText());
-        awaitObserveReadAll(0, deviceId);
+        awaitObserveReadAll(0, lwM2MTestClient.getDeviceIdStr());
     }
 
     protected String sendRpcObserveOkWithResultValue(String method, String params) throws Exception {
@@ -438,7 +426,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         return rpcActualResult.get("value").asText();
     }
     protected String sendRpcObserveOk(String method, String params) throws Exception {
-        return sendObserveOK(method, params, deviceId);
+        return sendObserveOK(method, params, lwM2MTestClient.getDeviceIdStr());
     }
     protected String sendObserveOK(String method, String params, String deviceIdStr) throws Exception {
         String sendRpcRequest;
@@ -456,4 +444,15 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         return JacksonUtil.fromString(actualResultReadAll, ObjectNode.class);
     }
 
+    protected long countUpdateReg() {
+        return Mockito.mockingDetails(defaultUplinkMsgHandlerTest)
+                .getInvocations().stream()
+                .filter(invocation -> invocation.getMethod().getName().equals("updatedReg"))
+                .count();
+    }
+
+    protected void awaitUpdateReg(int cntUpdate) {
+        verify(defaultUplinkMsgHandlerTest, timeout(50000).atLeast(cntUpdate))
+                .updatedReg(Mockito.any(Registration.class));
+    }
 }

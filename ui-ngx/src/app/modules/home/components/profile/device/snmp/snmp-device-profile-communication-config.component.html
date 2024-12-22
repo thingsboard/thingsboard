@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<div fxLayout="column">
+<div class="flex flex-col">
   <div *ngFor="let deviceProfileCommunication of communicationConfigFormArray.controls; let $index = index;
-               last as isLast;" fxLayout="row" fxLayoutAlign="start center"
-       fxLayoutGap="8px" class="scope-row" [formGroup]="deviceProfileCommunication">
+               last as isLast;"
+       class="scope-row flex flex-row items-center justify-start gap-2" [formGroup]="deviceProfileCommunication">
     <div class="communication-config">
       <mat-form-field class="spec mat-block" floatLabel="always" hideRequiredMarker>
         <mat-label translate>device-profile.snmp.scope</mat-label>
@@ -33,7 +33,7 @@
         </mat-error>
       </mat-form-field>
       <mat-divider vertical></mat-divider>
-      <section fxFlex fxLayout="column">
+      <section class="flex flex-1 flex-col">
         <mat-form-field *ngIf="isShowFrequency(deviceProfileCommunication.get('spec').value)">
           <mat-label translate>device-profile.snmp.querying-frequency</mat-label>
           <input matInput formControlName="queryingFrequencyMs" type="number" min="0" required/>
@@ -59,7 +59,7 @@
     </button>
   </div>
   <div *ngIf="!communicationConfigFormArray.controls.length && !disabled">
-      <span fxLayoutAlign="center center" class="tb-prompt required required-text" translate>device-profile.snmp.please-add-communication-config</span>
+      <span class="tb-prompt required required-text flex items-center justify-center" translate>device-profile.snmp.please-add-communication-config</span>
   </div>
   <div *ngIf="!disabled && isAddEnabled">
     <button mat-stroked-button color="primary"

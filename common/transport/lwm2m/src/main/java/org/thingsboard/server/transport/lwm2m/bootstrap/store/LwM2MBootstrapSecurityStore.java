@@ -133,7 +133,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                 log.error(" [{}] Different values SecurityMode between of client and profile.", store.getEndpoint());
                 log.error("{} getParametersBootstrap: [{}] Different values SecurityMode between of client and profile.", LOG_LWM2M_ERROR, store.getEndpoint());
                 String logMsg = String.format("%s: Different values SecurityMode between of client and profile.", LOG_LWM2M_ERROR);
-                helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LWM2M_TELEMETRY, logMsg), sessionInfo);
+                helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LWM2M_TELEMETRY, logMsg), sessionInfo, null);
                 return null;
             }
         }

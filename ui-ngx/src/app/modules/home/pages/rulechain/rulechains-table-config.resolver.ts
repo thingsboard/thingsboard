@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 
-import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
+import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import {
   CellActionDescriptor,
   checkBoxCell,
@@ -50,13 +50,12 @@ import { PageLink } from '@shared/models/page/page-link';
 import { Edge } from '@shared/models/edge.models';
 import { mergeMap } from 'rxjs/operators';
 import { PageData } from '@shared/models/page/page-data';
-import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 
 @Injectable()
-export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<RuleChain>> {
+export class RuleChainsTableConfigResolver  {
 
   private readonly config: EntityTableConfig<RuleChain> = new EntityTableConfig<RuleChain>();
-  private edge: Edge;
 
   constructor(private ruleChainService: RuleChainService,
               private dialogService: DialogService,
@@ -64,10 +63,10 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
               private importExport: ImportExportService,
               private itembuffer: ItemBufferService,
               private edgeService: EdgeService,
-              private homeDialogs: HomeDialogsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
-              private router: Router) {
+              private router: Router,
+              private customTranslate: CustomTranslatePipe) {
     this.config.entityType = EntityType.RULE_CHAIN;
     this.config.entityComponent = RuleChainComponent;
     this.config.entityTabsComponent = RuleChainTabsComponent;
@@ -127,7 +126,10 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     const columns: Array<EntityColumn<RuleChain>> = [];
     columns.push(
       new DateEntityTableColumn<RuleChain>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<RuleChain>('name', 'rulechain.name', '100%')
+      new EntityTableColumn<RuleChain>('name', 'rulechain.name', '50%'),
+      new EntityTableColumn<RuleChain>('description', 'rulechain.description', '50%',
+        entity => this.customTranslate.transform(entity.additionalInfo?.description || ''),
+        () => ({}), false)
     );
     if (ruleChainScope === 'tenant' || ruleChainScope === 'edge') {
       columns.push(

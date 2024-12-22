@@ -471,7 +471,6 @@ public class ExportImportServiceSqlTest extends AbstractControllerTest {
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("Generator 1");
         ruleNode1.setType(TbMsgGeneratorNode.class.getName());
-        ruleNode1.setDebugMode(true);
         TbMsgGeneratorNodeConfiguration configuration1 = new TbMsgGeneratorNodeConfiguration();
         configuration1.setOriginatorType(originatorId.getEntityType());
         configuration1.setOriginatorId(originatorId.getId().toString());
@@ -481,7 +480,6 @@ public class ExportImportServiceSqlTest extends AbstractControllerTest {
         ruleNode2.setName("Simple Rule Node 2");
         ruleNode2.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
         ruleNode2.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
-        ruleNode2.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration2 = new TbGetAttributesNodeConfiguration();
         configuration2.setServerAttributeNames(Collections.singletonList("serverAttributeKey2"));
         ruleNode2.setConfiguration(JacksonUtil.valueToTree(configuration2));
@@ -510,7 +508,6 @@ public class ExportImportServiceSqlTest extends AbstractControllerTest {
         ruleNode1.setName("Simple Rule Node 1");
         ruleNode1.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
         ruleNode1.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
-        ruleNode1.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration1 = new TbGetAttributesNodeConfiguration();
         configuration1.setServerAttributeNames(Collections.singletonList("serverAttributeKey1"));
         ruleNode1.setConfiguration(JacksonUtil.valueToTree(configuration1));
@@ -519,7 +516,6 @@ public class ExportImportServiceSqlTest extends AbstractControllerTest {
         ruleNode2.setName("Simple Rule Node 2");
         ruleNode2.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
         ruleNode2.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
-        ruleNode2.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration2 = new TbGetAttributesNodeConfiguration();
         configuration2.setServerAttributeNames(Collections.singletonList("serverAttributeKey2"));
         ruleNode2.setConfiguration(JacksonUtil.valueToTree(configuration2));

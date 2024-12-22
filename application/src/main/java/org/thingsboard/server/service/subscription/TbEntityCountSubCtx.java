@@ -24,7 +24,7 @@ import org.thingsboard.server.service.ws.WebSocketSessionRef;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountUpdate;
 
 @Slf4j
-public class TbEntityCountSubCtx extends TbAbstractSubCtx<EntityCountQuery> {
+public class TbEntityCountSubCtx extends TbAbstractEntityQuerySubCtx<EntityCountQuery> {
 
     private volatile int result;
 

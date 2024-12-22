@@ -15,41 +15,41 @@
     limitations under the License.
 
 -->
-<section fxLayout="column" [formGroup]="filterListFormGroup">
+<section class="flex flex-col" [formGroup]="filterListFormGroup">
   <mat-expansion-panel [expanded]="true">
     <mat-expansion-panel-header>
       <mat-panel-title>
         <div translate>filter.filters</div>
       </mat-panel-title>
     </mat-expansion-panel-header>
-    <div fxLayout="row">
-      <span fxFlex="8"></span>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" fxFlex="92">
-        <div fxFlex fxLayout="row" fxLayoutGap="8px">
-          <div fxFlex="30" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-            <label fxFlex translate class="tb-title no-padding">filter.operation.operation</label>
+    <div class="flex flex-row">
+      <span class="max-w-8% flex-full"></span>
+      <div class="flex max-w-92% flex-full flex-row items-center justify-start gap-2">
+        <div class="flex flex-1 flex-row gap-2">
+          <div class="flex max-w-30% flex-full flex-row items-center justify-start gap-2">
+            <label translate class="tb-title no-padding flex-1">filter.operation.operation</label>
             <label *ngIf="valueType === valueTypeEnum.STRING"
                    translate class="tb-title no-padding" style="min-width: 70px;">filter.ignore-case</label>
           </div>
-          <label fxFlex="70" translate class="tb-title no-padding">filter.value</label>
+          <label translate class="tb-title no-padding max-w-70% flex-full">filter.value</label>
         </div>
         <label *ngIf="displayUserParameters"
                translate class="tb-title no-padding" style="width: 60px;">filter.user-parameters</label>
-        <span [fxShow]="!disabled" style="min-width: 40px;">&nbsp;</span>
+        <span [class.!hidden]="disabled" style="min-width: 40px;">&nbsp;</span>
       </div>
     </div>
     <mat-divider style="padding-bottom: 5px;"></mat-divider>
     <div class="predicate-list">
-      <div fxLayout="row" fxLayoutAlign="start" style="height: 76px;"
+      <div class="flex flex-row items-stretch justify-start h-full min-h-19 max-h-24"
            formArrayName="predicates"
            *ngFor="let predicateControl of predicatesFormArray.controls; let $index = index">
-        <div fxFlex="8" fxLayout="row" fxLayoutAlign="center" class="filters-operation">
+        <div class="filters-operation flex max-w-8% flex-full flex-row items-stretch justify-center">
           <span *ngIf="$index > 0">{{ complexOperationTranslations.get(operation) | translate }}</span>
         </div>
-        <div fxLayout="column" fxFlex="92">
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" fxFlex>
+        <div class="flex max-w-92% min-w-147.5 flex-full flex-col">
+          <div class="flex flex-1 flex-row items-center justify-start gap-2">
             <tb-filter-predicate
-              fxFlex
+              class="flex-1"
               [valueType]="valueType"
               [displayUserParameters]="displayUserParameters"
               [allowUserDynamicSource]="allowUserDynamicSource"
@@ -58,7 +58,7 @@
               [formControl]="predicateControl">
             </tb-filter-predicate>
             <button mat-icon-button color="primary"
-                    [fxShow]="!disabled"
+                    [class.!hidden]="disabled"
                     type="button"
                     (click)="removePredicate($index)"
                     matTooltip="{{ 'filter.remove-filter' | translate }}"
@@ -68,13 +68,13 @@
           </div>
         </div>
       </div>
-      <span [fxShow]="!predicatesFormArray.length"
-            fxLayoutAlign="center center" [ngClass]="{'disabled': disabled}"
-            class="no-data-found" translate>filter.no-filters</span>
+      <span [class.!hidden]="!!predicatesFormArray.length"
+            [class.disabled]="disabled"
+            class="no-data-found flex items-center justify-center" translate>filter.no-filters</span>
     </div>
-    <div style="margin-top: 16px;" fxLayout="row" fxLayoutGap="8px">
+    <div style="margin-top: 16px;" class="flex flex-row gap-2">
       <button mat-button mat-raised-button color="primary"
-              [fxShow]="!disabled"
+              [class.!hidden]="disabled"
               (click)="addPredicate(false)"
               type="button"
               matTooltip="{{ 'filter.add-filter' | translate }}"
@@ -82,7 +82,7 @@
         {{ 'action.add' | translate }}
       </button>
       <button mat-button mat-raised-button color="primary"
-              [fxShow]="!disabled"
+              [class.!hidden]="disabled"
               (click)="addPredicate(true)"
               type="button"
               matTooltip="{{ 'filter.add-complex-filter' | translate }}"

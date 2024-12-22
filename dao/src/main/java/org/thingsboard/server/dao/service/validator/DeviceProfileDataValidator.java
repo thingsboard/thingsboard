@@ -18,7 +18,7 @@ package org.thingsboard.server.dao.service.validator;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.util.SecurityUtil;
+import org.eclipse.leshan.core.security.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;

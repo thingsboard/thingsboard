@@ -35,7 +35,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTimestamp">
         {{ 'widgets.table.display-timestamp' | translate }}
       </mat-slide-toggle>
-      <tb-date-format-select fxFlex excludeLastUpdateAgo formControlName="dateFormat"></tb-date-format-select>
+      <tb-date-format-select class="flex-1" excludeLastUpdateAgo formControlName="dateFormat"></tb-date-format-select>
     </div>
 
     <mat-slide-toggle class="mat-slide"  formControlName="enableStickyAction">
@@ -44,7 +44,7 @@
     <mat-slide-toggle class="mat-slide"  formControlName="showCellActionsMenu">
       {{ 'widgets.table.show-cell-actions-menu-mobile' | translate }}
     </mat-slide-toggle>
-    <mat-form-field fxFlex subscriptSizing="dynamic">
+    <mat-form-field class="flex-1" subscriptSizing="dynamic">
       <mat-label translate>widgets.table.hidden-cell-button-display-mode</mat-label>
       <mat-select formControlName="reserveSpaceForHiddenAction">
         <mat-option [value]="'true'">
@@ -80,20 +80,20 @@
       {{ 'widgets.table.hide-empty-lines' | translate }}
     </mat-slide-toggle>
     <mat-expansion-panel class="tb-settings" [expanded]="timeseriesTableWidgetSettingsForm.get('useRowStyleFunction').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="useRowStyleFunction" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="useRowStyleFunction" (click)="$event.stopPropagation()">
             {{ 'widgets.table.use-row-style-function' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxFlex="40" fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="flex max-w-40% flex-full items-center justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <tb-js-func required
                     formControlName="rowStyleFunction"
+                    withModules
                     [globalVariables]="functionScopeVariables"
                     [functionArgs]="['rowData', 'ctx']"
                     functionTitle="{{ 'widgets.table.row-style-function' | translate }}"

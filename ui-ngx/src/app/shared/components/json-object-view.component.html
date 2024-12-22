@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<div style="background: #fff;" [ngClass]="{'fill-height': fillHeight}">
+<div style="background: #fff;" [class.fill-height]="fillHeight">
   <label class="tb-title no-padding" *ngIf="label">{{ label }}</label>
-  <span fxFlex></span>
-  <div #jsonViewer id="tb-json-view" [ngClass]="{'fill-height': fillHeight}"></div>
+  <span class="flex-1"></span>
+  <div #jsonViewer id="tb-json-view" [class.fill-height]="fillHeight"></div>
 </div>

@@ -18,6 +18,7 @@ import { Datasource, FormattedData } from '@app/shared/models/widget.models';
 import tinycolor from 'tinycolor2';
 import { BaseIconOptions, Icon } from 'leaflet';
 import { Observable } from 'rxjs';
+import { CompiledTbFunction, TbFunction } from '@shared/models/js-function.models';
 
 export const DEFAULT_MAP_PAGE_SIZE = 16384;
 export const DEFAULT_ZOOM_LEVEL = 8;
@@ -51,7 +52,7 @@ export interface CircleData {
 export type GenericFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
 export type MarkerImageFunction = (data: FormattedData, markerImages: string[],
                                    dsData: FormattedData[], dsIndex: number) => MarkerImageInfo;
-export type PosFunction = (origXPos, origYPos, data: FormattedData,
+export type PosFunction = (origXPos: number, origYPos: number, data: FormattedData,
                            dsData: FormattedData[], dsIndex: number, aspect: number) => { x: number, y: number };
 export type MarkerIconReadyFunction = (icon: MarkerIconInfo) => void;
 
@@ -273,7 +274,7 @@ export interface TripAnimationCommonSettings {
 }
 
 export interface WidgetTripAnimationCommonSettings extends TripAnimationCommonSettings {
-  parsedTooltipFunction: GenericFunction;
+  parsedTooltipFunction: CompiledTbFunction<GenericFunction>;
 }
 
 export const defaultTripAnimationCommonSettings: TripAnimationCommonSettings = {
@@ -305,35 +306,35 @@ export const showTooltipActionTranslationMap = new Map<ShowTooltipAction, string
 export interface MarkersSettings {
   markerOffsetX: number;
   markerOffsetY: number;
-  posFunction?: string;
+  posFunction?: TbFunction;
   draggableMarker: boolean;
   showLabel: boolean;
   useLabelFunction: boolean;
   label?: string;
-  labelFunction?: string;
+  labelFunction?: TbFunction;
   showTooltip: boolean;
   showTooltipAction: ShowTooltipAction;
   autocloseTooltip: boolean;
   useTooltipFunction: boolean;
   tooltipPattern?: string;
-  tooltipFunction?: string;
+  tooltipFunction?: TbFunction;
   tooltipOffsetX: number;
   tooltipOffsetY: number;
   color?: string;
   useColorFunction: boolean;
-  colorFunction?: string;
+  colorFunction?: TbFunction;
   useMarkerImageFunction: boolean;
   markerImage?: string;
   markerImageSize?: number;
-  markerImageFunction?: string;
+  markerImageFunction?: TbFunction;
   markerImages?: string[];
 }
 
 export interface WidgetMarkersSettings extends MarkersSettings, WidgetToolipSettings {
-  parsedLabelFunction: GenericFunction;
-  parsedTooltipFunction: GenericFunction;
-  parsedColorFunction: GenericFunction;
-  parsedMarkerImageFunction: MarkerImageFunction;
+  parsedLabelFunction: CompiledTbFunction<GenericFunction>;
+  parsedTooltipFunction: CompiledTbFunction<GenericFunction>;
+  parsedColorFunction: CompiledTbFunction<GenericFunction>;
+  parsedMarkerImageFunction: CompiledTbFunction<MarkerImageFunction>;
   markerClick: { [name: string]: actionsHandler };
   currentImage: MarkerImageInfo;
   tinyColor: tinycolor.Instance;
@@ -382,8 +383,7 @@ export interface TripAnimationMarkerSettings {
 }
 
 export interface WidgetTripAnimationMarkerSettings extends TripAnimationMarkerSettings {
-  parsedLabelFunction: GenericFunction;
-  parsedMarkerImageFunction: MarkerImageFunction;
+  parsedLabelFunction: CompiledTbFunction<GenericFunction>;
 }
 
 export const defaultTripAnimationMarkersSettings: TripAnimationMarkerSettings = {
@@ -406,29 +406,29 @@ export interface PolygonSettings {
   showPolygonLabel: boolean;
   usePolygonLabelFunction: boolean;
   polygonLabel?: string;
-  polygonLabelFunction?: string;
+  polygonLabelFunction?: TbFunction;
   showPolygonTooltip: boolean;
   showPolygonTooltipAction: ShowTooltipAction;
   autoClosePolygonTooltip: boolean;
   usePolygonTooltipFunction: boolean;
   polygonTooltipPattern?: string;
-  polygonTooltipFunction?: string;
+  polygonTooltipFunction?: TbFunction;
   polygonColor?: string;
   polygonOpacity?: number;
   usePolygonColorFunction: boolean;
-  polygonColorFunction?: string;
+  polygonColorFunction?: TbFunction;
   polygonStrokeColor?: string;
   polygonStrokeOpacity?: number;
   polygonStrokeWeight?: number;
   usePolygonStrokeColorFunction: boolean;
-  polygonStrokeColorFunction?: string;
+  polygonStrokeColorFunction?: TbFunction;
 }
 
 export interface WidgetPolygonSettings extends PolygonSettings, WidgetToolipSettings {
-  parsedPolygonLabelFunction: GenericFunction;
-  parsedPolygonTooltipFunction: GenericFunction;
-  parsedPolygonColorFunction: GenericFunction;
-  parsedPolygonStrokeColorFunction: GenericFunction;
+  parsedPolygonLabelFunction: CompiledTbFunction<GenericFunction>;
+  parsedPolygonTooltipFunction: CompiledTbFunction<GenericFunction>;
+  parsedPolygonColorFunction: CompiledTbFunction<GenericFunction>;
+  parsedPolygonStrokeColorFunction: CompiledTbFunction<GenericFunction>;
   polygonClick: { [name: string]: actionsHandler };
 }
 
@@ -464,29 +464,29 @@ export interface CircleSettings {
   showCircleLabel: boolean;
   useCircleLabelFunction: boolean;
   circleLabel?: string;
-  circleLabelFunction?: string;
+  circleLabelFunction?: TbFunction;
   showCircleTooltip: boolean;
   showCircleTooltipAction: ShowTooltipAction;
   autoCloseCircleTooltip: boolean;
   useCircleTooltipFunction: boolean;
   circleTooltipPattern?: string;
-  circleTooltipFunction?: string;
+  circleTooltipFunction?: TbFunction;
   circleFillColor?: string;
   circleFillColorOpacity?: number;
   useCircleFillColorFunction: boolean;
-  circleFillColorFunction?: string;
+  circleFillColorFunction?: TbFunction;
   circleStrokeColor?: string;
   circleStrokeOpacity?: number;
   circleStrokeWeight?: number;
   useCircleStrokeColorFunction: boolean;
-  circleStrokeColorFunction?: string;
+  circleStrokeColorFunction?: TbFunction;
 }
 
 export interface WidgetCircleSettings extends CircleSettings, WidgetToolipSettings {
-  parsedCircleLabelFunction: GenericFunction;
-  parsedCircleTooltipFunction: GenericFunction;
-  parsedCircleFillColorFunction: GenericFunction;
-  parsedCircleStrokeColorFunction: GenericFunction;
+  parsedCircleLabelFunction: CompiledTbFunction<GenericFunction>;
+  parsedCircleTooltipFunction: CompiledTbFunction<GenericFunction>;
+  parsedCircleFillColorFunction: CompiledTbFunction<GenericFunction>;
+  parsedCircleStrokeColorFunction: CompiledTbFunction<GenericFunction>;
   circleClick: { [name: string]: actionsHandler };
 }
 
@@ -530,13 +530,13 @@ export const polylineDecoratorSymbolTranslationMap = new Map<PolylineDecoratorSy
 export interface PolylineSettings {
   useStrokeWeightFunction?: boolean;
   strokeWeight: number;
-  strokeWeightFunction?: string;
+  strokeWeightFunction?: TbFunction;
   useStrokeOpacityFunction?: boolean;
   strokeOpacity: number;
-  strokeOpacityFunction?: string;
+  strokeOpacityFunction?: TbFunction;
   useColorFunction?: boolean;
   color?: string;
-  colorFunction?: string;
+  colorFunction?: TbFunction;
   usePolylineDecorator?: boolean;
   decoratorSymbol?: PolylineDecoratorSymbol;
   decoratorSymbolSize?: number;
@@ -548,9 +548,9 @@ export interface PolylineSettings {
 }
 
 export interface WidgetPolylineSettings extends PolylineSettings {
-  parsedColorFunction: GenericFunction;
-  parsedStrokeOpacityFunction: GenericFunction;
-  parsedStrokeWeightFunction: GenericFunction;
+  parsedColorFunction: CompiledTbFunction<GenericFunction>;
+  parsedStrokeOpacityFunction: CompiledTbFunction<GenericFunction>;
+  parsedStrokeWeightFunction: CompiledTbFunction<GenericFunction>;
 }
 
 export const defaultRouteMapSettings: PolylineSettings = {
@@ -578,7 +578,7 @@ export interface PointsSettings {
   showPoints?: boolean;
   pointColor?: string;
   useColorPointFunction?: false;
-  colorPointFunction?: string;
+  colorPointFunction?: TbFunction;
   pointSize?: number;
   usePointAsAnchor?: false;
   pointAsAnchorFunction?: string;
@@ -586,8 +586,8 @@ export interface PointsSettings {
 }
 
 export interface WidgetPointsSettings extends PointsSettings {
-  parsedColorPointFunction: GenericFunction;
-  parsedPointAsAnchorFunction: GenericFunction;
+  parsedColorPointFunction: CompiledTbFunction<GenericFunction>;
+  parsedPointAsAnchorFunction: CompiledTbFunction<GenericFunction>;
 }
 
 export const defaultTripAnimationPointSettings: PointsSettings = {
@@ -612,11 +612,11 @@ export interface MarkerClusteringSettings {
   chunkedLoading: boolean;
   removeOutsideVisibleBounds: boolean;
   useIconCreateFunction: boolean;
-  clusterMarkerFunction?: string;
+  clusterMarkerFunction?: TbFunction;
 }
 
 export interface WidgetMarkerClusteringSettings extends MarkerClusteringSettings {
-  parsedClusterMarkerFunction?: GenericFunction;
+  parsedClusterMarkerFunction?: CompiledTbFunction<GenericFunction>;
 }
 
 export const defaultMarkerClusteringSettings: MarkerClusteringSettings = {

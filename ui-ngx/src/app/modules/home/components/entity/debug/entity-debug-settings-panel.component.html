@@ -1,0 +1,67 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="flex max-w-sm flex-col gap-3 p-2">
+  <div class="tb-form-panel-title" translate>debug-settings.label</div>
+  <div class="hint-container">
+    <div class="tb-form-hint tb-primary-fill tb-flex center">
+      @if (debugLimitsConfiguration) {
+        {{ 'debug-settings.hint.main-limited' | translate: { entity: entityLabel ?? ('debug-settings.entity' | translate), msg: maxMessagesCount, time: (maxTimeFrameDuration | milliSecondsToTimeString: true : true) } }}
+      } @else {
+        {{ 'debug-settings.hint.main' | translate }}
+      }
+    </div>
+  </div>
+  <div class="flex flex-col gap-3">
+    <mat-slide-toggle class="mat-slide" [formControl]="onFailuresControl">
+      <div tb-hint-tooltip-icon="{{ 'debug-settings.hint.on-failure' | translate }}">
+        {{ 'debug-settings.on-failure' | translate }}
+      </div>
+    </mat-slide-toggle>
+    <div class="align-center flex justify-between">
+      <mat-slide-toggle class="mat-slide" [formControl]="debugAllControl">
+        <div tb-hint-tooltip-icon="{{ 'debug-settings.hint.all-messages' | translate }}">
+          {{ 'debug-settings.all-messages' | translate: { time: (isDebugAllActive$ | async) && !allEnabled ? (allEnabledUntil | durationLeft) : (maxDebugModeDuration | milliSecondsToTimeString: true : true) } }}
+        </div>
+      </mat-slide-toggle>
+      <button mat-icon-button *ngIf="(isDebugAllActive$ | async) && !allEnabled"
+              class="tb-mat-20"
+              matTooltip="{{ 'action.reset' | translate }}"
+              matTooltipPosition="above"
+              color="primary"
+              (click)="onReset()">
+        <mat-icon class="material-icons">refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+  <div class="flex justify-end">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="onCancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            [disabled]="(isLoading$ | async) || !onFailuresControl.dirty && !debugAllControl.dirty"
+            (click)="onApply()">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</div>
+

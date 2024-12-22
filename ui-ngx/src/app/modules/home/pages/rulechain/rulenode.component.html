@@ -22,11 +22,11 @@
    (mouseleave)="userNodeCallbacks.mouseLeave($event, node)">
   <div class="fc-node-overlay"></div>
   <div class="tb-rule-node {{node.nodeClass}}"
-       [ngClass]="{'tb-rule-node-highlighted' : node.highlighted,
-                   'tb-rule-node-invalid': node.error }">
-    <mat-icon *ngIf="!iconUrl" fxFlex="15">{{node.icon}}</mat-icon>
-    <img *ngIf="iconUrl" fxFlex="15" [src]="iconUrl"/>
-    <div fxLayout="column" fxFlex="85" fxLayoutAlign="center">
+       [class.tb-rule-node-highlighted]="node.highlighted"
+       [class.tb-rule-node-invalid]="node.error">
+    <mat-icon *ngIf="!iconUrl" class="max-w-15% flex-full">{{node.icon}}</mat-icon>
+    <img *ngIf="iconUrl" class="max-w-15% flex-full" [src]="iconUrl"/>
+    <div class="flex max-w-85% flex-full flex-col items-stretch justify-center">
       <span class="tb-node-type">{{ node.component.name }}</span>
       <span class="tb-node-title" *ngIf="node.name">{{ node.name }}</span>
     </div>

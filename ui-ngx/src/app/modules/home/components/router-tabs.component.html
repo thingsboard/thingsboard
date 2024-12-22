@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<div fxFlex fxLayout="column" style="width: 100%;">
-  <div fxLayout="row" style="width: 100%;">
-    <nav fxFlex *ngIf="!routerOutlet?.activatedRouteData?.hideTabs && !hideCurrentTabs && (tabs$ | async).length > 1" mat-tab-nav-bar mat-stretch-tabs="false" class="tb-router-tabs" [tabPanel]="tabPanel">
+<div class="flex flex-1 flex-col" style="width: 100%;">
+  <div class="flex flex-row" style="width: 100%;">
+    <nav *ngIf="!routerOutlet?.activatedRouteData?.hideTabs && !hideCurrentTabs && (tabs$ | async).length > 1" mat-tab-nav-bar mat-stretch-tabs="false" class="tb-router-tabs flex-1" [tabPanel]="tabPanel">
       <a *ngFor="let tab of tabs$ | async"
          routerLink="{{tab.path}}"
          replaceUrl="{{ replaceUrl }}"
@@ -31,7 +31,7 @@
     </nav>
     <tb-anchor #tabsHeaderComponent></tb-anchor>
   </div>
-  <mat-tab-nav-panel #tabPanel fxFlex fxLayout="column" class="tb-router-tabs-content">
+  <mat-tab-nav-panel #tabPanel class="tb-router-tabs-content flex flex-1 flex-col">
     <router-outlet #routerOutlet="outlet" (activate)="activeComponentChanged($event)"></router-outlet>
   </mat-tab-nav-panel>
 </div>

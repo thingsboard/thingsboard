@@ -82,7 +82,8 @@ public class ModelConstants {
     public static final String USER_CREDENTIALS_ACTIVATE_TOKEN_EXP_TIME_PROPERTY = "activate_token_exp_time";
     public static final String USER_CREDENTIALS_RESET_TOKEN_PROPERTY = "reset_token";
     public static final String USER_CREDENTIALS_RESET_TOKEN_EXP_TIME_PROPERTY = "reset_token_exp_time";
-    public static final String USER_CREDENTIALS_ADDITIONAL_PROPERTY = "additional_info";
+    public static final String USER_CREDENTIALS_LAST_LOGIN_TS_PROPERTY = "last_login_ts";
+    public static final String USER_CREDENTIALS_FAILED_LOGIN_ATTEMPTS_PROPERTY = "failed_login_attempts";
 
     /**
      * User settings constants.
@@ -397,6 +398,7 @@ public class ModelConstants {
     public static final String EVENT_MESSAGE_COLUMN_NAME = "e_message";
 
     public static final String DEBUG_MODE = "debug_mode";
+    public static final String DEBUG_SETTINGS = "debug_settings";
     public static final String SINGLETON_MODE = "singleton_mode";
     public static final String QUEUE_NAME = "queue_name";
 
@@ -448,11 +450,25 @@ public class ModelConstants {
     public static final String MOBILE_APP_TABLE_NAME = "mobile_app";
     public static final String MOBILE_APP_PKG_NAME_PROPERTY = "pkg_name";
     public static final String MOBILE_APP_APP_SECRET_PROPERTY = "app_secret";
-    public static final String MOBILE_APP_OAUTH2_ENABLED_PROPERTY = "oauth2_enabled";
+    public static final String MOBILE_APP_PLATFORM_TYPE_PROPERTY = "platform_type";
+    public static final String MOBILE_APP_STATUS_PROPERTY = "status";
+    public static final String MOBILE_APP_VERSION_INFO_PROPERTY = "version_info";
+    public static final String MOBILE_APP_STORE_INFO_PROPERTY = "store_info";
 
-    public static final String MOBILE_APP_OAUTH2_CLIENT_TABLE_NAME = "mobile_app_oauth2_client";
-    public static final String MOBILE_APP_OAUTH2_CLIENT_CLIENT_ID_PROPERTY = "oauth2_client_id";
-    public static final String MOBILE_APP_OAUTH2_CLIENT_MOBILE_APP_ID_PROPERTY = "mobile_app_id";
+    /**
+     * Mobile application bundle constants.
+     */
+    public static final String MOBILE_APP_BUNDLE_TABLE_NAME = "mobile_app_bundle";
+    public static final String MOBILE_APP_BUNDLE_TITLE_PROPERTY = "title";
+    public static final String MOBILE_APP_BUNDLE_DESCRIPTION_PROPERTY = "description";
+    public static final String MOBILE_APP_BUNDLE_ANDROID_APP_ID_PROPERTY = "android_app_id";
+    public static final String MOBILE_APP_BUNDLE_IOS_APP_ID_PROPERTY = "ios_app_id";
+    public static final String MOBILE_APP_BUNDLE_LAYOUT_CONFIG_PROPERTY = "layout_config";
+    public static final String MOBILE_APP_BUNDLE_OAUTH2_ENABLED_PROPERTY = "oauth2_enabled";
+
+    public static final String MOBILE_APP_BUNDLE_OAUTH2_CLIENT_TABLE_NAME = "mobile_app_bundle_oauth2_client";
+    public static final String MOBILE_APP_BUNDLE_OAUTH2_CLIENT_CLIENT_ID_PROPERTY = "oauth2_client_id";
+    public static final String MOBILE_APP_BUNDLE_OAUTH2_CLIENT_MOBILE_APP_BUNDLE_ID_PROPERTY = "mobile_app_bundle_id";
 
 
     /**
@@ -684,11 +700,12 @@ public class ModelConstants {
     /**
      * Mobile application settings constants.
      */
-    public static final String MOBILE_APP_SETTINGS_TABLE_NAME = "mobile_app_settings";
-    public static final String MOBILE_APP_SETTINGS_USE_DEFAULT_APP_PROPERTY = "use_default_app";
-    public static final String MOBILE_APP_SETTINGS_ANDROID_CONFIG_PROPERTY = "android_config";
-    public static final String MOBILE_APP_SETTINGS_IOS_CONFIG_PROPERTY = "ios_config";
-    public static final String MOBILE_APP_SETTINGS_QR_CODE_CONFIG_PROPERTY = "qr_code_config";
+    public static final String QR_CODE_SETTINGS_TABLE_NAME = "qr_code_settings";
+    public static final String QR_CODE_SETTINGS_USE_DEFAULT_APP_PROPERTY = "use_default_app";
+    public static final String QR_CODE_SETTINGS_ANDROID_ENABLED_PROPERTY = "android_enabled";
+    public static final String QR_CODE_SETTINGS_IOS_ENABLED_PROPERTY = "ios_enabled";
+    public static final String QR_CODE_SETTINGS_BUNDLE_ID_PROPERTY = "mobile_app_bundle_id";
+    public static final String QR_CODE_SETTINGS_CONFIG_PROPERTY = "qr_code_config";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

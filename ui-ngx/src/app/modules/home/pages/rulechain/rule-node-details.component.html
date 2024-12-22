@@ -22,8 +22,8 @@
   </button>
 </div>
 <form [formGroup]="ruleNodeFormGroup" class="mat-padding">
-  <section class="title-row">
-    <mat-form-field fxFlex class="mat-block">
+  <section class="title-row flex align-center">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>rulenode.name</mat-label>
       <input matInput formControlName="name" required>
       <mat-error *ngIf="ruleNodeFormGroup.get('name').hasError('required')
@@ -34,13 +34,24 @@
         {{ 'rulenode.name-max-length' | translate }}
       </mat-error>
     </mat-form-field>
-    <section class="node-setting">
-      <mat-slide-toggle formControlName="debugMode">
-        {{ 'rulenode.debug-mode' | translate }}
-      </mat-slide-toggle>
-      <mat-slide-toggle *ngIf="isSingleton()" formControlName="singletonMode">
-        {{ 'rulenode.singleton-mode' | translate }}
-      </mat-slide-toggle>
+    <section class="mb-5 flex max-w-xs flex-row">
+      <tb-entity-debug-settings-button
+        class="mr-2"
+        formControlName="debugSettings"
+        [entityLabel]="'debug-settings.rule-node' | translate"
+        [debugLimitsConfiguration]="ruleChainDebugPerTenantLimitsConfiguration"
+      />
+      <button mat-stroked-button
+              class="tb-rounded-btn flex-1"
+              color="primary"
+              *ngIf="isSingleton()"
+              [disabled]="ruleNodeFormGroup.get('singletonMode').disabled || disabled"
+              [class.active]="ruleNodeFormGroup.get('singletonMode').value"
+              (click)="onSingleModeChange($event)">
+        <mat-icon [class.invisible]="!ruleNodeFormGroup.get('singletonMode').value">checkmark</mat-icon>
+        <span translate>rulenode.singleton</span>
+        <input class="hidden" formControlName="singletonMode">
+      </button>
     </section>
   </section>
   <tb-rule-node-config #ruleNodeConfigComponent

@@ -39,6 +39,7 @@ import { map } from 'rxjs/operators';
 import { displayGrids } from 'angular-gridster2/lib/gridsterConfig.interface';
 import { BreakpointId, LayoutType, ViewFormatType } from '@shared/models/dashboard.models';
 import { isNotEmptyStr } from '@core/utils';
+import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
 
 @Component({
   selector: 'tb-dashboard-layout',
@@ -107,10 +108,6 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
       return this.layoutCtx.gridSettings.rowHeight;
     }
     return this.layoutCtx.gridSettings.mobileRowHeight;
-  }
-
-  get colWidthInteger(): boolean {
-    return this.isScada;
   }
 
   get columns(): number {
@@ -323,12 +320,12 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     this.layoutCtx.dashboardCtrl.copyWidgetReference($event, this.layoutCtx, widget);
   }
 
-  pasteWidget($event: Event) {
+  pasteWidget($event: TbContextMenuEvent | KeyboardEvent) {
     const pos = this.dashboard.getEventGridPosition($event);
     this.layoutCtx.dashboardCtrl.pasteWidget($event, this.layoutCtx, pos);
   }
 
-  pasteWidgetReference($event: Event) {
+  pasteWidgetReference($event: TbContextMenuEvent | KeyboardEvent) {
     const pos = this.dashboard.getEventGridPosition($event);
     this.layoutCtx.dashboardCtrl.pasteWidgetReference($event, this.layoutCtx, pos);
   }

@@ -37,6 +37,7 @@ import { Subject } from 'rxjs';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TranslateService } from '@ngx-translate/core';
+import { EditorOptions } from 'tinymce';
 
 @Component({
   selector: 'tb-template-configuration',
@@ -81,18 +82,20 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
   readonly NotificationDeliveryMethod = NotificationDeliveryMethod;
   readonly NotificationTemplateTypeTranslateMap = NotificationTemplateTypeTranslateMap;
 
-  tinyMceOptions: Record<string, any> = {
+  tinyMceOptions: Partial<EditorOptions> = {
     base_url: '/assets/tinymce',
     suffix: '.min',
-    plugins: ['link table image imagetools code fullscreen'],
+    plugins: ['link', 'table', 'image', 'lists', 'code', 'fullscreen'],
     menubar: 'edit insert tools view format table',
-    toolbar: 'fontselect fontsizeselect | formatselect | bold italic  strikethrough  forecolor backcolor ' +
-      '| link | table | image | alignleft aligncenter alignright alignjustify  ' +
-      '| numlist bullist outdent indent  | removeformat | code | fullscreen',
+    toolbar: 'undo redo | fontfamily fontsize blocks | bold italic  strikethrough | forecolor backcolor ' +
+      '| link table image | alignleft aligncenter alignright alignjustify  ' +
+      '| numlist bullist | outdent indent  | removeformat | code | fullscreen',
     toolbar_mode: 'sliding',
     height: 400,
     autofocus: false,
-    branding: false
+    branding: false,
+    promotion: false,
+    relative_urls: false
   };
 
   private propagateChange = null;

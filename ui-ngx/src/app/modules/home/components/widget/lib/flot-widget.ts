@@ -54,7 +54,7 @@ import {
   TbFlotTicksFormatterFunction,
   TooltipValueFormatFunction
 } from './flot-widget.models';
-import * as moment_ from 'moment';
+import moment_ from 'moment';
 import tinycolor from 'tinycolor2';
 import { AggregationType, IntervalMath } from '@shared/models/time/time.models';
 import { CancelAnimationFrame } from '@core/services/raf.service';

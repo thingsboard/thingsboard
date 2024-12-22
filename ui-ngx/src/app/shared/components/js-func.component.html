@@ -15,16 +15,28 @@
     limitations under the License.
 
 -->
-<div class="tb-js-func" style="background: #fff;" [ngClass]="{'tb-disabled': disabled, 'fill-height': fillHeight, 'tb-hide-brackets': hideBrackets}"
+<div class="tb-js-func flex flex-col" style="background: #fff;" [class]="{'tb-disabled': disabled, 'fill-height': fillHeight, 'tb-hide-brackets': hideBrackets}"
      tb-fullscreen
-     [fullscreen]="fullscreen" fxLayout="column">
-  <div fxLayout="row" fxLayoutAlign="start center" style="min-height: 40px;" class="tb-js-func-toolbar">
-    <label class="tb-title no-padding"
-           [ngClass]="{'tb-error': !disabled && (hasErrors || !functionValid || required && !modelValue), 'tb-required': !disabled && required}">
+     [fullscreen]="fullscreen">
+  <div style="min-height: 40px;" class="tb-js-func-toolbar flex flex-row items-center justify-start">
+    <label *ngIf="!hideLabel" class="tb-title no-padding"
+           [class]="{'tb-error': !disabled && (hasErrors || !functionValid || required && !modelValue), 'tb-required': !disabled && required}">
       {{ functionLabel }}
     </label>
-    <span fxFlex></span>
+    <ng-content select="[toolbarStartButton]"></ng-content>
+    <span class="flex-1"></span>
     <ng-content select="[toolbarPrefixButton]"></ng-content>
+    <fieldset *ngIf="!disabled && withModules" style="width: initial">
+      <div matTooltip="{{'js-func.modules' | translate}}"
+           matTooltipPosition="above"
+           style="border-radius: 50%"
+           #editModulesButton
+           (click)="editModules($event, editModulesButton)">
+        <button type='button' mat-icon-button class="tb-mat-32">
+          <tb-icon color="primary" matButtonIcon>mdi:application-braces-outline</tb-icon>
+        </button>
+      </div>
+    </fieldset>
     <button type='button' *ngIf="!disabled" mat-button class="tidy" (click)="beautifyJs()">
       {{'js-func.tidy' | translate }}
     </button>
@@ -41,10 +53,10 @@
       </div>
     </fieldset>
   </div>
-  <div id="tb-javascript-panel" class="tb-js-func-panel" fxLayout="column" tb-toast toastTarget="{{toastTargetId}}">
-    <div #javascriptEditor id="tb-javascript-input" [ngStyle]="fillHeight ? {} : {minHeight: minHeight}" [ngClass]="{'fill-height': fillHeight}"></div>
+  <div id="tb-javascript-panel" class="tb-js-func-panel flex flex-col" tb-toast toastTarget="{{toastTargetId}}">
+    <div #javascriptEditor id="tb-javascript-input" [style]="fillHeight ? {} : {minHeight: minHeight}" [class.fill-height]="fillHeight"></div>
   </div>
-  <div *ngIf="!hideBrackets" fxLayout="row" fxLayoutAlign="start center" style="height: 40px;">
-    <label class="tb-title no-padding" [ngClass]="{'tb-error': hasErrors || !functionValid || required && !modelValue}">}</label>
+  <div *ngIf="!hideBrackets" class="flex flex-row items-center justify-start" style="height: 40px;">
+    <label class="tb-title no-padding" [class]="{'tb-error': hasErrors || !functionValid || required && !modelValue}">&#125;</label>
   </div>
 </div>

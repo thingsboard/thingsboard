@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="entityListFormGroup" class="mat-block" [ngClass]="{'tb-chip-list': !labelText}" [subscriptSizing]="subscriptSizing">
+<mat-form-field [formGroup]="entityListFormGroup" class="mat-block" [class.tb-chip-list]="!labelText" [appearance]="appearance" [subscriptSizing]="subscriptSizing">
   <mat-label *ngIf="labelText">{{ labelText }}</mat-label>
   <mat-chip-grid #chipList formControlName="entities">
     <mat-chip-row

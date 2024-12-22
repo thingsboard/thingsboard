@@ -97,6 +97,9 @@
           font-weight: 400;
           font-size: 14px;
           letter-spacing: 0.2px;
+          .mat-pseudo-checkbox {
+            display: none;
+          }
         }
       }
       &.mat-button-toggle-checked {
@@ -147,6 +150,10 @@
             color: rgba(0, 0, 0, 0.38);
             border-color: rgba(0, 0, 0, 0.38);
           }
+        }
+
+        .mat-button-toggle-focus-overlay {
+          opacity: 0;
         }
       }
       &.tb-fill {

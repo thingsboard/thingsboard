@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
@@ -26,6 +27,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -35,10 +37,13 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,13 +57,23 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 public class EdgeServiceTest extends AbstractServiceTest {
 
     @Autowired
+    TbTenantProfileCache tbTenantProfileCache;
+    @Autowired
+    TenantProfileService tenantProfileService;
+    @Autowired
     CustomerService customerService;
     @Autowired
     EdgeService edgeService;
     @Autowired
     RuleChainService ruleChainService;
 
-    private IdComparator<Edge> idComparator = new IdComparator<>();
+    private final IdComparator<Edge> idComparator = new IdComparator<>();
+
+    @After
+    public void after() {
+        tenantService.deleteTenant(tenantId);
+        tenantProfileService.deleteTenantProfiles(tenantId);
+    }
 
     @Test
     public void testSaveEdge() {
@@ -111,6 +126,34 @@ public class EdgeServiceTest extends AbstractServiceTest {
         Assertions.assertThrows(DataValidationException.class, () -> {
             edgeService.saveEdge(edge);
         });
+    }
+
+    @Test
+    public void testSaveEdgesWithInfiniteMaxEdgeLimit() {
+        TenantProfile defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(tenantId);
+        defaultTenantProfile.getProfileData().setConfiguration(DefaultTenantProfileConfiguration.builder().maxEdges(Long.MAX_VALUE).build());
+        tenantProfileService.saveTenantProfile(tenantId, defaultTenantProfile);
+
+        Edge savedEdge = edgeService.saveEdge(constructEdge("My edge", "default"));
+        edgeService.deleteEdge(tenantId, savedEdge.getId());
+    }
+
+    @Test
+    public void testSaveEdgesWithMaxEdgeOutOfLimit() {
+        TenantProfile defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(tenantId);
+        defaultTenantProfile.getProfileData().setConfiguration(DefaultTenantProfileConfiguration.builder().maxEdges(1).build());
+        tenantProfileService.saveTenantProfile(tenantId, defaultTenantProfile);
+        tbTenantProfileCache.evict(defaultTenantProfile.getId());
+
+        Assert.assertEquals(0, edgeService.countByTenantId(tenantId));
+
+        Edge savedEdge = edgeService.saveEdge(constructEdge("My first edge", "default"));
+        Assert.assertEquals(1, edgeService.countByTenantId(tenantId));
+
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            edgeService.saveEdge(constructEdge("My second edge that out of maxEdgeCount limit", "default"));
+        });
+        edgeService.deleteEdge(tenantId, savedEdge.getId());
     }
 
     @Test
@@ -668,5 +711,8 @@ public class EdgeServiceTest extends AbstractServiceTest {
         PageData<Edge> edgesPageData = edgeService.findEdgesByTenantProfileId(tenant2.getTenantProfileId(),
                 new PageLink(1000));
         Assert.assertEquals(2, edgesPageData.getTotalElements());
+        tenantService.deleteTenant(tenant1.getId());
+        tenantService.deleteTenant(tenant2.getId());
     }
+
 }

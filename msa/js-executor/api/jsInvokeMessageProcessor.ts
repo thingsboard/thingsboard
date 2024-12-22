@@ -130,7 +130,7 @@ export class JsInvokeMessageProcessor {
 
     processCompileRequest(requestId: string, responseTopic: string, headers: any, compileRequest: JsCompileRequest) {
         const scriptId = JsInvokeMessageProcessor.getScriptId(compileRequest);
-        this.logger.debug('[%s] Processing compile request, scriptId: [%s]', requestId, scriptId);
+        this.logger.debug('[%s] Processing compile request, scriptId: [%s], compileRequest [%s]', requestId, scriptId, compileRequest);
         if (this.scriptMap.has(scriptId)) {
             const compileResponse = JsInvokeMessageProcessor.createCompileResponse(scriptId, true);
             this.logger.debug('[%s] Script was already compiled, scriptId: [%s]', requestId, scriptId);
@@ -154,7 +154,7 @@ export class JsInvokeMessageProcessor {
 
     processInvokeRequest(requestId: string, responseTopic: string, headers: any, invokeRequest: JsInvokeRequest) {
         const scriptId = JsInvokeMessageProcessor.getScriptId(invokeRequest);
-        this.logger.debug('[%s] Processing invoke request, scriptId: [%s]', requestId, scriptId);
+        this.logger.debug('[%s] Processing invoke request, scriptId: [%s], invokeRequest [%s]', requestId, scriptId, invokeRequest);
         this.executedScriptsCounter++;
         if (this.executedScriptsCounter % statFrequency == 0) {
             const nowMs = performance.now();
@@ -217,7 +217,7 @@ export class JsInvokeMessageProcessor {
 
     processReleaseRequest(requestId: string, responseTopic: string, headers: any, releaseRequest: JsReleaseRequest) {
         const scriptId = JsInvokeMessageProcessor.getScriptId(releaseRequest);
-        this.logger.debug('[%s] Processing release request, scriptId: [%s]', requestId, scriptId);
+        this.logger.debug('[%s] Processing release request, scriptId: [%s], releaseRequest [%s]', requestId, scriptId, releaseRequest);
         if (this.scriptMap.has(scriptId)) {
             const index = this.scriptIds.indexOf(scriptId);
             if (index > -1) {

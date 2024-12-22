@@ -14,6 +14,8 @@
 /// limitations under the License.
 ///
 
+import { Observable } from 'rxjs';
+
 export interface IModulesMap {
-  init(): void;
+  init(): Observable<any>;
 }

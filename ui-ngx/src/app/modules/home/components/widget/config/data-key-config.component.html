@@ -17,7 +17,7 @@
 -->
 <div *ngIf="dataKeyConfigMode === dataKeyConfigModes.general; else advanced"
      [formGroup]="dataKeyFormGroup">
-  <div class="mat-padding" fxLayout="column" style="gap: 16px;">
+  <div class="mat-padding flex flex-col gap-4">
     <div class="tb-form-panel">
       <div class="tb-form-panel-title" translate>datakey.general</div>
       <mat-form-field *ngIf="modelValue.type !== dataKeyTypes.function && !hideDataKeyName" subscriptSizing="dynamic">
@@ -65,13 +65,14 @@
                         formControlName="color">
         </tb-color-input>
       </div>
-      <section fxLayout="column" *ngIf="modelValue.type === dataKeyTypes.function">
+      <section class="flex flex-col" *ngIf="modelValue.type === dataKeyTypes.function">
         <span translate>datakey.data-generation-func</span>
         <br/>
         <tb-js-func #funcBodyEdit
                     [functionArgs]="['time', 'prevValue']"
                     [globalVariables]="functionScopeVariables"
                     [validationArgs]="[[1, 1],[1, '1']]"
+                    withModules
                     resultType="any"
                     helpId="widget/config/datakey_generation_fn"
                     formControlName="funcBody">
@@ -103,8 +104,8 @@
       <div class="tb-form-panel-title" translate>datakey.delta-calculation</div>
       <div class="tb-form-panel stroked tb-slide-toggle">
         <mat-expansion-panel class="tb-settings" [expanded]="dataKeyFormGroup.get('comparisonEnabled').value" [disabled]="!dataKeyFormGroup.get('comparisonEnabled').value">
-        <mat-expansion-panel-header fxLayout="row wrap">
-          <mat-panel-title fxLayout="column" fxLayoutAlign="center start" fxLayoutGap="8px">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
+          <mat-panel-title class="flex flex-col items-start justify-center gap-2">
             <mat-slide-toggle class="mat-slide" formControlName="comparisonEnabled" (click)="$event.stopPropagation()">
               {{ 'datakey.enable-delta-calculation' | translate }}
             </mat-slide-toggle>
@@ -162,10 +163,9 @@
     <div class="tb-form-panel tb-slide-toggle"
          *ngIf="(modelValue.type === dataKeyTypes.timeseries || modelValue.type === dataKeyTypes.attribute || modelValue.type === dataKeyTypes.count) && showPostProcessing">
       <mat-expansion-panel class="tb-settings" [expanded]="dataKeyFormGroup.get('usePostProcessing').value" [disabled]="!dataKeyFormGroup.get('usePostProcessing').value">
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
           <mat-panel-title>
-            <mat-slide-toggle class="mat-slide" formControlName="usePostProcessing" (click)="$event.stopPropagation()"
-                              fxLayoutAlign="center">
+            <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="usePostProcessing" (click)="$event.stopPropagation()">
               {{ 'datakey.use-data-post-processing-func' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>
@@ -175,6 +175,7 @@
                       [functionArgs]="['time', 'value', 'prevValue', 'timePrev', 'prevOrigValue']"
                       [globalVariables]="functionScopeVariables"
                       [validationArgs]="[[1, 1, 1, 1, 1],[1, '1', '1', 1, '1']]"
+                      withModules
                       resultType="any"
                       helpId="widget/config/datakey_postprocess_fn"
                       formControlName="postFuncBody">
@@ -192,7 +193,7 @@
   </div>
 </div>
 <ng-template #advanced>
-  <div class="mat-padding" fxLayout="column" [formGroup]="dataKeySettingsFormGroup">
+  <div class="mat-padding flex flex-col" [formGroup]="dataKeySettingsFormGroup">
     <tb-widget-settings
       [dashboard]="dashboard"
       [aliasController]="aliasController"
