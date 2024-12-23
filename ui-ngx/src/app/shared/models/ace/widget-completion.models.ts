@@ -325,7 +325,7 @@ export const widgetContextCompletionsWithSettings = (settingsCompletions?: TbEdi
                 type: 'object'
               },
               settings: {
-                description: 'Widget settings containing widget specific properties according to the defined <a href="https://thingsboard.io/docs/user-guide/contribution/widgets-development/#settings-schema-section" target="_blank">settings json schema</a>',
+                description: 'Widget settings containing widget specific properties according to the defined settings form.',
                 meta: 'property',
                 type: 'object',
                 children: settingsCompletions
@@ -363,7 +363,7 @@ export const widgetContextCompletionsWithSettings = (settingsCompletions?: TbEdi
             }
           },
           settings: {
-            description: 'Widget settings containing widget specific properties according to the defined <a href="https://thingsboard.io/docs/user-guide/contribution/widgets-development/#settings-schema-section" target="_blank">settings json schema</a>',
+            description: 'Widget settings containing widget specific properties according to the defined settings form.',
             meta: 'property',
             type: 'object',
             children: settingsCompletions

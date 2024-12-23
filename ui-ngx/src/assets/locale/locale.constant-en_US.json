@@ -1699,7 +1699,8 @@
         "clear-form-prompt": "Are you sure you want to remove all form properties?",
         "import-form": "Import form from JSON",
         "export-form": "Export form to JSON",
-        "form-json-file": "Form JSON file",
+        "json-file": "JSON file",
+        "json-content": "JSON content",
         "invalid-form-json-file-error": "Unable to import form from JSON: Invalid form JSON data structure."
     },
     "asset-profile": {

@@ -16,8 +16,8 @@
 
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { TbEditorCompletion, TbEditorCompletions } from '@shared/models/ace/completion.models';
-import { deepClone, isDefinedAndNotNull, isString } from '@core/utils';
-import { JsonSchema, JsonSettingsSchema, JsonFormData, KeyLabelItem } from '@shared/legacy/json-form.models';
+import { deepClone, isDefinedAndNotNull, isEmptyStr, isString, isUndefinedOrNull } from '@core/utils';
+import { JsonFormData, JsonSchema, JsonSettingsSchema, KeyLabelItem } from '@shared/legacy/json-form.models';
 import JsonFormUtils from '@shared/legacy/json-form-utils';
 import { constantColor, Font } from '@shared/models/widget-settings.models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -164,6 +164,63 @@ export interface FormHtmlSection extends FormPropertyBase {
 
 export type FormProperty = FormPropertyBase & FormTextareaProperty & FormNumberProperty & FormSelectProperty & FormRadiosProperty
   & FormDateTimeProperty & FormJavascriptProperty & FormMarkdownProperty & FormFieldSetProperty & FormArrayProperty & FormHtmlSection;
+
+export const cleanupFormProperties = (properties: FormProperty[]): FormProperty[] => {
+  for (const property of properties) {
+    cleanupFormProperty(property);
+  }
+  return properties;
+}
+
+export const cleanupFormProperty = (property: FormProperty): FormProperty => {
+  if (property.type !== FormPropertyType.number) {
+    delete property.min;
+    delete property.max;
+    delete property.step;
+  }
+  if (property.type !== FormPropertyType.textarea) {
+    delete property.rows;
+  }
+  if (property.type !== FormPropertyType.fieldset) {
+    delete property.properties;
+  } else if (property.properties?.length) {
+    property.properties = cleanupFormProperties(property.properties);
+  }
+  if (property.type !== FormPropertyType.array) {
+    delete property.arrayItemName;
+    delete property.arrayItemType;
+  }
+  if (property.type !== FormPropertyType.select) {
+    delete property.multiple;
+    delete property.allowEmptyOption;
+    delete property.minItems;
+    delete property.maxItems;
+  }
+  if (property.type !== FormPropertyType.radios) {
+    delete property.direction;
+  }
+  if (![FormPropertyType.select, FormPropertyType.radios].includes(property.type)) {
+    delete property.items;
+  }
+  if (property.type !== FormPropertyType.datetime) {
+    delete property.allowClear;
+    delete property.dateTimeType;
+  }
+  if (![FormPropertyType.javascript, FormPropertyType.markdown].includes(property.type)) {
+    delete property.helpId;
+  }
+  if (property.type !== FormPropertyType.htmlSection) {
+    delete property.htmlClassList;
+    delete property.htmlContent;
+  }
+  for (const key of Object.keys(property)) {
+    const val = property[key];
+    if (isUndefinedOrNull(val) || isEmptyStr(val)) {
+      delete property[key];
+    }
+  }
+  return property;
+}
 
 export enum FormPropertyContainerType {
   field = 'field',

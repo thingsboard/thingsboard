@@ -37,7 +37,12 @@ import {
 } from '@angular/forms';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { TranslateService } from '@ngx-translate/core';
-import { FormProperty, FormPropertyType, propertyValid } from '@shared/models/dynamic-form.models';
+import {
+  cleanupFormProperties,
+  FormProperty,
+  FormPropertyType,
+  propertyValid
+} from '@shared/models/dynamic-form.models';
 import {
   DynamicFormPropertyRowComponent
 } from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-property-row.component';
@@ -134,7 +139,7 @@ export class DynamicFormPropertiesComponent implements ControlValueAccessor, OnI
             controls[i].patchValue(p, {emitEvent: false});
           }
         });
-        this.propagateChange(properties);
+        this.propagateChange(cleanupFormProperties(properties));
       }
     );
   }

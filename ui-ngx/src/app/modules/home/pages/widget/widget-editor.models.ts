@@ -54,8 +54,24 @@ const widgetEditorCompletions = (settingsCompletions?: TbEditorCompletions): TbE
               description: 'Called when widget element is destroyed. Should be used to cleanup all resources if necessary.',
               meta: 'function'
             },
+            getSettingsForm: {
+              description: 'Optional function returning widget settings form array as alternative to <b>Settings form</b> tab of settings section.',
+              meta: 'function',
+              return: {
+                description: 'An array of widget settings form properties',
+                type: 'Array&lt;FormProperty&gt;'
+              }
+            },
+            getDataKeySettingsForm: {
+              description: 'Optional function returning particular data key settings form array as alternative to <b>Data key settings form</b> tab of settings section.',
+              meta: 'function',
+              return: {
+                description: 'An array of data key settings form properties',
+                type: 'Array&lt;FormProperty&gt;'
+              }
+            },
             getSettingsSchema: {
-              description: 'Optional function returning widget settings schema json as alternative to <b>Settings tab</b> of <a href="https://thingsboard.io/docs/user-guide/contribution/widgets-development/#settings-schema-section" target="_blank">Settings schema section</a>.',
+              description: '<b>Deprecated</b>. Use getSettingsForm() function.',
               meta: 'function',
               return: {
                 description: 'An widget settings schema json',
@@ -63,7 +79,7 @@ const widgetEditorCompletions = (settingsCompletions?: TbEditorCompletions): TbE
               }
             },
             getDataKeySettingsSchema: {
-              description: 'Optional function returning particular data key settings schema json as alternative to <b>Data key settings schema</b> of <a href="https://thingsboard.io/docs/user-guide/contribution/widgets-development/#settings-schema-section" target="_blank">Settings schema section</a>.',
+              description: '<b>Deprecated</b>. Use getDataKeySettingsForm() function.',
               meta: 'function',
               return: {
                 description: 'A particular data key settings schema json',

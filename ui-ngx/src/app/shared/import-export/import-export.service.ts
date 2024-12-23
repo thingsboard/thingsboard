@@ -125,7 +125,8 @@ export class ImportExportService {
   }
 
   public importFormProperties(): Observable<FormProperty[]> {
-    return this.openImportDialog('dynamic-form.import-form', 'dynamic-form.form-json-file').pipe(
+    return this.openImportDialog('dynamic-form.import-form',
+      'dynamic-form.json-file', true, 'dynamic-form.json-content').pipe(
       map((properties: FormProperty[]) => {
         if (!this.validateImportedFormProperties(properties)) {
           this.store.dispatch(new ActionNotificationShow(
@@ -1134,14 +1135,17 @@ export class ImportExportService {
     };
   }
 
-  private openImportDialog(importTitle: string, importFileLabel: string): Observable<any> {
+  private openImportDialog(importTitle: string, importFileLabel: string,
+                           enableImportFromContent = false, importContentLabel?: string): Observable<any> {
     return this.dialog.open<ImportDialogComponent, ImportDialogData,
       any>(ImportDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         importTitle,
-        importFileLabel
+        importFileLabel,
+        enableImportFromContent,
+        importContentLabel
       }
     }).afterClosed().pipe(
       map((importedData) => {
