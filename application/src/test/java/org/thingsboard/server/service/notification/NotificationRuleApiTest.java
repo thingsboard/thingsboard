@@ -274,7 +274,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         Device device = createDevice("Device with alarm", "233");
         NotificationTarget target = createNotificationTarget(tenantAdminUserId);
         defaultNotifications.create(tenantId, DefaultNotifications.newAlarm, target.getId());
-        defaultNotifications.create(tenantId, DefaultNotifications.entityAction, target.getId());
         notificationRulesCache.evict(tenantId);
 
         Alarm alarm = new Alarm();
@@ -287,7 +286,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .pollDelay(2, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     List<Notification> notifications = getMyNotifications(false, 10);
-                    assertThat(notifications).hasSize(1).first().matches(notification -> {
+                    assertThat(notifications).singleElement().matches(notification -> {
                         return notification.getType() == NotificationType.ALARM &&
                                 notification.getSubject().equals("New alarm 'testAlarm'");
                     });
