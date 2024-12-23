@@ -24,6 +24,7 @@ import {
   DataKey,
   dataKeyAggregationTypeHintTranslationMap,
   DataKeyConfigMode,
+  DynamicFormData,
   Widget,
   widgetType
 } from '@shared/models/widget.models';
@@ -47,7 +48,6 @@ import { Observable, of } from 'rxjs';
 import { map, mergeMap, publishReplay, refCount, tap } from 'rxjs/operators';
 import { alarmFields } from '@shared/models/alarm.models';
 import { JsFuncComponent } from '@shared/components/js-func.component';
-import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
 import { WidgetService } from '@core/http/widget.service';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
@@ -58,6 +58,7 @@ import { WidgetConfigComponentData } from '@home/models/widget-component.models'
 import { WidgetComponentService } from '@home/components/widget/widget-component.service';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 import { isNotEmptyTbFunction, TbFunction } from '@shared/models/js-function.models';
+import { FormProperty } from '@shared/models/dynamic-form.models';
 
 @Component({
   selector: 'tb-data-key-config',
@@ -123,7 +124,7 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
   widgetType: widgetType;
 
   @Input()
-  dataKeySettingsSchema: any;
+  dataKeySettingsForm: FormProperty[];
 
   @Input()
   dataKeySettingsDirective: string;
@@ -168,7 +169,7 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
 
   public dataKeySettingsFormGroup: UntypedFormGroup;
 
-  private dataKeySettingsData: JsonFormComponentData;
+  private dataKeySettingsData: DynamicFormData;
 
   private alarmKeys: Array<DataKey>;
   private functionTypeKeys: Array<DataKey>;
@@ -226,15 +227,11 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
         type: DataKeyType.function
       });
     }
-    if (this.dataKeySettingsSchema && this.dataKeySettingsSchema.schema ||
+    if (this.dataKeySettingsForm?.length ||
       this.dataKeySettingsDirective && this.dataKeySettingsDirective.length) {
       this.hasAdvanced = true;
       this.dataKeySettingsData = {
-        schema: this.dataKeySettingsSchema?.schema || {
-          type: 'object',
-          properties: {}
-        },
-        form: this.dataKeySettingsSchema?.form || ['*'],
+        settingsForm: this.dataKeySettingsForm,
         settingsDirective: this.dataKeySettingsDirective
       };
       this.dataKeySettingsFormGroup = this.fb.group({

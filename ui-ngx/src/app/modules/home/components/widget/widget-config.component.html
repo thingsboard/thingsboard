@@ -32,9 +32,6 @@
     <div [class.!hidden]="selectedOption !== 'appearance'" class="mat-content">
       <ng-container *ngTemplateOutlet="appearance"></ng-container>
     </div>
-    <div [class.!hidden]="selectedOption !== 'oldAppearance'" class="mat-content">
-      <ng-container *ngTemplateOutlet="oldAppearance"></ng-container>
-    </div>
     <div [class.!hidden]="selectedOption !== 'card'" [formGroup]="widgetSettings" class="mat-content">
       <div class="tb-form-panel">
         <div class="tb-form-panel-title" translate>widget-config.card-title</div>
@@ -303,18 +300,6 @@
       </div>
     </div>
     <div *ngIf="displayAdvancedAppearance" style="height: 100%;" [formGroup]="advancedSettings">
-      <tb-widget-settings
-        [aliasController]="aliasController"
-        [callbacks]="widgetConfigCallbacks"
-        [dashboard]="dashboard"
-        [widget]="widget"
-        [widgetConfig]="modelValue"
-        formControlName="settings">
-      </tb-widget-settings>
-    </div>
-  </ng-template>
-  <ng-template #oldAppearance>
-    <div *ngIf="displayAdvancedAppearance" style="height: 100%;" [formGroup]="oldAdvancedSettings">
       <tb-widget-settings
         [aliasController]="aliasController"
         [callbacks]="widgetConfigCallbacks"

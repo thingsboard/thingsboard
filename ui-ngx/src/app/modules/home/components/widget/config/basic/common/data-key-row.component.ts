@@ -38,14 +38,7 @@ import {
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
-import {
-  DataKey,
-  DataKeyConfigMode,
-  DatasourceType,
-  JsonSettingsSchema,
-  Widget,
-  widgetType
-} from '@shared/models/widget.models';
+import { DataKey, DataKeyConfigMode, DatasourceType, Widget, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { merge } from 'rxjs';
@@ -66,6 +59,7 @@ import {
   TimeSeriesChartYAxisId
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
+import { FormProperty } from '@shared/models/dynamic-form.models';
 
 export const dataKeyValid = (key: DataKey): boolean => !!key && !!key.type && !!key.name;
 
@@ -197,16 +191,16 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
     return this.widgetConfigComponent.aliasController;
   }
 
-  get dataKeySettingsSchema(): JsonSettingsSchema {
-    return this.widgetConfigComponent.modelValue?.dataKeySettingsSchema;
+  get dataKeySettingsForm(): FormProperty[] {
+    return this.widgetConfigComponent.modelValue?.dataKeySettingsForm;
   }
 
   get dataKeySettingsDirective(): string {
     return this.widgetConfigComponent.modelValue?.dataKeySettingsDirective;
   }
 
-  get latestDataKeySettingsSchema(): JsonSettingsSchema {
-    return this.widgetConfigComponent.modelValue?.latestDataKeySettingsSchema;
+  get latestDataKeySettingsForm(): FormProperty[] {
+    return this.widgetConfigComponent.modelValue?.latestDataKeySettingsForm;
   }
 
   get latestDataKeySettingsDirective(): string {
@@ -325,7 +319,7 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
         data: {
           dataKey: deepClone(this.modelValue),
           dataKeyConfigMode: advanced ? DataKeyConfigMode.advanced : DataKeyConfigMode.general,
-          dataKeySettingsSchema: this.isLatestDataKeys ? this.latestDataKeySettingsSchema : this.dataKeySettingsSchema,
+          dataKeySettingsForm: this.isLatestDataKeys ? this.latestDataKeySettingsForm : this.dataKeySettingsForm,
           dataKeySettingsDirective: this.isLatestDataKeys ? this.latestDataKeySettingsDirective : this.dataKeySettingsDirective,
           dashboard: this.dashboard,
           aliasController: this.aliasController,
@@ -359,7 +353,7 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
   }
 
   private _generateDataKey(key: DataKey): DataKey {
-    key = this.callbacks.generateDataKey(key.name, key.type, this.dataKeySettingsSchema, this.isLatestDataKeys,
+    key = this.callbacks.generateDataKey(key.name, key.type, this.dataKeySettingsForm, this.isLatestDataKeys,
       this.dataKeySettingsFunction);
     if (!this.keyRowFormGroup.get('label').value) {
       this.keyRowFormGroup.get('label').patchValue(key.label, {emitEvent: false});

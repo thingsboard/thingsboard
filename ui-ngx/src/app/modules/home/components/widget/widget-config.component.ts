@@ -32,10 +32,8 @@ import {
   CellClickColumnInfo,
   DataKey,
   datasourcesHasAggregation,
-  datasourcesHasOnlyComparisonAggregation, DynamicFormData,
-  GroupInfo,
-  JsonSchema,
-  JsonSettingsSchema,
+  datasourcesHasOnlyComparisonAggregation,
+  DynamicFormData,
   TargetDevice,
   targetDeviceValid,
   Widget,
@@ -74,7 +72,6 @@ import {
 import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityService } from '@core/http/entity.service';
-import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { entityFields } from '@shared/models/entity.models';
 import { Filter, singleEntityFilterFromDeviceId } from '@shared/models/query/query.models';
@@ -84,16 +81,8 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { basicWidgetConfigComponentsMap } from '@home/components/widget/config/basic/basic-widget-config.module';
 import { TimewindowConfigData } from '@home/components/widget/config/timewindow-config-panel.component';
 import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import { defaultFormProperties, FormProperty } from '@shared/models/dynamic-form.models';
 import Timeout = NodeJS.Timeout;
-
-const emptySettingsSchema: JsonSchema = {
-  type: 'object',
-  properties: {}
-};
-const emptySettingsGroupInfoes: GroupInfo[] = [];
-const defaultSettingsForm = [
-  '*'
-];
 
 @Component({
   selector: 'tb-widget-config',
@@ -190,7 +179,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   public widgetSettings: UntypedFormGroup;
   public layoutSettings: UntypedFormGroup;
   public advancedSettings: UntypedFormGroup;
-  public oldAdvancedSettings: UntypedFormGroup;
   public actionsSettings: UntypedFormGroup;
 
   private createBasicModeComponentTimeout: Timeout;
@@ -204,7 +192,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   private widgetSettingsSubscription: Subscription;
   private layoutSettingsSubscription: Subscription;
   private advancedSettingsSubscription: Subscription;
-  private oldAdvancedSettingsSubscription: Subscription;
   private actionsSettingsSubscription: Subscription;
 
   private defaultConfigFormsType: widgetType;
@@ -223,7 +210,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     this.dataSettings = this.fb.group({});
     this.targetDeviceSettings = this.fb.group({});
     this.advancedSettings = this.fb.group({});
-    this.oldAdvancedSettings = this.fb.group({});
     this.widgetSettings = this.fb.group({
       title: [null, []],
       titleFont: [null, []],
@@ -299,10 +285,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       this.advancedSettingsSubscription.unsubscribe();
       this.advancedSettingsSubscription = null;
     }
-    if (this.oldAdvancedSettingsSubscription) {
-      this.oldAdvancedSettingsSubscription.unsubscribe();
-      this.oldAdvancedSettingsSubscription = null;
-    }
     if (this.actionsSettingsSubscription) {
       this.actionsSettingsSubscription.unsubscribe();
       this.actionsSettingsSubscription = null;
@@ -325,9 +307,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     this.advancedSettingsSubscription = this.advancedSettings.valueChanges.subscribe(
       () => this.updateAdvancedSettings()
     );
-    this.oldAdvancedSettingsSubscription = this.oldAdvancedSettings.valueChanges.subscribe(
-      () => this.updateOldAdvancedSettings()
-    );
     this.actionsSettingsSubscription = this.actionsSettings.valueChanges.subscribe(
       () => this.updateActionSettings()
     );
@@ -348,12 +327,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
         {
           name: this.translate.instant('widget-config.appearance'),
           value: 'appearance'
-        }
-      );
-      this.headerOptions.push(
-        {
-          name: 'Old appearance',
-          value: 'oldAppearance'
         }
       );
     }
@@ -408,8 +381,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       }
     }
     this.advancedSettings.addControl('settings',
-      this.fb.control(null, []));
-    this.oldAdvancedSettings.addControl('settings',
       this.fb.control(null, []));
   }
 
@@ -582,7 +553,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       }
 
       this.updateAdvancedForm(config.settings);
-      this.updateSchemaFormOld(config.settings);
 
       if (layout) {
         this.layoutSettings.patchValue(
@@ -664,23 +634,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     this.advancedSettings.patchValue({ settings: dynamicFormData }, {emitEvent: false});
   }
 
-  private updateSchemaFormOld(settings?: any) {
-    const widgetSettingsFormData: JsonFormComponentData = {};
-    if (this.modelValue.settingsSchema && this.modelValue.settingsSchema.schema) {
-      widgetSettingsFormData.schema = this.modelValue.settingsSchema.schema;
-      widgetSettingsFormData.form = this.modelValue.settingsSchema.form || deepClone(defaultSettingsForm);
-      widgetSettingsFormData.groupInfoes = this.modelValue.settingsSchema.groupInfoes;
-      widgetSettingsFormData.model = settings;
-    } else {
-      widgetSettingsFormData.schema = deepClone(emptySettingsSchema);
-      widgetSettingsFormData.form = deepClone(defaultSettingsForm);
-      widgetSettingsFormData.groupInfoes = deepClone(emptySettingsGroupInfoes);
-      widgetSettingsFormData.model = settings || {};
-    }
-    widgetSettingsFormData.settingsDirective = this.modelValue.settingsDirective;
-    this.oldAdvancedSettings.patchValue({ settings: widgetSettingsFormData }, {emitEvent: false});
-  }
-
   private updateDataSettings() {
     if (this.modelValue) {
       if (this.modelValue.config) {
@@ -732,15 +685,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     }
   }
 
-  private updateOldAdvancedSettings() {
-    if (this.modelValue) {
-      if (this.modelValue.config) {
-        this.modelValue.config.settings = this.advancedSettings.get('settings').value?.model;
-      }
-      this.propagateChange(this.modelValue);
-    }
-  }
-
   private updateActionSettings() {
     if (this.modelValue) {
       if (this.modelValue.config) {
@@ -763,7 +707,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   }
 
   public get displayAdvancedAppearance(): boolean {
-    return !!this.modelValue && (!!this.modelValue.settingsSchema && !!this.modelValue.settingsSchema.schema ||
+    return !!this.modelValue && (!!this.modelValue.settingsForm && !!this.modelValue.settingsForm.length ||
         !!this.modelValue.settingsDirective && !!this.modelValue.settingsDirective.length);
   }
 
@@ -802,7 +746,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     }
   }
 
-  public generateDataKey(chip: any, type: DataKeyType, datakeySettingsSchema: JsonSettingsSchema,
+  public generateDataKey(chip: any, type: DataKeyType, dataKeySettingsForm: FormProperty[],
                          isLatestDataKey: boolean, dataKeySettingsFunction: DataKeySettingsFunction): DataKey {
     if (isObject(chip)) {
       (chip as DataKey)._hash = Math.random();
@@ -834,8 +778,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       } else if (type === DataKeyType.count) {
         result.name = 'count';
       }
-      if (datakeySettingsSchema && isDefined(datakeySettingsSchema.schema)) {
-        result.settings = this.utils.generateObjectFromJsonSchema(datakeySettingsSchema.schema);
+      if (dataKeySettingsForm?.length) {
+        result.settings = defaultFormProperties(dataKeySettingsForm);
       } else if (dataKeySettingsFunction) {
         const settings = dataKeySettingsFunction(result, isLatestDataKey);
         if (settings) {

@@ -45,7 +45,7 @@ import { HasTenantId, HasVersion } from '@shared/models/entity.models';
 import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 import { TbFunction } from '@shared/models/js-function.models';
-import { FormProperty } from '@shared/models/dynamic-form.models';
+import { FormProperty, jsonFormSchemaToFormProperties } from '@shared/models/dynamic-form.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -155,9 +155,8 @@ export interface WidgetTypeDescriptor {
   templateCss: string;
   controllerScript: TbFunction;
   settingsForm?: FormProperty[];
-  settingsSchema?: string | any;
-  dataKeySettingsSchema?: string | any;
-  latestDataKeySettingsSchema?: string | any;
+  dataKeySettingsForm?: FormProperty[];
+  latestDataKeySettingsForm?: FormProperty[];
   settingsDirective?: string;
   dataKeySettingsDirective?: string;
   latestDataKeySettingsDirective?: string;
@@ -196,9 +195,8 @@ export interface WidgetTypeParameters {
 export interface WidgetControllerDescriptor {
   widgetTypeFunction?: any;
   settingsForm?: FormProperty[];
-  settingsSchema?: string | any;
-  dataKeySettingsSchema?: string | any;
-  latestDataKeySettingsSchema?: string | any;
+  dataKeySettingsForm?: FormProperty[];
+  latestDataKeySettingsForm?: FormProperty[];
   typeParameters?: WidgetTypeParameters;
   actionSources?: {[actionSourceId: string]: WidgetActionSource};
 }
@@ -237,6 +235,30 @@ export const isValidWidgetFullFqn = (fullFqn: string): boolean => {
   }
   return false;
 };
+
+
+export const migrateWidgetTypeToDynamicForms = <T extends WidgetType>(widgetType: T): T => {
+  const descriptor = widgetType.descriptor;
+  if ((descriptor as any).settingsSchema) {
+    if (!descriptor.settingsForm?.length) {
+      descriptor.settingsForm = jsonFormSchemaToFormProperties((descriptor as any).settingsSchema);
+    }
+    delete (descriptor as any).settingsSchema;
+  }
+  if ((descriptor as any).dataKeySettingsSchema) {
+    if (!descriptor.dataKeySettingsForm?.length) {
+      descriptor.dataKeySettingsForm = jsonFormSchemaToFormProperties((descriptor as any).dataKeySettingsSchema);
+    }
+    delete (descriptor as any).dataKeySettingsSchema;
+  }
+  if ((descriptor as any).latestDataKeySettingsSchema) {
+    if (!descriptor.latestDataKeySettingsForm?.length) {
+      descriptor.latestDataKeySettingsForm = jsonFormSchemaToFormProperties((descriptor as any).latestDataKeySettingsSchema);
+    }
+    delete (descriptor as any).latestDataKeySettingsSchema;
+  }
+  return widgetType;
+}
 
 export interface WidgetType extends BaseWidgetType {
   descriptor: WidgetTypeDescriptor;
@@ -813,24 +835,6 @@ export interface WidgetInfo extends BaseWidgetInfo {
   image?: string;
   description?: string;
   deprecated?: boolean;
-}
-
-export interface GroupInfo {
-  formIndex: number;
-  GroupTitle: string;
-}
-
-export interface JsonSchema {
-  type: string;
-  title?: string;
-  properties: {[key: string]: any};
-  required?: string[];
-}
-
-export interface JsonSettingsSchema {
-  schema?: JsonSchema;
-  form?: any[];
-  groupInfoes?: GroupInfo[];
 }
 
 export interface DynamicFormData {

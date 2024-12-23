@@ -24,7 +24,7 @@ import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import {
   BaseWidgetType,
   DeprecatedFilter,
-  fullWidgetTypeFqn,
+  fullWidgetTypeFqn, migrateWidgetTypeToDynamicForms,
   WidgetType,
   widgetType,
   WidgetTypeDetails,
@@ -271,6 +271,7 @@ export class WidgetService {
     return this.getWidgetType(templateWidgetType.template.fullFqn,
       config).pipe(
         map((result) => {
+          result = migrateWidgetTypeToDynamicForms(result);
           const widgetInfo = toWidgetInfo(result);
           widgetInfo.fullFqn = undefined;
           return widgetInfo;

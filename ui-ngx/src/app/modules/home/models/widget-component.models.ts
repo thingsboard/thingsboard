@@ -21,7 +21,6 @@ import {
   DatasourceData,
   FormattedData,
   fullWidgetTypeFqn,
-  JsonSettingsSchema,
   Widget,
   WidgetActionDescriptor,
   WidgetActionSource,
@@ -562,9 +561,8 @@ export interface WidgetInfo extends WidgetTypeDescriptor, WidgetControllerDescri
   deprecated: boolean;
   scada: boolean;
   typeSettingsForm?: FormProperty[];
-  typeSettingsSchema?: string | any;
-  typeDataKeySettingsSchema?: string | any;
-  typeLatestDataKeySettingsSchema?: string | any;
+  typeDataKeySettingsForm?: FormProperty[];
+  typeLatestDataKeySettingsForm?: FormProperty[];
   image?: string;
   description?: string;
   tags?: string[];
@@ -580,9 +578,8 @@ export interface WidgetConfigComponentData {
   actionSources: {[actionSourceId: string]: WidgetActionSource};
   isDataEnabled: boolean;
   settingsForm: FormProperty[];
-  settingsSchema: JsonSettingsSchema;
-  dataKeySettingsSchema: JsonSettingsSchema;
-  latestDataKeySettingsSchema: JsonSettingsSchema;
+  dataKeySettingsForm: FormProperty[];
+  latestDataKeySettingsForm: FormProperty[];
   dataKeySettingsFunction: DataKeySettingsFunction;
   settingsDirective: string;
   dataKeySettingsDirective: string;
@@ -605,8 +602,8 @@ export const MissingWidgetType: WidgetInfo = {
     '</div>',
   templateCss: '',
   controllerScript: 'self.onInit = function() {}',
-  settingsSchema: '{}\n',
-  dataKeySettingsSchema: '{}\n',
+  settingsForm: [],
+  dataKeySettingsForm: [],
   image: null,
   description: null,
   defaultConfig: '{\n' +
@@ -632,8 +629,8 @@ export const ErrorWidgetType: WidgetInfo = {
                 '</div>',
   templateCss: '',
   controllerScript: 'self.onInit = function() {}',
-  settingsSchema: '{}\n',
-  dataKeySettingsSchema: '{}\n',
+  settingsForm: [],
+  dataKeySettingsForm: [],
   image: null,
   description: null,
   defaultConfig: '{\n' +
@@ -646,9 +643,8 @@ export const ErrorWidgetType: WidgetInfo = {
 
 export interface WidgetTypeInstance {
   getSettingsForm?: () => FormProperty[];
-  getSettingsSchema?: () => string;
-  getDataKeySettingsSchema?: () => string;
-  getLatestDataKeySettingsSchema?: () => string;
+  getDataKeySettingsForm?: () => FormProperty[];
+  getLatestDataKeySettingsForm?: () => FormProperty[];
   typeParameters?: () => WidgetTypeParameters;
   useCustomDatasources?: () => boolean;
   actionSources?: () => {[actionSourceId: string]: WidgetActionSource};
@@ -675,9 +671,8 @@ export const toWidgetInfo = (widgetTypeEntity: WidgetType): WidgetInfo => ({
   templateCss: widgetTypeEntity.descriptor.templateCss,
   controllerScript: widgetTypeEntity.descriptor.controllerScript,
   settingsForm: widgetTypeEntity.descriptor.settingsForm,
-  settingsSchema: widgetTypeEntity.descriptor.settingsSchema,
-  dataKeySettingsSchema: widgetTypeEntity.descriptor.dataKeySettingsSchema,
-  latestDataKeySettingsSchema: widgetTypeEntity.descriptor.latestDataKeySettingsSchema,
+  dataKeySettingsForm: widgetTypeEntity.descriptor.dataKeySettingsForm,
+  latestDataKeySettingsForm: widgetTypeEntity.descriptor.latestDataKeySettingsForm,
   settingsDirective: widgetTypeEntity.descriptor.settingsDirective,
   dataKeySettingsDirective: widgetTypeEntity.descriptor.dataKeySettingsDirective,
   latestDataKeySettingsDirective: widgetTypeEntity.descriptor.latestDataKeySettingsDirective,
@@ -705,9 +700,8 @@ export const toWidgetType = (widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId:
     templateCss: widgetInfo.templateCss,
     controllerScript: widgetInfo.controllerScript,
     settingsForm: widgetInfo.settingsForm,
-    settingsSchema: widgetInfo.settingsSchema,
-    dataKeySettingsSchema: widgetInfo.dataKeySettingsSchema,
-    latestDataKeySettingsSchema: widgetInfo.latestDataKeySettingsSchema,
+    dataKeySettingsForm: widgetInfo.dataKeySettingsForm,
+    latestDataKeySettingsForm: widgetInfo.latestDataKeySettingsForm,
     settingsDirective: widgetInfo.settingsDirective,
     dataKeySettingsDirective: widgetInfo.dataKeySettingsDirective,
     latestDataKeySettingsDirective: widgetInfo.latestDataKeySettingsDirective,

@@ -17,9 +17,8 @@
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { TbEditorCompletion, TbEditorCompletions } from '@shared/models/ace/completion.models';
 import { deepClone, isDefinedAndNotNull, isString } from '@core/utils';
-import { JsonSchema, JsonSettingsSchema } from '@shared/models/widget.models';
-import JsonFormUtils from '@shared/components/json-form/react/json-form-utils';
-import { JsonFormData, KeyLabelItem } from '@shared/components/json-form/react/json-form.models';
+import { JsonSchema, JsonSettingsSchema, JsonFormData, KeyLabelItem } from '@shared/legacy/json-form.models';
+import JsonFormUtils from '@shared/legacy/json-form-utils';
 import { constantColor, Font } from '@shared/models/widget-settings.models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
@@ -573,29 +572,34 @@ const formPropertyCompletionType = (property: FormProperty): string => {
 
 
 export const jsonFormSchemaToFormProperties = (rawSchema: string | any) : FormProperty[] => {
-  const properties: FormProperty[] = [];
-  let settingsSchema: JsonSettingsSchema;
-  if (!rawSchema || rawSchema === '') {
-    settingsSchema = {};
-  } else {
-    settingsSchema = isString(rawSchema) ? JSON.parse(rawSchema) : rawSchema;
-  }
-  if (settingsSchema.schema) {
-    const schema = settingsSchema.schema;
-    const form = settingsSchema.form || ['*'];
-    const groupInfoes = settingsSchema.groupInfoes || [];
-    if (form.length > 0) {
-      if (groupInfoes.length) {
-        for (const info of groupInfoes) {
-          const theForm: any[] = form[info.formIndex];
-          properties.push(...schemaFormToProperties(schema, theForm, info.GroupTitle));
+  try {
+    const properties: FormProperty[] = [];
+    let settingsSchema: JsonSettingsSchema;
+    if (!rawSchema || rawSchema === '') {
+      settingsSchema = {};
+    } else {
+      settingsSchema = isString(rawSchema) ? JSON.parse(rawSchema) : rawSchema;
+    }
+    if (settingsSchema.schema) {
+      const schema = settingsSchema.schema;
+      const form = settingsSchema.form || ['*'];
+      const groupInfoes = settingsSchema.groupInfoes || [];
+      if (form.length > 0) {
+        if (groupInfoes.length) {
+          for (const info of groupInfoes) {
+            const theForm: any[] = form[info.formIndex];
+            properties.push(...schemaFormToProperties(schema, theForm, info.GroupTitle));
+          }
+        } else {
+          properties.push(...schemaFormToProperties(schema, form));
         }
-      } else {
-        properties.push(...schemaFormToProperties(schema, form));
       }
     }
+    return properties;
+  } catch (e) {
+    console.warn('Failed to convert old JSON form schema to form properties:', e);
+    return [];
   }
-  return properties;
 }
 
 const schemaFormToProperties = (schema: JsonSchema, theForm: any[], groupTitle?: string): FormProperty[] => {

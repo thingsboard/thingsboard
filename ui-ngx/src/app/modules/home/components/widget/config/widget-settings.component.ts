@@ -38,8 +38,6 @@ import {
 } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { JsonFormComponent } from '@shared/components/json-form/json-form.component';
-import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
 import { DynamicFormData, IWidgetSettingsComponent, Widget, WidgetSettings } from '@shared/models/widget.models';
 import { widgetSettingsComponentsMap } from '@home/components/widget/lib/settings/widget-settings.module';
 import { Dashboard } from '@shared/models/dashboard.models';
@@ -99,7 +97,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy,
   private definedSettingsComponentRef: ComponentRef<IWidgetSettingsComponent>;
   private definedSettingsComponent: IWidgetSettingsComponent;
 
-  private widgetSettingsFormData: JsonFormComponentData | DynamicFormData;
+  private widgetSettingsFormData: DynamicFormData;
   private propagateChange = (_v: any) => { };
 
   constructor(private translate: TranslateService,
@@ -166,13 +164,9 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy,
     }
   }
 
-  writeValue(value: JsonFormComponentData | DynamicFormData): void {
+  writeValue(value: DynamicFormData): void {
     this.widgetSettingsFormData = value;
-    if ('settingsForm' in this.widgetSettingsFormData) {
-      this.settingsForm = this.widgetSettingsFormData.settingsForm;
-    } else {
-      this.settingsForm = null;
-    }
+    this.settingsForm = this.widgetSettingsFormData.settingsForm;
     if (this.changeSubscription) {
       this.changeSubscription.unsubscribe();
       this.changeSubscription = null;
@@ -187,12 +181,10 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy,
         this.updateModel(settings);
       });
     } else {
-      const settingsValue = this.useJsonForm() ? this.widgetSettingsFormData : this.widgetSettingsFormData.model;
-      this.widgetSettingsFormGroup.get('settings').patchValue(settingsValue, {emitEvent: false});
+      this.widgetSettingsFormGroup.get('settings').patchValue(this.widgetSettingsFormData.model, {emitEvent: false});
       this.changeSubscription = this.widgetSettingsFormGroup.get('settings').valueChanges.subscribe(
-        (data: JsonFormComponentData | WidgetSettings) => {
-          const settings = this.useJsonForm() ? data.model : data;
-          this.updateModel(settings);
+        (data: WidgetSettings) => {
+          this.updateModel(data);
         }
       );
     }
@@ -203,12 +195,8 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy,
       this.settingsDirective.length && !this.definedDirectiveError;
   }
 
-  useJsonForm(): boolean {
-    return (!this.settingsDirective || !this.settingsDirective.length) && !this.settingsForm?.length;
-  }
-
   useDynamicForm(): boolean {
-    return (!this.settingsDirective || !this.settingsDirective.length) && !!this.settingsForm?.length;
+    return !this.settingsDirective || !this.settingsDirective.length;
   }
 
   private updateModel(settings: WidgetSettings) {
@@ -258,7 +246,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy,
           }
         };
       }
-    } else if (this.useJsonForm() || this.useDynamicForm()) {
+    } else if (this.useDynamicForm()) {
       if (!this.widgetSettingsFormGroup.get('settings').valid) {
         return {
           widgetSettings: {
