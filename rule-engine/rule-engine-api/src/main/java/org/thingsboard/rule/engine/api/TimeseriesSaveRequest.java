@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -40,6 +41,7 @@ public class TimeseriesSaveRequest {
     private final long ttl;
     private final boolean saveLatest;
     private final boolean onlyLatest;
+    private final List<CalculatedFieldId> calculatedFieldIds;
     private final FutureCallback<Void> callback;
 
     public static Builder builder() {
@@ -56,6 +58,7 @@ public class TimeseriesSaveRequest {
         private FutureCallback<Void> callback;
         private boolean saveLatest = true;
         private boolean onlyLatest;
+        private List<CalculatedFieldId> calculatedFieldIds;
 
         Builder() {}
 
@@ -103,6 +106,11 @@ public class TimeseriesSaveRequest {
             return this;
         }
 
+        public Builder calculatedFieldIds(List<CalculatedFieldId> calculatedFieldIds) {
+            this.calculatedFieldIds = calculatedFieldIds;
+            return this;
+        }
+
         public Builder callback(FutureCallback<Void> callback) {
             this.callback = callback;
             return this;
@@ -123,7 +131,7 @@ public class TimeseriesSaveRequest {
         }
 
         public TimeseriesSaveRequest build() {
-            return new TimeseriesSaveRequest(tenantId, customerId, entityId, entries, ttl, saveLatest, onlyLatest, callback);
+            return new TimeseriesSaveRequest(tenantId, customerId, entityId, entries, ttl, saveLatest, onlyLatest, calculatedFieldIds, callback);
         }
 
     }

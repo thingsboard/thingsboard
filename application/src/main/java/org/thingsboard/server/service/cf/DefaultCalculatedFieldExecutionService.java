@@ -18,11 +18,7 @@ package org.thingsboard.server.service.cf;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.*;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
@@ -41,25 +37,8 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.AssetProfileId;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.Aggregation;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.BooleanDataEntry;
-import org.thingsboard.server.common.data.kv.DoubleDataEntry;
-import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
-import org.thingsboard.server.common.data.kv.StringDataEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -301,7 +280,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     }
 
     @Override
-    public void onTelemetryUpdate(TenantId tenantId, EntityId entityId, List<? extends KvEntry> telemetry) {
+    public void onTelemetryUpdate(TenantId tenantId, EntityId entityId, List<CalculatedFieldId> calculatedFieldIds, List<? extends KvEntry> telemetry) {
         try {
             EntityType entityType = entityId.getEntityType();
             if (EntityType.DEVICE.equals(entityType) || EntityType.ASSET.equals(entityType) || EntityType.CUSTOMER.equals(entityType) || EntityType.TENANT.equals(entityType)) {
@@ -326,7 +305,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
                             ));
 
                     if (!updatedTelemetry.isEmpty()) {
-                        executeTelemetryUpdate(tenantId, entityId, calculatedFieldId, updatedTelemetry);
+                        executeTelemetryUpdate(tenantId, entityId, calculatedFieldId, calculatedFieldIds, updatedTelemetry);
                     }
                 });
             }
@@ -335,7 +314,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         }
     }
 
-    private void executeTelemetryUpdate(TenantId tenantId, EntityId entityId, CalculatedFieldId calculatedFieldId, Map<String, KvEntry> updatedTelemetry) {
+    private void executeTelemetryUpdate(TenantId tenantId, EntityId entityId, CalculatedFieldId calculatedFieldId, List<CalculatedFieldId> calculatedFieldIds, Map<String, KvEntry> updatedTelemetry) {
         log.info("Received telemetry update msg: tenantId=[{}], entityId=[{}], calculatedFieldId=[{}]", tenantId, entityId, calculatedFieldId);
         CalculatedField calculatedField = getOrFetchFromDb(tenantId, calculatedFieldId);
         CalculatedFieldCtx calculatedFieldCtx = calculatedFieldsCtx.computeIfAbsent(calculatedFieldId, id -> new CalculatedFieldCtx(calculatedField, tbelInvokeService));
@@ -347,12 +326,12 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             case ASSET_PROFILE, DEVICE_PROFILE -> {
                 boolean isCommonEntity = calculatedField.getConfiguration().getReferencedEntities().contains(entityId);
                 if (isCommonEntity) {
-                    getOrFetchFromDBProfileEntities(tenantId, cfEntityId).forEach(id -> updateOrInitializeState(calculatedFieldCtx, id, argumentValues));
+                    getOrFetchFromDBProfileEntities(tenantId, cfEntityId).forEach(id -> updateOrInitializeState(calculatedFieldCtx, id, argumentValues, calculatedFieldIds));
                 } else {
-                    updateOrInitializeState(calculatedFieldCtx, entityId, argumentValues);
+                    updateOrInitializeState(calculatedFieldCtx, entityId, argumentValues, calculatedFieldIds);
                 }
             }
-            default -> updateOrInitializeState(calculatedFieldCtx, cfEntityId, argumentValues);
+            default -> updateOrInitializeState(calculatedFieldCtx, cfEntityId, argumentValues, calculatedFieldIds);
         }
         log.info("Successfully updated telemetry for calculatedFieldId: [{}]", calculatedFieldId);
     }
@@ -583,7 +562,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         Futures.addCallback(Futures.allAsList(futures), new FutureCallback<>() {
             @Override
             public void onSuccess(List<ArgumentEntry> results) {
-                updateOrInitializeState(calculatedFieldCtx, entityId, argumentValues);
+                updateOrInitializeState(calculatedFieldCtx, entityId, argumentValues, Collections.emptyList());
                 callback.onSuccess();
             }
 
@@ -671,7 +650,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         return new StringDataEntry(key, defaultValue);
     }
 
-    private void updateOrInitializeState(CalculatedFieldCtx calculatedFieldCtx, EntityId entityId, Map<String, ArgumentEntry> argumentValues) {
+    private void updateOrInitializeState(CalculatedFieldCtx calculatedFieldCtx, EntityId entityId, Map<String, ArgumentEntry> argumentValues, List<CalculatedFieldId> calculatedFieldIds) {
         CalculatedFieldId cfId = calculatedFieldCtx.getCfId();
         CalculatedFieldEntityCtxId entityCtxId = new CalculatedFieldEntityCtxId(cfId.getId(), entityId.getId());
         CalculatedFieldEntityCtx calculatedFieldEntityCtx = states.computeIfAbsent(entityCtxId, ctxId -> fetchCalculatedFieldEntityState(ctxId, calculatedFieldCtx.getCfType()));
@@ -693,7 +672,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
                 }
 
                 if (allArgsPresent.test(state.getArguments())) {
-                    performCalculation(calculatedFieldCtx, state, entityId);
+                    performCalculation(calculatedFieldCtx, state, entityId, calculatedFieldIds);
                 }
             }
         };
@@ -714,13 +693,13 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         performUpdateState.accept(state);
     }
 
-    private void performCalculation(CalculatedFieldCtx calculatedFieldCtx, CalculatedFieldState state, EntityId entityId) {
+    private void performCalculation(CalculatedFieldCtx calculatedFieldCtx, CalculatedFieldState state, EntityId entityId, List<CalculatedFieldId> calculatedFieldIds) {
         ListenableFuture<CalculatedFieldResult> resultFuture = state.performCalculation(calculatedFieldCtx);
         Futures.addCallback(resultFuture, new FutureCallback<>() {
             @Override
             public void onSuccess(CalculatedFieldResult result) {
                 if (result != null) {
-                    pushMsgToRuleEngine(calculatedFieldCtx.getTenantId(), entityId, result);
+                    pushMsgToRuleEngine(calculatedFieldCtx.getTenantId(), calculatedFieldCtx.getCfId(), entityId, result, calculatedFieldIds);
                 }
             }
 
@@ -739,13 +718,17 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         return JacksonUtil.fromString(stateStr, CalculatedFieldEntityCtx.class);
     }
 
-    private void pushMsgToRuleEngine(TenantId tenantId, EntityId originatorId, CalculatedFieldResult calculatedFieldResult) {
+    private void pushMsgToRuleEngine(TenantId tenantId, CalculatedFieldId calculatedFieldId, EntityId originatorId, CalculatedFieldResult calculatedFieldResult, List<CalculatedFieldId> calculatedFieldIds) {
         try {
             String type = calculatedFieldResult.getType();
             TbMsgType msgType = "ATTRIBUTES".equals(type) ? TbMsgType.POST_ATTRIBUTES_REQUEST : TbMsgType.POST_TELEMETRY_REQUEST;
             TbMsgMetaData md = "ATTRIBUTES".equals(type) ? new TbMsgMetaData(Map.of(SCOPE, calculatedFieldResult.getScope().name())) : TbMsgMetaData.EMPTY;
             ObjectNode payload = createJsonPayload(calculatedFieldResult);
-            TbMsg msg = TbMsg.newMsg(msgType, originatorId, md, JacksonUtil.writeValueAsString(payload));
+            if (calculatedFieldIds.contains(calculatedFieldId)) {
+                throw new IllegalArgumentException("Calculated field [" + calculatedFieldId.getId() + "] refers to itself, causing an infinite loop.");
+            }
+            calculatedFieldIds.add(calculatedFieldId);
+            TbMsg msg = TbMsg.newMsg().type(msgType).originator(originatorId).calculatedFieldIds(calculatedFieldIds).metaData(md).data(JacksonUtil.writeValueAsString(payload)).build();
             clusterService.pushMsgToRuleEngine(tenantId, originatorId, msg, null);
         } catch (Exception e) {
             log.warn("[{}] Failed to push message to rule engine. CalculatedFieldResult: {}", originatorId, calculatedFieldResult, e);

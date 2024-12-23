@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.cf;
 
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.KvEntry;
@@ -27,7 +28,7 @@ public interface CalculatedFieldExecutionService {
 
     void onCalculatedFieldMsg(TransportProtos.CalculatedFieldMsgProto proto, TbCallback callback);
 
-    void onTelemetryUpdate(TenantId tenantId, EntityId entityId, List<? extends KvEntry> telemetry);
+    void onTelemetryUpdate(TenantId tenantId, EntityId entityId, List<CalculatedFieldId> calculatedFieldIds, List<? extends KvEntry> telemetry);
 
     void onCalculatedFieldStateMsg(TransportProtos.CalculatedFieldStateMsgProto proto, TbCallback callback);
 

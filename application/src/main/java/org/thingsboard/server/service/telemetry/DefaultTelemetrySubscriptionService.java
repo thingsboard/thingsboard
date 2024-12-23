@@ -152,7 +152,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         if (request.isSaveLatest() && !request.isOnlyLatest()) {
             addEntityViewCallback(tenantId, entityId, request.getEntries());
         }
-        calculatedFieldExecutionService.onTelemetryUpdate(tenantId, entityId, request.getEntries());
+        calculatedFieldExecutionService.onTelemetryUpdate(tenantId, entityId, request.getCalculatedFieldIds(), request.getEntries());
         return saveFuture;
     }
 
@@ -168,7 +168,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         ListenableFuture<List<Long>> saveFuture = attrService.save(request.getTenantId(), request.getEntityId(), request.getScope(), request.getEntries());
         addMainCallback(saveFuture, request.getCallback());
         addWsCallback(saveFuture, success -> onAttributesUpdate(request.getTenantId(), request.getEntityId(), request.getScope().name(), request.getEntries(), request.isNotifyDevice()));
-        calculatedFieldExecutionService.onTelemetryUpdate(request.getTenantId(), request.getEntityId(), request.getEntries());
+        calculatedFieldExecutionService.onTelemetryUpdate(request.getTenantId(), request.getEntityId(), request.getCalculatedFieldIds(), request.getEntries());
     }
 
     @Override
