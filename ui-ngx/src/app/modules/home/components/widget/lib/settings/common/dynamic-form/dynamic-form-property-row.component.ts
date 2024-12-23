@@ -16,7 +16,8 @@
 
 import {
   ChangeDetectorRef,
-  Component, DestroyRef,
+  Component,
+  DestroyRef,
   ElementRef,
   EventEmitter,
   forwardRef,
@@ -105,12 +106,12 @@ export class DynamicFormPropertyRowComponent implements ControlValueAccessor, On
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: UntypedFormBuilder,
-              private destroyRef: DestroyRef,
               private cd: ChangeDetectorRef,
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
-              private propertiesComponent: DynamicFormPropertiesComponent) {
+              private propertiesComponent: DynamicFormPropertiesComponent,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {

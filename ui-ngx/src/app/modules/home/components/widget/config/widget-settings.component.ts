@@ -153,6 +153,10 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy,
     if (this.definedSettingsComponentRef) {
       this.definedSettingsComponentRef.destroy();
     }
+    if (this.changeSubscription) {
+      this.changeSubscription.unsubscribe();
+      this.changeSubscription = null;
+    }
   }
 
   setDisabledState(isDisabled: boolean): void {

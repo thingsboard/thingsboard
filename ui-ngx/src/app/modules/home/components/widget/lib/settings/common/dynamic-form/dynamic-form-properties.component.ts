@@ -15,7 +15,8 @@
 ///
 
 import {
-  Component, DestroyRef,
+  Component,
+  DestroyRef,
   forwardRef,
   HostBinding,
   Input,
@@ -47,9 +48,9 @@ import {
   DynamicFormPropertyRowComponent
 } from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-property-row.component';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { DialogService } from '@core/services/dialog.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-dynamic-form-properties',
@@ -116,10 +117,10 @@ export class DynamicFormPropertiesComponent implements ControlValueAccessor, OnI
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: UntypedFormBuilder,
-              private destroyRef: DestroyRef,
               private translate: TranslateService,
               private importExportService: ImportExportService,
-              private dialogService: DialogService) {
+              private dialogService: DialogService,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {

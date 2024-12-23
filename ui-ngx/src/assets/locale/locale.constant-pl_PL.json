@@ -4520,7 +4520,6 @@
         "output": "Wyjście",
         "test": "Test",
         "help": "Pomoc",
-        "reset-debug-mode": "Zresetuj tryb debugowania we wszystkich węzłach",
         "test-with-this-message": "{{test}} with this message",
         "description": "Opis"
     },

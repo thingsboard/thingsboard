@@ -110,7 +110,7 @@ public abstract class EdgeGrpcSession implements Closeable {
     private static final String QUEUE_START_TS_ATTR_KEY = "queueStartTs";
     private static final String QUEUE_START_SEQ_ID_ATTR_KEY = "queueStartSeqId";
 
-    private static final int MAX_DOWNLINK_ATTEMPTS = 10;
+    private static final int MAX_DOWNLINK_ATTEMPTS = 3;
     private static final String RATE_LIMIT_REACHED = "Rate limit reached";
 
     protected static final ConcurrentLinkedQueue<EdgeEvent> highPriorityQueue = new ConcurrentLinkedQueue<>();
@@ -135,7 +135,7 @@ public abstract class EdgeGrpcSession implements Closeable {
     private StreamObserver<RequestMsg> inputStream;
     private StreamObserver<ResponseMsg> outputStream;
 
-    private boolean connected;
+    private volatile boolean connected;
     private volatile boolean syncCompleted;
 
     private EdgeVersion edgeVersion;
@@ -536,13 +536,15 @@ public abstract class EdgeGrpcSession implements Closeable {
 
     public void processHighPriorityEvents() {
         try {
-            List<EdgeEvent> highPriorityEvents = new ArrayList<>();
-            EdgeEvent event;
-            while ((event = highPriorityQueue.poll()) != null) {
-                highPriorityEvents.add(event);
+            if (isConnected() && isSyncCompleted()) {
+                List<EdgeEvent> highPriorityEvents = new ArrayList<>();
+                EdgeEvent event;
+                while ((event = highPriorityQueue.poll()) != null) {
+                    highPriorityEvents.add(event);
+                }
+                List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(highPriorityEvents);
+                sendDownlinkMsgsPack(downlinkMsgsPack).get();
             }
-            List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(highPriorityEvents);
-            sendDownlinkMsgsPack(downlinkMsgsPack).get();
         } catch (Exception e) {
             log.error("[{}] Failed to process high priority events", sessionId, e);
         }

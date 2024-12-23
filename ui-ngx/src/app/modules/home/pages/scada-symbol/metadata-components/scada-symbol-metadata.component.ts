@@ -16,6 +16,7 @@
 
 import {
   Component,
+  DestroyRef,
   forwardRef,
   Input,
   OnChanges,
@@ -54,6 +55,7 @@ import {
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { IAliasController } from '@core/api/widget-api.models';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-scada-symbol-metadata',
@@ -126,7 +128,8 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder,
               private translate: TranslateService,
-              private customTranslate: CustomTranslatePipe) {
+              private customTranslate: CustomTranslatePipe,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -144,7 +147,9 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
     });
     this.updateFunctionCompleters(emptyMetadata());
 
-    this.metadataFormGroup.valueChanges.subscribe(() => {
+    this.metadataFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }

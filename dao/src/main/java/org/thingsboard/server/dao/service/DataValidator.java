@@ -43,7 +43,10 @@ public abstract class DataValidator<D extends BaseData<?>> {
             Pattern.compile("^[A-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", Pattern.CASE_INSENSITIVE);
 
     private static final Pattern QUEUE_PATTERN = Pattern.compile("^[a-zA-Z0-9_.\\-]+$");
-
+    private static final String DOMAIN_REGEX = "^(((?!-))(xn--|_)?[a-z0-9-]{0,61}[a-z0-9]{1,1}\\.)*(xn--)?([a-z0-9][a-z0-9\\-]{0,60}|[a-z0-9-]{1,30}\\.[a-z]{2,})$";
+    private static final Pattern DOMAIN_PATTERN = Pattern.compile(DOMAIN_REGEX);
+    private static final String LOCALHOST_REGEX = "^localhost(:\\d{1,5})?$";
+    private static final Pattern LOCALHOST_PATTERN = Pattern.compile(LOCALHOST_REGEX);
     private static final String NAME = "name";
     private static final String TOPIC = "topic";
 
@@ -169,6 +172,16 @@ public abstract class DataValidator<D extends BaseData<?>> {
             throw new DataValidationException(
                     String.format("Queue %s contains a character other than ASCII alphanumerics, '.', '_' and '-'!", fieldName));
         }
+    }
+
+    public static boolean isValidDomain(String domainName) {
+        if (domainName == null) {
+            return false;
+        }
+        if (LOCALHOST_PATTERN.matcher(domainName).matches()) {
+            return true;
+        }
+        return DOMAIN_PATTERN.matcher(domainName).matches();
     }
 
 }

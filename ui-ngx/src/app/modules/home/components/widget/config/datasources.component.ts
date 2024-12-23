@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -43,6 +43,7 @@ import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/wid
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { FormProperty } from '@shared/models/dynamic-form.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-datasources',
@@ -150,7 +151,8 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
   constructor(private fb: UntypedFormBuilder,
               private utils: UtilsService,
               public translate: TranslateService,
-              private widgetConfigComponent: WidgetConfigComponent) {
+              private widgetConfigComponent: WidgetConfigComponent,
+              private destroyRef: DestroyRef) {
   }
 
   registerOnChange(fn: any): void {
@@ -178,7 +180,9 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
     this.datasourcesFormGroup = this.fb.group({
       datasources: this.fb.array([])
     });
-    this.datasourcesFormGroup.valueChanges.subscribe(
+    this.datasourcesFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => {
         this.datasourcesUpdated(this.datasourcesFormGroup.get('datasources').value);
       }

@@ -74,7 +74,14 @@ public class TbMsgCountNode implements TbNode {
             TbMsgMetaData metaData = new TbMsgMetaData();
             metaData.putValue("delta", Long.toString(System.currentTimeMillis() - lastScheduledTs + delay));
 
-            TbMsg tbMsg = TbMsg.newMsg(msg.getQueueName(), TbMsgType.POST_TELEMETRY_REQUEST, ctx.getTenantId(), msg.getCustomerId(), metaData, gson.toJson(telemetryJson));
+            TbMsg tbMsg = TbMsg.newMsg()
+                    .queueName(msg.getQueueName())
+                    .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                    .originator(ctx.getTenantId())
+                    .customerId(msg.getCustomerId())
+                    .copyMetaData(metaData)
+                    .data(gson.toJson(telemetryJson))
+                    .build();
             ctx.enqueueForTellNext(tbMsg, TbNodeConnectionType.SUCCESS);
             scheduleTickMsg(ctx, tbMsg);
         } else {

@@ -18,9 +18,11 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   EventEmitter,
-  Input, NgZone,
+  Input,
+  NgZone,
   OnChanges,
   OnDestroy,
   OnInit,
@@ -39,6 +41,7 @@ import {
   parseScadaSymbolsTagsFromContent,
   removeScadaSymbolMetadata
 } from '@home/components/widget/lib/scada/scada-symbol.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface ScadaSymbolEditorData {
   scadaSymbolContent: string;
@@ -106,7 +109,8 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   constructor(private cd: ChangeDetectorRef,
-              private zone: NgZone) {
+              private zone: NgZone,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -115,7 +119,9 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
     } else {
       this.svgContentFormControl.enable({emitEvent: false});
     }
-    this.svgContentFormControl.valueChanges.subscribe((svgContent) => {
+    this.svgContentFormControl.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((svgContent) => {
       if (this.svgContent !== svgContent) {
         this.svgContent = svgContent;
         this.editObjectCallbacks.onSymbolEditObjectDirty(true);

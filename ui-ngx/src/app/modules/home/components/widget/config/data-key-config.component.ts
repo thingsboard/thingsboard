@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -59,6 +59,7 @@ import { WidgetComponentService } from '@home/components/widget/widget-component
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 import { isNotEmptyTbFunction, TbFunction } from '@shared/models/js-function.models';
 import { FormProperty } from '@shared/models/dynamic-form.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-data-key-config',
@@ -189,7 +190,8 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
               private translate: TranslateService,
               private widgetService: WidgetService,
               private widgetComponentService: WidgetComponentService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
     this.functionScopeVariables = this.widgetService.getWidgetScopeVariables();
   }
@@ -237,7 +239,9 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
       this.dataKeySettingsFormGroup = this.fb.group({
         settings: [null, []]
       });
-      this.dataKeySettingsFormGroup.valueChanges.subscribe(() => {
+      this.dataKeySettingsFormGroup.valueChanges.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => {
         this.updateModel();
       });
     }
@@ -257,7 +261,9 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
       postFuncBody: [null, []]
     });
 
-    this.dataKeyFormGroup.get('aggregationType').valueChanges.subscribe(
+    this.dataKeyFormGroup.get('aggregationType').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       (aggType) => {
         if (!this.dataKeyFormGroup.get('label').dirty) {
           let newLabel = this.dataKeyFormGroup.get('name').value;
@@ -271,23 +277,31 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
       }
     );
 
-    this.dataKeyFormGroup.get('comparisonEnabled').valueChanges.subscribe(
+    this.dataKeyFormGroup.get('comparisonEnabled').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => {
         this.updateComparisonValues();
       }
     );
 
-    this.dataKeyFormGroup.get('timeForComparison').valueChanges.subscribe(
+    this.dataKeyFormGroup.get('timeForComparison').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => {
         this.updateComparisonValues();
       }
     );
 
-    this.dataKeyFormGroup.valueChanges.subscribe(() => {
+    this.dataKeyFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
 
-    this.dataKeyFormGroup.get('usePostProcessing').valueChanges.subscribe((usePostProcessing: boolean) => {
+    this.dataKeyFormGroup.get('usePostProcessing').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((usePostProcessing: boolean) => {
       const postFuncBody: TbFunction = this.dataKeyFormGroup.get('postFuncBody').value;
       if (usePostProcessing && !isNotEmptyTbFunction(postFuncBody)) {
         this.dataKeyFormGroup.get('postFuncBody').patchValue('return value;');

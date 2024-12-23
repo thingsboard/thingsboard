@@ -362,7 +362,14 @@ public class DefaultTransportApiService implements TransportApiService {
 
                 DeviceId deviceId = device.getId();
                 JsonNode entityNode = JacksonUtil.valueToTree(device);
-                TbMsg tbMsg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, deviceId, customerId, metaData, TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
+                TbMsg tbMsg = TbMsg.newMsg()
+                        .type(TbMsgType.ENTITY_CREATED)
+                        .originator(deviceId)
+                        .customerId(customerId)
+                        .copyMetaData(metaData)
+                        .dataType(TbMsgDataType.JSON)
+                        .data(JacksonUtil.toString(entityNode))
+                        .build();
                 tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, null);
             } else {
                 JsonNode deviceAdditionalInfo = device.getAdditionalInfo();

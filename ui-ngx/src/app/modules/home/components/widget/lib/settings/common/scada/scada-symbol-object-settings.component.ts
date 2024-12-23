@@ -14,7 +14,17 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  forwardRef,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  SimpleChanges
+} from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -44,6 +54,7 @@ import { Observable, of } from 'rxjs';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { ImageService } from '@core/http/image.service';
 import { map } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-scada-symbol-object-settings',
@@ -62,7 +73,7 @@ import { map } from 'rxjs/operators';
     }
   ]
 })
-export class ScadaSymbolObjectSettingsComponent implements OnInit, OnChanges, ControlValueAccessor, Validator {
+export class ScadaSymbolObjectSettingsComponent implements OnInit, OnChanges, ControlValueAccessor, Validator, OnDestroy {
 
   ScadaSymbolBehaviorType = ScadaSymbolBehaviorType;
 
@@ -102,7 +113,8 @@ export class ScadaSymbolObjectSettingsComponent implements OnInit, OnChanges, Co
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder,
               private imageService: ImageService,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -110,7 +122,9 @@ export class ScadaSymbolObjectSettingsComponent implements OnInit, OnChanges, Co
       behavior: this.fb.group({}),
       properties: [{}, []]
     });
-    this.scadaSymbolObjectSettingsFormGroup.valueChanges.subscribe(() => {
+    this.scadaSymbolObjectSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
     this.loadMetadata();
@@ -124,6 +138,13 @@ export class ScadaSymbolObjectSettingsComponent implements OnInit, OnChanges, Co
           this.loadMetadata();
         }
       }
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.validatorSubscription) {
+      this.validatorSubscription.unsubscribe();
+      this.validatorSubscription = null;
     }
   }
 
