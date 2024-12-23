@@ -89,7 +89,6 @@
     "tinymce": "~6.8.5",
     "tooltipster": "^4.2.8",
     "tslib": "^2.7.0",
-    "tv4": "^1.3.0",
     "typeface-roboto": "^1.1.13",
     "zone.js": "~0.14.10"
   },
