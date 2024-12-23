@@ -1,0 +1,74 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-dynamic-form-array tb-form-panel stroked" [class.no-padding-right]="!disabled || !propertiesFormArray().controls.length">
+  <mat-expansion-panel class="tb-settings" expanded>
+    <mat-expansion-panel-header class="flex flex-row flex-wrap">
+      <mat-panel-title>
+        <div class="tb-form-panel-title">{{ title }}</div>
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <div *ngIf="propertiesFormArray().controls.length; else noProperties" class="tb-dynamic-form-array-body tb-drop-list"
+           cdkDropList cdkDropListOrientation="vertical"
+           [cdkDropListDisabled]="!dragEnabled"
+           (cdkDropListDropped)="propertyDrop($event)">
+        <div cdkDrag [cdkDragDisabled]="!dragEnabled"
+             class="tb-draggable tb-dynamic-form-array-row"
+             *ngFor="let propertyControl of propertiesFormArray().controls; trackBy: trackByProperty; let $index = index;">
+          <div class="tb-dynamic-form-item-index-container">
+            <div class="tb-dynamic-form-item-index">{{$index + 1}}</div>
+          </div>
+          <tb-dynamic-form class="flex-1"
+                           [properties]="[itemProperty]"
+                           [formControl]="propertyControl"
+                           isArrayItem noPadding noBorder>
+          </tb-dynamic-form>
+          <div class="tb-dynamic-form-array-buttons">
+            <button mat-icon-button
+                    *ngIf="!disabled"
+                    type="button"
+                    (click)="removeProperty($index)"
+                    matTooltip="{{ 'action.delete' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>delete</mat-icon>
+            </button>
+            <button mat-icon-button
+                    *ngIf="!disabled"
+                    type="button"
+                    cdkDragHandle
+                    [class.tb-hidden]="!dragEnabled"
+                    matTooltip="{{ 'action.drag' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>drag_indicator</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="!disabled || !propertiesFormArray().controls.length" [class.invisible]="disabled">
+        <button type="button" mat-stroked-button color="primary" (click)="addProperty()">
+          <mat-icon>add</mat-icon>
+          {{ 'action.add' | translate }}
+        </button>
+      </div>
+    </ng-template>
+  </mat-expansion-panel>
+</div>
+
+<ng-template #noProperties>
+  <span class="tb-prompt flex items-center justify-center">{{ 'dynamic-form.property.no-items' | translate }}</span>
+</ng-template>
