@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 
-import java.util.Set;
+import java.util.List;
 
 public interface NotificationCenter {
 
@@ -48,6 +48,6 @@ public interface NotificationCenter {
 
     void deleteNotification(TenantId tenantId, UserId recipientId, NotificationId notificationId);
 
-    Set<NotificationDeliveryMethod> getAvailableDeliveryMethods(TenantId tenantId);
+    List<NotificationDeliveryMethod> getAvailableDeliveryMethods(TenantId tenantId);
 
 }

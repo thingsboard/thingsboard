@@ -31,6 +31,7 @@ import org.thingsboard.server.dao.oauth2.OAuth2ClientDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -65,8 +66,17 @@ public class JpaOAuth2ClientDao extends JpaAbstractDao<OAuth2ClientEntity, OAuth
 
     @Override
     public List<OAuth2Client> findEnabledByPkgNameAndPlatformType(String pkgName, PlatformType platformType) {
-        return DaoUtil.convertDataList(repository.findEnabledByPkgNameAndPlatformType(pkgName,
-                platformType != null ? platformType.name() : null));
+        List<OAuth2ClientEntity> clientEntities;
+        if (platformType != null) {
+            clientEntities = switch (platformType) {
+                case ANDROID -> repository.findEnabledByAndroidPkgNameAndPlatformType(pkgName, platformType.name());
+                case IOS -> repository.findEnabledByIosPkgNameAndPlatformType(pkgName, platformType.name());
+                default -> Collections.emptyList();
+            };
+        } else {
+            clientEntities = Collections.emptyList();
+        }
+        return DaoUtil.convertDataList(clientEntities);
     }
 
     @Override

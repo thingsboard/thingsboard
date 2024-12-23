@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ArgumentCaptor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
@@ -53,6 +52,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.assertArg;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willCallRealMethod;
 import static org.mockito.Mockito.mock;
@@ -174,16 +174,14 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
 
         node.saveAttr(testAttrList, ctxMock, testTbMsg, AttributeScope.SHARED_SCOPE, false);
 
-        ArgumentCaptor<Boolean> notifyDeviceCaptor = ArgumentCaptor.forClass(Boolean.class);
-
-        verify(telemetryServiceMock, times(1)).saveAndNotify(
-                eq(tenantId), eq(deviceId), eq(AttributeScope.SHARED_SCOPE),
-                eq(testAttrList), notifyDeviceCaptor.capture(), any()
-        );
-        boolean notifyDevice = notifyDeviceCaptor.getValue();
-        assertThat(notifyDevice).isEqualTo(expectedArgumentValue);
+        verify(telemetryServiceMock, times(1)).saveAttributes(assertArg(request -> {
+            assertThat(request.getTenantId()).isEqualTo(tenantId);
+            assertThat(request.getEntityId()).isEqualTo(deviceId);
+            assertThat(request.getScope()).isEqualTo(AttributeScope.SHARED_SCOPE);
+            assertThat(request.getEntries()).isEqualTo(testAttrList);
+            assertThat(request.isNotifyDevice()).isEqualTo(expectedArgumentValue);
+        }));
     }
-
 
     // Rule nodes upgrade
     private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {

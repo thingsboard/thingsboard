@@ -93,8 +93,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -103,6 +107,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -113,7 +118,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = {
         "queue.core.housekeeper.task-reprocessing-delay-ms=2000",
         "queue.core.housekeeper.poll-interval-ms=1000",
-        "queue.core.housekeeper.max-reprocessing-attempts=5"
+        "queue.core.housekeeper.max-reprocessing-attempts=5",
+        "queue.core.housekeeper.task-processing-timeout-ms=5000",
 })
 public class HousekeeperServiceTest extends AbstractControllerTest {
 
@@ -320,7 +326,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
 
     @Test
     public void whenTaskProcessingFails_thenReprocess() throws Exception {
-        TimeoutException error = new TimeoutException("Test timeout");
+        Exception error = new RuntimeException("Just a test");
         doThrow(error).when(tsHistoryDeletionTaskProcessor).process(any());
 
         Device device = createDevice("test", "test");
@@ -339,6 +345,54 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
 
         assertThat(getTimeseriesHistory(device.getId())).isNotEmpty();
         doCallRealMethod().when(tsHistoryDeletionTaskProcessor).process(any());
+        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(getTimeseriesHistory(device.getId())).isEmpty();
+        });
+    }
+
+    @Test
+    public void whenTaskProcessingTimedOut_thenInterruptAndReprocess() throws Exception {
+        ExecutorService someExecutor = Executors.newSingleThreadExecutor();
+        AtomicBoolean taskInterrupted = new AtomicBoolean(false);
+        AtomicBoolean underlyingTaskInterrupted = new AtomicBoolean(false);
+        doAnswer(invocationOnMock -> {
+            Future<?> future = someExecutor.submit(() -> {
+                try {
+                    Thread.sleep(TimeUnit.HOURS.toMillis(24));
+                } catch (InterruptedException e) {
+                    underlyingTaskInterrupted.set(true);
+                }
+            });
+            try {
+                future.get();
+            } catch (InterruptedException e) {
+                taskInterrupted.set(true);
+                future.cancel(true);
+                throw e;
+            }
+            return null;
+        }).when(tsHistoryDeletionTaskProcessor).process(any());
+
+        Device device = createDevice("test", "test");
+        createRelatedData(device.getId());
+
+        doDelete("/api/device/" + device.getId()).andExpect(status().isOk());
+
+        int attempts = 2;
+        await().atMost(30, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).untilAsserted(() -> {
+            for (int i = 0; i <= attempts; i++) {
+                int attempt = i;
+                verify(housekeeperReprocessingService).submitForReprocessing(argThat(getTaskMatcher(device.getId(), HousekeeperTaskType.DELETE_TS_HISTORY,
+                        task -> task.getAttempt() == attempt)), argThat(error -> error instanceof TimeoutException));
+            }
+        });
+        assertThat(taskInterrupted).isTrue();
+        assertThat(underlyingTaskInterrupted).isTrue();
+
+        assertThat(getTimeseriesHistory(device.getId())).isNotEmpty();
+        doCallRealMethod().when(tsHistoryDeletionTaskProcessor).process(any());
+        someExecutor.shutdown();
+
         await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(getTimeseriesHistory(device.getId())).isEmpty();
         });

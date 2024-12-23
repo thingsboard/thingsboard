@@ -989,16 +989,16 @@
         "type-timeseries-deleted": "Telemetry deleted",
         "type-sms-sent": "SMS sent"
     },
-    "debug-config": {
-        "min": "{{number}} min",
+    "debug-settings": {
         "label": "Debug configuration",
         "on-failure": "Failures only (24/7)",
         "all-messages": "All messages ({{time}})",
         "failures": "Failures",
-        "all": "All",
+        "entity": "entity",
+        "rule-node": "rule node",
         "hint": {
             "main": "All node debug messages rate limited with:",
-            "main-limited": "All node debug messages will be rate-limited, with a maximum of {{msg}} messages allowed per {{sec}} seconds.",
+            "main-limited": "All {{entity}} debug messages will be rate-limited, with a maximum of {{msg}} messages allowed per {{time}}.",
             "on-failure": "Save all failure debug events without time limit.",
             "all-messages": "Save all debug events during time limit."
         }
@@ -3179,8 +3179,10 @@
             "critical": "Critical",
             "critical-click": "Critical click",
             "critical-state-hint": "Indicates whether component is in critical state.",
-            "critical-state-animation": "Alarm state animation",
+            "critical-state-animation": "Critical state animation",
             "critical-state-animation-hint": "Whether to enable blinking animation when component is in critical state.",
+            "warning-critical-state-animation": "Warning/Critical state animation",
+            "warning-critical-state-animation-hint": "Whether to enable blinking animation when component is in warning or critical state.",
             "animation": "Animation",
             "broken": "Broken",
             "broken-hint": "Indicates whether component is broken.",
@@ -3330,7 +3332,9 @@
         "module-no-members": "Module has no exported members",
         "module-load-error": "Module load error",
         "source-code": "Source code",
-        "source-code-load-error": "Source code load error"
+        "source-code-load-error": "Source code load error",
+        "no-js-module-text": "No JS modules found",
+        "no-js-module-matching": "No JS modules matching '{{module}}' were found."
     },
     "key-val": {
         "key": "Key",
@@ -3548,7 +3552,8 @@
         "tablet-959": "Tablet (max 959px)",
         "max-element-number": "Max elements number",
         "page-name": "Page name",
-        "page-nam-required": "Page name is required.",
+        "page-name-required": "Page name is required.",
+        "page-name-cannot-contain-only-spaces": "Page name cannot contain only spaces.",
         "page-type": "Page type",
         "pages-types": {
             "dashboard": "Dashboard",
@@ -3556,9 +3561,9 @@
             "custom": "Custom"
         },
         "url": "URL",
-        "url-pattern": "Invalid URL",
+        "invalid-url-format": "Invalid URL format",
         "path": "Path",
-        "path-pattern": "Path pattern",
+        "invalid-path-format": "Invalid path format",
         "custom-page": "Custom page",
         "edit-page": "Edit page",
         "edit-custom-page": "Edit custom page",
@@ -4291,7 +4296,7 @@
         "output": "Output",
         "test": "Test",
         "help": "Help",
-        "reset-debug-mode": "Reset debug mode in all nodes",
+        "reset-debug-settings": "Reset debug settings in all nodes",
         "test-with-this-message": "{{test}} with this message",
         "queue-hint": "Select a queue for message forwarding to another queue.  'Main' queue is used by default.",
         "queue-singleton-hint": "Select a queue for message forwarding in multi-instance environments. 'Main' queue is used by default."
@@ -4741,6 +4746,7 @@
         "sec": "{{ sec }} sec",
         "sec-short": "{{ sec }}s",
         "short": {
+            "years": "{ years, plural, =1 {1 year } other {# years } }",
             "days": "{ days, plural, =1 {1 day } other {# days } }",
             "hours": "{ hours, plural, =1 {1 hour } other {# hours } }",
             "minutes": "{{minutes}} min ",
@@ -5705,7 +5711,12 @@
         "action-button": {
             "behavior": "Behavior",
             "on-click": "On click",
-            "on-click-hint": "Action triggered when the button is clicked"
+            "on-click-hint": "Action triggered when the button is clicked",
+            "first-button-click": "First button click",
+            "first-button-click-hint": "Action while pressing on first button.",
+            "second-button-click": "Second button click",
+            "second-button-click-hint": "Action while pressing on second button.",
+            "button-click-hint": "Action while pressing on widget."
         },
         "command-button": {
             "behavior": "Behavior",
@@ -5750,6 +5761,18 @@
             "vertical-fill": "Vertical fill",
             "button-appearance": "Button appearance"
         },
+        "segmented-button": {
+            "layout": "Layout",
+            "layout-squared": "Squared",
+            "layout-rounded": "Rounded",
+            "card-border": "Card border",
+            "button-appearance": "Button appearance",
+            "first": "First",
+            "second": "Second",
+            "color-styles": "Color styles",
+            "selected": "Selected",
+            "unselected": "Unselected"
+        },
         "button": {
             "layout": "Layout",
             "outlined": "Outlined",
@@ -5763,6 +5786,7 @@
             "color-palette": "Color palette",
             "main": "Main",
             "background": "Background",
+            "border": "Border",
             "custom-styles": "Custom styles",
             "clear-style": "Clear style",
             "shadow": "Shadow",
@@ -5776,11 +5800,16 @@
             "activated-state-hint": "Configure condition under which the button is active.",
             "disabled-state": "Disabled state",
             "disabled-state-hint": "Configure condition under which the button is disabled.",
+            "selected-state": "Select button",
+            "selected-state-hint": "Configure condition under which the button is select.",
             "enabled": "Enabled",
             "hovered": "Hovered",
             "pressed": "Pressed",
             "activated": "Activated",
-            "disabled": "Disabled"
+            "disabled": "Disabled",
+            "initial": "First button",
+            "first": "First",
+            "second": "Second"
         },
         "background": {
             "background": "Background",

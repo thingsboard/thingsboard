@@ -368,6 +368,9 @@ import {
 import {
 ScadaSymbolWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/scada/scada-symbol-widget-settings.component';
+import {
+  SegmentedButtonWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/button/segmented-button-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -483,6 +486,7 @@ ScadaSymbolWidgetSettingsComponent
     BarChartWithLabelsWidgetSettingsComponent,
     SingleSwitchWidgetSettingsComponent,
     ActionButtonWidgetSettingsComponent,
+    SegmentedButtonWidgetSettingsComponent,
     CommandButtonWidgetSettingsComponent,
     PowerButtonWidgetSettingsComponent,
     SliderWidgetSettingsComponent,
@@ -619,6 +623,7 @@ ScadaSymbolWidgetSettingsComponent
     BarChartWithLabelsWidgetSettingsComponent,
     SingleSwitchWidgetSettingsComponent,
     ActionButtonWidgetSettingsComponent,
+    SegmentedButtonWidgetSettingsComponent,
     CommandButtonWidgetSettingsComponent,
     PowerButtonWidgetSettingsComponent,
     SliderWidgetSettingsComponent,
@@ -723,6 +728,7 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-bar-chart-with-labels-widget-settings': BarChartWithLabelsWidgetSettingsComponent,
   'tb-single-switch-widget-settings': SingleSwitchWidgetSettingsComponent,
   'tb-action-button-widget-settings': ActionButtonWidgetSettingsComponent,
+  'tb-segmented-button-widget-settings': SegmentedButtonWidgetSettingsComponent,
   'tb-command-button-widget-settings': CommandButtonWidgetSettingsComponent,
   'tb-power-button-widget-settings': PowerButtonWidgetSettingsComponent,
   'tb-slider-widget-settings': SliderWidgetSettingsComponent,

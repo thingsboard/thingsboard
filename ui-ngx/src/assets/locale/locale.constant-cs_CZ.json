@@ -2426,8 +2426,7 @@
         "metadata-required": "Záznam metadat nemůže být prázdný.",
         "output": "Výstup",
         "test": "Test",
-        "help": "Nápověda",
-        "reset-debug-mode": "Resetovat režim ladění na všech uzlech"
+        "help": "Nápověda"
     },
     "timezone": {
         "timezone": "Časová zóna",

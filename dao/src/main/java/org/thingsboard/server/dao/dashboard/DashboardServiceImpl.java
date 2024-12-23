@@ -162,18 +162,19 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             dashboardValidator.validate(dashboard, DashboardInfo::getTenantId);
         }
         try {
+            TenantId tenantId = dashboard.getTenantId();
             if (CollectionUtils.isNotEmpty(dashboard.getResources())) {
-                resourceService.importResources(dashboard.getTenantId(), dashboard.getResources());
+                resourceService.importResources(tenantId, dashboard.getResources());
             }
             imageService.updateImagesUsage(dashboard);
-            resourceService.updateResourcesUsage(dashboard);
+            resourceService.updateResourcesUsage(tenantId, dashboard);
 
-            var saved = dashboardDao.save(dashboard.getTenantId(), dashboard);
+            var saved = dashboardDao.save(tenantId, dashboard);
             publishEvictEvent(new DashboardTitleEvictEvent(saved.getId()));
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(saved.getTenantId())
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
                     .entityId(saved.getId()).created(dashboard.getId() == null).build());
             if (dashboard.getId() == null) {
-                countService.publishCountEntityEvictEvent(saved.getTenantId(), EntityType.DASHBOARD);
+                countService.publishCountEntityEvictEvent(tenantId, EntityType.DASHBOARD);
             }
             return saved;
         } catch (Exception e) {
