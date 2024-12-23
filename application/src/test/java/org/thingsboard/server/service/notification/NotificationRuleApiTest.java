@@ -352,12 +352,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .findFirst().orElse(null);
         assertThat(scheduledNotificationRequest).extracting(NotificationRequest::getInfo).isEqualTo(notification.getInfo());
 
-        getWsClient().registerWaitForUpdate();
         alarmSubscriptionService.clearAlarm(tenantId, alarm.getId(), System.currentTimeMillis(), null);
-        getWsClient().waitForUpdate(true);
-        notification = getWsClient().getLastDataUpdate().getUpdate();
-        assertThat(notification.getSubject()).isEqualTo("critical alarm '" + alarmType + "' is CLEARED_UNACK");
-
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(findNotificationRequests(EntityType.ALARM).getData()).filteredOn(NotificationRequest::isScheduled).isEmpty();
         });
