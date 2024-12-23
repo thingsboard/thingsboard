@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
+import { Component, DestroyRef, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -40,6 +40,7 @@ import {
   parseScadaSymbolMetadataFromContent,
   updateScadaSymbolMetadataInContent
 } from '@home/components/widget/lib/scada/scada-symbol.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface UploadImageDialogData {
   imageSubType: ResourceSubType;
@@ -81,7 +82,8 @@ export class UploadImageDialogComponent extends
               @Inject(MAT_DIALOG_DATA) public data: UploadImageDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<UploadImageDialogComponent, UploadImageDialogResult>,
-              public fb: UntypedFormBuilder) {
+              public fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store, router, dialogRef);
   }
 
@@ -93,7 +95,9 @@ export class UploadImageDialogComponent extends
     if (this.uploadImage) {
       this.uploadImageFormGroup.addControl('title', this.fb.control(null, [Validators.required]));
       if (this.isScada) {
-        this.uploadImageFormGroup.get('file').valueChanges.subscribe((file: File) => {
+        this.uploadImageFormGroup.get('file').valueChanges.pipe(
+          takeUntilDestroyed(this.destroyRef)
+        ).subscribe((file: File) => {
           if (file) {
             blobToText(file).subscribe(content => {
               this.scadaSymbolContent = content;

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormBuilder,
@@ -28,6 +28,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface UpdateAttributeGeneralSettings {
   widgetTitle: string;
@@ -85,7 +86,8 @@ export class UpdateAttributeGeneralSettingsComponent extends PageComponent imple
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -99,14 +101,20 @@ export class UpdateAttributeGeneralSettingsComponent extends PageComponent imple
     });
     if (this.hasLabelValue) {
       this.updateAttributeGeneralSettingsFormGroup.addControl('labelValue', this.fb.control('', []));
-      this.updateAttributeGeneralSettingsFormGroup.get('showLabel').valueChanges.subscribe(() => {
+      this.updateAttributeGeneralSettingsFormGroup.get('showLabel').valueChanges.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => {
         this.updateValidators(true);
       });
     }
-    this.updateAttributeGeneralSettingsFormGroup.get('isRequired').valueChanges.subscribe(() => {
+    this.updateAttributeGeneralSettingsFormGroup.get('isRequired').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
-    this.updateAttributeGeneralSettingsFormGroup.valueChanges.subscribe(() => {
+    this.updateAttributeGeneralSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
     this.updateValidators(false);

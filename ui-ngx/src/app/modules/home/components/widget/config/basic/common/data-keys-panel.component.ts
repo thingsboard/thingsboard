@@ -17,6 +17,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   forwardRef,
   Input,
   OnChanges,
@@ -45,6 +46,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TimeSeriesChartYAxisId } from '@home/components/widget/lib/chart/time-series-chart.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-data-keys-panel',
@@ -180,14 +182,17 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
               private dialog: MatDialog,
               private cd: ChangeDetectorRef,
               private utils: UtilsService,
-              private widgetConfigComponent: WidgetConfigComponent) {
+              private widgetConfigComponent: WidgetConfigComponent,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
     this.keysListFormGroup = this.fb.group({
       keys: [this.fb.array([]), []]
     });
-    this.keysListFormGroup.valueChanges.subscribe(
+    this.keysListFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => {
         let keys: DataKey[] = this.keysListFormGroup.get('keys').value;
         if (keys) {

@@ -17,6 +17,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   EventEmitter,
   forwardRef,
@@ -55,6 +56,7 @@ import {
 import {
   ScadaSymbolPropertiesComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-properties.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export const propertyValid = (property: ScadaSymbolProperty): boolean => !(!property.id || !property.name || !property.type);
 
@@ -138,7 +140,8 @@ export class ScadaSymbolPropertyRowComponent implements ControlValueAccessor, On
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
-              private propertiesComponent: ScadaSymbolPropertiesComponent) {
+              private propertiesComponent: ScadaSymbolPropertiesComponent,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
@@ -147,10 +150,14 @@ export class ScadaSymbolPropertyRowComponent implements ControlValueAccessor, On
       name: [null, [Validators.required]],
       type: [null, [Validators.required]]
     });
-    this.propertyRowFormGroup.valueChanges.subscribe(
+    this.propertyRowFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.updateModel()
     );
-    this.propertyRowFormGroup.get('type').valueChanges.subscribe((newType: ScadaSymbolPropertyType) => {
+    this.propertyRowFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((newType: ScadaSymbolPropertyType) => {
       this.onTypeChanged(newType);
     });
   }

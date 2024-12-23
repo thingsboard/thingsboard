@@ -17,6 +17,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   EventEmitter,
   forwardRef,
   Input,
@@ -66,6 +67,7 @@ import {
   TimeSeriesChartYAxisId
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export const dataKeyValid = (key: DataKey): boolean => !!key && !!key.type && !!key.name;
 
@@ -234,7 +236,8 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
   constructor(private fb: UntypedFormBuilder,
               private dialog: MatDialog,
               private cd: ChangeDetectorRef,
-              private widgetConfigComponent: WidgetConfigComponent) {
+              private widgetConfigComponent: WidgetConfigComponent,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
@@ -252,7 +255,9 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
       this.keyRowFormGroup.addControl('yAxis', this.fb.control(null));
       this.keyRowFormGroup.addControl('timeSeriesType', this.fb.control(null));
     }
-    merge(this.keyFormControl.valueChanges, this.keyRowFormGroup.valueChanges).subscribe(
+    merge(this.keyFormControl.valueChanges, this.keyRowFormGroup.valueChanges).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.updateModel()
     );
   }

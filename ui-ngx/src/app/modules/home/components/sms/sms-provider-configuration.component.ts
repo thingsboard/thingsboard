@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
@@ -31,6 +31,7 @@ import {
   SmsProviderType,
   smsProviderTypeTranslationMap
 } from '@shared/models/settings.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-sms-provider-configuration',
@@ -65,7 +66,8 @@ export class SmsProviderConfigurationComponent implements ControlValueAccessor, 
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   registerOnChange(fn: any): void {
@@ -80,10 +82,14 @@ export class SmsProviderConfigurationComponent implements ControlValueAccessor, 
       type: [null, Validators.required],
       configuration: [null, smsProviderConfigurationValidator(true)]
     });
-    this.smsProviderConfigurationFormGroup.valueChanges.subscribe(() => {
+    this.smsProviderConfigurationFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
-    this.smsProviderConfigurationFormGroup.get('type').valueChanges.subscribe(() => {
+    this.smsProviderConfigurationFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.smsProviderTypeChanged();
     });
   }

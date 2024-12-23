@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.ImageDescriptor;
 import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.ResourceSubType;
@@ -319,6 +320,24 @@ public class ImageControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
         systemParams = doGet("/api/system/params", SystemParams.class);
         assertThat(systemParams.getMaxResourceSize()).isEqualTo(0);
+    }
+
+    @Test
+    public void testInlineImages() throws Exception {
+        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", "my_png_image.png", "image/png", PNG_IMAGE);
+        DeviceProfile deviceProfile = createDeviceProfile("Test");
+        deviceProfile.setImage("tb-image;" + imageInfo.getLink());
+        deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+
+        DeviceProfile deviceProfileInlined = doGet("/api/deviceProfile/" + deviceProfile.getUuidId() + "?inlineImages=true", DeviceProfile.class);
+        assertThat(deviceProfileInlined.getImage()).isEqualTo("tb-image:" +
+                Base64.getEncoder().encodeToString(imageInfo.getResourceKey().getBytes()) + ":"
+                + Base64.getEncoder().encodeToString(imageInfo.getName().getBytes()) + ":"
+                + Base64.getEncoder().encodeToString(imageInfo.getResourceSubType().name().getBytes()) +
+                ";data:image/png;base64," + Base64.getEncoder().encodeToString(PNG_IMAGE));
+
+        deviceProfile = doGet("/api/deviceProfile/" + deviceProfile.getUuidId(), DeviceProfile.class);
+        assertThat(deviceProfile.getImage()).isEqualTo("tb-image;" + imageInfo.getLink());
     }
 
     private TbResourceInfo updateImagePublicStatus(String filename, boolean isPublic) throws Exception {
