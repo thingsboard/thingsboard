@@ -265,7 +265,7 @@
           "default-dashboard-name": "Default dashboard name",
           "default-dashboard-name-max-length": "Default dashboard name should be less than 256",
           "delete-domain-text": "Be careful, after the confirmation a domain and all provider data will be unavailable.",
-          "delete-domain-title": "Are you sure you want to delete settings the domain '{{domainName}}'?",
+          "delete-domain-title": "Are you sure you want to delete the domain '{{domainName}}'?",
           "delete-registration-text": "Be careful, after the confirmation a provider data will be unavailable.",
           "delete-registration-title": "Are you sure you want to delete the provider '{{name}}'?",
           "email-attribute-key": "Email attribute key",
