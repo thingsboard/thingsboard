@@ -29,7 +29,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
+import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
+import org.thingsboard.rule.engine.api.TimeseriesDeleteRequest;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -49,7 +53,13 @@ import org.thingsboard.server.service.cf.CalculatedFieldExecutionService;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -231,8 +241,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                                 .onlyLatest(true)
                                                 .callback(new FutureCallback<>() {
                                                     @Override
-                                                    public void onSuccess(@Nullable Void tmp) {
-                                                    }
+                                                    public void onSuccess(@Nullable Void tmp) {}
 
                                                     @Override
                                                     public void onFailure(Throwable t) {
