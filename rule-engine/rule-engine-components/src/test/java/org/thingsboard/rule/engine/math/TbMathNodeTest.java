@@ -30,14 +30,17 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.ThrowingConsumer;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.verification.Timeout;
 import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -46,8 +49,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -70,13 +73,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyDouble;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.assertArg;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -434,15 +437,19 @@ public class TbMathNodeTest {
         );
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, TbMsgMetaData.EMPTY, JacksonUtil.newObjectNode().put("a", 5).toString());
-
-        when(telemetryService.saveAttrAndNotify(any(), any(), any(AttributeScope.class), anyString(), anyDouble()))
-                .thenReturn(Futures.immediateFuture(null));
+        doAnswer(invocation -> {
+            AttributesSaveRequest request = invocation.getArgument(0);
+            request.getCallback().onSuccess(null);
+            return null;
+        }).when(telemetryService).saveAttributes(any(AttributesSaveRequest.class));
 
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
-        verify(telemetryService, times(1)).saveAttrAndNotify(any(), any(), any(AttributeScope.class), anyString(), anyDouble());
+        verify(telemetryService, times(1)).saveAttributes(assertArg(request -> {
+            assertThat(request.getEntries()).singleElement().extracting(KvEntry::getValue).isInstanceOf(Double.class);
+        }));
 
         TbMsg resultMsg = msgCaptor.getValue();
         assertNotNull(resultMsg);
@@ -460,14 +467,20 @@ public class TbMathNodeTest {
         );
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, TbMsgMetaData.EMPTY, JacksonUtil.newObjectNode().put("a", 5).toString());
-        when(telemetryService.saveAndNotify(any(), any(), any(TsKvEntry.class)))
-                .thenReturn(Futures.immediateFuture(null));
+        doAnswer(invocation -> {
+            TimeseriesSaveRequest request = invocation.getArgument(0);
+            request.getCallback().onSuccess(null);
+            return null;
+        }).when(telemetryService).saveTimeseries(any(TimeseriesSaveRequest.class));
 
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
-        verify(telemetryService, times(1)).saveAndNotify(any(), any(), any(TsKvEntry.class));
+        verify(telemetryService, times(1)).saveTimeseries(assertArg(request -> {
+            assertThat(request.getEntries()).size().isOne();
+            assertThat(request.isSaveLatest()).isTrue();
+        }));
 
         TbMsg resultMsg = msgCaptor.getValue();
         assertNotNull(resultMsg);
@@ -485,14 +498,20 @@ public class TbMathNodeTest {
         );
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, TbMsgMetaData.EMPTY, JacksonUtil.newObjectNode().put("a", 5).toString());
-        when(telemetryService.saveAndNotify(any(), any(), any(TsKvEntry.class)))
-                .thenReturn(Futures.immediateFuture(null));
+        doAnswer(invocation -> {
+            TimeseriesSaveRequest request = invocation.getArgument(0);
+            request.getCallback().onSuccess(null);
+            return null;
+        }).when(telemetryService).saveTimeseries(any(TimeseriesSaveRequest.class));
 
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
-        verify(telemetryService, times(1)).saveAndNotify(any(), any(), any(TsKvEntry.class));
+        verify(telemetryService, times(1)).saveTimeseries(assertArg(request -> {
+            assertThat(request.getEntries()).size().isOne();
+            assertThat(request.isSaveLatest()).isTrue();
+        }));
 
         TbMsg resultMsg = msgCaptor.getValue();
         assertNotNull(resultMsg);
@@ -550,7 +569,7 @@ public class TbMathNodeTest {
                 new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "a")
         );
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, TbMsgMetaData.EMPTY,  TbMsg.EMPTY_JSON_ARRAY);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_ARRAY);
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<Throwable> tCaptor = ArgumentCaptor.forClass(Throwable.class);
