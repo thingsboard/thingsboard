@@ -21,7 +21,6 @@ import {
   forwardRef,
   Input,
   OnChanges,
-  OnDestroy,
   OnInit,
   SimpleChanges
 } from '@angular/core';
@@ -73,7 +72,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     }
   ]
 })
-export class ScadaSymbolObjectSettingsComponent implements OnInit, OnChanges, ControlValueAccessor, Validator, OnDestroy {
+export class ScadaSymbolObjectSettingsComponent implements OnInit, OnChanges, ControlValueAccessor, Validator {
 
   ScadaSymbolBehaviorType = ScadaSymbolBehaviorType;
 
@@ -138,13 +137,6 @@ export class ScadaSymbolObjectSettingsComponent implements OnInit, OnChanges, Co
           this.loadMetadata();
         }
       }
-    }
-  }
-
-  ngOnDestroy() {
-    if (this.validatorSubscription) {
-      this.validatorSubscription.unsubscribe();
-      this.validatorSubscription = null;
     }
   }
 
