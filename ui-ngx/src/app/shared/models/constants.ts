@@ -192,7 +192,7 @@ export const HelpLinks = {
     scada: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada`,
     scadaSymbolDev: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/`,
     scadaSymbolDevAnimation: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/#scadasymbolanimation`,
-    domains: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/domains`,
+    domains: `${helpBaseUrl}/docs${docPlatformPrefix}/domains`,
     mobileApplication: `${helpBaseUrl}/docs${docPlatformPrefix}/mobile-center/applications/`,
     mobileBundle: `${helpBaseUrl}/docs${docPlatformPrefix}/mobile-center/mobile-center/`,
     mobileQrCode: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/mobile-qr-code/`,
