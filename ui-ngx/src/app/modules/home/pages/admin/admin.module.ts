@@ -27,14 +27,16 @@ import { SmsProviderComponent } from '@home/pages/admin/sms-provider.component';
 import { SendTestSmsDialogComponent } from '@home/pages/admin/send-test-sms-dialog.component';
 import { HomeSettingsComponent } from '@home/pages/admin/home-settings.component';
 import { ResourcesLibraryComponent } from '@home/pages/admin/resource/resources-library.component';
+import { ResourceTabsComponent } from '@home/pages/admin/resource/resource-tabs.component';
 import { ResourcesTableHeaderComponent } from '@home/pages/admin/resource/resources-table-header.component';
 import { QueueComponent } from '@home/pages/admin/queue/queue.component';
 import { RepositoryAdminSettingsComponent } from '@home/pages/admin/repository-admin-settings.component';
 import { AutoCommitAdminSettingsComponent } from '@home/pages/admin/auto-commit-admin-settings.component';
 import { TwoFactorAuthSettingsComponent } from '@home/pages/admin/two-factor-auth-settings.component';
-import { MobileAppSettingsComponent } from '@home/pages/admin/mobile-app-settings.component';
-import { WidgetComponentsModule } from '@home/components/widget/widget-components.module';
 import { OAuth2Module } from '@home/pages/admin/oauth2/oauth2.module';
+import { JsLibraryTableHeaderComponent } from '@home/pages/admin/resource/js-library-table-header.component';
+import { JsResourceComponent } from '@home/pages/admin/resource/js-resource.component';
+import { NgxFlowModule } from '@flowjs/ngx-flow';
 
 @NgModule({
   declarations:
@@ -46,20 +48,22 @@ import { OAuth2Module } from '@home/pages/admin/oauth2/oauth2.module';
       SecuritySettingsComponent,
       HomeSettingsComponent,
       ResourcesLibraryComponent,
+      ResourceTabsComponent,
       ResourcesTableHeaderComponent,
+      JsResourceComponent,
+      JsLibraryTableHeaderComponent,
       QueueComponent,
       RepositoryAdminSettingsComponent,
       AutoCommitAdminSettingsComponent,
-      TwoFactorAuthSettingsComponent,
-      MobileAppSettingsComponent
+      TwoFactorAuthSettingsComponent
     ],
-    imports: [
-        CommonModule,
-        SharedModule,
-        HomeComponentsModule,
-        AdminRoutingModule,
-        WidgetComponentsModule,
-        OAuth2Module
-    ]
+  imports: [
+    CommonModule,
+    SharedModule,
+    HomeComponentsModule,
+    AdminRoutingModule,
+    OAuth2Module,
+    NgxFlowModule
+  ]
 })
 export class AdminModule { }

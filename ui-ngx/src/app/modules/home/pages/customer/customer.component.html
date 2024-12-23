@@ -49,7 +49,7 @@
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'manageEdges')"
-          [class.!hidden]="isEdit">
+          [class.!hidden]="isEdit"
           *ngIf="edgesSupportEnabled()">
     {{'customer.manage-edges' | translate }}
   </button>

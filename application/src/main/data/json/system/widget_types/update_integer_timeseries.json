@@ -2,7 +2,7 @@
   "fqn": "input_widgets.update_integer_timeseries",
   "name": "Update integer timeseries",
   "deprecated": true,
-  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAAAAABslHx1AAAAAmJLR0QA/4ePzL8AAANBSURBVHja7d3dS1NhHAfw/Sum1IUQBZYJIdSF4VVQIOSNXZiJg5nmWi18CXG9WJgSqd1IBUWu10PY1EBcIFYqyoTCLOZWA8/0uGmbbjs73y7mS+Z2YdjYs76/i3Oe88C5+PB73jhwnkeHiOxyCh4uOQxdxO1XIXiofndEJ/uRBuGXdS41HSCqS+dEWoSTEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYSQfwl59xkA+teqDfLWl9wOESC9twAo5QsJIdHI6EstkvoQX4UP6LsNzNo/hgGDrI2oCI0B0XG7DADuSzcttaMC9JG2t0DTMEZqezuvAwY5UhbEvB5a213J9A0Awg0mnwid/cM1zBpCmPQgWrGwARlv1GDvBABbd88TESDhc3Ov7wM/H99oKp/dgEgXWlqaGgFAWYl6hBh+H9rqp4COV1EYYpAA5vWwdXi9XkWoeeRLjVkDGofxqdwDg4zqrxjTY+b8HDwOoSDaZQnAeNXFVuMEDDIGKs1temCwpsE8JeLMHg2u95qVGHBR4xKFEEIIIeT/gyxvKYgB0d5sXhAtN0uxgtS8LBJEsxrtm2sko/TbTRSI9tzY92ddj1FavYgD0axbHYBklOLnI2Uh8fIRy0kCR8pBgvdcALRn8R3bhMjdrdYlAFh62mpd/Uk81J8ciGKp/56gXW27aQ3uPVqac9AJTOUePpOfMw1gom5/VpJSsnC1zpU4H9vp7KEDlSqUQ3qg6GQI4cKzwIvMU6eTBYFiMSXOx3aG38mM9wCMBUDDAIAr+YDzB9qTBoFiie/4uwmxuGJ1+CgqAYBkQhDcwSVKX+YIANi6SvKmkw7ZwUXjzL5GAEDlsT2l8wJD5o+UrO1o4S0sFhcSOH4isP7wYFdAVEikpEABgGBWF4D27KigEK06u9/hcDgUlOUNLQ7lmkRtWksZsXiEhaqsjN3mgMij1lqEPcJsY8OPD4QQQgghhOws5E5SgxkhhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCElNSNocEJweRzb7ZF04PQ7RVnXpcay5il+KVmW7YpZ2rQAAAABJRU5ErkJggg==",
+  "image": "tb-image;/api/images/system/update_shared_integer_attribute_system_widget_image.png",
   "description": "Simple form to input new integer value for pre-defined timeseries key.\nThe widget is deprecated. Use \"Update Multiple Attributes\" widget. Timeseries key type and integer value type can be selected in widgets data key configuration.",
   "descriptor": {
     "type": "latest",
@@ -17,5 +17,17 @@
     "settingsDirective": "tb-update-integer-attribute-widget-settings",
     "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Random\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.15479322438769105,\"funcBody\":\"var value = prevValue + Math.random() * 100 - 50;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < -1000) {\\n\\tvalue = -1000;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":true,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{},\"title\":\"Update integer timeseries\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{}}"
   },
-  "externalId": null
+  "resources": [
+    {
+      "link": "/api/images/system/update_shared_integer_attribute_system_widget_image.png",
+      "title": "\"Update shared integer attribute\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "update_shared_integer_attribute_system_widget_image.png",
+      "publicResourceKey": "7USFIzmXmXBqaopZXmkaEjOlHWMo3coq",
+      "mediaType": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAAAAABslHx1AAAAAmJLR0QA/4ePzL8AAANBSURBVHja7d3dS1NhHAfw/Sum1IUQBZYJIdSF4VVQIOSNXZiJg5nmWi18CXG9WJgSqd1IBUWu10PY1EBcIFYqyoTCLOZWA8/0uGmbbjs73y7mS+Z2YdjYs76/i3Oe88C5+PB73jhwnkeHiOxyCh4uOQxdxO1XIXiofndEJ/uRBuGXdS41HSCqS+dEWoSTEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYSQfwl59xkA+teqDfLWl9wOESC9twAo5QsJIdHI6EstkvoQX4UP6LsNzNo/hgGDrI2oCI0B0XG7DADuSzcttaMC9JG2t0DTMEZqezuvAwY5UhbEvB5a213J9A0Awg0mnwid/cM1zBpCmPQgWrGwARlv1GDvBABbd88TESDhc3Ov7wM/H99oKp/dgEgXWlqaGgFAWYl6hBh+H9rqp4COV1EYYpAA5vWwdXi9XkWoeeRLjVkDGofxqdwDg4zqrxjTY+b8HDwOoSDaZQnAeNXFVuMEDDIGKs1temCwpsE8JeLMHg2u95qVGHBR4xKFEEIIIeT/gyxvKYgB0d5sXhAtN0uxgtS8LBJEsxrtm2sko/TbTRSI9tzY92ddj1FavYgD0axbHYBklOLnI2Uh8fIRy0kCR8pBgvdcALRn8R3bhMjdrdYlAFh62mpd/Uk81J8ciGKp/56gXW27aQ3uPVqac9AJTOUePpOfMw1gom5/VpJSsnC1zpU4H9vp7KEDlSqUQ3qg6GQI4cKzwIvMU6eTBYFiMSXOx3aG38mM9wCMBUDDAIAr+YDzB9qTBoFiie/4uwmxuGJ1+CgqAYBkQhDcwSVKX+YIANi6SvKmkw7ZwUXjzL5GAEDlsT2l8wJD5o+UrO1o4S0sFhcSOH4isP7wYFdAVEikpEABgGBWF4D27KigEK06u9/hcDgUlOUNLQ7lmkRtWksZsXiEhaqsjN3mgMij1lqEPcJsY8OPD4QQQgghhOws5E5SgxkhhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCElNSNocEJweRzb7ZF04PQ7RVnXpcay5il+KVmW7YpZ2rQAAAABJRU5ErkJggg==",
+      "public": true
+    }
+  ]
 }

@@ -55,6 +55,7 @@
           </mat-expansion-panel-header>
           <ng-template matExpansionPanelContent>
             <tb-js-func formControlName="colorPointFunction"
+                        withModules
                         [globalVariables]="functionScopeVariables"
                         [functionArgs]="['data', 'dsData', 'dsIndex']"
                         functionTitle="{{ 'widgets.maps.point-color-function' | translate }}"
@@ -75,6 +76,7 @@
           </mat-expansion-panel-header>
           <ng-template matExpansionPanelContent>
             <tb-js-func formControlName="pointAsAnchorFunction"
+                        withModules
                         [globalVariables]="functionScopeVariables"
                         [functionArgs]="['data', 'dsData', 'dsIndex']"
                         functionTitle="{{ 'widgets.maps.point-as-anchor-function' | translate }}"

@@ -1878,8 +1878,7 @@
         "metadata-required": "메타데이터 엔트리를 입력하세요.",
         "output": "출력",
         "test": "테스트",
-        "help": "도움말",
-        "reset-debug-mode": "모든 노드에 대해 디버그 모드 초기화"
+        "help": "도움말"
     },
     "timezone": {
       "timezone": "Timezone",
@@ -1967,6 +1966,9 @@
         "maximum-dashboards": "Maximum number of dashboards (0 - unlimited)",
         "maximum-dashboards-required": "Maximum number of dashboards is required.",
         "maximum-dashboards-range": "Maximum number of dashboards can't be negative",
+        "maximum-edges": "Edges maximum number (0 - unlimited)",
+        "maximum-edges-required": "Edges maximum number is required.",
+        "maximum-edges-range": "Edges maximum number can't be negative",
         "maximum-rule-chains": "Maximum number of rule chains (0 - unlimited)",
         "maximum-rule-chains-required": "Maximum number of rule chains is required.",
         "maximum-rule-chains-range": "Maximum number of rule chains can't be negative",

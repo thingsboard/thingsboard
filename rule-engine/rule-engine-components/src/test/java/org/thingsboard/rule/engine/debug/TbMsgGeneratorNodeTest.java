@@ -29,7 +29,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -53,7 +53,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
@@ -79,8 +78,6 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
     private final RuleNodeId RULE_NODE_ID = new RuleNodeId(UUID.fromString("1c649392-1f53-4377-b12f-1ba172611746"));
     private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("4470dfc2-f621-42b2-b82c-b5776d424140"));
 
-    private final ThingsBoardThreadFactory factory = ThingsBoardThreadFactory.forName("msg-generator-node-test");
-
     private TbMsgGeneratorNode node;
     private TbMsgGeneratorNodeConfiguration config;
     private ScheduledExecutorService executorService;
@@ -94,7 +91,7 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
     public void setUp() {
         node = spy(new TbMsgGeneratorNode());
         config = new TbMsgGeneratorNodeConfiguration().defaultConfiguration();
-        executorService = Executors.newSingleThreadScheduledExecutor(factory);
+        executorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("msg-generator-node-test");
     }
 
     @AfterEach
@@ -193,7 +190,12 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
         given(ctxMock.createScriptEngine(any(), any(), any(), any(), any())).willReturn(scriptEngineMock);
 
         // creation of tickMsg
-        TbMsg tickMsg = TbMsg.newMsg(TbMsgType.GENERATOR_NODE_SELF_MSG, RULE_NODE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        TbMsg tickMsg = TbMsg.newMsg()
+                .type(TbMsgType.GENERATOR_NODE_SELF_MSG)
+                .originator(RULE_NODE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_STRING)
+                .build();
         given(ctxMock.newMsg(null, TbMsgType.GENERATOR_NODE_SELF_MSG, RULE_NODE_ID, null, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING)).willReturn(tickMsg);
 
         // invocation of tellSelf() method
@@ -206,16 +208,31 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
         }).given(ctxMock).tellSelf(any(), any(Long.class));
 
         // creation of first message
-        TbMsg firstMsg = TbMsg.newMsg(TbMsg.EMPTY_STRING, RULE_NODE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg firstMsg = TbMsg.newMsg()
+                .type(TbMsg.EMPTY_STRING)
+                .originator(RULE_NODE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         given(ctxMock.newMsg(null, TbMsg.EMPTY_STRING, RULE_NODE_ID, null, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT)).willReturn(firstMsg);
 
         // creation of generated message
         TbMsgMetaData metaData = new TbMsgMetaData(Map.of("data", "40"));
-        TbMsg generatedMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, RULE_NODE_ID, metaData, "{ \"temp\": 42, \"humidity\": 77 }");
+        TbMsg generatedMsg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(RULE_NODE_ID)
+                .copyMetaData(metaData)
+                .data("{ \"temp\": 42, \"humidity\": 77 }")
+                .build();
         given(scriptEngineMock.executeGenerateAsync(any())).willReturn(Futures.immediateFuture(generatedMsg));
 
         // creation of prev message
-        TbMsg prevMsg = TbMsg.newMsg(generatedMsg.getType(), RULE_NODE_ID, generatedMsg.getMetaData(), generatedMsg.getData());
+        TbMsg prevMsg = TbMsg.newMsg()
+                .type(generatedMsg.getType())
+                .originator(RULE_NODE_ID)
+                .copyMetaData(generatedMsg.getMetaData())
+                .data(generatedMsg.getData())
+                .build();
         given(ctxMock.newMsg(null, generatedMsg.getType(), RULE_NODE_ID, null, generatedMsg.getMetaData(), generatedMsg.getData())).willReturn(prevMsg);
 
         // WHEN

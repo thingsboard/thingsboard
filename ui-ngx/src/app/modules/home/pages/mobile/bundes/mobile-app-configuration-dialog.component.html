@@ -1,0 +1,89 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-toolbar color="primary" class="justify-between">
+  <h2 translate>mobile.configuration-dialog</h2>
+  <button mat-icon-button
+          (click)="close()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<div mat-dialog-content class="flex flex-col gap-4 xs:gap-2 gt-xs:max-h-[80vh]">
+  <div class="tb-form-panel stroked">
+    <div class="tb-form-panel-title" translate>mobile.configuration-step.prepare-environment-title</div>
+    <div class="flex gap-4">
+      <div class="flex-1" translate>mobile.configuration-step.prepare-environment-text</div>
+      <a mat-stroked-button
+         color="primary"
+         href="https://docs.flutter.dev/get-started/install"
+         target="_blank">
+        <mat-icon class="tb-mat-24">description</mat-icon>{{ 'common.documentation' | translate }}
+      </a>
+    </div>
+  </div>
+  <div class="tb-form-panel stroked">
+    <div class="tb-form-panel-title" translate>mobile.configuration-step.get-source-code-title</div>
+    <div translate>mobile.configuration-step.get-source-code-text</div>
+    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                 [data]=createMarkDownCommand(gitRepositoryLink)></tb-markdown>
+  </div>
+  <div class="tb-form-panel stroked">
+    <div class="tb-form-panel-title" translate>mobile.configuration-step.configure-api-title</div>
+    <div translate>mobile.configuration-step.configure-api-text</div>
+    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                 [data]=createMarkDownCommand(pathToConstants)></tb-markdown>
+    <div translate>mobile.configuration-step.configure-api-hint</div>
+    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                 [data]=createMarkDownCommand(configureApi)></tb-markdown>
+  </div>
+  <div class="tb-form-panel stroked" *ngIf="setApplication">
+    <div class="tb-form-panel-title" translate>mobile.configuration-step.configure-package-title</div>
+    <div translate>mobile.configuration-step.configure-package-text</div>
+    <div translate>mobile.configuration-step.configure-package-text-install</div>
+    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                 [data]=createMarkDownCommand(flutterInstallRenameCommand)></tb-markdown>
+    <div translate>mobile.configuration-step.configure-package-run-commands</div>
+    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                 [data]=createMarkDownCommand(renameCommands)></tb-markdown>
+  </div>
+  <div class="tb-form-panel stroked">
+    <div class="tb-form-panel-title" translate>mobile.configuration-step.run-app-title</div>
+    <div translate>mobile.configuration-step.run-app-text</div>
+    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                 [data]=createMarkDownCommand(flutterRunCommand)></tb-markdown>
+  </div>
+  <div class="tb-form-panel stroked">
+    <div class="flex items-center gap-4">
+      <div class="flex-1" translate>mobile.configuration-step.more-information</div>
+      <a mat-stroked-button
+         color="primary"
+         href="https://docs.flutter.dev/get-started/learn-flutter"
+         target="_blank">
+        <mat-icon class="tb-mat-24">rocket_launch</mat-icon>{{ 'mobile.configuration-step.getting-started' | translate }}
+      </a>
+    </div>
+  </div>
+</div>
+<div mat-dialog-actions class="tb-dialog-actions gap-2">
+  <mat-slide-toggle [class.!hidden]="!showDontShowAgain" [(ngModel)]="notShowAgain">{{ 'action.dont-show-again' | translate}}</mat-slide-toggle>
+  <span class="flex-1"></span>
+  <button mat-button
+          [disabled]="(isLoading$ | async)"
+          (click)="close()">{{ 'action.close' | translate }}</button>
+</div>
+

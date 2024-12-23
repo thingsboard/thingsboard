@@ -15,16 +15,22 @@
 ///
 
 import _ from 'lodash';
-import { from, Observable, Subject } from 'rxjs';
-import { finalize, share } from 'rxjs/operators';
+import { from, Observable, of, ReplaySubject, Subject } from 'rxjs';
+import { catchError, finalize, share } from 'rxjs/operators';
 import { Datasource, DatasourceData, FormattedData, ReplaceInfo } from '@app/shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { serverErrorCodesTranslations } from '@shared/models/constants';
 import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
+import {
+  CompiledTbFunction,
+  compileTbFunction, GenericFunction,
+  isNotEmptyTbFunction,
+  TbFunction
+} from '@shared/models/js-function.models';
 
 const varsRegex = /\${([^}]*)}/g;
 
@@ -133,16 +139,16 @@ export function isLiteralObject(value: any) {
 
 export const formatValue = (value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined => {
   if (isDefinedAndNotNull(value) && isNumeric(value) &&
-    (isDefinedAndNotNull(dec) || isDefinedAndNotNull(units) || Number(value).toString() === value)) {
-    let formatted: string | number = Number(value);
+    (isDefinedAndNotNull(dec) || isNotEmptyStr(units) || Number(value).toString() === value)) {
+    let formatted = value;
     if (isDefinedAndNotNull(dec)) {
-      formatted = formatted.toFixed(dec);
+      formatted = Number(formatted).toFixed(dec);
     }
     if (!showZeroDecimals) {
       formatted = (Number(formatted));
     }
     formatted = formatted.toString();
-    if (isDefinedAndNotNull(units) && units.length > 0) {
+    if (isNotEmptyStr(units)) {
       formatted += ' ' + units;
     }
     return formatted;
@@ -673,11 +679,29 @@ export function parseFunction(source: any, params: string[] = ['def']): (...args
   return res;
 }
 
-export function safeExecute(func: (...args: any[]) => any, params = []) {
+export function parseTbFunction<T extends GenericFunction>(http: HttpClient, source: TbFunction, params: string[] = ['def']): Observable<CompiledTbFunction<T>> {
+  if (isNotEmptyTbFunction(source)) {
+    return compileTbFunction<T>(http, source, ...params).pipe(
+      catchError(() => {
+        return of(null);
+      }),
+      share({
+        connector: () => new ReplaySubject(1),
+        resetOnError: false,
+        resetOnComplete: false,
+        resetOnRefCountZero: false
+      })
+    );
+  } else {
+    return of(null);
+  }
+}
+
+export function safeExecuteTbFunction<T extends GenericFunction>(func: CompiledTbFunction<T>, params = []) {
   let res = null;
-  if (func && typeof (func) === 'function') {
+  if (func) {
     try {
-      res = func(...params);
+      res = func.execute(...params);
     }
     catch (err) {
       console.log('error in external function:', err);
@@ -893,4 +917,12 @@ export const camelCase = (str: string): string => {
 
 export const convertKeysToCamelCase = (obj: Record<string, any>): Record<string, any> => {
   return _.mapKeys(obj, (value, key) => _.camelCase(key));
+};
+
+export const unwrapModule = (module: any) : any => {
+  if ('default' in module && Object.keys(module).length === 1) {
+    return module.default;
+  } else {
+    return module;
+  }
 };

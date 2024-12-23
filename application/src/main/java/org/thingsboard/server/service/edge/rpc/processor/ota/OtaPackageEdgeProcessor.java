@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.edge.rpc.processor.ota;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.OtaPackage;
@@ -27,6 +28,7 @@ import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.constructor.ota.OtaPackageMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.ota.OtaPackageMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 @Component
@@ -34,32 +36,33 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 @TbCoreComponent
 public class OtaPackageEdgeProcessor extends BaseEdgeProcessor {
 
+    @Autowired
+    private OtaPackageMsgConstructorFactory otaPackageMsgConstructorFactory;
+
     public DownlinkMsg convertOtaPackageEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         OtaPackageId otaPackageId = new OtaPackageId(edgeEvent.getEntityId());
-        DownlinkMsg downlinkMsg = null;
+        var msgConstructor = (OtaPackageMsgConstructor) otaPackageMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion);
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED -> {
-                OtaPackage otaPackage = otaPackageService.findOtaPackageById(edgeEvent.getTenantId(), otaPackageId);
+                OtaPackage otaPackage = edgeCtx.getOtaPackageService().findOtaPackageById(edgeEvent.getTenantId(), otaPackageId);
                 if (otaPackage != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    OtaPackageUpdateMsg otaPackageUpdateMsg = ((OtaPackageMsgConstructor)
-                            otaPackageMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructOtaPackageUpdatedMsg(msgType, otaPackage);
-                    downlinkMsg = DownlinkMsg.newBuilder()
+                    OtaPackageUpdateMsg otaPackageUpdateMsg = msgConstructor.constructOtaPackageUpdatedMsg(msgType, otaPackage);
+                    return DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addOtaPackageUpdateMsg(otaPackageUpdateMsg)
                             .build();
                 }
             }
             case DELETED -> {
-                OtaPackageUpdateMsg otaPackageUpdateMsg = ((OtaPackageMsgConstructor)
-                        otaPackageMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructOtaPackageDeleteMsg(otaPackageId);
-                downlinkMsg = DownlinkMsg.newBuilder()
+                OtaPackageUpdateMsg otaPackageUpdateMsg = msgConstructor.constructOtaPackageDeleteMsg(otaPackageId);
+                return DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addOtaPackageUpdateMsg(otaPackageUpdateMsg)
                         .build();
             }
         }
-        return downlinkMsg;
+        return null;
     }
 
 }

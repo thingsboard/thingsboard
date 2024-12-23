@@ -168,7 +168,7 @@ public class OAuth2ClientEntity extends BaseSqlEntity<OAuth2Client> {
         OAuth2Client registration = new OAuth2Client();
         registration.setId(new OAuth2ClientId(id));
         registration.setCreatedTime(createdTime);
-        registration.setTenantId(new TenantId(tenantId));
+        registration.setTenantId(TenantId.fromUUID(tenantId));
         registration.setTitle(title);
         registration.setAdditionalInfo(additionalInfo);
         registration.setMapperConfig(

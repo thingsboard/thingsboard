@@ -213,7 +213,7 @@
           <div class="notification-content">
             <div class="subject">{{ preview.processedTemplates.EMAIL.subject }}</div>
             <mat-divider></mat-divider>
-            <div class="html-content" [innerHTML]="(preview.processedTemplates.EMAIL.body | safe: 'html')"></div>
+            <editor [init]="tinyMceOptions" [initialValue]="preview.processedTemplates.EMAIL.body"></editor>
           </div>
         </section>
         <section class="preview-group notification tb-form-panel stroked no-gap" *ngIf="preview.processedTemplates.SLACK?.enabled">
@@ -230,9 +230,10 @@
             <tb-icon class="tb-mat-18">mdi:microsoft-teams</tb-icon>
             <div class="tb-form-panel-title" translate>notification.delivery-method.microsoft-teams-preview</div>
           </div>
-          <div class="notification-content mini">
+          <div class="notification-content mini" [style.background-color]="preview.processedTemplates.MICROSOFT_TEAMS?.themeColor">
             <div class="subject">{{ preview.processedTemplates.MICROSOFT_TEAMS.subject }}</div>
             {{ preview.processedTemplates.MICROSOFT_TEAMS.body }}
+            <button mat-raised-button>{{ preview.processedTemplates.MICROSOFT_TEAMS.button.text }}</button>
           </div>
         </section>
       </div>

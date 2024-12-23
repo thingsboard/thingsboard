@@ -23,23 +23,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.AbstractListeningExecutor;
-import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
-import org.thingsboard.rule.engine.api.RuleEngineApiUsageStateService;
-import org.thingsboard.rule.engine.api.RuleEngineAssetProfileCache;
-import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
-import org.thingsboard.rule.engine.api.RuleEngineRpcService;
-import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.server.common.data.ApiUsageState;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.OtaPackage;
-import org.thingsboard.server.common.data.TbResource;
-import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.User;
+import org.thingsboard.rule.engine.api.*;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
@@ -47,14 +32,9 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.id.AssetProfileId;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.NotificationId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.TenantProfileId;
-import org.thingsboard.server.common.data.mobile.MobileApp;
+import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.mobile.app.MobileApp;
+import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundle;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
@@ -75,6 +55,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.domain.DomainService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.mobile.MobileAppBundleService;
 import org.thingsboard.server.dao.mobile.MobileAppService;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
@@ -154,6 +135,8 @@ public class TenantIdLoaderTest {
     private DomainService domainService;
     @Mock
     private MobileAppService mobileAppService;
+    @Mock
+    private MobileAppBundleService mobileAppBundleService;
     @Mock
     private CalculatedFieldService calculatedFieldService;
 
@@ -396,6 +379,12 @@ public class TenantIdLoaderTest {
                 mobileApp.setTenantId(tenantId);
                 when(ctx.getMobileAppService()).thenReturn(mobileAppService);
                 doReturn(mobileApp).when(mobileAppService).findMobileAppById(eq(tenantId), any());
+                break;
+            case MOBILE_APP_BUNDLE:
+                MobileAppBundle mobileAppBundle = new MobileAppBundle();
+                mobileAppBundle.setTenantId(tenantId);
+                when(ctx.getMobileAppBundleService()).thenReturn(mobileAppBundleService);
+                doReturn(mobileAppBundle).when(mobileAppBundleService).findMobileAppBundleById(eq(tenantId), any());
                 break;
             case CALCULATED_FIELD:
                 CalculatedField calculatedField = new CalculatedField();

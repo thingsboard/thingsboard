@@ -1,0 +1,92 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="customMobilePageForm" class="mobile-page-form">
+  <div class="tb-form-row space-between">
+    <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="visible">
+      {{ 'mobile.visible' | translate }}
+    </mat-slide-toggle>
+  </div>
+  <div class="flex items-center justify-center gap-2">
+    <tb-material-icon-select asBoxInput
+                             required
+                             color="#305680"
+                             formControlName="icon">
+    </tb-material-icon-select>
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>mobile.page-name</mat-label>
+      <input required matInput formControlName="label">
+      <mat-icon matSuffix
+                matTooltipPosition="above"
+                matTooltipClass="tb-error-tooltip"
+                matTooltip="{{ 'mobile.page-name-required' | translate }}"
+                *ngIf="customMobilePageForm.get('label').hasError('required') && customMobilePageForm.get('label').touched"
+                class="tb-error">
+        warning
+      </mat-icon>
+      <mat-icon matSuffix
+                matTooltipPosition="above"
+                matTooltipClass="tb-error-tooltip"
+                matTooltip="{{ 'mobile.page-name-cannot-contain-only-spaces' | translate }}"
+                *ngIf="customMobilePageForm.get('label').hasError('pattern') && customMobilePageForm.get('label').touched"
+                class="tb-error">
+        warning
+      </mat-icon>
+    </mat-form-field>
+  </div>
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label translate>mobile.page-type</mat-label>
+    <mat-select formControlName="type">
+      <mat-option *ngFor="let pageType of mobilePagesTypes" [value]="pageType">
+        {{ mobilePageTypeTranslations.get(pageType) | translate }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <ng-container *ngIf="customMobilePageForm.get('type').value === MobilePageType.DASHBOARD">
+    <tb-dashboard-autocomplete class="flex-1"
+                               formControlName="dashboardId"
+                               required
+                               label="{{ 'dashboard.dashboard' | translate }}"
+                               floatLabel="always"
+                               appearance="outline"
+                               subscriptSizing="dynamic"
+                               requiredText="dashboard.dashboard-required"
+                               placeholder="{{ 'dashboard.select-dashboard' | translate }}"
+                               [selectFirstDashboard]="false"
+    ></tb-dashboard-autocomplete>
+  </ng-container>
+  <ng-container *ngIf="customMobilePageForm.get('type').value === MobilePageType.WEB_VIEW">
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>mobile.url</mat-label>
+      <input required matInput formControlName="url">
+      <mat-hint></mat-hint>
+      <mat-error *ngIf="customMobilePageForm.get('url').hasError('pattern')">
+        {{ 'mobile.invalid-url-format' | translate }}
+      </mat-error>
+    </mat-form-field>
+  </ng-container>
+  <ng-container *ngIf="customMobilePageForm.get('type').value === MobilePageType.CUSTOM">
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <mat-label translate>mobile.path</mat-label>
+      <input required matInput formControlName="path">
+      <mat-hint></mat-hint>
+      <mat-error *ngIf="customMobilePageForm.get('path').hasError('pattern')">
+        {{ 'mobile.invalid-path-format' | translate }}
+      </mat-error>
+    </mat-form-field>
+  </ng-container>
+</section>

@@ -47,7 +47,7 @@ import {
   WidgetActionsApi,
   WidgetSubscriptionApi
 } from '@core/api/widget-api.models';
-import { ChangeDetectorRef, Injector, NgZone, Type } from '@angular/core';
+import { ChangeDetectorRef, InjectionToken, Injector, NgZone, TemplateRef, Type } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { RafService } from '@core/services/raf.service';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
@@ -105,6 +105,7 @@ import { UserId } from '@shared/models/id/user-id';
 import { UserSettingsService } from '@core/http/user-settings.service';
 import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { UtilsService } from '@core/services/utils.service';
+import { CompiledTbFunction } from '@shared/models/js-function.models';
 
 export interface IWidgetAction {
   name: string;
@@ -118,7 +119,7 @@ export interface WidgetHeaderAction extends IWidgetAction {
   displayName: string;
   descriptor: WidgetActionDescriptor;
   useShowWidgetHeaderActionFunction: boolean;
-  showWidgetHeaderActionFunction: ShowWidgetHeaderActionFunction;
+  showWidgetHeaderActionFunction: CompiledTbFunction<ShowWidgetHeaderActionFunction>;
 }
 
 export interface WidgetAction extends IWidgetAction {
@@ -537,6 +538,10 @@ export class LabelVariablePattern {
     this.labelSubject.complete();
   }
 }
+
+export const widgetContextToken = new InjectionToken<WidgetContext>('widgetContext');
+export const widgetErrorMessagesToken = new InjectionToken<string[]>('errorMessages');
+export const widgetTitlePanelToken = new InjectionToken<TemplateRef<any>>('widgetTitlePanel');
 
 export interface IDynamicWidgetComponent {
   readonly ctx: WidgetContext;

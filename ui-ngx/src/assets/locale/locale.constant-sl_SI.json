@@ -1879,8 +1879,7 @@
     "metadata-required": "Vnosi metapodatkov ne smejo biti prazni.",
     "output": "Izdelek",
     "test": "Test",
-    "help": "Pomoč",
-    "reset-debug-mode": "Ponastavi način za odpravljanje napak v vseh vozliščih"
+    "help": "Pomoč"
   },
   "timezone": {
     "timezone": "Časovni pas",
@@ -1968,6 +1967,9 @@
     "maximum-dashboards": "Maximum number of dashboards (0 - unlimited)",
     "maximum-dashboards-required": "Maximum number of dashboards is required.",
     "maximum-dashboards-range": "Maximum number of dashboards can't be negative",
+    "maximum-edges": "Edges maximum number (0 - unlimited)",
+    "maximum-edges-required": "Edges maximum number is required.",
+    "maximum-edges-range": "Edges maximum number can't be negative",
     "maximum-rule-chains": "Maximum number of rule chains (0 - unlimited)",
     "maximum-rule-chains-required": "Maximum number of rule chains is required.",
     "maximum-rule-chains-range": "Maximum number of rule chains can't be negative",

@@ -114,6 +114,7 @@
       </tb-value-input>
       <tb-js-func *ngIf="setValueSettingsFormGroup.get('valueToData').get('type').value === valueToDataType.FUNCTION"
                   formControlName="valueToDataFunction"
+                  withModules
                   required
                   [globalVariables]="functionScopeVariables"
                   [functionArgs]="['value']"

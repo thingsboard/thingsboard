@@ -23,13 +23,17 @@ import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Data
 @EqualsAndHashCode(callSuper = true)
-@JsonPropertyOrder({"fqn", "name", "deprecated", "image", "description", "descriptor", "externalId"})
+@JsonPropertyOrder({"fqn", "name", "deprecated", "image", "description", "descriptor", "externalId", "resources"})
 public class WidgetTypeDetails extends WidgetType implements HasName, HasTenantId, HasImage, ExportableEntity<WidgetTypeId> {
 
     @Schema(description = "Relative or external image URL. Replaced with image data URL (Base64) in case of relative URL and 'inlineImages' option enabled.")
@@ -43,6 +47,8 @@ public class WidgetTypeDetails extends WidgetType implements HasName, HasTenantI
     private String[] tags;
 
     private WidgetTypeId externalId;
+
+    private List<ResourceExportData> resources;
 
     public WidgetTypeDetails() {
         super();
@@ -62,6 +68,7 @@ public class WidgetTypeDetails extends WidgetType implements HasName, HasTenantI
         this.description = widgetTypeDetails.getDescription();
         this.tags = widgetTypeDetails.getTags();
         this.externalId = widgetTypeDetails.getExternalId();
+        this.resources = widgetTypeDetails.getResources() != null ? new ArrayList<>(widgetTypeDetails.getResources()) : null;
     }
 
 }

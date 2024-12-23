@@ -103,8 +103,31 @@
           </div>
         </ng-container>
       </ng-template>
+      <ng-template [ngSwitchCase]="getValueAction.GET_ALARM_STATUS">
+        <ng-container formGroupName="getAlarmStatus">
+          <div class="tb-form-row space-between column-xs">
+            <div class="fixed-title-width" translate>alarm.alarm-severity</div>
+            <mat-chip-listbox multiple formControlName="severityList">
+              <mat-chip-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity">
+                {{ alarmSeverityTranslationMap.get(alarmSeverity) | translate }}
+              </mat-chip-option>
+            </mat-chip-listbox>
+          </div>
+          <div class="tb-form-row column-xs">
+            <div class="fixed-title-width" translate>alarm.alarm-types</div>
+            <tb-entity-subtype-list subscriptSizing="dynamic"
+                                    formControlName="typeList"
+                                    appearance="outline"
+                                    class="flex-1"
+                                    [additionalClasses]="['tb-chips', 'flex']"
+                                    [entityType]="entityType.ALARM">
+            </tb-entity-subtype-list>
+          </div>
+        </ng-container>
+      </ng-template>
     </ng-container>
-    <div *ngIf="getValueSettingsFormGroup.get('action').value !== getValueAction.DO_NOTHING"
+    <div *ngIf="getValueSettingsFormGroup.get('action').value !== getValueAction.DO_NOTHING &&
+                getValueSettingsFormGroup.get('action').value !== getValueAction.GET_ALARM_STATUS"
           class="tb-form-panel stroked" formGroupName="dataToValue">
       <div class="tb-form-row no-padding no-border column-xs">
         <div class="fixed-title-width" translate>widgets.value-action.action-result-converter</div>
@@ -115,6 +138,7 @@
       </div>
       <tb-js-func *ngIf="getValueSettingsFormGroup.get('dataToValue').get('type').value === dataToValueType.FUNCTION"
                   formControlName="dataToValueFunction"
+                  withModules
                   required
                   [globalVariables]="functionScopeVariables"
                   [functionArgs]="['data']"

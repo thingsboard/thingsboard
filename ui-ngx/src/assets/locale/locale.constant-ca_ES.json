@@ -3651,8 +3651,7 @@
         "metadata-required": "Les entrades de metadades no poden estar buides.",
         "output": "Sortida",
         "test": "Test",
-        "help": "Ajuda",
-        "reset-debug-mode": "Restablir el mode de depuració a tots els nodes"
+        "help": "Ajuda"
     },
     "role": {
         "role": "Rol",
@@ -4142,6 +4141,9 @@
         "maximum-dashboards": "Nº Màxim de panells (0 - sense límit)",
         "maximum-dashboards-required": "Cal Nº Màxim de panells.",
         "maximum-dashboards-range": "Nº Màxim de panells no pot ser negatiu",
+        "maximum-edges": "Nº Màxim de d'arestes (0 - sense límit)",
+        "maximum-edges-required": "Cal Nº Màxim de d'arestes.",
+        "maximum-edges-range": "Nº Màxim de d'arestes no pot ser negatiu",
         "maximum-rule-chains": "Nº Màxim de cadenes de regles (0 - sense límit)",
         "maximum-rule-chains-required": "Cal Nº Màxim de cadenes de regles.",
         "maximum-rule-chains-range": "Nº Màxim de cadenes de regles no pot ser negatiu",

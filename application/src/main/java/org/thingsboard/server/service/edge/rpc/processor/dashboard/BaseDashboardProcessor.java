@@ -16,11 +16,13 @@
 package org.thingsboard.server.service.edge.rpc.processor.dashboard;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
@@ -29,6 +31,9 @@ import java.util.Set;
 @Slf4j
 public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
 
+    @Autowired
+    private DataValidator<Dashboard> dashboardValidator;
+
     protected boolean saveOrUpdateDashboard(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg, CustomerId customerId) {
         boolean created = false;
         Dashboard dashboard = constructDashboardFromUpdateMsg(tenantId, dashboardId, dashboardUpdateMsg);
@@ -36,7 +41,7 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
             throw new RuntimeException("[{" + tenantId + "}] dashboardUpdateMsg {" + dashboardUpdateMsg + "} cannot be converted to dashboard");
         }
         Set<ShortCustomerInfo> assignedCustomers = null;
-        Dashboard dashboardById = dashboardService.findDashboardById(tenantId, dashboardId);
+        Dashboard dashboardById = edgeCtx.getDashboardService().findDashboardById(tenantId, dashboardId);
         if (dashboardById == null) {
             created = true;
             dashboard.setId(null);
@@ -58,11 +63,11 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
             }
         }
         dashboard.setAssignedCustomers(assignedCustomers);
-        Dashboard savedDashboard = dashboardService.saveDashboard(dashboard, false);
+        Dashboard savedDashboard = edgeCtx.getDashboardService().saveDashboard(dashboard, false);
         if (msgAssignedCustomers != null && !msgAssignedCustomers.isEmpty()) {
             for (ShortCustomerInfo assignedCustomer : msgAssignedCustomers) {
                 if (assignedCustomer.getCustomerId().equals(customerId)) {
-                    dashboardService.assignDashboardToCustomer(tenantId, savedDashboard.getId(), assignedCustomer.getCustomerId());
+                    edgeCtx.getDashboardService().assignDashboardToCustomer(tenantId, savedDashboard.getId(), assignedCustomer.getCustomerId());
                 }
             }
         } else {
@@ -75,7 +80,7 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
         if (dashboard.getAssignedCustomers() != null && !dashboard.getAssignedCustomers().isEmpty()) {
             for (ShortCustomerInfo assignedCustomer : dashboard.getAssignedCustomers()) {
                 if (assignedCustomer.getCustomerId().equals(customerId)) {
-                    dashboardService.unassignDashboardFromCustomer(tenantId, dashboard.getId(), assignedCustomer.getCustomerId());
+                    edgeCtx.getDashboardService().unassignDashboardFromCustomer(tenantId, dashboard.getId(), assignedCustomer.getCustomerId());
                 }
             }
         }
@@ -84,4 +89,5 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
     protected abstract Dashboard constructDashboardFromUpdateMsg(TenantId tenantId, DashboardId dashboardId, DashboardUpdateMsg dashboardUpdateMsg);
 
     protected abstract Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, Set<ShortCustomerInfo> assignedCustomers);
+
 }

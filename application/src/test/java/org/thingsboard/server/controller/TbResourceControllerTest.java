@@ -237,13 +237,13 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         //create widget type
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(JacksonUtil.fromString(String.format("{ \"resources\": [{\"url\":{\"entityType\":\"TB_RESOURCE\",\"id\":\"%s\"},\"isModule\":true}]}", savedResource.getId()), JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.fromString(String.format("{ \"resources\": [{\"url\":\"tb-resource;/api/resource/jks/tenant/%s\",\"isModule\":true}]}", savedResource.getResourceKey()), JsonNode.class));
         doPost("/api/widgetType", widgetType, WidgetTypeDetails.class);
 
         doDelete("/api/resource/" + resourceIdStr)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Following widget types uses current resource: ["
-                        + widgetType.getName() + "]")));
+                .andExpect(statusReason(containsString("Following widget types use this resource: "
+                        + widgetType.getName())));
     }
 
     @Test

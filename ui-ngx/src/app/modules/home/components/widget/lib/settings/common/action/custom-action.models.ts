@@ -19,9 +19,9 @@ import { widgetContextCompletions } from '@shared/models/ace/widget-completion.m
 import { entityIdHref, entityTypeHref, serviceCompletions } from '@shared/models/ace/service-completion.models';
 import { CustomActionDescriptor, WidgetAction } from '@shared/models/widget.models';
 import { deepClone, isDefined, isUndefined } from '@core/utils';
-import customSampleJs from '!raw-loader!./custom-sample-js.raw';
-import customSampleCss from '!raw-loader!./custom-sample-css.raw';
-import customSampleHtml from '!raw-loader!./custom-sample-html.raw';
+import customSampleJs from './custom-sample-js.raw';
+import customSampleCss from './custom-sample-css.raw';
+import customSampleHtml from './custom-sample-html.raw';
 
 const customActionCompletions: TbEditorCompletions = {
   ...{
@@ -63,8 +63,7 @@ const customActionCompletions: TbEditorCompletions = {
       type: 'string',
       description: 'Label of the entity for which the action was triggered.'
     }
-  },
-  ...serviceCompletions
+  }
 };
 
 const customPrettyActionCompletions: TbEditorCompletions = {
