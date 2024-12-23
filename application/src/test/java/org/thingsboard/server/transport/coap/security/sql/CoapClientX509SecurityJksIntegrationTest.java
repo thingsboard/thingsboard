@@ -32,11 +32,6 @@ import org.thingsboard.server.transport.coap.security.AbstractCoapSecurityIntegr
 })
 public class CoapClientX509SecurityJksIntegrationTest extends AbstractCoapSecurityIntegrationTest {
 
-    @After
-    public void afterTest() throws Exception {
-        processAfterX509Test();
-    }
-
     @Test
     public void testX509NoTrustFromJksConnectCoapSuccessUpdateAttributesSuccess() throws Exception {
         clientX509FromJksUpdateAttributesTest();

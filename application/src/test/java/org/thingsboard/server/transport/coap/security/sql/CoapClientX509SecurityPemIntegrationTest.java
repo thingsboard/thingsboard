@@ -27,11 +27,6 @@ import org.thingsboard.server.transport.coap.security.AbstractCoapSecurityIntegr
 @DaoSqlTest
 public class CoapClientX509SecurityPemIntegrationTest extends AbstractCoapSecurityIntegrationTest {
 
-    @After
-    public void afterTest() throws Exception {
-        processAfterX509Test();
-    }
-
     @Test
     public void testX509NoTrustFromPathConnectCoapSuccessUpdateAttributesSuccess() throws Exception {
         clientX509FromPathUpdateFeatureTypeTest(FeatureType.ATTRIBUTES);
@@ -39,5 +34,9 @@ public class CoapClientX509SecurityPemIntegrationTest extends AbstractCoapSecuri
     @Test
     public void testX509NoTrustFromPathConnectCoapSuccessUpdateTelemetrySuccess() throws Exception {
         clientX509FromPathUpdateFeatureTypeTest(FeatureType.TELEMETRY);
+    }
+    @Test
+    public void testX509NoTrustFromPathConnectCoapCntClient10CntMsg10UpdateTelemetry() throws Exception {
+        clientX509FromPathUpdateClientCntMsgFeatureTypeTest(10, 10);
     }
 }

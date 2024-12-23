@@ -63,6 +63,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 @Slf4j
 @TestPropertySource(properties = {
         "coap.enabled=true",
@@ -78,18 +79,12 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
     protected final String CREDENTIALS_PATH_CLIENT = CREDENTIALS_PATH + "client/";
     protected final String CREDENTIALS_PATH_CLIENT_CERT_PEM = CREDENTIALS_PATH_CLIENT + "cert.pem";
     protected final String CREDENTIALS_PATH_CLIENT_KEY_PEM = CREDENTIALS_PATH_CLIENT + "key.pem";
-    protected final X509Certificate clientX509CertTrust;                                        // client certificate signed by intermediate, rootCA with a good CN ("host name")
-    protected final PrivateKey clientPrivateKeyFromCertTrust;                                   // client private key used for X509 and RPK
     protected final X509Certificate clientX509CertTrustNo;                                      // client certificate signed by intermediate, rootCA with a good CN ("host name")
     protected final PrivateKey clientPrivateKeyFromCertTrustNo;
 
     protected static final String CLIENT_JKS_FOR_TEST = "coapclientTest";
     protected static final String CLIENT_STORE_PWD = "client_ks_password";
-    protected static final String CLIENT_ALIAS_CERT_TRUST = "client_alias_00000000";
     protected static final String CLIENT_ALIAS_CERT_TRUST_NO = "client_alias_trust_no";
-    protected static final String CLIENT_ENDPOINT_X509_TRUST = "LwX50900000000";
-    protected static final String CLIENT_ENDPOINT_X509_TRUST_NO = "LwX509TrustNo";
-    protected CoapClientX509Test clientX509;
 
     protected AbstractCoapSecurityIntegrationTest() {
 
@@ -100,9 +95,6 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
             try (InputStream clientKeyStoreFile = this.getClass().getClassLoader().getResourceAsStream(CREDENTIALS_PATH + CLIENT_JKS_FOR_TEST + ".jks")) {
                 clientKeyStore.load(clientKeyStoreFile, clientKeyStorePwd);
             }
-            // Trust
-            clientPrivateKeyFromCertTrust = (PrivateKey) clientKeyStore.getKey(CLIENT_ALIAS_CERT_TRUST, clientKeyStorePwd);
-            clientX509CertTrust = (X509Certificate) clientKeyStore.getCertificate(CLIENT_ALIAS_CERT_TRUST);
             // No trust
             clientPrivateKeyFromCertTrustNo = (PrivateKey) clientKeyStore.getKey(CLIENT_ALIAS_CERT_TRUST_NO, clientKeyStorePwd);
             clientX509CertTrustNo = (X509Certificate) clientKeyStore.getCertificate(CLIENT_ALIAS_CERT_TRUST_NO);
@@ -111,10 +103,8 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
         }
     }
 
-    protected Device createDeviceWithX509(CoapTestConfigProperties config, String deviceName, X509Certificate clientX509Cert) throws Exception {
+    protected Device createDeviceWithX509(String deviceName, X509Certificate clientX509Cert) throws Exception {
         loginTenantAdmin();
-        DeviceProfile deviceProfile = createCoapDeviceProfile(config);
-        assertNotNull(deviceProfile);
 
         Device device = new Device();
         device.setName(deviceName);
@@ -139,56 +129,71 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
         return deviceX509;
     }
 
-    protected void processAfterX509Test() throws Exception {
-        if (clientX509 != null) {
-            clientX509.disconnect();
-        }
-    }
-
     protected void clientX509FromJksUpdateAttributesTest() throws Exception {
-        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
-                .deviceName("Test Post Attribute device json payload, security X509 from jks")
-                .coapDeviceType(CoapDeviceType.DEFAULT)
-                .transportPayloadType(TransportPayloadType.JSON)
-                .build();
         CertPrivateKey certPrivateKey = new CertPrivateKey(clientX509CertTrustNo, clientPrivateKeyFromCertTrustNo);
-        Device deviceX509 = createDeviceWithX509(configProperties, CLIENT_ENDPOINT_X509_TRUST_NO, certPrivateKey.getCert());
-        clientX509 = new CoapClientX509Test(certPrivateKey, COAPS_BASE_URL);
-        CoapResponse coapResponseX509 = clientX509.postMethod(PAYLOAD_VALUES_STR.getBytes());
-        assertNotNull(coapResponseX509);
-        assertEquals(CoAP.ResponseCode.CREATED, coapResponseX509.getCode());
-        DeviceId deviceId = deviceX509.getId();
-        JsonNode expectedNode = JacksonUtil.toJsonNode(PAYLOAD_VALUES_STR);
-        List<String> expectedKeys = getKeysFromNode(expectedNode);
-        List<String> actualKeys = getActualKeysList(deviceId, expectedKeys, "attributes/CLIENT_SCOPE");
-        assertNotNull(actualKeys);
-
-        Set<String> actualKeySet = new HashSet<>(actualKeys);
-        Set<String> expectedKeySet = new HashSet<>(expectedKeys);
-        assertEquals(expectedKeySet, actualKeySet);
-
-        String getAttributesValuesUrl = getAttributesValuesUrl(deviceId, actualKeySet, "attributes/CLIENT_SCOPE");
-        List<Map<String, Object>> actualValues = doGetAsyncTyped(getAttributesValuesUrl, new TypeReference<>() {
-        });
-        assertValuesList(actualValues, expectedNode);
+        clientX509UpdateTest(FeatureType.ATTRIBUTES, certPrivateKey);
     }
 
     protected void clientX509FromPathUpdateFeatureTypeTest(FeatureType featureType) throws Exception {
+        CertPrivateKey certPrivateKey = new CertPrivateKey(CREDENTIALS_PATH_CLIENT_CERT_PEM, CREDENTIALS_PATH_CLIENT_KEY_PEM);
+        clientX509UpdateTest(featureType, certPrivateKey);
+     }
+
+    private void clientX509UpdateTest(FeatureType featureType, CertPrivateKey certPrivateKey) throws Exception {
         CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
-                .deviceName("Test Post Attribute device json payload, security X509 from Path")
+                .deviceName("CoapX509TrustNo_" + featureType.name())
                 .coapDeviceType(CoapDeviceType.DEFAULT)
                 .transportPayloadType(TransportPayloadType.JSON)
                 .build();
-        CertPrivateKey certPrivateKey = new CertPrivateKey(CREDENTIALS_PATH_CLIENT_CERT_PEM, CREDENTIALS_PATH_CLIENT_KEY_PEM);
-        Device deviceX509 = createDeviceWithX509(configProperties, "CoapX509TrustNoFromPath", certPrivateKey.getCert());
+        DeviceProfile deviceProfile = createCoapDeviceProfile(configProperties);
+        assertNotNull(deviceProfile);
+
+        Device deviceX509 = createDeviceWithX509(configProperties.getDeviceName(), certPrivateKey.getCert());
+        CoapClientX509Test clientX509 = new CoapClientX509Test(certPrivateKey, COAPS_BASE_URL);
+        CoapResponse coapResponseX509 = clientX509.postMethod(PAYLOAD_VALUES_STR);
+        assertNotNull(coapResponseX509);
+        assertEquals(CoAP.ResponseCode.CREATED, coapResponseX509.getCode());
+
+        if (FeatureType.ATTRIBUTES.equals(featureType)) {
+            DeviceId deviceId = deviceX509.getId();
+            JsonNode expectedNode = JacksonUtil.toJsonNode(PAYLOAD_VALUES_STR);
+            List<String> expectedKeys = getKeysFromNode(expectedNode);
+            List<String> actualKeys = getActualKeysList(deviceId, expectedKeys, "attributes/CLIENT_SCOPE");
+            assertNotNull(actualKeys);
+
+            Set<String> actualKeySet = new HashSet<>(actualKeys);
+            Set<String> expectedKeySet = new HashSet<>(expectedKeys);
+            assertEquals(expectedKeySet, actualKeySet);
+
+            String getAttributesValuesUrl = getAttributesValuesUrl(deviceId, actualKeySet, "attributes/CLIENT_SCOPE");
+            List<Map<String, Object>> actualValues = doGetAsyncTyped(getAttributesValuesUrl, new TypeReference<>() {
+            });
+            assertValuesList(actualValues, expectedNode);
+        }
+        clientX509.disconnect();
+    }
+
+    protected void clientX509FromPathUpdateClientCntMsgFeatureTypeTest(int cntClient, int cntMsg) throws Exception {
+        String deviceName = "CoapX509TrustNo_" + FeatureType.TELEMETRY.name();
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName(deviceName)
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.JSON)
+                .build();
+        DeviceProfile deviceProfile = createCoapDeviceProfile(configProperties);
+        assertNotNull(deviceProfile);
+
+        CertPrivateKey certPrivateKey = new CertPrivateKey(CREDENTIALS_PATH_CLIENT + "cert.pem", CREDENTIALS_PATH_CLIENT + "key.pem");
+        Device deviceX509 = createDeviceWithX509(deviceName, certPrivateKey.getCert());
         log.warn("Start connect and send post");
         System.out.println("Start connect and send post");
-        clientX509 = new CoapClientX509Test(certPrivateKey, featureType, COAPS_BASE_URL);
+        CoapClientX509Test clientX509 = new CoapClientX509Test(certPrivateKey, FeatureType.TELEMETRY, COAPS_BASE_URL);
         CoapResponse coapResponseX509 = clientX509.postMethod(PAYLOAD_VALUES_STR.getBytes());
         assertNotNull(coapResponseX509);
         assertEquals(CoAP.ResponseCode.CREATED, coapResponseX509.getCode());
         log.warn("Finish, response ok");
         System.out.println("Finish, response ok");
+        clientX509.disconnect();
     }
 
     private List<String> getActualKeysList(DeviceId deviceId, List<String> expectedKeys, String apiSuffix) throws Exception {
