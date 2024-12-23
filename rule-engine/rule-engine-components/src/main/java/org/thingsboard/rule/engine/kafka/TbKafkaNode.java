@@ -188,13 +188,17 @@ public class TbKafkaNode extends TbAbstractExternalNode {
         metaData.putValue(OFFSET, String.valueOf(recordMetadata.offset()));
         metaData.putValue(PARTITION, String.valueOf(recordMetadata.partition()));
         metaData.putValue(TOPIC, recordMetadata.topic());
-        return TbMsg.transformMsgMetadata(origMsg, metaData);
+        return origMsg.transform()
+                .metaData(metaData)
+                .build();
     }
 
     private TbMsg processException(TbMsg origMsg, Exception e) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(ERROR, e.getClass() + ": " + e.getMessage());
-        return TbMsg.transformMsgMetadata(origMsg, metaData);
+        return origMsg.transform()
+                .metaData(metaData)
+                .build();
     }
 
 }

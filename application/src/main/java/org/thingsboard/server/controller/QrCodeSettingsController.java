@@ -176,7 +176,7 @@ public class QrCodeSettingsController extends BaseController {
             return ResponseEntity.status(HttpStatus.FOUND)
                     .header("Location", googlePlayLink)
                     .build();
-        } else if (userAgent.contains("iPhone") || userAgent.contains("iPad") && qrCodeSettings.isIosEnabled()) {
+        } else if ((userAgent.contains("iPhone") || userAgent.contains("iPad")) && qrCodeSettings.isIosEnabled()) {
             String appStoreLink = qrCodeSettings.getAppStoreLink();
             return ResponseEntity.status(HttpStatus.FOUND)
                     .header("Location", appStoreLink)

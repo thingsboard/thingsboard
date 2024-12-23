@@ -149,7 +149,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                     return; // if originated by rule - just ignore delivery method
                 }
             }
-            if (ruleId == null) {
+            if (ruleId == null && !notificationTemplate.getNotificationType().isSystem()) {
                 if (targets.stream().noneMatch(target -> target.getConfiguration().getType().getSupportedDeliveryMethods().contains(deliveryMethod))) {
                     throw new IllegalArgumentException("Recipients for " + deliveryMethod.getName() + " delivery method not chosen");
                 }
@@ -225,13 +225,13 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         NotificationTemplate notificationTemplate = notificationTemplateService.findTenantOrSystemNotificationTemplate(tenantId, type)
                 .orElseThrow(() -> new IllegalArgumentException("No notification template found for type " + type));
         NotificationRequest notificationRequest = NotificationRequest.builder()
-                .tenantId(TenantId.SYS_TENANT_ID)
+                .tenantId(tenantId)
                 .targets(List.of(targetId.getId()))
                 .templateId(notificationTemplate.getId())
                 .info(info)
                 .originatorEntityId(TenantId.SYS_TENANT_ID)
                 .build();
-        processNotificationRequest(TenantId.SYS_TENANT_ID, notificationRequest, null);
+        processNotificationRequest(tenantId, notificationRequest, null);
     }
 
     private void processNotificationRequestAsync(NotificationProcessingContext ctx, List<NotificationTarget> targets, FutureCallback<NotificationRequestStats> callback) {
@@ -417,7 +417,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     }
 
     @Override
-    public Set<NotificationDeliveryMethod> getAvailableDeliveryMethods(TenantId tenantId) {
+    public List<NotificationDeliveryMethod> getAvailableDeliveryMethods(TenantId tenantId) {
         return channels.values().stream()
                 .filter(channel -> {
                     try {
@@ -428,7 +428,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                     }
                 })
                 .map(NotificationChannel::getDeliveryMethod)
-                .collect(Collectors.toSet());
+                .sorted().toList();
     }
 
     @Override

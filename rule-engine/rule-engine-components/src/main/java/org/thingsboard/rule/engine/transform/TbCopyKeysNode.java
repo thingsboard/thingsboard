@@ -105,7 +105,10 @@ public class TbCopyKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
                     log.debug("Unexpected CopyFrom value: {}. Allowed values: {}", copyFrom, TbMsgSource.values());
             }
         }
-        ctx.tellSuccess(msgChanged ? TbMsg.transformMsg(msg, metaDataCopy, msgData) : msg);
+        ctx.tellSuccess(msgChanged ? msg.transform()
+                .metaData(metaDataCopy)
+                .data(msgData)
+                .build() : msg);
     }
 
     @Override

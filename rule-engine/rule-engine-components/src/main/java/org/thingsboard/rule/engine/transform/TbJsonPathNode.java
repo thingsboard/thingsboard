@@ -68,7 +68,9 @@ public class TbJsonPathNode implements TbNode {
         if (!TbJsonPathNodeConfiguration.DEFAULT_JSON_PATH.equals(this.jsonPathValue)) {
             try {
                 Object jsonPathData = jsonPath.read(msg.getData(), this.configurationJsonPath);
-                ctx.tellSuccess(TbMsg.transformMsgData(msg, JacksonUtil.toString(jsonPathData)));
+                ctx.tellSuccess(msg.transform()
+                        .data(JacksonUtil.toString(jsonPathData))
+                        .build());
             } catch (PathNotFoundException e) {
                 ctx.tellFailure(msg, e);
             }

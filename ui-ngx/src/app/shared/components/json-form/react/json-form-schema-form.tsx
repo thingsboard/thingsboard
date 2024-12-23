@@ -131,10 +131,10 @@ class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
     }
     if (form.condition) {
       this.hasConditions = true;
-      if (!this.conditionFunction) {
-        this.conditionFunction = new Function('form', 'model', 'index', `return ${form.condition};`);
+      if (!form.conditionFunction) {
+        form.conditionFunction = new Function('form', 'model', 'index', `return ${form.condition};`);
       }
-      if (this.conditionFunction(form, model, index) === false) {
+      if (form.conditionFunction(form, model, index) === false) {
         return null;
       }
     }

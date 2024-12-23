@@ -49,11 +49,21 @@ public interface OAuth2ClientRepository extends JpaRepository<OAuth2ClientEntity
             "FROM OAuth2ClientEntity c " +
             "LEFT JOIN MobileAppBundleOauth2ClientEntity ac ON c.id = ac.oauth2ClientId " +
             "LEFT JOIN MobileAppBundleEntity b ON ac.mobileAppBundleId = b.id " +
-            "LEFT JOIN MobileAppEntity andApp ON b.androidAppId = andApp.id LEFT JOIN MobileAppEntity iosApp ON b.iosAppID = iosApp.id " +
-            "WHERE andApp.pkgName = :pkgName OR iosApp.pkgName = :pkgName AND b.oauth2Enabled = true " +
+            "LEFT JOIN MobileAppEntity andApp ON b.androidAppId = andApp.id " +
+            "WHERE andApp.pkgName = :pkgName AND b.oauth2Enabled = true " +
             "AND (:platformFilter IS NULL OR c.platforms IS NULL OR c.platforms = '' OR ilike(c.platforms, CONCAT('%', :platformFilter, '%')) = true)")
-    List<OAuth2ClientEntity> findEnabledByPkgNameAndPlatformType(@Param("pkgName") String pkgName,
-                                                                 @Param("platformFilter") String platformFilter);
+    List<OAuth2ClientEntity> findEnabledByAndroidPkgNameAndPlatformType(@Param("pkgName") String pkgName,
+                                                                        @Param("platformFilter") String platformFilter);
+
+    @Query("SELECT c " +
+            "FROM OAuth2ClientEntity c " +
+            "LEFT JOIN MobileAppBundleOauth2ClientEntity ac ON c.id = ac.oauth2ClientId " +
+            "LEFT JOIN MobileAppBundleEntity b ON ac.mobileAppBundleId = b.id " +
+            "LEFT JOIN MobileAppEntity iosApp ON b.iosAppID = iosApp.id " +
+            "WHERE iosApp.pkgName = :pkgName AND b.oauth2Enabled = true " +
+            "AND (:platformFilter IS NULL OR c.platforms IS NULL OR c.platforms = '' OR ilike(c.platforms, CONCAT('%', :platformFilter, '%')) = true)")
+    List<OAuth2ClientEntity> findEnabledByIosPkgNameAndPlatformType(@Param("pkgName") String pkgName,
+                                                                    @Param("platformFilter") String platformFilter);
 
     @Query("SELECT c " +
             "FROM OAuth2ClientEntity c " +

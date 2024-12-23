@@ -68,7 +68,7 @@
                             timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
             <button *ngIf="!(timewindowForm.get('realtime.hideLastInterval').value ||
                             timewindowForm.get('realtime.hideInterval').value)"
-                    matSuffix mat-icon-button type="button" class="tb-mat-24"
+                    matSuffix mat-icon-button type="button"
                     (click)="configureRealtimeLastIntervalOptions($event)">
               <mat-icon>edit</mat-icon>
             </button>
@@ -95,7 +95,7 @@
                           timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
           <button *ngIf="!(timewindowForm.get('realtime.hideQuickInterval').value ||
                             timewindowForm.get('realtime.hideInterval').value)"
-                  matSuffix mat-icon-button type="button" class="tb-mat-24"
+                  matSuffix mat-icon-button type="button"
                   (click)="configureRealtimeQuickIntervalOptions($event)">
             <mat-icon>edit</mat-icon>
           </button>
@@ -137,7 +137,7 @@
                           timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
             <button *ngIf="!(timewindowForm.get('history.hideLastInterval').value ||
                             timewindowForm.get('history.hideInterval').value)"
-                    matSuffix mat-icon-button type="button" class="tb-mat-24"
+                    matSuffix mat-icon-button type="button"
                     (click)="configureHistoryLastIntervalOptions($event)">
               <mat-icon>edit</mat-icon>
             </button>
@@ -177,7 +177,7 @@
                         timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
             <button *ngIf="!(timewindowForm.get('history.hideQuickInterval').value ||
                             timewindowForm.get('history.hideInterval').value)"
-                    matSuffix mat-icon-button type="button" class="tb-mat-24"
+                    matSuffix mat-icon-button type="button"
                     (click)="configureHistoryQuickIntervalOptions($event)">
               <mat-icon>edit</mat-icon>
             </button>
@@ -199,7 +199,7 @@
                                         formControlName="type"
                                         [allowedAggregationTypes]="timewindowForm.get('allowedAggTypes').value">
               <button *ngIf="!timewindowForm.get('hideAggregation').value"
-                      matSuffix mat-icon-button type="button" class="tb-mat-24"
+                      matSuffix mat-icon-button type="button"
                       (click)="openAggregationOptionsConfig($event)">
                 <mat-icon>edit</mat-icon>
               </button>

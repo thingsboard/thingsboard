@@ -30,6 +30,22 @@
     <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-label translate>mobile.page-name</mat-label>
       <input required matInput formControlName="label">
+      <mat-icon matSuffix
+                matTooltipPosition="above"
+                matTooltipClass="tb-error-tooltip"
+                matTooltip="{{ 'mobile.page-name-required' | translate }}"
+                *ngIf="customMobilePageForm.get('label').hasError('required') && customMobilePageForm.get('label').touched"
+                class="tb-error">
+        warning
+      </mat-icon>
+      <mat-icon matSuffix
+                matTooltipPosition="above"
+                matTooltipClass="tb-error-tooltip"
+                matTooltip="{{ 'mobile.page-name-cannot-contain-only-spaces' | translate }}"
+                *ngIf="customMobilePageForm.get('label').hasError('pattern') && customMobilePageForm.get('label').touched"
+                class="tb-error">
+        warning
+      </mat-icon>
     </mat-form-field>
   </div>
   <mat-form-field appearance="outline" subscriptSizing="dynamic">
@@ -59,7 +75,7 @@
       <input required matInput formControlName="url">
       <mat-hint></mat-hint>
       <mat-error *ngIf="customMobilePageForm.get('url').hasError('pattern')">
-        {{ 'mobile.url-pattern' | translate }}
+        {{ 'mobile.invalid-url-format' | translate }}
       </mat-error>
     </mat-form-field>
   </ng-container>
@@ -69,7 +85,7 @@
       <input required matInput formControlName="path">
       <mat-hint></mat-hint>
       <mat-error *ngIf="customMobilePageForm.get('path').hasError('pattern')">
-        {{ 'mobile.path-pattern' | translate }}
+        {{ 'mobile.invalid-path-format' | translate }}
       </mat-error>
     </mat-form-field>
   </ng-container>

@@ -191,8 +191,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor, OnCh
     if (typeof this.modelValue !== 'undefined') {
       const min = this.timeService.boundMinInterval(this.minValue);
       const max = this.timeService.boundMaxInterval(this.maxValue);
-      if (this.allowedIntervals?.length ||
-            IntervalMath.numberValue(this.modelValue) >= min && IntervalMath.numberValue(this.modelValue) <= max) {
+      if (IntervalMath.numberValue(this.modelValue) >= min && IntervalMath.numberValue(this.modelValue) <= max) {
         const advanced = this.allowedIntervals?.length
           ? !this.allowedIntervals.includes(this.modelValue)
           : !this.timeService.matchesExistingInterval(this.minValue, this.maxValue, this.modelValue,
