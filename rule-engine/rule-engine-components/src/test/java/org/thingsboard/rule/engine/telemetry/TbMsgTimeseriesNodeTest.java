@@ -96,7 +96,12 @@ public class TbMsgTimeseriesNodeTest {
     @EnumSource(TbMsgType.class)
     public void givenMsgTypeAndEmptyMsgData_whenOnMsg_thenVerifyFailureMsg(TbMsgType msgType) throws TbNodeException {
         init();
-        TbMsg msg = TbMsg.newMsg(msgType, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_ARRAY);
+        TbMsg msg = TbMsg.newMsg()
+                .type(msgType)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_ARRAY)
+                .build();
         node.onMsg(ctxMock, msg);
 
         ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
@@ -122,7 +127,12 @@ public class TbMsgTimeseriesNodeTest {
                     "humidity": 77
                 }
                 """;
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(data)
+                .build();
 
         when(ctxMock.getTelemetryService()).thenReturn(telemetryServiceMock);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
@@ -163,7 +173,12 @@ public class TbMsgTimeseriesNodeTest {
                 """;
         long ts = System.currentTimeMillis();
         var metadata = Map.of("ts", String.valueOf(ts));
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, new TbMsgMetaData(metadata), data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(new TbMsgMetaData(metadata))
+                .data(data)
+                .build();
 
         when(ctxMock.getTelemetryService()).thenReturn(telemetryServiceMock);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
@@ -206,7 +221,12 @@ public class TbMsgTimeseriesNodeTest {
                 """;
         var metadata = new TbMsgMetaData();
         metadata.putValue("TTL", ttlFromMd);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metadata, data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(metadata)
+                .data(data)
+                .build();
         node.onMsg(ctxMock, msg);
 
         verify(telemetryServiceMock).saveTimeseries(assertArg(request -> {

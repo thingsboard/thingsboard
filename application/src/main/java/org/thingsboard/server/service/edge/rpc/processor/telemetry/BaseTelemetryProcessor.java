@@ -209,7 +209,15 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
             JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
             metaData.putValue("ts", tsKv.getTs() + "");
             var defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
-            TbMsg tbMsg = TbMsg.newMsg(defaultQueueAndRuleChain.getKey(), TbMsgType.POST_TELEMETRY_REQUEST, entityId, customerId, metaData, gson.toJson(json), defaultQueueAndRuleChain.getValue(), null);
+            TbMsg tbMsg = TbMsg.newMsg()
+                    .queueName(defaultQueueAndRuleChain.getKey())
+                    .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                    .originator(entityId)
+                    .customerId(customerId)
+                    .copyMetaData(metaData)
+                    .data(gson.toJson(json))
+                    .ruleChainId(defaultQueueAndRuleChain.getValue())
+                    .build();
             edgeCtx.getClusterService().pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
@@ -253,7 +261,15 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         SettableFuture<Void> futureToSet = SettableFuture.create();
         JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
         var defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
-        TbMsg tbMsg = TbMsg.newMsg(defaultQueueAndRuleChain.getKey(), TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, customerId, metaData, gson.toJson(json), defaultQueueAndRuleChain.getValue(), null);
+        TbMsg tbMsg = TbMsg.newMsg()
+                .queueName(defaultQueueAndRuleChain.getKey())
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(entityId)
+                .customerId(customerId)
+                .copyMetaData(metaData)
+                .data(gson.toJson(json))
+                .ruleChainId(defaultQueueAndRuleChain.getValue())
+                .build();
         edgeCtx.getClusterService().pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {
@@ -287,8 +303,15 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
                     @Override
                     public void onSuccess(@Nullable Void tmp) {
                         var defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
-                        TbMsg tbMsg = TbMsg.newMsg(defaultQueueAndRuleChain.getKey(), TbMsgType.ATTRIBUTES_UPDATED, entityId,
-                                customerId, metaData, gson.toJson(json), defaultQueueAndRuleChain.getValue(), null);
+                        TbMsg tbMsg = TbMsg.newMsg()
+                                .queueName(defaultQueueAndRuleChain.getKey())
+                                .type(TbMsgType.ATTRIBUTES_UPDATED)
+                                .originator(entityId)
+                                .customerId(customerId)
+                                .copyMetaData(metaData)
+                                .data(gson.toJson(json))
+                                .ruleChainId(defaultQueueAndRuleChain.getValue())
+                                .build();
                         edgeCtx.getClusterService().pushMsgToRuleEngine(tenantId, tbMsg.getOriginator(), tbMsg, new TbQueueCallback() {
                             @Override
                             public void onSuccess(TbQueueMsgMetadata metadata) {

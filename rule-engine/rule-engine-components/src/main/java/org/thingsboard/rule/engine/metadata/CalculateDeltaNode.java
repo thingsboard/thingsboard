@@ -175,7 +175,9 @@ public class CalculateDeltaNode implements TbNode {
                 long period = previousData != null ? msg.getMetaDataTs() - previousData.ts : 0;
                 json.put(config.getPeriodValueKey(), period);
             }
-            return TbMsg.transformMsgData(msg, JacksonUtil.toString(json));
+            return msg.transform()
+                    .data(JacksonUtil.toString(json))
+                    .build();
         }, MoreExecutors.directExecutor());
     }
 

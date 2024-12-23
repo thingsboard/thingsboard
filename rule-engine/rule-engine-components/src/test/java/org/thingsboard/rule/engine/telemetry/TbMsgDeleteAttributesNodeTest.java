@@ -137,7 +137,13 @@ public class TbMsgDeleteAttributesNodeTest {
         }
         final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\"}";
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, metaData, data, callback);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(metaData)
+                .data(data)
+                .callback(callback)
+                .build();
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<Runnable> successCaptor = ArgumentCaptor.forClass(Runnable.class);

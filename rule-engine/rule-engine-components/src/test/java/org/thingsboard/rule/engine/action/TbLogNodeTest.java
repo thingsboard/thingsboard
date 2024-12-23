@@ -50,7 +50,12 @@ public class TbLogNodeTest {
         TbLogNode node = new TbLogNode();
         String data = "{\"key\": \"value\"}";
         TbMsgMetaData metaData = new TbMsgMetaData(Map.of("mdKey1", "mdValue1", "mdKey2", "23"));
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, TenantId.SYS_TENANT_ID, metaData, data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TenantId.SYS_TENANT_ID)
+                .copyMetaData(metaData)
+                .data(data)
+                .build();
 
         String logMessage = node.toLogMessage(msg);
         log.info(logMessage);
@@ -66,7 +71,12 @@ public class TbLogNodeTest {
     void givenEmptyDataMsg_whenToLog_thenReturnString() {
         TbLogNode node = new TbLogNode();
         TbMsgMetaData metaData = new TbMsgMetaData(Collections.emptyMap());
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, TenantId.SYS_TENANT_ID, metaData, "");
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TenantId.SYS_TENANT_ID)
+                .copyMetaData(metaData)
+                .data("")
+                .build();
 
         String logMessage = node.toLogMessage(msg);
         log.info(logMessage);
@@ -82,7 +92,12 @@ public class TbLogNodeTest {
     void givenNullDataMsg_whenToLog_thenReturnString() {
         TbLogNode node = new TbLogNode();
         TbMsgMetaData metaData = new TbMsgMetaData(Collections.emptyMap());
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, TenantId.SYS_TENANT_ID, metaData, null);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(TenantId.SYS_TENANT_ID)
+                .copyMetaData(metaData)
+                .data(null)
+                .build();
 
         String logMessage = node.toLogMessage(msg);
         log.info(logMessage);

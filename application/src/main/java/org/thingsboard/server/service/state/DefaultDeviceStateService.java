@@ -860,7 +860,14 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             if (!persistToTelemetry) {
                 md.putValue(SCOPE, SERVER_SCOPE);
             }
-            TbMsg tbMsg = TbMsg.newMsg(msgType, stateData.getDeviceId(), stateData.getCustomerId(), md, TbMsgDataType.JSON, data);
+            TbMsg tbMsg = TbMsg.newMsg()
+                    .type(msgType)
+                    .originator(stateData.getDeviceId())
+                    .customerId(stateData.getCustomerId())
+                    .copyMetaData(md)
+                    .dataType(TbMsgDataType.JSON)
+                    .data(data)
+                    .build();
             clusterService.pushMsgToRuleEngine(stateData.getTenantId(), stateData.getDeviceId(), tbMsg, null);
         } catch (Exception e) {
             log.warn("[{}] Failed to push inactivity alarm: {}", stateData.getDeviceId(), state, e);
