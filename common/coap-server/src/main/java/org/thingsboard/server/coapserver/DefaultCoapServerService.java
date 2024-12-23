@@ -78,7 +78,7 @@ public class DefaultCoapServerService implements CoapServerService {
     }
 
     @Override
-    public ConcurrentMap<InetSocketAddress, TbCoapDtlsSessionInfo> getDtlsSessionsMap() {
+    public ConcurrentMap<TbCoapDtlsDeviceAddr, TbCoapDtlsSessionInfo> getDtlsSessionsMap() {
         return tbDtlsCertificateVerifier != null ? tbDtlsCertificateVerifier.getTbCoapDtlsSessionsMap() : null;
     }
 
