@@ -38,6 +38,7 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -85,8 +86,9 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
         String registrationId = this.resolveRegistrationId(request);
         String redirectUriAction = getAction(request, "login");
         String appPackage = getAppPackage(request);
+        String platform = getPlatform(request);
         String appToken = getAppToken(request);
-        return resolve(request, registrationId, redirectUriAction, appPackage, appToken);
+        return resolve(request, registrationId, redirectUriAction, appPackage, platform, appToken);
     }
 
     @Override
@@ -96,8 +98,9 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
         }
         String redirectUriAction = getAction(request, "authorize");
         String appPackage = getAppPackage(request);
+        String platform = getPlatform(request);
         String appToken = getAppToken(request);
-        return resolve(request, registrationId, redirectUriAction, appPackage, appToken);
+        return resolve(request, registrationId, redirectUriAction, appPackage, platform, appToken);
     }
 
     private String getAction(HttpServletRequest request, String defaultAction) {
@@ -112,11 +115,15 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
         return request.getParameter("pkg");
     }
 
+    private String getPlatform(HttpServletRequest request) {
+        return request.getParameter("platform");
+    }
+
     private String getAppToken(HttpServletRequest request) {
         return request.getParameter("appToken");
     }
 
-    private OAuth2AuthorizationRequest resolve(HttpServletRequest request, String oauth2ClientId, String redirectUriAction, String appPackage, String appToken) {
+    private OAuth2AuthorizationRequest resolve(HttpServletRequest request, String oauth2ClientId, String redirectUriAction, String appPackage, String platform, String appToken) {
         if (oauth2ClientId == null) {
             return null;
         }
@@ -132,11 +139,19 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
             if (StringUtils.isEmpty(appToken)) {
                 throw new IllegalArgumentException("Invalid application token.");
             } else {
-                String appSecret = this.oAuth2ClientService.findAppSecret(new OAuth2ClientId(UUID.fromString(oauth2ClientId)), appPackage);
-                if (StringUtils.isEmpty(appSecret)) {
-                    throw new IllegalArgumentException("Invalid package: " + appPackage + ". No application secret found for Client Registration with given application package.");
+                String callbackUrlScheme;
+                if (platform != null) {
+                    callbackUrlScheme = validateMobileAppToken(oauth2ClientId, appPackage, PlatformType.valueOf(platform), appToken);
+                } else {
+                    // for backward compatibility with mobile apps of version 1.3.0 and less try to validate token with android and then ios app secret
+                    try {
+                        callbackUrlScheme = validateMobileAppToken(oauth2ClientId, appPackage, PlatformType.ANDROID, appToken);
+                    } catch (IllegalArgumentException e) {
+                        log.debug("Failed attempt to validate android application token, oauth client id: [{}], package name: [{}], appToken [{}] ",
+                                oauth2ClientId, appPackage, appToken, e);
+                        callbackUrlScheme = validateMobileAppToken(oauth2ClientId, appPackage, PlatformType.IOS, appToken);
+                    }
                 }
-                String callbackUrlScheme = this.oAuth2AppTokenFactory.validateTokenAndGetCallbackUrlScheme(appPackage, appToken, appSecret);
                 attributes.put(TbOAuth2ParameterNames.CALLBACK_URL_SCHEME, callbackUrlScheme);
             }
         }
@@ -172,6 +187,14 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
                 .state(this.stateGenerator.generateKey())
                 .attributes(attributes)
                 .build();
+    }
+
+    private String validateMobileAppToken(String oauth2ClientId, String appPackage, PlatformType platformType, String appToken) {
+        String appSecret = this.oAuth2ClientService.findAppSecret(new OAuth2ClientId(UUID.fromString(oauth2ClientId)), appPackage, platformType);
+        if (StringUtils.isEmpty(appSecret)) {
+            throw new IllegalArgumentException("Invalid package: " + appPackage + ". No application secret found for Client Registration with given application package.");
+        }
+        return this.oAuth2AppTokenFactory.validateTokenAndGetCallbackUrlScheme(appPackage, appToken, appSecret);
     }
 
     private String resolveRegistrationId(HttpServletRequest request) {

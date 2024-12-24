@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.dao.TenantEntityDao;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,11 +35,13 @@ import java.util.UUID;
  * The Interface EdgeDao.
  *
  */
-public interface EdgeDao extends Dao<Edge> {
+public interface EdgeDao extends Dao<Edge>, TenantEntityDao {
 
     Edge save(TenantId tenantId, Edge edge);
 
     EdgeInfo findEdgeInfoById(TenantId tenantId, UUID edgeId);
+
+    PageData<EdgeId> findEdgeIdsByTenantId(UUID tenantId, PageLink pageLink);
 
     PageData<Edge> findEdgesByTenantId(UUID tenantId, PageLink pageLink);
 

@@ -29,6 +29,7 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -176,7 +177,14 @@ public class TbDeviceProfileNode implements TbNode {
     }
 
     protected void scheduleAlarmHarvesting(TbContext ctx, TbMsg msg) {
-        TbMsg periodicCheck = TbMsg.newMsg(TbMsgType.DEVICE_PROFILE_PERIODIC_SELF_MSG, ctx.getTenantId(), msg != null ? msg.getCustomerId() : null, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        CustomerId customerId = msg != null ? msg.getCustomerId() : null;
+        TbMsg periodicCheck = TbMsg.newMsg()
+                .type(TbMsgType.DEVICE_PROFILE_PERIODIC_SELF_MSG)
+                .originator(ctx.getTenantId())
+                .customerId(customerId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         ctx.tellSelf(periodicCheck, TimeUnit.MINUTES.toMillis(1));
     }
 
@@ -201,7 +209,12 @@ public class TbDeviceProfileNode implements TbNode {
     }
 
     protected void onProfileUpdate(DeviceProfile profile) {
-        ctx.tellSelf(TbMsg.newMsg(TbMsgType.DEVICE_PROFILE_UPDATE_SELF_MSG, ctx.getTenantId(), TbMsgMetaData.EMPTY, profile.getId().getId().toString()), 0L);
+        ctx.tellSelf(TbMsg.newMsg()
+                .type(TbMsgType.DEVICE_PROFILE_UPDATE_SELF_MSG)
+                .originator(ctx.getTenantId())
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(profile.getId().getId().toString())
+                .build(), 0L);
     }
 
     private void onDeviceUpdate(DeviceId deviceId, DeviceProfile deviceProfile) {
@@ -210,7 +223,12 @@ public class TbDeviceProfileNode implements TbNode {
         if (deviceProfile != null) {
             msgData.put("deviceProfileId", deviceProfile.getId().getId().toString());
         }
-        ctx.tellSelf(TbMsg.newMsg(TbMsgType.DEVICE_UPDATE_SELF_MSG, ctx.getTenantId(), TbMsgMetaData.EMPTY, JacksonUtil.toString(msgData)), 0L);
+        ctx.tellSelf(TbMsg.newMsg()
+                .type(TbMsgType.DEVICE_UPDATE_SELF_MSG)
+                .originator(ctx.getTenantId())
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(JacksonUtil.toString(msgData))
+                .build(), 0L);
     }
 
     protected void invalidateDeviceProfileCache(DeviceId deviceId, String deviceJson) {

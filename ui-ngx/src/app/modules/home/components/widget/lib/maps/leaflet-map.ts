@@ -54,7 +54,7 @@ import {
   isNotEmptyStr,
   isString,
   mergeFormattedData,
-  safeExecute
+  safeExecuteTbFunction
 } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -63,9 +63,9 @@ import {
 } from '@home/components/widget/lib/maps/dialogs/select-entity-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { FormattedData, ReplaceInfo } from '@shared/models/widget.models';
-import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { take, tap } from 'rxjs/operators';
+import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 
 export default abstract class LeafletMap {
 
@@ -149,7 +149,7 @@ export default abstract class LeafletMap {
             const childCount = cluster.getChildCount();
             const formattedData = cluster.getAllChildMarkers().map(clusterMarker => clusterMarker.options.tbMarkerData);
             const markerColor = markerClusteringSettings.clusterMarkerFunction
-              ? safeExecute(markerClusteringSettings.parsedClusterMarkerFunction,
+              ? safeExecuteTbFunction(markerClusteringSettings.parsedClusterMarkerFunction,
                 [formattedData, childCount])
               : null;
             if (isDefinedAndNotNull(markerColor) && tinycolor(markerColor).isValid()) {
@@ -899,7 +899,7 @@ export default abstract class LeafletMap {
       rawMarkers.forEach(data => {
         if (data.rotationAngle || data.rotationAngle === 0) {
           const currentImage: MarkerImageInfo = this.options.useMarkerImageFunction ?
-            safeExecute(this.options.parsedMarkerImageFunction,
+            safeExecuteTbFunction(this.options.parsedMarkerImageFunction,
               [data, this.options.markerImages, markersData, data.dsIndex]) : this.options.currentImage;
           const imageUrl$ =
             currentImage
@@ -1042,7 +1042,7 @@ export default abstract class LeafletMap {
         if (!!this.extractPosition(pdata)) {
           const dsData = pointsData.map(ds => ds[tsIndex]);
           if (this.options.useColorPointFunction) {
-            pointColor = safeExecute(this.options.parsedColorPointFunction, [pdata, dsData, pdata.dsIndex]);
+            pointColor = safeExecuteTbFunction(this.options.parsedColorPointFunction, [pdata, dsData, pdata.dsIndex]);
           }
           const point = L.circleMarker(this.convertPosition(pdata, dsData), {
             color: pointColor,

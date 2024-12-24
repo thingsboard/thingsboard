@@ -60,6 +60,7 @@ import { BackgroundType, colorBackground, isBackgroundSettings } from '@shared/m
 import { MediaBreakpoints } from '@shared/models/constants';
 import { TranslateService } from '@ngx-translate/core';
 import { DashboardPageLayout } from '@home/components/dashboard-page/dashboard-page.models';
+import { maxGridsterCol, maxGridsterRow } from '@home/models/dashboard-component.models';
 
 @Injectable({
   providedIn: 'root'
@@ -682,6 +683,10 @@ export class DashboardUtilsService {
     if (row > -1 && column > - 1) {
       widgetLayout.row = row;
       widgetLayout.col = column;
+      if (this.hasWidgetCollision(widgetLayout.row, widgetLayout.col,
+                                  widgetLayout.sizeX, widgetLayout.sizeY, Object.values(layout.widgets))) {
+        this.widgetPossiblePosition(widgetLayout, layout);
+      }
     } else {
       row = 0;
       for (const w of Object.keys(layout.widgets)) {
@@ -701,6 +706,60 @@ export class DashboardUtilsService {
     widgetLayout.col = Math.floor(widgetLayout.col);
 
     layout.widgets[widget.id] = widgetLayout;
+  }
+
+  private widgetPossiblePosition(widgetLayout: WidgetLayout, layout: DashboardLayout) {
+    let bestRow = 0;
+    let bestCol = 0;
+
+    let maxCol = layout.gridSettings.minColumns || layout.gridSettings.columns || 0;
+    let maxRow = 0;
+
+    const widgetLayouts = Object.values(layout.widgets);
+
+    widgetLayouts.forEach(widget => {
+      maxCol = Math.max(maxCol, widget.col + widget.sizeX);
+      maxRow = Math.max(maxRow, widget.row + widget.sizeY);
+    })
+
+    for (; bestRow < maxRow; bestRow++) {
+      for (bestCol = 0; bestCol < maxCol; bestCol++) {
+        if (!this.hasWidgetCollision(bestRow, bestCol, widgetLayout.sizeX, widgetLayout.sizeY, widgetLayouts)) {
+          widgetLayout.row = bestRow;
+          widgetLayout.col = bestCol;
+          return;
+        }
+      }
+    }
+    const canAddToRows = maxGridsterRow >= maxRow + bestRow;
+    const canAddToColumns = maxGridsterCol >= maxCol + bestCol;
+    const addToRows = bestRow <= bestCol && canAddToRows;
+    if (!addToRows && canAddToColumns) {
+      widgetLayout.col = maxCol;
+      widgetLayout.row = 0;
+    } else if (canAddToRows) {
+      widgetLayout.row = maxRow;
+      widgetLayout.col = 0;
+    }
+  }
+
+  private hasWidgetCollision(row: number, col: number, sizeX: number, sizeY: number, widgetLayouts: WidgetLayout[]) {
+    const left = col;
+    const right = col + sizeX;
+    const top = row;
+    const bottom = row + sizeY;
+
+    for (const widget of widgetLayouts) {
+      const left2 = widget.col;
+      const right2 = widget.col + widget.sizeX;
+      const top2 = widget.row;
+      const bottom2 = widget.row + widget.sizeY;
+
+      if (left < right2 && right > left2 && top < bottom2 && bottom > top2) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public removeWidgetFromLayout(dashboard: Dashboard,

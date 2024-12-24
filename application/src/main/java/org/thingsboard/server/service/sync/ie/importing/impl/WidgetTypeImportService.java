@@ -39,8 +39,8 @@ public class WidgetTypeImportService extends BaseEntityImportService<WidgetTypeI
     }
 
     @Override
-    protected WidgetTypeDetails prepare(EntitiesImportCtx ctx, WidgetTypeDetails widgetsBundle, WidgetTypeDetails old, WidgetTypeExportData exportData, IdProvider idProvider) {
-        return widgetsBundle;
+    protected WidgetTypeDetails prepare(EntitiesImportCtx ctx, WidgetTypeDetails widgetTypeDetails, WidgetTypeDetails old, WidgetTypeExportData exportData, IdProvider idProvider) {
+        return widgetTypeDetails;
     }
 
     @Override

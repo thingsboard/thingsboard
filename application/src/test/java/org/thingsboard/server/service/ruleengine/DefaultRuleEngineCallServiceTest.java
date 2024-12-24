@@ -23,7 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -37,7 +37,6 @@ import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -63,7 +62,7 @@ public class DefaultRuleEngineCallServiceTest {
 
     @BeforeEach
     void setUp() {
-        executor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("re-rest-callback"));
+        executor = ThingsBoardExecutors.newSingleThreadScheduledExecutor("re-rest-callback");
         ruleEngineCallService = new DefaultRuleEngineCallService(tbClusterServiceMock);
         ReflectionTestUtils.setField(ruleEngineCallService, "executor", executor);
         ReflectionTestUtils.setField(ruleEngineCallService, "requests", requests);
@@ -86,7 +85,13 @@ public class DefaultRuleEngineCallServiceTest {
         metaData.put("serviceId", "core");
         metaData.put("requestUUID", requestId.toString());
         metaData.put("expirationTime", Long.toString(expTime));
-        TbMsg msg = TbMsg.newMsg(DataConstants.MAIN_QUEUE_NAME, TbMsgType.REST_API_REQUEST, TENANT_ID, new TbMsgMetaData(metaData), "{\"key\":\"value\"}");
+        TbMsg msg = TbMsg.newMsg()
+                .queueName(DataConstants.MAIN_QUEUE_NAME)
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(TENANT_ID)
+                .copyMetaData(new TbMsgMetaData(metaData))
+                .data("{\"key\":\"value\"}")
+                .build();
 
         Consumer<TbMsg> anyConsumer = TbMsg::getData;
         doAnswer(invocation -> {
@@ -114,7 +119,13 @@ public class DefaultRuleEngineCallServiceTest {
         metaData.put("serviceId", "core");
         metaData.put("requestUUID", requestId.toString());
         metaData.put("expirationTime", Long.toString(expTime));
-        TbMsg msg = TbMsg.newMsg(DataConstants.MAIN_QUEUE_NAME, TbMsgType.REST_API_REQUEST, TENANT_ID, new TbMsgMetaData(metaData), "{\"key\":\"value\"}");
+        TbMsg msg = TbMsg.newMsg()
+                .queueName(DataConstants.MAIN_QUEUE_NAME)
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(TENANT_ID)
+                .copyMetaData(new TbMsgMetaData(metaData))
+                .data("{\"key\":\"value\"}")
+                .build();
 
         Consumer<TbMsg> anyConsumer = TbMsg::getData;
         doAnswer(invocation -> {

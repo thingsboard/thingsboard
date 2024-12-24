@@ -1,0 +1,189 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+$defaultBorderRadius: 4px;
+
+$defaultCheckedMainColor: #FFFFFF;
+$defaultCheckedBackgroundColor: #305680;
+$defaultCheckedBorderColor: #305680;
+
+$defaultUncheckedMainColor: rgba(0, 0, 0, 0.76);
+$defaultUncheckedBackgroundColor: #E8E8E8;
+$defaultUncheckedBorderColor: #E8E8E8;
+
+$defaultCheckedMainColorDisabled: #FFFFFFCC;
+$defaultCheckedBackgroundColorDisabled: rgba(0, 0, 0, 0.12);
+$defaultCheckedBorderColorDisabled: rgba(0, 0, 0, 0.12);
+
+$defaultUncheckedMainColorDisabled: rgba(0, 0, 0, 0.12);
+$defaultUncheckedBackgroundColorDisabled: #E8E8E8;
+$defaultUncheckedBorderColorDisabled: #E8E8E8;
+
+$buttonBorderRadius: var(--tb-widget-button-toggle-border-radius, $defaultBorderRadius);
+
+$mainCheckedColorEnabled: var(--tb-widget-button-toggle-main-checked-color-enabled, $defaultCheckedMainColor);
+$backgroundCheckedColorEnabled: var(--tb-widget-button-toggle-background-checked-color-enabled, $defaultCheckedBackgroundColor);
+$borderCheckedColorEnabled: var(--tb-widget-button-toggle-border-checked-color-enabled, $defaultCheckedBorderColor);
+
+$mainUncheckedColorEnabled: var(--tb-widget-button-toggle-main-unchecked-color-enabled, $defaultUncheckedMainColor);
+$backgroundUncheckedColorEnabled: var(--tb-widget-button-toggle-background-unchecked-color-enabled, $defaultUncheckedBackgroundColor);
+$borderUncheckedColorEnabled: var(--tb-widget-button-toggle-border-unchecked-color-enabled, $defaultUncheckedBorderColor);
+
+$mainCheckedColorDisabled: var(--tb-widget-button-toggle-main-checked-color-disabled, $defaultCheckedMainColorDisabled);
+$backgroundCheckedColorDisabled: var(--tb-widget-button-toggle-background-checked-color-disabled, $defaultCheckedBackgroundColorDisabled);
+$borderCheckedColorDisabled: var(--tb-widget-button-toggle-border-checked-color-disabled, $defaultCheckedBorderColorDisabled);
+
+$mainUncheckedColorDisabled: var(--tb-widget-button-toggle-main-unchecked-color-disabled, $defaultUncheckedMainColorDisabled);
+$backgroundUncheckedColorDisabled: var(--tb-widget-button-toggle-background-unchecked-color-disabled, $defaultUncheckedBackgroundColorDisabled);
+$borderUncheckedColorDisabled: var(--tb-widget-button-toggle-border-unchecked-color-disabled, $defaultUncheckedBorderColorDisabled);
+
+$mainCheckedColorHovered: var(--tb-widget-button-toggle-main-checked-color-hovered, $defaultCheckedMainColor);
+$backgroundCheckedColorHovered: var(--tb-widget-button-toggle-background-checked-color-hovered, $defaultCheckedBackgroundColor);
+$borderCheckedColorHovered: var(--tb-widget-button-toggle-border-checked-color-hovered, $defaultCheckedBorderColor);
+
+$mainUncheckedColorHovered: var(--tb-widget-button-toggle-main-unchecked-color-hovered, $defaultCheckedMainColor);
+$backgroundUncheckedColorHovered: var(--tb-widget-button-toggle-background-unchecked-color-hovered, $defaultCheckedBackgroundColor);
+$borderUncheckedColorHovered: var(--tb-widget-button-toggle-border-unchecked-color-hovered, $defaultCheckedBorderColor);
+
+@mixin _tb-widget-button-styles($main, $background, $boxShadow) {
+  color: $main;
+  background-color: $background;
+  border: 1px solid $boxShadow;
+}
+
+:host {
+  max-width: 100%;
+  .tb-toggle-container {
+    display: block;
+    height: 100%;
+  }
+  .tb-toggle-header {
+    transition: transform 500ms cubic-bezier(0.35, 0, 0.25, 1);
+  }
+
+  .tb-widget-button-content {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    justify-content: center;
+    align-items: center;
+    .mat-icon {
+      margin: 0;
+    }
+    span.tb-widget-button-label {
+      line-height: normal;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+}
+
+:host ::ng-deep {
+  .mat-button-toggle-group.mat-button-toggle-group-appearance-standard.tb-toggle-header {
+    overflow: visible;
+    width: 100%;
+    height: 100%;
+    padding: 3px;
+    border: 1px solid;
+    background: transparent;
+    .mat-button-toggle + .mat-button-toggle {
+      border-left: none;
+    }
+    .mat-button-toggle.mat-button-toggle-appearance-standard {
+      flex: 1;
+      width: 50%;
+      border-radius: $buttonBorderRadius;
+
+      &.tb-hover-state {
+        .mat-button-toggle-button {
+          @include _tb-widget-button-styles($mainUncheckedColorHovered, $backgroundUncheckedColorHovered, $borderUncheckedColorHovered);
+        }
+        &.mat-button-toggle-checked {
+          .mat-button-toggle-button {
+            @include _tb-widget-button-styles($mainCheckedColorHovered, $backgroundCheckedColorHovered, $borderCheckedColorHovered);
+          }
+        }
+      }
+
+      .mat-button-toggle-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        border-radius: $buttonBorderRadius;
+        @include _tb-widget-button-styles($mainUncheckedColorEnabled, $backgroundUncheckedColorEnabled, $borderUncheckedColorEnabled);
+        .mat-button-toggle-label-content {
+          .mat-pseudo-checkbox {
+            display: none;
+          }
+        }
+      }
+      &.mat-button-toggle-checked {
+        .mat-button-toggle-button {
+          @include _tb-widget-button-styles($mainCheckedColorEnabled, $backgroundCheckedColorEnabled, $borderCheckedColorEnabled);
+
+        }
+      }
+
+    }
+    &.tb-pointer-events {
+      .mat-button-toggle.mat-button-toggle-appearance-standard {
+        .mat-button-toggle-button {
+          pointer-events: none;
+        }
+        .mat-button-toggle-focus-overlay, .mat-button-toggle-ripple {
+          opacity: 0;
+        }
+      }
+    }
+    &:not(:disabled):not(.tb-disabled-state):not(.tb-pointer-events) {
+      .mat-button-toggle.mat-button-toggle-appearance-standard {
+        &:hover {
+          .mat-button-toggle-button {
+            @include _tb-widget-button-styles($mainUncheckedColorHovered, $backgroundUncheckedColorHovered, $borderUncheckedColorHovered);
+          }
+          &.mat-button-toggle-checked {
+            .mat-button-toggle-button {
+              @include _tb-widget-button-styles($mainCheckedColorHovered, $backgroundCheckedColorHovered, $borderCheckedColorHovered);
+            }
+          }
+        }
+      }
+    }
+    &:disabled, &.tb-disabled-state {
+      pointer-events: none;
+      .mat-button-toggle.mat-button-toggle-appearance-standard {
+        .mat-button-toggle-button {
+          @include _tb-widget-button-styles($mainUncheckedColorDisabled, $backgroundUncheckedColorDisabled, $borderUncheckedColorDisabled);
+        }
+
+        &.mat-button-toggle-checked {
+          .mat-button-toggle-button {
+            @include _tb-widget-button-styles($mainCheckedColorDisabled, $backgroundCheckedColorDisabled, $borderCheckedColorDisabled);
+          }
+        }
+      }
+      .mat-button-toggle-focus-overlay, .mat-button-toggle-ripple {
+        opacity: 0;
+      }
+    }
+    .mat-button-toggle-focus-overlay, .mat-button-toggle-ripple {
+      border-radius: inherit;
+    }
+  }
+}

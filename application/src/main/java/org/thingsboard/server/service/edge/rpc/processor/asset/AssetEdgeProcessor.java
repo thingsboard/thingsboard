@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -57,9 +56,9 @@ public abstract class AssetEdgeProcessor extends BaseAssetProcessor implements A
                     saveOrUpdateAsset(tenantId, assetId, assetUpdateMsg, edge);
                     return Futures.immediateFuture(null);
                 case ENTITY_DELETED_RPC_MESSAGE:
-                    Asset assetToDelete = assetService.findAssetById(tenantId, assetId);
+                    Asset assetToDelete = edgeCtx.getAssetService().findAssetById(tenantId, assetId);
                     if (assetToDelete != null) {
-                        assetService.unassignAssetFromEdge(tenantId, assetId, edge.getId());
+                        edgeCtx.getAssetService().unassignAssetFromEdge(tenantId, assetId, edge.getId());
                     }
                     return Futures.immediateFuture(null);
                 case UNRECOGNIZED:
@@ -84,7 +83,7 @@ public abstract class AssetEdgeProcessor extends BaseAssetProcessor implements A
         if (created) {
             createRelationFromEdge(tenantId, edge.getId(), assetId);
             pushAssetCreatedEventToRuleEngine(tenantId, edge, assetId);
-            assetService.assignAssetToEdge(tenantId, assetId, edge.getId());
+            edgeCtx.getAssetService().assignAssetToEdge(tenantId, assetId, edge.getId());
         }
         Boolean assetNameUpdated = resultPair.getSecond();
         if (assetNameUpdated) {
@@ -94,7 +93,7 @@ public abstract class AssetEdgeProcessor extends BaseAssetProcessor implements A
 
     private void pushAssetCreatedEventToRuleEngine(TenantId tenantId, Edge edge, AssetId assetId) {
         try {
-            Asset asset = assetService.findAssetById(tenantId, assetId);
+            Asset asset = edgeCtx.getAssetService().findAssetById(tenantId, assetId);
             String assetAsString = JacksonUtil.toString(asset);
             TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, asset.getCustomerId());
             pushEntityEventToRuleEngine(tenantId, assetId, asset.getCustomerId(), TbMsgType.ENTITY_CREATED, assetAsString, msgMetaData);
@@ -104,34 +103,33 @@ public abstract class AssetEdgeProcessor extends BaseAssetProcessor implements A
     }
 
     @Override
-    public DownlinkMsg convertAssetEventToDownlink(EdgeEvent edgeEvent, EdgeId edgeId, EdgeVersion edgeVersion) {
+    public DownlinkMsg convertAssetEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         AssetId assetId = new AssetId(edgeEvent.getEntityId());
-        DownlinkMsg downlinkMsg = null;
-        var msgConstructor = (AssetMsgConstructor) assetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion);
+        var msgConstructor = (AssetMsgConstructor) edgeCtx.getAssetMsgConstructorFactory().getMsgConstructorByEdgeVersion(edgeVersion);
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED, ASSIGNED_TO_EDGE, ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER -> {
-                Asset asset = assetService.findAssetById(edgeEvent.getTenantId(), assetId);
+                Asset asset = edgeCtx.getAssetService().findAssetById(edgeEvent.getTenantId(), assetId);
                 if (asset != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    AssetUpdateMsg assetUpdateMsg = ((AssetMsgConstructor)
-                            assetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructAssetUpdatedMsg(msgType, asset);
+                    AssetUpdateMsg assetUpdateMsg = msgConstructor.constructAssetUpdatedMsg(msgType, asset);
                     DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addAssetUpdateMsg(assetUpdateMsg);
                     if (UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE.equals(msgType)) {
-                        AssetProfile assetProfile = assetProfileService.findAssetProfileById(edgeEvent.getTenantId(), asset.getAssetProfileId());
-                        assetProfile = checkIfAssetProfileDefaultFieldsAssignedToEdge(edgeEvent.getTenantId(), edgeId, assetProfile, edgeVersion);
+                        AssetProfile assetProfile = edgeCtx.getAssetProfileService().findAssetProfileById(edgeEvent.getTenantId(), asset.getAssetProfileId());
                         builder.addAssetProfileUpdateMsg(msgConstructor.constructAssetProfileUpdatedMsg(msgType, assetProfile));
                     }
-                    downlinkMsg = builder.build();
+                    return builder.build();
                 }
             }
-            case DELETED, UNASSIGNED_FROM_EDGE -> downlinkMsg = DownlinkMsg.newBuilder()
-                    .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                    .addAssetUpdateMsg(msgConstructor.constructAssetDeleteMsg(assetId))
-                    .build();
+            case DELETED, UNASSIGNED_FROM_EDGE -> {
+                return DownlinkMsg.newBuilder()
+                        .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
+                        .addAssetUpdateMsg(msgConstructor.constructAssetDeleteMsg(assetId))
+                        .build();
+            }
         }
-        return downlinkMsg;
+        return null;
     }
 
 }

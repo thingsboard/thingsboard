@@ -192,7 +192,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     private void updateQueues(List<QueueUpdateMsg> queueUpdateMsgs) {
         for (QueueUpdateMsg queueUpdateMsg : queueUpdateMsgs) {
             log.info("Received queue update msg: [{}]", queueUpdateMsg);
-            TenantId tenantId = new TenantId(new UUID(queueUpdateMsg.getTenantIdMSB(), queueUpdateMsg.getTenantIdLSB()));
+            TenantId tenantId = TenantId.fromUUID(new UUID(queueUpdateMsg.getTenantIdMSB(), queueUpdateMsg.getTenantIdLSB()));
             if (partitionService.isManagedByCurrentService(tenantId)) {
                 QueueId queueId = new QueueId(new UUID(queueUpdateMsg.getQueueIdMSB(), queueUpdateMsg.getQueueIdLSB()));
                 String queueName = queueUpdateMsg.getQueueName();
@@ -212,7 +212,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     private void deleteQueues(List<QueueDeleteMsg> queueDeleteMsgs) {
         for (QueueDeleteMsg queueDeleteMsg : queueDeleteMsgs) {
             log.info("Received queue delete msg: [{}]", queueDeleteMsg);
-            TenantId tenantId = new TenantId(new UUID(queueDeleteMsg.getTenantIdMSB(), queueDeleteMsg.getTenantIdLSB()));
+            TenantId tenantId = TenantId.fromUUID(new UUID(queueDeleteMsg.getTenantIdMSB(), queueDeleteMsg.getTenantIdLSB()));
             QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queueDeleteMsg.getQueueName(), tenantId);
             removeConsumer(queueKey).ifPresent(consumer -> consumer.delete(true));
         }

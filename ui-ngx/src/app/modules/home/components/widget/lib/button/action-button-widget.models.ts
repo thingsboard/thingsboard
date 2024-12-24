@@ -38,6 +38,10 @@ export const actionButtonDefaultSettings: ActionButtonWidgetSettings = {
     getTimeSeries: {
       key: 'state'
     },
+    getAlarmStatus: {
+      severityList: null,
+      typeList: null
+    },
     dataToValue: {
       type: DataToValueType.NONE,
       compareToValue: true,
@@ -53,6 +57,10 @@ export const actionButtonDefaultSettings: ActionButtonWidgetSettings = {
     },
     getTimeSeries: {
       key: 'state'
+    },
+    getAlarmStatus: {
+      severityList: null,
+      typeList: null
     },
     dataToValue: {
       type: DataToValueType.NONE,

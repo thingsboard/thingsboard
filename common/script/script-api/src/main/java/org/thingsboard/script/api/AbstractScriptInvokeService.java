@@ -21,7 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 
@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -87,7 +86,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
 
     public void init() {
         if (getMaxEvalRequestsTimeout() > 0 || getMaxInvokeRequestsTimeout() > 0) {
-            timeoutExecutorService = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("script-timeout"));
+            timeoutExecutorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("script-timeout");
         }
     }
 

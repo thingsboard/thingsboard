@@ -25,7 +25,7 @@
              placeholder="{{ (keyPlaceholderText ? keyPlaceholderText : 'key-val.key') | translate }}"/>
     </mat-form-field>
     <mat-form-field class="mat-block flex-1" subscriptSizing="{{ subscriptSizing }}">
-      <input [formControl]="keyValControl.get('value')" matInput required
+      <input [formControl]="keyValControl.get('value')" matInput [required]="isValueRequired"
              placeholder="{{ (valuePlaceholderText ? valuePlaceholderText : 'key-val.value') | translate }}"/>
     </mat-form-field>
     <button mat-icon-button color="primary"

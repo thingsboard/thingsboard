@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.rule.engine.util.TbMsgSource;
+import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -38,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -228,7 +230,7 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
 
         // update metadata for root rule chain
         edgeImitator.expectMessageAmount(1);
-        metaData.getNodes().forEach(n -> n.setDebugMode(true));
+        metaData.getNodes().forEach(n -> n.setDebugSettings(DebugSettings.all()));
         doPost("/api/ruleChain/metadata", metaData, RuleChainMetaData.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
         ruleChainUpdateMsgOpt = edgeImitator.findMessageByType(RuleChainUpdateMsg.class);

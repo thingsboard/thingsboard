@@ -1,0 +1,85 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form [formGroup]="intervalOptionsConfigForm" class="tb-interval-options-form tb-form-panel no-border"
+      [style]="aggregation ? {maxWidth: '600px'} : {maxWidth: '350px'}">
+  <div class="tb-form-panel-title">{{ 'timewindow.edit-intervals-list' | translate }}</div>
+  <div class="tb-form-hint tb-primary-fill">
+    {{ 'timewindow.edit-intervals-list-hint' | translate }} {{ aggregation ? ('timewindow.edit-grouping-intervals-list-hint' | translate) : '' }}
+  </div>
+  <div class="tb-form-table">
+    <div class="tb-form-table-header">
+      <div class="tb-form-table-header-cell tb-interval" tbTruncateWithTooltip>
+        <mat-checkbox color="warn"
+                      (click)="$event.stopPropagation()"
+                      [indeterminate]="getIndeterminate()"
+                      (change)="enableDisableIntervals($event.checked)"
+                      [checked]="getChecked()">
+        </mat-checkbox>
+        {{ "timewindow.interval" | translate }}
+      </div>
+      <ng-container *ngIf="aggregation">
+        <div class="tb-form-table-header-cell tb-agg-interval-header" tbTruncateWithTooltip>{{"timewindow.allowed-agg-intervals" | translate }}</div>
+        <div class="tb-form-table-header-cell tb-agg-interval-header" tbTruncateWithTooltip>{{"timewindow.default-agg-interval" | translate }}</div>
+      </ng-container>
+    </div>
+    <div class="tb-form-table-body" formArrayName="intervals">
+      <ng-container *ngFor="let interval of intervalsFormArray.controls; let i = index; trackBy: trackByElement">
+        <div [formGroupName]="i" class="tb-form-table-row">
+          <div class="tb-form-table-row-cell tb-interval">
+            <mat-checkbox class="tb-interval-option" formControlName="enabled" color="primary">
+              <mat-label tbTruncateWithTooltip>{{ interval.get('name').value }}</mat-label>
+            </mat-checkbox>
+          </div>
+          <ng-container *ngIf="aggregation">
+            <div class="tb-form-table-row-cell tb-agg-interval">
+              <tb-grouping-interval-options
+                formControlName="aggIntervalsConfig"
+                [min]="minAggInterval(interval.get('value').value)"
+                [max]="maxAggInterval(interval.get('value').value)"
+                useCalendarIntervals
+                subscriptSizing="dynamic"
+                appearance="outline">
+              </tb-grouping-interval-options>
+            </div>
+          </ng-container>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+  <div class="flex flex-row gap-2 items-center">
+    <button type="button"
+            mat-button
+            color="primary"
+            (click)="reset()">
+      {{ 'action.reset' | translate }}
+    </button>
+    <span class="flex-1"></span>
+    <button type="button"
+            mat-button
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button type="button"
+            mat-raised-button
+            color="primary"
+            (click)="update()"
+            [disabled]="intervalOptionsConfigForm.invalid || !intervalOptionsConfigForm.dirty">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</form>

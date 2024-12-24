@@ -78,6 +78,7 @@
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
               <tb-js-func formControlName="clusterMarkerFunction"
+                          withModules
                           [globalVariables]="functionScopeVariables"
                           [functionArgs]="['data', 'childCount']"
                           functionTitle="{{ 'widgets.maps.marker-color-function' | translate }}"

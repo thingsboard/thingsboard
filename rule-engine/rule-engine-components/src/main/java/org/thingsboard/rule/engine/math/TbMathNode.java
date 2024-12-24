@@ -19,16 +19,19 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.SemaphoreWithTbMsgQueue;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -37,6 +40,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -139,22 +143,36 @@ public class TbMathNode implements TbNode {
     }
 
     private ListenableFuture<Void> saveTimeSeries(TbContext ctx, TbMsg msg, double result, TbMathResult mathResultDef) {
-
-        return ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), msg.getOriginator(),
-                new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry(mathResultDef.getKey(), result)));
+        final BasicTsKvEntry basicTsKvEntry = new BasicTsKvEntry(System.currentTimeMillis(), new DoubleDataEntry(mathResultDef.getKey(), result));
+        SettableFuture<Void> future = SettableFuture.create();
+        ctx.getTelemetryService().saveTimeseries(TimeseriesSaveRequest.builder()
+                .tenantId(ctx.getTenantId())
+                .entityId(msg.getOriginator())
+                .entry(basicTsKvEntry)
+                .future(future)
+                .build());
+        return future;
     }
 
     private ListenableFuture<Void> saveAttribute(TbContext ctx, TbMsg msg, double result, TbMathResult mathResultDef) {
         AttributeScope attributeScope = getAttributeScope(mathResultDef.getAttributeScope());
+        KvEntry kvEntry;
         if (isIntegerResult(mathResultDef, config.getOperation())) {
             var value = toIntValue(result);
-            return ctx.getTelemetryService().saveAttrAndNotify(
-                    ctx.getTenantId(), msg.getOriginator(), attributeScope, mathResultDef.getKey(), value);
+            kvEntry = new LongDataEntry(mathResultDef.getKey(), value);
         } else {
             var value = toDoubleValue(mathResultDef, result);
-            return ctx.getTelemetryService().saveAttrAndNotify(
-                    ctx.getTenantId(), msg.getOriginator(), attributeScope, mathResultDef.getKey(), value);
+            kvEntry = new DoubleDataEntry(mathResultDef.getKey(), value);
         }
+        SettableFuture<Void> future = SettableFuture.create();
+        ctx.getTelemetryService().saveAttributes(AttributesSaveRequest.builder()
+                .tenantId(ctx.getTenantId())
+                .entityId(msg.getOriginator())
+                .scope(attributeScope)
+                .entry(kvEntry)
+                .future(future)
+                .build());
+        return future;
     }
 
     private boolean isIntegerResult(TbMathResult mathResultDef, TbRuleNodeMathFunctionType function) {
@@ -202,7 +220,9 @@ public class TbMathNode implements TbNode {
         } else {
             body.put(mathResultKey, toDoubleValue(mathResultDef, result));
         }
-        return TbMsg.transformMsgData(msg, JacksonUtil.toString(body));
+        return msg.transform()
+                .data(JacksonUtil.toString(body))
+                .build();
     }
 
     private TbMsg addToMeta(TbMsg msg, TbMathResult mathResultDef, String mathResultKey, double result) {
@@ -212,7 +232,9 @@ public class TbMathNode implements TbNode {
         } else {
             md.putValue(mathResultKey, Double.toString(toDoubleValue(mathResultDef, result)));
         }
-        return TbMsg.transformMsgMetadata(msg, md);
+        return msg.transform()
+                .metaData(md)
+                .build();
     }
 
     private double calculateResult(List<TbMathArgumentValue> args) {

@@ -28,6 +28,7 @@ import {
   SubscriptionDataKey
 } from '@core/api/entity-data-subscription';
 import { Observable, of } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 
 export interface EntityDataListener {
   subscriptionType: widgetType;
@@ -62,7 +63,8 @@ export interface EntityDataLoadResult {
 export class EntityDataService {
 
   constructor(private telemetryService: TelemetryWebsocketService,
-              private utils: UtilsService) {}
+              private utils: UtilsService,
+              private http: HttpClient) {}
 
   private static isUnresolvedDatasource(datasource: Datasource, pageLink: EntityDataPageLink): boolean {
     if (datasource.type === DatasourceType.entity) {
@@ -103,7 +105,7 @@ export class EntityDataService {
     if (EntityDataService.isUnresolvedDatasource(datasource, datasource.pageLink)) {
       return of(null);
     }
-    listener.subscription = new EntityDataSubscription(listener, this.telemetryService, this.utils);
+    listener.subscription = new EntityDataSubscription(listener, this.telemetryService, this.utils, this.http);
     return listener.subscription.subscribe();
   }
 
@@ -137,7 +139,7 @@ export class EntityDataService {
         listener.configDatasourceIndex, listener.subscriptionOptions.pageLink);
       return of(null);
     }
-    listener.subscription = new EntityDataSubscription(listener, this.telemetryService, this.utils);
+    listener.subscription = new EntityDataSubscription(listener, this.telemetryService, this.utils, this.http);
     if (listener.useTimewindow) {
       listener.subscriptionOptions.subscriptionTimewindow = deepClone(listener.subscriptionTimewindow);
     }

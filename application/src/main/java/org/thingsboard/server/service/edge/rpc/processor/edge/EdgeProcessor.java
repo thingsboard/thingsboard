@@ -48,21 +48,19 @@ public class EdgeProcessor extends BaseEdgeProcessor {
 
     public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
         EdgeId edgeId = new EdgeId(edgeEvent.getEntityId());
-        DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
             case ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER -> {
-                Edge edge = edgeService.findEdgeById(edgeEvent.getTenantId(), edgeId);
+                Edge edge = edgeCtx.getEdgeService().findEdgeById(edgeEvent.getTenantId(), edgeId);
                 if (edge != null) {
-                    EdgeConfiguration edgeConfigMsg =
-                            edgeMsgConstructor.constructEdgeConfiguration(edge);
-                    downlinkMsg = DownlinkMsg.newBuilder()
+                    EdgeConfiguration edgeConfigMsg = edgeCtx.getEdgeMsgConstructor().constructEdgeConfiguration(edge);
+                    return DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .setEdgeConfiguration(edgeConfigMsg)
                             .build();
                 }
             }
         }
-        return downlinkMsg;
+        return null;
     }
 
     public ListenableFuture<Void> processEdgeNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
@@ -70,9 +68,9 @@ public class EdgeProcessor extends BaseEdgeProcessor {
             EdgeEventActionType actionType = EdgeEventActionType.valueOf(edgeNotificationMsg.getAction());
             EdgeId edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
             switch (actionType) {
-                case ASSIGNED_TO_CUSTOMER:
+                case ASSIGNED_TO_CUSTOMER: {
                     CustomerId customerId = JacksonUtil.fromString(edgeNotificationMsg.getBody(), CustomerId.class);
-                    Edge edge = edgeService.findEdgeById(tenantId, edgeId);
+                    Edge edge = edgeCtx.getEdgeService().findEdgeById(tenantId, edgeId);
                     if (customerId != null && (edge == null || customerId.isNullUid())) {
                         return Futures.immediateFuture(null);
                     }
@@ -82,7 +80,7 @@ public class EdgeProcessor extends BaseEdgeProcessor {
                     PageLink pageLink = new PageLink(1000);
                     PageData<User> pageData;
                     do {
-                        pageData = userService.findCustomerUsers(tenantId, customerId, pageLink);
+                        pageData = edgeCtx.getUserService().findCustomerUsers(tenantId, customerId, pageLink);
                         if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
                             log.trace("[{}][{}][{}] user(s) are going to be added to edge.", tenantId, edge.getId(), pageData.getData().size());
                             for (User user : pageData.getData()) {
@@ -94,15 +92,17 @@ public class EdgeProcessor extends BaseEdgeProcessor {
                         }
                     } while (pageData != null && pageData.hasNext());
                     return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
-                case UNASSIGNED_FROM_CUSTOMER:
+                }
+                case UNASSIGNED_FROM_CUSTOMER: {
                     CustomerId customerIdToDelete = JacksonUtil.fromString(edgeNotificationMsg.getBody(), CustomerId.class);
-                    edge = edgeService.findEdgeById(tenantId, edgeId);
+                    Edge edge = edgeCtx.getEdgeService().findEdgeById(tenantId, edgeId);
                     if (customerIdToDelete != null && (edge == null || customerIdToDelete.isNullUid())) {
                         return Futures.immediateFuture(null);
                     }
                     return Futures.transformAsync(saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.EDGE, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER, edgeId, null),
                             voids -> saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.CUSTOMER, EdgeEventActionType.DELETED, customerIdToDelete, null),
                             dbCallbackExecutorService);
+                }
                 default:
                     return Futures.immediateFuture(null);
             }

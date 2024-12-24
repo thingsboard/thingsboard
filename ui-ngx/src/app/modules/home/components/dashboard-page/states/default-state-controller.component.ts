@@ -187,7 +187,8 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
   }
 
   public getStateName(id: string, state: DashboardState): string {
-    return this.utils.customTranslation(state.name, id);
+    const name = this.utils.customTranslation(state.name, id);
+    return name === this.stateControllerId() ? name.charAt(0).toUpperCase() + name.slice(1) : name;
   }
 
   public getCurrentStateName(): string {

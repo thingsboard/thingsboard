@@ -114,6 +114,7 @@
       <ng-template matExpansionPanelContent>
         <tb-js-func required
                     formControlName="rowStyleFunction"
+                    withModules
                     [globalVariables]="functionScopeVariables"
                     [functionArgs]="['entity', 'ctx']"
                     functionTitle="{{ 'widgets.table.row-style-function' | translate }}"

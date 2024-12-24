@@ -82,7 +82,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     public void init(String prefix) {
         this.consumersExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName(prefix + "-consumer"));
         this.mgmtExecutor = ThingsBoardExecutors.newWorkStealingPool(getMgmtThreadPoolSize(), prefix + "-mgmt");
-        this.scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName(prefix + "-consumer-scheduler"));
+        this.scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor(prefix + "-consumer-scheduler");
 
         this.nfConsumer = QueueConsumerManager.<TbProtoQueueMsg<N>>builder()
                 .name(getServiceType().getLabel() + " Notifications")

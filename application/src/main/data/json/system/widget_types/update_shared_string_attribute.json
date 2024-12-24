@@ -2,7 +2,7 @@
   "fqn": "input_widgets.update_shared_string_attribute",
   "name": "Update shared string attribute",
   "deprecated": true,
-  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAAAAABslHx1AAAAAmJLR0QA/4ePzL8AAAOkSURBVHja7d3bSxRRHAfw/VdG6yklCbPsRk+GhVLYDSXMohC1tczVUkxFXDULzW4a+SA9VIZRm5haIJqBmMqW2cUoddUVR1sved2dnV/nuJaX3X0Q1pjZvj/YM4fDmYfP/uZcdvbhaMgmmnpVHibRShpb/4REKg9pot+mESfIC2JC1Jgkb4BIJk0veUX0AgIIIIAAAggggAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAsp6QN194+epPs1Z0vqm/Uw2QuuussMSOuYXYbe3PZJvyIeNx40T1xUTDTe+sHCK3STTfwQDGpgVU/+Vr+ox2FYyRktdEuS3UllFXVsAhtrMz9DOe5JI7htQfvIM1K3VcDYO9NZ+GtfP00Uz2uLEliDFHpqYy3qG2suaxGiDW86PVFURTD6/mxg4vQQwpRUW5ObyDZc5uVsX0+6A2s5uo9LmdtA7INIfUlo6MjFhUtY58S06TiXJa6HOsmc9aSd+pI576Lo6SuVNVEDndwErjhUs3dO85pCExrSSeqDE5K61bjSu7febvqJlzACdlbFEAAQQQQP4/yKxTRR0Q+eXKDdFsocFRMRTOqgkiP9E1rWwx6AzLLmqByE919avbajihxqVDsRCWj3rnVpYM1/lQLMRVPhw5ceNQHGTmnok7qlw7PAuJOrWOEIs+c8DNc+XxR2tdITSWd8XkPh8eHezrC2E5SXWfjzVNvxUdRn0Bf29V3sZvq2GVD82FuUYy5ukbFiBdN7MbeU+pOvvuV96xoyrT4kGJa8eaF8Sg/cHaEN9WIr/ixe9/8+7QxD0bsgITDgqPWMu2refChXIi28mApIiNzOYX7B826MEB76EtStC+SbLuSFkOiZZoaos/ewcUdYh9AodJ1gX8ovubekhO2Ms6hk8pcdMYlM+KmBPLIUWscoy1UF7Q4hjpEpopTMsq9cKYo6NCIacjV0MiY1hRELgImRQqKUBYiC5VQ4aEatqZ2MljWvGQYP6C9LAz5CirvBA+UUyYndXmSPGQ2GDjwG0fZ4hQPPh21xH2l5BP+oCoD7UrHtITIvgej3CGnIkWhAN9fELfLggh7YrNyLIQp92sWUOOq31QxG92QAABBBBAvBNy658GMgIIIIAAAggggAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAokyI1xwQ7B1HNo+LGqt3HKItabzjWHOJfgM5tA7UOw6xeQAAAABJRU5ErkJggg==",
+  "image": "tb-image;/api/images/system/update_string_timeseries_system_widget_image.png",
   "description": "Simple form to input new string value for pre-defined shared attribute key.\nThe widget is deprecated. Use \"Update Multiple Attributes\" widget. Attribute type and string value type can be selected in widgets data key configuration.",
   "descriptor": {
     "type": "latest",
@@ -17,5 +17,17 @@
     "settingsDirective": "tb-update-string-attribute-widget-settings",
     "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Sin\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.23592248334107624,\"funcBody\":\"return Math.round(1000*Math.sin(time/5000));\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":true,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{},\"title\":\"Update shared string attribute\",\"dropShadow\":true,\"enableFullscreen\":false,\"enableDataExport\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{}}"
   },
-  "externalId": null
+  "resources": [
+    {
+      "link": "/api/images/system/update_string_timeseries_system_widget_image.png",
+      "title": "\"Update string timeseries\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "update_string_timeseries_system_widget_image.png",
+      "publicResourceKey": "iyiEAEpcCF3Lu8Dy2XIxc2O9xir540wS",
+      "mediaType": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAAAAABslHx1AAAAAmJLR0QA/4ePzL8AAAOkSURBVHja7d3bSxRRHAfw/VdG6yklCbPsRk+GhVLYDSXMohC1tczVUkxFXDULzW4a+SA9VIZRm5haIJqBmMqW2cUoddUVR1sved2dnV/nuJaX3X0Q1pjZvj/YM4fDmYfP/uZcdvbhaMgmmnpVHibRShpb/4REKg9pot+mESfIC2JC1Jgkb4BIJk0veUX0AgIIIIAAAggggAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAsp6QN194+epPs1Z0vqm/Uw2QuuussMSOuYXYbe3PZJvyIeNx40T1xUTDTe+sHCK3STTfwQDGpgVU/+Vr+ox2FYyRktdEuS3UllFXVsAhtrMz9DOe5JI7htQfvIM1K3VcDYO9NZ+GtfP00Uz2uLEliDFHpqYy3qG2suaxGiDW86PVFURTD6/mxg4vQQwpRUW5ObyDZc5uVsX0+6A2s5uo9LmdtA7INIfUlo6MjFhUtY58S06TiXJa6HOsmc9aSd+pI576Lo6SuVNVEDndwErjhUs3dO85pCExrSSeqDE5K61bjSu7febvqJlzACdlbFEAAQQQQP4/yKxTRR0Q+eXKDdFsocFRMRTOqgkiP9E1rWwx6AzLLmqByE919avbajihxqVDsRCWj3rnVpYM1/lQLMRVPhw5ceNQHGTmnok7qlw7PAuJOrWOEIs+c8DNc+XxR2tdITSWd8XkPh8eHezrC2E5SXWfjzVNvxUdRn0Bf29V3sZvq2GVD82FuUYy5ukbFiBdN7MbeU+pOvvuV96xoyrT4kGJa8eaF8Sg/cHaEN9WIr/ixe9/8+7QxD0bsgITDgqPWMu2refChXIi28mApIiNzOYX7B826MEB76EtStC+SbLuSFkOiZZoaos/ewcUdYh9AodJ1gX8ovubekhO2Ms6hk8pcdMYlM+KmBPLIUWscoy1UF7Q4hjpEpopTMsq9cKYo6NCIacjV0MiY1hRELgImRQqKUBYiC5VQ4aEatqZ2MljWvGQYP6C9LAz5CirvBA+UUyYndXmSPGQ2GDjwG0fZ4hQPPh21xH2l5BP+oCoD7UrHtITIvgej3CGnIkWhAN9fELfLggh7YrNyLIQp92sWUOOq31QxG92QAABBBBAvBNy658GMgIIIIAAAggggAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAokyI1xwQ7B1HNo+LGqt3HKItabzjWHOJfgM5tA7UOw6xeQAAAABJRU5ErkJggg==",
+      "public": true
+    }
+  ]
 }

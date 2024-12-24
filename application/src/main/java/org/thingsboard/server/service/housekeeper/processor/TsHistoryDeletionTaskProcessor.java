@@ -36,7 +36,7 @@ public class TsHistoryDeletionTaskProcessor extends HousekeeperTaskProcessor<TsH
     @Override
     public void process(TsHistoryDeletionHousekeeperTask task) throws Exception {
         DeleteTsKvQuery deleteQuery = new BaseDeleteTsKvQuery(task.getKey(), 0, System.currentTimeMillis(), false, false);
-        timeseriesService.remove(task.getTenantId(), task.getEntityId(), List.of(deleteQuery)).get();
+        wait(timeseriesService.remove(task.getTenantId(), task.getEntityId(), List.of(deleteQuery)));
         log.debug("[{}][{}][{}] Deleted timeseries history for key '{}'", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), task.getKey());
     }
 

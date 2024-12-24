@@ -61,6 +61,8 @@ import { HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 import { widgetSettingsComponentsMap } from '@home/components/widget/lib/settings/widget-settings.module';
 import { basicWidgetConfigComponentsMap } from '@home/components/widget/config/basic/basic-widget-config.module';
 import { IBasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
+import { compileTbFunction, TbFunction } from '@shared/models/js-function.models';
+import { HttpClient } from '@angular/common/http';
 
 @Injectable()
 export class WidgetComponentService {
@@ -82,7 +84,8 @@ export class WidgetComponentService {
               private widgetService: WidgetService,
               private utils: UtilsService,
               private resources: ResourcesService,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private http: HttpClient) {
 
     this.cssParser.testMode = false;
 
@@ -129,11 +132,13 @@ export class WidgetComponentService {
       w.tinycolor = tinycolor;
       w.cssjs = cssjs;
       w.moment = moment;
-      w.$ = $;
-      w.jQuery = $;
 
       const widgetModulesTasks: Observable<any>[] = [];
-      widgetModulesTasks.push(from(import('jquery.terminal')));
+      widgetModulesTasks.push(from(import('jquery.terminal')).pipe(
+        tap((mod) => {
+          mod.default(window, $);
+        })
+      ));
 
       widgetModulesTasks.push(from(import('flot/src/jquery.flot.js')).pipe(
         mergeMap(() => {
@@ -286,42 +291,45 @@ export class WidgetComponentService {
 
   private loadWidget(widgetType: WidgetType, widgetInfoSubject: Subject<WidgetInfo>) {
     const widgetInfo = toWidgetInfo(widgetType);
-    let widgetControllerDescriptor: WidgetControllerDescriptor = null;
-    try {
-      widgetControllerDescriptor = this.createWidgetControllerDescriptor(widgetInfo);
-    } catch (e) {
-      const details = this.utils.parseException(e);
-      const errorMessage = `Failed to compile widget script. \n Error: ${details.message}`;
-      this.processWidgetLoadError([errorMessage], widgetInfo.fullFqn, widgetInfoSubject);
-    }
-    if (widgetControllerDescriptor) {
-      const widgetNamespace = `widget-type-${widgetInfo.fullFqn.replace(/\./g, '-')}`;
-      this.loadWidgetResources(widgetInfo, widgetNamespace, [SharedModule, WidgetComponentsModule, this.homeComponentsModule]).subscribe(
-        () => {
-          if (widgetControllerDescriptor.settingsSchema) {
-            widgetInfo.typeSettingsSchema = widgetControllerDescriptor.settingsSchema;
-          }
-          if (widgetControllerDescriptor.dataKeySettingsSchema) {
-            widgetInfo.typeDataKeySettingsSchema = widgetControllerDescriptor.dataKeySettingsSchema;
-          }
-          if (widgetControllerDescriptor.latestDataKeySettingsSchema) {
-            widgetInfo.typeLatestDataKeySettingsSchema = widgetControllerDescriptor.latestDataKeySettingsSchema;
-          }
-          widgetInfo.typeParameters = widgetControllerDescriptor.typeParameters;
-          widgetInfo.actionSources = widgetControllerDescriptor.actionSources;
-          widgetInfo.widgetTypeFunction = widgetControllerDescriptor.widgetTypeFunction;
-          this.widgetService.putWidgetInfoToCache(widgetInfo);
-          if (widgetInfoSubject) {
-            widgetInfoSubject.next(widgetInfo);
-            widgetInfoSubject.complete();
-          }
-          this.resolveWidgetsInfoFetchQueue(widgetInfo.fullFqn, widgetInfo);
+    this.createWidgetControllerDescriptor(widgetInfo).subscribe(
+      {
+        next: widgetControllerDescriptor => {
+          const widgetNamespace = `widget-type-${widgetInfo.fullFqn.replace(/\./g, '-')}`;
+          this.loadWidgetResources(widgetInfo, widgetNamespace, [SharedModule, WidgetComponentsModule, this.homeComponentsModule]).subscribe(
+            {
+              next: () => {
+                if (widgetControllerDescriptor.settingsSchema) {
+                  widgetInfo.typeSettingsSchema = widgetControllerDescriptor.settingsSchema;
+                }
+                if (widgetControllerDescriptor.dataKeySettingsSchema) {
+                  widgetInfo.typeDataKeySettingsSchema = widgetControllerDescriptor.dataKeySettingsSchema;
+                }
+                if (widgetControllerDescriptor.latestDataKeySettingsSchema) {
+                  widgetInfo.typeLatestDataKeySettingsSchema = widgetControllerDescriptor.latestDataKeySettingsSchema;
+                }
+                widgetInfo.typeParameters = widgetControllerDescriptor.typeParameters;
+                widgetInfo.actionSources = widgetControllerDescriptor.actionSources;
+                widgetInfo.widgetTypeFunction = widgetControllerDescriptor.widgetTypeFunction;
+                this.widgetService.putWidgetInfoToCache(widgetInfo);
+                if (widgetInfoSubject) {
+                  widgetInfoSubject.next(widgetInfo);
+                  widgetInfoSubject.complete();
+                }
+                this.resolveWidgetsInfoFetchQueue(widgetInfo.fullFqn, widgetInfo);
+              },
+              error: (errorMessages: string[]) => {
+                this.processWidgetLoadError(errorMessages, widgetInfo.fullFqn, widgetInfoSubject);
+              }
+            }
+          );
         },
-        (errorMessages: string[]) => {
-          this.processWidgetLoadError(errorMessages, widgetInfo.fullFqn, widgetInfoSubject);
+        error: e => {
+          const details = this.utils.parseException(e);
+          const errorMessage = `Failed to compile widget script. \n Error: ${details.message}`;
+          this.processWidgetLoadError([errorMessage], widgetInfo.fullFqn, widgetInfoSubject);
         }
-      );
-    }
+      }
+    );
   }
 
   private loadWidgetResources(widgetInfo: WidgetInfo, widgetNamespace: string, modules?: Type<any>[]): Observable<any> {
@@ -443,7 +451,15 @@ export class WidgetComponentService {
     }
   }
 
-  private createWidgetControllerDescriptor(widgetInfo: WidgetInfo): WidgetControllerDescriptor {
+  private createWidgetControllerDescriptor(widgetInfo: WidgetInfo): Observable<WidgetControllerDescriptor> {
+    let controllerBody: string;
+    let modules: {[alias: string]: string} = null;
+    if (typeof widgetInfo.controllerScript === 'string') {
+      controllerBody = widgetInfo.controllerScript;
+    } else {
+      controllerBody = widgetInfo.controllerScript.body;
+      modules = widgetInfo.controllerScript.modules;
+    }
     let widgetTypeFunctionBody = `return function _${widgetInfo.fullFqn.replace(/\./g, '_')} (ctx) {\n` +
       '    var self = this;\n' +
       '    self.ctx = ctx;\n\n'; /*+
@@ -503,113 +519,124 @@ export class WidgetComponentService {
          '    }\n\n' +
          '}';*/
 
-    widgetTypeFunctionBody += widgetInfo.controllerScript;
+    widgetTypeFunctionBody += controllerBody;
     widgetTypeFunctionBody += '\n};\n';
 
-    try {
-
-      const widgetTypeFunction = new Function(widgetTypeFunctionBody);
-      const widgetType = widgetTypeFunction.apply(this);
-      const widgetTypeInstance: WidgetTypeInstance = new widgetType();
-      const result: WidgetControllerDescriptor = {
-        widgetTypeFunction: widgetType
-      };
-      if (isFunction(widgetTypeInstance.getSettingsSchema)) {
-        result.settingsSchema = widgetTypeInstance.getSettingsSchema();
+    let tbWidgetTypeFunction: TbFunction;
+    if (modules && Object.keys(modules).length) {
+      tbWidgetTypeFunction = {
+        body: widgetTypeFunctionBody,
+        modules
       }
-      if (isFunction(widgetTypeInstance.getDataKeySettingsSchema)) {
-        result.dataKeySettingsSchema = widgetTypeInstance.getDataKeySettingsSchema();
-      }
-      if (isFunction(widgetTypeInstance.getLatestDataKeySettingsSchema)) {
-        result.latestDataKeySettingsSchema = widgetTypeInstance.getLatestDataKeySettingsSchema();
-      }
-      if (isFunction(widgetTypeInstance.typeParameters)) {
-        result.typeParameters = widgetTypeInstance.typeParameters();
-      } else {
-        result.typeParameters = {};
-      }
-      if (isFunction(widgetTypeInstance.useCustomDatasources)) {
-        result.typeParameters.useCustomDatasources = widgetTypeInstance.useCustomDatasources();
-      } else {
-        result.typeParameters.useCustomDatasources = false;
-      }
-      if (isUndefined(result.typeParameters.hasDataPageLink)) {
-        result.typeParameters.hasDataPageLink = false;
-      }
-      if (isUndefined(result.typeParameters.maxDatasources)) {
-        result.typeParameters.maxDatasources = -1;
-      }
-      if (isUndefined(result.typeParameters.maxDataKeys)) {
-        result.typeParameters.maxDataKeys = -1;
-      }
-      if (isUndefined(result.typeParameters.singleEntity)) {
-        result.typeParameters.singleEntity = false;
-      }
-      if (isUndefined(result.typeParameters.hasAdditionalLatestDataKeys)) {
-        result.typeParameters.hasAdditionalLatestDataKeys = false;
-      }
-      if (isUndefined(result.typeParameters.warnOnPageDataOverflow)) {
-        result.typeParameters.warnOnPageDataOverflow = true;
-      }
-      if (isUndefined(result.typeParameters.ignoreDataUpdateOnIntervalTick)) {
-        result.typeParameters.ignoreDataUpdateOnIntervalTick = false;
-      }
-      if (isUndefined(result.typeParameters.dataKeysOptional)) {
-        result.typeParameters.dataKeysOptional = false;
-      }
-      if (isUndefined(result.typeParameters.datasourcesOptional)) {
-        result.typeParameters.datasourcesOptional = false;
-      }
-      if (isUndefined(result.typeParameters.stateData)) {
-        result.typeParameters.stateData = false;
-      }
-      if (isUndefined(result.typeParameters.processNoDataByWidget)) {
-        result.typeParameters.processNoDataByWidget = false;
-      }
-      if (isUndefined(result.typeParameters.previewWidth)) {
-        result.typeParameters.previewWidth = '100%';
-      }
-      if (isUndefined(result.typeParameters.previewHeight)) {
-        result.typeParameters.previewHeight = '70%';
-      }
-      if (isUndefined(result.typeParameters.embedTitlePanel)) {
-        result.typeParameters.embedTitlePanel = false;
-      }
-      if (isUndefined(result.typeParameters.overflowVisible)) {
-        result.typeParameters.overflowVisible = false;
-      }
-      if (isUndefined(result.typeParameters.hideDataSettings)) {
-        result.typeParameters.hideDataSettings = false;
-      }
-      if (!isFunction(result.typeParameters.defaultDataKeysFunction)) {
-        result.typeParameters.defaultDataKeysFunction = null;
-      }
-      if (!isFunction(result.typeParameters.defaultLatestDataKeysFunction)) {
-        result.typeParameters.defaultLatestDataKeysFunction = null;
-      }
-      if (!isFunction(result.typeParameters.dataKeySettingsFunction)) {
-        result.typeParameters.dataKeySettingsFunction = null;
-      }
-      if (isUndefined(result.typeParameters.displayRpcMessageToast)) {
-        result.typeParameters.displayRpcMessageToast = true;
-      }
-      if (isUndefined(result.typeParameters.targetDeviceOptional)) {
-        result.typeParameters.targetDeviceOptional = false;
-      }
-      if (isFunction(widgetTypeInstance.actionSources)) {
-        result.actionSources = widgetTypeInstance.actionSources();
-      } else {
-        result.actionSources = {};
-      }
-      for (const actionSourceId of Object.keys(widgetActionSources)) {
-        result.actionSources[actionSourceId] = {...widgetActionSources[actionSourceId]};
-        result.actionSources[actionSourceId].name = this.translate.instant(result.actionSources[actionSourceId].name);
-      }
-      return result;
-    } catch (e) {
-      this.utils.processWidgetException(e);
-      throw e;
+    } else {
+      tbWidgetTypeFunction = widgetTypeFunctionBody;
     }
+
+    return compileTbFunction(this.http, tbWidgetTypeFunction).pipe(
+      map((compiled) => {
+        const widgetType = compiled.apply(this);
+        const widgetTypeInstance: WidgetTypeInstance = new widgetType();
+        const result: WidgetControllerDescriptor = {
+          widgetTypeFunction: widgetType
+        };
+        if (isFunction(widgetTypeInstance.getSettingsSchema)) {
+          result.settingsSchema = widgetTypeInstance.getSettingsSchema();
+        }
+        if (isFunction(widgetTypeInstance.getDataKeySettingsSchema)) {
+          result.dataKeySettingsSchema = widgetTypeInstance.getDataKeySettingsSchema();
+        }
+        if (isFunction(widgetTypeInstance.getLatestDataKeySettingsSchema)) {
+          result.latestDataKeySettingsSchema = widgetTypeInstance.getLatestDataKeySettingsSchema();
+        }
+        if (isFunction(widgetTypeInstance.typeParameters)) {
+          result.typeParameters = widgetTypeInstance.typeParameters();
+        } else {
+          result.typeParameters = {};
+        }
+        if (isFunction(widgetTypeInstance.useCustomDatasources)) {
+          result.typeParameters.useCustomDatasources = widgetTypeInstance.useCustomDatasources();
+        } else {
+          result.typeParameters.useCustomDatasources = false;
+        }
+        if (isUndefined(result.typeParameters.hasDataPageLink)) {
+          result.typeParameters.hasDataPageLink = false;
+        }
+        if (isUndefined(result.typeParameters.maxDatasources)) {
+          result.typeParameters.maxDatasources = -1;
+        }
+        if (isUndefined(result.typeParameters.maxDataKeys)) {
+          result.typeParameters.maxDataKeys = -1;
+        }
+        if (isUndefined(result.typeParameters.singleEntity)) {
+          result.typeParameters.singleEntity = false;
+        }
+        if (isUndefined(result.typeParameters.hasAdditionalLatestDataKeys)) {
+          result.typeParameters.hasAdditionalLatestDataKeys = false;
+        }
+        if (isUndefined(result.typeParameters.warnOnPageDataOverflow)) {
+          result.typeParameters.warnOnPageDataOverflow = true;
+        }
+        if (isUndefined(result.typeParameters.ignoreDataUpdateOnIntervalTick)) {
+          result.typeParameters.ignoreDataUpdateOnIntervalTick = false;
+        }
+        if (isUndefined(result.typeParameters.dataKeysOptional)) {
+          result.typeParameters.dataKeysOptional = false;
+        }
+        if (isUndefined(result.typeParameters.datasourcesOptional)) {
+          result.typeParameters.datasourcesOptional = false;
+        }
+        if (isUndefined(result.typeParameters.stateData)) {
+          result.typeParameters.stateData = false;
+        }
+        if (isUndefined(result.typeParameters.processNoDataByWidget)) {
+          result.typeParameters.processNoDataByWidget = false;
+        }
+        if (isUndefined(result.typeParameters.previewWidth)) {
+          result.typeParameters.previewWidth = '100%';
+        }
+        if (isUndefined(result.typeParameters.previewHeight)) {
+          result.typeParameters.previewHeight = '70%';
+        }
+        if (isUndefined(result.typeParameters.embedTitlePanel)) {
+          result.typeParameters.embedTitlePanel = false;
+        }
+        if (isUndefined(result.typeParameters.overflowVisible)) {
+          result.typeParameters.overflowVisible = false;
+        }
+        if (isUndefined(result.typeParameters.hideDataSettings)) {
+          result.typeParameters.hideDataSettings = false;
+        }
+        if (!isFunction(result.typeParameters.defaultDataKeysFunction)) {
+          result.typeParameters.defaultDataKeysFunction = null;
+        }
+        if (!isFunction(result.typeParameters.defaultLatestDataKeysFunction)) {
+          result.typeParameters.defaultLatestDataKeysFunction = null;
+        }
+        if (!isFunction(result.typeParameters.dataKeySettingsFunction)) {
+          result.typeParameters.dataKeySettingsFunction = null;
+        }
+        if (isUndefined(result.typeParameters.displayRpcMessageToast)) {
+          result.typeParameters.displayRpcMessageToast = true;
+        }
+        if (isUndefined(result.typeParameters.targetDeviceOptional)) {
+          result.typeParameters.targetDeviceOptional = false;
+        }
+        if (isFunction(widgetTypeInstance.actionSources)) {
+          result.actionSources = widgetTypeInstance.actionSources();
+        } else {
+          result.actionSources = {};
+        }
+        for (const actionSourceId of Object.keys(widgetActionSources)) {
+          result.actionSources[actionSourceId] = {...widgetActionSources[actionSourceId]};
+          result.actionSources[actionSourceId].name = this.translate.instant(result.actionSources[actionSourceId].name);
+        }
+        return result;
+      }),
+      catchError((e) => {
+        this.utils.processWidgetException(e);
+        return throwError(() => e);
+      })
+    );
   }
 
   private processWidgetLoadError(errorMessages: string[], fullFqn: string, widgetInfoSubject: Subject<WidgetInfo>) {

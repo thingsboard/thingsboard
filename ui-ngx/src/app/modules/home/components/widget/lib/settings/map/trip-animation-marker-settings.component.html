@@ -46,6 +46,7 @@
           </tb-html>
           <tb-js-func [class.!hidden]="!tripAnimationMarkerSettingsFormGroup.get('useLabelFunction').value"
                       formControlName="labelFunction"
+                      withModules
                       [globalVariables]="functionScopeVariables"
                       [functionArgs]="['data', 'dsData', 'dsIndex']"
                       functionTitle="{{ 'widgets.maps.label-function' | translate }}"
@@ -78,6 +79,7 @@
             <input matInput type="number" min="1" formControlName="markerImageSize">
           </mat-form-field>
           <tb-js-func [class.!hidden]="!tripAnimationMarkerSettingsFormGroup.get('useMarkerImageFunction').value"
+                      withModules
                       formControlName="markerImageFunction"
                       [globalVariables]="functionScopeVariables"
                       [functionArgs]="['data', 'images', 'dsData', 'dsIndex']"

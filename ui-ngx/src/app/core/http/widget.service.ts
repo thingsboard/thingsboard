@@ -31,7 +31,6 @@ import {
   WidgetTypeInfo,
   widgetTypesData
 } from '@shared/models/widget.models';
-import { TranslateService } from '@ngx-translate/core';
 import { toWidgetInfo, toWidgetTypeDetails, WidgetInfo } from '@app/modules/home/models/widget-component.models';
 import { filter, map, mergeMap, tap } from 'rxjs/operators';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
@@ -53,7 +52,6 @@ export class WidgetService {
 
   constructor(
     private http: HttpClient,
-    private translate: TranslateService,
     private router: Router
   ) {
     this.router.events.pipe(filter(event => event instanceof ActivationEnd)).subscribe(
@@ -126,14 +124,10 @@ export class WidgetService {
   }
 
   public deleteWidgetsBundle(widgetsBundleId: string, config?: RequestConfig) {
-    return this.getWidgetsBundle(widgetsBundleId, config).pipe(
-      mergeMap((widgetsBundle) => this.http.delete(`/api/widgetsBundle/${widgetsBundleId}`,
-          defaultHttpOptionsFromConfig(config)).pipe(
-          tap(() => {
-            this.invalidateWidgetsBundleCache();
-          })
-        )
-    ));
+    return this.http.delete(`/api/widgetsBundle/${widgetsBundleId}`, defaultHttpOptionsFromConfig(config))
+      .pipe(
+        tap(() => this.invalidateWidgetsBundleCache())
+      );
   }
 
   public getBundleWidgetTypes(widgetsBundleId: string,
@@ -143,9 +137,13 @@ export class WidgetService {
   }
 
   public exportBundleWidgetTypesDetails(widgetsBundleId: string,
-                                     config?: RequestConfig): Observable<Array<WidgetTypeDetails>> {
-    return this.http.get<Array<WidgetTypeDetails>>(`/api/widgetTypesDetails?widgetsBundleId=${widgetsBundleId}&inlineImages=true`,
-      defaultHttpOptionsFromConfig(config));
+                                        includeResources = true,
+                                        config?: RequestConfig): Observable<Array<WidgetTypeDetails>> {
+    let url = `/api/widgetTypesDetails?widgetsBundleId=${widgetsBundleId}`
+    if (includeResources) {
+      url += '&includeResources=true';
+    }
+    return this.http.get<Array<WidgetTypeDetails>>(url, defaultHttpOptionsFromConfig(config));
   }
 
   public getBundleWidgetTypeFqns(widgetsBundleId: string,
@@ -211,9 +209,13 @@ export class WidgetService {
   }
 
   public exportWidgetType(widgetTypeId: string,
+                          includeResources = true,
                           config?: RequestConfig): Observable<WidgetTypeDetails> {
-    return this.http.get<WidgetTypeDetails>(`/api/widgetType/${widgetTypeId}?inlineImages=true`,
-      defaultHttpOptionsFromConfig(config));
+    let url = `/api/widgetType/${widgetTypeId}`;
+    if (includeResources) {
+      url += '?includeResources=true';
+    }
+    return this.http.get<WidgetTypeDetails>(url, defaultHttpOptionsFromConfig(config));
   }
 
   public getWidgetTypeInfoById(widgetTypeId: string,

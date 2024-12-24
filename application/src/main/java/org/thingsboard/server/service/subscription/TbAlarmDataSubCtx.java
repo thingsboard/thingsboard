@@ -93,6 +93,11 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         this.alarmsMap = new HashMap<>();
     }
 
+    @Override
+    public void clearSubscriptions() {
+        super.clearSubscriptions();
+    }
+
     public void fetchAlarms() {
         alarmInvocationAttempts++;
         log.trace("[{}] Fetching alarms: {}", cmdId, alarmInvocationAttempts);

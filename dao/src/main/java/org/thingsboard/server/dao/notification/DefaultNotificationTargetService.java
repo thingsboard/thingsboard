@@ -109,7 +109,7 @@ public class DefaultNotificationTargetService extends AbstractEntityService impl
         NotificationTarget notificationTarget = findNotificationTargetById(tenantId, targetId);
         Objects.requireNonNull(notificationTarget, "Notification target [" + targetId + "] not found");
         NotificationTargetConfig configuration = notificationTarget.getConfiguration();
-        return findRecipientsForNotificationTargetConfig(tenantId, (PlatformUsersNotificationTargetConfig) configuration, pageLink);
+        return findRecipientsForNotificationTargetConfig(notificationTarget.getTenantId(), (PlatformUsersNotificationTargetConfig) configuration, pageLink);
     }
 
     @Override

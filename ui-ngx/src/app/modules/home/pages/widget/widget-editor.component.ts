@@ -21,8 +21,8 @@ import {
   EventEmitter,
   Inject,
   OnDestroy,
-  OnInit,
-  ViewChild,
+  OnInit, Renderer2,
+  ViewChild, ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
 import { Store } from '@ngrx/store';
@@ -64,8 +64,13 @@ import { widgetEditorCompleter } from '@home/pages/widget/widget-editor.models';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, map, tap } from 'rxjs/operators';
 import { beautifyCss, beautifyHtml, beautifyJs } from '@shared/models/beautify.models';
-import { HttpStatusCode } from '@angular/common/http';
+import { HttpClient, HttpStatusCode } from '@angular/common/http';
 import Timeout = NodeJS.Timeout;
+import { TbEditorCompleter } from '@shared/models/ace/completion.models';
+import { loadModulesCompleter } from '@shared/models/js-function.models';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { JsFuncModulesComponent } from '@shared/components/js-func-modules.component';
+import { MatIconButton } from '@angular/material/button';
 
 // @dynamic
 @Component({
@@ -160,6 +165,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   dataKeyJsonSettingsEditor: Ace.Editor;
   latestDataKeyJsonSettingsEditor: Ace.Editor;
   jsEditor: Ace.Editor;
+  private initialCompleters: Ace.Completer[];
   aceResize$: ResizeObserver;
 
   onWindowMessageListener = this.onWindowMessage.bind(this);
@@ -187,7 +193,11 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
               private widgetService: WidgetService,
               private translate: TranslateService,
               private raf: RafService,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private popoverService: TbPopoverService,
+              private renderer: Renderer2,
+              private viewContainerRef: ViewContainerRef,
+              private http: HttpClient) {
     super(store);
 
     this.authUser = getCurrentAuthUser(store);
@@ -387,15 +397,15 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
         this.jsEditor = editor;
         this.jsEditor.on('input', () => {
           const editorValue = this.jsEditor.getValue();
-          if (this.widget.controllerScript !== editorValue) {
-            this.widget.controllerScript = editorValue;
+          if (this.controllerScriptBody !== editorValue) {
+            this.controllerScriptBody = editorValue;
             this.isDirty = true;
           }
         });
         this.jsEditor.on('change', () => {
           this.cleanupJsErrors();
         });
-        this.jsEditor.completers = [widgetEditorCompleter, ...(this.jsEditor.completers || [])];
+        this.initialCompleters = this.jsEditor.completers || [];
       })
     ));
 
@@ -414,7 +424,8 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.dataKeyJsonSettingsEditor.setValue(this.widget.dataKeySettingsSchema ? this.widget.dataKeySettingsSchema : '', -1);
     this.latestDataKeyJsonSettingsEditor.setValue(this.widget.latestDataKeySettingsSchema ?
       this.widget.latestDataKeySettingsSchema : '', -1);
-    this.jsEditor.setValue(this.widget.controllerScript ? this.widget.controllerScript : '', -1);
+    this.jsEditor.setValue(this.controllerScriptBody ? this.controllerScriptBody : '', -1);
+    this.updateControllerScriptCompleters();
   }
 
   private createAceEditor(editorElementRef: ElementRef, mode: string): Observable<Ace.Editor> {
@@ -781,12 +792,12 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   }
 
   beautifyJs(): void {
-    beautifyJs(this.widget.controllerScript, {indent_size: 4, wrap_line_length: 60}).subscribe(
+    beautifyJs(this.controllerScriptBody, {indent_size: 4, wrap_line_length: 60}).subscribe(
       (res) => {
-        if (this.widget.controllerScript !== res) {
+        if (this.controllerScriptBody !== res) {
           this.isDirty = true;
-          this.widget.controllerScript = res;
-          this.jsEditor.setValue(this.widget.controllerScript ? this.widget.controllerScript : '', -1);
+          this.controllerScriptBody = res;
+          this.jsEditor.setValue(this.controllerScriptBody ? this.controllerScriptBody : '', -1);
         }
       }
     );
@@ -862,10 +873,90 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.isDirty = true;
   }
 
+  editControllerScriptModules($event: Event, button: MatIconButton) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = button._elementRef.nativeElement;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const ctx: any = {
+        modules: deepClone(this.controllerScriptModules)
+      };
+      const modulesPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, JsFuncModulesComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
+        ctx,
+        {},
+        {}, {}, true);
+      modulesPanelPopover.tbComponentRef.instance.popover = modulesPanelPopover;
+      modulesPanelPopover.tbComponentRef.instance.modulesApplied.subscribe((modules) => {
+        modulesPanelPopover.hide();
+        this.controllerScriptModules = modules;
+        this.updateControllerScriptCompleters();
+        this.isDirty = true;
+      });
+    }
+  }
+
+  get controllerScriptBody(): string {
+    if (typeof this.widget.controllerScript === 'string') {
+      return this.widget.controllerScript;
+    } else {
+      return this.widget.controllerScript.body;
+    }
+  }
+
+  set controllerScriptBody(controllerScriptBody) {
+    if (typeof this.widget.controllerScript === 'string') {
+      this.widget.controllerScript = controllerScriptBody;
+    } else {
+      this.widget.controllerScript.body = controllerScriptBody;
+    }
+  }
+
+  get controllerScriptModules(): {[alias: string]: string} {
+    if (typeof this.widget.controllerScript === 'string') {
+      return null;
+    } else {
+      return this.widget.controllerScript.modules;
+    }
+  }
+
+  set controllerScriptModules(modules: {[alias: string]: string}) {
+    if (modules && Object.keys(modules).length) {
+      if (typeof this.widget.controllerScript === 'string') {
+        this.widget.controllerScript = {
+          body: this.widget.controllerScript,
+          modules
+        };
+      } else {
+        this.widget.controllerScript.modules = modules;
+      }
+    } else {
+      if (typeof this.widget.controllerScript !== 'string') {
+        this.widget.controllerScript = this.widget.controllerScript.body;
+      }
+    }
+  }
+
   get confirmOnExitMessage(): string {
     if (this.isEditModeWidget && !this._isDirty) {
       return this.translate.instant('widget.confirm-to-exit-editor-html');
     }
     return '';
+  }
+
+  private updateControllerScriptCompleters() {
+    const modulesCompleterObservable = loadModulesCompleter(this.http, this.controllerScriptModules);
+    modulesCompleterObservable.subscribe((modulesCompleter) => {
+      const completers: Ace.Completer[] = [];
+      completers.push(widgetEditorCompleter);
+      if (modulesCompleter) {
+        completers.push(modulesCompleter);
+      }
+      completers.push(...this.initialCompleters);
+      this.jsEditor.completers = completers;
+    });
   }
 }

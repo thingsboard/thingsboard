@@ -17,11 +17,13 @@ package org.thingsboard.rule.engine.telemetry;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -56,10 +58,10 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_R
         version = 2,
         nodeDescription = "Saves attributes data",
         nodeDetails = "Saves entity attributes based on configurable scope parameter. Expects messages with 'POST_ATTRIBUTES_REQUEST' message type. " +
-                      "If upsert(update/insert) operation is completed successfully rule node will send the incoming message via <b>Success</b> chain, otherwise, <b>Failure</b> chain is used. " +
-                      "Additionally if checkbox <b>Send attributes updated notification</b> is set to true, rule node will put the \"Attributes Updated\" " +
-                      "event for <b>SHARED_SCOPE</b> and <b>SERVER_SCOPE</b> attributes updates to the corresponding rule engine queue." +
-                      "Performance checkbox 'Save attributes only if the value changes' will skip attributes overwrites for values with no changes (avoid concurrent writes because this check is not transactional; will not update 'Last updated time' for skipped attributes).",
+                "If upsert(update/insert) operation is completed successfully rule node will send the incoming message via <b>Success</b> chain, otherwise, <b>Failure</b> chain is used. " +
+                "Additionally if checkbox <b>Send attributes updated notification</b> is set to true, rule node will put the \"Attributes Updated\" " +
+                "event for <b>SHARED_SCOPE</b> and <b>SERVER_SCOPE</b> attributes updates to the corresponding rule engine queue." +
+                "Performance checkbox 'Save attributes only if the value changes' will skip attributes overwrites for values with no changes (avoid concurrent writes because this check is not transactional; will not update 'Last updated time' for skipped attributes).",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeAttributesConfig",
         icon = "file_upload"
@@ -114,16 +116,18 @@ public class TbMsgAttributesNode implements TbNode {
             ctx.tellSuccess(msg);
             return;
         }
-        ctx.getTelemetryService().saveAndNotify(
-                ctx.getTenantId(),
-                msg.getOriginator(),
-                scope,
-                attributes,
-                config.isNotifyDevice() || checkNotifyDeviceMdValue(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY)),
-                sendAttributesUpdateNotification ?
-                        new AttributesUpdateNodeCallback(ctx, msg, scope.name(), attributes) :
-                        new TelemetryNodeCallback(ctx, msg)
-        );
+        FutureCallback<Void> callback = sendAttributesUpdateNotification ?
+                new AttributesUpdateNodeCallback(ctx, msg, scope.name(), attributes) :
+                new TelemetryNodeCallback(ctx, msg);
+        ctx.getTelemetryService().saveAttributes(AttributesSaveRequest.builder()
+                .tenantId(ctx.getTenantId())
+                .entityId(msg.getOriginator())
+                .scope(scope)
+                .entries(attributes)
+                .notifyDevice(config.isNotifyDevice() || checkNotifyDeviceMdValue(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY)))
+                .calculatedFieldIds(msg.getCalculatedFieldIds())
+                .callback(callback)
+                .build());
     }
 
     List<AttributeKvEntry> filterChangedAttr(List<AttributeKvEntry> currentAttributes, List<AttributeKvEntry> newAttributes) {

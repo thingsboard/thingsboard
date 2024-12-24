@@ -29,6 +29,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import {
+  defaultGoogleMapProviderSettings,
+  defaultHereMapProviderSettings,
+  defaultImageMapProviderSettings,
+  defaultOpenStreetMapProviderSettings, defaultTencentMapProviderSettings,
   GoogleMapProviderSettings,
   HereMapProviderSettings,
   ImageMapProviderSettings,
@@ -39,7 +43,6 @@ import {
   TencentMapProviderSettings
 } from '@home/components/widget/lib/maps/map-models';
 import { extractType } from '@core/utils';
-import { keys } from 'ts-transformer-keys';
 import { IAliasController } from '@core/api/widget-api.models';
 
 @Component({
@@ -128,11 +131,11 @@ export class MapProviderSettingsComponent extends PageComponent implements OnIni
   writeValue(value: MapProviderSettings): void {
     this.modelValue = value;
     const provider = value?.provider;
-    const googleProviderSettings = extractType<GoogleMapProviderSettings>(value, keys<GoogleMapProviderSettings>());
-    const openstreetProviderSettings = extractType<OpenStreetMapProviderSettings>(value, keys<OpenStreetMapProviderSettings>());
-    const hereProviderSettings = extractType<HereMapProviderSettings>(value, keys<HereMapProviderSettings>());
-    const imageMapProviderSettings = extractType<ImageMapProviderSettings>(value, keys<ImageMapProviderSettings>());
-    const tencentMapProviderSettings = extractType<TencentMapProviderSettings>(value, keys<TencentMapProviderSettings>());
+    const googleProviderSettings = extractType<GoogleMapProviderSettings>(value, Object.keys(defaultGoogleMapProviderSettings) as (keyof GoogleMapProviderSettings)[]);
+    const openstreetProviderSettings = extractType<OpenStreetMapProviderSettings>(value, Object.keys(defaultOpenStreetMapProviderSettings) as (keyof OpenStreetMapProviderSettings)[]);
+    const hereProviderSettings = extractType<HereMapProviderSettings>(value, Object.keys(defaultHereMapProviderSettings) as (keyof HereMapProviderSettings)[]);
+    const imageMapProviderSettings = extractType<ImageMapProviderSettings>(value, Object.keys(defaultImageMapProviderSettings) as (keyof ImageMapProviderSettings)[]);
+    const tencentMapProviderSettings = extractType<TencentMapProviderSettings>(value, Object.keys(defaultTencentMapProviderSettings) as (keyof TencentMapProviderSettings)[]);
     this.providerSettingsFormGroup.patchValue(
       {
         provider,

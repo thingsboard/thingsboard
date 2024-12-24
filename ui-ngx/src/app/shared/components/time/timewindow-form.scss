@@ -20,17 +20,14 @@
   .tb-timewindow-form {
     overflow: hidden;
 
-    .tb-flex {
-      gap: 16px;
-    }
-
     &-content {
       overflow-y: auto;
 
       tb-timeinterval,
       tb-quick-time-interval,
       tb-datetime-period,
-      tb-datapoints-limit {
+      tb-datapoints-limit,
+      tb-aggregation-type-select {
         flex: 1;
       }
     }

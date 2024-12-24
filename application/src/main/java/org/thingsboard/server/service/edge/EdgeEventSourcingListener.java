@@ -65,14 +65,15 @@ import org.thingsboard.server.dao.tenant.TenantService;
  *     future.addCallback(eventPublisher.publishEvent(...))
  *   }
  * */
+@Slf4j
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class EdgeEventSourcingListener {
 
     private final TbClusterService tbClusterService;
-    private final EdgeSynchronizationManager edgeSynchronizationManager;
+
     private final TenantService tenantService;
+    private final EdgeSynchronizationManager edgeSynchronizationManager;
 
     @PostConstruct
     public void init() {
@@ -106,7 +107,7 @@ public class EdgeEventSourcingListener {
             return;
         }
         try {
-            if (EntityType.EDGE.equals(entityType) || EntityType.TENANT.equals(entityType)) {
+            if (EntityType.TENANT.equals(entityType) || EntityType.EDGE.equals(entityType)) {
                 return;
             }
             log.trace("[{}] DeleteEntityEvent called: {}", tenantId, event);

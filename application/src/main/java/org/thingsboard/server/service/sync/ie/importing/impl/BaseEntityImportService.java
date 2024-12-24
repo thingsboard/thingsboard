@@ -24,6 +24,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
@@ -257,16 +258,22 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                         })
                         .collect(Collectors.toList());
                 // fixme: attributes are saved outside the transaction
-                tsSubService.saveAndNotify(user.getTenantId(), entity.getId(), scope, attributeKvEntries, new FutureCallback<Void>() {
-                    @Override
-                    public void onSuccess(@Nullable Void unused) {
-                    }
+                tsSubService.saveAttributes(AttributesSaveRequest.builder()
+                        .tenantId(user.getTenantId())
+                        .entityId(entity.getId())
+                        .scope(scope)
+                        .entries(attributeKvEntries)
+                        .callback(new FutureCallback<>() {
+                            @Override
+                            public void onSuccess(@Nullable Void unused) {
+                            }
 
-                    @Override
-                    public void onFailure(Throwable thr) {
-                        log.error("Failed to import attributes for {} {}", entity.getId().getEntityType(), entity.getId(), thr);
-                    }
-                });
+                            @Override
+                            public void onFailure(Throwable thr) {
+                                log.error("Failed to import attributes for {} {}", entity.getId().getEntityType(), entity.getId(), thr);
+                            }
+                        })
+                        .build());
             });
         });
     }

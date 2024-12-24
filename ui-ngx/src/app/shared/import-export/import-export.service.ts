@@ -55,7 +55,12 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetService } from '@core/http/widget.service';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
-import { EntityInfoData, ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entity.models';
+import {
+  EntityInfoData,
+  ImportEntitiesResultInfo,
+  ImportEntityData,
+  VersionedEntity
+} from '@shared/models/entity.models';
 import { RequestConfig } from '@core/http/http-utils';
 import { RuleChain, RuleChainImport, RuleChainMetaData, RuleChainType } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
@@ -70,11 +75,6 @@ import { EdgeService } from '@core/http/edge.service';
 import { RuleNode } from '@shared/models/rule-node.models';
 import { AssetProfileService } from '@core/http/asset-profile.service';
 import { AssetProfile } from '@shared/models/asset.models';
-import {
-  ExportWidgetsBundleDialogComponent,
-  ExportWidgetsBundleDialogData,
-  ExportWidgetsBundleDialogResult
-} from '@shared/import-export/export-widgets-bundle-dialog.component';
 import { ImageService } from '@core/http/image.service';
 import { ImageExportData, ImageResourceInfo, ImageResourceType } from '@shared/models/resource.models';
 import { selectUserSettingsProperty } from '@core/auth/auth.selectors';
@@ -82,9 +82,16 @@ import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
 import { ExportableEntity } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { Customer } from '@shared/models/customer.model';
+import {
+  ExportResourceDialogComponent,
+  ExportResourceDialogData,
+  ExportResourceDialogDialogResult
+} from '@shared/import-export/export-resource-dialog.component';
 
 export type editMissingAliasesFunction = (widgets: Array<Widget>, isSingleWidget: boolean,
                                           customTitle: string, missingEntityAliases: EntityAliases) => Observable<EntityAliases>;
+
+type SupportEntityResources = 'includeResourcesInExportWidgetTypes' | 'includeResourcesInExportDashboard' | 'includeBundleWidgetsInExport';
 
 // @dynamic
 @Injectable()
@@ -143,16 +150,23 @@ export class ImportExportService {
   }
 
   public exportDashboard(dashboardId: string) {
-    this.dashboardService.exportDashboard(dashboardId).subscribe({
-      next: (dashboard) => {
-        let name = dashboard.title;
-        name = name.toLowerCase().replace(/\W/g, '_');
-        this.exportToPc(this.prepareDashboardExport(dashboard), name);
-      },
-      error: (e) => {
-        this.handleExportError(e, 'dashboard.export-failed-error');
-      }
-    });
+    this.getIncludeResourcesPreference('includeResourcesInExportDashboard').subscribe(includeResources => {
+      this.openExportDialog('dashboard.export', 'dashboard.export-prompt', includeResources).subscribe(result => {
+        if (result) {
+          this.updateUserSettingsIncludeResourcesIfNeeded(includeResources, result.include, 'includeResourcesInExportDashboard');
+          this.dashboardService.exportDashboard(dashboardId, result.include).subscribe({
+            next: (dashboard) => {
+              let name = dashboard.title;
+              name = name.toLowerCase().replace(/\W/g, '_');
+              this.exportToPc(this.prepareDashboardExport(dashboard), name);
+            },
+            error: (e) => {
+              this.handleExportError(e, 'dashboard.export-failed-error');
+            }
+          });
+        }
+      })
+    })
   }
 
   public importDashboard(onEditMissingAliases: editMissingAliasesFunction): Observable<Dashboard> {
@@ -296,36 +310,54 @@ export class ImportExportService {
   }
 
   public exportWidgetType(widgetTypeId: string) {
-    this.widgetService.exportWidgetType(widgetTypeId).subscribe({
-      next: (widgetTypeDetails) => {
-        let name = widgetTypeDetails.name;
-        name = name.toLowerCase().replace(/\W/g, '_');
-        this.exportToPc(this.prepareExport(widgetTypeDetails), name);
-      },
-      error: (e) => {
-        this.handleExportError(e, 'widget-type.export-failed-error');
-      }
+    this.getIncludeResourcesPreference('includeResourcesInExportWidgetTypes').subscribe(includeResources => {
+      this.openExportDialog('widget.export', 'widget.export-prompt', includeResources).subscribe(result => {
+        if (result) {
+          this.updateUserSettingsIncludeResourcesIfNeeded(includeResources, result.include, 'includeResourcesInExportWidgetTypes');
+          this.widgetService.exportWidgetType(widgetTypeId, result.include).subscribe({
+            next: (widgetTypeDetails) => {
+              let name = widgetTypeDetails.name;
+              name = name.toLowerCase().replace(/\W/g, '_');
+              this.exportToPc(this.prepareExport(widgetTypeDetails), name);
+            },
+            error: (e) => {
+              this.handleExportError(e, 'widget-type.export-failed-error');
+            }
+          });
+        }
+      })
     });
   }
 
   public exportWidgetTypes(widgetTypeIds: string[]): Observable<void> {
-    const widgetTypesObservables: Array<Observable<WidgetTypeDetails>> = [];
-    for (const id of widgetTypeIds) {
-      widgetTypesObservables.push(this.widgetService.exportWidgetType(id));
-    }
-    return forkJoin(widgetTypesObservables).pipe(
-      map((widgetTypes) =>
-        Object.fromEntries(widgetTypes.map(wt=> {
-          let name = wt.name;
-          name = name.toLowerCase().replace(/\W/g, '_') + `.${JSON_TYPE.extension}`;
-          const data = JSON.stringify(this.prepareExport(wt), null, 2);
-          return [name, data];
-        }))),
-        mergeMap(widgetTypeFiles => this.exportJSZip(widgetTypeFiles, 'widget_types')),
-        catchError(e => {
-            this.handleExportError(e, 'widget-type.export-failed-error');
-            throw e;
-        })
+    return this.getIncludeResourcesPreference('includeResourcesInExportWidgetTypes').pipe(
+      mergeMap(includeResources =>
+        this.openExportDialog('widget.export-widgets', 'widget.export-widgets-prompt', includeResources).pipe(
+          mergeMap(result => {
+            if (result) {
+              this.updateUserSettingsIncludeResourcesIfNeeded(includeResources, result.include, 'includeResourcesInExportWidgetTypes');
+              const widgetTypesObservables: Array<Observable<WidgetTypeDetails>> = [];
+              for (const id of widgetTypeIds) {
+                widgetTypesObservables.push(this.widgetService.exportWidgetType(id, result.include));
+              }
+              return forkJoin(widgetTypesObservables).pipe(
+                map((widgetTypes) =>
+                  Object.fromEntries(widgetTypes.map(wt => {
+                    let name = wt.name;
+                    name = name.toLowerCase().replace(/\W/g, '_') + `.${JSON_TYPE.extension}`;
+                    const data = JSON.stringify(this.prepareExport(wt), null, 2);
+                    return [name, data];
+                  }))),
+                mergeMap(widgetTypeFiles => this.exportJSZip(widgetTypeFiles, 'widget_types')),
+                catchError(e => {
+                  this.handleExportError(e, 'widget-type.export-failed-error');
+                  throw e;
+                })
+              );
+            }
+          })
+        )
+      )
     );
   }
 
@@ -361,7 +393,7 @@ export class ImportExportService {
     });
   }
 
-  public exportEntity(entityData: EntityInfoData | RuleChainMetaData): void {
+  public exportEntity(entityData: VersionedEntity): void {
     const id = (entityData as EntityInfoData).id ?? (entityData as RuleChainMetaData).ruleChainId;
     let fileName = (entityData as EntityInfoData).name;
     let preparedData;
@@ -411,22 +443,11 @@ export class ImportExportService {
   }
 
   private handleExportWidgetsBundle(widgetsBundle: WidgetsBundle, includeBundleWidgetsInExport: boolean, ignoreLoading?: boolean): void {
-    this.dialog.open<ExportWidgetsBundleDialogComponent, ExportWidgetsBundleDialogData,
-      ExportWidgetsBundleDialogResult>(ExportWidgetsBundleDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        widgetsBundle,
-        includeBundleWidgetsInExport,
-        ignoreLoading
-      }
-    }).afterClosed().subscribe(
-      (result) => {
+    this.openExportDialog('widgets-bundle.export', 'widgets-bundle.export-widgets-bundle-widgets-prompt',
+      includeBundleWidgetsInExport, ignoreLoading).subscribe((result) => {
         if (result) {
-          if (includeBundleWidgetsInExport !== result.exportWidgets) {
-            this.store.dispatch(new ActionPreferencesPutUserSettings({includeBundleWidgetsInExport: result.exportWidgets}));
-          }
-          if (result.exportWidgets) {
+          this.updateUserSettingsIncludeResourcesIfNeeded(includeBundleWidgetsInExport, result.include, 'includeBundleWidgetsInExport');
+          if (result.include) {
             this.exportWidgetsBundleWithWidgetTypes(widgetsBundle);
           } else {
             this.exportWidgetsBundleWithWidgetTypeFqns(widgetsBundle);
@@ -628,16 +649,20 @@ export class ImportExportService {
     );
   }
 
-  private processOldRuleChainConnections(ruleChainImport: RuleChainImport): Observable<RuleChainImport> {
-    ruleChainImport.ruleChain = this.prepareImport(ruleChainImport.ruleChain);
-    const metadata = ruleChainImport.metadata;
+  private processOldRuleChainConnections({ruleChain, metadata}: RuleChainImport): Observable<RuleChainImport> {
+    ruleChain = this.prepareImport(ruleChain);
+    metadata = {
+      ...metadata,
+      nodes: metadata.nodes.map(({ debugMode, ...node }: RuleNode & { debugMode: boolean }) => {
+        return debugMode ? { ...node, debugSettings: { failuresEnabled: true, allEnabled: true} } : node
+      })
+    };
     if ((metadata as any).ruleChainConnections) {
       const ruleChainNameResolveObservables: Observable<void>[] = [];
       for (const ruleChainConnection of (metadata as any).ruleChainConnections) {
         if (ruleChainConnection.targetRuleChainId && ruleChainConnection.targetRuleChainId.id) {
           const ruleChainNode: RuleNode = {
             name: '',
-            debugMode: false,
             singletonMode: false,
             type: 'org.thingsboard.rule.engine.flow.TbRuleChainInputNode',
             configuration: {
@@ -665,13 +690,13 @@ export class ImportExportService {
       }
       if (ruleChainNameResolveObservables.length) {
         return forkJoin(ruleChainNameResolveObservables).pipe(
-           map(() => ruleChainImport)
+           map(() => ({ruleChain, metadata}))
         );
       } else {
-        return of(ruleChainImport);
+        return of({ruleChain, metadata});
       }
     } else {
-      return of(ruleChainImport);
+      return of({ruleChain, metadata});
     }
   }
 
@@ -1180,6 +1205,29 @@ export class ImportExportService {
       delete importedData.externalId;
     }
     return importedData;
+  }
+
+  private getIncludeResourcesPreference(key: SupportEntityResources): Observable<boolean> {
+    return this.store.pipe(
+      select(selectUserSettingsProperty(key)),
+      take(1)
+    );
+  }
+
+  private openExportDialog(title: string, prompt: string, includeResources: boolean, ignoreLoading?: boolean) {
+    return this.dialog.open<ExportResourceDialogComponent, ExportResourceDialogData, ExportResourceDialogDialogResult>(
+      ExportResourceDialogComponent, {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: { title, prompt, include: includeResources, ignoreLoading }
+      }
+    ).afterClosed();
+  }
+
+  private updateUserSettingsIncludeResourcesIfNeeded(currentValue: boolean, newValue: boolean, key: SupportEntityResources) {
+    if (currentValue !== newValue) {
+      this.store.dispatch(new ActionPreferencesPutUserSettings({[key]: newValue }));
+    }
   }
 
 }

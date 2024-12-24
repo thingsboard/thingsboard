@@ -87,7 +87,12 @@ public class TbCheckpointNodeTest extends AbstractRuleNodeUpgradeTest {
         given(ctxMock.getQueueName()).willReturn(queueName);
 
         node.init(ctxMock, nodeConfiguration);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         node.onMsg(ctxMock, msg);
 
         ArgumentCaptor<Runnable> onSuccess = ArgumentCaptor.forClass(Runnable.class);
@@ -101,7 +106,12 @@ public class TbCheckpointNodeTest extends AbstractRuleNodeUpgradeTest {
         given(ctxMock.getQueueName()).willReturn(DataConstants.HP_QUEUE_NAME);
 
         node.init(ctxMock, nodeConfiguration);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         node.onMsg(ctxMock, msg);
 
         ArgumentCaptor<Consumer<Throwable>> onFailure = ArgumentCaptor.forClass(Consumer.class);

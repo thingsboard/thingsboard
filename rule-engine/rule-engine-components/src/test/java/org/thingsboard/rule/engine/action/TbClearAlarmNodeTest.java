@@ -91,7 +91,12 @@ class TbClearAlarmNodeTest {
     void alarmCanBeCleared() {
         initWithClearAlarmScript();
         metadata.putValue("key", "value");
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, msgOriginator, metadata, "{\"temperature\": 50}");
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(msgOriginator)
+                .copyMetaData(metadata)
+                .data("{\"temperature\": 50}")
+                .build();
 
         long oldEndDate = System.currentTimeMillis();
         Alarm activeAlarm = Alarm.builder().type("SomeType").tenantId(tenantId).originator(msgOriginator).severity(AlarmSeverity.WARNING).endTs(oldEndDate).build();
@@ -143,7 +148,12 @@ class TbClearAlarmNodeTest {
     void alarmCanBeClearedWithAlarmOriginator() {
         initWithClearAlarmScript();
         metadata.putValue("key", "value");
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, alarmOriginator, metadata, "{\"temperature\": 50}");
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(alarmOriginator)
+                .copyMetaData(metadata)
+                .data("{\"temperature\": 50}")
+                .build();
 
         long oldEndDate = System.currentTimeMillis();
         AlarmId id = new AlarmId(alarmOriginator.getId());

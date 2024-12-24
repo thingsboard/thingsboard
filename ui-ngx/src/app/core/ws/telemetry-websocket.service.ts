@@ -22,6 +22,9 @@ import {
   AlarmDataCmd,
   AlarmDataUnsubscribeCmd,
   AlarmDataUpdate,
+  AlarmStatusCmd,
+  AlarmStatusUnsubscribeCmd,
+  AlarmStatusUpdate,
   EntityCountCmd,
   EntityCountUnsubscribeCmd,
   EntityCountUpdate,
@@ -30,6 +33,7 @@ import {
   EntityDataUpdate,
   isAlarmCountUpdateMsg,
   isAlarmDataUpdateMsg,
+  isAlarmStatusUpdateMsg,
   isEntityCountUpdateMsg,
   isEntityDataUpdateMsg,
   isNotificationCountUpdateMsg,
@@ -121,6 +125,10 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
             const alarmCountUnsubscribeCmd = new AlarmCountUnsubscribeCmd();
             alarmCountUnsubscribeCmd.cmdId = subscriptionCommand.cmdId;
             this.cmdWrapper.cmds.push(alarmCountUnsubscribeCmd);
+          } else if (subscriptionCommand instanceof AlarmStatusCmd) {
+            const alarmCountUnsubscribeCmd = new AlarmStatusUnsubscribeCmd();
+            alarmCountUnsubscribeCmd.cmdId = subscriptionCommand.cmdId;
+            this.cmdWrapper.cmds.push(alarmCountUnsubscribeCmd);
           } else if (subscriptionCommand instanceof UnreadCountSubCmd || subscriptionCommand instanceof UnreadSubCmd) {
             const notificationsUnsubCmds = new UnsubscribeCmd();
             notificationsUnsubCmds.cmdId = subscriptionCommand.cmdId;
@@ -157,6 +165,8 @@ export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscri
           subscriber.onEntityCount(new EntityCountUpdate(message));
         } else if (isAlarmCountUpdateMsg(message)) {
           subscriber.onAlarmCount(new AlarmCountUpdate(message));
+        } else if (isAlarmStatusUpdateMsg(message)) {
+          subscriber.onAlarmStatus(new AlarmStatusUpdate(message))
         }
       }
     } else if ('subscriptionId' in message && message.subscriptionId) {

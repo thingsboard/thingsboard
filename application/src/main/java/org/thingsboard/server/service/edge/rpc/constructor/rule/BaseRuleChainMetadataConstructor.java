@@ -88,7 +88,7 @@ public abstract class BaseRuleChainMetadataConstructor implements RuleChainMetad
                 .setIdLSB(node.getId().getId().getLeastSignificantBits())
                 .setType(node.getType())
                 .setName(node.getName())
-                .setDebugMode(node.isDebugMode())
+                .setDebugSettings(JacksonUtil.toString(node.getDebugSettings()))
                 .setConfiguration(JacksonUtil.toString(node.getConfiguration()))
                 .setAdditionalInfo(JacksonUtil.toString(node.getAdditionalInfo()))
                 .setSingletonMode(node.isSingletonMode())

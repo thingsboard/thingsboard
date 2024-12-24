@@ -26,6 +26,14 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
+import {
+  CompiledTbFunction,
+  compileTbFunction,
+  isNotEmptyTbFunction,
+  TbFunction
+} from '@shared/models/js-function.models';
+import { forkJoin, Observable, of, ReplaySubject } from 'rxjs';
+import { catchError, map, share } from 'rxjs/operators';
 
 type ColumnVisibilityOptions = 'visible' | 'hidden' | 'hidden-mobile';
 
@@ -40,7 +48,7 @@ export interface TableWidgetSettings {
   displayPagination: boolean;
   defaultPageSize: number;
   useRowStyleFunction: boolean;
-  rowStyleFunction?: string;
+  rowStyleFunction?: TbFunction;
   reserveSpaceForHiddenAction?: boolean;
 }
 
@@ -48,9 +56,9 @@ export interface TableWidgetDataKeySettings {
   customTitle?: string;
   columnWidth?: string;
   useCellStyleFunction: boolean;
-  cellStyleFunction?: string;
+  cellStyleFunction?: TbFunction;
   useCellContentFunction: boolean;
-  cellContentFunction?: string;
+  cellContentFunction?: TbFunction;
   defaultColumnVisibility?: ColumnVisibilityOptions;
   columnSelectionToDisplay?: ColumnSelectionOptions;
 }
@@ -59,7 +67,7 @@ export type ShowCellButtonActionFunction = (ctx: WidgetContext, data: EntityData
 
 export interface TableCellButtonActionDescriptor extends  WidgetActionDescriptor {
   useShowActionCellButtonFunction: boolean;
-  showActionCellButtonFunction: ShowCellButtonActionFunction;
+  showActionCellButtonFunction: CompiledTbFunction<ShowCellButtonActionFunction>;
 }
 
 export interface EntityData {
@@ -88,9 +96,13 @@ export interface DisplayColumn {
 
 export type CellContentFunction = (...args: any[]) => string;
 
-export interface CellContentInfo {
+export interface CellContentFunctionInfo {
   useCellContentFunction: boolean;
-  cellContentFunction?: CellContentFunction;
+  cellContentFunction?: CompiledTbFunction<CellContentFunction>;
+}
+
+export interface CellContentInfo {
+  contentFunction: Observable<CellContentFunctionInfo>;
   units?: string;
   decimals?: number;
 }
@@ -99,14 +111,14 @@ export type CellStyleFunction = (...args: any[]) => any;
 
 export interface CellStyleInfo {
   useCellStyleFunction: boolean;
-  cellStyleFunction?: CellStyleFunction;
+  cellStyleFunction?: CompiledTbFunction<CellStyleFunction>;
 }
 
 export type RowStyleFunction = (...args: any[]) => any;
 
 export interface RowStyleInfo {
   useRowStyleFunction: boolean;
-  rowStyleFunction?: RowStyleFunction;
+  rowStyleFunction?: CompiledTbFunction<RowStyleFunction>;
 }
 
 
@@ -229,67 +241,113 @@ export function getAlarmValue(alarm: AlarmDataInfo, key: EntityColumn) {
   }
 }
 
-export function getRowStyleInfo(settings: TableWidgetSettings, ...args: string[]): RowStyleInfo {
-  let rowStyleFunction: RowStyleFunction = null;
-  let useRowStyleFunction = false;
-
-  if (settings.useRowStyleFunction === true) {
-    if (isDefined(settings.rowStyleFunction) && settings.rowStyleFunction.length > 0) {
-      try {
-        rowStyleFunction = new Function(...args, settings.rowStyleFunction) as RowStyleFunction;
-        useRowStyleFunction = true;
-      } catch (e) {
-        rowStyleFunction = null;
-        useRowStyleFunction = false;
-      }
-    }
+export function getRowStyleInfo(widgetContext: WidgetContext, settings: TableWidgetSettings, ...args: string[]): Observable<RowStyleInfo> {
+  let rowStyleInfo$: Observable<RowStyleInfo>;
+  if (settings.useRowStyleFunction === true && isNotEmptyTbFunction(settings.rowStyleFunction)) {
+    rowStyleInfo$ = compileTbFunction<RowStyleFunction>(widgetContext.http, settings.rowStyleFunction, ...args).pipe(
+      catchError(() => { return of(null) }),
+      map((rowStyleFunction) => {
+        if (!rowStyleFunction) {
+          return {
+            useRowStyleFunction: false,
+            rowStyleFunction: null
+          }
+        } else {
+          return {
+            useRowStyleFunction: true,
+            rowStyleFunction
+          }
+        }
+      })
+    );
+  } else {
+    rowStyleInfo$ = of({
+      useRowStyleFunction: false,
+      rowStyleFunction: null
+    });
   }
-  return {
-    useRowStyleFunction,
-    rowStyleFunction
-  };
+  return rowStyleInfo$.pipe(
+    share({
+      connector: () => new ReplaySubject(1),
+      resetOnError: false,
+      resetOnComplete: false,
+      resetOnRefCountZero: false
+    })
+  );
 }
 
-export function getCellStyleInfo(keySettings: TableWidgetDataKeySettings, ...args: string[]): CellStyleInfo {
-  let cellStyleFunction: CellStyleFunction = null;
-  let useCellStyleFunction = false;
-
-  if (keySettings.useCellStyleFunction === true) {
-    if (isDefined(keySettings.cellStyleFunction) && keySettings.cellStyleFunction.length > 0) {
-      try {
-        cellStyleFunction = new Function(...args, keySettings.cellStyleFunction) as CellStyleFunction;
-        useCellStyleFunction = true;
-      } catch (e) {
-        cellStyleFunction = null;
-        useCellStyleFunction = false;
+export function getCellStyleInfo(widgetContext: WidgetContext, keySettings: TableWidgetDataKeySettings, ...args: string[]): Observable<CellStyleInfo> {
+  let cellStyleInfo$: Observable<CellStyleInfo>;
+  if (keySettings.useCellStyleFunction === true && isNotEmptyTbFunction(keySettings.cellStyleFunction)) {
+    cellStyleInfo$ = compileTbFunction<CellStyleFunction>(widgetContext.http, keySettings.cellStyleFunction, ...args).pipe(
+      catchError(() => { return of(null) }),
+      map((cellStyleFunction) => {
+        if (!cellStyleFunction) {
+          return {
+            useCellStyleFunction: false,
+            cellStyleFunction: null
+          }
+        } else {
+          return {
+            useCellStyleFunction: true,
+            cellStyleFunction
+          }
+        }
+      })
+    );
+  } else {
+    cellStyleInfo$ = of(
+      {
+        useCellStyleFunction: false,
+        cellStyleFunction: null
       }
-    }
+    )
   }
-  return {
-    useCellStyleFunction,
-    cellStyleFunction
-  };
+  return cellStyleInfo$.pipe(
+    share({
+      connector: () => new ReplaySubject(1),
+      resetOnError: false,
+      resetOnComplete: false,
+      resetOnRefCountZero: false
+    })
+  );
 }
 
-export function getCellContentInfo(keySettings: TableWidgetDataKeySettings, ...args: string[]): CellContentInfo {
-  let cellContentFunction: CellContentFunction = null;
-  let useCellContentFunction = false;
-
-  if (keySettings.useCellContentFunction === true) {
-    if (isDefined(keySettings.cellContentFunction) && keySettings.cellContentFunction.length > 0) {
-      try {
-        cellContentFunction = new Function(...args, keySettings.cellContentFunction) as CellContentFunction;
-        useCellContentFunction = true;
-      } catch (e) {
-        cellContentFunction = null;
-        useCellContentFunction = false;
+export function getCellContentFunctionInfo(widgetContext: WidgetContext, keySettings: TableWidgetDataKeySettings, ...args: string[]): Observable<CellContentFunctionInfo> {
+  let cellContentFunctionInfo$: Observable<CellContentFunctionInfo>;
+  if (keySettings.useCellContentFunction === true && isNotEmptyTbFunction(keySettings.cellContentFunction)) {
+    cellContentFunctionInfo$ = compileTbFunction<CellContentFunction>(widgetContext.http, keySettings.cellContentFunction, ...args).pipe(
+      catchError(() => { return of(null) }),
+      map((cellContentFunction) => {
+        if (!cellContentFunction) {
+          return {
+            useCellContentFunction: false,
+            cellContentFunction: null
+          }
+        } else {
+          return {
+            useCellContentFunction: true,
+            cellContentFunction
+          }
+        }
+      })
+    );
+  } else {
+    cellContentFunctionInfo$ = of(
+      {
+        useCellContentFunction: false,
+        cellContentFunction: null
       }
-    }
+    )
   }
-  return {
-    cellContentFunction,
-    useCellContentFunction
-  };
+  return cellContentFunctionInfo$.pipe(
+    share({
+      connector: () => new ReplaySubject(1),
+      resetOnError: false,
+      resetOnComplete: false,
+      resetOnRefCountZero: false
+    })
+  );
 }
 
 export function getColumnWidth(keySettings: TableWidgetDataKeySettings): string {
@@ -314,20 +372,26 @@ export function getColumnSelectionAvailability(keySettings: TableWidgetDataKeySe
   return !(isDefined(keySettings.columnSelectionToDisplay) && keySettings.columnSelectionToDisplay === 'disabled');
 }
 
-export function getTableCellButtonActions(widgetContext: WidgetContext): TableCellButtonActionDescriptor[] {
-  return widgetContext.actionsApi.getActionDescriptors('actionCellButton').map(descriptor => {
+export function getTableCellButtonActions(widgetContext: WidgetContext): Observable<TableCellButtonActionDescriptor[]> {
+  const actions$ = widgetContext.actionsApi.getActionDescriptors('actionCellButton').map(descriptor => {
     let useShowActionCellButtonFunction = descriptor.useShowWidgetActionFunction || false;
-    let showActionCellButtonFunction: ShowCellButtonActionFunction = null;
-    if (useShowActionCellButtonFunction && isNotEmptyStr(descriptor.showWidgetActionFunction)) {
-      try {
-        showActionCellButtonFunction =
-          new Function('widgetContext', 'data', descriptor.showWidgetActionFunction) as ShowCellButtonActionFunction;
-      } catch (e) {
-        useShowActionCellButtonFunction = false;
-      }
+    let showActionCellButtonFunction$: Observable<CompiledTbFunction<ShowCellButtonActionFunction>>;
+    if (useShowActionCellButtonFunction && isNotEmptyTbFunction(descriptor.showWidgetActionFunction)) {
+      showActionCellButtonFunction$ = compileTbFunction(widgetContext.http, descriptor.showWidgetActionFunction, 'widgetContext', 'data');
+    } else {
+      showActionCellButtonFunction$ = of(null);
     }
-    return {...descriptor, showActionCellButtonFunction, useShowActionCellButtonFunction};
+    return showActionCellButtonFunction$.pipe(
+      catchError(() => { return of(null) }),
+      map(showActionCellButtonFunction => {
+        if (!showActionCellButtonFunction) {
+          useShowActionCellButtonFunction = false;
+        }
+        return {...descriptor, showActionCellButtonFunction, useShowActionCellButtonFunction};
+      })
+    );
   });
+  return actions$.length ? forkJoin(actions$) : of([]);
 }
 
 export function checkHasActions(cellButtonActions: TableCellButtonActionDescriptor[]): boolean {
@@ -348,7 +412,7 @@ function filterTableCellButtonAction(widgetContext: WidgetContext,
                                      action: TableCellButtonActionDescriptor, data: EntityData | AlarmDataInfo | FormattedData): boolean {
   if (action.useShowActionCellButtonFunction) {
     try {
-      return action.showActionCellButtonFunction(widgetContext, data);
+      return action.showActionCellButtonFunction.execute(widgetContext, data);
     } catch (e) {
       console.warn('Failed to execute showActionCellButtonFunction', e);
       return false;

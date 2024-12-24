@@ -28,6 +28,7 @@ import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttReasonCodeAndPropertiesVariableHeader;
 import io.netty.handler.codec.mqtt.MqttReasonCodes;
+import io.netty.handler.codec.mqtt.MqttSubAckMessage;
 import io.netty.handler.codec.mqtt.MqttVersion;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -490,6 +491,48 @@ public class MqttClientTest extends AbstractContainerTest {
 
         updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.DISABLED);
     }
+
+    @Test
+    public void provisionRequestForCheckSubAckReceived() throws Exception {
+
+        DeviceProfile deviceProfile = testRestClient.getDeviceProfileById(device.getDeviceProfileId());
+        deviceProfile = updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES);
+
+        MqttMessageListener listener = new MqttMessageListener();
+        MqttClient mqttClient = getMqttClient("provision", listener, MqttVersion.MQTT_5);
+        final MqttReasonCodes.SubAck[] subAckResult = new MqttReasonCodes.SubAck[1];
+        mqttClient.setCallback(new MqttClientCallback() {
+                                   @Override
+                                   public void connectionLost(Throwable cause) {
+                                   }
+
+                                   @Override
+                                   public void onSuccessfulReconnect() {
+                                   }
+
+                                   @Override
+                                   public void onSubAck(MqttSubAckMessage subAckMessage) {
+                                       subAckResult[0] = subAckMessage.payload().typedReasonCodes().get(0);
+                                   }
+                               }
+        );
+
+        mqttClient.on("/provision/response", listener, MqttQoS.AT_LEAST_ONCE).get(3 * timeoutMultiplier, TimeUnit.SECONDS);
+        TimeUnit.SECONDS.sleep(2 * timeoutMultiplier);
+        assertThat(subAckResult[0]).isNotNull();
+        assertThat(MqttReasonCodes.SubAck.GRANTED_QOS_1.equals(subAckResult[0]));
+
+        subAckResult[0] = null;
+        mqttClient.on("v1/devices/me/attributes", listener, MqttQoS.AT_LEAST_ONCE).get(3 * timeoutMultiplier, TimeUnit.SECONDS);
+        TimeUnit.SECONDS.sleep(2 * timeoutMultiplier);
+        assertThat(subAckResult[0]).isNotNull();
+        assertThat(MqttReasonCodes.SubAck.TOPIC_FILTER_INVALID.equals(subAckResult[0]));
+
+        testRestClient.deleteDeviceIfExists(device.getId());
+        updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.DISABLED);
+    }
+
+
 
     @Test
     public void provisionRequestForDeviceWithDisabledProvisioningStrategy() throws Exception {

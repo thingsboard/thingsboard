@@ -27,6 +27,12 @@
       align-items: center;
     }
 
+    &-content {
+      .tb-flex {
+        gap: 16px;
+      }
+    }
+
     &-type-options {
       flex: 1;
     }

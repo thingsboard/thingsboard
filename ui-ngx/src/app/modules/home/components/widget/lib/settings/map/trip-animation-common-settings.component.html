@@ -81,6 +81,7 @@
           </tb-html>
           <tb-js-func [class.!hidden]="!tripAnimationCommonSettingsFormGroup.get('useTooltipFunction').value"
                       formControlName="tooltipFunction"
+                      withModules
                       [globalVariables]="functionScopeVariables"
                       [functionArgs]="['data', 'dsData', 'dsIndex']"
                       functionTitle="{{ 'widgets.maps.tooltip-function' | translate }}"

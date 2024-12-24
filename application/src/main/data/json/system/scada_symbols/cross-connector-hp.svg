@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="200" height="200" fill="none" version="1.1" viewBox="0 0 200 200"><tb:metadata xmlns=""><![CDATA[{
+  "title": "HP Cross connector",
+  "description": "Cross connector",
+  "widgetSizeX": 1,
+  "widgetSizeY": 1,
+  "tags": [
+    {
+      "tag": "line",
+      "stateRenderFunction": "element.stroke(ctx.properties.lineColor);\nif (ctx.properties.mainLine) {\n    element.attr({'stroke-width': ctx.properties.mainLineSize});\n} else {\n    element.attr({'stroke-width': ctx.properties.secondaryLineSize});\n}",
+      "actions": null
+    },
+    {
+      "tag": "line-color",
+      "stateRenderFunction": "element.fill(ctx.properties.lineColor);",
+      "actions": null
+    }
+  ],
+  "behavior": [],
+  "properties": [
+    {
+      "id": "mainLine",
+      "name": "{i18n:scada.symbol.main-line}",
+      "type": "switch",
+      "default": true,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "mainLineSize",
+      "name": "{i18n:scada.symbol.line}",
+      "type": "number",
+      "default": 6,
+      "required": true,
+      "subLabel": "Main",
+      "divider": true,
+      "fieldSuffix": "px",
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": 0,
+      "max": 99,
+      "step": 1
+    },
+    {
+      "id": "secondaryLineSize",
+      "name": "{i18n:scada.symbol.line}",
+      "type": "number",
+      "default": 2,
+      "required": true,
+      "subLabel": "Secondary",
+      "divider": null,
+      "fieldSuffix": "px",
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": 0,
+      "max": 99,
+      "step": 1
+    },
+    {
+      "id": "lineColor",
+      "name": "{i18n:scada.symbol.line-color}",
+      "type": "color",
+      "default": "#1A1A1A",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    }
+  ]
+}]]></tb:metadata>
+<path d="M87 100H113C113 100 100 100 100 86C100 100 87 100 87 100Z" id="path12" fill="#1A1A1A" tb:tag="line-color"/><path d="M87 100H113C113 100 100 100 100 114C100 100 87 100 87 100Z" id="path10" fill="#1A1A1A" tb:tag="line-color"/><path d="M0 100H85C93.2843 100 100 93.2843 100 85V0" stroke-width="6" id="path8" stroke="#1A1A1A" tb:tag="line"/><path d="M200 100H115C106.716 100 100 93.2843 100 85V0" stroke-width="6" id="path6" stroke="#1A1A1A" tb:tag="line"/><path d="M0 100H85C93.2843 100 100 106.716 100 115V200" stroke-width="6" id="path4" stroke="#1A1A1A" tb:tag="line"/><path d="M200 100H115C106.716 100 100 106.716 100 115V200" stroke-width="6" id="path2" stroke="#1A1A1A" tb:tag="line"/>
+</svg>

@@ -2768,8 +2768,7 @@
         "metadata-required": "元資料項不能為空。",
         "output": "輸出",
         "test": "測試",
-        "help": "幫助",
-        "reset-debug-mode": "重置所有節點中的調試模式"
+        "help": "幫助"
     },
     "timezone": {
         "timezone": "時區",
@@ -2972,6 +2971,9 @@
         "maximum-dashboards": "儀表板最大數量",
         "maximum-dashboards-required": "儀表板最大數量必填",
         "maximum-dashboards-range": "儀表板最大數量不可為否",
+        "maximum-edges": "最大邊數",
+        "maximum-edges-required": "需要最大邊數。",
+        "maximum-edges-range": "邊數最大不能為負數",
         "maximum-rule-chains": "規則鏈最大數量",
         "maximum-rule-chains-required": "規則鏈最大數量必填",
         "maximum-rule-chains-range": "規則鏈最大數量不可為否",

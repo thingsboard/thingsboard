@@ -25,6 +25,10 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ConcurrentReferenceHashMap;
+import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
+import org.thingsboard.rule.engine.api.TimeseriesDeleteRequest;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
@@ -55,6 +59,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -273,36 +278,41 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
             return Futures.transform(getAttrFuture, attributeKvEntries -> {
                 List<AttributeKvEntry> attributes;
                 if (attributeKvEntries != null && !attributeKvEntries.isEmpty()) {
-                    attributes =
-                            attributeKvEntries.stream()
-                                    .filter(attributeKvEntry -> {
-                                        long startTime = entityView.getStartTimeMs();
-                                        long endTime = entityView.getEndTimeMs();
-                                        long lastUpdateTs = attributeKvEntry.getLastUpdateTs();
-                                        return startTime == 0 && endTime == 0 ||
-                                                (endTime == 0 && startTime < lastUpdateTs) ||
-                                                (startTime == 0 && endTime > lastUpdateTs) ||
-                                                (startTime < lastUpdateTs && endTime > lastUpdateTs);
-                                    }).collect(Collectors.toList());
-                    tsSubService.saveAndNotify(entityView.getTenantId(), entityId, scope, attributes, new FutureCallback<Void>() {
-                        @Override
-                        public void onSuccess(@Nullable Void tmp) {
-                            try {
-                                logAttributesUpdated(entityView.getTenantId(), user, entityId, scope, attributes, null);
-                            } catch (ThingsboardException e) {
-                                log.error("Failed to log attribute updates", e);
-                            }
-                        }
+                    attributes = attributeKvEntries.stream()
+                            .filter(attributeKvEntry -> {
+                                long startTime = entityView.getStartTimeMs();
+                                long endTime = entityView.getEndTimeMs();
+                                long lastUpdateTs = attributeKvEntry.getLastUpdateTs();
+                                return startTime == 0 && endTime == 0 ||
+                                        (endTime == 0 && startTime < lastUpdateTs) ||
+                                        (startTime == 0 && endTime > lastUpdateTs) ||
+                                        (startTime < lastUpdateTs && endTime > lastUpdateTs);
+                            }).collect(Collectors.toList());
+                    tsSubService.saveAttributes(AttributesSaveRequest.builder()
+                            .tenantId(entityView.getTenantId())
+                            .entityId(entityId)
+                            .scope(scope)
+                            .entries(attributes)
+                            .callback(new FutureCallback<>() {
+                                @Override
+                                public void onSuccess(@Nullable Void tmp) {
+                                    try {
+                                        logAttributesUpdated(entityView.getTenantId(), user, entityId, scope, attributes, null);
+                                    } catch (ThingsboardException e) {
+                                        log.error("Failed to log attribute updates", e);
+                                    }
+                                }
 
-                        @Override
-                        public void onFailure(Throwable t) {
-                            try {
-                                logAttributesUpdated(entityView.getTenantId(), user, entityId, scope, attributes, t);
-                            } catch (ThingsboardException e) {
-                                log.error("Failed to log attribute updates", e);
-                            }
-                        }
-                    });
+                                @Override
+                                public void onFailure(Throwable t) {
+                                    try {
+                                        logAttributesUpdated(entityView.getTenantId(), user, entityId, scope, attributes, t);
+                                    } catch (ThingsboardException e) {
+                                        log.error("Failed to log attribute updates", e);
+                                    }
+                                }
+                            })
+                            .build());
                 }
                 return null;
             }, MoreExecutors.directExecutor());
@@ -334,15 +344,22 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         }, MoreExecutors.directExecutor());
         return Futures.transform(latestFuture, latestValues -> {
             if (latestValues != null && !latestValues.isEmpty()) {
-                tsSubService.saveLatestAndNotify(entityView.getTenantId(), entityId, latestValues, new FutureCallback<Void>() {
-                    @Override
-                    public void onSuccess(@Nullable Void tmp) {
-                    }
+                tsSubService.saveTimeseries(TimeseriesSaveRequest.builder()
+                        .tenantId(entityView.getTenantId())
+                        .entityId(entityId)
+                        .entries(latestValues)
+                        .onlyLatest(true)
+                        .callback(new FutureCallback<Void>() {
+                            @Override
+                            public void onSuccess(@Nullable Void tmp) {
+                            }
 
-                    @Override
-                    public void onFailure(Throwable t) {
-                    }
-                });
+                            @Override
+                            public void onFailure(Throwable t) {
+                                log.error("[{}][{}] Failed to save entity view latest timeseries: {}", tenantId, entityView.getId(), latestValues, t);
+                            }
+                        })
+                        .build());
             }
             return null;
         }, MoreExecutors.directExecutor());
@@ -352,27 +369,33 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
         EntityViewId entityId = entityView.getId();
         SettableFuture<Void> resultFuture = SettableFuture.create();
         if (keys != null && !keys.isEmpty()) {
-            tsSubService.deleteAndNotify(entityView.getTenantId(), entityId, scope, keys, new FutureCallback<Void>() {
-                @Override
-                public void onSuccess(@Nullable Void tmp) {
-                    try {
-                        logAttributesDeleted(entityView.getTenantId(), user, entityId, scope, keys, null);
-                    } catch (ThingsboardException e) {
-                        log.error("Failed to log attribute delete", e);
-                    }
-                    resultFuture.set(tmp);
-                }
+            tsSubService.deleteAttributes(AttributesDeleteRequest.builder()
+                    .tenantId(entityView.getTenantId())
+                    .entityId(entityId)
+                    .scope(scope)
+                    .keys(keys)
+                    .callback(new FutureCallback<>() {
+                        @Override
+                        public void onSuccess(@Nullable Void tmp) {
+                            try {
+                                logAttributesDeleted(entityView.getTenantId(), user, entityId, scope, keys, null);
+                            } catch (ThingsboardException e) {
+                                log.error("Failed to log attribute delete", e);
+                            }
+                            resultFuture.set(tmp);
+                        }
 
-                @Override
-                public void onFailure(Throwable t) {
-                    try {
-                        logAttributesDeleted(entityView.getTenantId(), user, entityId, scope, keys, t);
-                    } catch (ThingsboardException e) {
-                        log.error("Failed to log attribute delete", e);
-                    }
-                    resultFuture.setException(t);
-                }
-            });
+                        @Override
+                        public void onFailure(Throwable t) {
+                            try {
+                                logAttributesDeleted(entityView.getTenantId(), user, entityId, scope, keys, t);
+                            } catch (ThingsboardException e) {
+                                log.error("Failed to log attribute delete", e);
+                            }
+                            resultFuture.setException(t);
+                        }
+                    })
+                    .build());
         } else {
             resultFuture.set(null);
         }
@@ -382,51 +405,32 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
     private ListenableFuture<Void> deleteLatestFromEntityView(EntityView entityView, List<String> keys, User user) {
         EntityViewId entityId = entityView.getId();
         SettableFuture<Void> resultFuture = SettableFuture.create();
-        if (keys != null && !keys.isEmpty()) {
-            tsSubService.deleteLatest(entityView.getTenantId(), entityId, keys, new FutureCallback<Void>() {
-                @Override
-                public void onSuccess(@Nullable Void tmp) {
-                    try {
-                        logTimeseriesDeleted(entityView.getTenantId(), user, entityId, keys, null);
-                    } catch (ThingsboardException e) {
-                        log.error("Failed to log timeseries delete", e);
+        tsSubService.deleteTimeseries(TimeseriesDeleteRequest.builder()
+                .tenantId(entityView.getTenantId())
+                .entityId(entityId)
+                .keys(keys)
+                .callback(new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(@Nullable List<String> result) {
+                        try {
+                            logTimeseriesDeleted(entityView.getTenantId(), user, entityId, result, null);
+                        } catch (ThingsboardException e) {
+                            log.error("Failed to log timeseries delete", e);
+                        }
+                        resultFuture.set(null);
                     }
-                    resultFuture.set(tmp);
-                }
 
-                @Override
-                public void onFailure(Throwable t) {
-                    try {
-                        logTimeseriesDeleted(entityView.getTenantId(), user, entityId, keys, t);
-                    } catch (ThingsboardException e) {
-                        log.error("Failed to log timeseries delete", e);
+                    @Override
+                    public void onFailure(Throwable t) {
+                        try {
+                            logTimeseriesDeleted(entityView.getTenantId(), user, entityId, Optional.ofNullable(keys).orElse(Collections.emptyList()), t);
+                        } catch (ThingsboardException e) {
+                            log.error("Failed to log timeseries delete", e);
+                        }
+                        resultFuture.setException(t);
                     }
-                    resultFuture.setException(t);
-                }
-            });
-        } else {
-            tsSubService.deleteAllLatest(entityView.getTenantId(), entityId, new FutureCallback<Collection<String>>() {
-                @Override
-                public void onSuccess(@Nullable Collection<String> keys) {
-                    try {
-                        logTimeseriesDeleted(entityView.getTenantId(), user, entityId, new ArrayList<>(keys), null);
-                    } catch (ThingsboardException e) {
-                        log.error("Failed to log timeseries delete", e);
-                    }
-                    resultFuture.set(null);
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    try {
-                        logTimeseriesDeleted(entityView.getTenantId(), user, entityId, Collections.emptyList(), t);
-                    } catch (ThingsboardException e) {
-                        log.error("Failed to log timeseries delete", e);
-                    }
-                    resultFuture.setException(t);
-                }
-            });
-        }
+                })
+                .build());
         return resultFuture;
     }
 

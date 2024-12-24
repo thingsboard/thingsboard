@@ -1,0 +1,64 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-default-mobile-page-panel" [formGroup]="mobilePageFormGroup">
+  <div class="tb-default-mobile-page-title-container">
+    <div class="tb-default-mobile-page-title" translate>mobile.edit-page</div>
+    <button *ngIf="!disabled"
+            [disabled]="!isCleanupEnabled"
+            type="button"
+            mat-stroked-button
+            class="tb-box-button"
+            matTooltip="{{ 'mobile.reset-to-page-default' | translate }}"
+            matTooltipPosition="above"
+            (click)="cleanup()">
+      <tb-icon [color]="isCleanupEnabled ? 'primary' : null" matButtonIcon>mdi:broom</tb-icon>
+    </button>
+  </div>
+  <div class="tb-default-mobile-page-panel-content">
+    <div class="tb-form-row space-between">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="visible">
+        {{ 'mobile.visible' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <div class="flex items-center justify-center gap-2">
+      <tb-material-icon-select asBoxInput
+                               color="#305680"
+                               formControlName="icon">
+      </tb-material-icon-select>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic" floatLabel="always">
+        <mat-label translate>mobile.page-name</mat-label>
+        <input matInput formControlName="label" placeholder="{{ defaultItemName }}">
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-default-mobile-page-panel-buttons">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="apply()"
+            [disabled]="mobilePageFormGroup.invalid || !mobilePageFormGroup.dirty">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</div>

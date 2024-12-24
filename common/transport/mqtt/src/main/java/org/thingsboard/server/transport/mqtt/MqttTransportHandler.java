@@ -313,6 +313,14 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     sendResponseForAdaptorErrorOrCloseContext(ctx, topicName, msgId);
                 }
                 break;
+            case SUBSCRIBE:
+                MqttSubscribeMessage subscribeMessage = (MqttSubscribeMessage) msg;
+                processSubscribe(ctx, subscribeMessage);
+                break;
+            case UNSUBSCRIBE:
+                MqttUnsubscribeMessage unsubscribeMessage = (MqttUnsubscribeMessage) msg;
+                processUnsubscribe(ctx, unsubscribeMessage);
+                break;
             case PINGREQ:
                 ctx.writeAndFlush(new MqttMessage(new MqttFixedHeader(PINGRESP, false, AT_MOST_ONCE, false, 0)));
                 break;
@@ -750,7 +758,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     private void processSubscribe(ChannelHandlerContext ctx, MqttSubscribeMessage mqttMsg) {
-        if (!checkConnected(ctx, mqttMsg)) {
+        if (!checkConnected(ctx, mqttMsg) && !deviceSessionCtx.isProvisionOnly()) {
             ctx.writeAndFlush(createSubAckMessage(mqttMsg.variableHeader().messageId(), Collections.singletonList(MqttReasonCodes.SubAck.NOT_AUTHORIZED.byteValue() & 0xFF)));
             return;
         }
@@ -760,6 +768,16 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         for (MqttTopicSubscription subscription : mqttMsg.payload().topicSubscriptions()) {
             String topic = subscription.topicName();
             MqttQoS reqQoS = subscription.qualityOfService();
+            if (deviceSessionCtx.isProvisionOnly()) {
+                if (MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC.equals(topic)) {
+                    registerSubQoS(topic, grantedQoSList, reqQoS);
+                } else {
+                    log.debug("[{}] Failed to subscribe to [{}][{}]", sessionId, topic, reqQoS);
+                    grantedQoSList.add(ReturnCodeResolver.getSubscriptionReturnCode(deviceSessionCtx.getMqttVersion(), MqttReasonCodes.SubAck.TOPIC_FILTER_INVALID));
+                }
+                activityReported = true;
+                continue;
+            }
             if (deviceSessionCtx.isDeviceSubscriptionAttributesTopic(topic)) {
                 processAttributesSubscribe(grantedQoSList, topic, reqQoS, TopicType.V1);
                 activityReported = true;
@@ -822,7 +840,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC:
                         case MqttTopics.GATEWAY_RPC_TOPIC:
                         case MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC:
-                        case MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC:
                         case MqttTopics.DEVICE_FIRMWARE_RESPONSES_TOPIC:
                         case MqttTopics.DEVICE_FIRMWARE_ERROR_TOPIC:
                         case MqttTopics.DEVICE_SOFTWARE_RESPONSES_TOPIC:
@@ -873,7 +890,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     private void processUnsubscribe(ChannelHandlerContext ctx, MqttUnsubscribeMessage mqttMsg) {
-        if (!checkConnected(ctx, mqttMsg)) {
+        if (!checkConnected(ctx, mqttMsg) && !deviceSessionCtx.isProvisionOnly()) {
             ctx.writeAndFlush(createUnSubAckMessage(mqttMsg.variableHeader().messageId(),
                     Collections.singletonList((short) MqttReasonCodes.UnsubAck.NOT_AUTHORIZED.byteValue())));
             return;
@@ -887,6 +904,14 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 mqttQoSMap.remove(matcher);
                 try {
                     short resultValue = MqttReasonCodes.UnsubAck.SUCCESS.byteValue();
+                    if (deviceSessionCtx.isProvisionOnly()) {
+                        if (!matcher.matches(MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC)) {
+                            resultValue = MqttReasonCodes.UnsubAck.TOPIC_FILTER_INVALID.byteValue();
+                        }
+                        unSubResults.add(resultValue);
+                        activityReported = true;
+                        continue;
+                    }
                     switch (topicName) {
                         case MqttTopics.DEVICE_ATTRIBUTES_TOPIC:
                         case MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC:
@@ -917,7 +942,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC:
                         case MqttTopics.GATEWAY_RPC_TOPIC:
                         case MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC:
-                        case MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC:
                         case MqttTopics.DEVICE_FIRMWARE_RESPONSES_TOPIC:
                         case MqttTopics.DEVICE_FIRMWARE_ERROR_TOPIC:
                         case MqttTopics.DEVICE_SOFTWARE_RESPONSES_TOPIC:
@@ -1304,18 +1328,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     public void onRemoteSessionCloseCommand(UUID sessionId, TransportProtos.SessionCloseNotificationProto sessionCloseNotification) {
         log.trace("[{}] Received the remote command to close the session: {}", sessionId, sessionCloseNotification.getMessage());
         transportService.deregisterSession(deviceSessionCtx.getSessionInfo());
-        MqttReasonCodes.Disconnect returnCode = MqttReasonCodes.Disconnect.IMPLEMENTATION_SPECIFIC_ERROR;
-        switch (sessionCloseNotification.getReason()) {
-            case CREDENTIALS_UPDATED:
-                returnCode = MqttReasonCodes.Disconnect.ADMINISTRATIVE_ACTION;
-                break;
-            case MAX_CONCURRENT_SESSIONS_LIMIT_REACHED:
-                returnCode = MqttReasonCodes.Disconnect.SESSION_TAKEN_OVER;
-                break;
-            case SESSION_TIMEOUT:
-                returnCode = MqttReasonCodes.Disconnect.MAXIMUM_CONNECT_TIME;
-                break;
-        }
+        MqttReasonCodes.Disconnect returnCode = switch (sessionCloseNotification.getReason()) {
+            case CREDENTIALS_UPDATED, RPC_DELIVERY_TIMEOUT -> MqttReasonCodes.Disconnect.ADMINISTRATIVE_ACTION;
+            case MAX_CONCURRENT_SESSIONS_LIMIT_REACHED -> MqttReasonCodes.Disconnect.SESSION_TAKEN_OVER;
+            case SESSION_TIMEOUT -> MqttReasonCodes.Disconnect.MAXIMUM_CONNECT_TIME;
+            default -> MqttReasonCodes.Disconnect.IMPLEMENTATION_SPECIFIC_ERROR;
+        };
         closeCtx(deviceSessionCtx.getChannel(), returnCode);
     }
 

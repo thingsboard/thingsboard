@@ -136,8 +136,7 @@
         </div>
         <ng-template #searchNotEmpty>
           <span>
-            {{ translate.get('entity.no-key-matching',
-              {key: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
+            {{ 'entity.no-key-matching' | translate : {key: searchText | truncate: true: 6: &apos;...&apos;} }}
           </span>
           <span *ngIf="!isEntityDatasource; else createEntityKey">
             <a translate (click)="createKey(searchText)">entity.create-new-key</a>

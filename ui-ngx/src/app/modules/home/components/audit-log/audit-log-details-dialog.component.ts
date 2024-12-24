@@ -105,14 +105,14 @@ export class AuditLogDetailsDialogComponent extends DialogComponent<AuditLogDeta
     let newWidth = 600;
     if (content && content.length > 0) {
       const lines = content.split('\n');
-      newHeight = 16 * lines.length + 16;
+      newHeight = 18 * lines.length + 16;
       let maxLineLength = 0;
       lines.forEach((row) => {
         const line = row.replace(/\t/g, '    ').replace(/\n/g, '');
         const lineLength = line.length;
         maxLineLength = Math.max(maxLineLength, lineLength);
       });
-      newWidth = 8 * maxLineLength + 16;
+      newWidth = 9 * maxLineLength + 16;
     }
     // newHeight = Math.min(400, newHeight);
     this.renderer.setStyle(editorElement, 'minHeight', newHeight.toString() + 'px');

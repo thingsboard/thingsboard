@@ -50,6 +50,8 @@ import java.util.Properties;
 @Component
 public class TbKafkaSettings {
 
+    private static final List<String> DYNAMIC_TOPICS = List.of("tb_edge_event.notifications");
+
     @Value("${queue.kafka.bootstrap.servers}")
     private String servers;
 
@@ -164,6 +166,15 @@ public class TbKafkaSettings {
         consumerPropertiesPerTopic
                 .getOrDefault(topic, Collections.emptyList())
                 .forEach(kv -> props.put(kv.getKey(), kv.getValue()));
+
+        if (topic != null) {
+            DYNAMIC_TOPICS.stream()
+                    .filter(topic::startsWith)
+                    .findFirst()
+                    .ifPresent(prefix -> consumerPropertiesPerTopic.getOrDefault(prefix, Collections.emptyList())
+                            .forEach(kv -> props.put(kv.getKey(), kv.getValue())));
+        }
+
         return props;
     }
 

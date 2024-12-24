@@ -15,11 +15,16 @@
  */
 package org.thingsboard.server.service.resource;
 
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.List;
 
@@ -34,5 +39,11 @@ public interface TbResourceService extends SimpleTbEntityService<TbResource> {
                                           String sortProperty,
                                           String sortOrder,
                                           PageLink pageLink);
+
+    List<ResourceExportData> exportResources(Dashboard dashboard, SecurityUser user) throws ThingsboardException;
+
+    List<ResourceExportData> exportResources(WidgetTypeDetails widgetTypeDetails, SecurityUser user) throws ThingsboardException;
+
+    void importResources(List<ResourceExportData> resources, SecurityUser user) throws Exception;
 
 }

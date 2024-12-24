@@ -204,6 +204,11 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
         return new InMemoryTbQueueProducer<>(storage, topicService.getEdgeNotificationsTopic(serviceInfoProvider.getServiceId()).getFullTopicName());
     }
 
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToEdgeEventNotificationMsg>> createEdgeEventMsgProducer() {
+        return null;
+    }
+
     @Scheduled(fixedRateString = "${queue.in_memory.stats.print-interval-ms:60000}")
     private void printInMemoryStats() {
         storage.printStats();

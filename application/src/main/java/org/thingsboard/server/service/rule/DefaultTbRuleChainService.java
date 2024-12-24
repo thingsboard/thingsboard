@@ -47,6 +47,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.install.InstallScripts;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.utils.TbNodeUpgradeUtils;
 
 import java.util.ArrayList;
@@ -170,7 +171,7 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
     }
 
     @Override
-    public RuleChain save(RuleChain ruleChain, User user) throws Exception {
+    public RuleChain save(RuleChain ruleChain, SecurityUser user) throws Exception {
         ActionType actionType = ruleChain.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = ruleChain.getTenantId();
         try {

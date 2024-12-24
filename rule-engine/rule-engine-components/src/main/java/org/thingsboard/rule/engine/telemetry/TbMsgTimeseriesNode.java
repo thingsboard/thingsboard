@@ -22,6 +22,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.StringUtils;
@@ -104,11 +105,16 @@ public class TbMsgTimeseriesNode implements TbNode {
         if (ttl == 0L) {
             ttl = tenantProfileDefaultStorageTtl;
         }
-        if (config.isSkipLatestPersistence()) {
-            ctx.getTelemetryService().saveWithoutLatestAndNotify(ctx.getTenantId(), msg.getCustomerId(), msg.getOriginator(), tsKvEntryList, ttl, new TelemetryNodeCallback(ctx, msg));
-        } else {
-            ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), msg.getCustomerId(), msg.getOriginator(), tsKvEntryList, ttl, new TelemetryNodeCallback(ctx, msg));
-        }
+        ctx.getTelemetryService().saveTimeseries(TimeseriesSaveRequest.builder()
+                .tenantId(ctx.getTenantId())
+                .customerId(msg.getCustomerId())
+                .entityId(msg.getOriginator())
+                .entries(tsKvEntryList)
+                .ttl(ttl)
+                .saveLatest(!config.isSkipLatestPersistence())
+                .calculatedFieldIds(msg.getCalculatedFieldIds())
+                .callback(new TelemetryNodeCallback(ctx, msg))
+                .build());
     }
 
     public static long computeTs(TbMsg msg, boolean ignoreMetadataTs) {

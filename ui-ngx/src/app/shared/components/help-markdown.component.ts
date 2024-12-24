@@ -21,10 +21,11 @@ import {
   OnDestroy, OnInit,
   Output, SimpleChanges
 } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { share } from 'rxjs/operators';
 import { HelpService } from '@core/services/help.service';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { base64toString } from '@core/utils';
 
 @Component({
   selector: 'tb-help-markdown',
@@ -36,6 +37,10 @@ export class HelpMarkdownComponent implements OnDestroy, OnInit, OnChanges {
   @Input() helpId: string;
 
   @Input() helpContent: string;
+
+  @Input() helpContentBase64: string;
+
+  @Input() asyncHelpContent: Observable<string>;
 
   @Input()
   @coerceBoolean()
@@ -73,7 +78,7 @@ export class HelpMarkdownComponent implements OnDestroy, OnInit, OnChanges {
             this.loadHelp();
           }
         }
-        if (propName === 'helpId' || propName === 'helpContent') {
+        if (['helpId', 'helpContent', 'helpContentBase64', 'asyncHelpContent'].includes(propName)) {
           this.markdownText.next(null);
           this.loadHelpWhenVisible();
         }
@@ -96,6 +101,12 @@ export class HelpMarkdownComponent implements OnDestroy, OnInit, OnChanges {
       });
     } else if (this.helpContent) {
       this.markdownText.next(this.helpContent);
+    } else if (this.helpContentBase64) {
+      this.markdownText.next(base64toString(this.helpContentBase64));
+    } else if (this.asyncHelpContent) {
+      this.asyncHelpContent.subscribe((content) => {
+        this.markdownText.next(content);
+      });
     }
   }
 

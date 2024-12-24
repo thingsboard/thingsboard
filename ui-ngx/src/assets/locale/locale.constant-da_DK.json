@@ -2642,8 +2642,7 @@
     "metadata-required": "Metadataposter må ikke være tomme.",
     "output": "Output",
     "test": "Test",
-    "help": "Hjælp",
-    "reset-debug-mode": "Nulstil debug-tilstand i alle knuder"
+    "help": "Hjælp"
   },
   "role": {
     "role": "Rolle",
@@ -3038,6 +3037,9 @@
     "maximum-dashboards": "Maks. antal dashboards (0 – ubegrænset)",
     "maximum-dashboards-required": "Maks. antal dashboards er påkrævet.",
     "maximum-dashboards-range": "Maks. antal dashboards kan ikke være negativt",
+    "maximum-edges": "Maks. antal edges (0 – ubegrænset)",
+    "maximum-edges-required": "Maks. antal edges er påkrævet.",
+    "maximum-edges-range": "Maks. antal edges kan ikke være negativt",
     "maximum-rule-chains": "Maks. antal regelkæder (0 – ubegrænset)",
     "maximum-rule-chains-required": "Maks. antal regelkæder er påkrævet.",
     "maximum-rule-chains-range": "Maks. antal regelkæder kan ikke være negativt",

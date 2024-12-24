@@ -156,7 +156,7 @@ export class AlarmCommentComponent implements OnInit {
   }
 
   saveComment(): void {
-    const commentInputValue: string = this.getAlarmCommentFormControl().value;
+    const commentInputValue: string = this.getAlarmCommentValue();
     if (commentInputValue) {
       const comment: AlarmComment = {
         alarmId: {
@@ -174,7 +174,7 @@ export class AlarmCommentComponent implements OnInit {
   }
 
   saveEditedComment(commentId: string): void {
-    const commentEditInputValue: string = this.getAlarmCommentEditFormControl().value;
+    const commentEditInputValue: string = this.getAlarmCommentEditValue();
     if (commentEditInputValue) {
       const editedComment: AlarmComment = this.getAlarmCommentById(commentId);
       editedComment.comment.text = commentEditInputValue;
@@ -275,6 +275,14 @@ export class AlarmCommentComponent implements OnInit {
 
   getAlarmCommentEditFormControl(): AbstractControl {
     return this.alarmCommentFormGroup.get('alarmCommentEdit');
+  }
+
+  getAlarmCommentValue(): string {
+    return this.alarmCommentFormGroup.get('alarmComment').value.trim();
+  }
+
+  private getAlarmCommentEditValue(): string {
+    return this.alarmCommentFormGroup.get('alarmCommentEdit').value.trim();
   }
 
   private clearCommentInput(): void {

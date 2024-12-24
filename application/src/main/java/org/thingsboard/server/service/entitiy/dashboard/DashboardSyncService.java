@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -32,6 +33,7 @@ import org.thingsboard.server.service.sync.GitSyncService;
 import org.thingsboard.server.service.sync.vc.GitRepository.FileType;
 import org.thingsboard.server.service.sync.vc.GitRepository.RepoFile;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -45,6 +47,7 @@ public class DashboardSyncService {
 
     private final GitSyncService gitSyncService;
     private final ResourceService resourceService;
+    private final ImageService imageService;
     private final WidgetsBundleService widgetsBundleService;
     private final PartitionService partitionService;
 
@@ -70,19 +73,23 @@ public class DashboardSyncService {
 
         List<RepoFile> resources = listFiles("resources");
         for (RepoFile resourceFile : resources) {
-            String data = getFileContent(resourceFile.path());
+            byte[] data = getFileContent(resourceFile.path());
             resourceService.createOrUpdateSystemResource(ResourceType.JS_MODULE, resourceFile.name(), data);
+        }
+        List<RepoFile> images = listFiles("images");
+        for (RepoFile imageFile : images) {
+            byte[] data = getFileContent(imageFile.path());
+            imageService.createOrUpdateSystemImage(imageFile.name(), data);
         }
 
         Stream<String> widgetsBundles = listFiles("widget_bundles").stream()
-                .map(widgetsBundleFile -> getFileContent(widgetsBundleFile.path()));
+                .map(widgetsBundleFile -> new String(getFileContent(widgetsBundleFile.path()), StandardCharsets.UTF_8));
         Stream<String> widgetTypes = listFiles("widget_types").stream()
-                .map(widgetTypeFile -> getFileContent(widgetTypeFile.path()));
+                .map(widgetTypeFile -> new String(getFileContent(widgetTypeFile.path()), StandardCharsets.UTF_8));
         widgetsBundleService.updateSystemWidgets(widgetsBundles, widgetTypes);
 
         RepoFile dashboardFile = listFiles("dashboards").get(0);
-        String dashboardJson = getFileContent(dashboardFile.path());
-        resourceService.createOrUpdateSystemResource(ResourceType.DASHBOARD, GATEWAYS_DASHBOARD_KEY, dashboardJson);
+        resourceService.createOrUpdateSystemResource(ResourceType.DASHBOARD, GATEWAYS_DASHBOARD_KEY, getFileContent(dashboardFile.path()));
 
         log.info("Gateways dashboard sync completed");
     }
@@ -91,7 +98,7 @@ public class DashboardSyncService {
         return gitSyncService.listFiles(REPO_KEY, path, 1, FileType.FILE);
     }
 
-    private String getFileContent(String path) {
+    private byte[] getFileContent(String path) {
         return gitSyncService.getFileContent(REPO_KEY, path);
     }
 

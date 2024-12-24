@@ -49,7 +49,7 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.util.ImageUtils;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
-import org.thingsboard.server.service.install.update.ImagesUpdater;
+import org.thingsboard.server.service.install.update.ResourcesUpdater;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -119,7 +119,7 @@ public class InstallScripts {
     private ResourceService resourceService;
 
     @Autowired
-    private ImagesUpdater imagesUpdater;
+    private ResourcesUpdater resourcesUpdater;
     @Getter @Setter
     private boolean updateImages = false;
 
@@ -202,7 +202,7 @@ public class InstallScripts {
         ruleChain = ruleChainService.saveRuleChain(ruleChain, false);
 
         ruleChainMetaData.setRuleChainId(ruleChain.getId());
-        ruleChainService.saveRuleChainMetaData(TenantId.SYS_TENANT_ID, ruleChainMetaData, Function.identity(), false);
+        ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData, Function.identity(), false);
 
         return ruleChain;
     }
@@ -247,10 +247,8 @@ public class InstallScripts {
                 dirStream.forEach(
                         path -> {
                             try {
-                                String widgetTypeJson = Files.readString(path);
-                                widgetTypeJson = resourceService.checkSystemResourcesUsage(widgetTypeJson, ResourceType.JS_MODULE);
-
-                                WidgetTypeDetails widgetTypeDetails = JacksonUtil.fromString(widgetTypeJson, WidgetTypeDetails.class);
+                                JsonNode widgetTypeJson = JacksonUtil.toJsonNode(path.toFile());
+                                WidgetTypeDetails widgetTypeDetails = JacksonUtil.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
                                 widgetTypeService.saveWidgetType(widgetTypeDetails);
                             } catch (Exception e) {
                                 log.error("Unable to load widget type from json: [{}]", path.toString());
@@ -395,27 +393,32 @@ public class InstallScripts {
     }
 
     public void updateImages() {
-        imagesUpdater.updateWidgetsBundlesImages();
-        imagesUpdater.updateWidgetTypesImages();
-        imagesUpdater.updateDashboardsImages();
-        imagesUpdater.updateDeviceProfilesImages();
-        imagesUpdater.updateAssetProfilesImages();
+        resourcesUpdater.updateWidgetsBundlesImages();
+        resourcesUpdater.updateWidgetTypesImages();
+        resourcesUpdater.updateDashboardsImages();
+        resourcesUpdater.updateDeviceProfilesImages();
+        resourcesUpdater.updateAssetProfilesImages();
     }
 
-    public void loadSystemImages() {
-        log.info("Loading system images...");
+    public void loadSystemImagesAndResources() {
+        log.info("Loading system images and resources...");
         Stream<Path> dashboardsFiles = Stream.concat(listDir(Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, DASHBOARDS_DIR)),
                 listDir(Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, DASHBOARDS_DIR)));
         try (dashboardsFiles) {
             dashboardsFiles.forEach(file -> {
                 try {
                     Dashboard dashboard = JacksonUtil.OBJECT_MAPPER.readValue(file.toFile(), Dashboard.class);
-                    imagesUpdater.createSystemImages(dashboard);
+                    resourcesUpdater.createSystemImagesAndResources(dashboard);
                 } catch (Exception e) {
                     log.error("Failed to create system images for default dashboard {}", file.getFileName(), e);
                 }
             });
         }
+
+        Path resourcesDir = Path.of(getDataDir(), RESOURCES_DIR);
+        loadSystemResources(resourcesDir.resolve("images"), ResourceType.IMAGE);
+        loadSystemResources(resourcesDir.resolve("js_modules"), ResourceType.JS_MODULE);
+        loadSystemResources(resourcesDir.resolve("dashboards"), ResourceType.DASHBOARD);
     }
 
     public void loadDashboards(TenantId tenantId, CustomerId customerId) {
@@ -506,28 +509,30 @@ public class InstallScripts {
         }
     }
 
-    public void loadSystemResources() {
-        Path resourcesDir = Path.of(getDataDir(), RESOURCES_DIR);
-        loadSystemResources(resourcesDir.resolve("js_modules"), ResourceType.JS_MODULE);
-        loadSystemResources(resourcesDir.resolve("dashboards"), ResourceType.DASHBOARD);
+    public void updateResourcesUsage() {
+        resourcesUpdater.updateDashboardsResources();
+        resourcesUpdater.updateWidgetsResources();
     }
 
     private void loadSystemResources(Path dir, ResourceType resourceType) {
         listDir(dir).forEach(resourceFile -> {
             String resourceKey = resourceFile.getFileName().toString();
             try {
-                String data = getContent(resourceFile);
-                TbResource resource = resourceService.createOrUpdateSystemResource(resourceType, resourceKey, data);
-                log.info("{} resource {}", (resource.getId() == null ? "Created" : "Updated"), resourceKey);
+                byte[] data = getContent(resourceFile);
+                if (resourceType == ResourceType.IMAGE) {
+                    imageService.createOrUpdateSystemImage(resourceKey, data);
+                } else {
+                    resourceService.createOrUpdateSystemResource(resourceType, resourceKey, data);
+                }
             } catch (Exception e) {
                 throw new RuntimeException("Unable to load system resource " + resourceFile, e);
             }
         });
     }
 
-    private String getContent(Path file) {
+    private byte[] getContent(Path file) {
         try {
-            return Files.readString(file);
+            return Files.readAllBytes(file);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

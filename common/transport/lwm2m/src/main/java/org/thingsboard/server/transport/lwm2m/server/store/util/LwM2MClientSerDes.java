@@ -297,7 +297,7 @@ public class LwM2MClientSerDes {
         if (tenantId != null) {
             Field tenantIdField = lwM2mClientClass.getDeclaredField("tenantId");
             tenantIdField.setAccessible(true);
-            tenantIdField.set(lwM2mClient, new TenantId(UUID.fromString(tenantId.getAsString())));
+            tenantIdField.set(lwM2mClient, TenantId.fromUUID(UUID.fromString(tenantId.getAsString())));
         }
 
         JsonElement deviceId = o.get("deviceId");

@@ -415,6 +415,10 @@ export const defaultGetValueSettings = (valueType: ValueType): GetValueSettings<
   getTimeSeries: {
     key: 'state'
   },
+  getAlarmStatus: {
+    severityList: null,
+    typeList: null
+  },
   dataToValue: {
     type: DataToValueType.NONE,
     compareToValue: true,

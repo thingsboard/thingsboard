@@ -26,24 +26,24 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbRuleEngineActorMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Set;
 
 /**
  * Created by ashvayka on 19.03.18.
  */
+@Getter
 @EqualsAndHashCode(callSuper = true)
 @ToString
-class RuleNodeToRuleChainTellNextMsg extends TbRuleEngineActorMsg implements Serializable {
+public class RuleNodeToRuleChainTellNextMsg extends TbRuleEngineActorMsg implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 4577026446412871820L;
-    @Getter
+
     private final RuleChainId ruleChainId;
-    @Getter
     private final RuleNodeId originator;
-    @Getter
     private final Set<String> relationTypes;
-    @Getter
     private final String failureMessage;
 
     public RuleNodeToRuleChainTellNextMsg(RuleChainId ruleChainId, RuleNodeId originator, Set<String> relationTypes, TbMsg tbMsg, String failureMessage) {

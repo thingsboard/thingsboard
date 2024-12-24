@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.dao.edge.EdgeEventDao;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 
 import java.io.IOException;
@@ -47,6 +48,9 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
 
     @Autowired
     EdgeEventService edgeEventService;
+
+    @Autowired
+    EdgeEventDao edgeEventDao;
 
     long timeBeforeStartTime;
     long startTime;
@@ -81,7 +85,7 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
         Assert.assertEquals(saved.getAction(), edgeEvent.getAction());
         Assert.assertEquals(saved.getBody(), edgeEvent.getBody());
 
-        edgeEventService.cleanupEvents(1);
+        edgeEventDao.cleanupEvents(1);
     }
 
     protected EdgeEvent generateEdgeEvent(TenantId tenantId, EdgeId edgeId, EntityId entityId) throws IOException {
@@ -129,7 +133,7 @@ public class EdgeEventServiceTest extends AbstractServiceTest {
         Assert.assertEquals(Uuids.startOf(eventTime), edgeEvents.getData().get(0).getUuidId());
         Assert.assertFalse(edgeEvents.hasNext());
 
-        edgeEventService.cleanupEvents(1);
+        edgeEventDao.cleanupEvents(1);
     }
 
     private ListenableFuture<Void> saveEdgeEventWithProvidedTime(long time, EdgeId edgeId, EntityId entityId, TenantId tenantId) throws Exception {

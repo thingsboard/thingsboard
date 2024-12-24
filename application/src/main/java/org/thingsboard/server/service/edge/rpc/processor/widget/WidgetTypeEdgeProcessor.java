@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.edge.rpc.processor.widget;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -27,6 +28,7 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.WidgetTypeUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.constructor.widget.WidgetMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.widget.WidgetMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 @Slf4j
@@ -34,32 +36,33 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 @TbCoreComponent
 public class WidgetTypeEdgeProcessor extends BaseEdgeProcessor {
 
+    @Autowired
+    private WidgetMsgConstructorFactory widgetMsgConstructorFactory;
+
     public DownlinkMsg convertWidgetTypeEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         WidgetTypeId widgetTypeId = new WidgetTypeId(edgeEvent.getEntityId());
-        DownlinkMsg downlinkMsg = null;
+        var msgConstructor = (WidgetMsgConstructor) widgetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion);
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED -> {
-                WidgetTypeDetails widgetTypeDetails = widgetTypeService.findWidgetTypeDetailsById(edgeEvent.getTenantId(), widgetTypeId);
+                WidgetTypeDetails widgetTypeDetails = edgeCtx.getWidgetTypeService().findWidgetTypeDetailsById(edgeEvent.getTenantId(), widgetTypeId);
                 if (widgetTypeDetails != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    WidgetTypeUpdateMsg widgetTypeUpdateMsg =
-                            ((WidgetMsgConstructor) widgetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructWidgetTypeUpdateMsg(msgType, widgetTypeDetails, edgeVersion);
-                    downlinkMsg = DownlinkMsg.newBuilder()
+                    WidgetTypeUpdateMsg widgetTypeUpdateMsg = msgConstructor.constructWidgetTypeUpdateMsg(msgType, widgetTypeDetails, edgeVersion);
+                    return DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addWidgetTypeUpdateMsg(widgetTypeUpdateMsg)
                             .build();
                 }
             }
             case DELETED -> {
-                WidgetTypeUpdateMsg widgetTypeUpdateMsg =
-                        ((WidgetMsgConstructor) widgetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructWidgetTypeDeleteMsg(widgetTypeId);
-                downlinkMsg = DownlinkMsg.newBuilder()
+                WidgetTypeUpdateMsg widgetTypeUpdateMsg = msgConstructor.constructWidgetTypeDeleteMsg(widgetTypeId);
+                return DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addWidgetTypeUpdateMsg(widgetTypeUpdateMsg)
                         .build();
             }
         }
-        return downlinkMsg;
+        return null;
     }
 
 }

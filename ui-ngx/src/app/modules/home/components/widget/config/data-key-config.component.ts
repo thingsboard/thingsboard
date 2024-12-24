@@ -57,6 +57,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import { WidgetComponentService } from '@home/components/widget/widget-component.service';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
+import { isNotEmptyTbFunction, TbFunction } from '@shared/models/js-function.models';
 
 @Component({
   selector: 'tb-data-key-config',
@@ -290,10 +291,10 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
     });
 
     this.dataKeyFormGroup.get('usePostProcessing').valueChanges.subscribe((usePostProcessing: boolean) => {
-      const postFuncBody: string = this.dataKeyFormGroup.get('postFuncBody').value;
-      if (usePostProcessing && (!postFuncBody || !postFuncBody.length)) {
+      const postFuncBody: TbFunction = this.dataKeyFormGroup.get('postFuncBody').value;
+      if (usePostProcessing && !isNotEmptyTbFunction(postFuncBody)) {
         this.dataKeyFormGroup.get('postFuncBody').patchValue('return value;');
-      } else if (!usePostProcessing && postFuncBody && postFuncBody.length) {
+      } else if (!usePostProcessing && isNotEmptyTbFunction(postFuncBody)) {
         this.dataKeyFormGroup.get('postFuncBody').patchValue(null);
       }
     });
@@ -317,7 +318,7 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
 
   writeValue(value: DataKey): void {
     this.modelValue = value;
-    if (this.modelValue.postFuncBody && this.modelValue.postFuncBody.length) {
+    if (isNotEmptyTbFunction(this.modelValue.postFuncBody)) {
       this.modelValue.usePostProcessing = true;
     }
     if (this.widgetType === widgetType.latest && this.modelValue.type === DataKeyType.timeseries && !this.modelValue.aggregationType) {
@@ -466,13 +467,15 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
     return key => key.toLowerCase().startsWith(lowercaseQuery);
   }
 
-  public validateOnSubmit() {
+  public validateOnSubmit(): Observable<void> {
     if (this.modelValue.type === DataKeyType.function && this.funcBodyEdit) {
-      this.funcBodyEdit.validateOnSubmit();
+      return this.funcBodyEdit.validateOnSubmit();
     } else if ((this.modelValue.type === DataKeyType.timeseries ||
                 this.modelValue.type === DataKeyType.attribute) && this.dataKeyFormGroup.get('usePostProcessing').value &&
                 this.postFuncBodyEdit) {
-      this.postFuncBodyEdit.validateOnSubmit();
+      return this.postFuncBodyEdit.validateOnSubmit();
+    } else {
+      return of(null);
     }
   }
 

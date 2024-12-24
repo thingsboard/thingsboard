@@ -16,10 +16,7 @@
 package org.thingsboard.server.service.install;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.annotation.Profile;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -31,11 +28,6 @@ public class SqlEntityDatabaseSchemaService extends SqlAbstractDatabaseSchemaSer
     public static final String SCHEMA_ENTITIES_IDX_SQL = "schema-entities-idx.sql";
     public static final String SCHEMA_ENTITIES_IDX_PSQL_ADDON_SQL = "schema-entities-idx-psql-addon.sql";
     public static final String SCHEMA_VIEWS_AND_FUNCTIONS_SQL = "schema-views-and-functions.sql";
-
-    @Autowired
-    private BuildProperties buildProperties;
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
 
     public SqlEntityDatabaseSchemaService() {
         super(SCHEMA_ENTITIES_SQL, SCHEMA_ENTITIES_IDX_SQL);
@@ -61,32 +53,4 @@ public class SqlEntityDatabaseSchemaService extends SqlAbstractDatabaseSchemaSer
         executeQueryFromFile(SCHEMA_VIEWS_AND_FUNCTIONS_SQL);
     }
 
-    @Override
-    public void createCustomerTitleUniqueConstraintIfNotExists() {
-        executeQuery("DO $$ BEGIN IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'customer_title_unq_key') THEN " +
-                "ALTER TABLE customer ADD CONSTRAINT customer_title_unq_key UNIQUE(tenant_id, title); END IF; END; $$;",
-                "create 'customer_title_unq_key' constraint if it doesn't already exist!");
-    }
-
-    @Override
-    public void createSchemaVersion() {
-        try {
-            Long schemaVersion = jdbcTemplate.queryForList("SELECT schema_version FROM tb_schema_settings", Long.class).stream().findFirst().orElse(null);
-            if (schemaVersion == null) {
-                jdbcTemplate.execute("INSERT INTO tb_schema_settings (schema_version) VALUES (" + getSchemaVersion() + ")");
-            }
-        } catch (Exception e) {
-            log.warn("Failed to create schema version [{}]!", buildProperties.getVersion(), e);
-        }
-    }
-
-    private int getSchemaVersion() {
-        String[] versionParts = buildProperties.getVersion().replaceAll("[^\\d.]", "").split("\\.");
-
-        int major = Integer.parseInt(versionParts[0]);
-        int minor = Integer.parseInt(versionParts[1]);
-        int patch = versionParts.length > 2 ? Integer.parseInt(versionParts[2]) : 0;
-
-        return major * 1000000 + minor * 1000 + patch;
-    }
 }

@@ -266,6 +266,12 @@ public class NotificationController extends BaseController {
         }
         notificationRequest.setTenantId(user.getTenantId());
         checkEntity(notificationRequest.getId(), notificationRequest, NOTIFICATION);
+        List<NotificationTargetId> targets = notificationRequest.getTargets().stream()
+                .map(NotificationTargetId::new)
+                .toList();
+        for (NotificationTargetId targetId : targets) {
+            checkNotificationTargetId(targetId, Operation.READ);
+        }
 
         notificationRequest.setOriginatorEntityId(user.getId());
         notificationRequest.setInfo(null);
@@ -316,6 +322,8 @@ public class NotificationController extends BaseController {
         Map<String, Integer> recipientsCountByTarget = new LinkedHashMap<>();
         Map<NotificationTargetType, NotificationRecipient> firstRecipient = new HashMap<>();
         for (NotificationTarget target : targets) {
+            checkEntity(getCurrentUser(), target, Operation.READ);
+
             int recipientsCount;
             List<NotificationRecipient> recipientsPart;
             NotificationTargetType targetType = target.getConfiguration().getType();
@@ -469,7 +477,7 @@ public class NotificationController extends BaseController {
                     SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @GetMapping("/notification/deliveryMethods")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    public Set<NotificationDeliveryMethod> getAvailableDeliveryMethods(@AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
+    public List<NotificationDeliveryMethod> getAvailableDeliveryMethods(@AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         return notificationCenter.getAvailableDeliveryMethods(user.getTenantId());
     }
 

@@ -40,6 +40,8 @@ import { Subscription } from 'rxjs';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { PageLink } from '@shared/models/page/page-link';
 import { coerceBoolean } from '@app/shared/decorators/coercion';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { Authority } from '@shared/models/authority.enum';
 
 @Component({
   selector: 'tb-client',
@@ -92,13 +94,16 @@ export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAu
               private oauth2Service: OAuth2Service,
               @Optional() @Inject('entity') protected entityValue: OAuth2Client,
               @Optional() @Inject('entitiesTableConfig')
-                protected entitiesTableConfigValue: EntityTableConfig<OAuth2Client, PageLink, OAuth2ClientInfo>,
+              protected entitiesTableConfigValue: EntityTableConfig<OAuth2Client, PageLink, OAuth2ClientInfo>,
               protected cd: ChangeDetectorRef,
               public fb: UntypedFormBuilder) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
     this.oauth2Service.getOAuth2Template().subscribe(templates => {
       this.initTemplates(templates);
     });
+    if (getCurrentAuthUser(this.store).authority === Authority.TENANT_ADMIN) {
+      this.platformTypes = this.platformTypes.filter(item => item !== PlatformType.WEB);
+    }
   }
 
   ngOnDestroy() {
@@ -214,7 +219,11 @@ export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAu
     const mapperConfig = control.get('mapperConfig') as UntypedFormGroup;
     if (type === MapperType.CUSTOM) {
       mapperConfig.removeControl('basic');
-      mapperConfig.addControl('custom', this.formCustomGroup(predefinedValue?.custom));
+      if (!mapperConfig.get('custom')) {
+        mapperConfig.addControl('custom', this.formCustomGroup(predefinedValue?.custom));
+      } else {
+        mapperConfig.get('custom').patchValue(predefinedValue.custom, {emitEvent: false});
+      }
     } else {
       mapperConfig.removeControl('custom');
       if (!mapperConfig.get('basic')) {

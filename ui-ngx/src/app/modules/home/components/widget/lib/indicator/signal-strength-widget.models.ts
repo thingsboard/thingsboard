@@ -133,10 +133,10 @@ export const signalStrengthDefaultSettings: SignalStrengthWidgetSettings = {
   padding: '12px'
 };
 
-export const signalBarActive = (rssi: number, index: number): boolean => {
+export const signalBarActive = (rssi: number, index: number, minSignal: number): boolean => {
     switch (index) {
       case 0:
-        return rssi > -100;
+        return rssi > minSignal;
       case 1:
         return rssi >= -85;
       case 2:

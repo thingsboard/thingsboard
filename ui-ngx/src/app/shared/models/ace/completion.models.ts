@@ -17,7 +17,7 @@
 import { Ace } from 'ace-builds';
 import { deepClone } from '@core/utils';
 
-export type tbMetaType = 'object' | 'function' | 'service' | 'property' | 'argument';
+export type tbMetaType = 'object' | 'function' | 'service' | 'property' | 'argument' | 'constant' | 'module';
 
 export type TbEditorCompletions = {[name: string]: TbEditorCompletion};
 

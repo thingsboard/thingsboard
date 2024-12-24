@@ -106,7 +106,10 @@ public class TbRenameKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
             default:
                 log.debug("Unexpected RenameIn value: {}. Allowed values: {}", renameIn, TbMsgSource.values());
         }
-        ctx.tellSuccess(msgChanged ? TbMsg.transformMsg(msg, metaDataCopy, data) : msg);
+        ctx.tellSuccess(msgChanged ? msg.transform()
+                .metaData(metaDataCopy)
+                .data(data)
+                .build() : msg);
     }
 
     @Override

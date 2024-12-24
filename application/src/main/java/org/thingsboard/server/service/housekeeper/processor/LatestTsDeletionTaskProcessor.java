@@ -33,7 +33,7 @@ public class LatestTsDeletionTaskProcessor extends HousekeeperTaskProcessor<Late
 
     @Override
     public void process(LatestTsDeletionHousekeeperTask task) throws Exception {
-        timeseriesService.removeLatest(task.getTenantId(), task.getEntityId(), List.of(task.getKey())).get();
+        wait(timeseriesService.removeLatest(task.getTenantId(), task.getEntityId(), List.of(task.getKey())));
         log.debug("[{}][{}][{}] Deleted latest telemetry for key '{}'", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), task.getKey());
     }
 

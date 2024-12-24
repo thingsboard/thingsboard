@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -83,7 +82,7 @@ public abstract class DeviceProfileEdgeProcessor extends BaseDeviceProfileProces
 
     private void pushDeviceProfileCreatedEventToRuleEngine(TenantId tenantId, Edge edge, DeviceProfileId deviceProfileId) {
         try {
-            DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(tenantId, deviceProfileId);
+            DeviceProfile deviceProfile = edgeCtx.getDeviceProfileService().findDeviceProfileById(tenantId, deviceProfileId);
             String deviceProfileAsString = JacksonUtil.toString(deviceProfile);
             TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, null);
             pushEntityEventToRuleEngine(tenantId, deviceProfileId, null, TbMsgType.ENTITY_CREATED, deviceProfileAsString, msgMetaData);
@@ -93,18 +92,16 @@ public abstract class DeviceProfileEdgeProcessor extends BaseDeviceProfileProces
     }
 
     @Override
-    public DownlinkMsg convertDeviceProfileEventToDownlink(EdgeEvent edgeEvent, EdgeId edgeId, EdgeVersion edgeVersion) {
+    public DownlinkMsg convertDeviceProfileEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         DeviceProfileId deviceProfileId = new DeviceProfileId(edgeEvent.getEntityId());
-        DownlinkMsg downlinkMsg = null;
-        var msgConstructor = (DeviceMsgConstructor) deviceMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion);
+        var msgConstructor = (DeviceMsgConstructor) edgeCtx.getDeviceMsgConstructorFactory().getMsgConstructorByEdgeVersion(edgeVersion);
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED -> {
-                DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(edgeEvent.getTenantId(), deviceProfileId);
+                DeviceProfile deviceProfile = edgeCtx.getDeviceProfileService().findDeviceProfileById(edgeEvent.getTenantId(), deviceProfileId);
                 if (deviceProfile != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    deviceProfile = checkIfDeviceProfileDefaultFieldsAssignedToEdge(edgeEvent.getTenantId(), edgeId, deviceProfile, edgeVersion);
                     DeviceProfileUpdateMsg deviceProfileUpdateMsg = msgConstructor.constructDeviceProfileUpdatedMsg(msgType, deviceProfile);
-                    downlinkMsg = DownlinkMsg.newBuilder()
+                    return DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addDeviceProfileUpdateMsg(deviceProfileUpdateMsg)
                             .build();
@@ -112,13 +109,13 @@ public abstract class DeviceProfileEdgeProcessor extends BaseDeviceProfileProces
             }
             case DELETED -> {
                 DeviceProfileUpdateMsg deviceProfileUpdateMsg = msgConstructor.constructDeviceProfileDeleteMsg(deviceProfileId);
-                downlinkMsg = DownlinkMsg.newBuilder()
+                return DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addDeviceProfileUpdateMsg(deviceProfileUpdateMsg)
                         .build();
             }
         }
-        return downlinkMsg;
+        return null;
     }
 
 }

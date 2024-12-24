@@ -29,6 +29,7 @@ import { map } from 'rxjs/operators';
 import { FormattedData } from '@shared/models/widget.models';
 import L from 'leaflet';
 import { ImagePipe } from '@shared/pipe/image.pipe';
+import { CompiledTbFunction, GenericFunction } from '@shared/models/js-function.models';
 
 export function getRatio(firsMoment: number, secondMoment: number, intermediateMoment: number): number {
   return (intermediateMoment - firsMoment) / (secondMoment - firsMoment);
@@ -257,11 +258,11 @@ export const parseWithTranslation = {
   }
 };
 
-export function functionValueCalculator<T>(useFunction: boolean, func: (...args: any[]) => any, params = [], defaultValue: T): T {
+export function functionValueCalculator<T>(useFunction: boolean, func: CompiledTbFunction<GenericFunction>, params = [], defaultValue: T): T {
   let res: T;
   if (useFunction && isDefined(func) && isFunction(func)) {
     try {
-      res = func(...params);
+      res = func.execute(...params);
       if (!isDefinedAndNotNull(res) || res === '') {
         res = defaultValue;
       }

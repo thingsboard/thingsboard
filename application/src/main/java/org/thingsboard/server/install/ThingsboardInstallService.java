@@ -24,6 +24,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.install.DatabaseEntitiesUpgradeService;
+import org.thingsboard.server.service.install.DatabaseSchemaSettingsService;
 import org.thingsboard.server.service.install.EntityDatabaseSchemaService;
 import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.install.NoSqlKeyspaceService;
@@ -34,8 +35,6 @@ import org.thingsboard.server.service.install.migrate.TsLatestMigrateService;
 import org.thingsboard.server.service.install.update.CacheCleanupService;
 import org.thingsboard.server.service.install.update.DataUpdateService;
 
-import static org.thingsboard.server.service.install.update.DefaultDataUpdateService.getEnv;
-
 @Service
 @Profile("install")
 @Slf4j
@@ -44,7 +43,7 @@ public class ThingsboardInstallService {
     @Value("${install.upgrade:false}")
     private Boolean isUpgrade;
 
-    @Value("${install.upgrade.from_version:1.2.3}")
+    @Value("${install.upgrade.from_version:}")
     private String upgradeFromVersion;
 
     @Value("${install.load_demo:false}")
@@ -89,78 +88,46 @@ public class ThingsboardInstallService {
     @Autowired
     private InstallScripts installScripts;
 
+    @Autowired
+    private DatabaseSchemaSettingsService databaseSchemaVersionService;
+
     public void performInstall() {
         try {
             if (isUpgrade) {
                 log.info("Starting ThingsBoard Upgrade from version {} ...", upgradeFromVersion);
 
-                cacheCleanupService.clearCache(upgradeFromVersion);
-
                 if ("cassandra-latest-to-postgres".equals(upgradeFromVersion)) {
                     log.info("Migrating ThingsBoard latest timeseries data from cassandra to SQL database ...");
                     latestMigrateService.migrate();
-                } else if (upgradeFromVersion.equals("3.6.2-images")) {
-                    installScripts.updateImages();
                 } else {
-                    switch (upgradeFromVersion) {
-                        case "3.5.0":
-                            log.info("Upgrading ThingsBoard from version 3.5.0 to 3.5.1 ...");
-                            databaseEntitiesUpgradeService.upgradeDatabase("3.5.0");
-                        case "3.5.1":
-                            log.info("Upgrading ThingsBoard from version 3.5.1 to 3.6.0 ...");
-                            databaseEntitiesUpgradeService.upgradeDatabase("3.5.1");
-                            dataUpdateService.updateData("3.5.1");
-                            systemDataLoaderService.updateDefaultNotificationConfigs(true);
-                        case "3.6.0":
-                            log.info("Upgrading ThingsBoard from version 3.6.0 to 3.6.1 ...");
-                            databaseEntitiesUpgradeService.upgradeDatabase("3.6.0");
-                            dataUpdateService.updateData("3.6.0");
-                        case "3.6.1":
-                            log.info("Upgrading ThingsBoard from version 3.6.1 to 3.6.2 ...");
-                            databaseEntitiesUpgradeService.upgradeDatabase("3.6.1");
-                            if (!getEnv("SKIP_IMAGES_MIGRATION", false)) {
-                                installScripts.setUpdateImages(true);
-                            } else {
-                                log.info("Skipping images migration. Run the upgrade with fromVersion as '3.6.2-images' to migrate");
-                            }
-                        case "3.6.2":
-                            log.info("Upgrading ThingsBoard from version 3.6.2 to 3.6.3 ...");
-                            databaseEntitiesUpgradeService.upgradeDatabase("3.6.2");
-                            systemDataLoaderService.updateDefaultNotificationConfigs(true);
-                        case "3.6.3":
-                            log.info("Upgrading ThingsBoard from version 3.6.3 to 3.6.4 ...");
-                            databaseEntitiesUpgradeService.upgradeDatabase("3.6.3");
-                        case "3.6.4":
-                            log.info("Upgrading ThingsBoard from version 3.6.4 to 3.7.0 ...");
-                            databaseEntitiesUpgradeService.upgradeDatabase("3.6.4");
-                            dataUpdateService.updateData("3.6.4");
-                            entityDatabaseSchemaService.createCustomerTitleUniqueConstraintIfNotExists();
-                            systemDataLoaderService.updateDefaultNotificationConfigs(false);
-                            systemDataLoaderService.updateSecuritySettings();
-                        case "3.7.0":
-                            log.info("Upgrading ThingsBoard from version 3.7.0 to 3.8.0 ...");
-                            databaseEntitiesUpgradeService.upgradeDatabase("3.7.0");
-                        case "3.8.0":
-                            log.info("Upgrading ThingsBoard from version 3.8.0 to 3.8.1 ...");
-                        case "3.8.1":
-                            log.info("Upgrading ThingsBoard from version 3.8.1 to 3.9.0 ...");
-                            databaseEntitiesUpgradeService.upgradeDatabase("3.8.1");
-                            //TODO DON'T FORGET to update switch statement in the CacheCleanupService if you need to clear the cache
-                            break;
-                        default:
-                            throw new RuntimeException("Unable to upgrade ThingsBoard, unsupported fromVersion: " + upgradeFromVersion);
-                    }
+                    // TODO DON'T FORGET to update SUPPORTED_VERSIONS_FROM in DefaultDatabaseSchemaSettingsService
+                    databaseSchemaVersionService.validateSchemaSettings();
+                    String fromVersion = databaseSchemaVersionService.getDbSchemaVersion();
+                    String toVersion = databaseSchemaVersionService.getPackageSchemaVersion();
+                    log.info("Upgrading ThingsBoard from version {} to {} ...", fromVersion, toVersion);
+                    cacheCleanupService.clearCache();
+                    // Apply the schema_update.sql script. The script may include DDL statements to change structure
+                    // of *existing* tables and DML statements to manipulate the DB records.
+                    databaseEntitiesUpgradeService.upgradeDatabase();
+                    // All new tables that do not have any data will be automatically created here.
+                    entityDatabaseSchemaService.createDatabaseSchema(false);
+                    // Re-create all views, functions.
                     entityDatabaseSchemaService.createOrUpdateViewsAndFunctions();
                     entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
+                    // Creates missing indexes.
+                    entityDatabaseSchemaService.createDatabaseIndexes();
+                    // Runs upgrade scripts that are not possible in plain SQL.
+                    // TODO: cleanup update code after each release
+                    dataUpdateService.updateData();
                     log.info("Updating system data...");
                     dataUpdateService.upgradeRuleNodes();
-                    installScripts.loadSystemResources();
                     systemDataLoaderService.loadSystemWidgets();
                     installScripts.loadSystemLwm2mResources();
-                    installScripts.loadSystemImages();
+                    installScripts.loadSystemImagesAndResources();
                     if (installScripts.isUpdateImages()) {
                         installScripts.updateImages();
                     }
+                    databaseSchemaVersionService.updateSchemaVersion();
                 }
                 log.info("Upgrade finished successfully!");
 
@@ -171,7 +138,7 @@ public class ThingsboardInstallService {
                 log.info("Installing DataBase schema for entities...");
 
                 entityDatabaseSchemaService.createDatabaseSchema();
-                entityDatabaseSchemaService.createSchemaVersion();
+                databaseSchemaVersionService.createSchemaSettings();
 
                 entityDatabaseSchemaService.createOrUpdateViewsAndFunctions();
                 entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
@@ -196,7 +163,6 @@ public class ThingsboardInstallService {
                 systemDataLoaderService.createDefaultTenantProfiles();
                 systemDataLoaderService.createAdminSettings();
                 systemDataLoaderService.createRandomJwtSettings();
-                installScripts.loadSystemResources();
                 systemDataLoaderService.loadSystemWidgets();
                 systemDataLoaderService.createOAuth2Templates();
                 systemDataLoaderService.createQueues();
@@ -205,7 +171,7 @@ public class ThingsboardInstallService {
 //                systemDataLoaderService.loadSystemPlugins();
 //                systemDataLoaderService.loadSystemRules();
                 installScripts.loadSystemLwm2mResources();
-                installScripts.loadSystemImages();
+                installScripts.loadSystemImagesAndResources();
 
                 if (loadDemo) {
                     log.info("Loading demo data...");
@@ -213,8 +179,6 @@ public class ThingsboardInstallService {
                 }
                 log.info("Installation finished successfully!");
             }
-
-
         } catch (Exception e) {
             log.error("Unexpected error during ThingsBoard installation!", e);
             throw new ThingsboardInstallException("Unexpected error during ThingsBoard installation!", e);
@@ -224,4 +188,3 @@ public class ThingsboardInstallService {
     }
 
 }
-

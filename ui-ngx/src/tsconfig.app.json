@@ -6,7 +6,9 @@
        "react", "react-dom", "raphael", "canvas-gauges", "systemjs"]
   },
   "angularCompilerOptions": {
-    "fullTemplateTypeCheck": true
+    "fullTemplateTypeCheck": true,
+    "supportTestBed": true,
+    "supportJitMode": true
   },
   "files": [
     "main.ts",

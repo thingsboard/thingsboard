@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -212,7 +211,7 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     public void updateSystemWidgets(Stream<String> bundles, Stream<String> widgets) {
         widgets.forEach(widgetTypeJson -> {
             try {
-                updateSystemWidget(widgetTypeJson);
+                updateSystemWidget(JacksonUtil.toJsonNode(widgetTypeJson));
             } catch (Exception e) {
                 throw new RuntimeException("Unable to load widget type from json: " + widgetTypeJson, e);
             }
@@ -240,7 +239,7 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
                 JsonNode widgetTypesArrayJson = widgetsBundleDescriptor.get("widgetTypes");
                 widgetTypesArrayJson.forEach(widgetTypeJson -> {
                     try {
-                        WidgetTypeDetails widgetTypeDetails = updateSystemWidget(widgetTypeJson.toString());
+                        WidgetTypeDetails widgetTypeDetails = updateSystemWidget(widgetTypeJson);
                         widgetTypeFqns.add(widgetTypeDetails.getFqn());
                     } catch (Exception e) {
                         throw new RuntimeException("Unable to load widget type from json: " + widgetsBundleDescriptorJson, e);
@@ -257,10 +256,8 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
         });
     }
 
-    private WidgetTypeDetails updateSystemWidget(String widgetTypeJson) {
-        widgetTypeJson = resourceService.checkSystemResourcesUsage(widgetTypeJson, ResourceType.JS_MODULE);
-
-        WidgetTypeDetails widgetTypeDetails = JacksonUtil.fromString(widgetTypeJson, WidgetTypeDetails.class);
+    private WidgetTypeDetails updateSystemWidget(JsonNode widgetTypeJson) {
+        WidgetTypeDetails widgetTypeDetails = JacksonUtil.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
         WidgetType existingWidget = widgetTypeService.findWidgetTypeByTenantIdAndFqn(TenantId.SYS_TENANT_ID, widgetTypeDetails.getFqn());
         if (existingWidget != null) {
             widgetTypeDetails.setId(existingWidget.getId());

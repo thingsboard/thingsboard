@@ -48,10 +48,11 @@ import {
   isDefined,
   isUndefined,
   mergeFormattedData,
-  parseFunction,
-  safeExecute
+  parseTbFunction,
+  safeExecuteTbFunction
 } from '@core/utils';
 import { MapWidgetInterface } from '@home/components/widget/lib/maps/map-widget.interface';
+import { firstValueFrom, from } from 'rxjs';
 
 interface DataMap {
   [key: string]: FormattedData;
@@ -66,6 +67,10 @@ interface DataMap {
 export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private mapResize$: ResizeObserver;
+
+  private initialized = false;
+  private updatePending = false;
+  private mapWidgetUpdatePending = false;
 
   constructor(private cd: ChangeDetectorRef, private sanitizer: DomSanitizer) { }
 
@@ -100,38 +105,33 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
       ...this.ctx.settings
     };
     this.useAnchors = this.settings.showPoints && this.settings.usePointAsAnchor;
-    this.settings.parsedPointAsAnchorFunction = parseFunction(this.settings.pointAsAnchorFunction, ['data', 'dsData', 'dsIndex']);
-    this.settings.parsedTooltipFunction = parseFunction(this.settings.tooltipFunction, ['data', 'dsData', 'dsIndex']);
-    this.settings.parsedLabelFunction = parseFunction(this.settings.labelFunction, ['data', 'dsData', 'dsIndex']);
-    this.settings.parsedColorPointFunction = parseFunction(this.settings.colorPointFunction, ['data', 'dsData', 'dsIndex']);
     this.normalizationStep = this.settings.normalizationStep;
     const subscription = this.ctx.defaultSubscription;
     subscription.callbacks.onDataUpdated = () => {
-      this.historicalData = formattedDataArrayFromDatasourceData(this.ctx.data).map(
-        item => this.clearIncorrectFirsLastDatapoint(item)).filter(arr => arr.length);
-      this.interpolatedTimeData.length = 0;
-      this.formattedInterpolatedTimeData.length = 0;
-      const prevMinTime = this.minTime;
-      const prevMaxTime = this.maxTime;
-      this.calculateIntervals();
-      const currentTime = this.calculateCurrentTime(prevMinTime, prevMaxTime);
-      if (currentTime !== this.currentTime) {
-        this.timeUpdated(currentTime);
-      }
-      this.mapWidget.map.map?.invalidateSize();
-      this.mapWidget.map.setLoading(false);
-      this.cd.detectChanges();
+      this.update();
     };
     subscription.callbacks.onLatestDataUpdated = () => {
-      this.formattedLatestData = formattedDataFormDatasourceData(this.ctx.latestData);
-      this.updateCurrentData();
+      this.latestDataUpdate();
     };
+    from(this.initializeFunctions()).subscribe(() => {
+      this.initialized = true;
+      if (this.updatePending) {
+        this.updateCurrentData();
+      }
+    });
+
   }
 
   ngAfterViewInit() {
     import('@home/components/widget/lib/maps/map-widget2').then(
       (mod) => {
-        this.mapWidget = new mod.MapWidgetController(MapProviders.openstreet, false, this.ctx, this.mapContainer.nativeElement);
+        this.mapWidget = new mod.MapWidgetController(MapProviders.openstreet, false, this.ctx, this.mapContainer.nativeElement, false,
+          () => {
+            if (this.mapWidgetUpdatePending) {
+              this.updateMapWidget();
+            }
+          }
+        );
         this.mapResize$ = new ResizeObserver(() => {
           this.mapWidget.resize();
         });
@@ -177,22 +177,65 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
     this.updateCurrentData();
   }
 
-  private updateCurrentData() {
-    let currentPosition = this.formattedCurrentPosition;
-    if (this.formattedLatestData.length) {
-      currentPosition = mergeFormattedData(this.formattedCurrentPosition, this.formattedLatestData);
+  private async initializeFunctions(): Promise<void> {
+    this.settings.parsedPointAsAnchorFunction = await firstValueFrom(parseTbFunction(this.ctx.http, this.settings.pointAsAnchorFunction, ['data', 'dsData', 'dsIndex']));
+    this.settings.parsedTooltipFunction = await firstValueFrom(parseTbFunction(this.ctx.http, this.settings.tooltipFunction, ['data', 'dsData', 'dsIndex']));
+    this.settings.parsedLabelFunction = await firstValueFrom(parseTbFunction(this.ctx.http, this.settings.labelFunction, ['data', 'dsData', 'dsIndex']));
+    this.settings.parsedColorPointFunction = await firstValueFrom(parseTbFunction(this.ctx.http, this.settings.colorPointFunction, ['data', 'dsData', 'dsIndex']));
+  }
+
+  private update() {
+    this.historicalData = formattedDataArrayFromDatasourceData(this.ctx.data).map(
+      item => this.clearIncorrectFirsLastDatapoint(item)).filter(arr => arr.length);
+    this.interpolatedTimeData.length = 0;
+    this.formattedInterpolatedTimeData.length = 0;
+    const prevMinTime = this.minTime;
+    const prevMaxTime = this.maxTime;
+    this.calculateIntervals();
+    const currentTime = this.calculateCurrentTime(prevMinTime, prevMaxTime);
+    if (currentTime !== this.currentTime) {
+      this.timeUpdated(currentTime);
     }
-    this.calcLabel(currentPosition);
-    this.calcMainTooltip(currentPosition);
-    if (this.mapWidget && this.mapWidget.map && this.mapWidget.map.map) {
-      this.mapWidget.map.updateFromData(true, currentPosition, this.formattedInterpolatedTimeData, (trip) => {
-        this.activeTrip = trip;
-        this.timeUpdated(this.currentTime);
-        this.cd.markForCheck();
-      });
-      if (this.settings.showPoints) {
-        this.mapWidget.map.updatePoints(this.formattedInterpolatedTimeData, this.calcTooltip);
+    this.updateMapWidget();
+  }
+
+  private latestDataUpdate() {
+    this.formattedLatestData = formattedDataFormDatasourceData(this.ctx.latestData);
+    this.updateCurrentData();
+  }
+
+  private updateMapWidget() {
+    if (this.mapWidget?.map) {
+      this.mapWidgetUpdatePending = false;
+      this.mapWidget.map.map?.invalidateSize();
+      this.mapWidget.map.setLoading(false);
+      this.cd.detectChanges();
+    } else {
+      this.mapWidgetUpdatePending = true;
+    }
+  }
+
+  private updateCurrentData() {
+    if (this.initialized) {
+      this.updatePending = false;
+      let currentPosition = this.formattedCurrentPosition;
+      if (this.formattedLatestData.length) {
+        currentPosition = mergeFormattedData(this.formattedCurrentPosition, this.formattedLatestData);
       }
+      this.calcLabel(currentPosition);
+      this.calcMainTooltip(currentPosition);
+      if (this.mapWidget?.map?.map) {
+        this.mapWidget.map.updateFromData(true, currentPosition, this.formattedInterpolatedTimeData, (trip) => {
+          this.activeTrip = trip;
+          this.timeUpdated(this.currentTime);
+          this.cd.markForCheck();
+        });
+        if (this.settings.showPoints) {
+          this.mapWidget.map.updatePoints(this.formattedInterpolatedTimeData, this.calcTooltip);
+        }
+      }
+    } else {
+      this.updatePending = true;
     }
   }
 
@@ -235,7 +278,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
     if (this.useAnchors) {
       const anchorDate = Object.entries(_.union(this.interpolatedTimeData)[0]);
       this.anchors = anchorDate
-        .filter((data: [string, FormattedData], tsIndex) => safeExecute(this.settings.parsedPointAsAnchorFunction, [data[1],
+        .filter((data: [string, FormattedData], tsIndex) => safeExecuteTbFunction(this.settings.parsedPointAsAnchorFunction, [data[1],
           this.formattedInterpolatedTimeData.map(ds => ds[tsIndex]), data[1].dsIndex]))
         .map(data => parseInt(data[0], 10));
     }
@@ -244,7 +287,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
   calcTooltip = (point: FormattedData, points: FormattedData[]): string => {
     const data = point ? point : this.activeTrip;
     const tooltipPattern: string = this.settings.useTooltipFunction ?
-      safeExecute(this.settings.parsedTooltipFunction,
+      safeExecuteTbFunction(this.settings.parsedTooltipFunction,
         [data, points, point.dsIndex]) : this.settings.tooltipPattern;
     return parseWithTranslation.parseTemplate(tooltipPattern, data, true);
   }
@@ -261,7 +304,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
     if (this.activeTrip) {
       const data = points[this.activeTrip.dsIndex];
       const labelText: string = this.settings.useLabelFunction ?
-        safeExecute(this.settings.parsedLabelFunction, [data, points, data.dsIndex]) : this.settings.label;
+        safeExecuteTbFunction(this.settings.parsedLabelFunction, [data, points, data.dsIndex]) : this.settings.label;
       this.label = this.sanitizer.bypassSecurityTrustHtml(parseWithTranslation.parseTemplate(labelText, data, true));
     }
   }

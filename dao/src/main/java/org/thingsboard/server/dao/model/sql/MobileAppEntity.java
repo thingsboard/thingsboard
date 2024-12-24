@@ -15,16 +15,25 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.MobileAppId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.mobile.MobileApp;
+import org.thingsboard.server.common.data.mobile.app.MobileAppStatus;
+import org.thingsboard.server.common.data.mobile.app.MobileApp;
+import org.thingsboard.server.common.data.mobile.app.MobileAppVersionInfo;
+import org.thingsboard.server.common.data.mobile.app.StoreInfo;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
 import java.util.UUID;
 
@@ -45,8 +54,21 @@ public class MobileAppEntity extends BaseSqlEntity<MobileApp> {
     @Column(name = ModelConstants.MOBILE_APP_APP_SECRET_PROPERTY)
     private String appSecret;
 
-    @Column(name = ModelConstants.MOBILE_APP_OAUTH2_ENABLED_PROPERTY)
-    private Boolean oauth2Enabled;
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.MOBILE_APP_PLATFORM_TYPE_PROPERTY)
+    private PlatformType platformType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = ModelConstants.MOBILE_APP_STATUS_PROPERTY)
+    private MobileAppStatus status;
+
+    @Convert(converter = JsonConverter.class)
+    @Column(name = ModelConstants.MOBILE_APP_VERSION_INFO_PROPERTY)
+    private JsonNode versionInfo;
+
+    @Convert(converter = JsonConverter.class)
+    @Column(name = ModelConstants.MOBILE_APP_STORE_INFO_PROPERTY)
+    private JsonNode storeInfo;
 
     public MobileAppEntity() {
         super();
@@ -59,7 +81,10 @@ public class MobileAppEntity extends BaseSqlEntity<MobileApp> {
         }
         this.pkgName = mobile.getPkgName();
         this.appSecret = mobile.getAppSecret();
-        this.oauth2Enabled = mobile.isOauth2Enabled();
+        this.platformType = mobile.getPlatformType();
+        this.status = mobile.getStatus();
+        this.versionInfo = toJson(mobile.getVersionInfo());
+        this.storeInfo = toJson(mobile.getStoreInfo());
     }
 
     @Override
@@ -72,7 +97,10 @@ public class MobileAppEntity extends BaseSqlEntity<MobileApp> {
         mobile.setCreatedTime(createdTime);
         mobile.setPkgName(pkgName);
         mobile.setAppSecret(appSecret);
-        mobile.setOauth2Enabled(oauth2Enabled);
+        mobile.setPlatformType(platformType);
+        mobile.setStatus(status);
+        mobile.setVersionInfo(fromJson(versionInfo, MobileAppVersionInfo.class));
+        mobile.setStoreInfo(fromJson(storeInfo, StoreInfo.class));
         return mobile;
     }
 }

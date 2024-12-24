@@ -2600,6 +2600,6 @@
       "showUpdateDashboardImage": false
     }
   },
-  "externalId": null,
-  "name": "Software"
+  "name": "Software",
+  "resources": []
 }

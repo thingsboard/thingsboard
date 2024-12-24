@@ -322,6 +322,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                         forwardToCalculatedFieldService(toCoreMsg.getEntityProfileUpdateMsg(), callback);
                     } else if (toCoreMsg.hasProfileEntityMsg()) {
                         forwardToCalculatedFieldService(toCoreMsg.getProfileEntityMsg(), callback);
+                    } else if (toCoreMsg.hasCalculatedFieldStateMsg()) {
+                        forwardToCalculatedFieldService(toCoreMsg.getCalculatedFieldStateMsg(), callback);
                     }
                 } catch (Throwable e) {
                     log.warn("[{}] Failed to process message: {}", id, msg, e);
@@ -517,7 +519,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     }
 
     private void forwardToResourceService(TransportProtos.ResourceCacheInvalidateMsg msg, TbCallback callback) {
-        var tenantId = new TenantId(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
+        var tenantId = TenantId.fromUUID(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
         msg.getKeysList().stream().map(cacheKeyProto -> {
             if (cacheKeyProto.hasResourceKey()) {
                 return ImageCacheKey.forImage(tenantId, cacheKeyProto.getResourceKey());
@@ -687,7 +689,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private void forwardToCalculatedFieldService(TransportProtos.EntityProfileUpdateMsgProto profileUpdateMsg, TbCallback callback) {
         var tenantId = toTenantId(profileUpdateMsg.getTenantIdMSB(), profileUpdateMsg.getTenantIdLSB());
         var entityId = EntityIdFactory.getByTypeAndUuid(profileUpdateMsg.getEntityProfileType(), new UUID(profileUpdateMsg.getEntityIdMSB(), profileUpdateMsg.getEntityIdLSB()));
-        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onEntityProfileChanged(profileUpdateMsg, callback));
+        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onEntityProfileChangedMsg(profileUpdateMsg, callback));
         DonAsynchron.withCallback(future,
                 __ -> callback.onSuccess(),
                 t -> {
@@ -704,6 +706,18 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 __ -> callback.onSuccess(),
                 t -> {
                     log.warn("[{}] Failed to process profile entity message for entityId [{}]", tenantId.getId(), entityId.getId(), t);
+                    callback.onFailure(t);
+                });
+    }
+
+    private void forwardToCalculatedFieldService(TransportProtos.CalculatedFieldStateMsgProto calculatedFieldStateMsgProto, TbCallback callback) {
+        var tenantId = toTenantId(calculatedFieldStateMsgProto.getTenantIdMSB(), calculatedFieldStateMsgProto.getTenantIdLSB());
+        var calculatedFieldId = new CalculatedFieldId(new UUID(calculatedFieldStateMsgProto.getCalculatedFieldIdMSB(), calculatedFieldStateMsgProto.getCalculatedFieldIdLSB()));
+        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onCalculatedFieldStateMsg(calculatedFieldStateMsgProto, callback));
+        DonAsynchron.withCallback(future,
+                __ -> callback.onSuccess(),
+                t -> {
+                    log.warn("[{}] Failed to process calculated field state message for entityId [{}]", tenantId.getId(), calculatedFieldId.getId(), t);
                     callback.onFailure(t);
                 });
     }

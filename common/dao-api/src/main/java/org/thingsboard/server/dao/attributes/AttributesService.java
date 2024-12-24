@@ -37,15 +37,9 @@ public interface AttributesService {
 
     ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, AttributeScope scope);
 
-    @Deprecated(since = "3.7.0")
-    ListenableFuture<List<Long>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes);
-
     ListenableFuture<List<Long>> save(TenantId tenantId, EntityId entityId, AttributeScope scope, List<AttributeKvEntry> attributes);
 
     ListenableFuture<Long> save(TenantId tenantId, EntityId entityId, AttributeScope scope, AttributeKvEntry attribute);
-
-    @Deprecated(since = "3.7.0")
-    ListenableFuture<List<String>> removeAll(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys);
 
     ListenableFuture<List<String>> removeAll(TenantId tenantId, EntityId entityId, AttributeScope scope, List<String> attributeKeys);
 

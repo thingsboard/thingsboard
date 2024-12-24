@@ -21,12 +21,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.TbResource;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.common.data.widget.BaseWidgetType;
-import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.resource.TbResourceDao;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -35,7 +33,6 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.widget.WidgetTypeDao;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.EntityType.TB_RESOURCE;
 
@@ -115,13 +112,10 @@ public class ResourceDataValidator extends DataValidator<TbResource> {
         }
     }
 
-    @Override
-    public void validateDelete(TenantId tenantId, EntityId resourceId) {
-        List<WidgetTypeDetails> widgets = widgetTypeDao.findWidgetTypesInfosByTenantIdAndResourceId(tenantId.getId(),
-                resourceId.getId());
+    public void validateDelete(TenantId tenantId, TbResourceInfo resourceInfo) {
+        List<String> widgets = widgetTypeDao.findWidgetTypesNamesByTenantIdAndResourceLink(tenantId.getId(), resourceInfo.getLink());
         if (!widgets.isEmpty()) {
-            List<String> widgetNames = widgets.stream().map(BaseWidgetType::getName).collect(Collectors.toList());
-            throw new DataValidationException(String.format("Following widget types uses current resource: %s", widgetNames));
+            throw new DataValidationException("Following widget types use this resource: " + String.join(", ", widgets));
         }
     }
 

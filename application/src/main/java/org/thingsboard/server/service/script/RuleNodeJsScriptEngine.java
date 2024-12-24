@@ -147,6 +147,10 @@ public class RuleNodeJsScriptEngine extends RuleNodeScriptEngine<JsInvokeService
         String newData = data != null ? data : msg.getData();
         TbMsgMetaData newMetadata = metadata != null ? new TbMsgMetaData(metadata) : msg.getMetaData().copy();
         String newMessageType = !StringUtils.isEmpty(messageType) ? messageType : msg.getType();
-        return TbMsg.transformMsg(msg, newMessageType, msg.getOriginator(), newMetadata, newData);
+        return msg.transform()
+                .type(newMessageType)
+                .metaData(newMetadata)
+                .data(newData)
+                .build();
     }
 }

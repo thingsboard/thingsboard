@@ -239,10 +239,10 @@
                     matTooltipPosition="above">
               <mat-icon>delete</mat-icon>
             </button>
-            <button [disabled]="(isLoading$ | async) || !isDebugModeEnabled()"
+            <button [disabled]="(isLoading$ | async) || !isDebugSettingsEnabled()"
                     mat-fab color="accent" class="tb-btn-footer"
-                    (click)="resetDebugModeInAllNodes()"
-                    matTooltip="{{ 'rulenode.reset-debug-mode' | translate }}"
+                    (click)="resetDebugSettingsInAllNodes()"
+                    matTooltip="{{ 'rulenode.reset-debug-settings' | translate }}"
                     matTooltipPosition="above">
               <mat-icon>bug_report</mat-icon>
             </button>

@@ -31,6 +31,7 @@ export interface DefaultTenantProfileConfiguration {
   maxUsers: number;
   maxDashboards: number;
   maxRuleChains: number;
+  maxEdges: number;
   maxResourcesInBytes: number;
   maxOtaPackagesInBytes: number;
   maxResourceSize: number;
@@ -41,6 +42,13 @@ export interface DefaultTenantProfileConfiguration {
   transportDeviceMsgRateLimit?: string;
   transportDeviceTelemetryMsgRateLimit?: string;
   transportDeviceTelemetryDataPointsRateLimit?: string;
+
+  transportGatewayMsgRateLimit?: string;
+  transportGatewayTelemetryMsgRateLimit?: string;
+  transportGatewayTelemetryDataPointsRateLimit?: string;
+  transportGatewayDeviceMsgRateLimit?: string;
+  transportGatewayDeviceTelemetryMsgRateLimit?: string;
+  transportGatewayDeviceTelemetryDataPointsRateLimit?: string;
 
   tenantEntityExportRateLimit?: string;
   tenantEntityImportRateLimit?: string;
@@ -59,6 +67,8 @@ export interface DefaultTenantProfileConfiguration {
   smsEnabled: boolean;
   maxCreatedAlarms: number;
 
+  maxDebugModeDurationMinutes: number;
+
   tenantServerRestLimitsConfiguration: string;
   customerServerRestLimitsConfiguration: string;
 
@@ -74,6 +84,11 @@ export interface DefaultTenantProfileConfiguration {
   wsUpdatesPerSessionRateLimit: string;
 
   cassandraQueryTenantRateLimitsConfiguration: string;
+
+  edgeEventRateLimits?: string;
+  edgeEventRateLimitsPerEdge?: string;
+  edgeUplinkMessagesRateLimits?: string;
+  edgeUplinkMessagesRateLimitsPerEdge?: string;
 
   defaultStorageTtlDays: number;
   alarmsTtlDays: number;
@@ -100,6 +115,7 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           maxUsers: 0,
           maxDashboards: 0,
           maxRuleChains: 0,
+          maxEdges: 0,
           maxResourcesInBytes: 0,
           maxOtaPackagesInBytes: 0,
           maxResourceSize: 0,
@@ -114,6 +130,7 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           maxSms: 0,
           smsEnabled: true,
           maxCreatedAlarms: 0,
+          maxDebugModeDurationMinutes: 0,
           tenantServerRestLimitsConfiguration: '',
           customerServerRestLimitsConfiguration: '',
           maxWsSessionsPerTenant: 0,

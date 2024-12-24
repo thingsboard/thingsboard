@@ -248,7 +248,7 @@ public class TbRuleEngineStrategyTest {
     }
 
     private static TbMsg createRandomMsg() {
-        return TbMsg.builder()
+        return TbMsg.newMsg()
                 .id(UUID.randomUUID())
                 .type("test type")
                 .originator(deviceId)

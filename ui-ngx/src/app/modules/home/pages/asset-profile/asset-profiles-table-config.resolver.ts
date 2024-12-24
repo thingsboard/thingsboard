@@ -28,13 +28,12 @@ import { DatePipe } from '@angular/common';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { DialogService } from '@core/services/dialog.service';
-import { MatDialog } from '@angular/material/dialog';
 import { ImportExportService } from '@shared/import-export/import-export.service';
-import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 import { AssetProfile } from '@shared/models/asset.models';
 import { AssetProfileService } from '@core/http/asset-profile.service';
 import { AssetProfileComponent } from '@home/components/profile/asset-profile.component';
 import { AssetProfileTabsComponent } from './asset-profile-tabs.component';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 
 @Injectable()
 export class AssetProfilesTableConfigResolver  {
@@ -43,12 +42,11 @@ export class AssetProfilesTableConfigResolver  {
 
   constructor(private assetProfileService: AssetProfileService,
               private importExport: ImportExportService,
-              private homeDialogs: HomeDialogsService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private dialogService: DialogService,
               private router: Router,
-              private dialog: MatDialog) {
+              private customTranslate: CustomTranslatePipe) {
 
     this.config.entityType = EntityType.ASSET_PROFILE;
     this.config.entityComponent = AssetProfileComponent;
@@ -61,7 +59,8 @@ export class AssetProfilesTableConfigResolver  {
     this.config.columns.push(
       new DateEntityTableColumn<AssetProfile>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<AssetProfile>('name', 'asset-profile.name', '50%'),
-      new EntityTableColumn<AssetProfile>('description', 'asset-profile.description', '50%'),
+      new EntityTableColumn<AssetProfile>('description', 'asset-profile.description', '50%',
+          entity => this.customTranslate.transform(entity.description || '')),
       new EntityTableColumn<AssetProfile>('isDefault', 'asset-profile.default', '60px',
         entity => {
           return checkBoxCell(entity.default);

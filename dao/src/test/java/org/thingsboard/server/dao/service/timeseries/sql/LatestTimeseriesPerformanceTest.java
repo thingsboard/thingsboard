@@ -56,7 +56,8 @@ public class LatestTimeseriesPerformanceTest extends AbstractServiceTest {
     private static final String LONG_KEY = "longKey";
     private static final String DOUBLE_KEY = "doubleKey";
     private static final String BOOLEAN_KEY = "booleanKey";
-    public static final int AMOUNT_OF_UNIQ_KEY = 10000;
+    private static final int AMOUNT_OF_UNIQ_KEY = 10000;
+    private static final int TIMEOUT = 100;
 
     private final Random random = new Random();
 
@@ -102,7 +103,7 @@ public class LatestTimeseriesPerformanceTest extends AbstractServiceTest {
             futures.add(save(generateDblEntry(getRandomKey())));
             futures.add(save(generateBoolEntry(getRandomKey())));
         }
-        Futures.allAsList(futures).get(60, TimeUnit.SECONDS);
+        Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS);
         long endTime = System.currentTimeMillis();
 
         long totalTime = endTime - startTime;
@@ -120,7 +121,7 @@ public class LatestTimeseriesPerformanceTest extends AbstractServiceTest {
             futures.add(save(generateDblEntry(i)));
             futures.add(save(generateBoolEntry(i)));
         }
-        Futures.allAsList(futures).get(60, TimeUnit.SECONDS);
+        Futures.allAsList(futures).get(TIMEOUT, TimeUnit.SECONDS);
     }
 
     private ListenableFuture<?> save(TsKvEntry tsKvEntry) {

@@ -54,6 +54,7 @@ import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
+import org.thingsboard.server.common.data.query.OriginatorAlarmFilter;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmDao;
@@ -432,6 +433,13 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     @Override
     public boolean removeAlarmTypesIfNoAlarmsPresent(UUID tenantId, Set<String> types) {
         return alarmRepository.deleteTypeIfNoAlarmsExist(tenantId, types) > 0;
+    }
+
+    @Override
+    public List<UUID> findActiveOriginatorAlarms(TenantId tenantId, OriginatorAlarmFilter filter, int limit) {
+        return alarmRepository.findActiveOriginatorAlarms(filter.getOriginatorId().getId(),
+                filter.getTypeList(), filter.getSeverityList() != null ? filter.getSeverityList().stream().map(Enum::name).toList() : null,
+                limit);
     }
 
     private static String getPropagationTypes(AlarmPropagationInfo ap) {

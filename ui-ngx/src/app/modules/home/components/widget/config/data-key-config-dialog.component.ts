@@ -123,10 +123,11 @@ export class DataKeyConfigDialogComponent extends DialogComponent<DataKeyConfigD
 
   save(): void {
     this.submitted = true;
-    this.dataKeyConfig.validateOnSubmit();
-    if (this.dataKeyFormGroup.valid) {
-      const dataKey: DataKey = this.dataKeyFormGroup.get('dataKey').value;
-      this.dialogRef.close(dataKey);
-    }
+    this.dataKeyConfig.validateOnSubmit().subscribe(() => {
+      if (this.dataKeyFormGroup.valid) {
+        const dataKey: DataKey = this.dataKeyFormGroup.get('dataKey').value;
+        this.dialogRef.close(dataKey);
+      }
+    });
   }
 }

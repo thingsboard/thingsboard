@@ -1,0 +1,48 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-toolbar class="justify-between" color="primary">
+  <h2 translate>mobile.delete-application</h2>
+  <button mat-icon-button
+          (click)="cancel()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+</mat-progress-bar>
+<div *ngIf="!(isLoading$ | async)"></div>
+<div mat-dialog-content class="flex flex-col gap-4">
+  <div class="select-none" [innerHTML]="deleteApplicationText"></div>
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <input matInput [formControl]="deleteVerification" placeholder="{{ 'mobile.type-here' | translate }}"/>
+  </mat-form-field>
+</div>
+<div mat-dialog-actions class="justify-end">
+  <button mat-button color="primary"
+          type="button"
+          [disabled]="(isLoading$ | async)"
+          (click)="suspend()" cdkFocusInitial>
+    {{ 'action.suspend' | translate }}
+  </button>
+  <button mat-button mat-raised-button color="warn"
+          type="button"
+          (click)="delete()"
+          [disabled]="(isLoading$ | async) || deleteVerification.invalid || deleteVerification.value !== deleteVerificationText">
+    {{ 'mobile.delete-application-button-text' | translate }}
+  </button>
+</div>

@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="200" height="200" fill="none" version="1.1" viewBox="0 0 200 200"><tb:metadata xmlns=""><![CDATA[{
+  "title": "HP Bottom right elbow connector",
+  "description": "Bottom right elbow connector",
+  "widgetSizeX": 1,
+  "widgetSizeY": 1,
+  "tags": [
+    {
+      "tag": "line",
+      "stateRenderFunction": "element.stroke(ctx.properties.lineColor);\nif (ctx.properties.mainLine) {\n    element.attr({'stroke-width': ctx.properties.mainLineSize});\n} else {\n    element.attr({'stroke-width': ctx.properties.secondaryLineSize});\n}",
+      "actions": null
+    }
+  ],
+  "behavior": [],
+  "properties": [
+    {
+      "id": "mainLine",
+      "name": "{i18n:scada.symbol.main-line}",
+      "type": "switch",
+      "default": true,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "mainLineSize",
+      "name": "{i18n:scada.symbol.line}",
+      "type": "number",
+      "default": 6,
+      "required": true,
+      "subLabel": "Main",
+      "divider": true,
+      "fieldSuffix": "px",
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": 0,
+      "max": 99,
+      "step": 1
+    },
+    {
+      "id": "secondaryLineSize",
+      "name": "{i18n:scada.symbol.line}",
+      "type": "number",
+      "default": 2,
+      "required": true,
+      "subLabel": "Secondary",
+      "divider": null,
+      "fieldSuffix": "px",
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": 0,
+      "max": 99,
+      "step": 1
+    },
+    {
+      "id": "lineColor",
+      "name": "{i18n:scada.symbol.line-color}",
+      "type": "color",
+      "default": "#1A1A1A",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    }
+  ]
+}]]></tb:metadata>
+<path d="M200 101H131C113.879 101 100 114.879 100 132V201" stroke="#1A1A1A" stroke-width="6" tb:tag="line"/>
+</svg>

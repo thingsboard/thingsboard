@@ -229,14 +229,14 @@
     <form [formGroup]="jwtSecuritySettingsFormGroup" (ngSubmit)="saveJwtSettings()" autocomplete="off">
       <fieldset [disabled]="isLoading$ | async" class="flex flex-col gap-2">
         <div class="flex flex-row gap-2 xs:flex-col">
-          <mat-form-field class="mat-block flex-1">
+          <mat-form-field class="mat-block flex-1" subscriptSizing="dynamic">
             <mat-label translate>admin.jwt.issuer-name</mat-label>
             <input matInput required formControlName="tokenIssuer"/>
             <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('tokenIssuer').hasError('required')">
               {{ 'admin.jwt.issuer-name-required' | translate }}
             </mat-error>
           </mat-form-field>
-          <mat-form-field class="mat-block flex-1">
+          <mat-form-field class="mat-block flex-1" subscriptSizing="dynamic">
             <mat-label translate>admin.jwt.signings-key</mat-label>
             <input matInput (focus)="markAsTouched()" required formControlName="tokenSigningKey"/>
             <button type="button"
@@ -260,33 +260,35 @@
           </mat-form-field>
         </div>
         <div class="flex flex-row gap-2 xs:flex-col">
-          <mat-form-field class="mat-block flex-1">
+          <mat-form-field class="mat-block flex-1" subscriptSizing="dynamic">
             <mat-label translate>admin.jwt.expiration-time</mat-label>
             <input matInput type="number" required
                    formControlName="tokenExpirationTime"
                    step="1"
-                   min="0"/>
+                   min="60"/>
+            <mat-hint></mat-hint>
             <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('tokenExpirationTime').hasError('required')">
               {{ 'admin.jwt.expiration-time-required' | translate }}
             </mat-error>
-            <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('tokenExpirationTime').hasError('pattern')">
-              {{ 'admin.jwt.expiration-time-pattern' | translate }}
+            <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('tokenExpirationTime').hasError('max')">
+              {{ 'admin.jwt.expiration-time-max' | translate }}
             </mat-error>
             <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('tokenExpirationTime').hasError('min')">
               {{ 'admin.jwt.expiration-time-min' | translate }}
             </mat-error>
           </mat-form-field>
-          <mat-form-field class="mat-block flex-1">
+          <mat-form-field class="mat-block flex-1" subscriptSizing="dynamic">
             <mat-label translate>admin.jwt.refresh-expiration-time</mat-label>
             <input matInput type="number" required
                    formControlName="refreshTokenExpTime"
                    step="1"
-                   min="0"/>
+                   min="900"/>
+            <mat-hint></mat-hint>
             <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('refreshTokenExpTime').hasError('required')">
               {{ 'admin.jwt.refresh-expiration-time-required' | translate }}
             </mat-error>
-            <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('refreshTokenExpTime').hasError('pattern')">
-              {{ 'admin.jwt.refresh-expiration-time-pattern' | translate }}
+            <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('refreshTokenExpTime').hasError('max')">
+              {{ 'admin.jwt.refresh-expiration-time-max' | translate }}
             </mat-error>
             <mat-error *ngIf="jwtSecuritySettingsFormGroup.get('refreshTokenExpTime').hasError('min')">
               {{ 'admin.jwt.refresh-expiration-time-min' | translate }}

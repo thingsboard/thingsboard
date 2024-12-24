@@ -20,18 +20,21 @@ import reactCSS from 'reactcss';
 import Button from '@mui/material/Button';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
 import { IEditorProps } from 'react-ace/src/types';
-import { mergeMap } from 'rxjs/operators';
+import { map, mergeMap } from 'rxjs/operators';
 import { getAce } from '@shared/models/ace/ace.models';
 import { from, lastValueFrom } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { CircularProgress, IconButton } from '@mui/material';
 import { MouseEvent } from 'react';
 import { Help, HelpOutline } from '@mui/icons-material';
+import { unwrapModule } from '@core/utils';
 
 const ReactAce = React.lazy(() => {
   return lastValueFrom(getAce().pipe(
     mergeMap(() => {
-      return from(import('react-ace'));
+      return from(import('react-ace')).pipe(
+        map((module) => unwrapModule(module)
+      ));
     })
   ));
 });

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Injector } from '@angular/core';
+import { Component } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -42,8 +42,6 @@ export class MobileAppQrCodeBasicConfigComponent extends BasicWidgetConfigCompon
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
-              private cd: ChangeDetectorRef,
-              private $injector: Injector,
               private fb: UntypedFormBuilder) {
     super(store, widgetConfigComponent);
   }

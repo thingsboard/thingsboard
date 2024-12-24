@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.NotificationTemplateEntity;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,7 +46,7 @@ public interface NotificationTemplateRepository extends JpaRepository<Notificati
     @Query("SELECT count(t) FROM NotificationTemplateEntity t WHERE t.tenantId = :tenantId AND " +
             "t.notificationType IN :notificationTypes")
     int countByTenantIdAndNotificationTypes(@Param("tenantId") UUID tenantId,
-                                            @Param("notificationTypes") List<NotificationType> notificationTypes);
+                                            @Param("notificationTypes") Collection<NotificationType> notificationTypes);
 
     @Transactional
     @Modifying

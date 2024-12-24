@@ -27,6 +27,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
@@ -72,7 +73,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -82,6 +83,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.ACTIVITY_STATE;
@@ -208,9 +210,12 @@ public class DefaultDeviceStateServiceTest {
         service.onDeviceConnect(tenantId, deviceId, lastConnectTime);
 
         // THEN
-        then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(AttributeScope.SERVER_SCOPE), eq(LAST_CONNECT_TIME), eq(lastConnectTime), any()
-        );
+        then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
+                request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
+                        request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
+                        request.getEntries().get(0).getKey().equals(LAST_CONNECT_TIME) &&
+                        request.getEntries().get(0).getValue().equals(lastConnectTime)
+        ));
 
         var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         then(clusterService).should().pushMsgToRuleEngine(eq(tenantId), eq(deviceId), msgCaptor.capture(), any());
@@ -292,10 +297,12 @@ public class DefaultDeviceStateServiceTest {
         service.onDeviceDisconnect(tenantId, deviceId, lastDisconnectTime);
 
         // THEN
-        then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(AttributeScope.SERVER_SCOPE),
-                eq(LAST_DISCONNECT_TIME), eq(lastDisconnectTime), any()
-        );
+        then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
+                request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
+                        request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
+                        request.getEntries().get(0).getKey().equals(LAST_DISCONNECT_TIME) &&
+                        request.getEntries().get(0).getValue().equals(lastDisconnectTime)
+        ));
 
         var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         then(clusterService).should().pushMsgToRuleEngine(eq(tenantId), eq(deviceId), msgCaptor.capture(), any());
@@ -413,14 +420,18 @@ public class DefaultDeviceStateServiceTest {
         service.onDeviceInactivity(tenantId, deviceId, lastInactivityTime);
 
         // THEN
-        then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(AttributeScope.SERVER_SCOPE),
-                eq(INACTIVITY_ALARM_TIME), eq(lastInactivityTime), any()
-        );
-        then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(AttributeScope.SERVER_SCOPE),
-                eq(ACTIVITY_STATE), eq(false), any()
-        );
+        then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
+                request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
+                        request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
+                        request.getEntries().get(0).getKey().equals(INACTIVITY_ALARM_TIME) &&
+                        request.getEntries().get(0).getValue().equals(lastInactivityTime)
+        ));
+        then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
+                request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
+                        request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
+                        request.getEntries().get(0).getKey().equals(ACTIVITY_STATE) &&
+                        request.getEntries().get(0).getValue().equals(false)
+        ));
 
         var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         then(clusterService).should()
@@ -453,14 +464,17 @@ public class DefaultDeviceStateServiceTest {
         service.updateInactivityStateIfExpired(System.currentTimeMillis(), deviceId, deviceStateData);
 
         // THEN
-        then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(AttributeScope.SERVER_SCOPE),
-                eq(INACTIVITY_ALARM_TIME), anyLong(), any()
-        );
-        then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(AttributeScope.SERVER_SCOPE),
-                eq(ACTIVITY_STATE), eq(false), any()
-        );
+        then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
+                request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
+                        request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
+                        request.getEntries().get(0).getKey().equals(INACTIVITY_ALARM_TIME)
+        ));
+        then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
+                request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
+                        request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
+                        request.getEntries().get(0).getKey().equals(ACTIVITY_STATE) &&
+                        request.getEntries().get(0).getValue().equals(false)
+        ));
 
         var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         then(clusterService).should()
@@ -612,7 +626,9 @@ public class DefaultDeviceStateServiceTest {
         long newTimeout = System.currentTimeMillis() - deviceState.getLastActivityTime() + increase;
 
         service.onDeviceInactivityTimeoutUpdate(tenantId, deviceId, newTimeout);
-        verify(telemetrySubscriptionService, never()).saveAttrAndNotify(any(), eq(deviceId), any(AttributeScope.class), eq(ACTIVITY_STATE), any(), any());
+        verify(telemetrySubscriptionService, never()).saveAttributes(argThat(request ->
+                request.getEntityId().equals(deviceId) && request.getEntries().get(0).getKey().equals(ACTIVITY_STATE)
+        ));
         Thread.sleep(defaultTimeout + increase);
         service.checkStates();
         activityVerify(false);
@@ -651,7 +667,9 @@ public class DefaultDeviceStateServiceTest {
 
         long newTimeout = 1;
         Thread.sleep(newTimeout);
-        verify(telemetrySubscriptionService, never()).saveAttrAndNotify(any(), eq(deviceId), any(AttributeScope.class), eq(ACTIVITY_STATE), any(), any());
+        verify(telemetrySubscriptionService, never()).saveAttributes(argThat(request ->
+                request.getEntityId().equals(deviceId) && request.getEntries().get(0).getKey().equals(ACTIVITY_STATE)
+        ));
     }
 
     @Test
@@ -671,8 +689,6 @@ public class DefaultDeviceStateServiceTest {
 
         service.onDeviceActivity(tenantId, deviceId, System.currentTimeMillis());
         activityVerify(true);
-
-        verify(telemetrySubscriptionService, never()).saveAttrAndNotify(any(), eq(deviceId), any(AttributeScope.class), eq(ACTIVITY_STATE), any(), any());
 
         long newTimeout = 1;
         Thread.sleep(newTimeout);
@@ -713,11 +729,17 @@ public class DefaultDeviceStateServiceTest {
         long newTimeout = 1;
 
         service.onDeviceInactivityTimeoutUpdate(tenantId, deviceId, newTimeout);
-        verify(telemetrySubscriptionService, never()).saveAttrAndNotify(any(), eq(deviceId), any(AttributeScope.class), eq(ACTIVITY_STATE), any(), any());
+        verify(telemetrySubscriptionService, never()).saveAttributes(argThat(request ->
+                request.getEntityId().equals(deviceId) && request.getEntries().get(0).getKey().equals(ACTIVITY_STATE)
+        ));
     }
 
     private void activityVerify(boolean isActive) {
-        verify(telemetrySubscriptionService).saveAttrAndNotify(any(), eq(deviceId), any(AttributeScope.class), eq(ACTIVITY_STATE), eq(isActive), any());
+        verify(telemetrySubscriptionService).saveAttributes(argThat(request ->
+                request.getEntityId().equals(deviceId) &&
+                        request.getEntries().get(0).getKey().equals(ACTIVITY_STATE) &&
+                        request.getEntries().get(0).getValue().equals(isActive)
+        ));
     }
 
     @Test
@@ -763,21 +785,27 @@ public class DefaultDeviceStateServiceTest {
         // THEN
         assertThat(deviceState.isActive()).isEqualTo(true);
         assertThat(deviceState.getLastActivityTime()).isEqualTo(lastReportedActivity);
-        then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                any(), eq(deviceId), any(AttributeScope.class), eq(LAST_ACTIVITY_TIME), eq(lastReportedActivity), any()
-        );
+        then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
+                request.getEntityId().equals(deviceId) &&
+                        request.getEntries().get(0).getKey().equals(LAST_ACTIVITY_TIME) &&
+                        request.getEntries().get(0).getValue().equals(lastReportedActivity)
+        ));
 
         assertThat(deviceState.getLastInactivityAlarmTime()).isEqualTo(expectedInactivityAlarmTime);
         if (shouldSetInactivityAlarmTimeToZero) {
-            then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                    any(), eq(deviceId), any(AttributeScope.class), eq(INACTIVITY_ALARM_TIME), eq(0L), any()
-            );
+            then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
+                    request.getEntityId().equals(deviceId) &&
+                            request.getEntries().get(0).getKey().equals(INACTIVITY_ALARM_TIME) &&
+                            request.getEntries().get(0).getValue().equals(0L)
+            ));
         }
 
         if (shouldUpdateActivityStateToActive) {
-            then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                    eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(AttributeScope.SERVER_SCOPE), eq(ACTIVITY_STATE), eq(true), any()
-            );
+            then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
+                    request.getEntityId().equals(deviceId) &&
+                            request.getEntries().get(0).getKey().equals(ACTIVITY_STATE) &&
+                            request.getEntries().get(0).getValue().equals(true)
+            ));
 
             var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
             then(clusterService).should().pushMsgToRuleEngine(eq(tenantId), eq(deviceId), msgCaptor.capture(), any());
@@ -796,28 +824,28 @@ public class DefaultDeviceStateServiceTest {
 
     private static Stream<Arguments> provideParametersForUpdateActivityState() {
         return Stream.of(
-                Arguments.of(true,  100, 120, 80,  80,  false, false),
+                Arguments.of(true, 100, 120, 80, 80, false, false),
 
-                Arguments.of(true,  100, 120, 100, 100, false, false),
+                Arguments.of(true, 100, 120, 100, 100, false, false),
 
                 Arguments.of(false, 100, 120, 110, 110, false, true),
 
 
-                Arguments.of(true,  100, 100, 80,  80,  false, false),
+                Arguments.of(true, 100, 100, 80, 80, false, false),
 
-                Arguments.of(true,  100, 100, 100, 100, false, false),
+                Arguments.of(true, 100, 100, 100, 100, false, false),
 
-                Arguments.of(false, 100, 100, 110, 0,   true,  true),
-
-
-                Arguments.of(false, 100, 110, 110, 0,   true,  true),
-
-                Arguments.of(false, 100, 110, 120, 0,   true,  true),
+                Arguments.of(false, 100, 100, 110, 0, true, true),
 
 
-                Arguments.of(true,  0,   0,   0,   0,   false, false),
+                Arguments.of(false, 100, 110, 110, 0, true, true),
 
-                Arguments.of(false, 0,   0,   0,   0,   true,  true)
+                Arguments.of(false, 100, 110, 120, 0, true, true),
+
+
+                Arguments.of(true, 0, 0, 0, 0, false, false),
+
+                Arguments.of(false, 0, 0, 0, 0, true, true)
         );
     }
 
@@ -857,9 +885,10 @@ public class DefaultDeviceStateServiceTest {
         assertThat(deviceState.getInactivityTimeout()).isEqualTo(newInactivityTimeout);
         assertThat(deviceState.isActive()).isEqualTo(expectedActivityState);
         if (activityState && !expectedActivityState) {
-            then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                    any(), eq(deviceId), any(AttributeScope.class), eq(ACTIVITY_STATE), eq(false), any()
-            );
+            then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
+                    request.getEntityId().equals(deviceId) && request.getEntries().get(0).getKey().equals(ACTIVITY_STATE) &&
+                            request.getEntries().get(0).getValue().equals(false)
+            ));
         }
     }
 
@@ -954,9 +983,10 @@ public class DefaultDeviceStateServiceTest {
         assertThat(state.getLastInactivityAlarmTime()).isEqualTo(expectedLastInactivityAlarmTime);
 
         if (shouldUpdateActivityStateToInactive) {
-            then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                    eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(AttributeScope.SERVER_SCOPE), eq(ACTIVITY_STATE), eq(false), any()
-            );
+            then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
+                    request.getEntityId().equals(deviceId) && request.getEntries().get(0).getKey().equals(ACTIVITY_STATE) &&
+                            request.getEntries().get(0).getValue().equals(false)
+            ));
 
             var msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
             then(clusterService).should().pushMsgToRuleEngine(eq(tenantId), eq(deviceId), msgCaptor.capture(), any());
@@ -971,72 +1001,74 @@ public class DefaultDeviceStateServiceTest {
             assertThat(actualNotification.getDeviceId()).isEqualTo(deviceId);
             assertThat(actualNotification.isActive()).isFalse();
 
-            then(telemetrySubscriptionService).should().saveAttrAndNotify(
-                    eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(AttributeScope.SERVER_SCOPE),
-                    eq(INACTIVITY_ALARM_TIME), eq(expectedLastInactivityAlarmTime), any()
-            );
+            then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
+                    request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
+                            request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
+                            request.getEntries().get(0).getKey().equals(INACTIVITY_ALARM_TIME) &&
+                            request.getEntries().get(0).getValue().equals(expectedLastInactivityAlarmTime)
+            ));
         }
     }
 
     private static Stream<Arguments> provideParametersForUpdateInactivityStateIfExpired() {
         return Stream.of(
-                Arguments.of(false, 100, 70,  90,  70,  60,  false, 90,  false),
+                Arguments.of(false, 100, 70, 90, 70, 60, false, 90, false),
 
-                Arguments.of(false, 100, 40,  50,  70,  10,  false, 50,  false),
+                Arguments.of(false, 100, 40, 50, 70, 10, false, 50, false),
 
-                Arguments.of(false, 100, 25,  60,  75,  25,  false, 60,  false),
+                Arguments.of(false, 100, 25, 60, 75, 25, false, 60, false),
 
-                Arguments.of(false, 100, 60,  70,  10,  50,  false, 70,  false),
+                Arguments.of(false, 100, 60, 70, 10, 50, false, 70, false),
 
-                Arguments.of(false, 100, 10,  15,  90,  10,  false, 15,  false),
+                Arguments.of(false, 100, 10, 15, 90, 10, false, 15, false),
 
-                Arguments.of(false, 100, 0,   40,  75,  0,   false, 40,  false),
+                Arguments.of(false, 100, 0, 40, 75, 0, false, 40, false),
 
-                Arguments.of(true,  100, 90,  80,  80,  50,  true,  80,  false),
+                Arguments.of(true, 100, 90, 80, 80, 50, true, 80, false),
 
-                Arguments.of(true,  100, 95,  90,  10,  50,  true,  90,  false),
+                Arguments.of(true, 100, 95, 90, 10, 50, true, 90, false),
 
-                Arguments.of(true,  100, 10,  10,  90,  10,  false, 100, true),
+                Arguments.of(true, 100, 10, 10, 90, 10, false, 100, true),
 
-                Arguments.of(true,  100, 10,  10,  90,  11,  true,  10,  false),
+                Arguments.of(true, 100, 10, 10, 90, 11, true, 10, false),
 
-                Arguments.of(true,  100, 15,  10,  85,  5,   false, 100, true),
+                Arguments.of(true, 100, 15, 10, 85, 5, false, 100, true),
 
-                Arguments.of(true,  100, 15,  10,  75,  5,   false, 100, true),
+                Arguments.of(true, 100, 15, 10, 75, 5, false, 100, true),
 
-                Arguments.of(true,  100, 95,  90,  5,   50,  false, 100, true),
+                Arguments.of(true, 100, 95, 90, 5, 50, false, 100, true),
 
-                Arguments.of(true,  100, 0,   0,   101, 0,   true,  0,   false),
+                Arguments.of(true, 100, 0, 0, 101, 0, true, 0, false),
 
-                Arguments.of(true,  100, 0,   0,   100, 0,   false, 100, true),
+                Arguments.of(true, 100, 0, 0, 100, 0, false, 100, true),
 
-                Arguments.of(true,  100, 0,   0,   99,  0,   false, 100, true),
+                Arguments.of(true, 100, 0, 0, 99, 0, false, 100, true),
 
-                Arguments.of(true,  100, 0,   0,   120, 10,  true,  0,   false),
+                Arguments.of(true, 100, 0, 0, 120, 10, true, 0, false),
 
-                Arguments.of(true,  100, 50,  0,   100, 0,   true,  0,   false),
+                Arguments.of(true, 100, 50, 0, 100, 0, true, 0, false),
 
-                Arguments.of(true,  100, 10,  0,   91,  0,   true,  0,   false),
+                Arguments.of(true, 100, 10, 0, 91, 0, true, 0, false),
 
-                Arguments.of(true,  100, 90,  0,   10,  0,   false, 100, true),
+                Arguments.of(true, 100, 90, 0, 10, 0, false, 100, true),
 
-                Arguments.of(true,  100, 100, 100, 1,   0,   true,  100, false),
+                Arguments.of(true, 100, 100, 100, 1, 0, true, 100, false),
 
-                Arguments.of(true,  100, 100, 100, 100, 100, true,  100, false),
+                Arguments.of(true, 100, 100, 100, 100, 100, true, 100, false),
 
-                Arguments.of(false, 100, 59,  60,  30,  10,  false, 60,  false),
+                Arguments.of(false, 100, 59, 60, 30, 10, false, 60, false),
 
-                Arguments.of(true,  100, 60,  60,  30,  10,  false, 100, true),
+                Arguments.of(true, 100, 60, 60, 30, 10, false, 100, true),
 
-                Arguments.of(true,  100, 61,  60,  30,  10,  false, 100, true),
+                Arguments.of(true, 100, 61, 60, 30, 10, false, 100, true),
 
-                Arguments.of(true,  0,   0,   0,   1,   0,   true,  0,   false),
+                Arguments.of(true, 0, 0, 0, 1, 0, true, 0, false),
 
-                Arguments.of(true,  0,   0,   0,   0,   0,   false, 0,   true),
+                Arguments.of(true, 0, 0, 0, 0, 0, false, 0, true),
 
-                Arguments.of(true,  100, 90,  80,  20,  70,  true,  80,  false),
+                Arguments.of(true, 100, 90, 80, 20, 70, true, 80, false),
 
-                Arguments.of(true,  100, 80,  90,  30,  70,  true,  90,  false)
+                Arguments.of(true, 100, 80, 90, 30, 70, true, 90, false)
         );
     }
 
@@ -1100,7 +1132,10 @@ public class DefaultDeviceStateServiceTest {
         // THEN
         await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(service.deviceStates.get(deviceId).getState().isActive()).isEqualTo(false);
-            then(telemetrySubscriptionService).should().saveAttrAndNotify(eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(AttributeScope.SERVER_SCOPE), eq(ACTIVITY_STATE), eq(false), any());
+            then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
+                    request.getEntityId().equals(deviceId) && request.getEntries().get(0).getKey().equals(ACTIVITY_STATE) &&
+                            request.getEntries().get(0).getValue().equals(false)
+            ));
         });
     }
 
@@ -1127,10 +1162,31 @@ public class DefaultDeviceStateServiceTest {
         service.onDeviceActivity(tenantId, deviceId, currentTime);
 
         // THEN
+        ArgumentCaptor<AttributesSaveRequest> attributeRequestCaptor = ArgumentCaptor.forClass(AttributesSaveRequest.class);
+        then(telemetrySubscriptionService).should(times(2)).saveAttributes(attributeRequestCaptor.capture());
+
         await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(service.deviceStates.get(deviceId).getState().isActive()).isEqualTo(true);
-            then(telemetrySubscriptionService).should().saveAttrAndNotify(eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(AttributeScope.SERVER_SCOPE), eq(LAST_ACTIVITY_TIME), eq(currentTime), any());
-            then(telemetrySubscriptionService).should().saveAttrAndNotify(eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(AttributeScope.SERVER_SCOPE), eq(ACTIVITY_STATE), eq(true), any());
+
+            assertThat(attributeRequestCaptor.getAllValues()).hasSize(2)
+                    .anySatisfy(request -> {
+                        assertThat(request.getTenantId()).isEqualTo(TenantId.SYS_TENANT_ID);
+                        assertThat(request.getEntityId()).isEqualTo(deviceId);
+                        assertThat(request.getScope()).isEqualTo(AttributeScope.SERVER_SCOPE);
+                        assertThat(request.getEntries()).singleElement().satisfies(attributeKvEntry -> {
+                            assertThat(attributeKvEntry.getKey()).isEqualTo(LAST_ACTIVITY_TIME);
+                            assertThat(attributeKvEntry.getLongValue()).hasValue(currentTime);
+                        });
+                    })
+                    .anySatisfy(request -> {
+                        assertThat(request.getTenantId()).isEqualTo(TenantId.SYS_TENANT_ID);
+                        assertThat(request.getEntityId()).isEqualTo(deviceId);
+                        assertThat(request.getScope()).isEqualTo(AttributeScope.SERVER_SCOPE);
+                        assertThat(request.getEntries()).singleElement().satisfies(attributeKvEntry -> {
+                            assertThat(attributeKvEntry.getKey()).isEqualTo(ACTIVITY_STATE);
+                            assertThat(attributeKvEntry.getBooleanValue()).hasValue(true);
+                        });
+                    });
         });
     }
 
@@ -1174,7 +1230,10 @@ public class DefaultDeviceStateServiceTest {
         // THEN
         await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(service.deviceStates.get(deviceId).getState().isActive()).isEqualTo(true);
-            then(telemetrySubscriptionService).should().saveAttrAndNotify(eq(TenantId.SYS_TENANT_ID), eq(deviceId), eq(AttributeScope.SERVER_SCOPE), eq(ACTIVITY_STATE), eq(true), any());
+            then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
+                    request.getEntityId().equals(deviceId) && request.getEntries().get(0).getKey().equals(ACTIVITY_STATE) &&
+                            request.getEntries().get(0).getValue().equals(true)
+            ));
         });
     }
 

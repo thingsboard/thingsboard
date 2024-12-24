@@ -15,7 +15,7 @@
 ///
 
 import { ActivationEnd, Router } from '@angular/router';
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { TranslateService } from '@ngx-translate/core';
@@ -31,6 +31,7 @@ import { updateUserLang } from '@app/core/settings/settings.utils';
 import { UtilsService } from '@core/services/utils.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { ActionAuthUpdateLastPublicDashboardId } from '../auth/auth.actions';
+import { DOCUMENT } from '@angular/common';
 
 export const SETTINGS_KEY = 'SETTINGS';
 
@@ -43,7 +44,8 @@ export class SettingsEffects {
     private router: Router,
     private localStorageService: LocalStorageService,
     private titleService: TitleService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    @Inject(DOCUMENT) private document: Document,
   ) {
   }
 
@@ -56,7 +58,7 @@ export class SettingsEffects {
     distinctUntilChanged((a, b) => a?.userLang === b?.userLang),
     tap(setting => {
       this.localStorageService.setItem(SETTINGS_KEY, setting);
-      updateUserLang(this.translate, setting.userLang);
+      updateUserLang(this.translate, this.document, setting.userLang);
     })
   ), {dispatch: false});
 

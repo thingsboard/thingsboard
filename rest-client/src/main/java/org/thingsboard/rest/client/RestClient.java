@@ -55,7 +55,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.EventInfo;
-import org.thingsboard.server.common.data.ImageExportData;
+import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.ResourceSubType;
@@ -107,6 +107,7 @@ import org.thingsboard.server.common.data.id.DomainId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.MobileAppId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
@@ -123,8 +124,9 @@ import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.mobile.MobileApp;
-import org.thingsboard.server.common.data.mobile.MobileAppInfo;
+import org.thingsboard.server.common.data.mobile.app.MobileApp;
+import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundle;
+import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundleInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
@@ -1356,13 +1358,17 @@ public class RestClient implements Closeable {
                 }, params).getBody();
     }
 
-    public PageData<DeviceInfo> getTenantDeviceInfos(String type, DeviceProfileId deviceProfileId, PageLink pageLink) {
+    public PageData<DeviceInfo> getTenantDeviceInfos(String type, Boolean active, DeviceProfileId deviceProfileId, PageLink pageLink) {
         Map<String, String> params = new HashMap<>();
         params.put("type", type);
         params.put("deviceProfileId", deviceProfileId != null ? deviceProfileId.toString() : null);
+        if (active != null) {
+            params.put("active", active.toString());
+        }
         addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
-                baseURL + "/api/tenant/deviceInfos?type={type}&deviceProfileId={deviceProfileId}&" + getUrlParams(pageLink),
+                baseURL + "/api/tenant/deviceInfos?type={type}&deviceProfileId={deviceProfileId}&"
+                        + (active != null ? "active={active}&" : "") + getUrlParams(pageLink),
                 HttpMethod.GET, HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<DeviceInfo>>() {
                 }, params).getBody();
@@ -2107,12 +2113,12 @@ public class RestClient implements Closeable {
                 }, params).getBody();
     }
 
-    public List<OAuth2ClientInfo> getTenantOAuth2Clients() {
+    public PageData<OAuth2ClientInfo> getTenantOAuth2Clients() {
         return restTemplate.exchange(
                 baseURL + "/api/oauth2/client/infos",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<List<OAuth2ClientInfo>>() {
+                new ParameterizedTypeReference<PageData<OAuth2ClientInfo>>() {
                 }).getBody();
     }
 
@@ -2137,12 +2143,12 @@ public class RestClient implements Closeable {
         restTemplate.delete(baseURL + "/api/oauth2/client/{id}", oAuth2ClientId.getId());
     }
 
-    public List<DomainInfo> getTenantDomainInfos() {
+    public PageData<DomainInfo> getTenantDomainInfos() {
         return restTemplate.exchange(
                 baseURL + "/api/domain/infos",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<List<DomainInfo>>() {
+                new ParameterizedTypeReference<PageData<DomainInfo>>() {
                 }).getBody();
     }
 
@@ -2171,19 +2177,19 @@ public class RestClient implements Closeable {
         restTemplate.postForLocation(baseURL + "/api/domain/{id}/oauth2Clients", oauth2ClientIds, domainId.getId());
     }
 
-    public List<DomainInfo> getTenantMobileAppInfos() {
+    public PageData<MobileApp> getTenantMobileApps() {
         return restTemplate.exchange(
-                baseURL + "/api/mobileApp/infos",
+                baseURL + "/api/mobile/app",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<List<DomainInfo>>() {
+                new ParameterizedTypeReference<PageData<MobileApp>>() {
                 }).getBody();
     }
 
-    public Optional<MobileAppInfo> getMobileAppInfoById(MobileAppId mobileAppId) {
+    public Optional<MobileApp> getMobileAppById(MobileAppId mobileAppId) {
         try {
-            ResponseEntity<MobileAppInfo> mobileAppInfo = restTemplate.getForEntity(baseURL + "/api/mobileApp/info/{id}", MobileAppInfo.class, mobileAppId.getId());
-            return Optional.ofNullable(mobileAppInfo.getBody());
+            ResponseEntity<MobileApp> mobileApp = restTemplate.getForEntity(baseURL + "/api/mobile/app/{id}", MobileApp.class, mobileAppId.getId());
+            return Optional.ofNullable(mobileApp.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
                 return Optional.empty();
@@ -2194,15 +2200,45 @@ public class RestClient implements Closeable {
     }
 
     public MobileApp saveMobileApp(MobileApp mobileApp) {
-        return restTemplate.postForEntity(baseURL + "/api/mobileApp", mobileApp, MobileApp.class).getBody();
+        return restTemplate.postForEntity(baseURL + "/api/mobile/app", mobileApp, MobileApp.class).getBody();
     }
 
     public void deleteMobileApp(MobileAppId mobileAppId) {
-        restTemplate.delete(baseURL + "/api/mobileApp/{id}", mobileAppId.getId());
+        restTemplate.delete(baseURL + "/api/mobile/app/{id}", mobileAppId.getId());
     }
 
-    public void updateMobileAppOauth2Clients(MobileAppId mobileAppId, UUID[] oauth2ClientIds) {
-        restTemplate.postForLocation(baseURL + "/api/mobileApp/{id}/oauth2Clients", oauth2ClientIds, mobileAppId.getId());
+    public PageData<MobileAppBundleInfo> getTenantMobileBundleInfos() {
+        return restTemplate.exchange(
+                baseURL + "/api/mobile/bundle/infos",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<MobileAppBundleInfo>>() {
+                }).getBody();
+    }
+
+    public Optional<MobileAppBundle> getMobileBundleById(MobileAppBundleId mobileAppBundleId) {
+        try {
+            ResponseEntity<MobileAppBundle> mobileApp = restTemplate.getForEntity(baseURL + "/api/mobile/bundle/{id}", MobileAppBundle.class, mobileAppBundleId.getId());
+            return Optional.ofNullable(mobileApp.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public MobileAppBundle saveMobileBundle(MobileAppBundle mobileAppBundle) {
+        return restTemplate.postForEntity(baseURL + "/api/mobile/bundle", mobileAppBundle, MobileAppBundle.class).getBody();
+    }
+
+    public void deleteMobileBundle(MobileAppBundleId mobileAppBundleId) {
+        restTemplate.delete(baseURL + "/api/mobile/bundle/{id}", mobileAppBundleId.getId());
+    }
+
+    public void updateMobileAppBundleOauth2Clients(MobileAppBundleId mobileAppBundleId, UUID[] oauth2ClientIds) {
+        restTemplate.postForLocation(baseURL + "/api/mobile/bundle/{id}/oauth2Clients", oauth2ClientIds, mobileAppBundleId.getId());
     }
 
     public String getLoginProcessingUrl() {
@@ -3802,14 +3838,14 @@ public class RestClient implements Closeable {
         return IOUtils.toByteArray(image.getInputStream());
     }
 
-    public ImageExportData exportImage(String type, String key) {
-        return restTemplate.getForObject(baseURL + "/api/images/{type}/{key}/export", ImageExportData.class, Map.of(
+    public ResourceExportData exportImage(String type, String key) {
+        return restTemplate.getForObject(baseURL + "/api/images/{type}/{key}/export", ResourceExportData.class, Map.of(
                 "type", type,
                 "key", key
         ));
     }
 
-    public TbResourceInfo importImage(ImageExportData exportData) {
+    public TbResourceInfo importImage(ResourceExportData exportData) {
         return restTemplate.exchange(baseURL + "/api/image/import", HttpMethod.PUT, new HttpEntity<>(exportData), TbResourceInfo.class).getBody();
     }
 

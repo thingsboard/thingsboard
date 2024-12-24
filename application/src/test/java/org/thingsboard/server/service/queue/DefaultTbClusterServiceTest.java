@@ -294,7 +294,13 @@ public class DefaultTbClusterServiceTest {
         TbQueueCallback callback = mock(TbQueueCallback.class);
 
         TenantId tenantId = TenantId.fromUUID(UUID.fromString("3c8bd350-1239-4a3b-b9c3-4dd76f8e20f1"));
-        TbMsg requestMsg = TbMsg.newMsg(DataConstants.HP_QUEUE_NAME, TbMsgType.REST_API_REQUEST, tenantId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg requestMsg = TbMsg.newMsg()
+                .queueName(DataConstants.HP_QUEUE_NAME)
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(tenantId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
 
         when(producerProvider.getRuleEngineMsgProducer()).thenReturn(tbREQueueProducer);
 
@@ -308,7 +314,12 @@ public class DefaultTbClusterServiceTest {
     public void testPushMsgToRuleEngineWithTenantIdIsNullUuidAndEntityIsDevice() {
         TenantId tenantId = TenantId.SYS_TENANT_ID;
         DeviceId deviceId = new DeviceId(UUID.fromString("aa6d112d-2914-4a22-a9e3-bee33edbdb14"));
-        TbMsg requestMsg = TbMsg.newMsg(TbMsgType.REST_API_REQUEST, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg requestMsg = TbMsg.newMsg()
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         TbQueueCallback callback = mock(TbQueueCallback.class);
 
         clusterService.pushMsgToRuleEngine(tenantId, deviceId, requestMsg, false, callback);
@@ -324,7 +335,13 @@ public class DefaultTbClusterServiceTest {
         TenantId tenantId = TenantId.fromUUID(UUID.fromString("3c8bd350-1239-4a3b-b9c3-4dd76f8e20f1"));
         DeviceId deviceId = new DeviceId(UUID.fromString("adbb9d41-3367-40fd-9e74-7dd7cc5d30cf"));
         DeviceProfile deviceProfile = new DeviceProfile(new DeviceProfileId(UUID.fromString("552f5d6d-0b2b-43e1-a7d2-a51cb2a96927")));
-        TbMsg requestMsg = TbMsg.newMsg(DataConstants.HP_QUEUE_NAME, TbMsgType.REST_API_REQUEST, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg requestMsg = TbMsg.newMsg()
+                .queueName(DataConstants.HP_QUEUE_NAME)
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
 
         when(deviceProfileCache.get(any(TenantId.class), any(DeviceId.class))).thenReturn(deviceProfile);
         when(producerProvider.getRuleEngineMsgProducer()).thenReturn(tbREQueueProducer);
@@ -344,7 +361,12 @@ public class DefaultTbClusterServiceTest {
         DeviceId deviceId = new DeviceId(UUID.fromString("016c2abb-f46f-49f9-a83d-4d28b803cfe6"));
         DeviceProfile deviceProfile = new DeviceProfile(new DeviceProfileId(UUID.fromString("dc5766e2-1a32-4022-859b-743050097ab7")));
         deviceProfile.setDefaultQueueName(DataConstants.MAIN_QUEUE_NAME);
-        TbMsg requestMsg = TbMsg.newMsg(TbMsgType.REST_API_REQUEST, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg requestMsg = TbMsg.newMsg()
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
 
         when(deviceProfileCache.get(any(TenantId.class), any(DeviceId.class))).thenReturn(deviceProfile);
         when(producerProvider.getRuleEngineMsgProducer()).thenReturn(tbREQueueProducer);
@@ -352,7 +374,7 @@ public class DefaultTbClusterServiceTest {
         clusterService.pushMsgToRuleEngine(tenantId, deviceId, requestMsg, false, callback);
 
         verify(producerProvider).getRuleEngineMsgProducer();
-        TbMsg expectedMsg = TbMsg.transformMsgQueueName(requestMsg, DataConstants.MAIN_QUEUE_NAME);
+        TbMsg expectedMsg = requestMsg.transform(DataConstants.MAIN_QUEUE_NAME);
         ArgumentCaptor<TbMsg> actualMsg = ArgumentCaptor.forClass(TbMsg.class);
         verify(ruleEngineProducerService).sendToRuleEngine(eq(tbREQueueProducer), eq(tenantId), actualMsg.capture(), eq(callback));
         assertThat(actualMsg.getValue()).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);
@@ -378,12 +400,12 @@ public class DefaultTbClusterServiceTest {
         device.setDeviceProfileId(deviceProfileId);
 
         // device updated
-        TbMsg tbMsg = TbMsg.builder().internalType(TbMsgType.ENTITY_UPDATED).build();
+        TbMsg tbMsg = TbMsg.newMsg().type(TbMsgType.ENTITY_UPDATED).build();
         ((DefaultTbClusterService) clusterService).getRuleEngineProfileForEntityOrElseNull(tenantId, deviceId, tbMsg);
         verify(deviceProfileCache, times(1)).get(tenantId, deviceId);
 
         // device deleted
-        tbMsg = TbMsg.builder().internalType(TbMsgType.ENTITY_DELETED).data(JacksonUtil.toString(device)).build();
+        tbMsg = TbMsg.newMsg().type(TbMsgType.ENTITY_DELETED).data(JacksonUtil.toString(device)).build();
         ((DefaultTbClusterService) clusterService).getRuleEngineProfileForEntityOrElseNull(tenantId, deviceId, tbMsg);
         verify(deviceProfileCache, times(1)).get(tenantId, deviceProfileId);
     }
@@ -398,12 +420,12 @@ public class DefaultTbClusterServiceTest {
         asset.setAssetProfileId(assetProfileId);
 
         // asset updated
-        TbMsg tbMsg = TbMsg.builder().internalType(TbMsgType.ENTITY_UPDATED).build();
+        TbMsg tbMsg = TbMsg.newMsg().type(TbMsgType.ENTITY_UPDATED).build();
         ((DefaultTbClusterService) clusterService).getRuleEngineProfileForEntityOrElseNull(tenantId, assetId, tbMsg);
         verify(assetProfileCache, times(1)).get(tenantId, assetId);
 
         // asset deleted
-        tbMsg = TbMsg.builder().internalType(TbMsgType.ENTITY_DELETED).data(JacksonUtil.toString(asset)).build();
+        tbMsg = TbMsg.newMsg().type(TbMsgType.ENTITY_DELETED).data(JacksonUtil.toString(asset)).build();
         ((DefaultTbClusterService) clusterService).getRuleEngineProfileForEntityOrElseNull(tenantId, assetId, tbMsg);
         verify(assetProfileCache, times(1)).get(tenantId, assetProfileId);
     }

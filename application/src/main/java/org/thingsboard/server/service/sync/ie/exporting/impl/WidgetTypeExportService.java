@@ -36,7 +36,6 @@ public class WidgetTypeExportService extends BaseEntityExportService<WidgetTypeI
         if (widgetTypeDetails.getTenantId() == null || widgetTypeDetails.getTenantId().isNullUid()) {
             throw new IllegalArgumentException("Export of system Widget Type is not allowed");
         }
-        imageService.inlineImages(widgetTypeDetails);
     }
 
     @Override

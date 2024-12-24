@@ -151,6 +151,7 @@ public class TenantProfileController extends BaseController {
                     "      \"maxJSExecutions\": 5000000,\n" +
                     "      \"maxDPStorageDays\": 0,\n" +
                     "      \"maxRuleNodeExecutionsPerMessage\": 50,\n" +
+                    "      \"maxDebugModeDurationMinutes\": 15,\n" +
                     "      \"maxEmails\": 0,\n" +
                     "      \"maxSms\": 0,\n" +
                     "      \"maxCreatedAlarms\": 1000,\n" +

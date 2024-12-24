@@ -28,13 +28,7 @@ case $i in
 esac
 done
 
-if [[ -z "${FROM_VERSION// }" ]]; then
-    echo "--fromVersion parameter is invalid or unspecified!"
-    echo "Usage: docker-upgrade-tb.sh --fromVersion={VERSION}"
-    exit 1
-else
-    fromVersion="${FROM_VERSION// }"
-fi
+fromVersion="${FROM_VERSION// }"
 
 set -e
 

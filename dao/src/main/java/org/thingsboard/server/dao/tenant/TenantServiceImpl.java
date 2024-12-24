@@ -38,7 +38,7 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
-import org.thingsboard.server.dao.mobile.MobileAppSettingsService;
+import org.thingsboard.server.dao.mobile.QrCodeSettingService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -79,7 +79,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     @Autowired
     private NotificationSettingsService notificationSettingsService;
     @Autowired
-    private MobileAppSettingsService mobileAppSettingsService;
+    private QrCodeSettingService qrCodeSettingService;
     @Autowired
     private TenantDataValidator tenantValidator;
     @Autowired
@@ -164,7 +164,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
 
         userService.deleteAllByTenantId(tenantId);
         adminSettingsService.deleteAdminSettingsByTenantId(tenantId);
-        mobileAppSettingsService.deleteByTenantId(tenantId);
+        qrCodeSettingService.deleteByTenantId(tenantId);
         notificationSettingsService.deleteNotificationSettings(tenantId);
 
         tenantDao.removeById(tenantId, tenantId.getId());
@@ -178,7 +178,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
                 EntityType.TB_RESOURCE, EntityType.OTA_PACKAGE, EntityType.RPC, EntityType.QUEUE,
                 EntityType.NOTIFICATION_REQUEST, EntityType.NOTIFICATION_RULE, EntityType.NOTIFICATION_TEMPLATE,
                 EntityType.NOTIFICATION_TARGET, EntityType.QUEUE_STATS, EntityType.CUSTOMER,
-                EntityType.DOMAIN, EntityType.MOBILE_APP, EntityType.OAUTH2_CLIENT
+                EntityType.DOMAIN, EntityType.MOBILE_APP_BUNDLE, EntityType.MOBILE_APP, EntityType.OAUTH2_CLIENT
         );
     }
 
@@ -235,7 +235,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
 
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.ofNullable(findTenantById(new TenantId(entityId.getId())));
+        return Optional.ofNullable(findTenantById(TenantId.fromUUID(entityId.getId())));
     }
 
     @Override

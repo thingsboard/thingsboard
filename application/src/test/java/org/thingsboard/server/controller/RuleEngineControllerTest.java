@@ -62,7 +62,12 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
     @Test
     public void testHandleRuleEngineRequestWithMsgOriginatorUser() throws Exception {
         loginSysAdmin();
-        TbMsg responseMsg = TbMsg.newMsg(TbMsgType.REST_API_REQUEST, currentUserId, TbMsgMetaData.EMPTY, RESPONSE_BODY);
+        TbMsg responseMsg = TbMsg.newMsg()
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(currentUserId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(RESPONSE_BODY)
+                .build();
         mockRestApiCallToRuleEngine(responseMsg);
 
         JsonNode apiResponse = doPostAsyncWithTypedResponse("/api/rule-engine/", REQUEST_BODY, new TypeReference<>() {
@@ -86,7 +91,12 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
         Device device = createDevice("Test", "123");
         DeviceId deviceId = device.getId();
-        TbMsg responseMsg = TbMsg.newMsg(TbMsgType.REST_API_REQUEST, deviceId, TbMsgMetaData.EMPTY, RESPONSE_BODY);
+        TbMsg responseMsg = TbMsg.newMsg()
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(RESPONSE_BODY)
+                .build();
         mockRestApiCallToRuleEngine(responseMsg);
 
         JsonNode apiResponse = doPostAsyncWithTypedResponse("/api/rule-engine/DEVICE/" + deviceId.getId(), REQUEST_BODY, new TypeReference<>() {
@@ -110,7 +120,12 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
         Device device = createDevice("Test", "123");
         DeviceId deviceId = device.getId();
-        TbMsg responseMsg = TbMsg.newMsg(TbMsgType.REST_API_REQUEST, deviceId, TbMsgMetaData.EMPTY, RESPONSE_BODY);
+        TbMsg responseMsg = TbMsg.newMsg()
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(RESPONSE_BODY)
+                .build();
         mockRestApiCallToRuleEngine(responseMsg);
 
         JsonNode apiResponse = doPostAsyncWithTypedResponse("/api/rule-engine/DEVICE/" + deviceId.getId() + "/15000", REQUEST_BODY, new TypeReference<>() {
@@ -156,7 +171,13 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
         Device device = createDevice("Test", "123");
         DeviceId deviceId = device.getId();
-        TbMsg responseMsg = TbMsg.newMsg(DataConstants.HP_QUEUE_NAME, TbMsgType.REST_API_REQUEST, deviceId, TbMsgMetaData.EMPTY, RESPONSE_BODY);
+        TbMsg responseMsg = TbMsg.newMsg()
+                .queueName(DataConstants.HP_QUEUE_NAME)
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(RESPONSE_BODY)
+                .build();
         mockRestApiCallToRuleEngine(responseMsg);
 
         JsonNode apiResponse = doPostAsyncWithTypedResponse("/api/rule-engine/DEVICE/" + deviceId.getId() + "/HighPriority/1000", REQUEST_BODY, new TypeReference<>() {
@@ -195,7 +216,13 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
         assignDeviceToCustomer(deviceId, customerId);
         loginCustomerUser();
 
-        TbMsg responseMsg = TbMsg.newMsg(TbMsgType.REST_API_REQUEST, deviceId, customerId, TbMsgMetaData.EMPTY, RESPONSE_BODY);
+        TbMsg responseMsg = TbMsg.newMsg()
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(deviceId)
+                .customerId(customerId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(RESPONSE_BODY)
+                .build();
         mockRestApiCallToRuleEngine(responseMsg);
 
         JsonNode apiResponse = doPostAsyncWithTypedResponse("/api/rule-engine/DEVICE/" + deviceId.getId(), REQUEST_BODY, new TypeReference<>() {

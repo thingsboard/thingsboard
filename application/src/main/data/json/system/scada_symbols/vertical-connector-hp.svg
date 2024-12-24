@@ -1,0 +1,174 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="200" height="200" fill="none" version="1.1" viewBox="0 0 200 200"><tb:metadata xmlns=""><![CDATA[{
+  "title": "HP Vertical connector",
+  "description": "Vertical connector",
+  "widgetSizeX": 1,
+  "widgetSizeY": 1,
+  "tags": [
+    {
+      "tag": "arrow",
+      "stateRenderFunction": "var arrow = ctx.values.arrow;\nif (arrow) {\n    element.show();\n    var arrowDirection = ctx.values.arrowDirection;\n    var direticon = element.remember('direticon');\n    var angle = arrowDirection ? 0 : 180;\n    if (!direticon) {\n        element.transform({rotate: angle});\n    } else {\n        ctx.api.transform({rotate: angle, originY: 100});\n        element.remember('direticon', false);\n    }\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
+      "tag": "line",
+      "stateRenderFunction": "element.stroke(ctx.properties.lineColor);\nif (ctx.properties.mainLine) {\n    element.attr({'stroke-width': ctx.properties.mainLineSize});\n} else {\n    element.attr({'stroke-width': ctx.properties.secondaryLineSize});\n}",
+      "actions": null
+    }
+  ],
+  "behavior": [
+    {
+      "id": "arrow",
+      "name": "{i18n:scada.symbol.arrow-presence}",
+      "hint": "{i18n:scada.symbol.arrow-presence-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": "{i18n:scada.symbol.present}",
+      "falseLabel": "{i18n:scada.symbol.absent}",
+      "stateLabel": "{i18n:scada.symbol.arrow-present}",
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": true,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "arrowDirection",
+      "name": "{i18n:scada.symbol.arrow-direction}",
+      "hint": "{i18n:scada.symbol.arrow-direction-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": "{i18n:scada.symbol.forward}",
+      "falseLabel": "{i18n:scada.symbol.reverse}",
+      "stateLabel": "{i18n:scada.symbol.forward}",
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": true,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    }
+  ],
+  "properties": [
+    {
+      "id": "mainLine",
+      "name": "{i18n:scada.symbol.main-line}",
+      "type": "switch",
+      "default": true,
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "mainLineSize",
+      "name": "{i18n:scada.symbol.line}",
+      "type": "number",
+      "default": 6,
+      "required": true,
+      "subLabel": "Main",
+      "divider": true,
+      "fieldSuffix": "px",
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": 0,
+      "max": 99,
+      "step": 1
+    },
+    {
+      "id": "secondaryLineSize",
+      "name": "{i18n:scada.symbol.line}",
+      "type": "number",
+      "default": 2,
+      "required": true,
+      "subLabel": "Secondary",
+      "divider": null,
+      "fieldSuffix": "px",
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": 0,
+      "max": 99,
+      "step": 1
+    },
+    {
+      "id": "lineColor",
+      "name": "{i18n:scada.symbol.line-color}",
+      "type": "color",
+      "default": "#1A1A1A",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "arrowColor",
+      "name": "{i18n:scada.symbol.arrow-color}",
+      "type": "color",
+      "default": "#1A1A1A",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    }
+  ]
+}]]></tb:metadata>
+<path d="M100 200L100 0" stroke="#1A1A1A" stroke-width="6" tb:tag="line"/><path d="M100 71L129 129H71L100 71Z" fill="#1A1A1A" tb:tag="arrow"/>
+</svg>

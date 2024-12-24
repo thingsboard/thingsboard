@@ -27,17 +27,16 @@ import { AppState } from '@core/core.state';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { RuleChainType } from '@shared/models/rule-chain.models';
 import { DebugRuleNodeEventBody } from '@shared/models/event.models';
-import { TranslateService } from '@ngx-translate/core';
+import { HasEntityDebugSettings } from '@shared/models/entity.models';
 
 export interface RuleNodeConfiguration {
   [key: string]: any;
 }
 
-export interface RuleNode extends BaseData<RuleNodeId> {
+export interface RuleNode extends BaseData<RuleNodeId>, HasEntityDebugSettings {
   ruleChainId?: RuleChainId;
   type: string;
   name: string;
-  debugMode: boolean;
   singletonMode: boolean;
   queueName?: string;
   configurationVersion?: number;
@@ -332,7 +331,7 @@ export interface RuleNodeComponentDescriptor extends ComponentDescriptor {
   configurationDescriptor?: RuleNodeConfigurationDescriptor;
 }
 
-export interface FcRuleNodeType extends FcNode {
+export interface FcRuleNodeType extends FcNode, HasEntityDebugSettings {
   component?: RuleNodeComponentDescriptor;
   singletonMode?: boolean;
   queueName?: string;
@@ -345,7 +344,6 @@ export interface FcRuleNode extends FcRuleNodeType {
   ruleNodeId?: RuleNodeId;
   additionalInfo?: any;
   configuration?: RuleNodeConfiguration;
-  debugMode?: boolean;
   error?: string;
   highlighted?: boolean;
   componentClazz?: string;
@@ -493,7 +491,7 @@ const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode': 'ruleNodeSaveAttributes',
   'org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode': 'ruleNodeSaveTimeseries',
   'org.thingsboard.rule.engine.action.TbSaveToCustomCassandraTableNode': 'ruleNodeSaveToCustomTable',
-  'org.thingsboard.rule.engine.aws.lambda.TbLambdaNode': 'ruleNodeAwsLambda',
+  'org.thingsboard.rule.engine.aws.lambda.TbAwsLambdaNode': 'ruleNodeAwsLambda',
   'org.thingsboard.rule.engine.aws.sns.TbSnsNode': 'ruleNodeAwsSns',
   'org.thingsboard.rule.engine.aws.sqs.TbSqsNode': 'ruleNodeAwsSqs',
   'org.thingsboard.rule.engine.kafka.TbKafkaNode': 'ruleNodeKafka',
@@ -507,8 +505,12 @@ const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.edge.TbMsgPushToEdgeNode': 'ruleNodePushToEdge',
   'org.thingsboard.rule.engine.flow.TbRuleChainInputNode': 'ruleNodeRuleChain',
   'org.thingsboard.rule.engine.flow.TbRuleChainOutputNode': 'ruleNodeOutputNode',
+  'org.thingsboard.rule.engine.flow.TbAckNode': 'ruleNodeAcknowledge',
+  'org.thingsboard.rule.engine.flow.TbCheckpointNode': 'ruleNodeCheckpoint',
   'org.thingsboard.rule.engine.math.TbMathNode': 'ruleNodeMath',
   'org.thingsboard.rule.engine.rest.TbSendRestApiCallReplyNode': 'ruleNodeRestCallReply',
+  'org.thingsboard.rule.engine.notification.TbNotificationNode': 'ruleNodeSendNotification',
+  'org.thingsboard.rule.engine.notification.TbSlackNode': 'ruleNodeSendSlack',
 };
 
 export function getRuleNodeHelpLink(component: RuleNodeComponentDescriptor): string {

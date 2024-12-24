@@ -107,6 +107,7 @@
             <ng-template matExpansionPanelContent>
               <tb-js-func formControlName="showWidgetActionFunction"
                           functionTitle="{{ 'widget-config.show-action-function' | translate }}"
+                          withModules
                           [helpId]="getWidgetActionFunctionHelpId()"
                           [functionArgs]="['widgetContext', 'data']"
                           [globalVariables]="functionScopeVariables"

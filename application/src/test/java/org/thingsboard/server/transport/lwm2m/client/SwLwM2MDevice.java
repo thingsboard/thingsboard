@@ -24,12 +24,11 @@ import org.eclipse.leshan.core.request.argument.Arguments;
 import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.core.response.WriteResponse;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 
 import javax.security.auth.Destroyable;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -39,7 +38,7 @@ public class SwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
 
     private static final List<Integer> supportedResources = Arrays.asList(0, 1, 2, 3, 4, 6, 7, 9);
 
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName(getClass().getSimpleName() + "-test-scope"));
+    private final ScheduledExecutorService scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor(getClass().getSimpleName() + "-test-scope");
 
     private final AtomicInteger state = new AtomicInteger(0);
 

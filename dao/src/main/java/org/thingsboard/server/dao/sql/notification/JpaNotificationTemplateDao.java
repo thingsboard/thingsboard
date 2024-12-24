@@ -31,6 +31,7 @@ import org.thingsboard.server.dao.notification.NotificationTemplateDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -53,7 +54,7 @@ public class JpaNotificationTemplateDao extends JpaAbstractDao<NotificationTempl
     }
 
     @Override
-    public int countByTenantIdAndNotificationTypes(TenantId tenantId, List<NotificationType> notificationTypes) {
+    public int countByTenantIdAndNotificationTypes(TenantId tenantId, Collection<NotificationType> notificationTypes) {
         return notificationTemplateRepository.countByTenantIdAndNotificationTypes(tenantId.getId(), notificationTypes);
     }
 

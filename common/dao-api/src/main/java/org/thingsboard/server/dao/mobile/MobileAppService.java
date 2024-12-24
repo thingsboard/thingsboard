@@ -15,30 +15,27 @@
  */
 package org.thingsboard.server.dao.mobile;
 
+import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.MobileAppId;
-import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.mobile.MobileApp;
-import org.thingsboard.server.common.data.mobile.MobileAppInfo;
+import org.thingsboard.server.common.data.mobile.app.MobileApp;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.EntityDaoService;
-
-import java.util.List;
 
 public interface MobileAppService extends EntityDaoService {
 
     MobileApp saveMobileApp(TenantId tenantId, MobileApp mobileApp);
 
-    void deleteMobileAppById(TenantId tenantId, MobileAppId mobileAppId);
-
     MobileApp findMobileAppById(TenantId tenantId, MobileAppId mobileAppId);
 
-    PageData<MobileAppInfo> findMobileAppInfosByTenantId(TenantId tenantId, PageLink pageLink);
+    PageData<MobileApp> findMobileAppsByTenantId(TenantId tenantId, PlatformType platformType, PageLink pageLink);
 
-    MobileAppInfo findMobileAppInfoById(TenantId tenantId, MobileAppId mobileAppId);
+    MobileApp findByBundleIdAndPlatformType(TenantId tenantId, MobileAppBundleId mobileAppBundleId, PlatformType platformType);
 
-    void updateOauth2Clients(TenantId tenantId, MobileAppId mobileAppId, List<OAuth2ClientId> oAuth2ClientIds);
+    MobileApp findMobileAppByPkgNameAndPlatformType(String pkgName, PlatformType platform);
 
-    void deleteMobileAppsByTenantId(TenantId tenantId);
+    void deleteMobileAppById(TenantId tenantId, MobileAppId mobileAppId);
+
 }

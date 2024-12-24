@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import jakarta.mail.MessagingException;
+import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolation;
 import lombok.Getter;
@@ -28,6 +29,7 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -51,6 +53,7 @@ import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.HomeDashboardInfo;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
@@ -89,7 +92,9 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.HasId;
+import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.MobileAppId;
+import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.QueueId;
@@ -103,7 +108,9 @@ import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
-import org.thingsboard.server.common.data.mobile.MobileApp;
+import org.thingsboard.server.common.data.mobile.app.MobileApp;
+import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundle;
+import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
@@ -138,8 +145,10 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.mobile.MobileAppBundleService;
 import org.thingsboard.server.dao.mobile.MobileAppService;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
@@ -178,7 +187,9 @@ import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
+import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -190,6 +201,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPOutputStream;
 
 import static org.thingsboard.server.common.data.StringUtils.isNotEmpty;
 import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIELD;
@@ -200,6 +212,11 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @TbCoreComponent
 public abstract class BaseController {
+
+    protected static final String DASHBOARD_ID = "dashboardId";
+
+    protected static final String HOME_DASHBOARD_ID = "homeDashboardId";
+    protected static final String HOME_DASHBOARD_HIDE_TOOLBAR = "homeDashboardHideToolbar";
 
     protected final Logger log = org.slf4j.LoggerFactory.getLogger(getClass());
 
@@ -264,6 +281,9 @@ public abstract class BaseController {
 
     @Autowired
     protected MobileAppService mobileAppService;
+
+    @Autowired
+    protected MobileAppBundleService mobileAppBundleService;
 
     @Autowired
     protected OAuth2ConfigTemplateService oAuth2ConfigTemplateService;
@@ -348,6 +368,9 @@ public abstract class BaseController {
 
     @Autowired
     protected CalculatedFieldService calculatedFieldService;
+
+    @Autowired
+    protected NotificationTargetService notificationTargetService;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -651,6 +674,9 @@ public abstract class BaseController {
                 case MOBILE_APP:
                     checkMobileAppId(new MobileAppId(entityId.getId()), operation);
                     return;
+                case MOBILE_APP_BUNDLE:
+                    checkMobileAppBundleId(new MobileAppBundleId(entityId.getId()), operation);
+                    return;
                 case CALCULATED_FIELD:
                     checkCalculatedFieldId(new CalculatedFieldId(entityId.getId()), operation);
                     return;
@@ -842,6 +868,14 @@ public abstract class BaseController {
         return checkEntityId(mobileAppId, mobileAppService::findMobileAppById, operation);
     }
 
+    MobileAppBundle checkMobileAppBundleId(MobileAppBundleId mobileAppBundleId, Operation operation) throws ThingsboardException {
+        return checkEntityId(mobileAppBundleId, mobileAppBundleService::findMobileAppBundleById, operation);
+    }
+
+    NotificationTarget checkNotificationTargetId(NotificationTargetId notificationTargetId, Operation operation) throws ThingsboardException {
+        return checkEntityId(notificationTargetId, notificationTargetService::findNotificationTargetById, operation);
+    }
+
     protected <I extends EntityId> I emptyId(EntityType entityType) {
         return (I) EntityIdFactory.getByTypeAndUuid(entityType, ModelConstants.NULL_UUID);
     }
@@ -924,6 +958,38 @@ public abstract class BaseController {
         }
     }
 
+    protected HomeDashboardInfo getHomeDashboardInfo(SecurityUser securityUser, JsonNode additionalInfo) {
+        HomeDashboardInfo homeDashboardInfo = extractHomeDashboardInfoFromAdditionalInfo(additionalInfo);
+        if (homeDashboardInfo == null) {
+            if (securityUser.isCustomerUser()) {
+                Customer customer = customerService.findCustomerById(securityUser.getTenantId(), securityUser.getCustomerId());
+                homeDashboardInfo = extractHomeDashboardInfoFromAdditionalInfo(customer.getAdditionalInfo());
+            }
+            if (homeDashboardInfo == null) {
+                Tenant tenant = tenantService.findTenantById(securityUser.getTenantId());
+                homeDashboardInfo = extractHomeDashboardInfoFromAdditionalInfo(tenant.getAdditionalInfo());
+            }
+        }
+        return homeDashboardInfo;
+    }
+
+    private HomeDashboardInfo extractHomeDashboardInfoFromAdditionalInfo(JsonNode additionalInfo) {
+        try {
+            if (additionalInfo != null && additionalInfo.has(HOME_DASHBOARD_ID) && !additionalInfo.get(HOME_DASHBOARD_ID).isNull()) {
+                String strDashboardId = additionalInfo.get(HOME_DASHBOARD_ID).asText();
+                DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
+                checkDashboardId(dashboardId, Operation.READ);
+                boolean hideDashboardToolbar = true;
+                if (additionalInfo.has(HOME_DASHBOARD_HIDE_TOOLBAR)) {
+                    hideDashboardToolbar = additionalInfo.get(HOME_DASHBOARD_HIDE_TOOLBAR).asBoolean();
+                }
+                return new HomeDashboardInfo(dashboardId, hideDashboardToolbar);
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
     protected CalculatedField checkCalculatedFieldId(CalculatedFieldId calculatedFieldId, Operation operation) throws ThingsboardException {
         return checkEntityId(calculatedFieldId, calculatedFieldService::findById, operation);
     }
@@ -958,6 +1024,22 @@ public abstract class BaseController {
             return entityDataSortOrder;
         } else {
             return null;
+        }
+    }
+
+    protected void compressResponseWithGzipIFAccepted(String acceptEncodingHeader, HttpServletResponse response, byte[] content) throws IOException {
+        if (StringUtils.isNotEmpty(acceptEncodingHeader) && acceptEncodingHeader.contains("gzip")) {
+            response.setHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
+            response.setCharacterEncoding(StandardCharsets.UTF_8.displayName());
+            try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(response.getOutputStream())) {
+                gzipOutputStream.write(content);
+                gzipOutputStream.finish();
+            }
+        } else {
+            try (ServletOutputStream outputStream = response.getOutputStream()) {
+                outputStream.write(content);
+                outputStream.flush();
+            }
         }
     }
 

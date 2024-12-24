@@ -25,6 +25,9 @@
           {{ interval.name | translate:interval.translateParams }}
         </mat-option>
       </mat-select>
+      <ng-container matSuffix>
+        <ng-content select="[matSuffix]"></ng-content>
+      </ng-container>
     </mat-form-field>
   </section>
   <section class="tb-form-row column-xs no-border no-padding tb-standard-fields advanced-input"

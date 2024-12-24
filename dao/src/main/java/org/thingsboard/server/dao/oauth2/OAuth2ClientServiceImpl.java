@@ -34,6 +34,7 @@ import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.service.Validator;
 
 import java.util.Comparator;
 import java.util.List;
@@ -44,6 +45,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service("OAuth2ClientService")
 public class OAuth2ClientServiceImpl extends AbstractEntityService implements OAuth2ClientService {
+
+    private static final String PLATFORM_TYPE_IS_REQUIRED = "Platform type is required if package name is specified";
 
     @Autowired
     private OAuth2ClientDao oauth2ClientDao;
@@ -61,7 +64,7 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
 
     @Override
     public List<OAuth2ClientLoginInfo> findOAuth2ClientLoginInfosByMobilePkgNameAndPlatformType(String pkgName, PlatformType platformType) {
-        log.trace("Executing findOAuth2ClientLoginInfosByMobilePkgNameAndPlatformType pkgName=[{}] platformType=[{}]",pkgName, platformType);
+        log.trace("Executing findOAuth2ClientLoginInfosByMobilePkgNameAndPlatformType pkgName=[{}] platformType=[{}]", pkgName, platformType);
         return oauth2ClientDao.findEnabledByPkgNameAndPlatformType(pkgName, platformType)
                 .stream()
                 .map(OAuth2Utils::toClientLoginInfo)
@@ -90,9 +93,10 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
     }
 
     @Override
-    public String findAppSecret(OAuth2ClientId oAuth2ClientId, String pkgName) {
-        log.trace("Executing findAppSecret oAuth2ClientId = [{}] pkgName = [{}]", oAuth2ClientId, pkgName);
-        return oauth2ClientDao.findAppSecret(oAuth2ClientId.getId(), pkgName);
+    public String findAppSecret(OAuth2ClientId oAuth2ClientId, String pkgName, PlatformType platformType) {
+        log.trace("Executing findAppSecret oAuth2ClientId = [{}] pkgName = [{}], platform [{}]", oAuth2ClientId, pkgName, platformType);
+        Validator.checkNotNull(platformType, PLATFORM_TYPE_IS_REQUIRED);
+        return oauth2ClientDao.findAppSecret(oAuth2ClientId.getId(), pkgName, platformType);
     }
 
     @Override

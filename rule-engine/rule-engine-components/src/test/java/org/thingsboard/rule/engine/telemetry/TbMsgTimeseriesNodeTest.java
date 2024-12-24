@@ -25,12 +25,14 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.ThrowingConsumer;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -54,10 +56,8 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.assertArg;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -96,7 +96,12 @@ public class TbMsgTimeseriesNodeTest {
     @EnumSource(TbMsgType.class)
     public void givenMsgTypeAndEmptyMsgData_whenOnMsg_thenVerifyFailureMsg(TbMsgType msgType) throws TbNodeException {
         init();
-        TbMsg msg = TbMsg.newMsg(msgType, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_ARRAY);
+        TbMsg msg = TbMsg.newMsg()
+                .type(msgType)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_ARRAY)
+                .build();
         node.onMsg(ctxMock, msg);
 
         ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
@@ -122,24 +127,33 @@ public class TbMsgTimeseriesNodeTest {
                     "humidity": 77
                 }
                 """;
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(data)
+                .build();
 
         when(ctxMock.getTelemetryService()).thenReturn(telemetryServiceMock);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
         doAnswer(invocation -> {
-            TelemetryNodeCallback callback = invocation.getArgument(5);
-            callback.onSuccess(null);
+            TimeseriesSaveRequest request = invocation.getArgument(0);
+            request.getCallback().onSuccess(null);
             return null;
-        }).when(telemetryServiceMock).saveAndNotify(any(), any(), any(), anyList(), anyLong(), any());
+        }).when(telemetryServiceMock).saveTimeseries(any(TimeseriesSaveRequest.class));
 
         node.onMsg(ctxMock, msg);
 
         List<TsKvEntry> expectedList = getTsKvEntriesListWithTs(data, System.currentTimeMillis());
-        ArgumentCaptor<List<TsKvEntry>> entryListCaptor = ArgumentCaptor.forClass(List.class);
-        verify(telemetryServiceMock).saveAndNotify(eq(TENANT_ID), isNull(), eq(DEVICE_ID), entryListCaptor.capture(),
-                eq(tenantProfileDefaultStorageTtl), any(TelemetryNodeCallback.class));
-        assertThat(entryListCaptor.getValue()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("ts")
-                .containsExactlyElementsOf(expectedList);
+        verify(telemetryServiceMock).saveTimeseries(assertArg(request -> {
+            assertThat(request.getTenantId()).isEqualTo(TENANT_ID);
+            assertThat(request.getCustomerId()).isNull();
+            assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);
+            assertThat(request.getEntries()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("ts").containsExactlyElementsOf(expectedList);
+            assertThat(request.getTtl()).isEqualTo(tenantProfileDefaultStorageTtl);
+            assertThat(request.isSaveLatest()).isTrue();
+            assertThat(request.getCallback()).isInstanceOf(TelemetryNodeCallback.class);
+        }));
         verify(ctxMock).tellSuccess(msg);
         verifyNoMoreInteractions(ctxMock, telemetryServiceMock);
     }
@@ -159,23 +173,33 @@ public class TbMsgTimeseriesNodeTest {
                 """;
         long ts = System.currentTimeMillis();
         var metadata = Map.of("ts", String.valueOf(ts));
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, new TbMsgMetaData(metadata), data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(new TbMsgMetaData(metadata))
+                .data(data)
+                .build();
 
         when(ctxMock.getTelemetryService()).thenReturn(telemetryServiceMock);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
         doAnswer(invocation -> {
-            TelemetryNodeCallback callback = invocation.getArgument(5);
-            callback.onSuccess(null);
+            TimeseriesSaveRequest request = invocation.getArgument(0);
+            request.getCallback().onSuccess(null);
             return null;
-        }).when(telemetryServiceMock).saveWithoutLatestAndNotify(any(), any(), any(), anyList(), anyLong(), any());
+        }).when(telemetryServiceMock).saveTimeseries(any(TimeseriesSaveRequest.class));
 
         node.onMsg(ctxMock, msg);
 
         List<TsKvEntry> expectedList = getTsKvEntriesListWithTs(data, ts);
-        ArgumentCaptor<List<TsKvEntry>> entryListCaptor = ArgumentCaptor.forClass(List.class);
-        verify(telemetryServiceMock).saveWithoutLatestAndNotify(
-                eq(TENANT_ID), isNull(), eq(DEVICE_ID), entryListCaptor.capture(), eq(ttlFromConfig), any(TelemetryNodeCallback.class));
-        assertThat(entryListCaptor.getValue()).containsExactlyElementsOf(expectedList);
+        verify(telemetryServiceMock).saveTimeseries(assertArg(request -> {
+            assertThat(request.getTenantId()).isEqualTo(TENANT_ID);
+            assertThat(request.getCustomerId()).isNull();
+            assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);
+            assertThat(request.getEntries()).containsExactlyElementsOf(expectedList);
+            assertThat(request.getTtl()).isEqualTo(ttlFromConfig);
+            assertThat(request.isSaveLatest()).isFalse();
+            assertThat(request.getCallback()).isInstanceOf(TelemetryNodeCallback.class);
+        }));
         verify(ctxMock).tellSuccess(msg);
         verifyNoMoreInteractions(ctxMock, telemetryServiceMock);
     }
@@ -197,10 +221,22 @@ public class TbMsgTimeseriesNodeTest {
                 """;
         var metadata = new TbMsgMetaData();
         metadata.putValue("TTL", ttlFromMd);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metadata, data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(metadata)
+                .data(data)
+                .build();
         node.onMsg(ctxMock, msg);
 
-        verify(telemetryServiceMock).saveAndNotify(eq(TENANT_ID), isNull(), eq(DEVICE_ID), anyList(), eq(expectedTtl), any(TelemetryNodeCallback.class));
+        verify(telemetryServiceMock).saveTimeseries(assertArg(request -> {
+            assertThat(request.getTenantId()).isEqualTo(TENANT_ID);
+            assertThat(request.getCustomerId()).isNull();
+            assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);
+            assertThat(request.getTtl()).isEqualTo(expectedTtl);
+            assertThat(request.isSaveLatest()).isTrue();
+            assertThat(request.getCallback()).isInstanceOf(TelemetryNodeCallback.class);
+        }));
     }
 
     private static Stream<Arguments> givenTtlFromConfigAndTtlFromMd_whenOnMsg_thenVerifyTtl() {

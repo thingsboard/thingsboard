@@ -251,4 +251,8 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
         return hasher.hash().toString();
     }
 
+    @Override
+    protected long getMaxEvalRequestsTimeout() {
+        return maxInvokeRequestsTimeout * 2;
+    }
 }

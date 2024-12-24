@@ -56,7 +56,7 @@ public interface TimeseriesService {
 
     ListenableFuture<List<TsKvLatestRemovingResult>> removeLatest(TenantId tenantId, EntityId entityId, Collection<String> keys);
 
-    ListenableFuture<Collection<String>> removeAllLatest(TenantId tenantId, EntityId entityId);
+    ListenableFuture<List<String>> removeAllLatest(TenantId tenantId, EntityId entityId);
 
     List<String> findAllKeysByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId);
 

@@ -36,6 +36,8 @@ import { DebugEventType, EventBody, EventType } from '@shared/models/event.model
 import { Overlay } from '@angular/cdk/overlay';
 import { Subscription } from 'rxjs';
 import { isNotEmptyStr } from '@core/utils';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
 
 @Component({
   selector: 'tb-event-table',
@@ -123,6 +125,7 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
               private dialog: MatDialog,
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
+              private store: Store<AppState>,
               private cd: ChangeDetectorRef) {
   }
 
@@ -142,6 +145,7 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
       this.overlay,
       this.viewContainerRef,
       this.cd,
+      this.store,
       this.functionTestButtonLabel,
       this.debugEventSelected
     );

@@ -19,6 +19,7 @@ import lombok.Data;
 
 @Data
 public class UsageInfo {
+
     private long devices;
     private long maxDevices;
     private long assets;
@@ -29,6 +30,8 @@ public class UsageInfo {
     private long maxUsers;
     private long dashboards;
     private long maxDashboards;
+    private long edges;
+    private long maxEdges;
 
     private long transportMessages;
     private long maxTransportMessages;
@@ -43,4 +46,5 @@ public class UsageInfo {
     private Boolean smsEnabled;
     private long alarms;
     private long maxAlarms;
+
 }

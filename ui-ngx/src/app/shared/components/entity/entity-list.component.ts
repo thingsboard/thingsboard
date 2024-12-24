@@ -44,7 +44,7 @@ import { EntityService } from '@core/http/entity.service';
 import { MatAutocomplete } from '@angular/material/autocomplete';
 import { MatChipGrid } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { SubscriptSizing } from '@angular/material/form-field';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { isArray } from 'lodash';
 
@@ -85,6 +85,9 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
 
   @Input()
   requiredText = this.translate.instant('entity.entity-list-empty');
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   private requiredValue: boolean;
   get required(): boolean {

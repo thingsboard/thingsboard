@@ -161,13 +161,11 @@
       <ng-template matStepLabel>{{ 'notification.device-activity-trigger-settings' | translate }}</ng-template>
       <form [formGroup]="deviceInactivityTemplateForm">
         <section formGroupName="triggerConfig">
-          <div class="flex flex-1 items-center justify-center">
-            <mat-button-toggle-group class="tb-notification-unread-toggle-group"
-                                     style="width: 250px;"
-                                     formControlName="filterByDevice">
-              <mat-button-toggle class="flex-1" [value]=true>{{ 'device.device' | translate }}</mat-button-toggle>
-              <mat-button-toggle class="flex-1" [value]=false>{{ 'device-profile.device-profile' | translate }}</mat-button-toggle>
-            </mat-button-toggle-group>
+          <div class="mb-4 flex justify-center">
+            <tb-toggle-select class="w-60" appearance="fill" formControlName="filterByDevice">
+              <tb-toggle-option [value]=true>{{ 'device.device' | translate }}</tb-toggle-option>
+              <tb-toggle-option [value]=false>{{ 'device-profile.device-profile' | translate }}</tb-toggle-option>
+            </tb-toggle-select>
           </div>
           <ng-container *ngIf="deviceInactivityTemplateForm.get('triggerConfig.filterByDevice').value; else deviceProfile">
             <tb-entity-list

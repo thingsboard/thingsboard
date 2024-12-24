@@ -28,18 +28,21 @@ import {
   hashCode,
   isDefinedAndNotNull,
   isNotEmptyStr,
-  parseFunction,
-  safeExecute
+  parseTbFunction,
+  safeExecuteTbFunction
 } from '@core/utils';
 import cssjs from '@core/css/css';
 import { UtilsService } from '@core/services/utils.service';
 import { HOME_COMPONENTS_MODULE_TOKEN, WIDGET_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
+import { CompiledTbFunction, TbFunction } from '@shared/models/js-function.models';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 interface MarkdownWidgetSettings {
   markdownTextPattern: string;
   useMarkdownTextFunction: boolean;
-  markdownTextFunction: string;
+  markdownTextFunction: TbFunction;
   applyDefaultMarkdownStyle: boolean;
   markdownCss: string;
 }
@@ -53,7 +56,7 @@ type MarkdownTextFunction = (data: FormattedData[], ctx: WidgetContext) => strin
 export class MarkdownWidgetComponent extends PageComponent implements OnInit {
 
   settings: MarkdownWidgetSettings;
-  markdownTextFunction: MarkdownTextFunction;
+  markdownTextFunction: Observable<CompiledTbFunction<MarkdownTextFunction>>;
 
   markdownClass: string;
 
@@ -78,7 +81,7 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
     this.ctx.$scope.markdownWidget = this;
     this.settings = this.ctx.settings;
     this.markdownTextFunction = this.settings.useMarkdownTextFunction ?
-      parseFunction(this.settings.markdownTextFunction, ['data', 'ctx']) : null;
+      parseTbFunction(this.ctx.http, this.settings.markdownTextFunction, ['data', 'ctx']) : of(null);
     let cssString = this.settings.markdownCss;
     if (isNotEmptyStr(cssString)) {
       const cssParser = new cssjs();
@@ -126,8 +129,19 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
       initialData = [];
     }
     const data = formattedDataFormDatasourceData(initialData);
+
     let markdownText = this.settings.useMarkdownTextFunction ?
-      safeExecute(this.markdownTextFunction, [data, this.ctx]) : this.settings.markdownTextPattern;
+      this.markdownTextFunction.pipe(map(markdownTextFunction => safeExecuteTbFunction(markdownTextFunction, [data, this.ctx]))) : this.settings.markdownTextPattern;
+    if (typeof markdownText === 'string') {
+      this.updateMarkdownText(markdownText, data);
+    } else {
+      markdownText.subscribe((text) => {
+        this.updateMarkdownText(text, data);
+      });
+    }
+  }
+
+  private updateMarkdownText(markdownText: string, data: FormattedData[]) {
     const allData: FormattedData = flatDataWithoutOverride(data);
     markdownText = createLabelFromPattern(markdownText, allData);
     if (this.markdownText !== markdownText) {

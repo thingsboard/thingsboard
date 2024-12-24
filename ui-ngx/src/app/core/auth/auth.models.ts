@@ -27,6 +27,8 @@ export interface SysParamsState {
   mobileQrEnabled: boolean;
   userSettings: UserSettings;
   maxResourceSize: number;
+  maxDebugModeDurationMinutes: number;
+  ruleChainDebugPerTenantLimitsConfiguration?: string;
 }
 
 export interface SysParams extends SysParamsState {

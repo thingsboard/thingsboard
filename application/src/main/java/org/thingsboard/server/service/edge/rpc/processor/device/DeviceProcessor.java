@@ -33,7 +33,7 @@ public interface DeviceProcessor extends EdgeProcessor {
 
     ListenableFuture<Void> processDeviceCredentialsMsgFromEdge(TenantId tenantId, EdgeId edgeId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg);
 
-    DownlinkMsg convertDeviceEventToDownlink(EdgeEvent edgeEvent, EdgeId edgeId, EdgeVersion edgeVersion);
+    DownlinkMsg convertDeviceEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion);
 
     ListenableFuture<Void> processDeviceRpcCallFromEdge(TenantId tenantId, Edge edge, DeviceRpcCallMsg deviceRpcCallMsg);
 

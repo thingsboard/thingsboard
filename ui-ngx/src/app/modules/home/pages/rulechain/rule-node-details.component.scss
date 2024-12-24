@@ -23,13 +23,6 @@
     display: flex;
     flex-direction: column;
 
-    .node-setting {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 22px;
-    }
-
     @media #{$mat-gt-sm} {
       flex-direction: row;
       gap: 8px;

@@ -2,7 +2,7 @@
   "fqn": "control_widgets.rpcbutton",
   "name": "RPC Button",
   "deprecated": false,
-  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAAAAABslHx1AAAAAmJLR0QA/4ePzL8AAAN8SURBVHja7dvbSxRRHAfw/X9+bhcvrJZSmllhZFSCWBDaY4FUhBRZCQXR7akLyoJYlqxU0g0tukF0oYQM3bxsYVRgbuuyu7k7szNn9vSb2Wx9qB56ac72/T7MHGYZmA/nMjvDbzzSTkbpOASPw7CUjkPx2AwhTNNQNKYphE1hiCXMtK5pWkrB8GXraZMl0sMOQ9dEdqApmIzQdIMlDDH1lLIMh5LSTYZYIp1MS6XDAGF5uEPiltoQK85dwhAtKhVPVLMhRj5ADAcyqzpkNgtJqQ9JAQIIIIAAAggggAACCCB/8wog8btfAjd+f9Y3t0GmW5bS8rO/fvavaXB2jWVlZbVHwjLC+7L1x2P8rN1ZQcWtX90EyWws7r7bSuf+BKnz+f1t3norTPV+/0HvNiFP0+5b54sahYsgn+mQrdksZfL6hYcZGe2betoxyG/LtP7OiXlIJW/a6F2Y9nPjKI3MLtrBjbM05CJIsqT6tdOI1BbWFuyRQVpbupw7yGygqqLCBZCTNJqFdNGTAQpwY2bwo5vmyL1iqr+uS3l4yaTsoaEg7bT0VXWyn/xyquQHpDz4JuCrFWHaG48OrSuJXqLHLly1Yl01VDkuq6r7+i5Qd5ABsqlctlMiN0eI0/BZhu09rXggu10J4TVoYMlWWeKr51x2IM3lcp83k4NUfAqVbrQYsn3w/lvuvTt0lQ9Hn027CNJLt3m7YaXctIaXYCHnIWfog5Src3Okg/pldo7Ys8O7S9qHXrgIEllWee35uYJ9MkAHXgVq3s9Dxguan56iHCRZUa3/hPDAa3/U7dtiuGloTTZ7aXFrnO9xPio8Zs5D5JViaqpbsGpdpK4cxDxRRItbpl02R1Jfsje2zIy+8LCI/ekkc0a4b7Lj3y8ggAACCCCAAAIIIIAA8v9C8qaoRosqXngmsmVOXHgWVxsSyxaemXosJFR2mBMxpxRQpOPB0YihKsOIjAbjdnEml8vOhUaGX97s7VEwvTdfDo+E5kyn7pe7JDQWVDZjIbtDMk5JuZGcSyQScQXDlz2XNJyS8vwp8s+bzy6kzJsPYfIigAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAAggg/yTfATinNXQTM7TQAAAAAElFTkSuQmCC",
+  "image": "tb-image;/api/images/system/rpc_button_system_widget_image.png",
   "description": "Allows to send RPC command when the user presses the button.",
   "descriptor": {
     "type": "rpc",
@@ -17,7 +17,6 @@
     "settingsDirective": "tb-send-rpc-widget-settings",
     "defaultConfig": "{\"targetDeviceAliases\":[],\"showTitle\":false,\"backgroundColor\":\"#e6e7e8\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"requestTimeout\":5000,\"oneWayElseTwoWay\":true,\"buttonText\":\"Send RPC\",\"styleButton\":{\"isRaised\":true,\"isPrimary\":false},\"methodName\":\"rpcCommand\",\"methodParams\":\"{}\"},\"title\":\"RPC Button\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{}}"
   },
-  "externalId": null,
   "tags": [
     "command",
     "downlink",
@@ -30,5 +29,18 @@
     "subroutine call",
     "inter-process communication",
     "server request"
+  ],
+  "resources": [
+    {
+      "link": "/api/images/system/rpc_button_system_widget_image.png",
+      "title": "\"RPC Button\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "rpc_button_system_widget_image.png",
+      "publicResourceKey": "JhGGJdXCQOU6sES6GO3OBc3A7NkMZgBw",
+      "mediaType": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAAAAABslHx1AAAAAmJLR0QA/4ePzL8AAAN8SURBVHja7dvbSxRRHAfw/X9+bhcvrJZSmllhZFSCWBDaY4FUhBRZCQXR7akLyoJYlqxU0g0tukF0oYQM3bxsYVRgbuuyu7k7szNn9vSb2Wx9qB56ac72/T7MHGYZmA/nMjvDbzzSTkbpOASPw7CUjkPx2AwhTNNQNKYphE1hiCXMtK5pWkrB8GXraZMl0sMOQ9dEdqApmIzQdIMlDDH1lLIMh5LSTYZYIp1MS6XDAGF5uEPiltoQK85dwhAtKhVPVLMhRj5ADAcyqzpkNgtJqQ9JAQIIIIAAAggggAACCCB/8wog8btfAjd+f9Y3t0GmW5bS8rO/fvavaXB2jWVlZbVHwjLC+7L1x2P8rN1ZQcWtX90EyWws7r7bSuf+BKnz+f1t3norTPV+/0HvNiFP0+5b54sahYsgn+mQrdksZfL6hYcZGe2betoxyG/LtP7OiXlIJW/a6F2Y9nPjKI3MLtrBjbM05CJIsqT6tdOI1BbWFuyRQVpbupw7yGygqqLCBZCTNJqFdNGTAQpwY2bwo5vmyL1iqr+uS3l4yaTsoaEg7bT0VXWyn/xyquQHpDz4JuCrFWHaG48OrSuJXqLHLly1Yl01VDkuq6r7+i5Qd5ABsqlctlMiN0eI0/BZhu09rXggu10J4TVoYMlWWeKr51x2IM3lcp83k4NUfAqVbrQYsn3w/lvuvTt0lQ9Hn027CNJLt3m7YaXctIaXYCHnIWfog5Src3Okg/pldo7Ys8O7S9qHXrgIEllWee35uYJ9MkAHXgVq3s9Dxguan56iHCRZUa3/hPDAa3/U7dtiuGloTTZ7aXFrnO9xPio8Zs5D5JViaqpbsGpdpK4cxDxRRItbpl02R1Jfsje2zIy+8LCI/ekkc0a4b7Lj3y8ggAACCCCAAAIIIIAA8v9C8qaoRosqXngmsmVOXHgWVxsSyxaemXosJFR2mBMxpxRQpOPB0YihKsOIjAbjdnEml8vOhUaGX97s7VEwvTdfDo+E5kyn7pe7JDQWVDZjIbtDMk5JuZGcSyQScQXDlz2XNJyS8vwp8s+bzy6kzJsPYfIigAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAAggggAACCCCAAAIIIIAAAggg/yTfATinNXQTM7TQAAAAAElFTkSuQmCC",
+      "public": true
+    }
   ]
 }

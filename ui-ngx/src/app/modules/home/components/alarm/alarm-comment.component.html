@@ -173,7 +173,7 @@
           <button mat-icon-button
                   type="button"
                   matSuffix
-                  *ngIf="getAlarmCommentFormControl().value"
+                  *ngIf="getAlarmCommentValue()"
                   (click)="saveComment()">
             <mat-icon color="primary">
               send

@@ -2426,8 +2426,7 @@
         "metadata-required": "Záznam metadat nemůže být prázdný.",
         "output": "Výstup",
         "test": "Test",
-        "help": "Nápověda",
-        "reset-debug-mode": "Resetovat režim ladění na všech uzlech"
+        "help": "Nápověda"
     },
     "timezone": {
         "timezone": "Časová zóna",
@@ -2522,6 +2521,9 @@
         "maximum-dashboards": "Maximální počet dashboardů (0 - neomezeno)",
         "maximum-dashboards-required": "Maximální počet dashboardů je povinný.",
         "maximum-dashboards-range": "Maximální počet dashboardů nemůže být záporný",
+        "maximum-edges": "Maximální počet hran (0 - neomezeno)",
+        "maximum-edges-required": "Maximální počet hran je povinný.",
+        "maximum-edges-range": "Maximální počet hran nemůže být záporný",
         "maximum-rule-chains": "Maximální počet řetězů pravidel (0 - neomezeno)",
         "maximum-rule-chains-required": "Maximální počet řetězů pravidel je povinný.",
         "maximum-rule-chains-range": "Maximální počet řetězů pravidel nemůže být záporný",

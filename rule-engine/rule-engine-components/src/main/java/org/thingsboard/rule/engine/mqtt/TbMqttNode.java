@@ -103,7 +103,9 @@ public class TbMqttNode extends TbAbstractExternalNode {
     private TbMsg processException(TbMsg origMsg, Throwable e) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(ERROR, e.getClass() + ": " + e.getMessage());
-        return TbMsg.transformMsgMetadata(origMsg, metaData);
+        return origMsg.transform()
+                .metaData(metaData)
+                .build();
     }
 
     @Override

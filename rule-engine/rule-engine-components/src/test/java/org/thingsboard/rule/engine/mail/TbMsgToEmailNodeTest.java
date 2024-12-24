@@ -103,7 +103,12 @@ public class TbMsgToEmailNodeTest {
         }
 
         var msgDataStr = "{\"temperature\": " + EXPECTED_TEMPERATURE + "}";
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, md, msgDataStr);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(originator)
+                .copyMetaData(md)
+                .data(msgDataStr)
+                .build();
 
         // WHEN
         node.onMsg(ctxMock, msg);

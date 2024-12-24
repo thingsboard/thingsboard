@@ -90,7 +90,7 @@ public class DomainServiceTest extends AbstractServiceTest {
     public void testGetTenantDomains() {
         List<Domain> domains = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
-            Domain oAuth2Client = constructDomain(TenantId.SYS_TENANT_ID, StringUtils.randomAlphabetic(5), true, false);
+            Domain oAuth2Client = constructDomain(TenantId.SYS_TENANT_ID, StringUtils.randomAlphabetic(5).toLowerCase(), true, false);
             Domain savedOauth2Client = domainService.saveDomain(SYSTEM_TENANT_ID, oAuth2Client);
             domains.add(savedOauth2Client);
         }

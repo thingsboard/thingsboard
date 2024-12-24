@@ -33,6 +33,7 @@
 CREATE TABLE IF NOT EXISTS tb_schema_settings
 (
     schema_version bigint NOT NULL,
+    product varchar(2) NOT NULL,
     CONSTRAINT tb_schema_settings_pkey PRIMARY KEY (schema_version)
 );
 
@@ -197,7 +198,7 @@ CREATE TABLE IF NOT EXISTS rule_node (
     configuration varchar(10000000),
     type varchar(255),
     name varchar(255),
-    debug_mode boolean,
+    debug_settings varchar(1024),
     singleton_mode boolean,
     queue_name varchar(255),
     external_id uuid
@@ -638,9 +639,27 @@ CREATE TABLE IF NOT EXISTS mobile_app (
     id uuid NOT NULL CONSTRAINT mobile_app_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     tenant_id uuid,
-    pkg_name varchar(255) UNIQUE,
+    pkg_name varchar(255),
     app_secret varchar(2048),
-    oauth2_enabled boolean
+    platform_type varchar(32),
+    status varchar(32),
+    version_info varchar(100000),
+    store_info varchar(16384),
+    CONSTRAINT mobile_app_pkg_name_platform_unq_key UNIQUE (pkg_name, platform_type)
+);
+
+CREATE TABLE IF NOT EXISTS mobile_app_bundle (
+    id uuid NOT NULL CONSTRAINT mobile_app_bundle_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid,
+    title varchar(255),
+    description varchar(1024),
+    android_app_id uuid UNIQUE,
+    ios_app_id uuid UNIQUE,
+    layout_config varchar(16384),
+    oauth2_enabled boolean,
+    CONSTRAINT fk_android_app_id FOREIGN KEY (android_app_id) REFERENCES mobile_app(id) ON DELETE SET NULL,
+    CONSTRAINT fk_ios_app_id FOREIGN KEY (ios_app_id) REFERENCES mobile_app(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS domain_oauth2_client (
@@ -650,10 +669,10 @@ CREATE TABLE IF NOT EXISTS domain_oauth2_client (
     CONSTRAINT fk_oauth2_client FOREIGN KEY (oauth2_client_id) REFERENCES oauth2_client(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS mobile_app_oauth2_client (
-    mobile_app_id uuid NOT NULL,
+CREATE TABLE IF NOT EXISTS mobile_app_bundle_oauth2_client (
+    mobile_app_bundle_id uuid NOT NULL,
     oauth2_client_id uuid NOT NULL,
-    CONSTRAINT fk_domain FOREIGN KEY (mobile_app_id) REFERENCES mobile_app(id) ON DELETE CASCADE,
+    CONSTRAINT fk_domain FOREIGN KEY (mobile_app_bundle_id) REFERENCES mobile_app_bundle(id) ON DELETE CASCADE,
     CONSTRAINT fk_oauth2_client FOREIGN KEY (oauth2_client_id) REFERENCES oauth2_client(id) ON DELETE CASCADE
 );
 
@@ -892,15 +911,16 @@ CREATE TABLE IF NOT EXISTS queue_stats (
     CONSTRAINT queue_stats_name_unq_key UNIQUE (tenant_id, queue_name, service_id)
 );
 
-CREATE TABLE IF NOT EXISTS mobile_app_settings (
-    id uuid NOT NULL CONSTRAINT mobile_app_settings_pkey PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS qr_code_settings (
+    id uuid NOT NULL CONSTRAINT qr_code_settings_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     tenant_id uuid NOT NULL,
     use_default_app boolean,
-    android_config VARCHAR(1000),
-    ios_config VARCHAR(1000),
+    android_enabled boolean,
+    ios_enabled boolean,
+    mobile_app_bundle_id uuid,
     qr_code_config VARCHAR(100000),
-    CONSTRAINT mobile_app_settings_tenant_id_unq_key UNIQUE (tenant_id)
+    CONSTRAINT qr_code_settings_tenant_id_unq_key UNIQUE (tenant_id)
 );
 
 CREATE TABLE IF NOT EXISTS calculated_field (

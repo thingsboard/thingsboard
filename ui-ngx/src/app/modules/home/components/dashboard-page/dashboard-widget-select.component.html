@@ -51,7 +51,7 @@
         </div>
         <div class="preview-container">
           <div class="preview-spacer"></div>
-          <img class="preview" [src]="item.image | image: {emptyUrl: '/assets/widget-preview-empty.svg'} | async" alt="{{ item.title }}">
+          <img class="preview" [src]="item.image | image: {emptyUrl: '/assets/widget-preview-empty.svg', preview: item.scada} | async" alt="{{ item.title }}">
         </div>
       </mat-card>
     </ng-template>

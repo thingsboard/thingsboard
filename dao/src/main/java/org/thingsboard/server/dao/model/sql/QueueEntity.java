@@ -97,7 +97,7 @@ public class QueueEntity extends BaseSqlEntity<Queue> {
     public Queue toData() {
         Queue queue = new Queue(new QueueId(getUuid()));
         queue.setCreatedTime(createdTime);
-        queue.setTenantId(new TenantId(tenantId));
+        queue.setTenantId(TenantId.fromUUID(tenantId));
         queue.setName(name);
         queue.setTopic(topic);
         queue.setPollInterval(pollInterval);

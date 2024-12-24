@@ -18,7 +18,9 @@ package org.thingsboard.server.common.msg.edge;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 
-public interface EdgeSessionMsg {
+import java.io.Serializable;
+
+public interface EdgeSessionMsg extends Serializable {
 
     TenantId getTenantId();
 

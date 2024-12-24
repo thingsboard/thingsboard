@@ -85,7 +85,12 @@ public class TbDeviceStateNodeTest {
         metaData.putValue("ts", String.valueOf(METADATA_TS));
         var data = JacksonUtil.newObjectNode();
         data.put("humidity", 58.3);
-        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, JacksonUtil.toString(data));
+        msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(metaData)
+                .data(JacksonUtil.toString(data))
+                .build();
     }
 
     @BeforeEach
@@ -207,7 +212,12 @@ public class TbDeviceStateNodeTest {
                 return unsupportedType;
             }
         };
-        var msg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, nonDeviceOriginator, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.ENTITY_CREATED)
+                .originator(nonDeviceOriginator)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -236,7 +246,13 @@ public class TbDeviceStateNodeTest {
         given(ctxMock.getDeviceStateManager()).willReturn(deviceStateManagerMock);
 
         long msgTs = METADATA_TS + 1;
-        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT, msgTs);
+        msg = TbMsg.newMsg()
+                .ts(msgTs)
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
 
         // WHEN
         node.onMsg(ctxMock, msg);

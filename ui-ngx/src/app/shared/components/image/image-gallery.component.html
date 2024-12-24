@@ -132,7 +132,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <div *ngIf="mode === 'list'" class="flex flex-1 flex-col">
+    <div *ngIf="mode === 'list'" class="flex flex-1 flex-col min-h-0">
       <div class="table-container flex-1">
         <table mat-table [dataSource]="dataSource" [trackBy]="trackByEntity"
                matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>

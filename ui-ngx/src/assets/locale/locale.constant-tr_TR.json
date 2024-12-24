@@ -2447,8 +2447,7 @@
     "metadata-required": "Meta veri girişleri boş bırakılamaz.",
     "output": "Çıktı",
     "test": "Ölçek",
-    "help": "Yardım et",
-    "reset-debug-mode": "Tüm düğümlerde hata ayıklama modunu sıfırla"
+    "help": "Yardım et"
   },
   "timezone": {
     "timezone": "Saat dilimi",
@@ -2543,6 +2542,9 @@
     "maximum-dashboards": "Maksimum gösterge paneli sayısı (0 - sınırsız)",
     "maximum-dashboards-required": "Maksimum gösterge paneli sayısı gerekli.",
     "maximum-dashboards-range": "Maksimum gösterge paneli sayısı negatif olamaz",
+    "maximum-edges": "Maksimum gösterge kenar sayısı (0 - sınırsız)",
+    "maximum-edges-required": "Maksimum gösterge kenar sayısı gerekli.",
+    "maximum-edges-range": "Maksimum gösterge kenar sayısı negatif olamaz",
     "maximum-rule-chains": "Maksimum kural zinciri sayısı (0 - sınırsız)",
     "maximum-rule-chains-required": "Maksimum kural zinciri sayısı gerekli.",
     "maximum-rule-chains-range": "Maksimum kural zinciri sayısı negatif olamaz",

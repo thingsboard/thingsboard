@@ -57,7 +57,7 @@ export class ServiceBusTemplate implements IQueue {
 
         this.parseQueueProperties();
 
-        const listQueues = await this.serviceBusService.listQueues();
+        const listQueues = this.serviceBusService.listQueues();
         for await (const queue of listQueues) {
             this.queues.push(queue.name);
         }

@@ -38,6 +38,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -51,6 +53,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
@@ -857,7 +860,14 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             if (!persistToTelemetry) {
                 md.putValue(SCOPE, SERVER_SCOPE);
             }
-            TbMsg tbMsg = TbMsg.newMsg(msgType, stateData.getDeviceId(), stateData.getCustomerId(), md, TbMsgDataType.JSON, data);
+            TbMsg tbMsg = TbMsg.newMsg()
+                    .type(msgType)
+                    .originator(stateData.getDeviceId())
+                    .customerId(stateData.getCustomerId())
+                    .copyMetaData(md)
+                    .dataType(TbMsgDataType.JSON)
+                    .data(data)
+                    .build();
             clusterService.pushMsgToRuleEngine(stateData.getTenantId(), stateData.getDeviceId(), tbMsg, null);
         } catch (Exception e) {
             log.warn("[{}] Failed to push inactivity alarm: {}", stateData.getDeviceId(), state, e);
@@ -865,24 +875,30 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     }
 
     private void save(DeviceId deviceId, String key, long value) {
-        if (persistToTelemetry) {
-            tsSubService.saveAndNotifyInternal(
-                    TenantId.SYS_TENANT_ID, deviceId,
-                    Collections.singletonList(new BasicTsKvEntry(getCurrentTimeMillis(), new LongDataEntry(key, value))),
-                    telemetryTtl, new TelemetrySaveCallback<>(deviceId, key, value));
-        } else {
-            tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, AttributeScope.SERVER_SCOPE, key, value, new TelemetrySaveCallback<>(deviceId, key, value));
-        }
+        save(deviceId, new LongDataEntry(key, value), getCurrentTimeMillis());
     }
 
     private void save(DeviceId deviceId, String key, boolean value) {
+        save(deviceId, new BooleanDataEntry(key, value), getCurrentTimeMillis());
+    }
+
+    private void save(DeviceId deviceId, KvEntry kvEntry, long ts) {
         if (persistToTelemetry) {
-            tsSubService.saveAndNotifyInternal(
-                    TenantId.SYS_TENANT_ID, deviceId,
-                    Collections.singletonList(new BasicTsKvEntry(getCurrentTimeMillis(), new BooleanDataEntry(key, value))),
-                    telemetryTtl, new TelemetrySaveCallback<>(deviceId, key, value));
+            tsSubService.saveTimeseriesInternal(TimeseriesSaveRequest.builder()
+                    .tenantId(TenantId.SYS_TENANT_ID)
+                    .entityId(deviceId)
+                    .entry(new BasicTsKvEntry(ts, kvEntry))
+                    .ttl(telemetryTtl)
+                    .callback(new TelemetrySaveCallback<>(deviceId, kvEntry))
+                    .build());
         } else {
-            tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, AttributeScope.SERVER_SCOPE, key, value, new TelemetrySaveCallback<>(deviceId, key, value));
+            tsSubService.saveAttributes(AttributesSaveRequest.builder()
+                    .tenantId(TenantId.SYS_TENANT_ID)
+                    .entityId(deviceId)
+                    .scope(AttributeScope.SERVER_SCOPE)
+                    .entry(new BaseAttributeKvEntry(ts, kvEntry))
+                    .callback(new TelemetrySaveCallback<>(deviceId, kvEntry))
+                    .build());
         }
     }
 
@@ -892,23 +908,21 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
 
     private static class TelemetrySaveCallback<T> implements FutureCallback<T> {
         private final DeviceId deviceId;
-        private final String key;
-        private final Object value;
+        private final KvEntry kvEntry;
 
-        TelemetrySaveCallback(DeviceId deviceId, String key, Object value) {
+        TelemetrySaveCallback(DeviceId deviceId, KvEntry kvEntry) {
             this.deviceId = deviceId;
-            this.key = key;
-            this.value = value;
+            this.kvEntry = kvEntry;
         }
 
         @Override
         public void onSuccess(@Nullable T result) {
-            log.trace("[{}] Successfully updated attribute [{}] with value [{}]", deviceId, key, value);
+            log.trace("[{}] Successfully updated entry {}", deviceId, kvEntry);
         }
 
         @Override
         public void onFailure(Throwable t) {
-            log.warn("[{}] Failed to update attribute [{}] with value [{}]", deviceId, key, value, t);
+            log.warn("[{}] Failed to update entry {}", deviceId, kvEntry, t);
         }
     }
 }

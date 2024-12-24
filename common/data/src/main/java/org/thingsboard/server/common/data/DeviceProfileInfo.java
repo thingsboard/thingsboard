@@ -63,7 +63,7 @@ public class DeviceProfileInfo extends EntityInfo {
 
     public DeviceProfileInfo(UUID uuid, UUID tenantId, String name, String image, UUID defaultDashboardId, DeviceProfileType type, DeviceTransportType transportType) {
         super(EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE_PROFILE, uuid), name);
-        this.tenantId = new TenantId(tenantId);
+        this.tenantId = TenantId.fromUUID(tenantId);
         this.image = image;
         this.defaultDashboardId = defaultDashboardId != null ? new DashboardId(defaultDashboardId) : null;
         this.type = type;

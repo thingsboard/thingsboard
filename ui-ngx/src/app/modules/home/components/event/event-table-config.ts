@@ -40,8 +40,8 @@ import {
   EventContentDialogData
 } from '@home/components/event/event-content-dialog.component';
 import { isEqual, sortObjectKeys } from '@core/utils';
-import { historyInterval, MINUTE } from '@shared/models/time/time.models';
-import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
+import { DAY, historyInterval, MINUTE } from '@shared/models/time/time.models';
+import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ChangeDetectorRef, EventEmitter, Injector, StaticProvider, ViewContainerRef } from '@angular/core';
 import { ComponentPortal } from '@angular/cdk/portal';
 import {
@@ -51,6 +51,9 @@ import {
   FilterEntityColumn
 } from '@home/components/event/event-filter-panel.component';
 import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
 
 export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
@@ -59,6 +62,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
   private filterParams: FilterEventBody = {};
   private filterColumns: FilterEntityColumn[] = [];
+  private readonly maxDebugModeDurationMinutes = getCurrentAuthState(this.store).maxDebugModeDurationMinutes;
 
   set eventType(eventType: EventType | DebugEventType) {
     if (this.eventTypeValue !== eventType) {
@@ -88,13 +92,15 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
               private cd: ChangeDetectorRef,
+              private store: Store<AppState>,
               public testButtonLabel?: string,
               private debugEventSelected?: EventEmitter<EventBody>) {
     super();
     this.loadDataOnInit = false;
     this.tableTitle = '';
     this.useTimePageLink = true;
-    this.defaultTimewindowInterval = historyInterval(MINUTE * 15);
+    const defaultInterval = this.maxDebugModeDurationMinutes ? Math.min(this.maxDebugModeDurationMinutes * MINUTE, DAY) : DAY;
+    this.defaultTimewindowInterval = historyInterval(defaultInterval);
     this.detailsPanelEnabled = false;
     this.selectionEnabled = false;
     this.searchEnabled = false;

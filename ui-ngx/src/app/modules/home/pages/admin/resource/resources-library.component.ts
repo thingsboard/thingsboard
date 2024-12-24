@@ -41,7 +41,7 @@ import { getCurrentAuthState } from '@core/auth/auth.selectors';
 export class ResourcesLibraryComponent extends EntityComponent<Resource> implements OnInit, OnDestroy {
 
   readonly resourceType = ResourceType;
-  readonly resourceTypes: ResourceType[] = Object.values(this.resourceType);
+  readonly resourceTypes = [ResourceType.LWM2M_MODEL, ResourceType.PKCS_12, ResourceType.JKS];
   readonly resourceTypesTranslationMap = ResourceTypeTranslationMap;
   readonly maxResourceSize = getCurrentAuthState(this.store).maxResourceSize;
 
@@ -80,7 +80,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   buildForm(entity: Resource): FormGroup {
     return this.fb.group({
       title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
-      resourceType: [entity?.resourceType ? entity.resourceType : ResourceType.JS_MODULE, Validators.required],
+      resourceType: [entity?.resourceType ? entity.resourceType : ResourceType.LWM2M_MODEL, Validators.required],
       fileName: [entity ? entity.fileName : null, Validators.required],
       data: [entity ? entity.data : null, this.isAdd ? [Validators.required] : []]
     });
@@ -94,9 +94,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
     super.updateFormState();
     if (this.isEdit && this.entityForm && !this.isAdd) {
       this.entityForm.get('resourceType').disable({ emitEvent: false });
-      if (this.entityForm.get('resourceType').value !== ResourceType.JS_MODULE) {
-        this.entityForm.get('fileName').disable({ emitEvent: false });
-      }
+      this.entityForm.get('fileName').disable({ emitEvent: false });
     }
   }
 
@@ -140,7 +138,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
 
   private observeResourceTypeChange(): void {
     this.entityForm.get('resourceType').valueChanges.pipe(
-      startWith(ResourceType.JS_MODULE),
+      startWith(ResourceType.LWM2M_MODEL),
       takeUntil(this.destroy$)
     ).subscribe((type: ResourceType) => this.onResourceTypeChange(type));
   }

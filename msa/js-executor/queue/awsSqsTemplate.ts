@@ -52,7 +52,7 @@ export class AwsSqsTemplate implements IQueue {
     private queueAttributes: { [n: string]: string } = {
         FifoQueue: 'true'
     };
-    private timer: NodeJS.Timer;
+    private timer: NodeJS.Timeout;
 
     name = 'AWS SQS';
 

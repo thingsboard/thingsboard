@@ -14,24 +14,22 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, SkipSelf, ViewChild } from '@angular/core';
+import { Component, ElementRef, forwardRef, Input, OnInit, SkipSelf, ViewChild } from '@angular/core';
 import {
   ControlValueAccessor,
-  UntypedFormBuilder,
-  UntypedFormControl,
-  UntypedFormGroup,
+  FormBuilder,
+  FormControl,
+  FormGroup,
   FormGroupDirective,
   NG_VALUE_ACCESSOR,
-  NgForm
+  NgForm,
 } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { map, mergeMap, share, tap } from 'rxjs/operators';
-import { Store } from '@ngrx/store';
-import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { coerceBoolean } from '@shared/decorators/coercion';
 import { EntityAlias } from '@shared/models/alias.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
@@ -54,9 +52,9 @@ import { ErrorStateMatcher } from '@angular/material/core';
     useExisting: EntityAliasSelectComponent
   }*/]
 })
-export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit, AfterViewInit, ErrorStateMatcher {
+export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit, ErrorStateMatcher {
 
-  selectEntityAliasFormGroup: UntypedFormGroup;
+  selectEntityAliasFormGroup: FormGroup;
 
   modelValue: string | null;
 
@@ -75,15 +73,9 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
   @ViewChild('entityAliasAutocomplete') entityAliasAutocomplete: MatAutocomplete;
   @ViewChild('autocomplete', { read: MatAutocompleteTrigger }) autoCompleteTrigger: MatAutocompleteTrigger;
 
-
-  private requiredValue: boolean;
-  get tbRequired(): boolean {
-    return this.requiredValue;
-  }
   @Input()
-  set tbRequired(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
+  @coerceBoolean()
+  tbRequired: boolean;
 
   @Input()
   disabled: boolean;
@@ -98,16 +90,13 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
 
   private dirty = false;
 
-  private creatingEntityAlias = false;
+  private propagateChange = (_v: any) => { };
 
-  private propagateChange = (v: any) => { };
-
-  constructor(private store: Store<AppState>,
-              @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
+  constructor(@SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               private entityService: EntityService,
               public translate: TranslateService,
               public truncate: TruncatePipe,
-              private fb: UntypedFormBuilder) {
+              private fb: FormBuilder) {
     this.selectEntityAliasFormGroup = this.fb.group({
       entityAlias: [null]
     });
@@ -117,7 +106,7 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   ngOnInit() {
@@ -134,7 +123,7 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
     this.filteredEntityAliases = this.selectEntityAliasFormGroup.get('entityAlias').valueChanges
       .pipe(
         tap(value => {
-          let modelValue;
+          let modelValue: EntityAlias;
           if (typeof value === 'string' || !value) {
             modelValue = null;
           } else {
@@ -151,13 +140,11 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
       );
   }
 
-  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = this.tbRequired && !this.modelValue;
     return originalErrorState || customErrorState;
   }
-
-  ngAfterViewInit(): void {}
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
@@ -225,7 +212,7 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
   }
 
   textIsNotEmpty(text: string): boolean {
-    return (text && text != null && text.length > 0) ? true : false;
+    return text?.length > 0;
   }
 
   entityAliasEnter($event: KeyboardEvent) {
@@ -237,10 +224,23 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
     }
   }
 
+  editEntityAlias($event: Event) {
+    $event.preventDefault();
+    $event.stopPropagation();
+    if (this.callbacks && this.callbacks.editEntityAlias) {
+      this.callbacks.editEntityAlias(this.selectEntityAliasFormGroup.get('entityAlias').value,
+        this.allowedEntityTypes).subscribe((alias) => {
+        if (alias) {
+          this.modelValue = alias.id;
+          this.selectEntityAliasFormGroup.get('entityAlias').patchValue(alias, {emitEvent: true});
+        }
+      });
+    }
+  }
+
   createEntityAlias($event: Event, alias: string, focusOnCancel = true) {
     $event.preventDefault();
     $event.stopPropagation();
-    this.creatingEntityAlias = true;
     if (this.callbacks && this.callbacks.createEntityAlias) {
       this.callbacks.createEntityAlias(alias, this.allowedEntityTypes).subscribe((newAlias) => {
           if (!newAlias) {

@@ -66,9 +66,9 @@
           {{ 'resource.title-max-length' | translate }}
         </mat-error>
       </mat-form-field>
-      <tb-file-input *ngIf="isAdd || (isEdit && entityForm.get('resourceType').value === resourceType.JS_MODULE)"
+      <tb-file-input *ngIf="isAdd"
         formControlName="data"
-        [required]="isAdd"
+        required
         label="{{ (entityForm.get('resourceType').value === resourceType.LWM2M_MODEL ? 'resource.resource-files' : 'resource.resource-file') | translate }}"
         [readAsBinary]="true"
         [maxSizeByte]="maxResourceSize"
@@ -80,7 +80,7 @@
         [existingFileName]="entityForm.get('fileName')?.value"
         (fileNameChanged)="entityForm?.get('fileName').patchValue($event)">
       </tb-file-input>
-      <div *ngIf="!isAdd && !(isEdit && entityForm.get('resourceType').value === resourceType.JS_MODULE)" class="flex flex-row xs:flex-col sm:gap-2 md:flex-col gt-md:gap-2">
+      <div *ngIf="!isAdd" class="flex flex-row xs:flex-col sm:gap-2 md:flex-col gt-md:gap-2">
         <mat-form-field class="flex-1">
           <mat-label translate>resource.file-name</mat-label>
           <input matInput formControlName="fileName" type="text">

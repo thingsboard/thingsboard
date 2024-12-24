@@ -33,7 +33,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -77,6 +76,7 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v1.TelemetryPluginCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v1.TimeseriesSubscriptionCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmDataCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmStatusCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd;
@@ -97,7 +97,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -157,7 +156,7 @@ public class DefaultWebSocketService implements WebSocketService {
         serviceId = serviceInfoProvider.getServiceId();
         executor = ThingsBoardExecutors.newWorkStealingPool(50, getClass());
 
-        pingExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("telemetry-web-socket-ping"));
+        pingExecutor = ThingsBoardExecutors.newSingleThreadScheduledExecutor("telemetry-web-socket-ping");
         pingExecutor.scheduleWithFixedDelay(this::sendPing, pingTimeout / NUMBER_OF_PING_ATTEMPTS, pingTimeout / NUMBER_OF_PING_ATTEMPTS, TimeUnit.MILLISECONDS);
 
         cmdsHandlers = new EnumMap<>(WsCmdType.class);
@@ -168,10 +167,12 @@ public class DefaultWebSocketService implements WebSocketService {
         cmdsHandlers.put(WsCmdType.ALARM_DATA, newCmdHandler(this::handleWsAlarmDataCmd));
         cmdsHandlers.put(WsCmdType.ENTITY_COUNT, newCmdHandler(this::handleWsEntityCountCmd));
         cmdsHandlers.put(WsCmdType.ALARM_COUNT, newCmdHandler(this::handleWsAlarmCountCmd));
+        cmdsHandlers.put(WsCmdType.ALARM_STATUS, newCmdHandler(this::handleWsAlarmsStatusCmd));
         cmdsHandlers.put(WsCmdType.ENTITY_DATA_UNSUBSCRIBE, newCmdHandler(this::handleWsDataUnsubscribeCmd));
         cmdsHandlers.put(WsCmdType.ALARM_DATA_UNSUBSCRIBE, newCmdHandler(this::handleWsDataUnsubscribeCmd));
         cmdsHandlers.put(WsCmdType.ENTITY_COUNT_UNSUBSCRIBE, newCmdHandler(this::handleWsDataUnsubscribeCmd));
         cmdsHandlers.put(WsCmdType.ALARM_COUNT_UNSUBSCRIBE, newCmdHandler(this::handleWsDataUnsubscribeCmd));
+        cmdsHandlers.put(WsCmdType.ALARM_STATUS_UNSUBSCRIBE, newCmdHandler(this::handleWsDataUnsubscribeCmd));
         cmdsHandlers.put(WsCmdType.NOTIFICATIONS, newCmdHandler(notificationCmdsHandler::handleUnreadNotificationsSubCmd));
         cmdsHandlers.put(WsCmdType.NOTIFICATIONS_COUNT, newCmdHandler(notificationCmdsHandler::handleUnreadNotificationsCountSubCmd));
         cmdsHandlers.put(WsCmdType.MARK_NOTIFICATIONS_AS_READ, newCmdHandler(notificationCmdsHandler::handleMarkAsReadCmd));
@@ -256,6 +257,12 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     private void handleWsAlarmCountCmd(WebSocketSessionRef sessionRef, AlarmCountCmd cmd) {
+        if (validateCmd(sessionRef, cmd)) {
+            entityDataSubService.handleCmd(sessionRef, cmd);
+        }
+    }
+
+    private void handleWsAlarmsStatusCmd(WebSocketSessionRef sessionRef, AlarmStatusCmd cmd) {
         if (validateCmd(sessionRef, cmd)) {
             entityDataSubService.handleCmd(sessionRef, cmd);
         }

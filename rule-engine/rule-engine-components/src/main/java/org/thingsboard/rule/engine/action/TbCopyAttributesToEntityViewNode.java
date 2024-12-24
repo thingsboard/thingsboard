@@ -23,6 +23,8 @@ import com.google.gson.JsonPrimitive;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -105,15 +107,25 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
                                         List<String> filteredAttributes =
                                                 attributes.stream().filter(attr -> attributeContainsInEntityView(scope, attr, entityView)).collect(Collectors.toList());
                                         if (!filteredAttributes.isEmpty()) {
-                                            ctx.getTelemetryService().deleteAndNotify(ctx.getTenantId(), entityView.getId(), scope, filteredAttributes,
-                                                    getFutureCallback(ctx, msg, entityView));
+                                            ctx.getTelemetryService().deleteAttributes(AttributesDeleteRequest.builder()
+                                                    .tenantId(ctx.getTenantId())
+                                                    .entityId(entityView.getId())
+                                                    .scope(scope)
+                                                    .keys(filteredAttributes)
+                                                    .callback(getFutureCallback(ctx, msg, entityView))
+                                                    .build());
                                         }
                                     } else {
                                         Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(JsonParser.parseString(msg.getData()));
                                         List<AttributeKvEntry> filteredAttributes =
                                                 attributes.stream().filter(attr -> attributeContainsInEntityView(scope, attr.getKey(), entityView)).collect(Collectors.toList());
-                                        ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), entityView.getId(), scope, filteredAttributes,
-                                                getFutureCallback(ctx, msg, entityView));
+                                        ctx.getTelemetryService().saveAttributes(AttributesSaveRequest.builder()
+                                                .tenantId(ctx.getTenantId())
+                                                .entityId(entityView.getId())
+                                                .scope(scope)
+                                                .entries(filteredAttributes)
+                                                .callback(getFutureCallback(ctx, msg, entityView))
+                                                .build());
                                     }
                                 }
                             }

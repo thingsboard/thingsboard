@@ -47,6 +47,7 @@
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <tb-js-func formControlName="colorFunction"
+                    withModules
                     [globalVariables]="functionScopeVariables"
                     [functionArgs]="['data', 'dsData', 'dsIndex']"
                     functionTitle="{{ 'widgets.maps.path-color-function' | translate }}"

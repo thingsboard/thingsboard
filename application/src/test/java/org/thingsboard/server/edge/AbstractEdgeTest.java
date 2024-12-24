@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
@@ -103,7 +104,6 @@ import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -124,8 +124,6 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
     protected EdgeImitator edgeImitator;
     protected Edge edge;
-
-    private Random random = new Random();
 
     @Autowired
     protected EdgeEventService edgeEventService;
@@ -166,7 +164,8 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     }
 
     private RuleChainId getEdgeRootRuleChainId() throws Exception {
-        return doGetTypedWithPageLink("/api/ruleChains?type={type}&", new TypeReference<PageData<RuleChain>>() {},
+        return doGetTypedWithPageLink("/api/ruleChains?type={type}&", new TypeReference<PageData<RuleChain>>() {
+                },
                 new PageLink(100, 0, "Edge Root Rule Chain"),
                 "EDGE")
                 .getData().get(0).getId();
@@ -210,7 +209,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     protected void updateRootRuleChainMetadata() throws Exception {
         RuleChainId rootRuleChainId = getEdgeRootRuleChainId();
         RuleChainMetaData rootRuleChainMetadata = doGet("/api/ruleChain/" + rootRuleChainId.getId().toString() + "/metadata", RuleChainMetaData.class);
-        rootRuleChainMetadata.getNodes().forEach(n -> n.setDebugMode(random.nextBoolean()));
+        rootRuleChainMetadata.getNodes().forEach(n -> n.setDebugSettings(DebugSettings.all()));
         doPost("/api/ruleChain/metadata", rootRuleChainMetadata, RuleChainMetaData.class);
     }
 

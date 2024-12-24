@@ -104,6 +104,10 @@ export const powerButtonDefaultSettings: PowerButtonWidgetSettings = {
     getTimeSeries: {
       key: 'state'
     },
+    getAlarmStatus: {
+      severityList: null,
+      typeList: null
+    },
     dataToValue: {
       type: DataToValueType.NONE,
       compareToValue: true,
@@ -119,6 +123,10 @@ export const powerButtonDefaultSettings: PowerButtonWidgetSettings = {
     },
     getTimeSeries: {
       key: 'state'
+    },
+    getAlarmStatus: {
+      severityList: null,
+      typeList: null
     },
     dataToValue: {
       type: DataToValueType.NONE,

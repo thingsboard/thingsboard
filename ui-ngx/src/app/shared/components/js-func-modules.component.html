@@ -1,0 +1,66 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-js-func-modules-panel">
+  <div class="tb-js-func-modules-panel-title" translate>js-func.modules</div>
+  <div class="tb-js-func-modules-panel-content">
+    <div class="tb-form-panel no-border no-padding tb-js-func-modules">
+      <div class="tb-form-table">
+        <div class="tb-form-table-header">
+          <div class="tb-form-table-header-cell tb-alias-header" translate>js-func.module-alias</div>
+          <div class="tb-form-table-header-cell tb-module-link-header" translate>js-func.module-resource</div>
+          <div class="tb-form-table-header-cell tb-actions-header"></div>
+        </div>
+        <div *ngIf="modulesFormArray().controls.length; else noModules" class="tb-form-table-body">
+          <div *ngFor="let moduleControl of modulesFormArray().controls; trackBy: trackByModule; let $index = index;">
+            <tb-js-func-module-row class="flex-1"
+                                   [index]="$index"
+                                   [formControl]="moduleControl"
+                                   (moduleRemoved)="removeModule($index)">
+            </tb-js-func-module-row>
+          </div>
+        </div>
+        <tb-error *ngIf="modulesFormGroup.hasError('moduleAliasNotUnique')"
+                  noMargin [error]="'js-func.not-unique-module-aliases-error' | translate" style="padding-left: 12px;"></tb-error>
+      </div>
+      <div>
+        <button type="button" mat-stroked-button color="primary" (click)="addModule()">
+          {{ 'js-func.add-module' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="tb-js-func-modules-panel-buttons">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="applyModules()"
+            [disabled]="modulesFormGroup.invalid || !modulesFormGroup.dirty">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</div>
+
+<ng-template #noModules>
+  <span class="tb-prompt flex items-center justify-center">{{ 'js-func.no-modules' | translate }}</span>
+</ng-template>

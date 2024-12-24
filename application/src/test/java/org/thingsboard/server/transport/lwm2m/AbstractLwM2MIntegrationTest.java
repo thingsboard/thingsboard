@@ -33,7 +33,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
@@ -82,7 +82,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -198,7 +197,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     }
 
     private void init() throws Exception {
-        executor = Executors.newScheduledThreadPool(10, ThingsBoardThreadFactory.forName("test-lwm2m-scheduled"));
+        executor = ThingsBoardExecutors.newScheduledThreadPool(10, "test-lwm2m-scheduled");
         loginTenantAdmin();
         for (String resourceName : this.resources) {
             TbResource lwModel = new TbResource();

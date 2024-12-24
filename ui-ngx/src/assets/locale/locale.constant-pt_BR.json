@@ -1554,8 +1554,7 @@
     "metadata-required": "As entradas de metadados não podem estar em branco.",
     "output": "Saída",
     "test": "Teste",
-    "help": "Ajuda",
-    "reset-debug-mode": "Redefinir modo de depuração em todos os nós"
+    "help": "Ajuda"
   },
   "timezone": {
     "timezone": "Fuso horário",
