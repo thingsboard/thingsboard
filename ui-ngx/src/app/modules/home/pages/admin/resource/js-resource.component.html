@@ -47,7 +47,7 @@
 </div>
 <div class="mat-padding flex flex-col">
   <form [formGroup]="entityForm">
-    <fieldset [disabled]="(isLoading$ | async) || !isEdit">
+    <fieldset>
       <mat-form-field class="mat-block">
         <mat-label translate>javascript.javascript-type</mat-label>
         <mat-select formControlName="resourceSubType" required>
