@@ -594,7 +594,7 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
     [
       EntityType.DOMAIN,
       {
-        helpLinkId: 'oauth2Settings'
+        helpLinkId: 'domains'
       }
     ],
     [
