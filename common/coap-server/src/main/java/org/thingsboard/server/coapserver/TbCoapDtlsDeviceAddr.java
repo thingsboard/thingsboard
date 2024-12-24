@@ -15,14 +15,13 @@
  */
 package org.thingsboard.server.coapserver;
 
-import org.eclipse.californium.core.CoapServer;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.DeviceId;
 
-import java.net.UnknownHostException;
-import java.util.concurrent.ConcurrentMap;
+import java.net.InetSocketAddress;
 
-public interface CoapServerService {
-
-    CoapServer getCoapServer() throws UnknownHostException;
-
-    ConcurrentMap<TbCoapDtlsDeviceAddr, TbCoapDtlsSessionInfo> getDtlsSessionsMap();
+@Data
+public class TbCoapDtlsDeviceAddr {
+    private final DeviceId deviceId;
+    private final InetSocketAddress inetSocketAddress;
 }

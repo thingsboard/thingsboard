@@ -109,7 +109,8 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
                     if (msg != null && strCert.equals(msg.getCredentials())) {
                         DeviceProfile deviceProfile = msg.getDeviceProfile();
                         if (msg.hasDeviceInfo() && deviceProfile != null) {
-                            tbCoapDtlsSessionInMemoryStorage.put(remotePeer, new TbCoapDtlsSessionInfo(msg, deviceProfile));
+                            TbCoapDtlsDeviceAddr tbCoapDtlsDeviceAddr = new TbCoapDtlsDeviceAddr(msg.getDeviceInfo().getDeviceId(), remotePeer);
+                            tbCoapDtlsSessionInMemoryStorage.put(tbCoapDtlsDeviceAddr, new TbCoapDtlsSessionInfo(msg, deviceProfile));
                         }
                         break;
                     }
@@ -138,7 +139,7 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
     public void setResultHandler(HandshakeResultHandler resultHandler) {
     }
 
-    public ConcurrentMap<InetSocketAddress, TbCoapDtlsSessionInfo> getTbCoapDtlsSessionsMap() {
+    public ConcurrentMap<TbCoapDtlsDeviceAddr, TbCoapDtlsSessionInfo> getTbCoapDtlsSessionsMap() {
         return tbCoapDtlsSessionInMemoryStorage.getDtlsSessionsMap();
     }
 
