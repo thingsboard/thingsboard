@@ -20,10 +20,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.CoAP;
-import org.eclipse.californium.elements.util.SslContextUtil;
-import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
-import org.eclipse.californium.scandium.dtls.CertificateType;
-import org.eclipse.californium.scandium.dtls.x509.SingleCertificateProvider;
 import org.junit.Assert;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
@@ -44,22 +40,20 @@ import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.ServerSocket;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.PrivateKey;
-import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-
-import org.eclipse.californium.scandium.dtls.x509.StaticNewAdvancedCertificateVerifier;
-
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -130,25 +124,48 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
 
     protected void clientX509FromJksUpdateAttributesTest() throws Exception {
         CertPrivateKey certPrivateKey = new CertPrivateKey(clientX509CertTrustNo, clientPrivateKeyFromCertTrustNo);
-        clientX509UpdateTest(FeatureType.ATTRIBUTES, certPrivateKey);
-    }
-
-    protected void clientX509FromPathUpdateFeatureTypeTest(FeatureType featureType) throws Exception {
-        CertPrivateKey certPrivateKey = new CertPrivateKey(CREDENTIALS_PATH_CLIENT_CERT_PEM, CREDENTIALS_PATH_CLIENT_KEY_PEM);
-        clientX509UpdateTest(featureType, certPrivateKey);
-    }
-
-    private void clientX509UpdateTest(FeatureType featureType, CertPrivateKey certPrivateKey) throws Exception {
         CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
-                .deviceName("CoapX509TrustNo_" + featureType.name())
                 .coapDeviceType(CoapDeviceType.DEFAULT)
                 .transportPayloadType(TransportPayloadType.JSON)
                 .build();
         DeviceProfile deviceProfile = createCoapDeviceProfile(configProperties);
         assertNotNull(deviceProfile);
+        CoapClientX509Test clientX509 = clientX509UpdateTest(FeatureType.ATTRIBUTES, certPrivateKey, "CoapX509TrustNo_" + FeatureType.ATTRIBUTES.name(), deviceProfile.getId(), null);
+        clientX509.disconnect();
+    }
 
-        Device deviceX509 = createDeviceWithX509(configProperties.getDeviceName(), deviceProfile.getId(), certPrivateKey.getCert());
-        CoapClientX509Test clientX509 = new CoapClientX509Test(certPrivateKey, COAPS_BASE_URL);
+    protected void clientX509FromPathUpdateFeatureTypeTest(FeatureType featureType) throws Exception {
+        CertPrivateKey certPrivateKey = new CertPrivateKey(CREDENTIALS_PATH_CLIENT_CERT_PEM, CREDENTIALS_PATH_CLIENT_KEY_PEM);
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.JSON)
+                .build();
+        DeviceProfile deviceProfile = createCoapDeviceProfile(configProperties);
+        assertNotNull(deviceProfile);
+        CoapClientX509Test clientX509 = clientX509UpdateTest(featureType, certPrivateKey, "CoapX509TrustNo_" + featureType.name(), deviceProfile.getId(), null);
+        clientX509.disconnect();
+    }
+    protected void twoClientWithSamePortX509FromPathConnectTest() throws Exception {
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.JSON)
+                .build();
+        DeviceProfile deviceProfile = createCoapDeviceProfile(configProperties);
+        CertPrivateKey certPrivateKey = new CertPrivateKey(CREDENTIALS_PATH_CLIENT_CERT_PEM, CREDENTIALS_PATH_CLIENT_KEY_PEM);
+        CertPrivateKey certPrivateKey_01 = new CertPrivateKey(CREDENTIALS_PATH_CLIENT + "cert_01.pem", CREDENTIALS_PATH_CLIENT + "key_01.pem");
+        Integer fixedPort =  getFreePort();
+        CoapClientX509Test clientX509 = clientX509UpdateTest(FeatureType.TELEMETRY, certPrivateKey, "CoapX509TrustNo_" + FeatureType.TELEMETRY.name(), deviceProfile.getId(), fixedPort);
+        clientX509.disconnect();
+        await("Need to make port " + fixedPort + " free")
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> isPortAvailable(fixedPort));
+        CoapClientX509Test clientX509_01 = clientX509UpdateTest(FeatureType.TELEMETRY, certPrivateKey_01, "CoapX509TrustNo_" + FeatureType.TELEMETRY.name() + "_01", deviceProfile.getId(), fixedPort);
+        clientX509_01.disconnect();
+    }
+
+    private CoapClientX509Test clientX509UpdateTest(FeatureType featureType, CertPrivateKey certPrivateKey, String deviceName, DeviceProfileId deviceProfileId, Integer fixedPort) throws Exception {
+        Device deviceX509 = createDeviceWithX509(deviceName, deviceProfileId, certPrivateKey.getCert());
+        CoapClientX509Test clientX509 = new CoapClientX509Test(certPrivateKey, featureType, COAPS_BASE_URL, fixedPort);
         CoapResponse coapResponseX509 = clientX509.postMethod(PAYLOAD_VALUES_STR);
         assertNotNull(coapResponseX509);
         assertEquals(CoAP.ResponseCode.CREATED, coapResponseX509.getCode());
@@ -169,9 +186,7 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
             });
             assertValuesList(actualValues, expectedNode);
         }
-        if (clientX509 != null) {
-            clientX509.disconnect();
-        }
+        return clientX509;
     }
 
     private List<String> getActualKeysList(DeviceId deviceId, List<String> expectedKeys, String apiSuffix) throws Exception {
@@ -242,22 +257,18 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
         }
     }
 
-    private static void setupCredentials(DtlsConnectorConfig.Builder config, String keyStoreUriPath, String keyStoreAlias, String trustedAliasPattern, String keyStorePassword) {
-        StaticNewAdvancedCertificateVerifier.Builder trustBuilder = StaticNewAdvancedCertificateVerifier.builder();
-        try {
-            SslContextUtil.Credentials serverCredentials = SslContextUtil.loadCredentials(
-                    keyStoreUriPath, keyStoreAlias, keyStorePassword.toCharArray(), keyStorePassword.toCharArray());
-            Certificate[] trustedCertificates = SslContextUtil.loadTrustedCertificates(
-                    keyStoreUriPath, trustedAliasPattern, keyStorePassword.toCharArray());
-            trustBuilder.setTrustedCertificates(trustedCertificates);
-            config.setAdvancedCertificateVerifier(trustBuilder.build());
-            config.setCertificateIdentityProvider(new SingleCertificateProvider(serverCredentials.getPrivateKey(), serverCredentials.getCertificateChain(), Collections.singletonList(CertificateType.X_509)));
-        } catch (GeneralSecurityException e) {
-            System.err.println("certificates are invalid!");
-            throw new IllegalArgumentException(e.getMessage());
+    private static int getFreePort() throws IOException {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            return socket.getLocalPort();
+        }
+    }
+
+    private static boolean isPortAvailable(int port) {
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+            serverSocket.setReuseAddress(true);
+            return true;
         } catch (IOException e) {
-            System.err.println("certificates are missing!");
-            throw new IllegalArgumentException(e.getMessage());
+            return false;
         }
     }
 }

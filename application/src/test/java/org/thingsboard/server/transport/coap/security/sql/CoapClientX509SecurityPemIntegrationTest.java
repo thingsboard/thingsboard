@@ -37,5 +37,8 @@ public class CoapClientX509SecurityPemIntegrationTest extends AbstractCoapSecuri
     @Test
     public void testX509NoTrustFromPathConnectCoapSuccessUpdateTelemetrySuccess() throws Exception {
         clientX509FromPathUpdateFeatureTypeTest(FeatureType.TELEMETRY);
+    }    @Test
+    public void testTwoDevicesWithSamePortX509NoTrustFromPathConnectCoapSuccess() throws Exception {
+        twoClientWithSamePortX509FromPathConnectTest();
     }
 }

@@ -43,6 +43,7 @@ import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.transport.coap.CoapTestCallback;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Collections;
@@ -85,30 +86,13 @@ public class CoapClientX509Test {
     @Getter
     private CoAP.Type type = CoAP.Type.CON;
 
-    public CoapClientX509Test(CertPrivateKey certPrivateKey, String coapsBaseUrl) {
+    public CoapClientX509Test(CertPrivateKey certPrivateKey, FeatureType featureType, String coapsBaseUrl, Integer fixedPort) {
         this.certPrivateKey = certPrivateKey;
         this.coapsBaseUrl = coapsBaseUrl;
         this.config = createConfiguration();
-        this.dtlsConnector = createDTLSConnector();
-        this.clientX509 = createClient(getFeatureTokenUrl(FeatureType.ATTRIBUTES));
-    }
-
-    public CoapClientX509Test(CertPrivateKey certPrivateKey, FeatureType featureType, String coapsBaseUrl) {
-        this.certPrivateKey = certPrivateKey;
-        this.coapsBaseUrl = coapsBaseUrl;
-        this.config = createConfiguration();
-        this.dtlsConnector = createDTLSConnector();
+        this.dtlsConnector = createDTLSConnector(fixedPort);
         this.clientX509 = createClient(getFeatureTokenUrl(featureType));
     }
-
-    public void connectToCoap(String accessToken) {
-        setURI(accessToken, null);
-    }
-
-    public void connectToCoap(String accessToken, FeatureType featureType) {
-        setURI(accessToken, featureType);
-    }
-
     public void disconnect() {
         if (clientX509 != null) {
             clientX509.shutdown();
@@ -217,7 +201,7 @@ public class CoapClientX509Test {
         return clientCoapConfig;
     }
 
-    private DTLSConnector createDTLSConnector() {
+    private DTLSConnector createDTLSConnector(Integer fixedPort) {
         try {
             // Create DTLS config client
             DtlsConnectorConfig.Builder configBuilder = new DtlsConnectorConfig.Builder(this.config);
@@ -225,6 +209,11 @@ public class CoapClientX509Test {
             X509Certificate[] certificateChainClient = new X509Certificate[]{this.certPrivateKey.getCert()};
             CertificateProvider certificateProvider = new SingleCertificateProvider(this.certPrivateKey.getPrivateKey(), certificateChainClient, Collections.singletonList(CertificateType.X_509));
             configBuilder.setCertificateIdentityProvider(certificateProvider);
+            if (fixedPort != null) {
+                InetSocketAddress localAddress = new InetSocketAddress("0.0.0.0", fixedPort);
+                configBuilder.setAddress(localAddress);
+                configBuilder.setReuseAddress(true);
+            }
             return new DTLSConnector(configBuilder.build());
         } catch (Exception e) {
             throw new RuntimeException("", e);
