@@ -403,7 +403,8 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         list: 'entity.list-of-notification-rules',
         noEntities: 'notification.no-rules-notification',
         search: 'notification.search-rules',
-        selectedEntities: 'notification.selected-rules'
+        selectedEntities: 'notification.selected-rules',
+        add: 'notification.add-rule'
       }
     ],
     [
@@ -414,7 +415,8 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         list: 'entity.list-of-notification-targets',
         noEntities: 'notification.no-recipients-notification',
         search: 'notification.search-recipients',
-        selectedEntities: 'notification.selected-recipients'
+        selectedEntities: 'notification.selected-recipients',
+        add: 'notification.add-recipients'
       }
     ],
     [
@@ -425,7 +427,8 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         list: 'entity.list-of-notification-templates',
         noEntities: 'notification.no-notification-templates',
         search: 'notification.search-templates',
-        selectedEntities: 'notification.selected-template'
+        selectedEntities: 'notification.selected-template',
+        add: 'notification.add-template'
       }
     ],
     [
