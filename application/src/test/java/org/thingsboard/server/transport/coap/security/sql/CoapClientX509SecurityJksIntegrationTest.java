@@ -16,7 +16,7 @@
 package org.thingsboard.server.transport.coap.security.sql;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -31,6 +31,11 @@ import org.thingsboard.server.transport.coap.security.AbstractCoapSecurityIntegr
         "coap.dtls.credentials.keystore.key_alias=server",
 })
 public class CoapClientX509SecurityJksIntegrationTest extends AbstractCoapSecurityIntegrationTest {
+
+    @Before
+    public void beforeTest() throws Exception {
+        processBeforeTest();
+    }
 
     @Test
     public void testX509NoTrustFromJksConnectCoapSuccessUpdateAttributesSuccess() throws Exception {

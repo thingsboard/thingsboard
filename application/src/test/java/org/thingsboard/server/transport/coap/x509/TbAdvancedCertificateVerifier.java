@@ -78,7 +78,6 @@ public class TbAdvancedCertificateVerifier implements NewAdvancedCertificateVeri
     public CertificateVerificationResult verifyCertificate(ConnectionId cid, ServerNames serverName, InetSocketAddress remotePeer,
                                                            boolean clientUsage, boolean verifySubject, boolean truncateCertificatePath,
                                                            CertificateMessage message) {
-        long startTime = System.currentTimeMillis();
         CertPath certChain = message.getCertificateChain();
         CertificateVerificationResult result;
 

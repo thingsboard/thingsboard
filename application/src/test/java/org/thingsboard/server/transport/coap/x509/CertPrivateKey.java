@@ -65,10 +65,6 @@ public class CertPrivateKey {
         return FileUtils.readFileToString(file, "UTF-8");
     }
 
-    public String convertCertToPEM() throws Exception {
-        return  convertCertToPEM(this.cert);
-    }
-
     public static String convertCertToPEM(X509Certificate certificate) throws Exception {
         StringBuilder pemBuilder = new StringBuilder();
         pemBuilder.append("-----BEGIN CERTIFICATE-----\n");

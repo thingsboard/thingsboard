@@ -194,25 +194,11 @@ public class CoapClientX509Test {
         clientCoapConfig.set(DTLS_USE_HELLO_VERIFY_REQUEST, false);
         clientCoapConfig.set(DTLS_VERIFY_SERVER_CERTIFICATES_SUBJECT, false);
         clientCoapConfig.set(DTLS_MAX_FRAGMENTED_HANDSHAKE_MESSAGE_LENGTH, 22490);
-//        clientCoapConfig.set(DTLS_DEFAULT_HANDSHAKE_MODE, DtlsEndpointContext.HANDSHAKE_MODE_NONE); // only server
         clientCoapConfig.set(DTLS_AUTO_HANDSHAKE_TIMEOUT, 100000,  TimeUnit.MILLISECONDS);
         clientCoapConfig.set(DTLS_MAX_PENDING_HANDSHAKE_RESULT_JOBS, 64);
         clientCoapConfig.set(DTLS_USE_MULTI_HANDSHAKE_MESSAGE_RECORDS, false);
         clientCoapConfig.set(DTLS_RECEIVE_BUFFER_SIZE, 8192);
-
-
-//        clientCoapConfig.set(DTLS_RETRANSMISSION_TIMEOUT_SCALE, 1.0F);
-//        clientCoapConfig.set(DTLS_MAX_FRAGMENTED_HANDSHAKE_MESSAGE_LENGTH, 24576);
-
         clientCoapConfig.setTransient(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY);
-        // DTLS.VERIFY_SERVER_CERTIFICATES_SUBJECT
-        // DTLS.RECOMMENDED_CIPHER_SUITES_ONLY
-//            configBuilder.set(DTLS_CLIENT_AUTHENTICATION_MODE, NONE);
-//        clientCoapConfig.setTransient(DTLS_RETRANSMISSION_TIMEOUT);
-//        clientCoapConfig.set(DTLS_RETRANSMISSION_TIMEOUT, 60000, MILLISECONDS);
-//        clientCoapConfig.setTransient(DTLS_ROLE);
-//        clientCoapConfig.set(DTLS_ROLE, CLIENT_ONLY);
-//        clientCoapConfig.setTransient(DTLS_SIGNATURE_AND_HASH_ALGORITHMS);
         SignatureAndHashAlgorithmsDefinition algorithmsDefinition = new SignatureAndHashAlgorithmsDefinition(MODULE + "SIGNATURE_AND_HASH_ALGORITHMS", "List of DTLS signature- and hash-algorithms.\nValues e.g SHA256withECDSA or ED25519.");
         SignatureAndHashAlgorithm SHA384_WITH_RSA = new SignatureAndHashAlgorithm(HashAlgorithm.SHA384,
                 SignatureAlgorithm.RSA);
@@ -245,10 +231,6 @@ public class CoapClientX509Test {
         }
     }
 
-    private CoapClient createClient() {
-        return new CoapClient();
-    }
-
     private CoapClient createClient(String featureTokenUrl) {
         CoapClient client = new CoapClient(featureTokenUrl);
         CoapEndpoint.Builder builder = new CoapEndpoint.Builder();
@@ -261,15 +243,8 @@ public class CoapClientX509Test {
         return this.coapsBaseUrl + featureType.name().toLowerCase();
     }
 
-    public String getFeatureTokenUrl(String featureType) {
-        return this.coapsBaseUrl + featureType.toLowerCase();
-    }
-
     public String getFeatureTokenUrl(String token, FeatureType featureType) {
         return this.coapsBaseUrl + token + "/" + featureType.name().toLowerCase();
     }
-
-    public String getFeatureTokenUrl(String token, FeatureType featureType, int requestId) {
-        return this.coapsBaseUrl + token + "/" + featureType.name().toLowerCase() + "/" + requestId;
-    }
 }
+

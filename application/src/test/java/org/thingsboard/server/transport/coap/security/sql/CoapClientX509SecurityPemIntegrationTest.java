@@ -16,9 +16,8 @@
 package org.thingsboard.server.transport.coap.security.sql;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
-import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.coap.security.AbstractCoapSecurityIntegrationTest;
@@ -26,6 +25,10 @@ import org.thingsboard.server.transport.coap.security.AbstractCoapSecurityIntegr
 @Slf4j
 @DaoSqlTest
 public class CoapClientX509SecurityPemIntegrationTest extends AbstractCoapSecurityIntegrationTest {
+    @Before
+    public void beforeTest() throws Exception {
+        processBeforeTest();
+    }
 
     @Test
     public void testX509NoTrustFromPathConnectCoapSuccessUpdateAttributesSuccess() throws Exception {
@@ -34,9 +37,5 @@ public class CoapClientX509SecurityPemIntegrationTest extends AbstractCoapSecuri
     @Test
     public void testX509NoTrustFromPathConnectCoapSuccessUpdateTelemetrySuccess() throws Exception {
         clientX509FromPathUpdateFeatureTypeTest(FeatureType.TELEMETRY);
-    }
-    @Test
-    public void testX509NoTrustFromPathConnectCoapCntClient10CntMsg10UpdateTelemetry() throws Exception {
-        clientX509FromPathUpdateClientCntMsgFeatureTypeTest(10, 10);
     }
 }

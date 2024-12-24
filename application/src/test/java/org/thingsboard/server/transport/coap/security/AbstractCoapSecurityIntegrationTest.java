@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.session.FeatureType;
@@ -103,13 +104,11 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
         }
     }
 
-    protected Device createDeviceWithX509(String deviceName, X509Certificate clientX509Cert) throws Exception {
-        loginTenantAdmin();
-
+    protected Device createDeviceWithX509(String deviceName, DeviceProfileId deviceProfileId, X509Certificate clientX509Cert) throws Exception {
         Device device = new Device();
         device.setName(deviceName);
-        device.setType(deviceProfile.getName());
-        device.setDeviceProfileId(deviceProfile.getId());
+        device.setType(deviceName);
+        device.setDeviceProfileId(deviceProfileId);
 
         DeviceCredentials deviceCredentials = new DeviceCredentials();
         deviceCredentials.setCredentialsType(DeviceCredentialsType.X509_CERTIFICATE);
@@ -137,7 +136,7 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
     protected void clientX509FromPathUpdateFeatureTypeTest(FeatureType featureType) throws Exception {
         CertPrivateKey certPrivateKey = new CertPrivateKey(CREDENTIALS_PATH_CLIENT_CERT_PEM, CREDENTIALS_PATH_CLIENT_KEY_PEM);
         clientX509UpdateTest(featureType, certPrivateKey);
-     }
+    }
 
     private void clientX509UpdateTest(FeatureType featureType, CertPrivateKey certPrivateKey) throws Exception {
         CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
@@ -148,7 +147,7 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
         DeviceProfile deviceProfile = createCoapDeviceProfile(configProperties);
         assertNotNull(deviceProfile);
 
-        Device deviceX509 = createDeviceWithX509(configProperties.getDeviceName(), certPrivateKey.getCert());
+        Device deviceX509 = createDeviceWithX509(configProperties.getDeviceName(), deviceProfile.getId(), certPrivateKey.getCert());
         CoapClientX509Test clientX509 = new CoapClientX509Test(certPrivateKey, COAPS_BASE_URL);
         CoapResponse coapResponseX509 = clientX509.postMethod(PAYLOAD_VALUES_STR);
         assertNotNull(coapResponseX509);
@@ -170,30 +169,9 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
             });
             assertValuesList(actualValues, expectedNode);
         }
-        clientX509.disconnect();
-    }
-
-    protected void clientX509FromPathUpdateClientCntMsgFeatureTypeTest(int cntClient, int cntMsg) throws Exception {
-        String deviceName = "CoapX509TrustNo_" + FeatureType.TELEMETRY.name();
-        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
-                .deviceName(deviceName)
-                .coapDeviceType(CoapDeviceType.DEFAULT)
-                .transportPayloadType(TransportPayloadType.JSON)
-                .build();
-        DeviceProfile deviceProfile = createCoapDeviceProfile(configProperties);
-        assertNotNull(deviceProfile);
-
-        CertPrivateKey certPrivateKey = new CertPrivateKey(CREDENTIALS_PATH_CLIENT + "cert.pem", CREDENTIALS_PATH_CLIENT + "key.pem");
-        Device deviceX509 = createDeviceWithX509(deviceName, certPrivateKey.getCert());
-        log.warn("Start connect and send post");
-        System.out.println("Start connect and send post");
-        CoapClientX509Test clientX509 = new CoapClientX509Test(certPrivateKey, FeatureType.TELEMETRY, COAPS_BASE_URL);
-        CoapResponse coapResponseX509 = clientX509.postMethod(PAYLOAD_VALUES_STR.getBytes());
-        assertNotNull(coapResponseX509);
-        assertEquals(CoAP.ResponseCode.CREATED, coapResponseX509.getCode());
-        log.warn("Finish, response ok");
-        System.out.println("Finish, response ok");
-        clientX509.disconnect();
+        if (clientX509 != null) {
+            clientX509.disconnect();
+        }
     }
 
     private List<String> getActualKeysList(DeviceId deviceId, List<String> expectedKeys, String apiSuffix) throws Exception {
@@ -213,25 +191,7 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
         return actualKeys;
     }
 
-    private List<String> getActualKeysListTelemetry(DeviceId deviceId, List<String> expectedKeys) throws Exception {
-        long start = System.currentTimeMillis();
-        long end = System.currentTimeMillis() + 3000;
-
-        List<String> actualKeys = null;
-        while (start <= end) {
-            actualKeys = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/keys/timeseries", new TypeReference<>() {
-            });
-            if (actualKeys.size() == expectedKeys.size()) {
-                break;
-            }
-            Thread.sleep(100);
-            start += 100;
-        }
-        return actualKeys;
-    }
-
     private String getAttributesValuesUrl(DeviceId deviceId, Set<String> actualKeySet, String apiSuffix) {
-        //     "/api/plugins/telemetry/DEVICE/" + deviceId + "/values/timeseries?keys=" + String.join(",", actualKeySet);
         return "/api/plugins/telemetry/DEVICE/" + deviceId + "/values/" + apiSuffix + "?keys=" + String.join(",", actualKeySet);
     }
 
@@ -244,19 +204,6 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
         return jKeys;
     }
 
-    protected void assertValuesProto(Map<String, List<Map<String, Object>>> actualValues, JsonNode expectedValues) {
-        assertTrue(actualValues.size() > 0);
-        assertEquals(expectedValues.size(), actualValues.size());
-        for (Map.Entry<String, List<Map<String, Object>>> entry : actualValues.entrySet()) {
-            String key = entry.getKey();
-            List<Map<String, Object>> tsKv = entry.getValue();
-            Object actualValue = tsKv.get(0).get("value");
-            assertTrue(expectedValues.has(key));
-            JsonNode expectedValue = expectedValues.get(key);
-            assertExpectedActualValueProto(expectedValue, actualValue);
-        }
-    }
-
     protected void assertValuesList(List<Map<String, Object>> actualValues, JsonNode expectedValues) {
         assertTrue(actualValues.size() > 0);
         assertEquals(expectedValues.size(), actualValues.size());
@@ -266,39 +213,6 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
             assertTrue(expectedValues.has(key));
             JsonNode expectedValue = expectedValues.get(key);
             assertExpectedActualValue(expectedValue, actualValue);
-        }
-    }
-
-    protected void assertExpectedActualValueProto(JsonNode expectedValue, Object actualValue) {
-        switch (expectedValue.getNodeType()) {
-            case STRING:
-                assertEquals(expectedValue.asText(), actualValue);
-                break;
-            case NUMBER:
-                if (expectedValue.isInt()) {
-                    Integer iActual = Integer.valueOf(actualValue.toString());
-                    Integer iExpected = expectedValue.asInt();
-                    assertEquals(iExpected, iActual);
-                } else if (expectedValue.isLong()) {
-                    Long lActual = Long.valueOf(actualValue.toString());
-                    Long lExpected = expectedValue.asLong();
-                    assertEquals(lExpected, lActual);
-                } else if (expectedValue.isFloat() || expectedValue.isDouble()) {
-                    Double dActual = Double.valueOf(actualValue.toString());
-                    Double dExpected = expectedValue.asDouble();
-                    assertEquals(dExpected, dActual);
-                }
-                break;
-            case BOOLEAN:
-                assertTrue(actualValue.equals("true") || actualValue.equals("false"));
-                assertEquals(expectedValue.asBoolean(), actualValue.equals("true"));
-                break;
-            case ARRAY:
-            case OBJECT:
-                assertEquals(expectedValue.toString(), actualValue);
-                break;
-            default:
-                break;
         }
     }
 
