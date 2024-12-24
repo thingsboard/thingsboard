@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -189,6 +190,16 @@ public final class TbMsg implements Serializable {
         }
         if (msg.getPartition() != null) {
             builder.setPartition(msg.getPartition());
+        }
+
+        if (msg.getCalculatedFieldIds() != null) {
+            for (CalculatedFieldId calculatedFieldId : msg.getCalculatedFieldIds()) {
+                MsgProtos.CalculatedFieldIdProto calculatedFieldIdProto = MsgProtos.CalculatedFieldIdProto.newBuilder()
+                        .setCalculatedFieldIdMSB(calculatedFieldId.getId().getMostSignificantBits())
+                        .setCalculatedFieldIdLSB(calculatedFieldId.getId().getLeastSignificantBits())
+                        .build();
+                builder.addCalculatedFields(calculatedFieldIdProto);
+            }
         }
 
         builder.setCtx(msg.ctx.toProto());
@@ -495,8 +506,8 @@ public final class TbMsg implements Serializable {
                     ", type=" + this.type + ", internalType=" + this.internalType + ", originator=" + this.originator +
                     ", customerId=" + this.customerId + ", metaData=" + this.metaData + ", dataType=" + this.dataType +
                     ", data=" + this.data + ", ruleChainId=" + this.ruleChainId + ", ruleNodeId=" + this.ruleNodeId +
-                    ", correlationId=" + this.correlationId + ", partition=" + this.partition + ", ctx=" + this.ctx +
-                    ", callback=" + this.callback + ")";
+                    ", correlationId=" + this.correlationId + ", partition=" + this.partition + ", calculatedFields=" + this.calculatedFieldIds +
+                    ", ctx=" + this.ctx + ", callback=" + this.callback + ")";
         }
 
     }
