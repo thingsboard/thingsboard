@@ -3325,6 +3325,7 @@
         "no-modules": "No modules configured",
         "add-module": "Add module",
         "module-alias": "Alias",
+        "invalid-module-alias-name": "Invalid alias name",
         "module-resource": "JS module resource",
         "not-unique-module-aliases-error": "Modules aliases must be unique!",
         "show-module-info": "Show module info",
