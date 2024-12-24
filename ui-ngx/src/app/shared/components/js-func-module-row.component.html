@@ -18,6 +18,14 @@
 <div [formGroup]="moduleRowFormGroup" class="tb-form-table-row tb-js-func-module-row">
   <mat-form-field class="tb-inline-field tb-alias-field" appearance="outline" subscriptSizing="dynamic">
     <input required matInput formControlName="alias" placeholder="{{ 'widget-config.set' | translate }}">
+    <mat-icon matSuffix
+              matTooltipPosition="above"
+              matTooltipClass="tb-error-tooltip"
+              [matTooltip]="'js-func.invalid-module-alias-name' | translate"
+              *ngIf="moduleRowFormGroup.get('alias').invalid && moduleRowFormGroup.get('alias').touched"
+              class="tb-error">
+      warning
+    </mat-icon>
   </mat-form-field>
   <tb-resource-autocomplete class="tb-module-link-field"
                             #resourceAutocomplete
