@@ -817,8 +817,9 @@ message CalculatedFieldStateMsgProto {
   string entityType = 5;
   int64 entityIdMSB = 6;
   int64 entityIdLSB = 7;
-  repeated CalculatedFieldIdProto calculatedFields = 8;
-  map<string, ArgumentEntryProto> arguments = 9;
+  bool clear = 8;
+  repeated CalculatedFieldIdProto calculatedFields = 9;
+  map<string, ArgumentEntryProto> arguments = 10;
 }
 
 message CalculatedFieldIdProto {
@@ -843,8 +844,13 @@ message SingleValueProto {
 }
 
 message ObjectProto {
-  string type = 1;
-  string value = 2;
+  oneof value {
+    string stringValue = 1;
+    int32 intValue = 2;
+    int64 longValue = 3;
+    double doubleValue = 4;
+    bool boolValue = 5;
+  }
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
