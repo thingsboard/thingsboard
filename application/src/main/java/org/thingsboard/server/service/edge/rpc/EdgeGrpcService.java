@@ -580,7 +580,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 edgeState.put(ACTIVITY_STATE, false);
                 edgeState.put(LAST_DISCONNECT_TIME, ts);
             }
-            ctx.getNotificationRuleProcessor().process(EdgeConnectionTrigger.builder()
+            ctx.getRuleProcessor().process(EdgeConnectionTrigger.builder()
                     .tenantId(tenantId)
                     .customerId(edge.getCustomerId())
                     .edgeId(edgeId)
