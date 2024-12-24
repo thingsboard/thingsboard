@@ -26,15 +26,12 @@ import { SentNotificationDialogComponent } from '@home/pages/notification/sent/s
 import {
   RecipientNotificationDialogComponent
 } from '@home/pages/notification/recipient/recipient-notification-dialog.component';
-import { RecipientTableHeaderComponent } from '@home/pages/notification/recipient/recipient-table-header.component';
 import {
   TemplateNotificationDialogComponent
 } from '@home/pages/notification/template/template-notification-dialog.component';
-import { TemplateTableHeaderComponent } from '@home/pages/notification/template/template-table-header.component';
 import { EscalationFormComponent } from '@home/pages/notification/rule/escalation-form.component';
 import { EscalationsComponent } from '@home/pages/notification/rule/escalations.component';
 import { RuleNotificationDialogComponent } from '@home/pages/notification/rule/rule-notification-dialog.component';
-import { RuleTableHeaderComponent } from '@home/pages/notification/rule/rule-table-header.component';
 import { NotificationSettingsComponent } from '@home/pages/notification/settings/notification-settings.component';
 import {
   NotificationSettingFormComponent
@@ -53,13 +50,10 @@ import {
     SentErrorDialogComponent,
     SentNotificationDialogComponent,
     RecipientNotificationDialogComponent,
-    RecipientTableHeaderComponent,
     TemplateNotificationDialogComponent,
-    TemplateTableHeaderComponent,
     EscalationFormComponent,
     EscalationsComponent,
     RuleNotificationDialogComponent,
-    RuleTableHeaderComponent,
     NotificationSettingsComponent,
     NotificationSettingFormComponent,
     NotificationTemplateConfigurationComponent,

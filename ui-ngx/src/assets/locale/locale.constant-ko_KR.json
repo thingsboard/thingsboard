@@ -2142,7 +2142,6 @@
         "type": "위젯 타입",
         "resources": "리소스",
         "resource-url": "JavaScript/CSS URI",
-        "resource-is-module": "모듈 여부",
         "remove-resource": "리소스 삭제",
         "add-resource": "리소스 추가",
         "html": "HTML",

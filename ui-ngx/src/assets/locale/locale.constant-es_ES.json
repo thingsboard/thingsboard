@@ -4556,7 +4556,6 @@
         "type": "Tipo de widget",
         "resources": "Recursos",
         "resource-url": "URL JavaScript/CSS",
-        "resource-is-module": "Es módulo",
         "remove-resource": "Eliminar recurso",
         "add-resource": "Agregar recurso",
         "html": "HTML",
