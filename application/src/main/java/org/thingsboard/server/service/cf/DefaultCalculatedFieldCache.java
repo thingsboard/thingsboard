@@ -100,11 +100,11 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     @Override
     public List<CalculatedFieldLink> getCalculatedFieldLinks(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
         List<CalculatedFieldLink> cfLinks = calculatedFieldLinks.get(calculatedFieldId);
-        if (cfLinks == null) {
+        if (cfLinks == null || cfLinks.isEmpty()) {
             calculatedFieldFetchLock.lock();
             try {
                 cfLinks = calculatedFieldLinks.get(calculatedFieldId);
-                if (cfLinks == null) {
+                if (cfLinks == null || cfLinks.isEmpty()) {
                     cfLinks = calculatedFieldService.findAllCalculatedFieldLinksById(tenantId, calculatedFieldId);
                     if (cfLinks != null) {
                         calculatedFieldLinks.put(calculatedFieldId, cfLinks);
@@ -122,11 +122,11 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     @Override
     public List<CalculatedFieldLink> getCalculatedFieldLinksByEntityId(TenantId tenantId, EntityId entityId) {
         List<CalculatedFieldLink> cfLinks = entityIdCalculatedFieldLinks.get(entityId);
-        if (cfLinks == null) {
+        if (cfLinks == null || cfLinks.isEmpty()) {
             calculatedFieldFetchLock.lock();
             try {
                 cfLinks = entityIdCalculatedFieldLinks.get(entityId);
-                if (cfLinks == null) {
+                if (cfLinks == null || cfLinks.isEmpty()) {
                     cfLinks = calculatedFieldService.findAllCalculatedFieldLinksByEntityId(tenantId, entityId);
                     if (cfLinks != null) {
                         entityIdCalculatedFieldLinks.put(entityId, cfLinks);

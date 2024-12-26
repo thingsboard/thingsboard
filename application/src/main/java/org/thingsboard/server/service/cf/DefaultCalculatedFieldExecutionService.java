@@ -556,20 +556,21 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             CalculatedFieldState state = calculatedFieldEntityCtx.getState();
 
             boolean allKeysPresent = argumentValues.keySet().containsAll(calculatedFieldCtx.getArguments().keySet());
-            if (!allKeysPresent) {
+            boolean requiresTsRollingUpdate = calculatedFieldCtx.getArguments().values().stream()
+                    .anyMatch(argument -> "TS_ROLLING".equals(argument.getType()) && state.getArguments().get(argument.getKey()) == null);
+
+            if (!allKeysPresent || requiresTsRollingUpdate) {
 
                 Map<String, Argument> missingArguments = calculatedFieldCtx.getArguments().entrySet().stream()
-                        .filter(entry -> !argumentValues.containsKey(entry.getKey()))
+                        .filter(entry -> !argumentValues.containsKey(entry.getKey()) || ("TS_ROLLING".equals(entry.getValue().getType()) && state.getArguments().get(entry.getKey()) == null))
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
                 fetchArguments(calculatedFieldCtx.getTenantId(), entityId, missingArguments, argumentValues::putAll)
                         .addListener(() -> performUpdateState.accept(state),
                                 calculatedFieldCallbackExecutor);
-                return;
+            } else {
+                performUpdateState.accept(state);
             }
-            performUpdateState.accept(state);
-            states.put(entityCtxId, calculatedFieldEntityCtx);
-            rocksDBService.put(JacksonUtil.writeValueAsString(entityCtxId), JacksonUtil.writeValueAsString(calculatedFieldEntityCtx));
         } else {
             sendUpdateCalculatedFieldStateMsg(tenantId, cfId, entityId, calculatedFieldIds, argumentValues);
         }

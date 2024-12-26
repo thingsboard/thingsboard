@@ -24,6 +24,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     protected Map<String, ArgumentEntry> arguments;
 
     public BaseCalculatedFieldState() {
+        arguments = new HashMap<>();
     }
 
     @Override
