@@ -49,7 +49,9 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
                 tsRecords.entrySet().removeIf(tsRecord -> tsRecord.getKey() < System.currentTimeMillis() - argument.getTimeWindow());
             }
         });
-        Object[] args = arguments.values().stream().map(ArgumentEntry::getValue).toArray();
+        Object[] args = ctx.getArgKeys().stream()
+                .map(key -> arguments.get(key).getValue())
+                .toArray();
         ListenableFuture<Map<String, Object>> resultFuture = ctx.getCalculatedFieldScriptEngine().executeToMapAsync(args);
         Output output = ctx.getOutput();
         return Futures.transform(resultFuture,

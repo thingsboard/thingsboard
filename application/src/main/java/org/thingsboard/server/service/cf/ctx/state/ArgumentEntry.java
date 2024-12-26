@@ -22,8 +22,6 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 import java.util.List;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -48,8 +46,7 @@ public interface ArgumentEntry {
     }
 
     static ArgumentEntry createTsRollingArgument(List<TsKvEntry> kvEntries) {
-        return new TsRollingArgumentEntry(kvEntries.stream().
-                collect(Collectors.toMap(TsKvEntry::getTs, TsKvEntry::getValue, (oldValue, newValue) -> newValue, TreeMap::new)));
+        return new TsRollingArgumentEntry(kvEntries);
     }
 
     @JsonIgnore

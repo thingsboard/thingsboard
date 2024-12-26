@@ -841,6 +841,7 @@ message TsRollingProto {
 message SingleValueProto {
   int64 ts = 1;
   ObjectProto value = 2;
+  int64 version = 3;
 }
 
 message ObjectProto {

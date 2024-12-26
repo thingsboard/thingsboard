@@ -32,11 +32,15 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     private long ts;
     private Object value;
 
+    private long version;
+
     public SingleValueArgumentEntry(KvEntry entry) {
-        if (entry instanceof TsKvEntry) {
-            this.ts = ((TsKvEntry) entry).getTs();
-        } else if (entry instanceof AttributeKvEntry) {
-            this.ts = ((AttributeKvEntry) entry).getLastUpdateTs();
+        if (entry instanceof TsKvEntry tsKvEntry) {
+            this.ts = tsKvEntry.getTs();
+            this.version = tsKvEntry.getVersion();
+        } else if (entry instanceof AttributeKvEntry attributeKvEntry) {
+            this.ts = attributeKvEntry.getLastUpdateTs();
+            this.version = attributeKvEntry.getVersion();
         }
         this.value = entry.getValue();
     }
@@ -66,7 +70,7 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
 
     @Override
     public ArgumentEntry copy() {
-        return new SingleValueArgumentEntry(this.ts, this.value);
+        return new SingleValueArgumentEntry(this.ts, this.value, this.version);
     }
 
 }

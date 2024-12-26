@@ -16,16 +16,20 @@
 package org.thingsboard.server.service.cf.ctx.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 @Slf4j
 public class TsRollingArgumentEntry implements ArgumentEntry {
 
@@ -35,8 +39,8 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
 
     private TreeMap<Long, Object> tsRecords = new TreeMap<>();
 
-    public TsRollingArgumentEntry(TreeMap<Long, Object> tsRecords) {
-        addAllTsRecords(tsRecords);
+    public TsRollingArgumentEntry(List<TsKvEntry> kvEntries) {
+        kvEntries.forEach(tsKvEntry -> addTsRecord(tsKvEntry.getTs(), tsKvEntry.getValue()));
     }
 
     /**

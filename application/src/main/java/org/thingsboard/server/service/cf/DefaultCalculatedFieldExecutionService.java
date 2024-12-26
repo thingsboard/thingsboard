@@ -92,6 +92,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -118,6 +119,8 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
 
     private ListeningExecutorService calculatedFieldExecutor;
     private ListeningExecutorService calculatedFieldCallbackExecutor;
+
+    private final ConcurrentMap<EntityId, ReentrantLock> entityLocks = new ConcurrentHashMap<>();
 
     private final ConcurrentMap<CalculatedFieldEntityCtxId, CalculatedFieldEntityCtx> states = new ConcurrentHashMap<>();
 
@@ -536,40 +539,47 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         CalculatedFieldId cfId = calculatedFieldCtx.getCfId();
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, cfId);
         if (tpi.isMyPartition()) {
-            CalculatedFieldEntityCtxId entityCtxId = new CalculatedFieldEntityCtxId(cfId.getId(), entityId.getId());
-            CalculatedFieldEntityCtx calculatedFieldEntityCtx = states.computeIfAbsent(entityCtxId, ctxId -> fetchCalculatedFieldEntityState(ctxId, calculatedFieldCtx.getCfType()));
+            ReentrantLock lock = entityLocks.computeIfAbsent(entityId, id -> new ReentrantLock());
+            lock.lock();
 
-            Consumer<CalculatedFieldState> performUpdateState = (state) -> {
-                if (state.updateState(argumentValues)) {
-                    calculatedFieldEntityCtx.setState(state);
-                    states.put(entityCtxId, calculatedFieldEntityCtx);
-                    rocksDBService.put(JacksonUtil.writeValueAsString(entityCtxId), JacksonUtil.writeValueAsString(calculatedFieldEntityCtx));
-                    Map<String, ArgumentEntry> arguments = state.getArguments();
-                    boolean allArgsPresent = arguments.keySet().containsAll(calculatedFieldCtx.getArguments().keySet()) &&
-                            !arguments.containsValue(SingleValueArgumentEntry.EMPTY) && !arguments.containsValue(TsRollingArgumentEntry.EMPTY);
-                    if (allArgsPresent) {
-                        performCalculation(calculatedFieldCtx, state, entityId, calculatedFieldIds);
+            try {
+                CalculatedFieldEntityCtxId entityCtxId = new CalculatedFieldEntityCtxId(cfId.getId(), entityId.getId());
+                CalculatedFieldEntityCtx calculatedFieldEntityCtx = states.computeIfAbsent(entityCtxId, ctxId -> fetchCalculatedFieldEntityState(ctxId, calculatedFieldCtx.getCfType()));
+
+                Consumer<CalculatedFieldState> performUpdateState = (state) -> {
+                    if (state.updateState(argumentValues)) {
+                        calculatedFieldEntityCtx.setState(state);
+                        states.put(entityCtxId, calculatedFieldEntityCtx);
+                        rocksDBService.put(JacksonUtil.writeValueAsString(entityCtxId), JacksonUtil.writeValueAsString(calculatedFieldEntityCtx));
+                        Map<String, ArgumentEntry> arguments = state.getArguments();
+                        boolean allArgsPresent = arguments.keySet().containsAll(calculatedFieldCtx.getArguments().keySet()) &&
+                                !arguments.containsValue(SingleValueArgumentEntry.EMPTY) && !arguments.containsValue(TsRollingArgumentEntry.EMPTY);
+                        if (allArgsPresent) {
+                            performCalculation(calculatedFieldCtx, state, entityId, calculatedFieldIds);
+                        }
                     }
+                };
+
+                CalculatedFieldState state = calculatedFieldEntityCtx.getState();
+
+                boolean allKeysPresent = argumentValues.keySet().containsAll(calculatedFieldCtx.getArguments().keySet());
+                boolean requiresTsRollingUpdate = calculatedFieldCtx.getArguments().values().stream()
+                        .anyMatch(argument -> "TS_ROLLING".equals(argument.getType()) && state.getArguments().get(argument.getKey()) == null);
+
+                if (!allKeysPresent || requiresTsRollingUpdate) {
+
+                    Map<String, Argument> missingArguments = calculatedFieldCtx.getArguments().entrySet().stream()
+                            .filter(entry -> !argumentValues.containsKey(entry.getKey()) || ("TS_ROLLING".equals(entry.getValue().getType()) && state.getArguments().get(entry.getKey()) == null))
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+                    fetchArguments(calculatedFieldCtx.getTenantId(), entityId, missingArguments, argumentValues::putAll)
+                            .addListener(() -> performUpdateState.accept(state),
+                                    calculatedFieldCallbackExecutor);
+                } else {
+                    performUpdateState.accept(state);
                 }
-            };
-
-            CalculatedFieldState state = calculatedFieldEntityCtx.getState();
-
-            boolean allKeysPresent = argumentValues.keySet().containsAll(calculatedFieldCtx.getArguments().keySet());
-            boolean requiresTsRollingUpdate = calculatedFieldCtx.getArguments().values().stream()
-                    .anyMatch(argument -> "TS_ROLLING".equals(argument.getType()) && state.getArguments().get(argument.getKey()) == null);
-
-            if (!allKeysPresent || requiresTsRollingUpdate) {
-
-                Map<String, Argument> missingArguments = calculatedFieldCtx.getArguments().entrySet().stream()
-                        .filter(entry -> !argumentValues.containsKey(entry.getKey()) || ("TS_ROLLING".equals(entry.getValue().getType()) && state.getArguments().get(entry.getKey()) == null))
-                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-                fetchArguments(calculatedFieldCtx.getTenantId(), entityId, missingArguments, argumentValues::putAll)
-                        .addListener(() -> performUpdateState.accept(state),
-                                calculatedFieldCallbackExecutor);
-            } else {
-                performUpdateState.accept(state);
+            } finally {
+                lock.unlock();
             }
         } else {
             sendUpdateCalculatedFieldStateMsg(tenantId, cfId, entityId, calculatedFieldIds, argumentValues);
@@ -747,7 +757,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             return tsRollingArgumentEntry;
         } else if (entryProto.hasSingleValue()) {
             TransportProtos.SingleValueProto singleValueProto = entryProto.getSingleValue();
-            return new SingleValueArgumentEntry(singleValueProto.getTs(), fromObjectProto(singleValueProto.getValue()));
+            return new SingleValueArgumentEntry(singleValueProto.getTs(), fromObjectProto(singleValueProto.getValue()), singleValueProto.getVersion());
         } else {
             throw new IllegalArgumentException("Unsupported ArgumentEntryProto type");
         }

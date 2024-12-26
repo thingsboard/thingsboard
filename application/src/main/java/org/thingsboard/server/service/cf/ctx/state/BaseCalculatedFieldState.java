@@ -17,7 +17,6 @@ package org.thingsboard.server.service.cf.ctx.state;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
@@ -37,34 +36,30 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
         if (arguments == null) {
             arguments = new HashMap<>();
         }
-        AtomicBoolean stateUpdated = new AtomicBoolean(false);
-        argumentValues.forEach((key, argumentEntry) -> {
-            ArgumentEntry existingArgumentEntry = arguments.get(key);
-            if (existingArgumentEntry != null) {
-                if (existingArgumentEntry instanceof SingleValueArgumentEntry) {
-                    if (existingArgumentEntry.hasUpdatedValue(argumentEntry)) {
-                        arguments.put(key, argumentEntry.copy());
-                        stateUpdated.set(true);
-                    }
-                } else if (existingArgumentEntry instanceof TsRollingArgumentEntry existingTsRollingArgumentEntry) {
-                    if (argumentEntry instanceof TsRollingArgumentEntry tsRollingArgumentEntry) {
-                        if (existingArgumentEntry.hasUpdatedValue(argumentEntry)) {
-                            existingTsRollingArgumentEntry.addAllTsRecords(tsRollingArgumentEntry.getTsRecords());
-                            stateUpdated.set(true);
-                        }
-                    } else if (argumentEntry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
-                        if (existingArgumentEntry.hasUpdatedValue(argumentEntry)) {
-                            existingTsRollingArgumentEntry.addTsRecord(singleValueArgumentEntry.getTs(), singleValueArgumentEntry.getValue());
-                            stateUpdated.set(true);
-                        }
-                    }
+
+        boolean stateUpdated = false;
+
+        for (Map.Entry<String, ArgumentEntry> entry : argumentValues.entrySet()) {
+            String key = entry.getKey();
+            ArgumentEntry newEntry = entry.getValue();
+            ArgumentEntry existingEntry = arguments.get(key);
+
+            if (existingEntry == null || existingEntry.hasUpdatedValue(newEntry)) {
+                if (existingEntry instanceof TsRollingArgumentEntry existingTsRollingEntry && newEntry instanceof TsRollingArgumentEntry newTsRollingEntry) {
+                    existingTsRollingEntry.addAllTsRecords(newTsRollingEntry.getTsRecords());
+                } else if (existingEntry instanceof TsRollingArgumentEntry existingTsRollingEntry && newEntry instanceof SingleValueArgumentEntry singleValueEntry) {
+                    existingTsRollingEntry.addTsRecord(singleValueEntry.getTs(), singleValueEntry.getValue());
+                } else if (existingEntry instanceof SingleValueArgumentEntry existingSingleValueEntry && newEntry instanceof SingleValueArgumentEntry singleValueEntry
+                        && singleValueEntry.getVersion() > existingSingleValueEntry.getVersion()) {
+                    arguments.put(key, newEntry.copy());
+                } else {
+                    arguments.put(key, newEntry.copy());
                 }
-            } else {
-                arguments.put(key, argumentEntry.copy());
-                stateUpdated.set(true);
+                stateUpdated = true;
             }
-        });
-        return stateUpdated.get();
+        }
+
+        return stateUpdated;
     }
 
 }
