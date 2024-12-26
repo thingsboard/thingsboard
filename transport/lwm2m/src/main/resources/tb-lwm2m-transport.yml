@@ -141,7 +141,7 @@ transport:
     # which is responsible for detection of the device connectivity status in the core service of the platform.
     # The value of the session inactivity timeout parameter should be greater or equal to the device inactivity timeout.
     # Note that the session inactivity timeout is set in milliseconds while device inactivity timeout is in seconds.
-    inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:600000}"
+    inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:1900000}"
     # Interval of periodic check for expired sessions and report of the changes to session last activity time
     report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:3000}"
   json:
