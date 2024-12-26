@@ -56,7 +56,7 @@ public abstract class AbstractCoapIntegrationTest extends AbstractTransportInteg
     protected CoapTestClient client;
     protected static final String PAYLOAD_VALUES_STR = "{\"key1\":\"value1\", \"key2\":true, \"key3\": 3.0, \"key4\": 4," +
             " \"key5\": {\"someNumber\": 42, \"someArray\": [1,2,3], \"someNestedObject\": {\"key\": \"value\"}}}";
-    protected static final String PAYLOAD_VALUES_STR_02 = "{\"key2\":\"value2\", \"key3\":false, \"key4\": 4.0, \"key5\": 5," +
+    protected static final String PAYLOAD_VALUES_STR_01 = "{\"key2\":\"value2\", \"key3\":false, \"key4\": 4.0, \"key5\": 5," +
             " \"key6\": {\"someNumber_02\": 52, \"someArray_02\": [1,2,3,4], \"someNestedObject_02\": {\"key_02\": \"value_02\"}}}";
 
     protected void processBeforeTest() throws Exception {
