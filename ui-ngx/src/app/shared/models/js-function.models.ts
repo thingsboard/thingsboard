@@ -98,7 +98,7 @@ export const loadModuleMarkdownDescription = (http: HttpClient, translate: Trans
         } else {
           propDescription += `<p class="!pl-4 !pr-4"><em>const</em> <strong>${propName}</strong>: <code>${type}</code>`;
           if (type !== 'object') {
-            propDescription += ` = ${type === 'string' ? handleHtmlSpecialChars(prop) : prop}`;
+            propDescription += ' = ' + (type === 'string' ? `"${handleHtmlSpecialChars(prop)}"` : `${prop}`);
           }
           propDescription += '</p>';
         }
