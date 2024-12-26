@@ -5,11 +5,11 @@ import tailwind from "eslint-plugin-tailwindcss";
 
 export default tsEslint.config(
   {
-    files: ["**/*.ts", "*.tsx"],
+    files: ["**/*.ts"],
     languageOptions: {
       parserOptions: {
         project: true,
-        tsconfigRootDir: import.meta.dirname, // or import.meta.dirname for ESM
+        tsconfigRootDir: import.meta.dirname
       },
     },
     extends: [
@@ -62,7 +62,9 @@ export default tsEslint.config(
       "@typescript-eslint/no-inferrable-types": "off",
       "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/ban-ts-comment": "off",
-      "no-case-declarations": "off"
+      "no-case-declarations": "off",
+      "no-prototype-builtins": "off",
+      "@typescript-eslint/consistent-type-definitions": "off"
     },
   },
   {
