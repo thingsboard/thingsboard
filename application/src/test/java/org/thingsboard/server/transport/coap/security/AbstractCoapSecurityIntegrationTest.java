@@ -154,25 +154,30 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
         CertPrivateKey certPrivateKey = new CertPrivateKey(CREDENTIALS_PATH_CLIENT_CERT_PEM, CREDENTIALS_PATH_CLIENT_KEY_PEM);
         CertPrivateKey certPrivateKey_01 = new CertPrivateKey(CREDENTIALS_PATH_CLIENT + "cert_01.pem", CREDENTIALS_PATH_CLIENT + "key_01.pem");
         Integer fixedPort =  getFreePort();
-        CoapClientX509Test clientX509 = clientX509UpdateTest(FeatureType.TELEMETRY, certPrivateKey, "CoapX509TrustNo_" + FeatureType.TELEMETRY.name(), deviceProfile.getId(), fixedPort);
+        CoapClientX509Test clientX509 = clientX509UpdateTest(FeatureType.ATTRIBUTES, certPrivateKey, "CoapX509TrustNo_" + FeatureType.TELEMETRY.name(), deviceProfile.getId(), fixedPort);
         clientX509.disconnect();
         await("Need to make port " + fixedPort + " free")
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> isPortAvailable(fixedPort));
-        CoapClientX509Test clientX509_01 = clientX509UpdateTest(FeatureType.TELEMETRY, certPrivateKey_01, "CoapX509TrustNo_" + FeatureType.TELEMETRY.name() + "_01", deviceProfile.getId(), fixedPort);
+        CoapClientX509Test clientX509_01 = clientX509UpdateTest(FeatureType.ATTRIBUTES, certPrivateKey_01, "CoapX509TrustNo_" + FeatureType.TELEMETRY.name() + "_01", deviceProfile.getId(), fixedPort);
         clientX509_01.disconnect();
     }
 
     private CoapClientX509Test clientX509UpdateTest(FeatureType featureType, CertPrivateKey certPrivateKey, String deviceName, DeviceProfileId deviceProfileId, Integer fixedPort) throws Exception {
+        return clientX509UpdateTest(featureType, certPrivateKey, deviceName, deviceProfileId, fixedPort, null);
+    }
+
+    private CoapClientX509Test clientX509UpdateTest(FeatureType featureType, CertPrivateKey certPrivateKey, String deviceName, DeviceProfileId deviceProfileId, Integer fixedPort, String payload) throws Exception {
+        String payloadValuesStr = payload == null ? PAYLOAD_VALUES_STR : PAYLOAD_VALUES_STR_02;
         Device deviceX509 = createDeviceWithX509(deviceName, deviceProfileId, certPrivateKey.getCert());
         CoapClientX509Test clientX509 = new CoapClientX509Test(certPrivateKey, featureType, COAPS_BASE_URL, fixedPort);
-        CoapResponse coapResponseX509 = clientX509.postMethod(PAYLOAD_VALUES_STR);
+        CoapResponse coapResponseX509 = clientX509.postMethod(payloadValuesStr);
         assertNotNull(coapResponseX509);
         assertEquals(CoAP.ResponseCode.CREATED, coapResponseX509.getCode());
 
         if (FeatureType.ATTRIBUTES.equals(featureType)) {
             DeviceId deviceId = deviceX509.getId();
-            JsonNode expectedNode = JacksonUtil.toJsonNode(PAYLOAD_VALUES_STR);
+            JsonNode expectedNode = JacksonUtil.toJsonNode(payloadValuesStr);
             List<String> expectedKeys = getKeysFromNode(expectedNode);
             List<String> actualKeys = getActualKeysList(deviceId, expectedKeys, "attributes/CLIENT_SCOPE");
             assertNotNull(actualKeys);
