@@ -5910,7 +5910,6 @@
         "type": "Typ widgetu",
         "resources": "Biblioteki",
         "resource-url": "Adres URL JavaScript/CSS",
-        "resource-is-module": "Jest modułem",
         "remove-resource": "Usuń zasób",
         "add-resource": "Dodaj zasób",
         "html": "HTML",

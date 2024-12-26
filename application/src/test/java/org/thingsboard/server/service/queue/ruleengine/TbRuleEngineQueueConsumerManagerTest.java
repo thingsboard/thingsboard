@@ -782,7 +782,12 @@ public class TbRuleEngineQueueConsumerManagerTest {
         }
 
         public void setUpTestMsg() {
-            testMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, new DeviceId(UUID.randomUUID()), new TbMsgMetaData(), "{}");
+            testMsg = TbMsg.newMsg()
+                    .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                    .originator(new DeviceId(UUID.randomUUID()))
+                    .copyMetaData(new TbMsgMetaData())
+                    .data("{}")
+                    .build();
         }
     }
 

@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.telemetry;
 
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -70,16 +71,16 @@ public class TbMsgDeleteAttributesNode implements TbNode {
             ctx.tellSuccess(msg);
         } else {
             AttributeScope scope = getScope(msg.getMetaData().getValue(SCOPE));
-            ctx.getTelemetryService().deleteAndNotify(
-                    ctx.getTenantId(),
-                    msg.getOriginator(),
-                    scope,
-                    keysToDelete,
-                    checkNotifyDevice(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY), scope),
-                    config.isSendAttributesDeletedNotification() ?
+            ctx.getTelemetryService().deleteAttributes(AttributesDeleteRequest.builder()
+                    .tenantId(ctx.getTenantId())
+                    .entityId(msg.getOriginator())
+                    .scope(scope)
+                    .keys(keysToDelete)
+                    .notifyDevice(checkNotifyDevice(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY), scope))
+                    .callback(config.isSendAttributesDeletedNotification() ?
                             new AttributesDeleteNodeCallback(ctx, msg, scope.name(), keysToDelete) :
-                            new TelemetryNodeCallback(ctx, msg)
-            );
+                            new TelemetryNodeCallback(ctx, msg))
+                    .build());
         }
     }
 

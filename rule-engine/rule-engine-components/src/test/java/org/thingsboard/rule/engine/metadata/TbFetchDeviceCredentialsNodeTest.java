@@ -173,7 +173,13 @@ public class TbFetchDeviceCredentialsNodeTest {
         final var metaData = new TbMsgMetaData(mdMap);
         final String data = "{\"TestAttribute_1\": \"humidity\", \"TestAttribute_2\": \"voltage\"}";
 
-        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, metaData, data, callbackMock);
+        return TbMsg.newMsg()
+                .type(TbMsgType.POST_ATTRIBUTES_REQUEST)
+                .originator(entityId)
+                .copyMetaData(metaData)
+                .data(data)
+                .callback(callbackMock)
+                .build();
     }
 
 }

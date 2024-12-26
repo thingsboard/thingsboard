@@ -560,7 +560,12 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     private TbMsg getTbMsg(EntityId originator, TbMsgMetaData metaData) {
-        return TbMsg.newMsg(TbMsgType.NA, originator, metaData, TbMsg.EMPTY_JSON_OBJECT);
+        return TbMsg.newMsg()
+                .type(TbMsgType.NA)
+                .originator(originator)
+                .copyMetaData(metaData)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
     }
 
     private TbMsgMetaData getMetadataWithNameTemplate() {

@@ -65,6 +65,12 @@ import { catchError, map, take, takeUntil } from 'rxjs/operators';
 import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
 import { MatIconRegistry } from '@angular/material/icon';
 import { RafService } from '@core/services/raf.service';
+import {
+  defaultFormPropertyValue,
+  defaultPropertyValue,
+  FormProperty,
+  FormPropertyType
+} from '@shared/models/dynamic-form.models';
 
 export interface ScadaSymbolApi {
   generateElementId: () => string;
@@ -151,60 +157,6 @@ export interface ScadaSymbolBehaviorAction extends ScadaSymbolBehaviorBase {
 
 export type ScadaSymbolBehavior = ScadaSymbolBehaviorValue & ScadaSymbolBehaviorAction;
 
-export enum ScadaSymbolPropertyType {
-  text = 'text',
-  number = 'number',
-  switch = 'switch',
-  color = 'color',
-  color_settings = 'color_settings',
-  font = 'font',
-  units = 'units',
-  icon = 'icon'
-}
-
-export const scadaSymbolPropertyTypes = Object.keys(ScadaSymbolPropertyType) as ScadaSymbolPropertyType[];
-
-export const scadaSymbolPropertyTypeTranslations = new Map<ScadaSymbolPropertyType, string>(
-  [
-    [ScadaSymbolPropertyType.text, 'scada.property.type-text'],
-    [ScadaSymbolPropertyType.number, 'scada.property.type-number'],
-    [ScadaSymbolPropertyType.switch, 'scada.property.type-switch'],
-    [ScadaSymbolPropertyType.color, 'scada.property.type-color'],
-    [ScadaSymbolPropertyType.color_settings, 'scada.property.type-color-settings'],
-    [ScadaSymbolPropertyType.font, 'scada.property.type-font'],
-    [ScadaSymbolPropertyType.units, 'scada.property.type-units'],
-    [ScadaSymbolPropertyType.icon, 'scada.property.type-icon']
-  ]
-);
-
-export const scadaSymbolPropertyRowClasses =
-  ['column', 'column-xs', 'column-lt-md', 'align-start', 'no-border', 'no-gap', 'no-padding', 'same-padding'];
-
-export const scadaSymbolPropertyFieldClasses =
-  ['medium-width', 'flex', 'flex-xs', 'flex-lt-md'];
-
-export interface ScadaSymbolPropertyBase {
-  id: string;
-  name: string;
-  type: ScadaSymbolPropertyType;
-  default: any;
-  required?: boolean;
-  subLabel?: string;
-  divider?: boolean;
-  fieldSuffix?: string;
-  disableOnProperty?: string;
-  rowClass?: string;
-  fieldClass?: string;
-}
-
-export interface ScadaSymbolNumberProperty extends ScadaSymbolPropertyBase {
-  min?: number;
-  max?: number;
-  step?: number;
-}
-
-export type ScadaSymbolProperty = ScadaSymbolPropertyBase & ScadaSymbolNumberProperty;
-
 export interface ScadaSymbolMetadata {
   title: string;
   description?: string;
@@ -215,7 +167,7 @@ export interface ScadaSymbolMetadata {
   stateRender?: ScadaSymbolStateRenderFunction;
   tags: ScadaSymbolTag[];
   behavior: ScadaSymbolBehavior[];
-  properties: ScadaSymbolProperty[];
+  properties: FormProperty[];
 }
 
 export const emptyMetadata = (width?: number, height?: number): ScadaSymbolMetadata => ({
@@ -507,7 +459,7 @@ export const defaultScadaSymbolObjectSettings = (metadata: ScadaSymbolMetadata):
     }
   }
   for (const property of metadata.properties) {
-    settings.properties[property.id] = property.default;
+    settings.properties[property.id] = defaultFormPropertyValue(property);
   }
   return settings;
 };
@@ -683,7 +635,9 @@ export class ScadaSymbolObject {
       elements.push(element);
     }
     for (const property of this.metadata.properties) {
-      this.context.properties[property.id] = this.getPropertyValue(property.id);
+      if (property.type !== FormPropertyType.htmlSection) {
+        this.context.properties[property.id] = this.getPropertyValue(this.metadata.properties, this.settings.properties, property.id);
+      }
     }
     for (const tag of this.metadata.tags) {
       if (tag.actions) {
@@ -1020,37 +974,105 @@ export class ScadaSymbolObject {
     return Array.isArray(element) ? element : [element];
   }
 
-  private getProperty(id: string): ScadaSymbolProperty {
-    return this.metadata.properties.find(p => p.id === id);
+  private getProperty(properties: FormProperty[], ...ids: string[]): FormProperty {
+    let found: FormProperty;
+    for (const id of ids) {
+      if (properties) {
+        found = properties.find(p => p.id === id);
+        if (found && found.type === FormPropertyType.fieldset) {
+          properties = found.properties;
+        } else {
+          properties = null;
+        }
+      } else {
+        found = null;
+      }
+    }
+    return found;
   }
 
-  private getPropertyValue(id: string): any {
-    const property = this.getProperty(id);
-    if (property) {
-      const value = this.settings.properties[id];
-      if (isDefinedAndNotNull(value)) {
-        if (property.type === ScadaSymbolPropertyType.color_settings) {
-          return ColorProcessor.fromSettings(value);
-        } else if (property.type === ScadaSymbolPropertyType.text) {
-          const result =  this.ctx.utilsService.customTranslation(value, value);
-          const entityInfo = this.ctx.defaultSubscription.getFirstEntityInfo();
-          return createLabelFromSubscriptionEntityInfo(entityInfo, result);
+  private getSettingsValue(settings: {[id: string]: any}, ...ids: string[]): any {
+    let found: any;
+    let properties = settings;
+    for (const id of ids) {
+      if (properties) {
+        found = properties[id];
+        if (found && typeof found === 'object') {
+          properties = found;
+        } else {
+          properties = null;
         }
-        return value;
       } else {
-        switch (property.type) {
-          case ScadaSymbolPropertyType.text:
-            return '';
-          case ScadaSymbolPropertyType.number:
-            return 0;
-          case ScadaSymbolPropertyType.color:
-            return '#000';
-          case ScadaSymbolPropertyType.color_settings:
-            return ColorProcessor.fromSettings(constantColor('#000'));
+        found = null;
+      }
+    }
+    return found;
+  }
+
+  private getPropertyValue(properties: FormProperty[], settings: {[id: string]: any}, ...ids: string[]): any {
+    const property = this.getProperty(properties, ...ids);
+    if (property) {
+      if (property.type === FormPropertyType.array) {
+        const arrayValue = [];
+        if (property.arrayItemType !== FormPropertyType.htmlSection) {
+          const settingsValue = this.getSettingsValue(settings, ...ids);
+          if (settingsValue && Array.isArray(settingsValue)) {
+            for (const settingsElement of settingsValue) {
+              let value: any;
+              if (property.arrayItemType === FormPropertyType.fieldset) {
+                const propertyValue: {[id: string]: any} = {};
+                for (const childProperty of property.properties) {
+                  if (childProperty.type !== FormPropertyType.htmlSection) {
+                    propertyValue[childProperty.id] = this.getPropertyValue(property.properties, settingsElement, childProperty.id);
+                  }
+                }
+                value = propertyValue;
+              } else {
+                value = this.convertPropertyValue(property, settingsElement);
+              }
+              arrayValue.push(value);
+            }
+          }
         }
+        return arrayValue;
+      } else if (property.type === FormPropertyType.fieldset) {
+        const propertyValue: {[id: string]: any} = {};
+        for (const childProperty of property.properties) {
+          if (childProperty.type !== FormPropertyType.htmlSection) {
+            propertyValue[childProperty.id] = this.getPropertyValue(properties, settings, ...ids, childProperty.id);
+          }
+        }
+        return propertyValue;
+      } else {
+        const value = this.getSettingsValue(settings, ...ids);
+        return this.convertPropertyValue(property, value);
       }
     } else {
       return '';
+    }
+  }
+
+  private convertPropertyValue(property: FormProperty, value: any): any {
+    if (isDefinedAndNotNull(value)) {
+      if (property.type === FormPropertyType.color_settings) {
+        return ColorProcessor.fromSettings(value);
+      } else if ([FormPropertyType.text, FormPropertyType.textarea].includes(property.type)) {
+        const result = this.ctx.utilsService.customTranslation(value, value);
+        const entityInfo = this.ctx.defaultSubscription.getFirstEntityInfo();
+        return createLabelFromSubscriptionEntityInfo(entityInfo, result);
+      }
+      return value;
+    } else {
+      switch (property.type) {
+        case FormPropertyType.color_settings:
+          return ColorProcessor.fromSettings(constantColor('#000'));
+        case FormPropertyType.font:
+        case FormPropertyType.units:
+        case FormPropertyType.icon:
+          return null;
+        default:
+          return defaultPropertyValue(property.type);
+      }
     }
   }
 }

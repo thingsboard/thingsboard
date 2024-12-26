@@ -14,7 +14,6 @@
     "target": "ES2022",
     "module": "es2020",
     "emitDecoratorMetadata": true,
-    "jsx": "react",
     "resolveJsonModule": true,
     "typeRoots": [
       "node_modules/@types",
