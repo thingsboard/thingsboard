@@ -130,13 +130,12 @@ public abstract class EdgeGrpcSession implements Closeable {
     private Long previousStartTs;
     private Long newStartSeqId;
     private Long previousStartSeqId;
-    private Long seqIdEnd;
 
     private StreamObserver<RequestMsg> inputStream;
     private StreamObserver<ResponseMsg> outputStream;
 
     private volatile boolean connected;
-    private volatile boolean syncCompleted;
+    private volatile boolean syncInProgress;
 
     private EdgeVersion edgeVersion;
     private int maxInboundMessageSize;
@@ -191,7 +190,7 @@ public abstract class EdgeGrpcSession implements Closeable {
                             }
                             startSyncProcess(fullSync);
                         } else {
-                            syncCompleted = true;
+                            syncInProgress = false;
                         }
                     }
                     if (requestMsg.getMsgType().equals(RequestMsgType.UPLINK_RPC_MESSAGE)) {
@@ -246,10 +245,14 @@ public abstract class EdgeGrpcSession implements Closeable {
     }
 
     public void startSyncProcess(boolean fullSync) {
-        log.info("[{}][{}][{}] Staring edge sync process", tenantId, edge.getId(), sessionId);
-        syncCompleted = false;
-        interruptGeneralProcessingOnSync();
-        doSync(new EdgeSyncCursor(ctx, edge, fullSync));
+        if (!syncInProgress) {
+            log.info("[{}][{}][{}] Staring edge sync process", tenantId, edge.getId(), sessionId);
+            syncInProgress = true;
+            interruptGeneralProcessingOnSync();
+            doSync(new EdgeSyncCursor(ctx, edge, fullSync));
+        } else {
+            log.info("[{}][{}][{}] Sync is already started, skipping starting it now", tenantId, edge.getId(), sessionId);
+        }
     }
 
     private void doSync(EdgeSyncCursor cursor) {
@@ -292,6 +295,7 @@ public abstract class EdgeGrpcSession implements Closeable {
 
     protected void processEdgeEvents(EdgeEventFetcher fetcher, PageLink pageLink, SettableFuture<Pair<Long, Long>> result) {
         try {
+            log.trace("[{}] Start processing edge events, fetcher = {}, pageLink = {}", sessionId, fetcher.getClass().getSimpleName(), pageLink);
             processHighPriorityEvents();
             PageData<EdgeEvent> pageData = fetcher.fetchEdgeEvents(edge.getTenantId(), edge, pageLink);
             if (isConnected() && !pageData.getData().isEmpty()) {
@@ -327,7 +331,7 @@ public abstract class EdgeGrpcSession implements Closeable {
                     }
                 }, ctx.getGrpcCallbackExecutorService());
             } else {
-                log.trace("[{}] no event(s) found. Stop processing edge events", sessionId);
+                log.trace("[{}] no event(s) found. Stop processing edge events, fetcher = {}, pageLink = {}", sessionId, fetcher.getClass().getSimpleName(), pageLink);
                 result.set(null);
             }
         } catch (Exception e) {
@@ -406,6 +410,8 @@ public abstract class EdgeGrpcSession implements Closeable {
                 || sessionState.getScheduledSendDownlinkTask() != null && !sessionState.getScheduledSendDownlinkTask().isCancelled()) {
             log.debug("[{}][{}][{}] Previous send downlink future was not properly completed, stopping it now!", tenantId, edge.getId(), sessionId);
             stopCurrentSendDownlinkMsgsTask(true);
+        } else {
+            log.trace("[{}][{}][{}] Previous send downlink future is not active", tenantId, edge.getId(), sessionId);
         }
     }
 
@@ -519,12 +525,12 @@ public abstract class EdgeGrpcSession implements Closeable {
         try {
             if (msg.getSuccess()) {
                 sessionState.getPendingMsgsMap().remove(msg.getDownlinkMsgId());
-                log.debug("[{}][{}] Msg has been processed successfully! Msg Id: [{}], Msg: {}", tenantId, edge.getRoutingKey(), msg.getDownlinkMsgId(), msg);
+                log.debug("[{}][{}][{}] Msg has been processed successfully! Msg Id: [{}], Msg: {}", tenantId, edge.getId(), sessionId, msg.getDownlinkMsgId(), msg);
             } else {
-                log.error("[{}][{}] Msg processing failed! Msg Id: [{}], Error msg: {}", tenantId, edge.getRoutingKey(), msg.getDownlinkMsgId(), msg.getErrorMsg());
+                log.error("[{}][{}][{}] Msg processing failed! Msg Id: [{}], Error msg: {}", tenantId, edge.getId(), sessionId, msg.getDownlinkMsgId(), msg.getErrorMsg());
             }
             if (sessionState.getPendingMsgsMap().isEmpty()) {
-                log.debug("[{}][{}] Pending msgs map is empty. Stopping current iteration", tenantId, edge.getRoutingKey());
+                log.debug("[{}][{}][{}] Pending msgs map is empty. Stopping current iteration", tenantId, edge.getId(), sessionId);
                 stopCurrentSendDownlinkMsgsTask(false);
             }
         } catch (Exception e) {
@@ -534,7 +540,7 @@ public abstract class EdgeGrpcSession implements Closeable {
 
     public void processHighPriorityEvents() {
         try {
-            if (isConnected() && isSyncCompleted()) {
+            if (isConnected() && !isSyncInProgress()) {
                 if (highPriorityQueue.isEmpty()) {
                     return;
                 }
@@ -543,6 +549,7 @@ public abstract class EdgeGrpcSession implements Closeable {
                 while ((event = highPriorityQueue.poll()) != null) {
                     highPriorityEvents.add(event);
                 }
+                log.trace("[{}][{}] Sending high priority events {}", tenantId, sessionId, highPriorityEvents.size());
                 List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(highPriorityEvents);
                 sendDownlinkMsgsPack(downlinkMsgsPack).get();
             }
@@ -553,18 +560,18 @@ public abstract class EdgeGrpcSession implements Closeable {
 
     public ListenableFuture<Boolean> processEdgeEvents() throws Exception {
         SettableFuture<Boolean> result = SettableFuture.create();
-        log.trace("[{}][{}] starting processing edge events", tenantId, sessionId);
-        if (isConnected() && isSyncCompleted()) {
+        if (isConnected() && !isSyncInProgress()) {
             Pair<Long, Long> startTsAndSeqId = getQueueStartTsAndSeqId().get();
             previousStartTs = startTsAndSeqId.getFirst();
             previousStartSeqId = startTsAndSeqId.getSecond();
             GeneralEdgeEventFetcher fetcher = new GeneralEdgeEventFetcher(
                     previousStartTs,
                     previousStartSeqId,
-                    seqIdEnd,
                     false,
                     Integer.toUnsignedLong(ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount()),
                     ctx.getEdgeEventService());
+            log.trace("[{}][{}] starting processing edge events, previousStartTs = {}, previousStartSeqId = {}",
+                    tenantId, sessionId, previousStartTs, previousStartSeqId);
             Futures.addCallback(startProcessingEdgeEvents(fetcher), new FutureCallback<>() {
                 @Override
                 public void onSuccess(@Nullable Pair<Long, Long> newStartTsAndSeqId) {
@@ -574,18 +581,16 @@ public abstract class EdgeGrpcSession implements Closeable {
                             @Override
                             public void onSuccess(@Nullable List<Long> list) {
                                 log.debug("[{}][{}] queue offset was updated [{}]", tenantId, sessionId, newStartTsAndSeqId);
+                                boolean newEventsAvailable;
                                 if (fetcher.isSeqIdNewCycleStarted()) {
-                                    seqIdEnd = fetcher.getSeqIdEnd();
-                                    boolean newEventsAvailable = isNewEdgeEventsAvailable();
-                                    result.set(newEventsAvailable);
+                                    newEventsAvailable = isNewEdgeEventsAvailable();
                                 } else {
-                                    seqIdEnd = null;
-                                    boolean newEventsAvailable = isSeqIdStartedNewCycle();
+                                    newEventsAvailable = isSeqIdStartedNewCycle();
                                     if (!newEventsAvailable) {
                                         newEventsAvailable = isNewEdgeEventsAvailable();
                                     }
-                                    result.set(newEventsAvailable);
                                 }
+                                result.set(newEventsAvailable);
                             }
 
                             @Override
@@ -607,7 +612,7 @@ public abstract class EdgeGrpcSession implements Closeable {
                 }
             }, ctx.getGrpcCallbackExecutorService());
         } else {
-            if (!isSyncCompleted()) {
+            if (isSyncInProgress()) {
                 log.trace("[{}][{}] edge sync is not completed yet. Skipping iteration", tenantId, sessionId);
                 result.set(Boolean.TRUE);
             } else {
@@ -672,9 +677,12 @@ public abstract class EdgeGrpcSession implements Closeable {
 
     private boolean isSeqIdStartedNewCycle() {
         try {
+            log.trace("[{}][{}][{}] Checking if seq id started new cycle", tenantId, edge.getId(), sessionId);
             TimePageLink pageLink = new TimePageLink(ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount(), 0, null, null, newStartTs, System.currentTimeMillis());
             PageData<EdgeEvent> edgeEvents = ctx.getEdgeEventService().findEdgeEvents(edge.getTenantId(), edge.getId(), 0L, previousStartSeqId == 0 ? null : previousStartSeqId - 1, pageLink);
-            return !edgeEvents.getData().isEmpty();
+            boolean result = !edgeEvents.getData().isEmpty();
+            log.trace("[{}][{}][{}] Result of check if seq id started new cycle, result = {}", tenantId, edge.getId(), sessionId, result);
+            return result;
         } catch (Exception e) {
             log.error("[{}][{}][{}] Failed to execute isSeqIdStartedNewCycle", tenantId, edge.getId(), sessionId, e);
         }
@@ -683,9 +691,12 @@ public abstract class EdgeGrpcSession implements Closeable {
 
     private boolean isNewEdgeEventsAvailable() {
         try {
+            log.trace("[{}][{}][{}] Checking if new edge events available", tenantId, edge.getId(), sessionId);
             TimePageLink pageLink = new TimePageLink(ctx.getEdgeEventStorageSettings().getMaxReadRecordsCount(), 0, null, null, newStartTs, System.currentTimeMillis());
             PageData<EdgeEvent> edgeEvents = ctx.getEdgeEventService().findEdgeEvents(edge.getTenantId(), edge.getId(), newStartSeqId, null, pageLink);
-            return !edgeEvents.getData().isEmpty() || !highPriorityQueue.isEmpty();
+            boolean result = !edgeEvents.getData().isEmpty() || !highPriorityQueue.isEmpty();
+            log.trace("[{}][{}][{}] Result of check if new edge events available, result = {}", tenantId, edge.getId(), sessionId, result);
+            return result;
         } catch (Exception e) {
             log.error("[{}][{}][{}] Failed to execute isNewEdgeEventsAvailable", tenantId, edge.getId(), sessionId, e);
         }
@@ -724,7 +735,7 @@ public abstract class EdgeGrpcSession implements Closeable {
     }
 
     private void markSyncCompletedSendEdgeEventUpdate() {
-        syncCompleted = true;
+        syncInProgress = false;
         ctx.getClusterService().onEdgeEventUpdate(new EdgeEventUpdateMsg(edge.getTenantId(), edge.getId()));
     }
 
@@ -758,8 +769,8 @@ public abstract class EdgeGrpcSession implements Closeable {
         }
     }
 
-    protected DownlinkMsg convertEntityEventToDownlink(EdgeEvent edgeEvent) {
-        log.trace("[{}] Executing convertEntityEventToDownlink, edgeEvent [{}], action [{}]", edgeEvent.getTenantId(), edgeEvent, edgeEvent.getAction());
+    private DownlinkMsg convertEntityEventToDownlink(EdgeEvent edgeEvent) {
+        log.trace("[{}][{}] Executing convertEntityEventToDownlink, edgeEvent [{}], action [{}]", tenantId, sessionId, edgeEvent, edgeEvent.getAction());
         return switch (edgeEvent.getType()) {
             case EDGE -> ctx.getEdgeProcessor().convertEdgeEventToDownlink(edgeEvent);
             case DEVICE -> ctx.getDeviceProcessor().convertDeviceEventToDownlink(edgeEvent, edgeVersion);
@@ -789,7 +800,7 @@ public abstract class EdgeGrpcSession implements Closeable {
             case OAUTH2_CLIENT -> ctx.getOAuth2EdgeProcessor().convertOAuth2ClientEventToDownlink(edgeEvent, edgeVersion);
             case DOMAIN -> ctx.getOAuth2EdgeProcessor().convertOAuth2DomainEventToDownlink(edgeEvent, edgeVersion);
             default -> {
-                log.warn("[{}] Unsupported edge event type [{}]", edgeEvent.getTenantId(), edgeEvent);
+                log.warn("[{}][{}] Unsupported edge event type [{}]", tenantId, sessionId, edgeEvent);
                 yield null;
             }
         };
@@ -923,8 +934,8 @@ public abstract class EdgeGrpcSession implements Closeable {
             }
         } catch (Exception e) {
             String failureMsg = String.format("Can't process uplink msg [%s] from edge", uplinkMsg);
-            log.error("[{}][{}] Can't process uplink msg [{}]", edge.getTenantId(), sessionId, uplinkMsg, e);
-            ctx.getNotificationRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(edge.getTenantId()).edgeId(edge.getId())
+            log.error("[{}][{}] Can't process uplink msg [{}]", tenantId, sessionId, uplinkMsg, e);
+            ctx.getNotificationRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(tenantId).edgeId(edge.getId())
                     .customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(failureMsg).error(e.getMessage()).build());
             return Futures.immediateFailedFuture(e);
         }
