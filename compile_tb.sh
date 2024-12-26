@@ -32,8 +32,8 @@ run_command "cd .. && cd OUT"
 
 # Docker-Image speichern
 echo "Speichere Docker-Image als tb.tar..."
-echo "Geben Sie einen Namen für die .tar-Datei ein (z. B. tb_image.tar):"
+echo "Geben Sie einen Namen für die Datei ein (ohne .tar, z. B. tb_image):"
 read -r tar_name
-run_command "docker save thingsboard/tb-postgres:latest > $tar_name"
+run_command "docker save thingsboard/tb-postgres:latest > ${tar_name}.tar"
 
 echo "Das Skript wurde erfolgreich abgeschlossen. Alle Schritte wurden im aktuellen Terminal ausgeführt."
