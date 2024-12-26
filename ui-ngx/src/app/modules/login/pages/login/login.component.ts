@@ -40,27 +40,15 @@ export class LoginComponent extends PageComponent implements OnInit {
   });
   oauth2Clients: Array<OAuth2ClientLoginInfo> = null;
 
-  public backgroundImage: string; // Hintergrundbild-Variable
-
   constructor(protected store: Store<AppState>,
               private authService: AuthService,
               public fb: UntypedFormBuilder,
               private router: Router) {
     super(store);
-    this.setRandomBackground(); // Hintergrundbild beim Konstruktor setzen
   }
 
   ngOnInit() {
     this.oauth2Clients = this.authService.oauth2Clients;
-  }
-
-  private setRandomBackground(): void {
-    const images = [
-      'assets/backround/image1.jpg',
-      'assets/backround/image2.jpg',
-    ];
-    const randomIndex = Math.floor(Math.random() * images.length);
-    this.backgroundImage = images[randomIndex];
   }
 
   login(): void {

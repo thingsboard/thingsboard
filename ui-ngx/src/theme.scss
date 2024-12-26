@@ -55,7 +55,43 @@ $tb-mat-indigo: (
 );
 
 $tb-primary: mat.define-palette($tb-mat-indigo);
-$tb-accent: mat.define-palette(mat.$deep-orange-palette);
+
+// Define a custom palette with #ff8a00
+$tb-custom-orange: (
+  50: #ffe8d1,
+  100: #ffd1a6,
+  200: #ffba7a,
+  300: #ffa34e,
+  400: #ff8e27,
+  500: #ff8a00, // Main color
+  600: #e67b00,
+  700: #cc6c00,
+  800: #b35e00,
+  900: #994f00,
+  A100: #ffd8a8,
+  A200: #ffc380,
+  A400: #ffae58,
+  A700: #ff9a30,
+  contrast: (
+    50: rgba(black, 0.87),
+    100: rgba(black, 0.87),
+    200: rgba(black, 0.87),
+    300: rgba(black, 0.87),
+    400: white,
+    500: white,
+    600: white,
+    700: white,
+    800: white,
+    900: white,
+    A100: rgba(black, 0.87),
+    A200: rgba(black, 0.87),
+    A400: rgba(black, 0.87),
+    A700: rgba(black, 0.87),
+  )
+);
+
+// Update the accent palette to use the custom orange
+$tb-accent: mat.define-palette($tb-custom-orange);
 
 $background: (background: map_get(mat.$grey-palette, 200));
 

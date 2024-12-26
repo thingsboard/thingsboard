@@ -1,4 +1,5 @@
 <!--
+
     Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +13,9 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
--->
 
-<div 
-  class="tb-login-content mat-app-background tb-dark" 
-  fxFlex fxLayoutAlign="center center" 
-  [style.background-image]="'url(' + backgroundImage + ')'"
-  style="background-size: cover; background-position: center;"
->
+-->
+<div class="tb-login-content mat-app-background tb-dark" fxFlex fxLayoutAlign="center center">
   <mat-card appearance="raised" style="max-height: 80vh; overflow-y: auto;">
     <mat-card-content>
       <form class="tb-login-form" [formGroup]="loginFormGroup" (ngSubmit)="login()">
