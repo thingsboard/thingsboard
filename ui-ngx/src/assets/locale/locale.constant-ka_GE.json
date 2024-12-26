@@ -494,7 +494,7 @@
     "make-private-dashboard-text": "დადასტურების შემდეგ დეშბორდი გახდება პრივატული და აღარ იქნება ხელმისაწვდომი სხვა მომხმარებლებისთვის",
     "make-private-dashboard": "აქციე დეშბორდი პრივატულად",
     "socialshare-text": "სოციალური ტექსტი",
-    "socialshare-title": "'{{dashboardTitle}}' Powered by ThingsBoard",
+    "socialshare-title": "'{{dashboardTitle}}' Powered by QSData",
     "select-dashboard": "აირჩიე დეშბორდი",
     "no-dashboards-matching": "'{{entity}}'-ს მზგავსი დეშბორდი არ იქნა ნაპოვნი.",
     "dashboard-required": "დეშბორდი აუცილებელია",

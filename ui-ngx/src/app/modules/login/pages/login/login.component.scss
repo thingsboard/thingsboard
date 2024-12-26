@@ -19,10 +19,17 @@
 :host {
   display: flex;
   flex: 1 1 0;
+
   .tb-login-content {
     margin-top: 36px;
     margin-bottom: 76px;
     background-color: #eee;
+
+    /* Allgemeine Stile für das Login-Layout */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+
     .tb-login-form {
       @media #{$mat-gt-xs} {
         width: 550px !important;
@@ -35,12 +42,12 @@
         }
       }
 
-      .tb-action-button{
+      .tb-action-button {
         padding: 20px 0 16px;
       }
     }
 
-    .oauth-container{
+    .oauth-container {
       padding: 0;
 
       .container-divider {
@@ -54,7 +61,7 @@
           flex: 1;
         }
 
-        .mat-divider-horizontal{
+        .mat-divider-horizontal {
           position: relative;
         }
 
@@ -64,7 +71,7 @@
         }
       }
 
-      .material-icons{
+      .material-icons {
         width: 20px;
         min-width: 20px;
       }
@@ -85,4 +92,3 @@
     }
   }
 }
-
