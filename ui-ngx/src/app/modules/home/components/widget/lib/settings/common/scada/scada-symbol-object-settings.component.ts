@@ -48,7 +48,7 @@ import {
 } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { TargetDevice, widgetType } from '@shared/models/widget.models';
-import { isDefinedAndNotNull, mergeDeep } from '@core/utils';
+import { isDefinedAndNotNull, mergeDeepIgnoreArray } from '@core/utils';
 import {
   ScadaSymbolBehaviorGroup,
   ScadaSymbolPropertyRow,
@@ -288,7 +288,7 @@ export class ScadaSymbolObjectSettingsComponent implements OnInit, OnChanges, Co
   private setupValue() {
     if (this.metadata) {
       const defaults = defaultScadaSymbolObjectSettings(this.metadata);
-      this.modelValue = mergeDeep<ScadaSymbolObjectSettings>(defaults, this.modelValue);
+      this.modelValue = mergeDeepIgnoreArray<ScadaSymbolObjectSettings>(defaults, this.modelValue);
       this.scadaSymbolObjectSettingsFormGroup.patchValue(
         this.modelValue, {emitEvent: false}
       );
