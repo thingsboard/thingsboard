@@ -49,8 +49,12 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
                     existingTsRollingEntry.addAllTsRecords(newTsRollingEntry.getTsRecords());
                 } else if (existingEntry instanceof TsRollingArgumentEntry existingTsRollingEntry && newEntry instanceof SingleValueArgumentEntry singleValueEntry) {
                     existingTsRollingEntry.addTsRecord(singleValueEntry.getTs(), singleValueEntry.getValue());
-                } else if (existingEntry instanceof SingleValueArgumentEntry existingSingleValueEntry && newEntry instanceof SingleValueArgumentEntry singleValueEntry
-                        && singleValueEntry.getVersion() > existingSingleValueEntry.getVersion()) {
+                } else if (existingEntry instanceof SingleValueArgumentEntry existingSingleValueEntry && newEntry instanceof SingleValueArgumentEntry singleValueEntry) {
+//                    Long existingVersion = existingSingleValueEntry.getVersion();
+//                    Long newVersion = singleValueEntry.getVersion();
+//                    if (newVersion != null && (existingVersion == null || newVersion > existingVersion)) {
+//                        arguments.put(key, newEntry.copy());
+//                    }
                     arguments.put(key, newEntry.copy());
                 } else {
                     arguments.put(key, newEntry.copy());

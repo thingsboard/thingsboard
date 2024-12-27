@@ -24,7 +24,7 @@ public class Argument {
 
     private EntityId entityId;
     private String key;
-    private String type;
+    private ArgumentType type;
     private AttributeScope scope;
     private String defaultValue;
 

@@ -13,16 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.server.service.cf.ctx.state;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.AttributeScope;
-
-@Data
-public class Output {
-
-    private String name;
-    private OutputType type;
-    private AttributeScope scope;
-
+public enum ArgumentEntryType {
+    SINGLE_VALUE, TS_ROLLING
 }

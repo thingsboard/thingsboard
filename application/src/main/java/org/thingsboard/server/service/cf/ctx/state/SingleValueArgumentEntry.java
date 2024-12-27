@@ -32,7 +32,7 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     private long ts;
     private Object value;
 
-    private long version;
+    private Long version;
 
     public SingleValueArgumentEntry(KvEntry entry) {
         if (entry instanceof TsKvEntry tsKvEntry) {
@@ -54,8 +54,8 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     }
 
     @Override
-    public ArgumentType getType() {
-        return ArgumentType.SINGLE_VALUE;
+    public ArgumentEntryType getType() {
+        return ArgumentEntryType.SINGLE_VALUE;
     }
 
     @Override

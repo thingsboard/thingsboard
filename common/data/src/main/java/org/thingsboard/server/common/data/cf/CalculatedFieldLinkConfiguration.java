@@ -23,7 +23,9 @@ import java.util.Map;
 @Data
 public class CalculatedFieldLinkConfiguration {
 
-    private Map<String, String> attributes = new HashMap<>();
+    private Map<String, String> clientAttributes = new HashMap<>();
+    private Map<String, String> serverAttributes = new HashMap<>();
+    private Map<String, String> sharedAttributes = new HashMap<>();
     private Map<String, String> timeSeries = new HashMap<>();
 
 }

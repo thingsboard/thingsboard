@@ -15,14 +15,8 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.AttributeScope;
+public enum OutputType {
 
-@Data
-public class Output {
-
-    private String name;
-    private OutputType type;
-    private AttributeScope scope;
+    TIME_SERIES, ATTRIBUTES
 
 }

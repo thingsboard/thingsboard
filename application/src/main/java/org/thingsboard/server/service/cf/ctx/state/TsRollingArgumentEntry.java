@@ -51,8 +51,8 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
     }
 
     @Override
-    public ArgumentType getType() {
-        return ArgumentType.TS_ROLLING;
+    public ArgumentEntryType getType() {
+        return ArgumentEntryType.TS_ROLLING;
     }
 
     @JsonIgnore

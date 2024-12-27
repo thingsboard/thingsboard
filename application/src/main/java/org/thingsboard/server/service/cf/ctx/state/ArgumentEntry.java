@@ -35,7 +35,7 @@ import java.util.List;
 public interface ArgumentEntry {
 
     @JsonIgnore
-    ArgumentType getType();
+    ArgumentEntryType getType();
 
     Object getValue();
 
