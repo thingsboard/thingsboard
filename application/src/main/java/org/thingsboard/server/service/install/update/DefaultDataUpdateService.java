@@ -65,7 +65,6 @@ public class DefaultDataUpdateService implements DataUpdateService {
     public void updateData() throws Exception {
         log.info("Updating data ...");
         //TODO: should be cleaned after each release
-        installScripts.updateResourcesUsage();
         log.info("Data updated.");
     }
 
