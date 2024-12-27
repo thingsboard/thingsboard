@@ -123,6 +123,9 @@ public class InstallScripts {
     @Getter @Setter
     private boolean updateImages = false;
 
+    @Getter @Setter
+    private boolean updateResourcesUsage = false;
+
     @Autowired
     private ImageService imageService;
 
