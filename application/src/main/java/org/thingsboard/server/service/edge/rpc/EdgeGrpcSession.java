@@ -749,21 +749,22 @@ public abstract class EdgeGrpcSession implements Closeable {
         }
     }
 
-    private void sendDownlinkMsg(ResponseMsg downlinkMsg) {
-        final String downlinkMsgAsStr = StringUtils.truncate(downlinkMsg.toString(), 10000);
-        log.trace("[{}][{}] Sending downlink msg [{}]", tenantId, sessionId, downlinkMsgAsStr);
+    private void sendDownlinkMsg(ResponseMsg responseMsg) {
         if (isConnected()) {
+            String responseMsgStr = StringUtils.truncate(responseMsg.toString(), 10000);
+            log.trace("[{}][{}] Sending downlink msg [{}]", tenantId, sessionId, responseMsgStr);
             downlinkMsgLock.lock();
+            String downlinkMsgStr = responseMsg.hasDownlinkMsg() ? String.valueOf(responseMsg.getDownlinkMsg().getDownlinkMsgId()) : responseMsgStr;
             try {
-                outputStream.onNext(downlinkMsg);
+                outputStream.onNext(responseMsg);
             } catch (Exception e) {
-                log.error("[{}][{}] Failed to send downlink message [{}]", tenantId, sessionId, downlinkMsgAsStr, e);
+                log.error("[{}][{}] Failed to send downlink message [{}]", tenantId, sessionId, downlinkMsgStr, e);
                 connected = false;
                 sessionCloseListener.accept(edge, sessionId);
             } finally {
                 downlinkMsgLock.unlock();
             }
-            log.trace("[{}][{}] downlink msg successfully sent [{}]", tenantId, sessionId, downlinkMsgAsStr);
+            log.trace("[{}][{}] downlink msg successfully sent [{}]", tenantId, sessionId, downlinkMsgStr);
         }
     }
 
