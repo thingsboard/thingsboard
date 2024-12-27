@@ -28,6 +28,7 @@ import org.springframework.data.util.Pair;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -749,23 +750,20 @@ public abstract class EdgeGrpcSession implements Closeable {
     }
 
     private void sendDownlinkMsg(ResponseMsg downlinkMsg) {
-        if (downlinkMsg.getDownlinkMsg().getWidgetTypeUpdateMsgCount() > 0) {
-            log.trace("[{}][{}] Sending downlink widgetTypeUpdateMsg, downlinkMsgId = {}", tenantId, sessionId, downlinkMsg.getDownlinkMsg().getDownlinkMsgId());
-        } else {
-            log.trace("[{}][{}] Sending downlink msg [{}]", tenantId, sessionId, downlinkMsg);
-        }
+        final String downlinkMsgAsStr = StringUtils.truncate(downlinkMsg.toString(), 10000);
+        log.trace("[{}][{}] Sending downlink msg [{}]", tenantId, sessionId, downlinkMsgAsStr);
         if (isConnected()) {
             downlinkMsgLock.lock();
             try {
                 outputStream.onNext(downlinkMsg);
             } catch (Exception e) {
-                log.error("[{}][{}] Failed to send downlink message [{}]", tenantId, sessionId, downlinkMsg, e);
+                log.error("[{}][{}] Failed to send downlink message [{}]", tenantId, sessionId, downlinkMsgAsStr, e);
                 connected = false;
                 sessionCloseListener.accept(edge, sessionId);
             } finally {
                 downlinkMsgLock.unlock();
             }
-            log.trace("[{}][{}] Response msg successfully sent. downlinkMsgId = {}", tenantId, sessionId, downlinkMsg.getDownlinkMsg().getDownlinkMsgId());
+            log.trace("[{}][{}] downlink msg successfully sent [{}]", tenantId, sessionId, downlinkMsgAsStr);
         }
     }
 
