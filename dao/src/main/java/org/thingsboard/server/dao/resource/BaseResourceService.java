@@ -615,6 +615,13 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
             resource = new TbResource();
             resource.setTenantId(TenantId.SYS_TENANT_ID);
             resource.setResourceType(resourceType);
+
+            // hotfix for resource sub type. following the upgrade script logic:
+            // UPDATE resource SET resource_sub_type = 'EXTENSION' WHERE resource_type = 'JS_MODULE' AND resource_sub_type IS NULL;
+            if (resourceType == ResourceType.JS_MODULE) {
+                resource.setResourceSubType(ResourceSubType.EXTENSION);
+            }
+
             resource.setResourceKey(resourceKey);
             resource.setFileName(resourceKey);
             resource.setTitle(resourceKey);
