@@ -17,7 +17,7 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { interval } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { HistorySelectSettings } from '@app/modules/home/components/widget/lib/maps/map-models';
+import { HistorySelectSettings } from '@app/modules/home/components/widget/lib/maps-legacy/map-models';
 
 @Component({
   selector: 'tb-history-selector',

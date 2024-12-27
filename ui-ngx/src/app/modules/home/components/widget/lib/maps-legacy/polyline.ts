@@ -19,7 +19,7 @@ import L, { PolylineDecorator, PolylineDecoratorOptions, Symbol } from 'leaflet'
 import 'leaflet-polylinedecorator';
 
 import { WidgetPolylineSettings } from './map-models';
-import { functionValueCalculator } from '@home/components/widget/lib/maps/common-maps-utils';
+import { functionValueCalculator } from '@home/components/widget/lib/maps-legacy/common-maps-utils';
 import { FormattedData } from '@shared/models/widget.models';
 
 export class Polyline {

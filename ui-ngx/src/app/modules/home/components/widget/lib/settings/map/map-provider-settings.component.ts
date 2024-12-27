@@ -41,7 +41,7 @@ import {
   mapProviderTranslationMap,
   OpenStreetMapProviderSettings,
   TencentMapProviderSettings
-} from '@home/components/widget/lib/maps/map-models';
+} from '@home/components/widget/lib/maps-legacy/map-models';
 import { extractType } from '@core/utils';
 import { IAliasController } from '@core/api/widget-api.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';

@@ -43,8 +43,8 @@ import {
   isJSON,
   isValidLatLng,
   LabelSettings
-} from '@home/components/widget/lib/maps/maps-utils';
-import { checkLngLat, createLoadingDiv } from '@home/components/widget/lib/maps/common-maps-utils';
+} from '@home/components/widget/lib/maps-legacy/maps-utils';
+import { checkLngLat, createLoadingDiv } from '@home/components/widget/lib/maps-legacy/common-maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
   deepClone,
@@ -60,7 +60,7 @@ import { TranslateService } from '@ngx-translate/core';
 import {
   SelectEntityDialogComponent,
   SelectEntityDialogData
-} from '@home/components/widget/lib/maps/dialogs/select-entity-dialog.component';
+} from '@home/components/widget/lib/maps-legacy/dialogs/select-entity-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { FormattedData, ReplaceInfo } from '@shared/models/widget.models';
 import { ImagePipe } from '@shared/pipe/image.pipe';

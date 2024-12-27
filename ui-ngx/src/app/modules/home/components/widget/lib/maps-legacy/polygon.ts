@@ -20,7 +20,7 @@ import { functionValueCalculator, parseWithTranslation } from './common-maps-uti
 import { WidgetPolygonSettings } from './map-models';
 import { FormattedData } from '@shared/models/widget.models';
 import { fillDataPattern, processDataPattern, safeExecuteTbFunction } from '@core/utils';
-import LeafletMap from '@home/components/widget/lib/maps/leaflet-map';
+import LeafletMap from '@home/components/widget/lib/maps-legacy/leaflet-map';
 
 export class Polygon {
 

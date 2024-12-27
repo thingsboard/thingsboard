@@ -33,7 +33,7 @@ import {
   PolygonSettings,
   ShowTooltipAction,
   showTooltipActionTranslationMap
-} from '@home/components/widget/lib/maps/map-models';
+} from '@home/components/widget/lib/maps-legacy/map-models';
 import { WidgetService } from '@core/http/widget.service';
 import { Widget } from '@shared/models/widget.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';

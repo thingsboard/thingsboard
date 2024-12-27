@@ -18,7 +18,7 @@ import L from 'leaflet';
 import { GenericFunction, ShowTooltipAction, WidgetToolipSettings } from './map-models';
 import { Datasource, FormattedData } from '@app/shared/models/widget.models';
 import { fillDataPattern, isDefinedAndNotNull, isString, processDataPattern, safeExecuteTbFunction } from '@core/utils';
-import { parseWithTranslation } from '@home/components/widget/lib/maps/common-maps-utils';
+import { parseWithTranslation } from '@home/components/widget/lib/maps-legacy/common-maps-utils';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
 
 export function createTooltip(target: L.Layer,

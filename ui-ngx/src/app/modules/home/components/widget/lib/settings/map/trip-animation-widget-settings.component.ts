@@ -35,7 +35,7 @@ import {
   PointsSettings,
   PolygonSettings,
   PolylineSettings
-} from 'src/app/modules/home/components/widget/lib/maps/map-models';
+} from 'src/app/modules/home/components/widget/lib/maps-legacy/map-models';
 import { extractType } from '@core/utils';
 
 @Component({

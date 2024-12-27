@@ -33,7 +33,7 @@ import {
   PolylineDecoratorSymbol,
   polylineDecoratorSymbolTranslationMap,
   PolylineSettings
-} from '@home/components/widget/lib/maps/map-models';
+} from '@home/components/widget/lib/maps-legacy/map-models';
 import { WidgetService } from '@core/http/widget.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 

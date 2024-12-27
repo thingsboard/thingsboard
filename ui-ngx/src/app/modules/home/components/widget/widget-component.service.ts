@@ -186,7 +186,7 @@ export class WidgetComponentService {
           (window as any).TbCanvasDigitalGauge = mod.TbCanvasDigitalGauge;
         }))
       );
-      widgetModulesTasks.push(from(import('@home/components/widget/lib/maps/map-widget2')).pipe(
+      widgetModulesTasks.push(from(import('@home/components/widget/lib/maps-legacy/map-widget2')).pipe(
         tap((mod) => {
           (window as any).TbMapWidgetV2 = mod.TbMapWidgetV2;
         }))

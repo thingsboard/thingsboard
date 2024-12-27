@@ -33,7 +33,7 @@ import {
   TencentMapProviderSettings,
   TencentMapType,
   tencentMapTypeProviderTranslationMap
-} from '@home/components/widget/lib/maps/map-models';
+} from '@home/components/widget/lib/maps-legacy/map-models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({

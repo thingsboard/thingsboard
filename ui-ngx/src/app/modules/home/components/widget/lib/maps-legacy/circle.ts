@@ -15,10 +15,10 @@
 ///
 
 import L, { LeafletMouseEvent } from 'leaflet';
-import { CircleData, WidgetCircleSettings } from '@home/components/widget/lib/maps/map-models';
-import { functionValueCalculator, parseWithTranslation } from '@home/components/widget/lib/maps/common-maps-utils';
-import LeafletMap from '@home/components/widget/lib/maps/leaflet-map';
-import { createTooltip } from '@home/components/widget/lib/maps/maps-utils';
+import { CircleData, WidgetCircleSettings } from '@home/components/widget/lib/maps-legacy/map-models';
+import { functionValueCalculator, parseWithTranslation } from '@home/components/widget/lib/maps-legacy/common-maps-utils';
+import LeafletMap from '@home/components/widget/lib/maps-legacy/leaflet-map';
+import { createTooltip } from '@home/components/widget/lib/maps-legacy/maps-utils';
 import { FormattedData } from '@shared/models/widget.models';
 import { fillDataPattern, processDataPattern, safeExecuteTbFunction } from '@core/utils';
 

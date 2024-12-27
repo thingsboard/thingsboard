@@ -23,7 +23,7 @@ import { Datasource, DatasourceData, FormattedData, WidgetActionDescriptor } fro
 import { TranslateService } from '@ngx-translate/core';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
-import { providerClass } from '@home/components/widget/lib/maps/providers/public-api';
+import { providerClass } from '@home/components/widget/lib/maps-legacy/providers/public-api';
 import { isDefined, isDefinedAndNotNull, parseTbFunction } from '@core/utils';
 import L from 'leaflet';
 import { firstValueFrom, forkJoin, from, Observable, of } from 'rxjs';

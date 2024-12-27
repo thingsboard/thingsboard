@@ -46,7 +46,7 @@ import {
   PolygonSettings,
   PolylineSettings,
   UnitedMapSettings
-} from '@home/components/widget/lib/maps/map-models';
+} from '@home/components/widget/lib/maps-legacy/map-models';
 import { extractType } from '@core/utils';
 import { IAliasController } from '@core/api/widget-api.models';
 import { Widget } from '@shared/models/widget.models';

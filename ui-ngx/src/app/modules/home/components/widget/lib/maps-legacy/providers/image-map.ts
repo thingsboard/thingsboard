@@ -25,7 +25,7 @@ import {
 } from '../map-models';
 import { combineLatest, Observable, of, ReplaySubject, switchMap } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { calculateNewPointCoordinate, loadImageWithAspect } from '@home/components/widget/lib/maps/common-maps-utils';
+import { calculateNewPointCoordinate, loadImageWithAspect } from '@home/components/widget/lib/maps-legacy/common-maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DataSet, DatasourceType, FormattedData, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';

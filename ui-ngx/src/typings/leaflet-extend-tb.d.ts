@@ -21,4 +21,7 @@ declare module 'leaflet' {
   interface MarkerOptions {
     tbMarkerData?: FormattedData;
   }
+  namespace TB {
+    function sidebar(selector: string): Control;
+  }
 }
