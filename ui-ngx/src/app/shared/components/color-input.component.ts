@@ -17,6 +17,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   forwardRef,
   Input,
@@ -40,7 +41,7 @@ import { DialogService } from '@core/services/dialog.service';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';
-import { MatButton } from '@angular/material/button';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-color-input',
@@ -114,7 +115,8 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
               private fb: UntypedFormBuilder,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -123,7 +125,9 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
       color: [null, this.required ? [Validators.required] : []]
     });
 
-    this.colorFormGroup.valueChanges.subscribe(() => {
+    this.colorFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }

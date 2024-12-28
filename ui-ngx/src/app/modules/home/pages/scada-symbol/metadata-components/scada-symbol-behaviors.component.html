@@ -28,6 +28,7 @@
          [cdkDropListDisabled]="!dragEnabled"
          (cdkDropListDropped)="behaviorDrop($event)">
       <div cdkDrag [cdkDragDisabled]="!dragEnabled"
+           [class.tb-draggable]="!disabled"
            [class.tb-draggable-form-table-row]="!disabled"
            *ngFor="let behaviorControl of behaviorsFormArray().controls; trackBy: trackByBehavior; let $index = index;">
         <tb-scada-symbol-metadata-behavior-row class="flex-1"

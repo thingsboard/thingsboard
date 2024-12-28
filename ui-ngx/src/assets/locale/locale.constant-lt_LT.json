@@ -5893,7 +5893,6 @@
         "type": "Tipas",
         "resources": "Resursai",
         "resource-url": "JavaScript/CSS URL",
-        "resource-is-module": "Is module",
         "remove-resource": "Panaikinti resursą",
         "add-resource": "Pridėti resursą",
         "html": "HTML",

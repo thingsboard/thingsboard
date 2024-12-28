@@ -743,7 +743,12 @@ public class TenantControllerTest extends AbstractControllerTest {
     }
 
     private TbMsg publishTbMsg(TenantId tenantId, TopicPartitionInfo tpi) {
-        TbMsg tbMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, tenantId, TbMsgMetaData.EMPTY, "{\"test\":1}");
+        TbMsg tbMsg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(tenantId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data("{\"test\":1}")
+                .build();
         TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())

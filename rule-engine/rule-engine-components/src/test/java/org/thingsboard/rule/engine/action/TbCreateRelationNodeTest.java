@@ -439,7 +439,9 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         var md = getMetadataWithNameTemplate();
         var msg = getTbMsg(originatorId, md);
 
-        var msgAfterOriginatorChanged = TbMsg.transformMsgOriginator(msg, originatorId);
+        var msgAfterOriginatorChanged = msg.transform()
+                .originator(originatorId)
+                .build();
         when(ctxMock.transformMsgOriginator(any(), any())).thenReturn(msgAfterOriginatorChanged);
 
         // WHEN
@@ -486,7 +488,12 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
 
         var mockMethodCallsMap = mockEntityServiceCallsCreateEntityIfNotExistsEnabled();
-        var entityCreatedMsg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, entityId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        var entityCreatedMsg = TbMsg.newMsg()
+                .type(TbMsgType.ENTITY_CREATED)
+                .originator(entityId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         mockMethodCallsMap.get(entityType).accept(entity, entityCreatedMsg);
 
         when(relationServiceMock.checkRelationAsync(any(), any(), any(), any(), any())).thenReturn(Futures.immediateFuture(false));
@@ -676,7 +683,12 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     private TbMsg getTbMsg(EntityId originator, TbMsgMetaData metaData) {
-        return TbMsg.newMsg(TbMsgType.NA, originator, metaData, TbMsg.EMPTY_JSON_OBJECT);
+        return TbMsg.newMsg()
+                .type(TbMsgType.NA)
+                .originator(originator)
+                .copyMetaData(metaData)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
     }
 
     private TbMsgMetaData getMetadataWithNameTemplate() {

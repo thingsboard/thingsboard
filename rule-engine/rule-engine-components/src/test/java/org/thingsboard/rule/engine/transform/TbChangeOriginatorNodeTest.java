@@ -176,8 +176,15 @@ public class TbChangeOriginatorNodeTest {
         Device device = new Device(DEVICE_ID);
         device.setCustomerId(CUSTOMER_ID);
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
-        TbMsg expectedMsg = TbMsg.transformMsgOriginator(msg, CUSTOMER_ID);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
+        TbMsg expectedMsg = msg.transform()
+                .originator(CUSTOMER_ID)
+                .build();
 
         given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.getDeviceService()).willReturn(deviceServiceMock);
@@ -199,8 +206,15 @@ public class TbChangeOriginatorNodeTest {
     public void givenOriginatorSourceIsTenant_whenOnMsg_thenTellSuccess() throws TbNodeException {
         config.setOriginatorSource(TENANT);
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, ASSET_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
-        TbMsg expectedMsg = TbMsg.transformMsgOriginator(msg, TENANT_ID);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(ASSET_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
+        TbMsg expectedMsg = msg.transform()
+                .originator(TENANT_ID)
+                .build();
 
         given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.getTenantId()).willReturn(TENANT_ID);
@@ -219,7 +233,12 @@ public class TbChangeOriginatorNodeTest {
     public void givenOriginatorSourceIsRelatedAndNewOriginatorIsNull_whenOnMsg_thenTellFailure() throws TbNodeException {
         config.setOriginatorSource(RELATED);
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, ASSET_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(ASSET_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
 
         given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.getRelationService()).willReturn(relationServiceMock);
@@ -253,8 +272,15 @@ public class TbChangeOriginatorNodeTest {
         Alarm alarm = new Alarm(alarmId);
         alarm.setOriginator(DEVICE_ID);
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.ALARM, alarmId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
-        TbMsg expectedMsg = TbMsg.transformMsgOriginator(msg, DEVICE_ID);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.ALARM)
+                .originator(alarmId)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
+        TbMsg expectedMsg = msg.transform()
+                .originator(DEVICE_ID)
+                .build();
 
         given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.getAlarmService()).willReturn(alarmServiceMock);
@@ -279,8 +305,15 @@ public class TbChangeOriginatorNodeTest {
         config.setEntityType(EntityType.ASSET.name());
         config.setEntityNamePattern(entityNamePattern);
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, data);
-        TbMsg expectedMsg = TbMsg.transformMsgOriginator(msg, ASSET_ID);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(metaData)
+                .data(data)
+                .build();
+        TbMsg expectedMsg = msg.transform()
+                .originator(ASSET_ID)
+                .build();
 
         given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.getAssetService()).willReturn(assetServiceMock);
@@ -315,7 +348,12 @@ public class TbChangeOriginatorNodeTest {
 
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("md-name-pattern", "test-asset");
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(metaData)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
 
         given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.getAssetService()).willReturn(assetServiceMock);

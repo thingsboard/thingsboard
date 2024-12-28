@@ -27,6 +27,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.cache.CaffeineTbTransactionalCache;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
@@ -526,9 +527,16 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     }
 
     @Override
-    public void inlineImage(HasImage entity) {
+    public <T extends HasImage> T inlineImage(T entity) {
         log.trace("Executing inlineImage [{}] [{}] [{}]", entity.getTenantId(), entity.getClass().getSimpleName(), entity.getName());
+        if (StringUtils.isEmpty(entity.getImage())) {
+            return entity;
+        }
+        if (cache instanceof CaffeineTbTransactionalCache) {
+            entity = JacksonUtil.clone(entity); // cloning the entity to avoid updating the cached one
+        }
         entity.setImage(inlineImage(entity.getTenantId(), "image", entity.getImage(), true));
+        return entity;
     }
 
     @Override

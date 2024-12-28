@@ -54,7 +54,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -106,22 +105,11 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
         log.debug("Processing notification rule '{}' for trigger type {}", rule.getName(), rule.getTriggerType());
 
         if (matchesClearRule(trigger, triggerConfig)) {
-            List<NotificationRequest> notificationRequests = findAlreadySentNotificationRequests(rule, trigger);
-            if (notificationRequests.isEmpty()) {
-                return;
-            }
-
-            List<UUID> targets = notificationRequests.stream()
-                    .filter(NotificationRequest::isSent)
-                    .flatMap(notificationRequest -> notificationRequest.getTargets().stream())
-                    .distinct().collect(Collectors.toList());
-            NotificationInfo notificationInfo = constructNotificationInfo(trigger, triggerConfig);
-            submitNotificationRequest(targets, rule, trigger.getOriginatorEntityId(), notificationInfo, 0);
-
-            notificationRequests.forEach(notificationRequest -> {
-                if (notificationRequest.isScheduled()) {
-                    notificationCenter.deleteNotificationRequest(rule.getTenantId(), notificationRequest.getId());
-                }
+            List<NotificationRequest> scheduledRequests = notificationRequestService.findNotificationRequestsByRuleIdAndOriginatorEntityIdAndStatus(
+                    rule.getTenantId(), rule.getId(), trigger.getOriginatorEntityId(), NotificationRequestStatus.SCHEDULED
+            );
+            scheduledRequests.forEach(notificationRequest -> {
+                notificationCenter.deleteNotificationRequest(rule.getTenantId(), notificationRequest.getId());
             });
             return;
         }
@@ -137,10 +125,6 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
                 submitNotificationRequest(targets, rule, trigger.getOriginatorEntityId(), notificationInfo, delay);
             });
         }
-    }
-
-    private List<NotificationRequest> findAlreadySentNotificationRequests(NotificationRule rule, NotificationRuleTrigger trigger) {
-        return notificationRequestService.findNotificationRequestsByRuleIdAndOriginatorEntityId(rule.getTenantId(), rule.getId(), trigger.getOriginatorEntityId());
     }
 
     private void submitNotificationRequest(List<UUID> targets, NotificationRule rule,

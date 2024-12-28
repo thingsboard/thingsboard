@@ -79,7 +79,9 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
             if (previousDetails != null) {
                 TbMsgMetaData metaData = msg.getMetaData().copy();
                 metaData.putValue(PREV_ALARM_DETAILS, JacksonUtil.toString(previousDetails));
-                dummyMsg = TbMsg.transformMsgMetadata(msg, metaData);
+                dummyMsg = msg.transform()
+                        .metaData(metaData)
+                        .build();
             }
             return scriptEngine.executeJsonAsync(dummyMsg);
         } catch (Exception e) {

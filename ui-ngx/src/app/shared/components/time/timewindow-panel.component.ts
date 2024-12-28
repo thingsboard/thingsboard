@@ -413,7 +413,8 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   }
 
   private updateTimewindowForm() {
-    this.timewindowForm.patchValue(this.timewindow);
+    this.timewindowForm.patchValue(this.timewindow, {emitEvent: false});
+    this.updateValidators(this.timewindowForm.get('aggregation.type').value);
 
     if (this.timewindow.realtime.hideInterval) {
       this.timewindowForm.get('realtime.realtimeType').disable({emitEvent: false});

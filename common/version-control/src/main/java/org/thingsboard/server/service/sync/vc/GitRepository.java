@@ -51,7 +51,9 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.FetchResult;
+import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -85,6 +87,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -350,8 +353,16 @@ public class GitRepository {
             return;
         }
         log.debug("Executing push [{}][{}]", settings.getRepositoryUri(), remoteBranch);
-        execute(git.push()
+        Iterable<PushResult> result = execute(git.push()
                 .setRefSpecs(new RefSpec(localBranch + ":" + remoteBranch)));
+        result.forEach(pushResult -> {
+            for (RemoteRefUpdate update : pushResult.getRemoteUpdates()) {
+                RemoteRefUpdate.Status status = update.getStatus();
+                if (status != RemoteRefUpdate.Status.OK && status != RemoteRefUpdate.Status.UP_TO_DATE) {
+                    throw new RuntimeException("Failed to push changes: " + Optional.ofNullable(update.getMessage()).orElseGet(status::name));
+                }
+            }
+        });
     }
 
     public String getContentsDiff(String content1, String content2) throws IOException {
