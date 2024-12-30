@@ -68,7 +68,6 @@ import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.common.util.ProtoUtils;
-import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ComponentLifecycleMsgProto;
@@ -150,7 +149,6 @@ public class DefaultTbClusterService implements TbClusterService {
     private final GatewayNotificationsService gatewayNotificationsService;
     private final EdgeService edgeService;
     private final TbTransactionalCache<EdgeId, String> edgeIdServiceIdCache;
-    private final CalculatedFieldService calculatedFieldService;
 
     @Override
     public void pushMsgToCore(TenantId tenantId, EntityId entityId, ToCoreMsg msg, TbQueueCallback callback) {
@@ -393,7 +391,7 @@ public class DefaultTbClusterService implements TbClusterService {
     public void onDeviceDeleted(TenantId tenantId, Device device, TbQueueCallback callback) {
         DeviceId deviceId = device.getId();
         gatewayNotificationsService.onDeviceDeleted(device);
-        handleEntityDelete(tenantId, deviceId, device.getDeviceProfileId());
+        sendProfileEntityEvent(tenantId, deviceId, device.getDeviceProfileId(), false, true);
         broadcastEntityDeleteToTransport(tenantId, deviceId, device.getName(), callback);
         sendDeviceStateServiceEvent(tenantId, deviceId, false, false, true);
         broadcastEntityStateChangeEvent(tenantId, deviceId, ComponentLifecycleEvent.DELETED);
@@ -402,15 +400,8 @@ public class DefaultTbClusterService implements TbClusterService {
     @Override
     public void onAssetDeleted(TenantId tenantId, Asset asset, TbQueueCallback callback) {
         AssetId assetId = asset.getId();
-        handleEntityDelete(tenantId, assetId, asset.getAssetProfileId());
+        sendProfileEntityEvent(tenantId, assetId, asset.getAssetProfileId(), false, true);
         broadcastEntityStateChangeEvent(tenantId, assetId, ComponentLifecycleEvent.DELETED);
-    }
-
-    private void handleEntityDelete(TenantId tenantId, EntityId entityId, EntityId profileId) {
-        boolean cfExistsByProfile = calculatedFieldService.existsCalculatedFieldByEntityId(tenantId, profileId);
-        if (cfExistsByProfile) {
-            sendProfileEntityEvent(tenantId, entityId, profileId, false, true);
-        }
     }
 
     @Override
@@ -633,13 +624,13 @@ public class DefaultTbClusterService implements TbClusterService {
             }
             boolean deviceTypeChanged = !device.getType().equals(old.getType());
             if (deviceTypeChanged) {
-                handleProfileUpdate(device.getTenantId(), device.getId(), old.getDeviceProfileId(), device.getDeviceProfileId());
+                sendEntityProfileUpdatedEvent(device.getTenantId(), device.getId(), old.getDeviceProfileId(), device.getDeviceProfileId());
             }
             if (deviceNameChanged || deviceTypeChanged) {
                 pushMsgToCore(new DeviceNameOrTypeUpdateMsg(device.getTenantId(), device.getId(), device.getName(), device.getType()), null);
             }
         } else {
-            handleEntityCreate(device.getTenantId(), device.getId(), device.getDeviceProfileId());
+            sendProfileEntityEvent(device.getTenantId(), device.getId(), device.getDeviceProfileId(), true, false);
         }
         broadcastEntityStateChangeEvent(device.getTenantId(), device.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
         sendDeviceStateServiceEvent(device.getTenantId(), device.getId(), created, !created, false);
@@ -653,27 +644,12 @@ public class DefaultTbClusterService implements TbClusterService {
         if (old != null) {
             boolean assetTypeChanged = !asset.getType().equals(old.getType());
             if (assetTypeChanged) {
-                handleProfileUpdate(asset.getTenantId(), asset.getId(), old.getAssetProfileId(), asset.getAssetProfileId());
+                sendEntityProfileUpdatedEvent(asset.getTenantId(), asset.getId(), old.getAssetProfileId(), asset.getAssetProfileId());
             }
         } else {
-            handleEntityCreate(asset.getTenantId(), asset.getId(), asset.getAssetProfileId());
+            sendProfileEntityEvent(asset.getTenantId(), asset.getId(), asset.getAssetProfileId(), true, false);
         }
         broadcastEntityStateChangeEvent(asset.getTenantId(), asset.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
-    }
-
-    private void handleProfileUpdate(TenantId tenantId, EntityId entityId, EntityId oldProfileId, EntityId newProfileId) {
-        boolean cfExistsByOldProfile = calculatedFieldService.existsCalculatedFieldByEntityId(tenantId, oldProfileId);
-        boolean cfExistsByNewProfile = calculatedFieldService.existsCalculatedFieldByEntityId(tenantId, newProfileId);
-        if (cfExistsByOldProfile || cfExistsByNewProfile) {
-            sendEntityProfileUpdatedEvent(tenantId, entityId, oldProfileId, newProfileId);
-        }
-    }
-
-    private void handleEntityCreate(TenantId tenantId, EntityId entityId, EntityId profileId) {
-        boolean cfExistsByProfile = calculatedFieldService.existsCalculatedFieldByEntityId(tenantId, profileId);
-        if (cfExistsByProfile) {
-            sendProfileEntityEvent(tenantId, entityId, profileId, true, false);
-        }
     }
 
     @Override

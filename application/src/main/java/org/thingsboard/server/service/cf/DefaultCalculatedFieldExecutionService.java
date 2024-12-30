@@ -542,6 +542,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     private void updateOrInitializeState(CalculatedFieldCtx calculatedFieldCtx, EntityId entityId, Map<String, ArgumentEntry> argumentValues, List<CalculatedFieldId> calculatedFieldIds) {
         TenantId tenantId = calculatedFieldCtx.getTenantId();
         CalculatedFieldId cfId = calculatedFieldCtx.getCfId();
+        Map<String, ArgumentEntry> argumentsMap = new HashMap<>(argumentValues);
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, cfId);
         if (tpi.isMyPartition()) {
             CalculatedFieldEntityCtxId entityCtxId = new CalculatedFieldEntityCtxId(cfId.getId(), entityId.getId());
@@ -550,7 +551,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
                 CalculatedFieldEntityCtx calculatedFieldEntityCtx = ctx != null ? ctx : fetchCalculatedFieldEntityState(ctxId, calculatedFieldCtx.getCfType());
 
                 Consumer<CalculatedFieldState> performUpdateState = (state) -> {
-                    if (state.updateState(argumentValues)) {
+                    if (state.updateState(argumentsMap)) {
                         calculatedFieldEntityCtx.setState(state);
                         rocksDBService.put(JacksonUtil.writeValueAsString(entityCtxId), JacksonUtil.writeValueAsString(calculatedFieldEntityCtx));
                         Map<String, ArgumentEntry> arguments = state.getArguments();
@@ -564,17 +565,17 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
 
                 CalculatedFieldState state = calculatedFieldEntityCtx.getState();
 
-                boolean allKeysPresent = argumentValues.keySet().containsAll(calculatedFieldCtx.getArguments().keySet());
+                boolean allKeysPresent = argumentsMap.keySet().containsAll(calculatedFieldCtx.getArguments().keySet());
                 boolean requiresTsRollingUpdate = calculatedFieldCtx.getArguments().values().stream()
                         .anyMatch(argument -> ArgumentType.TS_ROLLING.equals(argument.getType()) && state.getArguments().get(argument.getKey()) == null);
 
                 if (!allKeysPresent || requiresTsRollingUpdate) {
 
                     Map<String, Argument> missingArguments = calculatedFieldCtx.getArguments().entrySet().stream()
-                            .filter(entry -> !argumentValues.containsKey(entry.getKey()) || (ArgumentType.TS_ROLLING.equals(entry.getValue().getType()) && state.getArguments().get(entry.getKey()) == null))
+                            .filter(entry -> !argumentsMap.containsKey(entry.getKey()) || (ArgumentType.TS_ROLLING.equals(entry.getValue().getType()) && state.getArguments().get(entry.getKey()) == null))
                             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-                    fetchArguments(calculatedFieldCtx.getTenantId(), entityId, missingArguments, argumentValues::putAll)
+                    fetchArguments(calculatedFieldCtx.getTenantId(), entityId, missingArguments, argumentsMap::putAll)
                             .addListener(() -> performUpdateState.accept(state),
                                     calculatedFieldCallbackExecutor);
                 } else {
@@ -583,7 +584,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
                 return calculatedFieldEntityCtx;
             });
         } else {
-            sendUpdateCalculatedFieldStateMsg(tenantId, cfId, entityId, calculatedFieldIds, argumentValues);
+            sendUpdateCalculatedFieldStateMsg(tenantId, cfId, entityId, calculatedFieldIds, argumentsMap);
         }
     }
 
