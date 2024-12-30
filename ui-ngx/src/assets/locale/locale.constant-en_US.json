@@ -6802,6 +6802,8 @@
             "max-value": "Maximum value"
         },
         "maps": {
+            "layers": "Layers",
+            "map-layers": "Map layers",
             "select-entity": "Select entity",
             "select-entity-hint": "Hint: after selection click at the map to set position",
             "tooltips": {

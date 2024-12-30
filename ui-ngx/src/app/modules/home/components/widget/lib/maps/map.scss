@@ -1,3 +1,20 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import '../../../../../../../scss/constants';
+
 .tb-map-layout {
   display: flex;
   width: 100%;
@@ -13,7 +30,114 @@
   }
   .tb-map {
     flex: 1;
+    .leaflet-control {
+      .tb-control-button {
+        &.active {
+          box-shadow: inset 0 -1px 5px 2px #514d4d4f;
+        }
+        > div {
+          width: 30px;
+          height: 30px;
+          color: #5B5B5B;
+          line-height: 30px;
+          background-repeat: no-repeat;
+          background-position: center;
+          &.tb-layers {
+            background-image: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 18 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 9.5L0.75 5L9 0.5L17.25 5L9 9.5ZM9 12.5L1.18125 8.24375L2.75625 7.38125L9 10.7938L15.2438 7.38125L16.8188 8.24375L9 12.5ZM9 15.5L1.18125 11.2438L2.75625 10.3813L9 13.7938L15.2438 10.3813L16.8188 11.2438L9 15.5Z" fill="%235B5B5B"/></svg>');
+          }
+        }
+      }
+    }
   }
   .tb-map-sidebar {
+    .tb-layers {
+      height: 100%;
+      width: 220px;
+      max-width: 220px;
+      display: flex;
+      flex-direction: column;
+      .tb-layers-title-container {
+        display: flex;
+        padding: 4px 4px 4px 16px;
+        justify-content: space-between;
+        align-items: center;
+        align-self: stretch;
+        .tb-layers-title {
+          color: rgba(0,0,0,0.87);
+          font-size: 18px;
+          font-style: normal;
+          font-weight: 500;
+          line-height: 24px;
+        }
+        button.tb-button-close {
+          width: 40px;
+          min-width: 40px;
+          height: 40px;
+          padding: 8px;
+          color: rgba(0, 0, 0, 0.54);
+        }
+      }
+      .tb-layers-container {
+        display: flex;
+        flex: 1;
+        padding: 4px 16px 16px 16px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        align-self: stretch;
+        overflow: auto;
+        .tb-layer-card {
+          position: relative;
+          height: 64px;
+          min-height: 64px;
+          align-self: stretch;
+          .tb-layer-map {
+            position: absolute;
+            inset: 2px;
+            border-radius: 2px;
+            z-index: 0;
+          }
+          input.tb-layer-button {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            clip: rect(0, 0, 0, 0);
+            pointer-events: none;
+            &:checked+label.tb-layer-label {
+              border: 3px solid $tb-primary-color;
+              box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.30), 0 2px 6px 2px rgba(0, 0, 0, 0.15);
+              margin: 0;
+            }
+          }
+          label.tb-layer-label {
+            position: absolute;
+            inset: 0;
+            cursor: pointer;
+            border-radius: 2px;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            margin: 2px;
+            &:hover {
+              border: 3px solid $tb-primary-color;
+              box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.30), 0 2px 6px 2px rgba(0, 0, 0, 0.15);
+              margin: 0;
+            }
+            > span {
+              position: absolute;
+              left: 0;
+              bottom: 0;
+              padding: 0 3px;
+              border-radius: 0 2px 0 0;
+              background: rgba(0, 0, 0, 0.56);
+              color: #fff;
+              font-size: 14px;
+              font-style: normal;
+              font-weight: 500;
+              line-height: 20px;
+              user-select: none;
+            }
+          }
+        }
+      }
+    }
   }
 }

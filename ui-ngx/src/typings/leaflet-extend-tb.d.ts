@@ -22,6 +22,48 @@ declare module 'leaflet' {
     tbMarkerData?: FormattedData;
   }
   namespace TB {
-    function sidebar(selector: string): Control;
+
+    interface SidebarControlOptions extends ControlOptions {
+      container: JQuery<HTMLElement>;
+      paneWidth?: number;
+    }
+
+    class SidebarControl extends Control<SidebarControlOptions> {
+      constructor(options: SidebarControlOptions);
+      addPane(pane: JQuery<HTMLElement>): this;
+      togglePane(pane: JQuery<HTMLElement>, button: JQuery<HTMLElement>): void;
+    }
+
+    interface SidebarPaneControlOptions extends ControlOptions {
+      sidebar: SidebarControl;
+      uiClass: string;
+      buttonTitle?: string;
+      paneTitle: string;
+    }
+
+    class SidebarPaneControl<O extends SidebarPaneControlOptions> extends Control<O> {
+      constructor(options: O);
+      onAddPane(map: Map, button: JQuery<HTMLElement>, $ui: JQuery<HTMLElement>, toggle: (e: JQuery.MouseEventBase) => void);
+    }
+
+    interface LayerData {
+      title: string;
+      layer: Layer;
+      mini: Layer;
+    }
+
+    interface LayersControlOptions extends SidebarPaneControlOptions {
+      layers: LayerData[];
+    }
+
+    class LayersControl extends SidebarPaneControl<LayersControlOptions> {
+      constructor(options: LayersControlOptions);
+    }
+
+    function sidebar(options: SidebarControlOptions): SidebarControl;
+
+    function sidebarPane<O extends SidebarPaneControlOptions>(options: O): SidebarPaneControl<O>;
+
+    function layers(options: LayersControlOptions): LayersControl;
   }
 }

@@ -32,7 +32,8 @@ import { DeepPartial } from '@shared/models/common';
 import L from 'leaflet';
 import { forkJoin, Observable, of } from 'rxjs';
 import { TbMapLayer } from '@home/components/widget/lib/maps/map-layer';
-import { map } from 'rxjs/operators';
+import { switchMap, tap } from 'rxjs/operators';
+import '@home/components/widget/lib/maps/leaflet/leaflet-tb';
 
 export abstract class TbMap<S extends BaseMapSettings> {
 
@@ -52,10 +53,10 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   protected defaultCenterPosition: [number, number];
   protected bounds: L.LatLngBounds;
-  protected layerControl: L.Control.Layers;
 
   protected mapElement: HTMLElement;
-  protected sidebarElement: HTMLElement;
+
+  private readonly mapResize$: ResizeObserver;
 
   protected constructor(protected ctx: WidgetContext,
                         protected inputSettings: DeepPartial<S>,
@@ -63,34 +64,35 @@ export abstract class TbMap<S extends BaseMapSettings> {
     this.settings = mergeDeep({} as S, this.defaultSettings(), this.inputSettings as S);
     $(containerElement).empty();
     $(containerElement).addClass('tb-map-layout');
-    if (this.settings.controlsPosition.endsWith('left')) {
-      $(containerElement).addClass('tb-sidebar-left');
-    } else {
-      $(containerElement).addClass('tb-sidebar-right');
-    }
     const mapElement = $('<div class="tb-map"></div>');
-    const sidebarElement = $('<div class="tb-map-sidebar"></div>');
     $(containerElement).append(mapElement);
-    $(containerElement).append(sidebarElement);
+
+    this.mapResize$ = new ResizeObserver(() => {
+      this.resize();
+    });
+    this.mapResize$.observe(this.containerElement);
 
     this.mapElement = mapElement[0];
-    this.sidebarElement = sidebarElement[0];
 
     this.defaultCenterPosition = parseCenterPosition(this.settings.defaultCenterPosition);
 
-    this.layerControl = L.control.layers({}, {}, {position: this.settings.controlsPosition, collapsed: true});
-    this.createMap().subscribe((map) => {
-      this.map = map;
+    this.createMap().pipe(
+      switchMap((map) => {
+        this.map = map;
+        return this.setupControls();
+      })
+    ).subscribe(() => {
       this.initMap();
     });
-    L.TB = {
-      sidebar: (s) => { return null;}
-    };
+  }
+
+  private setupControls(): Observable<any> {
+    this.map.zoomControl.setPosition(this.settings.controlsPosition);
+    return this.doSetupControls();
   }
 
   private initMap() {
-    this.map.zoomControl.setPosition(this.settings.controlsPosition);
-    this.layerControl.addTo(this.map);
+
     this.map.on('move', () => {
       this.ctx.updatePopoverPositions();
     });
@@ -112,11 +114,25 @@ export abstract class TbMap<S extends BaseMapSettings> {
     }
   }
 
+  private resize() {
+    this.onResize();
+    this.map?.invalidateSize();
+  }
+
   protected abstract defaultSettings(): S;
 
   protected abstract createMap(): Observable<L.Map>;
 
+  protected abstract onResize(): void;
+
+  protected doSetupControls(): Observable<any> {
+    return of(null);
+  }
+
   public destroy() {
+    if (this.mapResize$) {
+      this.mapResize$.disconnect();
+    }
     if (this.map) {
       this.map.remove();
     }
@@ -137,28 +153,44 @@ class TbGeoMap extends TbMap<GeoMapSettings> {
   }
 
   protected createMap(): Observable<L.Map> {
-    const theMap = L.map(this.mapElement, {
+    const map = L.map(this.mapElement, {
       scrollWheelZoom: this.settings.zoomActions.includes(MapZoomAction.scroll),
       doubleClickZoom: this.settings.zoomActions.includes(MapZoomAction.doubleClick),
       zoomControl: this.settings.zoomActions.includes(MapZoomAction.controlButtons)
     }).setView(this.defaultCenterPosition, this.settings.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
-    return this.loadLayers().pipe(
-      map((layers) => {
-        if (layers.length) {
-          const layer = layers[0];
-          layer.layer.addTo(theMap);
-          if (layers.length > 1) {
-            layers.forEach(l => {
-              this.layerControl.addBaseLayer(l.layer, l.title);
-            });
-          }
-        }
-        return theMap;
-      })
-    );
+    return of(map);
   }
 
-  private loadLayers(): Observable<{title: string, layer: L.Layer}[]> {
+  protected onResize(): void {}
+
+  protected doSetupControls(): Observable<any> {
+    return this.loadLayers().pipe(
+      tap((layers) => {
+        if (layers.length) {
+          const layer = layers[0];
+          layer.layer.addTo(this.map);
+          if (layers.length > 1) {
+            const sidebar = L.TB.sidebar({
+              container: $(this.containerElement),
+              position: this.settings.controlsPosition,
+              paneWidth: 220
+            }).addTo(this.map);
+            L.TB.layers({
+              layers,
+              sidebar,
+              position: this.settings.controlsPosition,
+              uiClass: 'tb-layers',
+              paneTitle: this.ctx.translate.instant('widgets.maps.map-layers'),
+              buttonTitle: this.ctx.translate.instant('widgets.maps.layers'),
+            }).addTo(this.map);
+          }
+        }
+      })
+    );
+
+  }
+
+  private loadLayers(): Observable<L.TB.LayerData[]> {
     const layers = this.settings.layers.map(settings => TbMapLayer.fromSettings(this.ctx, settings));
     return forkJoin(layers.map(layer => layer.loadLayer()));
   }
@@ -193,4 +225,6 @@ class TbImageMap extends TbMap<ImageMapSettings> {
     }).setView(this.defaultCenterPosition, this.settings.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
     return of(map);
   }
+
+  protected onResize(): void {}
 }

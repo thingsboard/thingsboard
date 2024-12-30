@@ -123,7 +123,7 @@ export const defaultBaseMapSettings: BaseMapSettings = {
   polygons: [],
   circles: [],
   additionalDataSources: [],
-  controlsPosition: MapControlsPosition.topleft,
+  controlsPosition: MapControlsPosition.bottomright,
   zoomActions: [MapZoomAction.scroll, MapZoomAction.doubleClick, MapZoomAction.controlButtons],
   fitMapBounds: true,
   useDefaultCenterPosition: false,
