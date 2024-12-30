@@ -26,6 +26,12 @@
     margin-top: 36px;
     margin-bottom: 76px;
     background-color: #eee0;
+
+    .logo {
+      height: 100px; /* Set the desired height */
+      width: auto; /* Maintain aspect ratio */
+    }
+
     .tb-login-form {
       @media #{$mat-gt-xs} {
         width: 550px !important;
