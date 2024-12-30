@@ -95,7 +95,8 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
     autofocus: false,
     branding: false,
     promotion: false,
-    relative_urls: false
+    relative_urls: false,
+    urlconverter_callback: (url) => url
   };
 
   private propagateChange = null;
