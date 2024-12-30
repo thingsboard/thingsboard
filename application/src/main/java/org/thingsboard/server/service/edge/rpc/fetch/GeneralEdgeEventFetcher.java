@@ -33,8 +33,6 @@ public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
     private final Long queueStartTs;
     private Long seqIdStart;
     @Getter
-    private Long seqIdEnd;
-    @Getter
     private boolean seqIdNewCycleStarted;
     private Long maxReadRecordsCount;
     private final EdgeEventService edgeEventService;
@@ -53,10 +51,11 @@ public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
     @Override
     public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, Edge edge, PageLink pageLink) {
         try {
-            PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), seqIdStart, seqIdEnd, (TimePageLink) pageLink);
+            log.trace("[{}] Finding general edge events [{}], seqIdStart = {}, pageLink = {}",
+                    tenantId, edge.getId(), seqIdStart, pageLink);
+            PageData<EdgeEvent> edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), seqIdStart, null, (TimePageLink) pageLink);
             if (edgeEvents.getData().isEmpty()) {
-                this.seqIdEnd = Math.max(this.maxReadRecordsCount, seqIdStart - this.maxReadRecordsCount);
-                edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), 0L, seqIdEnd, (TimePageLink) pageLink);
+                edgeEvents = edgeEventService.findEdgeEvents(tenantId, edge.getId(), 0L, Math.max(this.maxReadRecordsCount, seqIdStart - this.maxReadRecordsCount), (TimePageLink) pageLink);
                 if (edgeEvents.getData().stream().anyMatch(ee -> ee.getSeqId() < seqIdStart)) {
                     log.info("[{}] seqId column of edge_event table started new cycle [{}]", tenantId, edge.getId());
                     this.seqIdNewCycleStarted = true;
