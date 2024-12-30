@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit, Optional } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit, Optional } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -37,6 +37,7 @@ import {
   pieChartLabelPositionTranslations
 } from '@home/components/widget/lib/chart/chart.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-chart-bar-settings',
@@ -77,7 +78,8 @@ export class ChartBarSettingsComponent implements OnInit, ControlValueAccessor {
 
   constructor(protected store: Store<AppState>,
               @Optional() private dataKeyConfigComponent: DataKeyConfigComponent,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -104,13 +106,17 @@ export class ChartBarSettingsComponent implements OnInit, ControlValueAccessor {
       this.barSettingsFormGroup.addControl('barWidth', this.fb.control(null,
         [Validators.min(0), Validators.max(100)]));
     }
-    this.barSettingsFormGroup.valueChanges.subscribe(() => {
+    this.barSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
     merge(this.barSettingsFormGroup.get('showBorder').valueChanges,
       this.barSettingsFormGroup.get('showLabel').valueChanges,
-      this.barSettingsFormGroup.get('enableLabelBackground').valueChanges)
-    .subscribe(() => {
+      this.barSettingsFormGroup.get('enableLabelBackground').valueChanges
+    ).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
   }

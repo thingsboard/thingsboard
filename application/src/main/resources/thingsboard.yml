@@ -1446,11 +1446,11 @@ edges:
   # Max number of high priority edge events per edge session. No persistence - stored in memory
   max_high_priority_queue_size_per_session: "${EDGES_MAX_HIGH_PRIORITY_QUEUE_SIZE_PER_SESSION:10000}"
   # Number of threads that are used to check DB for edge events
-  scheduler_pool_size: "${EDGES_SCHEDULER_POOL_SIZE:1}"
+  scheduler_pool_size: "${EDGES_SCHEDULER_POOL_SIZE:4}"
   # Number of threads that are used to send downlink messages to edge over gRPC
-  send_scheduler_pool_size: "${EDGES_SEND_SCHEDULER_POOL_SIZE:1}"
+  send_scheduler_pool_size: "${EDGES_SEND_SCHEDULER_POOL_SIZE:4}"
   # Number of threads that are used to convert edge events from DB into downlink messages and send them for delivery
-  grpc_callback_thread_pool_size: "${EDGES_GRPC_CALLBACK_POOL_SIZE:1}"
+  grpc_callback_thread_pool_size: "${EDGES_GRPC_CALLBACK_POOL_SIZE:4}"
   state:
     # Persist state of edge (active, last connect, last disconnect) into timeseries or attributes tables. 'false' means to store edge state into attributes table
     persistToTelemetry: "${EDGES_PERSIST_STATE_TO_TELEMETRY:false}"

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -29,6 +29,7 @@ import {
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { DefaultDeviceProfileTransportConfiguration, DeviceTransportType } from '@shared/models/device.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-default-device-profile-transport-configuration',
@@ -57,7 +58,8 @@ export class DefaultDeviceProfileTransportConfigurationComponent implements Cont
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   registerOnChange(fn: any): void {
@@ -71,7 +73,9 @@ export class DefaultDeviceProfileTransportConfigurationComponent implements Cont
     this.defaultDeviceProfileTransportConfigurationFormGroup = this.fb.group({
       configuration: [null, Validators.required]
     });
-    this.defaultDeviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
+    this.defaultDeviceProfileTransportConfigurationFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }

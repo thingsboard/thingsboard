@@ -1,0 +1,62 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-form-panel tb-dynamic-form-select-items no-border no-padding">
+  <div class="tb-form-table">
+    <div class="tb-form-table-header" [class.no-padding-right]="!disabled">
+      <div class="tb-form-table-header-cell tb-value-header" translate>dynamic-form.property.value</div>
+      <div class="tb-form-table-header-cell tb-label-header" translate>dynamic-form.property.label</div>
+      <div class="tb-form-table-header-cell tb-actions-header" [class.disabled]="disabled"></div>
+    </div>
+    <div *ngIf="selectItemsFormArray().controls.length; else noSelectItems" class="tb-form-table-body tb-drop-list"
+         cdkDropList cdkDropListOrientation="vertical"
+         [cdkDropListDisabled]="!dragEnabled"
+         (cdkDropListDropped)="selectItemDrop($event)">
+      <div cdkDrag [cdkDragDisabled]="!dragEnabled"
+           [class.tb-draggable]="!disabled"
+           [class.tb-draggable-form-table-row]="!disabled"
+           *ngFor="let selectItemControl of selectItemsFormArray().controls; trackBy: trackBySelectItem; let $index = index;">
+        <tb-dynamic-form-select-item-row class="flex-1"
+                                         [index]="$index"
+                                         [formControl]="selectItemControl"
+                                         (selectItemRemoved)="removeSelectItem($index)">
+        </tb-dynamic-form-select-item-row>
+        <div class="tb-form-table-row-cell-buttons">
+          <button mat-icon-button
+                  *ngIf="!disabled"
+                  type="button"
+                  cdkDragHandle
+                  [class.tb-hidden]="!dragEnabled"
+                  matTooltip="{{ 'action.drag' | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>drag_indicator</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+    <tb-error *ngIf="errorText" noMargin [error]="errorText" style="padding-left: 12px;"></tb-error>
+  </div>
+  <div *ngIf="!disabled">
+    <button type="button" mat-stroked-button color="primary" (click)="addSelectItem()">
+      {{ 'dynamic-form.property.add-option' | translate }}
+    </button>
+  </div>
+</div>
+
+<ng-template #noSelectItems>
+  <span class="tb-prompt flex items-center justify-center">{{ 'dynamic-form.property.no-options' | translate }}</span>
+</ng-template>

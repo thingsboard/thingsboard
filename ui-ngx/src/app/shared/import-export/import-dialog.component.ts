@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
+import { Component, DestroyRef, Inject, OnInit, SkipSelf } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -23,10 +23,14 @@ import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDire
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { isDefinedAndNotNull } from '@core/utils';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface ImportDialogData {
   importTitle: string;
   importFileLabel: string;
+  enableImportFromContent?: boolean;
+  importContentLabel?: string;
 }
 
 @Component({
@@ -40,8 +44,12 @@ export class ImportDialogComponent extends DialogComponent<ImportDialogComponent
 
   importTitle: string;
   importFileLabel: string;
+  enableImportFromContent: boolean;
+  importContentLabel: string;
 
   importFormGroup: UntypedFormGroup;
+
+  currentFileName: string;
 
   submitted = false;
 
@@ -50,17 +58,26 @@ export class ImportDialogComponent extends DialogComponent<ImportDialogComponent
               @Inject(MAT_DIALOG_DATA) public data: ImportDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<ImportDialogComponent>,
+              private destroyRef: DestroyRef,
               private fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
     this.importTitle = data.importTitle;
     this.importFileLabel = data.importFileLabel;
-
-    this.importFormGroup = this.fb.group({
-      jsonContent: [null, [Validators.required]]
-    });
+    this.enableImportFromContent = isDefinedAndNotNull(data.enableImportFromContent) ? data.enableImportFromContent : false;
+    this.importContentLabel = data.importContentLabel;
   }
 
   ngOnInit(): void {
+    this.importFormGroup = this.fb.group({
+      importType: ['file'],
+      fileContent: [null, [Validators.required]],
+      jsonContent: [null, [Validators.required]]
+    });
+    this.importFormGroup.get('importType').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
+      this.importTypeChanged();
+    });
   }
 
   isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -85,7 +102,19 @@ export class ImportDialogComponent extends DialogComponent<ImportDialogComponent
 
   importFromJson(): void {
     this.submitted = true;
-    const importData = this.importFormGroup.get('jsonContent').value;
+    const importType: 'file' | 'content' = this.importFormGroup.get('importType').value;
+    const importData = this.importFormGroup.get(importType === 'file' ? 'fileContent' : 'jsonContent').value;
     this.dialogRef.close(importData);
+  }
+
+  private importTypeChanged() {
+    const importType: 'file' | 'content' = this.importFormGroup.get('importType').value;
+    if (importType === 'file') {
+      this.importFormGroup.get('fileContent').enable({emitEvent: false});
+      this.importFormGroup.get('jsonContent').disable({emitEvent: false});
+    } else {
+      this.importFormGroup.get('fileContent').disable({emitEvent: false});
+      this.importFormGroup.get('jsonContent').enable({emitEvent: false});
+    }
   }
 }

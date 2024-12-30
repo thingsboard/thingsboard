@@ -1,0 +1,266 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div [class.!hidden]="!propertyGroups?.length && !propertiesContent.children?.length" class="tb-form-panel"
+     [class.stroked]="stroked" [class.no-padding]="noPadding" [class.no-border]="noBorder"
+     [formGroup]="propertiesFormGroup">
+  <div *ngIf="title" class="tb-form-panel-title">{{ title }}</div>
+  <ng-container #propertiesContent><ng-content select=".tb-properties-content"></ng-content></ng-container>
+  <ng-container *ngFor="let propertyGroup of propertyGroups">
+    <ng-container *ngIf="propertyGroup.visible">
+      <div *ngIf="propertyGroup.title" class="tb-form-panel stroked">
+        <mat-expansion-panel class="tb-settings" expanded>
+          <mat-expansion-panel-header class="flex flex-row flex-wrap">
+            <mat-panel-title>
+              <div class="tb-form-panel-title">{{ propertyGroup.title | customTranslate }}</div>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+            <ng-container *ngTemplateOutlet="propertyContainersTpl; context:{propertyContainers: propertyGroup.containers}"></ng-container>
+          </ng-template>
+        </mat-expansion-panel>
+      </div>
+      <ng-container *ngIf="!propertyGroup.title">
+        <ng-container *ngTemplateOutlet="propertyContainersTpl; context:{propertyContainers: propertyGroup.containers}"></ng-container>
+      </ng-container>
+    </ng-container>
+  </ng-container>
+</div>
+
+<ng-template #propertyContainersTpl let-propertyContainers="propertyContainers">
+  <ng-container *ngFor="let propertyContainer of propertyContainers" [formGroup]="propertiesFormGroup">
+    <ng-container *ngIf="propertyContainer.visible">
+      <ng-container *ngIf="propertyContainer.type === FormPropertyContainerType.field">
+        <ng-container *ngTemplateOutlet="propertyFieldTpl;context:{property: propertyContainer.property}">
+        </ng-container>
+      </ng-container>
+      <ng-container *ngIf="propertyContainer.type === FormPropertyContainerType.row">
+        <ng-container *ngTemplateOutlet="propertyRowTpl;context:{propertyRow: propertyContainer}">
+        </ng-container>
+      </ng-container>
+      <tb-dynamic-form *ngIf="propertyContainer.type === FormPropertyContainerType.fieldset"
+                       formControlName="{{ propertyContainer.property.id }}"
+                       title="{{ propertyContainer.label | customTranslate }}"
+                       stroked
+                       [properties]="propertyContainer.properties">
+      </tb-dynamic-form>
+      <ng-container *ngIf="propertyContainer.type === FormPropertyContainerType.array">
+        <div *ngIf="propertyContainer.arrayItemProperty.type === FormPropertyType.image" class="tb-form-row flex-1">
+          <tb-multiple-gallery-image-input
+            class="flex-1"
+            label="{{ propertyContainer.property.name | customTranslate }}"
+            formControlName="{{ propertyContainer.property.id }}"
+            [required]="propertyContainer.property.required">
+          </tb-multiple-gallery-image-input>
+        </div>
+        <tb-dynamic-form-array *ngIf="propertyContainer.arrayItemProperty.type !== FormPropertyType.image"
+                       formControlName="{{ propertyContainer.property.id }}"
+                       [itemProperty]="propertyContainer.arrayItemProperty"
+                       title="{{ propertyContainer.label | customTranslate }}">
+        </tb-dynamic-form-array>
+      </ng-container>
+      <ng-container *ngIf="propertyContainer.type === FormPropertyContainerType.htmlSection">
+        <div [innerHTML]="propertyContainer.safeHtml" [class]="propertyContainer.htmlClass"></div>
+      </ng-container>
+    </ng-container>
+  </ng-container>
+</ng-template>
+
+<ng-template #propertyFieldTpl let-property="property">
+  <div [formGroup]="propertiesFormGroup" class="tb-form-row no-border no-padding tb-standard-fields">
+    <ng-container *ngTemplateOutlet="inputFieldTpl;context:{property: property, singleField: true}">
+    </ng-container>
+  </div>
+</ng-template>
+
+<ng-template #propertyRowTpl let-propertyRow="propertyRow">
+  <div [formGroup]="propertiesFormGroup" class="tb-form-row space-between overflow-auto" [class]="propertyRow.rowClass">
+    <mat-slide-toggle *ngIf="propertyRow.switch && propertyRow.switch.visible"
+                      class="mat-slide fixed-title-width margin" formControlName="{{ propertyRow.switch.id }}">
+      {{ propertyRow.label | customTranslate }}
+    </mat-slide-toggle>
+    <div *ngIf="!propertyRow.switch" class="fixed-title-width fixed-title-height">{{ propertyRow.label | customTranslate }}</div>
+    <div *ngIf="propertyRow.properties.length" class="tb-flex" [class]="propertyRow.propertiesRowClass">
+      <ng-container *ngFor="let property of propertyRow.properties">
+        <ng-container *ngIf="property.visible">
+          <div *ngIf="property.subLabel" class="tb-small-label">{{ property.subLabel | customTranslate }}</div>
+          <ng-container *ngIf="isInputFieldPropertyType(property.type)">
+            <ng-container *ngTemplateOutlet="inputFieldTpl;context:{property: property, singleField: false}">
+            </ng-container>
+          </ng-container>
+          <tb-color-input *ngIf="property.type === FormPropertyType.color"
+                          [required]="property.required"
+                          [class]="property.fieldClass"
+                          asBoxInput
+                          colorClearButton
+                          formControlName="{{ property.id }}">
+          </tb-color-input>
+          <tb-color-settings *ngIf="property.type === FormPropertyType.color_settings"
+                             [class]="property.fieldClass"
+                             formControlName="{{ property.id }}"
+                             settingsKey="{{ property.name | customTranslate }}">
+          </tb-color-settings>
+          <tb-font-settings *ngIf="property.type === FormPropertyType.font"
+                            [class]="property.fieldClass"
+                            formControlName="{{ property.id }}"
+                            clearButton
+                            disabledLineHeight>
+          </tb-font-settings>
+          <tb-unit-input *ngIf="property.type === FormPropertyType.units"
+                         [class]="property.fieldClass"
+                         [required]="property.required"
+                         formControlName="{{ property.id }}"></tb-unit-input>
+          <tb-material-icon-select *ngIf="property.type === FormPropertyType.icon"
+                                   [required]="property.required"
+                                   asBoxInput
+                                   formControlName="{{ property.id }}">
+          </tb-material-icon-select>
+          <mat-divider *ngIf="property.divider" vertical></mat-divider>
+        </ng-container>
+      </ng-container>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #inputFieldTpl let-property="property" let-singleField="singleField">
+  <ng-container [formGroup]="propertiesFormGroup">
+    <mat-form-field  *ngIf="property.type === FormPropertyType.textarea"
+                     [class]="singleField ? 'flex' : property.fieldClass"
+                     [floatLabel]="singleField ? 'always' : 'auto'"
+                     appearance="outline" subscriptSizing="dynamic">
+      <mat-label *ngIf="singleField">{{ property.name | customTranslate }}</mat-label>
+      <textarea matInput
+                [rows]="property.rows || 2"
+                formControlName="{{ property.id }}"
+                [required]="property.required"
+                placeholder="{{ 'widget-config.set' | translate }}"></textarea>
+    </mat-form-field>
+    <mat-form-field *ngIf="[FormPropertyType.text, FormPropertyType.password].includes(property.type)"
+                    [class]="singleField ? 'flex' : property.fieldClass"
+                    [floatLabel]="singleField ? 'always' : 'auto'"
+                    appearance="outline" subscriptSizing="dynamic">
+      <mat-label *ngIf="singleField">{{ property.name | customTranslate }}</mat-label>
+      <input matInput
+             [type]="property.type"
+             formControlName="{{ property.id }}"
+             [required]="property.required"
+             placeholder="{{ 'widget-config.set' | translate }}">
+      <div class="lt-md:!hidden" matSuffix *ngIf="property.fieldSuffix">{{ property.fieldSuffix | customTranslate }}</div>
+    </mat-form-field>
+    <mat-form-field *ngIf="property.type === FormPropertyType.number"
+                    [class]="singleField ? 'flex' : property.fieldClass"
+                    class="number"
+                    [floatLabel]="singleField ? 'always' : 'auto'"
+                    appearance="outline" subscriptSizing="dynamic">
+      <mat-label *ngIf="singleField">{{ property.name | customTranslate }}</mat-label>
+      <input matInput
+             type="number"
+             formControlName="{{ property.id }}"
+             [required]="property.required"
+             [min]="property.min"
+             [max]="property.max"
+             [step]="property.step"
+             placeholder="{{ 'widget-config.set' | translate }}">
+      <div class="lt-md:!hidden" matSuffix *ngIf="property.fieldSuffix">{{ property.fieldSuffix | customTranslate }}</div>
+    </mat-form-field>
+    <mat-form-field *ngIf="property.type === FormPropertyType.select"
+                    [class]="singleField ? 'flex' : (property.fieldClass || 'medium-width')"
+                    [floatLabel]="singleField ? 'always' : 'auto'"
+                    appearance="outline" subscriptSizing="dynamic">
+      <mat-label *ngIf="singleField">{{ property.name | customTranslate }}</mat-label>
+      <mat-select formControlName="{{ property.id }}"
+                  [required]="property.required"
+                  [multiple]="property.multiple">
+        <mat-option *ngIf="!property.multiple && property.allowEmptyOption" [value]="null"></mat-option>
+        <mat-option *ngFor="let item of property.items" [value]="item.value">
+          {{ item.label | customTranslate }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <tb-datetime *ngIf="property.type === FormPropertyType.datetime"
+                 [fieldClass]="singleField ? 'flex' : property.fieldClass"
+                 [class.flex-1]="singleField || property.fieldClass?.includes('flex')"
+                 [floatLabel]="singleField ? 'always' : 'auto'"
+                 [showLabel]="singleField"
+                 [dateText]="singleField ? (property.name | customTranslate) : ''"
+                 [allowClear]="property.allowClear"
+                 [required]="property.required"
+                 appearance="outline"
+                 subscriptSizing="dynamic"
+                 [type]="property.dateTimeType"
+                 formControlName="{{ property.id }}">
+    </tb-datetime>
+    <div *ngIf="property.type === FormPropertyType.javascript" class="tb-form-row flex-1">
+      <tb-js-func class="flex-1"
+                  label="{{ property.name | customTranslate }}"
+                  disableUndefinedCheck
+                  [required]="property.required"
+                  [helpId]="property.helpId"
+                  formControlName="{{ property.id }}">
+      </tb-js-func>
+    </div>
+    <div *ngIf="property.type === FormPropertyType.json" class="tb-form-row flex-1">
+      <tb-json-content class="flex-1"
+                       label="{{ property.name | customTranslate }}"
+                       [required]="property.required"
+                       [contentType]="ContentType.JSON"
+                       formControlName="{{ property.id }}">
+      </tb-json-content>
+    </div>
+    <div *ngIf="property.type === FormPropertyType.html" class="tb-form-row flex-1">
+      <tb-html class="flex-1"
+               label="{{ property.name | customTranslate }}"
+               [required]="property.required"
+               formControlName="{{ property.id }}">
+      </tb-html>
+    </div>
+    <div *ngIf="property.type === FormPropertyType.css" class="tb-form-row flex-1">
+      <tb-css class="flex-1"
+              label="{{ property.name | customTranslate }}"
+              [required]="property.required"
+              formControlName="{{ property.id }}">
+      </tb-css>
+    </div>
+    <div *ngIf="property.type === FormPropertyType.markdown" class="tb-form-row flex-1">
+      <tb-markdown-editor class="flex-1"
+                          label="{{ property.name | customTranslate }}"
+                          [required]="property.required"
+                          [helpId]="property.helpId"
+                          formControlName="{{ property.id }}">
+      </tb-markdown-editor>
+    </div>
+    <div *ngIf="property.type === FormPropertyType.image" class="tb-form-row flex-1">
+      <tb-gallery-image-input
+        class="flex-1"
+        label="{{ property.name | customTranslate }}"
+        formControlName="{{ property.id }}"
+        [required]="property.required">
+      </tb-gallery-image-input>
+    </div>
+    <div *ngIf="property.type === FormPropertyType.radios"
+         class="tb-form-row tb-radios-property column-xs flex-1" [class.direction-column]="property.direction === 'column'">
+      <div tbTruncateWithTooltip class="fixed-title-width fixed-title-height">{{ property.name | customTranslate }}</div>
+      <mat-radio-group class="flex flex-1 flex-wrap" [class.flex-col]="property.direction === 'column'"
+                       [required]="property.required"
+                       formControlName="{{ property.id }}">
+        <mat-radio-button *ngFor="let item of property.items" [value]="item.value">
+          <div tbTruncateWithTooltip>{{ item.label | customTranslate }}</div>
+        </mat-radio-button>
+      </mat-radio-group>
+    </div>
+  </ng-container>
+</ng-template>
