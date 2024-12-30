@@ -23,6 +23,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -30,6 +31,8 @@ import org.thingsboard.server.gen.edge.v1.RelationRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
+
+import java.util.UUID;
 
 @DaoSqlTest
 public class RelationEdgeTest extends AbstractEdgeTest {
@@ -152,6 +155,46 @@ public class RelationEdgeTest extends AbstractEdgeTest {
         Assert.assertNotNull(entityRelation);
         Assert.assertEquals(deviceToAssetRelation, entityRelation);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, relationUpdateMsg.getMsgType());
+    }
+
+    @Test
+    public void testRelationFromEdgeToDevice() throws Exception {
+        // create relation
+        Device device = findDeviceByName("Edge Device 1");
+        EdgeId edgeId = new EdgeId(new UUID(edgeImitator.getConfiguration().getEdgeIdMSB(), edgeImitator.getConfiguration().getEdgeIdLSB()));
+        EntityRelation relation = new EntityRelation();
+        relation.setType("test");
+        relation.setFrom(edgeId);
+        relation.setTo(device.getId());
+        relation.setTypeGroup(RelationTypeGroup.COMMON);
+        edgeImitator.expectMessageAmount(1);
+        relation = doPost("/api/v2/relation", relation, EntityRelation.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof RelationUpdateMsg);
+        RelationUpdateMsg relationUpdateMsg = (RelationUpdateMsg) latestMessage;
+        EntityRelation entityRelation = JacksonUtil.fromString(relationUpdateMsg.getEntity(), EntityRelation.class, true);
+        Assert.assertNotNull(entityRelation);
+        Assert.assertEquals(relation, entityRelation);
+        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, relationUpdateMsg.getMsgType());
+
+        // delete relation
+        edgeImitator.expectMessageAmount(1);
+        var deletedRelation = doDelete("/api/v2/relation?" +
+                "fromId=" + relation.getFrom().getId().toString() +
+                "&fromType=" + relation.getFrom().getEntityType().name() +
+                "&relationType=" + relation.getType() +
+                "&relationTypeGroup=" + relation.getTypeGroup().name() +
+                "&toId=" + relation.getTo().getId().toString() +
+                "&toType=" + relation.getTo().getEntityType().name(), EntityRelation.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof RelationUpdateMsg);
+        relationUpdateMsg = (RelationUpdateMsg) latestMessage;
+        entityRelation = JacksonUtil.fromString(relationUpdateMsg.getEntity(), EntityRelation.class, true);
+        Assert.assertNotNull(entityRelation);
+        Assert.assertEquals(deletedRelation, entityRelation);
+        Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, relationUpdateMsg.getMsgType());
     }
 
     private EntityRelation buildEntityRelationForUplinkMsg(DeviceId deviceId1, DeviceId deviceId2) {
