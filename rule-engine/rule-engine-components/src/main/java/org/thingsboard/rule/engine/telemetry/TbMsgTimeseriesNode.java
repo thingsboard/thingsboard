@@ -15,8 +15,12 @@
  */
 package org.thingsboard.rule.engine.telemetry;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -27,6 +31,9 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -59,7 +66,7 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_RE
                 "The DB layer has certain optimizations to ignore the updates of the \"attributes\" and \"latest values\" tables if the new record has a timestamp that is older than the previous record. " +
                 "So, to make sure that all the messages will be processed correctly, one should enable this parameter for sequential message processing scenarios.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeTimeseriesConfig",
+        // configDirective = "tbActionNodeTimeseriesConfig",
         icon = "file_upload"
 )
 public class TbMsgTimeseriesNode implements TbNode {
@@ -68,10 +75,13 @@ public class TbMsgTimeseriesNode implements TbNode {
     private TbContext ctx;
     private long tenantProfileDefaultStorageTtl;
 
+    private PersistenceStrategy latestPersistenceStrategy;
+
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgTimeseriesNodeConfiguration.class);
         this.ctx = ctx;
+        latestPersistenceStrategy = config.getPersistenceConfig().latest();
         ctx.addTenantProfileListener(this::onTenantProfileUpdate);
         onTenantProfileUpdate(ctx.getTenantProfile());
     }
@@ -94,10 +104,18 @@ public class TbMsgTimeseriesNode implements TbNode {
             ctx.tellFailure(msg, new IllegalArgumentException("Msg body is empty: " + src));
             return;
         }
-        List<TsKvEntry> tsKvEntryList = new ArrayList<>();
+        List<TsKvEntry> withLatest = new ArrayList<>();
+        List<TsKvEntry> withoutLatest = new ArrayList<>();
         for (Map.Entry<Long, List<KvEntry>> tsKvEntry : tsKvMap.entrySet()) {
             for (KvEntry kvEntry : tsKvEntry.getValue()) {
-                tsKvEntryList.add(new BasicTsKvEntry(tsKvEntry.getKey(), kvEntry));
+                TsKvEntry entry = new BasicTsKvEntry(tsKvEntry.getKey(), kvEntry);
+                if (latestPersistenceStrategy.shouldPersist(msg.getOriginator().getId(), entry)) {
+                    log.info("Persisting entry: {}", entry);
+                    withLatest.add(entry);
+                } else {
+                    log.info("Skipping entry: {}", entry);
+                    withoutLatest.add(entry);
+                }
             }
         }
         String ttlValue = msg.getMetaData().getValue("TTL");
@@ -105,15 +123,33 @@ public class TbMsgTimeseriesNode implements TbNode {
         if (ttl == 0L) {
             ttl = tenantProfileDefaultStorageTtl;
         }
-        ctx.getTelemetryService().saveTimeseries(TimeseriesSaveRequest.builder()
+
+        SettableFuture<Void> withLatestSavedFuture = SettableFuture.create();
+        TimeseriesSaveRequest saveWithLatestRequest = TimeseriesSaveRequest.builder()
                 .tenantId(ctx.getTenantId())
                 .customerId(msg.getCustomerId())
                 .entityId(msg.getOriginator())
-                .entries(tsKvEntryList)
+                .entries(withLatest)
                 .ttl(ttl)
-                .saveLatest(!config.isSkipLatestPersistence())
-                .callback(new TelemetryNodeCallback(ctx, msg))
-                .build());
+                .saveLatest(true)
+                .future(withLatestSavedFuture)
+                .build();
+        ctx.getTelemetryService().saveTimeseries(saveWithLatestRequest);
+
+        SettableFuture<Void> withoutLatestSavedFuture = SettableFuture.create();
+        TimeseriesSaveRequest saveWithoutLatestRequest = TimeseriesSaveRequest.builder()
+                .tenantId(ctx.getTenantId())
+                .customerId(msg.getCustomerId())
+                .entityId(msg.getOriginator())
+                .entries(withoutLatest)
+                .ttl(ttl)
+                .saveLatest(false)
+                .future(withoutLatestSavedFuture)
+                .build();
+        ctx.getTelemetryService().saveTimeseries(saveWithoutLatestRequest);
+
+        ListenableFuture<List<Void>> bothSavedFuture = Futures.allAsList(withLatestSavedFuture, withoutLatestSavedFuture);
+        DonAsynchron.withCallback(bothSavedFuture, success -> ctx.tellSuccess(msg), failure -> ctx.tellFailure(msg, failure));
     }
 
     public static long computeTs(TbMsg msg, boolean ignoreMetadataTs) {

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.telemetry;
 
+import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
@@ -22,15 +23,22 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 public class TbMsgTimeseriesNodeConfiguration implements NodeConfiguration<TbMsgTimeseriesNodeConfiguration> {
 
     private long defaultTTL;
-    private boolean skipLatestPersistence;
     private boolean useServerTs;
+    private PersistenceConfig persistenceConfig;
 
     @Override
     public TbMsgTimeseriesNodeConfiguration defaultConfiguration() {
         TbMsgTimeseriesNodeConfiguration configuration = new TbMsgTimeseriesNodeConfiguration();
         configuration.setDefaultTTL(0L);
-        configuration.setSkipLatestPersistence(false);
         configuration.setUseServerTs(false);
+        configuration.setPersistenceConfig(PersistenceConfig.builder()
+                .latest(SaveEveryMessagePersistenceStrategy.INSTANCE)
+                .build());
         return configuration;
     }
+
+    @Builder
+    record PersistenceConfig(PersistenceStrategy latest) {
+    }
+
 }

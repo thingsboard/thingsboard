@@ -88,7 +88,7 @@ public class TbMsgTimeseriesNodeTest {
     @Test
     public void verifyDefaultConfig() {
         assertThat(config.getDefaultTTL()).isEqualTo(0L);
-        assertThat(config.isSkipLatestPersistence()).isFalse();
+        // assertThat(config.isSkipLatestPersistence()).isFalse();
         assertThat(config.isUseServerTs()).isFalse();
     }
 
@@ -162,7 +162,7 @@ public class TbMsgTimeseriesNodeTest {
     public void givenSkipLatestPersistenceIsTrueAndTtlFromConfig_whenOnMsg_thenSaveTimeseriesUsingTtlFromConfig() throws TbNodeException {
         long ttlFromConfig = 5L;
         config.setDefaultTTL(ttlFromConfig);
-        config.setSkipLatestPersistence(true);
+        // config.setSkipLatestPersistence(true);
         init();
 
         String data = """
