@@ -99,12 +99,12 @@ public class RelationEdgeTest extends AbstractEdgeTest {
         edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
         Assert.assertTrue(edgeImitator.waitForResponses());
 
-        String deleteUrl = String.format("/api/relation?fromId=%s&fromType=%s&relationType=%s&relationTypeGroup=%s&toId=%s&toType=%s",
+        String getUrl = String.format("/api/relation?fromId=%s&fromType=%s&relationType=%s&relationTypeGroup=%s&toId=%s&toType=%s",
                 device2.getUuidId(), EntityType.DEVICE.name(), "test",
                 RelationTypeGroup.COMMON.name(), device1.getUuidId(), EntityType.DEVICE.name()
         );
 
-        var relation = doGet(deleteUrl, EntityRelation.class);
+        var relation = doGet(getUrl, EntityRelation.class);
 
         Assert.assertNotNull(relation);
     }
