@@ -94,6 +94,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
@@ -543,12 +544,16 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         TenantId tenantId = calculatedFieldCtx.getTenantId();
         CalculatedFieldId cfId = calculatedFieldCtx.getCfId();
         Map<String, ArgumentEntry> argumentsMap = new HashMap<>(argumentValues);
+
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, cfId);
         if (tpi.isMyPartition()) {
+
             CalculatedFieldEntityCtxId entityCtxId = new CalculatedFieldEntityCtxId(cfId.getId(), entityId.getId());
 
             states.compute(entityCtxId, (ctxId, ctx) -> {
                 CalculatedFieldEntityCtx calculatedFieldEntityCtx = ctx != null ? ctx : fetchCalculatedFieldEntityState(ctxId, calculatedFieldCtx.getCfType());
+
+                CompletableFuture<Void> updateFuture = new CompletableFuture<>();
 
                 Consumer<CalculatedFieldState> performUpdateState = (state) -> {
                     if (state.updateState(argumentsMap)) {
@@ -561,6 +566,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
                             performCalculation(calculatedFieldCtx, state, entityId, calculatedFieldIds);
                         }
                     }
+                    updateFuture.complete(null);
                 };
 
                 CalculatedFieldState state = calculatedFieldEntityCtx.getState();
@@ -570,7 +576,6 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
                         .anyMatch(argument -> ArgumentType.TS_ROLLING.equals(argument.getType()) && state.getArguments().get(argument.getKey()) == null);
 
                 if (!allKeysPresent || requiresTsRollingUpdate) {
-
                     Map<String, Argument> missingArguments = calculatedFieldCtx.getArguments().entrySet().stream()
                             .filter(entry -> !argumentsMap.containsKey(entry.getKey()) || (ArgumentType.TS_ROLLING.equals(entry.getValue().getType()) && state.getArguments().get(entry.getKey()) == null))
                             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -581,6 +586,14 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
                 } else {
                     performUpdateState.accept(state);
                 }
+
+                try {
+                    updateFuture.join();
+                } catch (Exception e) {
+                    log.trace("Failed to update state for ctxId [{}].", ctxId, e);
+                    throw new RuntimeException("Failed to update or initialize state.", e);
+                }
+
                 return calculatedFieldEntityCtx;
             });
         } else {
