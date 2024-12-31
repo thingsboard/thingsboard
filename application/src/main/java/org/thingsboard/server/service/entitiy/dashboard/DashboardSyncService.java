@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -74,7 +75,7 @@ public class DashboardSyncService {
         List<RepoFile> resources = listFiles("resources");
         for (RepoFile resourceFile : resources) {
             byte[] data = getFileContent(resourceFile.path());
-            resourceService.createOrUpdateSystemResource(ResourceType.JS_MODULE, resourceFile.name(), data);
+            resourceService.createOrUpdateSystemResource(ResourceType.JS_MODULE, ResourceSubType.EXTENSION, resourceFile.name(), data);
         }
         List<RepoFile> images = listFiles("images");
         for (RepoFile imageFile : images) {
@@ -89,7 +90,7 @@ public class DashboardSyncService {
         widgetsBundleService.updateSystemWidgets(widgetsBundles, widgetTypes);
 
         RepoFile dashboardFile = listFiles("dashboards").get(0);
-        resourceService.createOrUpdateSystemResource(ResourceType.DASHBOARD, GATEWAYS_DASHBOARD_KEY, getFileContent(dashboardFile.path()));
+        resourceService.createOrUpdateSystemResource(ResourceType.DASHBOARD, null, GATEWAYS_DASHBOARD_KEY, getFileContent(dashboardFile.path()));
 
         log.info("Gateways dashboard sync completed");
     }

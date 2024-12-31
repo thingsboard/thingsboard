@@ -39,7 +39,7 @@ import {
 } from '@angular/forms';
 import { JsFuncModulesComponent } from '@shared/components/js-func-modules.component';
 import { ResourceSubType } from '@shared/models/resource.models';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ResourceAutocompleteComponent } from '@shared/components/resource/resource-autocomplete.component';
 import { HttpClient } from '@angular/common/http';
 import { loadModuleMarkdownDescription, loadModuleMarkdownSourceCode } from '@shared/models/js-function.models';
@@ -103,7 +103,7 @@ export class JsFuncModuleRowComponent implements ControlValueAccessor, OnInit, V
 
   ngOnInit() {
     this.moduleRowFormGroup = this.fb.group({
-      alias: [null, [this.moduleAliasValidator()]],
+      alias: [null, [this.moduleAliasValidator(), Validators.pattern(/^[$_\p{ID_Start}][$\p{ID_Continue}]*$/u)]],
       moduleLink: [null, [Validators.required]]
     });
     this.moduleRowFormGroup.valueChanges.pipe(
@@ -133,13 +133,19 @@ export class JsFuncModuleRowComponent implements ControlValueAccessor, OnInit, V
 
   public validate(_c: UntypedFormControl) {
     const aliasControl = this.moduleRowFormGroup.get('alias');
-    if (aliasControl.hasError('moduleAliasNotUnique')) {
+    if (aliasControl.hasError('moduleAliasNotUnique') || aliasControl.hasError('pattern')) {
       aliasControl.updateValueAndValidity({onlySelf: false, emitEvent: false});
     }
     if (aliasControl.hasError('moduleAliasNotUnique')) {
       this.moduleRowFormGroup.get('alias').markAsTouched();
       return {
         moduleAliasNotUnique: true
+      };
+    }
+    if (aliasControl.hasError('pattern')) {
+      this.moduleRowFormGroup.get('alias').markAsTouched();
+      return {
+        invalidVariableName: true
       };
     }
     const module: JsFuncModuleRow = {...this.modelValue, ...this.moduleRowFormGroup.value};

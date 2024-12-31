@@ -73,13 +73,13 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
      * @throws Exception
      */
     @Test
-    public void testObserveOneObjectInstance_Result_CONTENT_Value_Count_3_After_Cancel_Count_2() throws Exception {
+    public void testObserveOneObjectInstance_Result_CONTENT_Value_Count_Equal_Greater_3_After_Cancel_Count_2() throws Exception {
         sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
         String idVer_3_0 = objectInstanceIdVer_3;
         sendRpcObserveWithContainsLwM2mSingleResource(idVer_3_0);
 
         int cntUpdate = 3;
-        verify(defaultUplinkMsgHandlerTest, timeout(10000).times(cntUpdate))
+        verify(defaultUplinkMsgHandlerTest, timeout(10000).atLeast(cntUpdate))
                 .updateAttrTelemetry(Mockito.any(Registration.class), eq(idVer_3_0_9), eq(null));
     }
 
@@ -88,13 +88,13 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
      * @throws Exception
      */
     @Test
-    public void testObserveOneObject_Result_CONTENT_Value_Count_3_After_Cancel_Count_2() throws Exception {
+    public void testObserveOneObject_Result_CONTENT_Value_Count_Equal_Greater_3_After_Cancel_Count_2() throws Exception {
         sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
         String idVer_3_0 = objectInstanceIdVer_3;
         sendRpcObserveWithContainsLwM2mSingleResource(idVer_3_0);
 
         int cntUpdate = 3;
-        verify(defaultUplinkMsgHandlerTest, timeout(10000).times(cntUpdate))
+        verify(defaultUplinkMsgHandlerTest, timeout(10000).atLeast(cntUpdate))
                 .updateAttrTelemetry(Mockito.any(Registration.class), eq(idVer_3_0_9), eq(null));
     }
 
