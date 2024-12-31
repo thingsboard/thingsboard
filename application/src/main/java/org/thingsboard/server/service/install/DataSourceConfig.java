@@ -56,7 +56,7 @@ public class DataSourceConfig {
     @Value("${tdengine.password}")
     private String tdPassword;
 
-    @Primary
+    // @Primary
     @Bean
     public DataSource getDatasource() {
         return DataSourceBuilder.create().driverClassName(driverName).url(url).username(username).password(password).build();
@@ -85,7 +85,7 @@ public class DataSourceConfig {
 
     @Autowired
     @Bean
-    @Primary
+    // @Primary
     public JdbcTemplate getTemplate(DataSource dataSource) {
         return new JdbcTemplate(dataSource);
     }
