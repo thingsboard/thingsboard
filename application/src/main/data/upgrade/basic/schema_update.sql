@@ -23,7 +23,7 @@ UPDATE user_credentials c SET failed_login_attempts = (SELECT (additional_info::
   WHERE failed_login_attempts IS NULL;
 
 UPDATE tb_user SET additional_info = (additional_info::jsonb - 'lastLoginTs' - 'failedLoginAttempts' - 'userCredentialsEnabled')::text
-  WHERE additional_info IS NOT NULL AND additional_info != 'null';
+  WHERE additional_info IS NOT NULL AND additional_info != 'null' AND jsonb_typeof(additional_info::jsonb) = 'object';
 
 -- UPDATE RULE NODE DEBUG MODE TO DEBUG STRATEGY START
 
