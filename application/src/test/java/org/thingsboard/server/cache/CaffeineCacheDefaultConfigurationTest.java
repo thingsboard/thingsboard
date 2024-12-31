@@ -24,6 +24,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.test.context.SpringBootContextLoader;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,6 +33,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ContextConfiguration(classes = CaffeineCacheDefaultConfigurationTest.class, loader = SpringBootContextLoader.class)
 @ComponentScan({"org.thingsboard.server.cache"})
 @EnableConfigurationProperties
+@TestPropertySource(properties = {
+        "cache.specs.edgeSessions.timeToLiveInMinutes=1",
+        "cache.specs.relatedEdges.maxSize=1"
+})
 @Slf4j
 public class CaffeineCacheDefaultConfigurationTest {
 
@@ -46,11 +51,7 @@ public class CaffeineCacheDefaultConfigurationTest {
         SoftAssertions softly = new SoftAssertions();
         cacheSpecsMap.getSpecs().forEach((name, cacheSpecs) -> {
             softly.assertThat(name).as("cache name").isNotEmpty();
-            if (name.equals("edgeSessions")) {
-                softly.assertThat(cacheSpecs.getTimeToLiveInMinutes()).as("cache %s time to live", name).isEqualTo(0);
-            } else {
-                softly.assertThat(cacheSpecs.getTimeToLiveInMinutes()).as("cache %s time to live", name).isGreaterThan(0);
-            }
+            softly.assertThat(cacheSpecs.getTimeToLiveInMinutes()).as("cache %s time to live", name).isGreaterThan(0);
             softly.assertThat(cacheSpecs.getMaxSize()).as("cache %s max size", name).isGreaterThan(0);
         });
         softly.assertAll();
