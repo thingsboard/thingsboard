@@ -123,6 +123,9 @@ public class InstallScripts {
     @Getter @Setter
     private boolean updateImages = false;
 
+    @Getter @Setter
+    private boolean updateResourcesUsage = false;
+
     @Autowired
     private ImageService imageService;
 
@@ -416,9 +419,9 @@ public class InstallScripts {
         }
 
         Path resourcesDir = Path.of(getDataDir(), RESOURCES_DIR);
-        loadSystemResources(resourcesDir.resolve("images"), ResourceType.IMAGE);
-        loadSystemResources(resourcesDir.resolve("js_modules"), ResourceType.JS_MODULE);
-        loadSystemResources(resourcesDir.resolve("dashboards"), ResourceType.DASHBOARD);
+        loadSystemResources(resourcesDir.resolve("images"), ResourceType.IMAGE, null);
+        loadSystemResources(resourcesDir.resolve("js_modules"), ResourceType.JS_MODULE, ResourceSubType.EXTENSION);
+        loadSystemResources(resourcesDir.resolve("dashboards"), ResourceType.DASHBOARD, null);
     }
 
     public void loadDashboards(TenantId tenantId, CustomerId customerId) {
@@ -514,7 +517,7 @@ public class InstallScripts {
         resourcesUpdater.updateWidgetsResources();
     }
 
-    private void loadSystemResources(Path dir, ResourceType resourceType) {
+    private void loadSystemResources(Path dir, ResourceType resourceType, ResourceSubType resourceSubType) {
         listDir(dir).forEach(resourceFile -> {
             String resourceKey = resourceFile.getFileName().toString();
             try {
@@ -522,7 +525,7 @@ public class InstallScripts {
                 if (resourceType == ResourceType.IMAGE) {
                     imageService.createOrUpdateSystemImage(resourceKey, data);
                 } else {
-                    resourceService.createOrUpdateSystemResource(resourceType, resourceKey, data);
+                    resourceService.createOrUpdateSystemResource(resourceType, resourceSubType, resourceKey, data);
                 }
             } catch (Exception e) {
                 throw new RuntimeException("Unable to load system resource " + resourceFile, e);
