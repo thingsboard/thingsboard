@@ -15,7 +15,7 @@
 ///
 
 import { ImageResourceInfo } from '@shared/models/resource.models';
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, Inject, OnInit } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -23,6 +23,7 @@ import { Router } from '@angular/router';
 import { ImageService } from '@core/http/image.service';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormControl, UntypedFormBuilder } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface EmbedImageDialogData {
   readonly: boolean;
@@ -50,13 +51,16 @@ export class EmbedImageDialogComponent extends
               private imageService: ImageService,
               @Inject(MAT_DIALOG_DATA) private data: EmbedImageDialogData,
               public dialogRef: MatDialogRef<EmbedImageDialogComponent, ImageResourceInfo>,
-              public fb: UntypedFormBuilder) {
+              public fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store, router, dialogRef);
   }
 
   ngOnInit(): void {
     if (!this.readonly) {
-      this.publicStatusControl.valueChanges.subscribe(
+      this.publicStatusControl.valueChanges.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(
         (isPublic) => {
           this.updateImagePublicStatus(isPublic);
         }

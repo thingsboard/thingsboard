@@ -16,13 +16,10 @@
 
 import L, { LatLngExpression, LeafletMouseEvent } from 'leaflet';
 import { createTooltip, isCutPolygon } from './maps-utils';
-import {
-  functionValueCalculator,
-  parseWithTranslation
-} from './common-maps-utils';
+import { functionValueCalculator, parseWithTranslation } from './common-maps-utils';
 import { WidgetPolygonSettings } from './map-models';
 import { FormattedData } from '@shared/models/widget.models';
-import { fillDataPattern, processDataPattern, safeExecute } from '@core/utils';
+import { fillDataPattern, processDataPattern, safeExecuteTbFunction } from '@core/utils';
 import LeafletMap from '@home/components/widget/lib/maps/leaflet-map';
 
 export class Polygon {
@@ -92,7 +89,7 @@ export class Polygon {
 
     updateTooltip(data: FormattedData) {
         const pattern = this.settings.usePolygonTooltipFunction ?
-            safeExecute(this.settings.parsedPolygonTooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) :
+          safeExecuteTbFunction(this.settings.parsedPolygonTooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) :
             this.settings.polygonTooltipPattern;
         this.tooltip.setContent(parseWithTranslation.parseTemplate(pattern, data, true));
     }
@@ -102,7 +99,7 @@ export class Polygon {
         if (settings.showPolygonLabel) {
             if (!this.map.polygonLabelText || settings.usePolygonLabelFunction) {
                 const pattern = settings.usePolygonLabelFunction ?
-                  safeExecute(settings.parsedPolygonLabelFunction,
+                  safeExecuteTbFunction(settings.parsedPolygonLabelFunction,
                     [this.data, this.dataSources, this.data.dsIndex]) : settings.polygonLabel;
                 this.map.polygonLabelText = parseWithTranslation.prepareProcessPattern(pattern, true);
                 this.map.replaceInfoLabelPolygon = processDataPattern(this.map.polygonLabelText, this.data);

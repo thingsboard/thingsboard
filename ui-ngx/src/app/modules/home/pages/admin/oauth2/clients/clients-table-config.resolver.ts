@@ -15,7 +15,6 @@
 ///
 
 import { Injectable } from '@angular/core';
-
 import {
   DateEntityTableColumn,
   EntityTableColumn,
@@ -45,7 +44,6 @@ export class ClientsTableConfigResolver  {
   constructor(private translate: TranslateService,
               private datePipe: DatePipe,
               private oauth2Service: OAuth2Service) {
-    this.config.tableTitle = this.translate.instant('admin.oauth2.clients');
     this.config.selectionEnabled = false;
     this.config.entityType = EntityType.OAUTH2_CLIENT;
     this.config.rowPointer = true;

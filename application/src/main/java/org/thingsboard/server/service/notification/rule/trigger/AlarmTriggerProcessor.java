@@ -46,10 +46,10 @@ public class AlarmTriggerProcessor implements NotificationRuleTriggerProcessor<A
             if (triggerConfig.getNotifyOn().contains(AlarmAction.CREATED)) {
                 return severityMatches(alarm, triggerConfig);
             }
-        }  else if (alarmUpdate.isSeverityChanged()) {
+        } else if (alarmUpdate.isSeverityChanged()) {
             if (triggerConfig.getNotifyOn().contains(AlarmAction.SEVERITY_CHANGED)) {
                 return severityMatches(alarmUpdate.getOld(), triggerConfig) || severityMatches(alarm, triggerConfig);
-            }  else {
+            } else {
                 // if we haven't yet sent notification about the alarm
                 return !severityMatches(alarmUpdate.getOld(), triggerConfig) && severityMatches(alarm, triggerConfig);
             }

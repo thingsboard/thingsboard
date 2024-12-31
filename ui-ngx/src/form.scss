@@ -54,6 +54,16 @@
       padding: 12px;
       gap: 8px;
     }
+    &.no-padding-right {
+      padding-right: 0;
+      .mat-expansion-panel {
+        &.tb-settings {
+          > .mat-expansion-panel-header {
+            padding-right: 16px;
+          }
+        }
+      }
+    }
     &.no-padding-bottom {
       padding-bottom: 0;
     }
@@ -213,7 +223,7 @@
     }
     .mat-divider-vertical {
       height: 56px;
-      margin-top: -7px;
+      margin-top: -9px;
       margin-bottom: -7px;
     }
     .mat-mdc-form-field, tb-unit-input {
@@ -649,6 +659,15 @@
         color: rgba(0, 0, 0, 0.38);
         &.tb-hidden {
           visibility: hidden;
+        }
+      }
+    }
+
+    .mat-mdc-form-field.tb-inline-field {
+      .mat-mdc-text-field-wrapper {
+        .mat-mdc-form-field-icon-prefix, .mat-mdc-form-field-icon-suffix,
+        .mat-datetimepicker-toggle {
+          line-height: normal;
         }
       }
     }

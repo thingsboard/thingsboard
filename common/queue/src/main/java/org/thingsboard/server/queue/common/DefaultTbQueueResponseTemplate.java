@@ -17,6 +17,7 @@ package org.thingsboard.server.queue.common;
 
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.stats.MessagesStats;
@@ -71,7 +72,7 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
         this.requestTimeout = requestTimeout;
         this.callbackExecutor = executor;
         this.stats = stats;
-        this.timeoutExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("tb-queue-response-template-timeout-" + requestTemplate.getTopic()));
+        this.timeoutExecutor = ThingsBoardExecutors.newSingleThreadScheduledExecutor("tb-queue-response-template-timeout-" + requestTemplate.getTopic());
         this.loopExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-queue-response-template-loop-" + requestTemplate.getTopic()));
     }
 

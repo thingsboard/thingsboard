@@ -214,9 +214,13 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         }
         RuleChainId ruleChainId = ruleChain.getId();
         if (nodes != null) {
+            long now = System.currentTimeMillis();
             for (RuleNode node : toAddOrUpdate) {
                 node.setRuleChainId(ruleChainId);
                 node = ruleNodeUpdater.apply(node);
+
+                updateDebugSettings(tenantId, node, now);
+
                 RuleChainDataValidator.validateRuleNode(node);
                 RuleNode savedNode = ruleNodeDao.save(tenantId, node);
                 relations.add(new EntityRelation(ruleChainMetaData.getRuleChainId(), savedNode.getId(),
@@ -261,7 +265,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     layout.remove("description");
                     layout.remove("ruleChainNodeId");
                     targetNode.setAdditionalInfo(layout);
-                    targetNode.setDebugMode(false);
                     targetNode = ruleNodeDao.save(tenantId, targetNode);
 
                     EntityRelation sourceRuleChainToRuleNode = new EntityRelation();

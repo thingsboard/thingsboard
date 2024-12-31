@@ -38,6 +38,11 @@
       "actions": null
     },
     {
+      "tag": "scale-background",
+      "stateRenderFunction": "if (!ctx.properties.scale) {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
       "tag": "top-layer",
       "stateRenderFunction": "if (ctx.properties.transparent || !ctx.properties.scale) {\n    element.hide();\n}",
       "actions": null
@@ -138,7 +143,7 @@
       "falseLabel": null,
       "stateLabel": "{i18n:scada.symbol.warning}",
       "defaultGetValueSettings": {
-        "action": "DO_NOTHING",
+        "action": "GET_ALARM_STATUS",
         "defaultValue": false,
         "executeRpc": {
           "method": "getState",
@@ -147,16 +152,25 @@
           "persistentPollingInterval": 1000
         },
         "getAttribute": {
-          "key": "state",
-          "scope": null
+          "scope": null,
+          "key": "state"
         },
         "getTimeSeries": {
           "key": "state"
         },
+        "getAlarmStatus": {
+          "severityList": [
+            "MAJOR",
+            "MINOR",
+            "WARNING",
+            "INDETERMINATE"
+          ],
+          "typeList": null
+        },
         "dataToValue": {
           "type": "NONE",
-          "compareToValue": true,
-          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
         }
       },
       "defaultSetValueSettings": null,
@@ -173,7 +187,7 @@
       "falseLabel": null,
       "stateLabel": "{i18n:scada.symbol.critical}",
       "defaultGetValueSettings": {
-        "action": "DO_NOTHING",
+        "action": "GET_ALARM_STATUS",
         "defaultValue": false,
         "executeRpc": {
           "method": "getState",
@@ -182,16 +196,22 @@
           "persistentPollingInterval": 1000
         },
         "getAttribute": {
-          "key": "state",
-          "scope": null
+          "scope": null,
+          "key": "state"
         },
         "getTimeSeries": {
           "key": "state"
         },
+        "getAlarmStatus": {
+          "severityList": [
+            "CRITICAL"
+          ],
+          "typeList": null
+        },
         "dataToValue": {
           "type": "NONE",
-          "compareToValue": true,
-          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
         }
       },
       "defaultSetValueSettings": null,
@@ -556,7 +576,7 @@
     }
   ]
 }]]></tb:metadata>
-<path d="m1e3 500c0 276.14-223.86 500-500 500s-500-223.86-500-500 223.86-500 500-500 500 223.86 500 500z" fill="#E5E5E5" tb:tag="background"/><path d="m1e3 500c0 276.14-223.86 500-500 500s-500-223.86-500-500 223.86-500 500-500 500 223.86 500 500z" fill="url(#paint0_radial_1711_251491)"/><path d="m998.5 500c0 275.31-223.19 498.5-498.5 498.5s-498.5-223.19-498.5-498.5 223.19-498.5 498.5-498.5 498.5 223.19 498.5 498.5z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><circle cx="500" cy="500" r="500" fill="#4A4848" fill-opacity=".5"/><mask id="mask0_1711_251491" x="16" y="16" width="968" height="968" style="mask-type:alpha" maskUnits="userSpaceOnUse">
+<path d="m1e3 500c0 276.14-223.86 500-500 500s-500-223.86-500-500 223.86-500 500-500 500 223.86 500 500z" fill="#E5E5E5" tb:tag="background"/><path d="m1e3 500c0 276.14-223.86 500-500 500s-500-223.86-500-500 223.86-500 500-500 500 223.86 500 500z" fill="url(#paint0_radial_1711_251491)"/><path d="m998.5 500c0 275.31-223.19 498.5-498.5 498.5s-498.5-223.19-498.5-498.5 223.19-498.5 498.5-498.5 498.5 223.19 498.5 498.5z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><circle cx="500" cy="500" r="500" fill="#4A4848" fill-opacity=".5" tb:tag="scale-background"/><mask id="mask0_1711_251491" x="16" y="16" width="968" height="968" style="mask-type:alpha" maskUnits="userSpaceOnUse">
   <circle cx="500" cy="500" r="484" fill="#D9D9D9"/>
  </mask><g mask="url(#mask0_1711_251491)">
   <rect transform="scale(1,-1)" x="8" y="-984" width="984" height="200" fill="#1EC1F4" fill-opacity=".5" tb:tag="fluid-background"/>

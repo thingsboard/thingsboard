@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
@@ -25,6 +25,7 @@ import {
   SmsProviderConfiguration,
   SmsProviderType
 } from '@shared/models/settings.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-aws-sns-provider-configuration',
@@ -57,7 +58,8 @@ export class AwsSnsProviderConfigurationComponent implements ControlValueAccesso
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   registerOnChange(fn: any): void {
@@ -73,7 +75,9 @@ export class AwsSnsProviderConfigurationComponent implements ControlValueAccesso
         secretAccessKey: [null, [Validators.required]],
         region: [null, [Validators.required]]
     });
-    this.awsSnsProviderConfigurationFormGroup.valueChanges.subscribe(() => {
+    this.awsSnsProviderConfigurationFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }

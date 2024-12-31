@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, SkipSelf, ViewChild } from '@angular/core';
+import { Component, DestroyRef, Inject, OnInit, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -32,6 +32,7 @@ import { forkJoin, Observable } from 'rxjs';
 import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface RelationDialogData {
   isAdd: boolean;
@@ -65,7 +66,8 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
               private entityRelationService: EntityRelationService,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<RelationDialogComponent, boolean>,
-              public fb: UntypedFormBuilder) {
+              public fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store, router, dialogRef);
     this.isAdd = data.isAdd;
     this.direction = data.direction;
@@ -83,7 +85,9 @@ export class RelationDialogComponent extends DialogComponent<RelationDialogCompo
       this.relationFormGroup.get('type').disable();
       this.relationFormGroup.get('targetEntityIds').disable();
     }
-    this.additionalInfo.valueChanges.subscribe(
+    this.additionalInfo.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => {
         this.submitted = false;
       }

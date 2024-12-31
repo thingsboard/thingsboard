@@ -40,7 +40,7 @@ public interface NotificationRequestDao extends Dao<NotificationRequest> {
 
     List<NotificationRequestId> findIdsByRuleId(TenantId tenantId, NotificationRequestStatus requestStatus, NotificationRuleId ruleId);
 
-    List<NotificationRequest> findByRuleIdAndOriginatorEntityId(TenantId tenantId, NotificationRuleId ruleId, EntityId originatorEntityId);
+    List<NotificationRequest> findByRuleIdAndOriginatorEntityIdAndStatus(TenantId tenantId, NotificationRuleId ruleId, EntityId originatorEntityId, NotificationRequestStatus status);
 
     PageData<NotificationRequest> findAllByStatus(NotificationRequestStatus status, PageLink pageLink);
 

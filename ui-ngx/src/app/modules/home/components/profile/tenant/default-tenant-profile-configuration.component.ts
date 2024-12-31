@@ -65,6 +65,7 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxUsers: [null, [Validators.required, Validators.min(0)]],
       maxDashboards: [null, [Validators.required, Validators.min(0)]],
       maxRuleChains: [null, [Validators.required, Validators.min(0)]],
+      maxEdges: [null, [Validators.required, Validators.min(0)]],
       maxResourcesInBytes: [null, [Validators.required, Validators.min(0)]],
       maxOtaPackagesInBytes: [null, [Validators.required, Validators.min(0)]],
       maxResourceSize: [null, [Validators.required, Validators.min(0)]],
@@ -95,6 +96,7 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxSms: [null, []],
       smsEnabled: [null, []],
       maxCreatedAlarms: [null, [Validators.required, Validators.min(0)]],
+      maxDebugModeDurationMinutes: [null, [Validators.min(0)]],
       defaultStorageTtlDays: [null, [Validators.required, Validators.min(0)]],
       alarmsTtlDays: [null, [Validators.required, Validators.min(0)]],
       rpcTtlDays: [null, [Validators.required, Validators.min(0)]],
@@ -126,7 +128,9 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       }
     );
 
-    this.defaultTenantProfileConfigurationFormGroup.valueChanges.subscribe(() => {
+    this.defaultTenantProfileConfigurationFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
       this.updateModel();
     });
   }

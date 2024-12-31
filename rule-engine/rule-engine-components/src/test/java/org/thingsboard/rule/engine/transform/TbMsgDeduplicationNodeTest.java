@@ -29,7 +29,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.stubbing.Answer;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -54,7 +54,6 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -78,8 +77,7 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private TbContext ctx;
 
-    private final ThingsBoardThreadFactory factory = ThingsBoardThreadFactory.forName("de-duplication-node-test");
-    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(factory);
+    private final ScheduledExecutorService executorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("de-duplication-node-test");
     private final int deduplicationInterval = 1;
 
     private TenantId tenantId;
@@ -105,7 +103,12 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
             EntityId originator = (EntityId) (invocationOnMock.getArguments())[2];
             TbMsgMetaData metaData = (TbMsgMetaData) (invocationOnMock.getArguments())[3];
             String data = (String) (invocationOnMock.getArguments())[4];
-            return TbMsg.newMsg(type, originator, metaData.copy(), data);
+            return TbMsg.newMsg()
+                    .type(type)
+                    .originator(originator)
+                    .copyMetaData(metaData)
+                    .data(data)
+                    .build();
         }).when(ctx).newMsg(isNull(), eq(TbMsgType.DEDUPLICATION_TIMEOUT_SELF_MSG), nullable(EntityId.class), any(TbMsgMetaData.class), any(String.class));
         node = spy(new TbMsgDeduplicationNode());
         config = new TbMsgDeduplicationNodeConfiguration().defaultConfiguration();
@@ -454,12 +457,13 @@ public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
         dataNode.put("deviceId", deviceId.getId().toString());
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("ts", String.valueOf(ts));
-        return TbMsg.newMsg(
-                DataConstants.MAIN_QUEUE_NAME,
-                TbMsgType.POST_TELEMETRY_REQUEST,
-                deviceId,
-                metaData,
-                JacksonUtil.toString(dataNode));
+        return TbMsg.newMsg()
+                .queueName(DataConstants.MAIN_QUEUE_NAME)
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(deviceId)
+                .copyMetaData(metaData)
+                .data(JacksonUtil.toString(dataNode))
+                .build();
     }
 
     private String getMergedData(List<TbMsg> msgs) {

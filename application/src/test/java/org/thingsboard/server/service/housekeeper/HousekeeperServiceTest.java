@@ -33,10 +33,12 @@ import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EventInfo;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.EntityAlarm;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.event.LifecycleEvent;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
@@ -45,6 +47,9 @@ import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.MobileAppBundleId;
+import org.thingsboard.server.common.data.id.MobileAppId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -54,7 +59,12 @@ import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.mobile.app.MobileApp;
+import org.thingsboard.server.common.data.mobile.app.MobileAppStatus;
+import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundle;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -83,8 +93,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -93,6 +107,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -103,7 +118,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = {
         "queue.core.housekeeper.task-reprocessing-delay-ms=2000",
         "queue.core.housekeeper.poll-interval-ms=1000",
-        "queue.core.housekeeper.max-reprocessing-attempts=5"
+        "queue.core.housekeeper.max-reprocessing-attempts=5",
+        "queue.core.housekeeper.task-processing-timeout-ms=5000",
 })
 public class HousekeeperServiceTest extends AbstractControllerTest {
 
@@ -233,6 +249,27 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         tenantId = differentTenantId;
 
         createRelatedData(tenantId);
+
+        MobileApp androidApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.android.package", PlatformType.ANDROID);
+        androidApp = doPost("/api/mobile/app", androidApp, MobileApp.class);
+        MobileAppId androidAppId = androidApp.getId();
+
+        MobileApp iosApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.ios.package", PlatformType.IOS);
+        iosApp = doPost("/api/mobile/app", iosApp, MobileApp.class);
+        MobileAppId iosAppId = androidApp.getId();
+
+        OAuth2Client oAuth2Client = createOauth2Client(TenantId.SYS_TENANT_ID, "test google client");
+        OAuth2Client savedOAuth2Client = doPost("/api/oauth2/client", oAuth2Client, OAuth2Client.class);
+        OAuth2ClientId oAuth2ClientId = savedOAuth2Client.getId();
+
+        MobileAppBundle mobileAppBundle = new MobileAppBundle();
+        mobileAppBundle.setTitle("Test bundle");
+        mobileAppBundle.setAndroidAppId(androidApp.getId());
+        mobileAppBundle.setIosAppId(iosApp.getId());
+
+        MobileAppBundle savedAppBundle = doPost("/api/mobile/bundle?oauth2ClientIds=" + savedOAuth2Client.getId().getId(), mobileAppBundle, MobileAppBundle.class);
+        MobileAppBundleId appBundleId = savedAppBundle.getId();
+
         createDifferentTenantCustomer();
         createRelatedData(differentTenantCustomerId);
         loginDifferentTenant();
@@ -279,13 +316,17 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
             verifyNoRelatedData(userId);
             verifyNoRelatedData(differentTenantCustomerId);
             verifyNoRelatedData(tenantApiUsageState.getId());
+            verifyNoRelatedData(androidAppId);
+            verifyNoRelatedData(iosAppId);
+            verifyNoRelatedData(oAuth2ClientId);
+            verifyNoRelatedData(appBundleId);
             verifyNoRelatedData(tenantId);
         });
     }
 
     @Test
     public void whenTaskProcessingFails_thenReprocess() throws Exception {
-        TimeoutException error = new TimeoutException("Test timeout");
+        Exception error = new RuntimeException("Just a test");
         doThrow(error).when(tsHistoryDeletionTaskProcessor).process(any());
 
         Device device = createDevice("test", "test");
@@ -304,6 +345,54 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
 
         assertThat(getTimeseriesHistory(device.getId())).isNotEmpty();
         doCallRealMethod().when(tsHistoryDeletionTaskProcessor).process(any());
+        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(getTimeseriesHistory(device.getId())).isEmpty();
+        });
+    }
+
+    @Test
+    public void whenTaskProcessingTimedOut_thenInterruptAndReprocess() throws Exception {
+        ExecutorService someExecutor = Executors.newSingleThreadExecutor();
+        AtomicBoolean taskInterrupted = new AtomicBoolean(false);
+        AtomicBoolean underlyingTaskInterrupted = new AtomicBoolean(false);
+        doAnswer(invocationOnMock -> {
+            Future<?> future = someExecutor.submit(() -> {
+                try {
+                    Thread.sleep(TimeUnit.HOURS.toMillis(24));
+                } catch (InterruptedException e) {
+                    underlyingTaskInterrupted.set(true);
+                }
+            });
+            try {
+                future.get();
+            } catch (InterruptedException e) {
+                taskInterrupted.set(true);
+                future.cancel(true);
+                throw e;
+            }
+            return null;
+        }).when(tsHistoryDeletionTaskProcessor).process(any());
+
+        Device device = createDevice("test", "test");
+        createRelatedData(device.getId());
+
+        doDelete("/api/device/" + device.getId()).andExpect(status().isOk());
+
+        int attempts = 2;
+        await().atMost(30, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).untilAsserted(() -> {
+            for (int i = 0; i <= attempts; i++) {
+                int attempt = i;
+                verify(housekeeperReprocessingService).submitForReprocessing(argThat(getTaskMatcher(device.getId(), HousekeeperTaskType.DELETE_TS_HISTORY,
+                        task -> task.getAttempt() == attempt)), argThat(error -> error instanceof TimeoutException));
+            }
+        });
+        assertThat(taskInterrupted).isTrue();
+        assertThat(underlyingTaskInterrupted).isTrue();
+
+        assertThat(getTimeseriesHistory(device.getId())).isNotEmpty();
+        doCallRealMethod().when(tsHistoryDeletionTaskProcessor).process(any());
+        someExecutor.shutdown();
+
         await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(getTimeseriesHistory(device.getId())).isEmpty();
         });
@@ -462,7 +551,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         ruleNode1.setName("Simple Rule Node 1");
         ruleNode1.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
         ruleNode1.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
-        ruleNode1.setDebugMode(true);
+        ruleNode1.setDebugSettings(DebugSettings.all());
         TbGetAttributesNodeConfiguration configuration1 = new TbGetAttributesNodeConfiguration();
         configuration1.setServerAttributeNames(Collections.singletonList("serverAttributeKey1"));
         ruleNode1.setConfiguration(JacksonUtil.valueToTree(configuration1));
@@ -471,7 +560,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         ruleNode2.setName("Simple Rule Node 2");
         ruleNode2.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
         ruleNode2.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
-        ruleNode2.setDebugMode(true);
+        ruleNode2.setDebugSettings(DebugSettings.all());
         TbGetAttributesNodeConfiguration configuration2 = new TbGetAttributesNodeConfiguration();
         configuration2.setServerAttributeNames(Collections.singletonList("serverAttributeKey2"));
         ruleNode2.setConfiguration(JacksonUtil.valueToTree(configuration2));
@@ -481,6 +570,16 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         metaData.addConnectionInfo(0, 1, TbNodeConnectionType.SUCCESS);
         ruleChainService.saveRuleChainMetaData(tenantId, metaData, Function.identity());
         return ruleChainService.loadRuleChainMetaData(tenantId, ruleChainId);
+    }
+
+    private MobileApp validMobileApp(TenantId tenantId, String mobileAppName, PlatformType platformType) {
+        MobileApp mobileApp = new MobileApp();
+        mobileApp.setTenantId(tenantId);
+        mobileApp.setStatus(MobileAppStatus.DRAFT);
+        mobileApp.setPkgName(mobileAppName);
+        mobileApp.setPlatformType(platformType);
+        mobileApp.setAppSecret(StringUtils.randomAlphanumeric(24));
+        return mobileApp;
     }
 
 }

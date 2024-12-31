@@ -1,0 +1,187 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="mat-padding flex flex-col" [formGroup]="entityForm">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label translate>mobile.mobile-package</mat-label>
+    <input matInput required formControlName="pkgName">
+    <tb-copy-button
+      matSuffix
+      miniButton="false"
+      [copyText]="entityForm.get('pkgName').value"
+      tooltipText="{{ 'mobile.copy-application-package' | translate }}"
+      tooltipPosition="above"
+      icon="content_copy">
+    </tb-copy-button>
+    <mat-hint> </mat-hint>
+    <mat-error *ngIf="entityForm.get('pkgName').hasError('required')">
+      {{ 'mobile.mobile-package-required' | translate }}
+    </mat-error>
+    <mat-error *ngIf="entityForm.get('pkgName').hasError('maxlength')">
+      {{ 'mobile.mobile-package-max-length' | translate }}
+    </mat-error>
+    <mat-error *ngIf="entityForm.get('pkgName').hasError('pattern')">
+      {{ 'mobile.mobile-package-pattern' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field appearance="outline" class="flex">
+    <mat-label translate>mobile.platform-type</mat-label>
+    <mat-select formControlName="platformType">
+      <mat-option *ngFor="let platformType of platformTypes" [value]="platformType">
+        {{ platformTypeTranslations.get(platformType) | translate }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label translate>mobile.application-secret</mat-label>
+    <input matInput required formControlName="appSecret"
+           placeholder="{{ 'mobile.set' | translate }}">
+    <div matSuffix style="display: flex; align-items: center">
+      <button mat-icon-button
+              type="button"
+              *ngIf="isEdit"
+              matTooltip="{{ 'mobile.generate-application-secret' | translate }}"
+              matTooltipPosition="above"
+              (click)="generateAppSecret($event)">
+        <tb-icon>cached</tb-icon>
+      </button>
+      <tb-copy-button
+        miniButton="false"
+        [copyText]="entityForm.get('appSecret').value"
+        tooltipText="{{ 'mobile.copy-application-secret' | translate }}"
+        tooltipPosition="above"
+        icon="content_copy">
+      </tb-copy-button>
+    </div>
+    <mat-hint> </mat-hint>
+    <mat-error *ngIf="entityForm.get('appSecret').hasError('required')">
+      {{ 'mobile.application-secret-required' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field appearance="outline">
+    <mat-label translate>mobile.status</mat-label>
+    <mat-select formControlName="status">
+      <mat-option *ngFor="let mobileAppStatus of mobileAppStatuses" [value]="mobileAppStatus">
+        {{ mobileAppStatusTranslations.get(mobileAppStatus) | translate }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <section class="tb-form-panel stroked no-padding-bottom" formGroupName="versionInfo" style="margin-bottom: 21px;">
+    <div class="tb-form-panel-title" translate>mobile.version-information</div>
+    <section class="flex flex-col">
+      <section class="flex flex-row">
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <mat-label translate>mobile.min-version</mat-label>
+          <input matInput formControlName="minVersion">
+          <mat-hint> </mat-hint>
+          <mat-error *ngIf="entityForm.get('versionInfo.minVersion').hasError('pattern')">
+            {{ 'mobile.invalid-version-pattern' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <button mat-icon-button
+                style="margin-top: 4px; color:#00000061"
+                type="button"
+                matTooltip="{{ 'mobile.min-version-release-notes' | translate }}"
+                matTooltipPosition="above"
+                #editMinReleaseNotesVersionButton
+                (click)="editReleaseNote($event, editMinReleaseNotesVersionButton, false)">
+          <tb-icon>mdi:text-box-edit</tb-icon>
+        </button>
+      </section>
+      <section class="flex flex-row">
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <mat-label translate>mobile.latest-version</mat-label>
+          <input matInput formControlName="latestVersion">
+          <mat-hint> </mat-hint>
+          <mat-error *ngIf="entityForm.get('versionInfo.minVersion').hasError('pattern')">
+            {{ 'mobile.invalid-version-pattern' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <button mat-icon-button
+                style="margin-top: 4px; color:#00000061"
+                type="button"
+                matTooltip="{{ 'mobile.latest-version-release-notes' | translate }}"
+                matTooltipPosition="above"
+                #editLatestReleaseNotesVersionButton
+                (click)="editReleaseNote($event, editLatestReleaseNotesVersionButton, true)">
+          <tb-icon>mdi:text-box-edit</tb-icon>
+        </button>
+      </section>
+    </section>
+  </section>
+  <section class="tb-form-panel stroked no-padding-bottom" formGroupName="storeInfo">
+    <div class="tb-form-panel-title" translate>mobile.store-information</div>
+    <section class="flex flex-col">
+      <mat-form-field appearance="outline">
+        <mat-label>{{
+            (entityForm.get('platformType').value === PlatformType.ANDROID ? 'mobile.google-play-link' : 'mobile.app-store-link') | translate
+          }}</mat-label>
+        <input matInput [required]="entityForm.get('status').value === 'PUBLISHED'" formControlName="storeLink">
+        <tb-copy-button
+          matSuffix
+          miniButton="false"
+          [copyText]="entityForm.get('storeInfo.storeLink').value"
+          tooltipText="{{ (entityForm.get('platformType').value === PlatformType.ANDROID ? 'mobile.copy-google-play-link' : 'mobile.copy-app-store-link') | translate }}"
+          tooltipPosition="above"
+          icon="content_copy">
+        </tb-copy-button>
+        <mat-error *ngIf="entityForm.get('storeInfo.storeLink').hasError('required')">
+          {{ (entityForm.get('platformType').value === PlatformType.ANDROID ? 'mobile.google-play-link-required' : 'mobile.app-store-link-required')  | translate }}
+        </mat-error>
+        <mat-error *ngIf="entityForm.get('storeInfo.storeLink').hasError('pattern')">
+          {{ 'mobile.invalid-store-link' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline" *ngIf="entityForm.get('platformType').value === PlatformType.ANDROID">
+        <mat-label translate>mobile.sha256-certificate-fingerprints</mat-label>
+        <input matInput [required]="entityForm.get('status').value !== MobileAppStatus.DRAFT" formControlName="sha256CertFingerprints">
+        <tb-copy-button
+          matSuffix
+          miniButton="false"
+          [copyText]="entityForm.get('storeInfo.sha256CertFingerprints').value"
+          tooltipText="{{ 'mobile.copy-sha256-certificate-fingerprints' | translate }}"
+          tooltipPosition="above"
+          icon="content_copy">
+        </tb-copy-button>
+        <mat-error *ngIf="entityForm.get('storeInfo.sha256CertFingerprints').hasError('required')">
+          {{ 'mobile.sha256-certificate-fingerprints-required' | translate }}
+        </mat-error>
+        <mat-error *ngIf="entityForm.get('storeInfo.sha256CertFingerprints').hasError('pattern')">
+          {{ 'mobile.sha256-certificate-fingerprints-pattern' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline" *ngIf="entityForm.get('platformType').value === PlatformType.IOS">
+        <mat-label translate>mobile.app-id</mat-label>
+        <input matInput [required]="entityForm.get('status').value !== MobileAppStatus.DRAFT" formControlName="appId">
+        <tb-copy-button
+          matSuffix
+          miniButton="false"
+          [copyText]="entityForm.get('storeInfo.appId').value"
+          tooltipText="{{ 'mobile.copy-app-id' | translate }}"
+          tooltipPosition="above"
+          icon="content_copy">
+        </tb-copy-button>
+        <mat-error *ngIf="entityForm.get('storeInfo.appId').hasError('required')">
+          {{ 'mobile.app-id-required' | translate }}
+        </mat-error>
+        <mat-error *ngIf="entityForm.get('storeInfo.appId').hasError('pattern')">
+          {{ 'mobile.app-id-pattern' | translate }}
+        </mat-error>
+      </mat-form-field>
+    </section>
+  </section>
+</section>

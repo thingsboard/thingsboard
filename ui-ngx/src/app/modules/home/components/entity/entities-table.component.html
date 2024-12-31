@@ -46,22 +46,41 @@
             </div>
             <span class="flex-1"></span>
             <div [class.!hidden]="!addEnabled()">
-              <button mat-icon-button [disabled]="isLoading$ | async"
-                      *ngIf="!entitiesTableConfig.addActionDescriptors.length; else addActions"
-                      (click)="addEntity($event)"
-                      matTooltip="{{ translations.add | translate }}"
-                      matTooltipPosition="above">
-                <mat-icon>add</mat-icon>
-              </button>
-              <ng-template #addActions>
-                <button mat-icon-button [disabled]="isLoading$ | async"
-                        *ngIf="entitiesTableConfig.addActionDescriptors.length === 1; else addActionsMenu"
-                        [class.!hidden]="!entitiesTableConfig.addActionDescriptors[0].isEnabled()"
-                        (click)="entitiesTableConfig.addActionDescriptors[0].onAction($event)"
-                        matTooltip="{{ entitiesTableConfig.addActionDescriptors[0].name }}"
+              <ng-container *ngIf="!entitiesTableConfig.addActionDescriptors.length; else addActions">
+                <button *ngIf="!entitiesTableConfig.addAsTextButton"
+                        mat-icon-button
+                        [disabled]="isLoading$ | async"
+                        (click)="addEntity($event)"
+                        matTooltip="{{ translations.add | translate }}"
                         matTooltipPosition="above">
-                  <tb-icon>{{entitiesTableConfig.addActionDescriptors[0].icon}}</tb-icon>
+                  <mat-icon>add</mat-icon>
                 </button>
+                <button *ngIf="entitiesTableConfig.addAsTextButton"
+                        mat-stroked-button color="primary"
+                        [disabled]="isLoading$ | async"
+                        (click)="addEntity($event)">
+                  <mat-icon>add</mat-icon>
+                  {{ translations.add | translate }}
+                </button>
+              </ng-container>
+              <ng-template #addActions>
+                <ng-container *ngIf="entitiesTableConfig.addActionDescriptors.length === 1; else addActionsMenu">
+                  <button *ngIf="!entitiesTableConfig.addAsTextButton && entitiesTableConfig.addActionDescriptors[0].isEnabled()"
+                          mat-icon-button
+                          [disabled]="isLoading$ | async"
+                          (click)="entitiesTableConfig.addActionDescriptors[0].onAction($event)"
+                          matTooltip="{{ entitiesTableConfig.addActionDescriptors[0].name }}"
+                          matTooltipPosition="above">
+                    <tb-icon>{{entitiesTableConfig.addActionDescriptors[0].icon}}</tb-icon>
+                  </button>
+                  <button *ngIf="entitiesTableConfig.addAsTextButton && entitiesTableConfig.addActionDescriptors[0].isEnabled()"
+                          mat-stroked-button color="primary"
+                          [disabled]="isLoading$ | async"
+                          (click)="entitiesTableConfig.addActionDescriptors[0].onAction($event)">
+                    <tb-icon>{{entitiesTableConfig.addActionDescriptors[0].icon}}</tb-icon>
+                    {{ entitiesTableConfig.addActionDescriptors[0].name }}
+                  </button>
+                </ng-container>
                 <ng-template #addActionsMenu>
                   <button mat-icon-button [disabled]="isLoading$ | async"
                           matTooltip="{{ translations.add | translate }}"
@@ -160,6 +179,7 @@
                                *matHeaderCellDef [style]="headerCellStyle(column)" mat-sort-header [disabled]="!column.sortable">
                 {{ column.ignoreTranslate ? column.title : (column.title | translate) }} </mat-header-cell>
               <mat-cell [class.mat-number-cell]="column.isNumberColumn"
+                        [class.cell-action]="column.actionCell?.type === cellActionType.COPY_BUTTON"
                         [class.lt-lg:!hidden]="column.mobileHide"
                         *matCellDef="let entity; let row = index"
                         [matTooltip]="cellTooltip(entity, column, row)"
@@ -172,7 +192,7 @@
                        (click)="$event.stopPropagation();"></a>
                   </ng-template>
                   <ng-template [ngSwitchCase]="'entityChips'">
-                    <tb-entity-chips [entity]="entity"></tb-entity-chips>
+                    <tb-entity-chips [entity]="entity" [key]="column.key"></tb-entity-chips>
                   </ng-template>
                   <ng-template #defaultContent ngSwitchDefault>
                     <span [innerHTML]="cellContent(entity, column, row)"></span>
@@ -182,6 +202,7 @@
                   <ng-container [ngSwitch]="column.actionCell.type">
                     <ng-template [ngSwitchCase]="cellActionType.COPY_BUTTON">
                       <tb-copy-button
+                        class="copy-button"
                         [disabled]="isLoading$ | async"
                         [class.!hidden]="!column.actionCell.isEnabled(entity)"
                         [copyText]="column.actionCell.onAction(null, entity)"

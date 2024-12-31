@@ -34,7 +34,7 @@ public class VersionControlRequestCtx {
     public VersionControlRequestCtx(ToVersionControlServiceMsg msg, RepositorySettings settings) {
         this.nodeId = msg.getNodeId();
         this.requestId = new UUID(msg.getRequestIdMSB(), msg.getRequestIdLSB());
-        this.tenantId = new TenantId(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
+        this.tenantId = TenantId.fromUUID(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
         this.settings = settings;
     }
 

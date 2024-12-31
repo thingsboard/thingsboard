@@ -36,11 +36,12 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { TranslateService } from '@ngx-translate/core';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
+import { FormProperty } from '@shared/models/dynamic-form.models';
 
 export interface DataKeyConfigDialogData {
   dataKey: DataKey;
   dataKeyConfigMode?: DataKeyConfigMode;
-  dataKeySettingsSchema: any;
+  dataKeySettingsForm: FormProperty[];
   dataKeySettingsDirective: string;
   dashboard: Dashboard;
   aliasController: IAliasController;
@@ -92,8 +93,8 @@ export class DataKeyConfigDialogComponent extends DialogComponent<DataKeyConfigD
     this.dataKeyFormGroup = this.fb.group({
       dataKey: [this.data.dataKey, [Validators.required]]
     });
-    if (this.data.dataKeySettingsSchema && this.data.dataKeySettingsSchema.schema ||
-      this.data.dataKeySettingsDirective && this.data.dataKeySettingsDirective.length) {
+    if (this.data.dataKeySettingsForm?.length ||
+      this.data.dataKeySettingsDirective?.length) {
       this.hasAdvanced = true;
       this.dataKeyConfigHeaderOptions = [
         {
@@ -123,10 +124,11 @@ export class DataKeyConfigDialogComponent extends DialogComponent<DataKeyConfigD
 
   save(): void {
     this.submitted = true;
-    this.dataKeyConfig.validateOnSubmit();
-    if (this.dataKeyFormGroup.valid) {
-      const dataKey: DataKey = this.dataKeyFormGroup.get('dataKey').value;
-      this.dialogRef.close(dataKey);
-    }
+    this.dataKeyConfig.validateOnSubmit().subscribe(() => {
+      if (this.dataKeyFormGroup.valid) {
+        const dataKey: DataKey = this.dataKeyFormGroup.get('dataKey').value;
+        this.dialogRef.close(dataKey);
+      }
+    });
   }
 }

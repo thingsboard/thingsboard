@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, forwardRef, Input, OnInit } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -24,6 +24,7 @@ import { EntityService } from '@core/http/entity.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-entity-select',
@@ -72,7 +73,8 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
   constructor(private store: Store<AppState>,
               private entityService: EntityService,
               public translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
 
     const entityTypes = this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes,
                                                                          this.useAliasEntityTypes);
@@ -97,12 +99,16 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
   }
 
   ngOnInit() {
-    this.entitySelectFormGroup.get('entityType').valueChanges.subscribe(
+    this.entitySelectFormGroup.get('entityType').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       (value) => {
         this.updateView(value, this.modelValue.id);
       }
     );
-    this.entitySelectFormGroup.get('entityId').valueChanges.subscribe(
+    this.entitySelectFormGroup.get('entityId').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       (value) => {
         const id = value ? (typeof value === 'string' ? value : value.id) : null;
         this.updateView(this.modelValue.entityType, id);
@@ -139,7 +145,7 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
       };
     }
     this.entitySelectFormGroup.get('entityType').patchValue(this.modelValue.entityType, {emitEvent: false});
-    this.entitySelectFormGroup.get('entityId').patchValue(this.modelValue.id, {emitEvent: false});
+    this.entitySelectFormGroup.get('entityId').patchValue(this.modelValue, {emitEvent: false});
   }
 
   updateView(entityType: EntityType | AliasEntityType | null, entityId: string | null) {

@@ -27,14 +27,18 @@ import {
   formattedDataFormDatasourceData,
   isNumber,
   isObject,
-  parseFunction,
-  safeExecute
+  parseTbFunction,
+  safeExecuteTbFunction,
+  unwrapModule
 } from '@core/utils';
+import { CompiledTbFunction, TbFunction } from '@shared/models/js-function.models';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 interface QrCodeWidgetSettings {
   qrCodeTextPattern: string;
   useQrCodeTextFunction: boolean;
-  qrCodeTextFunction: string;
+  qrCodeTextFunction: TbFunction;
 }
 
 type QrCodeTextFunction = (data: FormattedData[]) => string;
@@ -47,7 +51,7 @@ type QrCodeTextFunction = (data: FormattedData[]) => string;
 export class QrCodeWidgetComponent extends PageComponent implements OnInit, AfterViewInit {
 
   settings: QrCodeWidgetSettings;
-  qrCodeTextFunction: QrCodeTextFunction;
+  qrCodeTextFunction: Observable<CompiledTbFunction<QrCodeTextFunction>>;
 
   @Input()
   ctx: WidgetContext;
@@ -68,7 +72,7 @@ export class QrCodeWidgetComponent extends PageComponent implements OnInit, Afte
   ngOnInit(): void {
     this.ctx.$scope.qrCodeWidget = this;
     this.settings = this.ctx.settings;
-    this.qrCodeTextFunction = this.settings.useQrCodeTextFunction ? parseFunction(this.settings.qrCodeTextFunction, ['data']) : null;
+    this.qrCodeTextFunction = this.settings.useQrCodeTextFunction ? parseTbFunction(this.ctx.http, this.settings.qrCodeTextFunction, ['data']) : null;
   }
 
   ngAfterViewInit(): void {
@@ -81,7 +85,6 @@ export class QrCodeWidgetComponent extends PageComponent implements OnInit, Afte
 
   public onDataUpdated() {
     let initialData: DatasourceData[];
-    let qrCodeText: string;
     if (this.ctx.data?.length) {
       initialData = this.ctx.data;
     } else if (this.ctx.datasources?.length) {
@@ -100,13 +103,19 @@ export class QrCodeWidgetComponent extends PageComponent implements OnInit, Afte
     }
     const data = formattedDataFormDatasourceData(initialData);
     const pattern = this.settings.useQrCodeTextFunction ?
-      safeExecute(this.qrCodeTextFunction, [data]) : this.settings.qrCodeTextPattern;
-    const allData: FormattedData = flatDataWithoutOverride(data);
-    qrCodeText = createLabelFromPattern(pattern, allData);
-    this.updateQrCodeText(qrCodeText);
+      this.qrCodeTextFunction.pipe(map(qrCodeTextFunction => safeExecuteTbFunction(qrCodeTextFunction, [data]))) : this.settings.qrCodeTextPattern;
+    if (typeof pattern === 'string') {
+      this.updateQrCodeText(pattern, data);
+    } else {
+      pattern.subscribe((text) => {
+        this.updateQrCodeText(text, data);
+      });
+    }
   }
 
-  private updateQrCodeText(newQrCodeText: string): void {
+  private updateQrCodeText(pattern: string, data: FormattedData[]): void {
+    const allData: FormattedData = flatDataWithoutOverride(data);
+    const newQrCodeText = createLabelFromPattern(pattern, allData);
     if (this.qrCodeText !== newQrCodeText) {
       this.qrCodeText = newQrCodeText;
       if (!(isObject(newQrCodeText) || isNumber(newQrCodeText))) {
@@ -124,7 +133,7 @@ export class QrCodeWidgetComponent extends PageComponent implements OnInit, Afte
   private updateCanvas() {
     if (this.viewInited) {
       import('qrcode').then((QRCode) => {
-        QRCode.toCanvas(this.canvasRef.nativeElement, this.qrCodeText);
+        unwrapModule(QRCode).toCanvas(this.canvasRef.nativeElement, this.qrCodeText);
         this.canvasRef.nativeElement.style.width = 'auto';
         this.canvasRef.nativeElement.style.height = 'auto';
       });
