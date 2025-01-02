@@ -372,17 +372,18 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         doPost("/api/alarm", alarm2, Alarm.class);
 
-        AlarmStatusUpdate alarmStatusUpdate3 = JacksonUtil.fromString(getWsClient().waitForReply(), AlarmStatusUpdate.class);
+        AlarmStatusUpdate alarmStatusUpdate3 = JacksonUtil.fromString(getWsClient().waitForUpdate(), AlarmStatusUpdate.class);
         Assert.assertEquals(1, alarmStatusUpdate3.getCmdId());
         Assert.assertTrue(alarmStatusUpdate3.isActive());
 
         //change severity
+        getWsClient().registerWaitForUpdate();
         alarm2.setSeverity(AlarmSeverity.MAJOR);
         Alarm updatedAlarm = doPost("/api/alarm", alarm2, Alarm.class);
         Assert.assertNotNull(updatedAlarm);
         Assert.assertEquals(AlarmSeverity.MAJOR, updatedAlarm.getSeverity());
 
-        AlarmStatusUpdate alarmStatusUpdate4 = JacksonUtil.fromString(getWsClient().waitForReply(), AlarmStatusUpdate.class);
+        AlarmStatusUpdate alarmStatusUpdate4 = JacksonUtil.fromString(getWsClient().waitForUpdate(), AlarmStatusUpdate.class);
         Assert.assertEquals(1, alarmStatusUpdate4.getCmdId());
         Assert.assertFalse(alarmStatusUpdate4.isActive());
 
