@@ -15,13 +15,18 @@
  */
 package org.thingsboard.server.coapserver;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.id.DeviceId;
-
 import java.net.InetSocketAddress;
+import java.util.Objects;
 
-@Data
-public class TbCoapDtlsDeviceAddr {
-    private final DeviceId deviceId;
-    private final InetSocketAddress inetSocketAddress;
+public record TbCoapDtlsSessionKey(InetSocketAddress peerAddress, String credentials) {
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TbCoapDtlsSessionKey that = (TbCoapDtlsSessionKey) o;
+        return Objects.equals(peerAddress, that.peerAddress) &&
+                Objects.equals(credentials, that.credentials);
+    }
 }
+

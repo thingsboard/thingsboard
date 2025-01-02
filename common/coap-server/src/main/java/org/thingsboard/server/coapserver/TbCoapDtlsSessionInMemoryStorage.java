@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentMap;
 @Data
 public class TbCoapDtlsSessionInMemoryStorage {
 
-    private final ConcurrentMap<TbCoapDtlsDeviceAddr, TbCoapDtlsSessionInfo> dtlsSessionsMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TbCoapDtlsSessionKey, TbCoapDtlsSessionInfo> dtlsSessionsMap = new ConcurrentHashMap<>();
     private long dtlsSessionInactivityTimeout;
     private long dtlsSessionReportTimeout;
 
@@ -35,9 +35,9 @@ public class TbCoapDtlsSessionInMemoryStorage {
         this.dtlsSessionReportTimeout = dtlsSessionReportTimeout;
     }
 
-    public void put(TbCoapDtlsDeviceAddr remotePeer, TbCoapDtlsSessionInfo dtlsSessionInfo) {
-        log.trace("DTLS session added to in-memory store: [{}] timestamp: [{}]", remotePeer, dtlsSessionInfo.getLastActivityTime());
-        dtlsSessionsMap.putIfAbsent(remotePeer, dtlsSessionInfo);
+    public void put(TbCoapDtlsSessionKey tbCoapDtlsSessionKey, TbCoapDtlsSessionInfo dtlsSessionInfo) {
+        log.trace("DTLS session added to in-memory store: [{}] timestamp: [{}]", tbCoapDtlsSessionKey, dtlsSessionInfo.getLastActivityTime());
+        dtlsSessionsMap.putIfAbsent(tbCoapDtlsSessionKey, dtlsSessionInfo);
     }
 
     public void evictTimeoutSessions() {

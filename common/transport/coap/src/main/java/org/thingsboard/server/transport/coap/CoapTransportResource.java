@@ -27,7 +27,7 @@ import org.eclipse.californium.core.server.resources.ResourceObserver;
 import org.eclipse.californium.elements.EndpointContext;
 import org.eclipse.californium.elements.auth.X509CertPath;
 import org.thingsboard.server.coapserver.CoapServerService;
-import org.thingsboard.server.coapserver.TbCoapDtlsDeviceAddr;
+import org.thingsboard.server.coapserver.TbCoapDtlsSessionKey;
 import org.thingsboard.server.coapserver.TbCoapDtlsSessionInfo;
 import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.adaptor.JsonConverter;
@@ -70,7 +70,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
     private static final int FEATURE_TYPE_POSITION_CERTIFICATE_REQUEST = 3;
     private static final int REQUEST_ID_POSITION_CERTIFICATE_REQUEST = 4;
 
-    private final ConcurrentMap<TbCoapDtlsDeviceAddr, TbCoapDtlsSessionInfo> dtlsSessionsMap;
+    private final ConcurrentMap<TbCoapDtlsSessionKey, TbCoapDtlsSessionInfo> dtlsSessionsMap;
     private final long timeout;
     private final long piggybackTimeout;
     private final CoapClientContext clients;
@@ -182,17 +182,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
 
         var dtlsSessionId = request.getSourceContext().get(KEY_SESSION_ID);
         if (dtlsSessionsMap != null && dtlsSessionId != null && !dtlsSessionId.isEmpty()) {
-            TbCoapDtlsDeviceAddr tbCoapDtlsDeviceAddr = this.getCoapDtlsDeviceAddr(request.getSourceContext());
-            TbCoapDtlsSessionInfo tbCoapDtlsSessionInfo;
-            if (tbCoapDtlsDeviceAddr != null) {
-                tbCoapDtlsSessionInfo = dtlsSessionsMap
-                        .computeIfPresent(tbCoapDtlsDeviceAddr, (dtlsSessionIdStr, dtlsSessionInfo) -> {
-                            dtlsSessionInfo.setLastActivityTime(System.currentTimeMillis());
-                            return dtlsSessionInfo;
-                        });
-            } else {
-                tbCoapDtlsSessionInfo = null;
-            }
+            TbCoapDtlsSessionInfo tbCoapDtlsSessionInfo = this.getCoapDtlsSessionInfo(request.getSourceContext());
             if (tbCoapDtlsSessionInfo != null) {
                 processRequest(exchange, type, request, tbCoapDtlsSessionInfo.getMsg(), tbCoapDtlsSessionInfo.getDeviceProfile());
             } else {
@@ -469,20 +459,21 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         }
     }
 
-    private TbCoapDtlsDeviceAddr getCoapDtlsDeviceAddr(EndpointContext endpointContext) {
+    private TbCoapDtlsSessionInfo getCoapDtlsSessionInfo(EndpointContext endpointContext) {
         InetSocketAddress peerAddress = endpointContext.getPeerAddress();
         String certPemStr = getCertPem(endpointContext);
-        if (StringUtils.isNotBlank(certPemStr)) {
-            for (var entry : dtlsSessionsMap.entrySet()) {
-                TbCoapDtlsDeviceAddr tbCoapDtlsDeviceAddr = entry.getKey();
-                TbCoapDtlsSessionInfo sessionInfo = entry.getValue();
-                String credentials = sessionInfo.getMsg().getCredentials();
-                if (tbCoapDtlsDeviceAddr.getInetSocketAddress().equals(peerAddress) && certPemStr.equals(credentials)) {
-                    return tbCoapDtlsDeviceAddr;
-                }
-            }
+        TbCoapDtlsSessionKey tbCoapDtlsSessionKey = StringUtils.isNotBlank(certPemStr) ? new TbCoapDtlsSessionKey(peerAddress, certPemStr) : null;
+        TbCoapDtlsSessionInfo tbCoapDtlsSessionInfo;
+        if (tbCoapDtlsSessionKey != null) {
+            tbCoapDtlsSessionInfo = dtlsSessionsMap
+                    .computeIfPresent(tbCoapDtlsSessionKey, (dtlsSessionIdStr, dtlsSessionInfo) -> {
+                        dtlsSessionInfo.setLastActivityTime(System.currentTimeMillis());
+                        return dtlsSessionInfo;
+                    });
+        } else {
+            tbCoapDtlsSessionInfo = null;
         }
-        return null;
+        return tbCoapDtlsSessionInfo;
     }
 
     private String getCertPem(EndpointContext endpointContext) {

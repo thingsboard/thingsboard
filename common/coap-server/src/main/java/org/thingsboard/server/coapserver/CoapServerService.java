@@ -24,5 +24,5 @@ public interface CoapServerService {
 
     CoapServer getCoapServer() throws UnknownHostException;
 
-    ConcurrentMap<TbCoapDtlsDeviceAddr, TbCoapDtlsSessionInfo> getDtlsSessionsMap();
+    ConcurrentMap<TbCoapDtlsSessionKey, TbCoapDtlsSessionInfo> getDtlsSessionsMap();
 }
