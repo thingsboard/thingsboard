@@ -522,6 +522,10 @@ pre.tb-highlight {
     }
   }
 
+  .mat-mdc-icon-button:disabled {
+    opacity: var(--mdc-icon-button-disabled-icon-opacity, 0.38);
+  }
+
   .mat-mdc-tooltip {
     white-space: pre-line;
   }
