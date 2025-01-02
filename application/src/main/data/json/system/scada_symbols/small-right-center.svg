@@ -1,0 +1,717 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="100" height="200" fill="none" version="1.1" viewBox="0 0 100 200"><tb:metadata xmlns=""><![CDATA[{
+  "title": "Small right meter",
+  "description": "Small right meter displays the current value with a moving pointer on the scale.",
+  "searchTags": [
+    "scale",
+    "level",
+    "progress",
+    "thermometer"
+  ],
+  "widgetSizeX": 1,
+  "widgetSizeY": 2,
+  "tags": [
+    {
+      "tag": "background",
+      "stateRenderFunction": "element.attr({fill: ctx.properties.backgroundColor});",
+      "actions": null
+    },
+    {
+      "tag": "clickArea",
+      "stateRenderFunction": null,
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'click');"
+        }
+      }
+    },
+    {
+      "tag": "progress-indicator",
+      "stateRenderFunction": "function calculateOffset(value, minValue, maxValue, initial) {\n    var clampedValue = Math.max(Math.min(value, Math.max(minValue, maxValue)), Math.min(minValue, maxValue));\n    var normalizedValue = minValue < maxValue\n        ? (clampedValue - minValue) / (maxValue - minValue)\n        : (minValue - clampedValue) / (minValue - maxValue);\n    var offset = initial - (normalizedValue * initial);\n    return offset;\n}\n\nvar valueSet = element.remember('valueSet');\n\nif (ctx.properties.progressArrow && !ctx.properties.progressBar) {\n    element.show();\n    var initial = ctx.properties.valueBox ? 135 : 168;\n    if (!valueSet) {\n        element.remember('valueSet', true);\n        element.transform({\n            translateY: initial\n        });\n    }\n    \n    var minValue = ctx.properties.minValue;\n    var maxValue = ctx.properties.maxValue;\n    var value = ctx.values.value;\n    \n    var colorProcessor = ctx.properties.progressArrowColor;\n    colorProcessor.update(value);\n    var fill = colorProcessor.color;\n    element.attr({fill: fill});\n    \n    var offset = calculateOffset(value, minValue, maxValue, initial);\n\n    var elementOffset = element.remember('offset');\n    if (offset !== elementOffset) {\n        element.remember('offset', offset);\n        ctx.api.cssAnimate(element, 500).transform({\n            translateY: offset\n        });\n    }\n} else {\n    element.hide();\n    if (valueSet) {\n        element.remember('valueSet', false);\n    }\n}",
+      "actions": null
+    },
+    {
+      "tag": "progressBar",
+      "stateRenderFunction": "if (ctx.properties.progressBar) {\n    element.show();\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
+      "tag": "progressBorder",
+      "stateRenderFunction": "if (ctx.properties.valueBox) {\n    element.attr({'height': 137})\n}",
+      "actions": null
+    },
+    {
+      "tag": "progressCircle",
+      "stateRenderFunction": "if (ctx.properties.valueBox) {\n    element.attr({cy:152});\n}",
+      "actions": null
+    },
+    {
+      "tag": "progressFill",
+      "stateRenderFunction": "if (ctx.properties.valueBox) {\n    element.attr({y:-147});\n}\n\nfunction calculateOffset(value, minValue, maxValue, initial) {\n    var clampedValue = Math.max(Math.min(value, Math.max(minValue, maxValue)), Math.min(minValue, maxValue));\n    var normalizedValue = minValue < maxValue\n        ? (clampedValue - minValue) / (maxValue - minValue)\n        : (minValue - clampedValue) / (minValue - maxValue);\n    var offset = normalizedValue * initial;\n    return offset;\n}\n\nvar valueSet = element.remember('valueSet');\nif (ctx.properties.progressBar) {\n    var initial = ctx.properties.valueBox ? 135: 168;\n    if (!valueSet) {\n        element.remember('valueSet', true);\n        element.attr({height: 2});\n    }\n    \n    var minValue = ctx.properties.minValue;\n    var maxValue = ctx.properties.maxValue;\n    var value = ctx.values.value;\n    \n    var colorProcessor = ctx.properties.progressBarColor;\n    colorProcessor.update(value);\n    var fill = colorProcessor.color;\n    element.attr({fill: fill, stroke: fill});\n    ctx.tags.progressCircle[0].fill(fill);\n    \n    var height = calculateOffset(value, minValue, maxValue, initial);\n\n    var elementHeight = element.remember('height');\n    if (height !== elementHeight) {\n        element.remember('height', height);\n        ctx.api.cssAnimate(element, 500).attr({height: height+2});\n    }\n} else {\n    if (valueSet) {\n        element.remember('valueSet', false);\n    }\n}",
+      "actions": null
+    },
+    {
+      "tag": "scale",
+      "stateRenderFunction": "var scaleSet = element.remember('scaleSet');\nif (!scaleSet) {\n    element.remember('scaleSet', true);\n    element.clear();\n    \n    var majorIntervals = ctx.properties.majorIntervals;\n    var minorIntervals = ctx.properties.minorIntervals;\n    var minValue = ctx.properties.minValue;\n    var maxValue = ctx.properties.maxValue;\n    \n    var start = 11;\n    var end = ctx.properties.valueBox ? 134 : 167;\n    var majorIntervalLength = end / majorIntervals;\n    var minorIntervalLength = majorIntervalLength / minorIntervals;\n    element.add(ctx.svg.line(73, end+11, 73, 11).stroke({ width: 1 }).attr({class: 'majorTick'}));\n    for (var i = 0; i < majorIntervals+1; i++) {\n        var y = start + i * majorIntervalLength;\n        var line = ctx.svg.line(61, y, 73, y).stroke({ width: 1 }).attr({class: 'majorTick'});\n        element.add(line);\n        var majorText = (maxValue - ((maxValue - (minValue)) / (majorIntervals) * i)).toFixed(0);\n        var majorTickText = ctx.svg.text(majorText);\n        majorTickText.attr({x: 55, y: y + 2, 'text-anchor': 'end', class: 'majorTickText'});\n        majorTickText.first().attr({'dominant-baseline': 'middle'});\n        element.add(majorTickText);\n        if (i < majorIntervals) {\n            drawMinorTicks(y, minorIntervals, minorIntervalLength);\n        }\n    }\n}\n\nvar majorFont = ctx.properties.majorFont;\nvar majorColor = ctx.properties.majorColor;\nvar minorColor = ctx.properties.minorColor;\nif (ctx.values.critical) {\n    majorColor = ctx.properties.majorCriticalColor;\n    minorColor = ctx.properties.minorCriticalColor;\n} else if (ctx.values.warning) {\n    majorColor = ctx.properties.minorWarningColor;\n    minorColor = ctx.properties.minorWarningColor;\n}\n\nvar majorTicks = element.find('line.majorTick');\nmajorTicks.forEach(t => t.attr({stroke: majorColor}));\n\nvar majorTicksText = element.find('text.majorTickText');\nctx.api.font(majorTicksText, majorFont, majorColor);\n\nvar minorTicks = element.find('line.minorTick');\nminorTicks.forEach(t => t.attr({stroke: minorColor}));\n\nvar elementCriticalAnimation = element.remember('criticalAnimation');\nvar criticalAnimation = ctx.values.critical && ctx.values.criticalAnimation;\n\nif (elementCriticalAnimation !== criticalAnimation) {\n    element.remember('criticalAnimation', criticalAnimation);\n    if (criticalAnimation) {\n        ctx.api.cssAnimate(element, 500).attr({opacity: 0.15}).loop(0, true);\n    } else {\n        ctx.api.resetCssAnimation(element);\n    }\n}\n\nfunction drawMinorTicks(start, minorIntervals, minorIntervalLength) {\n    for (var i = 1; i < minorIntervals; i++) {\n        var minorY = start + i * minorIntervalLength;\n        var minorLine = ctx.svg.line(67, minorY, 73, minorY).stroke({ width: 1 }).attr({class: 'minorTick'});\n        element.add(minorLine);\n    }\n}",
+      "actions": null
+    },
+    {
+      "tag": "value-box",
+      "stateRenderFunction": "if (ctx.properties.valueBox) {\n    element.show();\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
+      "tag": "value-box-background",
+      "stateRenderFunction": "if (ctx.properties.valueBox) {\n    var colorProcessor = ctx.properties.valueBoxColor;\n    colorProcessor.update(ctx.values.value);\n    element.attr({fill: colorProcessor.color});\n}",
+      "actions": null
+    },
+    {
+      "tag": "value-text",
+      "stateRenderFunction": "if (ctx.properties.valueBox) {\n    var valueTextFont = ctx.properties.valueTextFont;\n    var valueTextColor = ctx.properties.valueTextColor;\n    var currentVolume = ctx.values.value;\n    var valueText = ctx.api.formatValue(currentVolume, 0, ctx.properties.valueUnits, false);\n    var colorProcessor = ctx.properties.valueTextColor;\n    colorProcessor.update(ctx.values.value);\n    ctx.api.font(element, valueTextFont, colorProcessor.color);\n    ctx.api.text(element, valueText);\n}",
+      "actions": null
+    }
+  ],
+  "behavior": [
+    {
+      "id": "value",
+      "name": "{i18n:scada.symbol.value}",
+      "hint": null,
+      "group": null,
+      "type": "value",
+      "valueType": "DOUBLE",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": {
+        "action": "GET_TIME_SERIES",
+        "defaultValue": null,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "waterLevel"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "warning",
+      "name": "{i18n:scada.symbol.warning-state}",
+      "hint": "{i18n:scada.symbol.warning-state-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.warning}",
+      "defaultGetValueSettings": {
+        "action": "GET_ALARM_STATUS",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": [
+            "MAJOR",
+            "MINOR",
+            "WARNING",
+            "INDETERMINATE"
+          ],
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "critical",
+      "name": "{i18n:scada.symbol.critical-state}",
+      "hint": "{i18n:scada.symbol.critical-state-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.critical}",
+      "defaultGetValueSettings": {
+        "action": "GET_ALARM_STATUS",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": [
+            "CRITICAL"
+          ],
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "criticalAnimation",
+      "name": "{i18n:scada.symbol.critical-state-animation}",
+      "hint": "{i18n:scada.symbol.critical-state-animation-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.animation}",
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "key": "state",
+          "scope": null
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "compareToValue": true,
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "click",
+      "name": "{i18n:scada.symbol.on-click}",
+      "hint": "{i18n:scada.symbol.on-click-hint}",
+      "group": null,
+      "type": "widgetAction",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "targetDashboardStateId": null,
+        "openRightLayout": false,
+        "setEntityId": false,
+        "stateEntityParamName": null
+      }
+    }
+  ],
+  "properties": [
+    {
+      "id": "minValue",
+      "name": "{i18n:scada.symbol.min-max-value}",
+      "type": "number",
+      "default": 0,
+      "required": true,
+      "subLabel": "{i18n:scada.symbol.min-value}",
+      "divider": true,
+      "min": -1000,
+      "step": 1,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "maxValue",
+      "name": "{i18n:scada.symbol.min-max-value}",
+      "type": "number",
+      "default": 100,
+      "required": true,
+      "subLabel": "{i18n:scada.symbol.max-value}",
+      "max": 1000,
+      "step": 1,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "backgroundColor",
+      "name": "{i18n:scada.symbol.background-color}",
+      "type": "color",
+      "default": "#FFFFFF",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "progressBar",
+      "name": "{i18n:scada.symbol.progress-bar}",
+      "type": "switch",
+      "default": true,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "progressBarColor",
+      "name": "{i18n:scada.symbol.progress-bar}",
+      "type": "color_settings",
+      "default": {
+        "type": "constant",
+        "color": "#4D94E1",
+        "gradient": {
+          "advancedMode": false,
+          "gradient": [
+            "rgba(0, 255, 0, 1)",
+            "rgba(255, 0, 0, 1)"
+          ],
+          "gradientAdvanced": [
+            {
+              "source": {
+                "type": "constant"
+              },
+              "color": "rgba(0, 255, 0, 1)"
+            },
+            {
+              "source": {
+                "type": "constant"
+              },
+              "color": "rgba(255, 0, 0, 1)"
+            }
+          ],
+          "minValue": 0,
+          "maxValue": 100
+        },
+        "rangeList": {
+          "advancedMode": false,
+          "range": [],
+          "rangeAdvanced": []
+        },
+        "colorFunction": "var temperature = value;\nif (typeof temperature !== undefined) {\n  var percent = (temperature + 60)/120 * 100;\n  return tinycolor.mix('blue', 'red', percent).toHexString();\n}\nreturn 'blue';"
+      },
+      "disableOnProperty": "progressBar",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "progressArrow",
+      "name": "{i18n:scada.symbol.progress-arrow}",
+      "type": "switch",
+      "default": false,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "progressArrowColor",
+      "name": "{i18n:scada.symbol.progress-arrow}",
+      "type": "color_settings",
+      "default": {
+        "type": "constant",
+        "color": "#1C943E",
+        "gradient": {
+          "advancedMode": false,
+          "gradient": [
+            "rgba(0, 255, 0, 1)",
+            "rgba(255, 0, 0, 1)"
+          ],
+          "gradientAdvanced": [
+            {
+              "source": {
+                "type": "constant"
+              },
+              "color": "rgba(0, 255, 0, 1)"
+            },
+            {
+              "source": {
+                "type": "constant"
+              },
+              "color": "rgba(255, 0, 0, 1)"
+            }
+          ],
+          "minValue": 0,
+          "maxValue": 100
+        },
+        "rangeList": {
+          "advancedMode": false,
+          "range": [],
+          "rangeAdvanced": []
+        },
+        "colorFunction": "var temperature = value;\nif (typeof temperature !== undefined) {\n  var percent = (temperature + 60)/120 * 100;\n  return tinycolor.mix('blue', 'red', percent).toHexString();\n}\nreturn 'blue';"
+      },
+      "disableOnProperty": "progressArrow",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "valueBox",
+      "name": "{i18n:scada.symbol.value-box}",
+      "type": "switch",
+      "default": false,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "valueBoxColor",
+      "name": "{i18n:scada.symbol.value-box}",
+      "type": "color_settings",
+      "default": {
+        "type": "constant",
+        "color": "#F3F3F3",
+        "gradient": {
+          "advancedMode": false,
+          "gradient": [
+            "rgba(0, 255, 0, 1)",
+            "rgba(255, 0, 0, 1)"
+          ],
+          "gradientAdvanced": [
+            {
+              "source": {
+                "type": "constant"
+              },
+              "color": "rgba(0, 255, 0, 1)"
+            },
+            {
+              "source": {
+                "type": "constant"
+              },
+              "color": "rgba(255, 0, 0, 1)"
+            }
+          ],
+          "minValue": 0,
+          "maxValue": 100
+        },
+        "rangeList": {
+          "advancedMode": false,
+          "range": [],
+          "rangeAdvanced": []
+        },
+        "colorFunction": "var temperature = value;\nif (typeof temperature !== undefined) {\n  var percent = (temperature + 60)/120 * 100;\n  return tinycolor.mix('blue', 'red', percent).toHexString();\n}\nreturn 'blue';"
+      },
+      "disableOnProperty": "valueBox",
+      "disabled": true,
+      "visible": true
+    },
+    {
+      "id": "valueUnits",
+      "name": "{i18n:scada.symbol.value-text}",
+      "type": "units",
+      "default": "%",
+      "subLabel": "{i18n:scada.symbol.units}",
+      "disableOnProperty": "valueBox",
+      "disabled": true,
+      "visible": true
+    },
+    {
+      "id": "valueTextFont",
+      "name": "{i18n:scada.symbol.value-text}",
+      "type": "font",
+      "default": {
+        "size": 14,
+        "sizeUnit": "px",
+        "family": "Roboto",
+        "weight": "500",
+        "style": "normal"
+      },
+      "disableOnProperty": "valueBox",
+      "disabled": true,
+      "visible": true
+    },
+    {
+      "id": "valueTextColor",
+      "name": "{i18n:scada.symbol.value-text}",
+      "type": "color_settings",
+      "default": {
+        "type": "constant",
+        "color": "#0000008A",
+        "gradient": {
+          "advancedMode": false,
+          "gradient": [
+            "rgba(0, 255, 0, 1)",
+            "rgba(255, 0, 0, 1)"
+          ],
+          "gradientAdvanced": [
+            {
+              "source": {
+                "type": "constant"
+              },
+              "color": "rgba(0, 255, 0, 1)"
+            },
+            {
+              "source": {
+                "type": "constant"
+              },
+              "color": "rgba(255, 0, 0, 1)"
+            }
+          ],
+          "minValue": 0,
+          "maxValue": 100
+        },
+        "rangeList": {
+          "advancedMode": false,
+          "range": [],
+          "rangeAdvanced": []
+        },
+        "colorFunction": "var temperature = value;\nif (typeof temperature !== undefined) {\n  var percent = (temperature + 60)/120 * 100;\n  return tinycolor.mix('blue', 'red', percent).toHexString();\n}\nreturn 'blue';"
+      },
+      "disableOnProperty": "valueBox",
+      "disabled": true,
+      "visible": true
+    },
+    {
+      "id": "majorIntervals",
+      "name": "{i18n:scada.symbol.major-ticks}",
+      "type": "number",
+      "default": 5,
+      "subLabel": "{i18n:scada.symbol.intervals}",
+      "divider": true,
+      "min": 1,
+      "step": 1,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "majorFont",
+      "name": "{i18n:scada.symbol.major-ticks}",
+      "type": "font",
+      "default": {
+        "size": 12,
+        "sizeUnit": "px",
+        "family": "Roboto",
+        "weight": "500",
+        "style": "normal"
+      },
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "majorColor",
+      "name": "{i18n:scada.symbol.major-ticks-color}",
+      "type": "color",
+      "default": "#747474",
+      "subLabel": "{i18n:scada.symbol.normal}",
+      "divider": true,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "majorWarningColor",
+      "name": "{i18n:scada.symbol.major-ticks-color}",
+      "type": "color",
+      "default": "#FAA405",
+      "subLabel": "{i18n:scada.symbol.warning}",
+      "divider": true,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "majorCriticalColor",
+      "name": "{i18n:scada.symbol.major-ticks-color}",
+      "type": "color",
+      "default": "#D12730",
+      "subLabel": "{i18n:scada.symbol.critical}",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "minorIntervals",
+      "name": "{i18n:scada.symbol.minor-ticks}",
+      "type": "number",
+      "default": 10,
+      "subLabel": "{i18n:scada.symbol.intervals}",
+      "min": 1,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "minorColor",
+      "name": "{i18n:scada.symbol.minor-ticks-color}",
+      "type": "color",
+      "default": "#747474",
+      "subLabel": "{i18n:scada.symbol.normal}",
+      "divider": true,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "minorWarningColor",
+      "name": "{i18n:scada.symbol.minor-ticks-color}",
+      "type": "color",
+      "default": "#FAA405",
+      "subLabel": "{i18n:scada.symbol.warning}",
+      "divider": true,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "minorCriticalColor",
+      "name": "{i18n:scada.symbol.minor-ticks-color}",
+      "type": "color",
+      "default": "#D12730",
+      "subLabel": "{i18n:scada.symbol.critical}",
+      "disabled": false,
+      "visible": true
+    }
+  ]
+}]]></tb:metadata>
+<path d="m28 200c-2.2091 0-4-1.791-4-4v-192c0-2.2091 1.7909-4 4-4h68c2.2091 0 4 1.7909 4 4v192c0 2.209-1.7909 4-4 4h-68z" fill="#E5E5E5" tb:tag="background"/><path d="m28 200c-2.2091 0-4-1.791-4-4v-192c0-2.2091 1.7909-4 4-4h68c2.2091 0 4 1.7909 4 4v192c0 2.209-1.7909 4-4 4h-68z" fill="url(#paint0_linear_3742_299973)"/><path d="m28 198.5c-1.3807 0-2.5-1.119-2.5-2.5v-192c0-1.3807 1.1193-2.5 2.5-2.5h68c1.3807 0 2.5 1.1193 2.5 2.5v192c0 1.381-1.1193 2.5-2.5 2.5h-68z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><g tb:tag="scale">
+  <g transform="translate(23.965)" fill="#919191">
+   <path d="m14.539 10.088v8.5605h-1.4121v-6.8848l-2.0918 0.709v-1.166l3.3339-1.2187zm8.7754 3.58v1.3946c0 0.6679-0.0665 1.2382-0.1993 1.7109-0.1289 0.4688-0.3164 0.8496-0.5625 1.1426-0.2461 0.2929-0.541 0.5078-0.8847 0.6445-0.3399 0.1367-0.7207 0.2051-1.1426 0.2051-0.3359 0-0.6484-0.043-0.9375-0.1289-0.2852-0.086-0.543-0.2207-0.7734-0.4043-0.2305-0.1836-0.4278-0.4199-0.5918-0.709-0.1602-0.293-0.2852-0.6426-0.375-1.0488-0.086-0.4063-0.1289-0.877-0.1289-1.4121v-1.3946c0-0.6718 0.0664-1.2383 0.1992-1.6992 0.1328-0.4648 0.3222-0.8418 0.5683-1.1308 0.2461-0.293 0.5391-0.5059 0.8789-0.6387 0.3438-0.1328 0.7266-0.1992 1.1485-0.1992 0.3398 0 0.6523 0.0429 0.9375 0.1289 0.289 0.082 0.5468 0.2129 0.7734 0.3925 0.2305 0.1797 0.4258 0.4141 0.5859 0.7032 0.1641 0.2851 0.2891 0.6308 0.375 1.0371 0.086 0.4023 0.129 0.8711 0.129 1.4062zm-1.4122 1.5938v-1.8047c0-0.3398-0.0195-0.6387-0.0585-0.8965-0.0391-0.2617-0.0977-0.4824-0.1758-0.6621-0.0742-0.1836-0.168-0.332-0.2813-0.4453-0.1133-0.1172-0.2422-0.2012-0.3867-0.252-0.1445-0.0547-0.3066-0.082-0.4863-0.082-0.2188 0-0.4141 0.043-0.586 0.1289-0.1718 0.082-0.3164 0.2149-0.4336 0.3984-0.1171 0.1836-0.207 0.4258-0.2695 0.7266-0.0586 0.2969-0.0879 0.6582-0.0879 1.084v1.8047c0 0.3437 0.0195 0.6465 0.0586 0.9082s0.0977 0.4863 0.1758 0.6738c0.0781 0.1836 0.1719 0.3359 0.2812 0.457 0.1133 0.1172 0.2422 0.2032 0.3868 0.2579 0.1484 0.0546 0.3105 0.082 0.4863 0.082 0.2226 0 0.4199-0.043 0.5918-0.1289 0.1719-0.086 0.3164-0.2227 0.4336-0.4102 0.1172-0.1914 0.2051-0.4394 0.2637-0.7441 0.0585-0.3047 0.0878-0.6699 0.0878-1.0957zm8.4825-1.5938v1.3946c0 0.6679-0.0664 1.2382-0.1993 1.7109-0.1289 0.4688-0.3164 0.8496-0.5625 1.1426-0.246 0.2929-0.541 0.5078-0.8847 0.6445-0.3399 0.1367-0.7207 0.2051-1.1426 0.2051-0.3359 0-0.6484-0.043-0.9375-0.1289-0.2852-0.086-0.543-0.2207-0.7734-0.4043-0.2305-0.1836-0.4278-0.4199-0.5918-0.709-0.1602-0.293-0.2852-0.6426-0.375-1.0488-0.086-0.4063-0.1289-0.877-0.1289-1.4121v-1.3946c0-0.6718 0.0664-1.2383 0.1992-1.6992 0.1328-0.4648 0.3222-0.8418 0.5683-1.1308 0.2461-0.293 0.5391-0.5059 0.8789-0.6387 0.3438-0.1328 0.7266-0.1992 1.1485-0.1992 0.3398 0 0.6523 0.0429 0.9375 0.1289 0.289 0.082 0.5469 0.2129 0.7734 0.3925 0.2305 0.1797 0.4258 0.4141 0.586 0.7032 0.164 0.2851 0.289 0.6308 0.375 1.0371 0.0859 0.4023 0.1289 0.8711 0.1289 1.4062zm-1.4121 1.5938v-1.8047c0-0.3398-0.0196-0.6387-0.0586-0.8965-0.0391-0.2617-0.0977-0.4824-0.1758-0.6621-0.0742-0.1836-0.168-0.332-0.2813-0.4453-0.1132-0.1172-0.2422-0.2012-0.3867-0.252-0.1445-0.0547-0.3066-0.082-0.4863-0.082-0.2188 0-0.4141 0.043-0.586 0.1289-0.1718 0.082-0.3164 0.2149-0.4335 0.3984-0.1172 0.1836-0.2071 0.4258-0.2696 0.7266-0.0586 0.2969-0.0879 0.6582-0.0879 1.084v1.8047c0 0.3437 0.0196 0.6465 0.0586 0.9082 0.0391 0.2617 0.0977 0.4863 0.1758 0.6738 0.0781 0.1836 0.1719 0.3359 0.2813 0.457 0.1132 0.1172 0.2421 0.2032 0.3867 0.2579 0.1484 0.0546 0.3105 0.082 0.4863 0.082 0.2227 0 0.4199-0.043 0.5918-0.1289 0.1719-0.086 0.3164-0.2227 0.4336-0.4102 0.1172-0.1914 0.2051-0.4394 0.2637-0.7441s0.0879-0.6699 0.0879-1.0957z"/>
+   <path d="m23.332 49.374c0 0.5313-0.123 0.9785-0.3691 1.3418s-0.582 0.6387-1.0078 0.8262c-0.4219 0.1836-0.8985 0.2754-1.4297 0.2754-0.5313 0-1.0098-0.0918-1.4356-0.2754-0.4257-0.1875-0.7617-0.4629-1.0078-0.8262s-0.3691-0.8105-0.3691-1.3418c0-0.3515 0.0683-0.6699 0.2051-0.955 0.1367-0.2891 0.33-0.5372 0.58-0.7442 0.254-0.2109 0.5508-0.373 0.8907-0.4863 0.3437-0.1133 0.7187-0.1699 1.125-0.1699 0.539 0 1.0215 0.0996 1.4472 0.2988 0.4258 0.1992 0.7598 0.4746 1.002 0.8262 0.2461 0.3515 0.3691 0.7617 0.3691 1.2304zm-1.4179-0.0703c0-0.2851-0.0586-0.5351-0.1758-0.75-0.1172-0.2148-0.2813-0.3808-0.4922-0.498s-0.4551-0.1758-0.7324-0.1758c-0.2813 0-0.5254 0.0586-0.7325 0.1758-0.207 0.1172-0.3691 0.2832-0.4863 0.498-0.1133 0.2149-0.1699 0.4649-0.1699 0.75 0 0.2891 0.0566 0.5391 0.1699 0.75 0.1133 0.207 0.2754 0.3653 0.4863 0.4746 0.211 0.1094 0.459 0.1641 0.7442 0.1641 0.2851 0 0.5312-0.0547 0.7383-0.1641 0.207-0.1093 0.3672-0.2676 0.4804-0.4746 0.1133-0.2109 0.17-0.4609 0.17-0.75zm1.2246-3.8906c0 0.4258-0.1133 0.8047-0.3399 1.1367-0.2226 0.332-0.5312 0.5938-0.9258 0.7852-0.3945 0.1875-0.8437 0.2812-1.3476 0.2812-0.5078 0-0.9609-0.0937-1.3594-0.2812-0.3945-0.1914-0.7051-0.4532-0.9316-0.7852-0.2227-0.332-0.334-0.7109-0.334-1.1367 0-0.5078 0.1113-0.9356 0.334-1.2832 0.2265-0.3516 0.5371-0.6192 0.9316-0.8027 0.3945-0.1836 0.8457-0.2754 1.3535-0.2754s0.959 0.0918 1.3535 0.2754c0.3946 0.1835 0.7032 0.4511 0.9258 0.8027 0.2266 0.3476 0.3399 0.7754 0.3399 1.2832zm-1.4121 0.0469c0-0.2539-0.0508-0.4766-0.1524-0.668-0.0976-0.1953-0.2363-0.3477-0.416-0.457-0.1797-0.1094-0.3926-0.1641-0.6387-0.1641s-0.459 0.0527-0.6386 0.1582c-0.1797 0.1055-0.3184 0.2539-0.4161 0.4453-0.0976 0.1914-0.1464 0.4199-0.1464 0.6856 0 0.2617 0.0488 0.4902 0.1464 0.6855 0.0977 0.1914 0.2364 0.3418 0.4161 0.4512 0.1836 0.1094 0.3984 0.164 0.6445 0.164s0.459-0.0546 0.6387-0.164 0.3183-0.2598 0.416-0.4512c0.0976-0.1953 0.1465-0.4238 0.1465-0.6855zm8.6582 1.2597v1.3946c0 0.6679-0.0664 1.2382-0.1993 1.7109-0.1289 0.4688-0.3164 0.8496-0.5625 1.1426-0.246 0.2929-0.541 0.5078-0.8847 0.6445-0.3399 0.1367-0.7207 0.2051-1.1426 0.2051-0.3359 0-0.6484-0.043-0.9375-0.1289-0.2852-0.086-0.543-0.2207-0.7734-0.4043-0.2305-0.1836-0.4278-0.4199-0.5918-0.709-0.1602-0.293-0.2852-0.6426-0.375-1.0488-0.086-0.4063-0.1289-0.877-0.1289-1.4121v-1.3946c0-0.6718 0.0664-1.2382 0.1992-1.6992 0.1328-0.4648 0.3222-0.8418 0.5683-1.1308 0.2461-0.293 0.5391-0.5059 0.8789-0.6387 0.3438-0.1328 0.7266-0.1992 1.1485-0.1992 0.3398 0 0.6523 0.0429 0.9375 0.1289 0.289 0.082 0.5469 0.2129 0.7734 0.3925 0.2305 0.1797 0.4258 0.4141 0.586 0.7032 0.164 0.2851 0.289 0.6308 0.375 1.0371 0.0859 0.4023 0.1289 0.8711 0.1289 1.4062zm-1.4121 1.5938v-1.8047c0-0.3398-0.0196-0.6387-0.0586-0.8965-0.0391-0.2617-0.0977-0.4824-0.1758-0.6621-0.0742-0.1836-0.168-0.332-0.2813-0.4453-0.1132-0.1172-0.2422-0.2012-0.3867-0.252-0.1445-0.0547-0.3066-0.082-0.4863-0.082-0.2188 0-0.4141 0.043-0.586 0.1289-0.1718 0.082-0.3164 0.2149-0.4335 0.3984-0.1172 0.1836-0.2071 0.4258-0.2696 0.7266-0.0586 0.2969-0.0879 0.6582-0.0879 1.084v1.8047c0 0.3437 0.0196 0.6465 0.0586 0.9082 0.0391 0.2617 0.0977 0.4863 0.1758 0.6738 0.0781 0.1836 0.1719 0.336 0.2813 0.457 0.1132 0.1172 0.2421 0.2032 0.3867 0.2579 0.1484 0.0546 0.3105 0.082 0.4863 0.082 0.2227 0 0.4199-0.043 0.5918-0.1289 0.1719-0.086 0.3164-0.2227 0.4336-0.4102 0.1172-0.1914 0.2051-0.4394 0.2637-0.7441s0.0879-0.6699 0.0879-1.0957z"/>
+   <path d="m22.02 74.016h0.1758v1.1543h-0.0996c-0.5039 0-0.9395 0.0781-1.3066 0.2343-0.3633 0.1563-0.6621 0.3711-0.8965 0.6446-0.2344 0.2734-0.4102 0.5937-0.5274 0.9609-0.1132 0.3633-0.1699 0.75-0.1699 1.1602v1.3418c0 0.3398 0.0371 0.6406 0.1113 0.9023 0.0743 0.2578 0.1778 0.4746 0.3106 0.6504 0.1367 0.1719 0.293 0.3027 0.4687 0.3926 0.1758 0.0898 0.3653 0.1347 0.5684 0.1347 0.2109 0 0.4023-0.0429 0.5742-0.1289 0.1719-0.0898 0.3184-0.2129 0.4395-0.3691 0.1211-0.1563 0.2129-0.3418 0.2754-0.5567 0.0625-0.2148 0.0937-0.4492 0.0937-0.7031 0-0.2422-0.0312-0.4687-0.0937-0.6797-0.0586-0.2148-0.1465-0.4023-0.2637-0.5625-0.1172-0.164-0.2637-0.291-0.4395-0.3808-0.1718-0.0938-0.3711-0.1406-0.5976-0.1406-0.2813 0-0.5371 0.0664-0.7676 0.1992-0.2266 0.1328-0.4102 0.3066-0.5508 0.5215-0.1367 0.2109-0.2109 0.4355-0.2226 0.6738l-0.5391-0.1758c0.0313-0.3633 0.1113-0.6895 0.2402-0.9785 0.1328-0.2891 0.3067-0.5352 0.5215-0.7383 0.2149-0.2031 0.4629-0.3574 0.7442-0.4629 0.2851-0.1094 0.5976-0.164 0.9375-0.164 0.414 0 0.7734 0.0781 1.0781 0.2343 0.3047 0.1563 0.5566 0.3692 0.7558 0.6387 0.2032 0.2656 0.3536 0.5703 0.4512 0.9141 0.1016 0.3398 0.1524 0.6953 0.1524 1.0664 0 0.4101-0.0625 0.7929-0.1875 1.1484-0.125 0.3516-0.3086 0.6602-0.5508 0.9258-0.2383 0.2656-0.5293 0.4726-0.8731 0.6211-0.3398 0.1484-0.7265 0.2226-1.1601 0.2226-0.4571 0-0.8653-0.0879-1.2246-0.2636-0.3555-0.1758-0.6582-0.418-0.9082-0.7266-0.2461-0.3086-0.4336-0.6641-0.5625-1.0664s-0.1934-0.8281-0.1934-1.2773v-0.586c0-0.6484 0.082-1.2598 0.2461-1.834 0.1641-0.5781 0.416-1.0879 0.7559-1.5293 0.3437-0.4414 0.7832-0.7871 1.3183-1.0371 0.5352-0.2539 1.1738-0.3808 1.916-0.3808zm8.3653 3.6035v1.3945c0 0.668-0.0664 1.2383-0.1993 1.7109-0.1289 0.4688-0.3164 0.8497-0.5625 1.1426-0.246 0.293-0.541 0.5078-0.8847 0.6446-0.3399 0.1367-0.7207 0.205-1.1426 0.205-0.3359 0-0.6484-0.0429-0.9375-0.1289-0.2852-0.0859-0.543-0.2207-0.7734-0.4043-0.2305-0.1836-0.4278-0.4199-0.5918-0.709-0.1602-0.2929-0.2852-0.6425-0.375-1.0488-0.086-0.4062-0.1289-0.8769-0.1289-1.4121v-1.3945c0-0.6719 0.0664-1.2383 0.1992-1.6992 0.1328-0.4649 0.3222-0.8418 0.5683-1.1309 0.2461-0.293 0.5391-0.5059 0.8789-0.6387 0.3438-0.1328 0.7266-0.1992 1.1485-0.1992 0.3398 0 0.6523 0.043 0.9375 0.1289 0.289 0.082 0.5469 0.2129 0.7734 0.3926 0.2305 0.1797 0.4258 0.4141 0.586 0.7031 0.164 0.2852 0.289 0.6309 0.375 1.0371 0.0859 0.4024 0.1289 0.8711 0.1289 1.4063zm-1.4121 1.5937v-1.8047c0-0.3398-0.0196-0.6386-0.0586-0.8964-0.0391-0.2618-0.0977-0.4825-0.1758-0.6622-0.0742-0.1835-0.168-0.332-0.2813-0.4453-0.1132-0.1172-0.2422-0.2011-0.3867-0.2519-0.1445-0.0547-0.3066-0.082-0.4863-0.082-0.2188 0-0.4141 0.0429-0.586 0.1289-0.1718 0.082-0.3164 0.2148-0.4335 0.3984-0.1172 0.1836-0.2071 0.4258-0.2696 0.7266-0.0586 0.2968-0.0879 0.6582-0.0879 1.0839v1.8047c0 0.3438 0.0196 0.6465 0.0586 0.9082 0.0391 0.2618 0.0977 0.4864 0.1758 0.6739 0.0781 0.1836 0.1719 0.3359 0.2813 0.457 0.1132 0.1172 0.2421 0.2031 0.3867 0.2578 0.1484 0.0547 0.3105 0.082 0.4863 0.082 0.2227 0 0.4199-0.0429 0.5918-0.1289 0.1719-0.0859 0.3164-0.2226 0.4336-0.4101 0.1172-0.1914 0.2051-0.4395 0.2637-0.7442s0.0879-0.6699 0.0879-1.0957z"/>
+   <path d="m23.631 111.66v1.125h-6.1524l-0.0469-0.85 3.6797-5.765h1.1309l-1.2246 2.097-2.1153 3.393zm-1.0664-5.49v8.531h-1.4122v-8.531zm7.8203 3.55v1.395c0 0.668-0.0664 1.238-0.1993 1.711-0.1289 0.469-0.3164 0.85-0.5625 1.143-0.246 0.292-0.541 0.507-0.8847 0.644-0.3399 0.137-0.7207 0.205-1.1426 0.205-0.3359 0-0.6484-0.043-0.9375-0.129-0.2852-0.086-0.543-0.22-0.7734-0.404-0.2305-0.184-0.4278-0.42-0.5918-0.709-0.1602-0.293-0.2852-0.643-0.375-1.049-0.086-0.406-0.1289-0.877-0.1289-1.412v-1.395c0-0.671 0.0664-1.238 0.1992-1.699 0.1328-0.465 0.3222-0.842 0.5683-1.131 0.2461-0.293 0.5391-0.505 0.8789-0.638 0.3438-0.133 0.7266-0.199 1.1485-0.199 0.3398 0 0.6523 0.042 0.9375 0.128 0.289 0.082 0.5469 0.213 0.7734 0.393 0.2305 0.18 0.4258 0.414 0.586 0.703 0.164 0.285 0.289 0.631 0.375 1.037 0.0859 0.403 0.1289 0.871 0.1289 1.406zm-1.4121 1.594v-1.804c0-0.34-0.0196-0.639-0.0586-0.897-0.0391-0.262-0.0977-0.482-0.1758-0.662-0.0742-0.184-0.168-0.332-0.2813-0.445-0.1132-0.118-0.2422-0.202-0.3867-0.252-0.1445-0.055-0.3066-0.082-0.4863-0.082-0.2188 0-0.4141 0.043-0.586 0.129-0.1718 0.082-0.3164 0.214-0.4335 0.398-0.1172 0.184-0.2071 0.426-0.2696 0.727-0.0586 0.296-0.0879 0.658-0.0879 1.084v1.804c0 0.344 0.0196 0.647 0.0586 0.908 0.0391 0.262 0.0977 0.487 0.1758 0.674 0.0781 0.184 0.1719 0.336 0.2813 0.457 0.1132 0.117 0.2421 0.203 0.3867 0.258 0.1484 0.055 0.3105 0.082 0.4863 0.082 0.2227 0 0.4199-0.043 0.5918-0.129s0.3164-0.222 0.4336-0.41c0.1172-0.191 0.2051-0.439 0.2637-0.744s0.0879-0.67 0.0879-1.096z"/>
+   <path d="m23.473 145.48v1.125h-5.7188v-0.967l2.7773-3.029c0.3047-0.344 0.545-0.641 0.7208-0.891 0.1757-0.25 0.2988-0.474 0.3691-0.673 0.0742-0.204 0.1113-0.401 0.1113-0.592 0-0.27-0.0508-0.506-0.1523-0.709-0.0977-0.207-0.2422-0.369-0.4336-0.487-0.1914-0.121-0.4238-0.181-0.6973-0.181-0.3164 0-0.582 0.068-0.7969 0.205-0.2148 0.137-0.3769 0.326-0.4863 0.568-0.1094 0.239-0.164 0.512-0.164 0.821h-1.4122c0-0.497 0.1133-0.95 0.3399-1.36 0.2265-0.414 0.5547-0.742 0.9844-0.984 0.4297-0.246 0.9472-0.369 1.5527-0.369 0.5703 0 1.0547 0.095 1.4531 0.287 0.3985 0.191 0.7012 0.463 0.9082 0.814 0.211 0.352 0.3164 0.768 0.3164 1.248 0 0.266-0.0429 0.53-0.1289 0.791-0.0859 0.262-0.209 0.524-0.3691 0.785-0.1563 0.258-0.3418 0.518-0.5567 0.78-0.2148 0.258-0.4511 0.519-0.7089 0.785l-1.8457 2.033zm6.9121-3.855v1.394c0 0.668-0.0664 1.238-0.1993 1.711-0.1289 0.469-0.3164 0.85-0.5625 1.143-0.246 0.293-0.541 0.507-0.8847 0.644-0.3399 0.137-0.7207 0.205-1.1426 0.205-0.3359 0-0.6484-0.043-0.9375-0.129-0.2852-0.086-0.543-0.22-0.7734-0.404-0.2305-0.184-0.4278-0.42-0.5918-0.709-0.1602-0.293-0.2852-0.642-0.375-1.049-0.086-0.406-0.1289-0.877-0.1289-1.412v-1.394c0-0.672 0.0664-1.239 0.1992-1.7 0.1328-0.464 0.3222-0.841 0.5683-1.13 0.2461-0.293 0.5391-0.506 0.8789-0.639 0.3438-0.133 0.7266-0.199 1.1485-0.199 0.3398 0 0.6523 0.043 0.9375 0.129 0.289 0.082 0.5469 0.212 0.7734 0.392 0.2305 0.18 0.4258 0.414 0.586 0.703 0.164 0.285 0.289 0.631 0.375 1.037 0.0859 0.403 0.1289 0.871 0.1289 1.407zm-1.4121 1.593v-1.804c0-0.34-0.0196-0.639-0.0586-0.897-0.0391-0.262-0.0977-0.482-0.1758-0.662-0.0742-0.183-0.168-0.332-0.2813-0.445-0.1132-0.117-0.2422-0.201-0.3867-0.252-0.1445-0.055-0.3066-0.082-0.4863-0.082-0.2188 0-0.4141 0.043-0.586 0.129-0.1718 0.082-0.3164 0.215-0.4335 0.398-0.1172 0.184-0.2071 0.426-0.2696 0.727-0.0586 0.297-0.0879 0.658-0.0879 1.084v1.804c0 0.344 0.0196 0.647 0.0586 0.909 0.0391 0.261 0.0977 0.486 0.1758 0.673 0.0781 0.184 0.1719 0.336 0.2813 0.457 0.1132 0.118 0.2421 0.204 0.3867 0.258 0.1484 0.055 0.3105 0.082 0.4863 0.082 0.2227 0 0.4199-0.043 0.5918-0.129s0.3164-0.222 0.4336-0.41c0.1172-0.191 0.2051-0.439 0.2637-0.744s0.0879-0.67 0.0879-1.096z"/>
+   <path d="m30.385 173.02v1.394c0 0.668-0.0664 1.238-0.1993 1.711-0.1289 0.469-0.3164 0.85-0.5625 1.143-0.246 0.293-0.541 0.507-0.8847 0.644-0.3399 0.137-0.7207 0.205-1.1426 0.205-0.3359 0-0.6484-0.043-0.9375-0.129-0.2852-0.086-0.543-0.22-0.7734-0.404-0.2305-0.184-0.4278-0.42-0.5918-0.709-0.1602-0.293-0.2852-0.643-0.375-1.049-0.086-0.406-0.1289-0.877-0.1289-1.412v-1.394c0-0.672 0.0664-1.239 0.1992-1.7 0.1328-0.465 0.3222-0.841 0.5683-1.131 0.2461-0.293 0.5391-0.505 0.8789-0.638 0.3438-0.133 0.7266-0.199 1.1485-0.199 0.3398 0 0.6523 0.043 0.9375 0.128 0.289 0.082 0.5469 0.213 0.7734 0.393 0.2305 0.18 0.4258 0.414 0.586 0.703 0.164 0.285 0.289 0.631 0.375 1.037 0.0859 0.403 0.1289 0.871 0.1289 1.407zm-1.4121 1.593v-1.804c0-0.34-0.0196-0.639-0.0586-0.897-0.0391-0.262-0.0977-0.482-0.1758-0.662-0.0742-0.184-0.168-0.332-0.2813-0.445-0.1132-0.117-0.2422-0.201-0.3867-0.252-0.1445-0.055-0.3066-0.082-0.4863-0.082-0.2188 0-0.4141 0.043-0.586 0.129-0.1718 0.082-0.3164 0.214-0.4335 0.398-0.1172 0.184-0.2071 0.426-0.2696 0.727-0.0586 0.296-0.0879 0.658-0.0879 1.084v1.804c0 0.344 0.0196 0.647 0.0586 0.908 0.0391 0.262 0.0977 0.487 0.1758 0.674 0.0781 0.184 0.1719 0.336 0.2813 0.457 0.1132 0.118 0.2421 0.203 0.3867 0.258 0.1484 0.055 0.3105 0.082 0.4863 0.082 0.2227 0 0.4199-0.043 0.5918-0.129s0.3164-0.222 0.4336-0.41c0.1172-0.191 0.2051-0.439 0.2637-0.744s0.0879-0.67 0.0879-1.096z"/>
+  </g>
+  <g transform="matrix(1 0 0 1.0194 24.515 -3.9105)" stroke="#747474">
+   <path d="m50.695 14.031v164.03h0.22794v-164.03z" fill="#747474" stroke-width=".77206"/>
+   <line x1="39" x2="51" y1="14.145" y2="14.145"/>
+   <line x1="45" x2="51" y1="17.76" y2="17.76"/>
+   <line x1="45" x2="51" y1="21.02" y2="21.02"/>
+   <line x1="45" x2="51" y1="24.28" y2="24.28"/>
+   <line x1="45" x2="51" y1="27.54" y2="27.54"/>
+   <line x1="45" x2="51" y1="30.8" y2="30.8"/>
+   <line x1="45" x2="51" y1="34.06" y2="34.06"/>
+   <line x1="45" x2="51" y1="37.32" y2="37.32"/>
+   <line x1="45" x2="51" y1="40.58" y2="40.58"/>
+   <line x1="45" x2="51" y1="43.84" y2="43.84"/>
+   <line x1="39" x2="51" y1="47.1" y2="47.1"/>
+   <line x1="45" x2="51" y1="50.36" y2="50.36"/>
+   <line x1="45" x2="51" y1="53.62" y2="53.62"/>
+   <line x1="45" x2="51" y1="56.88" y2="56.88"/>
+   <line x1="45" x2="51" y1="60.14" y2="60.14"/>
+   <line x1="45" x2="51" y1="63.4" y2="63.4"/>
+   <line x1="45" x2="51" y1="66.66" y2="66.66"/>
+   <line x1="45" x2="51" y1="69.92" y2="69.92"/>
+   <line x1="45" x2="51" y1="73.18" y2="73.18"/>
+   <line x1="45" x2="51" y1="76.44" y2="76.44"/>
+   <line x1="39" x2="51" y1="79.7" y2="79.7"/>
+   <line x1="45" x2="51" y1="82.96" y2="82.96"/>
+   <line x1="45" x2="51" y1="86.22" y2="86.22"/>
+   <line x1="45" x2="51" y1="89.48" y2="89.48"/>
+   <line x1="45" x2="51" y1="92.74" y2="92.74"/>
+   <line x1="45" x2="51" y1="96" y2="96"/>
+   <line x1="45" x2="51" y1="99.26" y2="99.26"/>
+   <line x1="45" x2="51" y1="102.52" y2="102.52"/>
+   <line x1="45" x2="51" y1="105.78" y2="105.78"/>
+   <line x1="45" x2="51" y1="109.04" y2="109.04"/>
+   <line x1="39" x2="51" y1="112.3" y2="112.3"/>
+   <line x1="45" x2="51" y1="115.56" y2="115.56"/>
+   <line x1="45" x2="51" y1="118.82" y2="118.82"/>
+   <line x1="45" x2="51" y1="122.08" y2="122.08"/>
+   <line x1="45" x2="51" y1="125.34" y2="125.34"/>
+   <line x1="45" x2="51" y1="128.6" y2="128.6"/>
+   <line x1="45" x2="51" y1="131.86" y2="131.86"/>
+   <line x1="45" x2="51" y1="135.12" y2="135.12"/>
+   <line x1="45" x2="51" y1="138.38" y2="138.38"/>
+   <line x1="45" x2="51" y1="141.64" y2="141.64"/>
+   <line x1="39" x2="51" y1="144.9" y2="144.9"/>
+   <line x1="45" x2="51" y1="148.16" y2="148.16"/>
+   <line x1="45" x2="51" y1="151.42" y2="151.42"/>
+   <line x1="45" x2="51" y1="154.68" y2="154.68"/>
+   <line x1="45" x2="51" y1="157.94" y2="157.94"/>
+   <line x1="45" x2="51" y1="161.2" y2="161.2"/>
+   <line x1="45" x2="51" y1="164.46" y2="164.46"/>
+   <line x1="45" x2="51" y1="167.72" y2="167.72"/>
+   <line x1="45" x2="51" y1="170.98" y2="170.98"/>
+   <line x1="45" x2="51" y1="174.24" y2="174.24"/>
+   <line x1="38.985" x2="50.985" y1="177.96" y2="177.96"/>
+  </g>
+ </g><g tb:tag="progressBar">
+  <rect x="79.5" y="10.5" width="6" height="169" ry="1.12" stroke="#cecece" tb:tag="progressBorder"/>
+  <rect transform="scale(1,-1)" x="79.5" y="-180" width="6" height="62" ry="1.12" fill="#4d94e1" stroke="#4d94e1" tb:tag="progressFill"/>
+  <circle cx="82.5" cy="185" r="7" fill="#4d94e1" tb:tag="progressCircle"/>
+ </g><g transform="translate(0,167)" fill="#1c943e" style="display: none;" tb:tag="progress-indicator">
+  <path d="m75 10.562 10.5 6.062v-12.124z" style=""/>
+ </g><g transform="translate(12)" filter="url(#filter0_ii_3742_299961)" style="display: none;" tb:tag="value-box">
+  <rect x="22" y="164" width="56" height="28" rx="4" fill="#fffefe" fill-opacity=".75" tb:tag="value-box-background" style=""/>
+  <rect x="23" y="165" width="54" height="26" rx="3" stroke="#fff" stroke-width="2" style=""/>
+  <text x="49.853027" y="179.5625" fill="#727171" font-family="Roboto" font-size="14px" font-weight="500" text-anchor="middle" tb:tag="value-text" xml:space="preserve" style=""><tspan dominant-baseline="middle">37%</tspan></text>
+ </g><path d="m49.56 0s-25.56 0-25.56 33.5v164.18c0 1.3256 0.68053 2.3202 1.52 2.3202h72.96c0.83942 0 1.52-0.9946 1.52-2.3202v-164.18c0-33.5-25.107-33.5-25.107-33.5h-12.893zm25.487 40.6c-0.48969 0-0.88669 0.6268-0.88669 1.4v150.2c0 0.7732 0.39697 1.4 0.88669 1.4h5.5733c0.48969 0 0.88669-0.6268 0.88669-1.4v-150.2c0-0.7732-0.39697-1.4-0.88669-1.4z" fill-opacity="0" tb:tag="clickArea"/><path d="m8 200c2.2091 0 4-1.791 4-4v-192c0-2.2091-1.7909-4-4-4h-4c-2.2091 0-4 1.7909-4 4v192c0 2.209 1.7909 4 4 4h4z" fill="#93979B"/><path d="m8 200c2.2091 0 4-1.791 4-4v-192c0-2.2091-1.7909-4-4-4h-4c-2.2091 0-4 1.7909-4 4v192c0 2.209 1.7909 4 4 4h4z" fill="url(#paint1_linear_3742_299973)"/><path d="m8 198.5c1.3807 0 2.5-1.119 2.5-2.5v-192c0-1.3807-1.1193-2.5-2.5-2.5h-4c-1.3807 0-2.5 1.1193-2.5 2.5v192c0 1.381 1.1193 2.5 2.5 2.5h4z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><path d="m12 146c0 2.209 1.7908 4 3.9999 4h4c2.2092 0 4.0001-1.791 4.0001-4v-92c0-2.2091-1.7909-4-4-4h-4c-2.2091 0-4 1.7909-4 4v92z" fill="#647484"/><path d="m12 146c0 2.209 1.7908 4 3.9999 4h4c2.2092 0 4.0001-1.791 4.0001-4v-92c0-2.2091-1.7909-4-4-4h-4c-2.2091 0-4 1.7909-4 4v92z" fill="url(#paint2_linear_3742_299973)"/><path d="m13.5 146c0 1.38 1.1193 2.5 2.4999 2.5h4c1.3808 0 2.5001-1.119 2.5001-2.5v-92c0-1.3807-1.1193-2.5-2.5-2.5h-4c-1.3807 0-2.5 1.1193-2.5 2.5v92z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><defs>
+  <linearGradient id="paint0_linear_3742_299973" x1="100" x2="24" y1="100" y2="100.09" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#020202" stop-opacity=".35" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".02629"/>
+   <stop stop-color="#fff" stop-opacity=".12" offset=".11617"/>
+   <stop stop-color="#fff" stop-opacity=".3" offset=".49829"/>
+   <stop stop-color="#fff" stop-opacity=".12" offset=".88762"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".96591"/>
+   <stop stop-color="#020202" stop-opacity=".35" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint1_linear_3742_299973" x1="1.9297" x2="46.003" y1="-14.344" y2="205.53" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#020202" stop-opacity=".35" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".23574"/>
+   <stop stop-color="#fff" stop-opacity=".12" offset=".39937"/>
+   <stop stop-color="#fff" stop-opacity=".3" offset=".49829"/>
+   <stop stop-color="#fff" stop-opacity=".12" offset=".59721"/>
+   <stop stop-color="#020202" stop-opacity=".12" offset=".76303"/>
+   <stop stop-color="#020202" stop-opacity=".35" offset="1"/>
+  </linearGradient>
+  <linearGradient id="paint2_linear_3742_299973" x1="19.045" x2="14.639" y1="53.812" y2="145.03" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#020202" stop-opacity=".2" offset="0"/>
+   <stop stop-color="#020202" stop-opacity=".18" offset=".090959"/>
+   <stop stop-color="#020202" stop-opacity=".1" offset=".1"/>
+   <stop stop-color="#020202" stop-opacity=".08" offset=".20513"/>
+   <stop stop-color="#020202" stop-opacity=".05" offset=".21555"/>
+   <stop stop-color="#020202" stop-opacity=".02" offset=".36962"/>
+   <stop stop-color="#fff" stop-opacity=".01" offset=".37768"/>
+   <stop stop-color="#fff" stop-opacity=".01" offset=".62413"/>
+   <stop stop-color="#020202" stop-opacity=".02" offset=".6313"/>
+   <stop stop-color="#020202" stop-opacity=".05" offset=".77601"/>
+   <stop stop-color="#020202" stop-opacity=".08" offset=".7898"/>
+   <stop stop-color="#020202" stop-opacity=".1" offset=".9"/>
+   <stop stop-color="#020202" stop-opacity=".18" offset=".90846"/>
+   <stop stop-color="#020202" stop-opacity=".2" offset="1"/>
+  </linearGradient>
+  <filter id="filter0_ii_3742_299961" x="20" y="162" width="60" height="32" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+   <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+   <feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset dx="-2" dy="2"/>
+   <feGaussianBlur stdDeviation="3"/>
+   <feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"/>
+   <feColorMatrix values="0 0 0 0 0.445833 0 0 0 0 0.445833 0 0 0 0 0.445833 0 0 0 0.5 0"/>
+   <feBlend in2="shape" result="effect1_innerShadow_3742_299961"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset dx="2" dy="-2"/>
+   <feGaussianBlur stdDeviation="2"/>
+   <feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"/>
+   <feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.5 0"/>
+   <feBlend in2="effect1_innerShadow_3742_299961" result="effect2_innerShadow_3742_299961"/>
+  </filter>
+ </defs>
+</svg>
