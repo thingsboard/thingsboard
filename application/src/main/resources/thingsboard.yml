@@ -500,8 +500,6 @@ actors:
   statistics:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
-    # Frequency of printing the JS executor statistics
-    js_print_interval_ms: "${ACTORS_JS_STATISTICS_PRINT_INTERVAL_MS:10000}"
     # Actors statistic persistence frequency in milliseconds
     persist_frequency: "${ACTORS_STATISTICS_PERSIST_FREQUENCY:3600000}"
 

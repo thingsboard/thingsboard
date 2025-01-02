@@ -20,10 +20,14 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.stats.StatsCounter;
+import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.common.stats.StatsType;
 
 import java.util.Map;
 import java.util.UUID;
@@ -32,22 +36,31 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.String.format;
 
 @Slf4j
 public abstract class AbstractScriptInvokeService implements ScriptInvokeService {
 
-    protected final Map<UUID, BlockedScriptInfo> disabledScripts = new ConcurrentHashMap<>();
-    private final AtomicInteger pushedMsgs = new AtomicInteger(0);
-    private final AtomicInteger invokeMsgs = new AtomicInteger(0);
-    private final AtomicInteger evalMsgs = new AtomicInteger(0);
-    protected final AtomicInteger failedMsgs = new AtomicInteger(0);
-    protected final AtomicInteger timeoutMsgs = new AtomicInteger(0);
+    private static final String REQUESTS = "requests";
+    private static final String INVOKE_RESPONSES = "invoke_responses";
+    private static final String EVAL_RESPONSES = "eval_responses";
+    private static final String FAILURES = "failures";
+    private static final String TIMEOUTS = "timeouts";
 
-    private final FutureCallback<UUID> evalCallback = new ScriptStatCallback<>(evalMsgs, timeoutMsgs, failedMsgs);
-    private final FutureCallback<Object> invokeCallback = new ScriptStatCallback<>(invokeMsgs, timeoutMsgs, failedMsgs);
+    protected final Map<UUID, BlockedScriptInfo> disabledScripts = new ConcurrentHashMap<>();
+
+    private StatsCounter requestsCounter;
+    private StatsCounter invokeResponsesCounter;
+    private StatsCounter evalResponsesCounter;
+    private StatsCounter failuresCounter;
+    private StatsCounter timeoutsCounter;
+
+    private FutureCallback<UUID> evalCallback;
+    private FutureCallback<Object> invokeCallback;
+
+    @Autowired
+    private StatsFactory statsFactory;
 
     protected ScheduledExecutorService timeoutExecutorService;
 
@@ -76,6 +89,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
     protected abstract boolean isScriptPresent(UUID scriptId);
 
     protected abstract boolean isExecEnabled(TenantId tenantId);
+
     protected abstract void reportExecution(TenantId tenantId, CustomerId customerId);
 
     protected abstract ListenableFuture<UUID> doEvalScript(TenantId tenantId, ScriptType scriptType, String scriptBody, UUID scriptId, String[] argNames);
@@ -85,6 +99,14 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
     protected abstract void doRelease(UUID scriptId) throws Exception;
 
     public void init() {
+        String key = getStatsType().getName();
+        this.requestsCounter = statsFactory.createStatsCounter(key, REQUESTS);
+        this.invokeResponsesCounter = statsFactory.createStatsCounter(key, INVOKE_RESPONSES);
+        this.evalResponsesCounter = statsFactory.createStatsCounter(key, EVAL_RESPONSES);
+        this.failuresCounter = statsFactory.createStatsCounter(key, FAILURES);
+        this.timeoutsCounter = statsFactory.createStatsCounter(key, TIMEOUTS);
+        this.evalCallback = new ScriptStatCallback<>(evalResponsesCounter, timeoutsCounter, failuresCounter);
+        this.invokeCallback = new ScriptStatCallback<>(invokeResponsesCounter, timeoutsCounter, failuresCounter);
         if (getMaxEvalRequestsTimeout() > 0 || getMaxInvokeRequestsTimeout() > 0) {
             timeoutExecutorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("script-timeout");
         }
@@ -98,11 +120,11 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
 
     public void printStats() {
         if (isStatsEnabled()) {
-            int pushed = pushedMsgs.getAndSet(0);
-            int invoked = invokeMsgs.getAndSet(0);
-            int evaluated = evalMsgs.getAndSet(0);
-            int failed = failedMsgs.getAndSet(0);
-            int timedOut = timeoutMsgs.getAndSet(0);
+            int pushed = requestsCounter.getAndClear();
+            int invoked = invokeResponsesCounter.getAndClear();
+            int evaluated = evalResponsesCounter.getAndClear();
+            int failed = failuresCounter.getAndClear();
+            int timedOut = timeoutsCounter.getAndClear();
             if (pushed > 0 || invoked > 0 || evaluated > 0 || failed > 0 || timedOut > 0) {
                 log.info("{}: pushed [{}] received [{}] invoke [{}] eval [{}] failed [{}] timedOut [{}]",
                         getStatsName(), pushed, invoked + evaluated, invoked, evaluated, failed, timedOut);
@@ -117,7 +139,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
                 return error(format("Script body exceeds maximum allowed size of %s symbols", getMaxScriptBodySize()));
             }
             UUID scriptId = UUID.randomUUID();
-            pushedMsgs.incrementAndGet();
+            requestsCounter.increment();
             return withTimeoutAndStatsCallback(scriptId, null,
                     doEvalScript(tenantId, scriptType, scriptBody, scriptId, argNames), evalCallback, getMaxEvalRequestsTimeout());
         } else {
@@ -139,7 +161,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
                     return Futures.immediateFailedFuture(handleScriptException(scriptId, null, t));
                 }
                 reportExecution(tenantId, customerId);
-                pushedMsgs.incrementAndGet();
+                requestsCounter.increment();
                 log.trace("[{}] InvokeScript uuid {} with timeout {}ms", tenantId, scriptId, getMaxInvokeRequestsTimeout());
                 var task = doInvokeFunction(scriptId, args);
 
@@ -274,4 +296,6 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
     private <T> ListenableFuture<T> error(String message) {
         return Futures.immediateFailedFuture(new RuntimeException(message));
     }
+
+    protected abstract StatsType getStatsType();
 }

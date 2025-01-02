@@ -161,10 +161,8 @@ public class TbMsgGeneratorNode implements TbNode {
             prevMsg = ctx.newMsg(queueName, TbMsg.EMPTY_STRING, originatorId, msg.getCustomerId(), TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
         }
         if (initialized.get()) {
-            ctx.logJsEvalRequest();
             return Futures.transformAsync(scriptEngine.executeGenerateAsync(prevMsg), generated -> {
                 log.trace("generate process response, generated {}, config {}", generated, config);
-                ctx.logJsEvalResponse();
                 prevMsg = ctx.newMsg(queueName, generated.getType(), originatorId, msg.getCustomerId(), generated.getMetaData(), generated.getData());
                 return Futures.immediateFuture(prevMsg);
             }, MoreExecutors.directExecutor()); //usually it runs on js-executor-remote-callback thread pool
