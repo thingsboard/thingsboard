@@ -147,6 +147,22 @@ public class TbUtils {
                 byte[].class, int.class, int.class)));
         parserConfig.addImport("parseBytesToInt", new MethodStub(TbUtils.class.getMethod("parseBytesToInt",
                 byte[].class, int.class, int.class, boolean.class)));
+        parserConfig.addImport("parseBytesToUnsignedInt", new MethodStub(TbUtils.class.getMethod("parseBytesToUnsignedInt",
+                byte[].class)));
+        parserConfig.addImport("parseBytesToUnsignedInt", new MethodStub(TbUtils.class.getMethod("parseBytesToUnsignedInt",
+                byte[].class, int.class)));
+        parserConfig.addImport("parseBytesToUnsignedInt", new MethodStub(TbUtils.class.getMethod("parseBytesToUnsignedInt",
+                byte[].class, int.class, int.class)));
+        parserConfig.addImport("parseBytesToUnsignedInt", new MethodStub(TbUtils.class.getMethod("parseBytesToUnsignedInt",
+                byte[].class, int.class, int.class, boolean.class)));
+        parserConfig.addImport("parseBytesToUnsignedInt", new MethodStub(TbUtils.class.getMethod("parseBytesToUnsignedInt",
+                List.class)));
+        parserConfig.addImport("parseBytesToUnsignedInt", new MethodStub(TbUtils.class.getMethod("parseBytesToUnsignedInt",
+                List.class, int.class)));
+        parserConfig.addImport("parseBytesToUnsignedInt", new MethodStub(TbUtils.class.getMethod("parseBytesToUnsignedInt",
+                List.class, int.class, int.class)));
+        parserConfig.addImport("parseBytesToUnsignedInt", new MethodStub(TbUtils.class.getMethod("parseBytesToUnsignedInt",
+                List.class, int.class, int.class, boolean.class)));
         parserConfig.addImport("parseLittleEndianHexToLong", new MethodStub(TbUtils.class.getMethod("parseLittleEndianHexToLong",
                 String.class)));
         parserConfig.addImport("parseBigEndianHexToLong", new MethodStub(TbUtils.class.getMethod("parseBigEndianHexToLong",
@@ -257,6 +273,8 @@ public class TbUtils {
                 float.class, int.class)));
         parserConfig.addImport("hexToBytes", new MethodStub(TbUtils.class.getMethod("hexToBytes",
                 ExecutionContext.class, String.class)));
+        parserConfig.addImport("hexToByteArray", new MethodStub(TbUtils.class.getMethod("hexToByteArray",
+                String.class)));
         parserConfig.addImport("intToHex", new MethodStub(TbUtils.class.getMethod("intToHex",
                 Integer.class)));
         parserConfig.addImport("intToHex", new MethodStub(TbUtils.class.getMethod("intToHex",
@@ -297,6 +315,8 @@ public class TbUtils {
                 String.class)));
         parserConfig.addImport("base64ToBytes", new MethodStub(TbUtils.class.getMethod("base64ToBytes",
                 String.class)));
+        parserConfig.addImport("base64ToByteList", new MethodStub(TbUtils.class.getMethod("base64ToByteList",
+                ExecutionContext.class, String.class)));
         parserConfig.addImport("bytesToBase64", new MethodStub(TbUtils.class.getMethod("bytesToBase64",
                 byte[].class)));
         parserConfig.addImport("bytesToHex", new MethodStub(TbUtils.class.getMethod("bytesToHex",
@@ -364,7 +384,6 @@ public class TbUtils {
         parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
                 byte[].class, int.class, int.class)));
     }
-
     public static String btoa(String input) {
         return new String(Base64.getEncoder().encode(input.getBytes()));
     }
@@ -664,6 +683,19 @@ public class TbUtils {
     }
 
     public static ExecutionArrayList<Byte> hexToBytes(ExecutionContext ctx, String value) {
+        String hex = validateAndPrepareHex(value);
+
+        byte [] data = hexToBytes(hex);
+        return bytesToExecutionArrayList(ctx, data);
+    }
+
+    public static byte[] hexToByteArray(String value) {
+        String hex = validateAndPrepareHex(value);
+
+        return hexToBytes(hex);
+    }
+
+    private static String validateAndPrepareHex(String value) {
         String hex = prepareNumberString(value, true);
         if (hex == null) {
             throw new IllegalArgumentException("Hex string must be not empty!");
@@ -677,8 +709,7 @@ public class TbUtils {
             throw new NumberFormatException("Value: \"" + value + "\" is not numeric or hexDecimal format!");
         }
 
-        byte [] data = hexToBytes(hex);
-        return bytesToExecutionArrayList(ctx, data);
+        return hex;
     }
 
     public static List<Integer> printUnsignedBytes(ExecutionContext ctx, List<Byte> byteArray) {
@@ -839,6 +870,11 @@ public class TbUtils {
         return Base64.getDecoder().decode(input);
     }
 
+    public static ExecutionArrayList<Byte> base64ToByteList(ExecutionContext ctx, String input) {
+        byte[] bytes = Base64.getDecoder().decode(input);
+        return bytesToExecutionArrayList(ctx, bytes);
+    }
+
     public static int parseBytesToInt(List<Byte> data) {
         return parseBytesToInt(data, 0);
     }
@@ -877,6 +913,48 @@ public class TbUtils {
         bb.put(data, offset, length);
         bb.position(0);
         return bb.getInt();
+    }
+
+    public static long parseBytesToUnsignedInt(byte[] data) {
+        return parseBytesToUnsignedInt(data, 0);
+    }
+
+    public static long parseBytesToUnsignedInt(byte[] data, int offset) {
+        return parseBytesToUnsignedInt(data, offset, validateLength(data.length, offset, BYTES_LEN_INT_MAX));
+    }
+
+    public static long parseBytesToUnsignedInt(byte[] data, int offset, int length) {
+        return parseBytesToUnsignedInt(data, offset, length, true);
+    }
+
+    public static long parseBytesToUnsignedInt(byte[] data, int offset, int length, boolean bigEndian) {
+        validationNumberByLength(data, offset, length, BYTES_LEN_INT_MAX);
+
+        ByteBuffer bb = ByteBuffer.allocate(8);
+        if (!bigEndian) {
+            bb.order(ByteOrder.LITTLE_ENDIAN);
+        }
+        bb.position(bigEndian ? 8 - length : 0);
+        bb.put(data, offset, length);
+        bb.position(0);
+
+        return bb.getLong();
+    }
+
+    public static long parseBytesToUnsignedInt(List<Byte> data) {
+        return parseBytesToUnsignedInt(data, 0);
+    }
+
+    public static long parseBytesToUnsignedInt(List<Byte> data, int offset) {
+        return parseBytesToUnsignedInt(data, offset, validateLength(data.size(), offset, BYTES_LEN_INT_MAX));
+    }
+
+    public static long parseBytesToUnsignedInt(List<Byte> data, int offset, int length) {
+        return parseBytesToUnsignedInt(data, offset, length, true);
+    }
+
+    public static long parseBytesToUnsignedInt(List<Byte> data, int offset, int length, boolean bigEndian) {
+        return parseBytesToUnsignedInt(Bytes.toArray(data), offset, length, bigEndian);
     }
 
     public static long parseBytesToLong(List<Byte> data) {

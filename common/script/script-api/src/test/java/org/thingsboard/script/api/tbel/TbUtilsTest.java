@@ -34,12 +34,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import static java.lang.Character.MAX_RADIX;
 import static java.lang.Character.MIN_RADIX;
@@ -1097,6 +1092,98 @@ public class TbUtilsTest {
         expected = "BB53";
         actual = TbUtils.bytesToHex(expectedList);
         Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
+    void base64ToByteList_Test() {
+        String validInput = Base64.getEncoder().encodeToString(new byte[]{1, 2, 3, 4, 5});
+        ExecutionArrayList<Byte> result = TbUtils.base64ToByteList(ctx, validInput);
+        Assertions.assertEquals(5, result.size());
+        Assertions.assertArrayEquals(new Byte[]{1, 2, 3, 4, 5}, result.toArray());
+
+        String emptyInput = Base64.getEncoder().encodeToString(new byte[]{});
+        result = TbUtils.base64ToByteList(ctx, emptyInput);
+        Assertions.assertTrue(result.isEmpty());
+
+        String invalidInput = "NotAValidBase64String";
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            TbUtils.base64ToByteList(ctx, invalidInput);
+        });
+
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            TbUtils.base64ToByteList(ctx, null);
+        });
+    }
+
+    @Test
+    void hexToByteArray_Test() {
+        String validInput = "AABBCCDDEE";
+        byte[] expected = new byte[]{(byte) 0xAA, (byte) 0xBB, (byte) 0xCC, (byte) 0xDD, (byte) 0xEE};
+        byte[] result = TbUtils.hexToByteArray(validInput);
+        Assertions.assertArrayEquals(expected, result);
+
+        String emptyInput = "";
+        Exception emptyException = Assertions.assertThrows(IllegalArgumentException.class, () -> TbUtils.hexToByteArray(emptyInput));
+        Assertions.assertEquals("Hex string must be not empty!", emptyException.getMessage());
+
+        String oddLengthInput = "AABBCCDD1";
+        Exception oddLengthException = Assertions.assertThrows(IllegalArgumentException.class, () -> TbUtils.hexToByteArray(oddLengthInput));
+        Assertions.assertEquals("Hex string must be even-length.", oddLengthException.getMessage());
+
+        String invalidCharsInput = "AABBCCGG";
+        Exception invalidCharsException = Assertions.assertThrows(NumberFormatException.class, () -> TbUtils.hexToByteArray(invalidCharsInput));
+        Assertions.assertEquals("Value: \"AABBCCGG\" is not numeric or hexDecimal format!", invalidCharsException.getMessage());
+
+        Exception nullException = Assertions.assertThrows(IllegalArgumentException.class, () -> TbUtils.hexToByteArray(null));
+        Assertions.assertEquals("Hex string must be not empty!", nullException.getMessage());
+    }
+
+    @Test
+    void parseBytesToUnsignedInt_Array_Test() {
+        byte[] data = {0x00, 0x00, 0x01, 0x02};
+        Assertions.assertEquals(258L, TbUtils.parseBytesToUnsignedInt(data));
+        Assertions.assertEquals(258L, TbUtils.parseBytesToUnsignedInt(data, 1));
+        Assertions.assertEquals(258L, TbUtils.parseBytesToUnsignedInt(data, 2, 2));
+
+        byte[] bigEndianData = {0x01, 0x02, 0x03, 0x04};
+        Assertions.assertEquals(16909060L, TbUtils.parseBytesToUnsignedInt(bigEndianData, 0, 4, true));
+        Assertions.assertEquals(67305985L, TbUtils.parseBytesToUnsignedInt(bigEndianData, 0, 4, false));
+
+        Assertions.assertEquals(0L, TbUtils.parseBytesToUnsignedInt(data, 0, 0, true));
+
+        byte[] zeros = {0x00, 0x00, 0x00, 0x00};
+        Assertions.assertEquals(0L, TbUtils.parseBytesToUnsignedInt(zeros, 0, 4));
+
+        Assertions.assertEquals(131844L, TbUtils.parseBytesToUnsignedInt(bigEndianData, 1, 3));
+        Assertions.assertEquals(258L, TbUtils.parseBytesToUnsignedInt(bigEndianData, 0, 2));
+
+        Assertions.assertThrows(IllegalArgumentException.class, () -> TbUtils.parseBytesToUnsignedInt(data, 5));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> TbUtils.parseBytesToUnsignedInt(data, 0, 5));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> TbUtils.parseBytesToUnsignedInt(data, 0, 9));
+    }
+
+    @Test
+    void parseBytesToUnsignedInt_List_Test() {
+        List<Byte> data = List.of((byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0x02);
+        Assertions.assertEquals(258L, TbUtils.parseBytesToUnsignedInt(data));
+        Assertions.assertEquals(258L, TbUtils.parseBytesToUnsignedInt(data, 1));
+        Assertions.assertEquals(258L, TbUtils.parseBytesToUnsignedInt(data, 2, 2));
+
+        List<Byte> bigEndianData = List.of((byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04);
+        Assertions.assertEquals(16909060L, TbUtils.parseBytesToUnsignedInt(bigEndianData, 0, 4, true));
+        Assertions.assertEquals(67305985L, TbUtils.parseBytesToUnsignedInt(bigEndianData, 0, 4, false));
+
+        Assertions.assertEquals(0L, TbUtils.parseBytesToUnsignedInt(data, 0, 0, true));
+
+        List<Byte> zeros = List.of((byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00);
+        Assertions.assertEquals(0L, TbUtils.parseBytesToUnsignedInt(zeros, 0, 4));
+
+        Assertions.assertEquals(131844L, TbUtils.parseBytesToUnsignedInt(bigEndianData, 1, 3));
+        Assertions.assertEquals(258L, TbUtils.parseBytesToUnsignedInt(bigEndianData, 0, 2));
+
+        Assertions.assertThrows(IllegalArgumentException.class, () -> TbUtils.parseBytesToUnsignedInt(data, 5));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> TbUtils.parseBytesToUnsignedInt(data, 0, 5));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> TbUtils.parseBytesToUnsignedInt(data, 0, 9));
     }
 
     private static List<Byte> toList(byte[] data) {
