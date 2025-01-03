@@ -141,6 +141,31 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
         return cfLinks;
     }
 
+
+    @Override
+    public void updateCalculatedFieldLinks(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
+        log.debug("Update calculated field links per entity for calculated field: [{}]", calculatedFieldId);
+        calculatedFieldFetchLock.lock();
+        try {
+            List<CalculatedFieldLink> cfLinks = getCalculatedFieldLinks(tenantId, calculatedFieldId);
+            if (cfLinks != null && !cfLinks.isEmpty()) {
+                cfLinks.forEach(link -> {
+                    entityIdCalculatedFieldLinks.compute(link.getEntityId(), (id, existingList) -> {
+                        if (existingList == null) {
+                            existingList = new ArrayList<>();
+                        } else if (!(existingList instanceof ArrayList)) {
+                            existingList = new ArrayList<>(existingList);
+                        }
+                        existingList.add(link);
+                        return existingList;
+                    });
+                });
+            }
+        } finally {
+            calculatedFieldFetchLock.unlock();
+        }
+    }
+
     @Override
     public CalculatedFieldCtx getCalculatedFieldCtx(TenantId tenantId, CalculatedFieldId calculatedFieldId, TbelInvokeService tbelInvokeService) {
         CalculatedFieldCtx ctx = calculatedFieldsCtx.get(calculatedFieldId);

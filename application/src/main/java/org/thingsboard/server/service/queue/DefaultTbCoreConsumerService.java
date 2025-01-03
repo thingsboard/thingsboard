@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.LifecycleEvent;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -87,6 +88,7 @@ import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.service.cf.CalculatedFieldCache;
 import org.thingsboard.server.service.cf.CalculatedFieldExecutionService;
 import org.thingsboard.server.service.notification.NotificationSchedulerService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
@@ -109,6 +111,7 @@ import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpd
 import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -181,8 +184,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         NotificationRuleProcessor notificationRuleProcessor,
                                         TbImageService imageService,
                                         RuleEngineCallService ruleEngineCallService,
-                                        CalculatedFieldExecutionService calculatedFieldExecutionService) {
-        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService,
+                                        CalculatedFieldExecutionService calculatedFieldExecutionService,
+                                        CalculatedFieldCache calculatedFieldCache) {
+        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, calculatedFieldCache, apiUsageStateService, partitionService,
                 eventPublisher, jwtSettingsService);
         this.stateService = stateService;
         this.localSubscriptionService = localSubscriptionService;
@@ -412,6 +416,10 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             callback.onSuccess();
         } else if (toCoreNotification.hasResourceCacheInvalidateMsg()) {
             forwardToResourceService(toCoreNotification.getResourceCacheInvalidateMsg(), callback);
+        } else if (toCoreNotification.hasEntityProfileUpdateMsg()) {
+            processEntityProfileUpdateMsg(toCoreNotification.getEntityProfileUpdateMsg());
+        } else if (toCoreNotification.hasProfileEntityMsg()) {
+            processProfileEntityMsg(toCoreNotification.getProfileEntityMsg());
         }
         if (statsEnabled) {
             stats.log(toCoreNotification);
@@ -528,6 +536,28 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             }
         }).forEach(imageService::evictETags);
         callback.onSuccess();
+    }
+
+    private void processEntityProfileUpdateMsg(TransportProtos.EntityProfileUpdateMsgProto profileUpdateMsg) {
+        var tenantId = toTenantId(profileUpdateMsg.getTenantIdMSB(), profileUpdateMsg.getTenantIdLSB());
+        var entityId = EntityIdFactory.getByTypeAndUuid(profileUpdateMsg.getEntityType(), new UUID(profileUpdateMsg.getEntityIdMSB(), profileUpdateMsg.getEntityIdLSB()));
+        var oldProfile = EntityIdFactory.getByTypeAndUuid(profileUpdateMsg.getEntityProfileType(), new UUID(profileUpdateMsg.getOldProfileIdMSB(), profileUpdateMsg.getOldProfileIdLSB()));
+        var newProfile = EntityIdFactory.getByTypeAndUuid(profileUpdateMsg.getEntityProfileType(), new UUID(profileUpdateMsg.getNewProfileIdMSB(), profileUpdateMsg.getNewProfileIdLSB()));
+        calculatedFieldCache.getEntitiesByProfile(tenantId, oldProfile).remove(entityId);
+        calculatedFieldCache.getEntitiesByProfile(tenantId, newProfile).add(entityId);
+    }
+
+    private void processProfileEntityMsg(TransportProtos.ProfileEntityMsgProto profileEntityMsg) {
+        var tenantId = toTenantId(profileEntityMsg.getTenantIdMSB(), profileEntityMsg.getTenantIdLSB());
+        var entityId = EntityIdFactory.getByTypeAndUuid(profileEntityMsg.getEntityType(), new UUID(profileEntityMsg.getEntityIdMSB(), profileEntityMsg.getEntityIdLSB()));
+        var profileId = EntityIdFactory.getByTypeAndUuid(profileEntityMsg.getEntityProfileType(), new UUID(profileEntityMsg.getProfileIdMSB(), profileEntityMsg.getProfileIdLSB()));
+        boolean added = profileEntityMsg.getAdded();
+        Set<EntityId> entitiesByProfile = calculatedFieldCache.getEntitiesByProfile(tenantId, profileId);
+        if (added) {
+            entitiesByProfile.add(entityId);
+        } else {
+            entitiesByProfile.remove(entityId);
+        }
     }
 
     private void forwardToSubMgrService(SubscriptionMgrMsgProto msg, TbCallback callback) {
@@ -688,12 +718,12 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
 
     private void forwardToCalculatedFieldService(TransportProtos.EntityProfileUpdateMsgProto profileUpdateMsg, TbCallback callback) {
         var tenantId = toTenantId(profileUpdateMsg.getTenantIdMSB(), profileUpdateMsg.getTenantIdLSB());
-        var entityId = EntityIdFactory.getByTypeAndUuid(profileUpdateMsg.getEntityProfileType(), new UUID(profileUpdateMsg.getEntityIdMSB(), profileUpdateMsg.getEntityIdLSB()));
+        var entityId = EntityIdFactory.getByTypeAndUuid(profileUpdateMsg.getEntityType(), new UUID(profileUpdateMsg.getEntityIdMSB(), profileUpdateMsg.getEntityIdLSB()));
         ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onEntityProfileChangedMsg(profileUpdateMsg, callback));
         DonAsynchron.withCallback(future,
                 __ -> callback.onSuccess(),
                 t -> {
-                    log.warn("[{}] Failed to process device type updated message for device [{}]", tenantId.getId(), entityId.getId(), t);
+                    log.warn("[{}] Failed to process entity profile updated message for entity [{}]", tenantId.getId(), entityId.getId(), t);
                     callback.onFailure(t);
                 });
     }

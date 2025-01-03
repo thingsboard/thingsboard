@@ -1620,6 +1620,8 @@ message ToCoreNotificationMsg {
   FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 12 [deprecated = true];
   ResourceCacheInvalidateMsg resourceCacheInvalidateMsg = 13;
   RestApiCallResponseMsgProto restApiCallResponseMsg = 50;
+  EntityProfileUpdateMsgProto entityProfileUpdateMsg = 51;
+  ProfileEntityMsgProto profileEntityMsg = 52;
 }
 
 /* Messages to Edge queue that are handled by ThingsBoard Core Service */

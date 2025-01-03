@@ -71,7 +71,6 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtx;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
@@ -105,7 +104,6 @@ import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 import static org.thingsboard.server.common.util.ProtoUtils.fromObjectProto;
 import static org.thingsboard.server.common.util.ProtoUtils.toObjectProto;
 
-@TbCoreComponent
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -117,7 +115,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     private final CalculatedFieldCache calculatedFieldCache;
     private final AttributesService attributesService;
     private final TimeseriesService timeseriesService;
-    private final RocksDBService rocksDBService;
+    //    private final RocksDBService rocksDBService;
     private final TbClusterService clusterService;
     private final TbelInvokeService tbelInvokeService;
 
@@ -213,8 +211,9 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
 
     private void restoreState(CalculatedField cf, EntityId entityId) {
         CalculatedFieldEntityCtxId ctxId = new CalculatedFieldEntityCtxId(cf.getId().getId(), entityId.getId());
-        String storedState = rocksDBService.get(JacksonUtil.writeValueAsString(ctxId));
+//        String storedState = rocksDBService.get(JacksonUtil.writeValueAsString(ctxId));
 
+        String storedState = null;
         if (storedState != null) {
             CalculatedFieldEntityCtx restoredCtx = JacksonUtil.fromString(storedState, CalculatedFieldEntityCtx.class);
             states.put(ctxId, restoredCtx);
@@ -313,13 +312,13 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             if (calculatedFieldIds != null) {
                 calculatedFieldIds.remove(calculatedFieldId);
             }
-            calculatedFieldCache.evict(calculatedFieldId);
+//            calculatedFieldCache.evict(calculatedFieldId);
             states.keySet().removeIf(ctxId -> ctxId.cfId().equals(calculatedFieldId.getId()));
             List<String> statesToRemove = states.keySet().stream()
                     .filter(ctxId -> ctxId.cfId().equals(calculatedFieldId.getId()))
                     .map(JacksonUtil::writeValueAsString)
                     .toList();
-            rocksDBService.deleteAll(statesToRemove);
+//            rocksDBService.deleteAll(statesToRemove);
         } catch (Exception e) {
             log.trace("Failed to delete calculated field: [{}]", calculatedFieldId, e);
             callback.onFailure(e);
@@ -414,7 +413,6 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             }
             default -> updateOrInitializeState(calculatedFieldCtx, cfEntityId, argumentValues, calculatedFieldIds);
         }
-        log.info("Successfully updated telemetry for calculatedFieldId: [{}]", calculatedFieldId);
     }
 
     @Override
@@ -423,7 +421,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             TenantId tenantId = TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
             CalculatedFieldId calculatedFieldId = new CalculatedFieldId(new UUID(proto.getCalculatedFieldIdMSB(), proto.getCalculatedFieldIdLSB()));
             EntityId entityId = EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
-
+            log.info("Received CalculatedFieldStateMsgProto for processing: tenantId=[{}], calculatedFieldId=[{}], entityId=[{}]", tenantId, calculatedFieldId, entityId);
             if (proto.getClear()) {
                 clearState(tenantId, calculatedFieldId, entityId);
                 return;
@@ -431,7 +429,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
 
             List<CalculatedFieldId> calculatedFieldIds = proto.getCalculatedFieldsList().stream()
                     .map(cfIdProto -> new CalculatedFieldId(new UUID(cfIdProto.getCalculatedFieldIdMSB(), cfIdProto.getCalculatedFieldIdLSB())))
-                    .toList();
+                    .collect(Collectors.toCollection(ArrayList::new));
             Map<String, ArgumentEntry> argumentsMap = proto.getArgumentsMap().entrySet().stream()
                     .collect(Collectors.toMap(Map.Entry::getKey, entry -> fromArgumentEntryProto(entry.getValue())));
 
@@ -451,8 +449,8 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             EntityId newProfileId = EntityIdFactory.getByTypeAndUuid(proto.getEntityProfileType(), new UUID(proto.getNewProfileIdMSB(), proto.getNewProfileIdLSB()));
             log.info("Received EntityProfileUpdateMsgProto for processing: tenantId=[{}], entityId=[{}]", tenantId, entityId);
 
-            calculatedFieldCache.getEntitiesByProfile(tenantId, oldProfileId).remove(entityId);
-            calculatedFieldCache.getEntitiesByProfile(tenantId, newProfileId).add(entityId);
+//            calculatedFieldCache.getEntitiesByProfile(tenantId, oldProfileId).remove(entityId);
+//            calculatedFieldCache.getEntitiesByProfile(tenantId, newProfileId).add(entityId);
 
             calculatedFieldService.findCalculatedFieldIdsByEntityId(tenantId, oldProfileId)
                     .forEach(cfId -> clearState(tenantId, cfId, entityId));
@@ -472,15 +470,18 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             log.info("Received ProfileEntityMsgProto for processing: tenantId=[{}], entityId=[{}]", tenantId, entityId);
             if (proto.getDeleted()) {
                 log.info("Executing profile entity deleted msg,  tenantId=[{}], entityId=[{}]", tenantId, entityId);
-                calculatedFieldCache.getEntitiesByProfile(tenantId, profileId).remove(entityId);
+//                calculatedFieldCache.getEntitiesByProfile(tenantId, profileId).remove(entityId);
+
+
                 List<CalculatedFieldId> calculatedFieldIds = Stream.concat(
                         calculatedFieldCache.getCalculatedFieldLinksByEntityId(tenantId, entityId).stream().map(CalculatedFieldLink::getCalculatedFieldId),
                         calculatedFieldCache.getCalculatedFieldLinksByEntityId(tenantId, profileId).stream().map(CalculatedFieldLink::getCalculatedFieldId)
                 ).toList();
+
                 calculatedFieldIds.forEach(cfId -> clearState(tenantId, cfId, entityId));
             } else {
                 log.info("Executing profile entity added msg,  tenantId=[{}], entityId=[{}]", tenantId, entityId);
-                calculatedFieldCache.getEntitiesByProfile(tenantId, profileId).add(entityId);
+//                calculatedFieldCache.getEntitiesByProfile(tenantId, profileId).add(entityId);
                 initializeStateForEntityByProfile(tenantId, entityId, profileId, callback);
             }
         } catch (Exception e) {
@@ -494,7 +495,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             log.warn("Executing clearState, calculatedFieldId=[{}], entityId=[{}]", calculatedFieldId, entityId);
             CalculatedFieldEntityCtxId ctxId = new CalculatedFieldEntityCtxId(calculatedFieldId.getId(), entityId.getId());
             states.remove(ctxId);
-            rocksDBService.delete(JacksonUtil.writeValueAsString(ctxId));
+//            rocksDBService.delete(JacksonUtil.writeValueAsString(ctxId));
         } else {
             sendClearCalculatedFieldStateMsg(tenantId, calculatedFieldId, entityId);
         }
@@ -558,13 +559,14 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
                 Consumer<CalculatedFieldState> performUpdateState = (state) -> {
                     if (state.updateState(argumentsMap)) {
                         calculatedFieldEntityCtx.setState(state);
-                        rocksDBService.put(JacksonUtil.writeValueAsString(entityCtxId), JacksonUtil.writeValueAsString(calculatedFieldEntityCtx));
+//                        rocksDBService.put(JacksonUtil.writeValueAsString(entityCtxId), JacksonUtil.writeValueAsString(calculatedFieldEntityCtx));
                         Map<String, ArgumentEntry> arguments = state.getArguments();
                         boolean allArgsPresent = arguments.keySet().containsAll(calculatedFieldCtx.getArguments().keySet()) &&
                                 !arguments.containsValue(SingleValueArgumentEntry.EMPTY) && !arguments.containsValue(TsRollingArgumentEntry.EMPTY);
                         if (allArgsPresent) {
                             performCalculation(calculatedFieldCtx, state, entityId, calculatedFieldIds);
                         }
+                        log.info("Successfully updated state: calculatedFieldId=[{}], entityId=[{}]", calculatedFieldCtx.getCfId(), entityId);
                     }
                     updateFuture.complete(null);
                 };
@@ -633,6 +635,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             calculatedFieldIds.add(calculatedFieldId);
             TbMsg msg = TbMsg.newMsg().type(msgType).originator(originatorId).calculatedFieldIds(calculatedFieldIds).metaData(md).data(JacksonUtil.writeValueAsString(payload)).build();
             clusterService.pushMsgToRuleEngine(tenantId, originatorId, msg, null);
+            log.info("Pushed message to rule engine: originatorId=[{}]", originatorId);
         } catch (Exception e) {
             log.warn("[{}] Failed to push message to rule engine. CalculatedFieldResult: {}", originatorId, calculatedFieldResult, e);
         }
@@ -715,6 +718,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             ));
         }
 
+        log.info("Sending calculated field state msg from entityId [{}]", entityId);
         clusterService.pushMsgToCore(tenantId, calculatedFieldId, TransportProtos.ToCoreMsg.newBuilder().setCalculatedFieldStateMsg(msgBuilder).build(), null);
     }
 
@@ -790,11 +794,11 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     }
 
     private CalculatedFieldEntityCtx fetchCalculatedFieldEntityState(CalculatedFieldEntityCtxId entityCtxId, CalculatedFieldType cfType) {
-        String stateStr = rocksDBService.get(JacksonUtil.writeValueAsString(entityCtxId));
-        if (stateStr == null) {
-            return new CalculatedFieldEntityCtx(entityCtxId, createStateByType(cfType));
-        }
-        return JacksonUtil.fromString(stateStr, CalculatedFieldEntityCtx.class);
+//        String stateStr = rocksDBService.get(JacksonUtil.writeValueAsString(entityCtxId));
+//        if (stateStr == null) {
+        return new CalculatedFieldEntityCtx(entityCtxId, createStateByType(cfType));
+//        }
+//        return JacksonUtil.fromString(stateStr, CalculatedFieldEntityCtx.class);
     }
 
     private ObjectNode createJsonPayload(CalculatedFieldResult calculatedFieldResult) {

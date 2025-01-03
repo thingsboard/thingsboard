@@ -34,6 +34,8 @@ public interface CalculatedFieldCache {
 
     List<CalculatedFieldLink> getCalculatedFieldLinksByEntityId(TenantId tenantId, EntityId entityId);
 
+    void updateCalculatedFieldLinks(TenantId tenantId, CalculatedFieldId calculatedFieldId);
+
     CalculatedFieldCtx getCalculatedFieldCtx(TenantId tenantId, CalculatedFieldId calculatedFieldId, TbelInvokeService tbelInvokeService);
 
     Set<EntityId> getEntitiesByProfile(TenantId tenantId, EntityId entityId);
