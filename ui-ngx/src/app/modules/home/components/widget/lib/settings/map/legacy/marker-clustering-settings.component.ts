@@ -29,64 +29,68 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
-import {
-  OpenStreetMapProvider,
-  OpenStreetMapProviderSettings,
-  openStreetMapProviderTranslationMap
-} from '@home/components/widget/lib/maps-legacy/map-models';
+import { MarkerClusteringSettings } from '@home/components/widget/lib/maps-legacy/map-models';
+import { WidgetService } from '@core/http/widget.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-openstreet-map-provider-settings',
-  templateUrl: './openstreet-map-provider-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
+  selector: 'tb-marker-clustering-settings',
+  templateUrl: './marker-clustering-settings.component.html',
+  styleUrls: ['./../../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => OpenStreetMapProviderSettingsComponent),
+      useExisting: forwardRef(() => MarkerClusteringSettingsComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => OpenStreetMapProviderSettingsComponent),
+      useExisting: forwardRef(() => MarkerClusteringSettingsComponent),
       multi: true
     }
   ]
 })
-export class OpenStreetMapProviderSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
+export class MarkerClusteringSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 
   @Input()
   disabled: boolean;
 
-  private modelValue: OpenStreetMapProviderSettings;
+  private modelValue: MarkerClusteringSettings;
+
+  functionScopeVariables = this.widgetService.getWidgetScopeVariables();
 
   private propagateChange = null;
 
-  public providerSettingsFormGroup: UntypedFormGroup;
-
-  mapProviders = Object.values(OpenStreetMapProvider);
-
-  openStreetMapProviderTranslations = openStreetMapProviderTranslationMap;
+  public markerClusteringSettingsFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
+              private widgetService: WidgetService,
               private fb: UntypedFormBuilder,
               private destroyRef: DestroyRef) {
     super(store);
   }
 
   ngOnInit(): void {
-    this.providerSettingsFormGroup = this.fb.group({
-      mapProvider: [null, [Validators.required]],
-      useCustomProvider: [null, []],
-      customProviderTileUrl: [null, [Validators.required]]
+    this.markerClusteringSettingsFormGroup = this.fb.group({
+      useClusterMarkers: [null, []],
+      zoomOnClick: [null, []],
+      maxZoom: [null, [Validators.min(0), Validators.max(18)]],
+      maxClusterRadius: [null, [Validators.min(0)]],
+      animate: [null, []],
+      spiderfyOnMaxZoom: [null, []],
+      showCoverageOnHover: [null, []],
+      chunkedLoading: [null, []],
+      removeOutsideVisibleBounds: [null, []],
+      useIconCreateFunction: [null, []],
+      clusterMarkerFunction: [null, []]
     });
-    this.providerSettingsFormGroup.valueChanges.pipe(
+    this.markerClusteringSettingsFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.updateModel();
     });
-    this.providerSettingsFormGroup.get('useCustomProvider').valueChanges.pipe(
+    this.markerClusteringSettingsFormGroup.get('useClusterMarkers').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.updateValidators(true);
@@ -104,42 +108,44 @@ export class OpenStreetMapProviderSettingsComponent extends PageComponent implem
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (isDisabled) {
-      this.providerSettingsFormGroup.disable({emitEvent: false});
+      this.markerClusteringSettingsFormGroup.disable({emitEvent: false});
     } else {
-      this.providerSettingsFormGroup.enable({emitEvent: false});
+      this.markerClusteringSettingsFormGroup.enable({emitEvent: false});
       this.updateValidators(false);
     }
   }
 
-  writeValue(value: OpenStreetMapProviderSettings): void {
+  writeValue(value: MarkerClusteringSettings): void {
     this.modelValue = value;
-    this.providerSettingsFormGroup.patchValue(
+    this.markerClusteringSettingsFormGroup.patchValue(
       value, {emitEvent: false}
     );
     this.updateValidators(false);
   }
 
   public validate(c: UntypedFormControl) {
-    return this.providerSettingsFormGroup.valid ? null : {
-      openStreetProviderSettings: {
+    return this.markerClusteringSettingsFormGroup.valid ? null : {
+      markerClusteringSettings: {
         valid: false,
       },
     };
   }
 
   private updateModel() {
-    const value: OpenStreetMapProviderSettings = this.providerSettingsFormGroup.value;
+    const value: MarkerClusteringSettings = this.markerClusteringSettingsFormGroup.value;
     this.modelValue = value;
     this.propagateChange(this.modelValue);
   }
 
   private updateValidators(emitEvent?: boolean): void {
-    const useCustomProvider: boolean = this.providerSettingsFormGroup.get('useCustomProvider').value;
-    if (useCustomProvider) {
-      this.providerSettingsFormGroup.get('customProviderTileUrl').enable({emitEvent});
-    } else {
-      this.providerSettingsFormGroup.get('customProviderTileUrl').disable({emitEvent});
+    const useClusterMarkers: boolean = this.markerClusteringSettingsFormGroup.get('useClusterMarkers').value;
+
+    this.markerClusteringSettingsFormGroup.disable({emitEvent: false});
+    this.markerClusteringSettingsFormGroup.get('useClusterMarkers').enable({emitEvent: false});
+
+    if (useClusterMarkers) {
+      this.markerClusteringSettingsFormGroup.enable({emitEvent: false});
     }
-    this.providerSettingsFormGroup.get('customProviderTileUrl').updateValueAndValidity({emitEvent: false});
+    this.markerClusteringSettingsFormGroup.updateValueAndValidity({emitEvent: false});
   }
 }

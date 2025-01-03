@@ -36,7 +36,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 @Component({
   selector: 'tb-trip-animation-marker-settings',
   templateUrl: './trip-animation-marker-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
+  styleUrls: ['./../../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

@@ -22,65 +22,58 @@ import {
   UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  Validator,
-  Validators
+  Validator, Validators
 } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
-import {
-  TencentMapProviderSettings,
-  TencentMapType,
-  tencentMapTypeProviderTranslationMap
-} from '@home/components/widget/lib/maps-legacy/map-models';
+import { PolylineSettings } from '@home/components/widget/lib/maps-legacy/map-models';
+import { WidgetService } from '@core/http/widget.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-tencent-map-provider-settings',
-  templateUrl: './tencent-map-provider-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
+  selector: 'tb-route-map-settings',
+  templateUrl: './route-map-settings.component.html',
+  styleUrls: ['./../../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TencentMapProviderSettingsComponent),
+      useExisting: forwardRef(() => RouteMapSettingsComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => TencentMapProviderSettingsComponent),
+      useExisting: forwardRef(() => RouteMapSettingsComponent),
       multi: true
     }
   ]
 })
-export class TencentMapProviderSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
+export class RouteMapSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 
   @Input()
   disabled: boolean;
 
-  private modelValue: TencentMapProviderSettings;
+  private modelValue: PolylineSettings;
 
   private propagateChange = null;
 
-  public providerSettingsFormGroup: UntypedFormGroup;
-
-  tencentMapTypes = Object.values(TencentMapType);
-
-  tencentMapTypeTranslations = tencentMapTypeProviderTranslationMap;
+  public routeMapSettingsFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
+              private widgetService: WidgetService,
               private fb: UntypedFormBuilder,
               private destroyRef: DestroyRef) {
     super(store);
   }
 
   ngOnInit(): void {
-    this.providerSettingsFormGroup = this.fb.group({
-      tmApiKey: [null, [Validators.required]],
-      tmDefaultMapType: [null, [Validators.required]]
+    this.routeMapSettingsFormGroup = this.fb.group({
+      strokeWeight: [null, [Validators.min(0)]],
+      strokeOpacity: [null, [Validators.min(0), Validators.max(1)]]
     });
-    this.providerSettingsFormGroup.valueChanges.pipe(
+    this.routeMapSettingsFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.updateModel();
@@ -97,29 +90,29 @@ export class TencentMapProviderSettingsComponent extends PageComponent implement
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (isDisabled) {
-      this.providerSettingsFormGroup.disable({emitEvent: false});
+      this.routeMapSettingsFormGroup.disable({emitEvent: false});
     } else {
-      this.providerSettingsFormGroup.enable({emitEvent: false});
+      this.routeMapSettingsFormGroup.enable({emitEvent: false});
     }
   }
 
-  writeValue(value: TencentMapProviderSettings): void {
+  writeValue(value: PolylineSettings): void {
     this.modelValue = value;
-    this.providerSettingsFormGroup.patchValue(
+    this.routeMapSettingsFormGroup.patchValue(
       value, {emitEvent: false}
     );
   }
 
   public validate(c: UntypedFormControl) {
-    return this.providerSettingsFormGroup.valid ? null : {
-      tencentMapProviderSettings: {
+    return this.routeMapSettingsFormGroup.valid ? null : {
+      routeMapSettings: {
         valid: false,
       },
     };
   }
 
   private updateModel() {
-    const value: TencentMapProviderSettings = this.providerSettingsFormGroup.value;
+    const value: PolylineSettings = this.routeMapSettingsFormGroup.value;
     this.modelValue = value;
     this.propagateChange(this.modelValue);
   }

@@ -36,7 +36,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 @Component({
   selector: 'tb-common-map-settings',
   templateUrl: './common-map-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
+  styleUrls: ['./../../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

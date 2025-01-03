@@ -183,6 +183,7 @@ import {
 import {
   DynamicFormArrayComponent
 } from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-array.component';
+import { MapSettingsComponent } from '@home/components/widget/lib/settings/common/map/map-settings.component';
 
 @NgModule({
   declarations: [
@@ -252,7 +253,8 @@ import {
     DynamicFormSelectItemsComponent,
     DynamicFormSelectItemRowComponent,
     DynamicFormComponent,
-    DynamicFormArrayComponent
+    DynamicFormArrayComponent,
+    MapSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -326,7 +328,8 @@ import {
     DynamicFormSelectItemsComponent,
     DynamicFormSelectItemRowComponent,
     DynamicFormComponent,
-    DynamicFormArrayComponent
+    DynamicFormArrayComponent,
+    MapSettingsComponent
   ],
   providers: [
     ColorSettingsComponentService,

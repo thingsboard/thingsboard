@@ -26,7 +26,7 @@
     </div>
   </div>
   <div *ngIf="widgetConfigMode === widgetConfigModes.advanced; else basicMode" class="tb-widget-config-content">
-    <div *ngIf="widgetType !== widgetTypes.static" [class.!hidden]="selectedOption !== 'data'" class="mat-content">
+    <div *ngIf="displayData" [class.!hidden]="selectedOption !== 'data'" class="mat-content">
       <ng-container *ngTemplateOutlet="data"></ng-container>
     </div>
     <div [class.!hidden]="selectedOption !== 'appearance'" class="mat-content">

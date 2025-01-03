@@ -1,0 +1,25 @@
+{
+  "fqn": "map",
+  "name": "Map",
+  "deprecated": false,
+  "image": null,
+  "description": null,
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 7.5,
+    "sizeY": 5.5,
+    "resources": [],
+    "templateHtml": "<tb-map-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-map-widget>",
+    "templateCss": "#container {\n    overflow: auto;\n}\n\n.tbDatasource-container {\n    margin: 5px;\n    padding: 8px;\n}\n\n.tbDatasource-title {\n    font-size: 1.200rem;\n    font-weight: 500;\n    padding-bottom: 10px;\n}\n\n.tbDatasource-table {\n    width: 100%;\n    box-shadow: 0 0 10px #ccc;\n    border-collapse: collapse;\n    white-space: nowrap;\n    font-size: 1.000rem;\n    color: #757575;\n}\n\n.tbDatasource-table td {\n    position: relative;\n    border-top: 1px solid rgba(0, 0, 0, 0.12);\n    border-bottom: 1px solid rgba(0, 0, 0, 0.12);\n    padding: 0px 18px;\n    box-sizing: border-box;\n}",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.mapWidget.onInit();\n};\n\nself.typeParameters = function() {\n    return {\n        hideDataTab: true,\n        hideDataSettings: true,\n        previewWidth: '80%',\n        embedTitlePanel: true,\n        datasourcesOptional: true\n    };\n}\n",
+    "settingsForm": [],
+    "dataKeySettingsForm": [],
+    "settingsDirective": "tb-map-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-map-basic-config",
+    "defaultConfig": "{\"datasources\":[],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":true,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"mapType\":\"geoMap\",\"layers\":[{\"provider\":\"openstreet-map\",\"layerType\":\"openStreetMapnik\"},{\"provider\":\"openstreet-map\",\"layerType\":\"openStreetHot\"},{\"provider\":\"openstreet-map\",\"layerType\":\"esriWorldStreetMap\"},{\"provider\":\"openstreet-map\",\"layerType\":\"esriWorldTopoMap\"},{\"provider\":\"openstreet-map\",\"layerType\":\"esriWorldImagery\"},{\"provider\":\"openstreet-map\",\"layerType\":\"cartoDbPositron\"},{\"provider\":\"openstreet-map\",\"layerType\":\"cartoDbDarkMatter\"},{\"provider\":\"google-map\",\"layerType\":\"roadmap\",\"apiKey\":\"AIzaSyDoEx2kaGz3PxwbI9T7ccTSg5xjdw8Nw8Q\"},{\"provider\":\"google-map\",\"layerType\":\"satellite\",\"apiKey\":\"AIzaSyDoEx2kaGz3PxwbI9T7ccTSg5xjdw8Nw8Q\"},{\"provider\":\"google-map\",\"layerType\":\"hybrid\",\"apiKey\":\"AIzaSyDoEx2kaGz3PxwbI9T7ccTSg5xjdw8Nw8Q\"},{\"provider\":\"google-map\",\"layerType\":\"terrain\",\"apiKey\":\"AIzaSyDoEx2kaGz3PxwbI9T7ccTSg5xjdw8Nw8Q\"},{\"provider\":\"tencent-map\",\"layerType\":\"tencentNormal\"},{\"provider\":\"tencent-map\",\"layerType\":\"tencentSatellite\"},{\"provider\":\"tencent-map\",\"layerType\":\"tencentTerrain\"},{\"provider\":\"here\",\"layerType\":\"hereNormalDay\",\"apiKey\":\"kVXykxAfZ6LS4EbCTO02soFVfjA7HoBzNVVH9u7nzoE\"},{\"provider\":\"here\",\"layerType\":\"hereNormalNight\",\"apiKey\":\"kVXykxAfZ6LS4EbCTO02soFVfjA7HoBzNVVH9u7nzoE\"},{\"provider\":\"here\",\"layerType\":\"hereHybridDay\",\"apiKey\":\"kVXykxAfZ6LS4EbCTO02soFVfjA7HoBzNVVH9u7nzoE\"},{\"provider\":\"here\",\"layerType\":\"hereTerrainDay\",\"apiKey\":\"kVXykxAfZ6LS4EbCTO02soFVfjA7HoBzNVVH9u7nzoE\"},{\"provider\":\"custom\",\"tileUrl\":\"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png\",\"label\":\"Custom 1\"},{\"provider\":\"custom\",\"tileUrl\":\"http://a.tile2.opencyclemap.org/transport/{z}/{x}/{y}.png\",\"label\":\"Custom 2\"},{\"provider\":\"custom\",\"tileUrl\":\"http://b.tile2.opencyclemap.org/transport/{z}/{x}/{y}.png\",\"label\":\"Custom 3\"}],\"markers\":[],\"polygons\":[],\"circles\":[],\"additionalDataSources\":[],\"controlsPosition\":\"topleft\",\"zoomActions\":[\"scroll\",\"doubleClick\",\"controlButtons\"],\"fitMapBounds\":true,\"useDefaultCenterPosition\":false,\"defaultCenterPosition\":\"0,0\",\"defaultZoomLevel\":null,\"mapPageSize\":16384,\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"padding\":\"12px\"},\"title\":\"Map\",\"useDashboardTimewindow\":true,\"displayTimewindow\":true,\"showTitleIcon\":false,\"titleTooltip\":\"\",\"dropShadow\":true,\"enableFullscreen\":true,\"widgetStyle\":{},\"widgetCss\":\"\",\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"configMode\":\"basic\",\"titleFont\":null,\"titleColor\":null,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"iconSize\":\"24px\",\"titleIcon\":\"map\",\"iconColor\":\"#1F6BDD\",\"actions\":{}}"
+  },
+  "resources": [],
+  "scada": false,
+  "tags": null
+}

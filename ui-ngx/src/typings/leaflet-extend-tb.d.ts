@@ -15,12 +15,21 @@
 ///
 
 import { FormattedData } from '@shared/models/widget.models';
+import L from 'leaflet';
+import { TileLayerOptions } from 'leaflet';
 
 // redeclare module, maintains compatibility with @types/leaflet
 declare module 'leaflet' {
   interface MarkerOptions {
     tbMarkerData?: FormattedData;
   }
+
+  interface TileLayer {
+    _url: string;
+    _getSubdomain(tilePoint: L.Coords): string;
+    _globalTileRange: L.Bounds;
+  }
+
   namespace TB {
 
     interface SidebarControlOptions extends ControlOptions {
@@ -48,6 +57,7 @@ declare module 'leaflet' {
 
     interface LayerData {
       title: string;
+      attributionPrefix?: string;
       layer: Layer;
       mini: Layer;
     }
@@ -65,5 +75,23 @@ declare module 'leaflet' {
     function sidebarPane<O extends SidebarPaneControlOptions>(options: O): SidebarPaneControl<O>;
 
     function layers(options: LayersControlOptions): LayersControl;
+
+    namespace TileLayer {
+
+      interface ChinaProvidersData {
+        [provider: string]: {
+          [type: string]: string;
+          Subdomains: string;
+        };
+      }
+
+      class ChinaProvider extends L.TileLayer {
+        constructor(type: string, options?: TileLayerOptions);
+      }
+    }
+
+    namespace tileLayer {
+      function chinaProvider(type: string, options?: TileLayerOptions): TileLayer.ChinaProvider;
+    }
   }
 }

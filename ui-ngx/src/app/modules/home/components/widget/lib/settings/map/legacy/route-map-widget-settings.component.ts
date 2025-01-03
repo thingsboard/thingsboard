@@ -24,7 +24,7 @@ import { defaultMapSettings } from 'src/app/modules/home/components/widget/lib/m
 @Component({
   selector: 'tb-route-map-widget-settings',
   templateUrl: './route-map-widget-settings.component.html',
-  styleUrls: ['./../widget-settings.scss']
+  styleUrls: ['./../../widget-settings.scss']
 })
 export class RouteMapWidgetSettingsComponent extends WidgetSettingsComponent {
 

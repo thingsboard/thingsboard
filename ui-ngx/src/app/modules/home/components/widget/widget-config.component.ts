@@ -322,7 +322,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   private buildHeader() {
     this.headerOptions.length = 0;
-    if (this.widgetType !== widgetType.static) {
+    if (this.displayData) {
       this.headerOptions.push(
         {
           name: this.translate.instant('widget-config.data'),
@@ -708,6 +708,10 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   public get useDefinedBasicModeDirective(): boolean {
     return this.modelValue?.basicModeDirective?.length && !this.basicModeDirectiveError;
+  }
+
+  public get displayData(): boolean {
+    return !this.modelValue?.typeParameters?.hideDataTab && this.widgetType !== widgetType.static;
   }
 
   public get displayAppearance(): boolean {

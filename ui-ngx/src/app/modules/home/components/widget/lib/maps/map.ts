@@ -32,7 +32,7 @@ import { DeepPartial } from '@shared/models/common';
 import L from 'leaflet';
 import { forkJoin, Observable, of } from 'rxjs';
 import { TbMapLayer } from '@home/components/widget/lib/maps/map-layer';
-import { switchMap, tap } from 'rxjs/operators';
+import { map, switchMap, tap } from 'rxjs/operators';
 import '@home/components/widget/lib/maps/leaflet/leaflet-tb';
 
 export abstract class TbMap<S extends BaseMapSettings> {
@@ -165,10 +165,11 @@ class TbGeoMap extends TbMap<GeoMapSettings> {
 
   protected doSetupControls(): Observable<any> {
     return this.loadLayers().pipe(
-      tap((layers) => {
+      tap((layers: L.TB.LayerData[]) => {
         if (layers.length) {
           const layer = layers[0];
           layer.layer.addTo(this.map);
+          this.map.attributionControl.setPrefix(layer.attributionPrefix);
           if (layers.length > 1) {
             const sidebar = L.TB.sidebar({
               container: $(this.containerElement),
@@ -192,7 +193,11 @@ class TbGeoMap extends TbMap<GeoMapSettings> {
 
   private loadLayers(): Observable<L.TB.LayerData[]> {
     const layers = this.settings.layers.map(settings => TbMapLayer.fromSettings(this.ctx, settings));
-    return forkJoin(layers.map(layer => layer.loadLayer()));
+    return forkJoin(layers.map(layer => layer.loadLayer(this.map))).pipe(
+      map((layersData) => {
+        return layersData.filter(l => l !== null);
+      })
+    );
   }
 
 

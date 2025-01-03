@@ -53,23 +53,23 @@ import { Widget } from '@shared/models/widget.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-map-settings',
-  templateUrl: './map-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
+  selector: 'tb-map-settings-legacy',
+  templateUrl: './map-settings-legacy.component.html',
+  styleUrls: ['./../../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MapSettingsComponent),
+      useExisting: forwardRef(() => MapSettingsLegacyComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => MapSettingsComponent),
+      useExisting: forwardRef(() => MapSettingsLegacyComponent),
       multi: true
     }
   ]
 })
-export class MapSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
+export class MapSettingsLegacyComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 
   @Input()
   disabled: boolean;

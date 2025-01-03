@@ -210,52 +210,52 @@ import {
 } from '@home/components/widget/lib/settings/input/update-multiple-attributes-key-settings.component';
 import {
   OpenStreetMapProviderSettingsComponent
-} from '@home/components/widget/lib/settings/map/openstreet-map-provider-settings.component';
-import { MapProviderSettingsComponent } from '@home/components/widget/lib/settings/map/map-provider-settings.component';
-import { MapSettingsComponent } from '@home/components/widget/lib/settings/map/map-settings.component';
-import { MapWidgetSettingsComponent } from '@home/components/widget/lib/settings/map/map-widget-settings.component';
+} from '@home/components/widget/lib/settings/map/legacy/openstreet-map-provider-settings.component';
+import { MapProviderSettingsComponent } from '@home/components/widget/lib/settings/map/legacy/map-provider-settings.component';
+import { MapSettingsLegacyComponent } from '@home/components/widget/lib/settings/map/legacy/map-settings-legacy.component';
+import { MapWidgetSettingsLegacyComponent } from '@home/components/widget/lib/settings/map/legacy/map-widget-settings-legacy.component';
 import {
   GoogleMapProviderSettingsComponent
-} from '@home/components/widget/lib/settings/map/google-map-provider-settings.component';
+} from '@home/components/widget/lib/settings/map/legacy/google-map-provider-settings.component';
 import {
   HereMapProviderSettingsComponent
-} from '@home/components/widget/lib/settings/map/here-map-provider-settings.component';
+} from '@home/components/widget/lib/settings/map/legacy/here-map-provider-settings.component';
 import {
   TencentMapProviderSettingsComponent
-} from '@home/components/widget/lib/settings/map/tencent-map-provider-settings.component';
+} from '@home/components/widget/lib/settings/map/legacy/tencent-map-provider-settings.component';
 import {
   ImageMapProviderSettingsComponent
-} from '@home/components/widget/lib/settings/map/image-map-provider-settings.component';
+} from '@home/components/widget/lib/settings/map/legacy/image-map-provider-settings.component';
 import {
   DatasourcesKeyAutocompleteComponent
-} from '@home/components/widget/lib/settings/map/datasources-key-autocomplete.component';
-import { CommonMapSettingsComponent } from '@home/components/widget/lib/settings/map/common-map-settings.component';
-import { MarkersSettingsComponent } from '@home/components/widget/lib/settings/map/markers-settings.component';
-import { PolygonSettingsComponent } from '@home/components/widget/lib/settings/map/polygon-settings.component';
-import { CircleSettingsComponent } from '@home/components/widget/lib/settings/map/circle-settings.component';
+} from '@home/components/widget/lib/settings/map/legacy/datasources-key-autocomplete.component';
+import { CommonMapSettingsComponent } from '@home/components/widget/lib/settings/map/legacy/common-map-settings.component';
+import { MarkersSettingsComponent } from '@home/components/widget/lib/settings/map/legacy/markers-settings.component';
+import { PolygonSettingsComponent } from '@home/components/widget/lib/settings/map/legacy/polygon-settings.component';
+import { CircleSettingsComponent } from '@home/components/widget/lib/settings/map/legacy/circle-settings.component';
 import {
   MarkerClusteringSettingsComponent
-} from '@home/components/widget/lib/settings/map/marker-clustering-settings.component';
-import { MapEditorSettingsComponent } from '@home/components/widget/lib/settings/map/map-editor-settings.component';
-import { RouteMapSettingsComponent } from '@home/components/widget/lib/settings/map/route-map-settings.component';
+} from '@home/components/widget/lib/settings/map/legacy/marker-clustering-settings.component';
+import { MapEditorSettingsComponent } from '@home/components/widget/lib/settings/map/legacy/map-editor-settings.component';
+import { RouteMapSettingsComponent } from '@home/components/widget/lib/settings/map/legacy/route-map-settings.component';
 import {
   RouteMapWidgetSettingsComponent
-} from '@home/components/widget/lib/settings/map/route-map-widget-settings.component';
+} from '@home/components/widget/lib/settings/map/legacy/route-map-widget-settings.component';
 import {
   TripAnimationWidgetSettingsComponent
-} from '@home/components/widget/lib/settings/map/trip-animation-widget-settings.component';
+} from '@home/components/widget/lib/settings/map/legacy/trip-animation-widget-settings.component';
 import {
   TripAnimationCommonSettingsComponent
-} from '@home/components/widget/lib/settings/map/trip-animation-common-settings.component';
+} from '@home/components/widget/lib/settings/map/legacy/trip-animation-common-settings.component';
 import {
   TripAnimationMarkerSettingsComponent
-} from '@home/components/widget/lib/settings/map/trip-animation-marker-settings.component';
+} from '@home/components/widget/lib/settings/map/legacy/trip-animation-marker-settings.component';
 import {
   TripAnimationPathSettingsComponent
-} from '@home/components/widget/lib/settings/map/trip-animation-path-settings.component';
+} from '@home/components/widget/lib/settings/map/legacy/trip-animation-path-settings.component';
 import {
   TripAnimationPointSettingsComponent
-} from '@home/components/widget/lib/settings/map/trip-animation-point-settings.component';
+} from '@home/components/widget/lib/settings/map/legacy/trip-animation-point-settings.component';
 import {
   GatewayLogsSettingsComponent
 } from '@home/components/widget/lib/settings/gateway/gateway-logs-settings.component';
@@ -371,6 +371,7 @@ ScadaSymbolWidgetSettingsComponent
 import {
   SegmentedButtonWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/button/segmented-button-widget-settings.component';
+import { MapWidgetSettingsComponent } from '@home/components/widget/lib/settings/map/map-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -458,12 +459,12 @@ import {
     MarkerClusteringSettingsComponent,
     MapEditorSettingsComponent,
     RouteMapSettingsComponent,
-    MapSettingsComponent,
+    MapSettingsLegacyComponent,
     TripAnimationCommonSettingsComponent,
     TripAnimationMarkerSettingsComponent,
     TripAnimationPathSettingsComponent,
     TripAnimationPointSettingsComponent,
-    MapWidgetSettingsComponent,
+    MapWidgetSettingsLegacyComponent,
     RouteMapWidgetSettingsComponent,
     GatewayLogsSettingsComponent,
     GatewayServiceRPCSettingsComponent,
@@ -502,7 +503,8 @@ import {
     LabelCardWidgetSettingsComponent,
     LabelValueCardWidgetSettingsComponent,
     UnreadNotificationWidgetSettingsComponent,
-    ScadaSymbolWidgetSettingsComponent
+    ScadaSymbolWidgetSettingsComponent,
+    MapWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -595,12 +597,12 @@ import {
     MarkerClusteringSettingsComponent,
     MapEditorSettingsComponent,
     RouteMapSettingsComponent,
-    MapSettingsComponent,
+    MapSettingsLegacyComponent,
     TripAnimationCommonSettingsComponent,
     TripAnimationMarkerSettingsComponent,
     TripAnimationPathSettingsComponent,
     TripAnimationPointSettingsComponent,
-    MapWidgetSettingsComponent,
+    MapWidgetSettingsLegacyComponent,
     RouteMapWidgetSettingsComponent,
     GatewayLogsSettingsComponent,
     GatewayServiceRPCSettingsComponent,
@@ -639,7 +641,8 @@ import {
     LabelCardWidgetSettingsComponent,
     LabelValueCardWidgetSettingsComponent,
     UnreadNotificationWidgetSettingsComponent,
-    ScadaSymbolWidgetSettingsComponent
+    ScadaSymbolWidgetSettingsComponent,
+    MapWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -705,7 +708,7 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-photo-camera-input-widget-settings': PhotoCameraInputWidgetSettingsComponent,
   'tb-update-multiple-attributes-widget-settings': UpdateMultipleAttributesWidgetSettingsComponent,
   'tb-update-multiple-attributes-key-settings': UpdateMultipleAttributesKeySettingsComponent,
-  'tb-map-widget-settings': MapWidgetSettingsComponent,
+  'tb-map-widget-settings-legacy': MapWidgetSettingsLegacyComponent,
   'tb-route-map-widget-settings': RouteMapWidgetSettingsComponent,
   'tb-trip-animation-widget-settings': TripAnimationWidgetSettingsComponent,
   'tb-gateway-logs-settings': GatewayLogsSettingsComponent,
@@ -743,5 +746,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-label-card-widget-settings': LabelCardWidgetSettingsComponent,
   'tb-label-value-card-widget-settings': LabelValueCardWidgetSettingsComponent,
   'tb-unread-notification-widget-settings': UnreadNotificationWidgetSettingsComponent,
-  'tb-scada-symbol-widget-settings': ScadaSymbolWidgetSettingsComponent
+  'tb-scada-symbol-widget-settings': ScadaSymbolWidgetSettingsComponent,
+  'tb-map-widget-settings': MapWidgetSettingsComponent
 };

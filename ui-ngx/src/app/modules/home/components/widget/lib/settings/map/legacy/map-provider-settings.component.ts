@@ -49,7 +49,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 @Component({
   selector: 'tb-map-provider-settings',
   templateUrl: './map-provider-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
+  styleUrls: ['./../../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

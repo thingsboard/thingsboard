@@ -22,58 +22,65 @@ import {
   UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  Validator, Validators
+  Validator,
+  Validators
 } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
-import { PolylineSettings } from '@home/components/widget/lib/maps-legacy/map-models';
-import { WidgetService } from '@core/http/widget.service';
+import {
+  GoogleMapProviderSettings,
+  GoogleMapType,
+  googleMapTypeProviderTranslationMap
+} from '@home/components/widget/lib/maps-legacy/map-models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-route-map-settings',
-  templateUrl: './route-map-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
+  selector: 'tb-google-map-provider-settings',
+  templateUrl: './google-map-provider-settings.component.html',
+  styleUrls: ['./../../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => RouteMapSettingsComponent),
+      useExisting: forwardRef(() => GoogleMapProviderSettingsComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => RouteMapSettingsComponent),
+      useExisting: forwardRef(() => GoogleMapProviderSettingsComponent),
       multi: true
     }
   ]
 })
-export class RouteMapSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
+export class GoogleMapProviderSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 
   @Input()
   disabled: boolean;
 
-  private modelValue: PolylineSettings;
+  private modelValue: GoogleMapProviderSettings;
 
   private propagateChange = null;
 
-  public routeMapSettingsFormGroup: UntypedFormGroup;
+  public providerSettingsFormGroup: UntypedFormGroup;
+
+  googleMapTypes = Object.values(GoogleMapType);
+
+  googleMapTypeTranslations = googleMapTypeProviderTranslationMap;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private widgetService: WidgetService,
               private fb: UntypedFormBuilder,
               private destroyRef: DestroyRef) {
     super(store);
   }
 
   ngOnInit(): void {
-    this.routeMapSettingsFormGroup = this.fb.group({
-      strokeWeight: [null, [Validators.min(0)]],
-      strokeOpacity: [null, [Validators.min(0), Validators.max(1)]]
+    this.providerSettingsFormGroup = this.fb.group({
+      gmApiKey: [null, [Validators.required]],
+      gmDefaultMapType: [null, [Validators.required]]
     });
-    this.routeMapSettingsFormGroup.valueChanges.pipe(
+    this.providerSettingsFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.updateModel();
@@ -90,29 +97,29 @@ export class RouteMapSettingsComponent extends PageComponent implements OnInit, 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (isDisabled) {
-      this.routeMapSettingsFormGroup.disable({emitEvent: false});
+      this.providerSettingsFormGroup.disable({emitEvent: false});
     } else {
-      this.routeMapSettingsFormGroup.enable({emitEvent: false});
+      this.providerSettingsFormGroup.enable({emitEvent: false});
     }
   }
 
-  writeValue(value: PolylineSettings): void {
+  writeValue(value: GoogleMapProviderSettings): void {
     this.modelValue = value;
-    this.routeMapSettingsFormGroup.patchValue(
+    this.providerSettingsFormGroup.patchValue(
       value, {emitEvent: false}
     );
   }
 
   public validate(c: UntypedFormControl) {
-    return this.routeMapSettingsFormGroup.valid ? null : {
-      routeMapSettings: {
+    return this.providerSettingsFormGroup.valid ? null : {
+      googleMapProviderSettings: {
         valid: false,
       },
     };
   }
 
   private updateModel() {
-    const value: PolylineSettings = this.routeMapSettingsFormGroup.value;
+    const value: GoogleMapProviderSettings = this.providerSettingsFormGroup.value;
     this.modelValue = value;
     this.propagateChange(this.modelValue);
   }

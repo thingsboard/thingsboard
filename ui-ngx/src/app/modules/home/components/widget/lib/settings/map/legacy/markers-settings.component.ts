@@ -38,7 +38,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 @Component({
   selector: 'tb-markers-settings',
   templateUrl: './markers-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
+  styleUrls: ['./../../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

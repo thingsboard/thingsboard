@@ -22,46 +22,43 @@ import {
   UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  Validator,
-  Validators
+  Validator
 } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
-import { MarkerClusteringSettings } from '@home/components/widget/lib/maps-legacy/map-models';
+import { MapEditorSettings } from '@home/components/widget/lib/maps-legacy/map-models';
 import { WidgetService } from '@core/http/widget.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-marker-clustering-settings',
-  templateUrl: './marker-clustering-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
+  selector: 'tb-map-editor-settings',
+  templateUrl: './map-editor-settings.component.html',
+  styleUrls: ['./../../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MarkerClusteringSettingsComponent),
+      useExisting: forwardRef(() => MapEditorSettingsComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => MarkerClusteringSettingsComponent),
+      useExisting: forwardRef(() => MapEditorSettingsComponent),
       multi: true
     }
   ]
 })
-export class MarkerClusteringSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
+export class MapEditorSettingsComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 
   @Input()
   disabled: boolean;
 
-  private modelValue: MarkerClusteringSettings;
-
-  functionScopeVariables = this.widgetService.getWidgetScopeVariables();
+  private modelValue: MapEditorSettings;
 
   private propagateChange = null;
 
-  public markerClusteringSettingsFormGroup: UntypedFormGroup;
+  public mapEditorSettingsFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
@@ -72,25 +69,20 @@ export class MarkerClusteringSettingsComponent extends PageComponent implements 
   }
 
   ngOnInit(): void {
-    this.markerClusteringSettingsFormGroup = this.fb.group({
-      useClusterMarkers: [null, []],
-      zoomOnClick: [null, []],
-      maxZoom: [null, [Validators.min(0), Validators.max(18)]],
-      maxClusterRadius: [null, [Validators.min(0)]],
-      animate: [null, []],
-      spiderfyOnMaxZoom: [null, []],
-      showCoverageOnHover: [null, []],
-      chunkedLoading: [null, []],
-      removeOutsideVisibleBounds: [null, []],
-      useIconCreateFunction: [null, []],
-      clusterMarkerFunction: [null, []]
+    this.mapEditorSettingsFormGroup = this.fb.group({
+      snappable: [null, []],
+      initDragMode: [null, []],
+      hideAllControlButton: [null, []],
+      hideDrawControlButton: [null, []],
+      hideEditControlButton: [null, []],
+      hideRemoveControlButton: [null, []],
     });
-    this.markerClusteringSettingsFormGroup.valueChanges.pipe(
+    this.mapEditorSettingsFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.updateModel();
     });
-    this.markerClusteringSettingsFormGroup.get('useClusterMarkers').valueChanges.pipe(
+    this.mapEditorSettingsFormGroup.get('hideAllControlButton').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.updateValidators(true);
@@ -108,44 +100,48 @@ export class MarkerClusteringSettingsComponent extends PageComponent implements 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (isDisabled) {
-      this.markerClusteringSettingsFormGroup.disable({emitEvent: false});
+      this.mapEditorSettingsFormGroup.disable({emitEvent: false});
     } else {
-      this.markerClusteringSettingsFormGroup.enable({emitEvent: false});
+      this.mapEditorSettingsFormGroup.enable({emitEvent: false});
       this.updateValidators(false);
     }
   }
 
-  writeValue(value: MarkerClusteringSettings): void {
+  writeValue(value: MapEditorSettings): void {
     this.modelValue = value;
-    this.markerClusteringSettingsFormGroup.patchValue(
+    this.mapEditorSettingsFormGroup.patchValue(
       value, {emitEvent: false}
     );
     this.updateValidators(false);
   }
 
   public validate(c: UntypedFormControl) {
-    return this.markerClusteringSettingsFormGroup.valid ? null : {
-      markerClusteringSettings: {
+    return this.mapEditorSettingsFormGroup.valid ? null : {
+      mapEditorSettings: {
         valid: false,
       },
     };
   }
 
   private updateModel() {
-    const value: MarkerClusteringSettings = this.markerClusteringSettingsFormGroup.value;
+    const value: MapEditorSettings = this.mapEditorSettingsFormGroup.value;
     this.modelValue = value;
     this.propagateChange(this.modelValue);
   }
 
   private updateValidators(emitEvent?: boolean): void {
-    const useClusterMarkers: boolean = this.markerClusteringSettingsFormGroup.get('useClusterMarkers').value;
-
-    this.markerClusteringSettingsFormGroup.disable({emitEvent: false});
-    this.markerClusteringSettingsFormGroup.get('useClusterMarkers').enable({emitEvent: false});
-
-    if (useClusterMarkers) {
-      this.markerClusteringSettingsFormGroup.enable({emitEvent: false});
+    const hideAllControlButton: boolean = this.mapEditorSettingsFormGroup.get('hideAllControlButton').value;
+    if (hideAllControlButton) {
+      this.mapEditorSettingsFormGroup.get('hideDrawControlButton').disable({emitEvent});
+      this.mapEditorSettingsFormGroup.get('hideEditControlButton').disable({emitEvent});
+      this.mapEditorSettingsFormGroup.get('hideRemoveControlButton').disable({emitEvent});
+    } else {
+      this.mapEditorSettingsFormGroup.get('hideDrawControlButton').enable({emitEvent});
+      this.mapEditorSettingsFormGroup.get('hideEditControlButton').enable({emitEvent});
+      this.mapEditorSettingsFormGroup.get('hideRemoveControlButton').enable({emitEvent});
     }
-    this.markerClusteringSettingsFormGroup.updateValueAndValidity({emitEvent: false});
+    this.mapEditorSettingsFormGroup.get('hideDrawControlButton').updateValueAndValidity({emitEvent: false});
+    this.mapEditorSettingsFormGroup.get('hideEditControlButton').updateValueAndValidity({emitEvent: false});
+    this.mapEditorSettingsFormGroup.get('hideRemoveControlButton').updateValueAndValidity({emitEvent: false});
   }
 }

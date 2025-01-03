@@ -185,6 +185,7 @@ export interface WidgetTypeParameters {
   previewHeight?: string;
   embedTitlePanel?: boolean;
   overflowVisible?: boolean;
+  hideDataTab?: boolean;
   hideDataSettings?: boolean;
   defaultDataKeysFunction?: (configComponent: any, configData: any) => DataKey[];
   defaultLatestDataKeysFunction?: (configComponent: any, configData: any) => DataKey[];

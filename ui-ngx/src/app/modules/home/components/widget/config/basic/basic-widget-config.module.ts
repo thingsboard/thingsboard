@@ -146,6 +146,7 @@ import { ScadaSymbolBasicConfigComponent } from '@home/components/widget/config/
 import {
   SegmentedButtonBasicConfigComponent
 } from '@home/components/widget/config/basic/button/segmented-button-basic-config.component';
+import { MapBasicConfigComponent } from '@home/components/widget/config/basic/map/map-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -195,7 +196,8 @@ import {
     LabelCardBasicConfigComponent,
     LabelValueCardBasicConfigComponent,
     UnreadNotificationBasicConfigComponent,
-    ScadaSymbolBasicConfigComponent
+    ScadaSymbolBasicConfigComponent,
+    MapBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -247,7 +249,8 @@ import {
     MobileAppQrCodeBasicConfigComponent,
     LabelCardBasicConfigComponent,
     LabelValueCardBasicConfigComponent,
-    UnreadNotificationBasicConfigComponent
+    UnreadNotificationBasicConfigComponent,
+    MapBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -293,5 +296,6 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-label-card-basic-config': LabelCardBasicConfigComponent,
   'tb-label-value-card-basic-config': LabelValueCardBasicConfigComponent,
   'tb-unread-notification-basic-config': UnreadNotificationBasicConfigComponent,
-  'tb-scada-symbol-basic-config': ScadaSymbolBasicConfigComponent
+  'tb-scada-symbol-basic-config': ScadaSymbolBasicConfigComponent,
+  'tb-map-basic-config': MapBasicConfigComponent
 };

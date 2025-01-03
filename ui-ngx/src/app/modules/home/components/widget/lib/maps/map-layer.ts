@@ -15,10 +15,21 @@
 ///
 
 import {
+  CustomMapLayerSettings, defaultCustomMapLayerSettings,
+  defaultGoogleMapLayerSettings, defaultHereMapLayerSettings,
   defaultOpenStreetMapLayerSettings,
+  defaultTencentMapLayerSettings,
+  GoogleLayerType,
+  GoogleMapLayerSettings,
+  googleMapLayerTranslationMap, hereLayerTranslationMap, HereLayerType, HereMapLayerSettings,
   MapLayerSettings,
-  MapProvider, OpenStreetLayerType,
-  OpenStreetMapLayerSettings, openStreetMapLayerTranslationMap
+  MapProvider,
+  OpenStreetLayerType,
+  OpenStreetMapLayerSettings,
+  openStreetMapLayerTranslationMap,
+  tencentLayerTranslationMap,
+  TencentLayerType,
+  TencentMapLayerSettings
 } from '@home/components/widget/lib/maps/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DeepPartial } from '@shared/models/common';
@@ -26,7 +37,8 @@ import { mergeDeep } from '@core/utils';
 import { Observable, of, switchMap } from 'rxjs';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import L from 'leaflet';
-import { map } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
+import { ResourcesService } from '@core/services/resources.service';
 
 export abstract class TbMapLayer<S extends MapLayerSettings> {
 
@@ -35,15 +47,15 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
 
     switch (inputSettings.provider) {
       case MapProvider.google:
-        break;
+        return new TbGoogleMapLayer(ctx, inputSettings);
       case MapProvider.openstreet:
         return new TbOpenStreetMapLayer(ctx, inputSettings);
       case MapProvider.tencent:
-        break;
+        return new TbTencentMapLayer(ctx, inputSettings);
       case MapProvider.here:
-        break;
+        return new TbHereMapLayer(ctx, inputSettings);
       case MapProvider.custom:
-        break;
+        return new TbCustomMapLayer(ctx, inputSettings);
     }
   }
 
@@ -69,22 +81,85 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
 
   protected abstract createLayer(): Observable<L.Layer>;
 
-  public loadLayer(): Observable<L.TB.LayerData> {
+  public loadLayer(theMap: L.Map): Observable<L.TB.LayerData> {
     return this.createLayer().pipe(
       switchMap((layer) => {
-        return this.createLayer().pipe(
-          map((mini) => {
-            return {
-              title: this.title(),
-              layer,
-              mini
-            };
-          })
-        );
+        if (layer) {
+          return this.createLayer().pipe(
+            map((mini) => {
+              if (mini) {
+                const attribution = layer.getAttribution();
+                const attributionPrefix = attribution ? theMap.attributionControl.options.prefix as string : null;
+                return {
+                  title: this.title(),
+                  attributionPrefix: attributionPrefix,
+                  layer,
+                  mini
+                };
+              } else {
+                return null;
+              }
+            })
+          );
+        } else {
+          return of(null);
+        }
+      })
+    );
+  }
+}
+
+class TbGoogleMapLayer extends TbMapLayer<GoogleMapLayerSettings> {
+
+  static loadedApiKeysGlobal: {[key: string]: boolean} = {};
+
+  constructor(protected ctx: WidgetContext,
+              protected inputSettings: DeepPartial<MapLayerSettings>) {
+    super(ctx, inputSettings);
+  }
+
+  protected defaultSettings(): GoogleMapLayerSettings {
+    return defaultGoogleMapLayerSettings;
+  }
+
+  protected generateTitle(): string {
+    const layerType = GoogleLayerType[this.settings.layerType];
+    return this.ctx.translate.instant(googleMapLayerTranslationMap.get(layerType));
+  }
+
+  protected createLayer(): Observable<L.Layer> {
+    return this.loadGoogle().pipe(
+      map((loaded) => {
+        if (loaded) {
+          return (L.gridLayer as any).googleMutant({
+            type: this.settings.layerType
+          });
+        } else {
+          return null;
+        }
       })
     );
   }
 
+  private loadGoogle(): Observable<boolean> {
+    const apiKey = this.settings.apiKey;
+    if (TbGoogleMapLayer.loadedApiKeysGlobal[apiKey]) {
+      return of(true);
+    } else {
+      const resourceService = this.ctx.$injector.get(ResourcesService);
+      return resourceService.loadResource(`https://maps.googleapis.com/maps/api/js?key=${apiKey}`).pipe(
+        map(() => {
+          TbGoogleMapLayer.loadedApiKeysGlobal[apiKey] = true;
+          return true;
+        }),
+        catchError((e) => {
+          TbGoogleMapLayer.loadedApiKeysGlobal[apiKey] = false;
+          console.error(`Google map api load failed!`, e);
+          return of(false);
+        })
+      );
+    }
+  }
 }
 
 class TbOpenStreetMapLayer extends TbMapLayer<OpenStreetMapLayerSettings> {
@@ -105,6 +180,76 @@ class TbOpenStreetMapLayer extends TbMapLayer<OpenStreetMapLayerSettings> {
 
   protected createLayer(): Observable<L.Layer> {
     const layer = L.tileLayer.provider(OpenStreetLayerType[this.settings.layerType]);
+    return of(layer);
+  }
+
+}
+
+class TbTencentMapLayer extends TbMapLayer<TencentMapLayerSettings> {
+
+  constructor(protected ctx: WidgetContext,
+              protected inputSettings: DeepPartial<MapLayerSettings>) {
+    super(ctx, inputSettings);
+  }
+
+  protected defaultSettings(): TencentMapLayerSettings {
+    return defaultTencentMapLayerSettings;
+  }
+
+  protected generateTitle(): string {
+    const layerType = TencentLayerType[this.settings.layerType];
+    return this.ctx.translate.instant(tencentLayerTranslationMap.get(layerType));
+  }
+
+  protected createLayer(): Observable<L.Layer> {
+    const layer = L.TB.tileLayer.chinaProvider(TencentLayerType[this.settings.layerType], {
+      attribution: '&copy;2024 Tencent - GS(2023)1171号'
+    });
+    return of(layer);
+  }
+
+}
+
+class TbHereMapLayer extends TbMapLayer<HereMapLayerSettings> {
+
+  constructor(protected ctx: WidgetContext,
+              protected inputSettings: DeepPartial<MapLayerSettings>) {
+    super(ctx, inputSettings);
+  }
+
+  protected defaultSettings(): HereMapLayerSettings {
+    return defaultHereMapLayerSettings;
+  }
+
+  protected generateTitle(): string {
+    const layerType = HereLayerType[this.settings.layerType];
+    return this.ctx.translate.instant(hereLayerTranslationMap.get(layerType));
+  }
+
+  protected createLayer(): Observable<L.Layer> {
+    const layer = L.tileLayer.provider(HereLayerType[this.settings.layerType], {useV3: true, apiKey: this.settings.apiKey} as any);
+    return of(layer);
+  }
+
+}
+
+class TbCustomMapLayer extends TbMapLayer<CustomMapLayerSettings> {
+
+  constructor(protected ctx: WidgetContext,
+              protected inputSettings: DeepPartial<MapLayerSettings>) {
+    super(ctx, inputSettings);
+  }
+
+  protected defaultSettings(): CustomMapLayerSettings {
+    return defaultCustomMapLayerSettings;
+  }
+
+  protected generateTitle(): string {
+    return this.ctx.translate.instant('widgets.maps.custom');
+  }
+
+  protected createLayer(): Observable<L.Layer> {
+    const layer = L.tileLayer(this.settings.tileUrl);
     return of(layer);
   }
 

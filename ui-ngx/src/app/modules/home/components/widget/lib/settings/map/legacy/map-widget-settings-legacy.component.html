@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="routeMapWidgetSettingsForm">
-  <tb-map-settings [routeMap]="true"
+<section class="tb-widget-settings" [formGroup]="mapWidgetSettingsForm">
+  <tb-map-settings-legacy [routeMap]="false"
                    [aliasController]="aliasController"
                    [widget]="widget"
                    formControlName="mapSettings">
-  </tb-map-settings>
+  </tb-map-settings-legacy>
 </section>

@@ -6803,8 +6803,19 @@
             "max-value": "Maximum value"
         },
         "maps": {
+            "map-type": "Map type",
+            "map-type-map": "Map",
+            "map-type-image": "Image",
+            "overlays": "Overlays",
+            "markers": "Markers",
+            "polygons": "Polygons",
+            "circles": "Circles",
             "layers": "Layers",
             "map-layers": "Map layers",
+            "tencent-provider-normal": "Tencent.Normal",
+            "tencent-provider-satellite": "Tencent.Satellite",
+            "tencent-provider-terrain": "Tencent.Terrain",
+            "custom": "Custom",
             "select-entity": "Select entity",
             "select-entity-hint": "Hint: after selection click at the map to set position",
             "tooltips": {

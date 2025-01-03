@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import L, { TB } from 'leaflet';
+import L, { Coords, TB, TileLayerOptions } from 'leaflet';
 
 class SidebarControl extends L.Control<TB.SidebarControlOptions> {
 
@@ -195,6 +195,7 @@ class LayersControl extends SidebarPaneControl<TB.LayersControlOptions> {
         layers.forEach((other) => {
           if (other.layer === layerData.layer) {
             map.addLayer(other.layer);
+            map.attributionControl.setPrefix(other.attributionPrefix);
           } else {
             map.removeLayer(other.layer);
           }
@@ -225,11 +226,67 @@ const layers = (options: TB.LayersControlOptions): LayersControl => {
   return new LayersControl(options);
 }
 
+class ChinaProvider extends L.TileLayer {
+
+  static chinaProviders: L.TB.TileLayer.ChinaProvidersData = {
+    Tencent: {
+      Normal: "//rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={-y}&type=vector&styleid=3",
+      Satellite: "//p{s}.map.gtimg.com/sateTiles/{z}/{sx}/{sy}/{x}_{-y}.jpg",
+      Terrain: "//p{s}.map.gtimg.com/demTiles/{z}/{sx}/{sy}/{x}_{-y}.jpg",
+      Subdomains: '0123',
+    }
+  };
+
+  constructor(type: string, options?: TileLayerOptions) {
+    options = options || {};
+
+    const parts = type.split('.');
+    const providerName = parts[0];
+    const mapName = parts[1];
+
+    const url = ChinaProvider.chinaProviders[providerName][mapName];
+    options.subdomains = ChinaProvider.chinaProviders[providerName].Subdomains;
+
+    super(url, options);
+  }
+
+  getTileUrl(coords: Coords): string {
+    const data = {
+      s: this._getSubdomain(coords),
+      x: coords.x,
+      y: coords.y,
+      z: this._getZoomForUrl(),
+      sx: null,
+      sy: null
+    };
+    if (this._map && !this._map.options.crs.infinite) {
+      const invertedY = this._globalTileRange.max.y - coords.y;
+      if (this.options.tms) {
+        data['y'] = invertedY;
+      }
+      data['-y'] = invertedY;
+    }
+    data.sx = data.x >> 4;
+    data.sy = (( 1 << data.z) - data.y) >> 4;
+    return L.Util.template(this._url, L.Util.extend(data, this.options));
+  }
+}
+
+const chinaProvider = (type: string, options?: TileLayerOptions): ChinaProvider => {
+  return new ChinaProvider(type, options);
+}
+
 L.TB = L.TB || {
   SidebarControl,
   SidebarPaneControl,
   LayersControl,
   sidebar,
   sidebarPane,
-  layers
+  layers,
+  TileLayer: {
+    ChinaProvider
+  },
+  tileLayer: {
+    chinaProvider
+  }
 }

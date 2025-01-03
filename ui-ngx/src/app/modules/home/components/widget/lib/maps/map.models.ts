@@ -152,6 +152,15 @@ export enum GoogleLayerType {
   terrain = 'terrain'
 }
 
+export const googleMapLayerTranslationMap = new Map<GoogleLayerType, string>(
+  [
+    [GoogleLayerType.roadmap, 'widgets.maps.google-map-type-roadmap'],
+    [GoogleLayerType.satellite, 'widgets.maps.google-map-type-satelite'],
+    [GoogleLayerType.hybrid, 'widgets.maps.google-map-type-hybrid'],
+    [GoogleLayerType.terrain, 'widgets.maps.google-map-type-terrain']
+  ]
+);
+
 export interface GoogleMapLayerSettings extends MapLayerSettings {
   provider: MapProvider.google;
   layerType: GoogleLayerType;
@@ -197,11 +206,20 @@ export const defaultOpenStreetMapLayerSettings: OpenStreetMapLayerSettings = {
 }
 
 export enum HereLayerType {
-  hereNormalDay = 'HERE.normalDay',
-  hereNormalNight = 'HERE.normalNight',
-  hereHybridDay = 'HERE.hybridDay',
-  hereTerrainDay = 'HERE.terrainDay'
+  hereNormalDay = 'HEREv3.normalDay',
+  hereNormalNight = 'HEREv3.normalNight',
+  hereHybridDay = 'HEREv3.hybridDay',
+  hereTerrainDay = 'HEREv3.terrainDay'
 }
+
+export const hereLayerTranslationMap = new Map<HereLayerType, string>(
+  [
+    [HereLayerType.hereNormalDay, 'widgets.maps.here-map-normal-day'],
+    [HereLayerType.hereNormalNight, 'widgets.maps.here-map-normal-night'],
+    [HereLayerType.hereHybridDay, 'widgets.maps.here-map-hybrid-day'],
+    [HereLayerType.hereTerrainDay, 'widgets.maps.here-map-terrain-day']
+  ]
+);
 
 export interface HereMapLayerSettings extends MapLayerSettings {
   provider: MapProvider.here;
@@ -216,21 +234,27 @@ export const defaultHereMapLayerSettings: HereMapLayerSettings = {
 }
 
 export enum TencentLayerType {
-  roadmap = 'roadmap',
-  satellite = 'satellite',
-  hybrid = 'hybrid'
+  tencentNormal = 'Tencent.Normal',
+  tencentSatellite = 'Tencent.Satellite',
+  tencentTerrain = 'Tencent.Terrain'
 }
+
+export const tencentLayerTranslationMap = new Map<TencentLayerType, string>(
+  [
+    [TencentLayerType.tencentNormal, 'widgets.maps.tencent-provider-normal'],
+    [TencentLayerType.tencentSatellite, 'widgets.maps.tencent-provider-satellite'],
+    [TencentLayerType.tencentTerrain, 'widgets.maps.tencent-provider-terrain']
+  ]
+);
 
 export interface TencentMapLayerSettings extends MapLayerSettings {
   provider: MapProvider.tencent;
   layerType: TencentLayerType
-  apiKey: string;
 }
 
 export const defaultTencentMapLayerSettings: TencentMapLayerSettings = {
   provider: MapProvider.tencent,
-  layerType: TencentLayerType.roadmap,
-  apiKey: '84d6d83e0e51e481e50454ccbe8986b'
+  layerType: TencentLayerType.tencentNormal
 }
 
 export interface CustomMapLayerSettings extends MapLayerSettings {
@@ -261,7 +285,33 @@ export const defaultMapLayerSettings = (provider: MapProvider): MapLayerSettings
 export const defaultMapLayers: MapLayerSettings[] = (Object.keys(OpenStreetLayerType) as OpenStreetLayerType[]).map(type => ({
   provider: MapProvider.openstreet,
   layerType: type
-}));
+} as MapLayerSettings)).concat((Object.keys(GoogleLayerType) as GoogleLayerType[]).map(type =>
+  mergeDeep({} as MapLayerSettings, defaultGoogleMapLayerSettings, {layerType: type} as GoogleMapLayerSettings)).concat(
+  (Object.keys(TencentLayerType) as TencentLayerType[]).map(type => ({
+    provider: MapProvider.tencent,
+    layerType: type
+  } as MapLayerSettings))
+)).concat(
+  (Object.keys(HereLayerType) as HereLayerType[]).map(type =>
+    mergeDeep({} as MapLayerSettings, defaultHereMapLayerSettings, {layerType: type} as HereMapLayerSettings))
+).concat([
+  mergeDeep({} as MapLayerSettings, defaultCustomMapLayerSettings, {label: 'Custom 1'} as CustomMapLayerSettings),
+  mergeDeep({} as MapLayerSettings, defaultCustomMapLayerSettings, {
+    tileUrl: 'http://a.tile2.opencyclemap.org/transport/{z}/{x}/{y}.png',
+    label: 'Custom 2'
+  } as CustomMapLayerSettings),
+  mergeDeep({} as MapLayerSettings, defaultCustomMapLayerSettings, {
+    tileUrl: 'http://b.tile2.opencyclemap.org/transport/{z}/{x}/{y}.png',
+    label: 'Custom 3'
+  } as CustomMapLayerSettings)
+]);
+  /*
+  (Object.keys(OpenStreetLayerType) as OpenStreetLayerType[]).map(type => ({
+  provider: MapProvider.openstreet,
+  layerType: type
+} as MapLayerSettings)).concat(
+  (Object.keys(GoogleLayerType) as GoogleLayerType[]).map(type =>
+    mergeDeep({} as GoogleMapLayerSettings, defaultGoogleMapLayerSettings, {layerType: type} as GoogleMapLayerSettings)));*/
 
 export interface GeoMapSettings extends BaseMapSettings {
   layers?: MapLayerSettings[];

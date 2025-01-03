@@ -96,6 +96,9 @@
             inset: 2px;
             border-radius: 2px;
             z-index: 0;
+            .leaflet-control-attribution {
+              display: none;
+            }
           }
           input.tb-layer-button {
             position: absolute;
