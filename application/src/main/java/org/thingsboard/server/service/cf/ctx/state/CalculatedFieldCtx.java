@@ -26,6 +26,8 @@ import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -35,7 +37,8 @@ public class CalculatedFieldCtx {
     private TenantId tenantId;
     private EntityId entityId;
     private CalculatedFieldType cfType;
-    private Map<String, Argument> arguments;
+    private final Map<String, Argument> arguments;
+    private final List<String> argKeys;
     private Output output;
     private String expression;
     private TbelInvokeService tbelInvokeService;
@@ -48,10 +51,11 @@ public class CalculatedFieldCtx {
         this.cfType = calculatedField.getType();
         CalculatedFieldConfiguration configuration = calculatedField.getConfiguration();
         this.arguments = configuration.getArguments();
+        this.argKeys = new ArrayList<>(arguments.keySet());
         this.output = configuration.getOutput();
         this.expression = configuration.getExpression();
         this.tbelInvokeService = tbelInvokeService;
-        if (!CalculatedFieldType.SIMPLE.equals(calculatedField.getType())) {
+        if (CalculatedFieldType.SCRIPT.equals(calculatedField.getType())) {
             this.calculatedFieldScriptEngine = initEngine(tenantId, expression, tbelInvokeService);
         }
     }
@@ -65,7 +69,7 @@ public class CalculatedFieldCtx {
                 tenantId,
                 tbelInvokeService,
                 expression,
-                arguments.keySet().toArray(new String[0])
+                argKeys.toArray(String[]::new)
         );
     }
 

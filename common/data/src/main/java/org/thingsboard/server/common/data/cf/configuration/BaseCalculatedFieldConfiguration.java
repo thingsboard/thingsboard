@@ -65,19 +65,24 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
     public CalculatedFieldLinkConfiguration getReferencedEntityConfig(EntityId entityId) {
         CalculatedFieldLinkConfiguration linkConfiguration = new CalculatedFieldLinkConfiguration();
 
-        for (Map.Entry<String, Argument> entry : arguments.entrySet()) {
-            Argument argument = entry.getValue();
-            if (argument.getEntityId().equals(entityId)) {
-                switch (argument.getType()) {
-                    case "ATTRIBUTE":
-                        linkConfiguration.getAttributes().put(entry.getKey(), argument.getKey());
-                        break;
-                    case "TS_LATEST", "TS_ROLLING":
-                        linkConfiguration.getTimeSeries().put(entry.getKey(), argument.getKey());
-                        break;
-                }
-            }
-        }
+        arguments.entrySet().stream()
+                .filter(entry -> entry.getValue().getEntityId().equals(entityId))
+                .forEach(entry -> {
+                    Argument argument = entry.getValue();
+                    String argumentKey = entry.getKey();
+
+                    switch (argument.getType()) {
+                        case ATTRIBUTE -> {
+                            switch (argument.getScope()) {
+                                case CLIENT_SCOPE -> linkConfiguration.getClientAttributes().put(entry.getKey(), argument.getKey());
+                                case SERVER_SCOPE -> linkConfiguration.getServerAttributes().put(entry.getKey(), argument.getKey());
+                                case SHARED_SCOPE -> linkConfiguration.getSharedAttributes().put(entry.getKey(), argument.getKey());
+                            }
+                        }
+                        case TS_LATEST, TS_ROLLING ->
+                                linkConfiguration.getTimeSeries().put(argumentKey, argument.getKey());
+                    }
+                });
 
         return linkConfiguration;
     }
@@ -98,7 +103,7 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
                 argumentNode.put("entityId", entityId.toString());
             }
             argumentNode.put("key", argument.getKey());
-            argumentNode.put("type", argument.getType());
+            argumentNode.put("type", String.valueOf(argument.getType()));
             argumentNode.put("scope", String.valueOf(argument.getScope()));
             argumentNode.put("defaultValue", argument.getDefaultValue());
             argumentNode.put("limit", String.valueOf(argument.getLimit()));
@@ -112,7 +117,7 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
         if (output != null) {
             ObjectNode outputNode = configNode.putObject("output");
             outputNode.put("name", output.getName());
-            outputNode.put("type", output.getType());
+            outputNode.put("type", String.valueOf(output.getType()));
             if (output.getScope() != null) {
                 outputNode.put("scope", String.valueOf(output.getScope()));
             }
@@ -141,7 +146,10 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
                     argument.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
                 }
                 argument.setKey(argumentNode.get("key").asText());
-                argument.setType(argumentNode.get("type").asText());
+                JsonNode type = argumentNode.get("type");
+                if (type != null && !type.isNull() && !type.asText().equals("null")) {
+                    argument.setType(ArgumentType.valueOf(type.asText()));
+                }
                 JsonNode scope = argumentNode.get("scope");
                 if (scope != null && !scope.isNull() && !scope.asText().equals("null")) {
                     argument.setScope(AttributeScope.valueOf(scope.asText()));
@@ -169,7 +177,10 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
         if (outputNode != null) {
             Output output = new Output();
             output.setName(outputNode.get("name").asText());
-            output.setType(outputNode.get("type").asText());
+            JsonNode type = outputNode.get("type");
+            if (type != null && !type.isNull() && !type.asText().equals("null")) {
+                output.setType(OutputType.valueOf(type.asText()));
+            }
             JsonNode scope = outputNode.get("scope");
             if (scope != null && !scope.isNull() && !scope.asText().equals("null")) {
                 output.setScope(AttributeScope.valueOf(scope.asText()));

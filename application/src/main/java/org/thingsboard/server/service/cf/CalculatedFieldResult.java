@@ -17,17 +17,18 @@ package org.thingsboard.server.service.cf;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.cf.configuration.OutputType;
 
 import java.util.Map;
 
 @Data
 public final class CalculatedFieldResult {
 
-    private String type;
-    private AttributeScope scope;
-    private Map<String, Object> resultMap;
+    private final OutputType type;
+    private final AttributeScope scope;
+    private final Map<String, Object> resultMap;
 
-    public CalculatedFieldResult(String type, AttributeScope scope, Map<String, Object> resultMap) {
+    public CalculatedFieldResult(OutputType type, AttributeScope scope, Map<String, Object> resultMap) {
         this.type = type;
         this.scope = scope;
         this.resultMap = resultMap == null ? Map.of() : Map.copyOf(resultMap);

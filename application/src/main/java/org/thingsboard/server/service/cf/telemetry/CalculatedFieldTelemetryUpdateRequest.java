@@ -13,16 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.server.service.cf.telemetry;
 
-import lombok.Data;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.KvEntry;
 
-@Data
-public class Output {
+import java.util.List;
 
-    private String name;
-    private OutputType type;
-    private AttributeScope scope;
+public interface CalculatedFieldTelemetryUpdateRequest {
+
+    TenantId getTenantId();
+
+    EntityId getEntityId();
+
+    AttributeScope getScope();
+
+    List<? extends KvEntry> getKvEntries();
+
+    List<CalculatedFieldId> getCalculatedFieldIds();
 
 }

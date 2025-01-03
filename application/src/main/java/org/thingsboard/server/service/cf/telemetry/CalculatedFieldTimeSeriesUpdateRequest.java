@@ -13,16 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.server.service.cf.telemetry;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
+
+import java.util.List;
 
 @Data
-public class Output {
+@AllArgsConstructor
+public class CalculatedFieldTimeSeriesUpdateRequest implements CalculatedFieldTelemetryUpdateRequest {
 
-    private String name;
-    private OutputType type;
-    private AttributeScope scope;
+    private TenantId tenantId;
+    private EntityId entityId;
+    private List<TsKvEntry> kvEntries;
+    private List<CalculatedFieldId> calculatedFieldIds;
+
+    @Override
+    public AttributeScope getScope() {
+        return null;
+    }
 
 }

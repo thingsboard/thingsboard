@@ -34,7 +34,9 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -379,7 +381,7 @@ public class CustomerServiceTest extends AbstractServiceTest {
 
         Argument argument = new Argument();
         argument.setEntityId(savedCustomer.getId());
-        argument.setType("TS_LATEST");
+        argument.setType(ArgumentType.TS_LATEST);
         argument.setKey("temperature");
 
         config.setArguments(Map.of("T", argument));
@@ -388,7 +390,7 @@ public class CustomerServiceTest extends AbstractServiceTest {
 
         Output output = new Output();
         output.setName("output");
-        output.setType("TS_LATEST");
+        output.setType(OutputType.TIME_SERIES);
 
         config.setOutput(output);
 

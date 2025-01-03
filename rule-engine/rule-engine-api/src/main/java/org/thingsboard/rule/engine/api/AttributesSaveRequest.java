@@ -22,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -40,6 +41,7 @@ public class AttributesSaveRequest {
     private final AttributeScope scope;
     private final List<AttributeKvEntry> entries;
     private final boolean notifyDevice;
+    private final List<CalculatedFieldId> calculatedFieldIds;
     private final FutureCallback<Void> callback;
 
     public static Builder builder() {
@@ -53,6 +55,7 @@ public class AttributesSaveRequest {
         private AttributeScope scope;
         private List<AttributeKvEntry> entries;
         private boolean notifyDevice = true;
+        private List<CalculatedFieldId> calculatedFieldIds;
         private FutureCallback<Void> callback;
 
         Builder() {}
@@ -100,6 +103,11 @@ public class AttributesSaveRequest {
             return this;
         }
 
+        public Builder calculatedFieldIds(List<CalculatedFieldId> calculatedFieldIds) {
+            this.calculatedFieldIds = calculatedFieldIds;
+            return this;
+        }
+
         public Builder callback(FutureCallback<Void> callback) {
             this.callback = callback;
             return this;
@@ -120,7 +128,7 @@ public class AttributesSaveRequest {
         }
 
         public AttributesSaveRequest build() {
-            return new AttributesSaveRequest(tenantId, entityId, scope, entries, notifyDevice, callback);
+            return new AttributesSaveRequest(tenantId, entityId, scope, entries, notifyDevice, calculatedFieldIds, callback);
         }
 
     }

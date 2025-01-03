@@ -23,6 +23,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     protected Map<String, ArgumentEntry> arguments;
 
     public BaseCalculatedFieldState() {
+        arguments = new HashMap<>();
     }
 
     @Override
@@ -31,26 +32,38 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     }
 
     @Override
-    public void initState(Map<String, ArgumentEntry> argumentValues) {
+    public boolean updateState(Map<String, ArgumentEntry> argumentValues) {
         if (arguments == null) {
             arguments = new HashMap<>();
         }
-        argumentValues.forEach((key, argumentEntry) -> {
-            ArgumentEntry existingArgumentEntry = arguments.get(key);
-            if (existingArgumentEntry != null) {
-                if (existingArgumentEntry instanceof SingleValueArgumentEntry) {
-                    arguments.put(key, argumentEntry);
-                } else if (existingArgumentEntry instanceof TsRollingArgumentEntry existingTsRollingArgumentEntry) {
-                    if (argumentEntry instanceof TsRollingArgumentEntry tsRollingArgumentEntry) {
-                        existingTsRollingArgumentEntry.getTsRecords().putAll(tsRollingArgumentEntry.getTsRecords());
-                    } else if (argumentEntry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
-                        existingTsRollingArgumentEntry.getTsRecords().put(singleValueArgumentEntry.getTs(), singleValueArgumentEntry.getValue());
-                    }
+
+        boolean stateUpdated = false;
+
+        for (Map.Entry<String, ArgumentEntry> entry : argumentValues.entrySet()) {
+            String key = entry.getKey();
+            ArgumentEntry newEntry = entry.getValue();
+            ArgumentEntry existingEntry = arguments.get(key);
+
+            if (existingEntry == null || existingEntry.hasUpdatedValue(newEntry)) {
+                if (existingEntry instanceof TsRollingArgumentEntry existingTsRollingEntry && newEntry instanceof TsRollingArgumentEntry newTsRollingEntry) {
+                    existingTsRollingEntry.addAllTsRecords(newTsRollingEntry.getTsRecords());
+                } else if (existingEntry instanceof TsRollingArgumentEntry existingTsRollingEntry && newEntry instanceof SingleValueArgumentEntry singleValueEntry) {
+                    existingTsRollingEntry.addTsRecord(singleValueEntry.getTs(), singleValueEntry.getValue());
+                } else if (existingEntry instanceof SingleValueArgumentEntry existingSingleValueEntry && newEntry instanceof SingleValueArgumentEntry singleValueEntry) {
+//                    Long existingVersion = existingSingleValueEntry.getVersion();
+//                    Long newVersion = singleValueEntry.getVersion();
+//                    if (newVersion != null && (existingVersion == null || newVersion > existingVersion)) {
+//                        arguments.put(key, newEntry.copy());
+//                    }
+                    arguments.put(key, newEntry.copy());
+                } else {
+                    arguments.put(key, newEntry.copy());
                 }
-            } else {
-                arguments.put(key, argumentEntry);
+                stateUpdated = true;
             }
-        });
+        }
+
+        return stateUpdated;
     }
 
 }

@@ -39,26 +39,25 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
 
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
-        if (isValid(ctx.getArguments())) {
-            arguments.forEach((key, argumentEntry) -> {
-                if (argumentEntry instanceof TsRollingArgumentEntry) {
-                    Argument argument = ctx.getArguments().get(key);
-                    TreeMap<Long, Object> tsRecords = ((TsRollingArgumentEntry) argumentEntry).getTsRecords();
-                    if (tsRecords.size() > argument.getLimit()) {
-                        tsRecords.pollFirstEntry();
-                    }
-                    tsRecords.entrySet().removeIf(tsRecord -> tsRecord.getKey() < System.currentTimeMillis() - argument.getTimeWindow());
+        arguments.forEach((key, argumentEntry) -> {
+            if (argumentEntry instanceof TsRollingArgumentEntry) {
+                Argument argument = ctx.getArguments().get(key);
+                TreeMap<Long, Object> tsRecords = ((TsRollingArgumentEntry) argumentEntry).getTsRecords();
+                if (tsRecords.size() > argument.getLimit()) {
+                    tsRecords.pollFirstEntry();
                 }
-            });
-            Object[] args = arguments.values().stream().map(ArgumentEntry::getValue).toArray();
-            ListenableFuture<Map<String, Object>> resultFuture = ctx.getCalculatedFieldScriptEngine().executeToMapAsync(args);
-            Output output = ctx.getOutput();
-            return Futures.transform(resultFuture,
-                    result -> new CalculatedFieldResult(output.getType(), output.getScope(), result),
-                    MoreExecutors.directExecutor()
-            );
-        }
-        return Futures.immediateFuture(null);
+                tsRecords.entrySet().removeIf(tsRecord -> tsRecord.getKey() < System.currentTimeMillis() - argument.getTimeWindow());
+            }
+        });
+        Object[] args = ctx.getArgKeys().stream()
+                .map(key -> arguments.get(key).getValue())
+                .toArray();
+        ListenableFuture<Map<String, Object>> resultFuture = ctx.getCalculatedFieldScriptEngine().executeToMapAsync(args);
+        Output output = ctx.getOutput();
+        return Futures.transform(resultFuture,
+                result -> new CalculatedFieldResult(output.getType(), output.getScope(), result),
+                MoreExecutors.directExecutor()
+        );
     }
 
 }

@@ -22,8 +22,6 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 import java.util.List;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -37,17 +35,21 @@ import java.util.stream.Collectors;
 public interface ArgumentEntry {
 
     @JsonIgnore
-    ArgumentType getType();
+    ArgumentEntryType getType();
 
     Object getValue();
+
+    boolean hasUpdatedValue(ArgumentEntry entry);
 
     static ArgumentEntry createSingleValueArgument(KvEntry kvEntry) {
         return new SingleValueArgumentEntry(kvEntry);
     }
 
     static ArgumentEntry createTsRollingArgument(List<TsKvEntry> kvEntries) {
-        return new TsRollingArgumentEntry(kvEntries.stream().
-                collect(Collectors.toMap(TsKvEntry::getTs, TsKvEntry::getValue, (oldValue, newValue) -> newValue, TreeMap::new)));
+        return new TsRollingArgumentEntry(kvEntries);
     }
+
+    @JsonIgnore
+    ArgumentEntry copy();
 
 }

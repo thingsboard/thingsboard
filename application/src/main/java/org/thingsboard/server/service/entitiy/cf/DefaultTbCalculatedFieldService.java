@@ -46,6 +46,9 @@ import static org.thingsboard.server.dao.service.Validator.validateEntityId;
 @RequiredArgsConstructor
 public class DefaultTbCalculatedFieldService extends AbstractTbEntityService implements TbCalculatedFieldService {
 
+    private static final int MAX_ARGUMENT_SIZE = 10;
+    private static final int MAX_CALCULATED_FIELD_NUMBER = 10;
+
     private final CalculatedFieldService calculatedFieldService;
 
     @Override
@@ -53,7 +56,9 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
         ActionType actionType = calculatedField.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = calculatedField.getTenantId();
         try {
+            checkCalculatedFieldNumber(tenantId, calculatedField.getEntityId());
             checkEntityExistence(tenantId, calculatedField.getEntityId());
+            checkArgumentSize(calculatedField.getConfiguration());
             checkReferencedEntities(calculatedField.getConfiguration(), user);
             CalculatedField savedCalculatedField = checkNotNull(calculatedFieldService.save(calculatedField));
             logEntityActionService.logEntityAction(tenantId, savedCalculatedField.getId(), savedCalculatedField, actionType, user);
@@ -103,6 +108,19 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
             checkEntity(user, entity, Operation.READ);
         }
 
+    }
+
+    private void checkArgumentSize(CalculatedFieldConfiguration calculatedFieldConfig) {
+        if (calculatedFieldConfig.getArguments().size() > MAX_ARGUMENT_SIZE) {
+            throw new IllegalArgumentException("Too many arguments: " + calculatedFieldConfig.getArguments().size() + ". Max number of argument is " + MAX_ARGUMENT_SIZE);
+        }
+    }
+
+    private void checkCalculatedFieldNumber(TenantId tenantId, EntityId entityId) {
+        int numberOfCalculatedFieldsByEntityId = calculatedFieldService.findCalculatedFieldIdsByEntityId(tenantId, entityId).size();
+        if (numberOfCalculatedFieldsByEntityId >= MAX_CALCULATED_FIELD_NUMBER) {
+            throw new IllegalArgumentException("Max number of calculated fields for entity is " + MAX_CALCULATED_FIELD_NUMBER);
+        }
     }
 
     private <E extends HasId<I> & HasTenantId, I extends EntityId> E findEntity(TenantId tenantId, EntityId entityId) {
