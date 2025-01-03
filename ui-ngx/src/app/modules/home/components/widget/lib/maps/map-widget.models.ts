@@ -34,5 +34,5 @@ export const mapWidgetDefaultSettings: MapWidgetSettings =
         blur: 3
       }
     },
-    padding: '6px'
+    padding: '8px'
 } as MapWidgetSettings);

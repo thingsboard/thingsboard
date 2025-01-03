@@ -78,6 +78,7 @@ export class ImportDialogComponent extends DialogComponent<ImportDialogComponent
     ).subscribe(() => {
       this.importTypeChanged();
     });
+    this.importTypeChanged();
   }
 
   isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
