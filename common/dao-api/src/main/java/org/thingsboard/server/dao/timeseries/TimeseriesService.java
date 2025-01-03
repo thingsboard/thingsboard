@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -37,6 +38,8 @@ public interface TimeseriesService {
     ListenableFuture<List<ReadTsKvQueryResult>> findAllByQueries(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries);
 
     ListenableFuture<List<TsKvEntry>> findAll(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries);
+
+    ListenableFuture<Map<EntityId, List<TsKvEntry>>> findAll(TenantId tenantId, List<EntityId> entitiesId, List<ReadTsKvQuery> queries);
 
     ListenableFuture<Optional<TsKvEntry>> findLatest(TenantId tenantId, EntityId entityId, String key);
 
