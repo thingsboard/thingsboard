@@ -30,14 +30,25 @@ import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.cf.configuration.OutputType;
+import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -45,13 +56,17 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DaoSqlTest
 public class CustomerServiceTest extends AbstractServiceTest {
 
     @Autowired
     CustomerService customerService;
+    @Autowired
+    CalculatedFieldService calculatedFieldService;
+    @Autowired
+    AssetService assetService;
 
     static final int TIMEOUT = 30;
 
@@ -341,6 +356,53 @@ public class CustomerServiceTest extends AbstractServiceTest {
                 executor.shutdownNow();
             }
         }
+    }
+
+    @Test
+    public void testDeleteCustomerIfReferencedInCalculatedField() {
+        Customer customer = new Customer();
+        customer.setTenantId(tenantId);
+        customer.setTitle("My customer");
+        Customer savedCustomer = customerService.saveCustomer(customer);
+
+        Asset asset = new Asset();
+        asset.setTenantId(tenantId);
+        asset.setName("My asset");
+        asset.setType("default");
+        Asset savedAsset = assetService.saveAsset(asset);
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setTenantId(tenantId);
+        calculatedField.setName("Test CF");
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setEntityId(savedAsset.getId());
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+
+        Argument argument = new Argument();
+        argument.setEntityId(savedCustomer.getId());
+        argument.setType(ArgumentType.TS_LATEST);
+        argument.setKey("temperature");
+
+        config.setArguments(Map.of("T", argument));
+
+        config.setExpression("T - (100 - H) / 5");
+
+        Output output = new Output();
+        output.setName("output");
+        output.setType(OutputType.TIME_SERIES);
+
+        config.setOutput(output);
+
+        calculatedField.setConfiguration(config);
+
+        CalculatedField savedCalculatedField = calculatedFieldService.save(calculatedField);
+
+        assertThatThrownBy(() -> customerService.deleteCustomer(tenantId, savedCustomer.getId()))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("Can't delete customer that is referenced in calculated fields!");
+
+        calculatedFieldService.deleteCalculatedField(tenantId, savedCalculatedField.getId());
     }
 
 }

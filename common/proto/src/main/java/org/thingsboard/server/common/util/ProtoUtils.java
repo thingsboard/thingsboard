@@ -1183,6 +1183,46 @@ public class ProtoUtils {
         return builder.build();
     }
 
+    public static TransportProtos.ObjectProto toObjectProto(Object value) {
+        if (value == null) {
+            throw new IllegalArgumentException("Cannot convert null to ObjectProto");
+        }
+
+        TransportProtos.ObjectProto.Builder builder = TransportProtos.ObjectProto.newBuilder();
+
+        if (value instanceof String) {
+            builder.setStringValue((String) value);
+        } else if (value instanceof Integer) {
+            builder.setIntValue((Integer) value);
+        } else if (value instanceof Long) {
+            builder.setLongValue((Long) value);
+        } else if (value instanceof Double) {
+            builder.setDoubleValue((Double) value);
+        } else if (value instanceof Boolean) {
+            builder.setBoolValue((Boolean) value);
+        } else {
+            throw new IllegalArgumentException("Unsupported value type: " + value.getClass().getName());
+        }
+
+        return builder.build();
+    }
+
+    public static Object fromObjectProto(TransportProtos.ObjectProto proto) {
+        try {
+            return switch (proto.getValueCase()) {
+                case STRINGVALUE -> proto.getStringValue();
+                case INTVALUE -> proto.getIntValue();
+                case LONGVALUE -> proto.getLongValue();
+                case DOUBLEVALUE -> proto.getDoubleValue();
+                case BOOLVALUE -> proto.getBoolValue();
+                case VALUE_NOT_SET -> throw new IllegalArgumentException("Value not set in ObjectProto");
+            };
+        } catch (Exception e) {
+            log.error("Failed to deserialize ObjectProto: [{}]", proto, e);
+            return null;
+        }
+    }
+
     private static boolean isNotNull(Object obj) {
         return obj != null;
     }
