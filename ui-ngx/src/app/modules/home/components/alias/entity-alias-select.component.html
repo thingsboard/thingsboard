@@ -31,6 +31,14 @@
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
+  <button *ngIf="selectEntityAliasFormGroup.get('entityAlias').value?.id && !disabled"
+          type="button"
+          matSuffix mat-icon-button aria-label="Edit"
+          matTooltip="{{ 'device-profile.edit' | translate }}"
+          matTooltipPosition="above"
+          (click)="editEntityAlias($event)">
+    <mat-icon class="material-icons">edit</mat-icon>
+  </button>
   <button *ngIf="!selectEntityAliasFormGroup.get('entityAlias').value && !disabled"
           style="margin-right: 8px;"
           type="button"

@@ -1139,5 +1139,6 @@
     },
     "filters": {}
   },
-  "name": "Rule Engine Statistics"
+  "name": "Rule Engine Statistics",
+  "resources": []
 }

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormBuilder,
@@ -29,6 +29,10 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import {
+  defaultGoogleMapProviderSettings,
+  defaultHereMapProviderSettings,
+  defaultImageMapProviderSettings,
+  defaultOpenStreetMapProviderSettings, defaultTencentMapProviderSettings,
   GoogleMapProviderSettings,
   HereMapProviderSettings,
   ImageMapProviderSettings,
@@ -39,8 +43,8 @@ import {
   TencentMapProviderSettings
 } from '@home/components/widget/lib/maps/map-models';
 import { extractType } from '@core/utils';
-import { keys } from 'ts-transformer-keys';
 import { IAliasController } from '@core/api/widget-api.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-map-provider-settings',
@@ -84,7 +88,8 @@ export class MapProviderSettingsComponent extends PageComponent implements OnIni
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -100,10 +105,14 @@ export class MapProviderSettingsComponent extends PageComponent implements OnIni
       imageMapProviderSettings: [null, []],
       tencentMapProviderSettings: [null, []]
     });
-    this.providerSettingsFormGroup.valueChanges.subscribe(() => {
+    this.providerSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
-    this.providerSettingsFormGroup.get('provider').valueChanges.subscribe(() => {
+    this.providerSettingsFormGroup.get('provider').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
     this.updateValidators(false);
@@ -128,11 +137,11 @@ export class MapProviderSettingsComponent extends PageComponent implements OnIni
   writeValue(value: MapProviderSettings): void {
     this.modelValue = value;
     const provider = value?.provider;
-    const googleProviderSettings = extractType<GoogleMapProviderSettings>(value, keys<GoogleMapProviderSettings>());
-    const openstreetProviderSettings = extractType<OpenStreetMapProviderSettings>(value, keys<OpenStreetMapProviderSettings>());
-    const hereProviderSettings = extractType<HereMapProviderSettings>(value, keys<HereMapProviderSettings>());
-    const imageMapProviderSettings = extractType<ImageMapProviderSettings>(value, keys<ImageMapProviderSettings>());
-    const tencentMapProviderSettings = extractType<TencentMapProviderSettings>(value, keys<TencentMapProviderSettings>());
+    const googleProviderSettings = extractType<GoogleMapProviderSettings>(value, Object.keys(defaultGoogleMapProviderSettings) as (keyof GoogleMapProviderSettings)[]);
+    const openstreetProviderSettings = extractType<OpenStreetMapProviderSettings>(value, Object.keys(defaultOpenStreetMapProviderSettings) as (keyof OpenStreetMapProviderSettings)[]);
+    const hereProviderSettings = extractType<HereMapProviderSettings>(value, Object.keys(defaultHereMapProviderSettings) as (keyof HereMapProviderSettings)[]);
+    const imageMapProviderSettings = extractType<ImageMapProviderSettings>(value, Object.keys(defaultImageMapProviderSettings) as (keyof ImageMapProviderSettings)[]);
+    const tencentMapProviderSettings = extractType<TencentMapProviderSettings>(value, Object.keys(defaultTencentMapProviderSettings) as (keyof TencentMapProviderSettings)[]);
     this.providerSettingsFormGroup.patchValue(
       {
         provider,

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormBuilder,
@@ -26,6 +26,7 @@ import {
   Validators
 } from '@angular/forms';
 import { EntityKeyValueType, FilterPredicateType, KeyFilterPredicateInfo } from '@shared/models/query/query.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-filter-predicate',
@@ -66,7 +67,8 @@ export class FilterPredicateComponent implements ControlValueAccessor, Validator
 
   private propagateChange = null;
 
-  constructor(private fb: UntypedFormBuilder) {
+  constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -74,7 +76,9 @@ export class FilterPredicateComponent implements ControlValueAccessor, Validator
       predicate: [null, [Validators.required]],
       userInfo: [null, []]
     });
-    this.filterPredicateFormGroup.valueChanges.subscribe(() => {
+    this.filterPredicateFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }

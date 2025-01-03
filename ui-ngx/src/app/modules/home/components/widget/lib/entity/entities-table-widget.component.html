@@ -43,8 +43,8 @@
         <ng-container [matColumnDef]="column.def" *ngFor="let column of columns; let $index = index; trackBy: trackByColumnDef;">
           <mat-header-cell [style]="headerStyle(column)" *matHeaderCellDef mat-sort-header [disabled]="!column.sortable"> {{ column.title }} </mat-header-cell>
             <mat-cell *matCellDef="let entity; let row = index"
-                      [innerHTML]="cellContent(entity, column, row)"
-                      [style]="cellStyle(entity, column, row)"
+                      [innerHTML]="cellContent(entity, column, row) | async"
+                      [style]="cellStyle(entity, column, row) | async"
                       (click)="onCellClick($event, entity, column, $index)"
                       [class.tb-pointer]="columnHasCellClick($index)">
             </mat-cell>
@@ -59,7 +59,7 @@
               </div>
             </ng-container>
           </mat-header-cell>
-          <mat-cell *matCellDef="let entity; let row = index" [style]="rowStyle(entity, row)">
+          <mat-cell *matCellDef="let entity; let row = index" [style]="rowStyle(entity, row) | async">
             <ng-container *ngIf="entityDatasource.countCellButtonAction">
               <div [class.lt-lg:!hidden]="showCellActionsMenu && entityDatasource.countCellButtonAction !== 1" class="flex flex-row items-stretch justify-end"
                    [style.min-width]="(entityDatasource.countCellButtonAction * 48) + 'px'">
@@ -99,7 +99,7 @@
                  [class.invisible]="entityDatasource.dataLoading"
                  [class.tb-pointer]="hasRowAction"
                  *matRowDef="let entity; columns: displayedColumns; let row = index"
-                 [style]="rowStyle(entity, row)"
+                 [style]="rowStyle(entity, row) | async"
                  (click)="onRowClick($event, entity)" (dblclick)="onRowClick($event, entity, true)"></mat-row>
       </table>
       <span [class.!hidden]="(entityDatasource.isEmpty() | async) === false || entityDatasource.dataLoading"

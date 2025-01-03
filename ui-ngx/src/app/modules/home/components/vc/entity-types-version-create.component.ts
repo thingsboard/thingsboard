@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -40,6 +40,7 @@ import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { isDefinedAndNotNull } from '@core/utils';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-entity-types-version-create',
@@ -80,7 +81,8 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -88,7 +90,9 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
     this.entityTypesVersionCreateFormGroup = this.fb.group({
       entityTypes: this.fb.array([], [])
     });
-    this.entityTypesVersionCreateFormGroup.valueChanges.subscribe(() => {
+    this.entityTypesVersionCreateFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }
@@ -152,7 +156,9 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
       }
     );
     this.updateEntityTypeValidators(entityTypeControl);
-    entityTypeControl.get('config.allEntities').valueChanges.subscribe(() => {
+    entityTypeControl.get('config.allEntities').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateEntityTypeValidators(entityTypeControl);
     });
     return entityTypeControl;

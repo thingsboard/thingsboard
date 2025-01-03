@@ -19,12 +19,24 @@
      tb-fullscreen
      [fullscreen]="fullscreen">
   <div style="min-height: 40px;" class="tb-js-func-toolbar flex flex-row items-center justify-start">
-    <label class="tb-title no-padding"
+    <label *ngIf="!hideLabel" class="tb-title no-padding"
            [class]="{'tb-error': !disabled && (hasErrors || !functionValid || required && !modelValue), 'tb-required': !disabled && required}">
       {{ functionLabel }}
     </label>
+    <ng-content select="[toolbarStartButton]"></ng-content>
     <span class="flex-1"></span>
     <ng-content select="[toolbarPrefixButton]"></ng-content>
+    <fieldset *ngIf="!disabled && withModules" style="width: initial">
+      <div matTooltip="{{'js-func.modules' | translate}}"
+           matTooltipPosition="above"
+           style="border-radius: 50%"
+           #editModulesButton
+           (click)="editModules($event, editModulesButton)">
+        <button type='button' mat-icon-button class="tb-mat-32">
+          <tb-icon color="primary" matButtonIcon>mdi:application-braces-outline</tb-icon>
+        </button>
+      </div>
+    </fieldset>
     <button type='button' *ngIf="!disabled" mat-button class="tidy" (click)="beautifyJs()">
       {{'js-func.tidy' | translate }}
     </button>

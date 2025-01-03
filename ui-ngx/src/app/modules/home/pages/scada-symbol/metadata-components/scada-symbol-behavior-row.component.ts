@@ -17,6 +17,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   EventEmitter,
   forwardRef,
@@ -57,6 +58,8 @@ import {
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-behaviors.component';
 import { IAliasController } from '@core/api/widget-api.models';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
+import { isNotEmptyTbFunction } from '@shared/models/js-function.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export const behaviorValid = (behavior: ScadaSymbolBehavior): boolean => {
   if (!behavior.id || !behavior.name || !behavior.type) {
@@ -77,7 +80,7 @@ export const behaviorValid = (behavior: ScadaSymbolBehavior): boolean => {
         return false;
       }
       if (behavior.defaultSetValueSettings.valueToData?.type === ValueToDataType.FUNCTION
-        && isUndefinedOrNull(behavior.defaultSetValueSettings.valueToData?.valueToDataFunction)) {
+        && !isNotEmptyTbFunction(behavior.defaultSetValueSettings.valueToData?.valueToDataFunction)) {
         return false;
       }
       break;
@@ -142,7 +145,8 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
-              private behaviorsComponent: ScadaSymbolBehaviorsComponent) {
+              private behaviorsComponent: ScadaSymbolBehaviorsComponent,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
@@ -151,10 +155,14 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
       name: [null, [Validators.required]],
       type: [null, [Validators.required]]
     });
-    this.behaviorRowFormGroup.valueChanges.subscribe(
+    this.behaviorRowFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.updateModel()
     );
-    this.behaviorRowFormGroup.get('type').valueChanges.subscribe((newType: ScadaSymbolBehaviorType) => {
+    this.behaviorRowFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((newType: ScadaSymbolBehaviorType) => {
       this.onTypeChanged(newType);
     });
   }

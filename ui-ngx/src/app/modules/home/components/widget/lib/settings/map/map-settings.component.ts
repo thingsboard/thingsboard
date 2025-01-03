@@ -14,14 +14,14 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
-  NG_VALIDATORS,
-  NG_VALUE_ACCESSOR,
   Validator
 } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
@@ -31,6 +31,13 @@ import { TranslateService } from '@ngx-translate/core';
 import {
   CircleSettings,
   CommonMapSettings,
+  defaultCircleSettings,
+  defaultCommonMapSettings,
+  defaultMapEditorSettings,
+  defaultMapProviderSettings,
+  defaultMarkerClusteringSettings,
+  defaultMarkersSettings,
+  defaultPolygonSettings,
   MapEditorSettings,
   MapProviders,
   MapProviderSettings,
@@ -41,9 +48,9 @@ import {
   UnitedMapSettings
 } from '@home/components/widget/lib/maps/map-models';
 import { extractType } from '@core/utils';
-import { keys } from 'ts-transformer-keys';
 import { IAliasController } from '@core/api/widget-api.models';
 import { Widget } from '@shared/models/widget.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-map-settings',
@@ -86,7 +93,8 @@ export class MapSettingsComponent extends PageComponent implements OnInit, Contr
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -104,19 +112,29 @@ export class MapSettingsComponent extends PageComponent implements OnInit, Contr
       this.mapSettingsFormGroup.addControl('markerClusteringSettings', this.fb.control(null, []));
     }
     this.mapSettingsFormGroup.addControl('mapEditorSettings', this.fb.control(null, []));
-    this.mapSettingsFormGroup.get('mapProviderSettings').valueChanges.subscribe(() => {
+    this.mapSettingsFormGroup.get('mapProviderSettings').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
-    this.mapSettingsFormGroup.get('markersSettings').valueChanges.subscribe(() => {
+    this.mapSettingsFormGroup.get('markersSettings').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
-    this.mapSettingsFormGroup.get('polygonSettings').valueChanges.subscribe(() => {
+    this.mapSettingsFormGroup.get('polygonSettings').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
-    this.mapSettingsFormGroup.get('circleSettings').valueChanges.subscribe(() => {
+    this.mapSettingsFormGroup.get('circleSettings').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators(true);
     });
-    this.mapSettingsFormGroup.valueChanges.subscribe(() => {
+    this.mapSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
     this.updateValidators(false);
@@ -140,12 +158,12 @@ export class MapSettingsComponent extends PageComponent implements OnInit, Contr
 
   writeValue(value: UnitedMapSettings): void {
     this.modelValue = value;
-    const mapProviderSettings = extractType<MapProviderSettings>(value, keys<MapProviderSettings>());
-    const commonMapSettings = extractType<CommonMapSettings>(value, keys<CommonMapSettings>());
-    const markersSettings = extractType<MarkersSettings>(value, keys<MarkersSettings>());
-    const polygonSettings = extractType<PolygonSettings>(value, keys<PolygonSettings>());
-    const circleSettings = extractType<CircleSettings>(value, keys<CircleSettings>());
-    const mapEditorSettings = extractType<MapEditorSettings>(value, keys<MapEditorSettings>());
+    const mapProviderSettings = extractType<MapProviderSettings>(value, Object.keys(defaultMapProviderSettings) as (keyof MapProviderSettings)[]);
+    const commonMapSettings = extractType<CommonMapSettings>(value, Object.keys(defaultCommonMapSettings) as (keyof CommonMapSettings)[]);
+    const markersSettings = extractType<MarkersSettings>(value, Object.keys(defaultMarkersSettings) as (keyof MarkersSettings)[]);
+    const polygonSettings = extractType<PolygonSettings>(value, Object.keys(defaultPolygonSettings) as (keyof PolygonSettings)[]);
+    const circleSettings = extractType<CircleSettings>(value, Object.keys(defaultCircleSettings) as (keyof CircleSettings)[]);
+    const mapEditorSettings = extractType<MapEditorSettings>(value, Object.keys(defaultMapEditorSettings) as (keyof MapEditorSettings)[]);
     const formValue = {
       mapProviderSettings,
       commonMapSettings,
@@ -157,7 +175,7 @@ export class MapSettingsComponent extends PageComponent implements OnInit, Contr
     if (this.routeMap) {
       formValue.routeMapSettings = extractType<PolylineSettings>(value, ['strokeWeight', 'strokeOpacity']);
     } else {
-      formValue.markerClusteringSettings = extractType<MarkerClusteringSettings>(value, keys<MarkerClusteringSettings>());
+      formValue.markerClusteringSettings = extractType<MarkerClusteringSettings>(value, Object.keys(defaultMarkerClusteringSettings) as (keyof MarkerClusteringSettings)[]);
     }
     this.mapSettingsFormGroup.patchValue( formValue, {emitEvent: false} );
     this.updateValidators(false);

@@ -100,7 +100,10 @@ public class TbDeleteKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
             default:
                 log.debug("Unexpected DeleteFrom value: {}. Allowed values: {}", deleteFrom, TbMsgSource.values());
         }
-        ctx.tellSuccess(hasNoChanges ? msg : TbMsg.transformMsg(msg, metaDataCopy, msgDataStr));
+        ctx.tellSuccess(hasNoChanges ? msg : msg.transform()
+                .metaData(metaDataCopy)
+                .data(msgDataStr)
+                .build());
     }
 
     @Override

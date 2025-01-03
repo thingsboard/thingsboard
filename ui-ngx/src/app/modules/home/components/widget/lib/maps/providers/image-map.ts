@@ -23,16 +23,17 @@ import {
   PosFunction,
   WidgetUnitedMapSettings
 } from '../map-models';
-import { Observable, of, ReplaySubject, switchMap } from 'rxjs';
+import { combineLatest, Observable, of, ReplaySubject, switchMap } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { calculateNewPointCoordinate, loadImageWithAspect } from '@home/components/widget/lib/maps/common-maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DataSet, DatasourceType, FormattedData, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { isDefinedAndNotNull, isEmptyStr, isNotEmptyStr, parseFunction } from '@core/utils';
+import { isDefinedAndNotNull, isEmptyStr, isNotEmptyStr, parseTbFunction } from '@core/utils';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { ImagePipe } from '@shared/pipe/image.pipe';
+import { CompiledTbFunction } from '@shared/models/js-function.models';
 
 const maxZoom = 4; // ?
 
@@ -43,13 +44,20 @@ export class ImageMap extends LeafletMap {
     width = 0;
     height = 0;
     imageUrl: string;
-    posFunction: PosFunction;
+    posFunction: CompiledTbFunction<PosFunction>;
 
     constructor(ctx: WidgetContext, $container: HTMLElement, options: WidgetUnitedMapSettings) {
         super(ctx, $container, options);
-        this.posFunction = parseFunction(options.posFunction,
-          ['origXPos', 'origYPos', 'data', 'dsData', 'dsIndex', 'aspect']) as PosFunction;
-        this.mapImage(options).subscribe((mapImage) => {
+
+        const initData = {
+          posFunction: parseTbFunction<PosFunction>(this.ctx.http, options.posFunction,
+            ['origXPos', 'origYPos', 'data', 'dsData', 'dsIndex', 'aspect']),
+          mapImage: this.mapImage(options)
+        };
+
+        combineLatest(initData).subscribe(inited => {
+          this.posFunction = inited.posFunction;
+          const mapImage = inited.mapImage;
           this.imageUrl = mapImage.imageUrl;
           this.aspect = mapImage.aspect;
           if (mapImage.update) {
@@ -272,7 +280,7 @@ export class ImageMap extends LeafletMap {
     convertPosition(data: FormattedData, dsData: FormattedData[]): L.LatLng {
       const position = this.extractPosition(data);
       if (position) {
-        const converted = this.posFunction(position.x, position.y, data, dsData, data.dsIndex, this.aspect) || {x: 0, y: 0};
+        const converted = this.posFunction.execute(position.x, position.y, data, dsData, data.dsIndex, this.aspect) || {x: 0, y: 0};
         return this.positionToLatLng(converted);
       } else {
         return null;

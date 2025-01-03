@@ -16,6 +16,7 @@
 
 import {
   Component,
+  DestroyRef,
   forwardRef,
   HostBinding,
   Input,
@@ -51,6 +52,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { mergeDeep } from '@core/utils';
 import { IAliasController } from '@core/api/widget-api.models';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-scada-symbol-metadata-behaviors',
@@ -98,14 +100,17 @@ export class ScadaSymbolBehaviorsComponent implements ControlValueAccessor, OnIn
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: UntypedFormBuilder,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
     this.behaviorsFormGroup = this.fb.group({
       behaviors: this.fb.array([])
     });
-    this.behaviorsFormGroup.valueChanges.subscribe(
+    this.behaviorsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => {
         let behaviors: ScadaSymbolBehavior[] = this.behaviorsFormGroup.get('behaviors').value;
         if (behaviors) {
@@ -172,8 +177,8 @@ export class ScadaSymbolBehaviorsComponent implements ControlValueAccessor, OnIn
   behaviorDrop(event: CdkDragDrop<string[]>) {
     const behaviorsArray = this.behaviorsFormGroup.get('behaviors') as UntypedFormArray;
     const behavior = behaviorsArray.at(event.previousIndex);
-    behaviorsArray.removeAt(event.previousIndex);
-    behaviorsArray.insert(event.currentIndex, behavior);
+    behaviorsArray.removeAt(event.previousIndex, {emitEvent: false});
+    behaviorsArray.insert(event.currentIndex, behavior, {emitEvent: true});
   }
 
   behaviorsFormArray(): UntypedFormArray {

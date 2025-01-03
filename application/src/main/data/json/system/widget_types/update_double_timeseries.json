@@ -2,7 +2,7 @@
   "fqn": "input_widgets.update_double_timeseries",
   "name": "Update double timeseries",
   "deprecated": true,
-  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAAAAABslHx1AAAAAmJLR0QA/4ePzL8AAANMSURBVHja7d3fS5NRGAfw/SsrhSCKKIugburCi6KCLrropi4izME0c1kLUxquHybmKNPAi4qMJkm9hOkswhVkpaLMfhmlbjHYu+3Vaf7a3r3fLjad5nZh6NiZ3+diO+fAe/HhOc85Z+/Fjg4R2T0ieLjlMHQRT0iF4KGGPBGdHEIWREjWudVsgKhu3QiyIkYIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQghZS8jbbwDQOT9slJc/5HGJAOmoAaAUjKWERCO9z7RI5kPGC8cBxy3A5/wUBoyy1qNirg+I9jtlAPBcvGkt7xWgRmyvgKpu9JR3NF4HjHLk9DSCBmi2eqnsFwCEK8vGRSj2j9fgM85h0Ito4VgC0m/R4GwEgHZ72xMRIOHiwIv7wJ/HN6oKfAmIdL62tsoCAMps1CvE8vuwvWIIaHgehTEGmULQgPYGv9+vCLWP/Cg1a4ClG18LvDDKKPmJPgNGzwXgdQkF0S5JAPrPXqgzDcAo402R2WYAukorzUMi7uzR6YWqmY0BJzQeUQghhBBC1h9kZllDDIj2cumBaKZaijWk6hmRIFqLybl0RDJJi75EgWitJse/Y20mKf4hDkRrWe4AJJOUPB8ZC0mWj1hOUjgyDjJ9zw1Ae5rcsUKIbK9rmVzovatv+hJvfh5ec4hirfidYl6teGp1bd1/Km9XfDhasOnksZxGAIGmA/rWtU/J2NXL7tT5WEmxz+0sUqHsNsR69lwXcDc3AC13b0U6IFCsZanzsZLld1D/AYApP/5wDYBBfTfwPupPCwSKNbnj/zbE44WLOvYcLwCkCYLpVTyiODb2zDe/P7qypQnphKzioXF0myUxMw9t3+MUFBLcd2LxP1qo1bnDQkKmjhydWjqw4YGIkMiJ/MT5ufggAL9eEhCilWzudLlcLgWvbYBDfyfoPpOnCAiZ1MeiGeYdKtCcp9cfHhB11YoXeewFo2+Cv9kJIYQQQghZf5DbaQ1mhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCEkMyFZc0FwdlzZPC7rwtlxibaqy45rzVX8BUWnY6Q1/jMIAAAAAElFTkSuQmCC",
+  "image": "tb-image;/api/images/system/update_double_timeseries_system_widget_image.png",
   "description": "Simple form to input new double value for pre-defined timeseries key.\nThe widget is deprecated. Use \"Update Multiple Attributes\" widget. Timeseries key type and double value type can be selected in widgets data key configuration.",
   "descriptor": {
     "type": "latest",
@@ -17,5 +17,17 @@
     "settingsDirective": "tb-update-double-attribute-widget-settings",
     "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Random\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.15479322438769105,\"funcBody\":\"var value = prevValue + Math.random() * 100 - 50;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < -1000) {\\n\\tvalue = -1000;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":true,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{},\"title\":\"Update double timeseries\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{}}"
   },
-  "externalId": null
+  "resources": [
+    {
+      "link": "/api/images/system/update_double_timeseries_system_widget_image.png",
+      "title": "\"Update double timeseries\" system widget image",
+      "type": "IMAGE",
+      "subType": "IMAGE",
+      "fileName": "update_double_timeseries_system_widget_image.png",
+      "publicResourceKey": "Qp6mHlHuCMNnvkPYHndt6kGUvr8jDSbW",
+      "mediaType": "image/png",
+      "data": "iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAAAAABslHx1AAAAAmJLR0QA/4ePzL8AAANMSURBVHja7d3fS5NRGAfw/SsrhSCKKIugburCi6KCLrropi4izME0c1kLUxquHybmKNPAi4qMJkm9hOkswhVkpaLMfhmlbjHYu+3Vaf7a3r3fLjad5nZh6NiZ3+diO+fAe/HhOc85Z+/Fjg4R2T0ieLjlMHQRT0iF4KGGPBGdHEIWREjWudVsgKhu3QiyIkYIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQghZS8jbbwDQOT9slJc/5HGJAOmoAaAUjKWERCO9z7RI5kPGC8cBxy3A5/wUBoyy1qNirg+I9jtlAPBcvGkt7xWgRmyvgKpu9JR3NF4HjHLk9DSCBmi2eqnsFwCEK8vGRSj2j9fgM85h0Ito4VgC0m/R4GwEgHZ72xMRIOHiwIv7wJ/HN6oKfAmIdL62tsoCAMps1CvE8vuwvWIIaHgehTEGmULQgPYGv9+vCLWP/Cg1a4ClG18LvDDKKPmJPgNGzwXgdQkF0S5JAPrPXqgzDcAo402R2WYAukorzUMi7uzR6YWqmY0BJzQeUQghhBBC1h9kZllDDIj2cumBaKZaijWk6hmRIFqLybl0RDJJi75EgWitJse/Y20mKf4hDkRrWe4AJJOUPB8ZC0mWj1hOUjgyDjJ9zw1Ae5rcsUKIbK9rmVzovatv+hJvfh5ec4hirfidYl6teGp1bd1/Km9XfDhasOnksZxGAIGmA/rWtU/J2NXL7tT5WEmxz+0sUqHsNsR69lwXcDc3AC13b0U6IFCsZanzsZLld1D/AYApP/5wDYBBfTfwPupPCwSKNbnj/zbE44WLOvYcLwCkCYLpVTyiODb2zDe/P7qypQnphKzioXF0myUxMw9t3+MUFBLcd2LxP1qo1bnDQkKmjhydWjqw4YGIkMiJ/MT5ufggAL9eEhCilWzudLlcLgWvbYBDfyfoPpOnCAiZ1MeiGeYdKtCcp9cfHhB11YoXeewFo2+Cv9kJIYQQQghZf5DbaQ1mhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCGEEEIIIYQQQgghhBBCCCEkMyFZc0FwdlzZPC7rwtlxibaqy45rzVX8BUWnY6Q1/jMIAAAAAElFTkSuQmCC",
+      "public": true
+    }
+  ]
 }

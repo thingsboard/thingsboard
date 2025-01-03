@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -24,6 +24,7 @@ import {
   DataKey,
   dataKeyAggregationTypeHintTranslationMap,
   DataKeyConfigMode,
+  DynamicFormData,
   Widget,
   widgetType
 } from '@shared/models/widget.models';
@@ -47,7 +48,6 @@ import { Observable, of } from 'rxjs';
 import { map, mergeMap, publishReplay, refCount, tap } from 'rxjs/operators';
 import { alarmFields } from '@shared/models/alarm.models';
 import { JsFuncComponent } from '@shared/components/js-func.component';
-import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
 import { WidgetService } from '@core/http/widget.service';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
@@ -57,6 +57,9 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import { WidgetComponentService } from '@home/components/widget/widget-component.service';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
+import { isNotEmptyTbFunction, TbFunction } from '@shared/models/js-function.models';
+import { FormProperty } from '@shared/models/dynamic-form.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-data-key-config',
@@ -122,7 +125,7 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
   widgetType: widgetType;
 
   @Input()
-  dataKeySettingsSchema: any;
+  dataKeySettingsForm: FormProperty[];
 
   @Input()
   dataKeySettingsDirective: string;
@@ -167,7 +170,7 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
 
   public dataKeySettingsFormGroup: UntypedFormGroup;
 
-  private dataKeySettingsData: JsonFormComponentData;
+  private dataKeySettingsData: DynamicFormData;
 
   private alarmKeys: Array<DataKey>;
   private functionTypeKeys: Array<DataKey>;
@@ -187,7 +190,8 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
               private translate: TranslateService,
               private widgetService: WidgetService,
               private widgetComponentService: WidgetComponentService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
     this.functionScopeVariables = this.widgetService.getWidgetScopeVariables();
   }
@@ -225,21 +229,19 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
         type: DataKeyType.function
       });
     }
-    if (this.dataKeySettingsSchema && this.dataKeySettingsSchema.schema ||
+    if (this.dataKeySettingsForm?.length ||
       this.dataKeySettingsDirective && this.dataKeySettingsDirective.length) {
       this.hasAdvanced = true;
       this.dataKeySettingsData = {
-        schema: this.dataKeySettingsSchema?.schema || {
-          type: 'object',
-          properties: {}
-        },
-        form: this.dataKeySettingsSchema?.form || ['*'],
+        settingsForm: this.dataKeySettingsForm,
         settingsDirective: this.dataKeySettingsDirective
       };
       this.dataKeySettingsFormGroup = this.fb.group({
         settings: [null, []]
       });
-      this.dataKeySettingsFormGroup.valueChanges.subscribe(() => {
+      this.dataKeySettingsFormGroup.valueChanges.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => {
         this.updateModel();
       });
     }
@@ -259,7 +261,9 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
       postFuncBody: [null, []]
     });
 
-    this.dataKeyFormGroup.get('aggregationType').valueChanges.subscribe(
+    this.dataKeyFormGroup.get('aggregationType').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       (aggType) => {
         if (!this.dataKeyFormGroup.get('label').dirty) {
           let newLabel = this.dataKeyFormGroup.get('name').value;
@@ -273,27 +277,35 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
       }
     );
 
-    this.dataKeyFormGroup.get('comparisonEnabled').valueChanges.subscribe(
+    this.dataKeyFormGroup.get('comparisonEnabled').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => {
         this.updateComparisonValues();
       }
     );
 
-    this.dataKeyFormGroup.get('timeForComparison').valueChanges.subscribe(
+    this.dataKeyFormGroup.get('timeForComparison').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => {
         this.updateComparisonValues();
       }
     );
 
-    this.dataKeyFormGroup.valueChanges.subscribe(() => {
+    this.dataKeyFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
 
-    this.dataKeyFormGroup.get('usePostProcessing').valueChanges.subscribe((usePostProcessing: boolean) => {
-      const postFuncBody: string = this.dataKeyFormGroup.get('postFuncBody').value;
-      if (usePostProcessing && (!postFuncBody || !postFuncBody.length)) {
+    this.dataKeyFormGroup.get('usePostProcessing').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((usePostProcessing: boolean) => {
+      const postFuncBody: TbFunction = this.dataKeyFormGroup.get('postFuncBody').value;
+      if (usePostProcessing && !isNotEmptyTbFunction(postFuncBody)) {
         this.dataKeyFormGroup.get('postFuncBody').patchValue('return value;');
-      } else if (!usePostProcessing && postFuncBody && postFuncBody.length) {
+      } else if (!usePostProcessing && isNotEmptyTbFunction(postFuncBody)) {
         this.dataKeyFormGroup.get('postFuncBody').patchValue(null);
       }
     });
@@ -317,7 +329,7 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
 
   writeValue(value: DataKey): void {
     this.modelValue = value;
-    if (this.modelValue.postFuncBody && this.modelValue.postFuncBody.length) {
+    if (isNotEmptyTbFunction(this.modelValue.postFuncBody)) {
       this.modelValue.usePostProcessing = true;
     }
     if (this.widgetType === widgetType.latest && this.modelValue.type === DataKeyType.timeseries && !this.modelValue.aggregationType) {
@@ -466,13 +478,15 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
     return key => key.toLowerCase().startsWith(lowercaseQuery);
   }
 
-  public validateOnSubmit() {
+  public validateOnSubmit(): Observable<void> {
     if (this.modelValue.type === DataKeyType.function && this.funcBodyEdit) {
-      this.funcBodyEdit.validateOnSubmit();
+      return this.funcBodyEdit.validateOnSubmit();
     } else if ((this.modelValue.type === DataKeyType.timeseries ||
                 this.modelValue.type === DataKeyType.attribute) && this.dataKeyFormGroup.get('usePostProcessing').value &&
                 this.postFuncBodyEdit) {
-      this.postFuncBodyEdit.validateOnSubmit();
+      return this.postFuncBodyEdit.validateOnSubmit();
+    } else {
+      return of(null);
     }
   }
 

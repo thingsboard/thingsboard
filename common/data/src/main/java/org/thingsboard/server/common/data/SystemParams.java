@@ -32,4 +32,6 @@ public class SystemParams {
     long maxDatapointsLimit;
     long maxResourceSize;
     boolean mobileQrEnabled;
+    int maxDebugModeDurationMinutes;
+    String ruleChainDebugPerTenantLimitsConfiguration;
 }

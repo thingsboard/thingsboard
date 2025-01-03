@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.tenant;
 
+import org.thingsboard.server.common.data.SystemParams;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;

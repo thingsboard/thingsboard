@@ -18,12 +18,20 @@
       },
       "architect": {
         "build": {
-          "builder": "@angular-builders/custom-webpack:browser",
+          "builder": "@angular-builders/custom-esbuild:application",
           "options": {
-            "outputPath": "target/generated-resources/public",
+            "plugins": ["./esbuild/tb-esbuild-plugins.ts"],
+            "loader": {
+                ".raw": "text"
+            },
+            "outputPath": {
+                "base": "target/generated-resources/public",
+                "media": ".",
+                "browser": ""
+            },
             "index": "src/index.html",
-            "main": "src/main.ts",
-            "polyfills": "src/polyfills.ts",
+            "browser": "src/main.ts",
+            "polyfills": ["src/polyfills.ts"],
             "tsConfig": "src/tsconfig.app.json",
             "aot": true,
             "assets": [
@@ -91,8 +99,6 @@
               "node_modules/jquery.terminal/css/jquery.terminal.min.css",
               "node_modules/tooltipster/dist/css/tooltipster.bundle.min.css",
               "node_modules/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-shadow.min.css",
-              "src/app/shared/components/json-form/react/json-form.scss",
-              "node_modules/rc-select/assets/index.less",
               "node_modules/jstree-bootstrap-theme/dist/themes/proton/style.min.css",
               "node_modules/leaflet/dist/leaflet.css",
               "src/app/modules/home/components/widget/lib/maps/markers.scss",
@@ -122,49 +128,8 @@
               "node_modules/prismjs/components/prism-typescript.min.js",
               "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.min.js"
             ],
-            "customWebpackConfig": {
-              "path": "./extra-webpack.config.js"
-            },
             "allowedCommonJsDependencies": [
-              "hammerjs",
-              "react",
-              "react-dom",
-              "reactcss",
-              "react-ace",
-              "schema-inspector",
-              "@flowjs/flow.js",
-              "@material-ui/icons/Add",
-              "@material-ui/icons/Clear",
-              "js-beautify",
-              "mousetrap",
-              "prop-types",
-              "react-is",
-              "hoist-non-react-statics",
-              "classnames",
-              "raf",
-              "moment-timezone",
-              "tinycolor2",
-              "json-schema-defaults",
-              "leaflet-providers",
-              "lodash",
-              "jquery",
-              "jquery.terminal",
-              "tooltipster",
-              "jstree",
-              "qrcode",
-              "wcwidth",
-              "leaflet-polylinedecorator",
-              "ace-diff",
-              "messageformat-parser",
-              "html2canvas",
-              "jszip",
-              "moment",
-              "ace",
-              "ace-builds",
-              "diff-match-patch",
-              "tv4",
-              "@messageformat/parser",
-              "sorted-btree"
+              "*"
             ]
           },
           "configurations": {
@@ -187,8 +152,6 @@
               "sourceMap": false,
               "namedChunks": false,
               "extractLicenses": true,
-              "vendorChunk": false,
-              "buildOptimizer": false,
               "budgets": [
                 {
                   "type": "initial",
@@ -198,7 +161,6 @@
               ]
             },
             "development": {
-              "buildOptimizer": false,
               "optimization": {
                 "scripts": false,
                 "styles": {
@@ -207,7 +169,6 @@
                 },
                 "fonts": false
               },
-              "vendorChunk": true,
               "extractLicenses": false,
               "sourceMap": true,
               "namedChunks": true
@@ -215,7 +176,7 @@
           }
         },
         "serve": {
-          "builder": "@angular-builders/custom-webpack:dev-server",
+          "builder": "@angular-builders/custom-esbuild:dev-server",
           "options": {
             "buildTarget": "thingsboard:build",
             "proxyConfig": "proxy.conf.js"
@@ -231,7 +192,7 @@
           "defaultConfiguration": "development"
         },
         "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "builder": "@angular/build:extract-i18n",
           "options": {
             "buildTarget": "thingsboard:build"
           }

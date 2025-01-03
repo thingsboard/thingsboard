@@ -43,7 +43,7 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.mobile.MobileSessionInfo;
-import org.thingsboard.server.common.data.mobile.UserMobileInfo;
+import org.thingsboard.server.common.data.mobile.UserMobileSessionInfo;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
@@ -293,6 +293,16 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     }
 
     @Override
+    public UserCredentials checkUserActivationToken(TenantId tenantId, UserCredentials userCredentials) {
+        if (userCredentials.getActivationTokenTtl() < TimeUnit.MINUTES.toMillis(15)) { // renew link if less than 15 minutes before expiration
+            userCredentials = generateUserActivationToken(userCredentials);
+            userCredentials = saveUserCredentials(tenantId, userCredentials);
+            log.debug("[{}][{}] Regenerated expired user activation token", tenantId, userCredentials.getUserId());
+        }
+        return userCredentials;
+    }
+
+    @Override
     public UserCredentials replaceUserCredentials(TenantId tenantId, UserCredentials userCredentials) {
         log.trace("Executing replaceUserCredentials [{}]", userCredentials);
         userCredentialsValidator.validate(userCredentials, data -> tenantId);
@@ -448,8 +458,8 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     public void saveMobileSession(TenantId tenantId, UserId userId, String mobileToken, MobileSessionInfo sessionInfo) {
         removeMobileSession(tenantId, mobileToken); // unassigning fcm token from other users, in case we didn't clean up it on log out or mobile app uninstall
 
-        UserMobileInfo mobileInfo = findMobileInfo(tenantId, userId).orElseGet(() -> {
-            UserMobileInfo newMobileInfo = new UserMobileInfo();
+        UserMobileSessionInfo mobileInfo = findMobileSessionInfo(tenantId, userId).orElseGet(() -> {
+            UserMobileSessionInfo newMobileInfo = new UserMobileSessionInfo();
             newMobileInfo.setSessions(new HashMap<>());
             return newMobileInfo;
         });
@@ -459,12 +469,12 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
 
     @Override
     public Map<String, MobileSessionInfo> findMobileSessions(TenantId tenantId, UserId userId) {
-        return findMobileInfo(tenantId, userId).map(UserMobileInfo::getSessions).orElse(Collections.emptyMap());
+        return findMobileSessionInfo(tenantId, userId).map(UserMobileSessionInfo::getSessions).orElse(Collections.emptyMap());
     }
 
     @Override
     public MobileSessionInfo findMobileSession(TenantId tenantId, UserId userId, String mobileToken) {
-        return findMobileInfo(tenantId, userId).map(mobileInfo -> mobileInfo.getSessions().get(mobileToken)).orElse(null);
+        return findMobileSessionInfo(tenantId, userId).map(mobileInfo -> mobileInfo.getSessions().get(mobileToken)).orElse(null);
     }
 
     @Override
@@ -475,9 +485,9 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
         }
     }
 
-    private Optional<UserMobileInfo> findMobileInfo(TenantId tenantId, UserId userId) {
+    private Optional<UserMobileSessionInfo> findMobileSessionInfo(TenantId tenantId, UserId userId) {
         return Optional.ofNullable(userSettingsService.findUserSettings(tenantId, userId, UserSettingsType.MOBILE))
-                .map(UserSettings::getSettings).map(settings -> JacksonUtil.treeToValue(settings, UserMobileInfo.class));
+                .map(UserSettings::getSettings).map(settings -> JacksonUtil.treeToValue(settings, UserMobileSessionInfo.class));
     }
 
     @Override

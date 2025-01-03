@@ -213,8 +213,8 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
     });
   }
 
-  onClicked(event: MouseEvent) {
-    if (event) {
+  onClicked(event: MouseEvent): void {
+    if (event && this.isEdit) {
       event.stopPropagation();
     }
     this.widgetComponentAction.emit({
@@ -223,8 +223,8 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
     });
   }
 
-  onContextMenu(event: TbContextMenuEvent) {
-    if (event) {
+  onContextMenu(event: TbContextMenuEvent): void {
+    if (event && this.isEdit) {
       event.stopPropagation();
     }
     this.widgetComponentAction.emit({

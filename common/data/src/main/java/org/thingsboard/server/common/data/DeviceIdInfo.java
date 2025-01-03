@@ -35,7 +35,7 @@ public class DeviceIdInfo implements Serializable, HasTenantId {
     private final DeviceId deviceId;
 
     public DeviceIdInfo(UUID tenantId, UUID customerId, UUID deviceId) {
-        this.tenantId = new TenantId(tenantId);
+        this.tenantId = TenantId.fromUUID(tenantId);
         this.customerId = customerId != null ? new CustomerId(customerId) : null;
         this.deviceId = new DeviceId(deviceId);
     }

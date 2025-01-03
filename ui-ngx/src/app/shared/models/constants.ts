@@ -152,6 +152,10 @@ export const HelpLinks = {
     ruleNodeRestCallReply: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#rest-call-reply-node`,
     ruleNodePushToCloud: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#push-to-cloud`,
     ruleNodePushToEdge: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#push-to-edge`,
+    ruleNodeAcknowledge: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/flow-nodes/#acknowledge-node`,
+    ruleNodeCheckpoint: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/flow-nodes/#checkpoint-node`,
+    ruleNodeSendNotification: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/external-nodes/#send-notification-node`,
+    ruleNodeSendSlack: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/external-nodes/#send-to-slack-node`,
     tenants: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/tenants`,
     tenantProfiles: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/tenant-profiles`,
     customers: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/customers`,
@@ -186,8 +190,12 @@ export const HelpLinks = {
     jwtSecuritySettings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/jwt-security-settings`,
     gatewayInstall: `${helpBaseUrl}/docs/iot-gateway/install/docker-installation`,
     scada: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada`,
-    scadaSymbolDev: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/symbols-dev-guide`,
-    scadaSymbolDevAnimation: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/#scadasymbolanimation`
+    scadaSymbolDev: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/`,
+    scadaSymbolDevAnimation: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/#scadasymbolanimation`,
+    domains: `${helpBaseUrl}/docs${docPlatformPrefix}/domains`,
+    mobileApplication: `${helpBaseUrl}/docs${docPlatformPrefix}/mobile-center/applications/`,
+    mobileBundle: `${helpBaseUrl}/docs${docPlatformPrefix}/mobile-center/mobile-center/`,
+    mobileQrCode: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/mobile-qr-code/`,
   }
 };
 /* eslint-enable max-len */

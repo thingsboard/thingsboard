@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.GitRepository;
@@ -32,7 +32,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -44,7 +43,7 @@ public class DefaultGitSyncService implements GitSyncService {
     @Value("${vc.git.repositories-folder:${java.io.tmpdir}/repositories}")
     private String repositoriesFolder;
 
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("git-sync"));
+    private final ScheduledExecutorService executor = ThingsBoardExecutors.newSingleThreadScheduledExecutor("git-sync");
     private final Map<String, GitRepository> repositories = new ConcurrentHashMap<>();
     private final Map<String, Runnable> updateListeners = new ConcurrentHashMap<>();
 
@@ -92,14 +91,9 @@ public class DefaultGitSyncService implements GitSyncService {
 
 
     @Override
-    public String getFileContent(String key, String path) {
+    public byte[] getFileContent(String key, String path) {
         GitRepository repository = getRepository(key);
-        try {
-            return repository.getFileContentAtCommit(path, getBranchRef(repository));
-        } catch (Exception e) {
-            log.warn("[{}] Failed to get file content for path {}: {}", key, path, e.getMessage());
-            return "{}";
-        }
+        return repository.getFileContentAtCommit(path, getBranchRef(repository));
     }
 
     @Override

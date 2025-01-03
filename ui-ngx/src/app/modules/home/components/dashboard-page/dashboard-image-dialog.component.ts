@@ -28,6 +28,7 @@ import html2canvas from 'html2canvas';
 import { map, share } from 'rxjs/operators';
 import { BehaviorSubject, from } from 'rxjs';
 import { isNumber } from '@core/utils';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface DashboardImageDialogData {
   dashboardId: DashboardId;
@@ -84,7 +85,9 @@ export class DashboardImageDialogComponent extends DialogComponent<DashboardImag
       dashboardImage: [this.data.currentImage]
     });
 
-    this.dashboardImageFormGroup.get('dashboardImage').valueChanges.subscribe(
+    this.dashboardImageFormGroup.get('dashboardImage').valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe(
       (newImage) => {
         this.updateImage(newImage);
       }
