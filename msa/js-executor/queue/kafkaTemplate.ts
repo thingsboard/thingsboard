@@ -35,7 +35,6 @@ import { KeyObject } from 'tls';
 
 import process, { exit, kill } from 'process';
 
-// TODO: remove dependencies for other queue types
 export class KafkaTemplate implements IQueue {
 
     private logger = _logger(`kafkaTemplate`);
