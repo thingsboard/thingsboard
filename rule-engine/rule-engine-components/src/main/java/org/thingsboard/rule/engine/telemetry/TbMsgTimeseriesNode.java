@@ -112,7 +112,7 @@ public class TbMsgTimeseriesNode implements TbNode {
                 .entries(tsKvEntryList)
                 .ttl(ttl)
                 .saveLatest(!config.isSkipLatestPersistence())
-                .calculatedFieldIds(msg.getCalculatedFieldIds())
+                .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
                 .callback(new TelemetryNodeCallback(ctx, msg))
                 .build());
     }

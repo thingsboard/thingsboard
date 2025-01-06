@@ -41,7 +41,7 @@ public class AttributesSaveRequest {
     private final AttributeScope scope;
     private final List<AttributeKvEntry> entries;
     private final boolean notifyDevice;
-    private final List<CalculatedFieldId> calculatedFieldIds;
+    private final List<CalculatedFieldId> previousCalculatedFieldIds;
     private final FutureCallback<Void> callback;
 
     public static Builder builder() {
@@ -55,7 +55,7 @@ public class AttributesSaveRequest {
         private AttributeScope scope;
         private List<AttributeKvEntry> entries;
         private boolean notifyDevice = true;
-        private List<CalculatedFieldId> calculatedFieldIds;
+        private List<CalculatedFieldId> previousCalculatedFieldIds;
         private FutureCallback<Void> callback;
 
         Builder() {}
@@ -103,8 +103,8 @@ public class AttributesSaveRequest {
             return this;
         }
 
-        public Builder calculatedFieldIds(List<CalculatedFieldId> calculatedFieldIds) {
-            this.calculatedFieldIds = calculatedFieldIds;
+        public Builder previousCalculatedFieldIds(List<CalculatedFieldId> previousCalculatedFieldIds) {
+            this.previousCalculatedFieldIds = previousCalculatedFieldIds;
             return this;
         }
 
@@ -128,7 +128,7 @@ public class AttributesSaveRequest {
         }
 
         public AttributesSaveRequest build() {
-            return new AttributesSaveRequest(tenantId, entityId, scope, entries, notifyDevice, calculatedFieldIds, callback);
+            return new AttributesSaveRequest(tenantId, entityId, scope, entries, notifyDevice, previousCalculatedFieldIds, callback);
         }
 
     }

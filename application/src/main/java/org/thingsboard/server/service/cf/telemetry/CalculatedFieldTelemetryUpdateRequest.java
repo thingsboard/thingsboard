@@ -15,13 +15,14 @@
  */
 package org.thingsboard.server.service.cf.telemetry;
 
-import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 
 import java.util.List;
+import java.util.Map;
 
 public interface CalculatedFieldTelemetryUpdateRequest {
 
@@ -29,10 +30,10 @@ public interface CalculatedFieldTelemetryUpdateRequest {
 
     EntityId getEntityId();
 
-    AttributeScope getScope();
-
     List<? extends KvEntry> getKvEntries();
 
-    List<CalculatedFieldId> getCalculatedFieldIds();
+    List<CalculatedFieldId> getPreviousCalculatedFieldIds();
+
+    Map<String, String> getTelemetryKeysFromLink(CalculatedFieldLink link);
 
 }

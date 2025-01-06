@@ -41,7 +41,7 @@ public class TimeseriesSaveRequest {
     private final long ttl;
     private final boolean saveLatest;
     private final boolean onlyLatest;
-    private final List<CalculatedFieldId> calculatedFieldIds;
+    private final List<CalculatedFieldId> previousCalculatedFieldIds;
     private final FutureCallback<Void> callback;
 
     public static Builder builder() {
@@ -58,7 +58,7 @@ public class TimeseriesSaveRequest {
         private FutureCallback<Void> callback;
         private boolean saveLatest = true;
         private boolean onlyLatest;
-        private List<CalculatedFieldId> calculatedFieldIds;
+        private List<CalculatedFieldId> previousCalculatedFieldIds;
 
         Builder() {}
 
@@ -106,8 +106,8 @@ public class TimeseriesSaveRequest {
             return this;
         }
 
-        public Builder calculatedFieldIds(List<CalculatedFieldId> calculatedFieldIds) {
-            this.calculatedFieldIds = calculatedFieldIds;
+        public Builder previousCalculatedFieldIds(List<CalculatedFieldId> previousCalculatedFieldIds) {
+            this.previousCalculatedFieldIds = previousCalculatedFieldIds;
             return this;
         }
 
@@ -131,7 +131,7 @@ public class TimeseriesSaveRequest {
         }
 
         public TimeseriesSaveRequest build() {
-            return new TimeseriesSaveRequest(tenantId, customerId, entityId, entries, ttl, saveLatest, onlyLatest, calculatedFieldIds, callback);
+            return new TimeseriesSaveRequest(tenantId, customerId, entityId, entries, ttl, saveLatest, onlyLatest, previousCalculatedFieldIds, callback);
         }
 
     }

@@ -391,7 +391,7 @@ public class DefaultTbClusterService implements TbClusterService {
     public void onDeviceDeleted(TenantId tenantId, Device device, TbQueueCallback callback) {
         DeviceId deviceId = device.getId();
         gatewayNotificationsService.onDeviceDeleted(device);
-        sendProfileEntityEvent(tenantId, deviceId, device.getDeviceProfileId(), false, true);
+        handleProfileEntityEvent(tenantId, deviceId, device.getDeviceProfileId(), false, true);
         broadcastEntityDeleteToTransport(tenantId, deviceId, device.getName(), callback);
         sendDeviceStateServiceEvent(tenantId, deviceId, false, false, true);
         broadcastEntityStateChangeEvent(tenantId, deviceId, ComponentLifecycleEvent.DELETED);
@@ -400,7 +400,7 @@ public class DefaultTbClusterService implements TbClusterService {
     @Override
     public void onAssetDeleted(TenantId tenantId, Asset asset, TbQueueCallback callback) {
         AssetId assetId = asset.getId();
-        sendProfileEntityEvent(tenantId, assetId, asset.getAssetProfileId(), false, true);
+        handleProfileEntityEvent(tenantId, assetId, asset.getAssetProfileId(), true, true);
         broadcastEntityStateChangeEvent(tenantId, assetId, ComponentLifecycleEvent.DELETED);
     }
 
@@ -563,7 +563,9 @@ public class DefaultTbClusterService implements TbClusterService {
                 || entityType.equals(EntityType.API_USAGE_STATE)
                 || (entityType.equals(EntityType.DEVICE) && msg.getEvent() == ComponentLifecycleEvent.UPDATED)
                 || entityType.equals(EntityType.ENTITY_VIEW)
-                || entityType.equals(EntityType.NOTIFICATION_RULE)) {
+                || entityType.equals(EntityType.NOTIFICATION_RULE)
+                || entityType.equals(EntityType.CALCULATED_FIELD)
+        ) {
             TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toCoreNfProducer = producerProvider.getTbCoreNotificationsMsgProducer();
             Set<String> tbCoreServices = partitionService.getAllServiceIds(ServiceType.TB_CORE);
             for (String serviceId : tbCoreServices) {
@@ -624,13 +626,13 @@ public class DefaultTbClusterService implements TbClusterService {
             }
             boolean deviceTypeChanged = !device.getType().equals(old.getType());
             if (deviceTypeChanged) {
-                sendEntityProfileUpdatedEvent(device.getTenantId(), device.getId(), old.getDeviceProfileId(), device.getDeviceProfileId());
+                handleEntityProfileUpdatedEvent(device.getTenantId(), device.getId(), old.getDeviceProfileId(), device.getDeviceProfileId());
             }
             if (deviceNameChanged || deviceTypeChanged) {
                 pushMsgToCore(new DeviceNameOrTypeUpdateMsg(device.getTenantId(), device.getId(), device.getName(), device.getType()), null);
             }
         } else {
-            sendProfileEntityEvent(device.getTenantId(), device.getId(), device.getDeviceProfileId(), true, false);
+            handleProfileEntityEvent(device.getTenantId(), device.getId(), device.getDeviceProfileId(), true, false);
         }
         broadcastEntityStateChangeEvent(device.getTenantId(), device.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
         sendDeviceStateServiceEvent(device.getTenantId(), device.getId(), created, !created, false);
@@ -644,10 +646,10 @@ public class DefaultTbClusterService implements TbClusterService {
         if (old != null) {
             boolean assetTypeChanged = !asset.getType().equals(old.getType());
             if (assetTypeChanged) {
-                sendEntityProfileUpdatedEvent(asset.getTenantId(), asset.getId(), old.getAssetProfileId(), asset.getAssetProfileId());
+                handleEntityProfileUpdatedEvent(asset.getTenantId(), asset.getId(), old.getAssetProfileId(), asset.getAssetProfileId());
             }
         } else {
-            sendProfileEntityEvent(asset.getTenantId(), asset.getId(), asset.getAssetProfileId(), true, false);
+            handleProfileEntityEvent(asset.getTenantId(), asset.getId(), asset.getAssetProfileId(), true, false);
         }
         broadcastEntityStateChangeEvent(asset.getTenantId(), asset.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
     }
@@ -792,8 +794,8 @@ public class DefaultTbClusterService implements TbClusterService {
     public void onCalculatedFieldDeleted(TenantId tenantId, CalculatedField calculatedField, TbQueueCallback callback) {
         CalculatedFieldId calculatedFieldId = calculatedField.getId();
         broadcastEntityDeleteToTransport(tenantId, calculatedFieldId, calculatedField.getName(), callback);
-        sendCalculatedFieldEvent(tenantId, calculatedFieldId, false, false, true);
         broadcastEntityStateChangeEvent(tenantId, calculatedFieldId, ComponentLifecycleEvent.DELETED);
+        sendCalculatedFieldEvent(tenantId, calculatedFieldId, false, false, true);
     }
 
     private void sendCalculatedFieldEvent(TenantId tenantId, CalculatedFieldId calculatedFieldId, boolean added, boolean updated, boolean deleted) {
@@ -809,7 +811,7 @@ public class DefaultTbClusterService implements TbClusterService {
         pushMsgToCore(tenantId, calculatedFieldId, ToCoreMsg.newBuilder().setCalculatedFieldMsg(msg).build(), null);
     }
 
-    private void sendEntityProfileUpdatedEvent(TenantId tenantId, EntityId entityId, EntityId oldProfileId, EntityId newProfileId) {
+    private void handleEntityProfileUpdatedEvent(TenantId tenantId, EntityId entityId, EntityId oldProfileId, EntityId newProfileId) {
         TransportProtos.EntityProfileUpdateMsgProto.Builder builder = TransportProtos.EntityProfileUpdateMsgProto.newBuilder();
         builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
@@ -822,10 +824,12 @@ public class DefaultTbClusterService implements TbClusterService {
         builder.setNewProfileIdMSB(newProfileId.getId().getMostSignificantBits());
         builder.setNewProfileIdLSB(newProfileId.getId().getLeastSignificantBits());
         TransportProtos.EntityProfileUpdateMsgProto msg = builder.build();
+
+        broadcastToCore(ToCoreNotificationMsg.newBuilder().setEntityProfileUpdateMsg(msg).build());
         pushMsgToCore(tenantId, entityId, ToCoreMsg.newBuilder().setEntityProfileUpdateMsg(msg).build(), null);
     }
 
-    private void sendProfileEntityEvent(TenantId tenantId, EntityId entityId, EntityId profileId, boolean added, boolean deleted) {
+    private void handleProfileEntityEvent(TenantId tenantId, EntityId entityId, EntityId profileId, boolean added, boolean deleted) {
         TransportProtos.ProfileEntityMsgProto.Builder builder = TransportProtos.ProfileEntityMsgProto.newBuilder();
         builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
@@ -838,6 +842,8 @@ public class DefaultTbClusterService implements TbClusterService {
         builder.setAdded(added);
         builder.setDeleted(deleted);
         TransportProtos.ProfileEntityMsgProto msg = builder.build();
+
+        broadcastToCore(ToCoreNotificationMsg.newBuilder().setProfileEntityMsg(msg).build());
         pushMsgToCore(tenantId, entityId, ToCoreMsg.newBuilder().setProfileEntityMsg(msg).build(), null);
     }
 
