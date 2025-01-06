@@ -18,7 +18,7 @@ import config from 'config';
 import { _logger } from '../config/logger';
 import { JsExecutor, TbScript } from './jsExecutor';
 import { performance } from 'perf_hooks';
-import { isString, parseJsErrorDetails, toUUIDString, UUIDFromBuffer, UUIDToBits } from './utils';
+import { isString, parseJsErrorDetails, UUIDFromBuffer, UUIDToBits } from './utils';
 import { IQueue } from '../queue/queue.models';
 import {
     JsCompileRequest,
@@ -310,8 +310,6 @@ export class JsInvokeMessageProcessor {
             errorCode: errorCode,
             success: success,
             errorDetails: parseJsErrorDetails(err),
-            scriptIdMSB: "0",
-            scriptIdLSB: "0",
             scriptHash: scriptId
         };
     }
@@ -328,14 +326,12 @@ export class JsInvokeMessageProcessor {
     private static createReleaseResponse(scriptId: string, success: boolean): JsReleaseResponse {
         return {
             success: success,
-            scriptIdMSB: "0",
-            scriptIdLSB: "0",
             scriptHash: scriptId,
         };
     }
 
     private static getScriptId(request: TbMessage): string {
-        return request.scriptHash ? request.scriptHash : toUUIDString(request.scriptIdMSB, request.scriptIdLSB);
+        return request.scriptHash;
     }
 
     private incrementUseScriptId(scriptId: string) {

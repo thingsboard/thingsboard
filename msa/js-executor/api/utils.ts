@@ -17,13 +17,6 @@
 import Long from 'long';
 import uuidParse from 'uuid-parse';
 
-export function toUUIDString(mostSigBits: string, leastSigBits: string): string {
-    const msbBytes = Long.fromValue(mostSigBits, false).toBytes(false);
-    const lsbBytes = Long.fromValue(leastSigBits, false).toBytes(false);
-    const uuidBytes = msbBytes.concat(lsbBytes);
-    return uuidParse.unparse(uuidBytes as any);
-}
-
 export function UUIDFromBuffer(buf: Buffer): string {
     return uuidParse.unparse(buf);
 }
