@@ -122,16 +122,14 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     @Override
     public List<CalculatedFieldLink> getCalculatedFieldLinksByEntityId(TenantId tenantId, EntityId entityId) {
         List<CalculatedFieldLink> cfLinks = entityIdCalculatedFieldLinks.get(entityId);
-        if (cfLinks == null || cfLinks.isEmpty()) {
+        if (cfLinks == null) {
             calculatedFieldFetchLock.lock();
             try {
                 cfLinks = entityIdCalculatedFieldLinks.get(entityId);
-                if (cfLinks == null || cfLinks.isEmpty()) {
+                if (cfLinks == null) {
                     cfLinks = calculatedFieldService.findAllCalculatedFieldLinksByEntityId(tenantId, entityId);
-                    if (cfLinks != null) {
-                        entityIdCalculatedFieldLinks.put(entityId, cfLinks);
-                        log.debug("[{}] Fetch calculated field links by entity id into cache: {}", entityId, cfLinks);
-                    }
+                    entityIdCalculatedFieldLinks.put(entityId, cfLinks);
+                    log.debug("[{}] Fetch calculated field links by entity id into cache: {}", entityId, cfLinks);
                 }
             } finally {
                 calculatedFieldFetchLock.unlock();
