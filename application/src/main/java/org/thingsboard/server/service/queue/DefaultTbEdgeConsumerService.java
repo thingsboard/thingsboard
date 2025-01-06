@@ -91,7 +91,7 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
 
     public DefaultTbEdgeConsumerService(TbCoreQueueFactory tbCoreQueueFactory, ActorSystemContext actorContext,
                                         StatsFactory statsFactory, EdgeContextComponent edgeCtx) {
-        super(actorContext, null, null, null, null, null,
+        super(actorContext, null, null, null, null, null, null,
                 null, null);
         this.edgeCtx = edgeCtx;
         this.stats = new EdgeConsumerStats(statsFactory);
@@ -270,8 +270,10 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
                 case TENANT_PROFILE -> future = edgeCtx.getTenantProfileProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
                 case NOTIFICATION_RULE, NOTIFICATION_TARGET, NOTIFICATION_TEMPLATE ->
                         future = edgeCtx.getNotificationEdgeProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
-                case TB_RESOURCE -> future = edgeCtx.getResourceProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
-                case DOMAIN, OAUTH2_CLIENT -> future = edgeCtx.getOAuth2EdgeProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case TB_RESOURCE ->
+                        future = edgeCtx.getResourceProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case DOMAIN, OAUTH2_CLIENT ->
+                        future = edgeCtx.getOAuth2EdgeProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
                 default -> {
                     future = Futures.immediateFuture(null);
                     log.warn("[{}] Edge event type [{}] is not designed to be pushed to edge", tenantId, type);

@@ -70,4 +70,11 @@ message TbMsgProto {
     int64 correlationIdMSB = 20;
     int64 correlationIdLSB = 21;
     int32 partition = 22;
+
+    repeated CalculatedFieldIdProto calculatedFields = 23;
+}
+
+message CalculatedFieldIdProto {
+    int64 calculatedFieldIdMSB = 1;
+    int64 calculatedFieldIdLSB = 2;
 }

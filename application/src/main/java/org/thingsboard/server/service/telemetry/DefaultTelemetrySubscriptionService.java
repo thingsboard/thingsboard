@@ -49,6 +49,9 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.util.KvUtils;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.service.cf.CalculatedFieldExecutionService;
+import org.thingsboard.server.service.cf.telemetry.CalculatedFieldAttributeUpdateRequest;
+import org.thingsboard.server.service.cf.telemetry.CalculatedFieldTimeSeriesUpdateRequest;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
@@ -75,6 +78,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     private final TbEntityViewService tbEntityViewService;
     private final TbApiUsageReportClient apiUsageClient;
     private final TbApiUsageStateService apiUsageStateService;
+    private final CalculatedFieldExecutionService calculatedFieldExecutionService;
 
     private ExecutorService tsCallBackExecutor;
 
@@ -85,12 +89,14 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                                TimeseriesService tsService,
                                                @Lazy TbEntityViewService tbEntityViewService,
                                                TbApiUsageReportClient apiUsageClient,
-                                               TbApiUsageStateService apiUsageStateService) {
+                                               TbApiUsageStateService apiUsageStateService,
+                                               CalculatedFieldExecutionService calculatedFieldExecutionService) {
         this.attrService = attrService;
         this.tsService = tsService;
         this.tbEntityViewService = tbEntityViewService;
         this.apiUsageClient = apiUsageClient;
         this.apiUsageStateService = apiUsageStateService;
+        this.calculatedFieldExecutionService = calculatedFieldExecutionService;
     }
 
     @PostConstruct
@@ -148,6 +154,9 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         if (request.isSaveLatest() && !request.isOnlyLatest()) {
             addEntityViewCallback(tenantId, entityId, request.getEntries());
         }
+        // Use something very similar to addMainCallback. don't forget about tsCallBackExecutor.
+        //CalculatedFieldTimeSeriesUpdateRequest - add constructor that accepts the TimeseriesSaveRequest
+        addCallback(saveFuture, success -> calculatedFieldExecutionService.onTelemetryUpdate(new CalculatedFieldTimeSeriesUpdateRequest(tenantId, entityId, request.getEntries(), request.getPreviousCalculatedFieldIds())), tsCallBackExecutor);
         return saveFuture;
     }
 
@@ -163,6 +172,8 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         ListenableFuture<List<Long>> saveFuture = attrService.save(request.getTenantId(), request.getEntityId(), request.getScope(), request.getEntries());
         addMainCallback(saveFuture, request.getCallback());
         addWsCallback(saveFuture, success -> onAttributesUpdate(request.getTenantId(), request.getEntityId(), request.getScope().name(), request.getEntries(), request.isNotifyDevice()));
+        //CalculatedFieldAttributeUpdateRequest - add constructor that accepts the AttributesSaveRequest
+        addCallback(saveFuture, success -> calculatedFieldExecutionService.onTelemetryUpdate(new CalculatedFieldAttributeUpdateRequest(request.getTenantId(), request.getEntityId(), request.getScope(), request.getEntries(), request.getPreviousCalculatedFieldIds())), tsCallBackExecutor);
     }
 
     @Override
@@ -235,7 +246,8 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                                 .onlyLatest(true)
                                                 .callback(new FutureCallback<>() {
                                                     @Override
-                                                    public void onSuccess(@Nullable Void tmp) {}
+                                                    public void onSuccess(@Nullable Void tmp) {
+                                                    }
 
                                                     @Override
                                                     public void onFailure(Throwable t) {

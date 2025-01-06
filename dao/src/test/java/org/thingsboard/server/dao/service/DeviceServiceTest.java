@@ -39,6 +39,13 @@ import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.cf.configuration.OutputType;
+import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -50,6 +57,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
@@ -64,6 +72,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -86,6 +95,8 @@ public class DeviceServiceTest extends AbstractServiceTest {
     OtaPackageService otaPackageService;
     @Autowired
     TenantProfileService tenantProfileService;
+    @Autowired
+    private CalculatedFieldService calculatedFieldService;
     @Autowired
     private PlatformTransactionManager platformTransactionManager;
     @SpyBean
@@ -1196,6 +1207,45 @@ public class DeviceServiceTest extends AbstractServiceTest {
                                         && d.getCustomerTitle().equals(savedCustomer.getTitle())
                         )
         );
+    }
+
+    @Test
+    public void testDeleteAssetIfReferencedInCalculatedField() {
+        Device device = saveDevice(tenantId, "Test Device");
+        Device deviceWithCf = saveDevice(tenantId, "Device with CF");
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setTenantId(tenantId);
+        calculatedField.setName("Test CF");
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setEntityId(deviceWithCf.getId());
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+
+        Argument argument = new Argument();
+        argument.setEntityId(device.getId());
+        argument.setType(ArgumentType.TS_LATEST);
+        argument.setKey("temperature");
+
+        config.setArguments(Map.of("T", argument));
+
+        config.setExpression("T - (100 - H) / 5");
+
+        Output output = new Output();
+        output.setName("output");
+        output.setType(OutputType.TIME_SERIES);
+
+        config.setOutput(output);
+
+        calculatedField.setConfiguration(config);
+
+        CalculatedField savedCalculatedField = calculatedFieldService.save(calculatedField);
+
+        assertThatThrownBy(() -> deviceService.deleteDevice(tenantId, device.getId()))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("Can't delete device that has entity views or is referenced in calculated fields!");
+
+        calculatedFieldService.deleteCalculatedField(tenantId, savedCalculatedField.getId());
     }
 
 }
