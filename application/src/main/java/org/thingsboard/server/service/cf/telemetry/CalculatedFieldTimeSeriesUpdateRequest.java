@@ -17,13 +17,14 @@ package org.thingsboard.server.service.cf.telemetry;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 @AllArgsConstructor
@@ -32,11 +33,11 @@ public class CalculatedFieldTimeSeriesUpdateRequest implements CalculatedFieldTe
     private TenantId tenantId;
     private EntityId entityId;
     private List<TsKvEntry> kvEntries;
-    private List<CalculatedFieldId> calculatedFieldIds;
+    private List<CalculatedFieldId> previousCalculatedFieldIds;
 
     @Override
-    public AttributeScope getScope() {
-        return null;
+    public Map<String, String> getTelemetryKeysFromLink(CalculatedFieldLink link) {
+        return link.getConfiguration().getTimeSeries();
     }
 
 }

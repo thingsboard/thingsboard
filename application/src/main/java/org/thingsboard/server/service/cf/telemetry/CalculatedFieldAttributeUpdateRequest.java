@@ -18,12 +18,14 @@ package org.thingsboard.server.service.cf.telemetry;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 @AllArgsConstructor
@@ -33,6 +35,15 @@ public class CalculatedFieldAttributeUpdateRequest implements CalculatedFieldTel
     private EntityId entityId;
     private AttributeScope scope;
     private List<AttributeKvEntry> kvEntries;
-    private List<CalculatedFieldId> calculatedFieldIds;
+    private List<CalculatedFieldId> previousCalculatedFieldIds;
+
+    @Override
+    public Map<String, String> getTelemetryKeysFromLink(CalculatedFieldLink link) {
+        return switch (scope) {
+            case CLIENT_SCOPE -> link.getConfiguration().getClientAttributes();
+            case SERVER_SCOPE -> link.getConfiguration().getServerAttributes();
+            case SHARED_SCOPE -> link.getConfiguration().getSharedAttributes();
+        };
+    }
 
 }

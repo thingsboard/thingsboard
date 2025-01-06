@@ -818,7 +818,7 @@ message CalculatedFieldStateMsgProto {
   int64 entityIdMSB = 6;
   int64 entityIdLSB = 7;
   bool clear = 8;
-  repeated CalculatedFieldIdProto calculatedFields = 9;
+  repeated CalculatedFieldIdProto previousCalculatedFields = 9;
   map<string, ArgumentEntryProto> arguments = 10;
 }
 
