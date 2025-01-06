@@ -319,6 +319,7 @@ import * as DashboardSettingsDialogComponent from '@home/components/dashboard-pa
 import * as ManageDashboardStatesDialogComponent from '@home/components/dashboard-page/states/manage-dashboard-states-dialog.component';
 import * as DashboardStateDialogComponent from '@home/components/dashboard-page/states/dashboard-state-dialog.component';
 import * as EmbedDashboardDialogComponent from '@home/components/widget/dialog/embed-dashboard-dialog.component';
+import * as TimeSeriesChartWidgetComponent from '@home/components/widget/lib/chart/time-series-chart-widget.component';
 import * as EdgeDownlinkTableComponent from '@home/components/edge/edge-downlink-table.component';
 import * as EdgeDownlinkTableHeaderComponent from '@home/components/edge/edge-downlink-table-header.component';
 import * as DisplayWidgetTypesPanelComponent from '@home/components/dashboard-page/widget-types-panel.component';
@@ -597,6 +598,7 @@ class ModulesMap implements IModulesMap {
     '@home/components/widget/config/widget-config-components.module': WidgetConfigComponentsModule,
     '@home/components/widget/config/basic/basic-widget-config.module': BasicWidgetConfigModule,
     '@home/components/widget/lib/settings/common/widget-settings-common.module': WidgetSettingsCommonModule,
+    '@home/components/widget/lib/chart/time-series-chart-widget.component': TimeSeriesChartWidgetComponent,
     '@home/components/widget/widget-components.module': WidgetComponentsModule,
     '@home/components/dashboard/select-target-layout-dialog.component': SelectTargetLayoutDialogComponent,
     '@home/components/dashboard/select-target-state-dialog.component': SelectTargetStateDialogComponent,
