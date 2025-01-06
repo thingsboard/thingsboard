@@ -14,13 +14,14 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { WidgetFont } from '@home/components/widget/lib/settings/common/widget-font.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface LabelWidgetLabel {
   pattern: string;
@@ -61,7 +62,8 @@ export class LabelWidgetLabelComponent extends PageComponent implements OnInit, 
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -73,7 +75,9 @@ export class LabelWidgetLabelComponent extends PageComponent implements OnInit, 
       backgroundColor: [null, []],
       font: [null, []]
     });
-    this.labelWidgetLabelFormGroup.valueChanges.subscribe(() => {
+    this.labelWidgetLabelFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }

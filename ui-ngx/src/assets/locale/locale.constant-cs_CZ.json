@@ -2734,7 +2734,6 @@
         "type": "Typ widgetu",
         "resources": "Zdroje",
         "resource-url": "JavaScript/CSS URL",
-        "resource-is-module": "Je modulem",
         "remove-resource": "Odebrat zdroj",
         "add-resource": "Přidat zdroj",
         "html": "HTML",

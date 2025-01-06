@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component } from '@angular/core';
+import { Component, HostBinding } from '@angular/core';
 import { EntityTableHeaderComponent } from '@home/components/entity/entity-table-header.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -27,6 +27,8 @@ import { PageLink } from '@shared/models/page/page-link';
   styleUrls: []
 })
 export class ClientTableHeaderComponent extends EntityTableHeaderComponent<OAuth2Client, PageLink, OAuth2ClientInfo> {
+
+  @HostBinding('style.width') width = '100%';
 
   constructor(protected store: Store<AppState>) {
     super(store);

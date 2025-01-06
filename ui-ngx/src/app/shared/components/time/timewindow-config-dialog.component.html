@@ -235,9 +235,10 @@
             </mat-slide-toggle>
           </div>
           <div class="tb-form-row column-xs">
+            <ng-container
+              *ngTemplateOutlet="timewindowForm.get('aggregation.type').value !== aggregationTypes.NONE ? hideAggInterval : null">
+            </ng-container>
             <ng-container formGroupName="realtime">
-              <ng-container *ngTemplateOutlet="hideAggInterval">
-              </ng-container>
               <tb-timeinterval
                 formControlName="interval"
                 [min]="minRealtimeAggInterval" [max]="maxRealtimeAggInterval"
@@ -257,7 +258,8 @@
             </mat-slide-toggle>
           </div>
           <div class="tb-form-row column-xs">
-            <ng-container *ngTemplateOutlet="hideAggInterval">
+            <ng-container
+              *ngTemplateOutlet="timewindowForm.get('aggregation.type').value !== aggregationTypes.NONE ? hideAggInterval : null">
             </ng-container>
             <ng-container formGroupName="history">
               <tb-timeinterval

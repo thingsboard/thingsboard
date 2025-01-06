@@ -14,7 +14,16 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  ViewEncapsulation
+} from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import {
   backgroundStyle,
@@ -30,6 +39,7 @@ import { AppState } from '@core/core.state';
 import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-background-settings-panel',
@@ -64,7 +74,8 @@ export class BackgroundSettingsPanelComponent extends PageComponent implements O
               private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
               protected store: Store<AppState>,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -81,13 +92,19 @@ export class BackgroundSettingsPanelComponent extends PageComponent implements O
         })
       }
     );
-    this.backgroundSettingsFormGroup.get('type').valueChanges.subscribe(() => {
+    this.backgroundSettingsFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       setTimeout(() => {this.popover?.updatePosition();}, 0);
     });
-    this.backgroundSettingsFormGroup.get('overlay').get('enabled').valueChanges.subscribe(() => {
+    this.backgroundSettingsFormGroup.get('overlay').get('enabled').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
-    this.backgroundSettingsFormGroup.valueChanges.subscribe(() => {
+    this.backgroundSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateBackgroundStyle();
     });
     this.updateValidators();

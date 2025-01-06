@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -25,6 +25,7 @@ import { map, mergeMap } from 'rxjs/operators';
 import { Datasource } from '@shared/models/widget.models';
 import { EntityService } from '@core/http/entity.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-datasources-key-autocomplete',
@@ -72,7 +73,8 @@ export class DatasourcesKeyAutocompleteComponent extends PageComponent implement
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
               private entityService: EntityService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -80,7 +82,9 @@ export class DatasourcesKeyAutocompleteComponent extends PageComponent implement
     this.keyFormGroup = this.fb.group({
       key: [null, this.required ? [Validators.required] : []]
     });
-    this.keyFormGroup.valueChanges.subscribe(() => {
+    this.keyFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
 

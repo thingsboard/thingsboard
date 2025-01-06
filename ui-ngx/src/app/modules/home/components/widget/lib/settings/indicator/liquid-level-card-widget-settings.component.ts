@@ -53,6 +53,7 @@ import { ResourcesService } from '@core/services/resources.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityService } from '@core/http/entity.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'liquid-level-card-widget-settings',
@@ -189,7 +190,9 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
       tooltipBackgroundBlur: [settings.tooltipBackgroundBlur, []],
     });
 
-    this.levelCardWidgetSettingsForm.get('selectedShape').valueChanges.subscribe(() => {
+    this.levelCardWidgetSettingsForm.get('selectedShape').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.cd.detectChanges();
       this.layoutsImageCardsSelect?.imageCardsSelectOptions.notifyOnChanges();
     });

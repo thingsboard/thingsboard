@@ -82,8 +82,8 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
     }
 
     @Override
-    public List<NotificationRequest> findNotificationRequestsByRuleIdAndOriginatorEntityId(TenantId tenantId, NotificationRuleId ruleId, EntityId originatorEntityId) {
-        return notificationRequestDao.findByRuleIdAndOriginatorEntityId(tenantId, ruleId, originatorEntityId);
+    public List<NotificationRequest> findNotificationRequestsByRuleIdAndOriginatorEntityIdAndStatus(TenantId tenantId, NotificationRuleId ruleId, EntityId originatorEntityId, NotificationRequestStatus status) {
+        return notificationRequestDao.findByRuleIdAndOriginatorEntityIdAndStatus(tenantId, ruleId, originatorEntityId, status);
     }
 
     @Override

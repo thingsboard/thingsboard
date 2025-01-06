@@ -2143,7 +2143,6 @@
     "type": "Vrsta pripomočka",
     "resources": "Viri",
     "resource-url": "URL JavaScript / CSS",
-    "resource-is-module": "Je modul",
     "remove-resource": "Odstrani vir",
     "add-resource": "Dodaj vir",
     "html": "HTML",

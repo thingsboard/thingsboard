@@ -67,7 +67,7 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
             return savedDomain;
         } catch (Exception e) {
             checkConstraintViolation(e,
-                    Map.of("domain_unq_key", "Domain with such name and scheme already exists!"));
+                    Map.of("domain_name_key", "Domain with such name and scheme already exists!"));
             throw e;
         }
     }

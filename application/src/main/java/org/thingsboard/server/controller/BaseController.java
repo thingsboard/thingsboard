@@ -372,6 +372,9 @@ public abstract class BaseController {
     @Autowired
     protected NotificationTargetService notificationTargetService;
 
+    @Autowired
+    protected CalculatedFieldService calculatedFieldService;
+
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
     private boolean logControllerErrorStackTrace;
@@ -932,6 +935,7 @@ public abstract class BaseController {
 
         UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
         info.put("userCredentialsEnabled", userCredentials.isEnabled());
+        info.put("userActivated", userCredentials.getActivateToken() == null);
         info.put("lastLoginTs", userCredentials.getLastLoginTs());
     }
 
@@ -956,6 +960,10 @@ public abstract class BaseController {
                 additionalInfo.remove(dashboardField);
             }
         }
+    }
+
+    protected CalculatedField checkCalculatedFieldId(CalculatedFieldId calculatedFieldId, Operation operation) throws ThingsboardException {
+        return checkEntityId(calculatedFieldId, calculatedFieldService::findById, operation);
     }
 
     protected HomeDashboardInfo getHomeDashboardInfo(SecurityUser securityUser, JsonNode additionalInfo) {

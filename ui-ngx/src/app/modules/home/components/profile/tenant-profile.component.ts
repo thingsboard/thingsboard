@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Inject, Input, Optional } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, Inject, Input, Optional } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -24,6 +24,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { EntityComponent } from '../entity/entity.component';
 import { guid } from '@core/utils';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-tenant-profile',
@@ -40,7 +41,8 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
               @Optional() @Inject('entity') protected entityValue: TenantProfile,
               @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<TenantProfile>,
               protected fb: UntypedFormBuilder,
-              protected cd: ChangeDetectorRef) {
+              protected cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
@@ -142,7 +144,9 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
         description: [entity ? entity.description : '', []],
       }
     );
-    formGroup.get('isolatedTbRuleEngine').valueChanges.subscribe((value) => {
+    formGroup.get('isolatedTbRuleEngine').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((value) => {
       if (value) {
         formGroup.get('profileData').patchValue({
             queueConfiguration: mainQueue

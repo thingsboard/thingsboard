@@ -47,8 +47,7 @@
           <ng-template [ngSwitchCase]="valueTypeEnum.DATE_TIME">
             <label class="tb-title no-padding tb-required">{{ userInputControl.get('label').value }}</label>
             <tb-datetime [formControl]="userInputControl.get('value')"
-                         dateText="filter.date"
-                         timeText="filter.time"
+                         dateText="{{ 'filter.date' | translate }}"
                          required [showLabel]="false"></tb-datetime>
           </ng-template>
           <ng-template [ngSwitchCase]="valueTypeEnum.BOOLEAN">

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -28,6 +28,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface LabelDataKey {
   name: string;
@@ -75,7 +76,8 @@ export class LabelDataKeyComponent extends PageComponent implements OnInit, Cont
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -84,7 +86,9 @@ export class LabelDataKeyComponent extends PageComponent implements OnInit, Cont
       name: [null, [Validators.required]],
       type: [DataKeyType.attribute, [Validators.required]]
     });
-    this.labelDataKeyFormGroup.valueChanges.subscribe(() => {
+    this.labelDataKeyFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }

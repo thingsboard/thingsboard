@@ -243,23 +243,11 @@
                       </mat-error>
                     </mat-form-field>
                   </div>
-                  <mat-form-field class="mat-block flex-1">
-                    <mat-label translate>admin.oauth2.scope</mat-label>
-                    <mat-chip-grid #scopeList>
-                      <mat-chip-row *ngFor="let scope of mailSettings.get('scope').value; let k = index; trackBy: trackByParams"
-                                    removable (removed)="removeScope(k)">
-                        {{scope}}
-                        <mat-icon matChipRemove>cancel</mat-icon>
-                      </mat-chip-row>
-                      <input [matChipInputFor]="scopeList"
-                             [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-                             matChipInputAddOnBlur
-                             (matChipInputTokenEnd)="addScope($event)">
-                    </mat-chip-grid>
-                    <mat-error *ngIf="mailSettings.get('scope').hasError('required')">
-                      {{ 'admin.oauth2.scope-required' | translate }}
-                    </mat-error>
-                  </mat-form-field>
+                  <tb-string-items-list
+                    formControlName="scope" required
+                    label="{{ 'admin.oauth2.scope' | translate }}"
+                    requiredText="{{ 'admin.oauth2.scope-required' | translate }}">
+                  </tb-string-items-list>
                 </ng-template>
               </mat-expansion-panel>
 

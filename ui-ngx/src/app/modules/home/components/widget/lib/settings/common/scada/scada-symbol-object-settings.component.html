@@ -36,58 +36,11 @@
       </ng-container>
     </ng-container>
   </div>
-  <div [class.!hidden]="!propertyRows?.length && !appearanceProperties.children.length" class="tb-form-panel" formGroupName="properties">
-    <div class="tb-form-panel-title" translate>widget-config.appearance</div>
-    <div #appearanceProperties><ng-content select=".tb-scada-symbol-appearance-properties"></ng-content></div>
-    <div *ngFor="let propertyRow of propertyRows" class="tb-form-row space-between flex-wrap overflow-auto" [class]="propertyRow.rowClass">
-      <mat-slide-toggle *ngIf="propertyRow.switch" class="mat-slide fixed-title-width margin" formControlName="{{ propertyRow.switch.id }}">
-        {{ propertyRow.label | customTranslate }}
-      </mat-slide-toggle>
-      <div *ngIf="!propertyRow.switch" class="fixed-title-width fixed-title-height">{{ propertyRow.label | customTranslate }}</div>
-      <div *ngIf="propertyRow.properties.length" class="tb-flex row flex-end align-center">
-        <ng-container *ngFor="let property of propertyRow.properties">
-          <div *ngIf="property.subLabel" class="tb-small-label">{{ property.subLabel | customTranslate }}</div>
-          <mat-form-field  *ngIf="property.type === ScadaSymbolPropertyType.text" [class]="property.fieldClass" appearance="outline" subscriptSizing="dynamic">
-            <input matInput formControlName="{{ property.id }}" [required]="property.required" placeholder="{{ 'widget-config.set' | translate }}">
-            <div class="lt-md:!hidden" matSuffix *ngIf="property.fieldSuffix">{{ property.fieldSuffix | customTranslate }}</div>
-          </mat-form-field>
-          <tb-color-input *ngIf="property.type === ScadaSymbolPropertyType.color"
-                          [required]="property.required"
-                          [class]="property.fieldClass"
-                          asBoxInput
-                          colorClearButton
-                          formControlName="{{ property.id }}">
-          </tb-color-input>
-          <tb-color-settings *ngIf="property.type === ScadaSymbolPropertyType.color_settings"
-                             [class]="property.fieldClass"
-                             formControlName="{{ property.id }}"
-                             settingsKey="{{ property.name | customTranslate }}">
-          </tb-color-settings>
-          <mat-form-field  *ngIf="property.type === ScadaSymbolPropertyType.number" [class]="property.fieldClass" appearance="outline" class="number" subscriptSizing="dynamic">
-            <input matInput formControlName="{{ property.id }}" [required]="property.required"
-                   [min]="property.min" [max]="property.max" [step]="property.step"
-                   type="number" placeholder="{{ 'widget-config.set' | translate }}">
-            <div class="lt-md:!hidden" matSuffix *ngIf="property.fieldSuffix">{{ property.fieldSuffix | customTranslate }}</div>
-          </mat-form-field>
-          <tb-font-settings *ngIf="property.type === ScadaSymbolPropertyType.font"
-                            [class]="property.fieldClass"
-                            formControlName="{{ property.id }}"
-                            clearButton
-                            disabledLineHeight>
-          </tb-font-settings>
-          <tb-unit-input *ngIf="property.type === ScadaSymbolPropertyType.units"
-                         [class]="property.fieldClass"
-                         [required]="property.required"
-                         formControlName="{{ property.id }}"></tb-unit-input>
-          <tb-material-icon-select *ngIf="property.type === ScadaSymbolPropertyType.icon"
-                                   asBoxInput
-                                   formControlName="{{ property.id }}">
-          </tb-material-icon-select>
-          <mat-divider *ngIf="property.divider" vertical></mat-divider>
-        </ng-container>
-      </div>
-    </div>
-  </div>
+  <tb-dynamic-form formControlName="properties"
+                   title="{{ 'widget-config.appearance' | translate }}"
+                   [properties]="metadata?.properties">
+    <ng-container class="tb-properties-content"><ng-content select=".tb-scada-symbol-appearance-properties"></ng-content></ng-container>
+  </tb-dynamic-form>
 </ng-container>
 
 <ng-template #behaviorsTpl let-behaviors="behaviors">
