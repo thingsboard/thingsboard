@@ -18,6 +18,7 @@ import { DataKey, DatasourceType } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { mergeDeep } from '@core/utils';
+import { AbstractControl, ValidationErrors } from '@angular/forms';
 
 export enum MapType {
   geoMap = 'geoMap',
@@ -133,16 +134,117 @@ export const defaultBaseMapSettings: BaseMapSettings = {
 };
 
 export enum MapProvider {
-  google = 'google-map',
-  openstreet = 'openstreet-map',
+  openstreet = 'openstreet',
+  google = 'google',
   here = 'here',
-  tencent = 'tencent-map',
+  tencent = 'tencent',
   custom = 'custom'
 }
+
+export const mapProviders = Object.keys(MapProvider) as MapProvider[];
+
+export const mapProviderTranslationMap = new Map<MapProvider, string>(
+  [
+    [MapProvider.openstreet, 'widgets.maps.layer.provider.openstreet.title'],
+    [MapProvider.google, 'widgets.maps.layer.provider.google.title'],
+    [MapProvider.here, 'widgets.maps.layer.provider.here.title'],
+    [MapProvider.tencent, 'widgets.maps.layer.provider.tencent.title'],
+    [MapProvider.custom, 'widgets.maps.layer.provider.custom.title']
+  ]
+);
 
 export interface MapLayerSettings {
   label?: string;
   provider: MapProvider;
+}
+
+export const mapLayerValid = (layer: MapLayerSettings): boolean => {
+  if (!layer.provider) {
+    return false;
+  }
+  switch (layer.provider) {
+    case MapProvider.openstreet:
+      const openStreetLayer = layer as OpenStreetMapLayerSettings;
+      return !!openStreetLayer.layerType;
+    case MapProvider.google:
+      const googleLayer = layer as GoogleMapLayerSettings;
+      return !!googleLayer.layerType && !!googleLayer.apiKey;
+    case MapProvider.here:
+      const hereLayer = layer as HereMapLayerSettings;
+      return !!hereLayer.layerType && !!hereLayer.apiKey;
+    case MapProvider.tencent:
+      const tencentLayer = layer as TencentMapLayerSettings;
+      return !!tencentLayer.layerType;
+    case MapProvider.custom:
+      const customLayer = layer as CustomMapLayerSettings;
+      return !!customLayer.tileUrl;
+  }
+};
+
+export const mapLayerValidator = (control: AbstractControl): ValidationErrors | null => {
+  const layer: MapLayerSettings = control.value;
+  if (!mapLayerValid(layer)) {
+    return {
+      layer: true
+    };
+  }
+  return null;
+};
+
+export const defaultLayerTitle = (layer: MapLayerSettings): string => {
+  if (!layer.provider) {
+    return null;
+  }
+  switch (layer.provider) {
+    case MapProvider.openstreet:
+      const openStreetLayer = layer as OpenStreetMapLayerSettings;
+      return openStreetMapLayerTranslationMap.get(openStreetLayer.layerType);
+    case MapProvider.google:
+      const googleLayer = layer as GoogleMapLayerSettings;
+      return googleMapLayerTranslationMap.get(googleLayer.layerType);
+    case MapProvider.here:
+      const hereLayer = layer as HereMapLayerSettings;
+      return hereLayerTranslationMap.get(hereLayer.layerType);
+    case MapProvider.tencent:
+      const tencentLayer = layer as TencentMapLayerSettings;
+      return tencentLayerTranslationMap.get(tencentLayer.layerType);
+    case MapProvider.custom:
+      return 'widgets.maps.layer.provider.custom.title';
+  }
+}
+
+export enum OpenStreetLayerType {
+  openStreetMapnik = 'OpenStreetMap.Mapnik',
+  openStreetHot = 'OpenStreetMap.HOT',
+  esriWorldStreetMap = 'Esri.WorldStreetMap',
+  esriWorldTopoMap = 'Esri.WorldTopoMap',
+  esriWorldImagery = 'Esri.WorldImagery',
+  cartoDbPositron = 'CartoDB.Positron',
+  cartoDbDarkMatter = 'CartoDB.DarkMatter'
+}
+
+export const openStreetLayerTypes = Object.values(OpenStreetLayerType) as OpenStreetLayerType[];
+
+export const openStreetMapLayerTranslationMap = new Map<OpenStreetLayerType, string>(
+  [
+    [OpenStreetLayerType.openStreetMapnik, 'widgets.maps.layer.provider.openstreet.mapnik'],
+    [OpenStreetLayerType.openStreetHot, 'widgets.maps.layer.provider.openstreet.hot'],
+    [OpenStreetLayerType.esriWorldStreetMap, 'widgets.maps.layer.provider.openstreet.esri-street'],
+    [OpenStreetLayerType.esriWorldTopoMap, 'widgets.maps.layer.provider.openstreet.esri-topo'],
+    [OpenStreetLayerType.esriWorldImagery, 'widgets.maps.layer.provider.openstreet.esri-imagery'],
+    [OpenStreetLayerType.cartoDbPositron, 'widgets.maps.layer.provider.openstreet.cartodb-positron'],
+    [OpenStreetLayerType.cartoDbDarkMatter, 'widgets.maps.layer.provider.openstreet.cartodb-dark-matter']
+  ]
+);
+
+export interface OpenStreetMapLayerSettings extends MapLayerSettings {
+  provider: MapProvider.openstreet;
+  layerType: OpenStreetLayerType;
+}
+
+export const defaultOpenStreetMapLayerSettings: OpenStreetMapLayerSettings = {
+  provider: MapProvider.openstreet,
+  layerType: OpenStreetLayerType.openStreetMapnik
 }
 
 export enum GoogleLayerType {
@@ -152,12 +254,14 @@ export enum GoogleLayerType {
   terrain = 'terrain'
 }
 
+export const googleMapLayerTypes = Object.values(GoogleLayerType) as GoogleLayerType[];
+
 export const googleMapLayerTranslationMap = new Map<GoogleLayerType, string>(
   [
-    [GoogleLayerType.roadmap, 'widgets.maps.google-map-type-roadmap'],
-    [GoogleLayerType.satellite, 'widgets.maps.google-map-type-satelite'],
-    [GoogleLayerType.hybrid, 'widgets.maps.google-map-type-hybrid'],
-    [GoogleLayerType.terrain, 'widgets.maps.google-map-type-terrain']
+    [GoogleLayerType.roadmap, 'widgets.maps.layer.provider.google.roadmap'],
+    [GoogleLayerType.satellite, 'widgets.maps.layer.provider.google.satellite'],
+    [GoogleLayerType.hybrid, 'widgets.maps.layer.provider.google.hybrid'],
+    [GoogleLayerType.terrain, 'widgets.maps.layer.provider.google.terrain']
   ]
 );
 
@@ -173,38 +277,6 @@ export const defaultGoogleMapLayerSettings: GoogleMapLayerSettings = {
   apiKey: 'AIzaSyDoEx2kaGz3PxwbI9T7ccTSg5xjdw8Nw8Q'
 };
 
-export enum OpenStreetLayerType {
-  openStreetMapnik = 'OpenStreetMap.Mapnik',
-  openStreetHot = 'OpenStreetMap.HOT',
-  esriWorldStreetMap = 'Esri.WorldStreetMap',
-  esriWorldTopoMap = 'Esri.WorldTopoMap',
-  esriWorldImagery = 'Esri.WorldImagery',
-  cartoDbPositron = 'CartoDB.Positron',
-  cartoDbDarkMatter = 'CartoDB.DarkMatter'
-}
-
-export const openStreetMapLayerTranslationMap = new Map<OpenStreetLayerType, string>(
-  [
-    [OpenStreetLayerType.openStreetMapnik, 'widgets.maps.openstreet-provider-mapnik'],
-    [OpenStreetLayerType.openStreetHot, 'widgets.maps.openstreet-provider-hot'],
-    [OpenStreetLayerType.esriWorldStreetMap, 'widgets.maps.openstreet-provider-esri-street'],
-    [OpenStreetLayerType.esriWorldTopoMap, 'widgets.maps.openstreet-provider-esri-topo'],
-    [OpenStreetLayerType.esriWorldImagery, 'widgets.maps.openstreet-provider-esri-imagery'],
-    [OpenStreetLayerType.cartoDbPositron, 'widgets.maps.openstreet-provider-cartodb-positron'],
-    [OpenStreetLayerType.cartoDbDarkMatter, 'widgets.maps.openstreet-provider-cartodb-dark-matter']
-  ]
-);
-
-export interface OpenStreetMapLayerSettings extends MapLayerSettings {
-  provider: MapProvider.openstreet;
-  layerType: OpenStreetLayerType;
-}
-
-export const defaultOpenStreetMapLayerSettings: OpenStreetMapLayerSettings = {
-  provider: MapProvider.openstreet,
-  layerType: OpenStreetLayerType.openStreetMapnik
-}
-
 export enum HereLayerType {
   hereNormalDay = 'HEREv3.normalDay',
   hereNormalNight = 'HEREv3.normalNight',
@@ -212,12 +284,14 @@ export enum HereLayerType {
   hereTerrainDay = 'HEREv3.terrainDay'
 }
 
+export const hereLayerTypes = Object.values(HereLayerType) as HereLayerType[];
+
 export const hereLayerTranslationMap = new Map<HereLayerType, string>(
   [
-    [HereLayerType.hereNormalDay, 'widgets.maps.here-map-normal-day'],
-    [HereLayerType.hereNormalNight, 'widgets.maps.here-map-normal-night'],
-    [HereLayerType.hereHybridDay, 'widgets.maps.here-map-hybrid-day'],
-    [HereLayerType.hereTerrainDay, 'widgets.maps.here-map-terrain-day']
+    [HereLayerType.hereNormalDay, 'widgets.maps.layer.provider.here.normal-day'],
+    [HereLayerType.hereNormalNight, 'widgets.maps.layer.provider.here.normal-night'],
+    [HereLayerType.hereHybridDay, 'widgets.maps.layer.provider.here.hybrid-day'],
+    [HereLayerType.hereTerrainDay, 'widgets.maps.layer.provider.here.terrain-day']
   ]
 );
 
@@ -239,11 +313,13 @@ export enum TencentLayerType {
   tencentTerrain = 'Tencent.Terrain'
 }
 
+export const tencentLayerTypes = Object.values(TencentLayerType) as TencentLayerType[];
+
 export const tencentLayerTranslationMap = new Map<TencentLayerType, string>(
   [
-    [TencentLayerType.tencentNormal, 'widgets.maps.tencent-provider-normal'],
-    [TencentLayerType.tencentSatellite, 'widgets.maps.tencent-provider-satellite'],
-    [TencentLayerType.tencentTerrain, 'widgets.maps.tencent-provider-terrain']
+    [TencentLayerType.tencentNormal, 'widgets.maps.layer.provider.tencent.normal'],
+    [TencentLayerType.tencentSatellite, 'widgets.maps.layer.provider.tencent.satellite'],
+    [TencentLayerType.tencentTerrain, 'widgets.maps.layer.provider.tencent.terrain']
   ]
 );
 
@@ -269,10 +345,10 @@ export const defaultCustomMapLayerSettings: CustomMapLayerSettings = {
 
 export const defaultMapLayerSettings = (provider: MapProvider): MapLayerSettings => {
   switch (provider) {
-    case MapProvider.google:
-      return defaultGoogleMapLayerSettings;
     case MapProvider.openstreet:
       return defaultOpenStreetMapLayerSettings;
+    case MapProvider.google:
+      return defaultGoogleMapLayerSettings;
     case MapProvider.here:
       return defaultHereMapLayerSettings;
     case MapProvider.tencent:
@@ -284,16 +360,17 @@ export const defaultMapLayerSettings = (provider: MapProvider): MapLayerSettings
 
 export const defaultMapLayers: MapLayerSettings[] = (Object.keys(OpenStreetLayerType) as OpenStreetLayerType[]).map(type => ({
   provider: MapProvider.openstreet,
-  layerType: type
-} as MapLayerSettings)).concat((Object.keys(GoogleLayerType) as GoogleLayerType[]).map(type =>
-  mergeDeep({} as MapLayerSettings, defaultGoogleMapLayerSettings, {layerType: type} as GoogleMapLayerSettings)).concat(
+  layerType: OpenStreetLayerType[type]
+} as MapLayerSettings));
+/*.concat((Object.keys(GoogleLayerType) as GoogleLayerType[]).map(type =>
+  mergeDeep({} as MapLayerSettings, defaultGoogleMapLayerSettings, {layerType: GoogleLayerType[type]} as GoogleMapLayerSettings)).concat(
   (Object.keys(TencentLayerType) as TencentLayerType[]).map(type => ({
     provider: MapProvider.tencent,
-    layerType: type
+    layerType: TencentLayerType[type]
   } as MapLayerSettings))
 )).concat(
   (Object.keys(HereLayerType) as HereLayerType[]).map(type =>
-    mergeDeep({} as MapLayerSettings, defaultHereMapLayerSettings, {layerType: type} as HereMapLayerSettings))
+    mergeDeep({} as MapLayerSettings, defaultHereMapLayerSettings, {layerType: HereLayerType[type]} as HereMapLayerSettings))
 ).concat([
   mergeDeep({} as MapLayerSettings, defaultCustomMapLayerSettings, {label: 'Custom 1'} as CustomMapLayerSettings),
   mergeDeep({} as MapLayerSettings, defaultCustomMapLayerSettings, {
@@ -304,14 +381,7 @@ export const defaultMapLayers: MapLayerSettings[] = (Object.keys(OpenStreetLayer
     tileUrl: 'http://b.tile2.opencyclemap.org/transport/{z}/{x}/{y}.png',
     label: 'Custom 3'
   } as CustomMapLayerSettings)
-]);
-  /*
-  (Object.keys(OpenStreetLayerType) as OpenStreetLayerType[]).map(type => ({
-  provider: MapProvider.openstreet,
-  layerType: type
-} as MapLayerSettings)).concat(
-  (Object.keys(GoogleLayerType) as GoogleLayerType[]).map(type =>
-    mergeDeep({} as GoogleMapLayerSettings, defaultGoogleMapLayerSettings, {layerType: type} as GoogleMapLayerSettings)));*/
+]);*/
 
 export interface GeoMapSettings extends BaseMapSettings {
   layers?: MapLayerSettings[];

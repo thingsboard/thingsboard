@@ -15,7 +15,13 @@
 ///
 
 import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  UntypedFormBuilder, UntypedFormControl,
+  UntypedFormGroup, Validator
+} from '@angular/forms';
 import { ImageSourceType, MapSetting, MapType } from '@home/components/widget/lib/maps/map.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { merge } from 'rxjs';
@@ -29,10 +35,15 @@ import { merge } from 'rxjs';
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => MapSettingsComponent),
       multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => MapSettingsComponent),
+      multi: true
     }
   ]
 })
-export class MapSettingsComponent implements OnInit, ControlValueAccessor {
+export class MapSettingsComponent implements OnInit, ControlValueAccessor, Validator {
 
   MapType = MapType;
 
@@ -108,6 +119,15 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor {
       value, {emitEvent: false}
     );
     this.updateValidators();
+  }
+
+  public validate(c: UntypedFormControl) {
+    const valid = this.mapSettingsFormGroup.valid;
+    return valid ? null : {
+      mapSettings: {
+        valid: false,
+      },
+    };
   }
 
   private updateValidators() {

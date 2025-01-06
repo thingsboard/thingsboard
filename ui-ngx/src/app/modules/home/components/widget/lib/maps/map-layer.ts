@@ -15,20 +15,18 @@
 ///
 
 import {
-  CustomMapLayerSettings, defaultCustomMapLayerSettings,
-  defaultGoogleMapLayerSettings, defaultHereMapLayerSettings,
+  CustomMapLayerSettings,
+  defaultCustomMapLayerSettings,
+  defaultGoogleMapLayerSettings,
+  defaultHereMapLayerSettings,
+  defaultLayerTitle,
   defaultOpenStreetMapLayerSettings,
   defaultTencentMapLayerSettings,
-  GoogleLayerType,
   GoogleMapLayerSettings,
-  googleMapLayerTranslationMap, hereLayerTranslationMap, HereLayerType, HereMapLayerSettings,
+  HereMapLayerSettings,
   MapLayerSettings,
   MapProvider,
-  OpenStreetLayerType,
   OpenStreetMapLayerSettings,
-  openStreetMapLayerTranslationMap,
-  tencentLayerTranslationMap,
-  TencentLayerType,
   TencentMapLayerSettings
 } from '@home/components/widget/lib/maps/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
@@ -46,10 +44,10 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
                       inputSettings: DeepPartial<MapLayerSettings>) {
 
     switch (inputSettings.provider) {
-      case MapProvider.google:
-        return new TbGoogleMapLayer(ctx, inputSettings);
       case MapProvider.openstreet:
         return new TbOpenStreetMapLayer(ctx, inputSettings);
+      case MapProvider.google:
+        return new TbGoogleMapLayer(ctx, inputSettings);
       case MapProvider.tencent:
         return new TbTencentMapLayer(ctx, inputSettings);
       case MapProvider.here:
@@ -65,21 +63,6 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
                         protected inputSettings: DeepPartial<MapLayerSettings>) {
     this.settings = mergeDeep({} as S, this.defaultSettings(), this.inputSettings as S);
   }
-
-  protected abstract defaultSettings(): S;
-
-  protected title(): string {
-    const customTranslate = this.ctx.$injector.get(CustomTranslatePipe);
-    if (this.settings.label) {
-      return customTranslate.transform(this.settings.label);
-    } else {
-      return this.generateTitle();
-    }
-  }
-
-  protected abstract generateTitle(): string;
-
-  protected abstract createLayer(): Observable<L.Layer>;
 
   public loadLayer(theMap: L.Map): Observable<L.TB.LayerData> {
     return this.createLayer().pipe(
@@ -107,6 +90,47 @@ export abstract class TbMapLayer<S extends MapLayerSettings> {
       })
     );
   }
+
+  private title(): string {
+    const customTranslate = this.ctx.$injector.get(CustomTranslatePipe);
+    if (this.settings.label) {
+      return customTranslate.transform(this.settings.label);
+    } else {
+      return this.generateTitle();
+    }
+  }
+
+  private generateTitle(): string {
+    const translationKey = defaultLayerTitle(this.settings);
+    if (translationKey) {
+      return this.ctx.translate.instant(translationKey);
+    } else {
+      return 'Unknown';
+    }
+  };
+
+  protected abstract defaultSettings(): S;
+
+  protected abstract createLayer(): Observable<L.Layer>;
+
+}
+
+class TbOpenStreetMapLayer extends TbMapLayer<OpenStreetMapLayerSettings> {
+
+  constructor(protected ctx: WidgetContext,
+              protected inputSettings: DeepPartial<MapLayerSettings>) {
+    super(ctx, inputSettings);
+  }
+
+  protected defaultSettings(): OpenStreetMapLayerSettings {
+    return defaultOpenStreetMapLayerSettings;
+  }
+
+  protected createLayer(): Observable<L.Layer> {
+    const layer = L.tileLayer.provider(this.settings.layerType);
+    return of(layer);
+  }
+
 }
 
 class TbGoogleMapLayer extends TbMapLayer<GoogleMapLayerSettings> {
@@ -120,11 +144,6 @@ class TbGoogleMapLayer extends TbMapLayer<GoogleMapLayerSettings> {
 
   protected defaultSettings(): GoogleMapLayerSettings {
     return defaultGoogleMapLayerSettings;
-  }
-
-  protected generateTitle(): string {
-    const layerType = GoogleLayerType[this.settings.layerType];
-    return this.ctx.translate.instant(googleMapLayerTranslationMap.get(layerType));
   }
 
   protected createLayer(): Observable<L.Layer> {
@@ -162,29 +181,6 @@ class TbGoogleMapLayer extends TbMapLayer<GoogleMapLayerSettings> {
   }
 }
 
-class TbOpenStreetMapLayer extends TbMapLayer<OpenStreetMapLayerSettings> {
-
-  constructor(protected ctx: WidgetContext,
-              protected inputSettings: DeepPartial<MapLayerSettings>) {
-      super(ctx, inputSettings);
-  }
-
-  protected defaultSettings(): OpenStreetMapLayerSettings {
-      return defaultOpenStreetMapLayerSettings;
-  }
-
-  protected generateTitle(): string {
-    const layerType = OpenStreetLayerType[this.settings.layerType];
-    return this.ctx.translate.instant(openStreetMapLayerTranslationMap.get(layerType));
-  }
-
-  protected createLayer(): Observable<L.Layer> {
-    const layer = L.tileLayer.provider(OpenStreetLayerType[this.settings.layerType]);
-    return of(layer);
-  }
-
-}
-
 class TbTencentMapLayer extends TbMapLayer<TencentMapLayerSettings> {
 
   constructor(protected ctx: WidgetContext,
@@ -196,13 +192,8 @@ class TbTencentMapLayer extends TbMapLayer<TencentMapLayerSettings> {
     return defaultTencentMapLayerSettings;
   }
 
-  protected generateTitle(): string {
-    const layerType = TencentLayerType[this.settings.layerType];
-    return this.ctx.translate.instant(tencentLayerTranslationMap.get(layerType));
-  }
-
   protected createLayer(): Observable<L.Layer> {
-    const layer = L.TB.tileLayer.chinaProvider(TencentLayerType[this.settings.layerType], {
+    const layer = L.TB.tileLayer.chinaProvider(this.settings.layerType, {
       attribution: '&copy;2024 Tencent - GS(2023)1171号'
     });
     return of(layer);
@@ -221,13 +212,8 @@ class TbHereMapLayer extends TbMapLayer<HereMapLayerSettings> {
     return defaultHereMapLayerSettings;
   }
 
-  protected generateTitle(): string {
-    const layerType = HereLayerType[this.settings.layerType];
-    return this.ctx.translate.instant(hereLayerTranslationMap.get(layerType));
-  }
-
   protected createLayer(): Observable<L.Layer> {
-    const layer = L.tileLayer.provider(HereLayerType[this.settings.layerType], {useV3: true, apiKey: this.settings.apiKey} as any);
+    const layer = L.tileLayer.provider(this.settings.layerType, {useV3: true, apiKey: this.settings.apiKey} as any);
     return of(layer);
   }
 
@@ -242,10 +228,6 @@ class TbCustomMapLayer extends TbMapLayer<CustomMapLayerSettings> {
 
   protected defaultSettings(): CustomMapLayerSettings {
     return defaultCustomMapLayerSettings;
-  }
-
-  protected generateTitle(): string {
-    return this.ctx.translate.instant('widgets.maps.custom');
   }
 
   protected createLayer(): Observable<L.Layer> {

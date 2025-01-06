@@ -184,6 +184,11 @@ import {
   DynamicFormArrayComponent
 } from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-array.component';
 import { MapSettingsComponent } from '@home/components/widget/lib/settings/common/map/map-settings.component';
+import { MapLayersComponent } from '@home/components/widget/lib/settings/common/map/map-layers.component';
+import { MapLayerRowComponent } from '@home/components/widget/lib/settings/common/map/map-layer-row.component';
+import {
+  MapLayerSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/map/map-layer-settings-panel.component';
 
 @NgModule({
   declarations: [
@@ -254,6 +259,9 @@ import { MapSettingsComponent } from '@home/components/widget/lib/settings/commo
     DynamicFormSelectItemRowComponent,
     DynamicFormComponent,
     DynamicFormArrayComponent,
+    MapLayerSettingsPanelComponent,
+    MapLayerRowComponent,
+    MapLayersComponent,
     MapSettingsComponent
   ],
   imports: [

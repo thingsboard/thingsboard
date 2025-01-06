@@ -27,7 +27,7 @@ import {
   parseCenterPosition
 } from '@home/components/widget/lib/maps/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { mergeDeep } from '@core/utils';
+import { mergeDeep, mergeDeepIgnoreArray } from '@core/utils';
 import { DeepPartial } from '@shared/models/common';
 import L from 'leaflet';
 import { forkJoin, Observable, of } from 'rxjs';
@@ -61,7 +61,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected constructor(protected ctx: WidgetContext,
                         protected inputSettings: DeepPartial<S>,
                         protected containerElement: HTMLElement) {
-    this.settings = mergeDeep({} as S, this.defaultSettings(), this.inputSettings as S);
+    this.settings = mergeDeepIgnoreArray({} as S, this.defaultSettings(), this.inputSettings as S);
     $(containerElement).empty();
     $(containerElement).addClass('tb-map-layout');
     const mapElement = $('<div class="tb-map"></div>');
@@ -181,8 +181,8 @@ class TbGeoMap extends TbMap<GeoMapSettings> {
               sidebar,
               position: this.settings.controlsPosition,
               uiClass: 'tb-layers',
-              paneTitle: this.ctx.translate.instant('widgets.maps.map-layers'),
-              buttonTitle: this.ctx.translate.instant('widgets.maps.layers'),
+              paneTitle: this.ctx.translate.instant('widgets.maps.layer.map-layers'),
+              buttonTitle: this.ctx.translate.instant('widgets.maps.layer.layers'),
             }).addTo(this.map);
           }
         }

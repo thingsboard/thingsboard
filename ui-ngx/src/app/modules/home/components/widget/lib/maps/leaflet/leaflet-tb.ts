@@ -15,6 +15,7 @@
 ///
 
 import L, { Coords, TB, TileLayerOptions } from 'leaflet';
+import { guid } from '@core/utils';
 
 class SidebarControl extends L.Control<TB.SidebarControlOptions> {
 
@@ -133,7 +134,6 @@ class SidebarPaneControl<O extends TB.SidebarPaneControlOptions> extends L.Contr
     if (!this.button.hasClass("disabled")) {
       this.options.sidebar.togglePane(this.$ui, this.button);
     }
-    //$(".leaflet-control .control-button").tooltip("hide");
   }
 }
 
@@ -143,13 +143,14 @@ class LayersControl extends SidebarPaneControl<TB.LayersControlOptions> {
   }
 
   public onAddPane(map: L.Map, button: JQuery<HTMLElement>, $ui: JQuery<HTMLElement>, toggle: (e: JQuery.MouseEventBase) => void) {
+    const paneId = guid();
     const layers = this.options.layers;
     const baseSection = $("<div>")
     .attr('class', 'tb-layers-container')
     .appendTo($ui);
 
     layers.forEach((layerData, i) => {
-      const id = 'map-ui-layer-' + i;
+      const id = `map-ui-layer-${paneId}-${i}`;
       const buttonContainer = $('<div class="tb-layer-card">')
       .appendTo(baseSection);
       const mapContainer = $('<div class="tb-layer-map">')
@@ -191,7 +192,9 @@ class LayersControl extends SidebarPaneControl<TB.LayersControlOptions> {
       });
 
 
-      input.on('click', () => {
+      input.on('click', (e: JQuery.MouseEventBase) => {
+        e.stopPropagation();
+        e.preventDefault();
         layers.forEach((other) => {
           if (other.layer === layerData.layer) {
             map.addLayer(other.layer);

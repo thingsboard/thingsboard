@@ -19,7 +19,7 @@ import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.m
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { mergeDeep } from '@core/utils';
+import { mergeDeep, mergeDeepIgnoreArray } from '@core/utils';
 import { mapWidgetDefaultSettings, MapWidgetSettings } from '@home/components/widget/lib/maps/map-widget.models';
 
 @Component({
@@ -41,7 +41,7 @@ export class MapWidgetSettingsComponent extends WidgetSettingsComponent {
   }
 
   protected defaultSettings(): WidgetSettings {
-    return mergeDeep<MapWidgetSettings>({} as MapWidgetSettings, mapWidgetDefaultSettings);
+    return mergeDeepIgnoreArray<MapWidgetSettings>({} as MapWidgetSettings, mapWidgetDefaultSettings);
   }
 
   protected onSettingsSet(settings: WidgetSettings) {

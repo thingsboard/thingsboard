@@ -21,7 +21,7 @@ import { AppState } from '@core/core.state';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { isUndefined, mergeDeep } from '@core/utils';
+import { isUndefined, mergeDeep, mergeDeepIgnoreArray } from '@core/utils';
 import { mapWidgetDefaultSettings, MapWidgetSettings } from '@home/components/widget/lib/maps/map-widget.models';
 import { cssSizeToStrSize, resolveCssSize } from '@shared/models/widget-settings.models';
 import { WidgetConfig } from '@shared/models/widget.models';
@@ -47,7 +47,7 @@ export class MapBasicConfigComponent extends BasicWidgetConfigComponent {
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
-    const settings: MapWidgetSettings = mergeDeep<MapWidgetSettings>({} as MapWidgetSettings,
+    const settings: MapWidgetSettings = mergeDeepIgnoreArray<MapWidgetSettings>({} as MapWidgetSettings,
       mapWidgetDefaultSettings, configData.config.settings as MapWidgetSettings);
     const iconSize = resolveCssSize(configData.config.iconSize);
     this.mapWidgetConfigForm = this.fb.group({

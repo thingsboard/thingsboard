@@ -19,24 +19,26 @@
   <div class="tb-form-panel">
     <div class="flex flex-row items-center justify-between">
       <div class="tb-form-panel-title">
-        {{ 'widgets.maps.map-type' | translate }}
+        {{ 'widgets.maps.map-type.type' | translate }}
       </div>
       <tb-toggle-select formControlName="mapType">
-        <tb-toggle-option [value]="MapType.geoMap">{{ 'widgets.maps.map-type-map' | translate }}</tb-toggle-option>
-        <tb-toggle-option [value]="MapType.image">{{ 'widgets.maps.map-type-image' | translate }}</tb-toggle-option>
+        <tb-toggle-option [value]="MapType.geoMap">{{ 'widgets.maps.map-type.map' | translate }}</tb-toggle-option>
+        <tb-toggle-option [value]="MapType.image">{{ 'widgets.maps.map-type.image' | translate }}</tb-toggle-option>
       </tb-toggle-select>
     </div>
+    <tb-map-layers *ngIf="MapType.geoMap === mapSettingsFormGroup.get('mapType').value"
+                   formControlName="layers"></tb-map-layers>
   </div>
   <div class="tb-form-panel">
     <div class="flex flex-row items-center justify-between">
       <div class="tb-form-panel-title">
-        {{ 'widgets.maps.overlays' | translate }}
+        {{ 'widgets.maps.overlays.overlays' | translate }}
       </div>
       <tb-toggle-select [(ngModel)]="overlaysMode"
                         [ngModelOptions]="{ standalone: true }">
-        <tb-toggle-option value="markers">{{ 'widgets.maps.markers' | translate }}</tb-toggle-option>
-        <tb-toggle-option value="polygons">{{ 'widgets.maps.polygons' | translate }}</tb-toggle-option>
-        <tb-toggle-option value="circles">{{ 'widgets.maps.circles' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="markers">{{ 'widgets.maps.overlays.markers' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="polygons">{{ 'widgets.maps.overlays.polygons' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="circles">{{ 'widgets.maps.overlays.circles' | translate }}</tb-toggle-option>
       </tb-toggle-select>
     </div>
   </div>

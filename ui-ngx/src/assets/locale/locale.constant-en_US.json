@@ -6803,19 +6803,69 @@
             "max-value": "Maximum value"
         },
         "maps": {
-            "map-type": "Map type",
-            "map-type-map": "Map",
-            "map-type-image": "Image",
-            "overlays": "Overlays",
-            "markers": "Markers",
-            "polygons": "Polygons",
-            "circles": "Circles",
-            "layers": "Layers",
-            "map-layers": "Map layers",
-            "tencent-provider-normal": "Tencent.Normal",
-            "tencent-provider-satellite": "Tencent.Satellite",
-            "tencent-provider-terrain": "Tencent.Terrain",
-            "custom": "Custom",
+            "map-type": {
+                "type": "Map type",
+                "map": "Map",
+                "image": "Image"
+            },
+            "layer": {
+                "label": "Label",
+                "layer": "Layer",
+                "layers": "Layers",
+                "map-layers": "Map layers",
+                "add-layer": "Add layer",
+                "layer-settings": "Layer settings",
+                "remove-layer": "Remove layer",
+                "no-layers": "No layers configured",
+                "provider": {
+                    "provider": "Provider",
+                    "openstreet": {
+                        "title": "OpenStreet",
+                        "mapnik": "Mapnik",
+                        "hot": "HOT",
+                        "esri-street": "WorldStreetMap",
+                        "esri-topo": "WorldTopoMap",
+                        "esri-imagery": "WorldImagery",
+                        "cartodb-positron": "Positron",
+                        "cartodb-dark-matter": "DarkMatter"
+
+                    },
+                    "google": {
+                        "title": "Google",
+                        "roadmap": "Roadmap",
+                        "satellite": "Satellite",
+                        "hybrid": "Hybrid",
+                        "terrain": "Terrain"
+                    },
+                    "here": {
+                        "title": "HERE",
+                        "normal-day": "Normal day",
+                        "normal-night": "Normal night",
+                        "hybrid-day": "Hybrid day",
+                        "terrain-day": "Terrain day"
+                    },
+                    "tencent": {
+                        "title": "Tencent",
+                        "normal": "Normal",
+                        "satellite": "Satellite",
+                        "terrain": "Terrain"
+                    },
+                    "custom": {
+                        "title": "Custom",
+                        "tile-url": "Tile URL"
+                    }
+                },
+                "credentials": {
+                    "credentials": "Credentials",
+                    "api-key": "API Key"
+                }
+            },
+            "overlays": {
+                "overlays": "Overlays",
+                "markers": "Markers",
+                "polygons": "Polygons",
+                "circles": "Circles"
+            },
             "select-entity": "Select entity",
             "select-entity-hint": "Hint: after selection click at the map to set position",
             "tooltips": {
