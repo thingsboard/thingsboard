@@ -194,7 +194,6 @@ class LayersControl extends SidebarPaneControl<TB.LayersControlOptions> {
 
       input.on('click', (e: JQuery.MouseEventBase) => {
         e.stopPropagation();
-        e.preventDefault();
         layers.forEach((other) => {
           if (other.layer === layerData.layer) {
             map.addLayer(other.layer);
