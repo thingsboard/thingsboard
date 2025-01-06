@@ -55,7 +55,7 @@ export class RecipientTableConfigResolver  {
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.NOTIFICATION_TARGET);
     this.config.entityResources = {} as EntityTypeResource<NotificationTarget>;
 
-    this.config.addEntity = () => this.editTarget(null, true);
+    this.config.addEntity = () => this.notificationTargetDialog(null, true);
 
     this.config.entitiesFetchFunction = pageLink => this.notificationService.getNotificationTargets(pageLink);
 
@@ -72,11 +72,7 @@ export class RecipientTableConfigResolver  {
 
     this.config.handleRowClick = ($event, target) => {
       $event?.stopPropagation();
-      this.editTarget(target).subscribe((res) => {
-        if (res) {
-          this.config.updateData();
-        }
-      });
+      this.notificationTargetDialog(target).subscribe(res => res ? this.config.updateData() : null);
       return true;
     };
 
@@ -100,7 +96,7 @@ export class RecipientTableConfigResolver  {
     return [];
   }
 
-  private editTarget(target: NotificationTarget, isAdd = false): Observable<NotificationTarget> {
+  private notificationTargetDialog(target: NotificationTarget, isAdd = false): Observable<NotificationTarget> {
     return this.dialog.open<RecipientNotificationDialogComponent, RecipientNotificationDialogData,
       NotificationTarget>(RecipientNotificationDialogComponent, {
       disableClose: true,
