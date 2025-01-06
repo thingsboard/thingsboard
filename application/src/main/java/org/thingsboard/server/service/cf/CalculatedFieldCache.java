@@ -30,6 +30,8 @@ public interface CalculatedFieldCache {
 
     CalculatedField getCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
+    List<CalculatedField> getCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId);
+
     List<CalculatedFieldLink> getCalculatedFieldLinks(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
     List<CalculatedFieldLink> getCalculatedFieldLinksByEntityId(TenantId tenantId, EntityId entityId);

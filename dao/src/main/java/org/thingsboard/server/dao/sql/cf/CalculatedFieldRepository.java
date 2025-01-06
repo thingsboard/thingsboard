@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.cf;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.dao.model.sql.CalculatedFieldEntity;
 
@@ -27,6 +28,8 @@ public interface CalculatedFieldRepository extends JpaRepository<CalculatedField
     boolean existsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 
     List<CalculatedFieldId> findCalculatedFieldIdsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
+
+    List<CalculatedField> findAllByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 
     List<CalculatedFieldEntity> findAllByTenantId(UUID tenantId);
 

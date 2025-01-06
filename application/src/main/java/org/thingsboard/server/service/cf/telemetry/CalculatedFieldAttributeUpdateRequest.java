@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.service.cf.telemetry;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 
 @Data
-@AllArgsConstructor
 public class CalculatedFieldAttributeUpdateRequest implements CalculatedFieldTelemetryUpdateRequest {
 
     private TenantId tenantId;
@@ -37,12 +36,20 @@ public class CalculatedFieldAttributeUpdateRequest implements CalculatedFieldTel
     private List<AttributeKvEntry> kvEntries;
     private List<CalculatedFieldId> previousCalculatedFieldIds;
 
+    public CalculatedFieldAttributeUpdateRequest(AttributesSaveRequest request) {
+        this.tenantId = request.getTenantId();
+        this.entityId = request.getEntityId();
+        this.scope = request.getScope();
+        this.kvEntries = request.getEntries();
+        this.previousCalculatedFieldIds = request.getPreviousCalculatedFieldIds();
+    }
+
     @Override
-    public Map<String, String> getTelemetryKeysFromLink(CalculatedFieldLink link) {
+    public Map<String, String> getTelemetryKeysFromLink(CalculatedFieldLinkConfiguration linkConfiguration) {
         return switch (scope) {
-            case CLIENT_SCOPE -> link.getConfiguration().getClientAttributes();
-            case SERVER_SCOPE -> link.getConfiguration().getServerAttributes();
-            case SHARED_SCOPE -> link.getConfiguration().getSharedAttributes();
+            case CLIENT_SCOPE -> linkConfiguration.getClientAttributes();
+            case SERVER_SCOPE -> linkConfiguration.getServerAttributes();
+            case SHARED_SCOPE -> linkConfiguration.getSharedAttributes();
         };
     }
 

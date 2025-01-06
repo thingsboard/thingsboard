@@ -154,9 +154,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         if (request.isSaveLatest() && !request.isOnlyLatest()) {
             addEntityViewCallback(tenantId, entityId, request.getEntries());
         }
-        // Use something very similar to addMainCallback. don't forget about tsCallBackExecutor.
-        //CalculatedFieldTimeSeriesUpdateRequest - add constructor that accepts the TimeseriesSaveRequest
-        addCallback(saveFuture, success -> calculatedFieldExecutionService.onTelemetryUpdate(new CalculatedFieldTimeSeriesUpdateRequest(tenantId, entityId, request.getEntries(), request.getPreviousCalculatedFieldIds())), tsCallBackExecutor);
+        addCallback(saveFuture, success -> calculatedFieldExecutionService.onTelemetryUpdate(new CalculatedFieldTimeSeriesUpdateRequest(request)), tsCallBackExecutor);
         return saveFuture;
     }
 
@@ -172,8 +170,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         ListenableFuture<List<Long>> saveFuture = attrService.save(request.getTenantId(), request.getEntityId(), request.getScope(), request.getEntries());
         addMainCallback(saveFuture, request.getCallback());
         addWsCallback(saveFuture, success -> onAttributesUpdate(request.getTenantId(), request.getEntityId(), request.getScope().name(), request.getEntries(), request.isNotifyDevice()));
-        //CalculatedFieldAttributeUpdateRequest - add constructor that accepts the AttributesSaveRequest
-        addCallback(saveFuture, success -> calculatedFieldExecutionService.onTelemetryUpdate(new CalculatedFieldAttributeUpdateRequest(request.getTenantId(), request.getEntityId(), request.getScope(), request.getEntries(), request.getPreviousCalculatedFieldIds())), tsCallBackExecutor);
+        addCallback(saveFuture, success -> calculatedFieldExecutionService.onTelemetryUpdate(new CalculatedFieldAttributeUpdateRequest(request)), tsCallBackExecutor);
     }
 
     @Override

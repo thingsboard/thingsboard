@@ -38,6 +38,7 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
@@ -139,6 +140,8 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
                 Math.max(4, Runtime.getRuntime().availableProcessors()), "calculated-field"));
         calculatedFieldCallbackExecutor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(
                 Math.max(4, Runtime.getRuntime().availableProcessors()), "calculated-field-callback"));
+        scheduledExecutor.submit(() -> rocksDBService.getAll()
+                .forEach((ctxId, ctx) -> states.put(JacksonUtil.fromString(ctxId, CalculatedFieldEntityCtxId.class), JacksonUtil.fromString(ctx, CalculatedFieldEntityCtx.class))));
     }
 
     @PreDestroy
@@ -337,11 +340,32 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             if (supportedReferencedEntities.contains(entityId.getEntityType())) {
                 EntityId profileId = getProfileId(tenantId, entityId);
 
+                // process by profile
+                if (profileId != null) {
+                    calculatedFieldCache.getCalculatedFieldsByEntityId(tenantId, profileId).forEach(cf -> {
+                        CalculatedFieldLinkConfiguration linkConfiguration = cf.getConfiguration().getReferencedEntityConfig(profileId);
+                        Map<String, String> telemetryKeys = calculatedFieldTelemetryUpdateRequest.getTelemetryKeysFromLink(linkConfiguration);
+                        Map<String, KvEntry> updatedTelemetry = calculatedFieldTelemetryUpdateRequest.getKvEntries().stream()
+                                .filter(entry -> telemetryKeys.containsKey(entry.getKey()))
+                                .collect(Collectors.toMap(
+                                        entry -> getMappedKey(entry, telemetryKeys),
+                                        entry -> entry,
+                                        (v1, v2) -> v1
+                                ));
+
+                        if (!updatedTelemetry.isEmpty()) {
+                            List<CalculatedFieldId> previousCalculatedFieldIds = calculatedFieldTelemetryUpdateRequest.getPreviousCalculatedFieldIds();
+                            executeTelemetryUpdate(tenantId, entityId, cf.getId(), previousCalculatedFieldIds, updatedTelemetry);
+                        }
+                    });
+                }
+
+                // process by links
                 getCalculatedFieldLinks(tenantId, entityId, profileId).forEach(link -> {
                     CalculatedFieldId calculatedFieldId = link.getCalculatedFieldId();
-                    Map<String, String> telemetryKeys = calculatedFieldTelemetryUpdateRequest.getTelemetryKeysFromLink(link);
+                    Map<String, String> telemetryKeys = calculatedFieldTelemetryUpdateRequest.getTelemetryKeysFromLink(link.getConfiguration());
                     Map<String, KvEntry> updatedTelemetry = calculatedFieldTelemetryUpdateRequest.getKvEntries().stream()
-                            .filter(entry -> telemetryKeys.containsValue(entry.getKey()))
+                            .filter(entry -> telemetryKeys.containsKey(entry.getKey()))
                             .collect(Collectors.toMap(
                                     entry -> getMappedKey(entry, telemetryKeys),
                                     entry -> entry,

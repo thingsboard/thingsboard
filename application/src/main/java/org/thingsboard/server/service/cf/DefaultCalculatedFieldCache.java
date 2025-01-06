@@ -56,6 +56,7 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     private final DeviceService deviceService;
 
     private final ConcurrentMap<CalculatedFieldId, CalculatedField> calculatedFields = new ConcurrentHashMap<>();
+    private final ConcurrentMap<EntityId, List<CalculatedField>> entityIdCalculatedFields = new ConcurrentHashMap<>();
     private final ConcurrentMap<CalculatedFieldId, List<CalculatedFieldLink>> calculatedFieldLinks = new ConcurrentHashMap<>();
     private final ConcurrentMap<EntityId, List<CalculatedFieldLink>> entityIdCalculatedFieldLinks = new ConcurrentHashMap<>();
     private final ConcurrentMap<CalculatedFieldId, CalculatedFieldCtx> calculatedFieldsCtx = new ConcurrentHashMap<>();
@@ -65,10 +66,8 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     @Getter
     private int initFetchPackSize;
 
-
     @PostConstruct
     public void init() {
-        // to discuss: fetch on start or fetch on demand
         PageDataIterable<CalculatedField> cfs = new PageDataIterable<>(calculatedFieldService::findAllCalculatedFields, initFetchPackSize);
         cfs.forEach(cf -> calculatedFields.putIfAbsent(cf.getId(), cf));
         PageDataIterable<CalculatedFieldLink> cfls = new PageDataIterable<>(calculatedFieldService::findAllCalculatedFieldLinks, initFetchPackSize);
@@ -98,18 +97,36 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     }
 
     @Override
+    public List<CalculatedField> getCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId) {
+        List<CalculatedField> cfs = entityIdCalculatedFields.get(entityId);
+        if (cfs == null) {
+            calculatedFieldFetchLock.lock();
+            try {
+                cfs = entityIdCalculatedFields.get(entityId);
+                if (cfs == null) {
+                    cfs = calculatedFieldService.findCalculatedFieldsByEntityId(tenantId, entityId);
+                    entityIdCalculatedFields.put(entityId, cfs);
+                    log.debug("[{}] Fetch calculated fields by entity into cache: {}", entityId, cfs);
+                }
+            } finally {
+                calculatedFieldFetchLock.unlock();
+            }
+        }
+        log.trace("[{}] Found calculated fields by entity in cache: {}", entityId, cfs);
+        return cfs;
+    }
+
+    @Override
     public List<CalculatedFieldLink> getCalculatedFieldLinks(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
         List<CalculatedFieldLink> cfLinks = calculatedFieldLinks.get(calculatedFieldId);
-        if (cfLinks == null || cfLinks.isEmpty()) {
+        if (cfLinks == null) {
             calculatedFieldFetchLock.lock();
             try {
                 cfLinks = calculatedFieldLinks.get(calculatedFieldId);
-                if (cfLinks == null || cfLinks.isEmpty()) {
+                if (cfLinks == null) {
                     cfLinks = calculatedFieldService.findAllCalculatedFieldLinksById(tenantId, calculatedFieldId);
-                    if (cfLinks != null) {
-                        calculatedFieldLinks.put(calculatedFieldId, cfLinks);
-                        log.debug("[{}] Fetch calculated field links into cache: {}", calculatedFieldId, cfLinks);
-                    }
+                    calculatedFieldLinks.put(calculatedFieldId, cfLinks);
+                    log.debug("[{}] Fetch calculated field links into cache: {}", calculatedFieldId, cfLinks);
                 }
             } finally {
                 calculatedFieldFetchLock.unlock();
@@ -138,7 +155,6 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
         log.trace("[{}] Found calculated field links by entity id in cache: {}", entityId, cfLinks);
         return cfLinks;
     }
-
 
     @Override
     public void updateCalculatedFieldLinks(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
@@ -225,6 +241,9 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
         CalculatedField oldCalculatedField = calculatedFields.remove(calculatedFieldId);
         log.debug("[{}] evict calculated field from cache: {}", calculatedFieldId, oldCalculatedField);
         calculatedFieldLinks.remove(calculatedFieldId);
+        log.debug("[{}] evict calculated field from cached calculated fields by entity id: {}", calculatedFieldId, oldCalculatedField);
+        entityIdCalculatedFields.forEach((entityId, calculatedFields) -> calculatedFields.removeIf(cf -> cf.getId().equals(calculatedFieldId)));
+        entityIdCalculatedFields.remove(oldCalculatedField.getEntityId());
         log.debug("[{}] evict calculated field links from cache: {}", calculatedFieldId, oldCalculatedField);
         calculatedFieldsCtx.remove(calculatedFieldId);
         log.debug("[{}] evict calculated field ctx from cache: {}", calculatedFieldId, oldCalculatedField);

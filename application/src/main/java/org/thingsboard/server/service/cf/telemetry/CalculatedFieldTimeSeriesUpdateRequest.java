@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.service.cf.telemetry;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 
 @Data
-@AllArgsConstructor
 public class CalculatedFieldTimeSeriesUpdateRequest implements CalculatedFieldTelemetryUpdateRequest {
 
     private TenantId tenantId;
@@ -35,9 +34,16 @@ public class CalculatedFieldTimeSeriesUpdateRequest implements CalculatedFieldTe
     private List<TsKvEntry> kvEntries;
     private List<CalculatedFieldId> previousCalculatedFieldIds;
 
+    public CalculatedFieldTimeSeriesUpdateRequest(TimeseriesSaveRequest request) {
+        this.tenantId = request.getTenantId();
+        this.entityId = request.getEntityId();
+        this.kvEntries = request.getEntries();
+        this.previousCalculatedFieldIds = request.getPreviousCalculatedFieldIds();
+    }
+
     @Override
-    public Map<String, String> getTelemetryKeysFromLink(CalculatedFieldLink link) {
-        return link.getConfiguration().getTimeSeries();
+    public Map<String, String> getTelemetryKeysFromLink(CalculatedFieldLinkConfiguration linkConfiguration) {
+        return linkConfiguration.getTimeSeries();
     }
 
 }

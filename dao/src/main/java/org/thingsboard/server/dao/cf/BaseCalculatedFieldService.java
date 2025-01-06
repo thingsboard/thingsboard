@@ -99,6 +99,13 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     }
 
     @Override
+    public List<CalculatedField> findCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId) {
+        log.trace("Executing findCalculatedFieldsByEntityId [{}]", entityId);
+        validateId(entityId.getId(), id -> INCORRECT_ENTITY_ID + id);
+        return calculatedFieldDao.findCalculatedFieldsByEntityId(tenantId, entityId);
+    }
+
+    @Override
     public List<CalculatedField> findAllCalculatedFields() {
         log.trace("Executing findAll");
         return calculatedFieldDao.findAll();
