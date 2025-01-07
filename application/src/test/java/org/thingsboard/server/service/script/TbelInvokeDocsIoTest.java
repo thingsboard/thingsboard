@@ -18,7 +18,6 @@ package org.thingsboard.server.service.script;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbDate;
-import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -34,7 +33,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@DaoSqlTest
 class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
 
     private String decoderStr;
@@ -1696,6 +1694,62 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(4.2d, actual);
     }
+
+    // Bitwise Operations
+    @Test
+    public void bitwiseOperationsBoolean_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """     
+                    var x = true;
+                    var y = false;               
+                    return {
+                        "andResult": x & y,
+                        "orResult": x | y,
+                        "xorResult": x ^ y,                    
+                        "leftShift": x << y,                    
+                        "rightShift": x >> y,                    
+                        "rightUnShift": x >>> y                    
+                    }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("andResult", 0);
+        expected.put("orResult", 1);
+        expected.put("xorResult", 1);
+        expected.put("leftShift", 1);
+        expected.put("rightShift", 1);
+        expected.put("rightUnShift", 1);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+    @Test
+    public void bitwiseOperationsMix_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """     
+                    var x = true;
+                    var y = false;
+                    var i = 10;
+                    var b = -14;
+                    var l = 9223372036854775807;            
+                    return {
+                        "andResult": x & b,
+                        "orResult": i | y,
+                        "xorResult": i ^ l,                
+                        "leftShift": l << i,                   
+                        "rightShift": l >> b,                    
+                        "rightUnShift": i >>> x                    
+                    }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("andResult", 0);
+        expected.put("orResult", 10);
+        expected.put("xorResult", 9223372036854775797L);
+        expected.put("leftShift", -1024L);
+        expected.put("rightShift", 8191L);
+        expected.put("rightUnShift", 5);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
 
     // base64
     @Test

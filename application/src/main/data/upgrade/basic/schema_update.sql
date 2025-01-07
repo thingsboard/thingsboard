@@ -23,7 +23,7 @@ UPDATE user_credentials c SET failed_login_attempts = (SELECT (additional_info::
   WHERE failed_login_attempts IS NULL;
 
 UPDATE tb_user SET additional_info = (additional_info::jsonb - 'lastLoginTs' - 'failedLoginAttempts' - 'userCredentialsEnabled')::text
-  WHERE additional_info IS NOT NULL AND additional_info != 'null';
+  WHERE additional_info IS NOT NULL AND additional_info != 'null' AND jsonb_typeof(additional_info::jsonb) = 'object';
 
 -- UPDATE RULE NODE DEBUG MODE TO DEBUG STRATEGY START
 
@@ -190,6 +190,17 @@ $$
             ALTER TABLE qr_code_settings RENAME CONSTRAINT mobile_app_settings_pkey TO qr_code_settings_pkey;
         END IF;
         ALTER TABLE qr_code_settings DROP COLUMN IF EXISTS android_config, DROP COLUMN IF EXISTS ios_config;
+    END;
+$$;
+
+-- update constraint name
+DO
+$$
+    BEGIN
+        ALTER TABLE domain DROP CONSTRAINT IF EXISTS domain_unq_key;
+        IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'domain_name_key') THEN
+            ALTER TABLE domain ADD CONSTRAINT domain_name_key UNIQUE (name);
+        END IF;
     END;
 $$;
 

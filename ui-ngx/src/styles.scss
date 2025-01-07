@@ -58,6 +58,10 @@ tb-root {
  * TYPE DEFAULTS
  ***************/
 
+* {
+  box-sizing: border-box;
+}
+
 body,
 button,
 html,

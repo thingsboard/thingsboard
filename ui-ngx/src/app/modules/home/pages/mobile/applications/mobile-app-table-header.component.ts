@@ -30,8 +30,4 @@ export class MobileAppTableHeaderComponent extends EntityTableHeaderComponent<Mo
   constructor(protected store: Store<AppState>) {
     super(store);
   }
-
-  createMobile($event: Event) {
-    this.entitiesTableConfig.getTable().addEntity($event);
-  }
 }

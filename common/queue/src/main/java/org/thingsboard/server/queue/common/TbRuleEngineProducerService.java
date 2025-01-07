@@ -47,7 +47,7 @@ public class TbRuleEngineProducerService {
                 Integer partition = tpi.getPartition().orElse(null);
                 UUID id = i > 0 ? UUID.randomUUID() : tbMsg.getId();
 
-                tbMsg = tbMsg.toBuilder()
+                tbMsg = tbMsg.transform()
                         .id(id)
                         .correlationId(correlationId)
                         .partition(partition)

@@ -62,7 +62,7 @@ export class MobileAppService {
   }
 
   public updateOauth2Clients(id: string, oauth2ClientIds: Array<string>, config?: RequestConfig) {
-    return this.http.put(`/api/mobile/bundle/${id}/oauth2Clients`, oauth2ClientIds, defaultHttpOptionsFromConfig(config));
+    return this.http.put(`/api/mobile/bundle/${id}/oauth2Clients`, oauth2ClientIds ?? [], defaultHttpOptionsFromConfig(config));
   }
 
   public getTenantMobileAppBundleInfos(pageLink: PageLink, config?: RequestConfig): Observable<PageData<MobileAppBundleInfo>> {

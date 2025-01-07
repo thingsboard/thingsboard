@@ -134,13 +134,17 @@ public class TbSqsNode extends TbAbstractExternalNode {
         if (!StringUtils.isEmpty(result.getSequenceNumber())) {
             metaData.putValue(SEQUENCE_NUMBER, result.getSequenceNumber());
         }
-        return TbMsg.transformMsgMetadata(origMsg, metaData);
+        return origMsg.transform()
+                .metaData(metaData)
+                .build();
     }
 
     private TbMsg processException(TbMsg origMsg, Throwable t) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(ERROR, t.getClass() + ": " + t.getMessage());
-        return TbMsg.transformMsgMetadata(origMsg, metaData);
+        return origMsg.transform()
+                .metaData(metaData)
+                .build();
     }
 
     @Override
