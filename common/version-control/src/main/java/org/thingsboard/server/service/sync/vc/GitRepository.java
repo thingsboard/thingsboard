@@ -569,7 +569,9 @@ public class GitRepository {
             try {
                 keyPairs = SecurityUtils.loadKeyPairIdentities(null,
                         null, new ByteArrayInputStream(privateKeyContent.getBytes()), (session, resourceKey, retryIndex) -> password);
-            } catch (Exception e) {}
+            } catch (Exception e) {
+                log.error("Failed to load ssh private key", e);
+            }
             if (keyPairs == null) {
                 throw new IllegalArgumentException("Failed to load ssh private key");
             }
