@@ -16,7 +16,13 @@
 
 -->
 <ng-container [formGroup]="mapWidgetSettingsForm">
-  <tb-map-settings formControlName="mapSettings"></tb-map-settings>
+  <tb-map-settings
+    [aliasController]="aliasController"
+    [callbacks]="callbacks"
+    [functionsOnly]="functionsOnly"
+    [widget]="widget"
+    formControlName="mapSettings">
+  </tb-map-settings>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
     <div class="tb-form-row space-between">

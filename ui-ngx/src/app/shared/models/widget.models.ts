@@ -510,8 +510,8 @@ export const datasourcesHasOnlyComparisonAggregation = (datasources?: Array<Data
   return true;
 };
 
-export interface FormattedData {
-  $datasource: Datasource;
+export interface FormattedData<D extends Datasource = Datasource> {
+  $datasource: D;
   entityName: string;
   deviceName: string;
   entityId: string;
@@ -861,6 +861,7 @@ export interface IWidgetSettingsComponent {
   aliasController: IAliasController;
   callbacks: WidgetConfigCallbacks;
   dataKeyCallbacks: DataKeysCallbacks;
+  functionsOnly: boolean;
   dashboard: Dashboard;
   widget: Widget;
   widgetConfig: WidgetConfigComponentData;
@@ -881,6 +882,8 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
   callbacks: WidgetConfigCallbacks;
 
   dataKeyCallbacks: DataKeysCallbacks;
+
+  functionsOnly: boolean;
 
   dashboard: Dashboard;
 

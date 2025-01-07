@@ -37,7 +37,7 @@ import { AlarmSearchStatus } from '@shared/models/alarm.models';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { IAliasController } from '@core/api/widget-api.models';
-import { EntityAliasSelectCallbacks } from '@home/components/alias/entity-alias-select.component.models';
+import { EntityAliasSelectCallbacks } from '@home/components/widget/lib/settings/common/alias/entity-alias-select.component.models';
 import { FilterSelectCallbacks } from '@home/components/filter/filter-select.component.models';
 import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { EntityType } from '@shared/models/entity-type.models';

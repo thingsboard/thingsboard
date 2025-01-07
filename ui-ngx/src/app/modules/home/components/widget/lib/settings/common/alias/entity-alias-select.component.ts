@@ -37,6 +37,7 @@ import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autoc
 import { EntityAliasSelectCallbacks } from './entity-alias-select.component.models';
 import { ENTER } from '@angular/cdk/keycodes';
 import { ErrorStateMatcher } from '@angular/material/core';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-entity-alias-select',
@@ -79,6 +80,16 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  @coerceBoolean()
+  inlineField: boolean;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
 
   @ViewChild('entityAliasInput', {static: true}) entityAliasInput: ElementRef;
 

@@ -15,11 +15,18 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="selectEntityFormGroup" class="mat-block" [appearance]="appearance" [subscriptSizing]="subscriptSizing"
+<mat-form-field [formGroup]="selectEntityFormGroup"
+                [class.tb-inline-field]="inlineField"
+                [class.flex]="inlineField"
+                [class.tb-suffix-absolute]="inlineField && !selectEntityFormGroup.get('entity').value"
+                class="mat-block"
+                [appearance]="inlineField ? 'outline' : appearance"
+                [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing"
                 [class]="additionalClasses">
-  <mat-label>{{ label | translate }}</mat-label>
+  <mat-label *ngIf="!inlineField">{{ label | translate }}</mat-label>
   <input matInput type="text"
          #entityInput
+         placeholder="{{ placeholder }}"
          formControlName="entity"
          (focusin)="onFocus()"
          [required]="required"
@@ -40,6 +47,15 @@
           (click)="createNewEntity($event)">
     <span style="white-space: nowrap">{{ 'entity.create-new' | translate }}</span>
   </button>
+  <mat-icon matSuffix
+            matTooltipPosition="above"
+            matTooltipClass="tb-error-tooltip"
+            [matTooltip]="requiredErrorText | translate"
+            *ngIf="inlineField && selectEntityFormGroup.get('entity').hasError('required')
+                            && selectEntityFormGroup.get('entity').touched"
+            class="tb-error">
+    warning
+  </mat-icon>
   <mat-autocomplete class="tb-autocomplete"
                     #entityAutocomplete="matAutocomplete"
                     [displayWith]="displayEntityFn">
@@ -59,7 +75,7 @@
       </div>
     </mat-option>
   </mat-autocomplete>
-  <mat-error *ngIf="selectEntityFormGroup.get('entity').hasError('required')">
+  <mat-error *ngIf="!inlineField && selectEntityFormGroup.get('entity').hasError('required')">
     {{ requiredErrorText | translate }}
   </mat-error>
 </mat-form-field>

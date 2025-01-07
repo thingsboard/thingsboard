@@ -15,9 +15,14 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="selectEntityAliasFormGroup" class="mat-block">
-  <mat-label *ngIf="showLabel">{{ 'entity.entity-alias' | translate }}</mat-label>
-  <input matInput type="text" placeholder="{{ !showLabel ? ('entity.entity-alias' | translate) : ''}}"
+<mat-form-field [formGroup]="selectEntityAliasFormGroup"
+                [class.tb-inline-field]="inlineField"
+                [class.flex]="inlineField"
+                class="mat-block"
+                [appearance]="inlineField ? 'outline' : appearance"
+                [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing">
+  <mat-label *ngIf="showLabel && !inlineField">{{ 'entity.entity-alias' | translate }}</mat-label>
+  <input matInput type="text" placeholder="{{ (!showLabel || inlineField) ? ('entity.entity-alias' | translate) : ''}}"
          #entityAliasInput
          formControlName="entityAlias"
          (focusin)="onFocus()"
@@ -25,21 +30,31 @@
          (keydown)="entityAliasEnter($event)"
          (keypress)="entityAliasEnter($event)"
          [matAutocomplete]="entityAliasAutocomplete">
-  <button *ngIf="selectEntityAliasFormGroup.get('entityAlias').value && !disabled"
-          type="button"
-          matSuffix mat-icon-button aria-label="Clear"
-          (click)="clear()">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
-  <button *ngIf="selectEntityAliasFormGroup.get('entityAlias').value?.id && !disabled"
-          type="button"
-          matSuffix mat-icon-button aria-label="Edit"
-          matTooltip="{{ 'device-profile.edit' | translate }}"
-          matTooltipPosition="above"
-          (click)="editEntityAlias($event)">
-    <mat-icon class="material-icons">edit</mat-icon>
-  </button>
-  <button *ngIf="!selectEntityAliasFormGroup.get('entityAlias').value && !disabled"
+  <div matSuffix class="mat-mdc-form-field-icon-suffix flex flex-row">
+    <button *ngIf="selectEntityAliasFormGroup.get('entityAlias').value"
+            type="button"
+            mat-icon-button aria-label="Clear"
+            (click)="clear()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+    <button *ngIf="selectEntityAliasFormGroup.get('entityAlias').value?.id"
+            type="button"
+            mat-icon-button aria-label="Edit"
+            matTooltip="{{ 'entity.edit-alias' | translate }}"
+            matTooltipPosition="above"
+            (click)="editEntityAlias($event)">
+      <mat-icon class="material-icons">edit</mat-icon>
+    </button>
+    <mat-icon matTooltipPosition="above"
+              matTooltipClass="tb-error-tooltip"
+              [matTooltip]="'entity.alias-required' | translate"
+              *ngIf="inlineField && !modelValue && tbRequired
+                            && selectEntityAliasFormGroup.get('entityAlias').touched"
+              class="tb-error">
+      warning
+    </mat-icon>
+  </div>
+  <button *ngIf="!inlineField && !selectEntityAliasFormGroup.get('entityAlias').value && !disabled"
           style="margin-right: 8px;"
           type="button"
           matSuffix mat-button color="primary"
@@ -69,7 +84,7 @@
       </div>
     </mat-option>
   </mat-autocomplete>
-  <mat-error *ngIf="!modelValue && tbRequired">
+  <mat-error *ngIf="!inlineField && !modelValue && tbRequired">
     {{ 'entity.alias-required' | translate }}
   </mat-error>
 </mat-form-field>

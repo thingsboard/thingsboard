@@ -22,9 +22,14 @@ import {
   UntypedFormBuilder, UntypedFormControl,
   UntypedFormGroup, Validator
 } from '@angular/forms';
-import { ImageSourceType, MapSetting, MapType } from '@home/components/widget/lib/maps/map.models';
+import { ImageSourceType, MapDataLayerType, MapSetting, MapType } from '@home/components/widget/lib/maps/map.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { merge } from 'rxjs';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { IAliasController } from '@core/api/widget-api.models';
+import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
+import { Widget } from '@shared/models/widget.models';
 
 @Component({
   selector: 'tb-map-settings',
@@ -50,13 +55,26 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
   @Input()
   disabled: boolean;
 
+  @Input()
+  @coerceBoolean()
+  functionsOnly = false;
+
+  @Input()
+  aliasController: IAliasController;
+
+  @Input()
+  callbacks: WidgetConfigCallbacks;
+
+  @Input()
+  widget: Widget;
+
   private modelValue: MapSetting;
 
   private propagateChange = null;
 
   public mapSettingsFormGroup: UntypedFormGroup;
 
-  overlaysMode: 'markers' | 'polygons' | 'circles' = 'markers';
+  dataLayerMode: MapDataLayerType = 'markers';
 
   constructor(private fb: UntypedFormBuilder,
               private destroyRef: DestroyRef) {

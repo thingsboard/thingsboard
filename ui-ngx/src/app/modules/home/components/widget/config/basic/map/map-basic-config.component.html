@@ -16,7 +16,13 @@
 
 -->
 <ng-container [formGroup]="mapWidgetConfigForm">
-  <tb-map-settings formControlName="mapSettings"></tb-map-settings>
+  <tb-map-settings
+    [functionsOnly]="functionsOnly"
+    [aliasController]="aliasController"
+    [callbacks]="callbacks"
+    [widget]="widget"
+    formControlName="mapSettings">
+  </tb-map-settings>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.appearance</div>
     <div class="tb-form-row column-xs">

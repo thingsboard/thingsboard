@@ -34,12 +34,24 @@
       <div class="tb-form-panel-title">
         {{ 'widgets.maps.overlays.overlays' | translate }}
       </div>
-      <tb-toggle-select [(ngModel)]="overlaysMode"
+      <tb-toggle-select [(ngModel)]="dataLayerMode"
                         [ngModelOptions]="{ standalone: true }">
         <tb-toggle-option value="markers">{{ 'widgets.maps.overlays.markers' | translate }}</tb-toggle-option>
         <tb-toggle-option value="polygons">{{ 'widgets.maps.overlays.polygons' | translate }}</tb-toggle-option>
         <tb-toggle-option value="circles">{{ 'widgets.maps.overlays.circles' | translate }}</tb-toggle-option>
       </tb-toggle-select>
     </div>
+    <tb-map-data-layers [class.!hidden]="dataLayerMode !== 'markers'"
+                        formControlName="markers"
+                        dataLayerType="markers"
+                        [mapType]="mapSettingsFormGroup.get('mapType').value"></tb-map-data-layers>
+    <tb-map-data-layers [class.!hidden]="dataLayerMode !== 'polygons'"
+                        formControlName="polygons"
+                        dataLayerType="polygons"
+                        [mapType]="mapSettingsFormGroup.get('mapType').value"></tb-map-data-layers>
+    <tb-map-data-layers [class.!hidden]="dataLayerMode !== 'circles'"
+                        formControlName="circles"
+                        dataLayerType="circles"
+                        [mapType]="mapSettingsFormGroup.get('mapType').value"></tb-map-data-layers>
   </div>
 </ng-container>

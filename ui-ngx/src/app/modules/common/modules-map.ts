@@ -231,7 +231,7 @@ import * as EntityFilterViewComponent from '@home/components/entity/entity-filte
 import * as EntityAliasDialogComponent from '@home/components/alias/entity-alias-dialog.component';
 import * as EntityFilterComponent from '@home/components/entity/entity-filter.component';
 import * as RelationFiltersComponent from '@home/components/relation/relation-filters.component';
-import * as EntityAliasSelectComponent from '@home/components/alias/entity-alias-select.component';
+import * as EntityAliasSelectComponent from '@home/components/widget/lib/settings/common/alias/entity-alias-select.component';
 import * as DataKeysComponent from '@home/components/widget/config/data-keys.component';
 import * as DataKeyConfigDialogComponent from '@home/components/widget/config/data-key-config-dialog.component';
 import * as DataKeyConfigComponent from '@home/components/widget/config/data-key-config.component';
@@ -577,7 +577,7 @@ class ModulesMap implements IModulesMap {
     '@home/components/alias/entity-alias-dialog.component': EntityAliasDialogComponent,
     '@home/components/entity/entity-filter.component': EntityFilterComponent,
     '@home/components/relation/relation-filters.component': RelationFiltersComponent,
-    '@home/components/alias/entity-alias-select.component': EntityAliasSelectComponent,
+    '@home/components/widget/lib/settings/common/alias/entity-alias-select.component': EntityAliasSelectComponent,
     '@home/components/widget/config/data-keys.component': DataKeysComponent,
     '@home/components/widget/config/data-key-config-dialog.component': DataKeyConfigDialogComponent,
     '@home/components/widget/config/data-key-config.component': DataKeyConfigComponent,

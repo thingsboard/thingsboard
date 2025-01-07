@@ -15,6 +15,7 @@
 ///
 
 import {
+  additionalMapDataSourcesToDatasources,
   BaseMapSettings,
   DEFAULT_ZOOM_LEVEL,
   defaultGeoMapSettings,
@@ -23,17 +24,27 @@ import {
   ImageMapSettings,
   MapSetting,
   MapType,
-  MapZoomAction,
-  parseCenterPosition
+  MapZoomAction, mergeMapDatasources,
+  parseCenterPosition, TbMapDatasource
 } from '@home/components/widget/lib/maps/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { mergeDeep, mergeDeepIgnoreArray } from '@core/utils';
+import { formattedDataFormDatasourceData, isDefinedAndNotNull, mergeDeepIgnoreArray } from '@core/utils';
 import { DeepPartial } from '@shared/models/common';
 import L from 'leaflet';
 import { forkJoin, Observable, of } from 'rxjs';
 import { TbMapLayer } from '@home/components/widget/lib/maps/map-layer';
 import { map, switchMap, tap } from 'rxjs/operators';
 import '@home/components/widget/lib/maps/leaflet/leaflet-tb';
+import {
+  MapDataLayerType,
+  TbCirclesDataLayer,
+  TbMapDataLayer,
+  TbMarkersDataLayer,
+  TbPolygonsDataLayer
+} from '@home/components/widget/lib/maps/map-data-layer';
+import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
+import { FormattedData, widgetType } from '@shared/models/widget.models';
+import { EntityDataPageLink } from '@shared/models/query/query.models';
 
 export abstract class TbMap<S extends BaseMapSettings> {
 
@@ -53,6 +64,8 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   protected defaultCenterPosition: [number, number];
   protected bounds: L.LatLngBounds;
+
+  protected dataLayers: TbMapDataLayer<any>[];
 
   protected mapElement: HTMLElement;
 
@@ -112,6 +125,73 @@ export abstract class TbMap<S extends BaseMapSettings> {
     } else {
       this.bounds = new L.LatLngBounds(null, null);
     }
+    this.setupDataLayers();
+  }
+
+  private setupDataLayers() {
+    this.dataLayers = [];
+    if (this.settings.markers) {
+      this.dataLayers.push(...this.settings.markers.map(settings => new TbMarkersDataLayer(this, settings)));
+    }
+    if (this.settings.polygons) {
+      this.dataLayers.push(...this.settings.polygons.map(settings => new TbPolygonsDataLayer(this, settings)));
+    }
+    if (this.settings.circles) {
+      this.dataLayers.push(...this.settings.circles.map(settings => new TbCirclesDataLayer(this, settings)));
+    }
+    if (this.dataLayers.length) {
+      const setup = this.dataLayers.map(dl => dl.setup());
+      forkJoin(setup).subscribe(
+        () => {
+          let datasources: TbMapDatasource[];
+          for (const layerType of (Object.keys(MapDataLayerType) as MapDataLayerType[])) {
+            const typeDatasources = this.dataLayers.filter(dl => dl.dataLayerType() === layerType).map(dl => dl.getDatasource());
+            if (!datasources) {
+              datasources = typeDatasources;
+            } else {
+              datasources = mergeMapDatasources(datasources, typeDatasources);
+            }
+          }
+          const additionalDatasources = additionalMapDataSourcesToDatasources(this.settings.additionalDataSources);
+          datasources = mergeMapDatasources(datasources, additionalDatasources);
+          const dataLayersSubscriptionOptions: WidgetSubscriptionOptions = {
+            datasources,
+            hasDataPageLink: true,
+            useDashboardTimewindow: false,
+            type: widgetType.latest,
+            callbacks: {
+              onDataUpdated: (subscription) => {
+                this.update(subscription);
+              }
+            }
+          };
+          this.ctx.subscriptionApi.createSubscription(dataLayersSubscriptionOptions, false).subscribe(
+            (dataLayersSubscription) => {
+              let pageSize = this.settings.mapPageSize;
+              if (isDefinedAndNotNull(this.ctx.widgetConfig.pageSize)) {
+                pageSize = Math.max(pageSize, this.ctx.widgetConfig.pageSize);
+              }
+              const pageLink: EntityDataPageLink = {
+                page: 0,
+                pageSize,
+                textSearch: null,
+                dynamic: true
+              };
+              dataLayersSubscription.paginatedDataSubscriptionUpdated.subscribe(() => {
+                // this.map.resetState();
+              });
+              dataLayersSubscription.subscribeAllForPaginatedData(pageLink, null);
+            }
+          );
+        }
+      );
+    }
+  }
+
+  private update(subscription: IWidgetSubscription) {
+    const dsData = formattedDataFormDatasourceData<TbMapDatasource>(subscription.data,
+      undefined, undefined, el => el.datasource.entityId + el.datasource.mapDataIds[0]);
+    this.dataLayers.forEach(dl => dl.updateData(dsData));
   }
 
   private resize() {

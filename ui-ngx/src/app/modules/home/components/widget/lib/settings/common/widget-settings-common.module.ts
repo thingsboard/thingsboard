@@ -189,6 +189,12 @@ import { MapLayerRowComponent } from '@home/components/widget/lib/settings/commo
 import {
   MapLayerSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/map/map-layer-settings-panel.component';
+import { MapDataLayersComponent } from '@home/components/widget/lib/settings/common/map/map-data-layers.component';
+import { MapDataLayerRowComponent } from '@home/components/widget/lib/settings/common/map/map-data-layer-row.component';
+import { WidgetConfigComponentsModule } from '@home/components/widget/config/widget-config-components.module';
+import {
+  EntityAliasSelectComponent
+} from '@home/components/widget/lib/settings/common/alias/entity-alias-select.component';
 
 @NgModule({
   declarations: [
@@ -262,7 +268,10 @@ import {
     MapLayerSettingsPanelComponent,
     MapLayerRowComponent,
     MapLayersComponent,
-    MapSettingsComponent
+    MapDataLayerRowComponent,
+    MapDataLayersComponent,
+    MapSettingsComponent,
+    EntityAliasSelectComponent
   ],
   imports: [
     CommonModule,
@@ -337,7 +346,8 @@ import {
     DynamicFormSelectItemRowComponent,
     DynamicFormComponent,
     DynamicFormArrayComponent,
-    MapSettingsComponent
+    MapSettingsComponent,
+    EntityAliasSelectComponent
   ],
   providers: [
     ColorSettingsComponentService,

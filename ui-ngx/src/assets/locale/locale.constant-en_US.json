@@ -2332,6 +2332,7 @@
         "alias-required": "Entity alias is required.",
         "remove-alias": "Remove entity alias",
         "add-alias": "Add entity alias",
+        "edit-alias": "Edit entity alias",
         "entity-list": "Entity list",
         "entity-type": "Entity type",
         "entity-types": "Entity types",
@@ -6865,6 +6866,39 @@
                 "markers": "Markers",
                 "polygons": "Polygons",
                 "circles": "Circles"
+            },
+            "data-layer": {
+                "source": "Source",
+                "marker": {
+                    "latitude-key": "Latitude key",
+                    "longitude-key": "Longitude key",
+                    "x-pos-key": "X position key",
+                    "y-pos-key": "Y position key",
+                    "latitude-key-required": "Latitude key required",
+                    "longitude-key-required": "Longitude key required",
+                    "x-pos-key-required": "X position key required",
+                    "y-pos-key-required": "Y position key required",
+                    "no-markers": "No markers configured",
+                    "add-marker": "Add marker",
+                    "marker-configuration": "Marker configuration",
+                    "remove-marker": "Remove marker"
+                },
+                "polygon": {
+                    "polygon-key": "Polygon key",
+                    "polygon-key-required": "Polygon key required",
+                    "no-polygons": "No polygons configured",
+                    "add-polygon": "Add polygon",
+                    "polygon-configuration": "Polygon configuration",
+                    "remove-polygon": "Remove polygon"
+                },
+                "circle": {
+                    "circle-key": "Circle key",
+                    "circle-key-required": "Circle key required",
+                    "no-circles": "No circles configured",
+                    "add-circle": "Add circle",
+                    "circle-configuration": "Circle configuration",
+                    "remove-circle": "Remove circle"
+                }
             },
             "select-entity": "Select entity",
             "select-entity-hint": "Hint: after selection click at the map to set position",

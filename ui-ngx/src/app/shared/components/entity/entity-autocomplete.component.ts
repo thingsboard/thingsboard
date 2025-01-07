@@ -117,11 +117,18 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   requiredText: string;
 
   @Input()
+  placeholder: string;
+
+  @Input()
   @coerceBoolean()
   useFullEntityId: boolean;
 
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
+
+  @Input()
+  @coerceBoolean()
+  inlineField: boolean;
 
   @Input()
   @coerceBoolean()

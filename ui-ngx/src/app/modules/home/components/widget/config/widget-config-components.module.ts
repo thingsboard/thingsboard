@@ -24,7 +24,6 @@ import { DataKeyConfigDialogComponent } from '@home/components/widget/config/dat
 import { DataKeyConfigComponent } from '@home/components/widget/config/data-key-config.component';
 import { DatasourceComponent } from '@home/components/widget/config/datasource.component';
 import { DatasourcesComponent } from '@home/components/widget/config/datasources.component';
-import { EntityAliasSelectComponent } from '@home/components/alias/entity-alias-select.component';
 import { FilterSelectComponent } from '@home/components/filter/filter-select.component';
 import { WidgetSettingsModule } from '@home/components/widget/lib/settings/widget-settings.module';
 import { WidgetSettingsComponent } from '@home/components/widget/config/widget-settings.component';
@@ -45,7 +44,6 @@ import { TargetDeviceComponent } from '@home/components/widget/config/target-dev
       DatasourceComponent,
       DatasourcesComponent,
       TargetDeviceComponent,
-      EntityAliasSelectComponent,
       FilterSelectComponent,
       TimewindowStyleComponent,
       TimewindowStylePanelComponent,
@@ -67,7 +65,6 @@ import { TargetDeviceComponent } from '@home/components/widget/config/target-dev
     DatasourceComponent,
     DatasourcesComponent,
     TargetDeviceComponent,
-    EntityAliasSelectComponent,
     FilterSelectComponent,
     TimewindowStyleComponent,
     TimewindowStylePanelComponent,

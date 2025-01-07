@@ -76,6 +76,9 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy,
   callbacks: WidgetConfigCallbacks;
 
   @Input()
+  functionsOnly: boolean;
+
+  @Input()
   dashboard: Dashboard;
 
   @Input()
@@ -138,6 +141,11 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy,
           if (this.definedSettingsComponent) {
             this.definedSettingsComponent.callbacks = this.callbacks;
             this.definedSettingsComponent.dataKeyCallbacks = this.callbacks;
+          }
+        }
+        if (propName === 'functionsOnly') {
+          if (this.definedSettingsComponent) {
+            this.definedSettingsComponent.functionsOnly = this.functionsOnly;
           }
         }
         if (propName === 'widgetConfig') {
@@ -229,6 +237,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnDestroy,
         this.definedSettingsComponent = this.definedSettingsComponentRef.instance;
         this.definedSettingsComponent.aliasController = this.aliasController;
         this.definedSettingsComponent.callbacks = this.callbacks;
+        this.definedSettingsComponent.functionsOnly = this.functionsOnly;
         this.definedSettingsComponent.dataKeyCallbacks = this.callbacks;
         this.definedSettingsComponent.dashboard = this.dashboard;
         this.definedSettingsComponent.widget = this.widget;

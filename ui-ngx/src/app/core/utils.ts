@@ -491,11 +491,12 @@ export const createLabelFromSubscriptionEntityInfo = (entityInfo: SubscriptionEn
 
 export const hasDatasourceLabelsVariables = (pattern: string): boolean => varsRegex.test(pattern) !== null;
 
-export function formattedDataFormDatasourceData(input: DatasourceData[], dataIndex?: number, ts?: number): FormattedData[] {
-  return _(input).groupBy(el => el.datasource.entityName + el.datasource.entityType)
+export function formattedDataFormDatasourceData<D extends Datasource = Datasource>(input: DatasourceData[], dataIndex?: number, ts?: number,
+                                                groupFunction: (el: DatasourceData) => any = (el) => el.datasource.entityName + el.datasource.entityType): FormattedData<D>[] {
+  return _(input).groupBy(groupFunction)
     .values().value().map((entityArray, i) => {
-      const datasource = entityArray[0].datasource;
-      const obj = formattedDataFromDatasource(datasource, i);
+      const datasource = entityArray[0].datasource as D;
+      const obj = formattedDataFromDatasource<D>(datasource, i);
       entityArray.filter(el => el.data.length).forEach(el => {
         const index = isDefined(dataIndex) ? dataIndex : el.data.length - 1;
         const dataSet = isDefined(ts) ? el.data.find(data => data[0] === ts) : el.data[index];
@@ -537,7 +538,7 @@ export function formattedDataArrayFromDatasourceData(input: DatasourceData[]): F
     });
 }
 
-export function formattedDataFromDatasource(datasource: Datasource, dsIndex: number): FormattedData {
+export function formattedDataFromDatasource<D extends Datasource = Datasource>(datasource: D, dsIndex: number): FormattedData<D> {
   return {
     entityName: datasource.entityName,
     deviceName: datasource.entityName,

@@ -14,11 +14,11 @@
 /// limitations under the License.
 ///
 
-import { DataKey, DatasourceType } from '@shared/models/widget.models';
-import { EntityType } from '@shared/models/entity-type.models';
+import { DataKey, Datasource, DatasourceType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { mergeDeep } from '@core/utils';
-import { AbstractControl, ValidationErrors } from '@angular/forms';
+import { guid, mergeDeep } from '@core/utils';
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { materialColors } from '@shared/models/material.models';
 
 export enum MapType {
   geoMap = 'geoMap',
@@ -27,33 +27,133 @@ export enum MapType {
 
 export interface MapDataSourceSettings {
   dsType: DatasourceType;
-  dsEntityType?: EntityType;
-  dsEntityId?: string;
+  dsDeviceId?: string;
   dsEntityAliasId?: string;
   dsFilterId?: string;
 }
+
+export interface TbMapDatasource extends Datasource {
+  mapDataIds: string[];
+}
+
+export const mapDataSourceSettingsToDatasource = (settings: MapDataSourceSettings): TbMapDatasource => {
+  return {
+    type: settings.dsType,
+    deviceId: settings.dsDeviceId,
+    entityAliasId: settings.dsEntityAliasId,
+    filterId: settings.dsFilterId,
+    dataKeys: [],
+    mapDataIds: [guid()]
+  };
+};
 
 export interface MapDataLayerSettings extends MapDataSourceSettings {
   additionalDataKeys?: DataKey[];
   group?: string;
 }
 
+export type MapDataLayerType = 'markers' | 'polygons' | 'circles';
+
+export const mapDataLayerValid = (dataLayer: MapDataLayerSettings, type: MapDataLayerType): boolean => {
+  if (!dataLayer.dsType || ![DatasourceType.function, DatasourceType.device, DatasourceType.entity].includes(dataLayer.dsType)) {
+    return false;
+  }
+  switch (dataLayer.dsType) {
+    case DatasourceType.function:
+      break;
+    case DatasourceType.device:
+      if (!dataLayer.dsDeviceId) {
+        return false;
+      }
+      break;
+    case DatasourceType.entity:
+      if (!dataLayer.dsEntityAliasId) {
+        return false;
+      }
+      break;
+  }
+  switch (type) {
+    case 'markers':
+      const markersDataLayer = dataLayer as MarkersDataLayerSettings;
+      if (!markersDataLayer.xKey?.type || !markersDataLayer.xKey?.name ||
+          !markersDataLayer.yKey?.type || !markersDataLayer.xKey?.name) {
+        return false;
+      }
+      break;
+    case 'polygons':
+      const polygonsDataLayer = dataLayer as PolygonsDataLayerSettings;
+      if (!polygonsDataLayer.polygonKey?.type || !polygonsDataLayer.polygonKey?.name) {
+        return false;
+      }
+      break;
+    case 'circles':
+      const circlesDataLayer = dataLayer as CirclesDataLayerSettings;
+      if (!circlesDataLayer.circleKey?.type || !circlesDataLayer.circleKey?.name) {
+        return false;
+      }
+      break;
+  }
+  return true;
+};
+
+export const mapDataLayerValidator = (type: MapDataLayerType): ValidatorFn => {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const layer: MapDataLayerSettings = control.value;
+    if (!mapDataLayerValid(layer, type)) {
+      return {
+        layer: true
+      };
+    }
+    return null;
+  };
+};
+
 export interface MarkersDataLayerSettings extends MapDataLayerSettings {
   xKey: DataKey;
   yKey: DataKey;
 }
 
-export const defaultMarkersDataLayerSettings = (mapType: MapType): MarkersDataLayerSettings => ({
-  dsType: DatasourceType.entity,
+const defaultMarkerLatitudeFunction = 'var value = prevValue || 15.833293;\n' +
+  'if (time % 5000 < 500) {\n' +
+  '    value += Math.random() * 0.05 - 0.025;\n' +
+  '}\n' +
+  'return value;';
+
+const defaultMarkerLongitudeFunction = 'var value = prevValue || -90.454350;\n' +
+  'if (time % 5000 < 500) {\n' +
+  '    value += Math.random() * 0.05 - 0.025;\n' +
+  '}\n' +
+  'return value;';
+
+const defaultMarkerXPosFunction = 'var value = prevValue || 0.2;\n' +
+  'if (time % 5000 < 500) {\n' +
+  '    value += Math.random() * 0.05 - 0.025;\n' +
+  '}\n' +
+  'return value;';
+
+const defaultMarkerYPosFunction = 'var value = prevValue || 0.3;\n' +
+  'if (time % 5000 < 500) {\n' +
+  '    value += Math.random() * 0.05 - 0.025;\n' +
+  '}\n' +
+  'return value;';
+
+export const defaultMarkersDataLayerSettings = (mapType: MapType, functionsOnly = false): MarkersDataLayerSettings => ({
+  dsType: functionsOnly ? DatasourceType.function : DatasourceType.entity,
   xKey: {
-    name: MapType.geoMap === mapType ? 'latitude' : 'xPos',
+    name: functionsOnly ? 'f(x)' : (MapType.geoMap === mapType ? 'latitude' : 'xPos'),
     label: MapType.geoMap === mapType ? 'latitude' : 'xPos',
-    type: DataKeyType.attribute
+    type: functionsOnly ? DataKeyType.function : DataKeyType.attribute,
+    funcBody: functionsOnly ? (MapType.geoMap === mapType ? defaultMarkerLatitudeFunction : defaultMarkerXPosFunction) : undefined,
+    settings: {},
+    color: materialColors[0].value
   },
   yKey: {
-    name: MapType.geoMap === mapType ? 'longitude' : 'yPos',
+    name: functionsOnly ? 'f(x)' : (MapType.geoMap === mapType ? 'longitude' : 'yPos'),
     label: MapType.geoMap === mapType ? 'longitude' : 'yPos',
-    type: DataKeyType.attribute
+    type: functionsOnly ? DataKeyType.function : DataKeyType.attribute,
+    funcBody: functionsOnly ? (MapType.geoMap === mapType ? defaultMarkerLongitudeFunction : defaultMarkerYPosFunction) : undefined,
+    settings: {},
+    color: materialColors[0].value
   }
 });
 
@@ -61,31 +161,54 @@ export interface PolygonsDataLayerSettings extends MapDataLayerSettings {
   polygonKey: DataKey;
 }
 
-export const defaultPolygonsDataLayerSettings: PolygonsDataLayerSettings = {
-  dsType: DatasourceType.entity,
+export const defaultPolygonsDataLayerSettings = (functionsOnly = false): PolygonsDataLayerSettings => ({
+  dsType: functionsOnly ? DatasourceType.function : DatasourceType.entity,
   polygonKey: {
-    name: 'perimeter',
+    name: functionsOnly ? 'f(x)' : 'perimeter',
     label: 'perimeter',
-    type: DataKeyType.attribute
+    type: functionsOnly ? DataKeyType.function : DataKeyType.attribute,
+    settings: {},
+    color: materialColors[0].value
   }
-};
+});
 
 export interface CirclesDataLayerSettings extends MapDataLayerSettings {
   circleKey: DataKey;
 }
 
-export const defaultCirclesDataLayerSettings: CirclesDataLayerSettings = {
-  dsType: DatasourceType.entity,
+export const defaultCirclesDataLayerSettings = (functionsOnly = false): CirclesDataLayerSettings => ({
+  dsType: functionsOnly ? DatasourceType.function : DatasourceType.entity,
   circleKey: {
-    name: 'perimeter',
+    name: functionsOnly ? 'f(x)' : 'perimeter',
     label: 'perimeter',
-    type: DataKeyType.attribute
+    type: functionsOnly ? DataKeyType.function : DataKeyType.attribute,
+    settings: {},
+    color: materialColors[0].value
+  }
+});
+
+export const defaultMapDataLayerSettings = (mapType: MapType, dataLayerType: MapDataLayerType, functionsOnly = false): MapDataLayerSettings => {
+  switch (dataLayerType) {
+    case 'markers':
+      return defaultMarkersDataLayerSettings(mapType, functionsOnly);
+    case 'polygons':
+      return defaultPolygonsDataLayerSettings(functionsOnly);
+    case 'circles':
+      return defaultCirclesDataLayerSettings(functionsOnly);
   }
 };
 
 export interface AdditionalMapDataSourceSettings extends MapDataSourceSettings {
   dataKeys: DataKey[];
 }
+
+export const additionalMapDataSourcesToDatasources = (additionalMapDataSources: AdditionalMapDataSourceSettings[]): TbMapDatasource[] => {
+  return additionalMapDataSources.map(addDs => {
+    const res = mapDataSourceSettingsToDatasource(addDs);
+    res.dataKeys = addDs.dataKeys;
+    return res;
+  });
+};
 
 export enum MapControlsPosition {
   topleft = 'topleft',
@@ -427,4 +550,52 @@ export function parseCenterPosition(position: string | [number, number]): [numbe
     return position;
   }
   return [0, 0];
+}
+
+export const mergeMapDatasources = (target: TbMapDatasource[], source: TbMapDatasource[]): TbMapDatasource[] => {
+  const appendDatasources: TbMapDatasource[] = [];
+  for (const sourceDs of source) {
+    let merged = false;
+    for (let i = 0; i < target.length; i++) {
+      const targetDs = target[i];
+      if (mapDatasourceIsSame(targetDs, sourceDs)) {
+        target[i] = mergeMapDatasource(targetDs, sourceDs);
+        merged = true;
+        break;
+      }
+    }
+    if (!merged) {
+      appendDatasources.push(sourceDs);
+    }
+  }
+  target.push(...appendDatasources);
+  return target;
+};
+
+const mapDatasourceIsSame = (ds1: TbMapDatasource, ds2: TbMapDatasource): boolean => {
+  if (ds1.type === ds2.type) {
+    switch (ds1.type) {
+      case DatasourceType.function:
+        return true;
+      case DatasourceType.device:
+        return ds1.deviceId === ds2.deviceId;
+      case DatasourceType.entity:
+        return ds1.entityAliasId === ds2.entityAliasId;
+    }
+  }
+  return false;
+}
+
+const mergeMapDatasource = (target: TbMapDatasource, source: TbMapDatasource): TbMapDatasource => {
+  target.mapDataIds.push(...source.mapDataIds);
+  const appendKeys: DataKey[] = [];
+  for (const sourceKey of source.dataKeys) {
+    const found =
+      target.dataKeys.find(key => key.type === sourceKey.type && key.name === sourceKey.name && key.label === sourceKey.label);
+    if (!found) {
+      appendKeys.push(sourceKey);
+    }
+  }
+  target.dataKeys.push(...appendKeys);
+  return target;
 }
