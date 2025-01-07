@@ -15,7 +15,6 @@
 ///
 
 import {
-  CellActionDescriptor,
   DateEntityTableColumn,
   EntityTableColumn,
   EntityTableConfig
@@ -66,13 +65,10 @@ export class RecipientTableConfigResolver  {
 
     this.config.deleteEntity = id => this.notificationService.deleteNotificationTarget(id.id);
 
-    this.config.cellActionDescriptors = this.configureCellActions();
-
     this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
     this.config.handleRowClick = ($event, target) => {
-      $event?.stopPropagation();
-      this.notificationTargetDialog(target).subscribe(res => res ? this.config.updateData() : null);
+      this.editTarget($event, target);
       return true;
     };
 
@@ -92,8 +88,9 @@ export class RecipientTableConfigResolver  {
     return this.config;
   }
 
-  private configureCellActions(): Array<CellActionDescriptor<NotificationTarget>> {
-    return [];
+  private editTarget($event: Event, target: NotificationTarget): void {
+    $event?.stopPropagation();
+    this.notificationTargetDialog(target).subscribe(res => res ? this.config.updateData() : null);
   }
 
   private notificationTargetDialog(target: NotificationTarget, isAdd = false): Observable<NotificationTarget> {
