@@ -1,0 +1,96 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="rabbitMqConfigForm" class="flex flex-col">
+  <mat-form-field class="mat-block">
+    <mat-label translate>tb.rulenode.exchange-name-pattern</mat-label>
+    <input matInput formControlName="exchangeNamePattern">
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tb.rulenode.routing-key-pattern</mat-label>
+    <input matInput formControlName="routingKeyPattern">
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tb.rulenode.message-properties</mat-label>
+    <mat-select formControlName="messageProperties">
+      <mat-option *ngFor="let property of messageProperties" [value]="property">
+        {{ property }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <div class="gt-sm:flex gt-sm:flex-row gt-sm:gap-2">
+    <mat-form-field class="mat-block gt-sm:max-w-60% gt-sm:flex-full">
+      <mat-label translate>tb.rulenode.host</mat-label>
+      <input required matInput formControlName="host">
+      <mat-error *ngIf="rabbitMqConfigForm.get('host').hasError('required')">
+        {{ 'tb.rulenode.host-required' | translate }}
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field class="mat-block gt-sm:max-w-40% gt-sm:flex-full">
+      <mat-label translate>tb.rulenode.port</mat-label>
+      <input required type="number" step="1" min="1" max="65535" matInput formControlName="port">
+      <mat-error *ngIf="rabbitMqConfigForm.get('port').hasError('required')">
+        {{ 'tb.rulenode.port-required' | translate }}
+      </mat-error>
+      <mat-error *ngIf="rabbitMqConfigForm.get('port').hasError('min')">
+        {{ 'tb.rulenode.port-range' | translate }}
+      </mat-error>
+      <mat-error *ngIf="rabbitMqConfigForm.get('port').hasError('max')">
+        {{ 'tb.rulenode.port-range' | translate }}
+      </mat-error>
+    </mat-form-field>
+  </div>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tb.rulenode.virtual-host</mat-label>
+    <input matInput formControlName="virtualHost">
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tb.rulenode.username</mat-label>
+    <input matInput formControlName="username">
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tb.rulenode.password</mat-label>
+    <input type="password" matInput formControlName="password">
+    <tb-toggle-password matSuffix></tb-toggle-password>
+  </mat-form-field>
+  <mat-checkbox formControlName="automaticRecoveryEnabled">
+    {{ 'tb.rulenode.automatic-recovery' | translate }}
+  </mat-checkbox>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tb.rulenode.connection-timeout-ms</mat-label>
+    <input type="number" step="1" min="0" matInput formControlName="connectionTimeout">
+    <mat-error *ngIf="rabbitMqConfigForm.get('connectionTimeout').hasError('min')">
+      {{ 'tb.rulenode.min-connection-timeout-ms-message' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tb.rulenode.handshake-timeout-ms</mat-label>
+    <input type="number" step="1" min="0" matInput formControlName="handshakeTimeout">
+    <mat-error *ngIf="rabbitMqConfigForm.get('handshakeTimeout').hasError('min')">
+      {{ 'tb.rulenode.min-handshake-timeout-ms-message' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <label translate class="tb-title">tb.rulenode.client-properties</label>
+  <tb-kv-map-config-old
+    required="false"
+    formControlName="clientProperties"
+    keyText="tb.rulenode.key"
+    keyRequiredText="tb.rulenode.key-required"
+    valText="tb.rulenode.value"
+    valRequiredText="tb.rulenode.value-required">
+  </tb-kv-map-config-old>
+</section>

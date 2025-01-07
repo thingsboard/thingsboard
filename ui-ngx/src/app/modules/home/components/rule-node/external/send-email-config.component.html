@@ -1,0 +1,116 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="sendEmailConfigForm" class="flex flex-col">
+  <mat-checkbox formControlName="useSystemSmtpSettings">
+    {{ 'tb.rulenode.use-system-smtp-settings' | translate }}
+  </mat-checkbox>
+  <section class="flex flex-col" *ngIf="sendEmailConfigForm.get('useSystemSmtpSettings').value === false">
+    <mat-form-field class="mat-block">
+      <mat-label translate>tb.rulenode.smtp-protocol</mat-label>
+      <mat-select formControlName="smtpProtocol">
+        <mat-option *ngFor="let smtpProtocol of smtpProtocols" [value]="smtpProtocol">
+          {{ smtpProtocol.toUpperCase() }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <div class="gt-sm:flex gt-sm:flex-row gt-sm:gap-2">
+      <mat-form-field class="mat-block gt-sm:max-w-60% gt-sm:flex-full">
+        <mat-label translate>tb.rulenode.smtp-host</mat-label>
+        <input required matInput formControlName="smtpHost">
+        <mat-error *ngIf="sendEmailConfigForm.get('smtpHost').hasError('required')">
+          {{ 'tb.rulenode.smtp-host-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field class="mat-block gt-sm:max-w-40% gt-sm:flex-full">
+        <mat-label translate>tb.rulenode.smtp-port</mat-label>
+        <input required type="number" step="1" min="1" max="65535" matInput formControlName="smtpPort">
+        <mat-error *ngIf="sendEmailConfigForm.get('smtpPort').hasError('required')">
+          {{ 'tb.rulenode.smtp-port-required' | translate }}
+        </mat-error>
+        <mat-error *ngIf="sendEmailConfigForm.get('smtpPort').hasError('min')">
+          {{ 'tb.rulenode.smtp-port-range' | translate }}
+        </mat-error>
+        <mat-error *ngIf="sendEmailConfigForm.get('smtpPort').hasError('max')">
+          {{ 'tb.rulenode.smtp-port-range' | translate }}
+        </mat-error>
+      </mat-form-field>
+    </div>
+    <mat-form-field class="mat-block">
+      <mat-label translate>tb.rulenode.timeout-msec</mat-label>
+      <input required type="number" step="1" min="0" matInput formControlName="timeout">
+      <mat-error *ngIf="sendEmailConfigForm.get('timeout').hasError('required')">
+        {{ 'tb.rulenode.timeout-required' | translate }}
+      </mat-error>
+      <mat-error *ngIf="sendEmailConfigForm.get('timeout').hasError('min')">
+        {{ 'tb.rulenode.min-timeout-msec-message' | translate }}
+      </mat-error>
+    </mat-form-field>
+    <mat-checkbox formControlName="enableTls">
+      {{ 'tb.rulenode.enable-tls' | translate }}
+    </mat-checkbox>
+    <mat-form-field class="mat-block" *ngIf="sendEmailConfigForm.get('enableTls').value === true">
+      <mat-label translate>tb.rulenode.tls-version</mat-label>
+      <mat-select formControlName="tlsVersion">
+        <mat-option *ngFor="let tlsVersion of tlsVersions" [value]="tlsVersion">
+          {{ tlsVersion }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <tb-checkbox formControlName="enableProxy">
+      {{ 'tb.rulenode.enable-proxy' | translate }}
+    </tb-checkbox>
+    <div *ngIf="sendEmailConfigForm.get('enableProxy').value">
+      <div class="gt-sm:flex gt-sm:flex-row gt-sm:gap-2">
+        <mat-form-field class="mat-block gt-sm:max-w-60% gt-sm:flex-full">
+          <mat-label translate>tb.rulenode.proxy-host</mat-label>
+          <input matInput required formControlName="proxyHost">
+          <mat-error *ngIf="sendEmailConfigForm.get('proxyHost').hasError('required')">
+            {{ 'tb.rulenode.proxy-host-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="mat-block gt-sm:max-w-40% gt-sm:flex-full">
+          <mat-label translate>tb.rulenode.proxy-port</mat-label>
+          <input matInput required formControlName="proxyPort" type="number" step="1" min="1" max="65535">
+          <mat-error *ngIf="sendEmailConfigForm.get('proxyPort').hasError('required')">
+            {{ 'tb.rulenode.proxy-port-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="sendEmailConfigForm.get('proxyPort').hasError('min') || sendEmailConfigForm.get('proxyPort').hasError('max')">
+            {{ 'tb.rulenode.proxy-port-range' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+      <mat-form-field class="mat-block">
+        <mat-label translate>tb.rulenode.proxy-user</mat-label>
+        <input matInput formControlName="proxyUser">
+      </mat-form-field>
+      <mat-form-field class="mat-block">
+        <mat-label translate>tb.rulenode.proxy-password</mat-label>
+        <input matInput formControlName="proxyPassword">
+      </mat-form-field>
+    </div>
+    <mat-form-field class="mat-block" floatLabel="always">
+      <mat-label translate>tb.rulenode.username</mat-label>
+      <input matInput placeholder="{{ 'tb.rulenode.enter-username' | translate }}" formControlName="username">
+    </mat-form-field>
+    <mat-form-field class="mat-block" floatLabel="always">
+      <mat-label translate>tb.rulenode.password</mat-label>
+      <input matInput type="password" placeholder="{{ 'tb.rulenode.enter-password' | translate }}" formControlName="password">
+      <tb-toggle-password matSuffix></tb-toggle-password>
+    </mat-form-field>
+  </section>
+</section>

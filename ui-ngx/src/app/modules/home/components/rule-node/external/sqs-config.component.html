@@ -1,0 +1,76 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="sqsConfigForm" class="flex flex-col">
+  <mat-form-field class="mat-block">
+    <mat-label translate>tb.rulenode.queue-type</mat-label>
+    <mat-select formControlName="queueType" required>
+      <mat-option *ngFor="let type of sqsQueueTypes" [value]="type">
+        {{ sqsQueueTypeTranslationsMap.get(type) | translate }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+    <mat-label translate>tb.rulenode.queue-url-pattern</mat-label>
+    <input required matInput formControlName="queueUrlPattern">
+    <mat-error *ngIf="sqsConfigForm.get('queueUrlPattern').hasError('required')">
+      {{ 'tb.rulenode.queue-url-pattern-required' | translate }}
+    </mat-error>
+    <mat-hint translate>tb.rulenode.general-pattern-hint</mat-hint>
+  </mat-form-field>
+  <mat-form-field *ngIf="sqsConfigForm.get('queueType').value === sqsQueueType.STANDARD" class="mat-block">
+    <mat-label translate>tb.rulenode.delay-seconds</mat-label>
+    <input required type="number" min="0" max="900" step="1" matInput formControlName="delaySeconds">
+    <mat-error *ngIf="sqsConfigForm.get('delaySeconds').hasError('min')">
+      {{ 'tb.rulenode.min-delay-seconds-message' | translate }}
+    </mat-error>
+    <mat-error *ngIf="sqsConfigForm.get('delaySeconds').hasError('max')">
+      {{ 'tb.rulenode.max-delay-seconds-message' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <label translate class="tb-title">tb.rulenode.message-attributes</label>
+  <div class="tb-hint" [innerHTML]="'tb.rulenode.message-attributes-hint' | translate | safe: 'html'"></div>
+  <tb-kv-map-config-old
+    required="false"
+    formControlName="messageAttributes"
+    keyText="tb.rulenode.name"
+    keyRequiredText="tb.rulenode.name-required"
+    valText="tb.rulenode.value"
+    valRequiredText="tb.rulenode.value-required">
+  </tb-kv-map-config-old>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tb.rulenode.aws-access-key-id</mat-label>
+    <input required matInput formControlName="accessKeyId">
+    <mat-error *ngIf="sqsConfigForm.get('accessKeyId').hasError('required')">
+      {{ 'tb.rulenode.aws-access-key-id-required' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tb.rulenode.aws-secret-access-key</mat-label>
+    <input required matInput formControlName="secretAccessKey">
+    <mat-error *ngIf="sqsConfigForm.get('secretAccessKey').hasError('required')">
+      {{ 'tb.rulenode.aws-secret-access-key-required' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>tb.rulenode.aws-region</mat-label>
+    <input required matInput formControlName="region">
+    <mat-error *ngIf="sqsConfigForm.get('region').hasError('required')">
+      {{ 'tb.rulenode.aws-region-required' | translate }}
+    </mat-error>
+  </mat-form-field>
+</section>

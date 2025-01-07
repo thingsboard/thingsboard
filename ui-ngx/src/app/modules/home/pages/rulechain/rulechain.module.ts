@@ -34,6 +34,7 @@ import { LinkLabelsComponent } from '@home/pages/rulechain/link-labels.component
 import { RuleNodeConfigComponent } from './rule-node-config.component';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { EntityDebugSettingsButtonComponent } from '@home/components/entity/debug/entity-debug-settings-button.component';
+import { RuleNodeConfigModule } from '@home/components/rule-node/rule-node-config.module';
 
 @NgModule({
   declarations: [
@@ -63,7 +64,8 @@ import { EntityDebugSettingsButtonComponent } from '@home/components/entity/debu
     HomeComponentsModule,
     RuleChainRoutingModule,
     DurationLeftPipe,
-    EntityDebugSettingsButtonComponent
+    EntityDebugSettingsButtonComponent,
+    RuleNodeConfigModule,
   ]
 })
 export class RuleChainModule { }
