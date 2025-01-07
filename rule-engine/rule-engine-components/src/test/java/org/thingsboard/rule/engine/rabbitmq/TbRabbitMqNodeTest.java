@@ -103,7 +103,7 @@ public class TbRabbitMqNodeTest {
         assertThat(config.getExchangeNamePattern()).isEqualTo("");
         assertThat(config.getRoutingKeyPattern()).isEqualTo("");
         assertThat(config.getMessageProperties()).isNull();
-        assertThat(config.getHost()).isEqualTo(ConnectionFactory.DEFAULT_HOST);
+        assertThat(config.getHost()).isEqualTo(null);
         assertThat(config.getPort()).isEqualTo(ConnectionFactory.DEFAULT_AMQP_PORT);
         assertThat(config.getVirtualHost()).isEqualTo(ConnectionFactory.DEFAULT_VHOST);
         assertThat(config.getUsername()).isEqualTo(ConnectionFactory.DEFAULT_USER);
