@@ -148,12 +148,26 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                     "    \"attributeLwm2m\": {}\n" +
                     "  }";
     public static  String OBSERVE_ATTRIBUTES_WITH_PARAMS =
-
             "    {\n" +
                     "    \"keyName\": {\n" +
                     "      \"/3_1.2/0/9\": \"batteryLevel\"\n" +
                     "    },\n" +
                     "    \"observe\": [],\n" +
+                    "    \"attribute\": [\n" +
+                    "      \"/3_1.2/0/9\"\n" +
+                    "    ],\n" +
+                    "    \"telemetry\": [\n" +
+                    "    ],\n" +
+                    "    \"attributeLwm2m\": {}\n" +
+                    "  }";
+    public static  String TELEMETRY_WITH_ONE_OBSERVE =
+            "    {\n" +
+                    "    \"keyName\": {\n" +
+                    "      \"/3_1.2/0/9\": \"batteryLevel\"\n" +
+                    "    },\n" +
+                    "    \"observe\": [\n" +
+                    "      \"/3_1.2/0/9\"\n" +
+                    "    ],\n" +
                     "    \"attribute\": [\n" +
                     "    ],\n" +
                     "    \"telemetry\": [\n" +
@@ -161,6 +175,24 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                     "    ],\n" +
                     "    \"attributeLwm2m\": {}\n" +
                     "  }";
+
+    public static  String TELEMETRY_WITH_MANY_OBSERVE =
+               "    {\n" +
+                       "    \"keyName\": {\n" +
+                       "      \"/3_1.2/0/9\": \"batteryLevel\",\n" +
+                       "      \"/3_1.2/0/20\": \"batteryStatus\"\n" +
+                       "    },\n" +
+                       "    \"observe\": [\n" +
+                       "      \"/3_1.2/0/9\",\n" +
+                       "      \"/3_1.2/0/20\"\n" +
+                       "    ],\n" +
+                       "    \"attribute\": [],\n" +
+                       "    \"telemetry\": [\n" +
+                       "      \"/3_1.2/0/9\",\n" +
+                       "      \"/3_1.2/0/20\"\n" +
+                       "    ],\n" +
+                       "    \"attributeLwm2m\": {}\n" +
+                       "  }";
 
     public static final String CLIENT_LWM2M_SETTINGS =
             "     {\n" +
