@@ -43,7 +43,7 @@ import { DomSanitizer } from '@angular/platform-browser';
   styleUrls: ['./map-widget.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class MapWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
+export class MapWidgetComponent implements OnInit, OnDestroy {
 
   @ViewChild('mapElement', {static: false})
   mapElement: ElementRef<HTMLElement>;
@@ -78,10 +78,6 @@ export class MapWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
     this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
   }
 
-  ngAfterViewInit() {
-    this.map = TbMap.fromSettings(this.ctx, this.settings, this.mapElement.nativeElement);
-  }
-
   ngOnDestroy() {
     if (this.map) {
       this.map.destroy();
@@ -92,6 +88,7 @@ export class MapWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
     const borderRadius = this.ctx.$widgetElement.css('borderRadius');
     this.overlayStyle = {...this.overlayStyle, ...{borderRadius}};
     this.cd.detectChanges();
+    this.map = TbMap.fromSettings(this.ctx, this.settings, this.mapElement.nativeElement);
   }
 
 }

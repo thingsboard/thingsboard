@@ -22,15 +22,19 @@ import {
   defaultImageMapSettings,
   GeoMapSettings,
   ImageMapSettings,
+  latLngPointToBounds,
   MapSetting,
   MapType,
-  MapZoomAction, mergeMapDatasources,
-  parseCenterPosition, TbMapDatasource
+  MapZoomAction,
+  mergeMapDatasources,
+  parseCenterPosition,
+  TbCircleData,
+  TbMapDatasource
 } from '@home/components/widget/lib/maps/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { formattedDataFormDatasourceData, isDefinedAndNotNull, mergeDeepIgnoreArray } from '@core/utils';
 import { DeepPartial } from '@shared/models/common';
-import L from 'leaflet';
+import L, { LatLngBounds, LatLngTuple, PointExpression, Projection } from 'leaflet';
 import { forkJoin, Observable, of } from 'rxjs';
 import { TbMapLayer } from '@home/components/widget/lib/maps/map-layer';
 import { map, switchMap, tap } from 'rxjs/operators';
@@ -43,7 +47,7 @@ import {
   TbPolygonsDataLayer
 } from '@home/components/widget/lib/maps/map-data-layer';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { FormattedData, widgetType } from '@shared/models/widget.models';
+import { widgetType } from '@shared/models/widget.models';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 
 export abstract class TbMap<S extends BaseMapSettings> {
@@ -64,8 +68,12 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   protected defaultCenterPosition: [number, number];
   protected bounds: L.LatLngBounds;
+  protected ignoreUpdateBounds = false;
 
-  protected dataLayers: TbMapDataLayer<any>[];
+  protected southWest = new L.LatLng(-Projection.SphericalMercator['MAX_LATITUDE'], -180);
+  protected northEast = new L.LatLng(Projection.SphericalMercator['MAX_LATITUDE'], 180);
+
+  protected dataLayers: TbMapDataLayer<any,any>[];
 
   protected mapElement: HTMLElement;
 
@@ -140,6 +148,10 @@ export abstract class TbMap<S extends BaseMapSettings> {
       this.dataLayers.push(...this.settings.circles.map(settings => new TbCirclesDataLayer(this, settings)));
     }
     if (this.dataLayers.length) {
+
+      // TODO: Groups
+      this.dataLayers.forEach(dl => this.map.addLayer(dl.getFeatureGroup()));
+
       const setup = this.dataLayers.map(dl => dl.setup());
       forkJoin(setup).subscribe(
         () => {
@@ -192,11 +204,55 @@ export abstract class TbMap<S extends BaseMapSettings> {
     const dsData = formattedDataFormDatasourceData<TbMapDatasource>(subscription.data,
       undefined, undefined, el => el.datasource.entityId + el.datasource.mapDataIds[0]);
     this.dataLayers.forEach(dl => dl.updateData(dsData));
+    this.updateBounds();
   }
 
   private resize() {
     this.onResize();
     this.map?.invalidateSize();
+  }
+
+  private updateBounds() {
+    const bounds = new L.LatLngBounds(null, null);
+    this.dataLayers.forEach(dl => bounds.extend(dl.getBounds()));
+    const mapBounds = this.map.getBounds();
+    if (bounds.isValid() && (!this.bounds || !this.bounds.isValid() || !this.bounds.equals(bounds)
+    && this.settings.fitMapBounds ? !mapBounds.contains(bounds) : false)) {
+      this.bounds = bounds;
+      if (!this.ignoreUpdateBounds) {
+        this.fitBounds(bounds);
+      }
+    }
+  }
+
+  private fitBounds(bounds: LatLngBounds, padding?: PointExpression) {
+    if (bounds.isValid()) {
+      this.bounds = !!this.bounds ? this.bounds.extend(bounds) : bounds;
+      if (!this.settings.fitMapBounds && this.settings.defaultZoomLevel) {
+        this.map.setZoom(this.settings.defaultZoomLevel, { animate: false });
+        if (this.settings.useDefaultCenterPosition) {
+          this.map.panTo(this.defaultCenterPosition, { animate: false });
+        }
+        else {
+          this.map.panTo(this.bounds.getCenter());
+        }
+      } else {
+        this.map.once('zoomend', () => {
+          let minZoom = this.settings.minZoomLevel;
+          if (this.settings.defaultZoomLevel) {
+            minZoom = Math.max(minZoom, this.settings.defaultZoomLevel);
+          }
+          if (this.map.getZoom() > minZoom) {
+            this.map.setZoom(minZoom, { animate: false });
+          }
+        });
+        if (this.settings.useDefaultCenterPosition) {
+          this.bounds = this.bounds.extend(this.defaultCenterPosition);
+        }
+        this.map.fitBounds(this.bounds, { padding: padding || [50, 50], animate: false });
+        this.map.invalidateSize();
+      }
+    }
   }
 
   protected abstract defaultSettings(): S;
@@ -209,6 +265,10 @@ export abstract class TbMap<S extends BaseMapSettings> {
     return of(null);
   }
 
+  public type(): MapType {
+    return this.settings.mapType;
+  }
+
   public destroy() {
     if (this.mapResize$) {
       this.mapResize$.disconnect();
@@ -217,6 +277,12 @@ export abstract class TbMap<S extends BaseMapSettings> {
       this.map.remove();
     }
   }
+
+  public abstract positionToLatLng(position: {x: number; y: number}): L.LatLng;
+
+  public abstract toPolygonCoordinates(expression: (LatLngTuple | LatLngTuple[] | LatLngTuple[][])[]): any;
+
+  public abstract convertCircleData(circle: TbCircleData): TbCircleData;
 
 }
 
@@ -280,12 +346,37 @@ class TbGeoMap extends TbMap<GeoMapSettings> {
     );
   }
 
+  public positionToLatLng(position: {x: number; y: number}): L.LatLng {
+    return L.latLng(position.x, position.y) as L.LatLng;
+  }
+
+  public toPolygonCoordinates(expression: (LatLngTuple | LatLngTuple[] | LatLngTuple[][])[]): any {
+    return (expression).map((el) => {
+      if (!Array.isArray(el[0]) && el.length === 2) {
+        return el;
+      } else if (Array.isArray(el) && el.length) {
+        return this.toPolygonCoordinates(el as LatLngTuple[] | LatLngTuple[][]);
+      } else {
+        return null;
+      }
+    }).filter(el => !!el);
+  }
+
+  public convertCircleData(circle: TbCircleData): TbCircleData {
+    const centerPoint = latLngPointToBounds(new L.LatLng(circle.latitude, circle.longitude), this.southWest, this.northEast);
+    circle.latitude = centerPoint.lat;
+    circle.longitude = centerPoint.lng;
+    return circle;
+  }
 
 }
 
 class TbImageMap extends TbMap<ImageMapSettings> {
 
   private maxZoom = 4;
+
+  private width = 0;
+  private height = 0;
 
   constructor(protected ctx: WidgetContext,
               protected inputSettings: DeepPartial<ImageMapSettings>,
@@ -312,4 +403,38 @@ class TbImageMap extends TbMap<ImageMapSettings> {
   }
 
   protected onResize(): void {}
+
+  public positionToLatLng(position: {x: number; y: number}): L.LatLng {
+    return this.pointToLatLng(
+      position.x * this.width,
+      position.y * this.height);
+  }
+
+  public pointToLatLng(x: number, y: number): L.LatLng {
+    return L.CRS.Simple.pointToLatLng({ x, y } as L.PointExpression, this.maxZoom - 1);
+  }
+
+  public toPolygonCoordinates(expression: (LatLngTuple | LatLngTuple[] | LatLngTuple[][])[]): any {
+    return (expression).map((el) => {
+      if (!Array.isArray(el[0]) && !Array.isArray(el[1]) && el.length === 2) {
+        return this.pointToLatLng(
+          el[0] * this.width,
+          el[1] * this.height
+        );
+      } else if (Array.isArray(el) && el.length) {
+        return this.toPolygonCoordinates(el as LatLngTuple[] | LatLngTuple[][]);
+      } else {
+        return null;
+      }
+    }).filter(el => !!el);
+  }
+
+  public convertCircleData(circle: TbCircleData): TbCircleData {
+    const centerPoint = this.pointToLatLng(circle.latitude * this.width, circle.longitude * this.height);
+    circle.latitude = centerPoint.lat;
+    circle.longitude = centerPoint.lng;
+    circle.radius = circle.radius * this.width;
+    return circle;
+  }
+
 }

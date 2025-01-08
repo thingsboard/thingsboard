@@ -16,9 +16,10 @@
 
 import { DataKey, Datasource, DatasourceType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { guid, mergeDeep } from '@core/utils';
+import { guid, isDefinedAndNotNull, isString, mergeDeep } from '@core/utils';
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { materialColors } from '@shared/models/material.models';
+import L from 'leaflet';
 
 export enum MapType {
   geoMap = 'geoMap',
@@ -114,25 +115,25 @@ export interface MarkersDataLayerSettings extends MapDataLayerSettings {
 }
 
 const defaultMarkerLatitudeFunction = 'var value = prevValue || 15.833293;\n' +
-  'if (time % 5000 < 500) {\n' +
+  'if (time % 500 < 500) {\n' +
   '    value += Math.random() * 0.05 - 0.025;\n' +
   '}\n' +
   'return value;';
 
 const defaultMarkerLongitudeFunction = 'var value = prevValue || -90.454350;\n' +
-  'if (time % 5000 < 500) {\n' +
+  'if (time % 500 < 500) {\n' +
   '    value += Math.random() * 0.05 - 0.025;\n' +
   '}\n' +
   'return value;';
 
 const defaultMarkerXPosFunction = 'var value = prevValue || 0.2;\n' +
-  'if (time % 5000 < 500) {\n' +
+  'if (time % 500 < 500) {\n' +
   '    value += Math.random() * 0.05 - 0.025;\n' +
   '}\n' +
   'return value;';
 
 const defaultMarkerYPosFunction = 'var value = prevValue || 0.3;\n' +
-  'if (time % 5000 < 500) {\n' +
+  'if (time % 500 < 500) {\n' +
   '    value += Math.random() * 0.05 - 0.025;\n' +
   '}\n' +
   'return value;';
@@ -235,6 +236,7 @@ export interface BaseMapSettings {
   useDefaultCenterPosition: boolean;
   defaultCenterPosition?: string;
   defaultZoomLevel: number;
+  minZoomLevel: number;
   mapPageSize: number;
 }
 
@@ -253,6 +255,7 @@ export const defaultBaseMapSettings: BaseMapSettings = {
   useDefaultCenterPosition: false,
   defaultCenterPosition: '0,0',
   defaultZoomLevel: null,
+  minZoomLevel: 16,
   mapPageSize: DEFAULT_MAP_PAGE_SIZE
 };
 
@@ -539,7 +542,48 @@ export type MapSetting = GeoMapSettings & ImageMapSettings;
 
 export const defaultMapSettings: MapSetting = defaultGeoMapSettings;
 
-export function parseCenterPosition(position: string | [number, number]): [number, number] {
+export interface TbCircleData {
+  latitude: number;
+  longitude: number;
+  radius: number;
+}
+
+export const isValidLatitude = (latitude: any): boolean =>
+  isDefinedAndNotNull(latitude) &&
+  !isString(latitude) &&
+  !isNaN(latitude) && isFinite(latitude) && Math.abs(latitude) <= 90;
+
+export const isValidLongitude = (longitude: any): boolean =>
+  isDefinedAndNotNull(longitude) &&
+  !isString(longitude) &&
+  !isNaN(longitude) && isFinite(longitude) && Math.abs(longitude) <= 180;
+
+export const isValidLatLng = (latitude: any, longitude: any): boolean =>
+  isValidLatitude(latitude) && isValidLongitude(longitude);
+
+export const isCutPolygon = (data): boolean => {
+  return data.length > 1 && Array.isArray(data[0]) && (Array.isArray(data[0][0]) || data[0][0] instanceof L.LatLng);
+}
+
+export const latLngPointToBounds = (point: L.LatLng, southWest: L.LatLng, northEast: L.LatLng, offset = 0): L.LatLng => {
+  const maxLngMap = northEast.lng - offset;
+  const minLngMap = southWest.lng + offset;
+  const maxLatMap = northEast.lat - offset;
+  const minLatMap = southWest.lat + offset;
+  if (point.lng > maxLngMap) {
+    point.lng = maxLngMap;
+  } else if (point.lng < minLngMap) {
+    point.lng = minLngMap;
+  }
+  if (point.lat > maxLatMap) {
+    point.lat = maxLatMap;
+  } else if (point.lat < minLatMap) {
+    point.lat = minLatMap;
+  }
+  return point;
+}
+
+export const parseCenterPosition = (position: string | [number, number]): [number, number] => {
   if (typeof (position) === 'string') {
     const parts = position.split(',');
     if (parts.length === 2) {
