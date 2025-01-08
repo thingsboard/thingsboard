@@ -37,14 +37,14 @@
           {{ deduplicationStrategiesTranslations.get(strategy) | translate }}
         </tb-toggle-option>
       </tb-toggle-select>
-      <tb-example-hint [hintText]="'tb.rulenode.strategy-all-hint' | translate"
+      <tb-example-hint [hintText]="'tb.rulenode.strategy-all-hint'"
                        *ngIf="deduplicationConfigForm.get('strategy').value === 'ALL'">
       </tb-example-hint>
-      <tb-example-hint [hintText]="'tb.rulenode.strategy-first-hint' | translate"
+      <tb-example-hint [hintText]="'tb.rulenode.strategy-first-hint'"
                         textAlign="'center'"
                        *ngIf="deduplicationConfigForm.get('strategy').value === 'FIRST'">
       </tb-example-hint>
-      <tb-example-hint [hintText]="'tb.rulenode.strategy-last-hint' | translate"
+      <tb-example-hint [hintText]="'tb.rulenode.strategy-last-hint'"
                         textAlign="'center'"
                        *ngIf="deduplicationConfigForm.get('strategy').value === 'LAST'">
       </tb-example-hint>
