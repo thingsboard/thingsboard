@@ -68,22 +68,22 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
         arguments.entrySet().stream()
                 .filter(entry -> entry.getValue().getEntityId().equals(entityId))
                 .forEach(entry -> {
-                    Argument tergetArgument = entry.getValue();
+                    Argument targetArgument = entry.getValue();
                     String argumentKey = entry.getKey();
 
-                    switch (tergetArgument.getType()) {
+                    switch (targetArgument.getType()) {
                         case ATTRIBUTE -> {
-                            switch (tergetArgument.getScope()) {
+                            switch (targetArgument.getScope()) {
                                 case CLIENT_SCOPE ->
-                                        linkConfiguration.getClientAttributes().put(tergetArgument.getKey(), argumentKey);
+                                        linkConfiguration.getClientAttributes().put(targetArgument.getKey(), argumentKey);
                                 case SERVER_SCOPE ->
-                                        linkConfiguration.getServerAttributes().put(tergetArgument.getKey(), argumentKey);
+                                        linkConfiguration.getServerAttributes().put(targetArgument.getKey(), argumentKey);
                                 case SHARED_SCOPE ->
-                                        linkConfiguration.getSharedAttributes().put(tergetArgument.getKey(), argumentKey);
+                                        linkConfiguration.getSharedAttributes().put(targetArgument.getKey(), argumentKey);
                             }
                         }
                         case TS_LATEST, TS_ROLLING ->
-                                linkConfiguration.getTimeSeries().put(tergetArgument.getKey(), argumentKey);
+                                linkConfiguration.getTimeSeries().put(targetArgument.getKey(), argumentKey);
                     }
                 });
 

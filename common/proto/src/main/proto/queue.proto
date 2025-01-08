@@ -183,6 +183,18 @@ message TsKvListProto {
   repeated KeyValueProto kv = 2;
 }
 
+message AttributeKvProto {
+  AttributeKey key = 1;
+  AttributeValueProto value = 2;
+}
+
+message TelemetryProto {
+  oneof proto {
+    AttributeKvProto attrKv = 1;
+    TsKvProto tsKv = 2;
+  }
+}
+
 message DeviceInfoProto {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
@@ -809,11 +821,21 @@ message ProfileEntityMsgProto {
   bool deleted = 10;
 }
 
-message ToServerB {
+message TelemetryUpdateMsgProto {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
-  repeated CfIdEntityIdPair links = 3;
-  value = 4;
+  repeated CalculatedFieldEntityCtxIdProto links = 3;
+  repeated CalculatedFieldIdProto previousCalculatedFields = 4;
+  string scope = 5;
+  repeated TelemetryProto updatedTelemetry = 6;
+}
+
+message CalculatedFieldEntityCtxIdProto {
+  int64 calculatedFieldIdMSB = 1;
+  int64 calculatedFieldIdLSB = 2;
+  string entityType = 3;
+  int64 entityIdMSB = 4;
+  int64 entityIdLSB = 5;
 }
 
 message CalculatedFieldStateMsgProto {
@@ -1655,6 +1677,7 @@ message ToRuleEngineMsg {
   bytes tbMsg = 3;
   repeated string relationTypes = 4;
   string failureMessage = 5;
+  TelemetryUpdateMsgProto cfTelemetryUpdateMsg = 6;
 }
 
 message ToRuleEngineNotificationMsg {

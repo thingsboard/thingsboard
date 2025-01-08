@@ -247,6 +247,7 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     private List<CalculatedFieldLink> buildCalculatedFieldLinks(TenantId tenantId, CalculatedField calculatedField) {
         CalculatedFieldConfiguration cfConfig = calculatedField.getConfiguration();
         return cfConfig.getReferencedEntities().stream()
+                .filter(referencedEntity -> !referencedEntity.equals(calculatedField.getEntityId()))
                 .map(referencedEntityId -> {
                     CalculatedFieldLink link = new CalculatedFieldLink();
                     link.setTenantId(tenantId);

@@ -15,7 +15,8 @@
  */
 package org.thingsboard.server.service.cf.ctx;
 
-import java.util.UUID;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.EntityId;
 
-public record CalculatedFieldEntityCtxId(UUID cfId, UUID entityId) {
+public record CalculatedFieldEntityCtxId(CalculatedFieldId cfId, EntityId entityId) {
 }

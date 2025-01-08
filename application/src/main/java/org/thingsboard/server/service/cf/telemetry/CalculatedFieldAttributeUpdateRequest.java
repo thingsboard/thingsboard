@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.cf.telemetry;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -22,18 +23,19 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
 
 import java.util.List;
 import java.util.Map;
 
 @Data
+@AllArgsConstructor
 public class CalculatedFieldAttributeUpdateRequest implements CalculatedFieldTelemetryUpdateRequest {
 
     private TenantId tenantId;
     private EntityId entityId;
     private AttributeScope scope;
-    private List<AttributeKvEntry> kvEntries;
+    private List<? extends KvEntry> kvEntries;
     private List<CalculatedFieldId> previousCalculatedFieldIds;
 
     public CalculatedFieldAttributeUpdateRequest(AttributesSaveRequest request) {

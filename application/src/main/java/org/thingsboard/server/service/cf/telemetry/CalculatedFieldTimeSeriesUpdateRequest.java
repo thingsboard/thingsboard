@@ -15,23 +15,25 @@
  */
 package org.thingsboard.server.service.cf.telemetry;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
 
 import java.util.List;
 import java.util.Map;
 
 @Data
+@AllArgsConstructor
 public class CalculatedFieldTimeSeriesUpdateRequest implements CalculatedFieldTelemetryUpdateRequest {
 
     private TenantId tenantId;
     private EntityId entityId;
-    private List<TsKvEntry> kvEntries;
+    private List<? extends KvEntry> kvEntries;
     private List<CalculatedFieldId> previousCalculatedFieldIds;
 
     public CalculatedFieldTimeSeriesUpdateRequest(TimeseriesSaveRequest request) {
