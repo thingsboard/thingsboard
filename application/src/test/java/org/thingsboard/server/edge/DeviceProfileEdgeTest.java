@@ -359,7 +359,7 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
         transportConfiguration.setBootstrapServerUpdateEnable(true);
 
         TelemetryMappingConfiguration observeAttrConfiguration =
-                JacksonUtil.fromString(AbstractLwM2MIntegrationTest.OBSERVE_ATTRIBUTES_WITH_PARAMS, TelemetryMappingConfiguration.class);
+                JacksonUtil.fromString(AbstractLwM2MIntegrationTest.TELEMETRY_WITHOUT_OBSERVE, TelemetryMappingConfiguration.class);
         transportConfiguration.setObserveAttr(observeAttrConfiguration);
 
         List<LwM2MBootstrapServerCredential> bootstrap = new ArrayList<>();
