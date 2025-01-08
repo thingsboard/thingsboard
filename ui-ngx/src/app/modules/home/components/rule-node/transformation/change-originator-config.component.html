@@ -36,7 +36,7 @@
     </mat-select>
   </mat-form-field>
   <div class="tb-form-panel stroked no-padding-bottom"
-        *ngIf="changeOriginatorConfigForm.get('originatorSource').value === 'ENTITY'">
+        *ngIf="changeOriginatorConfigForm.get('originatorSource').value === originatorSource.ENTITY">
     <tb-example-hint [hintText]="'tb.rulenode.entity-name-pattern-hint'"
                       popupHelpLink="rulenode/change_originator_node_fields_templatization">
     </tb-example-hint>

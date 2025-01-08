@@ -17,7 +17,12 @@
 import { Component } from '@angular/core';
 import { isDefinedAndNotNull } from '@core/public-api';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MessageType, messageTypeNames, RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@shared/models/rule-node.models';
+import {
+  MessageType,
+  messageTypeNames,
+  RuleNodeConfiguration,
+  RuleNodeConfigurationComponent
+} from '@shared/models/rule-node.models';
 
 @Component({
     selector: 'tb-action-node-device-state-config',

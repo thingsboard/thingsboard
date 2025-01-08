@@ -76,5 +76,5 @@ import { ExampleHintComponent } from './example-hint.component';
   ]
 })
 
-export class RuleNodeConfigCommonModule {
+export class CommonRuleNodeConfigModule {
 }

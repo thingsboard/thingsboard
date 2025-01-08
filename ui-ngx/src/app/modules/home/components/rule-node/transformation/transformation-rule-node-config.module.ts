@@ -18,7 +18,7 @@ import { NgModule, Type } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IRuleNodeConfigurationComponent, SharedModule } from '@shared/public-api';
 import { ChangeOriginatorConfigComponent } from './change-originator-config.component';
-import { RuleNodeConfigCommonModule } from '../common/rule-node-config-common.module';
+import { CommonRuleNodeConfigModule } from '../common/common-rule-node-config.module';
 import { TransformScriptConfigComponent } from './script-config.component';
 import { ToEmailConfigComponent } from './to-email-config.component';
 import { CopyKeysConfigComponent } from './copy-keys-config.component';
@@ -42,7 +42,7 @@ import { ScriptConfigComponent } from '@home/components/rule-node/filter/script-
   imports: [
     CommonModule,
     SharedModule,
-    RuleNodeConfigCommonModule
+    CommonRuleNodeConfigModule
   ],
   exports: [
     ChangeOriginatorConfigComponent,
@@ -55,13 +55,13 @@ import { ScriptConfigComponent } from '@home/components/rule-node/filter/script-
     DeduplicationConfigComponent
   ]
 })
-export class RuleNodeConfigTransformModule {
+export class TransformationRuleNodeConfigModule {
 }
 
-export const ruleNodeTransformConfigComponentsMap: Record<string, Type<IRuleNodeConfigurationComponent>> = {
+export const transformationRuleNodeConfigComponentsMap: Record<string, Type<IRuleNodeConfigurationComponent>> = {
   'tbTransformationNodeChangeOriginatorConfig': ChangeOriginatorConfigComponent,
   'tbTransformationNodeCopyKeysConfig': CopyKeysConfigComponent,
-  'tbActionNodeMsgDeduplicationConfig': DeduplicationConfigComponent,
+  'tbTransformationNodeDeduplicationConfig': DeduplicationConfigComponent,
   'tbTransformationNodeDeleteKeysConfig': DeleteKeysConfigComponent,
   'tbTransformationNodeJsonPathConfig': NodeJsonPathConfigComponent,
   'tbTransformationNodeRenameKeysConfig': RenameKeysConfigComponent,

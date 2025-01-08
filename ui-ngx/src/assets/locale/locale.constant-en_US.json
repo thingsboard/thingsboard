@@ -4927,7 +4927,7 @@
             "min-interval-seconds-message": "Only 1 second minimum interval is allowed.",
             "output-timeseries-key-prefix": "Output time series key prefix",
             "output-timeseries-key-prefix-required": "Output time series key prefix required.",
-            "separator-hint": "Press \"Enter\" to complete field input.",
+            "separator-hint": "You should press \"Enter\" to complete field input.",
             "select-details": "Select details",
             "entity-details-id": "Id",
             "entity-details-title": "Title",

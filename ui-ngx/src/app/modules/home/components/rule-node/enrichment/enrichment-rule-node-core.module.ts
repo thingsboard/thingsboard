@@ -18,7 +18,7 @@ import { NgModule, Type } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IRuleNodeConfigurationComponent, SharedModule } from '@shared/public-api';
 import { CustomerAttributesConfigComponent } from './customer-attributes-config.component';
-import { RuleNodeConfigCommonModule } from '../common/rule-node-config-common.module';
+import { CommonRuleNodeConfigModule } from '../common/common-rule-node-config.module';
 import { EntityDetailsConfigComponent } from './entity-details-config.component';
 import { DeviceAttributesConfigComponent } from './device-attributes-config.component';
 import { OriginatorAttributesConfigComponent } from './originator-attributes-config.component';
@@ -45,7 +45,7 @@ import { FetchDeviceCredentialsConfigComponent } from './fetch-device-credential
   imports: [
     CommonModule,
     SharedModule,
-    RuleNodeConfigCommonModule
+    CommonRuleNodeConfigModule
   ],
   exports: [
     CustomerAttributesConfigComponent,
@@ -60,10 +60,10 @@ import { FetchDeviceCredentialsConfigComponent } from './fetch-device-credential
     FetchDeviceCredentialsConfigComponent
   ]
 })
-export class RuleNodeCoreEnrichmentModule {
+export class EnrichmentRuleNodeCoreModule {
 }
 
-export const ruleNodeEnrichmentConfigComponentsMap: Record<string, Type<IRuleNodeConfigurationComponent>> = {
+export const enrichmentRuleNodeConfigComponentsMap: Record<string, Type<IRuleNodeConfigurationComponent>> = {
   'tbEnrichmentNodeCalculateDeltaConfig': CalculateDeltaConfigComponent,
   'tbEnrichmentNodeCustomerAttributesConfig': CustomerAttributesConfigComponent,
   'tbEnrichmentNodeDeviceAttributesConfig': DeviceAttributesConfigComponent,

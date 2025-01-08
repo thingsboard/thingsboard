@@ -25,7 +25,7 @@ import { OriginatorTypeConfigComponent } from './originator-type-config.componen
 import { ScriptConfigComponent } from './script-config.component';
 import { SwitchConfigComponent } from './switch-config.component';
 import { CheckAlarmStatusComponent } from './check-alarm-status.component';
-import { RuleNodeConfigCommonModule } from '../common/rule-node-config-common.module';
+import { CommonRuleNodeConfigModule } from '../common/common-rule-node-config.module';
 
 @NgModule({
   declarations: [
@@ -41,7 +41,7 @@ import { RuleNodeConfigCommonModule } from '../common/rule-node-config-common.mo
   imports: [
     CommonModule,
     SharedModule,
-    RuleNodeConfigCommonModule
+    CommonRuleNodeConfigModule
   ],
   exports: [
     CheckMessageConfigComponent,
@@ -54,10 +54,10 @@ import { RuleNodeConfigCommonModule } from '../common/rule-node-config-common.mo
     CheckAlarmStatusComponent
   ]
 })
-export class RuleNodeConfigFilterModule {
+export class FilterRuleNodeConfigModule {
 }
 
-export const ruleNodeFilterConfigComponentsMap: Record<string, Type<IRuleNodeConfigurationComponent>> = {
+export const filterRuleNodeConfigComponentsMap: Record<string, Type<IRuleNodeConfigurationComponent>> = {
   'tbFilterNodeCheckAlarmStatusConfig': CheckAlarmStatusComponent,
   'tbFilterNodeCheckMessageConfig': CheckMessageConfigComponent,
   'tbFilterNodeCheckRelationConfig': CheckRelationConfigComponent,

@@ -15,8 +15,7 @@
 ///
 
 import { Component } from '@angular/core';
-import { AppState, isDefinedAndNotNull } from '@core/public-api';
-import { Store } from '@ngrx/store';
+import { isDefinedAndNotNull } from '@core/public-api';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@shared/models/rule-node.models';
 

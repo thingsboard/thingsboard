@@ -29,7 +29,7 @@ import { SendSmsConfigComponent } from './send-sms-config.component';
 import { CommonModule } from '@angular/common';
 import { IRuleNodeConfigurationComponent, SharedModule } from '@shared/public-api';
 import { HomeComponentsModule } from '@home/components/public-api';
-import { RuleNodeConfigCommonModule } from '../common/rule-node-config-common.module';
+import { CommonRuleNodeConfigModule } from '../common/common-rule-node-config.module';
 import { SlackConfigComponent } from './slack-config.component';
 import { LambdaConfigComponent } from './lambda-config.component';
 
@@ -53,7 +53,7 @@ import { LambdaConfigComponent } from './lambda-config.component';
     CommonModule,
     SharedModule,
     HomeComponentsModule,
-    RuleNodeConfigCommonModule
+    CommonRuleNodeConfigModule
   ],
   exports: [
     SnsConfigComponent,
@@ -71,10 +71,10 @@ import { LambdaConfigComponent } from './lambda-config.component';
     SlackConfigComponent
   ]
 })
-export class RuleNodeConfigExternalModule {
+export class ExternalRuleNodeConfigModule {
 }
 
-export const ruleNodeExternalConfigComponentsMap: Record<string, Type<IRuleNodeConfigurationComponent>> = {
+export const externalRuleNodeConfigComponentsMap: Record<string, Type<IRuleNodeConfigurationComponent>> = {
   'tbExternalNodeAzureIotHubConfig': AzureIotHubConfigComponent,
   'tbExternalNodeKafkaConfig': KafkaConfigComponent,
   'tbExternalNodeLambdaConfig': LambdaConfigComponent,

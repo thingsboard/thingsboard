@@ -19,29 +19,29 @@ import { EmptyConfigComponent } from './empty-config.component';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import {
-  ruleNodeActionConfigComponentsMap,
-  RuleNodeConfigActionModule
-} from '@home/components/rule-node/action/rule-node-config-action.module';
+  actionRuleNodeConfigComponentsMap,
+  ActionRuleNodeConfigModule
+} from '@home/components/rule-node/action/action-rule-node-config.module';
 import {
-  RuleNodeConfigFilterModule,
-  ruleNodeFilterConfigComponentsMap
-} from '@home/components/rule-node/filter/rule-node-config-filter.module';
+  filterRuleNodeConfigComponentsMap,
+  FilterRuleNodeConfigModule
+} from '@home/components/rule-node/filter/filter-rule-node-config.module';
 import {
-  RuleNodeCoreEnrichmentModule,
-  ruleNodeEnrichmentConfigComponentsMap
-} from '@home/components/rule-node/enrichment/rule-node-core-enrichment.module';
+  enrichmentRuleNodeConfigComponentsMap,
+  EnrichmentRuleNodeCoreModule
+} from '@home/components/rule-node/enrichment/enrichment-rule-node-core.module';
 import {
-  RuleNodeConfigExternalModule,
-  ruleNodeExternalConfigComponentsMap
-} from '@home/components/rule-node/external/rule-node-config-external.module';
+  externalRuleNodeConfigComponentsMap,
+  ExternalRuleNodeConfigModule
+} from '@home/components/rule-node/external/external-rule-node-config.module';
 import {
-  RuleNodeConfigTransformModule,
-  ruleNodeTransformConfigComponentsMap
-} from '@home/components/rule-node/transform/rule-node-config-transform.module';
+  transformationRuleNodeConfigComponentsMap,
+  TransformationRuleNodeConfigModule
+} from '@home/components/rule-node/transformation/transformation-rule-node-config.module';
 import {
-  RuleNodeConfigFlowModule,
-  ruleNodeFlowConfigComponentsMap
-} from '@home/components/rule-node/flow/rule-node-config-flow.module';
+  flowRuleNodeConfigComponentsMap,
+  FlowRuleNodeConfigModule
+} from '@home/components/rule-node/flow/flow-rule-node-config.module';
 import { IRuleNodeConfigurationComponent } from '@shared/models/rule-node.models';
 
 @NgModule({
@@ -53,23 +53,23 @@ import { IRuleNodeConfigurationComponent } from '@shared/models/rule-node.models
     SharedModule
   ],
   exports: [
-    RuleNodeConfigActionModule,
-    RuleNodeConfigFilterModule,
-    RuleNodeCoreEnrichmentModule,
-    RuleNodeConfigExternalModule,
-    RuleNodeConfigTransformModule,
-    RuleNodeConfigFlowModule,
+    ActionRuleNodeConfigModule,
+    FilterRuleNodeConfigModule,
+    EnrichmentRuleNodeCoreModule,
+    ExternalRuleNodeConfigModule,
+    TransformationRuleNodeConfigModule,
+    FlowRuleNodeConfigModule,
     EmptyConfigComponent
   ]
 })
 export class RuleNodeConfigModule {}
 
 export const ruleNodeConfigComponentsMap: Record<string, Type<IRuleNodeConfigurationComponent>> = {
-  ...ruleNodeActionConfigComponentsMap,
-  ...ruleNodeEnrichmentConfigComponentsMap,
-  ...ruleNodeExternalConfigComponentsMap,
-  ...ruleNodeFilterConfigComponentsMap,
-  ...ruleNodeFlowConfigComponentsMap,
-  ...ruleNodeTransformConfigComponentsMap,
+  ...actionRuleNodeConfigComponentsMap,
+  ...enrichmentRuleNodeConfigComponentsMap,
+  ...externalRuleNodeConfigComponentsMap,
+  ...filterRuleNodeConfigComponentsMap,
+  ...flowRuleNodeConfigComponentsMap,
+  ...transformationRuleNodeConfigComponentsMap,
   'tbNodeEmptyConfig': EmptyConfigComponent
 };
