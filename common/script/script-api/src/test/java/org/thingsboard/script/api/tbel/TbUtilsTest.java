@@ -19,7 +19,6 @@ import com.google.common.collect.Lists;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.A;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +35,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
@@ -787,8 +787,12 @@ public class TbUtilsTest {
     public void hexToBytes_Test() {
         String input = "0x01752B0367FA000500010488FFFFFFFFFFFFFFFF33";
         byte[] expected = {1, 117, 43, 3, 103, -6, 0, 5, 0, 1, 4, -120, -1, -1, -1, -1, -1, -1, -1, -1, 51};
-        List<Byte> actual = TbUtils.hexToBytes(ctx, input);
-        Assertions.assertEquals(toList(expected), actual);
+        List<Byte> actualList = TbUtils.hexToBytes(ctx, input);
+        Assertions.assertEquals(toList(expected), actualList);
+        String validInput = "AABBCCDDEE";
+        expected = new byte[]{(byte) 0xAA, (byte) 0xBB, (byte) 0xCC, (byte) 0xDD, (byte) 0xEE};
+        byte[] actualBytes = TbUtils.hexToBytesArray(validInput);
+        Assertions.assertArrayEquals(expected, actualBytes);
         try {
             input = "0x01752B0367FA000500010488FFFFFFFFFFFFFFFF3";
             TbUtils.hexToBytes(ctx, input);
@@ -803,6 +807,12 @@ public class TbUtilsTest {
         }
         try {
             input = "";
+            TbUtils.hexToBytes(ctx, input);
+        } catch (IllegalArgumentException e) {
+            Assertions.assertTrue(e.getMessage().contains("Hex string must be not empty"));
+        }
+        try {
+            input = null;
             TbUtils.hexToBytes(ctx, input);
         } catch (IllegalArgumentException e) {
             Assertions.assertTrue(e.getMessage().contains("Hex string must be not empty"));
@@ -1085,6 +1095,26 @@ public class TbUtilsTest {
         String expected = "AUoACgIgIAcGAAABSgGfA+gAyBtYAQFKAp8DCgAAAAAAAUoDJAXdBdQbWDYBSgSfOQAAAAAAAA==";
         String actual = TbUtils.hexToBase64(hex);
         Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
+    void base64ToBytesList_Test() {
+        String validInput = Base64.getEncoder().encodeToString(new byte[]{1, 2, 3, 4, 5});
+        ExecutionArrayList<Byte> actual = TbUtils.base64ToBytesList(ctx, validInput);
+        ExecutionArrayList<Byte> expected = new ExecutionArrayList<>(ctx);
+        expected.addAll(List.of((byte) 1, (byte)2, (byte)3, (byte)4, (byte)5));
+        Assertions.assertEquals(expected, actual);
+
+        String emptyInput = Base64.getEncoder().encodeToString(new byte[]{});
+        actual = TbUtils.base64ToBytesList(ctx, emptyInput);
+        Assertions.assertTrue(actual.isEmpty());
+        String invalidInput = "NotAValidBase64String";
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            TbUtils.base64ToBytesList(ctx, invalidInput);
+        });
+        Assertions.assertThrows(NullPointerException.class, () -> {
+            TbUtils.base64ToBytesList(ctx, null);
+        });
     }
     @Test
     public void bytesToHex_Test() {
