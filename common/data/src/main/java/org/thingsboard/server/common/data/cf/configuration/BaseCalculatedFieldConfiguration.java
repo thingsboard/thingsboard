@@ -22,9 +22,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Data;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.HashMap;
 import java.util.List;
@@ -88,6 +91,24 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
                 });
 
         return linkConfiguration;
+    }
+
+    @Override
+    public List<CalculatedFieldLink> buildCalculatedFieldLinks(TenantId tenantId, EntityId cfEntityId, CalculatedFieldId calculatedFieldId) {
+        return getReferencedEntities().stream()
+                .filter(referencedEntity -> !referencedEntity.equals(cfEntityId))
+                .map(referencedEntityId -> buildCalculatedFieldLink(tenantId, referencedEntityId, calculatedFieldId))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public CalculatedFieldLink buildCalculatedFieldLink(TenantId tenantId, EntityId referencedEntityId, CalculatedFieldId calculatedFieldId) {
+        CalculatedFieldLink link = new CalculatedFieldLink();
+        link.setTenantId(tenantId);
+        link.setEntityId(referencedEntityId);
+        link.setCalculatedFieldId(calculatedFieldId);
+        link.setConfiguration(getReferencedEntityConfig(referencedEntityId));
+        return link;
     }
 
     @Override

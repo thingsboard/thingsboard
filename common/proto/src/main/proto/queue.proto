@@ -824,10 +824,13 @@ message ProfileEntityMsgProto {
 message TelemetryUpdateMsgProto {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
-  repeated CalculatedFieldEntityCtxIdProto links = 3;
-  repeated CalculatedFieldIdProto previousCalculatedFields = 4;
-  string scope = 5;
-  repeated TelemetryProto updatedTelemetry = 6;
+  string entityType = 3;
+  int64 entityIdMSB = 4;
+  int64 entityIdLSB = 5;
+  repeated CalculatedFieldEntityCtxIdProto links = 6;
+  repeated CalculatedFieldIdProto previousCalculatedFields = 7;
+  string scope = 8;
+  repeated TelemetryProto updatedTelemetry = 9;
 }
 
 message CalculatedFieldEntityCtxIdProto {

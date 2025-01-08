@@ -57,7 +57,7 @@ public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity,
 
     @Override
     public List<CalculatedField> findCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId) {
-        return calculatedFieldRepository.findAllByTenantIdAndEntityId(tenantId.getId(), entityId.getId());
+        return DaoUtil.convertDataList(calculatedFieldRepository.findAllByTenantIdAndEntityId(tenantId.getId(), entityId.getId()));
     }
 
     @Override

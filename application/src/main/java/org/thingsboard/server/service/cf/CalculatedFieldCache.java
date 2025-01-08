@@ -28,19 +28,23 @@ import java.util.Set;
 
 public interface CalculatedFieldCache {
 
-    CalculatedField getCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId);
+    CalculatedField getCalculatedField(CalculatedFieldId calculatedFieldId);
 
-    List<CalculatedField> getCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId);
+    List<CalculatedField> getCalculatedFieldsByEntityId(EntityId entityId);
 
-    List<CalculatedFieldLink> getCalculatedFieldLinks(TenantId tenantId, CalculatedFieldId calculatedFieldId);
+    List<CalculatedFieldLink> getCalculatedFieldLinks(CalculatedFieldId calculatedFieldId);
 
-    List<CalculatedFieldLink> getCalculatedFieldLinksByEntityId(TenantId tenantId, EntityId entityId);
+    List<CalculatedFieldLink> getCalculatedFieldLinksByEntityId(EntityId entityId);
 
-    void updateCalculatedFieldLinks(TenantId tenantId, CalculatedFieldId calculatedFieldId);
+    void updateCalculatedFieldLinks(CalculatedFieldId calculatedFieldId);
 
-    CalculatedFieldCtx getCalculatedFieldCtx(TenantId tenantId, CalculatedFieldId calculatedFieldId, TbelInvokeService tbelInvokeService);
+    CalculatedFieldCtx getCalculatedFieldCtx(CalculatedFieldId calculatedFieldId, TbelInvokeService tbelInvokeService);
 
     Set<EntityId> getEntitiesByProfile(TenantId tenantId, EntityId entityId);
+
+    void addCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId);
+
+    void updateCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
     void evict(CalculatedFieldId calculatedFieldId);
 
