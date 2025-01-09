@@ -34,60 +34,58 @@
     <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
     <mat-card-content style="padding-top: 16px;">
       <form [formGroup]="profile" (ngSubmit)="save()">
-        <fieldset [disabled]="isLoading$ | async">
-          <mat-form-field class="mat-block">
-            <mat-label translate>user.email</mat-label>
-            <input matInput type="email" formControlName="email" required/>
-            <mat-error *ngIf="profile.get('email').hasError('required')">
-              {{ 'user.email-required' | translate }}
-            </mat-error>
-            <mat-error *ngIf="profile.get('email').hasError('email')">
-              {{ 'user.invalid-email-format' | translate }}
-            </mat-error>
-          </mat-form-field>
-          <mat-form-field class="mat-block">
-            <mat-label translate>user.first-name</mat-label>
-            <input matInput formControlName="firstName"/>
-          </mat-form-field>
-          <mat-form-field class="mat-block">
-            <mat-label translate>user.last-name</mat-label>
-            <input matInput formControlName="lastName"/>
-          </mat-form-field>
-          <tb-phone-input [required]="false"
-                          label="{{ 'contact.phone' | translate }}"
-                          [enableFlagsSelect]="true"
-                          formControlName="phone">
-          </tb-phone-input>
-          <mat-form-field class="mat-block">
-            <mat-label translate>language.language</mat-label>
-            <mat-select formControlName="language">
-              <mat-option *ngFor="let lang of languageList" [value]="lang">
-                {{ lang ? ('language.locales.' + lang | translate) : ''}}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <section class="tb-home-dashboard flex flex-1 flex-col gt-sm:flex-row" *ngIf="!isSysAdmin()">
-            <tb-dashboard-autocomplete
-              class="flex-1"
-              label="{{ 'dashboard.home-dashboard' | translate }}"
-              formControlName="homeDashboardId"
-              [dashboardsScope]="user?.authority === authorities.TENANT_ADMIN ? 'tenant' : 'customer'"
-              [tenantId]="user?.tenantId?.id"
-              [customerId]="user?.customerId?.id"
-              [selectFirstDashboard]="false"
-            ></tb-dashboard-autocomplete>
-            <mat-checkbox class="flex-1" formControlName="homeDashboardHideToolbar">
-              {{ 'dashboard.home-dashboard-hide-toolbar' | translate }}
-            </mat-checkbox>
-          </section>
-          <div class="flex flex-row items-start justify-end">
-            <button mat-button mat-raised-button color="primary"
-                    type="submit"
-                    [disabled]="(isLoading$ | async) || profile.invalid || !profile.dirty">
-              {{ 'action.save' | translate }}
-            </button>
-          </div>
-        </fieldset>
+        <mat-form-field class="mat-block">
+          <mat-label translate>user.email</mat-label>
+          <input matInput type="email" formControlName="email" required/>
+          <mat-error *ngIf="profile.get('email').hasError('required')">
+            {{ 'user.email-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="profile.get('email').hasError('email')">
+            {{ 'user.invalid-email-format' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="mat-block">
+          <mat-label translate>user.first-name</mat-label>
+          <input matInput formControlName="firstName"/>
+        </mat-form-field>
+        <mat-form-field class="mat-block">
+          <mat-label translate>user.last-name</mat-label>
+          <input matInput formControlName="lastName"/>
+        </mat-form-field>
+        <tb-phone-input [required]="false"
+                        label="{{ 'contact.phone' | translate }}"
+                        [enableFlagsSelect]="true"
+                        formControlName="phone">
+        </tb-phone-input>
+        <mat-form-field class="mat-block">
+          <mat-label translate>language.language</mat-label>
+          <mat-select formControlName="language">
+            <mat-option *ngFor="let lang of languageList" [value]="lang">
+              {{ lang ? ('language.locales.' + lang | translate) : ''}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <section class="tb-home-dashboard flex flex-1 flex-col gt-sm:flex-row" *ngIf="!isSysAdmin()">
+          <tb-dashboard-autocomplete
+            class="flex-1"
+            label="{{ 'dashboard.home-dashboard' | translate }}"
+            formControlName="homeDashboardId"
+            [dashboardsScope]="user?.authority === authorities.TENANT_ADMIN ? 'tenant' : 'customer'"
+            [tenantId]="user?.tenantId?.id"
+            [customerId]="user?.customerId?.id"
+            [selectFirstDashboard]="false"
+          ></tb-dashboard-autocomplete>
+          <mat-checkbox class="flex-1" formControlName="homeDashboardHideToolbar">
+            {{ 'dashboard.home-dashboard-hide-toolbar' | translate }}
+          </mat-checkbox>
+        </section>
+        <div class="flex flex-row items-start justify-end">
+          <button mat-button mat-raised-button color="primary"
+                  type="submit"
+                  [disabled]="(isLoading$ | async) || profile.invalid || !profile.dirty">
+            {{ 'action.save' | translate }}
+          </button>
+        </div>
       </form>
     </mat-card-content>
   </mat-card>

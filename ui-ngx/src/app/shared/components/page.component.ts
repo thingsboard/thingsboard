@@ -42,13 +42,17 @@ export abstract class PageComponent implements OnDestroy {
     if (!this.loadingSubscription) {
       this.loadingSubscription = this.isLoading$.subscribe((isLoading) => {
         for (const formControl of this.disabledOnLoadFormControls) {
-          if (isLoading) {
-            formControl.disable({emitEvent: false});
-          } else {
-            formControl.enable({emitEvent: false});
-          }
+          this.toggleOnLoadFormControl(formControl, isLoading);
         }
       });
+    }
+  }
+
+  protected toggleOnLoadFormControl(formControl: AbstractControl, isLoading: boolean): void {
+    if (isLoading) {
+      formControl.disable({emitEvent: false});
+    } else {
+      formControl.enable({emitEvent: false});
     }
   }
 

@@ -70,6 +70,8 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
       homeDashboardId: [null],
       homeDashboardHideToolbar: [true]
     });
+    this.registerDisableOnLoadFormControl(this.profile);
+    this.registerDisableOnLoadFormControl(this.profile.get('phone'));
   }
 
   save(): void {

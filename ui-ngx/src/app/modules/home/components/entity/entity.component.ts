@@ -15,7 +15,7 @@
 ///
 
 import { BaseData, HasId } from '@shared/models/base-data';
-import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import { AbstractControl, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { ChangeDetectorRef, Directive, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Store } from '@ngrx/store';
@@ -124,6 +124,14 @@ export abstract class EntityComponent<T extends BaseData<HasId>,
 
   protected setEntitiesTableConfig(entitiesTableConfig: C) {
     this.entitiesTableConfigValue = entitiesTableConfig;
+  }
+
+  protected override toggleOnLoadFormControl(formControl: AbstractControl, isLoading: boolean): void {
+    if (isLoading) {
+      formControl.disable({emitEvent: false});
+    } else if (this.isEditValue) {
+      formControl.enable({emitEvent: false});
+    }
   }
 
   abstract buildForm(entity: T): UntypedFormGroup;
