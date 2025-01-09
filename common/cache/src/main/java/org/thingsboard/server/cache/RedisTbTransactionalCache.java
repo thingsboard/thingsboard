@@ -286,13 +286,13 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     protected void executeScript(RedisConnection connection, byte[] scriptSha, byte[] luaScript, ReturnType returnType, int numKeys, byte[]... keysAndArgs) {
         try {
             connection.scriptingCommands().evalSha(scriptSha, returnType, numKeys, keysAndArgs);
-        } catch (InvalidDataAccessApiUsageException exception) {
-            log.warn("Loading LUA [{}]", connection.getNativeConnection(), exception);
+        } catch (InvalidDataAccessApiUsageException ignored) {
+            log.debug("Loading LUA [{}]", connection.getNativeConnection());
             connection.scriptingCommands().scriptLoad(luaScript);
             try {
                 connection.scriptingCommands().evalSha(scriptSha, returnType, numKeys, keysAndArgs);
-            } catch (InvalidDataAccessApiUsageException ex) {
-                log.warn("Slowly executing eval instead of fast evalSha", ex);
+            } catch (InvalidDataAccessApiUsageException exception) {
+                log.warn("Slowly executing eval instead of fast evalSha", exception);
                 connection.scriptingCommands().eval(luaScript, returnType, numKeys, keysAndArgs);
             }
         }
