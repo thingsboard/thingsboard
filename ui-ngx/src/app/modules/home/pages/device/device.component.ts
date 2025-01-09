@@ -63,6 +63,7 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
 
     this.registerDisableOnLoadFormControl(this.entityForm);
+    this.registerDisableOnLoadFormControl(this.entityForm.get('deviceData'));
   }
 
   ngOnInit() {
