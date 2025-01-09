@@ -21,34 +21,14 @@ import { RuleChainComponent } from '@modules/home/pages/rulechain/rulechain.comp
 import { RuleChainRoutingModule } from '@modules/home/pages/rulechain/rulechain-routing.module';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { RuleChainTabsComponent } from '@home/pages/rulechain/rulechain-tabs.component';
-import {
-  AddRuleNodeDialogComponent,
-  AddRuleNodeLinkDialogComponent, CreateNestedRuleChainDialogComponent,
-  RuleChainPageComponent
-} from './rulechain-page.component';
 import { RuleNodeComponent } from '@home/pages/rulechain/rulenode.component';
 import { FC_NODE_COMPONENT_CONFIG } from 'ngx-flowchart';
-import { RuleNodeDetailsComponent } from './rule-node-details.component';
-import { RuleNodeLinkComponent } from './rule-node-link.component';
-import { LinkLabelsComponent } from '@home/pages/rulechain/link-labels.component';
-import { RuleNodeConfigComponent } from './rule-node-config.component';
-import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
-import { EntityDebugSettingsButtonComponent } from '@home/components/entity/debug/entity-debug-settings-button.component';
-import { RuleNodeConfigModule } from '@home/components/rule-node/rule-node-config.module';
 
 @NgModule({
   declarations: [
     RuleChainComponent,
     RuleChainTabsComponent,
-    RuleChainPageComponent,
     RuleNodeComponent,
-    RuleNodeDetailsComponent,
-    RuleNodeConfigComponent,
-    LinkLabelsComponent,
-    RuleNodeLinkComponent,
-    AddRuleNodeLinkDialogComponent,
-    AddRuleNodeDialogComponent,
-    CreateNestedRuleChainDialogComponent
   ],
   providers: [
     {
@@ -56,16 +36,13 @@ import { RuleNodeConfigModule } from '@home/components/rule-node/rule-node-confi
       useValue: {
         nodeComponentType: RuleNodeComponent
       }
-    }
+    },
   ],
   imports: [
     CommonModule,
     SharedModule,
     HomeComponentsModule,
     RuleChainRoutingModule,
-    DurationLeftPipe,
-    EntityDebugSettingsButtonComponent,
-    RuleNodeConfigModule,
   ]
 })
 export class RuleChainModule { }

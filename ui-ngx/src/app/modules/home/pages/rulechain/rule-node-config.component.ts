@@ -21,7 +21,7 @@ import {
   forwardRef,
   Input,
   OnDestroy,
-  Output, Type,
+  Output,
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
@@ -43,7 +43,6 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
 import { deepClone } from '@core/utils';
 import { RuleChainType } from '@shared/models/rule-chain.models';
-import { ruleNodeConfigComponentsMap } from '@home/components/rule-node/rule-node-config.module';
 
 @Component({
   selector: 'tb-rule-node-config',
@@ -213,12 +212,7 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnDestroy 
         this.changeScriptSubscription = null;
       }
       this.definedConfigContainer.clear();
-      let component: Type<IRuleNodeConfigurationComponent>;
-      if (!this.nodeDefinition.uiResources?.length) {
-        component = ruleNodeConfigComponentsMap[this.nodeDefinition.configDirective];
-      } else {
-        component = this.ruleChainService.getRuleNodeConfigComponent(this.nodeDefinition.configDirective);
-      }
+      const component = this.ruleChainService.getRuleNodeConfigComponent(this.nodeDefinition.configDirective, !this.nodeDefinition.uiResources?.length);
       this.definedConfigComponentRef = this.definedConfigContainer.createComponent(component);
       this.definedConfigComponent = this.definedConfigComponentRef.instance;
       this.definedConfigComponent.ruleNodeId = this.ruleNodeId;

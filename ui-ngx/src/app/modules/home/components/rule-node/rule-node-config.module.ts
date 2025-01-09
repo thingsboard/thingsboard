@@ -43,6 +43,7 @@ import {
   FlowRuleNodeConfigModule
 } from '@home/components/rule-node/flow/flow-rule-node-config.module';
 import { IRuleNodeConfigurationComponent } from '@shared/models/rule-node.models';
+import { RuleChainService } from '@core/http/rule-chain.service';
 
 @NgModule({
   declarations: [
@@ -62,14 +63,17 @@ import { IRuleNodeConfigurationComponent } from '@shared/models/rule-node.models
     EmptyConfigComponent
   ]
 })
-export class RuleNodeConfigModule {}
-
-export const ruleNodeConfigComponentsMap: Record<string, Type<IRuleNodeConfigurationComponent>> = {
-  ...actionRuleNodeConfigComponentsMap,
-  ...enrichmentRuleNodeConfigComponentsMap,
-  ...externalRuleNodeConfigComponentsMap,
-  ...filterRuleNodeConfigComponentsMap,
-  ...flowRuleNodeConfigComponentsMap,
-  ...transformationRuleNodeConfigComponentsMap,
-  'tbNodeEmptyConfig': EmptyConfigComponent
-};
+export class RuleNodeConfigModule {
+  constructor(private ruleChainService: RuleChainService) {
+    const ruleNodeConfigComponentsMap: Record<string, Type<IRuleNodeConfigurationComponent>> = {
+      ...actionRuleNodeConfigComponentsMap,
+      ...enrichmentRuleNodeConfigComponentsMap,
+      ...externalRuleNodeConfigComponentsMap,
+      ...filterRuleNodeConfigComponentsMap,
+      ...flowRuleNodeConfigComponentsMap,
+      ...transformationRuleNodeConfigComponentsMap,
+      'tbNodeEmptyConfig': EmptyConfigComponent
+    };
+    this.ruleChainService.registemSystemRuleNodeConfigComponent(ruleNodeConfigComponentsMap);
+  }
+}

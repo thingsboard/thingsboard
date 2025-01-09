@@ -53,6 +53,7 @@ export class RuleChainService {
   private ruleNodeComponentsMap: Map<RuleChainType, Array<RuleNodeComponentDescriptor>> =
     new Map<RuleChainType, Array<RuleNodeComponentDescriptor>>();
   private ruleNodeConfigComponents: {[directive: string]: Type<IRuleNodeConfigurationComponent>} = {};
+  private systemRuleNodeConfigComponents: {[directive: string]: Type<IRuleNodeConfigurationComponent>} = {};
 
   constructor(
     private http: HttpClient,
@@ -128,7 +129,10 @@ export class RuleChainService {
     }
   }
 
-  public getRuleNodeConfigComponent(directive: string): Type<IRuleNodeConfigurationComponent> {
+  public getRuleNodeConfigComponent(directive: string, isSystemComponent = false): Type<IRuleNodeConfigurationComponent> {
+    if (isSystemComponent) {
+      return this.systemRuleNodeConfigComponents[directive];
+    }
     return this.ruleNodeConfigComponents[directive];
   }
 
@@ -178,6 +182,10 @@ export class RuleChainService {
       url += `?scriptLang=${scriptLang}`;
     }
     return this.http.post<TestScriptResult>(url, inputParams, defaultHttpOptionsFromConfig(config));
+  }
+
+  public registemSystemRuleNodeConfigComponent(componentMap: Record<string, Type<IRuleNodeConfigurationComponent>>) {
+    this.systemRuleNodeConfigComponents = componentMap;
   }
 
   private loadRuleNodeComponents(ruleChainType: RuleChainType, config?: RequestConfig): Observable<Array<RuleNodeComponentDescriptor>> {
