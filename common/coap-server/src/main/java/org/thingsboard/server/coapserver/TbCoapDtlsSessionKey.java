@@ -15,14 +15,18 @@
  */
 package org.thingsboard.server.coapserver;
 
-import org.eclipse.californium.core.CoapServer;
+import java.net.InetSocketAddress;
+import java.util.Objects;
 
-import java.net.UnknownHostException;
-import java.util.concurrent.ConcurrentMap;
+public record TbCoapDtlsSessionKey(InetSocketAddress peerAddress, String credentials) {
 
-public interface CoapServerService {
-
-    CoapServer getCoapServer() throws UnknownHostException;
-
-    ConcurrentMap<TbCoapDtlsSessionKey, TbCoapDtlsSessionInfo> getDtlsSessionsMap();
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TbCoapDtlsSessionKey that = (TbCoapDtlsSessionKey) o;
+        return Objects.equals(peerAddress, that.peerAddress) &&
+                Objects.equals(credentials, that.credentials);
+    }
 }
+
