@@ -37,8 +37,14 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.PersistenceSettings;
+import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.PersistenceSettings.Advanced;
+import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.PersistenceSettings.Deduplicate;
+import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.PersistenceSettings.OnEveryMessage;
+import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.PersistenceSettings.WebSocketsOnly;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @Slf4j
@@ -68,12 +74,15 @@ public class TbMsgTimeseriesNode implements TbNode {
     private TbContext ctx;
     private long tenantProfileDefaultStorageTtl;
 
+    private PersistenceSettings persistenceSettings;
+
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgTimeseriesNodeConfiguration.class);
         this.ctx = ctx;
         ctx.addTenantProfileListener(this::onTenantProfileUpdate);
         onTenantProfileUpdate(ctx.getTenantProfile());
+        persistenceSettings = config.getPersistenceSettings();
     }
 
     void onTenantProfileUpdate(TenantProfile tenantProfile) {
@@ -88,6 +97,18 @@ public class TbMsgTimeseriesNode implements TbNode {
             return;
         }
         long ts = computeTs(msg, config.isUseServerTs());
+
+        PersistenceDecision persistenceDecision = makePersistenceDecision(ts, msg.getOriginator().getId());
+        boolean saveTimeseries = persistenceDecision.saveTimeseries();
+        boolean saveLatest = persistenceDecision.saveLatest();
+        boolean sendWsUpdate = persistenceDecision.sendWsUpdate();
+
+        // short-circuit
+        if (!saveTimeseries && !saveLatest && !sendWsUpdate) {
+            ctx.tellSuccess(msg);
+            return;
+        }
+
         String src = msg.getData();
         Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(JsonParser.parseString(src), ts);
         if (tsKvMap.isEmpty()) {
@@ -111,13 +132,46 @@ public class TbMsgTimeseriesNode implements TbNode {
                 .entityId(msg.getOriginator())
                 .entries(tsKvEntryList)
                 .ttl(ttl)
-                .saveLatest(!config.isSkipLatestPersistence())
+                .saveTimeseries(saveTimeseries)
+                .saveLatest(saveLatest)
+                .sendWsUpdate(sendWsUpdate)
                 .callback(new TelemetryNodeCallback(ctx, msg))
                 .build());
     }
 
     public static long computeTs(TbMsg msg, boolean ignoreMetadataTs) {
         return ignoreMetadataTs ? System.currentTimeMillis() : msg.getMetaDataTs();
+    }
+
+    private record PersistenceDecision(boolean saveTimeseries, boolean saveLatest, boolean sendWsUpdate) {}
+
+    private PersistenceDecision makePersistenceDecision(long ts, UUID originatorUuid) {
+        boolean saveTimeseries;
+        boolean saveLatest;
+        boolean sendWsUpdate;
+
+        if (persistenceSettings instanceof OnEveryMessage) {
+            saveTimeseries = true;
+            saveLatest = true;
+            sendWsUpdate = true;
+        } else if (persistenceSettings instanceof WebSocketsOnly) {
+            saveTimeseries = false;
+            saveLatest = false;
+            sendWsUpdate = true;
+        } else if (persistenceSettings instanceof Deduplicate deduplicate) {
+            boolean isFirstMsgInInterval = deduplicate.getDeduplicateStrategy().shouldPersist(ts, originatorUuid);
+            saveTimeseries = isFirstMsgInInterval;
+            saveLatest = isFirstMsgInInterval;
+            sendWsUpdate = isFirstMsgInInterval;
+        } else if (persistenceSettings instanceof Advanced advanced) {
+            saveTimeseries = advanced.timeseries().shouldPersist(ts, originatorUuid);
+            saveLatest = advanced.latest().shouldPersist(ts, originatorUuid);
+            sendWsUpdate = advanced.webSockets().shouldPersist(ts, originatorUuid);
+        } else { // should not happen
+            throw new IllegalArgumentException("Unknown persistence settings type: " + persistenceSettings.getClass().getSimpleName());
+        }
+
+        return new PersistenceDecision(saveTimeseries, saveLatest, sendWsUpdate);
     }
 
     @Override

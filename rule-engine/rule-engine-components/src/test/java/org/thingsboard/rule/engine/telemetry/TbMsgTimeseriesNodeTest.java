@@ -33,6 +33,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
+import org.thingsboard.rule.engine.telemetry.strategy.PersistenceStrategy;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -88,7 +89,7 @@ public class TbMsgTimeseriesNodeTest {
     @Test
     public void verifyDefaultConfig() {
         assertThat(config.getDefaultTTL()).isEqualTo(0L);
-        assertThat(config.isSkipLatestPersistence()).isFalse();
+        assertThat(config.getPersistenceSettings()).isInstanceOf(TbMsgTimeseriesNodeConfiguration.PersistenceSettings.OnEveryMessage.class);
         assertThat(config.isUseServerTs()).isFalse();
     }
 
@@ -162,7 +163,13 @@ public class TbMsgTimeseriesNodeTest {
     public void givenSkipLatestPersistenceIsTrueAndTtlFromConfig_whenOnMsg_thenSaveTimeseriesUsingTtlFromConfig() throws TbNodeException {
         long ttlFromConfig = 5L;
         config.setDefaultTTL(ttlFromConfig);
-        config.setSkipLatestPersistence(true);
+
+        var timeseriesStrategy = PersistenceStrategy.onEveryMessage();
+        var latestStrategy = PersistenceStrategy.skip();
+        var webSockets = PersistenceStrategy.onEveryMessage();
+        var persistenceSettings = new TbMsgTimeseriesNodeConfiguration.PersistenceSettings.Advanced(timeseriesStrategy, latestStrategy, webSockets);
+        config.setPersistenceSettings(persistenceSettings);
+
         init();
 
         String data = """
@@ -197,7 +204,9 @@ public class TbMsgTimeseriesNodeTest {
             assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);
             assertThat(request.getEntries()).containsExactlyElementsOf(expectedList);
             assertThat(request.getTtl()).isEqualTo(ttlFromConfig);
+            assertThat(request.isSaveTimeseries()).isTrue();
             assertThat(request.isSaveLatest()).isFalse();
+            assertThat(request.isSendWsUpdate()).isTrue();
             assertThat(request.getCallback()).isInstanceOf(TelemetryNodeCallback.class);
         }));
         verify(ctxMock).tellSuccess(msg);
