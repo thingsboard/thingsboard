@@ -20,7 +20,7 @@ import { AppState } from '@core/core.state';
 import { Observable, Subscription } from 'rxjs';
 import { selectIsLoading } from '@core/interceptors/load.selectors';
 import { delay, share } from 'rxjs/operators';
-import { AbstractControl } from '@angular/forms';
+import { AbstractControl, FormGroup } from '@angular/forms';
 
 @Directive()
 export abstract class PageComponent implements OnDestroy {
@@ -28,7 +28,7 @@ export abstract class PageComponent implements OnDestroy {
   protected store: Store<AppState> = inject(Store<AppState>);
 
   isLoading$: Observable<boolean>;
-  loadingSubscription: Subscription;
+  loadingSubscriptions: Subscription[] = [];
   disabledOnLoadFormControls: Array<AbstractControl> = [];
 
   showMainLoadingBar = true;
@@ -37,15 +37,22 @@ export abstract class PageComponent implements OnDestroy {
     this.isLoading$ = this.store.pipe(delay(0), select(selectIsLoading), share());
   }
 
-  protected registerDisableOnLoadFormControl(control: AbstractControl) {
-    this.disabledOnLoadFormControls.push(control);
-    if (!this.loadingSubscription) {
-      this.loadingSubscription = this.isLoading$.subscribe((isLoading) => {
-        for (const formControl of this.disabledOnLoadFormControls) {
-          this.toggleOnLoadFormControl(formControl, isLoading);
-        }
+  protected registerDisableOnLoadFormControl(control: AbstractControl): void {
+    if (control instanceof FormGroup) {
+      Object.values(control.controls).forEach((childControl: AbstractControl) => {
+        this.registerDisableOnLoadFormControl(childControl);
       });
+    } else {
+      this.disabledOnLoadFormControls.push(control);
     }
+
+    const loadingSubscription = this.isLoading$.subscribe((isLoading) => {
+      for (const formControl of this.disabledOnLoadFormControls) {
+        this.toggleOnLoadFormControl(formControl, isLoading);
+      }
+    });
+
+    this.loadingSubscriptions.push(loadingSubscription);
   }
 
   protected toggleOnLoadFormControl(formControl: AbstractControl, isLoading: boolean): void {
@@ -57,9 +64,7 @@ export abstract class PageComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.loadingSubscription) {
-      this.loadingSubscription.unsubscribe();
-    }
+    this.loadingSubscriptions.forEach(subscription => subscription.unsubscribe());
   }
 
 }

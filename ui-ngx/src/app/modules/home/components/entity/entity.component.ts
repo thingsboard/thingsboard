@@ -127,9 +127,9 @@ export abstract class EntityComponent<T extends BaseData<HasId>,
   }
 
   protected override toggleOnLoadFormControl(formControl: AbstractControl, isLoading: boolean): void {
-    if (isLoading) {
+    if (isLoading || !this.isEdit) {
       formControl.disable({emitEvent: false});
-    } else if (this.isEditValue) {
+    } else {
       formControl.enable({emitEvent: false});
     }
   }
