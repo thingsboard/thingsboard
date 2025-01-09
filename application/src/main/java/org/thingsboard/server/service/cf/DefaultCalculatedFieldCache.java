@@ -36,12 +36,12 @@ import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -72,14 +72,14 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
         PageDataIterable<CalculatedField> cfs = new PageDataIterable<>(calculatedFieldService::findAllCalculatedFields, initFetchPackSize);
         cfs.forEach(cf -> calculatedFields.putIfAbsent(cf.getId(), cf));
         calculatedFields.values().forEach(cf ->
-                entityIdCalculatedFields.computeIfAbsent(cf.getEntityId(), id -> new ArrayList<>()).add(cf)
+                entityIdCalculatedFields.computeIfAbsent(cf.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(cf)
         );
         PageDataIterable<CalculatedFieldLink> cfls = new PageDataIterable<>(calculatedFieldService::findAllCalculatedFieldLinks, initFetchPackSize);
-        cfls.forEach(link -> calculatedFieldLinks.computeIfAbsent(link.getCalculatedFieldId(), id -> new ArrayList<>()).add(link));
+        cfls.forEach(link -> calculatedFieldLinks.computeIfAbsent(link.getCalculatedFieldId(), id -> new CopyOnWriteArrayList<>()).add(link));
         calculatedFieldLinks.values().stream()
                 .flatMap(List::stream)
                 .forEach(link ->
-                        entityIdCalculatedFieldLinks.computeIfAbsent(link.getEntityId(), id -> new ArrayList<>()).add(link)
+                        entityIdCalculatedFieldLinks.computeIfAbsent(link.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(link)
                 );
     }
 
@@ -90,41 +90,17 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
 
     @Override
     public List<CalculatedField> getCalculatedFieldsByEntityId(EntityId entityId) {
-        return entityIdCalculatedFields.getOrDefault(entityId, new ArrayList<>());
+        return entityIdCalculatedFields.getOrDefault(entityId, new CopyOnWriteArrayList<>());
     }
 
     @Override
     public List<CalculatedFieldLink> getCalculatedFieldLinks(CalculatedFieldId calculatedFieldId) {
-        return calculatedFieldLinks.getOrDefault(calculatedFieldId, new ArrayList<>());
+        return calculatedFieldLinks.getOrDefault(calculatedFieldId, new CopyOnWriteArrayList<>());
     }
 
     @Override
     public List<CalculatedFieldLink> getCalculatedFieldLinksByEntityId(EntityId entityId) {
-        return entityIdCalculatedFieldLinks.getOrDefault(entityId, new ArrayList<>());
-    }
-
-    @Override
-    public void updateCalculatedFieldLinks(CalculatedFieldId calculatedFieldId) {
-        log.debug("Update calculated field links per entity for calculated field: [{}]", calculatedFieldId);
-        calculatedFieldFetchLock.lock();
-        try {
-            List<CalculatedFieldLink> cfLinks = getCalculatedFieldLinks(calculatedFieldId);
-            if (cfLinks != null && !cfLinks.isEmpty()) {
-                cfLinks.forEach(link -> {
-                    entityIdCalculatedFieldLinks.compute(link.getEntityId(), (id, existingList) -> {
-                        if (existingList == null) {
-                            existingList = new ArrayList<>();
-                        } else if (!(existingList instanceof ArrayList)) {
-                            existingList = new ArrayList<>(existingList);
-                        }
-                        existingList.add(link);
-                        return existingList;
-                    });
-                });
-            }
-        } finally {
-            calculatedFieldFetchLock.unlock();
-        }
+        return entityIdCalculatedFieldLinks.getOrDefault(entityId, new CopyOnWriteArrayList<>());
     }
 
     @Override
@@ -192,7 +168,7 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
 
             calculatedFields.put(calculatedFieldId, calculatedField);
 
-            entityIdCalculatedFields.computeIfAbsent(cfEntityId, entityId -> new ArrayList<>()).add(calculatedField);
+            entityIdCalculatedFields.computeIfAbsent(cfEntityId, entityId -> new CopyOnWriteArrayList<>()).add(calculatedField);
 
             CalculatedFieldConfiguration configuration = calculatedField.getConfiguration();
             calculatedFieldLinks.put(calculatedFieldId, configuration.buildCalculatedFieldLinks(tenantId, cfEntityId, calculatedFieldId));
@@ -200,7 +176,7 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
             configuration.getReferencedEntities().stream()
                     .filter(referencedEntityId -> !referencedEntityId.equals(cfEntityId))
                     .forEach(referencedEntityId -> {
-                        entityIdCalculatedFieldLinks.computeIfAbsent(referencedEntityId, entityId -> new ArrayList<>())
+                        entityIdCalculatedFieldLinks.computeIfAbsent(referencedEntityId, entityId -> new CopyOnWriteArrayList<>())
                                 .add(configuration.buildCalculatedFieldLink(tenantId, referencedEntityId, calculatedFieldId));
                     });
         } finally {
@@ -210,13 +186,8 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
 
     @Override
     public void updateCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
-        calculatedFieldFetchLock.lock();
-        try {
-            evict(calculatedFieldId);
-            addCalculatedField(tenantId, calculatedFieldId);
-        } finally {
-            calculatedFieldFetchLock.unlock();
-        }
+        evict(calculatedFieldId);
+        addCalculatedField(tenantId, calculatedFieldId);
     }
 
     @Override
