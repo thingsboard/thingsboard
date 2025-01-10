@@ -63,8 +63,6 @@ import { Renderer2, SecurityContext } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 
 class EChartsModule {
-  constructor() {
-  }
   private initialized = false;
 
   init() {
