@@ -257,6 +257,8 @@ public class TbUtils {
                 float.class, int.class)));
         parserConfig.addImport("hexToBytes", new MethodStub(TbUtils.class.getMethod("hexToBytes",
                 ExecutionContext.class, String.class)));
+        parserConfig.addImport("hexToBytesArray", new MethodStub(TbUtils.class.getMethod("hexToBytesArray",
+                String.class)));
         parserConfig.addImport("intToHex", new MethodStub(TbUtils.class.getMethod("intToHex",
                 Integer.class)));
         parserConfig.addImport("intToHex", new MethodStub(TbUtils.class.getMethod("intToHex",
@@ -297,6 +299,8 @@ public class TbUtils {
                 String.class)));
         parserConfig.addImport("base64ToBytes", new MethodStub(TbUtils.class.getMethod("base64ToBytes",
                 String.class)));
+        parserConfig.addImport("base64ToBytesList", new MethodStub(TbUtils.class.getMethod("base64ToBytesList",
+                ExecutionContext.class, String.class)));
         parserConfig.addImport("bytesToBase64", new MethodStub(TbUtils.class.getMethod("bytesToBase64",
                 byte[].class)));
         parserConfig.addImport("bytesToHex", new MethodStub(TbUtils.class.getMethod("bytesToHex",
@@ -335,7 +339,7 @@ public class TbUtils {
                 byte.class)));
         parserConfig.addImport("parseByteToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseByteToBinaryArray",
                 byte.class, int.class)));
-         parserConfig.addImport("parseByteToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseByteToBinaryArray",
+        parserConfig.addImport("parseByteToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseByteToBinaryArray",
                 byte.class, int.class, boolean.class)));
         parserConfig.addImport("parseBytesToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseBytesToBinaryArray",
                 List.class)));
@@ -664,21 +668,14 @@ public class TbUtils {
     }
 
     public static ExecutionArrayList<Byte> hexToBytes(ExecutionContext ctx, String value) {
-        String hex = prepareNumberString(value, true);
-        if (hex == null) {
-            throw new IllegalArgumentException("Hex string must be not empty!");
-        }
-        int len = hex.length();
-        if (len % 2 > 0) {
-            throw new IllegalArgumentException("Hex string must be even-length.");
-        }
-        int radix = isHexadecimal(value);
-        if (radix != HEX_RADIX) {
-            throw new NumberFormatException("Value: \"" + value + "\" is not numeric or hexDecimal format!");
-        }
-
-        byte [] data = hexToBytes(hex);
+        String hex = validateAndPrepareHex(value);
+        byte[] data = hexToBytes(hex);
         return bytesToExecutionArrayList(ctx, data);
+    }
+
+    public static byte[] hexToBytesArray(String value) {
+        String hex = validateAndPrepareHex(value);
+        return hexToBytes(hex);
     }
 
     public static List<Integer> printUnsignedBytes(ExecutionContext ctx, List<Byte> byteArray) {
@@ -839,6 +836,11 @@ public class TbUtils {
         return Base64.getDecoder().decode(input);
     }
 
+    public static ExecutionArrayList<Byte> base64ToBytesList(ExecutionContext ctx, String input) {
+        byte[] bytes = Base64.getDecoder().decode(input);
+        return bytesToExecutionArrayList(ctx, bytes);
+    }
+
     public static int parseBytesToInt(List<Byte> data) {
         return parseBytesToInt(data, 0);
     }
@@ -877,6 +879,48 @@ public class TbUtils {
         bb.put(data, offset, length);
         bb.position(0);
         return bb.getInt();
+    }
+
+    public static long parseBytesToUnsignedInt(byte[] data) {
+        return parseBytesToUnsignedInt(data, 0);
+    }
+
+    public static long parseBytesToUnsignedInt(byte[] data, int offset) {
+        return parseBytesToUnsignedInt(data, offset, validateLength(data.length, offset, BYTES_LEN_INT_MAX));
+    }
+
+    public static long parseBytesToUnsignedInt(byte[] data, int offset, int length) {
+        return parseBytesToUnsignedInt(data, offset, length, true);
+    }
+
+    public static long parseBytesToUnsignedInt(byte[] data, int offset, int length, boolean bigEndian) {
+        validationNumberByLength(data, offset, length, BYTES_LEN_INT_MAX);
+
+        ByteBuffer bb = ByteBuffer.allocate(8);
+        if (!bigEndian) {
+            bb.order(ByteOrder.LITTLE_ENDIAN);
+        }
+        bb.position(bigEndian ? 8 - length : 0);
+        bb.put(data, offset, length);
+        bb.position(0);
+
+        return bb.getLong();
+    }
+
+    public static long parseBytesToUnsignedInt(List<Byte> data) {
+        return parseBytesToUnsignedInt(data, 0);
+    }
+
+    public static long parseBytesToUnsignedInt(List<Byte> data, int offset) {
+        return parseBytesToUnsignedInt(data, offset, validateLength(data.size(), offset, BYTES_LEN_INT_MAX));
+    }
+
+    public static long parseBytesToUnsignedInt(List<Byte> data, int offset, int length) {
+        return parseBytesToUnsignedInt(data, offset, length, true);
+    }
+
+    public static long parseBytesToUnsignedInt(List<Byte> data, int offset, int length, boolean bigEndian) {
+        return parseBytesToUnsignedInt(Bytes.toArray(data), offset, length, bigEndian);
     }
 
     public static long parseBytesToLong(List<Byte> data) {
@@ -1304,7 +1348,7 @@ public class TbUtils {
     public static byte[] parseByteToBinaryArray(byte byteValue, int binLength, boolean bigEndian) {
         byte[] bins = new byte[binLength];
         for (int i = 0; i < binLength; i++) {
-            if(bigEndian) {
+            if (bigEndian) {
                 bins[binLength - 1 - i] = (byte) ((byteValue >> i) & 1);
             } else {
                 bins[i] = (byte) ((byteValue >> i) & 1);
@@ -1435,16 +1479,32 @@ public class TbUtils {
     }
 
     private static byte[] hexToBytes(String hex) {
-        byte [] data = new byte[hex.length()/2];
+        byte[] data = new byte[hex.length() / 2];
         for (int i = 0; i < hex.length(); i += 2) {
             // Extract two characters from the hex string
             String byteString = hex.substring(i, i + 2);
             // Parse the hex string to a byte
             byte byteValue = (byte) Integer.parseInt(byteString, HEX_RADIX);
             // Add the byte to the ArrayList
-            data[i/2] = byteValue;
+            data[i / 2] = byteValue;
         }
         return data;
+    }
+
+    private static String validateAndPrepareHex(String value) {
+        String hex = prepareNumberString(value, true);
+        if (hex == null) {
+            throw new IllegalArgumentException("Hex string must be not empty!");
+        }
+        int len = hex.length();
+        if (len % 2 > 0) {
+            throw new IllegalArgumentException("Hex string must be even-length.");
+        }
+        int radix = isHexadecimal(value);
+        if (radix != HEX_RADIX) {
+            throw new NumberFormatException("Value: \"" + value + "\" is not numeric or hexDecimal format!");
+        }
+        return hex;
     }
 }
 
