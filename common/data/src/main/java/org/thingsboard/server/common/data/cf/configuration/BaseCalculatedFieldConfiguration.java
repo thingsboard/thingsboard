@@ -50,6 +50,7 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
     }
 
     public BaseCalculatedFieldConfiguration(JsonNode config, EntityType entityType, UUID entityId) {
+//        BaseCalculatedFieldConfiguration calculatedFieldConfig = mapper.convertValue(config, BaseCalculatedFieldConfiguration.class);
         BaseCalculatedFieldConfiguration calculatedFieldConfig = toCalculatedFieldConfig(config, entityType, entityId);
         this.arguments = calculatedFieldConfig.getArguments();
         this.expression = calculatedFieldConfig.getExpression();
@@ -59,7 +60,7 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
     @Override
     public List<EntityId> getReferencedEntities() {
         return arguments.values().stream()
-                .map(Argument::getEntityId)
+                .map(Argument::getRefEntityId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
@@ -69,24 +70,24 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
         CalculatedFieldLinkConfiguration linkConfiguration = new CalculatedFieldLinkConfiguration();
 
         arguments.entrySet().stream()
-                .filter(entry -> entry.getValue().getEntityId().equals(entityId))
+                .filter(entry -> entry.getValue().getRefEntityId().equals(entityId))
                 .forEach(entry -> {
-                    Argument targetArgument = entry.getValue();
-                    String argumentKey = entry.getKey();
+                    ReferencedEntityKey refEntityKey = entry.getValue().getRefEntityKey();
+                    String argumentName = entry.getKey();
 
-                    switch (targetArgument.getType()) {
+                    switch (refEntityKey.getType()) {
                         case ATTRIBUTE -> {
-                            switch (targetArgument.getScope()) {
+                            switch (refEntityKey.getScope()) {
                                 case CLIENT_SCOPE ->
-                                        linkConfiguration.getClientAttributes().put(targetArgument.getKey(), argumentKey);
+                                        linkConfiguration.getClientAttributes().put(refEntityKey.getKey(), argumentName);
                                 case SERVER_SCOPE ->
-                                        linkConfiguration.getServerAttributes().put(targetArgument.getKey(), argumentKey);
+                                        linkConfiguration.getServerAttributes().put(refEntityKey.getKey(), argumentName);
                                 case SHARED_SCOPE ->
-                                        linkConfiguration.getSharedAttributes().put(targetArgument.getKey(), argumentKey);
+                                        linkConfiguration.getSharedAttributes().put(refEntityKey.getKey(), argumentName);
                             }
                         }
                         case TS_LATEST, TS_ROLLING ->
-                                linkConfiguration.getTimeSeries().put(targetArgument.getKey(), argumentKey);
+                                linkConfiguration.getTimeSeries().put(refEntityKey.getKey(), argumentName);
                     }
                 });
 
@@ -118,7 +119,7 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
         ObjectNode argumentsNode = configNode.putObject("arguments");
         arguments.forEach((key, argument) -> {
             ObjectNode argumentNode = argumentsNode.putObject(key);
-            EntityId referencedEntityId = argument.getEntityId();
+            EntityId referencedEntityId = argument.getRefEntityId();
             if (referencedEntityId != null) {
                 argumentNode.put("entityType", referencedEntityId.getEntityType().name());
                 argumentNode.put("entityId", referencedEntityId.getId().toString());
@@ -126,9 +127,9 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
                 argumentNode.put("entityType", entityType.name());
                 argumentNode.put("entityId", entityId.toString());
             }
-            argumentNode.put("key", argument.getKey());
-            argumentNode.put("type", String.valueOf(argument.getType()));
-            argumentNode.put("scope", String.valueOf(argument.getScope()));
+//            argumentNode.put("key", argument.getKey());
+//            argumentNode.put("type", String.valueOf(argument.getType()));
+//            argumentNode.put("scope", String.valueOf(argument.getScope()));
             argumentNode.put("defaultValue", argument.getDefaultValue());
             argumentNode.put("limit", String.valueOf(argument.getLimit()));
             argumentNode.put("timeWindow", String.valueOf(argument.getTimeWindow()));
@@ -165,19 +166,19 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
                 if (argumentNode.hasNonNull("entityType") && argumentNode.hasNonNull("entityId")) {
                     String referencedEntityType = argumentNode.get("entityType").asText();
                     UUID referencedEntityId = UUID.fromString(argumentNode.get("entityId").asText());
-                    argument.setEntityId(EntityIdFactory.getByTypeAndUuid(referencedEntityType, referencedEntityId));
+                    argument.setRefEntityId(EntityIdFactory.getByTypeAndUuid(referencedEntityType, referencedEntityId));
                 } else {
-                    argument.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
+                    argument.setRefEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
                 }
-                argument.setKey(argumentNode.get("key").asText());
+//                argument.setRefEntityKey(argumentNode.get("key").asText());
                 JsonNode type = argumentNode.get("type");
-                if (type != null && !type.isNull() && !type.asText().equals("null")) {
-                    argument.setType(ArgumentType.valueOf(type.asText()));
-                }
-                JsonNode scope = argumentNode.get("scope");
-                if (scope != null && !scope.isNull() && !scope.asText().equals("null")) {
-                    argument.setScope(AttributeScope.valueOf(scope.asText()));
-                }
+//                if (type != null && !type.isNull() && !type.asText().equals("null")) {
+//                    argument.setType(ArgumentType.valueOf(type.asText()));
+//                }
+//                JsonNode scope = argumentNode.get("scope");
+//                if (scope != null && !scope.isNull() && !scope.asText().equals("null")) {
+//                    argument.setScope(AttributeScope.valueOf(scope.asText()));
+//                }
                 if (argumentNode.hasNonNull("defaultValue")) {
                     argument.setDefaultValue(argumentNode.get("defaultValue").asText());
                 }

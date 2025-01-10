@@ -39,8 +39,6 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
@@ -273,7 +271,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
                     case ASSET_PROFILE, DEVICE_PROFILE -> {
                         log.info("Initializing state for all entities in profile: tenantId=[{}], profileId=[{}]", tenantId, entityId);
                         Map<String, Argument> commonArguments = calculatedFieldCtx.getArguments().entrySet().stream()
-                                .filter(entry -> !isProfileEntity(entry.getValue().getEntityId()))
+                                .filter(entry -> !isProfileEntity(entry.getValue().getRefEntityId()))
                                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                         fetchArguments(tenantId, entityId, commonArguments, commonArgs -> {
                             calculatedFieldCache.getEntitiesByProfile(tenantId, entityId).forEach(targetEntityId -> {
@@ -341,30 +339,30 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     }
 
     @Override
-    public void onTelemetryUpdate(CalculatedFieldTelemetryUpdateRequest calculatedFieldTelemetryUpdateRequest) {
+    public void onTelemetryUpdate(CalculatedFieldTelemetryUpdateRequest request) {
         try {
-            EntityId entityId = calculatedFieldTelemetryUpdateRequest.getEntityId();
+            EntityId entityId = request.getEntityId();
 
             if (supportedReferencedEntities.contains(entityId.getEntityType())) {
-                TenantId tenantId = calculatedFieldTelemetryUpdateRequest.getTenantId();
+                TenantId tenantId = request.getTenantId();
                 TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tenantId, entityId);
 
                 if (tpi.isMyPartition()) {
 
-                    processCalculatedFields(calculatedFieldTelemetryUpdateRequest, entityId);
-                    processCalculatedFields(calculatedFieldTelemetryUpdateRequest, getProfileId(tenantId, entityId));
+                    processCalculatedFields(request, entityId);
+                    processCalculatedFields(request, getProfileId(tenantId, entityId));
 
                     Map<TopicPartitionInfo, List<CalculatedFieldEntityCtxId>> tpiStatesToUpdate = new HashMap<>();
-                    processCalculatedFieldLinks(calculatedFieldTelemetryUpdateRequest, tpiStatesToUpdate);
+                    processCalculatedFieldLinks(request, tpiStatesToUpdate);
                     if (!tpiStatesToUpdate.isEmpty()) {
                         tpiStatesToUpdate.forEach((topicPartitionInfo, ctxIds) -> {
-                            TransportProtos.TelemetryUpdateMsgProto telemetryUpdateMsgProto = buildTelemetryUpdateMsgProto(calculatedFieldTelemetryUpdateRequest, ctxIds);
+                            TransportProtos.TelemetryUpdateMsgProto telemetryUpdateMsgProto = buildTelemetryUpdateMsgProto(request, ctxIds);
                             clusterService.pushMsgToRuleEngine(topicPartitionInfo, UUID.randomUUID(), TransportProtos.ToRuleEngineMsg.newBuilder()
                                     .setCfTelemetryUpdateMsg(telemetryUpdateMsgProto).build(), null);
                         });
                     }
                 } else {
-                    TransportProtos.TelemetryUpdateMsgProto telemetryUpdateMsgProto = buildTelemetryUpdateMsgProto(calculatedFieldTelemetryUpdateRequest);
+                    TransportProtos.TelemetryUpdateMsgProto telemetryUpdateMsgProto = buildTelemetryUpdateMsgProto(request);
                     clusterService.pushMsgToRuleEngine(tpi, UUID.randomUUID(), TransportProtos.ToRuleEngineMsg.newBuilder()
                             .setCfTelemetryUpdateMsg(telemetryUpdateMsgProto).build(), null);
                 }
@@ -375,13 +373,12 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     }
 
     private void processCalculatedFields(CalculatedFieldTelemetryUpdateRequest request, EntityId cfTargetEntityId) {
-        TenantId tenantId = request.getTenantId();
-        EntityId entityId = request.getEntityId();
-
         if (cfTargetEntityId != null) {
-            calculatedFieldCache.getCalculatedFieldsByEntityId(cfTargetEntityId).forEach(cf -> {
-                CalculatedFieldLinkConfiguration linkConfiguration = cf.getConfiguration().getReferencedEntityConfig(cfTargetEntityId);
-                mapAndProcessUpdatedTelemetry(tenantId, entityId, cf.getId(), request, linkConfiguration);
+            calculatedFieldCache.getCalculatedFieldCtxsByEntityId(cfTargetEntityId, tbelInvokeService).forEach(ctx -> {
+                Map<String, KvEntry> updatedTelemetry = request.getMappedTelemetry(ctx);
+                if (!updatedTelemetry.isEmpty()) {
+                    executeTelemetryUpdate(ctx, request.getEntityId(), request.getPreviousCalculatedFieldIds(), updatedTelemetry);
+                }
             });
         }
     }
@@ -393,54 +390,30 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         calculatedFieldCache.getCalculatedFieldLinksByEntityId(entityId)
                 .forEach(link -> {
                     CalculatedFieldId calculatedFieldId = link.getCalculatedFieldId();
-                    EntityId targetEntityId = calculatedFieldCache.getCalculatedField(calculatedFieldId).getEntityId();
+                    CalculatedFieldCtx ctx = calculatedFieldCache.getCalculatedFieldCtx(calculatedFieldId, tbelInvokeService);
+                    EntityId targetEntityId = ctx.getEntityId();
 
                     if (isProfileEntity(targetEntityId)) {
                         calculatedFieldCache.getEntitiesByProfile(tenantId, targetEntityId).forEach(entityByProfile -> {
-                            processCalculatedFieldLink(request, entityByProfile, link, tpiStates);
+                            processCalculatedFieldLink(request, entityByProfile, ctx, tpiStates);
                         });
                     } else {
-                        processCalculatedFieldLink(request, targetEntityId, link, tpiStates);
+                        processCalculatedFieldLink(request, targetEntityId, ctx, tpiStates);
                     }
                 });
     }
 
-    private void processCalculatedFieldLink(CalculatedFieldTelemetryUpdateRequest request, EntityId targetEntity, CalculatedFieldLink link, Map<TopicPartitionInfo, List<CalculatedFieldEntityCtxId>> tpiStates) {
-        TenantId tenantId = request.getTenantId();
-        EntityId entityId = request.getEntityId();
-        CalculatedFieldId calculatedFieldId = link.getCalculatedFieldId();
-
-        TopicPartitionInfo targetEntityTpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tenantId, targetEntity);
+    private void processCalculatedFieldLink(CalculatedFieldTelemetryUpdateRequest request, EntityId targetEntity, CalculatedFieldCtx ctx, Map<TopicPartitionInfo, List<CalculatedFieldEntityCtxId>> tpiStates) {
+        TopicPartitionInfo targetEntityTpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, request.getTenantId(), targetEntity);
         if (targetEntityTpi.isMyPartition()) {
-            mapAndProcessUpdatedTelemetry(tenantId, entityId, calculatedFieldId, request, link.getConfiguration());
+            Map<String, KvEntry> updatedTelemetry = request.getMappedTelemetry(ctx);
+            if (!updatedTelemetry.isEmpty()) {
+                executeTelemetryUpdate(ctx, request.getEntityId(), request.getPreviousCalculatedFieldIds(), updatedTelemetry);
+            }
         } else {
             List<CalculatedFieldEntityCtxId> ctxIds = tpiStates.computeIfAbsent(targetEntityTpi, k -> new ArrayList<>());
-            ctxIds.add(new CalculatedFieldEntityCtxId(calculatedFieldId, targetEntity));
+            ctxIds.add(new CalculatedFieldEntityCtxId(ctx.getCfId(), targetEntity));
         }
-    }
-
-    private void mapAndProcessUpdatedTelemetry(TenantId tenantId,
-                                               EntityId entityId,
-                                               CalculatedFieldId calculatedFieldId,
-                                               CalculatedFieldTelemetryUpdateRequest request,
-                                               CalculatedFieldLinkConfiguration linkConfiguration) {
-        Map<String, String> telemetryKeys = request.getTelemetryKeysFromLink(linkConfiguration);
-        Map<String, KvEntry> updatedTelemetry = mapTelemetryKeys(telemetryKeys, request.getKvEntries());
-
-        if (!updatedTelemetry.isEmpty()) {
-            List<CalculatedFieldId> previousCalculatedFieldIds = request.getPreviousCalculatedFieldIds();
-            executeTelemetryUpdate(tenantId, entityId, calculatedFieldId, previousCalculatedFieldIds, updatedTelemetry);
-        }
-    }
-
-    private Map<String, KvEntry> mapTelemetryKeys(Map<String, String> telemetryKeys, List<? extends KvEntry> kvEntries) {
-        return kvEntries.stream()
-                .filter(entry -> telemetryKeys.containsKey(entry.getKey()))
-                .collect(Collectors.toMap(
-                        entry -> telemetryKeys.getOrDefault(entry.getKey(), entry.getKey()),
-                        entry -> entry,
-                        (v1, v2) -> v1
-                ));
     }
 
     @Override
@@ -454,40 +427,26 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             }
 
             proto.getLinksList().forEach(ctxIdProto -> {
-                TenantId tenantId = request.getTenantId();
                 EntityId entityId = request.getEntityId();
                 CalculatedFieldId calculatedFieldId = new CalculatedFieldId(new UUID(ctxIdProto.getCalculatedFieldIdMSB(), ctxIdProto.getCalculatedFieldIdLSB()));
+                CalculatedFieldCtx ctx = calculatedFieldCache.getCalculatedFieldCtx(calculatedFieldId, tbelInvokeService);
 
-                CalculatedFieldLinkConfiguration linkConfiguration
-                        = calculatedFieldCache.getCalculatedField(calculatedFieldId).getConfiguration().getReferencedEntityConfig(entityId);
-
-                mapAndProcessUpdatedTelemetry(tenantId, entityId, calculatedFieldId, request, linkConfiguration);
+                Map<String, KvEntry> updatedTelemetry = request.getMappedTelemetry(ctx);
+                if (!updatedTelemetry.isEmpty()) {
+                    executeTelemetryUpdate(ctx, entityId, request.getPreviousCalculatedFieldIds(), updatedTelemetry);
+                }
             });
         } catch (Exception e) {
             log.trace("Failed to process telemetry update msg: [{}]", proto, e);
         }
     }
 
-    private void executeTelemetryUpdate(TenantId tenantId, EntityId entityId, CalculatedFieldId calculatedFieldId, List<CalculatedFieldId> previousCalculatedFieldIds, Map<String, KvEntry> updatedTelemetry) {
-        log.info("Received telemetry update msg: tenantId=[{}], entityId=[{}], calculatedFieldId=[{}]", tenantId, entityId, calculatedFieldId);
-        CalculatedField calculatedField = calculatedFieldCache.getCalculatedField(calculatedFieldId);
-        CalculatedFieldCtx calculatedFieldCtx = calculatedFieldCache.getCalculatedFieldCtx(calculatedFieldId, tbelInvokeService);
+    private void executeTelemetryUpdate(CalculatedFieldCtx cfCtx, EntityId entityId, List<CalculatedFieldId> previousCalculatedFieldIds, Map<String, KvEntry> updatedTelemetry) {
+        log.info("Received telemetry update msg: tenantId=[{}], entityId=[{}], calculatedFieldId=[{}]", cfCtx.getTenantId(), entityId, cfCtx.getCfId());
         Map<String, ArgumentEntry> argumentValues = updatedTelemetry.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> ArgumentEntry.createSingleValueArgument(entry.getValue())));
 
-        EntityId cfEntityId = calculatedField.getEntityId();
-        switch (cfEntityId.getEntityType()) {
-            case ASSET_PROFILE, DEVICE_PROFILE -> {
-                boolean isCommonEntity = calculatedField.getConfiguration().getReferencedEntities().contains(entityId);
-                if (isCommonEntity) {
-                    calculatedFieldCache.getEntitiesByProfile(tenantId, cfEntityId).forEach(id -> updateOrInitializeState(calculatedFieldCtx, id, argumentValues, previousCalculatedFieldIds));
-                } else {
-                    updateOrInitializeState(calculatedFieldCtx, entityId, argumentValues, previousCalculatedFieldIds);
-                }
-            }
-            default ->
-                    updateOrInitializeState(calculatedFieldCtx, cfEntityId, argumentValues, previousCalculatedFieldIds);
-        }
+        updateOrInitializeState(cfCtx, entityId, argumentValues, previousCalculatedFieldIds);
     }
 
     @Override
@@ -533,8 +492,6 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             } else {
                 clusterService.pushMsgToRuleEngine(tpi, UUID.randomUUID(), TransportProtos.ToRuleEngineMsg.newBuilder().setProfileEntityMsg(proto).build(), null);
             }
-
-
         } catch (Exception e) {
             log.trace("Failed to process profile entity msg: [{}]", proto, e);
         }
@@ -616,11 +573,11 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
 
             boolean allKeysPresent = argumentsMap.keySet().containsAll(calculatedFieldCtx.getArguments().keySet());
             boolean requiresTsRollingUpdate = calculatedFieldCtx.getArguments().values().stream()
-                    .anyMatch(argument -> ArgumentType.TS_ROLLING.equals(argument.getType()) && state.getArguments().get(argument.getKey()) == null);
+                    .anyMatch(argument -> ArgumentType.TS_ROLLING.equals(argument.getRefEntityKey().getType()) && state.getArguments().get(argument.getRefEntityKey().getKey()) == null);
 
             if (!allKeysPresent || requiresTsRollingUpdate) {
                 Map<String, Argument> missingArguments = calculatedFieldCtx.getArguments().entrySet().stream()
-                        .filter(entry -> !argumentsMap.containsKey(entry.getKey()) || (ArgumentType.TS_ROLLING.equals(entry.getValue().getType()) && state.getArguments().get(entry.getKey()) == null))
+                        .filter(entry -> !argumentsMap.containsKey(entry.getKey()) || (ArgumentType.TS_ROLLING.equals(entry.getValue().getRefEntityKey().getType()) && state.getArguments().get(entry.getKey()) == null))
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
                 fetchArguments(calculatedFieldCtx.getTenantId(), entityId, missingArguments, argumentsMap::putAll)
@@ -696,7 +653,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     }
 
     private ListenableFuture<ArgumentEntry> fetchArgumentValue(TenantId tenantId, EntityId targetEntityId, Argument argument) {
-        EntityId argumentEntityId = argument.getEntityId();
+        EntityId argumentEntityId = argument.getRefEntityId();
         EntityId entityId = isProfileEntity(argumentEntityId)
                 ? targetEntityId
                 : argumentEntityId;
@@ -704,17 +661,17 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     }
 
     private ListenableFuture<ArgumentEntry> fetchKvEntry(TenantId tenantId, EntityId entityId, Argument argument) {
-        return switch (argument.getType()) {
+        return switch (argument.getRefEntityKey().getType()) {
             case TS_ROLLING -> fetchTsRolling(tenantId, entityId, argument);
             case ATTRIBUTE -> transformSingleValueArgument(
                     Futures.transform(
-                            attributesService.find(tenantId, entityId, argument.getScope(), argument.getKey()),
+                            attributesService.find(tenantId, entityId, argument.getRefEntityKey().getScope(), argument.getRefEntityKey().getKey()),
                             result -> result.or(() -> Optional.of(new BaseAttributeKvEntry(createDefaultKvEntry(argument), System.currentTimeMillis(), 0L))),
                             calculatedFieldCallbackExecutor)
             );
             case TS_LATEST -> transformSingleValueArgument(
                     Futures.transform(
-                            timeseriesService.findLatest(tenantId, entityId, argument.getKey()),
+                            timeseriesService.findLatest(tenantId, entityId, argument.getRefEntityKey().getKey()),
                             result -> result.or(() -> Optional.of(new BasicTsKvEntry(System.currentTimeMillis(), createDefaultKvEntry(argument), 0L))),
                             calculatedFieldCallbackExecutor));
         };
@@ -736,7 +693,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         long startTs = currentTime - timeWindow;
         int limit = argument.getLimit() == 0 ? MAX_LAST_RECORDS_VALUE : argument.getLimit();
 
-        ReadTsKvQuery query = new BaseReadTsKvQuery(argument.getKey(), startTs, currentTime, 0, limit, Aggregation.NONE);
+        ReadTsKvQuery query = new BaseReadTsKvQuery(argument.getRefEntityKey().getKey(), startTs, currentTime, 0, limit, Aggregation.NONE);
         ListenableFuture<List<TsKvEntry>> tsRollingFuture = timeseriesService.findAll(tenantId, entityId, List.of(query));
 
         return Futures.transform(tsRollingFuture, tsRolling -> tsRolling == null ? TsRollingArgumentEntry.EMPTY : ArgumentEntry.createTsRollingArgument(tsRolling), calculatedFieldCallbackExecutor);
@@ -826,7 +783,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     }
 
     private KvEntry createDefaultKvEntry(Argument argument) {
-        String key = argument.getKey();
+        String key = argument.getRefEntityKey().getKey();
         String defaultValue = argument.getDefaultValue();
         if (NumberUtils.isParsable(defaultValue)) {
             return new DoubleDataEntry(key, Double.parseDouble(defaultValue));

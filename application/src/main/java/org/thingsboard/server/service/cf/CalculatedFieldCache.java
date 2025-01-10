@@ -38,6 +38,8 @@ public interface CalculatedFieldCache {
 
     CalculatedFieldCtx getCalculatedFieldCtx(CalculatedFieldId calculatedFieldId, TbelInvokeService tbelInvokeService);
 
+    List<CalculatedFieldCtx> getCalculatedFieldCtxsByEntityId(EntityId entityId, TbelInvokeService tbelInvokeService);
+
     Set<EntityId> getEntitiesByProfile(TenantId tenantId, EntityId entityId);
 
     void addCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId);

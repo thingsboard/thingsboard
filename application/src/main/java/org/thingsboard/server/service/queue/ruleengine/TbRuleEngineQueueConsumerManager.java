@@ -28,6 +28,7 @@ import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
@@ -179,6 +180,10 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
                 forwardToRuleEngineActor(config.getName(), tenantId, toRuleEngineMsg, callback);
             } else if (toRuleEngineMsg.hasCfTelemetryUpdateMsg()) {
                 calculatedFieldExecutionService.onTelemetryUpdateMsg(toRuleEngineMsg.getCfTelemetryUpdateMsg());
+            } else if (toRuleEngineMsg.hasEntityProfileUpdateMsg()) {
+                calculatedFieldExecutionService.onEntityProfileChangedMsg(toRuleEngineMsg.getEntityProfileUpdateMsg(), TbCallback.EMPTY);
+            } else if (toRuleEngineMsg.hasProfileEntityMsg()) {
+                calculatedFieldExecutionService.onProfileEntityMsg(toRuleEngineMsg.getProfileEntityMsg(), TbCallback.EMPTY);
             } else {
                 callback.onSuccess();
             }

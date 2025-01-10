@@ -61,6 +61,7 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     private final ConcurrentMap<CalculatedFieldId, List<CalculatedFieldLink>> calculatedFieldLinks = new ConcurrentHashMap<>();
     private final ConcurrentMap<EntityId, List<CalculatedFieldLink>> entityIdCalculatedFieldLinks = new ConcurrentHashMap<>();
     private final ConcurrentMap<CalculatedFieldId, CalculatedFieldCtx> calculatedFieldsCtx = new ConcurrentHashMap<>();
+    private final ConcurrentMap<EntityId, List<CalculatedFieldCtx>> entityIdCalculatedFieldCtxs = new ConcurrentHashMap<>();
     private final ConcurrentMap<EntityId, Set<EntityId>> profileEntities = new ConcurrentHashMap<>();
 
     @Value("${calculatedField.initFetchPackSize:50000}")
@@ -124,6 +125,13 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
         }
         log.trace("[{}] Found calculated field ctx in cache: {}", calculatedFieldId, ctx);
         return ctx;
+    }
+
+    @Override
+    public List<CalculatedFieldCtx> getCalculatedFieldCtxsByEntityId(EntityId entityId, TbelInvokeService tbelInvokeService) {
+        return getCalculatedFieldsByEntityId(entityId).stream()
+                .map(cf -> getCalculatedFieldCtx(cf.getId(), tbelInvokeService))
+                .toList();
     }
 
     @Override

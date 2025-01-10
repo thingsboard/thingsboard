@@ -19,11 +19,16 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.util.TbPair;
+import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -46,6 +51,32 @@ public class CalculatedFieldTimeSeriesUpdateRequest implements CalculatedFieldTe
     @Override
     public Map<String, String> getTelemetryKeysFromLink(CalculatedFieldLinkConfiguration linkConfiguration) {
         return linkConfiguration.getTimeSeries();
+    }
+
+    @Override
+    public Map<String, KvEntry> getMappedTelemetry(CalculatedFieldCtx ctx) {
+        Map<String, KvEntry> mappedKvEntries = new HashMap<>();
+        Map<TbPair<EntityId, ReferencedEntityKey>, String> referencedKeys = ctx.getReferencedEntityKeys();
+
+        kvEntries.forEach(entry -> {
+            String key = entry.getKey();
+
+            ReferencedEntityKey tsLatestKey = new ReferencedEntityKey(key, ArgumentType.TS_LATEST, null);
+            String argTsLatestName = referencedKeys.get(new TbPair<>(entityId, tsLatestKey));
+
+            if (argTsLatestName != null) {
+                mappedKvEntries.put(argTsLatestName, entry);
+            } else {
+                ReferencedEntityKey tsRollingKey = new ReferencedEntityKey(key, ArgumentType.TS_ROLLING, null);
+                String argTsRollingName = referencedKeys.get(new TbPair<>(entityId, tsRollingKey));
+
+                if (argTsRollingName != null) {
+                    mappedKvEntries.put(argTsRollingName, entry);
+                }
+            }
+        });
+
+        return mappedKvEntries;
     }
 
 }

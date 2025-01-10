@@ -382,7 +382,7 @@ public class CustomerServiceTest extends AbstractServiceTest {
         Argument argument = new Argument();
         argument.setEntityId(savedCustomer.getId());
         argument.setType(ArgumentType.TS_LATEST);
-        argument.setKey("temperature");
+        argument.setRefEntityKey("temperature");
 
         config.setArguments(Map.of("T", argument));
 

@@ -156,7 +156,7 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         Argument argument = new Argument();
         argument.setEntityId(referencedEntityId);
         argument.setType(ArgumentType.TS_LATEST);
-        argument.setKey("temperature");
+        argument.setRefEntityKey("temperature");
 
         config.setArguments(Map.of("T", argument));
 

@@ -22,6 +22,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -95,6 +96,7 @@ public class CalculatedFieldEntity extends BaseSqlEntity<CalculatedField> implem
         this.type = calculatedField.getType().name();
         this.name = calculatedField.getName();
         this.configurationVersion = calculatedField.getConfigurationVersion();
+//        this.configuration = JacksonUtil.valueToTree(calculatedField.getConfiguration());
         this.configuration = calculatedField.getConfiguration().calculatedFieldConfigToJson(EntityType.valueOf(entityType), entityId);
         this.version = calculatedField.getVersion();
         if (calculatedField.getExternalId() != null) {
@@ -112,6 +114,7 @@ public class CalculatedFieldEntity extends BaseSqlEntity<CalculatedField> implem
         calculatedField.setName(name);
         calculatedField.setConfigurationVersion(configurationVersion);
         calculatedField.setConfiguration(readCalculatedFieldConfiguration(configuration, EntityType.valueOf(entityType), entityId));
+//        calculatedField.setConfiguration(JacksonUtil.treeToValue(configuration, CalculatedFieldConfiguration.class));
         calculatedField.setVersion(version);
         if (externalId != null) {
             calculatedField.setExternalId(new CalculatedFieldId(externalId));

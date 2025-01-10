@@ -15,19 +15,16 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.springframework.lang.Nullable;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.AttributeScope;
 
 @Data
-public class Argument {
+@AllArgsConstructor
+public class ReferencedEntityKey {
 
-    @Nullable
-    private EntityId refEntityId;
-    private ReferencedEntityKey refEntityKey;
-    private String defaultValue;
-
-    private int limit;
-    private long timeWindow;
+    private String key;
+    private ArgumentType type;
+    private AttributeScope scope;
 
 }
