@@ -23,7 +23,7 @@ const tbHtmlFallbackMiddleware: NextHandleFunction = (
   _res: ServerResponse,
   next: Connect.NextFunction
 ) => {
-  if (/^\/resources\/scada-symbols\/(?:system|tenant)\/[^/]+\.svg$/.test(req.url)) {
+  if (/^\/resources\/scada-symbols\/(?:system|tenant)\/[^/]+$/.test(req.url)) {
     req.url = '/';
   }
   next();
