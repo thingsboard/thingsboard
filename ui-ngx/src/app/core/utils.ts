@@ -17,7 +17,7 @@
 import _ from 'lodash';
 import { from, Observable, of, ReplaySubject, Subject } from 'rxjs';
 import { catchError, finalize, share } from 'rxjs/operators';
-import { Datasource, DatasourceData, FormattedData, ReplaceInfo } from '@app/shared/models/widget.models';
+import { DataKey, Datasource, DatasourceData, FormattedData, ReplaceInfo } from '@app/shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
@@ -846,7 +846,7 @@ function prepareMessageFromData(data): string {
   }
 }
 
-export function genNextLabel(name: string, datasources: Datasource[]): string {
+export const genNextLabel = (name: string, datasources: Datasource[]): string => {
   let label = name;
   let i = 1;
   let matches = false;
@@ -876,6 +876,25 @@ export function genNextLabel(name: string, datasources: Datasource[]): string {
         }
       });
     } while (matches);
+  }
+  return label;
+}
+
+export const genNextLabelForDataKeys = (name: string, dataKeys: DataKey[]): string => {
+  let label = name;
+  let i = 1;
+  let matches = false;
+  if (dataKeys) {
+    do {
+      matches = false;
+      dataKeys.forEach((dataKey) => {
+        if (dataKey?.label === label) {
+          i++;
+          label = name + ' ' + i;
+          matches = true;
+        }
+      });
+    } while (matches)
   }
   return label;
 }

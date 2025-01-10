@@ -33,7 +33,7 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { DomSanitizer } from '@angular/platform-browser';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { isDefinedAndNotNull } from '@core/utils';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { Datasource } from '@shared/models/widget.models';
 
 @Component({

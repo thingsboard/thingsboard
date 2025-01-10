@@ -102,7 +102,7 @@ import {
 import {
   TimeSeriesChartThresholdRowComponent
 } from '@home/components/widget/lib/settings/common/chart/time-series-chart-threshold-row.component';
-import { DataKeyInputComponent } from '@home/components/widget/lib/settings/common/data-key-input.component';
+import { DataKeyInputComponent } from '@home/components/widget/lib/settings/common/key/data-key-input.component';
 import { EntityAliasInputComponent } from '@home/components/widget/lib/settings/common/entity-alias-input.component';
 import {
   TimeSeriesChartThresholdSettingsPanelComponent
@@ -191,10 +191,19 @@ import {
 } from '@home/components/widget/lib/settings/common/map/map-layer-settings-panel.component';
 import { MapDataLayersComponent } from '@home/components/widget/lib/settings/common/map/map-data-layers.component';
 import { MapDataLayerRowComponent } from '@home/components/widget/lib/settings/common/map/map-data-layer-row.component';
-import { WidgetConfigComponentsModule } from '@home/components/widget/config/widget-config-components.module';
 import {
   EntityAliasSelectComponent
 } from '@home/components/widget/lib/settings/common/alias/entity-alias-select.component';
+import {
+  MapDataLayerDialogComponent
+} from '@home/components/widget/lib/settings/common/map/map-data-layer-dialog.component';
+import { FilterSelectComponent } from '@home/components/widget/lib/settings/common/filter/filter-select.component';
+import { DataKeysComponent } from '@home/components/widget/lib/settings/common/key/data-keys.component';
+import {
+  DataKeyConfigDialogComponent
+} from '@home/components/widget/lib/settings/common/key/data-key-config-dialog.component';
+import { DataKeyConfigComponent } from '@home/components/widget/lib/settings/common/key/data-key-config.component';
+import { WidgetSettingsComponent } from '@home/components/widget/lib/settings/common/widget/widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -268,10 +277,16 @@ import {
     MapLayerSettingsPanelComponent,
     MapLayerRowComponent,
     MapLayersComponent,
+    MapDataLayerDialogComponent,
     MapDataLayerRowComponent,
     MapDataLayersComponent,
     MapSettingsComponent,
-    EntityAliasSelectComponent
+    EntityAliasSelectComponent,
+    FilterSelectComponent,
+    DataKeysComponent,
+    DataKeyConfigDialogComponent,
+    DataKeyConfigComponent,
+    WidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -347,7 +362,12 @@ import {
     DynamicFormComponent,
     DynamicFormArrayComponent,
     MapSettingsComponent,
-    EntityAliasSelectComponent
+    EntityAliasSelectComponent,
+    FilterSelectComponent,
+    DataKeysComponent,
+    DataKeyConfigDialogComponent,
+    DataKeyConfigComponent,
+    WidgetSettingsComponent
   ],
   providers: [
     ColorSettingsComponentService,

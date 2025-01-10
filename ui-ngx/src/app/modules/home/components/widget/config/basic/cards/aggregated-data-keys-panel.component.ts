@@ -38,7 +38,7 @@ import { WidgetConfigComponent } from '@home/components/widget/widget-config.com
 import { DataKey, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { aggregatedValueCardDefaultKeySettings } from '@home/components/widget/lib/cards/aggregated-value-card.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 

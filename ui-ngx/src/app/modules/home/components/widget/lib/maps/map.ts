@@ -49,6 +49,7 @@ import {
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { widgetType } from '@shared/models/widget.models';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 
 export abstract class TbMap<S extends BaseMapSettings> {
 
@@ -67,7 +68,6 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected map: L.Map;
 
   protected defaultCenterPosition: [number, number];
-  protected bounds: L.LatLngBounds;
   protected ignoreUpdateBounds = false;
 
   protected southWest = new L.LatLng(-Projection.SphericalMercator['MAX_LATITUDE'], -180);
@@ -76,6 +76,8 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected dataLayers: TbMapDataLayer<any,any>[];
 
   protected mapElement: HTMLElement;
+
+  protected sidebar: L.TB.SidebarControl;
 
   private readonly mapResize$: ResizeObserver;
 
@@ -129,9 +131,6 @@ export abstract class TbMap<S extends BaseMapSettings> {
     });
     if (this.settings.useDefaultCenterPosition) {
       this.map.panTo(this.defaultCenterPosition);
-      this.bounds = this.map.getBounds();
-    } else {
-      this.bounds = new L.LatLngBounds(null, null);
     }
     this.setupDataLayers();
   }
@@ -148,9 +147,39 @@ export abstract class TbMap<S extends BaseMapSettings> {
       this.dataLayers.push(...this.settings.circles.map(settings => new TbCirclesDataLayer(this, settings)));
     }
     if (this.dataLayers.length) {
+      const groupsMap = new Map<string, L.TB.GroupData>();
+      const customTranslate = this.ctx.$injector.get(CustomTranslatePipe);
+      this.dataLayers.forEach(dl => {
+        dl.getGroups().forEach(group => {
+          let groupData = groupsMap.get(group);
+          if (!groupData) {
+            groupData = {
+              title: customTranslate.transform(group),
+              group,
+              enabled: true,
+              dataLayers: []
+            };
+            groupsMap.set(group, groupData);
+          }
+          groupData.dataLayers.push(dl);
+        });
+      });
 
-      // TODO: Groups
-      this.dataLayers.forEach(dl => this.map.addLayer(dl.getFeatureGroup()));
+      const groupDataLayers = Array.from(groupsMap.values());
+      if (groupDataLayers.length) {
+        const sidebar = this.getSidebar();
+        L.TB.groups({
+          groups: groupDataLayers,
+          sidebar,
+          position: this.settings.controlsPosition,
+          uiClass: 'tb-groups',
+          paneTitle: this.ctx.translate.instant('widgets.maps.data-layer.groups'),
+          buttonTitle: this.ctx.translate.instant('widgets.maps.data-layer.groups'),
+        }).addTo(this.map);
+        this.map.on('layergroupchange', () => {
+          this.updateBounds();
+        });
+      }
 
       const setup = this.dataLayers.map(dl => dl.setup());
       forkJoin(setup).subscribe(
@@ -213,28 +242,32 @@ export abstract class TbMap<S extends BaseMapSettings> {
   }
 
   private updateBounds() {
-    const bounds = new L.LatLngBounds(null, null);
-    this.dataLayers.forEach(dl => bounds.extend(dl.getBounds()));
-    const mapBounds = this.map.getBounds();
-    if (bounds.isValid() && (!this.bounds || !this.bounds.isValid() || !this.bounds.equals(bounds)
-    && this.settings.fitMapBounds ? !mapBounds.contains(bounds) : false)) {
-      this.bounds = bounds;
-      if (!this.ignoreUpdateBounds) {
-        this.fitBounds(bounds);
+    const enabledDataLayers = this.dataLayers.filter(dl => dl.isEnabled());
+    const dataLayersBounds = enabledDataLayers.map(dl => dl.getBounds()).filter(b => b.isValid());
+    let bounds: L.LatLngBounds;
+    if (dataLayersBounds.length) {
+      bounds = new L.LatLngBounds(null, null);
+      dataLayersBounds.forEach(b => bounds.extend(b));
+
+      const mapBounds = this.map.getBounds();
+      if (bounds.isValid() && this.settings.fitMapBounds && !mapBounds.contains(bounds)) {
+        if (!this.ignoreUpdateBounds) {
+          this.fitBounds(bounds);
+        }
       }
+
     }
   }
 
-  private fitBounds(bounds: LatLngBounds, padding?: PointExpression) {
+  private fitBounds(bounds: LatLngBounds) {
     if (bounds.isValid()) {
-      this.bounds = !!this.bounds ? this.bounds.extend(bounds) : bounds;
       if (!this.settings.fitMapBounds && this.settings.defaultZoomLevel) {
         this.map.setZoom(this.settings.defaultZoomLevel, { animate: false });
         if (this.settings.useDefaultCenterPosition) {
           this.map.panTo(this.defaultCenterPosition, { animate: false });
         }
         else {
-          this.map.panTo(this.bounds.getCenter());
+          this.map.panTo(bounds.getCenter());
         }
       } else {
         this.map.once('zoomend', () => {
@@ -247,9 +280,9 @@ export abstract class TbMap<S extends BaseMapSettings> {
           }
         });
         if (this.settings.useDefaultCenterPosition) {
-          this.bounds = this.bounds.extend(this.defaultCenterPosition);
+          bounds = bounds.extend(this.defaultCenterPosition);
         }
-        this.map.fitBounds(this.bounds, { padding: padding || [50, 50], animate: false });
+        this.map.fitBounds(bounds, { padding: [10, 10], animate: false });
         this.map.invalidateSize();
       }
     }
@@ -263,6 +296,25 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   protected doSetupControls(): Observable<any> {
     return of(null);
+  }
+
+  protected getSidebar(): L.TB.SidebarControl {
+    if (!this.sidebar) {
+      this.sidebar = L.TB.sidebar({
+        container: $(this.containerElement),
+        position: this.settings.controlsPosition,
+        paneWidth: 220
+      }).addTo(this.map);
+    }
+    return this.sidebar;
+  }
+
+  public getCtx(): WidgetContext {
+    return this.ctx;
+  }
+
+  public getMap(): L.Map {
+    return this.map;
   }
 
   public type(): MapType {
@@ -317,11 +369,7 @@ class TbGeoMap extends TbMap<GeoMapSettings> {
           layer.layer.addTo(this.map);
           this.map.attributionControl.setPrefix(layer.attributionPrefix);
           if (layers.length > 1) {
-            const sidebar = L.TB.sidebar({
-              container: $(this.containerElement),
-              position: this.settings.controlsPosition,
-              paneWidth: 220
-            }).addTo(this.map);
+            const sidebar = this.getSidebar();
             L.TB.layers({
               layers,
               sidebar,

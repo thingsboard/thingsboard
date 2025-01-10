@@ -16,12 +16,26 @@
 
 import {
   CirclesDataLayerSettings,
+  DataLayerColorSettings,
+  DataLayerColorType,
+  defaultBaseCirclesDataLayerSettings,
+  defaultBaseMarkersDataLayerSettings,
+  defaultBasePolygonsDataLayerSettings,
   isCutPolygon,
+  isJSON,
   isValidLatLng,
+  loadImageWithAspect,
   MapDataLayerSettings,
   mapDataSourceSettingsToDatasource,
+  MapStringFunction,
   MapType,
+  MarkerIconInfo,
+  MarkerImageFunction,
+  MarkerImageInfo,
+  MarkerImageSettings,
+  MarkerImageType,
   MarkersDataLayerSettings,
+  MarkerType,
   PolygonsDataLayerSettings,
   TbCircleData,
   TbMapDatasource
@@ -29,9 +43,23 @@ import {
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { FormattedData } from '@shared/models/widget.models';
 import { Observable, of } from 'rxjs';
-import { guid, isDefinedAndNotNull, isEmptyStr, isNotEmptyStr, isString } from '@core/utils';
+import {
+  guid,
+  isDefined,
+  isDefinedAndNotNull,
+  isEmptyStr,
+  isNotEmptyStr,
+  isString,
+  mergeDeepIgnoreArray,
+  parseTbFunction,
+  safeExecuteTbFunction
+} from '@core/utils';
 import L, { LatLngBounds } from 'leaflet';
-import { isJSON } from '@home/components/widget/lib/maps-legacy/maps-utils';
+import { CompiledTbFunction } from '@shared/models/js-function.models';
+import { catchError, map } from 'rxjs/operators';
+import tinycolor from 'tinycolor2';
+import { WidgetContext } from '@home/models/widget-component.models';
+import { ImagePipe } from '@shared/pipe/image.pipe';
 
 abstract class TbDataLayerItem<S extends MapDataLayerSettings, L extends TbMapDataLayer<S,L>> {
 
@@ -67,7 +95,9 @@ export enum MapDataLayerType {
    circle = 'circle'
 }
 
-export abstract class TbMapDataLayer<S extends MapDataLayerSettings, L extends TbMapDataLayer<S,L>> {
+export abstract class TbMapDataLayer<S extends MapDataLayerSettings, L extends TbMapDataLayer<S,L>> implements L.TB.DataLayer {
+
+  protected settings: S;
 
   protected datasource: TbMapDatasource;
 
@@ -77,8 +107,19 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, L extends T
 
   protected layerItems = new Map<string, TbDataLayerItem<S,L>>();
 
+  protected groupsState: {[group: string]: boolean} = {};
+
+  protected enabled = true;
+
   protected constructor(protected map: TbMap<any>,
-                        protected settings: S) {
+                        inputSettings: S) {
+    this.settings = mergeDeepIgnoreArray({} as S, this.defaultBaseSettings() as S, inputSettings);
+    if (this.settings.groups?.length) {
+      this.settings.groups.forEach((group) => {
+        this.groupsState[group] = true;
+      });
+    }
+    this.map.getMap().addLayer(this.featureGroup);
   }
 
   public setup(): Observable<void> {
@@ -99,6 +140,31 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, L extends T
 
   public getBounds(): LatLngBounds {
     return this.featureGroup.getBounds();
+  }
+
+  public isEnabled(): boolean {
+    return this.enabled;
+  }
+
+  public getGroups(): string[] {
+    return this.settings.groups || [];
+  }
+
+  public toggleGroup(group: string): boolean {
+    if (isDefined(this.groupsState[group])) {
+      this.groupsState[group] = !this.groupsState[group];
+      const enabled = Object.values(this.groupsState).some(v => v);
+      if (this.enabled !== enabled) {
+        this.enabled = enabled;
+        if (this.enabled) {
+          this.map.getMap().addLayer(this.featureGroup);
+        } else {
+          this.map.getMap().removeLayer(this.featureGroup);
+        }
+        return true;
+      }
+    }
+    return false;
   }
 
   public updateData(dsData: FormattedData<TbMapDatasource>[]) {
@@ -122,6 +188,10 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, L extends T
     });
   }
 
+  public getCtx(): WidgetContext {
+    return this.map.getCtx();
+  }
+
   protected setupDatasource(datasource: TbMapDatasource): TbMapDatasource {
     return datasource;
   }
@@ -131,6 +201,8 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, L extends T
   }
 
   public abstract dataLayerType(): MapDataLayerType;
+
+  protected abstract defaultBaseSettings(): Partial<S>;
 
   protected abstract doSetup(): Observable<void>;
 
@@ -144,6 +216,7 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
 
   private location: L.LatLng;
   private marker: L.Marker;
+  private labelOffset: L.PointTuple;
 
   constructor(data: FormattedData<TbMapDatasource>,
               dsData: FormattedData<TbMapDatasource>[],
@@ -157,6 +230,9 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
     this.marker = L.marker(this.location, {
       tbMarkerData: data
     });
+
+    this.updateMarkerIcon(data, dsData);
+
     return this.marker;
   }
   public update(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
@@ -165,15 +241,192 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
       this.location = position;
       this.marker.setLatLng(position);
     }
+    this.updateMarkerIcon(data, dsData);
+  }
+
+  private updateMarkerIcon(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
+    this.dataLayer.markerIconProcessor.createMarkerIcon(data, dsData).subscribe(
+      (iconInfo) => {
+        this.marker.setIcon(iconInfo.icon);
+        const anchor = iconInfo.icon.options.iconAnchor;
+        if (anchor && Array.isArray(anchor)) {
+          this.labelOffset = [iconInfo.size[0] / 2 - anchor[0], 10 - anchor[1]];
+        } else {
+          this.labelOffset = [0, -iconInfo.size[1] * this.dataLayer.markerOffset[1] + 10];
+        }
+        this.updateMarkerLabel(data, dsData);
+      }
+    );
+  }
+
+  private updateMarkerLabel(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
+
+  }
+
+}
+
+abstract class MarkerIconProcessor<S> {
+
+  static fromSettings(dataLayer: TbMarkersDataLayer,
+                      settings: MarkersDataLayerSettings): MarkerIconProcessor<any> {
+    switch (settings.markerType) {
+      case MarkerType.default:
+        return new ColorMarkerIconProcessor(dataLayer, settings.markerColor);
+      case MarkerType.image:
+        return new ImageMarkerIconProcessor(dataLayer, settings.markerImage);
+    }
+  }
+
+  protected constructor(protected dataLayer: TbMarkersDataLayer,
+                        protected settings: S) {}
+
+  public abstract setup(): Observable<void>;
+
+  public abstract createMarkerIcon(data: FormattedData<TbMapDatasource>,
+                                   dsData: FormattedData<TbMapDatasource>[]): Observable<MarkerIconInfo>;
+
+}
+
+class ColorMarkerIconProcessor extends MarkerIconProcessor<DataLayerColorSettings> {
+
+  private markerColorFunction: CompiledTbFunction<MapStringFunction>;
+
+  private defaultMarkerIconInfo: MarkerIconInfo;
+
+  constructor(protected dataLayer: TbMarkersDataLayer,
+              protected settings: DataLayerColorSettings) {
+    super(dataLayer, settings);
+  }
+
+  public setup(): Observable<void> {
+    if (this.settings.type === DataLayerColorType.function) {
+      return parseTbFunction<MapStringFunction>(this.dataLayer.getCtx().http, this.settings.colorFunction, ['data', 'dsData']).pipe(
+        map((parsed) => {
+          this.markerColorFunction = parsed;
+          return null;
+        })
+      );
+    } else {
+      const color = tinycolor(this.settings.color);
+      this.defaultMarkerIconInfo = this.dataLayer.createColoredMarkerIcon(color);
+      return of(null)
+    }
+  }
+
+  public createMarkerIcon(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): Observable<MarkerIconInfo> {
+    if (this.settings.type === DataLayerColorType.function) {
+      const functionColor = safeExecuteTbFunction(this.markerColorFunction, [data, dsData]);
+      let color: tinycolor.Instance;
+      if (isDefinedAndNotNull(functionColor)) {
+        color = tinycolor(functionColor);
+      } else {
+        color = tinycolor(this.settings.color);
+      }
+      return of(this.dataLayer.createColoredMarkerIcon(color));
+    } else {
+      return of(this.defaultMarkerIconInfo);
+    }
+  }
+}
+
+class ImageMarkerIconProcessor extends MarkerIconProcessor<MarkerImageSettings> {
+
+  private markerImageFunction: CompiledTbFunction<MarkerImageFunction>;
+
+  private defaultMarkerIconInfo: MarkerIconInfo;
+
+  constructor(protected dataLayer: TbMarkersDataLayer,
+              protected settings: MarkerImageSettings) {
+    super(dataLayer, settings);
+  }
+
+  public setup(): Observable<void> {
+    if (this.settings.type === MarkerImageType.function) {
+      return parseTbFunction<MarkerImageFunction>(this.dataLayer.getCtx().http, this.settings.imageFunction, ['data', 'images', 'dsData']).pipe(
+        map((parsed) => {
+          this.markerImageFunction = parsed;
+          return null;
+        })
+      );
+    } else {
+      const currentImage: MarkerImageInfo = {
+        url: this.settings.image,
+        size: this.settings.imageSize || 34
+      };
+      return this.loadMarkerIconInfo(currentImage).pipe(
+        map((iconInfo) => {
+          this.defaultMarkerIconInfo = iconInfo;
+          return null;
+        }
+      ));
+    }
+  }
+
+  public createMarkerIcon(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): Observable<MarkerIconInfo> {
+    if (this.settings.type === MarkerImageType.function) {
+      const currentImage: MarkerImageInfo = safeExecuteTbFunction(this.markerImageFunction, [data, this.settings.images, dsData]);
+      return this.loadMarkerIconInfo(currentImage);
+    } else {
+      return of(this.defaultMarkerIconInfo);
+    }
+  }
+
+  private loadMarkerIconInfo(image: MarkerImageInfo): Observable<MarkerIconInfo> {
+    if (image && image.url) {
+      return loadImageWithAspect(this.dataLayer.getCtx().$injector.get(ImagePipe), image.url).pipe(
+        map((aspectImage) => {
+          if (aspectImage?.aspect) {
+            let width: number;
+            let height: number;
+            if (aspectImage.aspect > 1) {
+              width = image.size;
+              height = image.size / aspectImage.aspect;
+            } else {
+              width = image.size * aspectImage.aspect;
+              height = image.size;
+            }
+            let iconAnchor = image.markerOffset;
+            let popupAnchor = image.tooltipOffset;
+            if (!iconAnchor) {
+              iconAnchor = [width * this.dataLayer.markerOffset[0], height * this.dataLayer.markerOffset[1]];
+            }
+            if (!popupAnchor) {
+              popupAnchor = [width * this.dataLayer.tooltipOffset[0], height * this.dataLayer.tooltipOffset[1]];
+            }
+            const icon = L.icon({
+              iconUrl: aspectImage.url,
+              iconSize: [width, height],
+              iconAnchor,
+              popupAnchor
+            });
+            const iconInfo: MarkerIconInfo = {
+              size: [width, height],
+              icon
+            };
+            return iconInfo;
+          } else {
+            return this.dataLayer.createDefaultMarkerIcon();
+          }
+        }),
+        catchError(() => of(this.dataLayer.createDefaultMarkerIcon()))
+      );
+    } else {
+      return of(this.dataLayer.createDefaultMarkerIcon());
+    }
   }
 
 }
 
 export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings, TbMarkersDataLayer> {
 
+  public markerIconProcessor: MarkerIconProcessor<any>;
+
+  public markerOffset: L.LatLngTuple;
+  public tooltipOffset: L.LatLngTuple;
+
   constructor(protected map: TbMap<any>,
-              protected settings: MarkersDataLayerSettings) {
-    super(map, settings);
+              inputSettings: MarkersDataLayerSettings) {
+    super(map, inputSettings);
   }
 
   public dataLayerType(): MapDataLayerType {
@@ -185,8 +438,23 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
     return datasource;
   }
 
+  protected defaultBaseSettings(): Partial<MarkersDataLayerSettings> {
+    return defaultBaseMarkersDataLayerSettings;
+  }
+
   protected doSetup(): Observable<void> {
-    return of(null);
+    this.markerOffset = [
+      isDefined(this.settings.markerOffsetX) ? this.settings.markerOffsetX : 0.5,
+      isDefined(this.settings.markerOffsetY) ? this.settings.markerOffsetY : 1,
+    ];
+    this.tooltipOffset = [0, -1];
+    /*   this.tooltipOffset = [
+         isDefined(this.settings.tooltipOffsetX) ? this.settings.tooltipOffsetX : 0,
+         isDefined(this.settings.tooltipOffsetY) ? this.settings.tooltipOffsetY : -1,
+       ];*/
+
+    this.markerIconProcessor = MarkerIconProcessor.fromSettings(this, this.settings);
+    return this.markerIconProcessor.setup();
   }
 
   protected isValidLayerData(layerData: FormattedData<TbMapDatasource>): boolean {
@@ -219,6 +487,39 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
     }
   }
 
+  private createColorIconURI(color: tinycolor.Instance): string {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-191.35 -351.18 1083.58 1730.46">` +
+      `<path fill-rule="evenodd" clip-rule="evenodd" fill="#${color.toHex()}" stroke="#000" stroke-width="37" ` +
+      `stroke-miterlimit="10" d="M351.833 1360.78c-38.766-190.3-107.116-348.665-189.903-495.44C100.523 756.469 ` +
+      `29.386 655.978-36.434 550.404c-21.972-35.244-40.934-72.477-62.047-109.054-42.216-73.137-76.444-157.935-74.269-267.932 ` +
+      `2.125-107.473 33.208-193.685 78.03-264.173C-21-206.69 102.481-301.745 268.164-326.724c135.466-20.425 262.475 14.082 ` +
+      `352.543 66.747 73.6 43.038 130.596 100.528 173.92 168.28 45.22 70.716 76.36 154.26 78.971 263.233 1.337 55.83-7.805 ` +
+      `107.532-20.684 150.417-13.034 43.41-33.996 79.695-52.646 118.455-36.406 75.659-82.049 144.981-127.855 214.345-136.437 ` +
+      `206.606-264.496 417.31-320.58 706.028z"/><circle fill-rule="evenodd" ` +
+      `clip-rule="evenodd" cx="352.891" cy="225.779" r="183.332"/></svg>`;
+    return 'data:image/svg+xml;base64,' + btoa(svg);
+  }
+
+  public createDefaultMarkerIcon(): MarkerIconInfo {
+    const color = this.settings.markerColor.color || '#FE7569';
+    return this.createColoredMarkerIcon(tinycolor(color));
+  }
+
+  public createColoredMarkerIcon(color: tinycolor.Instance): MarkerIconInfo {
+    return {
+      size: [21, 34],
+      icon: L.icon({
+        iconUrl: this.createColorIconURI(color),
+        iconSize: [21, 34],
+        iconAnchor: [21 * this.markerOffset[0], 34 * this.markerOffset[1]],
+        popupAnchor: [0, -34],
+        shadowUrl: 'assets/shadow.png',
+        shadowSize: [40, 37],
+        shadowAnchor: [12, 35]
+      })
+    };
+  }
+
   public extractLocation(data: FormattedData<TbMapDatasource>): L.LatLng {
     const position = this.extractPosition(data);
     if (position) {
@@ -227,7 +528,6 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
       return null;
     }
   }
-
 }
 
 class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, TbPolygonsDataLayer> {
@@ -281,8 +581,8 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
 export class TbPolygonsDataLayer extends TbMapDataLayer<PolygonsDataLayerSettings, TbPolygonsDataLayer> {
 
   constructor(protected map: TbMap<any>,
-              protected settings: PolygonsDataLayerSettings) {
-    super(map, settings);
+              inputSettings: PolygonsDataLayerSettings) {
+    super(map, inputSettings);
   }
 
   public dataLayerType(): MapDataLayerType {
@@ -292,6 +592,10 @@ export class TbPolygonsDataLayer extends TbMapDataLayer<PolygonsDataLayerSetting
   protected setupDatasource(datasource: TbMapDatasource): TbMapDatasource {
     datasource.dataKeys.push(this.settings.polygonKey);
     return datasource;
+  }
+
+  protected defaultBaseSettings(): Partial<PolygonsDataLayerSettings> {
+    return defaultBasePolygonsDataLayerSettings;
   }
 
   protected doSetup(): Observable<void> {
@@ -356,8 +660,8 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
 export class TbCirclesDataLayer extends TbMapDataLayer<CirclesDataLayerSettings, TbCirclesDataLayer> {
 
   constructor(protected map: TbMap<any>,
-              protected settings: CirclesDataLayerSettings) {
-    super(map, settings);
+              inputSettings: CirclesDataLayerSettings) {
+    super(map, inputSettings);
   }
 
   public dataLayerType(): MapDataLayerType {
@@ -367,6 +671,10 @@ export class TbCirclesDataLayer extends TbMapDataLayer<CirclesDataLayerSettings,
   protected setupDatasource(datasource: TbMapDatasource): TbMapDatasource {
     datasource.dataKeys.push(this.settings.circleKey);
     return datasource;
+  }
+
+  protected defaultBaseSettings(): Partial<CirclesDataLayerSettings> {
+    return defaultBaseCirclesDataLayerSettings;
   }
 
   protected doSetup(): Observable<void> {

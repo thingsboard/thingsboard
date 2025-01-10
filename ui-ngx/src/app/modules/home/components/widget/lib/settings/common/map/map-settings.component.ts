@@ -19,17 +19,25 @@ import {
   ControlValueAccessor,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  UntypedFormBuilder, UntypedFormControl,
-  UntypedFormGroup, Validator
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
+  Validator
 } from '@angular/forms';
 import { ImageSourceType, MapDataLayerType, MapSetting, MapType } from '@home/components/widget/lib/maps/map.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { merge } from 'rxjs';
+import { merge, Observable } from 'rxjs';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { IAliasController } from '@core/api/widget-api.models';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
-import { Widget } from '@shared/models/widget.models';
+import { DataKey, DataKeyConfigMode, Widget, widgetType } from '@shared/models/widget.models';
+import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
+import {
+  DataKeyConfigDialogComponent,
+  DataKeyConfigDialogData
+} from '@home/components/widget/lib/settings/common/key/data-key-config-dialog.component';
+import { deepClone } from '@core/utils';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'tb-map-settings',
@@ -68,6 +76,8 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
   @Input()
   widget: Widget;
 
+  context: MapSettingsContext;
+
   private modelValue: MapSetting;
 
   private propagateChange = null;
@@ -77,10 +87,21 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
   dataLayerMode: MapDataLayerType = 'markers';
 
   constructor(private fb: UntypedFormBuilder,
+              private dialog: MatDialog,
               private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
+
+    this.context = {
+      functionsOnly: this.functionsOnly,
+      aliasController: this.aliasController,
+      callbacks: this.callbacks,
+      widget: this.widget,
+      editKey: this.editKey.bind(this),
+      generateDataKey: this.generateDataKey.bind(this)
+    };
+
     this.mapSettingsFormGroup = this.fb.group({
       mapType: [null, []],
       layers: [null, []],
@@ -175,5 +196,34 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
   private updateModel() {
     this.modelValue = this.mapSettingsFormGroup.getRawValue();
     this.propagateChange(this.modelValue);
+  }
+
+  private editKey(key: DataKey, deviceId: string, entityAliasId: string): Observable<DataKey> {
+    return this.dialog.open<DataKeyConfigDialogComponent, DataKeyConfigDialogData, DataKey>(DataKeyConfigDialogComponent,
+      {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          dataKey: deepClone(key),
+          dataKeyConfigMode: DataKeyConfigMode.general,
+          aliasController: this.aliasController,
+          widgetType: widgetType.latest,
+          deviceId,
+          entityAliasId,
+          showPostProcessing: true,
+          callbacks: this.callbacks,
+          hideDataKeyColor: true,
+          hideDataKeyDecimals: true,
+          hideDataKeyUnits: true,
+          widget: this.widget,
+          dashboard: null,
+          dataKeySettingsForm: null,
+          dataKeySettingsDirective: null
+        }
+      }).afterClosed();
+  }
+
+  private generateDataKey(key: DataKey): DataKey {
+    return this.callbacks.generateDataKey(key.name, key.type, null, false, null);
   }
 }

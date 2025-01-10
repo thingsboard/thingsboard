@@ -39,7 +39,7 @@ declare module 'leaflet' {
 
     class SidebarControl extends Control<SidebarControlOptions> {
       constructor(options: SidebarControlOptions);
-      addPane(pane: JQuery<HTMLElement>): this;
+      addPane(pane: JQuery<HTMLElement>, button: JQuery<HTMLElement>): this;
       togglePane(pane: JQuery<HTMLElement>, button: JQuery<HTMLElement>): void;
     }
 
@@ -70,11 +70,32 @@ declare module 'leaflet' {
       constructor(options: LayersControlOptions);
     }
 
+    interface DataLayer {
+      toggleGroup(group: string): boolean;
+    }
+
+    interface GroupData {
+      title: string;
+      group: string;
+      enabled: boolean;
+      dataLayers: DataLayer[];
+    }
+
+    interface GroupsControlOptions extends SidebarPaneControlOptions {
+      groups: GroupData[];
+    }
+
+    class GroupsControl extends SidebarPaneControl<GroupsControlOptions> {
+      constructor(options: GroupsControlOptions);
+    }
+
     function sidebar(options: SidebarControlOptions): SidebarControl;
 
     function sidebarPane<O extends SidebarPaneControlOptions>(options: O): SidebarPaneControl<O>;
 
     function layers(options: LayersControlOptions): LayersControl;
+
+    function groups(options: GroupsControlOptions): GroupsControl;
 
     namespace TileLayer {
 

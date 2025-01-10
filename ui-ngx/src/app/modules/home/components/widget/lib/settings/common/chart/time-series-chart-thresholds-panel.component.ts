@@ -35,7 +35,7 @@ import {
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { mergeDeep } from '@core/utils';
 import { IAliasController } from '@core/api/widget-api.models';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { DataKey, Datasource, WidgetConfig } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { coerceBoolean } from '@shared/decorators/coercion';

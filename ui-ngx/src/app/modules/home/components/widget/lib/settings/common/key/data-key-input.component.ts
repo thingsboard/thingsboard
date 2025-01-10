@@ -50,13 +50,14 @@ import { UtilsService } from '@core/services/utils.service';
 import { alarmFields } from '@shared/models/alarm.models';
 import { filter, map, mergeMap, publishReplay, refCount, share, tap } from 'rxjs/operators';
 import { AggregationType } from '@shared/models/time/time.models';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks } from './data-keys.component.models';
 import { IAliasController } from '@core/api/widget-api.models';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-data-key-input',
   templateUrl: './data-key-input.component.html',
-  styleUrls: ['./data-key-input.component.scss', '../../../config/data-keys.component.scss'],
+  styleUrls: ['./data-key-input.component.scss', './data-keys.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -82,6 +83,19 @@ export class DataKeyInputComponent implements ControlValueAccessor, OnInit, OnCh
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  label: string;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
+
+  @Input()
+  @coerceBoolean()
+  inlineField = true;
 
   @Input()
   @coerceBoolean()

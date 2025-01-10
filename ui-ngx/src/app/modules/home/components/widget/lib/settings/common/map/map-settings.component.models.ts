@@ -14,8 +14,16 @@
 /// limitations under the License.
 ///
 
-import { EntityAliasSelectCallbacks } from '@home/components/widget/lib/settings/common/alias/entity-alias-select.component.models';
-import { FilterSelectCallbacks } from '@home/components/widget/lib/settings/common/filter/filter-select.component.models';
-import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
+import { IAliasController } from '@core/api/widget-api.models';
+import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
+import { DataKey, Widget } from '@shared/models/widget.models';
+import { Observable } from 'rxjs';
 
-export type DatasourceCallbacks = EntityAliasSelectCallbacks & FilterSelectCallbacks & DataKeysCallbacks;
+export interface MapSettingsContext {
+  functionsOnly: boolean;
+  aliasController: IAliasController;
+  callbacks: WidgetConfigCallbacks;
+  widget: Widget;
+  editKey: (key: DataKey, deviceId: string, entityAliasId: string) => Observable<DataKey>;
+  generateDataKey: (key: DataKey) => DataKey;
+}

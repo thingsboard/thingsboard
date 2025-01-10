@@ -30,7 +30,7 @@ import {
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { DataKey, DataKeyConfigMode, Widget, widgetType } from '@shared/models/widget.models';
-import { DataKeyConfigComponent } from '@home/components/widget/config/data-key-config.component';
+import { DataKeyConfigComponent } from './data-key-config.component';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';

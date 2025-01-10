@@ -44,14 +44,17 @@
     <tb-map-data-layers [class.!hidden]="dataLayerMode !== 'markers'"
                         formControlName="markers"
                         dataLayerType="markers"
+                        [context]="context"
                         [mapType]="mapSettingsFormGroup.get('mapType').value"></tb-map-data-layers>
     <tb-map-data-layers [class.!hidden]="dataLayerMode !== 'polygons'"
                         formControlName="polygons"
                         dataLayerType="polygons"
+                        [context]="context"
                         [mapType]="mapSettingsFormGroup.get('mapType').value"></tb-map-data-layers>
     <tb-map-data-layers [class.!hidden]="dataLayerMode !== 'circles'"
                         formControlName="circles"
                         dataLayerType="circles"
+                        [context]="context"
                         [mapType]="mapSettingsFormGroup.get('mapType').value"></tb-map-data-layers>
   </div>
 </ng-container>

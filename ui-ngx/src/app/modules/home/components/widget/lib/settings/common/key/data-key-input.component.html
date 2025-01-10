@@ -15,8 +15,12 @@
     limitations under the License.
 
 -->
-<mat-form-field class="tb-inline-field tb-key-field" subscriptSizing="dynamic"
-                [class.tb-suffix-absolute]="!keysFormControl.value?.length">
+<mat-form-field class="tb-key-field" subscriptSizing="dynamic"
+                [class]="{'tb-inline-field': inlineField,
+                          'tb-suffix-absolute': (inlineField && !keysFormControl.value?.length)}"
+                [appearance]="inlineField ? 'fill' : appearance"
+                [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing">
+  <mat-label *ngIf="!inlineField && label">{{ label }}</mat-label>
   <mat-chip-grid #chipList [formControl]="keysFormControl">
     <mat-chip-row class="tb-datakey-chip" *ngIf="modelValue?.type"
                   [removable]="removable"
@@ -81,7 +85,7 @@
             matTooltipPosition="above"
             matTooltipClass="tb-error-tooltip"
             [matTooltip]="requiredText | translate"
-            *ngIf="requiredText && keysFormControl.hasError('required')
+            *ngIf="inlineField && requiredText && keysFormControl.hasError('required')
                                 && keysFormControl.touched"
             class="tb-error">
     warning
@@ -145,6 +149,9 @@
       </div>
     </mat-option>
   </mat-autocomplete>
+  <mat-error *ngIf="!inlineField && requiredText && keysFormControl.hasError('required')">
+    {{ requiredText | translate }}
+  </mat-error>
 </mat-form-field>
 <ng-template #keyName>
   <ng-container *ngIf="dataKeyHasPostprocessing(); else keyName">

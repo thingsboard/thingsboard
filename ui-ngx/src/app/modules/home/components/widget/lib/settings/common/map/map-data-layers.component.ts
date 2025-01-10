@@ -37,6 +37,7 @@ import {
   MapType
 } from '@home/components/widget/lib/maps/map.models';
 import { MapSettingsComponent } from '@home/components/widget/lib/settings/common/map/map-settings.component';
+import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
 
 @Component({
   selector: 'tb-map-data-layers',
@@ -69,9 +70,8 @@ export class MapDataLayersComponent implements ControlValueAccessor, OnInit, Val
   @Input()
   dataLayerType: MapDataLayerType = 'markers';
 
-  get functionsOnly(): boolean {
-    return this.mapSettingsComponent.functionsOnly;
-  }
+  @Input()
+  context: MapSettingsContext;
 
   dataLayersFormGroup: UntypedFormGroup;
 
@@ -161,7 +161,7 @@ export class MapDataLayersComponent implements ControlValueAccessor, OnInit, Val
 
   addDataLayer() {
     const dataLayer = mergeDeep<MapDataLayerSettings>({} as MapDataLayerSettings,
-      defaultMapDataLayerSettings(this.mapType, this.dataLayerType, this.functionsOnly));
+      defaultMapDataLayerSettings(this.mapType, this.dataLayerType, this.context.functionsOnly));
     const dataLayersArray = this.dataLayersFormGroup.get('dataLayers') as UntypedFormArray;
     const dataLayerControl = this.fb.control(dataLayer, [mapDataLayerValidator(this.dataLayerType)]);
     dataLayersArray.push(dataLayerControl);

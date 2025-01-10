@@ -45,7 +45,7 @@ import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import {
   DataKeyConfigDialogComponent,
   DataKeyConfigDialogData
-} from '@home/components/widget/config/data-key-config-dialog.component';
+} from '@home/components/widget/lib/settings/common/key/data-key-config-dialog.component';
 import { deepClone, formatValue } from '@core/utils';
 import {
   AggregatedValueCardKeyPosition,
@@ -59,7 +59,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 @Component({
   selector: 'tb-aggregated-data-key-row',
   templateUrl: './aggregated-data-key-row.component.html',
-  styleUrls: ['./aggregated-data-key-row.component.scss', '../../data-keys.component.scss'],
+  styleUrls: ['./aggregated-data-key-row.component.scss', '../../../lib/settings/common/key/data-keys.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

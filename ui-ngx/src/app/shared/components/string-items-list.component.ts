@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -38,14 +38,15 @@ export interface StringItemsOption {
 @Component({
   selector: 'tb-string-items-list',
   templateUrl: './string-items-list.component.html',
-  styleUrls: [],
+  styleUrls: ['./string-items-list.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => StringItemsListComponent),
       multi: true
     }
-  ]
+  ],
+  encapsulation: ViewEncapsulation.None
 })
 export class StringItemsListComponent implements ControlValueAccessor, OnInit {
 

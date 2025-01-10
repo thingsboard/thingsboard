@@ -232,9 +232,9 @@ import * as EntityAliasDialogComponent from '@home/components/alias/entity-alias
 import * as EntityFilterComponent from '@home/components/entity/entity-filter.component';
 import * as RelationFiltersComponent from '@home/components/relation/relation-filters.component';
 import * as EntityAliasSelectComponent from '@home/components/widget/lib/settings/common/alias/entity-alias-select.component';
-import * as DataKeysComponent from '@home/components/widget/config/data-keys.component';
-import * as DataKeyConfigDialogComponent from '@home/components/widget/config/data-key-config-dialog.component';
-import * as DataKeyConfigComponent from '@home/components/widget/config/data-key-config.component';
+import * as DataKeysComponent from '@home/components/widget/lib/settings/common/key/data-keys.component';
+import * as DataKeyConfigDialogComponent from '@home/components/widget/lib/settings/common/key/data-key-config-dialog.component';
+import * as DataKeyConfigComponent from '@home/components/widget/lib/settings/common/key/data-key-config.component';
 import * as LegendConfigComponent from '@home/components/widget/lib/settings/common/legend-config.component';
 import * as ManageWidgetActionsComponent from '@home/components/widget/action/manage-widget-actions.component';
 import * as WidgetActionDialogComponent from '@home/components/widget/action/widget-action-dialog.component';
@@ -268,7 +268,7 @@ import * as ComplexFilterPredicateDialogComponent from '@home/components/filter/
 import * as KeyFilterDialogComponent from '@home/components/filter/key-filter-dialog.component';
 import * as FiltersDialogComponent from '@home/components/filter/filters-dialog.component';
 import * as FilterDialogComponent from '@home/components/filter/filter-dialog.component';
-import * as FilterSelectComponent from '@home/components/filter/filter-select.component';
+import * as FilterSelectComponent from '@home/components/widget/lib/settings/common/filter/filter-select.component';
 import * as FiltersEditComponent from '@home/components/filter/filters-edit.component';
 import * as FiltersEditPanelComponent from '@home/components/filter/filters-edit-panel.component';
 import * as UserFilterDialogComponent from '@home/components/filter/user-filter-dialog.component';
@@ -578,9 +578,9 @@ class ModulesMap implements IModulesMap {
     '@home/components/entity/entity-filter.component': EntityFilterComponent,
     '@home/components/relation/relation-filters.component': RelationFiltersComponent,
     '@home/components/widget/lib/settings/common/alias/entity-alias-select.component': EntityAliasSelectComponent,
-    '@home/components/widget/config/data-keys.component': DataKeysComponent,
-    '@home/components/widget/config/data-key-config-dialog.component': DataKeyConfigDialogComponent,
-    '@home/components/widget/config/data-key-config.component': DataKeyConfigComponent,
+    '@home/components/widget/lib/settings/common/key/data-keys.component': DataKeysComponent,
+    '@home/components/widget/lib/settings/common/key/data-key-config-dialog.component': DataKeyConfigDialogComponent,
+    '@home/components/widget/lib/settings/common/key/data-key-config.component': DataKeyConfigComponent,
     '@home/components/widget/lib/settings/common/legend-config.component': LegendConfigComponent,
     '@home/components/widget/action/manage-widget-actions.component': ManageWidgetActionsComponent,
     '@home/components/widget/action/widget-action-dialog.component': WidgetActionDialogComponent,
@@ -610,7 +610,7 @@ class ModulesMap implements IModulesMap {
     '@home/components/filter/key-filter-dialog.component': KeyFilterDialogComponent,
     '@home/components/filter/filters-dialog.component': FiltersDialogComponent,
     '@home/components/filter/filter-dialog.component': FilterDialogComponent,
-    '@home/components/filter/filter-select.component': FilterSelectComponent,
+    '@home/components/widget/lib/settings/common/filter/filter-select.component': FilterSelectComponent,
     '@home/components/filter/filters-edit.component': FiltersEditComponent,
     '@home/components/filter/filters-edit-panel.component': FiltersEditPanelComponent,
     '@home/components/filter/user-filter-dialog.component': UserFilterDialogComponent,

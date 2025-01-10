@@ -38,9 +38,9 @@
       *ngIf="dataLayerFormGroup.get('dsType').value === DatasourceType.entity"
       inlineField
       tbRequired
-      [aliasController]="aliasController"
+      [aliasController]="context.aliasController"
       formControlName="dsEntityAliasId"
-      [callbacks]="entityAliasSelectCallbacks">
+      [callbacks]="context.callbacks">
     </tb-entity-alias-select>
   </div>
   <tb-data-key-input
@@ -51,11 +51,12 @@
     [datasourceType]="dataLayerFormGroup.get('dsType').value"
     [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
     [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
-    [aliasController]="aliasController"
-    [dataKeyType]="functionsOnly ? DataKeyType.function : null"
+    [aliasController]="context.aliasController"
+    [widgetType]="widgetType.latest"
+    [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
     [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
-    [callbacks]="dataKeyCallbacks"
-    [generateKey]="generateDataKey"
+    [callbacks]="context.callbacks"
+    [generateKey]="context.generateDataKey"
     (keyEdit)="editKey('xKey')"
     formControlName="xKey">
   </tb-data-key-input>
@@ -67,11 +68,12 @@
     [datasourceType]="dataLayerFormGroup.get('dsType').value"
     [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
     [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
-    [aliasController]="aliasController"
-    [dataKeyType]="functionsOnly ? DataKeyType.function : null"
+    [aliasController]="context.aliasController"
+    [widgetType]="widgetType.latest"
+    [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
     [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
-    [callbacks]="dataKeyCallbacks"
-    [generateKey]="generateDataKey"
+    [callbacks]="context.callbacks"
+    [generateKey]="context.generateDataKey"
     (keyEdit)="editKey('yKey')"
     formControlName="yKey">
   </tb-data-key-input>
@@ -83,11 +85,12 @@
     [datasourceType]="dataLayerFormGroup.get('dsType').value"
     [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
     [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
-    [aliasController]="aliasController"
-    [dataKeyType]="functionsOnly ? DataKeyType.function : null"
+    [aliasController]="context.aliasController"
+    [widgetType]="widgetType.latest"
+    [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
     [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
-    [callbacks]="dataKeyCallbacks"
-    [generateKey]="generateDataKey"
+    [callbacks]="context.callbacks"
+    [generateKey]="context.generateDataKey"
     (keyEdit)="editKey('polygonKey')"
     formControlName="polygonKey">
   </tb-data-key-input>
@@ -99,11 +102,12 @@
     [datasourceType]="dataLayerFormGroup.get('dsType').value"
     [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
     [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
-    [aliasController]="aliasController"
-    [dataKeyType]="functionsOnly ? DataKeyType.function : null"
+    [aliasController]="context.aliasController"
+    [widgetType]="widgetType.latest"
+    [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
     [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
-    [callbacks]="dataKeyCallbacks"
-    [generateKey]="generateDataKey"
+    [callbacks]="context.callbacks"
+    [generateKey]="context.generateDataKey"
     (keyEdit)="editKey('circleKey')"
     formControlName="circleKey">
   </tb-data-key-input>

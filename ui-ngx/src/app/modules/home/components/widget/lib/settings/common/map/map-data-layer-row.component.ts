@@ -23,8 +23,6 @@ import {
   Input,
   OnInit,
   Output,
-  Renderer2,
-  ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
 import {
@@ -35,8 +33,6 @@ import {
   Validators
 } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
-import { TbPopoverService } from '@shared/components/popover.service';
-import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   CirclesDataLayerSettings,
@@ -46,27 +42,17 @@ import {
   MarkersDataLayerSettings,
   PolygonsDataLayerSettings
 } from '@home/components/widget/lib/maps/map.models';
-import {
-  DataKey,
-  DataKeyConfigMode,
-  DatasourceType,
-  datasourceTypeTranslationMap,
-  widgetType
-} from '@shared/models/widget.models';
+import { DataKey, DatasourceType, datasourceTypeTranslationMap, widgetType } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { MapSettingsComponent } from '@home/components/widget/lib/settings/common/map/map-settings.component';
-import { IAliasController } from '@core/api/widget-api.models';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
-import {
-  DataKeyConfigDialogComponent,
-  DataKeyConfigDialogData
-} from '@home/components/widget/config/data-key-config-dialog.component';
 import { deepClone } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
 import {
-  EntityAliasSelectCallbacks
-} from '@home/components/widget/lib/settings/common/alias/entity-alias-select.component.models';
+  MapDataLayerDialogComponent,
+  MapDataLayerDialogData
+} from '@home/components/widget/lib/settings/common/map/map-data-layer-dialog.component';
+import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
 
 @Component({
   selector: 'tb-map-data-layer-row',
@@ -90,6 +76,8 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
 
   MapType = MapType;
 
+  widgetType = widgetType;
+
   datasourceTypes: Array<DatasourceType> = [];
   datasourceTypesTranslations = datasourceTypeTranslationMap;
 
@@ -102,26 +90,11 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
   @Input()
   dataLayerType: MapDataLayerType = 'markers';
 
-  get functionsOnly(): boolean {
-    return this.mapSettingsComponent.functionsOnly;
-  }
-
-  get aliasController(): IAliasController {
-    return this.mapSettingsComponent.aliasController;
-  }
-
-  get dataKeyCallbacks(): DataKeysCallbacks {
-    return this.mapSettingsComponent.callbacks;
-  }
-
-  public get entityAliasSelectCallbacks(): EntityAliasSelectCallbacks {
-    return this.mapSettingsComponent.callbacks;
-  }
+  @Input()
+  context: MapSettingsContext;
 
   @Output()
   dataLayerRemoved = new EventEmitter();
-
-  generateDataKey = this._generateDataKey.bind(this);
 
   dataLayerFormGroup: UntypedFormGroup;
 
@@ -136,16 +109,12 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
   constructor(private mapSettingsComponent: MapSettingsComponent,
               private fb: UntypedFormBuilder,
               private dialog: MatDialog,
-              private translate: TranslateService,
-              private popoverService: TbPopoverService,
-              private renderer: Renderer2,
-              private viewContainerRef: ViewContainerRef,
               private cd: ChangeDetectorRef,
               private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
-    if (this.functionsOnly) {
+    if (this.context.functionsOnly) {
       this.datasourceTypes = [DatasourceType.function];
     } else {
       this.datasourceTypes = [DatasourceType.function, DatasourceType.device, DatasourceType.entity];
@@ -244,66 +213,37 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
 
   editKey(keyType: 'xKey' | 'yKey' | 'polygonKey' | 'circleKey') {
     const targetDataKey: DataKey = this.dataLayerFormGroup.get(keyType).value;
-    this.dialog.open<DataKeyConfigDialogComponent, DataKeyConfigDialogData, DataKey>(DataKeyConfigDialogComponent,
-      {
-        disableClose: true,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-        data: {
-          dataKey: deepClone(targetDataKey),
-          dataKeyConfigMode: DataKeyConfigMode.general,
-          aliasController: this.aliasController,
-          widgetType: widgetType.latest,
-          deviceId: this.dataLayerFormGroup.get('dsDeviceId').value,
-          entityAliasId: this.dataLayerFormGroup.get('dsEntityAliasId').value,
-          showPostProcessing: true,
-          callbacks: this.mapSettingsComponent.callbacks,
-          hideDataKeyColor: true,
-          hideDataKeyDecimals: true,
-          hideDataKeyUnits: true,
-          widget: this.mapSettingsComponent.widget,
-          dashboard: null,
-          dataKeySettingsForm: null,
-          dataKeySettingsDirective: null
+    this.context.editKey(targetDataKey,
+      this.dataLayerFormGroup.get('dsDeviceId').value, this.dataLayerFormGroup.get('dsEntityAliasId').value).subscribe(
+      (updatedDataKey) => {
+        if (updatedDataKey) {
+          this.dataLayerFormGroup.get(keyType).patchValue(updatedDataKey);
         }
-      }).afterClosed().subscribe((updatedDataKey) => {
-      if (updatedDataKey) {
-        this.dataLayerFormGroup.get(keyType).patchValue(updatedDataKey);
       }
-    });
+    );
   }
 
   editDataLayer($event: Event, matButton: MatButton) {
     if ($event) {
       $event.stopPropagation();
     }
-    const trigger = matButton._elementRef.nativeElement;
-    if (this.popoverService.hasPopover(trigger)) {
-      this.popoverService.hidePopover(trigger);
-    } else {
-      /*const ctx: any = {
-        mapLayerSettings: deepClone(this.modelValue)
-      };
-      const mapLayerSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, MapLayerSettingsPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
-        ctx,
-        {},
-        {}, {}, true);
-      mapLayerSettingsPanelPopover.tbComponentRef.instance.popover = mapLayerSettingsPanelPopover;
-      mapLayerSettingsPanelPopover.tbComponentRef.instance.mapLayerSettingsApplied.subscribe((layer) => {
-        mapLayerSettingsPanelPopover.hide();
-        this.layerFormGroup.patchValue(
-          layer,
-          {emitEvent: false});
+    this.dialog.open<MapDataLayerDialogComponent, MapDataLayerDialogData,
+      MapDataLayerSettings>(MapDataLayerDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        settings: deepClone(this.modelValue),
+        mapType: this.mapType,
+        dataLayerType: this.dataLayerType,
+        context: this.context
+      }
+    }).afterClosed().subscribe((settings) => {
+      if (settings) {
+        this.modelValue = settings;
+        this.dataLayerFormGroup.patchValue(settings);
         this.updateValidators();
-        this.updateModel();
-      });*/
-    }
-  }
-
-  private _generateDataKey(key: DataKey): DataKey {
-    key = this.dataKeyCallbacks.generateDataKey(key.name, key.type, null, false,
-      null);
-    return key;
+      }
+    });
   }
 
   private onDsTypeChanged(newDsType: DatasourceType) {
@@ -375,6 +315,4 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
     this.modelValue = {...this.modelValue, ...this.dataLayerFormGroup.value};
     this.propagateChange(this.modelValue);
   }
-
-  protected readonly datasourceType = DatasourceType;
 }

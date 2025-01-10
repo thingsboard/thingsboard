@@ -19,7 +19,7 @@ import {
   Component,
   DestroyRef,
   ElementRef,
-  forwardRef,
+  forwardRef, HostBinding,
   Input,
   OnChanges,
   OnInit,
@@ -60,19 +60,19 @@ import { MatDialog } from '@angular/material/dialog';
 import {
   DataKeyConfigDialogComponent,
   DataKeyConfigDialogData
-} from '@home/components/widget/config/data-key-config-dialog.component';
+} from './data-key-config-dialog.component';
 import { deepClone, guid, isDefinedAndNotNull, isObject, isUndefined } from '@core/utils';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { AggregationType } from '@shared/models/time/time.models';
 import { DndDropEvent } from 'ngx-drag-drop/lib/dnd-dropzone.directive';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { DatasourceComponent } from '@home/components/widget/config/datasource.component';
 import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormProperty } from '@shared/models/dynamic-form.models';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-data-keys',
@@ -98,21 +98,37 @@ import { FormProperty } from '@shared/models/dynamic-form.models';
 })
 export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChanges, ErrorStateMatcher, Validator {
 
-  public get hideDataKeyLabel(): boolean {
-    return this.datasourceComponent.hideDataKeyLabel;
-  }
+  @HostBinding('class')
+  hostClass = 'tb-data-keys';
 
-  public get hideDataKeyColor(): boolean {
-    return this.datasourceComponent.hideDataKeyColor;
-  }
+  @Input()
+  label: string;
 
-  public get hideDataKeyUnits(): boolean {
-    return this.datasourceComponent.hideDataKeyUnits;
-  }
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
-  public get hideDataKeyDecimals(): boolean {
-    return this.datasourceComponent.hideDataKeyDecimals;
-  }
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
+
+  @Input()
+  @coerceBoolean()
+  hideDataKeyLabel: boolean;
+
+  @Input()
+  @coerceBoolean()
+  hideDataKeyColor: boolean;
+
+  @Input()
+  @coerceBoolean()
+  hideDataKeyUnits: boolean;
+
+  @Input()
+  @coerceBoolean()
+  hideDataKeyDecimals: boolean;
+
+  @Input()
+  @coerceBoolean()
+  disableDrag = false;
 
   widgetTypes = widgetType;
   dataKeyTypes = DataKeyType;
@@ -138,6 +154,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
   }
 
   @Input()
+  @coerceBoolean()
   optDataKeys: boolean;
 
   @Input()
@@ -174,6 +191,9 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
 
   @Input()
   deviceId: string;
+
+  @Input()
+  generateKey: (key: DataKey) => DataKey = (key) => key;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -222,7 +242,6 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
   private keysValidator = this._keysValidator.bind(this);
 
   constructor(@SkipSelf() private errorStateMatcher: ErrorStateMatcher,
-              private datasourceComponent: DatasourceComponent,
               private translate: TranslateService,
               private utils: UtilsService,
               private dialog: MatDialog,
@@ -463,8 +482,13 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
   }
 
   private addFromChipValue(chip: DataKey) {
-    const key = this.callbacks.generateDataKey(chip.name, chip.type, this.dataKeySettingsForm, this.latestDataKeys,
-      this.datakeySettingsFunction);
+    let key: DataKey;
+    if (this.generateKey) {
+      key = this.generateKey(chip);
+    } else {
+      key = this.callbacks.generateDataKey(chip.name, chip.type, this.dataKeySettingsForm, this.latestDataKeys,
+        this.datakeySettingsFunction);
+    }
     this.addKey(key);
   }
 
@@ -687,7 +711,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
   }
 
   get dragDisabled(): boolean {
-    return this.keys.length < 2;
+    return this.keys.length < 2 || this.disableDrag;
   }
 
   get maxDataKeysSet(): boolean {

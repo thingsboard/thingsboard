@@ -35,8 +35,10 @@ import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { ENTER } from '@angular/cdk/keycodes';
 import { ErrorStateMatcher } from '@angular/material/core';
-import { FilterSelectCallbacks } from '@home/components/filter/filter-select.component.models';
+import { FilterSelectCallbacks } from './filter-select.component.models';
 import { Filter } from '@shared/models/query/query.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-filter-select',
@@ -65,7 +67,14 @@ export class FilterSelectComponent implements ControlValueAccessor, OnInit, Afte
   callbacks: FilterSelectCallbacks;
 
   @Input()
+  @coerceBoolean()
   showLabel: boolean;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
 
   @ViewChild('filterAutocomplete') filterAutocomplete: MatAutocomplete;
   @ViewChild('autocomplete', { read: MatAutocompleteTrigger }) autoCompleteTrigger: MatAutocompleteTrigger;

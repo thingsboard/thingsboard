@@ -29,7 +29,7 @@ import { WidgetConfigComponentData, WidgetInfo } from '@home/models/widget-compo
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
-import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeySettingsFunction } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 
 export interface AddWidgetDialogData {
   dashboard: Dashboard;

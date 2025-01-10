@@ -1349,6 +1349,7 @@
         "general": "General",
         "advanced": "Advanced",
         "key": "Key",
+        "keys": "Keys",
         "label": "Label",
         "color": "Color",
         "units": "Special symbol to show next to value",
@@ -6869,6 +6870,8 @@
             },
             "data-layer": {
                 "source": "Source",
+                "additional-data-keys": "Additional data keys",
+                "groups": "Groups",
                 "marker": {
                     "latitude-key": "Latitude key",
                     "longitude-key": "Longitude key",

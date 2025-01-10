@@ -15,8 +15,10 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="keysListFormGroup" class="mat-block">
-  <mat-label>{{placeholder}}</mat-label>
+<mat-form-field [formGroup]="keysListFormGroup" class="mat-block tb-keys-field"
+                [appearance]="appearance"
+                [subscriptSizing]="subscriptSizing">
+  <mat-label>{{ label ? label : placeholder}}</mat-label>
   <mat-chip-grid #chipList formControlName="keys" [required]="required">
     <div class="tb-datakeys-container"
          [dndDropzone]="[dndId]"
@@ -46,7 +48,7 @@
           <div dndHandle *ngIf="!disabled && !dragDisabled" class="tb-chip-drag-handle">
             <mat-icon class="tb-mat-18">drag_indicator</mat-icon>
           </div>
-          <div class="tb-chip-labels">
+          <div class="tb-chip-labels" [class.tb-transparent]="dragDisabled">
             <div class="tb-chip-label tb-chip-text tb-chip-icon">
               <ng-container *ngIf="isEntityDatasource">
                 <mat-icon class="tb-mat-18 tb-datakey-icon" *ngIf="key.type === dataKeyTypes.alarm"

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 .tb-data-key-input {
-  .mat-mdc-form-field.tb-inline-field.tb-key-field {
+  .mat-mdc-form-field.tb-key-field {
     width: 100%;
     &.mat-form-field-appearance-fill {
       .mdc-text-field--filled.mdc-text-field--disabled {
@@ -23,14 +23,25 @@
         }
       }
     }
-    .mat-mdc-text-field-wrapper:not(.mdc-text-field--outlined) {
-      padding-left: 8px;
-      padding-right: 0;
-
+    .mat-mdc-text-field-wrapper {
+      &:not(.mdc-text-field--outlined) {
+        padding-left: 8px;
+        padding-right: 0;
+        .mat-mdc-form-field-infix {
+          padding-top: 0;
+          padding-bottom: 6px;
+        }
+      }
+      &.mdc-text-field--outlined {
+        .mat-mdc-form-field-infix {
+          padding-top: 12px;
+          padding-bottom: 12px;
+        }
+        .mdc-evolution-chip-set__chips {
+          margin-left: 0;
+        }
+      }
       .mat-mdc-form-field-infix {
-        padding-top: 0;
-        padding-bottom: 6px;
-
         .mdc-evolution-chip-set .mdc-evolution-chip {
           margin: 0;
         }

@@ -15,7 +15,7 @@
 ///
 
 import L, { Coords, TB, TileLayerOptions } from 'leaflet';
-import { guid } from '@core/utils';
+import {  guid } from '@core/utils';
 
 class SidebarControl extends L.Control<TB.SidebarControlOptions> {
 
@@ -25,6 +25,8 @@ class SidebarControl extends L.Control<TB.SidebarControlOptions> {
   private currentButton = $();
 
   private map: L.Map;
+
+  private buttonContainer: JQuery<HTMLElement>;
 
   constructor(options: TB.SidebarControlOptions) {
     super(options);
@@ -38,8 +40,9 @@ class SidebarControl extends L.Control<TB.SidebarControlOptions> {
     }
   }
 
-  addPane(pane: JQuery<HTMLElement>): this {
+  addPane(pane: JQuery<HTMLElement>, button: JQuery<HTMLElement>): this {
     pane.hide().appendTo(this.sidebar);
+    button.appendTo(this.buttonContainer);
     return this;
   }
 
@@ -50,6 +53,7 @@ class SidebarControl extends L.Control<TB.SidebarControlOptions> {
     this.current.hide().trigger('hide');
     this.currentButton.removeClass('active');
 
+
     if (this.current === pane) {
       if (['topleft', 'bottomleft'].includes(position)) {
         this.map.panBy([-paneWidth, 0], { animate: false });
@@ -58,20 +62,26 @@ class SidebarControl extends L.Control<TB.SidebarControlOptions> {
       this.current = this.currentButton = $();
     } else {
       this.sidebar.show();
-      this.current = pane;
-      this.currentButton = button || $();
-      if (['topleft', 'bottomleft'].includes(position)) {
+      if (['topleft', 'bottomleft'].includes(position) && !this.current.length) {
         this.map.panBy([paneWidth, 0], { animate: false });
       }
+      this.current = pane;
+      this.currentButton = button || $();
     }
-    this.map.invalidateSize({ pan: false, animate: false });
     this.current.show().trigger('show');
     this.currentButton.addClass('active');
+    this.map.invalidateSize({ pan: false, animate: false });
+  }
+
+  onAdd(map: L.Map): HTMLElement {
+    this.buttonContainer = $("<div>")
+    .attr('class', 'leaflet-bar');
+    return this.buttonContainer[0];
   }
 
   addTo(map: L.Map): this {
     this.map = map;
-    return this;
+    return super.addTo(map);
   }
 }
 
@@ -84,9 +94,7 @@ class SidebarPaneControl<O extends TB.SidebarPaneControlOptions> extends L.Contr
     super(options);
   }
 
-  onAdd(map: L.Map): HTMLElement {
-    const $container = $("<div>")
-    .attr('class', 'leaflet-bar');
+  addTo(map: L.Map): this {
 
     this.button = $("<a>")
     .attr('class', 'tb-control-button')
@@ -98,7 +106,6 @@ class SidebarPaneControl<O extends TB.SidebarPaneControlOptions> extends L.Contr
     if (this.options.buttonTitle) {
       this.button.attr('title', this.options.buttonTitle);
     }
-    this.button.appendTo($container);
 
     this.$ui = $('<div>')
         .attr('class', this.options.uiClass);
@@ -117,13 +124,13 @@ class SidebarPaneControl<O extends TB.SidebarPaneControlOptions> extends L.Contr
       this.toggle(e);
     })));
 
-    this.options.sidebar.addPane(this.$ui);
+    this.options.sidebar.addPane(this.$ui, this.button);
 
     this.onAddPane(map, this.button, this.$ui, (e) => {
       this.toggle(e);
     });
 
-    return $container[0];
+    return this;
   }
 
   public onAddPane(map: L.Map, button: JQuery<HTMLElement>, $ui: JQuery<HTMLElement>, toggle: (e: JQuery.MouseEventBase) => void) {}
@@ -216,6 +223,53 @@ class LayersControl extends SidebarPaneControl<TB.LayersControlOptions> {
   }
 }
 
+class GroupsControl extends SidebarPaneControl<TB.GroupsControlOptions> {
+  constructor(options: TB.GroupsControlOptions) {
+    super(options);
+  }
+
+  public onAddPane(map: L.Map, button: JQuery<HTMLElement>, $ui: JQuery<HTMLElement>, toggle: (e: JQuery.MouseEventBase) => void) {
+    const paneId = guid();
+    const groups = this.options.groups;
+    const baseSection = $("<div>")
+    .attr('class', 'tb-layers-container')
+    .appendTo($ui);
+
+    groups.forEach((groupData, i) => {
+      const id = `map-group-layer-${paneId}-${i}`;
+      const checkBoxContainer = $('<div class="tb-group-checkbox">')
+      .appendTo(baseSection);
+      const input = $('<input type="checkbox" class="tb-group-button" name="group">')
+      .prop('id', id)
+      .prop('checked', groupData.enabled)
+      .appendTo(checkBoxContainer);
+
+      $('<label class="tb-group-label">')
+      .prop('title', groupData.title)
+      .prop('for', id)
+      .append($('<span>').append(groupData.title))
+      .appendTo(checkBoxContainer);
+      input.on('click', (e: JQuery.MouseEventBase) => {
+        e.stopPropagation();
+        groupData.enabled = !groupData.enabled;
+        let changed = false;
+        groupData.dataLayers.forEach(
+          (dl) => {
+            changed = dl.toggleGroup(groupData.group) || changed;
+          }
+        );
+        if (changed) {
+          map.fire('layergroupchange', {group: groupData});
+        }
+      });
+
+      map.on('layeradd layerremove', function () {
+        input.prop('checked', groupData.enabled);
+      });
+    });
+  }
+}
+
 const sidebar = (options: TB.SidebarControlOptions): SidebarControl => {
   return new SidebarControl(options);
 }
@@ -226,6 +280,10 @@ const sidebarPane = <O extends TB.SidebarPaneControlOptions>(options: O): Sideba
 
 const layers = (options: TB.LayersControlOptions): LayersControl => {
   return new LayersControl(options);
+}
+
+const groups = (options: TB.GroupsControlOptions): GroupsControl => {
+  return new GroupsControl(options);
 }
 
 class ChinaProvider extends L.TileLayer {
@@ -282,9 +340,11 @@ L.TB = L.TB || {
   SidebarControl,
   SidebarPaneControl,
   LayersControl,
+  GroupsControl,
   sidebar,
   sidebarPane,
   layers,
+  groups,
   TileLayer: {
     ChinaProvider
   },

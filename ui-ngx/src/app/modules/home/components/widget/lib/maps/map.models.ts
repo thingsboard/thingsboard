@@ -14,12 +14,16 @@
 /// limitations under the License.
 ///
 
-import { DataKey, Datasource, DatasourceType } from '@shared/models/widget.models';
+import { DataKey, Datasource, DatasourceType, FormattedData } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { guid, isDefinedAndNotNull, isString, mergeDeep } from '@core/utils';
+import { guid, hashCode, isDefinedAndNotNull, isString, mergeDeep } from '@core/utils';
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { materialColors } from '@shared/models/material.models';
-import L from 'leaflet';
+import L, { BaseIconOptions, Icon } from 'leaflet';
+import { TbFunction } from '@shared/models/js-function.models';
+import { Observable, Observer, of, switchMap } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { ImagePipe } from '@shared/pipe/image.pipe';
 
 export enum MapType {
   geoMap = 'geoMap',
@@ -50,7 +54,7 @@ export const mapDataSourceSettingsToDatasource = (settings: MapDataSourceSetting
 
 export interface MapDataLayerSettings extends MapDataSourceSettings {
   additionalDataKeys?: DataKey[];
-  group?: string;
+  groups?: string[];
 }
 
 export type MapDataLayerType = 'markers' | 'polygons' | 'circles';
@@ -109,9 +113,43 @@ export const mapDataLayerValidator = (type: MapDataLayerType): ValidatorFn => {
   };
 };
 
+export enum MarkerType {
+  default = 'default',
+  image = 'image'
+}
+
+export enum DataLayerColorType {
+  constant = 'constant',
+  function = 'function'
+}
+
+export interface DataLayerColorSettings {
+  type: DataLayerColorType;
+  color: string;
+  colorFunction?: TbFunction;
+}
+
+export enum MarkerImageType {
+  image = 'image',
+  function = 'function'
+}
+
+export interface MarkerImageSettings {
+  type: MarkerImageType;
+  image?: string;
+  imageSize?: number;
+  imageFunction?: TbFunction;
+  images?: string[];
+}
+
 export interface MarkersDataLayerSettings extends MapDataLayerSettings {
   xKey: DataKey;
   yKey: DataKey;
+  markerType: MarkerType;
+  markerColor: DataLayerColorSettings;
+  markerImage?: MarkerImageSettings;
+  markerOffsetX: number;
+  markerOffsetY: number;
 }
 
 const defaultMarkerLatitudeFunction = 'var value = prevValue || 15.833293;\n' +
@@ -138,7 +176,7 @@ const defaultMarkerYPosFunction = 'var value = prevValue || 0.3;\n' +
   '}\n' +
   'return value;';
 
-export const defaultMarkersDataLayerSettings = (mapType: MapType, functionsOnly = false): MarkersDataLayerSettings => ({
+export const defaultMarkersDataLayerSettings = (mapType: MapType, functionsOnly = false): MarkersDataLayerSettings => mergeDeep({
   dsType: functionsOnly ? DatasourceType.function : DatasourceType.entity,
   xKey: {
     name: functionsOnly ? 'f(x)' : (MapType.geoMap === mapType ? 'latitude' : 'xPos'),
@@ -156,13 +194,23 @@ export const defaultMarkersDataLayerSettings = (mapType: MapType, functionsOnly 
     settings: {},
     color: materialColors[0].value
   }
-});
+} as MarkersDataLayerSettings, defaultBaseMarkersDataLayerSettings as MarkersDataLayerSettings);
+
+export const defaultBaseMarkersDataLayerSettings: Partial<MarkersDataLayerSettings> = {
+  markerType: MarkerType.default,
+  markerColor: {
+    type: DataLayerColorType.constant,
+    color: '#FE7569'
+  },
+  markerOffsetX: 0.5,
+  markerOffsetY: 1
+};
 
 export interface PolygonsDataLayerSettings extends MapDataLayerSettings {
   polygonKey: DataKey;
 }
 
-export const defaultPolygonsDataLayerSettings = (functionsOnly = false): PolygonsDataLayerSettings => ({
+export const defaultPolygonsDataLayerSettings = (functionsOnly = false): PolygonsDataLayerSettings => mergeDeep({
   dsType: functionsOnly ? DatasourceType.function : DatasourceType.entity,
   polygonKey: {
     name: functionsOnly ? 'f(x)' : 'perimeter',
@@ -171,13 +219,17 @@ export const defaultPolygonsDataLayerSettings = (functionsOnly = false): Polygon
     settings: {},
     color: materialColors[0].value
   }
-});
+} as PolygonsDataLayerSettings, defaultBasePolygonsDataLayerSettings as PolygonsDataLayerSettings);
+
+export const defaultBasePolygonsDataLayerSettings: Partial<PolygonsDataLayerSettings> = {
+
+}
 
 export interface CirclesDataLayerSettings extends MapDataLayerSettings {
   circleKey: DataKey;
 }
 
-export const defaultCirclesDataLayerSettings = (functionsOnly = false): CirclesDataLayerSettings => ({
+export const defaultCirclesDataLayerSettings = (functionsOnly = false): CirclesDataLayerSettings => mergeDeep({
   dsType: functionsOnly ? DatasourceType.function : DatasourceType.entity,
   circleKey: {
     name: functionsOnly ? 'f(x)' : 'perimeter',
@@ -186,7 +238,11 @@ export const defaultCirclesDataLayerSettings = (functionsOnly = false): CirclesD
     settings: {},
     color: materialColors[0].value
   }
-});
+} as CirclesDataLayerSettings, defaultBaseCirclesDataLayerSettings as CirclesDataLayerSettings);
+
+export const defaultBaseCirclesDataLayerSettings: Partial<CirclesDataLayerSettings> = {
+
+}
 
 export const defaultMapDataLayerSettings = (mapType: MapType, dataLayerType: MapDataLayerType, functionsOnly = false): MapDataLayerSettings => {
   switch (dataLayerType) {
@@ -542,10 +598,37 @@ export type MapSetting = GeoMapSettings & ImageMapSettings;
 
 export const defaultMapSettings: MapSetting = defaultGeoMapSettings;
 
+export interface MarkerImageInfo {
+  url: string;
+  size: number;
+  markerOffset?: [number, number];
+  tooltipOffset?: [number, number];
+}
+
+export interface MarkerIconInfo {
+  icon: Icon<BaseIconOptions>;
+  size: [number, number];
+}
+
+export type MapStringFunction = (data: FormattedData<TbMapDatasource>,
+                                 dsData: FormattedData<TbMapDatasource>[]) => string;
+
+export type MarkerImageFunction = (data: FormattedData<TbMapDatasource>, markerImages: string[],
+                                   dsData: FormattedData<TbMapDatasource>[]) => MarkerImageInfo;
+
 export interface TbCircleData {
   latitude: number;
   longitude: number;
   radius: number;
+}
+
+export const isJSON = (data: string): boolean => {
+  try {
+    const parseData = JSON.parse(data);
+    return !Array.isArray(parseData);
+  } catch (e) {
+    return false;
+  }
 }
 
 export const isValidLatitude = (latitude: any): boolean =>
@@ -622,9 +705,14 @@ const mapDatasourceIsSame = (ds1: TbMapDatasource, ds2: TbMapDatasource): boolea
       case DatasourceType.function:
         return true;
       case DatasourceType.device:
-        return ds1.deviceId === ds2.deviceId;
       case DatasourceType.entity:
-        return ds1.entityAliasId === ds2.entityAliasId;
+        if (ds1.filterId === ds2.filterId) {
+          if (ds1.type === DatasourceType.device) {
+            return ds1.deviceId === ds2.deviceId;
+          } else {
+            return ds1.entityAliasId === ds2.entityAliasId;
+          }
+        }
     }
   }
   return false;
@@ -643,3 +731,57 @@ const mergeMapDatasource = (target: TbMapDatasource, source: TbMapDatasource): T
   target.dataKeys.push(...appendKeys);
   return target;
 }
+
+const imageAspectMap: {[key: string]: ImageWithAspect} = {};
+
+const imageLoader = (imageUrl: string): Observable<HTMLImageElement> => new Observable((observer: Observer<HTMLImageElement>) => {
+  const image = document.createElement('img'); // support IE
+  image.style.position = 'absolute';
+  image.style.left = '-99999px';
+  image.style.top = '-99999px';
+  image.onload = () => {
+    observer.next(image);
+    document.body.removeChild(image);
+    observer.complete();
+  };
+  image.onerror = err => {
+    observer.error(err);
+    document.body.removeChild(image);
+    observer.complete();
+  };
+  document.body.appendChild(image);
+  image.src = imageUrl;
+});
+
+const loadImageAspect = (imageUrl: string): Observable<number> =>
+  imageLoader(imageUrl).pipe(map(image => image.width / image.height));
+
+export interface ImageWithAspect {
+  url: string;
+  aspect: number;
+}
+
+export const loadImageWithAspect = (imagePipe: ImagePipe, imageUrl: string): Observable<ImageWithAspect> => {
+  if (imageUrl?.length) {
+    const hash = hashCode(imageUrl);
+    let imageWithAspect = imageAspectMap[hash];
+    if (imageWithAspect) {
+      return of(imageWithAspect);
+    } else {
+      return imagePipe.transform(imageUrl, {asString: true, ignoreLoadingImage: true}).pipe(
+        switchMap((res) => {
+          const url = res as string;
+          return loadImageAspect(url).pipe(
+            map((aspect) => {
+              imageWithAspect = {url, aspect};
+              imageAspectMap[hash] = imageWithAspect;
+              return imageWithAspect;
+            })
+          );
+        })
+      );
+    }
+  } else {
+    return of(null);
+  }
+};

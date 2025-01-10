@@ -1,0 +1,198 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form (ngSubmit)="save()" class="tb-map-data-layer-dialog" style="width: 750px;">
+  <mat-toolbar color="primary">
+    <h2 translate>{{dialogTitle}}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content class="tb-form-panel no-border no-padding" [formGroup]="dataLayerFormGroup">
+    <div class="tb-form-panel">
+      <div class="flex flex-row items-center justify-between">
+        <div class="tb-form-panel-title">{{ 'widget-config.datasource' | translate }}</div>
+        <tb-toggle-select formControlName="dsType">
+          <tb-toggle-option *ngFor="let type of datasourceTypes" [value]="type">{{ datasourceTypesTranslations.get(type) | translate }}</tb-toggle-option>
+        </tb-toggle-select>
+      </div>
+      <div class="flex flex-col">
+        <tb-entity-autocomplete
+          *ngIf="dataLayerFormGroup.get('dsType').value === DatasourceType.device"
+          required
+          appearance="outline"
+          placeholder="{{ 'device.select-device' | translate }}"
+          [entityType]="EntityType.DEVICE"
+          formControlName="dsDeviceId">
+        </tb-entity-autocomplete>
+        <tb-entity-alias-select
+          *ngIf="dataLayerFormGroup.get('dsType').value === DatasourceType.entity"
+          tbRequired
+          appearance="outline"
+          [aliasController]="context.aliasController"
+          formControlName="dsEntityAliasId"
+          [callbacks]="context.callbacks">
+        </tb-entity-alias-select>
+        <tb-filter-select
+          *ngIf="[DatasourceType.device, DatasourceType.entity].includes(dataLayerFormGroup.get('dsType').value)"
+          showLabel
+          appearance="outline"
+          [aliasController]="context.aliasController"
+          formControlName="dsFilterId"
+          [callbacks]="context.callbacks">
+        </tb-filter-select>
+      </div>
+    </div>
+    <div class="tb-form-panel">
+      <div class="tb-form-panel-title">{{ 'datakey.keys' | translate }}</div>
+      <div class="flex flex-col">
+        <div *ngIf="dataLayerType === 'markers'" class="flex flex-row gap-3">
+          <tb-data-key-input
+            class="flex-1"
+            inlineField="false"
+            appearance="outline"
+            subscriptSizing="fixed"
+            label="{{ (mapType === MapType.geoMap ? 'widgets.maps.data-layer.marker.latitude-key' : 'widgets.maps.data-layer.marker.x-pos-key') | translate }}"
+            required
+            requiredText="{{ mapType === MapType.geoMap ? 'widgets.maps.data-layer.marker.latitude-key-required' : 'widgets.maps.data-layer.marker.x-pos-key-required' }}"
+            [datasourceType]="dataLayerFormGroup.get('dsType').value"
+            [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
+            [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
+            [aliasController]="context.aliasController"
+            [widgetType]="widgetType.latest"
+            [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
+            [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
+            [callbacks]="context.callbacks"
+            [generateKey]="context.generateDataKey"
+            (keyEdit)="editKey('xKey')"
+            formControlName="xKey">
+          </tb-data-key-input>
+          <tb-data-key-input
+            class="flex-1"
+            inlineField="false"
+            appearance="outline"
+            subscriptSizing="fixed"
+            label="{{ (mapType === MapType.geoMap ? 'widgets.maps.data-layer.marker.longitude-key' : 'widgets.maps.data-layer.marker.y-pos-key') | translate }}"
+            *ngIf="dataLayerType === 'markers'"
+            required
+            requiredText="{{ mapType === MapType.geoMap ? 'widgets.maps.data-layer.marker.longitude-key-required' : 'widgets.maps.data-layer.marker.y-pos-key-required' }}"
+            [datasourceType]="dataLayerFormGroup.get('dsType').value"
+            [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
+            [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
+            [aliasController]="context.aliasController"
+            [widgetType]="widgetType.latest"
+            [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
+            [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
+            [callbacks]="context.callbacks"
+            [generateKey]="context.generateDataKey"
+            (keyEdit)="editKey('yKey')"
+            formControlName="yKey">
+          </tb-data-key-input>
+        </div>
+        <tb-data-key-input
+          *ngIf="dataLayerType === 'polygons'"
+          inlineField="false"
+          appearance="outline"
+          subscriptSizing="fixed"
+          label="{{ 'widgets.maps.data-layer.polygon.polygon-key' | translate }}"
+          required
+          requiredText="widgets.maps.data-layer.polygon.polygon-key-required"
+          [datasourceType]="dataLayerFormGroup.get('dsType').value"
+          [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
+          [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
+          [aliasController]="context.aliasController"
+          [widgetType]="widgetType.latest"
+          [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
+          [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
+          [callbacks]="context.callbacks"
+          [generateKey]="context.generateDataKey"
+          (keyEdit)="editKey('polygonKey')"
+          formControlName="polygonKey">
+        </tb-data-key-input>
+        <tb-data-key-input
+          *ngIf="dataLayerType === 'circles'"
+          inlineField="false"
+          appearance="outline"
+          subscriptSizing="fixed"
+          label="{{ 'widgets.maps.data-layer.circle.circle-key' | translate }}"
+          required
+          requiredText="widgets.maps.data-layer.circle.circle-key-required"
+          [datasourceType]="dataLayerFormGroup.get('dsType').value"
+          [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
+          [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
+          [aliasController]="context.aliasController"
+          [widgetType]="widgetType.latest"
+          [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
+          [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
+          [callbacks]="context.callbacks"
+          [generateKey]="context.generateDataKey"
+          (keyEdit)="editKey('circleKey')"
+          formControlName="circleKey">
+        </tb-data-key-input>
+        <tb-data-keys
+          formControlName="additionalDataKeys"
+          appearance="outline"
+          subscriptSizing="dynamic"
+          hideDataKeyColor
+          hideDataKeyDecimals
+          hideDataKeyUnits
+          optDataKeys
+          disableDrag
+          label="{{ 'widgets.maps.data-layer.additional-data-keys' | translate }}"
+          [required]="false"
+          [widgetType]="widgetType.latest"
+          [widget]="context.widget"
+          [datasourceType]="dataLayerFormGroup.get('dsType').value"
+          [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
+          [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
+          [aliasController]="context.aliasController"
+          [callbacks]="context.callbacks"
+          [generateKey]="generateAdditionalDataKey">
+        </tb-data-keys>
+      </div>
+    </div>
+    <div class="tb-form-panel">
+      <div class="tb-form-panel-title">{{ 'widget-config.appearance' | translate }}</div>
+    </div>
+    <div class="tb-form-panel">
+      <div class="tb-form-panel-title">{{ 'widgets.maps.data-layer.groups' | translate }}</div>
+      <tb-string-items-list class="tb-inline-chips"
+                            editable
+                            placeholder="{{'widgets.maps.data-layer.groups' | translate}}"
+                            appearance="outline"
+                            subscriptSizing="dynamic"
+                            formControlName="groups">
+      </tb-string-items-list>
+    </div>
+  </div>
+  <div mat-dialog-actions class="flex items-center justify-between">
+    <button mat-button color="primary"
+            type="button"
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()" cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || dataLayerFormGroup.invalid || !dataLayerFormGroup.dirty">
+      {{ 'action.save' | translate }}
+    </button>
+  </div>
+</form>
