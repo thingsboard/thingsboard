@@ -20,10 +20,19 @@ import { DateFormatProcessor, DateFormatSettings, Font } from '@shared/models/wi
 import {
   TimeSeriesChartDataItem,
 } from '@home/components/widget/lib/chart/time-series-chart.models';
-import { Renderer2, SecurityContext } from '@angular/core';
+import { Renderer2 } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { CallbackDataParams } from 'echarts/types/dist/shared';
 import { Interval } from '@shared/models/time/time.models';
+import {
+  getCircleElement,
+  getLabelElement,
+  getLabelTextElement,
+  getLabelValueElement,
+  getTooltipDateElement,
+  getTooltipElement,
+  getValueElement
+} from '@home/components/widget/lib/chart/echarts-widget.models';
 
 export type TimeSeriesChartTooltipValueFormatFunction =
   (value: any, latestData: FormattedData, units?: string, decimals?: number) => string;
@@ -104,11 +113,7 @@ export class TimeSeriesChartTooltip {
       return null;
     }
 
-    const tooltipElement: HTMLElement = this.renderer.createElement('div');
-    this.renderer.setStyle(tooltipElement, 'display', 'flex');
-    this.renderer.setStyle(tooltipElement, 'flex-direction', 'column');
-    this.renderer.setStyle(tooltipElement, 'align-items', 'flex-start');
-    this.renderer.setStyle(tooltipElement, 'gap', '16px');
+    const tooltipElement: HTMLElement = getTooltipElement(this.renderer, '16px');
 
     this.buildItemsTooltip(tooltipElement, tooltipParams.items, interval);
     this.buildItemsTooltip(tooltipElement, tooltipParams.comparisonItems, interval);
@@ -119,11 +124,7 @@ export class TimeSeriesChartTooltip {
   private buildItemsTooltip(tooltipElement: HTMLElement,
                             items: TooltipItem[], interval?: Interval) {
     if (items.length) {
-      const tooltipItemsElement: HTMLElement = this.renderer.createElement('div');
-      this.renderer.setStyle(tooltipItemsElement, 'display', 'flex');
-      this.renderer.setStyle(tooltipItemsElement, 'flex-direction', 'column');
-      this.renderer.setStyle(tooltipItemsElement, 'align-items', 'flex-start');
-      this.renderer.setStyle(tooltipItemsElement, 'gap', '4px');
+      const tooltipItemsElement: HTMLElement = getTooltipElement(this.renderer, '4px');
       this.renderer.appendChild(tooltipElement, tooltipItemsElement);
       if (this.settings.tooltipShowDate) {
         this.renderer.appendChild(tooltipItemsElement, this.constructTooltipDateElement(items[0].param, interval));
@@ -135,7 +136,6 @@ export class TimeSeriesChartTooltip {
   }
 
   private constructTooltipDateElement(param: CallbackDataParams, interval?: Interval): HTMLElement {
-    const dateElement: HTMLElement = this.renderer.createElement('div');
     let dateText: string;
     const startTs = param.value[2];
     const endTs = param.value[3];
@@ -151,44 +151,17 @@ export class TimeSeriesChartTooltip {
       const ts = param.value[0];
       dateText = this.tooltipDateFormat.update(ts, interval);
     }
-    this.renderer.appendChild(dateElement, this.renderer.createText(dateText));
-    this.renderer.setStyle(dateElement, 'font-family', this.settings.tooltipDateFont.family);
-    this.renderer.setStyle(dateElement, 'font-size', this.settings.tooltipDateFont.size + this.settings.tooltipDateFont.sizeUnit);
-    this.renderer.setStyle(dateElement, 'font-style', this.settings.tooltipDateFont.style);
-    this.renderer.setStyle(dateElement, 'font-weight', this.settings.tooltipDateFont.weight);
-    this.renderer.setStyle(dateElement, 'line-height', this.settings.tooltipDateFont.lineHeight);
-    this.renderer.setStyle(dateElement, 'color', this.settings.tooltipDateColor);
-    return dateElement;
+    return getTooltipDateElement(this.renderer, dateText, this.settings);
   }
 
   private constructTooltipSeriesElement(item: TooltipItem): HTMLElement {
-    const labelValueElement: HTMLElement = this.renderer.createElement('div');
-    this.renderer.setStyle(labelValueElement, 'display', 'flex');
-    this.renderer.setStyle(labelValueElement, 'flex-direction', 'row');
-    this.renderer.setStyle(labelValueElement, 'align-items', 'center');
-    this.renderer.setStyle(labelValueElement, 'align-self', 'stretch');
-    this.renderer.setStyle(labelValueElement, 'gap', '12px');
-    const labelElement: HTMLElement = this.renderer.createElement('div');
-    this.renderer.setStyle(labelElement, 'display', 'flex');
-    this.renderer.setStyle(labelElement, 'align-items', 'center');
-    this.renderer.setStyle(labelElement, 'gap', '8px');
+    const labelValueElement: HTMLElement = getLabelValueElement(this.renderer);
+    const labelElement: HTMLElement = getLabelElement(this.renderer);
     this.renderer.appendChild(labelValueElement, labelElement);
-    const circleElement: HTMLElement = this.renderer.createElement('div');
-    this.renderer.setStyle(circleElement, 'width', '8px');
-    this.renderer.setStyle(circleElement, 'height', '8px');
-    this.renderer.setStyle(circleElement, 'border-radius', '50%');
-    this.renderer.setStyle(circleElement, 'background', item.param.color);
+    const circleElement: HTMLElement = getCircleElement(this.renderer, item.param.color);
     this.renderer.appendChild(labelElement, circleElement);
-    const labelTextElement: HTMLElement = this.renderer.createElement('div');
-    this.renderer.setProperty(labelTextElement, 'innerHTML', this.sanitizer.sanitize(SecurityContext.HTML, item.param.seriesName));
-    this.renderer.setStyle(labelTextElement, 'font-family', this.settings.tooltipLabelFont.family);
-    this.renderer.setStyle(labelTextElement, 'font-size', this.settings.tooltipLabelFont.size + this.settings.tooltipLabelFont.sizeUnit);
-    this.renderer.setStyle(labelTextElement, 'font-style', this.settings.tooltipLabelFont.style);
-    this.renderer.setStyle(labelTextElement, 'font-weight', this.settings.tooltipLabelFont.weight);
-    this.renderer.setStyle(labelTextElement, 'line-height', this.settings.tooltipLabelFont.lineHeight);
-    this.renderer.setStyle(labelTextElement, 'color', this.settings.tooltipLabelColor);
+    const labelTextElement: HTMLElement = getLabelTextElement(this.renderer, this.sanitizer, item.param.seriesName);
     this.renderer.appendChild(labelElement, labelTextElement);
-    const valueElement: HTMLElement = this.renderer.createElement('div');
     let formatFunction = this.valueFormatFunction;
     let latestData: FormattedData;
     let units = '';
@@ -205,16 +178,7 @@ export class TimeSeriesChartTooltip {
       latestData = {} as FormattedData;
     }
     const value = formatFunction(item.param.value[1], latestData, units, decimals);
-    this.renderer.setProperty(valueElement, 'innerHTML', this.sanitizer.sanitize(SecurityContext.HTML, value));
-    this.renderer.setStyle(valueElement, 'flex', '1');
-    this.renderer.setStyle(valueElement, 'text-align', 'end');
-    this.renderer.setStyle(valueElement, 'font-family', this.settings.tooltipValueFont.family);
-    this.renderer.setStyle(valueElement, 'font-size', this.settings.tooltipValueFont.size + this.settings.tooltipValueFont.sizeUnit);
-    this.renderer.setStyle(valueElement, 'font-style', this.settings.tooltipValueFont.style);
-    this.renderer.setStyle(valueElement, 'font-weight', this.settings.tooltipValueFont.weight);
-    this.renderer.setStyle(valueElement, 'line-height', this.settings.tooltipValueFont.lineHeight);
-    this.renderer.setStyle(valueElement, 'color', this.settings.tooltipValueColor);
-    this.renderer.appendChild(labelValueElement, valueElement);
+    this.renderer.appendChild(labelValueElement, getValueElement(this.renderer, this.sanitizer, value, this.settings));
     return labelValueElement;
   }
 
