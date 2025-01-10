@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.msg.rpc;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -28,6 +29,7 @@ import java.util.UUID;
  * @author Andrew Shvayka
  */
 @Data
+@Builder
 public class ToDeviceRpcRequest implements Serializable {
 
     private static final long serialVersionUID = -7089247105087346214L;
