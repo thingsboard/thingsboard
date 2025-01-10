@@ -24,3 +24,4 @@ export * from './widget/lib/chart/echarts-widget.models';
 export * from './widget/config/widget-config.component.models';
 export * from './widget/lib/table-widget.models';
 export * from './widget/lib/flot-widget.models';
+export * from './widget/lib/chart/time-series-chart.models';
