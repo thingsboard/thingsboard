@@ -3339,6 +3339,8 @@
             "min-max-value": "Min and max value",
             "min-value": "Min",
             "max-value": "Max",
+            "progress-bar": "Progress bar",
+            "progress-arrow": "Progress arrow",
             "warning-scale-color": "Warning scale color",
             "critical-scale-color": "Critical scale color",
             "scale-color": "Scale color",
