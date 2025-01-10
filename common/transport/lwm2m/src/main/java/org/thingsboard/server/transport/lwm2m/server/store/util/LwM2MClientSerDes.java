@@ -180,7 +180,7 @@ public class LwM2MClientSerDes {
             case STRING:
                 return value.getAsString();
             case TIME:
-                return Instant.ofEpochMilli(value.getAsLong());
+                return new Date(value.getAsLong());
             case OBJLNK:
                 return ObjectLink.decodeFromString(value.getAsString());
             case UNSIGNED_INTEGER:
