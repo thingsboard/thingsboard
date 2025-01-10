@@ -3361,7 +3361,8 @@
             "low-critical-state-hint": "Double value indicates a low critical range up to the min value scale.",
             "filter-color": "Filter color",
             "colors": "Colors",
-            "alarm-colors": "Alarm colors"
+            "alarm-colors": "Alarm colors",
+            "hook-color": "Hook color"
         }
     },
     "item": {
