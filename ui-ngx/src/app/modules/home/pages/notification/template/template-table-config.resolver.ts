@@ -53,7 +53,7 @@ export class TemplateTableConfigResolver  {
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.NOTIFICATION_TEMPLATE);
     this.config.entityResources = {} as EntityTypeResource<NotificationTemplate>;
 
-    this.config.addEntity = () => this.editTemplate(null, null, true);
+    this.config.addEntity = () => this.notificationTemplateDialog(null, true);
 
     this.config.entitiesFetchFunction = pageLink => this.notificationService.getNotificationTemplates(pageLink);
 
@@ -68,11 +68,7 @@ export class TemplateTableConfigResolver  {
     this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
     this.config.handleRowClick = ($event, template) => {
-      this.editTemplate($event, template).subscribe((res) => {
-        if (res) {
-          this.config.updateData();
-        }
-      });
+      this.editTemplate($event, template);
       return true;
     };
 
@@ -94,13 +90,17 @@ export class TemplateTableConfigResolver  {
         name: this.translate.instant('notification.copy-template'),
         icon: 'content_copy',
         isEnabled: () => true,
-        onAction: ($event, entity) => this.editTemplate($event, entity, false, true)
+        onAction: ($event, entity) => this.editTemplate($event, entity, true)
       }
     ];
   }
 
-  private editTemplate($event: Event, template: NotificationTemplate, isAdd = false, isCopy = false): Observable<NotificationTemplate> {
+  private editTemplate($event: Event, template: NotificationTemplate, isCopy = false) {
     $event?.stopPropagation();
+    this.notificationTemplateDialog(template, false, isCopy).subscribe((res) => res ? this.config.updateData() : null);
+  }
+
+  private notificationTemplateDialog(template: NotificationTemplate, isAdd = false, isCopy = false): Observable<NotificationTemplate> {
     return this.dialog.open<TemplateNotificationDialogComponent, TemplateNotificationDialogData,
       NotificationTemplate>(TemplateNotificationDialogComponent, {
       disableClose: true,

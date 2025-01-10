@@ -180,7 +180,8 @@
           "builder": "@angular-builders/custom-esbuild:dev-server",
           "options": {
             "buildTarget": "thingsboard:build",
-            "proxyConfig": "proxy.conf.js"
+            "proxyConfig": "proxy.conf.js",
+            "middlewares": ["./esbuild/tb-html-fallback-middleware.ts"]
           },
           "configurations": {
             "production": {
