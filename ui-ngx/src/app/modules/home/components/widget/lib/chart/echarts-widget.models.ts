@@ -62,14 +62,14 @@ import { TimeSeriesChartTooltipWidgetSettings } from '@home/components/widget/li
 import { Renderer2, SecurityContext } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 
-export class EChartsModule {
-  constructor(private echarts) {
+class EChartsModule {
+  constructor() {
   }
   private initialized = false;
 
   init() {
     if (!this.initialized) {
-      this.echarts.use([
+      echarts.use([
         TooltipComponent,
         GridComponent,
         VisualMapComponent,
@@ -91,7 +91,7 @@ export class EChartsModule {
   }
 }
 
-export const echartsModule = new EChartsModule(echarts);
+export const echartsModule = new EChartsModule();
 
 export type EChartsOption = echarts.ComposeOption<
   | TooltipComponentOption
