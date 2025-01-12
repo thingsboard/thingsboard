@@ -20,7 +20,11 @@
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
         "name": "Save Timeseries",
         "configuration": {
-          "defaultTTL": 0
+          "defaultTTL": 0,
+          "useServerTs": false,
+          "persistenceSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          }
         }
       },
       {

@@ -23,7 +23,11 @@
         "singletonMode": false,
         "configurationVersion": 0,
         "configuration": {
-          "defaultTTL": 0
+          "defaultTTL": 0,
+          "useServerTs": false,
+          "persistenceSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          }
         },
         "externalId": null
       },
@@ -275,7 +279,11 @@
         "singletonMode": false,
         "configurationVersion": 0,
         "configuration": {
-          "defaultTTL": 0
+          "defaultTTL": 0,
+          "useServerTs": false,
+          "persistenceSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          }
         },
         "externalId": null
       },
@@ -310,8 +318,10 @@
         "configurationVersion": 0,
         "configuration": {
           "defaultTTL": 180,
-          "skipLatestPersistence": null,
-          "useServerTs": null
+          "useServerTs": false,
+          "persistenceSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          }
         },
         "externalId": null
       }
