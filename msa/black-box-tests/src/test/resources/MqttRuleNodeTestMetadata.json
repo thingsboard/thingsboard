@@ -39,8 +39,10 @@
       "configurationVersion": 0,
       "configuration": {
         "defaultTTL": 0,
-        "skipLatestPersistence": false,
-        "useServerTs": false
+        "useServerTs": false,
+        "persistenceSettings": {
+          "type": "ON_EVERY_MESSAGE"
+        }
       },
       "externalId": null
     },
