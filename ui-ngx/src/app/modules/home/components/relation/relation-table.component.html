@@ -118,7 +118,7 @@
           <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 33%"> {{ 'relation.to-entity-name' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let relation">
             <a class="link" [routerLink]="relation.entityURL">
-              {{ relation.toName }}
+              {{ relation.toName | customTranslate }}
             </a>
           </mat-cell>
         </ng-container>
@@ -132,7 +132,7 @@
           <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 33%"> {{ 'relation.from-entity-name' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let relation">
             <a class="link" [routerLink]="relation.entityURL">
-              {{ relation.fromName }}
+              {{ relation.fromName | customTranslate }}
             </a>
           </mat-cell>
         </ng-container>
