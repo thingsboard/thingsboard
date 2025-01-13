@@ -3339,6 +3339,8 @@
             "min-max-value": "Min and max value",
             "min-value": "Min",
             "max-value": "Max",
+            "progress-bar": "Progress bar",
+            "progress-arrow": "Progress arrow",
             "warning-scale-color": "Warning scale color",
             "critical-scale-color": "Critical scale color",
             "scale-color": "Scale color",
@@ -3361,7 +3363,8 @@
             "low-critical-state-hint": "Double value indicates a low critical range up to the min value scale.",
             "filter-color": "Filter color",
             "colors": "Colors",
-            "alarm-colors": "Alarm colors"
+            "alarm-colors": "Alarm colors",
+            "hook-color": "Hook color"
         }
     },
     "item": {
