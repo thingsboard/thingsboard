@@ -29,7 +29,6 @@ export abstract class PageComponent implements OnDestroy {
 
   isLoading$: Observable<boolean>;
   loadingSubscriptions: Subscription[] = [];
-  disabledOnLoadFormControls: Array<AbstractControl> = [];
 
   showMainLoadingBar = true;
 
@@ -38,21 +37,12 @@ export abstract class PageComponent implements OnDestroy {
   }
 
   protected registerDisableOnLoadFormControl(control: AbstractControl): void {
+    this.registerSubscription(control);
     if (control instanceof FormGroup) {
       Object.values(control.controls).forEach((childControl: AbstractControl) => {
         this.registerDisableOnLoadFormControl(childControl);
       });
-    } else {
-      this.disabledOnLoadFormControls.push(control);
     }
-
-    const loadingSubscription = this.isLoading$.subscribe((isLoading) => {
-      for (const formControl of this.disabledOnLoadFormControls) {
-        this.toggleOnLoadFormControl(formControl, isLoading);
-      }
-    });
-
-    this.loadingSubscriptions.push(loadingSubscription);
   }
 
   protected toggleOnLoadFormControl(formControl: AbstractControl, isLoading: boolean): void {
@@ -61,6 +51,12 @@ export abstract class PageComponent implements OnDestroy {
     } else {
       formControl.enable({emitEvent: false});
     }
+  }
+
+  private registerSubscription(control: AbstractControl): void {
+    this.loadingSubscriptions.push(
+      this.isLoading$.subscribe((isLoading) => this.toggleOnLoadFormControl(control, isLoading))
+    );
   }
 
   ngOnDestroy(): void {
