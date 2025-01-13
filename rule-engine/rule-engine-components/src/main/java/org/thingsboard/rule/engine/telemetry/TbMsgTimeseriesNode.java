@@ -15,8 +15,11 @@
  */
 package org.thingsboard.rule.engine.telemetry;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -24,6 +27,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.telemetry.strategy.PersistenceStrategy;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -32,6 +36,7 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.ArrayList;
@@ -66,7 +71,8 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_RE
                 "So, to make sure that all the messages will be processed correctly, one should enable this parameter for sequential message processing scenarios.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeTimeseriesConfig",
-        icon = "file_upload"
+        icon = "file_upload",
+        version = 1
 )
 public class TbMsgTimeseriesNode implements TbNode {
 
@@ -180,6 +186,34 @@ public class TbMsgTimeseriesNode implements TbNode {
     @Override
     public void destroy() {
         ctx.removeListeners();
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                if (oldConfiguration.has("persistenceSettings")) {
+                    break;
+                }
+                hasChanges = true;
+                JsonNode skipLatestPersistence = oldConfiguration.get("skipLatestPersistence");
+                if (skipLatestPersistence != null && "true".equals(skipLatestPersistence.asText())) {
+                    var skipLatestPersistenceSettings = new Advanced(
+                            PersistenceStrategy.onEveryMessage(),
+                            PersistenceStrategy.skip(),
+                            PersistenceStrategy.onEveryMessage()
+                    );
+                    ((ObjectNode) oldConfiguration).set("persistenceSettings", JacksonUtil.valueToTree(skipLatestPersistenceSettings));
+                } else {
+                    ((ObjectNode) oldConfiguration).set("persistenceSettings", JacksonUtil.valueToTree(new OnEveryMessage()));
+                }
+                ((ObjectNode) oldConfiguration).remove("skipLatestPersistence");
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
 }

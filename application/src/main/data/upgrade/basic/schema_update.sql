@@ -269,8 +269,9 @@ DO $$
                                                         'type', 'ON_EVERY_MESSAGE'
                                                                             )
                                            )
-                END::text
-            WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode';
+                END::text,
+                configuration_version = 1
+            WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode' AND configuration_version = 0;
 
             -- Drop the helper function
             DROP FUNCTION is_valid_jsonb(text);

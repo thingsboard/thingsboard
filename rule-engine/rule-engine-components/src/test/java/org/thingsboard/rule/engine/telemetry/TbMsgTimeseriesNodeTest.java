@@ -25,11 +25,12 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.ThrowingConsumer;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
@@ -60,12 +61,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.assertArg;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class TbMsgTimeseriesNodeTest {
+public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("c8f34868-603a-4433-876a-7d356e5cf377"));
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("e5095e9a-04f4-44c9-b443-1cf1b97d3384"));
@@ -82,7 +84,7 @@ public class TbMsgTimeseriesNodeTest {
 
     @BeforeEach
     public void setUp() throws TbNodeException {
-        node = new TbMsgTimeseriesNode();
+        node = spy(new TbMsgTimeseriesNode());
         config = new TbMsgTimeseriesNodeConfiguration().defaultConfiguration();
     }
 
@@ -289,6 +291,84 @@ public class TbMsgTimeseriesNodeTest {
             }
         }
         return expectedList;
+    }
+
+    @Override
+    protected TbNode getTestNode() {
+        return node;
+    }
+
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                Arguments.of(0, """
+                                {
+                                  "defaultTTL": 0,
+                                  "useServerTs": false,
+                                  "skipLatestPersistence": false
+                                }""",
+                        true,
+                        """
+                                {
+                                    "defaultTTL": 0,
+                                    "useServerTs": false,
+                                    "persistenceSettings": {
+                                        "type": "ON_EVERY_MESSAGE"
+                                    }
+                                }"""),
+                Arguments.of(0, """
+                                {
+                                  "defaultTTL": 0,
+                                  "useServerTs": false
+                                }""",
+                        true,
+                        """
+                                {
+                                    "defaultTTL": 0,
+                                    "useServerTs": false,
+                                    "persistenceSettings": {
+                                        "type": "ON_EVERY_MESSAGE"
+                                    }
+                                }"""),
+                Arguments.of(0, """
+                                {
+                                  "defaultTTL": 0,
+                                  "useServerTs": false,
+                                  "skipLatestPersistence": null
+                                }""",
+                        true,
+                        """
+                                {
+                                    "defaultTTL": 0,
+                                    "useServerTs": false,
+                                    "persistenceSettings": {
+                                        "type": "ON_EVERY_MESSAGE"
+                                    }
+                                }"""),
+                Arguments.of(0, """
+                                {
+                                  "defaultTTL": 0,
+                                  "useServerTs": false,
+                                  "skipLatestPersistence": true
+                                }""",
+                        true,
+                        """
+                                {
+                                    "defaultTTL": 0,
+                                    "useServerTs": false,
+                                    "persistenceSettings": {
+                                        "type": "ADVANCED",
+                                        "timeseries": {
+                                            "type": "ON_EVERY_MESSAGE"
+                                        },
+                                        "latest": {
+                                            "type": "SKIP"
+                                        },
+                                        "webSockets": {
+                                            "type": "ON_EVERY_MESSAGE"
+                                        }
+                                    }
+                                }""")
+        );
     }
 
 }
