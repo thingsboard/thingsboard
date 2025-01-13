@@ -99,6 +99,7 @@ class SidebarPaneControl<O extends TB.SidebarPaneControlOptions> extends L.Contr
     this.button = $("<a>")
     .attr('class', 'tb-control-button')
     .attr('href', '#')
+    .attr('role', 'button')
     .html('<div class="' + this.options.uiClass + '"></div>')
     .on('click', (e) => {
       this.toggle(e);

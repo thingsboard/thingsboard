@@ -22,6 +22,7 @@ import {
   MapDataLayerType,
   MapType,
   MarkersDataLayerSettings,
+  MarkerType,
   PolygonsDataLayerSettings
 } from '@home/components/widget/lib/maps/map.models';
 import { Store } from '@ngrx/store';
@@ -60,6 +61,8 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
   DataKeyType = DataKeyType;
 
   widgetType = widgetType;
+
+  MarkerType = MarkerType;
 
   datasourceTypes: Array<DatasourceType> = [];
   datasourceTypesTranslations = datasourceTypeTranslationMap;
@@ -103,7 +106,17 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         const markersDataLayer = this.settings as MarkersDataLayerSettings;
         this.dialogTitle = 'widgets.maps.data-layer.marker.marker-configuration';
         this.dataLayerFormGroup.addControl('xKey', this.fb.control(markersDataLayer.xKey, Validators.required));
-        this.dataLayerFormGroup.addControl('yKey', this.fb.control(markersDataLayer.yKey, Validators.required));
+        this.dataLayerFormGroup.addControl('yKey', this.fb.control(markersDataLayer.yKey, Validators.required))
+        this.dataLayerFormGroup.addControl('markerType', this.fb.control(markersDataLayer.markerType, Validators.required));
+        this.dataLayerFormGroup.addControl('markerColor', this.fb.control(markersDataLayer.markerColor, Validators.required));
+        this.dataLayerFormGroup.addControl('markerImage', this.fb.control(markersDataLayer.markerImage, Validators.required));
+        this.dataLayerFormGroup.addControl('markerOffsetX', this.fb.control(markersDataLayer.markerOffsetX));
+        this.dataLayerFormGroup.addControl('markerOffsetY', this.fb.control(markersDataLayer.markerOffsetY));
+        this.dataLayerFormGroup.get('markerType').valueChanges.pipe(
+          takeUntilDestroyed(this.destroyRef)
+        ).subscribe(() =>
+          this.updateValidators()
+        );
         break;
       case 'polygons':
         const polygonsDataLayer = this.settings as PolygonsDataLayerSettings;
@@ -178,6 +191,16 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
     } else {
       this.dataLayerFormGroup.get('dsDeviceId').disable({emitEvent: false});
       this.dataLayerFormGroup.get('dsEntityAliasId').enable({emitEvent: false});
+    }
+    if (this.dataLayerType === 'markers') {
+      const markerType: MarkerType = this.dataLayerFormGroup.get('markerType').value;
+      if (markerType === MarkerType.default) {
+        this.dataLayerFormGroup.get('markerColor').enable({emitEvent: false});
+        this.dataLayerFormGroup.get('markerImage').disable({emitEvent: false});
+      } else {
+        this.dataLayerFormGroup.get('markerColor').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('markerImage').enable({emitEvent: false});
+      }
     }
   }
 

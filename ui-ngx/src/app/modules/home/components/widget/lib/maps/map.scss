@@ -30,23 +30,67 @@
   }
   .tb-map {
     flex: 1;
+    &.leaflet-touch {
+      .leaflet-bar {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 4px 4px 4px 0 rgba(0, 0, 0, 0.15);
+        background: #fff;
+        position: relative;
+        &:before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: 15px;
+          background: $tb-primary-color;  // primary color
+          opacity: 0.05;
+        }
+        a {
+          color: rgba(0, 0, 0, 0.54);
+          border-bottom: none;
+          position: relative;
+          background: transparent;
+          &:hover {
+            border-bottom: none;
+            color: $tb-primary-color;  // primary color
+            &:before {
+              content: "";
+              position: absolute;
+              inset: 0;
+              border-radius: 50%;
+              background-color: rgba(0, 105, 92, 0.10);
+            }
+          }
+          &:first-child {
+            border-top-left-radius: 50%;
+            border-top-right-radius: 50%;
+          }
+          &:last-child {
+            border-bottom-left-radius: 50%;
+            border-bottom-right-radius: 50%;
+          }
+        }
+      }
+    }
     .leaflet-control {
       .tb-control-button {
-        &.active {
-          box-shadow: inset 0 -1px 5px 2px #514d4d4f;
+        &.active, &:hover {
+          > div {
+            background: $tb-primary-color;  // primary color
+          }
         }
         > div {
           width: 30px;
           height: 30px;
-          color: #5B5B5B;
+          background: rgba(0, 0, 0, 0.54);
           line-height: 30px;
-          background-repeat: no-repeat;
-          background-position: center;
+          mask-repeat: no-repeat;
+          mask-position: center;
           &.tb-layers {
-            background-image: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 18 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 9.5L0.75 5L9 0.5L17.25 5L9 9.5ZM9 12.5L1.18125 8.24375L2.75625 7.38125L9 10.7938L15.2438 7.38125L16.8188 8.24375L9 12.5ZM9 15.5L1.18125 11.2438L2.75625 10.3813L9 13.7938L15.2438 10.3813L16.8188 11.2438L9 15.5Z" fill="%235B5B5B"/></svg>');
+            mask-image: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 18 16" xmlns="http://www.w3.org/2000/svg"><path d="M9 9.5L0.75 5L9 0.5L17.25 5L9 9.5ZM9 12.5L1.18125 8.24375L2.75625 7.38125L9 10.7938L15.2438 7.38125L16.8188 8.24375L9 12.5ZM9 15.5L1.18125 11.2438L2.75625 10.3813L9 13.7938L15.2438 10.3813L16.8188 11.2438L9 15.5Z"/></svg>');
           }
           &.tb-groups {
-            background-image: url('data:image/svg+xml,<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 3A2 2 0 0 0 3 5H5M7 3V5H9V3M11 3V5H13V3M15 3V5H17V3M19 3V5H21A2 2 0 0 0 19 3M3 7V9H5V7M7 7V11H11V7M13 7V11H17V7M19 7V9H21V7M3 11V13H5V11M19 11V13H21V11M7 13V17H11V13M13 13V17H17V13M3 15V17H5V15M19 15V17H21V15M3 19A2 2 0 0 0 5 21V19M7 19V21H9V19M11 19V21H13V19M15 19V21H17V19M19 19V21A2 2 0 0 0 21 19Z" fill="%235B5B5B"/></svg>');
+            mask-image: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path d="M6 13.5C5.5875 13.5 5.2345 13.3533 4.941 13.0597C4.6475 12.7662 4.5005 12.413 4.5 12V3C4.5 2.5875 4.647 2.2345 4.941 1.941C5.235 1.6475 5.588 1.5005 6 1.5H15C15.4125 1.5 15.7657 1.647 16.0597 1.941C16.3538 2.235 16.5005 2.588 16.5 3V12C16.5 12.4125 16.3533 12.7657 16.0597 13.0597C15.7662 13.3538 15.413 13.5005 15 13.5H6ZM6 4.5H15V3H6V4.5ZM3 16.5C2.5875 16.5 2.2345 16.3533 1.941 16.0597C1.6475 15.7662 1.5005 15.413 1.5 15V4.5H3V15H13.5V16.5H3Z"/></svg>');
           }
         }
       }

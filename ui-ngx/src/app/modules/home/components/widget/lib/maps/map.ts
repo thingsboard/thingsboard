@@ -50,6 +50,7 @@ import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget
 import { widgetType } from '@shared/models/widget.models';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 
 export abstract class TbMap<S extends BaseMapSettings> {
 
@@ -80,6 +81,8 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected sidebar: L.TB.SidebarControl;
 
   private readonly mapResize$: ResizeObserver;
+
+  private tooltipInstances: ITooltipsterInstance[] = [];
 
   protected constructor(protected ctx: WidgetContext,
                         protected inputSettings: DeepPartial<S>,
@@ -133,6 +136,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
       this.map.panTo(this.defaultCenterPosition);
     }
     this.setupDataLayers();
+    this.createdControlButtonTooltip();
   }
 
   private setupDataLayers() {
@@ -227,6 +231,51 @@ export abstract class TbMap<S extends BaseMapSettings> {
         }
       );
     }
+  }
+
+  private createdControlButtonTooltip() {
+    import('tooltipster').then(() => {
+      if ($.tooltipster) {
+        this.tooltipInstances.forEach((instance) => {
+          instance.destroy();
+        });
+        this.tooltipInstances = [];
+      }
+      $(this.mapElement)
+      .find('a[role="button"]:not(.leaflet-pm-action)')
+      .each((_index, element) => {
+        let title: string;
+        if (element.title) {
+          title = element.title;
+          $(element).removeAttr('title');
+        } else if (element.parentElement.title) {
+          title = element.parentElement.title;
+          $(element).parent().removeAttr('title');
+        }
+        const tooltip =  $(element).tooltipster(
+          {
+            content: title,
+            theme: 'tooltipster-shadow',
+            delay: 10,
+            triggerClose: {
+              click: true,
+              tap: true,
+              scroll: true,
+              mouseleave: true
+            },
+            side: ['topleft', 'bottomleft'].includes(this.settings.controlsPosition) ? 'right' : 'left',
+            distance: 2,
+            trackOrigin: true,
+            functionBefore: (instance, helper) => {
+              if (helper.origin.ariaDisabled === 'true' || helper.origin.parentElement.classList.contains('active')) {
+                return false;
+              }
+            },
+          }
+        );
+        this.tooltipInstances.push(tooltip.tooltipster('instance'));
+      });
+    });
   }
 
   private update(subscription: IWidgetSubscription) {
@@ -328,6 +377,9 @@ export abstract class TbMap<S extends BaseMapSettings> {
     if (this.map) {
       this.map.remove();
     }
+    this.tooltipInstances.forEach((instance) => {
+      instance.destroy();
+    });
   }
 
   public abstract positionToLatLng(position: {x: number; y: number}): L.LatLng;

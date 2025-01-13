@@ -204,6 +204,18 @@ import {
 } from '@home/components/widget/lib/settings/common/key/data-key-config-dialog.component';
 import { DataKeyConfigComponent } from '@home/components/widget/lib/settings/common/key/data-key-config.component';
 import { WidgetSettingsComponent } from '@home/components/widget/lib/settings/common/widget/widget-settings.component';
+import {
+  DataLayerColorSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/data-layer-color-settings.component';
+import {
+  DataLayerColorSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/map/data-layer-color-settings-panel.component';
+import {
+  MarkerImageSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/marker-image-settings.component';
+import {
+  MarkerImageSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/map/marker-image-settings-panel.component';
 
 @NgModule({
   declarations: [
@@ -277,6 +289,10 @@ import { WidgetSettingsComponent } from '@home/components/widget/lib/settings/co
     MapLayerSettingsPanelComponent,
     MapLayerRowComponent,
     MapLayersComponent,
+    DataLayerColorSettingsComponent,
+    DataLayerColorSettingsPanelComponent,
+    MarkerImageSettingsComponent,
+    MarkerImageSettingsPanelComponent,
     MapDataLayerDialogComponent,
     MapDataLayerRowComponent,
     MapDataLayersComponent,

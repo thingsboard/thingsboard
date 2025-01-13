@@ -24,6 +24,20 @@ import { TbFunction } from '@shared/models/js-function.models';
 import { Observable, Observer, of, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ImagePipe } from '@shared/pipe/image.pipe';
+import tinycolor from 'tinycolor2';
+
+export const createColorMarkerURI = (color: tinycolor.Instance): string => {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-191.35 -351.18 1083.58 1730.46">` +
+    `<path fill-rule="evenodd" clip-rule="evenodd" fill="#${color.toHex()}" stroke="#000" stroke-width="37" ` +
+    `stroke-miterlimit="10" d="M351.833 1360.78c-38.766-190.3-107.116-348.665-189.903-495.44C100.523 756.469 ` +
+    `29.386 655.978-36.434 550.404c-21.972-35.244-40.934-72.477-62.047-109.054-42.216-73.137-76.444-157.935-74.269-267.932 ` +
+    `2.125-107.473 33.208-193.685 78.03-264.173C-21-206.69 102.481-301.745 268.164-326.724c135.466-20.425 262.475 14.082 ` +
+    `352.543 66.747 73.6 43.038 130.596 100.528 173.92 168.28 45.22 70.716 76.36 154.26 78.971 263.233 1.337 55.83-7.805 ` +
+    `107.532-20.684 150.417-13.034 43.41-33.996 79.695-52.646 118.455-36.406 75.659-82.049 144.981-127.855 214.345-136.437 ` +
+    `206.606-264.496 417.31-320.58 706.028z"/><circle fill-rule="evenodd" ` +
+    `clip-rule="evenodd" cx="352.891" cy="225.779" r="183.332"/></svg>`;
+  return 'data:image/svg+xml;base64,' + btoa(svg);
+}
 
 export enum MapType {
   geoMap = 'geoMap',
@@ -200,7 +214,12 @@ export const defaultBaseMarkersDataLayerSettings: Partial<MarkersDataLayerSettin
   markerType: MarkerType.default,
   markerColor: {
     type: DataLayerColorType.constant,
-    color: '#FE7569'
+    color: '#FE7569',
+  },
+  markerImage: {
+    type: MarkerImageType.image,
+    image: createColorMarkerURI(tinycolor('#FE7569')),
+    imageSize: 34
   },
   markerOffsetX: 0.5,
   markerOffsetY: 1

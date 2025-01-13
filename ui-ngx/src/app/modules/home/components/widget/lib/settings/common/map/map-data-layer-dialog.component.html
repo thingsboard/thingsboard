@@ -170,6 +170,40 @@
     </div>
     <div class="tb-form-panel">
       <div class="tb-form-panel-title">{{ 'widget-config.appearance' | translate }}</div>
+      <ng-container *ngIf="dataLayerType === 'markers'">
+        <div class="tb-form-panel stroked">
+          <div class="flex flex-row items-center justify-between">
+            <div class="tb-form-panel-title">{{ 'widgets.maps.data-layer.marker.marker-type' | translate }}</div>
+            <tb-toggle-select formControlName="markerType">
+              <tb-toggle-option [value]="MarkerType.default">{{ 'widgets.maps.data-layer.marker.marker-type-default' | translate }}</tb-toggle-option>
+              <tb-toggle-option [value]="MarkerType.image">{{ 'widgets.maps.data-layer.marker.marker-type-image' | translate }}</tb-toggle-option>
+            </tb-toggle-select>
+          </div>
+          <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.default" class="tb-form-row space-between">
+            <div translate>widgets.maps.data-layer.color</div>
+            <tb-data-layer-color-settings formControlName="markerColor"></tb-data-layer-color-settings>
+          </div>
+          <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.image" class="tb-form-row space-between">
+            <div translate>widgets.maps.data-layer.marker.image</div>
+            <tb-marker-image-settings formControlName="markerImage"></tb-marker-image-settings>
+          </div>
+        </div>
+        <div class="tb-form-row space-between column-xs">
+          <div translate>widgets.maps.data-layer.marker.marker-offset</div>
+          <div class="flex flex-row items-center justify-start gap-2">
+            <div class="tb-small-label" translate>widgets.maps.data-layer.marker.offset-horizontal</div>
+            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+              <input matInput formControlName="markerOffsetX"
+                     type="number" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+            <div class="tb-small-label" translate>widgets.maps.data-layer.marker.offset-vertical</div>
+            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+              <input matInput formControlName="markerOffsetY"
+                     type="number" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+          </div>
+        </div>
+      </ng-container>
     </div>
     <div class="tb-form-panel">
       <div class="tb-form-panel-title">{{ 'widgets.maps.data-layer.groups' | translate }}</div>

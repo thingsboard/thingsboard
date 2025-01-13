@@ -6875,6 +6875,11 @@
                 "source": "Source",
                 "additional-data-keys": "Additional data keys",
                 "groups": "Groups",
+                "color": "Color",
+                "color-settings": "Color settings",
+                "color-type-constant": "Constant",
+                "color-type-function": "Function",
+                "color-function": "Color function",
                 "marker": {
                     "latitude-key": "Latitude key",
                     "longitude-key": "Longitude key",
@@ -6887,7 +6892,20 @@
                     "no-markers": "No markers configured",
                     "add-marker": "Add marker",
                     "marker-configuration": "Marker configuration",
-                    "remove-marker": "Remove marker"
+                    "remove-marker": "Remove marker",
+                    "marker-type": "Marker type",
+                    "marker-type-default": "Default",
+                    "marker-type-image": "Image",
+                    "image": "Image",
+                    "marker-image": "Marker image",
+                    "marker-image-type-image": "Constant",
+                    "marker-image-type-function": "Function",
+                    "custom-marker-image-size": "Custom marker image size",
+                    "marker-image-function": "Function",
+                    "marker-images": "Marker images",
+                    "marker-offset": "Marker offset",
+                    "offset-horizontal": "Horizontal",
+                    "offset-vertical": "Vertical"
                 },
                 "polygon": {
                     "polygon-key": "Polygon key",
