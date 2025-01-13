@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.resource;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.ResourceExportData;
+import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -80,14 +81,14 @@ public interface ResourceService extends EntityDaoService {
 
     TbResourceInfo findSystemOrTenantResourceByEtag(TenantId tenantId, ResourceType resourceType, String etag);
 
-    boolean updateResourcesUsage(Dashboard dashboard);
+    boolean updateResourcesUsage(TenantId tenantId, Dashboard dashboard);
 
-    boolean updateResourcesUsage(WidgetTypeDetails widgetTypeDetails);
+    boolean updateResourcesUsage(TenantId tenantId, WidgetTypeDetails widgetTypeDetails);
 
-    Collection<TbResourceInfo> getUsedResources(Dashboard dashboard);
+    Collection<TbResourceInfo> getUsedResources(TenantId tenantId, Dashboard dashboard);
 
-    Collection<TbResourceInfo> getUsedResources(WidgetTypeDetails widgetTypeDetails);
+    Collection<TbResourceInfo> getUsedResources(TenantId tenantId, WidgetTypeDetails widgetTypeDetails);
 
-    TbResource createOrUpdateSystemResource(ResourceType resourceType, String resourceKey, byte[] data);
+    TbResource createOrUpdateSystemResource(ResourceType resourceType, ResourceSubType resourceSubType, String resourceKey, byte[] data);
 
 }

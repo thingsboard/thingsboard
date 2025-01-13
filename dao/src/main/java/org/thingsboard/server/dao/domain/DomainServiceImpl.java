@@ -35,6 +35,7 @@ import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientDao;
+import org.thingsboard.server.dao.service.validator.DomainDataValidator;
 
 import java.util.Comparator;
 import java.util.List;
@@ -53,17 +54,20 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
     private OAuth2ClientDao oauth2ClientDao;
     @Autowired
     private DomainDao domainDao;
+    @Autowired
+    private DomainDataValidator domainDataValidator;
 
     @Override
     public Domain saveDomain(TenantId tenantId, Domain domain) {
         log.trace("Executing saveDomain [{}]", domain);
         try {
+            domainDataValidator.validate(domain, Domain::getTenantId);
             Domain savedDomain = domainDao.save(tenantId, domain);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(savedDomain.getId()).entity(savedDomain).build());
             return savedDomain;
         } catch (Exception e) {
             checkConstraintViolation(e,
-                    Map.of("domain_unq_key", "Domain with such name and scheme already exists!"));
+                    Map.of("domain_name_key", "Domain with such name and scheme already exists!"));
             throw e;
         }
     }

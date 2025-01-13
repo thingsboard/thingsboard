@@ -23,7 +23,7 @@ import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormGroupDirective, NgForm, UntypedFormControl } from '@angular/forms';
 import { MobileApp } from '@shared/models/mobile-app.models';
-import { MobileAppComponent } from '@home/pages/mobile/applications/mobile-app.component';
+import type { MobileAppComponent } from '@home/pages/mobile/applications/mobile-app.component';
 import { PlatformType } from '@shared/models/oauth2.models';
 import { MobileAppService } from '@core/http/mobile-app.service';
 
@@ -57,6 +57,7 @@ export class MobileAppDialogComponent extends DialogComponent<MobileAppDialogCom
       this.mobileAppComponent.entityForm.markAsDirty();
       this.mobileAppComponent.entityForm.patchValue({platformType: this.data.platformType});
       this.mobileAppComponent.entityForm.get('platformType').disable({emitEvent: false});
+      this.mobileAppComponent.isEdit = true;
     }, 0);
   }
 

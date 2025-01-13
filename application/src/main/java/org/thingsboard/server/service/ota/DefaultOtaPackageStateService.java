@@ -20,7 +20,10 @@ import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
@@ -54,7 +57,6 @@ import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -128,7 +130,7 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
                     // Device was updated and new firmware is different from previous firmware.
                     send(device.getTenantId(), device.getId(), newFirmwareId, System.currentTimeMillis(), FIRMWARE);
                 }
-            } else if (oldFirmwareId != null){
+            } else if (oldFirmwareId != null) {
                 // Device was updated and new firmware is not set.
                 remove(device, FIRMWARE);
             }
@@ -155,7 +157,7 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
                     // Device was updated and new firmware is different from previous firmware.
                     send(device.getTenantId(), device.getId(), newSoftwareId, System.currentTimeMillis(), SOFTWARE);
                 }
-            } else if (oldSoftwareId != null){
+            } else if (oldSoftwareId != null) {
                 // Device was updated and new firmware is not set.
                 remove(device, SOFTWARE);
             }
@@ -261,17 +263,22 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
         telemetry.add(new BasicTsKvEntry(ts, new LongDataEntry(getTargetTelemetryKey(firmware.getType(), TS), ts)));
         telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(getTelemetryKey(firmware.getType(), STATE), OtaPackageUpdateStatus.QUEUED.name())));
 
-        telemetryService.saveAndNotify(tenantId, deviceId, telemetry, new FutureCallback<>() {
-            @Override
-            public void onSuccess(@Nullable Void tmp) {
-                log.trace("[{}] Success save firmware status!", deviceId);
-            }
+        telemetryService.saveTimeseries(TimeseriesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .entries(telemetry)
+                .callback(new FutureCallback<Void>() {
+                    @Override
+                    public void onSuccess(@Nullable Void tmp) {
+                        log.trace("[{}] Success save firmware status!", deviceId);
+                    }
 
-            @Override
-            public void onFailure(Throwable t) {
-                log.error("[{}] Failed to save firmware status!", deviceId, t);
-            }
-        });
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.error("[{}] Failed to save firmware status!", deviceId, t);
+                    }
+                })
+                .build());
     }
 
 
@@ -282,19 +289,24 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
 
         BasicTsKvEntry status = new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(getTelemetryKey(otaPackageType, STATE), OtaPackageUpdateStatus.INITIATED.name()));
 
-        telemetryService.saveAndNotify(tenantId, deviceId, Collections.singletonList(status), new FutureCallback<>() {
-            @Override
-            public void onSuccess(@Nullable Void tmp) {
-                log.trace("[{}] Success save telemetry with target {} for device!", deviceId, otaPackage);
-                updateAttributes(device, otaPackage, ts, tenantId, deviceId, otaPackageType);
-            }
+        telemetryService.saveTimeseries(TimeseriesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .entry(status)
+                .callback(new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(@Nullable Void tmp) {
+                        log.trace("[{}] Success save telemetry with target {} for device!", deviceId, otaPackage);
+                        updateAttributes(device, otaPackage, ts, tenantId, deviceId, otaPackageType);
+                    }
 
-            @Override
-            public void onFailure(Throwable t) {
-                log.error("[{}] Failed to save telemetry with target {} for device!", deviceId, otaPackage, t);
-                updateAttributes(device, otaPackage, ts, tenantId, deviceId, otaPackageType);
-            }
-        });
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.error("[{}] Failed to save telemetry with target {} for device!", deviceId, otaPackage, t);
+                        updateAttributes(device, otaPackage, ts, tenantId, deviceId, otaPackageType);
+                    }
+                })
+                .build());
     }
 
     private void updateAttributes(Device device, OtaPackageInfo otaPackage, long ts, TenantId tenantId, DeviceId deviceId, OtaPackageType otaPackageType) {
@@ -336,17 +348,23 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
 
         remove(device, otaPackageType, attrToRemove);
 
-        telemetryService.saveAndNotify(tenantId, deviceId, AttributeScope.SHARED_SCOPE, attributes, new FutureCallback<>() {
-            @Override
-            public void onSuccess(@Nullable Void tmp) {
-                log.trace("[{}] Success save attributes with target firmware!", deviceId);
-            }
+        telemetryService.saveAttributes(AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(deviceId)
+                .scope(AttributeScope.SHARED_SCOPE)
+                .entries(attributes)
+                .callback(new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(@Nullable Void tmp) {
+                        log.trace("[{}] Success save attributes with target firmware!", deviceId);
+                    }
 
-            @Override
-            public void onFailure(Throwable t) {
-                log.error("[{}] Failed to save attributes with target firmware!", deviceId, t);
-            }
-        });
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.error("[{}] Failed to save attributes with target firmware!", deviceId, t);
+                    }
+                })
+                .build());
     }
 
     private void remove(Device device, OtaPackageType otaPackageType) {
@@ -354,8 +372,12 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
     }
 
     private void remove(Device device, OtaPackageType otaPackageType, List<String> attributesKeys) {
-        telemetryService.deleteAndNotify(device.getTenantId(), device.getId(), AttributeScope.SHARED_SCOPE, attributesKeys,
-                new FutureCallback<>() {
+        telemetryService.deleteAttributes(AttributesDeleteRequest.builder()
+                .tenantId(device.getTenantId())
+                .entityId(device.getId())
+                .scope(AttributeScope.SHARED_SCOPE)
+                .keys(attributesKeys)
+                .callback(new FutureCallback<>() {
                     @Override
                     public void onSuccess(@Nullable Void tmp) {
                         log.trace("[{}] Success remove target {} attributes!", device.getId(), otaPackageType);
@@ -366,6 +388,8 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
                     public void onFailure(Throwable t) {
                         log.error("[{}] Failed to remove target {} attributes!", device.getId(), otaPackageType, t);
                     }
-                });
+                })
+                .build());
     }
+
 }

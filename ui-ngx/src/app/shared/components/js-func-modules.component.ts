@@ -119,6 +119,7 @@ export class JsFuncModulesComponent implements OnInit {
 
   removeModule(index: number, emitEvent = true) {
     (this.modulesFormGroup.get('modules') as UntypedFormArray).removeAt(index, {emitEvent});
+    this.modulesFormGroup.get('modules').markAsDirty({emitEvent});
   }
 
   addModule() {

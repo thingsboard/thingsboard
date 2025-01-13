@@ -60,7 +60,7 @@ export class CustomMobilePageComponent implements ControlValueAccessor, Validato
   customMobilePageForm = this.fb.group({
     visible: [true],
     icon: ['star'],
-    label: ['', Validators.required],
+    label: ['', [Validators.required, Validators.pattern(/\S/)]],
     type: [MobilePageType.DASHBOARD],
     dashboardId: this.fb.control<string>(null, Validators.required),
     url: [{value:'', disabled: true}, [Validators.required, Validators.pattern(/^(https?:\/\/)?(localhost|([\w\-]+\.)+[\w\-]+)(:\d+)?(\/[\w\-._~:\/?#[\]@!$&'()*+,;=%]*)?$/)]],

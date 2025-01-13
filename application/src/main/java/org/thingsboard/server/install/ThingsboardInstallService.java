@@ -35,6 +35,8 @@ import org.thingsboard.server.service.install.migrate.TsLatestMigrateService;
 import org.thingsboard.server.service.install.update.CacheCleanupService;
 import org.thingsboard.server.service.install.update.DataUpdateService;
 
+import static org.thingsboard.server.service.install.update.DefaultDataUpdateService.getEnv;
+
 @Service
 @Profile("install")
 @Slf4j
@@ -94,11 +96,11 @@ public class ThingsboardInstallService {
     public void performInstall() {
         try {
             if (isUpgrade) {
-                log.info("Starting ThingsBoard Upgrade from version {} ...", upgradeFromVersion);
-
                 if ("cassandra-latest-to-postgres".equals(upgradeFromVersion)) {
                     log.info("Migrating ThingsBoard latest timeseries data from cassandra to SQL database ...");
                     latestMigrateService.migrate();
+                } else if (upgradeFromVersion.equals("3.9.0-resources")) {
+                    installScripts.updateResourcesUsage();
                 } else {
                     // TODO DON'T FORGET to update SUPPORTED_VERSIONS_FROM in DefaultDatabaseSchemaSettingsService
                     databaseSchemaVersionService.validateSchemaSettings();
@@ -118,6 +120,14 @@ public class ThingsboardInstallService {
                     entityDatabaseSchemaService.createDatabaseIndexes();
                     // Runs upgrade scripts that are not possible in plain SQL.
                     // TODO: cleanup update code after each release
+                    if (!getEnv("SKIP_RESOURCES_USAGE_MIGRATION", false)) {
+                        installScripts.setUpdateResourcesUsage(true);
+                    } else {
+                        log.info("Skipping resources usage migration. Run the upgrade with fromVersion as '3.9.0-resources' to migrate");
+                    }
+                    if (installScripts.isUpdateResourcesUsage()) {
+                        installScripts.updateResourcesUsage();
+                    }
                     dataUpdateService.updateData();
                     log.info("Updating system data...");
                     dataUpdateService.upgradeRuleNodes();

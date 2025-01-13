@@ -31,8 +31,7 @@
       </ng-template>
       <ng-template [ngSwitchCase]="valueTypeEnum.DATE_TIME">
         <tb-datetime formControlName="defaultValue"
-                     dateText="filter.date"
-                     timeText="filter.time"
+                     dateText="{{ 'filter.date' | translate }}"
                      required [showLabel]="false"></tb-datetime>
       </ng-template>
       <ng-template [ngSwitchCase]="valueTypeEnum.BOOLEAN">
@@ -44,7 +43,7 @@
     <div class="tb-hint">{{ hintText | translate }}</div>
   </div>
   <div class="flex flex-col flex-1" [class.!hidden]="!dynamicMode && !onlyUserDynamicSource">
-    <div formGroupName="dynamicValue" class="flex flex-row items-center justify-start gap-2">
+    <div formGroupName="dynamicValue" class="flex flex-row justify-start gap-2">
       <div class="flex max-w-35% flex-full flex-col">
         <mat-form-field hideRequiredMarker class="mat-block">
           <mat-select formControlName="sourceType" placeholder="{{'filter.dynamic-source-type' | translate}}">

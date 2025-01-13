@@ -101,7 +101,7 @@ public class ResourcesUpdater {
         for (DashboardId dashboardId : dashboards) {
             executor.submit(() -> {
                 Dashboard dashboard = dashboardService.findDashboardById(TenantId.SYS_TENANT_ID, dashboardId);
-                boolean updated = resourceService.updateResourcesUsage(dashboard); // will convert resources ids to new structure
+                boolean updated = resourceService.updateResourcesUsage(dashboard.getTenantId(), dashboard); // will convert resources ids to new structure
                 if (updated) {
                     dashboardService.saveDashboard(dashboard);
                     updatedCount.incrementAndGet();
@@ -113,7 +113,7 @@ public class ResourcesUpdater {
         }
 
         executor.shutdown();
-        if (!executor.awaitTermination(10, TimeUnit.MINUTES)) {
+        if (!executor.awaitTermination(5, TimeUnit.HOURS)) {
             throw new RuntimeException("Dashboards resources update timeout"); // just in case, should happen
         }
         log.info("Updated {} dashboards", updatedCount);
@@ -130,7 +130,7 @@ public class ResourcesUpdater {
         for (WidgetTypeId widgetTypeId : widgets) {
             executor.submit(() -> {
                 WidgetTypeDetails widgetTypeDetails = widgetTypeService.findWidgetTypeDetailsById(TenantId.SYS_TENANT_ID, widgetTypeId);
-                boolean updated = resourceService.updateResourcesUsage(widgetTypeDetails);
+                boolean updated = resourceService.updateResourcesUsage(widgetTypeDetails.getTenantId(), widgetTypeDetails);
                 if (updated) {
                     widgetTypeService.saveWidgetType(widgetTypeDetails);
                     updatedCount.incrementAndGet();
@@ -142,7 +142,7 @@ public class ResourcesUpdater {
         }
 
         executor.shutdown();
-        if (!executor.awaitTermination(10, TimeUnit.MINUTES)) {
+        if (!executor.awaitTermination(5, TimeUnit.HOURS)) {
             throw new RuntimeException("Widgets resources update timeout");
         }
         log.info("Updated {} widgets", updatedCount);

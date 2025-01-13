@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import {
   DynamicValueSourceType,
@@ -24,6 +24,7 @@ import {
   inheritModeForDynamicValueSourceType
 } from '@shared/models/query/query.models';
 import { AlarmConditionType } from '@shared/models/device.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-alarm-duration-predicate-value',
@@ -76,7 +77,8 @@ export class AlarmDurationPredicateValueComponent implements ControlValueAccesso
 
   private propagateChange = null;
 
-  constructor(private fb: UntypedFormBuilder) {
+  constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -90,7 +92,9 @@ export class AlarmDurationPredicateValueComponent implements ControlValueAccesso
         }
       )
     });
-    this.alarmDurationPredicateValueFormGroup.get('dynamicValue').get('sourceType').valueChanges.subscribe(
+    this.alarmDurationPredicateValueFormGroup.get('dynamicValue').get('sourceType').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       (sourceType) => {
         if (!sourceType) {
           this.alarmDurationPredicateValueFormGroup.get('dynamicValue').get('sourceAttribute').patchValue(null, {emitEvent: false});
@@ -98,7 +102,9 @@ export class AlarmDurationPredicateValueComponent implements ControlValueAccesso
         this.updateShowInheritMode(sourceType);
       }
     );
-    this.alarmDurationPredicateValueFormGroup.valueChanges.subscribe(() => {
+    this.alarmDurationPredicateValueFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
   }

@@ -15,21 +15,12 @@
 ///
 
 import {
-  ScadaSymbolBehavior,
-  ScadaSymbolProperty,
-  ScadaSymbolPropertyType
+  ScadaSymbolBehavior
 } from '@home/components/widget/lib/scada/scada-symbol.models';
 
 export interface ScadaSymbolBehaviorGroup {
   title?: string;
   behaviors: ScadaSymbolBehavior[];
-}
-
-export interface ScadaSymbolPropertyRow {
-  label: string;
-  properties: ScadaSymbolProperty[];
-  switch?: ScadaSymbolProperty;
-  rowClass?: string;
 }
 
 export const toBehaviorGroups = (behaviors: ScadaSymbolBehavior[]): ScadaSymbolBehaviorGroup[] => {
@@ -50,27 +41,6 @@ export const toBehaviorGroups = (behaviors: ScadaSymbolBehavior[]): ScadaSymbolB
         result.push(behaviorGroup);
       }
       behaviorGroup.behaviors.push(behavior);
-    }
-  }
-  return result;
-};
-
-export const toPropertyRows = (properties: ScadaSymbolProperty[]): ScadaSymbolPropertyRow[] => {
-  const result: ScadaSymbolPropertyRow[] = [];
-  for (const property of properties) {
-    let propertyRow = result.find(r => r.label === property.name);
-    if (!propertyRow) {
-      propertyRow = {
-        label: property.name,
-        properties: [],
-        rowClass: property.rowClass
-      };
-      result.push(propertyRow);
-    }
-    if (property.type === ScadaSymbolPropertyType.switch) {
-      propertyRow.switch = property;
-    } else {
-      propertyRow.properties.push(property);
     }
   }
   return result;

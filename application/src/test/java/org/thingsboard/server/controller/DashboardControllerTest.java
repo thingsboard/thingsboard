@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -602,13 +603,14 @@ public class DashboardControllerTest extends AbstractControllerTest {
         dashboard.setTitle("My dashboard");
         dashboard.setConfiguration(JacksonUtil.newObjectNode()
                 .put("someImage", "tb-image;/api/images/tenant/" + imageInfo.getResourceKey())
-                .set("widgets", JacksonUtil.toJsonNode("""
+                .<ObjectNode>set("widgets", JacksonUtil.toJsonNode("""
                         {"xxx":
                         {"config":{"actions":{"elementClick":[
                         {"customResources":[{"url":{"entityType":"TB_RESOURCE","id":
                         "tb-resource;/api/resource/js_module/tenant/gateway-management-extension.js"},"isModule":true},
                         {"url":"tb-resource;/api/resource/js_module/tenant/gateway-management-extension.js","isModule":true}]}]}}}}
-                        """)));
+                        """))
+                .put("someResource", "tb-resource;/api/resource/js_module/tenant/gateway-management-extension.js"));
         dashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
 
         Dashboard exportedDashboard = doGet("/api/dashboard/" + dashboard.getUuidId() + "?includeResources=true", Dashboard.class);
@@ -637,12 +639,18 @@ public class DashboardControllerTest extends AbstractControllerTest {
         doPost("/api/resource", resource, TbResourceInfo.class);
 
         Dashboard importedDashboard = doPost("/api/dashboard", exportedDashboard, Dashboard.class);
+        String newResourceKey = "gateway-management-extension_(1).js";
+
         imageRef = importedDashboard.getConfiguration().get("someImage").asText();
         assertThat(imageRef).isEqualTo("tb-image;/api/images/tenant/" + imageInfo.getResourceKey());
-        resourceRef = importedDashboard.getConfiguration().get("widgets").get("xxx").get("config")
-                .get("actions").get("elementClick").get(0).get("customResources").get(0).get("url").asText();
-        String newResourceKey = "gateway-management-extension_(1).js";
-        assertThat(resourceRef).isEqualTo("tb-resource;/api/resource/js_module/tenant/" + newResourceKey);
+
+        List<String> resourcesRefs = new ArrayList<>();
+        resourcesRefs.add(importedDashboard.getConfiguration().get("widgets").get("xxx").get("config")
+                .get("actions").get("elementClick").get(0).get("customResources").get(0).get("url").asText());
+        resourcesRefs.add(importedDashboard.getConfiguration().get("someResource").asText());
+        assertThat(resourcesRefs).allSatisfy(ref -> {
+            assertThat(ref).isEqualTo("tb-resource;/api/resource/js_module/tenant/" + newResourceKey);
+        });
 
         TbResourceInfo importedImageInfo = doGet("/api/images/tenant/" + imageInfo.getResourceKey() + "/info", TbResourceInfo.class);
         assertThat(importedImageInfo.getEtag()).isEqualTo(imageInfo.getEtag());

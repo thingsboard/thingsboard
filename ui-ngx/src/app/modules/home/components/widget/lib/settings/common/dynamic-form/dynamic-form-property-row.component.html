@@ -1,0 +1,50 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div [formGroup]="propertyRowFormGroup" class="tb-form-table-row tb-dynamic-form-property-row">
+  <mat-form-field class="tb-inline-field tb-id-field" appearance="outline" subscriptSizing="dynamic">
+    <input #idInput required matInput formControlName="id" placeholder="{{ 'widget-config.set' | translate }}">
+  </mat-form-field>
+  <mat-form-field class="tb-inline-field tb-name-field" appearance="outline" subscriptSizing="dynamic">
+    <input required matInput formControlName="name" placeholder="{{ 'widget-config.set' | translate }}">
+  </mat-form-field>
+  <mat-form-field class="tb-inline-field tb-type-field fixed-height" appearance="outline" subscriptSizing="dynamic">
+    <mat-select formControlName="type">
+      <mat-option *ngFor="let type of formPropertyTypes" [value]="type">
+        {{ formPropertyTypeTranslations.get(type) | translate }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <div class="tb-form-table-row-cell-buttons">
+    <button type="button"
+            mat-icon-button
+            #editButton
+            (click)="editProperty($event, editButton)"
+            matTooltip="{{ 'dynamic-form.property.property-settings' | translate }}"
+            matTooltipPosition="above">
+      <mat-icon>settings</mat-icon>
+    </button>
+    <button *ngIf="!disabled"
+            type="button"
+            mat-icon-button
+            (click)="propertyRemoved.emit()"
+            matTooltip="{{ 'dynamic-form.property.remove-property' | translate }}"
+            matTooltipPosition="above">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </div>
+</div>

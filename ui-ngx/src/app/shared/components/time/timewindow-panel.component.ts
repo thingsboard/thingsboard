@@ -308,9 +308,9 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
       ).subscribe((timewindowMs: number) => {
         if (this.realtimeAdvancedParams?.lastAggIntervalsConfig?.hasOwnProperty(timewindowMs) &&
           this.realtimeAdvancedParams.lastAggIntervalsConfig[timewindowMs].defaultAggInterval) {
-          this.timewindowForm.get('realtime.interval').patchValue(
+          setTimeout(() => this.timewindowForm.get('realtime.interval').patchValue(
             this.realtimeAdvancedParams.lastAggIntervalsConfig[timewindowMs].defaultAggInterval, {emitEvent: false}
-          );
+          ));
         }
       });
       this.timewindowForm.get('realtime.quickInterval').valueChanges.pipe(
@@ -318,9 +318,9 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
       ).subscribe((quickInterval: number) => {
         if (this.realtimeAdvancedParams?.quickAggIntervalsConfig?.hasOwnProperty(quickInterval) &&
           this.realtimeAdvancedParams.quickAggIntervalsConfig[quickInterval].defaultAggInterval) {
-          this.timewindowForm.get('realtime.interval').patchValue(
+          setTimeout(() => this.timewindowForm.get('realtime.interval').patchValue(
             this.realtimeAdvancedParams.quickAggIntervalsConfig[quickInterval].defaultAggInterval, {emitEvent: false}
-          );
+          ));
         }
       });
       this.timewindowForm.get('history.timewindowMs').valueChanges.pipe(
@@ -328,9 +328,9 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
       ).subscribe((timewindowMs: number) => {
         if (this.historyAdvancedParams?.lastAggIntervalsConfig?.hasOwnProperty(timewindowMs) &&
           this.historyAdvancedParams.lastAggIntervalsConfig[timewindowMs].defaultAggInterval) {
-          this.timewindowForm.get('history.interval').patchValue(
+          setTimeout(() => this.timewindowForm.get('history.interval').patchValue(
             this.historyAdvancedParams.lastAggIntervalsConfig[timewindowMs].defaultAggInterval, {emitEvent: false}
-          );
+          ));
         }
       });
       this.timewindowForm.get('history.quickInterval').valueChanges.pipe(
@@ -338,9 +338,9 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
       ).subscribe((quickInterval: number) => {
         if (this.historyAdvancedParams?.quickAggIntervalsConfig?.hasOwnProperty(quickInterval) &&
           this.historyAdvancedParams.quickAggIntervalsConfig[quickInterval].defaultAggInterval) {
-          this.timewindowForm.get('history.interval').patchValue(
+          setTimeout(() => this.timewindowForm.get('history.interval').patchValue(
             this.historyAdvancedParams.quickAggIntervalsConfig[quickInterval].defaultAggInterval, {emitEvent: false}
-          );
+          ));
         }
       });
 
@@ -413,7 +413,8 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   }
 
   private updateTimewindowForm() {
-    this.timewindowForm.patchValue(this.timewindow);
+    this.timewindowForm.patchValue(this.timewindow, {emitEvent: false});
+    this.updateValidators(this.timewindowForm.get('aggregation.type').value);
 
     if (this.timewindow.realtime.hideInterval) {
       this.timewindowForm.get('realtime.realtimeType').disable({emitEvent: false});
