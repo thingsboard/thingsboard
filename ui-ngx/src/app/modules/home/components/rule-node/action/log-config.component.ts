@@ -46,7 +46,7 @@ export class LogConfigComponent extends RuleNodeConfigurationComponent {
 
   readonly hasScript = true;
 
-  readonly testScriptLabel = 'tb.rulenode.test-to-string-function';
+  readonly testScriptLabel = 'rule-node-config.test-to-string-function';
 
   constructor(private fb: UntypedFormBuilder,
               private nodeScriptTestService: NodeScriptTestService,
@@ -100,7 +100,7 @@ export class LogConfigComponent extends RuleNodeConfigurationComponent {
     this.nodeScriptTestService.testNodeScript(
       script,
       'string',
-      this.translate.instant('tb.rulenode.to-string'),
+      this.translate.instant('rule-node-config.to-string'),
       'ToString',
       ['msg', 'metadata', 'msgType'],
       this.ruleNodeId,

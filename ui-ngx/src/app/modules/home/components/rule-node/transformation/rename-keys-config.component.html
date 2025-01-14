@@ -16,7 +16,7 @@
 
 -->
 <section [formGroup]="renameKeysConfigForm" class="tb-form-panel stroked">
-  <div class="tb-form-panel-title" translate>tb.rulenode.rename-keys-in</div>
+  <div class="tb-form-panel-title" translate>rule-node-config.rename-keys-in</div>
   <div class="fx-centered">
     <div class="fetch-to-data-toggle">
       <tb-toggle-select class="fetch-to-data-toggle" formControlName="renameIn" appearance="fill">
@@ -28,13 +28,13 @@
   </div>
   <tb-kv-map-config
     required
-    labelText="{{ translation.get(renameKeysConfigForm.get('renameIn').value) | translate }} {{'tb.rulenode.keys-mapping' | translate}}"
+    labelText="{{ translation.get(renameKeysConfigForm.get('renameIn').value) | translate }} {{'rule-node-config.keys-mapping' | translate}}"
     formControlName="renameKeysMapping"
     uniqueKeyValuePairValidator
-    requiredText="{{'tb.rulenode.attr-mapping-required' | translate}}"
-    keyText="{{'tb.rulenode.current-key-name' | translate}}"
-    keyRequiredText="{{'tb.rulenode.key-name-required' | translate}}"
-    valText="{{'tb.rulenode.new-key-name' | translate}}"
-    valRequiredText="{{'tb.rulenode.new-key-name-required' | translate}}">
+    requiredText="{{'rule-node-config.attr-mapping-required' | translate}}"
+    keyText="{{'rule-node-config.current-key-name' | translate}}"
+    keyRequiredText="{{'rule-node-config.key-name-required' | translate}}"
+    valText="{{'rule-node-config.new-key-name' | translate}}"
+    valRequiredText="{{'rule-node-config.new-key-name-required' | translate}}">
   </tb-kv-map-config>
 </section>

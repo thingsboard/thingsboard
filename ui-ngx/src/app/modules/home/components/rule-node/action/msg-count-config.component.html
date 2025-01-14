@@ -17,20 +17,20 @@
 -->
 <section [formGroup]="msgCountConfigForm" class="flex flex-col">
   <mat-form-field class="mat-block">
-    <mat-label translate>tb.rulenode.interval-seconds</mat-label>
+    <mat-label translate>rule-node-config.interval-seconds</mat-label>
     <input required type="number" min="1" step="1" matInput formControlName="interval">
     <mat-error *ngIf="msgCountConfigForm.get('interval').hasError('required')">
-      {{ 'tb.rulenode.interval-seconds-required' | translate }}
+      {{ 'rule-node-config.interval-seconds-required' | translate }}
     </mat-error>
     <mat-error *ngIf="msgCountConfigForm.get('interval').hasError('min')">
-      {{ 'tb.rulenode.min-interval-seconds-message' | translate }}
+      {{ 'rule-node-config.min-interval-seconds-message' | translate }}
     </mat-error>
   </mat-form-field>
   <mat-form-field class="mat-block">
-    <mat-label translate>tb.rulenode.output-timeseries-key-prefix</mat-label>
+    <mat-label translate>rule-node-config.output-timeseries-key-prefix</mat-label>
     <input required matInput formControlName="telemetryPrefix">
     <mat-error *ngIf="msgCountConfigForm.get('telemetryPrefix').hasError('required')">
-      {{ 'tb.rulenode.output-timeseries-key-prefix-required' | translate }}
+      {{ 'rule-node-config.output-timeseries-key-prefix-required' | translate }}
     </mat-error>
   </mat-form-field>
 </section>

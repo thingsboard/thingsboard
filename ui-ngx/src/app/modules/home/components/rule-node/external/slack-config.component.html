@@ -17,21 +17,21 @@
 -->
 <section [formGroup]="slackConfigForm" class="flex flex-col">
   <mat-form-field class="mat-block flex-1">
-    <mat-label translate>tb.rulenode.message-template</mat-label>
+    <mat-label translate>rule-node-config.message-template</mat-label>
     <input required matInput formControlName="messageTemplate">
     <mat-error *ngIf="slackConfigForm.get('messageTemplate').hasError('required')">
-      {{ 'tb.rulenode.message-template-required' | translate }}
+      {{ 'rule-node-config.message-template-required' | translate }}
     </mat-error>
-    <mat-hint translate>tb.rulenode.general-pattern-hint</mat-hint>
+    <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
   </mat-form-field>
   <mat-checkbox formControlName="useSystemSettings">
-    {{ 'tb.rulenode.use-system-slack-settings' | translate }}
+    {{ 'rule-node-config.use-system-slack-settings' | translate }}
   </mat-checkbox>
   <mat-form-field *ngIf="!slackConfigForm.get('useSystemSettings').value" class="mat-block">
-    <mat-label translate>tb.rulenode.slack-api-token</mat-label>
+    <mat-label translate>rule-node-config.slack-api-token</mat-label>
     <input required matInput formControlName="botToken">
     <mat-error *ngIf="slackConfigForm.get('botToken').hasError('required')">
-      {{ 'tb.rulenode.slack-api-token-required' | translate }}
+      {{ 'rule-node-config.slack-api-token-required' | translate }}
     </mat-error>
   </mat-form-field>
   <label class="tb-title">{{ 'notification.slack-chanel-type' | translate }}</label>

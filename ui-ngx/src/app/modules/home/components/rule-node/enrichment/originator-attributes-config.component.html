@@ -18,23 +18,23 @@
 <section class="tb-form-panel no-padding no-border" [formGroup]="originatorAttributesConfigForm">
   <div class="tb-form-panel stroked">
     <div class="tb-form-row no-padding no-border space-between">
-      <div class="tb-form-panel-title tb-required" translate>tb.rulenode.originator-attributes</div>
+      <div class="tb-form-panel-title tb-required" translate>rule-node-config.originator-attributes</div>
       <div class="tb-form-panel-hint tb-error" translate
            [hidden]="!(originatorAttributesConfigForm.get('attributesControl').touched &&
                         originatorAttributesConfigForm.get('attributesControl').hasError('atLeastOneRequired'))">
-        tb.rulenode.at-least-one-field-required
+        rule-node-config.at-least-one-field-required
       </div>
     </div>
     <tb-select-attributes formControlName="attributesControl"
                           popupHelpLink="rulenode/originator_attributes_node_fields_templatization">
     </tb-select-attributes>
-    <tb-msg-metadata-chip [labelText]="'tb.rulenode.add-originator-attributes-to' | translate"
+    <tb-msg-metadata-chip [labelText]="'rule-node-config.add-originator-attributes-to' | translate"
                           formControlName="fetchTo">
     </tb-msg-metadata-chip>
   </div>
-  <div tb-hint-tooltip-icon="{{ 'tb.rulenode.tell-failure-tooltip' | translate }}" class="tb-form-row same-padding">
+  <div tb-hint-tooltip-icon="{{ 'rule-node-config.tell-failure-tooltip' | translate }}" class="tb-form-row same-padding">
     <mat-slide-toggle class="mat-slide margin" formControlName="tellFailureIfAbsent">
-      {{ 'tb.rulenode.tell-failure' | translate }}
+      {{ 'rule-node-config.tell-failure' | translate }}
     </mat-slide-toggle>
   </div>
 </section>

@@ -17,23 +17,23 @@
 -->
 <section [formGroup]="sendSmsConfigForm" class="flex flex-col">
   <mat-form-field class="mat-block" subscriptSizing="dynamic">
-    <mat-label translate>tb.rulenode.numbers-to-template</mat-label>
+    <mat-label translate>rule-node-config.numbers-to-template</mat-label>
     <input required matInput formControlName="numbersToTemplate">
     <mat-error *ngIf="sendSmsConfigForm.get('numbersToTemplate').hasError('required')">
-      {{ 'tb.rulenode.numbers-to-template-required' | translate }}
+      {{ 'rule-node-config.numbers-to-template-required' | translate }}
     </mat-error>
-    <mat-hint [innerHTML]="'tb.rulenode.numbers-to-template-hint' | translate | safe: 'html'"></mat-hint>
+    <mat-hint [innerHTML]="'rule-node-config.numbers-to-template-hint' | translate | safe: 'html'"></mat-hint>
   </mat-form-field>
   <mat-form-field class="mat-block" subscriptSizing="dynamic">
-    <mat-label translate>tb.rulenode.sms-message-template</mat-label>
+    <mat-label translate>rule-node-config.sms-message-template</mat-label>
     <textarea required matInput formControlName="smsMessageTemplate" rows="6"></textarea>
     <mat-error *ngIf="sendSmsConfigForm.get('smsMessageTemplate').hasError('required')">
-      {{ 'tb.rulenode.sms-message-template-required' | translate }}
+      {{ 'rule-node-config.sms-message-template-required' | translate }}
     </mat-error>
-    <mat-hint translate>tb.rulenode.general-pattern-hint</mat-hint>
+    <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
   </mat-form-field>
   <mat-checkbox formControlName="useSystemSmsSettings">
-    {{ 'tb.rulenode.use-system-sms-settings' | translate }}
+    {{ 'rule-node-config.use-system-sms-settings' | translate }}
   </mat-checkbox>
   <tb-sms-provider-configuration
     *ngIf="sendSmsConfigForm.get('useSystemSmsSettings').value === false"

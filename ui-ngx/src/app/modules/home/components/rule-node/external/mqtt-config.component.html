@@ -17,69 +17,69 @@
 -->
 <section [formGroup]="mqttConfigForm" class="flex flex-col">
   <mat-form-field class="mat-block" subscriptSizing="dynamic">
-    <mat-label translate>tb.rulenode.topic-pattern</mat-label>
+    <mat-label translate>rule-node-config.topic-pattern</mat-label>
     <input required matInput formControlName="topicPattern">
     <mat-error *ngIf="mqttConfigForm.get('topicPattern').hasError('required')">
-      {{ 'tb.rulenode.topic-pattern-required' | translate }}
+      {{ 'rule-node-config.topic-pattern-required' | translate }}
     </mat-error>
-    <mat-hint translate>tb.rulenode.general-pattern-hint</mat-hint>
+    <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
   </mat-form-field>
   <div class="flex flex-1 flex-col gt-sm:flex-row gt-sm:gap-2">
     <mat-form-field class="mat-block gt-sm:max-w-60% gt-sm:flex-full">
-      <mat-label translate>tb.rulenode.host</mat-label>
+      <mat-label translate>rule-node-config.host</mat-label>
       <input required matInput formControlName="host">
       <mat-error *ngIf="mqttConfigForm.get('host').hasError('required')">
-        {{ 'tb.rulenode.host-required' | translate }}
+        {{ 'rule-node-config.host-required' | translate }}
       </mat-error>
     </mat-form-field>
     <mat-form-field class="mat-block gt-sm:max-w-40% gt-sm:flex-full">
-      <mat-label translate>tb.rulenode.port</mat-label>
+      <mat-label translate>rule-node-config.port</mat-label>
       <input required type="number" step="1" min="1" max="65535" matInput formControlName="port">
       <mat-error *ngIf="mqttConfigForm.get('port').hasError('required')">
-        {{ 'tb.rulenode.port-required' | translate }}
+        {{ 'rule-node-config.port-required' | translate }}
       </mat-error>
       <mat-error *ngIf="mqttConfigForm.get('port').hasError('min')">
-        {{ 'tb.rulenode.port-range' | translate }}
+        {{ 'rule-node-config.port-range' | translate }}
       </mat-error>
       <mat-error *ngIf="mqttConfigForm.get('port').hasError('max')">
-        {{ 'tb.rulenode.port-range' | translate }}
+        {{ 'rule-node-config.port-range' | translate }}
       </mat-error>
     </mat-form-field>
     <mat-form-field class="mat-block gt-sm:max-w-40% gt-sm:flex-full">
-      <mat-label translate>tb.rulenode.connect-timeout</mat-label>
+      <mat-label translate>rule-node-config.connect-timeout</mat-label>
       <input required type="number" step="1" min="1" max="200" matInput formControlName="connectTimeoutSec">
       <mat-error *ngIf="mqttConfigForm.get('connectTimeoutSec').hasError('required')">
-        {{ 'tb.rulenode.connect-timeout-required' | translate }}
+        {{ 'rule-node-config.connect-timeout-required' | translate }}
       </mat-error>
       <mat-error *ngIf="mqttConfigForm.get('connectTimeoutSec').hasError('min')">
-        {{ 'tb.rulenode.connect-timeout-range' | translate }}
+        {{ 'rule-node-config.connect-timeout-range' | translate }}
       </mat-error>
       <mat-error *ngIf="mqttConfigForm.get('connectTimeoutSec').hasError('max')">
-        {{ 'tb.rulenode.connect-timeout-range' | translate }}
+        {{ 'rule-node-config.connect-timeout-range' | translate }}
       </mat-error>
     </mat-form-field>
   </div>
   <mat-form-field class="mat-block" subscriptSizing="dynamic">
-    <mat-label translate>tb.rulenode.client-id</mat-label>
+    <mat-label translate>rule-node-config.client-id</mat-label>
     <input matInput formControlName="clientId">
-    <mat-hint>{{'tb.rulenode.client-id-hint' | translate}}</mat-hint>
+    <mat-hint>{{'rule-node-config.client-id-hint' | translate}}</mat-hint>
   </mat-form-field>
   <mat-checkbox formControlName="appendClientIdSuffix">
-    {{ 'tb.rulenode.append-client-id-suffix' | translate }}
+    {{ 'rule-node-config.append-client-id-suffix' | translate }}
   </mat-checkbox>
-  <div class="tb-hint">{{ "tb.rulenode.client-id-suffix-hint" | translate }}</div>
+  <div class="tb-hint">{{ "rule-node-config.client-id-suffix-hint" | translate }}</div>
   <mat-checkbox formControlName="parseToPlainText">
-    {{ 'tb.rulenode.parse-to-plain-text' | translate }}
+    {{ 'rule-node-config.parse-to-plain-text' | translate }}
   </mat-checkbox>
-  <div class="tb-hint">{{ "tb.rulenode.parse-to-plain-text-hint" | translate }}</div>
+  <div class="tb-hint">{{ "rule-node-config.parse-to-plain-text-hint" | translate }}</div>
   <mat-checkbox formControlName="cleanSession">
-    {{ 'tb.rulenode.clean-session' | translate }}
+    {{ 'rule-node-config.clean-session' | translate }}
   </mat-checkbox>
   <mat-checkbox formControlName="retainedMessage">
-    {{ "tb.rulenode.retained-message" | translate }}
+    {{ "rule-node-config.retained-message" | translate }}
   </mat-checkbox>
   <mat-checkbox formControlName="ssl">
-    {{ 'tb.rulenode.enable-ssl' | translate }}
+    {{ 'rule-node-config.enable-ssl' | translate }}
   </mat-checkbox>
   <tb-credentials-config formControlName="credentials" [passwordFieldRequired]="false"></tb-credentials-config>
 </section>

@@ -17,13 +17,13 @@
 -->
 <section [formGroup]="rpcRequestConfigForm" class="flex flex-col">
   <mat-form-field class="mat-block flex-1">
-    <mat-label translate>tb.rulenode.timeout-sec</mat-label>
+    <mat-label translate>rule-node-config.timeout-sec</mat-label>
     <input type="number" min="0" step="1" matInput formControlName="timeoutInSeconds" required>
     <mat-error *ngIf="rpcRequestConfigForm.get('timeoutInSeconds').hasError('required')">
-      {{ 'tb.rulenode.timeout-required' | translate }}
+      {{ 'rule-node-config.timeout-required' | translate }}
     </mat-error>
     <mat-error *ngIf="rpcRequestConfigForm.get('timeoutInSeconds').hasError('min')">
-      {{ 'tb.rulenode.min-timeout-message' | translate }}
+      {{ 'rule-node-config.min-timeout-message' | translate }}
     </mat-error>
   </mat-form-field>
 </section>

@@ -17,33 +17,33 @@
 -->
 <section [formGroup]="timeseriesConfigForm" class="tb-form-panel no-border no-padding">
   <mat-form-field class="mat-block flex-1">
-    <mat-label translate>tb.rulenode.default-ttl</mat-label>
+    <mat-label translate>rule-node-config.default-ttl</mat-label>
     <input type="number" min="0" step="1" matInput formControlName="defaultTTL" required>
     <mat-icon class="help-icon margin-8 cursor-pointer"
               aria-hidden="false"
               aria-label="help-icon"
               matSuffix
-              matTooltip="{{ 'tb.rulenode.default-ttl-hint' | translate }}">
+              matTooltip="{{ 'rule-node-config.default-ttl-hint' | translate }}">
       help
     </mat-icon>
     <mat-error *ngIf="timeseriesConfigForm.get('defaultTTL').hasError('required')">
-      {{ 'tb.rulenode.default-ttl-required' | translate }}
+      {{ 'rule-node-config.default-ttl-required' | translate }}
     </mat-error>
     <mat-error *ngIf="timeseriesConfigForm.get('defaultTTL').hasError('min')">
-      {{ 'tb.rulenode.min-default-ttl-message' | translate }}
+      {{ 'rule-node-config.min-default-ttl-message' | translate }}
     </mat-error>
   </mat-form-field>
   <div class="tb-form-panel stroked">
-    <div tb-hint-tooltip-icon="{{ 'tb.rulenode.use-server-ts-hint' | translate}}"
+    <div tb-hint-tooltip-icon="{{ 'rule-node-config.use-server-ts-hint' | translate}}"
          class="tb-form-row no-border no-padding">
       <mat-slide-toggle class="mat-slide" formControlName="useServerTs">
-        {{ 'tb.rulenode.use-server-ts' | translate }}
+        {{ 'rule-node-config.use-server-ts' | translate }}
       </mat-slide-toggle>
     </div>
-    <div tb-hint-tooltip-icon="{{ 'tb.rulenode.skip-latest-persistence-hint' | translate}}"
+    <div tb-hint-tooltip-icon="{{ 'rule-node-config.skip-latest-persistence-hint' | translate}}"
          class="tb-form-row no-border no-padding">
       <mat-slide-toggle class="mat-slide" formControlName="skipLatestPersistence">
-        {{ 'tb.rulenode.skip-latest-persistence' | translate }}
+        {{ 'rule-node-config.skip-latest-persistence' | translate }}
       </mat-slide-toggle>
     </div>
   </div>

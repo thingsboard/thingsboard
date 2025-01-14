@@ -16,7 +16,7 @@
 
 -->
 <section [formGroup]="customerAttributesConfigForm" class="tb-form-panel stroked">
-  <div class="tb-form-panel-title" translate>tb.rulenode.mapping-of-customers</div>
+  <div class="tb-form-panel-title" translate>rule-node-config.mapping-of-customers</div>
   <div class="flex flex-1 items-center justify-center">
     <div class="fetch-to-data-toggle">
       <tb-toggle-select class="fetch-to-data-toggle" formControlName="dataToFetch" appearance="fill">
@@ -29,18 +29,18 @@
   <tb-kv-map-config
     required
     formControlName="dataMapping"
-    [requiredText]="'tb.rulenode.attr-mapping-required' | translate"
-    [labelText]="selectTranslation('tb.rulenode.latest-telemetry-mapping','tb.rulenode.attributes-mapping') | translate"
-    [keyText]="selectTranslation('tb.rulenode.source-telemetry','tb.rulenode.source-attribute') | translate"
-    [keyRequiredText]="selectTranslation('tb.rulenode.source-telemetry-required','tb.rulenode.source-attribute-required') | translate"
-    [valText]="'tb.rulenode.target-key' | translate"
-    [valRequiredText]="'tb.rulenode.target-key-required' | translate"
-    [hintText]="'tb.rulenode.kv-map-pattern-hint'"
+    [requiredText]="'rule-node-config.attr-mapping-required' | translate"
+    [labelText]="selectTranslation('rule-node-config.latest-telemetry-mapping','rule-node-config.attributes-mapping') | translate"
+    [keyText]="selectTranslation('rule-node-config.source-telemetry','rule-node-config.source-attribute') | translate"
+    [keyRequiredText]="selectTranslation('rule-node-config.source-telemetry-required','rule-node-config.source-attribute-required') | translate"
+    [valText]="'rule-node-config.target-key' | translate"
+    [valRequiredText]="'rule-node-config.target-key-required' | translate"
+    [hintText]="'rule-node-config.kv-map-pattern-hint'"
     popupHelpLink="rulenode/customer_attributes_node_fields_templatization">
   </tb-kv-map-config>
   <tb-msg-metadata-chip
     [labelText]="customerAttributesConfigForm.get('dataToFetch').value === DataToFetch.LATEST_TELEMETRY ?
-    ('tb.rulenode.add-mapped-latest-telemetry-to' | translate) : ('tb.rulenode.add-mapped-attribute-to' | translate)"
+    ('rule-node-config.add-mapped-latest-telemetry-to' | translate) : ('rule-node-config.add-mapped-attribute-to' | translate)"
     formControlName="fetchTo">
   </tb-msg-metadata-chip>
 </section>

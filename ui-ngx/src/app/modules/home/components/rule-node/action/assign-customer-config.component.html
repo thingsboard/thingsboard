@@ -18,17 +18,17 @@
 <section [formGroup]="assignCustomerConfigForm" class="flex flex-col">
   <div class="tb-form-panel no-padding no-border">
     <mat-form-field class="mat-block" subscriptSizing="dynamic">
-      <mat-label translate>tb.rulenode.customer-name-pattern</mat-label>
+      <mat-label translate>rule-node-config.customer-name-pattern</mat-label>
       <input required matInput formControlName="customerNamePattern">
       <mat-error *ngIf="assignCustomerConfigForm.get('customerNamePattern').hasError('required') ||
                         assignCustomerConfigForm.get('customerNamePattern').hasError('pattern')">
-        {{ 'tb.rulenode.customer-name-pattern-required' | translate }}
+        {{ 'rule-node-config.customer-name-pattern-required' | translate }}
       </mat-error>
-      <mat-hint translate>tb.rulenode.customer-name-pattern-hint</mat-hint>
+      <mat-hint translate>rule-node-config.customer-name-pattern-hint</mat-hint>
     </mat-form-field>
     <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="createCustomerIfNotExists">
-        {{ 'tb.rulenode.create-customer-if-not-exists' | translate }}
+        {{ 'rule-node-config.create-customer-if-not-exists' | translate }}
       </mat-slide-toggle>
     </div>
   </div>

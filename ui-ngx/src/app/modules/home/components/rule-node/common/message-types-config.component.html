@@ -47,25 +47,25 @@
     <mat-option *ngIf="(filteredMessageTypes | async)?.length === 0" [value]="null" class="tb-not-found">
       <div class="tb-not-found-content" (click)="$event.stopPropagation()">
         <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
-          <span translate>tb.rulenode.no-message-types-found</span>
+          <span translate>rule-node-config.no-message-types-found</span>
         </div>
         <ng-template #searchNotEmpty>
                 <span>
-                  {{ 'tb.rulenode.no-message-type-matching' | translate :
+                  {{ 'rule-node-config.no-message-type-matching' | translate :
                   {messageType: truncate.transform(searchText, true, 6, &apos;...&apos;)}
                   }}
                 </span>
         </ng-template>
         <span>
-          <a translate (click)="createMessageType($event, searchText)">tb.rulenode.create-new-message-type</a>
+          <a translate (click)="createMessageType($event, searchText)">rule-node-config.create-new-message-type</a>
         </span>
       </div>
     </mat-option>
   </mat-autocomplete>
   <mat-icon class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon" matSuffix
             color="primary"
-            matTooltip="{{ 'tb.rulenode.chip-help' | translate: { inputName: 'tb.rulenode.message-type' | translate } }}">help</mat-icon>
+            matTooltip="{{ 'rule-node-config.chip-help' | translate: { inputName: 'rule-node-config.message-type' | translate } }}">help</mat-icon>
   <mat-error *ngIf="chipList.errorState">
-    {{ 'tb.rulenode.select-message-types-required' | translate }}
+    {{ 'rule-node-config.select-message-types-required' | translate }}
   </mat-error>
 </mat-form-field>

@@ -17,7 +17,7 @@
 -->
 <section [formGroup]="deviceAttributesConfigForm" class="tb-form-panel no-padding no-border">
   <div class="tb-form-panel stroked no-padding-bottom">
-    <div class="tb-form-panel-title" translate>tb.rulenode.device-relations-query</div>
+    <div class="tb-form-panel-title" translate>rule-node-config.device-relations-query</div>
     <tb-device-relations-query-config
       required
       formControlName="deviceRelationsQuery">
@@ -25,22 +25,22 @@
   </div>
   <div class="tb-form-panel stroked">
     <div class="tb-form-row no-padding no-border space-between">
-      <div class="tb-form-panel-title tb-required" translate>tb.rulenode.related-device-attributes</div>
+      <div class="tb-form-panel-title tb-required" translate>rule-node-config.related-device-attributes</div>
       <div class="tb-form-panel-hint tb-error" translate
            [hidden]="!(deviceAttributesConfigForm.get('attributesControl').touched &&
                         deviceAttributesConfigForm.get('attributesControl').hasError('atLeastOneRequired'))">
-        tb.rulenode.at-least-one-field-required
+        rule-node-config.at-least-one-field-required
       </div>
     </div>
     <tb-select-attributes formControlName="attributesControl"
                           popupHelpLink="rulenode/related_device_attributes_node_fields_templatization"></tb-select-attributes>
     <tb-msg-metadata-chip formControlName="fetchTo"
-                          [labelText]="'tb.rulenode.add-selected-attributes-to' | translate"></tb-msg-metadata-chip>
+                          [labelText]="'rule-node-config.add-selected-attributes-to' | translate"></tb-msg-metadata-chip>
   </div>
-  <div tb-hint-tooltip-icon="{{ 'tb.rulenode.tell-failure-tooltip' | translate }}"
+  <div tb-hint-tooltip-icon="{{ 'rule-node-config.tell-failure-tooltip' | translate }}"
        class="tb-form-row same-padding">
     <mat-slide-toggle class="mat-slide margin" formControlName="tellFailureIfAbsent">
-      {{ 'tb.rulenode.tell-failure' | translate }}
+      {{ 'rule-node-config.tell-failure' | translate }}
     </mat-slide-toggle>
   </div>
 </section>

@@ -46,7 +46,7 @@ export class TransformScriptConfigComponent extends RuleNodeConfigurationCompone
 
   readonly hasScript = true;
 
-  readonly testScriptLabel = 'tb.rulenode.test-transformer-function';
+  readonly testScriptLabel = 'rule-node-config.test-transformer-function';
 
   constructor(private fb: FormBuilder,
               private nodeScriptTestService: NodeScriptTestService,
@@ -104,7 +104,7 @@ export class TransformScriptConfigComponent extends RuleNodeConfigurationCompone
     this.nodeScriptTestService.testNodeScript(
       script,
       'update',
-      this.translate.instant('tb.rulenode.transformer'),
+      this.translate.instant('rule-node-config.transformer'),
       'Transform',
       ['msg', 'metadata', 'msgType'],
       this.ruleNodeId,

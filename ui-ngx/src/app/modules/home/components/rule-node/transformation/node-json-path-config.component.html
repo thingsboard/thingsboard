@@ -17,9 +17,9 @@
 -->
 <section [formGroup]="jsonPathConfigForm">
   <mat-form-field subscriptSizing="dynamic" class="mat-block">
-    <mat-label>{{ 'tb.rulenode.json-path-expression' | translate }}</mat-label>
+    <mat-label>{{ 'rule-node-config.json-path-expression' | translate }}</mat-label>
     <input matInput formControlName="jsonPath" required/>
-    <mat-hint>{{ 'tb.rulenode.json-path-expression-hint' | translate }}</mat-hint>
-    <mat-error *ngIf="jsonPathConfigForm.get('jsonPath').hasError('required')">{{ 'tb.rulenode.json-path-expression-required' | translate }}</mat-error>
+    <mat-hint>{{ 'rule-node-config.json-path-expression-hint' | translate }}</mat-hint>
+    <mat-error *ngIf="jsonPathConfigForm.get('jsonPath').hasError('required')">{{ 'rule-node-config.json-path-expression-required' | translate }}</mat-error>
   </mat-form-field>
 </section>

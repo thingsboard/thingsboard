@@ -17,13 +17,13 @@
 -->
 <section [formGroup]="toEmailConfigForm" class="tb-form-panel no-border no-padding">
   <div class="tb-form-panel stroked">
-    <div class="tb-form-panel-title" translate>tb.rulenode.email-sender</div>
+    <div class="tb-form-panel-title" translate>rule-node-config.email-sender</div>
     <div class="tb-form-row no-border no-padding tb-standard-fields">
       <mat-form-field class="flex" subscriptSizing="dynamic">
-        <mat-label translate>tb.rulenode.from-template</mat-label>
+        <mat-label translate>rule-node-config.from-template</mat-label>
         <input required matInput formControlName="fromTemplate">
         <mat-hint align="start">
-          {{ 'tb.rulenode.email-from-template-hint' | translate }}
+          {{ 'rule-node-config.email-from-template-hint' | translate }}
         </mat-hint>
         <mat-hint align="end">
           <div class="input-bottom-double-hint">
@@ -33,25 +33,25 @@
                 tb-help-popup-placement="right"
                 trigger-style="letter-spacing:0.25px; font-size:12px;"
                 [tb-help-popup-style]="{maxWidth: '820px'}"
-                trigger-text="{{ 'tb.key-val.see-examples' | translate }}"></div>
+                trigger-text="{{ 'rule-node-config.key-val.see-examples' | translate }}"></div>
           </div>
         </mat-hint>
         <mat-error *ngIf="toEmailConfigForm.get('fromTemplate').hasError('required')">
-          {{ 'tb.rulenode.from-template-required' | translate }}
+          {{ 'rule-node-config.from-template-required' | translate }}
         </mat-error>
       </mat-form-field>
     </div>
   </div>
   <div class="tb-form-panel stroked">
     <div class="tb-form-panel no-padding no-border">
-      <div class="tb-form-panel-title" translate>tb.rulenode.recipients</div>
-      <tb-example-hint [hintText]="'tb.rulenode.recipients-block-main-hint'"
+      <div class="tb-form-panel-title" translate>rule-node-config.recipients</div>
+      <tb-example-hint [hintText]="'rule-node-config.recipients-block-main-hint'"
                         popupHelpLink="rulenode/to_email_node_fields_templatization">
       </tb-example-hint>
     </div>
     <div class="tb-form-row no-border no-padding tb-standard-fields">
       <mat-form-field class="flex">
-        <mat-label translate>tb.rulenode.to-template</mat-label>
+        <mat-label translate>rule-node-config.to-template</mat-label>
         <textarea required
                   matInput
                   class="tb-enable-vertical-resize"
@@ -59,11 +59,11 @@
                   cdkTextareaAutosize
                   cdkAutosizeMinRows="1"></textarea>
         <mat-error *ngIf="toEmailConfigForm.get('toTemplate').hasError('required')">
-          {{ 'tb.rulenode.to-template-required' | translate }}
+          {{ 'rule-node-config.to-template-required' | translate }}
         </mat-error>
       </mat-form-field>
       <mat-form-field class="flex">
-        <mat-label translate>tb.rulenode.cc-template</mat-label>
+        <mat-label translate>rule-node-config.cc-template</mat-label>
         <textarea matInput
                   formControlName="ccTemplate"
                   class="tb-enable-vertical-resize"
@@ -71,7 +71,7 @@
                   cdkAutosizeMinRows="1"></textarea>
       </mat-form-field>
       <mat-form-field class="flex">
-        <mat-label translate>tb.rulenode.bcc-template</mat-label>
+        <mat-label translate>rule-node-config.bcc-template</mat-label>
         <textarea matInput
                   formControlName="bccTemplate"
                   class="tb-enable-vertical-resize"
@@ -81,13 +81,13 @@
     </div>
   </div>
   <div class="tb-form-panel stroked">
-    <div class="tb-form-panel-title" translate>tb.rulenode.message-subject-and-content</div>
-    <tb-example-hint [hintText]="'tb.rulenode.kv-map-pattern-hint'"
+    <div class="tb-form-panel-title" translate>rule-node-config.message-subject-and-content</div>
+    <tb-example-hint [hintText]="'rule-node-config.kv-map-pattern-hint'"
                       popupHelpLink="rulenode/to_email_node_fields_templatization">
     </tb-example-hint>
     <section>
       <mat-form-field class="mat-block">
-        <mat-label translate>tb.rulenode.subject-template</mat-label>
+        <mat-label translate>rule-node-config.subject-template</mat-label>
         <textarea required
                   matInput
                   formControlName="subjectTemplate"
@@ -95,11 +95,11 @@
                   cdkTextareaAutosize
                   cdkAutosizeMinRows="1"></textarea>
         <mat-error *ngIf="toEmailConfigForm.get('subjectTemplate').hasError('required')">
-          {{ 'tb.rulenode.subject-template-required' | translate }}
+          {{ 'rule-node-config.subject-template-required' | translate }}
         </mat-error>
       </mat-form-field>
       <mat-form-field class="mat-block">
-        <mat-label translate>tb.rulenode.mail-body-type</mat-label>
+        <mat-label translate>rule-node-config.mail-body-type</mat-label>
         <mat-select formControlName="mailBodyType">
           <mat-select-trigger>
             <span *ngIf="toEmailConfigForm.get('mailBodyType').value">
@@ -118,12 +118,12 @@
         </mat-select>
       </mat-form-field>
       <mat-form-field class="mat-block" *ngIf="toEmailConfigForm.get('mailBodyType').value === 'dynamic'">
-        <mat-label translate>tb.rulenode.body-type-template</mat-label>
+        <mat-label translate>rule-node-config.body-type-template</mat-label>
         <input required matInput formControlName="isHtmlTemplate">
-        <mat-hint translate>tb.mail-body-type.after-template-evaluation-hint</mat-hint>
+        <mat-hint translate>rule-node-config.mail-body-types.after-template-evaluation-hint</mat-hint>
       </mat-form-field>
       <mat-form-field class="mat-block">
-        <mat-label translate>tb.rulenode.body-template</mat-label>
+        <mat-label translate>rule-node-config.body-template</mat-label>
         <textarea required
                   matInput
                   formControlName="bodyTemplate"
@@ -131,7 +131,7 @@
                   cdkTextareaAutosize
                   cdkAutosizeMinRows="2"></textarea>
         <mat-error *ngIf="toEmailConfigForm.get('bodyTemplate').hasError('required')">
-          {{ 'tb.rulenode.body-template-required' | translate }}
+          {{ 'rule-node-config.body-template-required' | translate }}
         </mat-error>
       </mat-form-field>
     </section>

@@ -30,8 +30,8 @@ export class CreateRelationConfigComponent extends RuleNodeConfigurationComponen
   directionTypes = Object.keys(EntitySearchDirection);
   directionTypeTranslations  = new Map<EntitySearchDirection, string>(
     [
-      [EntitySearchDirection.FROM, 'tb.rulenode.search-direction-from'],
-      [EntitySearchDirection.TO, 'tb.rulenode.search-direction-to'],
+      [EntitySearchDirection.FROM, 'rule-node-config.search-direction-from'],
+      [EntitySearchDirection.TO, 'rule-node-config.search-direction-to'],
     ]
   );
 
@@ -39,13 +39,13 @@ export class CreateRelationConfigComponent extends RuleNodeConfigurationComponen
 
   entityTypeNamePatternTranslation = new Map<EntityType, string>(
     [
-      [EntityType.DEVICE, 'tb.rulenode.device-name-pattern'],
-      [EntityType.ASSET, 'tb.rulenode.asset-name-pattern'],
-      [EntityType.ENTITY_VIEW, 'tb.rulenode.entity-view-name-pattern'],
-      [EntityType.CUSTOMER, 'tb.rulenode.customer-title-pattern'],
-      [EntityType.USER, 'tb.rulenode.user-name-pattern'],
-      [EntityType.DASHBOARD, 'tb.rulenode.dashboard-name-pattern'],
-      [EntityType.EDGE, 'tb.rulenode.edge-name-pattern']
+      [EntityType.DEVICE, 'rule-node-config.device-name-pattern'],
+      [EntityType.ASSET, 'rule-node-config.asset-name-pattern'],
+      [EntityType.ENTITY_VIEW, 'rule-node-config.entity-view-name-pattern'],
+      [EntityType.CUSTOMER, 'rule-node-config.customer-title-pattern'],
+      [EntityType.USER, 'rule-node-config.user-name-pattern'],
+      [EntityType.DASHBOARD, 'rule-node-config.dashboard-name-pattern'],
+      [EntityType.EDGE, 'rule-node-config.edge-name-pattern']
     ]
   );
 

@@ -17,17 +17,17 @@
 -->
 <section [formGroup]="pubSubConfigForm" class="flex flex-col">
   <mat-form-field class="mat-block">
-    <mat-label translate>tb.rulenode.gcp-project-id</mat-label>
+    <mat-label translate>rule-node-config.gcp-project-id</mat-label>
     <input required matInput formControlName="projectId">
     <mat-error *ngIf="pubSubConfigForm.get('projectId').hasError('required')">
-      {{ 'tb.rulenode.gcp-project-id-required' | translate }}
+      {{ 'rule-node-config.gcp-project-id-required' | translate }}
     </mat-error>
   </mat-form-field>
   <mat-form-field class="mat-block">
-    <mat-label translate>tb.rulenode.pubsub-topic-name</mat-label>
+    <mat-label translate>rule-node-config.pubsub-topic-name</mat-label>
     <input required matInput formControlName="topicName">
     <mat-error *ngIf="pubSubConfigForm.get('topicName').hasError('required')">
-      {{ 'tb.rulenode.pubsub-topic-name-required' | translate }}
+      {{ 'rule-node-config.pubsub-topic-name-required' | translate }}
     </mat-error>
   </mat-form-field>
   <tb-file-input style="padding-bottom: 24px;"
@@ -36,18 +36,18 @@
                  (fileNameChanged)="pubSubConfigForm.get('serviceAccountKeyFileName').setValue($event)"
                  required
                  requiredAsError
-                 label="{{'tb.rulenode.gcp-service-account-key' | translate}}"
-                 noFileText="tb.rulenode.no-file"
-                 dropLabel="{{'tb.rulenode.drop-file' | translate}}">
+                 label="{{'rule-node-config.gcp-service-account-key' | translate}}"
+                 noFileText="rule-node-config.no-file"
+                 dropLabel="{{'rule-node-config.drop-file' | translate}}">
   </tb-file-input>
-  <label translate class="tb-title">tb.rulenode.message-attributes</label>
-  <div class="tb-hint" [innerHTML]="'tb.rulenode.message-attributes-hint' | translate | safe: 'html'"></div>
+  <label translate class="tb-title">rule-node-config.message-attributes</label>
+  <div class="tb-hint" [innerHTML]="'rule-node-config.message-attributes-hint' | translate | safe: 'html'"></div>
   <tb-kv-map-config-old
     required="false"
     formControlName="messageAttributes"
-    keyText="tb.rulenode.name"
-    keyRequiredText="tb.rulenode.name-required"
-    valText="tb.rulenode.value"
-    valRequiredText="tb.rulenode.value-required">
+    keyText="rule-node-config.name"
+    keyRequiredText="rule-node-config.name-required"
+    valText="rule-node-config.value"
+    valRequiredText="rule-node-config.value-required">
   </tb-kv-map-config-old>
 </section>

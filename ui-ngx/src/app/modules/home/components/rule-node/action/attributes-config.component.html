@@ -17,11 +17,11 @@
 -->
 <section [formGroup]="attributesConfigForm" class="tb-form-panel no-border no-padding">
   <div class="tb-form-panel stroked">
-    <tb-example-hint [hintText]="'tb.rulenode.attributes-scope-hint'">
+    <tb-example-hint [hintText]="'rule-node-config.attributes-scope-hint'">
     </tb-example-hint>
     <div class="tb-form-row no-border no-padding tb-standard-fields">
       <mat-form-field class="flex">
-        <mat-label>{{ 'tb.rulenode.attributes-scope' | translate }}</mat-label>
+        <mat-label>{{ 'rule-node-config.attributes-scope' | translate }}</mat-label>
         <mat-select required
                     class="tb-entity-type-select" matInput formControlName="scope">
           <mat-option *ngFor="let scope of attributeScopes" [value]="scope">
@@ -30,7 +30,7 @@
         </mat-select>
       </mat-form-field>
       <mat-form-field class="flex">
-        <mat-label>{{ 'tb.rulenode.attributes-scope-value' | translate }}</mat-label>
+        <mat-label>{{ 'rule-node-config.attributes-scope-value' | translate }}</mat-label>
         <input type="text" matInput readonly disabled [ngModel]="attributesConfigForm.get('scope').value" [ngModelOptions]="{standalone: true}">
         <button type="button"
                 matSuffix
@@ -38,7 +38,7 @@
                 aria-label="Copy"
                 ngxClipboard
                 [cbContent]="attributesConfigForm.get('scope').value"
-                matTooltip="{{ 'tb.rulenode.attributes-scope-value-copy' | translate }}">
+                matTooltip="{{ 'rule-node-config.attributes-scope-value-copy' | translate }}">
           <mat-icon aria-hidden="false"
                     aria-label="help-icon">content_copy
           </mat-icon>
@@ -50,28 +50,28 @@
   <section class="tb-form-panel stroked">
     <mat-expansion-panel class="tb-settings">
       <mat-expansion-panel-header>
-        <mat-panel-title translate>tb.rulenode.advanced-settings</mat-panel-title>
+        <mat-panel-title translate>rule-node-config.advanced-settings</mat-panel-title>
       </mat-expansion-panel-header>
       <div tb-hint-tooltip-icon="{{ (attributesConfigForm.get('updateAttributesOnlyOnValueChange').value
-                                     ? 'tb.rulenode.update-attributes-only-on-value-change-hint-enabled'
-                                     : 'tb.rulenode.update-attributes-only-on-value-change-hint') | translate }}"
+                                     ? 'rule-node-config.update-attributes-only-on-value-change-hint-enabled'
+                                     : 'rule-node-config.update-attributes-only-on-value-change-hint') | translate }}"
            class="tb-form-row no-border no-padding">
         <mat-slide-toggle class="mat-slide" formControlName="updateAttributesOnlyOnValueChange">
-          {{ 'tb.rulenode.update-attributes-only-on-value-change' | translate }}
+          {{ 'rule-node-config.update-attributes-only-on-value-change' | translate }}
         </mat-slide-toggle>
       </div>
-      <div tb-hint-tooltip-icon="{{ 'tb.rulenode.send-attributes-updated-notification-hint' | translate }}"
+      <div tb-hint-tooltip-icon="{{ 'rule-node-config.send-attributes-updated-notification-hint' | translate }}"
            *ngIf="attributesConfigForm.get('scope').value !== attributeScopeMap.CLIENT_SCOPE"
            class="tb-form-row no-border no-padding">
         <mat-slide-toggle class="mat-slide" formControlName="sendAttributesUpdatedNotification">
-          {{ 'tb.rulenode.send-attributes-updated-notification' | translate }}
+          {{ 'rule-node-config.send-attributes-updated-notification' | translate }}
         </mat-slide-toggle>
       </div>
-      <div tb-hint-tooltip-icon="{{ 'tb.rulenode.notify-device-on-update-hint' | translate }}"
+      <div tb-hint-tooltip-icon="{{ 'rule-node-config.notify-device-on-update-hint' | translate }}"
            *ngIf="attributesConfigForm.get('scope').value === attributeScopeMap.SHARED_SCOPE"
            class="tb-form-row no-border no-padding">
         <mat-slide-toggle class="mat-slide" formControlName="notifyDevice">
-          {{ 'tb.rulenode.notify-device' | translate }}
+          {{ 'rule-node-config.notify-device' | translate }}
         </mat-slide-toggle>
       </div>
     </mat-expansion-panel>

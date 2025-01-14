@@ -54,7 +54,7 @@ export class CreateAlarmConfigComponent extends RuleNodeConfigurationComponent {
 
   readonly hasScript = true;
 
-  readonly testScriptLabel = 'tb.rulenode.test-details-function';
+  readonly testScriptLabel = 'rule-node-config.test-details-function';
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder,
@@ -143,7 +143,7 @@ export class CreateAlarmConfigComponent extends RuleNodeConfigurationComponent {
     this.nodeScriptTestService.testNodeScript(
       script,
       'json',
-      this.translate.instant('tb.rulenode.details'),
+      this.translate.instant('rule-node-config.details'),
       'Details',
       ['msg', 'metadata', 'msgType'],
       this.ruleNodeId,

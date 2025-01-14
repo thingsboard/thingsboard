@@ -44,7 +44,7 @@
               type="button"
               (click)="removeKeyVal($index)"
               [disabled]="isLoading$ | async"
-              matTooltip="{{ 'tb.key-val.remove-entry' | translate }}"
+              matTooltip="{{ 'rule-node-config.key-val.remove-entry' | translate }}"
               matTooltipPosition="above">
         <mat-icon>close</mat-icon>
       </button>
@@ -53,7 +53,7 @@
   </div>
   <tb-error [error]="ngControl.hasError('kvMapRequired') || ngControl.hasError('uniqueKeyValuePair') ?
                      (ngControl.hasError('kvMapRequired') ? translate.instant(requiredText) :
-                     translate.instant('tb.key-val.unique-key-value-pair-error', {keyText: translate.instant(keyText),
+                     translate.instant('rule-node-config.key-val.unique-key-value-pair-error', {keyText: translate.instant(keyText),
                      valText: translate.instant(valText)})) : ''"></tb-error>
   <div style="margin-top: 16px;">
     <button mat-button mat-raised-button color="primary"
@@ -61,7 +61,7 @@
             [disabled]="isLoading$ | async"
             (click)="addKeyVal()"
             type="button"
-            matTooltip="{{ 'tb.key-val.add-entry' | translate }}"
+            matTooltip="{{ 'rule-node-config.key-val.add-entry' | translate }}"
             matTooltipPosition="above">
       <mat-icon>add</mat-icon>
       {{ 'action.add' | translate }}

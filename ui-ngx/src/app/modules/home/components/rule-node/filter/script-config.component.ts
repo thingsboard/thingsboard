@@ -43,7 +43,7 @@ export class ScriptConfigComponent extends RuleNodeConfigurationComponent {
 
   readonly hasScript = true;
 
-  readonly testScriptLabel = 'tb.rulenode.test-filter-function';
+  readonly testScriptLabel = 'rule-node-config.test-filter-function';
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder,
@@ -104,7 +104,7 @@ export class ScriptConfigComponent extends RuleNodeConfigurationComponent {
     this.nodeScriptTestService.testNodeScript(
       script,
       'filter',
-      this.translate.instant('tb.rulenode.filter'),
+      this.translate.instant('rule-node-config.filter'),
       'Filter',
       ['msg', 'metadata', 'msgType'],
       this.ruleNodeId,

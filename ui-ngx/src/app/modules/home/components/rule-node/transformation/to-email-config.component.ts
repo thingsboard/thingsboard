@@ -29,18 +29,18 @@ export class ToEmailConfigComponent extends RuleNodeConfigurationComponent {
   toEmailConfigForm: FormGroup;
   mailBodyTypes = [
     {
-      name: 'tb.mail-body-type.plain-text',
-      description: 'tb.mail-body-type.plain-text-description',
+      name: 'rule-node-config.mail-body-types.plain-text',
+      description: 'rule-node-config.mail-body-types.plain-text-description',
       value: 'false',
     },
     {
-      name: 'tb.mail-body-type.html',
-      description: 'tb.mail-body-type.html-text-description',
+      name: 'rule-node-config.mail-body-types.html',
+      description: 'rule-node-config.mail-body-types.html-text-description',
       value: 'true',
     },
     {
-      name: 'tb.mail-body-type.use-body-type-template',
-      description: 'tb.mail-body-type.dynamic-text-description',
+      name: 'rule-node-config.mail-body-types.use-body-type-template',
+      description: 'rule-node-config.mail-body-types.dynamic-text-description',
       value: 'dynamic',
     }
   ];

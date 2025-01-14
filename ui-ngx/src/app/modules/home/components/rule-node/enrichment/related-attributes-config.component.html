@@ -21,7 +21,7 @@
     formControlName="relationsQuery">
   </tb-relations-query-config>
   <div class="tb-form-panel stroked">
-    <div class="tb-form-panel-title" translate>tb.rulenode.data-to-fetch</div>
+    <div class="tb-form-panel-title" translate>rule-node-config.data-to-fetch</div>
     <tb-toggle-select formControlName="dataToFetch" appearance="fill">
       <tb-toggle-option *ngFor="let data of fetchToData" [value]="data.value">
         {{ data.name }}
@@ -31,28 +31,28 @@
       [hidden]="relatedAttributesConfigForm.get('dataToFetch').value === DataToFetch.FIELDS"
       required
       formControlName="kvMap"
-      [requiredText]="'tb.rulenode.attr-mapping-required' | translate"
-      [labelText]="selectTranslation('tb.rulenode.latest-telemetry-mapping','tb.rulenode.attributes-mapping') | translate"
-      [keyText]="selectTranslation('tb.rulenode.source-telemetry','tb.rulenode.source-attribute') | translate"
-      [keyRequiredText]="selectTranslation('tb.rulenode.source-telemetry-required','tb.rulenode.source-attribute-required') | translate"
-      [valText]="'tb.rulenode.target-key' | translate"
-      [valRequiredText]="'tb.rulenode.target-key-required' | translate"
-      [hintText]="'tb.rulenode.kv-map-pattern-hint'"
+      [requiredText]="'rule-node-config.attr-mapping-required' | translate"
+      [labelText]="selectTranslation('rule-node-config.latest-telemetry-mapping','rule-node-config.attributes-mapping') | translate"
+      [keyText]="selectTranslation('rule-node-config.source-telemetry','rule-node-config.source-attribute') | translate"
+      [keyRequiredText]="selectTranslation('rule-node-config.source-telemetry-required','rule-node-config.source-attribute-required') | translate"
+      [valText]="'rule-node-config.target-key' | translate"
+      [valRequiredText]="'rule-node-config.target-key-required' | translate"
+      [hintText]="'rule-node-config.kv-map-pattern-hint'"
       popupHelpLink="rulenode/related_entity_data_node_fields_templatization">
     </tb-kv-map-config>
     <tb-sv-map-config
       [hidden]="relatedAttributesConfigForm.get('dataToFetch').value !== DataToFetch.FIELDS"
       required
-      [labelText]="'tb.rulenode.fields-mapping' | translate"
+      [labelText]="'rule-node-config.fields-mapping' | translate"
       targetKeyPrefix="relatedEntity"
       [selectOptions]="originatorFields"
       formControlName="svMap"
-      [requiredText]="'tb.rulenode.attr-mapping-required' | translate"
-      [selectText]="'tb.rulenode.source-field' | translate"
-      [selectRequiredText]="'tb.rulenode.source-field-required' | translate"
-      [valText]="'tb.rulenode.target-key' | translate"
-      [valRequiredText]="'tb.rulenode.target-key-required' | translate"
-      [hintText]="'tb.rulenode.sv-map-hint' | translate"
+      [requiredText]="'rule-node-config.attr-mapping-required' | translate"
+      [selectText]="'rule-node-config.source-field' | translate"
+      [selectRequiredText]="'rule-node-config.source-field-required' | translate"
+      [valText]="'rule-node-config.target-key' | translate"
+      [valRequiredText]="'rule-node-config.target-key-required' | translate"
+      [hintText]="'rule-node-config.sv-map-hint' | translate"
       popupHelpLink="rulenode/related_entity_data_node_fields_templatization">
     </tb-sv-map-config>
     <tb-msg-metadata-chip formControlName="fetchTo"

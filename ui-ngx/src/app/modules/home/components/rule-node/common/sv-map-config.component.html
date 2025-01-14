@@ -19,7 +19,7 @@
   <div class="tb-form-row no-padding no-border space-between">
     <div class="tb-form-panel-title">{{ labelText }}</div>
     <div class="tb-form-panel-hint tb-error" translate *ngIf="svListFormGroup.hasError('required')">
-      tb.rulenode.map-fields-required
+      rule-node-config.map-fields-required
     </div>
     <div class="tb-form-panel-hint tb-error" translate *ngIf="svListFormGroup.hasError('svMapRequired')">
       {{ requiredText }}
@@ -51,7 +51,7 @@
                     mat-icon-button
                     (click)="removeKeyVal($index)"
                     [disabled]="isLoading$ | async"
-                    matTooltip="{{ 'tb.key-val.remove-mapping-entry' | translate }}"
+                    matTooltip="{{ 'rule-node-config.key-val.remove-mapping-entry' | translate }}"
                     matTooltipPosition="above">
               <mat-icon>delete</mat-icon>
             </button>
@@ -63,7 +63,7 @@
   <div>
     <button [disabled]="(isLoading$ | async) || keyValsFormArray().length >= selectOptions.length"
             type="button" mat-stroked-button color="primary" (click)="addKeyVal()">
-      {{ 'tb.key-val.add-mapping-entry' | translate }}
+      {{ 'rule-node-config.key-val.add-mapping-entry' | translate }}
     </button>
   </div>
   <tb-example-hint [hintText]="hintText" [popupHelpLink]="popupHelpLink"></tb-example-hint>

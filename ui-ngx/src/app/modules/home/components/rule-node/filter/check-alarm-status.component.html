@@ -17,9 +17,9 @@
 -->
 <section [formGroup]="alarmStatusConfigForm" class="tb-form-panel stroked">
   <div class="tb-form-row no-padding no-border space-between">
-    <div class="tb-form-panel-title tb-required" translate>tb.rulenode.alarm-status</div>
+    <div class="tb-form-panel-title tb-required" translate>rule-node-config.alarm-status</div>
     <div class="tb-form-panel-hint tb-error" translate [hidden]="alarmStatusConfigForm.get('alarmStatusList').valid">
-      tb.rulenode.alarm-required
+      rule-node-config.alarm-required
     </div>
   </div>
   <tb-alarm-status-select formControlName="alarmStatusList"></tb-alarm-status-select>
