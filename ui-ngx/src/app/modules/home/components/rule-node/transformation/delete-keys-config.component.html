@@ -17,18 +17,18 @@
 -->
 <section [formGroup]="deleteKeysConfigForm" class="tb-form-panel no-border no-padding">
   <tb-msg-metadata-chip
-    [labelText]="('tb.key-val.delete-key-values-from' | translate)"
+    [labelText]="('rule-node-config.key-val.delete-key-values-from' | translate)"
     formControlName="deleteFrom">
   </tb-msg-metadata-chip>
   <tb-string-items-list class="mat-block"
                         required
-                        [label]="'tb.rulenode.keys' | translate"
-                        [placeholder]="'tb.rulenode.add-key' | translate"
-                        [requiredText]="'tb.key-val.at-least-one-key-error' | translate"
+                        [label]="'rule-node-config.keys' | translate"
+                        [placeholder]="'rule-node-config.add-key' | translate"
+                        [requiredText]="'rule-node-config.key-val.at-least-one-key-error' | translate"
                         formControlName="keys">
     <mat-icon matSuffix class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon"
               color="primary"
-              matTooltip="{{ 'tb.rulenode.use-regular-expression-delete-hint' | translate }}">
+              matTooltip="{{ 'rule-node-config.use-regular-expression-delete-hint' | translate }}">
       help
     </mat-icon>
   </tb-string-items-list>

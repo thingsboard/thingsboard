@@ -22,10 +22,10 @@
       {{ requiredText }}
     </div>
     <div class="tb-form-panel-hint tb-error" translate *ngIf="kvListFormGroup.hasError('required')">
-      tb.rulenode.map-fields-required
+      rule-node-config.map-fields-required
     </div>
     <div class="tb-form-panel-hint tb-error" translate *ngIf="kvListFormGroup.hasError('uniqueKeyValuePair')">
-      {{ 'tb.key-val.unique-key-value-pair-error' | translate:
+      {{ 'rule-node-config.key-val.unique-key-value-pair-error' | translate:
             {
               valText: valText,
               keyText: keyText
@@ -54,7 +54,7 @@
                     mat-icon-button
                     (click)="removeKeyVal($index)"
                     [disabled]="disabled"
-                    matTooltip="{{ 'tb.key-val.remove-mapping-entry' | translate }}"
+                    matTooltip="{{ 'rule-node-config.key-val.remove-mapping-entry' | translate }}"
                     matTooltipPosition="above">
               <mat-icon>delete</mat-icon>
             </button>
@@ -65,7 +65,7 @@
   </div>
   <div>
     <button type="button" mat-stroked-button color="primary" (click)="addKeyVal()">
-      {{ 'tb.key-val.add-mapping-entry' | translate }}
+      {{ 'rule-node-config.key-val.add-mapping-entry' | translate }}
     </button>
   </div>
   <tb-example-hint [hintText]="hintText" [popupHelpLink]="popupHelpLink" *ngIf="popupHelpLink || hintText"></tb-example-hint>

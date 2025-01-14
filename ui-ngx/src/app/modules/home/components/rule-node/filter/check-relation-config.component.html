@@ -16,13 +16,13 @@
 
 -->
 <section [formGroup]="checkRelationConfigForm" class="tb-form-panel stroked no-padding-bottom">
-  <div class="tb-form-panel-title" translate>tb.rulenode.relation-search-parameters</div>
+  <div class="tb-form-panel-title" translate>rule-node-config.relation-search-parameters</div>
   <div class="flex flex-col">
     <mat-form-field class="mat-block" hideRequiredMarker>
       <mat-label>{{ 'relation.direction' | translate }}</mat-label>
       <mat-select formControlName="direction" required>
         <mat-option *ngFor="let direction of entitySearchDirection" [value]="direction">
-          {{ entitySearchDirectionTranslationsMap.get(direction) | translate }} <span translate>tb.rulenode.relations-query-config-direction-suffix</span>
+          {{ entitySearchDirectionTranslationsMap.get(direction) | translate }} <span translate>rule-node-config.relations-query-config-direction-suffix</span>
         </mat-option>
       </mat-select>
     </mat-form-field>
@@ -30,10 +30,10 @@
       required
       formControlName="relationType">
     </tb-relation-type-autocomplete>
-    <div tb-hint-tooltip-icon="{{ 'tb.rulenode.check-relation-to-specific-entity-tooltip' | translate }}"
+    <div tb-hint-tooltip-icon="{{ 'rule-node-config.check-relation-to-specific-entity-tooltip' | translate }}"
          class="tb-form-row no-border no-padding slide-toggle">
       <mat-slide-toggle class="mat-slide" formControlName="checkForSingleEntity">
-        {{ 'tb.rulenode.check-relation-to-specific-entity' | translate }}
+        {{ 'rule-node-config.check-relation-to-specific-entity' | translate }}
       </mat-slide-toggle>
     </div>
     <div *ngIf="checkRelationConfigForm.get('checkForSingleEntity').value" class="same-width-component-row">

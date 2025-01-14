@@ -17,7 +17,7 @@
 -->
 <section [formGroup]="deleteRelationConfigForm" class="tb-form-panel no-padding no-border">
   <div class="tb-form-panel stroked no-padding-bottom">
-    <div class="tb-form-panel-title" translate>tb.rulenode.relation-parameters</div>
+    <div class="tb-form-panel-title" translate>rule-node-config.relation-parameters</div>
     <div class="flex flex-col">
       <mat-form-field class="mat-block" hideRequiredMarker>
         <mat-label translate>relation.direction</mat-label>
@@ -34,10 +34,10 @@
     </div>
   </div>
   <div class="tb-form-panel stroked">
-    <div tb-hint-tooltip-icon="{{ 'tb.rulenode.delete-relation-with-specific-entity-hint' | translate }}"
+    <div tb-hint-tooltip-icon="{{ 'rule-node-config.delete-relation-with-specific-entity-hint' | translate }}"
          class="tb-form-row no-border no-padding">
       <mat-slide-toggle class="mat-slide" formControlName="deleteForSingleEntity">
-        {{ 'tb.rulenode.delete-relation-with-specific-entity' | translate }}
+        {{ 'rule-node-config.delete-relation-with-specific-entity' | translate }}
       </mat-slide-toggle>
     </div>
     <div *ngIf="deleteRelationConfigForm.get('deleteForSingleEntity').value">
@@ -56,7 +56,7 @@
         </mat-form-field>
       </div>
       <tb-example-hint *ngIf="deleteRelationConfigForm.get('entityType').value && deleteRelationConfigForm.get('entityType').value !== entityType.TENANT"
-                       [hintText]="'tb.rulenode.kv-map-single-pattern-hint'"></tb-example-hint>
+                       [hintText]="'rule-node-config.kv-map-single-pattern-hint'"></tb-example-hint>
     </div>
   </div>
 </section>

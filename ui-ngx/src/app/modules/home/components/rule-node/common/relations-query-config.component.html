@@ -16,35 +16,35 @@
 
 -->
 <section [formGroup]="relationsQueryFormGroup" class="tb-form-panel stroked">
-  <div class="tb-form-panel-title tb-required" translate>tb.rulenode.relations-query</div>
+  <div class="tb-form-panel-title tb-required" translate>rule-node-config.relations-query</div>
   <section>
     <div class="flex flex-row gap-4">
       <mat-form-field class="mat-block max-w-50% flex-full" style="min-width: 100px;" hideRequiredMarker>
         <mat-label translate>relation.direction</mat-label>
         <mat-select required formControlName="direction">
           <mat-option *ngFor="let type of directionTypes" [value]="type">
-            {{ directionTypeTranslations.get(type) | translate }} <span translate>tb.rulenode.relations-query-config-direction-suffix</span>
+            {{ directionTypeTranslations.get(type) | translate }} <span translate>rule-node-config.relations-query-config-direction-suffix</span>
           </mat-option>
         </mat-select>
       </mat-form-field>
       <mat-form-field floatLabel="always" class="mat-block max-w-50% flex-full">
-        <mat-label translate>tb.rulenode.max-relation-level</mat-label>
+        <mat-label translate>rule-node-config.max-relation-level</mat-label>
         <input matInput
                type="text"
                pattern="[0-9]*"
                min="1"
                inputmode="numeric"
-               placeholder="{{ 'tb.rulenode.unlimited-level' | translate }}"
+               placeholder="{{ 'rule-node-config.unlimited-level' | translate }}"
                formControlName="maxLevel">
         <mat-error *ngIf="relationsQueryFormGroup.get('maxLevel').hasError('min')">
-          {{ 'tb.rulenode.max-relation-level-error' | translate }}
+          {{ 'rule-node-config.max-relation-level-error' | translate }}
         </mat-error>
         <mat-error *ngIf="relationsQueryFormGroup.get('maxLevel').invalid">
-          {{ 'tb.rulenode.max-relation-level-invalid' | translate }}
+          {{ 'rule-node-config.max-relation-level-invalid' | translate }}
         </mat-error>
       </mat-form-field>
     </div>
-    <div tb-hint-tooltip-icon="{{ 'tb.rulenode.last-level-relation-tooltip' | translate }}"
+    <div tb-hint-tooltip-icon="{{ 'rule-node-config.last-level-relation-tooltip' | translate }}"
          *ngIf="relationsQueryFormGroup.get('maxLevel').value > 1"
          class="tb-form-row no-border no-padding last-level-slide-toggle">
       <mat-slide-toggle class="mat-slide" formControlName="fetchLastLevelOnly">

@@ -17,34 +17,34 @@
 -->
 <section [formGroup]="deduplicationConfigForm">
   <mat-form-field class="mat-block">
-    <mat-label>{{'tb.rulenode.interval' | translate}}</mat-label>
+    <mat-label>{{'rule-node-config.interval' | translate}}</mat-label>
     <input type='number' required matInput formControlName="interval">
     <mat-error *ngIf="deduplicationConfigForm.get('interval').hasError('required')">
-      {{'tb.rulenode.interval-required' | translate}}
+      {{'rule-node-config.interval-required' | translate}}
     </mat-error>
     <mat-error *ngIf="deduplicationConfigForm.get('interval').hasError('min')">
-      {{'tb.rulenode.interval-min-error' | translate}}
+      {{'rule-node-config.interval-min-error' | translate}}
     </mat-error>
     <mat-icon matSuffix class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon"
               color="primary"
-              matTooltip="{{ 'tb.rulenode.interval-hint' | translate }}">help</mat-icon>
+              matTooltip="{{ 'rule-node-config.interval-hint' | translate }}">help</mat-icon>
   </mat-form-field>
   <div class="tb-form-panel no-padding no-border">
     <div class="tb-form-panel stroked">
-      <div class="tb-form-panel-title  tb-required" translate>tb.rulenode.strategy</div>
+      <div class="tb-form-panel-title  tb-required" translate>rule-node-config.strategy</div>
       <tb-toggle-select class="fetch-to-data-toggle" formControlName="strategy" appearance="fill">
         <tb-toggle-option *ngFor="let strategy of deduplicationStrategies" [value]="strategy">
           {{ deduplicationStrategiesTranslations.get(strategy) | translate }}
         </tb-toggle-option>
       </tb-toggle-select>
-      <tb-example-hint [hintText]="'tb.rulenode.strategy-all-hint'"
+      <tb-example-hint [hintText]="'rule-node-config.strategy-all-hint'"
                        *ngIf="deduplicationConfigForm.get('strategy').value === 'ALL'">
       </tb-example-hint>
-      <tb-example-hint [hintText]="'tb.rulenode.strategy-first-hint'"
+      <tb-example-hint [hintText]="'rule-node-config.strategy-first-hint'"
                         textAlign="'center'"
                        *ngIf="deduplicationConfigForm.get('strategy').value === 'FIRST'">
       </tb-example-hint>
-      <tb-example-hint [hintText]="'tb.rulenode.strategy-last-hint'"
+      <tb-example-hint [hintText]="'rule-node-config.strategy-last-hint'"
                         textAlign="'center'"
                        *ngIf="deduplicationConfigForm.get('strategy').value === 'LAST'">
       </tb-example-hint>
@@ -58,40 +58,40 @@
     <section class="tb-form-panel stroked">
       <mat-expansion-panel class="tb-settings">
         <mat-expansion-panel-header>
-          <mat-panel-title translate>tb.rulenode.advanced-settings</mat-panel-title>
+          <mat-panel-title translate>rule-node-config.advanced-settings</mat-panel-title>
         </mat-expansion-panel-header>
         <div class="tb-form-row no-border no-padding tb-standard-fields">
           <mat-form-field class="flex">
-            <mat-label>{{'tb.rulenode.max-pending-msgs' | translate}}</mat-label>
+            <mat-label>{{'rule-node-config.max-pending-msgs' | translate}}</mat-label>
             <input type = 'number' required matInput formControlName="maxPendingMsgs">
             <mat-error *ngIf="deduplicationConfigForm.get('maxPendingMsgs').hasError('required')">
-              {{'tb.rulenode.max-pending-msgs-required' | translate}}
+              {{'rule-node-config.max-pending-msgs-required' | translate}}
             </mat-error>
             <mat-error *ngIf="deduplicationConfigForm.get('maxPendingMsgs').hasError('max')">
-              {{'tb.rulenode.max-pending-msgs-max-error' | translate}}
+              {{'rule-node-config.max-pending-msgs-max-error' | translate}}
             </mat-error>
             <mat-error *ngIf="deduplicationConfigForm.get('maxPendingMsgs').hasError('min')">
-              {{'tb.rulenode.max-pending-msgs-min-error' | translate}}
+              {{'rule-node-config.max-pending-msgs-min-error' | translate}}
             </mat-error>
             <mat-icon matSuffix class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon"
                       color="primary"
-                      matTooltip="{{ 'tb.rulenode.max-pending-msgs-hint' | translate }}">help</mat-icon>
+                      matTooltip="{{ 'rule-node-config.max-pending-msgs-hint' | translate }}">help</mat-icon>
           </mat-form-field>
           <mat-form-field class="flex">
-            <mat-label>{{'tb.rulenode.max-retries' | translate}}</mat-label>
+            <mat-label>{{'rule-node-config.max-retries' | translate}}</mat-label>
             <input type = 'number' required matInput formControlName="maxRetries">
             <mat-error *ngIf="deduplicationConfigForm.get('maxRetries').hasError('required')">
-              {{'tb.rulenode.max-retries-required' | translate}}
+              {{'rule-node-config.max-retries-required' | translate}}
             </mat-error>
             <mat-error *ngIf="deduplicationConfigForm.get('maxRetries').hasError('max')">
-              {{'tb.rulenode.max-retries-max-error' | translate}}
+              {{'rule-node-config.max-retries-max-error' | translate}}
             </mat-error>
             <mat-error *ngIf="deduplicationConfigForm.get('maxRetries').hasError('min')">
-              {{'tb.rulenode.max-retries-min-error' | translate}}
+              {{'rule-node-config.max-retries-min-error' | translate}}
             </mat-error>
             <mat-icon matSuffix class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon"
                       color="primary"
-                      matTooltip="{{ 'tb.rulenode.max-retries-hint' | translate }}">help</mat-icon>
+                      matTooltip="{{ 'rule-node-config.max-retries-hint' | translate }}">help</mat-icon>
           </mat-form-field>
         </div>
       </mat-expansion-panel>

@@ -17,11 +17,11 @@
 -->
 <section [formGroup]="pushToEdgeConfigForm" class="tb-form-panel no-border no-padding">
   <div class="tb-form-panel stroked">
-    <tb-example-hint [hintText]="'tb.rulenode.attributes-scope-hint'">
+    <tb-example-hint [hintText]="'rule-node-config.attributes-scope-hint'">
     </tb-example-hint>
     <div class="tb-form-row no-border no-padding tb-standard-fields">
       <mat-form-field class="flex">
-        <mat-label>{{ 'tb.rulenode.attributes-scope' | translate }}</mat-label>
+        <mat-label>{{ 'rule-node-config.attributes-scope' | translate }}</mat-label>
         <mat-select required
                     class="tb-entity-type-select" matInput formControlName="scope">
           <mat-option *ngFor="let scope of attributeScopes" [value]="scope">
@@ -30,7 +30,7 @@
         </mat-select>
       </mat-form-field>
       <mat-form-field class="flex">
-        <mat-label>{{ 'tb.rulenode.attributes-scope-value' | translate }}</mat-label>
+        <mat-label>{{ 'rule-node-config.attributes-scope-value' | translate }}</mat-label>
         <input type="text" matInput readonly disabled [ngModel]="pushToEdgeConfigForm.get('scope').value" [ngModelOptions]="{standalone: true}">
         <button type="button"
                 matSuffix
@@ -38,7 +38,7 @@
                 aria-label="Copy"
                 ngxClipboard
                 [cbContent]="pushToEdgeConfigForm.get('scope').value"
-                matTooltip="{{ 'tb.rulenode.attributes-scope-value-copy' | translate }}">
+                matTooltip="{{ 'rule-node-config.attributes-scope-value-copy' | translate }}">
           <mat-icon aria-hidden="false"
                     aria-label="help-icon">content_copy
           </mat-icon>

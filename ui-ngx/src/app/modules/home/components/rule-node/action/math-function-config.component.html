@@ -22,27 +22,27 @@
     formControlName="operation">
   </tb-math-function-autocomplete>
   <fieldset class="fields-group flex flex-col gap-2">
-    <legend class="group-title" translate>tb.rulenode.argument-tile</legend>
+    <legend class="group-title" translate>rule-node-config.argument-tile</legend>
     <tb-arguments-map-config formControlName="arguments"
                              [function]="mathFunctionConfigForm.get('operation').value">
     </tb-arguments-map-config>
   </fieldset>
   <fieldset *ngIf="mathFunctionConfigForm.get('operation').value === MathFunction.CUSTOM"
             class="fields-group flex flex-col gap-2">
-    <legend class="group-title">{{'tb.rulenode.custom-expression-field-input' | translate }} *</legend>
+    <legend class="group-title">{{'rule-node-config.custom-expression-field-input' | translate }} *</legend>
     <mat-form-field class="mat-block no-margin-top flex-1" subscriptSizing="dynamic">
       <input matInput formControlName="customFunction" required/>
       <mat-error *ngIf="mathFunctionConfigForm.get('customFunction').hasError('required')" translate>
-        tb.rulenode.custom-expression-field-input-required
+        rule-node-config.custom-expression-field-input-required
       </mat-error>
-      <mat-hint translate>tb.rulenode.custom-expression-field-input-hint</mat-hint>
+      <mat-hint translate>rule-node-config.custom-expression-field-input-hint</mat-hint>
     </mat-form-field>
   </fieldset>
   <fieldset class="fields-group flex flex-col gap-2">
-    <legend class="group-title" translate>tb.rulenode.result-title</legend>
+    <legend class="group-title" translate>rule-node-config.result-title</legend>
     <div formGroupName="result">
       <mat-form-field class="mat-block flex-1">
-        <mat-label translate>tb.rulenode.type-field-input</mat-label>
+        <mat-label translate>rule-node-config.type-field-input</mat-label>
         <mat-select formControlName="type" required>
           <mat-select-trigger>
             {{ argumentTypeResultMap.get(mathFunctionConfigForm.get('result.type').value)?.name | translate }}
@@ -51,17 +51,17 @@
                       style="border-bottom: 1px solid #eee;">
             {{ argumentTypeResultMap.get(argument).name | translate }}
             <small style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-              {{ argumentTypeResultMap.get(argument).description }}
+              {{ argumentTypeResultMap.get(argument).description | translate }}
             </small>
           </mat-option>
         </mat-select>
         <mat-error *ngIf="mathFunctionConfigForm.get('result.type').hasError('required')" translate>
-          tb.rulenode.type-field-input-required
+          rule-node-config.type-field-input-required
         </mat-error>
       </mat-form-field>
       <div class="xs:flex-col gt-xs:gap-4 flex flex-1 flex-row">
         <mat-form-field class="mat-block flex-1" *ngIf="mathFunctionConfigForm.get('result').get('type').value === ArgumentTypeResult.ATTRIBUTE">
-          <mat-label translate>tb.rulenode.attribute-scope-field-input</mat-label>
+          <mat-label translate>rule-node-config.attribute-scope-field-input</mat-label>
           <mat-select required formControlName="attributeScope">
             <mat-option *ngFor="let scope of attributeScopeResult" [value]="scope">
               {{ attributeScopeMap.get(scope) | translate }}
@@ -69,33 +69,33 @@
           </mat-select>
         </mat-form-field>
         <mat-form-field floatLabel="always" class="mat-block flex-1">
-          <mat-label translate>tb.rulenode.key-field-input</mat-label>
+          <mat-label translate>rule-node-config.key-field-input</mat-label>
           <input matInput formControlName="key" required/>
           <mat-icon class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon" matSuffix
                     color="primary"
-                    matTooltip="{{ 'tb.rulenode.math-templatization-tooltip' | translate }}">help</mat-icon>
+                    matTooltip="{{ 'rule-node-config.math-templatization-tooltip' | translate }}">help</mat-icon>
           <mat-error *ngIf="mathFunctionConfigForm.get('result.key').hasError('required')" translate>
-            tb.rulenode.key-field-input-required
+            rule-node-config.key-field-input-required
           </mat-error>
         </mat-form-field>
       </div>
       <div class="xs:flex-col gt-xs:gap-4 flex flex-1 flex-row">
         <mat-form-field floatLabel="always" class="mat-block flex-1" subscriptSizing="dynamic">
-          <mat-label translate>tb.rulenode.number-floating-point-field-input</mat-label>
+          <mat-label translate>rule-node-config.number-floating-point-field-input</mat-label>
           <input formControlName="resultValuePrecision"
                  matInput
                  step="1" min="0"
                  type="number"/>
-          <mat-hint [innerHTML]="'tb.rulenode.number-floating-point-field-input-hint' | translate | safe: 'html'"></mat-hint>
+          <mat-hint [innerHTML]="'rule-node-config.number-floating-point-field-input-hint' | translate | safe: 'html'"></mat-hint>
         </mat-form-field>
       </div>
       <div *ngIf="[ArgumentTypeResult.ATTRIBUTE, ArgumentTypeResult.TIME_SERIES].includes(mathFunctionConfigForm.get('result').get('type').value)"
            class="xs:flex-col gt-xs:gap-4 flex flex-1 flex-row items-stretch justify-start" style="padding-top: 16px;">
         <mat-checkbox formControlName="addToBody">
-          {{'tb.rulenode.add-to-message-field-input' | translate }}
+          {{'rule-node-config.add-to-message-field-input' | translate }}
         </mat-checkbox>
         <mat-checkbox formControlName="addToMetadata">
-          {{'tb.rulenode.add-to-metadata-field-input' | translate}}
+          {{'rule-node-config.add-to-metadata-field-input' | translate}}
         </mat-checkbox>
       </div>
     </div>

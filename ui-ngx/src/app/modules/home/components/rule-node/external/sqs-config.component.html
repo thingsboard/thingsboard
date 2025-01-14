@@ -17,7 +17,7 @@
 -->
 <section [formGroup]="sqsConfigForm" class="flex flex-col">
   <mat-form-field class="mat-block">
-    <mat-label translate>tb.rulenode.queue-type</mat-label>
+    <mat-label translate>rule-node-config.queue-type</mat-label>
     <mat-select formControlName="queueType" required>
       <mat-option *ngFor="let type of sqsQueueTypes" [value]="type">
         {{ sqsQueueTypeTranslationsMap.get(type) | translate }}
@@ -25,52 +25,52 @@
     </mat-select>
   </mat-form-field>
   <mat-form-field class="mat-block" subscriptSizing="dynamic">
-    <mat-label translate>tb.rulenode.queue-url-pattern</mat-label>
+    <mat-label translate>rule-node-config.queue-url-pattern</mat-label>
     <input required matInput formControlName="queueUrlPattern">
     <mat-error *ngIf="sqsConfigForm.get('queueUrlPattern').hasError('required')">
-      {{ 'tb.rulenode.queue-url-pattern-required' | translate }}
+      {{ 'rule-node-config.queue-url-pattern-required' | translate }}
     </mat-error>
-    <mat-hint translate>tb.rulenode.general-pattern-hint</mat-hint>
+    <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
   </mat-form-field>
   <mat-form-field *ngIf="sqsConfigForm.get('queueType').value === sqsQueueType.STANDARD" class="mat-block">
-    <mat-label translate>tb.rulenode.delay-seconds</mat-label>
+    <mat-label translate>rule-node-config.delay-seconds</mat-label>
     <input required type="number" min="0" max="900" step="1" matInput formControlName="delaySeconds">
     <mat-error *ngIf="sqsConfigForm.get('delaySeconds').hasError('min')">
-      {{ 'tb.rulenode.min-delay-seconds-message' | translate }}
+      {{ 'rule-node-config.min-delay-seconds-message' | translate }}
     </mat-error>
     <mat-error *ngIf="sqsConfigForm.get('delaySeconds').hasError('max')">
-      {{ 'tb.rulenode.max-delay-seconds-message' | translate }}
+      {{ 'rule-node-config.max-delay-seconds-message' | translate }}
     </mat-error>
   </mat-form-field>
-  <label translate class="tb-title">tb.rulenode.message-attributes</label>
-  <div class="tb-hint" [innerHTML]="'tb.rulenode.message-attributes-hint' | translate | safe: 'html'"></div>
+  <label translate class="tb-title">rule-node-config.message-attributes</label>
+  <div class="tb-hint" [innerHTML]="'rule-node-config.message-attributes-hint' | translate | safe: 'html'"></div>
   <tb-kv-map-config-old
     required="false"
     formControlName="messageAttributes"
-    keyText="tb.rulenode.name"
-    keyRequiredText="tb.rulenode.name-required"
-    valText="tb.rulenode.value"
-    valRequiredText="tb.rulenode.value-required">
+    keyText="rule-node-config.name"
+    keyRequiredText="rule-node-config.name-required"
+    valText="rule-node-config.value"
+    valRequiredText="rule-node-config.value-required">
   </tb-kv-map-config-old>
   <mat-form-field class="mat-block">
-    <mat-label translate>tb.rulenode.aws-access-key-id</mat-label>
+    <mat-label translate>rule-node-config.aws-access-key-id</mat-label>
     <input required matInput formControlName="accessKeyId">
     <mat-error *ngIf="sqsConfigForm.get('accessKeyId').hasError('required')">
-      {{ 'tb.rulenode.aws-access-key-id-required' | translate }}
+      {{ 'rule-node-config.aws-access-key-id-required' | translate }}
     </mat-error>
   </mat-form-field>
   <mat-form-field class="mat-block">
-    <mat-label translate>tb.rulenode.aws-secret-access-key</mat-label>
+    <mat-label translate>rule-node-config.aws-secret-access-key</mat-label>
     <input required matInput formControlName="secretAccessKey">
     <mat-error *ngIf="sqsConfigForm.get('secretAccessKey').hasError('required')">
-      {{ 'tb.rulenode.aws-secret-access-key-required' | translate }}
+      {{ 'rule-node-config.aws-secret-access-key-required' | translate }}
     </mat-error>
   </mat-form-field>
   <mat-form-field class="mat-block">
-    <mat-label translate>tb.rulenode.aws-region</mat-label>
+    <mat-label translate>rule-node-config.aws-region</mat-label>
     <input required matInput formControlName="region">
     <mat-error *ngIf="sqsConfigForm.get('region').hasError('required')">
-      {{ 'tb.rulenode.aws-region-required' | translate }}
+      {{ 'rule-node-config.aws-region-required' | translate }}
     </mat-error>
   </mat-form-field>
 </section>

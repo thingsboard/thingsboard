@@ -17,41 +17,41 @@
 -->
 <section [formGroup]="msgDelayConfigForm" class="flex flex-col">
   <mat-checkbox formControlName="useMetadataPeriodInSecondsPatterns">
-    {{ 'tb.rulenode.use-metadata-period-in-seconds-patterns' | translate }}
+    {{ 'rule-node-config.use-metadata-period-in-seconds-patterns' | translate }}
   </mat-checkbox>
-  <div class="tb-hint" translate>tb.rulenode.use-metadata-period-in-seconds-patterns-hint</div>
+  <div class="tb-hint" translate>rule-node-config.use-metadata-period-in-seconds-patterns-hint</div>
   <mat-form-field *ngIf="msgDelayConfigForm.get('useMetadataPeriodInSecondsPatterns').value !== true; else periodInSecondsPattern"
                   class="mat-block">
-    <mat-label translate>tb.rulenode.period-seconds</mat-label>
+    <mat-label translate>rule-node-config.period-seconds</mat-label>
     <input required type="number" min="0" step="1" matInput formControlName="periodInSeconds">
     <mat-error *ngIf="msgDelayConfigForm.get('periodInSeconds').hasError('required')">
-      {{ 'tb.rulenode.period-seconds-required' | translate }}
+      {{ 'rule-node-config.period-seconds-required' | translate }}
     </mat-error>
     <mat-error *ngIf="msgDelayConfigForm.get('periodInSeconds').hasError('min')">
-      {{ 'tb.rulenode.min-period-0-seconds-message' | translate }}
+      {{ 'rule-node-config.min-period-0-seconds-message' | translate }}
     </mat-error>
   </mat-form-field>
   <ng-template #periodInSecondsPattern>
     <mat-form-field class="mat-block" subscriptSizing="dynamic">
-      <mat-label translate>tb.rulenode.period-in-seconds-pattern</mat-label>
+      <mat-label translate>rule-node-config.period-in-seconds-pattern</mat-label>
       <input required matInput formControlName="periodInSecondsPattern">
       <mat-error *ngIf="msgDelayConfigForm.get('periodInSecondsPattern').hasError('required')">
-        {{ 'tb.rulenode.period-in-seconds-pattern-required' | translate }}
+        {{ 'rule-node-config.period-in-seconds-pattern-required' | translate }}
       </mat-error>
-      <mat-hint translate>tb.rulenode.general-pattern-hint</mat-hint>
+      <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
     </mat-form-field>
   </ng-template>
   <mat-form-field class="mat-block">
-    <mat-label translate>tb.rulenode.max-pending-messages</mat-label>
+    <mat-label translate>rule-node-config.max-pending-messages</mat-label>
     <input required type="number" min="1" max="100000" step="1" matInput formControlName="maxPendingMsgs">
     <mat-error *ngIf="msgDelayConfigForm.get('maxPendingMsgs').hasError('required')">
-      {{ 'tb.rulenode.max-pending-messages-required' | translate }}
+      {{ 'rule-node-config.max-pending-messages-required' | translate }}
     </mat-error>
     <mat-error *ngIf="msgDelayConfigForm.get('maxPendingMsgs').hasError('min')">
-      {{ 'tb.rulenode.max-pending-messages-range' | translate }}
+      {{ 'rule-node-config.max-pending-messages-range' | translate }}
     </mat-error>
     <mat-error *ngIf="msgDelayConfigForm.get('maxPendingMsgs').hasError('max')">
-      {{ 'tb.rulenode.max-pending-messages-range' | translate }}
+      {{ 'rule-node-config.max-pending-messages-range' | translate }}
     </mat-error>
   </mat-form-field>
 </section>

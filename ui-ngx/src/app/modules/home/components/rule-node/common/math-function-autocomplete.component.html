@@ -16,7 +16,7 @@
 
 -->
 <mat-form-field [formGroup]="mathFunctionForm" class="mat-block">
-  <mat-label translate>tb.rulenode.functions-field-input</mat-label>
+  <mat-label translate>rule-node-config.functions-field-input</mat-label>
   <input [required]="required"
          (focusin)="onFocus()"
          type="text"
@@ -37,7 +37,7 @@
       </small>
     </mat-option>
     <mat-option *ngIf="!(filteredOptions | async)?.length" [value]="null">
-      <span translate>tb.rulenode.no-option-found</span>
+      <span translate>rule-node-config.no-option-found</span>
     </mat-option>
   </mat-autocomplete>
 </mat-form-field>

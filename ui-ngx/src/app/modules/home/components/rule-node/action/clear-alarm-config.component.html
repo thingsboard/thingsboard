@@ -57,11 +57,11 @@
     </button>
   </div>
   <mat-form-field class="mat-block" subscriptSizing="dynamic">
-    <mat-label translate>tb.rulenode.alarm-type</mat-label>
+    <mat-label translate>rule-node-config.alarm-type</mat-label>
     <input required matInput formControlName="alarmType">
     <mat-error *ngIf="clearAlarmConfigForm.get('alarmType').hasError('required')">
-      {{ 'tb.rulenode.alarm-type-required' | translate }}
+      {{ 'rule-node-config.alarm-type-required' | translate }}
     </mat-error>
-    <mat-hint translate>tb.rulenode.general-pattern-hint</mat-hint>
+    <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
   </mat-form-field>
 </section>

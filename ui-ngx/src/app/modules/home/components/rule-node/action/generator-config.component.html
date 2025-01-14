@@ -17,33 +17,33 @@
 -->
 <section [formGroup]="generatorConfigForm" class="tb-form-panel no-border no-padding">
   <div class="tb-form-panel no-padding-bottom stroked">
-    <div class="tb-form-panel-title" translate>tb.rulenode.generation-parameters</div>
+    <div class="tb-form-panel-title" translate>rule-node-config.generation-parameters</div>
     <div class="tb-form-row no-border no-padding tb-standard-fields column-xs">
       <mat-form-field class="flex">
-        <mat-label translate>tb.rulenode.message-count</mat-label>
+        <mat-label translate>rule-node-config.message-count</mat-label>
         <input required type="number" min="0" step="1" matInput formControlName="msgCount">
         <mat-error *ngIf="generatorConfigForm.get('msgCount').hasError('required')">
-          {{ 'tb.rulenode.message-count-required' | translate }}
+          {{ 'rule-node-config.message-count-required' | translate }}
         </mat-error>
         <mat-error *ngIf="generatorConfigForm.get('msgCount').hasError('min')">
-          {{ 'tb.rulenode.min-message-count-message' | translate }}
+          {{ 'rule-node-config.min-message-count-message' | translate }}
         </mat-error>
       </mat-form-field>
       <mat-form-field class="flex">
-        <mat-label translate>tb.rulenode.generation-frequency-seconds</mat-label>
+        <mat-label translate>rule-node-config.generation-frequency-seconds</mat-label>
         <input required type="number" min="1" step="1" matInput formControlName="periodInSeconds">
         <mat-error *ngIf="generatorConfigForm.get('periodInSeconds').hasError('required')">
-          {{ 'tb.rulenode.generation-frequency-required' | translate }}
+          {{ 'rule-node-config.generation-frequency-required' | translate }}
         </mat-error>
         <mat-error *ngIf="generatorConfigForm.get('periodInSeconds').hasError('min')">
-          {{ 'tb.rulenode.min-generation-frequency-message' | translate }}
+          {{ 'rule-node-config.min-generation-frequency-message' | translate }}
         </mat-error>
       </mat-form-field>
     </div>
   </div>
 
   <div class="tb-form-panel no-padding-bottom stroked">
-    <div class="tb-form-panel-title" translate>tb.rulenode.originator</div>
+    <div class="tb-form-panel-title" translate>rule-node-config.originator</div>
     <tb-entity-select class="flex-1"
                       required="true"
                       useAliasEntityTypes="true"
@@ -55,7 +55,7 @@
   <div class="tb-form-panel stroked">
     <mat-expansion-panel class="tb-settings" expanded>
       <mat-expansion-panel-header>
-        <mat-panel-title translate>tb.rulenode.generator-function</mat-panel-title>
+        <mat-panel-title translate>rule-node-config.generator-function</mat-panel-title>
       </mat-expansion-panel-header>
       <tb-js-func *ngIf="generatorConfigForm.get('scriptLang').value === scriptLanguage.JS"
                   #jsFuncComponent
@@ -66,10 +66,10 @@
                   noValidate="true">
         <tb-toggle-select toolbarPrefixButton formControlName="scriptLang" appearance="fill" *ngIf="tbelEnabled">
           <tb-toggle-option [value]="scriptLanguage.TBEL">
-            {{ 'tb.rulenode.script-lang-tbel' | translate }}
+            {{ 'rule-node-config.script-lang-tbel' | translate }}
           </tb-toggle-option>
           <tb-toggle-option [value]="scriptLanguage.JS">
-            {{ 'tb.rulenode.script-lang-js' | translate }}
+            {{ 'rule-node-config.script-lang-js' | translate }}
           </tb-toggle-option>
         </tb-toggle-select>
         <button toolbarSuffixButton
@@ -92,10 +92,10 @@
                   noValidate="true">
         <tb-toggle-select toolbarPrefixButton formControlName="scriptLang" appearance="fill">
           <tb-toggle-option [value]="scriptLanguage.TBEL">
-            {{ 'tb.rulenode.script-lang-tbel' | translate }}
+            {{ 'rule-node-config.script-lang-tbel' | translate }}
           </tb-toggle-option>
           <tb-toggle-option [value]="scriptLanguage.JS">
-            {{ 'tb.rulenode.script-lang-js' | translate }}
+            {{ 'rule-node-config.script-lang-js' | translate }}
           </tb-toggle-option>
         </tb-toggle-select>
         <button toolbarSuffixButton

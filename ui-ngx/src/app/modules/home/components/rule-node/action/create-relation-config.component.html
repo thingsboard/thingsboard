@@ -17,7 +17,7 @@
 -->
 <section [formGroup]="createRelationConfigForm" class="tb-form-panel no-padding no-border">
   <div class="tb-form-panel stroked no-padding-bottom">
-    <div class="tb-form-panel-title" translate>tb.rulenode.relation-parameters</div>
+    <div class="tb-form-panel-title" translate>rule-node-config.relation-parameters</div>
     <div class="flex flex-col">
       <mat-form-field class="mat-block" hideRequiredMarker>
         <mat-label translate>relation.direction</mat-label>
@@ -35,7 +35,7 @@
   </div>
 
   <div class="tb-form-panel stroked no-padding-bottom">
-    <div class="tb-form-panel-title" translate>tb.rulenode.target-entity</div>
+    <div class="tb-form-panel-title" translate>rule-node-config.target-entity</div>
     <div class="flex flex-row gap-4">
       <tb-entity-type-select
         class="flex-1"
@@ -55,43 +55,43 @@
       <mat-form-field *ngIf="createRelationConfigForm.get('entityType').value === entityType.DEVICE ||
                            createRelationConfigForm.get('entityType').value === entityType.ASSET"
                       class="mat-block flex-1">
-        <mat-label translate>tb.rulenode.profile-name</mat-label>
+        <mat-label translate>rule-node-config.profile-name</mat-label>
         <input matInput formControlName="entityTypePattern">
       </mat-form-field>
     </div>
 
-    <tb-example-hint [hintText]="'tb.rulenode.kv-map-pattern-hint'"
+    <tb-example-hint [hintText]="'rule-node-config.kv-map-pattern-hint'"
                      *ngIf="createRelationConfigForm.get('entityType').value === entityType.CUSTOMER ||
                      createRelationConfigForm.get('entityType').value === entityType.DEVICE ||
                      createRelationConfigForm.get('entityType').value === entityType.ASSET"></tb-example-hint>
 
-    <div tb-hint-tooltip-icon="{{ 'tb.rulenode.create-entity-if-not-exists-hint' | translate }}"
+    <div tb-hint-tooltip-icon="{{ 'rule-node-config.create-entity-if-not-exists-hint' | translate }}"
          *ngIf="createRelationConfigForm.get('entityType').value === entityType.CUSTOMER ||
                   createRelationConfigForm.get('entityType').value === entityType.DEVICE ||
                   createRelationConfigForm.get('entityType').value === entityType.ASSET"
          style="margin-bottom: 18px"
          class="tb-form-row no-border no-padding">
       <mat-slide-toggle class="mat-slide" formControlName="createEntityIfNotExists">
-        {{ 'tb.rulenode.create-entity-if-not-exists' | translate }}
+        {{ 'rule-node-config.create-entity-if-not-exists' | translate }}
       </mat-slide-toggle>
     </div>
   </div>
   <section class="tb-form-panel stroked no-padding">
     <mat-expansion-panel class="tb-settings">
       <mat-expansion-panel-header style="padding: 16px">
-        <mat-panel-title translate>tb.rulenode.advanced-settings</mat-panel-title>
+        <mat-panel-title translate>rule-node-config.advanced-settings</mat-panel-title>
       </mat-expansion-panel-header>
       <div class="tb-form-panel no-border no-padding-top">
-        <div tb-hint-tooltip-icon="{{ 'tb.rulenode.remove-current-relations-hint' | translate }}"
+        <div tb-hint-tooltip-icon="{{ 'rule-node-config.remove-current-relations-hint' | translate }}"
              class="tb-form-row no-border no-padding">
           <mat-slide-toggle class="mat-slide" formControlName="removeCurrentRelations">
-            {{ 'tb.rulenode.remove-current-relations' | translate }}
+            {{ 'rule-node-config.remove-current-relations' | translate }}
           </mat-slide-toggle>
         </div>
-        <div tb-hint-tooltip-icon="{{ 'tb.rulenode.change-originator-to-related-entity-hint' | translate }}"
+        <div tb-hint-tooltip-icon="{{ 'rule-node-config.change-originator-to-related-entity-hint' | translate }}"
              class="tb-form-row no-border no-padding">
           <mat-slide-toggle class="mat-slide" formControlName="changeOriginatorToRelatedEntity">
-            {{ 'tb.rulenode.change-originator-to-related-entity' | translate }}
+            {{ 'rule-node-config.change-originator-to-related-entity' | translate }}
           </mat-slide-toggle>
         </div>
       </div>

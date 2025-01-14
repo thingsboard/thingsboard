@@ -18,18 +18,18 @@
 <section [formGroup]="entityDetailsConfigForm">
   <tb-string-items-list [predefinedValues]="predefinedValues"
                         class="mat-block" required
-                        [label]="'tb.rulenode.select-details' | translate"
-                        [placeholder]="'tb.rulenode.add-detail' | translate"
-                        [requiredText]="'tb.rulenode.entity-details-list-empty' | translate"
+                        [label]="'rule-node-config.select-details' | translate"
+                        [placeholder]="'rule-node-config.add-detail' | translate"
+                        [requiredText]="'rule-node-config.entity-details-list-empty' | translate"
                         formControlName="detailsList">
     <mat-icon matSuffix class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon"
               color="primary"
-              matTooltip="{{ 'tb.rulenode.chip-help' | translate: { inputName: 'tb.rulenode.detail' | translate } }}">
+              matTooltip="{{ 'rule-node-config.chip-help' | translate: { inputName: 'rule-node-config.detail' | translate } }}">
       help
     </mat-icon>
   </tb-string-items-list>
   <tb-msg-metadata-chip
-    [labelText]="'tb.rulenode.add-selected-details-to' | translate"
+    [labelText]="'rule-node-config.add-selected-details-to' | translate"
     formControlName="fetchTo">
   </tb-msg-metadata-chip>
 </section>

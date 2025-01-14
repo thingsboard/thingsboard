@@ -51,13 +51,13 @@ export class GeneratorConfigComponent extends RuleNodeConfigurationComponent {
   ];
 
   additionEntityTypes = {
-    TENANT: this.translate.instant('tb.rulenode.current-tenant'),
-    RULE_NODE: this.translate.instant('tb.rulenode.current-rule-node')
+    TENANT: this.translate.instant('rule-node-config.current-tenant'),
+    RULE_NODE: this.translate.instant('rule-node-config.current-rule-node')
   };
 
   readonly hasScript = true;
 
-  readonly testScriptLabel = 'tb.rulenode.test-generator-function';
+  readonly testScriptLabel = 'rule-node-config.test-generator-function';
 
   constructor(private fb: UntypedFormBuilder,
               private nodeScriptTestService: NodeScriptTestService,
@@ -131,7 +131,7 @@ export class GeneratorConfigComponent extends RuleNodeConfigurationComponent {
     this.nodeScriptTestService.testNodeScript(
       script,
       'generate',
-      this.translate.instant('tb.rulenode.generator'),
+      this.translate.instant('rule-node-config.generator'),
       'Generate',
       ['prevMsg', 'prevMetadata', 'prevMsgType'],
       this.ruleNodeId,

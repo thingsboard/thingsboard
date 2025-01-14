@@ -16,38 +16,38 @@
 
 -->
 <div class="tb-form-panel no-padding no-border" [formGroup]="attributeControlGroup">
-  <tb-example-hint [hintText]="'tb.rulenode.kv-map-pattern-hint'"
+  <tb-example-hint [hintText]="'rule-node-config.kv-map-pattern-hint'"
                    [popupHelpLink]="popupHelpLink"></tb-example-hint>
   <tb-string-items-list subscriptSizing="dynamic" class="mat-block" editable
                         (focusout)="onTouched()"
-                        [placeholder]="'tb.rulenode.add-attribute-key' | translate"
-                        [label]="'tb.rulenode.client-attributes' | translate" formControlName="clientAttributeNames">
+                        [placeholder]="'rule-node-config.add-attribute-key' | translate"
+                        [label]="'rule-node-config.client-attributes' | translate" formControlName="clientAttributeNames">
     <ng-container matSuffix *ngTemplateOutlet="helpIcon"></ng-container>
   </tb-string-items-list>
   <tb-string-items-list subscriptSizing="dynamic" class="mat-block" editable
                         (focusout)="onTouched()"
-                        [placeholder]="'tb.rulenode.add-attribute-key' | translate"
-                        [label]="'tb.rulenode.shared-attributes' | translate" formControlName="sharedAttributeNames">
+                        [placeholder]="'rule-node-config.add-attribute-key' | translate"
+                        [label]="'rule-node-config.shared-attributes' | translate" formControlName="sharedAttributeNames">
     <ng-container matSuffix *ngTemplateOutlet="helpIcon"></ng-container>
   </tb-string-items-list>
   <tb-string-items-list subscriptSizing="dynamic" class="mat-block" editable
                         (focusout)="onTouched()"
-                        [placeholder]="'tb.rulenode.add-attribute-key' | translate"
-                        [label]="'tb.rulenode.server-attributes' | translate" formControlName="serverAttributeNames">
+                        [placeholder]="'rule-node-config.add-attribute-key' | translate"
+                        [label]="'rule-node-config.server-attributes' | translate" formControlName="serverAttributeNames">
     <ng-container matSuffix *ngTemplateOutlet="helpIcon"></ng-container>
   </tb-string-items-list>
   <tb-string-items-list subscriptSizing="dynamic" editable class="mat-block"
                         (focusout)="onTouched()"
-                        [placeholder]="'tb.rulenode.add-telemetry-key' | translate"
-                        [label]="'tb.rulenode.latest-telemetry' | translate" formControlName="latestTsKeyNames">
+                        [placeholder]="'rule-node-config.add-telemetry-key' | translate"
+                        [label]="'rule-node-config.latest-telemetry' | translate" formControlName="latestTsKeyNames">
     <ng-container matSuffix *ngTemplateOutlet="helpIcon"></ng-container>
   </tb-string-items-list>
-  <div tb-hint-tooltip-icon="{{ 'tb.rulenode.fetch-latest-telemetry-with-timestamp-tooltip' | translate:
+  <div tb-hint-tooltip-icon="{{ 'rule-node-config.fetch-latest-telemetry-with-timestamp-tooltip' | translate:
                          { latestTsKeyName:  attributeControlGroup.get('latestTsKeyNames').value[0]} }}"
        *ngIf="attributeControlGroup.get('latestTsKeyNames').value?.length > 0"
        class="tb-form-row no-border no-padding">
     <mat-slide-toggle class="mat-slide" formControlName="getLatestValueWithTs">
-      {{ 'tb.rulenode.fetch-latest-telemetry-with-timestamp' | translate }}
+      {{ 'rule-node-config.fetch-latest-telemetry-with-timestamp' | translate }}
     </mat-slide-toggle>
   </div>
 </div>
@@ -55,5 +55,5 @@
 <ng-template #helpIcon>
   <mat-icon class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon"
             color="primary"
-            matTooltip="{{ 'tb.rulenode.chip-help' | translate: { inputName: 'tb.rulenode.field-name' | translate } }}">help</mat-icon>
+            matTooltip="{{ 'rule-node-config.chip-help' | translate: { inputName: 'rule-node-config.field-name' | translate } }}">help</mat-icon>
 </ng-template>
