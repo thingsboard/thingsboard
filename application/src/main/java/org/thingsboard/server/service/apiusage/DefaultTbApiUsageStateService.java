@@ -61,7 +61,6 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
-import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsgPack;
 import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsKVProto;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -158,20 +157,18 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
     @Override
     public void process(TbProtoQueueMsg<ToUsageStatsServiceMsgPack> msgPack, TbCallback callback) {
         String serviceId = msgPack.getValue().getServiceId();
-        msgPack.getValue().getMsgsList().forEach(msg -> process(msg, serviceId));
+        msgPack.getValue().getMsgsList().forEach(msg -> {
+            TenantId tenantId = TenantId.fromUUID(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
+            EntityId ownerId;
+            if (msg.getCustomerIdMSB() != 0 && msg.getCustomerIdLSB() != 0) {
+                ownerId = new CustomerId(new UUID(msg.getCustomerIdMSB(), msg.getCustomerIdLSB()));
+            } else {
+                ownerId = tenantId;
+            }
+
+            processEntityUsageStats(tenantId, ownerId, msg.getValuesList(), serviceId);
+        });
         callback.onSuccess();
-    }
-
-    private void process(ToUsageStatsServiceMsg statsMsg, String serviceId) {
-        TenantId tenantId = TenantId.fromUUID(new UUID(statsMsg.getTenantIdMSB(), statsMsg.getTenantIdLSB()));
-        EntityId ownerId;
-        if (statsMsg.getCustomerIdMSB() != 0 && statsMsg.getCustomerIdLSB() != 0) {
-            ownerId = new CustomerId(new UUID(statsMsg.getCustomerIdMSB(), statsMsg.getCustomerIdLSB()));
-        } else {
-            ownerId = tenantId;
-        }
-
-        processEntityUsageStats(tenantId, ownerId, statsMsg.getValuesList(), serviceId);
     }
 
     private void processEntityUsageStats(TenantId tenantId, EntityId ownerId, List<UsageStatsKVProto> values, String serviceId) {
