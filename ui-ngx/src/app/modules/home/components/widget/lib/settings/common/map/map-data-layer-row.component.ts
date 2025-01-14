@@ -121,6 +121,7 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
     }
     this.dataLayerFormGroup = this.fb.group({
       dsType: [null, [Validators.required]],
+      dsLabel: [null, []],
       dsDeviceId: [null, [Validators.required]],
       dsEntityAliasId: [null, [Validators.required]]
     });
@@ -176,6 +177,7 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
     this.dataLayerFormGroup.patchValue(
       {
         dsType: value?.dsType,
+        dsLabel: value?.dsLabel,
         dsDeviceId: value?.dsDeviceId,
         dsEntityAliasId: value?.dsEntityAliasId
       }, {emitEvent: false}
@@ -300,12 +302,15 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
   private updateValidators() {
     const dsType: DatasourceType = this.dataLayerFormGroup.get('dsType').value;
     if (dsType === DatasourceType.function) {
+      this.dataLayerFormGroup.get('dsLabel').enable({emitEvent: false});
       this.dataLayerFormGroup.get('dsDeviceId').disable({emitEvent: false});
       this.dataLayerFormGroup.get('dsEntityAliasId').disable({emitEvent: false});
     } else if (dsType === DatasourceType.device) {
+      this.dataLayerFormGroup.get('dsLabel').disable({emitEvent: false});
       this.dataLayerFormGroup.get('dsDeviceId').enable({emitEvent: false});
       this.dataLayerFormGroup.get('dsEntityAliasId').disable({emitEvent: false});
     } else {
+      this.dataLayerFormGroup.get('dsLabel').disable({emitEvent: false});
       this.dataLayerFormGroup.get('dsDeviceId').disable({emitEvent: false});
       this.dataLayerFormGroup.get('dsEntityAliasId').enable({emitEvent: false});
     }

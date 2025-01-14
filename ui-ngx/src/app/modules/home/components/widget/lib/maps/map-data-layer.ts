@@ -19,6 +19,9 @@ import {
   createColorMarkerURI,
   DataLayerColorSettings,
   DataLayerColorType,
+  DataLayerPatternSettings,
+  DataLayerPatternType,
+  DataLayerTooltipTrigger,
   defaultBaseCirclesDataLayerSettings,
   defaultBaseMarkersDataLayerSettings,
   defaultBasePolygonsDataLayerSettings,
@@ -37,14 +40,15 @@ import {
   MarkerImageType,
   MarkersDataLayerSettings,
   MarkerType,
-  PolygonsDataLayerSettings,
+  PolygonsDataLayerSettings, processTooltipTemplate, ShapeDataLayerSettings,
   TbCircleData,
   TbMapDatasource
 } from '@home/components/widget/lib/maps/map.models';
 import { TbMap } from '@home/components/widget/lib/maps/map';
-import { FormattedData } from '@shared/models/widget.models';
-import { Observable, of } from 'rxjs';
+import { Datasource, FormattedData } from '@shared/models/widget.models';
+import { forkJoin, Observable, of } from 'rxjs';
 import {
+  createLabelFromPattern,
   guid,
   isDefined,
   isDefinedAndNotNull,
@@ -55,37 +59,98 @@ import {
   parseTbFunction,
   safeExecuteTbFunction
 } from '@core/utils';
-import L, { LatLngBounds } from 'leaflet';
+import L, { LatLngBounds, PathOptions } from 'leaflet';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
 import { catchError, map } from 'rxjs/operators';
 import tinycolor from 'tinycolor2';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { ImagePipe } from '@shared/pipe/image.pipe';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 
 abstract class TbDataLayerItem<S extends MapDataLayerSettings, L extends TbMapDataLayer<S,L>> {
 
   protected layer: L.Layer;
+  protected tooltip: L.Popup;
 
-  constructor(data: FormattedData<TbMapDatasource>,
-              dsData: FormattedData<TbMapDatasource>[],
-              protected settings: S,
-              protected dataLayer: L) {
+  protected constructor(data: FormattedData<TbMapDatasource>,
+                        dsData: FormattedData<TbMapDatasource>[],
+                        protected settings: S,
+                        protected dataLayer: L) {
     this.layer = this.create(data, dsData);
+    if (this.settings.tooltip?.show) {
+      this.createTooltip(data.$datasource);
+      this.updateTooltip(data, dsData);
+    }
+    this.createEventListeners(data, dsData);
     this.dataLayer.getFeatureGroup().addLayer(this.layer);
   }
 
   protected abstract create(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.Layer;
 
+  protected abstract unbindLabel(): void;
+
+  protected abstract bindLabel(content: L.Content): void;
+
+  protected abstract createEventListeners(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void;
+
   public abstract update(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void;
 
   public remove() {
+    this.layer.off();
     this.dataLayer.getFeatureGroup().removeLayer(this.layer);
   }
 
-  protected updateLayer(newLayer: L.Layer) {
-    this.dataLayer.getFeatureGroup().removeLayer(this.layer);
-    this.layer = newLayer;
-    this.dataLayer.getFeatureGroup().addLayer(this.layer);
+  protected updateTooltip(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
+    if (this.settings.tooltip.show) {
+      let tooltipTemplate = this.dataLayer.dataLayerTooltipProcessor.processPattern(data, dsData);
+      tooltipTemplate = processTooltipTemplate(tooltipTemplate);
+      this.tooltip.setContent(tooltipTemplate);
+      if (this.tooltip.isOpen() && this.tooltip.getElement()) {
+        this.bindTooltipActions(data.$datasource);
+      }
+    }
+  }
+
+  protected updateLabel(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
+    if (this.settings.label.show) {
+      this.unbindLabel();
+      const label = this.dataLayer.dataLayerLabelProcessor.processPattern(data, dsData);
+      const labelColor = this.dataLayer.getCtx().widgetConfig.color;
+      const content: L.Content = `<div style="color: ${labelColor};"><b>${label}</b></div>`;
+      this.bindLabel(content);
+    }
+  }
+
+  private createTooltip(datasource: TbMapDatasource) {
+    this.tooltip = L.popup();
+    this.layer.bindPopup(this.tooltip, {autoClose: this.settings.tooltip.autoclose, closeOnClick: false});
+    if (this.settings.tooltip.trigger === DataLayerTooltipTrigger.hover) {
+      this.layer.off('click');
+      this.layer.on('mouseover', () => {
+        this.layer.openPopup();
+      });
+      this.layer.on('mousemove', (e) => {
+        this.tooltip.setLatLng(e.latlng);
+      });
+      this.layer.on('mouseout', () => {
+        this.layer.closePopup();
+      });
+    }
+    this.layer.on('popupopen', () => {
+      this.bindTooltipActions(datasource);
+      (this.layer as any)._popup._closeButton.addEventListener('click', (event: Event) => {
+        event.preventDefault();
+      });
+    });
+  }
+
+  private bindTooltipActions(datasource: TbMapDatasource) {
+    const actions = this.tooltip.getElement().getElementsByClassName('tb-custom-action');
+    Array.from(actions).forEach(
+      (element: HTMLElement) => {
+        const actionName = element.getAttribute('data-action-name');
+        this.dataLayer.getMap().tooltipElementClick(element, actionName, datasource);
+      });
   }
 
 }
@@ -94,6 +159,76 @@ export enum MapDataLayerType {
    marker = 'marker',
    polygon = 'polygon',
    circle = 'circle'
+}
+
+class DataLayerPatternProcessor {
+
+  private patternFunction: CompiledTbFunction<MapStringFunction>;
+  private pattern: string;
+
+  constructor(private dataLayer: TbMapDataLayer<any, any>,
+              private settings: DataLayerPatternSettings) {}
+
+  public setup(): Observable<void> {
+    if (this.settings.type === DataLayerPatternType.function) {
+      return parseTbFunction<MapStringFunction>(this.dataLayer.getCtx().http, this.settings.patternFunction, ['data', 'dsData']).pipe(
+        map((parsed) => {
+          this.patternFunction = parsed;
+          return null;
+        })
+      );
+    } else {
+      this.pattern = this.settings.pattern;
+      return of(null)
+    }
+  }
+
+  public processPattern(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): string {
+    let pattern: string;
+    if (this.settings.type === DataLayerPatternType.function) {
+      pattern = safeExecuteTbFunction(this.patternFunction, [data, dsData]);
+    } else {
+      pattern = this.pattern;
+    }
+    const text = createLabelFromPattern(pattern, data);
+    const customTranslate = this.dataLayer.getCtx().$injector.get(CustomTranslatePipe);
+    return customTranslate.transform(text);
+  }
+
+}
+
+class DataLayerColorProcessor {
+
+  private colorFunction: CompiledTbFunction<MapStringFunction>;
+  private color: string;
+
+  constructor(private dataLayer: TbMapDataLayer<any, any>,
+              private settings: DataLayerColorSettings) {}
+
+  public setup(): Observable<void> {
+    if (this.settings.type === DataLayerColorType.function) {
+      return parseTbFunction<MapStringFunction>(this.dataLayer.getCtx().http, this.settings.colorFunction, ['data', 'dsData']).pipe(
+        map((parsed) => {
+          this.colorFunction = parsed;
+          return null;
+        })
+      );
+    } else {
+      this.color = this.settings.color;
+      return of(null)
+    }
+  }
+
+  public processColor(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): string {
+    let color: string;
+    if (this.settings.type === DataLayerColorType.function) {
+      color = safeExecuteTbFunction(this.colorFunction, [data, dsData]);
+    } else {
+      color = this.color;
+    }
+    return color;
+  }
+
 }
 
 export abstract class TbMapDataLayer<S extends MapDataLayerSettings, L extends TbMapDataLayer<S,L>> implements L.TB.DataLayer {
@@ -112,6 +247,9 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, L extends T
 
   protected enabled = true;
 
+  public dataLayerLabelProcessor: DataLayerPatternProcessor;
+  public dataLayerTooltipProcessor: DataLayerPatternProcessor;
+
   protected constructor(protected map: TbMap<any>,
                         inputSettings: S) {
     this.settings = mergeDeepIgnoreArray({} as S, this.defaultBaseSettings() as S, inputSettings);
@@ -120,15 +258,22 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, L extends T
         this.groupsState[group] = true;
       });
     }
+    this.dataLayerLabelProcessor = this.settings.label.show ? new DataLayerPatternProcessor(this, this.settings.label) : null;
+    this.dataLayerTooltipProcessor = this.settings.tooltip.show ? new DataLayerPatternProcessor(this, this.settings.tooltip): null;
     this.map.getMap().addLayer(this.featureGroup);
   }
 
-  public setup(): Observable<void> {
+  public setup(): Observable<any> {
     this.datasource = mapDataSourceSettingsToDatasource(this.settings);
     this.datasource.dataKeys = this.settings.additionalDataKeys ? [...this.settings.additionalDataKeys] : [];
     this.mapDataId = this.datasource.mapDataIds[0];
     this.datasource = this.setupDatasource(this.datasource);
-    return this.doSetup();
+    return forkJoin(
+      [
+        this.dataLayerLabelProcessor ? this.dataLayerLabelProcessor.setup() : of(null),
+        this.dataLayerTooltipProcessor ? this.dataLayerTooltipProcessor.setup() : of(null),
+        this.doSetup()
+      ]);
   }
 
   public getDatasource(): TbMapDatasource {
@@ -192,6 +337,9 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, L extends T
   public getCtx(): WidgetContext {
     return this.map.getCtx();
   }
+  public getMap(): TbMap<any> {
+    return this.map;
+  }
 
   protected setupDatasource(datasource: TbMapDatasource): TbMapDatasource {
     return datasource;
@@ -205,7 +353,7 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, L extends T
 
   protected abstract defaultBaseSettings(): Partial<S>;
 
-  protected abstract doSetup(): Observable<void>;
+  protected abstract doSetup(): Observable<any>;
 
   protected abstract isValidLayerData(layerData: FormattedData<TbMapDatasource>): boolean;
 
@@ -236,12 +384,26 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
 
     return this.marker;
   }
+
+  protected createEventListeners(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
+    this.dataLayer.getMap().markerClick(this.marker, data.$datasource);
+  }
+
+  protected unbindLabel() {
+    this.marker.unbindTooltip();
+  }
+
+  protected bindLabel(content: L.Content): void {
+    this.marker.bindTooltip(content, { className: 'tb-marker-label', permanent: true, direction: 'top', offset: this.labelOffset });
+  }
+
   public update(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
     const position = this.dataLayer.extractLocation(data);
     if (!this.marker.getLatLng().equals(position)) {
       this.location = position;
       this.marker.setLatLng(position);
     }
+    this.updateTooltip(data, dsData);
     this.updateMarkerIcon(data, dsData);
   }
 
@@ -255,15 +417,10 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
         } else {
           this.labelOffset = [0, -iconInfo.size[1] * this.dataLayer.markerOffset[1] + 10];
         }
-        this.updateMarkerLabel(data, dsData);
+        this.updateLabel(data, dsData);
       }
     );
   }
-
-  private updateMarkerLabel(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
-
-  }
-
 }
 
 abstract class MarkerIconProcessor<S> {
@@ -448,11 +605,10 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
       isDefined(this.settings.markerOffsetX) ? this.settings.markerOffsetX : 0.5,
       isDefined(this.settings.markerOffsetY) ? this.settings.markerOffsetY : 1,
     ];
-    this.tooltipOffset = [0, -1];
-    /*   this.tooltipOffset = [
-         isDefined(this.settings.tooltipOffsetX) ? this.settings.tooltipOffsetX : 0,
-         isDefined(this.settings.tooltipOffsetY) ? this.settings.tooltipOffsetY : -1,
-       ];*/
+    this.tooltipOffset = [
+      isDefined(this.settings.tooltip?.offsetX) ? this.settings.tooltip?.offsetX : 0,
+      isDefined(this.settings.tooltip?.offsetY) ? this.settings.tooltip?.offsetY : -1,
+    ];
 
     this.markerIconProcessor = MarkerIconProcessor.fromSettings(this, this.settings);
     return this.markerIconProcessor.setup();
@@ -500,7 +656,7 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
         iconUrl: createColorMarkerURI(color),
         iconSize: [21, 34],
         iconAnchor: [21 * this.markerOffset[0], 34 * this.markerOffset[1]],
-        popupAnchor: [0, -34],
+        popupAnchor: [21 * this.tooltipOffset[0], 34 * this.tooltipOffset[1]],
         shadowUrl: 'assets/shadow.png',
         shadowSize: [40, 37],
         shadowAnchor: [12, 35]
@@ -520,6 +676,7 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
 
 class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, TbPolygonsDataLayer> {
 
+  private polygonContainer: L.FeatureGroup;
   private polygon: L.Polygon;
 
   constructor(data: FormattedData<TbMapDatasource>,
@@ -532,29 +689,41 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
   protected create(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.Layer {
     const polyData = this.dataLayer.extractPolygonCoordinates(data);
     const polyConstructor = isCutPolygon(polyData) || polyData.length !== 2 ? L.polygon : L.rectangle;
+    const style = this.dataLayer.getShapeStyle(data, dsData);
     this.polygon = polyConstructor(polyData, {
-      fill: true,
-      fillColor: '#3a77e7',
-      color: '#0742ad',
-      weight: 1,
-      fillOpacity: 0.4,
-      opacity: 1
+      ...style
     });
-    return this.polygon;
+
+    this.polygonContainer = L.featureGroup();
+    this.polygon.addTo(this.polygonContainer);
+
+    this.updateLabel(data, dsData);
+    return this.polygonContainer;
   }
+
+  protected createEventListeners(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
+    this.dataLayer.getMap().polygonClick(this.polygonContainer, data.$datasource);
+  }
+
+  protected unbindLabel() {
+    this.polygonContainer.unbindTooltip();
+  }
+
+  protected bindLabel(content: L.Content): void {
+    this.polygonContainer.bindTooltip(content, {className: 'tb-polygon-label', permanent: true, direction: 'center'})
+      .openTooltip(this.polygonContainer.getBounds().getCenter());
+  }
+
   public update(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
     const polyData = this.dataLayer.extractPolygonCoordinates(data);
+    const style = this.dataLayer.getShapeStyle(data, dsData);
     if (isCutPolygon(polyData) || polyData.length !== 2) {
       if (this.polygon instanceof L.Rectangle) {
+        this.polygonContainer.removeLayer(this.polygon);
         this.polygon = L.polygon(polyData, {
-          fill: true,
-          fillColor: '#3a77e7',
-          color: '#0742ad',
-          weight: 1,
-          fillOpacity: 0.4,
-          opacity: 1
+          ...style
         });
-        this.updateLayer(this.polygon);
+        this.polygon.addTo(this.polygonContainer);
       } else {
         this.polygon.setLatLngs(polyData);
       }
@@ -563,10 +732,44 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
       // @ts-ignore
       this.leafletPoly.setBounds(bounds);
     }
+    this.updateTooltip(data, dsData);
+    this.updateLabel(data, dsData);
+    this.polygon.setStyle(style);
   }
 }
 
-export class TbPolygonsDataLayer extends TbMapDataLayer<PolygonsDataLayerSettings, TbPolygonsDataLayer> {
+abstract class TbShapesDataLayer<S extends ShapeDataLayerSettings, L extends TbMapDataLayer<S,L>> extends TbMapDataLayer<S, L> {
+
+  public fillColorProcessor: DataLayerColorProcessor;
+  public strokeColorProcessor: DataLayerColorProcessor;
+
+  protected constructor(protected map: TbMap<any>,
+              inputSettings: S) {
+    super(map, inputSettings);
+  }
+
+  protected doSetup(): Observable<any> {
+    this.fillColorProcessor = new DataLayerColorProcessor(this, this.settings.fillColor);
+    this.strokeColorProcessor = new DataLayerColorProcessor(this, this.settings.strokeColor);
+    return forkJoin([this.fillColorProcessor.setup(), this.strokeColorProcessor.setup()]);
+  }
+
+  public getShapeStyle(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.PathOptions {
+    const fill = this.fillColorProcessor.processColor(data, dsData);
+    const stroke = this.strokeColorProcessor.processColor(data, dsData);
+    const style: L.PathOptions = {
+      fill: true,
+      fillColor: fill,
+      color: stroke,
+      weight: this.settings.strokeWeight,
+      fillOpacity: 1,
+      opacity: 1
+    };
+    return style;
+  }
+}
+
+export class TbPolygonsDataLayer extends TbShapesDataLayer<PolygonsDataLayerSettings, TbPolygonsDataLayer> {
 
   constructor(protected map: TbMap<any>,
               inputSettings: PolygonsDataLayerSettings) {
@@ -586,8 +789,8 @@ export class TbPolygonsDataLayer extends TbMapDataLayer<PolygonsDataLayerSetting
     return defaultBasePolygonsDataLayerSettings;
   }
 
-  protected doSetup(): Observable<void> {
-    return of(null);
+  protected doSetup(): Observable<any> {
+    return super.doSetup();
   }
 
   protected isValidLayerData(layerData: FormattedData<TbMapDatasource>): boolean {
@@ -622,15 +825,26 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
   protected create(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.Layer {
     const circleData = this.dataLayer.extractCircleCoordinates(data);
     const center = new L.LatLng(circleData.latitude, circleData.longitude);
+    const style = this.dataLayer.getShapeStyle(data, dsData);
     this.circle = L.circle(center, {
       radius: circleData.radius,
-      fillColor: '#3a77e7',
-      color: '#0742ad',
-      weight: 1,
-      fillOpacity: 0.4,
-      opacity: 1
+      ...style
     });
+    this.updateLabel(data, dsData);
     return this.circle;
+  }
+
+  protected createEventListeners(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
+    this.dataLayer.getMap().circleClick(this.circle, data.$datasource);
+  }
+
+  protected unbindLabel() {
+    this.circle.unbindTooltip();
+  }
+
+  protected bindLabel(content: L.Content): void {
+    this.circle.bindTooltip(content, { className: 'tb-polygon-label', permanent: true, direction: 'center'})
+      .openTooltip(this.circle.getLatLng());
   }
 
   public update(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
@@ -642,10 +856,14 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
     if (this.circle.getRadius() !== circleData.radius) {
       this.circle.setRadius(circleData.radius);
     }
+    this.updateTooltip(data, dsData);
+    this.updateLabel(data, dsData);
+    const style = this.dataLayer.getShapeStyle(data, dsData);
+    this.circle.setStyle(style);
   }
 }
 
-export class TbCirclesDataLayer extends TbMapDataLayer<CirclesDataLayerSettings, TbCirclesDataLayer> {
+export class TbCirclesDataLayer extends TbShapesDataLayer<CirclesDataLayerSettings, TbCirclesDataLayer> {
 
   constructor(protected map: TbMap<any>,
               inputSettings: CirclesDataLayerSettings) {
@@ -666,7 +884,7 @@ export class TbCirclesDataLayer extends TbMapDataLayer<CirclesDataLayerSettings,
   }
 
   protected doSetup(): Observable<void> {
-    return of(null);
+    return super.doSetup();
   }
 
   protected isValidLayerData(layerData: FormattedData<TbMapDatasource>): boolean {

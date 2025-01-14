@@ -24,6 +24,11 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
+    <mat-form-field
+      *ngIf="dataLayerFormGroup.get('dsType').value === DatasourceType.function"
+      class="tb-label-field tb-inline-field" appearance="outline" subscriptSizing="dynamic">
+      <input matInput formControlName="dsLabel" placeholder="{{ 'widget-config.set' | translate }}">
+    </mat-form-field>
     <tb-entity-autocomplete
       class="tb-device-field"
       *ngIf="dataLayerFormGroup.get('dsType').value === DatasourceType.device"

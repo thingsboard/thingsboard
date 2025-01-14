@@ -17,13 +17,13 @@
 import { Component, DestroyRef, Inject, ViewEncapsulation } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import {
-  CirclesDataLayerSettings,
+  CirclesDataLayerSettings, defaultBaseMapDataLayerSettings,
   MapDataLayerSettings,
   MapDataLayerType,
   MapType,
   MarkersDataLayerSettings,
   MarkerType,
-  PolygonsDataLayerSettings
+  PolygonsDataLayerSettings, ShapeDataLayerSettings
 } from '@home/components/widget/lib/maps/map.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -35,7 +35,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityType } from '@shared/models/entity-type.models';
 import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
-import { genNextLabelForDataKeys } from '@core/utils';
+import { genNextLabelForDataKeys, mergeDeepIgnoreArray } from '@core/utils';
 
 export interface MapDataLayerDialogData {
   settings: MapDataLayerSettings;
@@ -92,12 +92,18 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
       this.datasourceTypes = [DatasourceType.function, DatasourceType.device, DatasourceType.entity];
     }
 
+    this.settings = mergeDeepIgnoreArray({} as MapDataLayerSettings,
+      defaultBaseMapDataLayerSettings<MapDataLayerSettings>(this.dataLayerType), this.settings);
+
     this.dataLayerFormGroup = this.fb.group({
       dsType: [this.settings.dsType, [Validators.required]],
+      dsLabel: [this.settings.dsLabel, []],
       dsDeviceId: [this.settings.dsDeviceId, [Validators.required]],
       dsEntityAliasId: [this.settings.dsEntityAliasId, [Validators.required]],
       dsFilterId: [this.settings.dsFilterId, []],
       additionalDataKeys: [this.settings.additionalDataKeys, []],
+      label: [this.settings.label, []],
+      tooltip: [this.settings.tooltip, []],
       groups: [this.settings.groups, []]
     });
 
@@ -119,14 +125,20 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         );
         break;
       case 'polygons':
-        const polygonsDataLayer = this.settings as PolygonsDataLayerSettings;
-        this.dialogTitle = 'widgets.maps.data-layer.polygon.polygon-configuration';
-        this.dataLayerFormGroup.addControl('polygonKey', this.fb.control(polygonsDataLayer.polygonKey, Validators.required));
-        break;
       case 'circles':
-        const circlesDataLayer = this.settings as CirclesDataLayerSettings;
-        this.dialogTitle = 'widgets.maps.data-layer.circle.circle-configuration';
-        this.dataLayerFormGroup.addControl('circleKey', this.fb.control(circlesDataLayer.circleKey, Validators.required));
+        const shapeDataLayer = this.settings as ShapeDataLayerSettings;
+        this.dataLayerFormGroup.addControl('fillColor', this.fb.control(shapeDataLayer.fillColor, Validators.required));
+        this.dataLayerFormGroup.addControl('strokeColor', this.fb.control(shapeDataLayer.strokeColor, Validators.required));
+        this.dataLayerFormGroup.addControl('strokeWeight', this.fb.control(shapeDataLayer.strokeWeight, [Validators.required, Validators.min(0)]));
+        if (this.dataLayerType === 'polygons') {
+          const polygonsDataLayer = this.settings as PolygonsDataLayerSettings;
+          this.dialogTitle = 'widgets.maps.data-layer.polygon.polygon-configuration';
+          this.dataLayerFormGroup.addControl('polygonKey', this.fb.control(polygonsDataLayer.polygonKey, Validators.required));
+        } else {
+          const circlesDataLayer = this.settings as CirclesDataLayerSettings;
+          this.dialogTitle = 'widgets.maps.data-layer.circle.circle-configuration';
+          this.dataLayerFormGroup.addControl('circleKey', this.fb.control(circlesDataLayer.circleKey, Validators.required));
+        }
         break;
     }
     this.dataLayerFormGroup.get('dsType').valueChanges.pipe(
@@ -183,12 +195,15 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
   private updateValidators() {
     const dsType: DatasourceType = this.dataLayerFormGroup.get('dsType').value;
     if (dsType === DatasourceType.function) {
+      this.dataLayerFormGroup.get('dsLabel').enable({emitEvent: false});
       this.dataLayerFormGroup.get('dsDeviceId').disable({emitEvent: false});
       this.dataLayerFormGroup.get('dsEntityAliasId').disable({emitEvent: false});
     } else if (dsType === DatasourceType.device) {
+      this.dataLayerFormGroup.get('dsLabel').disable({emitEvent: false});
       this.dataLayerFormGroup.get('dsDeviceId').enable({emitEvent: false});
       this.dataLayerFormGroup.get('dsEntityAliasId').disable({emitEvent: false});
     } else {
+      this.dataLayerFormGroup.get('dsLabel').disable({emitEvent: false});
       this.dataLayerFormGroup.get('dsDeviceId').disable({emitEvent: false});
       this.dataLayerFormGroup.get('dsEntityAliasId').enable({emitEvent: false});
     }

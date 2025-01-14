@@ -46,6 +46,7 @@ export enum MapType {
 
 export interface MapDataSourceSettings {
   dsType: DatasourceType;
+  dsLabel?: string;
   dsDeviceId?: string;
   dsEntityAliasId?: string;
   dsFilterId?: string;
@@ -58,6 +59,7 @@ export interface TbMapDatasource extends Datasource {
 export const mapDataSourceSettingsToDatasource = (settings: MapDataSourceSettings): TbMapDatasource => {
   return {
     type: settings.dsType,
+    name: settings.dsLabel,
     deviceId: settings.dsDeviceId,
     entityAliasId: settings.dsEntityAliasId,
     filterId: settings.dsFilterId,
@@ -66,9 +68,62 @@ export const mapDataSourceSettingsToDatasource = (settings: MapDataSourceSetting
   };
 };
 
+
+export enum DataLayerPatternType {
+  pattern = 'pattern',
+  function = 'function'
+}
+
+export interface DataLayerPatternSettings {
+  show: boolean;
+  type: DataLayerPatternType;
+  pattern?: string;
+  patternFunction?: TbFunction;
+}
+
+export enum DataLayerTooltipTrigger {
+  click = 'click',
+  hover = 'hover'
+}
+
+export const dataLayerTooltipTriggers = Object.keys(DataLayerTooltipTrigger) as DataLayerTooltipTrigger[];
+
+export const dataLayerTooltipTriggerTranslationMap = new Map<DataLayerTooltipTrigger, string>(
+  [
+    [DataLayerTooltipTrigger.click, 'widgets.maps.data-layer.tooltip-trigger-click'],
+    [DataLayerTooltipTrigger.hover, 'widgets.maps.data-layer.tooltip-trigger-hover']
+  ]
+);
+
+export interface DataLayerTooltipSettings extends DataLayerPatternSettings {
+  trigger: DataLayerTooltipTrigger;
+  autoclose: boolean;
+  offsetX: number;
+  offsetY: number;
+}
+
 export interface MapDataLayerSettings extends MapDataSourceSettings {
   additionalDataKeys?: DataKey[];
+  label: DataLayerPatternSettings;
+  tooltip: DataLayerTooltipSettings;
   groups?: string[];
+}
+
+export const defaultBaseDataLayerSettings: Partial<MapDataLayerSettings> = {
+  label: {
+    show: true,
+    type: DataLayerPatternType.pattern,
+    pattern: '${entityName}'
+  },
+  tooltip: {
+    show: true,
+    trigger: DataLayerTooltipTrigger.click,
+    autoclose: true,
+    type: DataLayerPatternType.pattern,
+    pattern: '<b>${entityName}</b><br/><br/><b>Latitude:</b> ${latitude:7}<br/><b>Longitude:</b> ${longitude:7}<br/><b>Temperature:</b> ${temperature} °C<br/><small>See tooltip settings for details</small>',
+    offsetX: 0,
+    offsetY: -1
+  }
 }
 
 export type MapDataLayerType = 'markers' | 'polygons' | 'circles';
@@ -192,6 +247,7 @@ const defaultMarkerYPosFunction = 'var value = prevValue || 0.3;\n' +
 
 export const defaultMarkersDataLayerSettings = (mapType: MapType, functionsOnly = false): MarkersDataLayerSettings => mergeDeep({
   dsType: functionsOnly ? DatasourceType.function : DatasourceType.entity,
+  dsLabel: functionsOnly ? 'First point' : '',
   xKey: {
     name: functionsOnly ? 'f(x)' : (MapType.geoMap === mapType ? 'latitude' : 'xPos'),
     label: MapType.geoMap === mapType ? 'latitude' : 'xPos',
@@ -210,27 +266,34 @@ export const defaultMarkersDataLayerSettings = (mapType: MapType, functionsOnly 
   }
 } as MarkersDataLayerSettings, defaultBaseMarkersDataLayerSettings as MarkersDataLayerSettings);
 
-export const defaultBaseMarkersDataLayerSettings: Partial<MarkersDataLayerSettings> = {
+export const defaultBaseMarkersDataLayerSettings: Partial<MarkersDataLayerSettings> = mergeDeep({
   markerType: MarkerType.default,
   markerColor: {
     type: DataLayerColorType.constant,
-    color: '#FE7569',
+    color: '#307FE5',
   },
   markerImage: {
     type: MarkerImageType.image,
-    image: createColorMarkerURI(tinycolor('#FE7569')),
+    image: createColorMarkerURI(tinycolor('#307FE5')),
     imageSize: 34
   },
   markerOffsetX: 0.5,
   markerOffsetY: 1
-};
+} as MarkersDataLayerSettings, defaultBaseDataLayerSettings);
 
-export interface PolygonsDataLayerSettings extends MapDataLayerSettings {
+export interface ShapeDataLayerSettings extends MapDataLayerSettings {
+  fillColor: DataLayerColorSettings;
+  strokeColor: DataLayerColorSettings;
+  strokeWeight: number;
+}
+
+export interface PolygonsDataLayerSettings extends ShapeDataLayerSettings {
   polygonKey: DataKey;
 }
 
 export const defaultPolygonsDataLayerSettings = (functionsOnly = false): PolygonsDataLayerSettings => mergeDeep({
   dsType: functionsOnly ? DatasourceType.function : DatasourceType.entity,
+  dsLabel: functionsOnly ? 'First polygon' : '',
   polygonKey: {
     name: functionsOnly ? 'f(x)' : 'perimeter',
     label: 'perimeter',
@@ -240,16 +303,26 @@ export const defaultPolygonsDataLayerSettings = (functionsOnly = false): Polygon
   }
 } as PolygonsDataLayerSettings, defaultBasePolygonsDataLayerSettings as PolygonsDataLayerSettings);
 
-export const defaultBasePolygonsDataLayerSettings: Partial<PolygonsDataLayerSettings> = {
+export const defaultBasePolygonsDataLayerSettings: Partial<PolygonsDataLayerSettings> = mergeDeep({
+    fillColor: {
+      type: DataLayerColorType.constant,
+      color: 'rgba(51,136,255,0.2)',
+    },
+    strokeColor: {
+      type: DataLayerColorType.constant,
+      color: '#3388ff',
+    },
+    strokeWeight: 3
+} as Partial<PolygonsDataLayerSettings>, defaultBaseDataLayerSettings,
+  {label: {show: false}, tooltip: {show: false, pattern: '<b>${entityName}</b><br/><br/><b>TimeStamp:</b> ${ts:7}'}} as Partial<PolygonsDataLayerSettings>)
 
-}
-
-export interface CirclesDataLayerSettings extends MapDataLayerSettings {
+export interface CirclesDataLayerSettings extends ShapeDataLayerSettings {
   circleKey: DataKey;
 }
 
 export const defaultCirclesDataLayerSettings = (functionsOnly = false): CirclesDataLayerSettings => mergeDeep({
   dsType: functionsOnly ? DatasourceType.function : DatasourceType.entity,
+  dsLabel: functionsOnly ? 'First circle' : '',
   circleKey: {
     name: functionsOnly ? 'f(x)' : 'perimeter',
     label: 'perimeter',
@@ -259,9 +332,18 @@ export const defaultCirclesDataLayerSettings = (functionsOnly = false): CirclesD
   }
 } as CirclesDataLayerSettings, defaultBaseCirclesDataLayerSettings as CirclesDataLayerSettings);
 
-export const defaultBaseCirclesDataLayerSettings: Partial<CirclesDataLayerSettings> = {
-
-}
+export const defaultBaseCirclesDataLayerSettings: Partial<CirclesDataLayerSettings> = mergeDeep({
+    fillColor: {
+      type: DataLayerColorType.constant,
+      color: 'rgba(51,136,255,0.2)',
+    },
+    strokeColor: {
+      type: DataLayerColorType.constant,
+      color: '#3388ff',
+    },
+    strokeWeight: 3
+} as Partial<CirclesDataLayerSettings>, defaultBaseDataLayerSettings,
+  {label: {show: false}, tooltip: {show: false, pattern: '<b>${entityName}</b><br/><br/><b>TimeStamp:</b> ${ts:7}'}} as Partial<CirclesDataLayerSettings>)
 
 export const defaultMapDataLayerSettings = (mapType: MapType, dataLayerType: MapDataLayerType, functionsOnly = false): MapDataLayerSettings => {
   switch (dataLayerType) {
@@ -273,6 +355,17 @@ export const defaultMapDataLayerSettings = (mapType: MapType, dataLayerType: Map
       return defaultCirclesDataLayerSettings(functionsOnly);
   }
 };
+
+export const defaultBaseMapDataLayerSettings = <T extends MapDataLayerSettings>(dataLayerType: MapDataLayerType): T => {
+  switch (dataLayerType) {
+    case 'markers':
+      return defaultBaseMarkersDataLayerSettings as T;
+    case 'polygons':
+      return defaultBasePolygonsDataLayerSettings as T;
+    case 'circles':
+      return defaultBaseCirclesDataLayerSettings as T;
+  }
+}
 
 export interface AdditionalMapDataSourceSettings extends MapDataSourceSettings {
   dataKeys: DataKey[];
@@ -617,6 +710,8 @@ export type MapSetting = GeoMapSettings & ImageMapSettings;
 
 export const defaultMapSettings: MapSetting = defaultGeoMapSettings;
 
+export type MapActionHandler = ($event: Event, datasource: TbMapDatasource) => void;
+
 export interface MarkerImageInfo {
   url: string;
   size: number;
@@ -722,7 +817,7 @@ const mapDatasourceIsSame = (ds1: TbMapDatasource, ds2: TbMapDatasource): boolea
   if (ds1.type === ds2.type) {
     switch (ds1.type) {
       case DatasourceType.function:
-        return true;
+        return ds1.name === ds2.name;
       case DatasourceType.device:
       case DatasourceType.entity:
         if (ds1.filterId === ds2.filterId) {
@@ -804,3 +899,39 @@ export const loadImageWithAspect = (imagePipe: ImagePipe, imageUrl: string): Obs
     return of(null);
   }
 };
+
+const linkActionRegex = /<link-act name=['"]([^['"]*)['"]>([^<]*)<\/link-act>/g;
+const buttonActionRegex = /<button-act name=['"]([^['"]*)['"]>([^<]*)<\/button-act>/g;
+
+const createTooltipLinkElement = (actionName: string, actionText: string): string => {
+  return `<a href="javascript:void(0);" class="tb-custom-action" data-action-name="${actionName}">${actionText}</a>`;
+}
+
+const creatTooltipButtonElement = (actionName: string, actionText: string): string => {
+  return `<button mat-button class="tb-custom-action" data-action-name="${actionName}">${actionText}</button>`;
+}
+
+export const processTooltipTemplate = (template: string): string => {
+  let actionTags: string;
+  let actionText: string;
+  let actionName: string;
+  let action: string;
+
+  let match = linkActionRegex.exec(template);
+  while (match !== null) {
+    [actionTags, actionName, actionText] = match;
+    action = createTooltipLinkElement(actionName, actionText);
+    template = template.replace(actionTags, action);
+    match = linkActionRegex.exec(template);
+  }
+
+  match = buttonActionRegex.exec(template);
+  while (match !== null) {
+    [actionTags, actionName, actionText] = match;
+    action = creatTooltipButtonElement(actionName, actionText);
+    template = template.replace(actionTags, action);
+    match = buttonActionRegex.exec(template);
+  }
+
+  return template;
+}

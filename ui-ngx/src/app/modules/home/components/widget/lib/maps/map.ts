@@ -22,7 +22,7 @@ import {
   defaultImageMapSettings,
   GeoMapSettings,
   ImageMapSettings,
-  latLngPointToBounds,
+  latLngPointToBounds, MapActionHandler,
   MapSetting,
   MapType,
   MapZoomAction,
@@ -34,7 +34,7 @@ import {
 import { WidgetContext } from '@home/models/widget-component.models';
 import { formattedDataFormDatasourceData, isDefinedAndNotNull, mergeDeepIgnoreArray } from '@core/utils';
 import { DeepPartial } from '@shared/models/common';
-import L, { LatLngBounds, LatLngTuple, PointExpression, Projection } from 'leaflet';
+import L, { LatLngBounds, LatLngTuple, LeafletMouseEvent, PointExpression, Projection } from 'leaflet';
 import { forkJoin, Observable, of } from 'rxjs';
 import { TbMapLayer } from '@home/components/widget/lib/maps/map-layer';
 import { map, switchMap, tap } from 'rxjs/operators';
@@ -47,7 +47,7 @@ import {
   TbPolygonsDataLayer
 } from '@home/components/widget/lib/maps/map-data-layer';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { widgetType } from '@shared/models/widget.models';
+import { Datasource, WidgetActionDescriptor, widgetType } from '@shared/models/widget.models';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
@@ -82,12 +82,23 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   private readonly mapResize$: ResizeObserver;
 
+  private readonly tooltipActions: { [name: string]: MapActionHandler };
+  private readonly markerClickActions: { [name: string]: MapActionHandler };
+  private readonly polygonClickActions: { [name: string]: MapActionHandler };
+  private readonly circleClickActions: { [name: string]: MapActionHandler };
+
   private tooltipInstances: ITooltipsterInstance[] = [];
 
   protected constructor(protected ctx: WidgetContext,
                         protected inputSettings: DeepPartial<S>,
                         protected containerElement: HTMLElement) {
     this.settings = mergeDeepIgnoreArray({} as S, this.defaultSettings(), this.inputSettings as S);
+
+    this.tooltipActions = this.loadActions('tooltipAction');
+    this.markerClickActions = this.loadActions('markerClick');
+    this.polygonClickActions = this.loadActions('polygonClick');
+    this.circleClickActions = this.loadActions('circleClick');
+
     $(containerElement).empty();
     $(containerElement).addClass('tb-map-layout');
     const mapElement = $('<div class="tb-map"></div>');
@@ -331,10 +342,31 @@ export abstract class TbMap<S extends BaseMapSettings> {
         if (this.settings.useDefaultCenterPosition) {
           bounds = bounds.extend(this.defaultCenterPosition);
         }
-        this.map.fitBounds(bounds, { padding: [10, 10], animate: false });
+        this.map.fitBounds(bounds, { padding: [50, 50], animate: false });
         this.map.invalidateSize();
       }
     }
+  }
+
+  private loadActions(name: string): { [name: string]: MapActionHandler } {
+    const descriptors = this.ctx.actionsApi.getActionDescriptors(name);
+    const actions: { [name: string]: MapActionHandler } = {};
+    descriptors.forEach(descriptor => {
+      actions[descriptor.name] = ($event: Event, datasource: TbMapDatasource) => this.onCustomAction(descriptor, $event, datasource);
+    });
+    return actions;
+  }
+
+  private onCustomAction(descriptor: WidgetActionDescriptor, $event: Event, entityInfo: TbMapDatasource) {
+    if ($event) {
+      $event.preventDefault();
+      $event.stopPropagation();
+    }
+    const { entityId, entityName, entityLabel, entityType } = entityInfo;
+    this.ctx.actionsApi.handleWidgetAction($event, descriptor, {
+      entityType,
+      id: entityId
+    }, entityName, null, entityLabel);
   }
 
   protected abstract defaultSettings(): S;
@@ -368,6 +400,46 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   public type(): MapType {
     return this.settings.mapType;
+  }
+
+  public tooltipElementClick(element: HTMLElement, action: string, datasource: TbMapDatasource): void {
+    if (element && this.tooltipActions[action]) {
+      element.onclick = ($event) =>
+      {
+        this.tooltipActions[action]($event, datasource);
+        return false;
+      };
+    }
+  }
+
+  public markerClick(marker: L.Layer, datasource: TbMapDatasource): void {
+    if (Object.keys(this.markerClickActions).length) {
+      marker.on('click', (event: LeafletMouseEvent) => {
+        for (const action in this.markerClickActions) {
+          this.markerClickActions[action](event.originalEvent, datasource);
+        }
+      });
+    }
+  }
+
+  public polygonClick(polygon: L.Layer, datasource: TbMapDatasource): void {
+    if (Object.keys(this.polygonClickActions).length) {
+      polygon.on('click', (event: LeafletMouseEvent) => {
+        for (const action in this.polygonClickActions) {
+          this.polygonClickActions[action](event.originalEvent, datasource);
+        }
+      });
+    }
+  }
+
+  public circleClick(circle: L.Layer, datasource: TbMapDatasource): void {
+    if (Object.keys(this.circleClickActions).length) {
+      circle.on('click', (event: LeafletMouseEvent) => {
+        for (const action in this.circleClickActions) {
+          this.circleClickActions[action](event.originalEvent, datasource);
+        }
+      });
+    }
   }
 
   public destroy() {

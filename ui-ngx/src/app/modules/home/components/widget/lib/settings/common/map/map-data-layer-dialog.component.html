@@ -34,6 +34,12 @@
         </tb-toggle-select>
       </div>
       <div class="flex flex-col">
+        <mat-form-field
+          *ngIf="dataLayerFormGroup.get('dsType').value === DatasourceType.function"
+          appearance="outline">
+          <mat-label translate>datasource.label</mat-label>
+          <input matInput formControlName="dsLabel" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
         <tb-entity-autocomplete
           *ngIf="dataLayerFormGroup.get('dsType').value === DatasourceType.device"
           required
@@ -204,6 +210,31 @@
           </div>
         </div>
       </ng-container>
+      <ng-container *ngIf="['polygons', 'circles'].includes(dataLayerType)">
+        <div class="tb-form-row space-between">
+          <div translate>widgets.maps.data-layer.fill-color</div>
+          <tb-data-layer-color-settings formControlName="fillColor"></tb-data-layer-color-settings>
+        </div>
+        <div class="tb-form-row space-between">
+          <div translate>widgets.maps.data-layer.stroke</div>
+          <div class="flex flex-row items-center gap-2">
+            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+              <input matInput type="number" min="0" formControlName="strokeWeight" placeholder="{{ 'widget-config.set' | translate }}">
+              <span matSuffix>px</span>
+            </mat-form-field>
+            <tb-data-layer-color-settings formControlName="strokeColor"></tb-data-layer-color-settings>
+          </div>
+        </div>
+      </ng-container>
+      <tb-data-layer-pattern-settings
+        patternType="label"
+        formControlName="label">
+      </tb-data-layer-pattern-settings>
+      <tb-data-layer-pattern-settings
+        patternType="tooltip"
+        [hasTooltipOffset]="dataLayerType === 'markers'"
+        formControlName="tooltip">
+      </tb-data-layer-pattern-settings>
     </div>
     <div class="tb-form-panel">
       <div class="tb-form-panel-title">{{ 'widgets.maps.data-layer.groups' | translate }}</div>
