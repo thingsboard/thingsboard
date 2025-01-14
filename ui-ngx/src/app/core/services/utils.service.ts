@@ -27,14 +27,11 @@ import {
   hashCode,
   isDefined,
   isDefinedAndNotNull,
-  isString,
   isUndefined,
   objToBase64,
   objToBase64URI
 } from '@core/utils';
 import { WindowMessage } from '@shared/models/window-message.model';
-import { TranslateService } from '@ngx-translate/core';
-import { customTranslationsPrefix, i18nPrefix } from '@app/shared/models/constants';
 import { DataKey, Datasource, DatasourceType, KeyInfo } from '@shared/models/widget.models';
 import { DataKeyType, SharedTelemetrySubscriber } from '@app/shared/models/telemetry/telemetry.models';
 import { alarmFields, alarmSeverityTranslations, alarmStatusTranslations } from '@shared/models/alarm.models';
@@ -50,8 +47,7 @@ import { entityTypeTranslations } from '@shared/models/entity-type.models';
 import cssjs from '@core/css/css';
 import { isNotEmptyTbFunction } from '@shared/models/js-function.models';
 import { defaultFormProperties, FormProperty } from '@shared/models/dynamic-form.models';
-
-const i18nRegExp = new RegExp(`{${i18nPrefix}:[^{}]+}`, 'g');
+import { TranslateWithCustomService } from '@core/translate/translate-with-custom.service';
 
 const predefinedFunctions: { [func: string]: string } = {
   Sin: 'return Math.round(1000*Math.sin(time/5000));',
@@ -112,7 +108,7 @@ export class UtilsService {
               @Inject(DOCUMENT) private document: Document,
               private zone: NgZone,
               private datePipe: DatePipe,
-              private translate: TranslateService) {
+              private translate: TranslateWithCustomService) {
     let frame: Element = null;
     try {
       frame = window.frameElement;
@@ -208,39 +204,9 @@ export class UtilsService {
     return parseException(exception, lineOffset);
   }
 
-  public customTranslation(translationValue: string, defaultValue: string): string {
-    if (translationValue && isString(translationValue)) {
-      if (translationValue.includes(`{${i18nPrefix}`)) {
-        const matches = translationValue.match(i18nRegExp);
-        let result = translationValue;
-        for (const match of matches) {
-          const translationId = match.substring(6, match.length - 1);
-          result = result.replace(match, this.doTranslate(translationId, match));
-        }
-        return result;
-      } else {
-        return this.doTranslate(translationValue, defaultValue, customTranslationsPrefix);
-      }
-    } else {
-      return translationValue;
-    }
-  }
-
-  private doTranslate(translationValue: string, defaultValue: string, prefix?: string): string {
-    let result: string;
-    let translationId;
-    if (prefix) {
-      translationId = prefix + translationValue;
-    } else {
-      translationId = translationValue;
-    }
-    const translation = this.translate.instant(translationId);
-    if (translation !== translationId) {
-      result = translation + '';
-    } else {
-      result = defaultValue;
-    }
-    return result;
+  // @Deprecated: use TranslateWithCustomService instead
+  public customTranslation(translationValue: string, defaultValue?: string): string {
+    return this.translate.customTranslation(translationValue, defaultValue);
   }
 
   public guid(): string {
