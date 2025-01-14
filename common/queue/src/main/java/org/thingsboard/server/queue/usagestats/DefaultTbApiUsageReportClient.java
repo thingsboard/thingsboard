@@ -115,7 +115,6 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
                         newStatsMsg.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
                     }
 
-                    newStatsMsg.setServiceId(serviceInfoProvider.getServiceId());
                     return newStatsMsg;
                 });
 
@@ -124,7 +123,6 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
                         .setValue(value);
                 statsMsg.addValues(statsItem.build());
             });
-            statsForKey.clear();
         }
 
         Map<TopicPartitionInfo, List<ToUsageStatsServiceMsg>> reportStatsPerTpi = new HashMap<>();
@@ -160,6 +158,7 @@ public class DefaultTbApiUsageReportClient implements TbApiUsageReportClient {
                 .map(partition ->
                         ToUsageStatsServiceMsgPack.newBuilder()
                                 .addAllMsgs(partition)
+                                .setServiceId(serviceInfoProvider.getServiceId())
                                 .build())
                 .toList();
     }

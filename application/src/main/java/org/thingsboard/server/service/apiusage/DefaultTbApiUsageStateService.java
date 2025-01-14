@@ -157,11 +157,12 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
 
     @Override
     public void process(TbProtoQueueMsg<ToUsageStatsServiceMsgPack> msgPack, TbCallback callback) {
-        msgPack.getValue().getMsgsList().forEach(this::process);
+        String serviceId = msgPack.getValue().getServiceId();
+        msgPack.getValue().getMsgsList().forEach(msg -> process(msg, serviceId));
         callback.onSuccess();
     }
 
-    private void process(ToUsageStatsServiceMsg statsMsg) {
+    private void process(ToUsageStatsServiceMsg statsMsg, String serviceId) {
         TenantId tenantId = TenantId.fromUUID(new UUID(statsMsg.getTenantIdMSB(), statsMsg.getTenantIdLSB()));
         EntityId ownerId;
         if (statsMsg.getCustomerIdMSB() != 0 && statsMsg.getCustomerIdLSB() != 0) {
@@ -170,7 +171,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
             ownerId = tenantId;
         }
 
-        processEntityUsageStats(tenantId, ownerId, statsMsg.getValuesList(), statsMsg.getServiceId());
+        processEntityUsageStats(tenantId, ownerId, statsMsg.getValuesList(), serviceId);
     }
 
     private void processEntityUsageStats(TenantId tenantId, EntityId ownerId, List<UsageStatsKVProto> values, String serviceId) {
