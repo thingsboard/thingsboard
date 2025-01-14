@@ -33,8 +33,11 @@ export class DomainService {
   }
 
   public saveDomain(domain: Domain, oauth2ClientIds: Array<string>, config?: RequestConfig): Observable<Domain> {
-    return this.http.post<Domain>(`/api/domain?oauth2ClientIds=${oauth2ClientIds.join(',')}`,
-      domain, defaultHttpOptionsFromConfig(config));
+    let url = '/api/domain';
+    if (oauth2ClientIds?.length) {
+      url += `?oauth2ClientIds=${oauth2ClientIds.join(',')}`;
+    }
+    return this.http.post<Domain>(url, domain, defaultHttpOptionsFromConfig(config));
   }
 
   public updateOauth2Clients(id: string, oauth2ClientIds: Array<string>, config?: RequestConfig): Observable<void> {
