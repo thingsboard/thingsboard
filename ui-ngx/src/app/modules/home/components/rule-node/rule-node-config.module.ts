@@ -14,35 +14,18 @@
 /// limitations under the License.
 ///
 
-import { NgModule, Type } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { EmptyConfigComponent } from './empty-config.component';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
+import { ActionRuleNodeConfigModule } from '@home/components/rule-node/action/action-rule-node-config.module';
+import { FilterRuleNodeConfigModule } from '@home/components/rule-node/filter/filter-rule-node-config.module';
+import { EnrichmentRuleNodeCoreModule } from '@home/components/rule-node/enrichment/enrichment-rule-node-core.module';
+import { ExternalRuleNodeConfigModule } from '@home/components/rule-node/external/external-rule-node-config.module';
 import {
-  actionRuleNodeConfigComponentsMap,
-  ActionRuleNodeConfigModule
-} from '@home/components/rule-node/action/action-rule-node-config.module';
-import {
-  filterRuleNodeConfigComponentsMap,
-  FilterRuleNodeConfigModule
-} from '@home/components/rule-node/filter/filter-rule-node-config.module';
-import {
-  enrichmentRuleNodeConfigComponentsMap,
-  EnrichmentRuleNodeCoreModule
-} from '@home/components/rule-node/enrichment/enrichment-rule-node-core.module';
-import {
-  externalRuleNodeConfigComponentsMap,
-  ExternalRuleNodeConfigModule
-} from '@home/components/rule-node/external/external-rule-node-config.module';
-import {
-  transformationRuleNodeConfigComponentsMap,
   TransformationRuleNodeConfigModule
 } from '@home/components/rule-node/transformation/transformation-rule-node-config.module';
-import {
-  flowRuleNodeConfigComponentsMap,
-  FlowRuleNodeConfigModule
-} from '@home/components/rule-node/flow/flow-rule-node-config.module';
-import { IRuleNodeConfigurationComponent } from '@shared/models/rule-node.models';
+import { FlowRuleNodeConfigModule } from '@home/components/rule-node/flow/flow-rule-node-config.module';
 import { RuleChainService } from '@core/http/rule-chain.service';
 
 @NgModule({
@@ -65,15 +48,6 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 })
 export class RuleNodeConfigModule {
   constructor(private ruleChainService: RuleChainService) {
-    const ruleNodeConfigComponentsMap: Record<string, Type<IRuleNodeConfigurationComponent>> = {
-      ...actionRuleNodeConfigComponentsMap,
-      ...enrichmentRuleNodeConfigComponentsMap,
-      ...externalRuleNodeConfigComponentsMap,
-      ...filterRuleNodeConfigComponentsMap,
-      ...flowRuleNodeConfigComponentsMap,
-      ...transformationRuleNodeConfigComponentsMap,
-      'tbNodeEmptyConfig': EmptyConfigComponent
-    };
-    this.ruleChainService.registemSystemRuleNodeConfigComponent(ruleNodeConfigComponentsMap);
+    this.ruleChainService.registerSystemRuleNodeConfigModule(this.constructor);
   }
 }

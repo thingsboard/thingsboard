@@ -73,19 +73,3 @@ import { LambdaConfigComponent } from './lambda-config.component';
 })
 export class ExternalRuleNodeConfigModule {
 }
-
-export const externalRuleNodeConfigComponentsMap: Record<string, Type<IRuleNodeConfigurationComponent>> = {
-  'tbExternalNodeAzureIotHubConfig': AzureIotHubConfigComponent,
-  'tbExternalNodeKafkaConfig': KafkaConfigComponent,
-  'tbExternalNodeLambdaConfig': LambdaConfigComponent,
-  'tbExternalNodeMqttConfig': MqttConfigComponent,
-  'tbExternalNodeNotificationConfig': NotificationConfigComponent,
-  'tbExternalNodePubSubConfig': PubSubConfigComponent,
-  'tbExternalNodeRabbitMqConfig': RabbitMqConfigComponent,
-  'tbExternalNodeRestApiCallConfig': RestApiCallConfigComponent,
-  'tbExternalNodeSendEmailConfig': SendEmailConfigComponent,
-  'tbExternalNodeSendSmsConfig': SendSmsConfigComponent,
-  'tbExternalNodeSlackConfig': SlackConfigComponent,
-  'tbExternalNodeSnsConfig': SnsConfigComponent,
-  'tbExternalNodeSqsConfig': SqsConfigComponent
-}

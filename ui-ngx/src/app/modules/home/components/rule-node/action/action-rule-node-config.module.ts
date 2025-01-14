@@ -103,29 +103,3 @@ import { SendRestApiCallReplyConfigComponent } from './send-rest-api-call-reply-
 })
 export class ActionRuleNodeConfigModule {
 }
-
-export const actionRuleNodeConfigComponentsMap: Record<string, Type<IRuleNodeConfigurationComponent>> = {
-  'tbActionNodeAssignToCustomerConfig': AssignCustomerConfigComponent,
-  'tbActionNodeAttributesConfig': AttributesConfigComponent,
-  'tbActionNodeClearAlarmConfig': ClearAlarmConfigComponent,
-  'tbActionNodeCreateAlarmConfig': CreateAlarmConfigComponent,
-  'tbActionNodeCreateRelationConfig': CreateRelationConfigComponent,
-  'tbActionNodeDeleteAttributesConfig': DeleteAttributesConfigComponent,
-  'tbActionNodeDeleteRelationConfig': DeleteRelationConfigComponent,
-  'tbActionNodeDeviceProfileConfig': DeviceProfileConfigComponent,
-  'tbActionNodeDeviceStateConfig': DeviceStateConfigComponent,
-  'tbActionNodeGeneratorConfig': GeneratorConfigComponent,
-  'tbActionNodeGpsGeofencingConfig': GpsGeoActionConfigComponent,
-  'tbActionNodeLogConfig': LogConfigComponent,
-  'tbActionNodeMathFunctionConfig': MathFunctionConfigComponent,
-  'tbActionNodeMsgCountConfig': MsgCountConfigComponent,
-  'tbActionNodeMsgDelayConfig': MsgDelayConfigComponent,
-  'tbActionNodePushToCloudConfig': PushToCloudConfigComponent,
-  'tbActionNodePushToEdgeConfig': PushToEdgeConfigComponent,
-  'tbActionNodeRpcReplyConfig': RpcReplyConfigComponent,
-  'tbActionNodeRpcRequestConfig': RpcRequestConfigComponent,
-  'tbActionNodeCustomTableConfig': SaveToCustomTableConfigComponent,
-  'tbActionNodeSendRestApiCallReplyConfig': SendRestApiCallReplyConfigComponent,
-  'tbActionNodeTimeseriesConfig': TimeseriesConfigComponent,
-  'tbActionNodeUnAssignToCustomerConfig': UnassignCustomerConfigComponent
-};

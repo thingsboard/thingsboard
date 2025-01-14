@@ -184,8 +184,8 @@ export class RuleChainService {
     return this.http.post<TestScriptResult>(url, inputParams, defaultHttpOptionsFromConfig(config));
   }
 
-  public registemSystemRuleNodeConfigComponent(componentMap: Record<string, Type<IRuleNodeConfigurationComponent>>) {
-    this.systemRuleNodeConfigComponents = componentMap;
+  public registerSystemRuleNodeConfigModule(module: any) {
+    this.systemRuleNodeConfigComponents = this.resourcesService.extractComponentsFromModule(module, true);
   }
 
   private loadRuleNodeComponents(ruleChainType: RuleChainType, config?: RequestConfig): Observable<Array<RuleNodeComponentDescriptor>> {

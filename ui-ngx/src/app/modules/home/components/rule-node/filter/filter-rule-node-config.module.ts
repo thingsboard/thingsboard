@@ -56,14 +56,3 @@ import { CommonRuleNodeConfigModule } from '../common/common-rule-node-config.mo
 })
 export class FilterRuleNodeConfigModule {
 }
-
-export const filterRuleNodeConfigComponentsMap: Record<string, Type<IRuleNodeConfigurationComponent>> = {
-  'tbFilterNodeCheckAlarmStatusConfig': CheckAlarmStatusComponent,
-  'tbFilterNodeCheckMessageConfig': CheckMessageConfigComponent,
-  'tbFilterNodeCheckRelationConfig': CheckRelationConfigComponent,
-  'tbFilterNodeGpsGeofencingConfig': GpsGeoFilterConfigComponent,
-  'tbFilterNodeMessageTypeConfig': MessageTypeConfigComponent,
-  'tbFilterNodeOriginatorTypeConfig': OriginatorTypeConfigComponent,
-  'tbFilterNodeScriptConfig': ScriptConfigComponent,
-  'tbFilterNodeSwitchConfig': SwitchConfigComponent
-}
