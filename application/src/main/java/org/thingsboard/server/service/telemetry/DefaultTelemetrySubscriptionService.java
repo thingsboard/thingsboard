@@ -149,8 +149,8 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         if (request.isSendWsUpdate()) {
             addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, request.getEntries()));
         }
-        if (request.isSaveTimeseries() && request.isSaveLatest()) {
-            addEntityViewCallback(tenantId, entityId, request.getEntries());
+        if (request.isSaveLatest()) {
+            copyLatestToEntityViews(tenantId, entityId, request.getEntries());
         }
         return saveFuture;
     }
@@ -205,7 +205,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         }
     }
 
-    private void addEntityViewCallback(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
+    private void copyLatestToEntityViews(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
         if (EntityType.DEVICE.equals(entityId.getEntityType()) || EntityType.ASSET.equals(entityId.getEntityType())) {
             Futures.addCallback(this.tbEntityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId),
                     new FutureCallback<>() {
@@ -238,6 +238,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                                 .entries(entityViewLatest)
                                                 .saveTimeseries(false)
                                                 .saveLatest(true)
+                                                .sendWsUpdate(true)
                                                 .callback(new FutureCallback<>() {
                                                     @Override
                                                     public void onSuccess(@Nullable Void tmp) {}

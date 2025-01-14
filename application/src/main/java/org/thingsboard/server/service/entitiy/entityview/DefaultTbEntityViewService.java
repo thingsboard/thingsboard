@@ -350,6 +350,7 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
                         .entries(latestValues)
                         .saveTimeseries(false)
                         .saveLatest(true)
+                        .sendWsUpdate(true)
                         .callback(new FutureCallback<Void>() {
                             @Override
                             public void onSuccess(@Nullable Void tmp) {
