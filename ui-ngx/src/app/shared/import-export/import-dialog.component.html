@@ -63,8 +63,7 @@
       {{ 'action.cancel' | translate }}
     </button>
     <button mat-raised-button color="primary"
-            type="submit"
-            [disabled]="(isLoading$ | async) || importFormGroup.invalid || !importFormGroup.dirty">
+            type="submit">
       {{ 'action.import' | translate }}
     </button>
   </div>
