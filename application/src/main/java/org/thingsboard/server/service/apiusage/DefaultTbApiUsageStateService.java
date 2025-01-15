@@ -56,11 +56,12 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
-import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsgPack;
 import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsKVProto;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -154,18 +155,19 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
     }
 
     @Override
-    public void process(TbProtoQueueMsg<ToUsageStatsServiceMsg> msg, TbCallback callback) {
-        ToUsageStatsServiceMsg statsMsg = msg.getValue();
+    public void process(TbProtoQueueMsg<ToUsageStatsServiceMsgPack> msgPack, TbCallback callback) {
+        String serviceId = msgPack.getValue().getServiceId();
+        msgPack.getValue().getMsgsList().forEach(msg -> {
+            TenantId tenantId = TenantId.fromUUID(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
+            EntityId ownerId;
+            if (msg.getCustomerIdMSB() != 0 && msg.getCustomerIdLSB() != 0) {
+                ownerId = new CustomerId(new UUID(msg.getCustomerIdMSB(), msg.getCustomerIdLSB()));
+            } else {
+                ownerId = tenantId;
+            }
 
-        TenantId tenantId = TenantId.fromUUID(new UUID(statsMsg.getTenantIdMSB(), statsMsg.getTenantIdLSB()));
-        EntityId ownerId;
-        if (statsMsg.getCustomerIdMSB() != 0 && statsMsg.getCustomerIdLSB() != 0) {
-            ownerId = new CustomerId(new UUID(statsMsg.getCustomerIdMSB(), statsMsg.getCustomerIdLSB()));
-        } else {
-            ownerId = tenantId;
-        }
-
-        processEntityUsageStats(tenantId, ownerId, statsMsg.getValuesList(), statsMsg.getServiceId());
+            processEntityUsageStats(tenantId, ownerId, msg.getValuesList(), serviceId);
+        });
         callback.onSuccess();
     }
 
@@ -191,7 +193,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
             updatedEntries = new ArrayList<>(ApiUsageRecordKey.values().length);
             Set<ApiFeature> apiFeatures = new HashSet<>();
             for (UsageStatsKVProto statsItem : values) {
-                ApiUsageRecordKey recordKey = ApiUsageRecordKey.valueOf(statsItem.getKey());
+                ApiUsageRecordKey recordKey = ProtoUtils.fromProto(statsItem.getKey());
 
                 StatsCalculationResult calculationResult = usageState.calculate(recordKey, statsItem.getValue(), serviceId);
                 if (calculationResult.isValueChanged()) {
