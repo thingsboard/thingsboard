@@ -490,7 +490,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testSendOutdatedAttributeToCloud() throws Exception {
-        long ts = System.currentTimeMillis();
+        long ts = System.currentTimeMillis() - 5;
         Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
 
         edgeImitator.expectResponsesAmount(1);
