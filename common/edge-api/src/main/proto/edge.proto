@@ -132,6 +132,7 @@ message EntityDataProto {
   transport.PostAttributeMsg attributesUpdatedMsg = 6;
   string postAttributeScope = 7;
   AttributeDeleteMsg attributeDeleteMsg = 8;
+  optional int64 attributeTs = 9;
 }
 
 message AttributeDeleteMsg {

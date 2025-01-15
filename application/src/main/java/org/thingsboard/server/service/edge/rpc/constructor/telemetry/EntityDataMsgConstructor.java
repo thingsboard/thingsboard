@@ -67,6 +67,9 @@ public class EntityDataMsgConstructor {
                     TransportProtos.PostAttributeMsg attributesUpdatedMsg = JsonConverter.convertToAttributesProto(data.getAsJsonObject("kv"));
                     builder.setAttributesUpdatedMsg(attributesUpdatedMsg);
                     builder.setPostAttributeScope(getScopeOfDefault(data));
+                    if (data.get("ts") != null && !data.get("ts").isJsonNull()) {
+                        builder.setAttributeTs(data.getAsJsonPrimitive("ts").getAsLong());
+                    }
                 } catch (Exception e) {
                     log.warn("[{}][{}] Can't convert to AttributesUpdatedMsg proto, entityData [{}]", tenantId, entityId, entityData, e);
                 }
@@ -77,6 +80,9 @@ public class EntityDataMsgConstructor {
                     TransportProtos.PostAttributeMsg postAttributesMsg = JsonConverter.convertToAttributesProto(data.getAsJsonObject("kv"));
                     builder.setPostAttributesMsg(postAttributesMsg);
                     builder.setPostAttributeScope(getScopeOfDefault(data));
+                    if (data.get("ts") != null && !data.get("ts").isJsonNull()) {
+                        builder.setAttributeTs(data.getAsJsonPrimitive("ts").getAsLong());
+                    }
                 } catch (Exception e) {
                     log.warn("[{}][{}] Can't convert to PostAttributesMsg, entityData [{}]", tenantId, entityId, entityData, e);
                 }

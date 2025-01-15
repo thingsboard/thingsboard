@@ -54,6 +54,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -79,7 +80,9 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
@@ -114,7 +117,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
 
     abstract protected String getMsgSourceKey();
 
-    public List<ListenableFuture<Void>> processTelemetryMsg(TenantId tenantId, EntityDataProto entityData) {
+    public List<ListenableFuture<Void>> processTelemetryMsg(TenantId tenantId, EntityDataProto entityData) throws Exception {
         log.trace("[{}] processTelemetryMsg [{}]", tenantId, entityData);
         List<ListenableFuture<Void>> result = new ArrayList<>();
         EntityId entityId = constructEntityId(entityData.getEntityType(), entityData.getEntityIdMSB(), entityData.getEntityIdLSB());
@@ -125,11 +128,13 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
                 CustomerId customerId = pair.getValue();
                 metaData.putValue(DataConstants.MSG_SOURCE_KEY, getMsgSourceKey());
                 if (entityData.hasPostAttributesMsg()) {
-                    result.add(processPostAttributes(tenantId, customerId, entityId, entityData.getPostAttributesMsg(), metaData));
+                    long ts = entityData.hasAttributeTs() ? entityData.getAttributeTs() : System.currentTimeMillis();
+                    result.add(processPostAttributes(tenantId, customerId, entityId, entityData.getPostAttributesMsg(), metaData, ts));
                 }
                 if (entityData.hasAttributesUpdatedMsg()) {
                     metaData.putValue("scope", entityData.getPostAttributeScope());
-                    result.add(processAttributesUpdate(tenantId, customerId, entityId, entityData.getAttributesUpdatedMsg(), metaData));
+                    long ts = entityData.hasAttributeTs() ? entityData.getAttributeTs() : System.currentTimeMillis();
+                    result.add(processAttributesUpdate(tenantId, customerId, entityId, entityData.getAttributesUpdatedMsg(), metaData, ts));
                 }
                 if (entityData.hasPostTelemetryMsg()) {
                     result.add(processPostTelemetry(tenantId, customerId, entityId, entityData.getPostTelemetryMsg(), metaData));
@@ -257,9 +262,13 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         return new ImmutablePair<>(queueName, ruleChainId);
     }
 
-    private ListenableFuture<Void> processPostAttributes(TenantId tenantId, CustomerId customerId, EntityId entityId, TransportProtos.PostAttributeMsg msg, TbMsgMetaData metaData) {
+    private ListenableFuture<Void> processPostAttributes(TenantId tenantId, CustomerId customerId, EntityId entityId, TransportProtos.PostAttributeMsg msg, TbMsgMetaData metaData, long ts) throws Exception {
         SettableFuture<Void> futureToSet = SettableFuture.create();
         JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
+
+        List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(json, ts));
+        filterAttributesByTs(tenantId, entityId, AttributeScope.CLIENT_SCOPE, attributes, json);
+
         var defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
         TbMsg tbMsg = TbMsg.newMsg()
                 .queueName(defaultQueueAndRuleChain.getKey())
@@ -289,16 +298,18 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
                                                            CustomerId customerId,
                                                            EntityId entityId,
                                                            TransportProtos.PostAttributeMsg msg,
-                                                           TbMsgMetaData metaData) {
+                                                           TbMsgMetaData metaData,
+                                                           long ts) throws Exception {
         SettableFuture<Void> futureToSet = SettableFuture.create();
         JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
-        List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(json));
-        String scope = metaData.getValue("scope");
+        AttributeScope scope = AttributeScope.valueOf(metaData.getValue("scope"));
+        List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(json, ts));
+        List<AttributeKvEntry> attributesToSave = filterAttributesByTs(tenantId, entityId, scope, attributes, json);
         tsSubService.saveAttributes(AttributesSaveRequest.builder()
                 .tenantId(tenantId)
                 .entityId(entityId)
-                .scope(AttributeScope.valueOf(scope))
-                .entries(attributes)
+                .scope(scope)
+                .entries(attributesToSave)
                 .callback(new FutureCallback<>() {
                     @Override
                     public void onSuccess(@Nullable Void tmp) {
@@ -388,6 +399,23 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         String bodyJackson = JacksonUtil.toString(body);
         return bodyJackson == null ? null :
                 entityDataMsgConstructor.constructEntityDataMsg(tenantId, entityId, actionType, JsonParser.parseString(bodyJackson));
+    }
+
+    private List<AttributeKvEntry> filterAttributesByTs(TenantId tenantId, EntityId entityId, AttributeScope scope, List<AttributeKvEntry> attributes, JsonObject jsonObject) throws Exception {
+        List<String> keys = attributes.stream().map(KvEntry::getKey).toList();
+        Map<String, Long> existingAttributesTs = edgeCtx.getAttributesService().find(tenantId, entityId, scope, keys).get()
+                .stream().collect(Collectors.toMap(KvEntry::getKey, AttributeKvEntry::getLastUpdateTs));
+        return attributes.stream()
+                .filter(attribute -> {
+                    String key = attribute.getKey();
+                    long incomingTs = attribute.getLastUpdateTs();
+                    if (incomingTs > existingAttributesTs.getOrDefault(key, 0L)) {
+                        return true;
+                    } else {
+                        jsonObject.remove(key);
+                        return false;
+                    }
+                }).toList();
     }
 
 }

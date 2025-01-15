@@ -89,6 +89,7 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
             switch (actionType) {
                 case ATTRIBUTES_UPDATED, POST_ATTRIBUTES -> {
                     entityBody.put("kv", dataJson);
+                    entityBody.put("ts", msg.getMetaDataTs());
                     entityBody.put(SCOPE, getScope(metadata));
                     if (EdgeEventActionType.POST_ATTRIBUTES.equals(actionType)) {
                         entityBody.put("isPostAttributes", true);
