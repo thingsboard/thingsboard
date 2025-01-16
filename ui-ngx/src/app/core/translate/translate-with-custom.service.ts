@@ -9,16 +9,16 @@ export class TranslateWithCustomService extends TranslateService {
   private readonly i18nRegExp = new RegExp(`{${i18nPrefix}:[^{}]+}`, 'g');
   private readonly prefix = `{${i18nPrefix}`;
 
-  instant(key: string, interpolateParams: Object = {}): string | any {
-    if (key.includes(this.prefix)) {
-      return this.customTranslation(key);
+  instant(key: string, interpolateParams: object = {}): string {
+    if (key[0] === this.prefix[0] && key.includes(this.prefix)) {
+      return this.customInstant(key);
     } else {
       interpolateParams = this.customTranslateInterpolateParams(interpolateParams);
       return super.instant(key, interpolateParams);
     }
   }
 
-  public customTranslation(translationValue: string, defaultValue?: string): string {
+  customInstant(translationValue: string, defaultValue?: string): string {
     if (!defaultValue) {
       defaultValue = translationValue;
     }
@@ -39,12 +39,11 @@ export class TranslateWithCustomService extends TranslateService {
     }
   }
 
-  private customTranslateInterpolateParams(interpolateParams: Object = {}): object {
+  private customTranslateInterpolateParams(interpolateParams: object = {}): object {
     const interpolateParamsValues = Object.values(interpolateParams);
-    if (interpolateParamsValues.length && interpolateParamsValues.some(value => value && isString(value) && value.includes(`{${i18nPrefix}`))) {
-      interpolateParams = Object.keys(interpolateParams).reduce((acc, key) => {
-        return {...acc, [key]: this.customTranslation(interpolateParams[key])};
-      }, {})
+    if (interpolateParamsValues.length && interpolateParamsValues.some(value => value[0] === this.prefix[0] && value.includes(`{${i18nPrefix}`))) {
+      interpolateParams = Object.keys(interpolateParams).reduce((acc, key) =>
+        ({...acc, [key]: this.customInstant(interpolateParams[key])}), {})
     }
     return interpolateParams;
   }

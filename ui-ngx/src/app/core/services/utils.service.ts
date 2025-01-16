@@ -206,7 +206,7 @@ export class UtilsService {
 
   // @Deprecated: use TranslateWithCustomService instead
   public customTranslation(translationValue: string, defaultValue?: string): string {
-    return this.translate.customTranslation(translationValue, defaultValue);
+    return this.translate.customInstant(translationValue, defaultValue);
   }
 
   public guid(): string {
