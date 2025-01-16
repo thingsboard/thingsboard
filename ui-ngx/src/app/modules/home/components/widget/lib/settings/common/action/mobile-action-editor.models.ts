@@ -138,6 +138,15 @@ const processLocationFunction: TbFunction =
   '    }, 100);\n' +
   '}';
 
+const provisioningSuccessFunction: TbFunction =
+  '// Function body to handle device provision success. \n' +
+  '// - device - device that was successfully provisioned.\n' +
+  'function showDeviceProvisioningSuccess(deviceName, message) {\n' +
+  '    setTimeout(function() {\n' +
+  '        widgetContext.dialogs.alert(`Device ` + deviceName + ` was successfully provisioned`, message).subscribe();\n' +
+  '    }, 100);\n' +
+  '}\n';
+
 const handleEmptyResultFunctionTemplate: TbFunction =
   '// Optional function body to handle empty result. \n' +
   '// Usually this happens when user cancels the action (for ex. by pressing phone back button). \n\n' +
@@ -241,6 +250,8 @@ export const getDefaultProcessQrCodeFunction = () => processQrCodeFunction;
 
 export const getDefaultProcessLocationFunction = () => processLocationFunction;
 
+export const getDefaultProvisioningSuccessFunction = () => provisioningSuccessFunction;
+
 export const getDefaultGetLocationFunction = () => getLocationFunctionTemplate;
 
 export const getDefaultGetPhoneNumberFunction = () => getPhoneNumberFunctionTemplate;
@@ -272,6 +283,9 @@ export const getDefaultHandleEmptyResultFunction = (type: WidgetMobileActionType
     case WidgetMobileActionType.takeScreenshot:
       message = 'Take screenshot action was cancelled!';
       break;
+    case WidgetMobileActionType.provisioningDevice:
+      message = 'Provisioning device was not invoked!';
+      break;
   }
   return handleEmptyResultFunctionTemplate.replace('--MESSAGE--', message);
 };
@@ -302,6 +316,9 @@ export const getDefaultHandleErrorFunction = (type: WidgetMobileActionType): TbF
       break;
     case WidgetMobileActionType.takeScreenshot:
       title = 'Failed to take screenshot';
+      break;
+    case WidgetMobileActionType.provisioningDevice:
+      title = 'Failed to make device provisioning';
       break;
   }
   return handleErrorFunctionTemplate.replace('--TITLE--', title);

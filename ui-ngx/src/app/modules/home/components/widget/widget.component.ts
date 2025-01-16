@@ -1292,6 +1292,26 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
                         );
                       }
                       break;
+                    case WidgetMobileActionType.provisioningDevice:
+                      const deviceName = actionResult.device.name;
+                      if (isNotEmptyTbFunction(mobileAction.handleProvisionSuccessFunction)) {
+                        compileTbFunction(this.http, mobileAction.handleProvisionSuccessFunction, 'deviceName', '$event', 'widgetContext', 'entityId',
+                          'entityName', 'additionalParams', 'entityLabel').subscribe(
+                          {
+                            next: (compiled) => {
+                              try {
+                                compiled.execute(deviceName, $event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
+                              } catch (e) {
+                                console.error(e);
+                              }
+                            },
+                            error: (err) => {
+                              console.error(err);
+                            }
+                          }
+                        );
+                      }
+                      break;
                     case WidgetMobileActionType.scanQrCode:
                       const code = actionResult.code;
                       const format = actionResult.format;

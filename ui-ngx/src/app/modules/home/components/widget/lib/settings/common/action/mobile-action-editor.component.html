@@ -36,6 +36,36 @@
     </mat-form-field>
   </div>
   <ng-container [formGroup]="mobileActionTypeFormGroup" [ngSwitch]="mobileActionFormGroup.get('type').value">
+    <ng-template [ngSwitchCase]="mobileActionType.provisioningDevice">
+      <div class="tb-form-row">
+        <div class="fixed-title-width">{{ 'widget-action.mobile.provisioning-device.type' | translate }}*</div>
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <mat-select required formControlName="provisionType" placeholder="{{ 'widget-action.mobile.provisioning-device.select-type' | translate }}">
+            <mat-option *ngFor="let actionType of mobileProvisionTypes" [value]="actionType">
+              {{ widgetMobileProvisionTypeTranslationMap.get(mobileProvisionType[actionType]) | translate }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'widget-action.mobile.provisioning-device.type-required' | translate"
+                    *ngIf="mobileActionTypeFormGroup.get('provisionType').hasError('required')
+                       && mobileActionTypeFormGroup.get('provisionType').touched"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        </mat-form-field>
+      </div>
+      <tb-js-func
+        formControlName="handleProvisionSuccessFunction"
+        functionName="handleProvisionSuccess"
+        withModules
+        [functionArgs]="['deviceName', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
+        [globalVariables]="functionScopeVariables"
+        [editorCompleter]="customActionEditorCompleter"
+        hideBrackets
+      ></tb-js-func>
+    </ng-template>
     <ng-template [ngSwitchCase]="mobileActionFormGroup.get('type').value === mobileActionType.mapDirection ||
                                  mobileActionFormGroup.get('type').value === mobileActionType.mapLocation ?
                                  mobileActionFormGroup.get('type').value : ''">

@@ -47,6 +47,7 @@ import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-con
 import { TbFunction } from '@shared/models/js-function.models';
 import { FormProperty, jsonFormSchemaToFormProperties } from '@shared/models/dynamic-form.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Device } from '@shared/models/device.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -585,8 +586,25 @@ export enum WidgetMobileActionType {
   scanQrCode = 'scanQrCode',
   makePhoneCall = 'makePhoneCall',
   getLocation = 'getLocation',
-  takeScreenshot = 'takeScreenshot'
+  takeScreenshot = 'takeScreenshot',
+  provisioningDevice = 'provisioningDevice',
 }
+
+export enum WidgetMobileProvisionType {
+  smartConfigEspTouch = 'SmartConfigEspTouch',
+  smartConfigEspTouchV2 = 'SmartConfigEspTouchV2',
+  wifi = 'wifi',
+  softAp = 'SoftAp',
+}
+
+export const widgetMobileProvisionTypeTranslationMap = new Map<WidgetMobileProvisionType, string>(
+  [
+    [ WidgetMobileProvisionType.smartConfigEspTouch, 'widget-action.mobile.provisioning-device.smart-config-esp-touch' ],
+    [ WidgetMobileProvisionType.smartConfigEspTouchV2, 'widget-action.mobile.provisioning-device.smart-config-esp-touch-v2' ],
+    [ WidgetMobileProvisionType.wifi, 'widget-action.mobile.provisioning-device.wifi' ],
+    [ WidgetMobileProvisionType.softAp, 'widget-action.mobile.provisioning-device.soft-ap' ]
+  ]
+);
 
 export const widgetActionTypes = Object.keys(WidgetActionType) as WidgetActionType[];
 
@@ -612,7 +630,8 @@ export const widgetMobileActionTypeTranslationMap = new Map<WidgetMobileActionTy
     [ WidgetMobileActionType.scanQrCode, 'widget-action.mobile.scan-qr-code' ],
     [ WidgetMobileActionType.makePhoneCall, 'widget-action.mobile.make-phone-call' ],
     [ WidgetMobileActionType.getLocation, 'widget-action.mobile.get-location' ],
-    [ WidgetMobileActionType.takeScreenshot, 'widget-action.mobile.take-screenshot' ]
+    [ WidgetMobileActionType.takeScreenshot, 'widget-action.mobile.take-screenshot' ],
+    [ WidgetMobileActionType.provisioningDevice, 'widget-action.mobile.provisioning-device.label' ]
   ]
 );
 
@@ -634,16 +653,25 @@ export interface MobileLocationResult {
   longitude: number;
 }
 
+export interface MobileDeviceProvisioningResult {
+  device: Device;
+}
+
 export type MobileActionResult = MobileLaunchResult &
                                  MobileImageResult &
                                  MobileQrCodeResult &
-                                 MobileLocationResult;
+                                 MobileLocationResult &
+                                 MobileDeviceProvisioningResult;
 
 export interface WidgetMobileActionResult<T extends MobileActionResult> {
   result?: T;
   hasResult: boolean;
   error?: string;
   hasError: boolean;
+}
+
+export interface ProvisionSuccessDescriptor {
+  handleProvisionSuccessFunction: TbFunction;
 }
 
 export interface ProcessImageDescriptor {
@@ -674,7 +702,8 @@ export type WidgetMobileActionDescriptors = ProcessImageDescriptor &
                                             LaunchMapDescriptor &
                                             ScanQrCodeDescriptor &
                                             MakePhoneCallDescriptor &
-                                            GetLocationDescriptor;
+                                            GetLocationDescriptor &
+                                            ProvisionSuccessDescriptor;
 
 export interface WidgetMobileActionDescriptor extends WidgetMobileActionDescriptors {
   type: WidgetMobileActionType;

@@ -24,10 +24,12 @@ import {
 } from '@angular/forms';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
+  WidgetMobileProvisionType,
   WidgetActionType,
   WidgetMobileActionDescriptor,
   WidgetMobileActionType,
-  widgetMobileActionTypeTranslationMap
+  widgetMobileActionTypeTranslationMap,
+  widgetMobileProvisionTypeTranslationMap
 } from '@shared/models/widget.models';
 import { CustomActionEditorCompleter } from '@home/components/widget/lib/settings/common/action/custom-action.models';
 import {
@@ -38,7 +40,8 @@ import {
   getDefaultProcessImageFunction,
   getDefaultProcessLaunchResultFunction,
   getDefaultProcessLocationFunction,
-  getDefaultProcessQrCodeFunction
+  getDefaultProcessQrCodeFunction,
+  getDefaultProvisioningSuccessFunction
 } from '@home/components/widget/lib/settings/common/action/mobile-action-editor.models';
 import { WidgetService } from '@core/http/widget.service';
 import { TbFunction } from '@shared/models/js-function.models';
@@ -59,6 +62,9 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
   mobileActionTypes = Object.keys(WidgetMobileActionType);
   mobileActionTypeTranslations = widgetMobileActionTypeTranslationMap;
   mobileActionType = WidgetMobileActionType;
+  mobileProvisionType = WidgetMobileProvisionType;
+  mobileProvisionTypes = Object.keys(WidgetMobileProvisionType);
+  widgetMobileProvisionTypeTranslationMap = widgetMobileProvisionTypeTranslationMap;
 
   customActionEditorCompleter = CustomActionEditorCompleter;
 
@@ -254,6 +260,22 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
             this.fb.control(processLocationFunction, [Validators.required])
           );
           break;
+        case WidgetMobileActionType.provisioningDevice:
+          let handleProvisionSuccessFunction = action?.handleProvisionSuccessFunction;
+          if (changed) {
+            const defaultProvisioningSuccessFunction = getDefaultProvisioningSuccessFunction();
+            if (defaultProvisioningSuccessFunction !== handleProvisionSuccessFunction) {
+              handleProvisionSuccessFunction = defaultProvisioningSuccessFunction;
+            }
+          }
+          this.mobileActionTypeFormGroup.addControl(
+            'handleProvisionSuccessFunction',
+            this.fb.control(handleProvisionSuccessFunction, [Validators.required])
+          );
+          this.mobileActionTypeFormGroup.addControl(
+            'provisionType',
+            this.fb.control(null, [Validators.required])
+          );
       }
     }
     this.mobileActionTypeFormGroup.valueChanges.pipe(
