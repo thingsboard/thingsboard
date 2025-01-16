@@ -112,12 +112,9 @@ export class DomainTableConfigResolver  {
       $event.stopPropagation();
     }
 
-    const modifiedDomain: DomainInfo = {
-      ...domain,
-      oauth2Enabled: !domain.oauth2Enabled
-    };
+    const { oauth2ClientInfos, oauth2Enabled, ...updatedDomain } = domain;
 
-    this.domainService.saveDomain(modifiedDomain, null,
+    this.domainService.saveDomain({ ...updatedDomain, oauth2Enabled: !oauth2Enabled }, null,
       {ignoreLoading: true})
       .subscribe((result) => {
         domain.oauth2Enabled = result.oauth2Enabled;
@@ -130,12 +127,9 @@ export class DomainTableConfigResolver  {
       $event.stopPropagation();
     }
 
-    const modifiedDomain: DomainInfo = {
-      ...domain,
-      propagateToEdge: !domain.propagateToEdge
-    };
+    const { oauth2ClientInfos, propagateToEdge, ...updatedDomain } = domain;
 
-    this.domainService.saveDomain(modifiedDomain, null,
+    this.domainService.saveDomain({ ...updatedDomain, propagateToEdge: !propagateToEdge }, null,
       {ignoreLoading: true})
       .subscribe((result) => {
         domain.propagateToEdge = result.propagateToEdge;
