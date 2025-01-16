@@ -85,17 +85,15 @@ export class DomainTableConfigResolver  {
     this.config.loadEntity = id => this.domainService.getDomainInfoById(id.id);
     this.config.saveEntity = (domain, originalDomain) => {
       const clientsIds = domain.oauth2ClientInfos as Array<string> || [];
-      const newDomainClients = domain.oauth2ClientInfos;
+      const shouldUpdateClients = domain.id && !isEqual(domain.oauth2ClientInfos?.sort(),
+        originalDomain.oauth2ClientInfos?.map(info => info.id ? info.id.id : info).sort());
       delete domain.oauth2ClientInfos;
 
-      return this.domainService.saveDomain(domain, domain.id ? [] : clientsIds).pipe(
-        switchMap(savedDomain => {
-          const shouldUpdateClients = domain.id && !isEqual(newDomainClients?.sort(),
-            originalDomain.oauth2ClientInfos?.map(info => info.id ? info.id.id : info).sort());
-          return shouldUpdateClients
-            ? this.domainService.updateOauth2Clients(domain.id.id, clientsIds).pipe(map(() => savedDomain))
-            : of(savedDomain);
-        }),
+      return this.domainService.saveDomain(domain, domain.id ? null : clientsIds).pipe(
+        switchMap(savedDomain => shouldUpdateClients
+          ? this.domainService.updateOauth2Clients(domain.id.id, clientsIds).pipe(map(() => savedDomain))
+          : of(savedDomain)
+        ),
         map(savedDomain => {
           (savedDomain as DomainInfo).oauth2ClientInfos = clientsIds;
           return savedDomain;
@@ -119,7 +117,7 @@ export class DomainTableConfigResolver  {
       oauth2Enabled: !domain.oauth2Enabled
     };
 
-    this.domainService.saveDomain(modifiedDomain, domain.oauth2ClientInfos.map(clientInfo => clientInfo.id.id),
+    this.domainService.saveDomain(modifiedDomain, null,
       {ignoreLoading: true})
       .subscribe((result) => {
         domain.oauth2Enabled = result.oauth2Enabled;
@@ -137,7 +135,7 @@ export class DomainTableConfigResolver  {
       propagateToEdge: !domain.propagateToEdge
     };
 
-    this.domainService.saveDomain(modifiedDomain, domain.oauth2ClientInfos.map(clientInfo => clientInfo.id.id),
+    this.domainService.saveDomain(modifiedDomain, null,
       {ignoreLoading: true})
       .subscribe((result) => {
         domain.propagateToEdge = result.propagateToEdge;
