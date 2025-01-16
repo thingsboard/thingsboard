@@ -85,11 +85,12 @@ export class DomainTableConfigResolver  {
     this.config.loadEntity = id => this.domainService.getDomainInfoById(id.id);
     this.config.saveEntity = (domain, originalDomain) => {
       const clientsIds = domain.oauth2ClientInfos as Array<string> || [];
+      const newDomainClients = domain.oauth2ClientInfos;
       delete domain.oauth2ClientInfos;
 
       return this.domainService.saveDomain(domain, domain.id ? [] : clientsIds).pipe(
         switchMap(savedDomain => {
-          const shouldUpdateClients = domain.id && !isEqual(domain.oauth2ClientInfos?.sort(),
+          const shouldUpdateClients = domain.id && !isEqual(newDomainClients?.sort(),
             originalDomain.oauth2ClientInfos?.map(info => info.id ? info.id.id : info).sort());
           return shouldUpdateClients
             ? this.domainService.updateOauth2Clients(domain.id.id, clientsIds).pipe(map(() => savedDomain))

@@ -32,7 +32,7 @@ export class DomainService {
   ) {
   }
 
-  public saveDomain(domain: Domain, oauth2ClientIds: Array<string>, config?: RequestConfig): Observable<Domain> {
+  public saveDomain(domain: Domain, oauth2ClientIds?: Array<string>, config?: RequestConfig): Observable<Domain> {
     let url = '/api/domain';
     if (oauth2ClientIds?.length) {
       url += `?oauth2ClientIds=${oauth2ClientIds.join(',')}`;
