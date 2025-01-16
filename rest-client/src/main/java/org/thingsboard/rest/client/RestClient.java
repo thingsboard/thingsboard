@@ -2496,6 +2496,39 @@ public class RestClient implements Closeable {
         return RestJsonConverter.toTimeseries(timeseries);
     }
 
+    public Map<String, List<TsKvEntry>> getDevicesTimeseries(List<DeviceId> deviceIds, List<String> keys, Long interval, Aggregation agg, SortOrder.Direction sortOrder, Long startTime, Long endTime, Integer limit, boolean useStrictDataTypes) {
+        Map<String, String> params = new HashMap<>();
+        params.put("deviceIds", listIdsToString(deviceIds));
+        params.put("keys", listToString(keys));
+        params.put("interval", interval == null ? "0" : interval.toString());
+        params.put("agg", agg == null ? "NONE" : agg.name());
+        params.put("limit", limit != null ? limit.toString() : "100");
+        params.put("orderBy", sortOrder != null ? sortOrder.name() : "DESC");
+        params.put("useStrictDataTypes", Boolean.toString(useStrictDataTypes));
+
+        StringBuilder urlBuilder = new StringBuilder(baseURL);
+        urlBuilder.append("/api/plugins/telemetry/devices/values/timeseries?deviceIds={deviceIds}&keys={keys}&interval={interval}&limit={limit}&agg={agg}&useStrictDataTypes={useStrictDataTypes}&orderBy={orderBy}");
+
+        if (startTime != null) {
+            urlBuilder.append("&startTs={startTs}");
+            params.put("startTs", String.valueOf(startTime));
+        }
+        if (endTime != null) {
+            urlBuilder.append("&endTs={endTs}");
+            params.put("endTs", String.valueOf(endTime));
+        }
+
+        Map<String, Map<String, List<JsonNode>>> timeseries = restTemplate.exchange(
+                urlBuilder.toString(),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<Map<String, Map<String, List<JsonNode>>>>() {
+                },
+                params).getBody();
+
+        return RestJsonConverter.toMultiTimeseries(timeseries);
+    }
+
     public boolean saveDeviceAttributes(DeviceId deviceId, String scope, JsonNode request) {
         return restTemplate
                 .postForEntity(baseURL + "/api/plugins/telemetry/{deviceId}/{scope}", request, Object.class, deviceId.getId().toString(), scope)
