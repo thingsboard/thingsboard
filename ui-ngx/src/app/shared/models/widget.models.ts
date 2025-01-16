@@ -672,6 +672,7 @@ export interface WidgetMobileActionResult<T extends MobileActionResult> {
 
 export interface ProvisionSuccessDescriptor {
   handleProvisionSuccessFunction: TbFunction;
+  provisionType: WidgetMobileProvisionType;
 }
 
 export interface ProcessImageDescriptor {

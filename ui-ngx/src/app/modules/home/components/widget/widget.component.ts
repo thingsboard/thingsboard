@@ -1205,6 +1205,9 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       case WidgetMobileActionType.takeScreenshot:
         argsObservable = of([]);
         break;
+      case WidgetMobileActionType.provisioningDevice:
+        argsObservable = of([mobileAction.provisionType]);
+        break;
       case WidgetMobileActionType.mapDirection:
       case WidgetMobileActionType.mapLocation:
         argsObservable = compileTbFunction(this.http, mobileAction.getLocationFunction, '$event', 'widgetContext', 'entityId',
