@@ -16,23 +16,37 @@
 package org.thingsboard.server.service.rpc;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.FutureCallback;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.RpcId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rpc.Rpc;
+import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
+import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
+import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
+import org.thingsboard.server.controller.BaseController;
+import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.AccessValidator;
+import org.thingsboard.server.service.security.ValidationResult;
+import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.permission.Operation;
+
+import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 @TbCoreComponent
 @Service
@@ -41,6 +55,9 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 public class TbRpcService {
     private final RpcService rpcService;
     private final TbClusterService tbClusterService;
+    private final AuditLogService auditLogService;
+    private final AccessValidator accessValidator;
+    private final TbCoreDeviceRpcService deviceRpcService;
 
     public Rpc save(TenantId tenantId, Rpc rpc) {
         Rpc saved = rpcService.save(rpc);
@@ -75,4 +92,86 @@ public class TbRpcService {
         return rpcService.findAllByDeviceIdAndStatus(tenantId, deviceId, rpcStatus, pageLink);
     }
 
+    public void sendRpcRequest(SecurityUser user,
+                               DeviceId entityId,
+                               ToDeviceRpcRequest rpcRequest,
+                               RpcSuccessCallback onSuccess,
+                               RpcFailureCallback onFailure) {
+
+        accessValidator.validate(user, Operation.RPC_CALL, entityId, new FutureCallback<>() {
+
+            @Override
+            public void onSuccess(ValidationResult result) {
+                deviceRpcService.processRestApiRpcRequest(rpcRequest, fromDeviceRpcResponse -> {
+                    onSuccess.handleRpcSuccess(rpcRequest, fromDeviceRpcResponse);
+                }, user);
+            }
+
+            @Override
+            public void onFailure(Throwable throwable) {
+                onFailure.handleRpcFailure(rpcRequest, throwable);
+            }
+        });
+    }
+
+    public void logRpcCall(SecurityUser user,
+                           EntityId entityId,
+                           ToDeviceRpcRequestBody body,
+                           boolean oneWay,
+                           Optional<RpcError> rpcError,
+                           Throwable t) {
+
+        String rpcErrorStr = rpcError.map(err -> "RPC Error: " + err.name()).orElse("");
+        auditLogService.logEntityAction(
+                user.getTenantId(),
+                user.getCustomerId(),
+                user.getId(),
+                user.getName(),
+                (UUIDBased & EntityId) entityId,
+                null,
+                ActionType.RPC_CALL,
+                BaseController.toException(t),
+                rpcErrorStr,
+                oneWay,
+                body.getMethod(),
+                body.getParams()
+        );
+    }
+
+    public void handleRpcResponse(
+            FromDeviceRpcResponse response,
+            Consumer<RpcError> onError,
+            BiConsumer<String, Throwable> onSuccessWithData,
+            Runnable onSuccessEmpty,
+            Consumer<Throwable> onDecodeError
+    ) {
+        Optional<RpcError> rpcError = response.getError();
+        if (rpcError.isPresent()) {
+            onError.accept(rpcError.get());
+        } else {
+            Optional<String> responseData = response.getResponse();
+            if (responseData.isPresent() && !responseData.get().isEmpty()) {
+                String data = responseData.get();
+                try {
+                    onSuccessWithData.accept(data, null);
+                } catch (IllegalArgumentException e) {
+                    onDecodeError.accept(e);
+                }
+            } else {
+                onSuccessEmpty.run();
+            }
+        }
+    }
+
+    @FunctionalInterface
+    public interface RpcSuccessCallback {
+        void handleRpcSuccess(ToDeviceRpcRequest rpcRequest, FromDeviceRpcResponse response);
+    }
+
+    @FunctionalInterface
+    public interface RpcFailureCallback {
+        void handleRpcFailure(ToDeviceRpcRequest rpcRequest, Throwable e);
+    }
 }
+
+

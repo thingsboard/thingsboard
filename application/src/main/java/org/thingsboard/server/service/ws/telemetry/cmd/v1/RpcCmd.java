@@ -19,7 +19,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.ws.WsCmd;
 import org.thingsboard.server.service.ws.WsCmdType;
 
