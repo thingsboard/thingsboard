@@ -203,7 +203,9 @@ export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAu
       additionalInfo?.providerName : defaultProviderName);
 
     this.changeMapperConfigType(this.entityForm, MapperType.BASIC);
-    this.setProviderDefaultValue(defaultProviderName, this.entityForm);
+    if (this.createNewDialog || this.isAdd) {
+      this.setProviderDefaultValue(defaultProviderName, this.entityForm);
+    }
 
     this.subscriptions.push(this.entityForm.get('mapperConfig.type').valueChanges.subscribe((value) => {
       this.changeMapperConfigType(this.entityForm, value);
