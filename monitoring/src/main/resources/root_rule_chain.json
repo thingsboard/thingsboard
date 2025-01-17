@@ -21,7 +21,7 @@
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
         "name": "Save Timeseries",
         "singletonMode": false,
-        "configurationVersion": 0,
+        "configurationVersion": 1,
         "configuration": {
           "defaultTTL": 0,
           "useServerTs": false,
@@ -277,7 +277,7 @@
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
         "name": "Save Timeseries",
         "singletonMode": false,
-        "configurationVersion": 0,
+        "configurationVersion": 1,
         "configuration": {
           "defaultTTL": 0,
           "useServerTs": false,
@@ -315,7 +315,7 @@
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
         "name": "Save Timeseries with TTL",
         "singletonMode": false,
-        "configurationVersion": 0,
+        "configurationVersion": 1,
         "configuration": {
           "defaultTTL": 180,
           "useServerTs": false,

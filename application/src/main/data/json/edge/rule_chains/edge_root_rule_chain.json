@@ -33,6 +33,7 @@
         },
         "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
         "name": "Save Timeseries",
+        "configurationVersion": 1,
         "configuration": {
           "defaultTTL": 0,
           "useServerTs": false,
