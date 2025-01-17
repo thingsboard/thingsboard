@@ -27,7 +27,7 @@
         </div>
         <div *ngIf="modulesFormArray().controls.length; else noModules" class="tb-form-table-body">
           <div *ngFor="let moduleControl of modulesFormArray().controls; trackBy: trackByModule; let $index = index;">
-            <tb-js-func-module-row class="flex-1"
+            <tb-js-func-module-row class="flex flex-1"
                                    [index]="$index"
                                    [formControl]="moduleControl"
                                    (moduleRemoved)="removeModule($index)">
