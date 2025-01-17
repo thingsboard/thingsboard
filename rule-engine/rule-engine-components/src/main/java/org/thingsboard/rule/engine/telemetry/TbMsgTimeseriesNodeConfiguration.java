@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.telemetry;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -67,11 +68,15 @@ public class TbMsgTimeseriesNodeConfiguration implements NodeConfiguration<TbMsg
         @Getter
         final class Deduplicate implements PersistenceSettings {
 
-            public final PersistenceStrategy deduplicateStrategy;
+            private final int deduplicationIntervalSecs;
+
+            @JsonIgnore
+            private final PersistenceStrategy deduplicateStrategy;
 
             @JsonCreator
-            private Deduplicate(@JsonProperty("deduplicationIntervalSecs") int deduplicationIntervalSecs) {
-                this.deduplicateStrategy = PersistenceStrategy.deduplicate(deduplicationIntervalSecs);
+            Deduplicate(@JsonProperty("deduplicationIntervalSecs") int deduplicationIntervalSecs) {
+                this.deduplicationIntervalSecs = deduplicationIntervalSecs;
+                deduplicateStrategy = PersistenceStrategy.deduplicate(deduplicationIntervalSecs);
             }
 
         }

@@ -90,11 +90,11 @@ public class TbMsgTimeseriesNode implements TbNode {
         onTenantProfileUpdate(ctx.getTenantProfile());
         persistenceSettings = config.getPersistenceSettings();
         if (persistenceSettings == null) {
-            throw new TbNodeException("Persistence settings cannot be null!", true);
+            throw new TbNodeException("Persistence settings cannot be null", true);
         }
     }
 
-    void onTenantProfileUpdate(TenantProfile tenantProfile) {
+    private void onTenantProfileUpdate(TenantProfile tenantProfile) {
         DefaultTenantProfileConfiguration configuration = (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
         tenantProfileDefaultStorageTtl = TimeUnit.DAYS.toSeconds(configuration.getDefaultStorageTtlDays());
     }
@@ -193,7 +193,7 @@ public class TbMsgTimeseriesNode implements TbNode {
         boolean hasChanges = false;
         switch (fromVersion) {
             case 0:
-                if (oldConfiguration.has("persistenceSettings")) {
+                if (oldConfiguration.has("persistenceSettings") && !oldConfiguration.has("skipLatestPersistence")) {
                     break;
                 }
                 hasChanges = true;

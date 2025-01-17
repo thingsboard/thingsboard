@@ -45,6 +45,11 @@ final class DeduplicatePersistenceStrategy implements PersistenceStrategy {
                 .build(__ -> Sets.newConcurrentHashSet());
     }
 
+    @JsonProperty("deduplicationIntervalSecs")
+    public long getDeduplicationIntervalSecs() {
+        return Duration.ofMillis(deduplicationIntervalMillis).toSeconds();
+    }
+
     @Override
     public boolean shouldPersist(long ts, UUID originatorUuid) {
         long intervalNumber = ts / deduplicationIntervalMillis;
