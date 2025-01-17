@@ -15,8 +15,11 @@
  */
 package org.thingsboard.rule.engine.telemetry;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -24,6 +27,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.telemetry.strategy.PersistenceStrategy;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -32,13 +36,20 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.PersistenceSettings;
+import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.PersistenceSettings.Advanced;
+import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.PersistenceSettings.Deduplicate;
+import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.PersistenceSettings.OnEveryMessage;
+import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.PersistenceSettings.WebSocketsOnly;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @Slf4j
@@ -60,7 +71,8 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_RE
                 "So, to make sure that all the messages will be processed correctly, one should enable this parameter for sequential message processing scenarios.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeTimeseriesConfig",
-        icon = "file_upload"
+        icon = "file_upload",
+        version = 1
 )
 public class TbMsgTimeseriesNode implements TbNode {
 
@@ -68,15 +80,21 @@ public class TbMsgTimeseriesNode implements TbNode {
     private TbContext ctx;
     private long tenantProfileDefaultStorageTtl;
 
+    private PersistenceSettings persistenceSettings;
+
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgTimeseriesNodeConfiguration.class);
         this.ctx = ctx;
         ctx.addTenantProfileListener(this::onTenantProfileUpdate);
         onTenantProfileUpdate(ctx.getTenantProfile());
+        persistenceSettings = config.getPersistenceSettings();
+        if (persistenceSettings == null) {
+            throw new TbNodeException("Persistence settings cannot be null", true);
+        }
     }
 
-    void onTenantProfileUpdate(TenantProfile tenantProfile) {
+    private void onTenantProfileUpdate(TenantProfile tenantProfile) {
         DefaultTenantProfileConfiguration configuration = (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
         tenantProfileDefaultStorageTtl = TimeUnit.DAYS.toSeconds(configuration.getDefaultStorageTtlDays());
     }
@@ -88,6 +106,18 @@ public class TbMsgTimeseriesNode implements TbNode {
             return;
         }
         long ts = computeTs(msg, config.isUseServerTs());
+
+        PersistenceDecision persistenceDecision = makePersistenceDecision(ts, msg.getOriginator().getId());
+        boolean saveTimeseries = persistenceDecision.saveTimeseries();
+        boolean saveLatest = persistenceDecision.saveLatest();
+        boolean sendWsUpdate = persistenceDecision.sendWsUpdate();
+
+        // short-circuit
+        if (!saveTimeseries && !saveLatest && !sendWsUpdate) {
+            ctx.tellSuccess(msg);
+            return;
+        }
+
         String src = msg.getData();
         Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(JsonParser.parseString(src), ts);
         if (tsKvMap.isEmpty()) {
@@ -111,7 +141,9 @@ public class TbMsgTimeseriesNode implements TbNode {
                 .entityId(msg.getOriginator())
                 .entries(tsKvEntryList)
                 .ttl(ttl)
-                .saveLatest(!config.isSkipLatestPersistence())
+                .saveTimeseries(saveTimeseries)
+                .saveLatest(saveLatest)
+                .sendWsUpdate(sendWsUpdate)
                 .callback(new TelemetryNodeCallback(ctx, msg))
                 .build());
     }
@@ -120,9 +152,68 @@ public class TbMsgTimeseriesNode implements TbNode {
         return ignoreMetadataTs ? System.currentTimeMillis() : msg.getMetaDataTs();
     }
 
+    private record PersistenceDecision(boolean saveTimeseries, boolean saveLatest, boolean sendWsUpdate) {}
+
+    private PersistenceDecision makePersistenceDecision(long ts, UUID originatorUuid) {
+        boolean saveTimeseries;
+        boolean saveLatest;
+        boolean sendWsUpdate;
+
+        if (persistenceSettings instanceof OnEveryMessage) {
+            saveTimeseries = true;
+            saveLatest = true;
+            sendWsUpdate = true;
+        } else if (persistenceSettings instanceof WebSocketsOnly) {
+            saveTimeseries = false;
+            saveLatest = false;
+            sendWsUpdate = true;
+        } else if (persistenceSettings instanceof Deduplicate deduplicate) {
+            boolean isFirstMsgInInterval = deduplicate.getDeduplicateStrategy().shouldPersist(ts, originatorUuid);
+            saveTimeseries = isFirstMsgInInterval;
+            saveLatest = isFirstMsgInInterval;
+            sendWsUpdate = isFirstMsgInInterval;
+        } else if (persistenceSettings instanceof Advanced advanced) {
+            saveTimeseries = advanced.timeseries().shouldPersist(ts, originatorUuid);
+            saveLatest = advanced.latest().shouldPersist(ts, originatorUuid);
+            sendWsUpdate = advanced.webSockets().shouldPersist(ts, originatorUuid);
+        } else { // should not happen
+            throw new IllegalArgumentException("Unknown persistence settings type: " + persistenceSettings.getClass().getSimpleName());
+        }
+
+        return new PersistenceDecision(saveTimeseries, saveLatest, sendWsUpdate);
+    }
+
     @Override
     public void destroy() {
         ctx.removeListeners();
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                if (oldConfiguration.has("persistenceSettings") && !oldConfiguration.has("skipLatestPersistence")) {
+                    break;
+                }
+                hasChanges = true;
+                JsonNode skipLatestPersistence = oldConfiguration.get("skipLatestPersistence");
+                if (skipLatestPersistence != null && "true".equals(skipLatestPersistence.asText())) {
+                    var skipLatestPersistenceSettings = new Advanced(
+                            PersistenceStrategy.onEveryMessage(),
+                            PersistenceStrategy.skip(),
+                            PersistenceStrategy.onEveryMessage()
+                    );
+                    ((ObjectNode) oldConfiguration).set("persistenceSettings", JacksonUtil.valueToTree(skipLatestPersistenceSettings));
+                } else {
+                    ((ObjectNode) oldConfiguration).set("persistenceSettings", JacksonUtil.valueToTree(new OnEveryMessage()));
+                }
+                ((ObjectNode) oldConfiguration).remove("skipLatestPersistence");
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
 }

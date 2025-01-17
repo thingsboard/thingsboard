@@ -38,8 +38,9 @@ public class TimeseriesSaveRequest {
     private final EntityId entityId;
     private final List<TsKvEntry> entries;
     private final long ttl;
+    private final boolean saveTimeseries;
     private final boolean saveLatest;
-    private final boolean onlyLatest;
+    private final boolean sendWsUpdate;
     private final FutureCallback<Void> callback;
 
     public static Builder builder() {
@@ -53,9 +54,10 @@ public class TimeseriesSaveRequest {
         private EntityId entityId;
         private List<TsKvEntry> entries;
         private long ttl;
-        private FutureCallback<Void> callback;
+        private boolean saveTimeseries = true;
         private boolean saveLatest = true;
-        private boolean onlyLatest;
+        private boolean sendWsUpdate = true;
+        private FutureCallback<Void> callback;
 
         Builder() {}
 
@@ -92,14 +94,18 @@ public class TimeseriesSaveRequest {
             return this;
         }
 
+        public Builder saveTimeseries(boolean saveTimeseries) {
+            this.saveTimeseries = saveTimeseries;
+            return this;
+        }
+
         public Builder saveLatest(boolean saveLatest) {
             this.saveLatest = saveLatest;
             return this;
         }
 
-        public Builder onlyLatest(boolean onlyLatest) {
-            this.onlyLatest = onlyLatest;
-            this.saveLatest = true;
+        public Builder sendWsUpdate(boolean sendWsUpdate) {
+            this.sendWsUpdate = sendWsUpdate;
             return this;
         }
 
@@ -123,7 +129,7 @@ public class TimeseriesSaveRequest {
         }
 
         public TimeseriesSaveRequest build() {
-            return new TimeseriesSaveRequest(tenantId, customerId, entityId, entries, ttl, saveLatest, onlyLatest, callback);
+            return new TimeseriesSaveRequest(tenantId, customerId, entityId, entries, ttl, saveTimeseries, saveLatest, sendWsUpdate, callback);
         }
 
     }

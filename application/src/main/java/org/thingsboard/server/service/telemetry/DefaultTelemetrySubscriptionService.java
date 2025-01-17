@@ -118,10 +118,10 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         EntityId entityId = request.getEntityId();
         checkInternalEntity(entityId);
         boolean sysTenant = TenantId.SYS_TENANT_ID.equals(tenantId) || tenantId == null;
-        if (sysTenant || request.isOnlyLatest() || apiUsageStateService.getApiUsageState(tenantId).isDbStorageEnabled()) {
+        if (sysTenant || !request.isSaveTimeseries() || apiUsageStateService.getApiUsageState(tenantId).isDbStorageEnabled()) {
             KvUtils.validate(request.getEntries(), valueNoXssValidation);
             ListenableFuture<Integer> future = saveTimeseriesInternal(request);
-            if (!request.isOnlyLatest()) {
+            if (request.isSaveTimeseries()) {
                 FutureCallback<Integer> callback = getApiUsageCallback(tenantId, request.getCustomerId(), sysTenant, request.getCallback());
                 Futures.addCallback(future, callback, tsCallBackExecutor);
             }
@@ -135,18 +135,22 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         TenantId tenantId = request.getTenantId();
         EntityId entityId = request.getEntityId();
         ListenableFuture<Integer> saveFuture;
-        if (request.isOnlyLatest()) {
-            saveFuture = Futures.transform(tsService.saveLatest(tenantId, entityId, request.getEntries()), result -> 0, MoreExecutors.directExecutor());
-        } else if (request.isSaveLatest()) {
+        if (request.isSaveTimeseries() && request.isSaveLatest()) {
             saveFuture = tsService.save(tenantId, entityId, request.getEntries(), request.getTtl());
-        } else {
+        } else if (request.isSaveLatest()) {
+            saveFuture = Futures.transform(tsService.saveLatest(tenantId, entityId, request.getEntries()), result -> 0, MoreExecutors.directExecutor());
+        } else if (request.isSaveTimeseries()) {
             saveFuture = tsService.saveWithoutLatest(tenantId, entityId, request.getEntries(), request.getTtl());
+        } else {
+            saveFuture = Futures.immediateFuture(0);
         }
 
         addMainCallback(saveFuture, request.getCallback());
-        addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, request.getEntries()));
-        if (request.isSaveLatest() && !request.isOnlyLatest()) {
-            addEntityViewCallback(tenantId, entityId, request.getEntries());
+        if (request.isSendWsUpdate()) {
+            addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, request.getEntries()));
+        }
+        if (request.isSaveLatest()) {
+            copyLatestToEntityViews(tenantId, entityId, request.getEntries());
         }
         return saveFuture;
     }
@@ -201,7 +205,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         }
     }
 
-    private void addEntityViewCallback(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
+    private void copyLatestToEntityViews(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
         if (EntityType.DEVICE.equals(entityId.getEntityType()) || EntityType.ASSET.equals(entityId.getEntityType())) {
             Futures.addCallback(this.tbEntityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId),
                     new FutureCallback<>() {
@@ -232,7 +236,9 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                                 .tenantId(tenantId)
                                                 .entityId(entityView.getId())
                                                 .entries(entityViewLatest)
-                                                .onlyLatest(true)
+                                                .saveTimeseries(false)
+                                                .saveLatest(true)
+                                                .sendWsUpdate(true)
                                                 .callback(new FutureCallback<>() {
                                                     @Override
                                                     public void onSuccess(@Nullable Void tmp) {}
