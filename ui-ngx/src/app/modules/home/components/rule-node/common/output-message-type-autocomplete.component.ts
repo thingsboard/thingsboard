@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
+import { Component, forwardRef, Input } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -26,7 +26,7 @@ import {
 } from '@angular/forms';
 import { SubscriptSizing } from '@angular/material/form-field';
 import { coerceBoolean } from '@shared/public-api';
-import { Subject, takeUntil } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 interface MessageType {
   name: string;
@@ -51,7 +51,7 @@ interface MessageType {
   ]
 })
 
-export class OutputMessageTypeAutocompleteComponent implements ControlValueAccessor, Validator, OnDestroy {
+export class OutputMessageTypeAutocompleteComponent implements ControlValueAccessor, Validator {
 
   @Input()
   subscriptSizing: SubscriptSizing = 'fixed';
@@ -93,7 +93,6 @@ export class OutputMessageTypeAutocompleteComponent implements ControlValueAcces
   private modelValue: string | null;
   private requiredValue: boolean;
   private propagateChange: (value: any) => void = () => {};
-  private destroy$ = new Subject<void>();
 
   constructor(private fb: FormBuilder) {
     this.messageTypeFormGroup = this.fb.group({
@@ -101,19 +100,14 @@ export class OutputMessageTypeAutocompleteComponent implements ControlValueAcces
       messageType: [{value: null, disabled: true}, [Validators.maxLength(255)]]
     });
     this.messageTypeFormGroup.get('messageTypeAlias').valueChanges
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed())
       .subscribe(value => this.updateMessageTypeValue(value));
     this.messageTypeFormGroup.valueChanges
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed())
       .subscribe(() => this.updateView());
   }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   registerOnChange(fn: any): void {

@@ -101,7 +101,7 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
 
   private configurationSet = false;
   private disabledValue = false;
-  private destroyRef = inject(DestroyRef);
+  protected destroyRef = inject(DestroyRef);
 
   set disabled(value: boolean) {
     if (this.disabledValue !== value) {

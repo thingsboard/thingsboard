@@ -29,6 +29,7 @@ import {
 import type { JsFuncComponent } from '@app/shared/components/js-func.component';
 import { AlarmSeverity, alarmSeverityTranslations } from '@app/shared/models/alarm.models';
 import { DebugRuleNodeEventBody } from '@shared/models/event.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-action-node-create-alarm-config',
@@ -83,7 +84,9 @@ export class CreateAlarmConfigComponent extends RuleNodeConfigurationComponent {
       dynamicSeverity: false
     });
 
-    this.createAlarmConfigForm.get('dynamicSeverity').valueChanges.subscribe((dynamicSeverity) => {
+    this.createAlarmConfigForm.get('dynamicSeverity').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((dynamicSeverity) => {
       if(dynamicSeverity){
         this.createAlarmConfigForm.get('severity').patchValue('',{emitEvent:false});
       } else {

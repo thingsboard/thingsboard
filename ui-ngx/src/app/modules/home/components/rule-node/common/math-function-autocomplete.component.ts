@@ -75,7 +75,7 @@ export class MathFunctionAutocompleteComponent implements ControlValueAccessor, 
     });
     this.filteredOptions = this.mathFunctionForm.get('operation').valueChanges.pipe(
       tap(value => {
-        let modelValue;
+        let modelValue: MathFunction;
         if (typeof value === 'string' && MathFunction[value]) {
           modelValue = MathFunction[value];
         } else {
@@ -101,7 +101,7 @@ export class MathFunctionAutocompleteComponent implements ControlValueAccessor, 
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   setDisabledState(isDisabled: boolean): void {

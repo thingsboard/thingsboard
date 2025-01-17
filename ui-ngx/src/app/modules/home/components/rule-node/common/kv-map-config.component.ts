@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Injector, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Injector, Input, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -31,7 +31,7 @@ import {
 } from '@angular/forms';
 import { coerceBoolean } from '@shared/public-api';
 import { isEqual } from '@core/public-api';
-import { Subject, takeUntil } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-kv-map-config',
@@ -50,10 +50,9 @@ import { Subject, takeUntil } from 'rxjs';
     }
   ]
 })
-export class KvMapConfigComponent implements ControlValueAccessor, OnInit, Validator, OnDestroy {
+export class KvMapConfigComponent implements ControlValueAccessor, OnInit, Validator {
 
   private propagateChange: (value: any) => void = () => {};
-  private destroy$ = new Subject<void>();
 
   kvListFormGroup: FormGroup;
   ngControl: NgControl;
@@ -87,7 +86,8 @@ export class KvMapConfigComponent implements ControlValueAccessor, OnInit, Valid
   required = false;
 
   constructor(private injector: Injector,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -101,15 +101,10 @@ export class KvMapConfigComponent implements ControlValueAccessor, OnInit, Valid
     }, {validators: [this.propagateNestedErrors, this.oneMapRequiredValidator]});
 
     this.kvListFormGroup.valueChanges
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.updateModel();
       });
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   keyValsFormArray(): FormArray {
@@ -120,7 +115,7 @@ export class KvMapConfigComponent implements ControlValueAccessor, OnInit, Valid
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   setDisabledState(isDisabled: boolean): void {

@@ -14,11 +14,10 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, OnInit } from '@angular/core';
 import { AlarmStatus, alarmStatusTranslations, PageComponent } from '@shared/public-api';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-alarm-status-select',
@@ -31,17 +30,17 @@ import { Subject } from 'rxjs';
   }]
 })
 
-export class AlarmStatusSelectComponent extends PageComponent implements OnInit, ControlValueAccessor, OnDestroy {
+export class AlarmStatusSelectComponent extends PageComponent implements OnInit, ControlValueAccessor {
 
   public alarmStatusGroup: FormGroup;
 
   private propagateChange = null;
-  private destroy$ = new Subject<void>();
 
   readonly alarmStatus = AlarmStatus;
   readonly alarmStatusTranslations = alarmStatusTranslations;
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder,
+              private destroyRef: DestroyRef) {
     super();
   }
 
@@ -51,7 +50,7 @@ export class AlarmStatusSelectComponent extends PageComponent implements OnInit,
     });
 
     this.alarmStatusGroup.get('alarmStatus').valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe((value) => {
       this.propagateChange(value);
     });
@@ -69,12 +68,7 @@ export class AlarmStatusSelectComponent extends PageComponent implements OnInit,
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
+  registerOnTouched(_fn: any): void {
   }
 
   writeValue(value: Array<AlarmStatus>): void {

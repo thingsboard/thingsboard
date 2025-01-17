@@ -14,13 +14,12 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Injector, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Injector, Input, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
   FormArray,
   FormBuilder,
-  FormControl,
   FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
@@ -31,12 +30,10 @@ import {
   Validators
 } from '@angular/forms';
 import { coerceBoolean, PageComponent } from '@shared/public-api';
-import { Store } from '@ngrx/store';
-import { AppState, isDefinedAndNotNull, isEqual } from '@core/public-api';
-import { Subject, Subscription } from 'rxjs';
+import { isDefinedAndNotNull, isEqual } from '@core/public-api';
 import { TranslateService } from '@ngx-translate/core';
-import { takeUntil } from 'rxjs/operators';
 import { OriginatorFieldsMappingValues, SvMapOption } from '../rule-node-config.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-sv-map-config',
@@ -55,10 +52,8 @@ import { OriginatorFieldsMappingValues, SvMapOption } from '../rule-node-config.
     }
   ]
 })
-export class SvMapConfigComponent extends PageComponent implements ControlValueAccessor, OnInit, Validator, OnDestroy {
+export class SvMapConfigComponent extends PageComponent implements ControlValueAccessor, OnInit, Validator {
 
-  private destroy$ = new Subject<void>();
-  private sourceFieldSubcritption: Subscription[] = [];
   private propagateChange = null;
 
   svListFormGroup: FormGroup;
@@ -92,11 +87,11 @@ export class SvMapConfigComponent extends PageComponent implements ControlValueA
   @coerceBoolean()
   required = false;
 
-  constructor(protected store: Store<AppState>,
-              public translate: TranslateService,
-              public injector: Injector,
-              private fb: FormBuilder) {
-    super(store);
+  constructor(public translate: TranslateService,
+              private injector: Injector,
+              private fb: FormBuilder,
+              private destroyRef: DestroyRef) {
+    super();
   }
 
   ngOnInit(): void {
@@ -110,15 +105,10 @@ export class SvMapConfigComponent extends PageComponent implements ControlValueA
     }, {validators: [this.propagateNestedErrors, this.oneMapRequiredValidator]});
 
     this.svListFormGroup.valueChanges
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.updateModel();
       });
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   keyValsFormArray(): FormArray {
@@ -129,7 +119,7 @@ export class SvMapConfigComponent extends PageComponent implements ControlValueA
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -215,8 +205,6 @@ export class SvMapConfigComponent extends PageComponent implements ControlValueA
 
   public removeKeyVal(index: number) {
     this.keyValsFormArray().removeAt(index);
-    this.sourceFieldSubcritption[index].unsubscribe();
-    this.sourceFieldSubcritption.splice(index, 1);
   }
 
   public addKeyVal() {
@@ -228,15 +216,15 @@ export class SvMapConfigComponent extends PageComponent implements ControlValueA
   }
 
   private keyChangeSubscribe(formGroup: FormGroup) {
-    this.sourceFieldSubcritption.push(formGroup.get('key').valueChanges.pipe(
-      takeUntil(this.destroy$)
+    formGroup.get('key').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe((value) => {
       const mappedValue = OriginatorFieldsMappingValues.get(value);
       formGroup.get('value').patchValue(this.targetKeyPrefix + mappedValue[0].toUpperCase() + mappedValue.slice(1));
-    }));
+    });
   }
 
-  public validate(c: FormControl) {
+  public validate() {
     const svList: { key: string; value: string }[] = this.svListFormGroup.get('keyVals').value;
     if (!svList.length && this.required) {
       return {

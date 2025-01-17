@@ -20,6 +20,7 @@ import { MatChipGrid, MatChipInputEvent } from '@angular/material/chips';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shared/models/rule-node.models';
 import { AttributeScope, telemetryTypeTranslations } from '@shared/models/telemetry/telemetry.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-action-node-delete-attributes-config',
@@ -51,7 +52,9 @@ export class DeleteAttributesConfigComponent extends RuleNodeConfigurationCompon
       notifyDevice: [configuration ? configuration.notifyDevice : false, []]
     });
 
-    this.deleteAttributesConfigForm.get('scope').valueChanges.subscribe((value) => {
+    this.deleteAttributesConfigForm.get('scope').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((value) => {
       if (value !== AttributeScope.SHARED_SCOPE) {
         this.deleteAttributesConfigForm.get('notifyDevice').patchValue(false, {emitEvent: false});
       }

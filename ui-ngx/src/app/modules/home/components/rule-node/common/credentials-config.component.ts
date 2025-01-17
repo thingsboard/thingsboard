@@ -14,11 +14,10 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
-  FormControl,
   FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
@@ -27,12 +26,11 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
-import { AppState, isDefinedAndNotNull } from '@core/public-api';
+import { isDefinedAndNotNull } from '@core/public-api';
 import { PageComponent } from '@shared/public-api';
-import { Store } from '@ngrx/store';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { credentialsType, credentialsTypes, credentialsTypeTranslations } from '../rule-node-config.models';
-import { Subscription } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 interface CredentialsConfig {
   type: credentialsType;
@@ -63,11 +61,9 @@ interface CredentialsConfig {
     }
   ]
 })
-export class CredentialsConfigComponent extends PageComponent implements ControlValueAccessor, OnInit, Validator, OnDestroy, OnChanges {
+export class CredentialsConfigComponent extends PageComponent implements ControlValueAccessor, OnInit, Validator, OnChanges {
 
   credentialsConfigFormGroup: FormGroup;
-
-  subscriptions: Subscription[] = [];
 
   private requiredValue: boolean;
 
@@ -91,9 +87,9 @@ export class CredentialsConfigComponent extends PageComponent implements Control
 
   private propagateChange = (_: any) => {};
 
-  constructor(protected store: Store<AppState>,
-              private fb: FormBuilder) {
-    super(store);
+  constructor(private fb: FormBuilder,
+              private destroyRef: DestroyRef) {
+    super();
   }
 
   ngOnInit(): void {
@@ -110,16 +106,16 @@ export class CredentialsConfigComponent extends PageComponent implements Control
         certFileName: [null, []]
       }
     );
-    this.subscriptions.push(
-      this.credentialsConfigFormGroup.valueChanges.subscribe(() => {
-        this.updateView();
-      })
-    );
-    this.subscriptions.push(
-      this.credentialsConfigFormGroup.get('type').valueChanges.subscribe(() => {
-        this.credentialsTypeChanged();
-      })
-    );
+    this.credentialsConfigFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
+      this.updateView();
+    });
+    this.credentialsConfigFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
+      this.credentialsTypeChanged();
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -136,10 +132,6 @@ export class CredentialsConfigComponent extends PageComponent implements Control
         }
       }
     }
-  }
-
-  ngOnDestroy() {
-    this.subscriptions.forEach(s => s.unsubscribe());
   }
 
   writeValue(credentials: CredentialsConfig | null): void {
@@ -185,10 +177,10 @@ export class CredentialsConfigComponent extends PageComponent implements Control
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(): void {
   }
 
-  public validate(c: FormControl) {
+  public validate() {
     return this.credentialsConfigFormGroup.valid ? null : {
       credentialsConfig: {
         valid: false,

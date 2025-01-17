@@ -18,6 +18,7 @@ import { Component } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@shared/models/rule-node.models';
 import { AttributeScope, telemetryTypeTranslations } from '@app/shared/models/telemetry/telemetry.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-action-node-attributes-config',
@@ -48,7 +49,9 @@ export class AttributesConfigComponent extends RuleNodeConfigurationComponent {
       updateAttributesOnlyOnValueChange: [configuration ? configuration.updateAttributesOnlyOnValueChange : false, []]
     });
 
-    this.attributesConfigForm.get('scope').valueChanges.subscribe((value) => {
+    this.attributesConfigForm.get('scope').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((value) => {
       if (value !== AttributeScope.SHARED_SCOPE) {
         this.attributesConfigForm.get('notifyDevice').patchValue(false, {emitEvent: false});
       }

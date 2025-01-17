@@ -14,12 +14,11 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FetchTo, FetchToTranslation } from '../rule-node-config.models';
-import { takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-msg-metadata-chip',
@@ -31,19 +30,19 @@ import { TranslateService } from '@ngx-translate/core';
   }]
 })
 
-export class MsgMetadataChipComponent implements OnInit, ControlValueAccessor, OnDestroy {
+export class MsgMetadataChipComponent implements OnInit, ControlValueAccessor {
 
   @Input() labelText: string;
   @Input() translation: Map<FetchTo, string> = FetchToTranslation;
 
   private propagateChange: (value: any) => void = () => {};
-  private destroy$ = new Subject<void>();
 
   public chipControlGroup: FormGroup;
   public selectOptions = [];
 
   constructor(private fb: FormBuilder,
-              private translate: TranslateService) {}
+              private translate: TranslateService,
+              private destroyRef: DestroyRef) {}
 
   ngOnInit(): void {
     this.initOptions();
@@ -52,18 +51,13 @@ export class MsgMetadataChipComponent implements OnInit, ControlValueAccessor, O
     });
 
     this.chipControlGroup.get('chipControl').valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe((value) => {
         if (value) {
           this.propagateChange(value);
         }
       }
     );
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   initOptions() {
@@ -83,7 +77,7 @@ export class MsgMetadataChipComponent implements OnInit, ControlValueAccessor, O
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   setDisabledState(isDisabled: boolean): void {

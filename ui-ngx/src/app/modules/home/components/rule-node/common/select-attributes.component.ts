@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -25,11 +25,10 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
-import { takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { TranslateService } from '@ngx-translate/core';
 import { isDefinedAndNotNull } from '@core/public-api';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-select-attributes',
@@ -46,10 +45,9 @@ import { isDefinedAndNotNull } from '@core/public-api';
   }]
 })
 
-export class SelectAttributesComponent implements OnInit, ControlValueAccessor, OnDestroy {
+export class SelectAttributesComponent implements OnInit, ControlValueAccessor {
 
   private propagateChange = (v: any) => { };
-  private destroy$ = new Subject();
 
   public attributeControlGroup: FormGroup;
   public separatorKeysCodes = [ENTER, COMMA, SEMICOLON];
@@ -58,7 +56,8 @@ export class SelectAttributesComponent implements OnInit, ControlValueAccessor, 
   @Input() popupHelpLink: string;
 
   constructor(public translate: TranslateService,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
@@ -74,7 +73,7 @@ export class SelectAttributesComponent implements OnInit, ControlValueAccessor, 
     });
 
     this.attributeControlGroup.valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe((value) => {
       this.propagateChange(this.preparePropagateValue(value));
     });
@@ -88,7 +87,7 @@ export class SelectAttributesComponent implements OnInit, ControlValueAccessor, 
       } else {
         formatValue[key] = isDefinedAndNotNull(propagateValue[key]) ? propagateValue[key] : [];
       }
-    };
+    }
 
     return formatValue;
   };
@@ -130,10 +129,5 @@ export class SelectAttributesComponent implements OnInit, ControlValueAccessor, 
     } else {
       this.attributeControlGroup.enable({emitEvent: false});
     }
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next(null);
-    this.destroy$.complete();
   }
 }

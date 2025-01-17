@@ -14,12 +14,11 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   FormArray,
   FormBuilder,
-  FormControl,
   FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
@@ -27,7 +26,6 @@ import {
   Validators
 } from '@angular/forms';
 import { PageComponent } from '@shared/public-api';
-import { Subscription } from 'rxjs';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import {
   ArgumentName,
@@ -38,6 +36,7 @@ import {
   MathFunction,
   MathFunctionMap
 } from './../rule-node-config.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-arguments-map-config',
@@ -56,7 +55,7 @@ import {
     }
   ]
 })
-export class ArgumentsMapConfigComponent extends PageComponent implements ControlValueAccessor, OnInit, OnDestroy, Validator {
+export class ArgumentsMapConfigComponent extends PageComponent implements ControlValueAccessor, OnInit, Validator {
 
   @Input() disabled: boolean;
 
@@ -90,9 +89,8 @@ export class ArgumentsMapConfigComponent extends PageComponent implements Contro
 
   private propagateChange = null;
 
-  private valueChangeSubscription: Subscription[] = [];
-
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder,
+              private destroyRef: DestroyRef) {
     super();
   }
 
@@ -101,9 +99,11 @@ export class ArgumentsMapConfigComponent extends PageComponent implements Contro
       arguments: this.fb.array([])
     });
 
-    this.valueChangeSubscription.push(this.argumentsFormGroup.valueChanges.subscribe(() => {
+    this.argumentsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
-    }));
+    });
 
     this.setupArgumentsFormGroup();
   }
@@ -124,7 +124,7 @@ export class ArgumentsMapConfigComponent extends PageComponent implements Contro
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -138,13 +138,7 @@ export class ArgumentsMapConfigComponent extends PageComponent implements Contro
     }
   }
 
-  ngOnDestroy() {
-    if (this.valueChangeSubscription.length) {
-      this.valueChangeSubscription.forEach(sub => sub.unsubscribe());
-    }
-  }
-
-  writeValue(argumentsList): void {
+  writeValue(argumentsList: Array<any>): void {
     const argumentsControls: Array<FormGroup> = [];
     if (argumentsList) {
       argumentsList.forEach((property, index) => {
@@ -167,7 +161,7 @@ export class ArgumentsMapConfigComponent extends PageComponent implements Contro
     argumentsFormArray.push(argumentControl, {emitEvent});
   }
 
-  public validate(c: FormControl) {
+  public validate() {
     if (!this.argumentsFormGroup.valid) {
       return {
         argumentsRequired: true
@@ -203,11 +197,13 @@ export class ArgumentsMapConfigComponent extends PageComponent implements Contro
       defaultValue: [property?.defaultValue ? property?.defaultValue : null]
     });
     this.updateArgumentControlValidators(argumentControl);
-    this.valueChangeSubscription.push(argumentControl.get('type').valueChanges.subscribe(() => {
+    argumentControl.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateArgumentControlValidators(argumentControl);
       argumentControl.get('attributeScope').updateValueAndValidity({emitEvent: false});
       argumentControl.get('defaultValue').updateValueAndValidity({emitEvent: false});
-    }));
+    });
     return argumentControl;
   }
 
