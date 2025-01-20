@@ -271,24 +271,17 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         connection.stringCommands().set(rawKey, rawValue, this.cacheTtl, setOption);
     }
 
-    protected void loadLuaScript(byte[] expectedSha, byte[] luaScript) {
-        try (var connection = getConnection(expectedSha)) {
-            log.debug("Loading LUA with expected SHA [{}], connection [{}]", new String(expectedSha), connection.getNativeConnection());
-            String actualSha = connection.scriptingCommands().scriptLoad(luaScript);
-            if (!Arrays.equals(expectedSha, StringRedisSerializer.UTF_8.serialize(actualSha))) {
-                String message = String.format("SHA for LUA script wrong! Expected [%s], but actual [%s], connection [%s]",
-                        new String(expectedSha), actualSha, connection.getNativeConnection());
-                throw new IllegalStateException(message);
-            }
-        }
-    }
-
     protected void executeScript(RedisConnection connection, byte[] scriptSha, byte[] luaScript, ReturnType returnType, int numKeys, byte[]... keysAndArgs) {
         try {
             connection.scriptingCommands().evalSha(scriptSha, returnType, numKeys, keysAndArgs);
         } catch (InvalidDataAccessApiUsageException ignored) {
-            log.debug("Loading LUA [{}]", connection.getNativeConnection());
-            connection.scriptingCommands().scriptLoad(luaScript);
+            log.debug("Loading LUA with expected SHA [{}], connection [{}]", new String(scriptSha), connection.getNativeConnection());
+            String actualSha = connection.scriptingCommands().scriptLoad(luaScript);
+            if (!Arrays.equals(scriptSha, StringRedisSerializer.UTF_8.serialize(actualSha))) {
+                String message = String.format("SHA for LUA script wrong! Expected [%s], but actual [%s], connection [%s]",
+                        new String(scriptSha), actualSha, connection.getNativeConnection());
+                throw new IllegalStateException(message);
+            }
             try {
                 connection.scriptingCommands().evalSha(scriptSha, returnType, numKeys, keysAndArgs);
             } catch (InvalidDataAccessApiUsageException exception) {

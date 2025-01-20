@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.cache;
 
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.data.redis.connection.RedisConnection;
@@ -61,11 +60,6 @@ public abstract class VersionedRedisTbCache<K extends VersionedCacheKey, V exten
 
     public VersionedRedisTbCache(String cacheName, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory, TBRedisCacheConfiguration configuration, TbRedisSerializer<K, V> valueSerializer) {
         super(cacheName, cacheSpecsMap, connectionFactory, configuration, valueSerializer);
-    }
-
-    @PostConstruct
-    public void init() {
-        loadLuaScript(SET_VERSIONED_VALUE_SHA, SET_VERSIONED_VALUE_LUA_SCRIPT);
     }
 
     @Override
