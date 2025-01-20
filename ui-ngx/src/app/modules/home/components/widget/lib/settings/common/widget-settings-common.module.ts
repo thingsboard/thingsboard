@@ -219,6 +219,10 @@ import {
 import {
   DataLayerPatternSettingsComponent
 } from '@home/components/widget/lib/settings/common/map/data-layer-pattern-settings.component';
+import {
+  MarkerShapeSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/marker-shape-settings.component';
+import { MarkerShapesComponent } from '@home/components/widget/lib/settings/common/map/marker-shapes.component';
 
 @NgModule({
   declarations: [
@@ -295,6 +299,8 @@ import {
     DataLayerColorSettingsComponent,
     DataLayerColorSettingsPanelComponent,
     DataLayerPatternSettingsComponent,
+    MarkerShapeSettingsComponent,
+    MarkerShapesComponent,
     MarkerImageSettingsComponent,
     MarkerImageSettingsPanelComponent,
     MapDataLayerDialogComponent,

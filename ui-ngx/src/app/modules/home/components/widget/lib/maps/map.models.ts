@@ -19,25 +19,12 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { guid, hashCode, isDefinedAndNotNull, isString, mergeDeep } from '@core/utils';
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { materialColors } from '@shared/models/material.models';
-import L, { BaseIconOptions, Icon } from 'leaflet';
+import L from 'leaflet';
 import { TbFunction } from '@shared/models/js-function.models';
 import { Observable, Observer, of, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ImagePipe } from '@shared/pipe/image.pipe';
-import tinycolor from 'tinycolor2';
-
-export const createColorMarkerURI = (color: tinycolor.Instance): string => {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-191.35 -351.18 1083.58 1730.46">` +
-    `<path fill-rule="evenodd" clip-rule="evenodd" fill="#${color.toHex()}" stroke="#000" stroke-width="37" ` +
-    `stroke-miterlimit="10" d="M351.833 1360.78c-38.766-190.3-107.116-348.665-189.903-495.44C100.523 756.469 ` +
-    `29.386 655.978-36.434 550.404c-21.972-35.244-40.934-72.477-62.047-109.054-42.216-73.137-76.444-157.935-74.269-267.932 ` +
-    `2.125-107.473 33.208-193.685 78.03-264.173C-21-206.69 102.481-301.745 268.164-326.724c135.466-20.425 262.475 14.082 ` +
-    `352.543 66.747 73.6 43.038 130.596 100.528 173.92 168.28 45.22 70.716 76.36 154.26 78.971 263.233 1.337 55.83-7.805 ` +
-    `107.532-20.684 150.417-13.034 43.41-33.996 79.695-52.646 118.455-36.406 75.659-82.049 144.981-127.855 214.345-136.437 ` +
-    `206.606-264.496 417.31-320.58 706.028z"/><circle fill-rule="evenodd" ` +
-    `clip-rule="evenodd" cx="352.891" cy="225.779" r="183.332"/></svg>`;
-  return 'data:image/svg+xml;base64,' + btoa(svg);
-}
+import { MarkerShape } from '@home/components/widget/lib/maps/marker-shape.models';
 
 export enum MapType {
   geoMap = 'geoMap',
@@ -183,7 +170,8 @@ export const mapDataLayerValidator = (type: MapDataLayerType): ValidatorFn => {
 };
 
 export enum MarkerType {
-  default = 'default',
+  shape = 'shape',
+  icon = 'icon',
   image = 'image'
 }
 
@@ -211,11 +199,25 @@ export interface MarkerImageSettings {
   images?: string[];
 }
 
+export interface BaseMarkerShapeSettings {
+  size: number;
+  color: DataLayerColorSettings;
+}
+
+export interface MarkerShapeSettings extends BaseMarkerShapeSettings {
+  shape: MarkerShape;
+}
+
+export interface MarkerIconSettings extends BaseMarkerShapeSettings {
+  icon: string;
+}
+
 export interface MarkersDataLayerSettings extends MapDataLayerSettings {
   xKey: DataKey;
   yKey: DataKey;
   markerType: MarkerType;
-  markerColor: DataLayerColorSettings;
+  markerShape?: MarkerShapeSettings;
+  markerIcon?: MarkerIconSettings;
   markerImage?: MarkerImageSettings;
   markerOffsetX: number;
   markerOffsetY: number;
@@ -267,14 +269,26 @@ export const defaultMarkersDataLayerSettings = (mapType: MapType, functionsOnly 
 } as MarkersDataLayerSettings, defaultBaseMarkersDataLayerSettings as MarkersDataLayerSettings);
 
 export const defaultBaseMarkersDataLayerSettings: Partial<MarkersDataLayerSettings> = mergeDeep({
-  markerType: MarkerType.default,
-  markerColor: {
-    type: DataLayerColorType.constant,
-    color: '#307FE5',
+  markerType: MarkerType.shape,
+  markerShape: {
+    shape: MarkerShape.markerShape1,
+    size: 34,
+    color: {
+      type: DataLayerColorType.constant,
+      color: '#307FE5',
+    }
+  },
+  markerIcon: {
+    icon: 'mdi:lightbulb-on',
+    size: 48,
+    color: {
+      type: DataLayerColorType.constant,
+      color: '#307FE5',
+    }
   },
   markerImage: {
     type: MarkerImageType.image,
-    image: createColorMarkerURI(tinycolor('#307FE5')),
+    image: '/assets/markers/shape1.svg',
     imageSize: 34
   },
   markerOffsetX: 0.5,
@@ -720,7 +734,7 @@ export interface MarkerImageInfo {
 }
 
 export interface MarkerIconInfo {
-  icon: Icon<BaseIconOptions>;
+  icon: L.Icon<L.BaseIconOptions>;
   size: [number, number];
 }
 

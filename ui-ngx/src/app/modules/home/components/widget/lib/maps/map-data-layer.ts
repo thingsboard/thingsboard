@@ -15,8 +15,8 @@
 ///
 
 import {
+  BaseMarkerShapeSettings,
   CirclesDataLayerSettings,
-  createColorMarkerURI,
   DataLayerColorSettings,
   DataLayerColorType,
   DataLayerPatternSettings,
@@ -34,18 +34,22 @@ import {
   MapStringFunction,
   MapType,
   MarkerIconInfo,
+  MarkerIconSettings,
   MarkerImageFunction,
   MarkerImageInfo,
   MarkerImageSettings,
   MarkerImageType,
   MarkersDataLayerSettings,
+  MarkerShapeSettings,
   MarkerType,
-  PolygonsDataLayerSettings, processTooltipTemplate, ShapeDataLayerSettings,
+  PolygonsDataLayerSettings,
+  processTooltipTemplate,
+  ShapeDataLayerSettings,
   TbCircleData,
   TbMapDatasource
 } from '@home/components/widget/lib/maps/map.models';
 import { TbMap } from '@home/components/widget/lib/maps/map';
-import { Datasource, FormattedData } from '@shared/models/widget.models';
+import { FormattedData } from '@shared/models/widget.models';
 import { forkJoin, Observable, of } from 'rxjs';
 import {
   createLabelFromPattern,
@@ -59,13 +63,20 @@ import {
   parseTbFunction,
   safeExecuteTbFunction
 } from '@core/utils';
-import L, { LatLngBounds, PathOptions } from 'leaflet';
+import L, { divIcon, LatLngBounds } from 'leaflet';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import tinycolor from 'tinycolor2';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import {
+  createColorMarkerIconElement,
+  createColorMarkerShapeURI,
+  MarkerShape
+} from '@home/components/widget/lib/maps/marker-shape.models';
+import { MatIconRegistry } from '@angular/material/icon';
+import { DomSanitizer } from '@angular/platform-browser';
 
 abstract class TbDataLayerItem<S extends MapDataLayerSettings, L extends TbMapDataLayer<S,L>> {
 
@@ -317,7 +328,7 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, L extends T
     const layerData = dsData.filter(d => d.$datasource.mapDataIds.includes(this.mapDataId));
     const rawItems = layerData.filter(d => this.isValidLayerData(d));
     const toDelete = new Set(Array.from(this.layerItems.keys()));
-    rawItems.forEach((data, index) => {
+    rawItems.forEach((data) => {
       let layerItem = this.layerItems.get(data.entityId);
       if (layerItem) {
         layerItem.update(data, dsData);
@@ -428,8 +439,10 @@ abstract class MarkerIconProcessor<S> {
   static fromSettings(dataLayer: TbMarkersDataLayer,
                       settings: MarkersDataLayerSettings): MarkerIconProcessor<any> {
     switch (settings.markerType) {
-      case MarkerType.default:
-        return new ColorMarkerIconProcessor(dataLayer, settings.markerColor);
+      case MarkerType.shape:
+        return new ShapeMarkerIconProcessor(dataLayer, settings.markerShape);
+      case MarkerType.icon:
+        return new IconMarkerIconProcessor(dataLayer, settings.markerIcon);
       case MarkerType.image:
         return new ImageMarkerIconProcessor(dataLayer, settings.markerImage);
     }
@@ -445,46 +458,80 @@ abstract class MarkerIconProcessor<S> {
 
 }
 
-class ColorMarkerIconProcessor extends MarkerIconProcessor<DataLayerColorSettings> {
+abstract class BaseColorMarkerShapeProcessor<S extends BaseMarkerShapeSettings> extends MarkerIconProcessor<S> {
 
   private markerColorFunction: CompiledTbFunction<MapStringFunction>;
 
   private defaultMarkerIconInfo: MarkerIconInfo;
 
-  constructor(protected dataLayer: TbMarkersDataLayer,
-              protected settings: DataLayerColorSettings) {
+  protected constructor(protected dataLayer: TbMarkersDataLayer,
+                        protected settings: S) {
     super(dataLayer, settings);
   }
 
   public setup(): Observable<void> {
-    if (this.settings.type === DataLayerColorType.function) {
-      return parseTbFunction<MapStringFunction>(this.dataLayer.getCtx().http, this.settings.colorFunction, ['data', 'dsData']).pipe(
+    const colorSettings = this.settings.color;
+    if (colorSettings.type === DataLayerColorType.function) {
+      return parseTbFunction<MapStringFunction>(this.dataLayer.getCtx().http, colorSettings.colorFunction, ['data', 'dsData']).pipe(
         map((parsed) => {
           this.markerColorFunction = parsed;
           return null;
         })
       );
     } else {
-      const color = tinycolor(this.settings.color);
-      this.defaultMarkerIconInfo = this.dataLayer.createColoredMarkerIcon(color);
-      return of(null)
+      const color = tinycolor(colorSettings.color);
+      return this.createMarkerShape(color, this.settings.size).pipe(
+        map((info) => {
+          this.defaultMarkerIconInfo = info;
+          return null;
+        }
+      ));
     }
   }
 
   public createMarkerIcon(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): Observable<MarkerIconInfo> {
-    if (this.settings.type === DataLayerColorType.function) {
+    const colorSettings = this.settings.color;
+    if (colorSettings.type === DataLayerColorType.function) {
       const functionColor = safeExecuteTbFunction(this.markerColorFunction, [data, dsData]);
       let color: tinycolor.Instance;
       if (isDefinedAndNotNull(functionColor)) {
         color = tinycolor(functionColor);
       } else {
-        color = tinycolor(this.settings.color);
+        color = tinycolor(colorSettings.color);
       }
-      return of(this.dataLayer.createColoredMarkerIcon(color));
+      return this.createMarkerShape(color, this.settings.size);
     } else {
       return of(this.defaultMarkerIconInfo);
     }
   }
+
+  protected abstract createMarkerShape(color: tinycolor.Instance, size: number): Observable<MarkerIconInfo>;
+}
+
+class ShapeMarkerIconProcessor extends BaseColorMarkerShapeProcessor<MarkerShapeSettings> {
+
+  constructor(protected dataLayer: TbMarkersDataLayer,
+              protected settings: MarkerShapeSettings) {
+    super(dataLayer, settings);
+  }
+
+    protected createMarkerShape(color: tinycolor.Instance, size: number): Observable<MarkerIconInfo> {
+        return this.dataLayer.createColoredMarkerShape(this.settings.shape, color, size);
+    }
+
+}
+
+class IconMarkerIconProcessor extends BaseColorMarkerShapeProcessor<MarkerIconSettings> {
+
+  constructor(protected dataLayer: TbMarkersDataLayer,
+              protected settings: MarkerIconSettings) {
+    super(dataLayer, settings);
+  }
+
+  protected createMarkerShape(color: tinycolor.Instance, size: number): Observable<MarkerIconInfo> {
+    return this.dataLayer.createColoredMarkerIcon(this.settings.icon, color, size);
+  }
+
 }
 
 class ImageMarkerIconProcessor extends MarkerIconProcessor<MarkerImageSettings> {
@@ -532,7 +579,7 @@ class ImageMarkerIconProcessor extends MarkerIconProcessor<MarkerImageSettings> 
   private loadMarkerIconInfo(image: MarkerImageInfo): Observable<MarkerIconInfo> {
     if (image && image.url) {
       return loadImageWithAspect(this.dataLayer.getCtx().$injector.get(ImagePipe), image.url).pipe(
-        map((aspectImage) => {
+        switchMap((aspectImage) => {
           if (aspectImage?.aspect) {
             let width: number;
             let height: number;
@@ -561,15 +608,15 @@ class ImageMarkerIconProcessor extends MarkerIconProcessor<MarkerImageSettings> 
               size: [width, height],
               icon
             };
-            return iconInfo;
+            return of(iconInfo);
           } else {
             return this.dataLayer.createDefaultMarkerIcon();
           }
         }),
-        catchError(() => of(this.dataLayer.createDefaultMarkerIcon()))
+        catchError(() => this.dataLayer.createDefaultMarkerIcon())
       );
     } else {
-      return of(this.dataLayer.createDefaultMarkerIcon());
+      return this.dataLayer.createDefaultMarkerIcon();
     }
   }
 
@@ -644,24 +691,42 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
     }
   }
 
-  public createDefaultMarkerIcon(): MarkerIconInfo {
-    const color = this.settings.markerColor.color || '#FE7569';
-    return this.createColoredMarkerIcon(tinycolor(color));
+  public createDefaultMarkerIcon(): Observable<MarkerIconInfo> {
+    const color = this.settings.markerShape?.color?.color || '#307FE5';
+    return this.createColoredMarkerShape(MarkerShape.markerShape1, tinycolor(color));
   }
 
-  public createColoredMarkerIcon(color: tinycolor.Instance): MarkerIconInfo {
-    return {
-      size: [21, 34],
-      icon: L.icon({
-        iconUrl: createColorMarkerURI(color),
-        iconSize: [21, 34],
-        iconAnchor: [21 * this.markerOffset[0], 34 * this.markerOffset[1]],
-        popupAnchor: [21 * this.tooltipOffset[0], 34 * this.tooltipOffset[1]],
-        shadowUrl: 'assets/shadow.png',
-        shadowSize: [40, 37],
-        shadowAnchor: [12, 35]
+  public createColoredMarkerShape(shape: MarkerShape, color: tinycolor.Instance, size = 34): Observable<MarkerIconInfo> {
+    return createColorMarkerShapeURI(this.getCtx().$injector.get(MatIconRegistry), this.getCtx().$injector.get(DomSanitizer), shape, color).pipe(
+      map((iconUrl) => {
+        return {
+          size: [size, size],
+          icon: L.icon({
+            iconUrl,
+            iconSize: [size, size],
+            iconAnchor: [size * this.markerOffset[0], size * this.markerOffset[1]],
+            popupAnchor: [size * this.tooltipOffset[0], size * this.tooltipOffset[1]]
+          })
+        };
       })
-    };
+    );
+  }
+
+  public createColoredMarkerIcon(icon: string, color: tinycolor.Instance, size = 34): Observable<MarkerIconInfo> {
+    return createColorMarkerIconElement(this.getCtx().$injector.get(MatIconRegistry), this.getCtx().$injector.get(DomSanitizer), icon, color).pipe(
+      map((element) => {
+        return {
+          size: [size, size],
+          icon: L.divIcon({
+            html: element.outerHTML,
+            className: 'tb-marker-div-icon',
+            iconSize: [size, size],
+            iconAnchor: [size * this.markerOffset[0], size * this.markerOffset[1]],
+            popupAnchor: [size * this.tooltipOffset[0], size * this.tooltipOffset[1]]
+          })
+        };
+      })
+    );
   }
 
   public extractLocation(data: FormattedData<TbMapDatasource>): L.LatLng {
@@ -757,7 +822,7 @@ abstract class TbShapesDataLayer<S extends ShapeDataLayerSettings, L extends TbM
   public getShapeStyle(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.PathOptions {
     const fill = this.fillColorProcessor.processColor(data, dsData);
     const stroke = this.strokeColorProcessor.processColor(data, dsData);
-    const style: L.PathOptions = {
+    return {
       fill: true,
       fillColor: fill,
       color: stroke,
@@ -765,7 +830,6 @@ abstract class TbShapesDataLayer<S extends ShapeDataLayerSettings, L extends TbM
       fillOpacity: 1,
       opacity: 1
     };
-    return style;
   }
 }
 

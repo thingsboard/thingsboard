@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34" fill="none">
+  <g filter="url(#filter0_bf_8816_263885)">
+    <path d="M19 24.5C17.4075 27.4125 17 33 17 33C17 33 27.0858 32.1955 30.9992 27.4998C34 23.8992 31.9992 19 27.9992 19C23.9993 19 21.1929 20.4894 19 24.5Z" fill="black" fill-opacity="0.24"/>
+  </g>
+  <path class="marker-color" d="M9.5 23L17 34L24.5 23C24.5 23 22 25.5 17 25.5C12 25.5 9.5 23 9.5 23Z" fill="#307FE5"/>
+  <path d="M9.5 23L17 34L24.5 23C24.5 23 22 25.5 17 25.5C12 25.5 9.5 23 9.5 23Z" fill="black" fill-opacity="0.38"/>
+  <path class="marker-color" d="M28 13C28 19.0749 23.0753 24 17 24C10.9251 24 6 19.0753 6 13C6 6.92506 10.9247 2 17 2C23.0749 2 28 6.92473 28 13Z" fill="#307FE5"/>
+  <path d="M28 13C28 19.0749 23.0753 24 17 24C10.9251 24 6 19.0753 6 13C6 6.92506 10.9247 2 17 2C23.0749 2 28 6.92473 28 13Z" fill="url(#paint0_radial_8816_263885)"/>
+  <path class="marker-stroke" d="M28 13C28 19.0749 23.0753 24 17 24C10.9251 24 6 19.0753 6 13C6 6.92506 10.9247 2 17 2C23.0749 2 28 6.92473 28 13Z" stroke="#307FE5" stroke-width="3.1875"/>
+  <path d="M28 13C28 19.0749 23.0753 24 17 24C10.9251 24 6 19.0753 6 13C6 6.92506 10.9247 2 17 2C23.0749 2 28 6.92473 28 13Z" stroke="url(#paint1_linear_8816_263885)" stroke-width="3.1875"/>
+  <defs>
+    <filter id="filter0_bf_8816_263885" x="12.75" y="14.75" width="23.9434" height="22.5" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feGaussianBlur in="BackgroundImageFix" stdDeviation="2.125"/>
+      <feComposite in2="SourceAlpha" operator="in" result="effect1_backgroundBlur_8816_263885"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_backgroundBlur_8816_263885" result="shape"/>
+      <feGaussianBlur stdDeviation="0.5" result="effect2_foregroundBlur_8816_263885"/>
+    </filter>
+    <radialGradient id="paint0_radial_8816_263885" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(21.4 5.3) rotate(126.87) scale(13.75 14.648)">
+      <stop stop-opacity="0.25"/>
+      <stop offset="1" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="paint1_linear_8816_263885" x1="9.3" y1="20.7" x2="21.95" y2="3.1" gradientUnits="userSpaceOnUse">
+      <stop stop-opacity="0.25"/>
+      <stop offset="1" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+</svg>

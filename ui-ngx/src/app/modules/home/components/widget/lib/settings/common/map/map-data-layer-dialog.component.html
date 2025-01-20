@@ -181,13 +181,18 @@
           <div class="flex flex-row items-center justify-between">
             <div class="tb-form-panel-title">{{ 'widgets.maps.data-layer.marker.marker-type' | translate }}</div>
             <tb-toggle-select formControlName="markerType">
-              <tb-toggle-option [value]="MarkerType.default">{{ 'widgets.maps.data-layer.marker.marker-type-default' | translate }}</tb-toggle-option>
+              <tb-toggle-option [value]="MarkerType.shape">{{ 'widgets.maps.data-layer.marker.marker-type-shape' | translate }}</tb-toggle-option>
+              <tb-toggle-option [value]="MarkerType.icon">{{ 'widgets.maps.data-layer.marker.marker-type-icon' | translate }}</tb-toggle-option>
               <tb-toggle-option [value]="MarkerType.image">{{ 'widgets.maps.data-layer.marker.marker-type-image' | translate }}</tb-toggle-option>
             </tb-toggle-select>
           </div>
-          <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.default" class="tb-form-row space-between">
-            <div translate>widgets.maps.data-layer.color</div>
-            <tb-data-layer-color-settings formControlName="markerColor"></tb-data-layer-color-settings>
+          <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.shape" class="tb-form-row space-between">
+            <div translate>widgets.maps.data-layer.marker.shape</div>
+            <tb-marker-shape-settings formControlName="markerShape" [markerType]="MarkerType.shape"></tb-marker-shape-settings>
+          </div>
+          <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.icon" class="tb-form-row space-between">
+            <div translate>widgets.maps.data-layer.marker.icon</div>
+            <tb-marker-shape-settings formControlName="markerIcon" [markerType]="MarkerType.icon"></tb-marker-shape-settings>
           </div>
           <div *ngIf="dataLayerFormGroup.get('markerType').value === MarkerType.image" class="tb-form-row space-between">
             <div translate>widgets.maps.data-layer.marker.image</div>

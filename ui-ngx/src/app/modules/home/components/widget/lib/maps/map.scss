@@ -95,6 +95,12 @@
         }
       }
     }
+    .leaflet-marker-icon {
+      &.tb-marker-div-icon {
+        background: none;
+        border: none;
+      }
+    }
   }
   .tb-map-sidebar {
     .tb-layers, .tb-groups {

@@ -114,7 +114,8 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         this.dataLayerFormGroup.addControl('xKey', this.fb.control(markersDataLayer.xKey, Validators.required));
         this.dataLayerFormGroup.addControl('yKey', this.fb.control(markersDataLayer.yKey, Validators.required))
         this.dataLayerFormGroup.addControl('markerType', this.fb.control(markersDataLayer.markerType, Validators.required));
-        this.dataLayerFormGroup.addControl('markerColor', this.fb.control(markersDataLayer.markerColor, Validators.required));
+        this.dataLayerFormGroup.addControl('markerShape', this.fb.control(markersDataLayer.markerShape, Validators.required));
+        this.dataLayerFormGroup.addControl('markerIcon', this.fb.control(markersDataLayer.markerIcon, Validators.required));
         this.dataLayerFormGroup.addControl('markerImage', this.fb.control(markersDataLayer.markerImage, Validators.required));
         this.dataLayerFormGroup.addControl('markerOffsetX', this.fb.control(markersDataLayer.markerOffsetX));
         this.dataLayerFormGroup.addControl('markerOffsetY', this.fb.control(markersDataLayer.markerOffsetY));
@@ -209,11 +210,17 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
     }
     if (this.dataLayerType === 'markers') {
       const markerType: MarkerType = this.dataLayerFormGroup.get('markerType').value;
-      if (markerType === MarkerType.default) {
-        this.dataLayerFormGroup.get('markerColor').enable({emitEvent: false});
+      if (markerType === MarkerType.shape) {
+        this.dataLayerFormGroup.get('markerShape').enable({emitEvent: false});
+        this.dataLayerFormGroup.get('markerIcon').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('markerImage').disable({emitEvent: false});
+      } else if (markerType === MarkerType.icon) {
+        this.dataLayerFormGroup.get('markerShape').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('markerIcon').enable({emitEvent: false});
         this.dataLayerFormGroup.get('markerImage').disable({emitEvent: false});
       } else {
-        this.dataLayerFormGroup.get('markerColor').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('markerShape').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('markerIcon').disable({emitEvent: false});
         this.dataLayerFormGroup.get('markerImage').enable({emitEvent: false});
       }
     }
