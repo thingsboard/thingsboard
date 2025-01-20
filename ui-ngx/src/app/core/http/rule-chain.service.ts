@@ -185,7 +185,7 @@ export class RuleChainService {
   }
 
   public registerSystemRuleNodeConfigModule(module: any) {
-    this.systemRuleNodeConfigComponents = this.resourcesService.extractComponentsFromModule(module, true);
+    this.systemRuleNodeConfigComponents = this.resourcesService.extractComponentsFromModule<IRuleNodeConfigurationComponent>(module, true);
   }
 
   private loadRuleNodeComponents(ruleChainType: RuleChainType, config?: RequestConfig): Observable<Array<RuleNodeComponentDescriptor>> {

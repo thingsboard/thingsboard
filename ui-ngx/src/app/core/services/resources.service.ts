@@ -51,7 +51,7 @@ export interface ModulesWithComponents {
   standaloneComponents: ɵComponentDef<any>[];
 }
 
-export type ComponentsSelectorMap = Record<string, Type<any>>;
+export type ComponentsSelectorMap<T> = Record<string, Type<T>>;
 
 export const flatModulesWithComponents = (modulesWithComponentsList: ModulesWithComponents[]): ModulesWithComponents => {
   const modulesWithComponents: ModulesWithComponents = {
@@ -265,7 +265,7 @@ export class ResourcesService {
     );
   }
 
-  public extractComponentsFromModule(module: any, isCamelCaseSelector = false): ComponentsSelectorMap {
+  public extractComponentsFromModule<T>(module: any, isCamelCaseSelector = false): ComponentsSelectorMap<T> {
     const modulesWithComponents = this.extractModulesWithComponents(module);
     const componentMap = {};
 
