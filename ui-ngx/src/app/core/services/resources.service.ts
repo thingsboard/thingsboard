@@ -267,9 +267,9 @@ export class ResourcesService {
 
   public extractComponentsFromModule<T>(module: any, isCamelCaseSelector = false): ComponentsSelectorMap<T> {
     const modulesWithComponents = this.extractModulesWithComponents(module);
-    const componentMap = {};
+    const componentMap: ComponentsSelectorMap<T> = {};
 
-    const processComponents = (components: Array<ɵComponentDef<any>>) => {
+    const processComponents = (components: Array<ɵComponentDef<T>>) => {
       components.forEach(item => {
         let selector = extractSelectorFromComponent(item);
         if (isCamelCaseSelector) {
