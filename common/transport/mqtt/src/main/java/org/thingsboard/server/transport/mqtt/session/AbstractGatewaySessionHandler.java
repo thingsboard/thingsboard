@@ -115,6 +115,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     private final ConcurrentMap<String, T> devices;
     private final ConcurrentMap<String, ListenableFuture<T>> deviceFutures;
     protected final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
+    @Getter
     protected final ChannelHandlerContext channel;
     protected final DeviceSessionCtx deviceSessionCtx;
     protected final GatewayMetricsService gatewayMetricsService;
