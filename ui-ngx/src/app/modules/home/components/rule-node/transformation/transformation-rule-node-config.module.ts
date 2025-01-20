@@ -57,14 +57,3 @@ import { ScriptConfigComponent } from '@home/components/rule-node/filter/script-
 })
 export class TransformationRuleNodeConfigModule {
 }
-
-export const transformationRuleNodeConfigComponentsMap: Record<string, Type<IRuleNodeConfigurationComponent>> = {
-  'tbTransformationNodeChangeOriginatorConfig': ChangeOriginatorConfigComponent,
-  'tbTransformationNodeCopyKeysConfig': CopyKeysConfigComponent,
-  'tbTransformationNodeDeduplicationConfig': DeduplicationConfigComponent,
-  'tbTransformationNodeDeleteKeysConfig': DeleteKeysConfigComponent,
-  'tbTransformationNodeJsonPathConfig': NodeJsonPathConfigComponent,
-  'tbTransformationNodeRenameKeysConfig': RenameKeysConfigComponent,
-  'tbTransformationNodeScriptConfig': ScriptConfigComponent,
-  'tbTransformationNodeToEmailConfig': ToEmailConfigComponent
-}

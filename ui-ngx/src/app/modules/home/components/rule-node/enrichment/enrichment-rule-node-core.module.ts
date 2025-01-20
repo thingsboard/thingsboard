@@ -62,16 +62,3 @@ import { FetchDeviceCredentialsConfigComponent } from './fetch-device-credential
 })
 export class EnrichmentRuleNodeCoreModule {
 }
-
-export const enrichmentRuleNodeConfigComponentsMap: Record<string, Type<IRuleNodeConfigurationComponent>> = {
-  'tbEnrichmentNodeCalculateDeltaConfig': CalculateDeltaConfigComponent,
-  'tbEnrichmentNodeCustomerAttributesConfig': CustomerAttributesConfigComponent,
-  'tbEnrichmentNodeDeviceAttributesConfig': DeviceAttributesConfigComponent,
-  'tbEnrichmentNodeEntityDetailsConfig': EntityDetailsConfigComponent,
-  'tbEnrichmentNodeFetchDeviceCredentialsConfig': FetchDeviceCredentialsConfigComponent,
-  'tbEnrichmentNodeGetTelemetryFromDatabase': GetTelemetryFromDatabaseConfigComponent,
-  'tbEnrichmentNodeOriginatorAttributesConfig': OriginatorAttributesConfigComponent,
-  'tbEnrichmentNodeOriginatorFieldsConfig': OriginatorFieldsConfigComponent,
-  'tbEnrichmentNodeRelatedAttributesConfig': RelatedAttributesConfigComponent,
-  'tbEnrichmentNodeTenantAttributesConfig': TenantAttributesConfigComponent
-}
