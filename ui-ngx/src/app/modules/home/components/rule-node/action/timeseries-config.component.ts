@@ -38,7 +38,6 @@ export class TimeseriesConfigComponent extends RuleNodeConfigurationComponent {
   protected onConfigurationSet(configuration: RuleNodeConfiguration) {
     this.timeseriesConfigForm = this.fb.group({
       defaultTTL: [configuration ? configuration.defaultTTL : null, [Validators.required, Validators.min(0)]],
-      skipLatestPersistence: [configuration ? configuration.skipLatestPersistence : false, []],
       useServerTs: [configuration ? configuration.useServerTs : false, []]
     });
   }
