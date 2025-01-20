@@ -212,7 +212,7 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnDestroy 
         this.changeScriptSubscription = null;
       }
       this.definedConfigContainer.clear();
-      const component = this.ruleChainService.getRuleNodeConfigComponent(this.nodeDefinition.configDirective, !this.nodeDefinition.uiResources?.length);
+      const component = this.ruleChainService.getRuleNodeConfigComponent(this.nodeDefinition.configDirective);
       this.definedConfigComponentRef = this.definedConfigContainer.createComponent(component);
       this.definedConfigComponent = this.definedConfigComponentRef.instance;
       this.definedConfigComponent.ruleNodeId = this.ruleNodeId;

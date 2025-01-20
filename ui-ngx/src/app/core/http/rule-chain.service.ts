@@ -53,7 +53,6 @@ export class RuleChainService {
   private ruleNodeComponentsMap: Map<RuleChainType, Array<RuleNodeComponentDescriptor>> =
     new Map<RuleChainType, Array<RuleNodeComponentDescriptor>>();
   private ruleNodeConfigComponents: {[directive: string]: Type<IRuleNodeConfigurationComponent>} = {};
-  private systemRuleNodeConfigComponents: {[directive: string]: Type<IRuleNodeConfigurationComponent>} = {};
 
   constructor(
     private http: HttpClient,
@@ -129,10 +128,7 @@ export class RuleChainService {
     }
   }
 
-  public getRuleNodeConfigComponent(directive: string, isSystemComponent = false): Type<IRuleNodeConfigurationComponent> {
-    if (isSystemComponent) {
-      return this.systemRuleNodeConfigComponents[directive];
-    }
+  public getRuleNodeConfigComponent(directive: string): Type<IRuleNodeConfigurationComponent> {
     return this.ruleNodeConfigComponents[directive];
   }
 
@@ -185,7 +181,7 @@ export class RuleChainService {
   }
 
   public registerSystemRuleNodeConfigModule(module: any) {
-    this.systemRuleNodeConfigComponents = this.resourcesService.extractComponentsFromModule<IRuleNodeConfigurationComponent>(module, true);
+    Object.assign(this.ruleNodeConfigComponents, this.resourcesService.extractComponentsFromModule<IRuleNodeConfigurationComponent>(module, true));
   }
 
   private loadRuleNodeComponents(ruleChainType: RuleChainType, config?: RequestConfig): Observable<Array<RuleNodeComponentDescriptor>> {
@@ -219,7 +215,7 @@ export class RuleChainService {
     Observable<RuleNodeComponentDescriptor> {
     const nodeDefinition = component.configurationDescriptor.nodeDefinition;
     const uiResources = nodeDefinition.uiResources;
-    if (uiResources && uiResources.length) {
+    if (!this.ruleNodeConfigComponents[nodeDefinition.configDirective] && uiResources && uiResources.length) {
       const commonResources = uiResources.filter((resource) => !resource.endsWith('.js'));
       const moduleResource = uiResources.find((resource) => resource.endsWith('.js'));
       const tasks: Observable<any>[] = [];
