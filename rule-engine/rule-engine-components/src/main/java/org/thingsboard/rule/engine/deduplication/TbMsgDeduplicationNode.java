@@ -59,8 +59,7 @@ import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
                 "<li><strong>ALL</strong> - return all messages as a single JSON array message. " +
                 "Where each element represents object with <strong><i>msg</i></strong> and <strong><i>metadata</i></strong> inner properties.</li></ul>",
         icon = "content_copy",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeMsgDeduplicationConfig"
+        configDirective = "tbTransformationNodeDeduplicationConfig"
 )
 @Slf4j
 public class TbMsgDeduplicationNode implements TbNode {

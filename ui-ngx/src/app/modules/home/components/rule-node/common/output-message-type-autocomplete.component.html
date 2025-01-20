@@ -1,0 +1,50 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-form-row no-border no-padding tb-standard-fields column-xs" [formGroup]="messageTypeFormGroup">
+  <mat-form-field class="flex" subscriptSizing="{{ subscriptSizing }}" hideRequiredMarker>
+    <mat-label>{{'rule-node-config.output-message-type' | translate}}</mat-label>
+    <mat-select formControlName="messageTypeAlias">
+      <mat-option *ngFor="let msgType of messageTypes" [value]="msgType">
+        {{msgType.name}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field class="flex" subscriptSizing="{{ subscriptSizing }}" [hideRequiredMarker]="messageTypeFormGroup.get('messageType').disabled">
+    <mat-label>{{'rule-node-config.message-type-value' | translate}}</mat-label>
+    <input matInput type="text" formControlName="messageType">
+    <button type="button"
+            matSuffix
+            mat-icon-button
+            aria-label="Copy"
+            *ngIf="messageTypeFormGroup.get('messageType').value"
+            ngxClipboard
+            [cbContent]="messageTypeFormGroup.get('messageType').value"
+            matTooltip="{{ 'rule-node-config.copy-message-type' | translate }}">
+      <mat-icon aria-hidden="false"
+                aria-label="help-icon">content_copy
+      </mat-icon>
+    </button>
+    <mat-error *ngIf="messageTypeFormGroup.get('messageType').hasError('required')">
+      {{ 'rule-node-config.message-type-value-required' | translate }}
+    </mat-error>
+    <mat-error *ngIf="messageTypeFormGroup.get('messageType').hasError('maxlength')">
+      {{ 'rule-node-config.message-type-value-max-length' | translate }}
+    </mat-error>
+  </mat-form-field>
+</section>
+

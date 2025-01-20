@@ -1,0 +1,48 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="snsConfigForm" class="flex flex-col">
+  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+    <mat-label translate>rule-node-config.topic-arn-pattern</mat-label>
+    <input required matInput formControlName="topicArnPattern">
+    <mat-error *ngIf="snsConfigForm.get('topicArnPattern').hasError('required')">
+      {{ 'rule-node-config.topic-arn-pattern-required' | translate }}
+    </mat-error>
+    <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>rule-node-config.aws-access-key-id</mat-label>
+    <input required matInput formControlName="accessKeyId">
+    <mat-error *ngIf="snsConfigForm.get('accessKeyId').hasError('required')">
+      {{ 'rule-node-config.aws-access-key-id-required' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>rule-node-config.aws-secret-access-key</mat-label>
+    <input required matInput formControlName="secretAccessKey">
+    <mat-error *ngIf="snsConfigForm.get('secretAccessKey').hasError('required')">
+      {{ 'rule-node-config.aws-secret-access-key-required' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>rule-node-config.aws-region</mat-label>
+    <input required matInput formControlName="region">
+    <mat-error *ngIf="snsConfigForm.get('region').hasError('required')">
+      {{ 'rule-node-config.aws-region-required' | translate }}
+    </mat-error>
+  </mat-form-field>
+</section>

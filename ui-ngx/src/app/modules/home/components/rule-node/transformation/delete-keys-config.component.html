@@ -1,0 +1,35 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="deleteKeysConfigForm" class="tb-form-panel no-border no-padding">
+  <tb-msg-metadata-chip
+    [labelText]="('rule-node-config.key-val.delete-key-values-from' | translate)"
+    formControlName="deleteFrom">
+  </tb-msg-metadata-chip>
+  <tb-string-items-list class="mat-block"
+                        required
+                        [label]="'rule-node-config.keys' | translate"
+                        [placeholder]="'rule-node-config.add-key' | translate"
+                        [requiredText]="'rule-node-config.key-val.at-least-one-key-error' | translate"
+                        formControlName="keys">
+    <mat-icon matSuffix class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon"
+              color="primary"
+              matTooltip="{{ 'rule-node-config.use-regular-expression-delete-hint' | translate }}">
+      help
+    </mat-icon>
+  </tb-string-items-list>
+</section>

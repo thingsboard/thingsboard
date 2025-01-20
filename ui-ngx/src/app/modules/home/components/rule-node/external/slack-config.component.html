@@ -1,0 +1,49 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="slackConfigForm" class="flex flex-col">
+  <mat-form-field class="mat-block flex-1">
+    <mat-label translate>rule-node-config.message-template</mat-label>
+    <input required matInput formControlName="messageTemplate">
+    <mat-error *ngIf="slackConfigForm.get('messageTemplate').hasError('required')">
+      {{ 'rule-node-config.message-template-required' | translate }}
+    </mat-error>
+    <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
+  </mat-form-field>
+  <mat-checkbox formControlName="useSystemSettings">
+    {{ 'rule-node-config.use-system-slack-settings' | translate }}
+  </mat-checkbox>
+  <mat-form-field *ngIf="!slackConfigForm.get('useSystemSettings').value" class="mat-block">
+    <mat-label translate>rule-node-config.slack-api-token</mat-label>
+    <input required matInput formControlName="botToken">
+    <mat-error *ngIf="slackConfigForm.get('botToken').hasError('required')">
+      {{ 'rule-node-config.slack-api-token-required' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <label class="tb-title">{{ 'notification.slack-chanel-type' | translate }}</label>
+  <mat-radio-group formControlName="conversationType">
+    <mat-radio-button *ngFor="let slackChanelType of slackChanelTypes" [value]="slackChanelType">
+      {{ slackChanelTypesTranslateMap.get(slackChanelType) | translate }}
+    </mat-radio-button>
+  </mat-radio-group>
+  <tb-slack-conversation-autocomplete
+    formControlName="conversation"
+    required
+    [token]="slackConfigForm.get('useSystemSettings').value ? '' : slackConfigForm.get('botToken').value"
+    [slackChanelType]="slackConfigForm.get('conversationType').value">
+  </tb-slack-conversation-autocomplete>
+</section>

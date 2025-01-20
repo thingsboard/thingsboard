@@ -148,6 +148,7 @@ const routes: Routes = [
           import: false,
           ruleChainType: RuleChainType.CORE
         },
+        loadChildren: () => import('./rulechain-page.module').then(m => m.RuleChainPageModule),
         resolve: {
           ruleChain: RuleChainResolver,
           ruleChainMetaData: RuleChainMetaDataResolver,
@@ -170,6 +171,7 @@ const routes: Routes = [
           import: true,
           ruleChainType: RuleChainType.CORE
         },
+        loadChildren: () => import('./rulechain-page.module').then(m => m.RuleChainPageModule),
         resolve: {
           ruleNodeComponents: RuleNodeComponentsResolver,
           tooltipster: TooltipsterResolver

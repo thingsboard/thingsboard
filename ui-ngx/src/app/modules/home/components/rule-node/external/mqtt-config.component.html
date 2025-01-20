@@ -1,0 +1,85 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="mqttConfigForm" class="flex flex-col">
+  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+    <mat-label translate>rule-node-config.topic-pattern</mat-label>
+    <input required matInput formControlName="topicPattern">
+    <mat-error *ngIf="mqttConfigForm.get('topicPattern').hasError('required')">
+      {{ 'rule-node-config.topic-pattern-required' | translate }}
+    </mat-error>
+    <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
+  </mat-form-field>
+  <div class="flex flex-1 flex-col gt-sm:flex-row gt-sm:gap-2">
+    <mat-form-field class="mat-block gt-sm:max-w-60% gt-sm:flex-full">
+      <mat-label translate>rule-node-config.host</mat-label>
+      <input required matInput formControlName="host">
+      <mat-error *ngIf="mqttConfigForm.get('host').hasError('required')">
+        {{ 'rule-node-config.host-required' | translate }}
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field class="mat-block gt-sm:max-w-40% gt-sm:flex-full">
+      <mat-label translate>rule-node-config.port</mat-label>
+      <input required type="number" step="1" min="1" max="65535" matInput formControlName="port">
+      <mat-error *ngIf="mqttConfigForm.get('port').hasError('required')">
+        {{ 'rule-node-config.port-required' | translate }}
+      </mat-error>
+      <mat-error *ngIf="mqttConfigForm.get('port').hasError('min')">
+        {{ 'rule-node-config.port-range' | translate }}
+      </mat-error>
+      <mat-error *ngIf="mqttConfigForm.get('port').hasError('max')">
+        {{ 'rule-node-config.port-range' | translate }}
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field class="mat-block gt-sm:max-w-40% gt-sm:flex-full">
+      <mat-label translate>rule-node-config.connect-timeout</mat-label>
+      <input required type="number" step="1" min="1" max="200" matInput formControlName="connectTimeoutSec">
+      <mat-error *ngIf="mqttConfigForm.get('connectTimeoutSec').hasError('required')">
+        {{ 'rule-node-config.connect-timeout-required' | translate }}
+      </mat-error>
+      <mat-error *ngIf="mqttConfigForm.get('connectTimeoutSec').hasError('min')">
+        {{ 'rule-node-config.connect-timeout-range' | translate }}
+      </mat-error>
+      <mat-error *ngIf="mqttConfigForm.get('connectTimeoutSec').hasError('max')">
+        {{ 'rule-node-config.connect-timeout-range' | translate }}
+      </mat-error>
+    </mat-form-field>
+  </div>
+  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+    <mat-label translate>rule-node-config.client-id</mat-label>
+    <input matInput formControlName="clientId">
+    <mat-hint>{{'rule-node-config.client-id-hint' | translate}}</mat-hint>
+  </mat-form-field>
+  <mat-checkbox formControlName="appendClientIdSuffix">
+    {{ 'rule-node-config.append-client-id-suffix' | translate }}
+  </mat-checkbox>
+  <div class="tb-hint">{{ "rule-node-config.client-id-suffix-hint" | translate }}</div>
+  <mat-checkbox formControlName="parseToPlainText">
+    {{ 'rule-node-config.parse-to-plain-text' | translate }}
+  </mat-checkbox>
+  <div class="tb-hint">{{ "rule-node-config.parse-to-plain-text-hint" | translate }}</div>
+  <mat-checkbox formControlName="cleanSession">
+    {{ 'rule-node-config.clean-session' | translate }}
+  </mat-checkbox>
+  <mat-checkbox formControlName="retainedMessage">
+    {{ "rule-node-config.retained-message" | translate }}
+  </mat-checkbox>
+  <mat-checkbox formControlName="ssl">
+    {{ 'rule-node-config.enable-ssl' | translate }}
+  </mat-checkbox>
+  <tb-credentials-config formControlName="credentials" [passwordFieldRequired]="false"></tb-credentials-config>
+</section>

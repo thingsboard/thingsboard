@@ -291,6 +291,7 @@ const routes: Routes = [
                   import: false,
                   ruleChainType: RuleChainType.EDGE
                 },
+                loadChildren: () => import('../rulechain/rulechain-page.module').then(m => m.RuleChainPageModule),
                 resolve: {
                   ruleChain: RuleChainResolver,
                   ruleChainMetaData: RuleChainMetaDataResolver,
@@ -336,6 +337,7 @@ const routes: Routes = [
               import: false,
               ruleChainType: RuleChainType.EDGE
             },
+            loadChildren: () => import('../rulechain/rulechain-page.module').then(m => m.RuleChainPageModule),
             resolve: {
               ruleChain: RuleChainResolver,
               ruleChainMetaData: RuleChainMetaDataResolver,
@@ -358,6 +360,7 @@ const routes: Routes = [
               import: true,
               ruleChainType: RuleChainType.EDGE
             },
+            loadChildren: () => import('../rulechain/rulechain-page.module').then(m => m.RuleChainPageModule),
             resolve: {
               ruleNodeComponents: RuleNodeComponentsResolver,
               tooltipster: TooltipsterResolver

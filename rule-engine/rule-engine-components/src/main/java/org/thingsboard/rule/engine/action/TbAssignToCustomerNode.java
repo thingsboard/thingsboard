@@ -40,7 +40,6 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDescription = "Assign message originator entity to customer",
         nodeDetails = "Finds target customer by title and assign message originator entity to this customer. " +
                 "Rule node will create a new customer if it doesn't exist, and 'Create new customer if it doesn't exist' enabled.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeAssignToCustomerConfig",
         icon = "add_circle",
         version = 1

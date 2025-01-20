@@ -32,7 +32,6 @@ import org.thingsboard.server.common.msg.TbMsg;
         configClazz = EmptyNodeConfiguration.class,
         nodeDescription = "This Node is now deprecated. Use \"Checkpoint\" instead.",
         nodeDetails = "",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = ("tbNodeEmptyConfig")
 )
 @Deprecated

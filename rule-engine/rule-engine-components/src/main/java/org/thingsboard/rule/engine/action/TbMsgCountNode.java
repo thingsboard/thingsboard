@@ -42,7 +42,6 @@ import java.util.concurrent.atomic.AtomicLong;
         nodeDescription = "Count incoming messages",
         nodeDetails = "Count incoming messages for specified interval and produces POST_TELEMETRY_REQUEST msg with messages count",
         icon = "functions",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeMsgCountConfig"
 )
 public class TbMsgCountNode implements TbNode {

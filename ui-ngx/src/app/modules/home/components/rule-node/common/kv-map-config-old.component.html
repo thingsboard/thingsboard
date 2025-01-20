@@ -1,0 +1,70 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-kv-map-config flex flex-col" [formGroup]="kvListFormGroup">
+  <div class="header flex flex-1 flex-row gap-2">
+    <span class="cell tb-required flex-1">{{ keyText | translate }}</span>
+    <span class="cell tb-required flex-1">{{ valText | translate }}</span>
+    <span [class.!hidden]="disabled" style="width: 52px;" innerHTML="&nbsp"></span>
+  </div>
+  <div class="body">
+    <div class="row flex flex-row items-center justify-start gap-2"
+         formArrayName="keyVals"
+         *ngFor="let keyValControl of keyValsFormArray().controls; let $index = index">
+      <mat-form-field class="cell mat-block flex-1">
+        <input [formControl]="keyValControl.get('key')" matInput required
+               placeholder="{{ keyText | translate }}"/>
+        <mat-error *ngIf="keyValControl.get('key').hasError('required')">
+          {{ keyRequiredText | translate }}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field class="cell mat-block flex-1">
+        <input [formControl]="keyValControl.get('value')" matInput required
+               placeholder="{{ valText | translate }}"/>
+        <mat-error *ngIf="keyValControl.get('value').hasError('required')">
+          {{ valRequiredText | translate }}
+        </mat-error>
+      </mat-form-field>
+      <button mat-icon-button color="primary"
+              [class.!hidden]="disabled"
+              type="button"
+              (click)="removeKeyVal($index)"
+              [disabled]="isLoading$ | async"
+              matTooltip="{{ 'rule-node-config.key-val.remove-entry' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <div *ngIf="hintText" class="tb-hint" [innerHTML]="hintText | translate | safe: 'html'"></div>
+  </div>
+  <tb-error [error]="ngControl.hasError('kvMapRequired') || ngControl.hasError('uniqueKeyValuePair') ?
+                     (ngControl.hasError('kvMapRequired') ? translate.instant(requiredText) :
+                     translate.instant('rule-node-config.key-val.unique-key-value-pair-error', {keyText: translate.instant(keyText),
+                     valText: translate.instant(valText)})) : ''"></tb-error>
+  <div style="margin-top: 16px;">
+    <button mat-button mat-raised-button color="primary"
+            [class.!hidden]="disabled"
+            [disabled]="isLoading$ | async"
+            (click)="addKeyVal()"
+            type="button"
+            matTooltip="{{ 'rule-node-config.key-val.add-entry' | translate }}"
+            matTooltipPosition="above">
+      <mat-icon>add</mat-icon>
+      {{ 'action.add' | translate }}
+    </button>
+  </div>
+</section>

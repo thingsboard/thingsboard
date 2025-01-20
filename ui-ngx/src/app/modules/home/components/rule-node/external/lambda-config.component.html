@@ -1,0 +1,115 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="lambdaConfigForm" class="tb-form-panel no-padding no-border">
+  <div class="tb-form-panel stroked">
+    <div class="tb-form-row no-padding no-border">
+      <div class="tb-form-panel-title tb-required" translate>rule-node-config.function-configuration</div>
+    </div>
+    <tb-example-hint [hintText]="'rule-node-config.template-rules-hint'"
+                     popupHelpLink="rulenode/node-templatization-doc">
+    </tb-example-hint>
+    <div class="tb-standard-fields">
+      <mat-form-field class="mat-block">
+        <mat-label>{{'rule-node-config.function-name' | translate}}</mat-label>
+        <input required matInput formControlName="functionName">
+        <mat-error *ngIf="lambdaConfigForm.get('functionName').hasError('required')">
+          {{'rule-node-config.function-name-required' | translate}}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field class="mat-block">
+        <mat-label>{{'rule-node-config.qualifier' | translate}}</mat-label>
+        <input matInput formControlName="qualifier">
+        <mat-hint translate>rule-node-config.qualifier-hint</mat-hint>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <div class="tb-form-panel stroked">
+    <mat-expansion-panel class="tb-settings" expanded>
+      <mat-expansion-panel-header>
+        <mat-panel-title class="tb-form-panel-title tb-required" translate>rule-node-config.aws-credentials</mat-panel-title>
+      </mat-expansion-panel-header>
+      <div class="tb-standard-fields">
+        <mat-form-field class="mat-block">
+          <mat-label translate>rule-node-config.aws-access-key-id</mat-label>
+          <input required matInput formControlName="accessKey">
+          <mat-error *ngIf="lambdaConfigForm.get('accessKey').hasError('required')">
+            {{ 'rule-node-config.aws-access-key-id-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="mat-block">
+          <mat-label translate>rule-node-config.aws-secret-access-key</mat-label>
+          <input required matInput formControlName="secretKey">
+          <mat-error *ngIf="lambdaConfigForm.get('secretKey').hasError('required')">
+            {{ 'rule-node-config.aws-secret-access-key-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="mat-block">
+          <mat-label translate>rule-node-config.aws-region</mat-label>
+          <input required matInput formControlName="region">
+          <mat-error *ngIf="lambdaConfigForm.get('region').hasError('required')">
+            {{ 'rule-node-config.aws-region-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </mat-expansion-panel>
+  </div>
+  <div class="tb-form-panel stroked no-padding">
+    <mat-expansion-panel class="tb-settings">
+      <mat-expansion-panel-header style="padding: 16px">
+        <mat-panel-title translate>rule-node-config.advanced-settings</mat-panel-title>
+      </mat-expansion-panel-header>
+      <div class="tb-form-panel no-border no-padding no-gap" style="margin-top: 0">
+        <div class="tb-form-row no-border same-padding tb-standard-fields">
+          <mat-form-field class="flex">
+            <mat-label translate>rule-node-config.connection-timeout</mat-label>
+            <input type="number" required min="0" matInput formControlName="connectionTimeout">
+            <mat-error *ngIf="lambdaConfigForm.get('connectionTimeout').hasError('required')">
+              {{ 'rule-node-config.connection-timeout-required' | translate }}
+            </mat-error>
+            <mat-error *ngIf="lambdaConfigForm.get('connectionTimeout').hasError('min')">
+              {{ 'rule-node-config.connection-timeout-min' | translate }}
+            </mat-error>
+            <mat-icon matSuffix class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon"
+                      color="primary"
+                      matTooltip="{{ 'rule-node-config.connection-timeout-hint' | translate }}">help</mat-icon>
+          </mat-form-field>
+          <mat-form-field class="flex">
+            <mat-label translate>rule-node-config.request-timeout</mat-label>
+            <input type="number" required min="0" matInput formControlName="requestTimeout">
+            <mat-error *ngIf="lambdaConfigForm.get('requestTimeout').hasError('required')">
+              {{ 'rule-node-config.request-timeout-required' | translate }}
+            </mat-error>
+            <mat-error *ngIf="lambdaConfigForm.get('requestTimeout').hasError('min')">
+              {{ 'rule-node-config.request-timeout-min' | translate }}
+            </mat-error>
+            <mat-icon matSuffix class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon"
+                      color="primary"
+                      matTooltip="{{ 'rule-node-config.request-timeout-hint' | translate }}">help</mat-icon>
+          </mat-form-field>
+        </div>
+        <div tb-hint-tooltip-icon="{{ 'rule-node-config.tell-failure-aws-lambda-hint' | translate }}"
+             class="tb-form-row no-border" style="margin-bottom: 16px">
+          <mat-slide-toggle class="mat-slide" formControlName="tellFailureIfFuncThrowsExc">
+            {{ 'rule-node-config.tell-failure-aws-lambda' | translate }}
+          </mat-slide-toggle>
+        </div>
+      </div>
+    </mat-expansion-panel>
+  </div>
+</section>

@@ -1,0 +1,111 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="kafkaConfigForm" class="flex flex-col">
+  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+    <mat-label translate>rule-node-config.topic-pattern</mat-label>
+    <input required matInput formControlName="topicPattern">
+    <mat-error *ngIf="kafkaConfigForm.get('topicPattern').hasError('required')">
+      {{ 'rule-node-config.topic-pattern-required' | translate }}
+    </mat-error>
+    <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
+  </mat-form-field>
+  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+    <mat-label translate>rule-node-config.key-pattern</mat-label>
+    <input matInput formControlName="keyPattern">
+    <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
+  </mat-form-field>
+  <div class="tb-hint" translate>rule-node-config.key-pattern-hint</div>
+  <mat-form-field class="mat-block">
+    <mat-label translate>rule-node-config.bootstrap-servers</mat-label>
+    <input required matInput formControlName="bootstrapServers">
+    <mat-error *ngIf="kafkaConfigForm.get('bootstrapServers').hasError('required')">
+      {{ 'rule-node-config.bootstrap-servers-required' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>rule-node-config.retries</mat-label>
+    <input type="number" step="1" min="0" matInput formControlName="retries">
+    <mat-error *ngIf="kafkaConfigForm.get('retries').hasError('min')">
+      {{ 'rule-node-config.min-retries-message' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>rule-node-config.batch-size-bytes</mat-label>
+    <input type="number" step="1" min="0" matInput formControlName="batchSize">
+    <mat-error *ngIf="kafkaConfigForm.get('batchSize').hasError('min')">
+      {{ 'rule-node-config.min-batch-size-bytes-message' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>rule-node-config.linger-ms</mat-label>
+    <input type="number" step="1" min="0" matInput formControlName="linger">
+    <mat-error *ngIf="kafkaConfigForm.get('linger').hasError('min')">
+      {{ 'rule-node-config.min-linger-ms-message' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>rule-node-config.buffer-memory-bytes</mat-label>
+    <input type="number" step="1" min="0" matInput formControlName="bufferMemory">
+    <mat-error *ngIf="kafkaConfigForm.get('bufferMemory').hasError('min')">
+      {{ 'rule-node-config.min-buffer-memory-bytes-message' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>rule-node-config.acks</mat-label>
+    <mat-select formControlName="acks" required>
+      <mat-option *ngFor="let ackValue of ackValues" [value]="ackValue">
+        {{ ackValue }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>rule-node-config.key-serializer</mat-label>
+    <input required matInput formControlName="keySerializer">
+    <mat-error *ngIf="kafkaConfigForm.get('keySerializer').hasError('required')">
+      {{ 'rule-node-config.key-serializer-required' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>rule-node-config.value-serializer</mat-label>
+    <input required matInput formControlName="valueSerializer">
+    <mat-error *ngIf="kafkaConfigForm.get('valueSerializer').hasError('required')">
+      {{ 'rule-node-config.value-serializer-required' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <label translate class="tb-title">rule-node-config.other-properties</label>
+  <tb-kv-map-config-old
+    required="false"
+    formControlName="otherProperties"
+    keyText="rule-node-config.key"
+    keyRequiredText="rule-node-config.key-required"
+    valText="rule-node-config.value"
+    valRequiredText="rule-node-config.value-required">
+  </tb-kv-map-config-old>
+  <mat-checkbox class="flex-1" formControlName="addMetadataKeyValuesAsKafkaHeaders">
+    {{ 'rule-node-config.add-metadata-key-values-as-kafka-headers' | translate }}
+  </mat-checkbox>
+  <div class="tb-hint" translate>rule-node-config.add-metadata-key-values-as-kafka-headers-hint</div>
+  <mat-form-field class="mat-block flex-1" *ngIf="kafkaConfigForm.get('addMetadataKeyValuesAsKafkaHeaders').value">
+    <mat-label translate>rule-node-config.charset-encoding</mat-label>
+    <mat-select formControlName="kafkaHeadersCharset" required>
+      <mat-option *ngFor="let charset of ToByteStandartCharsetTypesValues" [value]="charset">
+        {{ ToByteStandartCharsetTypeTranslationMap.get(charset) | translate }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+</section>

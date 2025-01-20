@@ -36,7 +36,6 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDetails = "Sends messages with message types <b>\"Post attributes\", \"Post telemetry\", \"RPC Request\"</b>" +
                 " etc. via corresponding chain, otherwise <b>Other</b> chain is used.<br><br>" +
                 "Output connections: <i>Message type connection</i>, <code>Other</code> - if message type is custom or <code>Failure</code>",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig")
 public class TbMsgTypeSwitchNode implements TbNode {
 

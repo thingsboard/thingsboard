@@ -43,7 +43,6 @@ import java.util.Objects;
         nodeDescription = "Checks alarm status.",
         nodeDetails = "Checks the alarm status to match one of the specified statuses.<br><br>" +
                 "Output connections: <code>True</code>, <code>False</code>, <code>Failure</code>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeCheckAlarmStatusConfig")
 public class TbCheckAlarmStatusNode implements TbNode {
 
