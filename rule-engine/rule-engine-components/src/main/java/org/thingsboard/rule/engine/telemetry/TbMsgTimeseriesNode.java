@@ -193,9 +193,6 @@ public class TbMsgTimeseriesNode implements TbNode {
         boolean hasChanges = false;
         switch (fromVersion) {
             case 0:
-                if (oldConfiguration.has("persistenceSettings") && !oldConfiguration.has("skipLatestPersistence")) {
-                    break;
-                }
                 hasChanges = true;
                 JsonNode skipLatestPersistence = oldConfiguration.get("skipLatestPersistence");
                 if (skipLatestPersistence != null && "true".equals(skipLatestPersistence.asText())) {
