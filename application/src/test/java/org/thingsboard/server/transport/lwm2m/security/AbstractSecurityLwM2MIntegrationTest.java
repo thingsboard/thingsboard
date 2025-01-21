@@ -196,7 +196,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
                 false);
     }
 
-    protected void basicTestConnection(Security security, Security securityBs,
+    protected Device basicTestConnection(Security security, Security securityBs,
                                        LwM2MDeviceCredentials deviceCredentials,
                                        String endpoint,
                                        Lwm2mDeviceProfileTransportConfiguration transportConfiguration,
@@ -227,6 +227,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
                     return lwM2MTestClient.getClientStates().contains(finishState) || lwM2MTestClient.getClientStates().contains(ON_UPDATE_SUCCESS);
                 });
         Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatuses));
+        return device;
     }
 
 
