@@ -349,7 +349,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void startSyncProcess(TenantId tenantId, EdgeId edgeId, UUID requestId, String requestServiceId) {
         EdgeGrpcSession session = sessions.get(edgeId);
         if (session != null) {
-            if (!session.isSyncCompleted()) {
+            if (session.isSyncInProgress()) {
                 clusterService.pushEdgeSyncResponseToCore(new FromEdgeSyncResponse(requestId, tenantId, edgeId, false, "Sync process is active at the moment"), requestServiceId);
             } else {
                 boolean success = false;
@@ -368,7 +368,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
         UUID requestId = request.getId();
         EdgeGrpcSession session = sessions.get(request.getEdgeId());
-        if (session != null && !session.isSyncCompleted()) {
+        if (session != null && session.isSyncInProgress()) {
             responseConsumer.accept(new FromEdgeSyncResponse(requestId, request.getTenantId(), request.getEdgeId(), false, "Sync process is active at the moment"));
         } else {
             log.trace("[{}][{}] Processing sync edge request [{}], serviceId [{}]", request.getTenantId(), request.getId(), request.getEdgeId(), request.getServiceId());
@@ -411,7 +411,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                     newEventLock.lock();
                     try {
                         if (Boolean.TRUE.equals(sessionNewEvents.get(edgeId))) {
-                            log.trace("[{}][{}] Set session new events flag to false", tenantId, edgeId.getId());
+                            log.trace("[{}][{}] set session new events flag to false", tenantId, edgeId.getId());
                             sessionNewEvents.put(edgeId, false);
                             session.processHighPriorityEvents();
                             processEdgeEventMigrationIfNeeded(session, edgeId);
@@ -420,6 +420,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                                     @Override
                                     public void onSuccess(Boolean newEventsAdded) {
                                         if (Boolean.TRUE.equals(newEventsAdded)) {
+                                            log.trace("[{}][{}] new events added. set session new events flag to true", tenantId, edgeId.getId());
                                             sessionNewEvents.put(edgeId, true);
                                         }
                                         scheduleEdgeEventsCheck(session);

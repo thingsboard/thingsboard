@@ -20,15 +20,10 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import {
-  getProviderHelpLink,
-  OAuth2Client,
-  OAuth2ClientInfo,
-  platformTypeTranslations
-} from '@shared/models/oauth2.models';
+import { OAuth2Client, OAuth2ClientInfo, platformTypeTranslations } from '@shared/models/oauth2.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
-import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { OAuth2Service } from '@core/http/oauth2.service';
 import { ClientComponent } from '@home/pages/admin/oauth2/clients/client.component';
 import { ClientTableHeaderComponent } from '@home/pages/admin/oauth2/clients/client-table-header.component';
@@ -48,10 +43,7 @@ export class ClientsTableConfigResolver  {
     this.config.entityType = EntityType.OAUTH2_CLIENT;
     this.config.rowPointer = true;
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.OAUTH2_CLIENT);
-    this.config.entityResources = {
-      helpLinkId: null,
-      helpLinkIdForEntity: (entity: OAuth2Client) => getProviderHelpLink(entity.additionalInfo.providerName)
-    };
+    this.config.entityResources = entityTypeResources.get(EntityType.OAUTH2_CLIENT);
     this.config.entityComponent = ClientComponent;
     this.config.headerComponent = ClientTableHeaderComponent;
     this.config.addDialogStyle = {width: '850px', maxHeight: '100vh'};

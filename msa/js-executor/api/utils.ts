@@ -17,13 +17,6 @@
 import Long from 'long';
 import uuidParse from 'uuid-parse';
 
-export function toUUIDString(mostSigBits: string, leastSigBits: string): string {
-    const msbBytes = Long.fromValue(mostSigBits, false).toBytes(false);
-    const lsbBytes = Long.fromValue(leastSigBits, false).toBytes(false);
-    const uuidBytes = msbBytes.concat(lsbBytes);
-    return uuidParse.unparse(uuidBytes as any);
-}
-
 export function UUIDFromBuffer(buf: Buffer): string {
     return uuidParse.unparse(buf);
 }
@@ -57,10 +50,6 @@ export function parseJsErrorDetails(err: any): string | undefined {
         }
     }
     return details;
-}
-
-export function isNotUUID(candidate: string) {
-    return candidate.length != 36 || !candidate.includes('-');
 }
 
 export function isNotEmptyStr(value: any): boolean {

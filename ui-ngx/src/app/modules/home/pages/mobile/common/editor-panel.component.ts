@@ -63,7 +63,9 @@ export class EditorPanelComponent implements OnInit {
         const uiContainer = document.querySelector('.tox.tox-tinymce-aux');
         container.parentNode.appendChild(uiContainer);
       });
-    }
+    },
+    relative_urls: false,
+    urlconverter_callback: (url) => url
   };
 
   constructor(private fb: FormBuilder) {
