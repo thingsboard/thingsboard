@@ -17,6 +17,8 @@ package org.thingsboard.server.service.install;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -38,6 +40,9 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
 
     private final BuildProperties buildProperties;
     private final JdbcTemplate jdbcTemplate;
+
+    @Value("${install.upgrade.from_version:}")
+    private String upgradeFromVersion;
 
     private String packageSchemaVersion;
     private String schemaVersionFromDb;
@@ -102,6 +107,15 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
     @Override
     public String getDbSchemaVersion() {
         if (schemaVersionFromDb == null) {
+            if (StringUtils.isNotBlank(upgradeFromVersion)) {
+                /*
+                * TODO - Remove after the release of 3.9.0:
+                *  This a temporary workaround due to the issue that schema version in the
+                *  tb_schema_settings was set as 3.6.4 during the install of 3.8.1.
+                * */
+                schemaVersionFromDb = upgradeFromVersion;
+                return schemaVersionFromDb;
+            }
             Long version = getSchemaVersionFromDb();
             if (version == null) {
                 onSchemaSettingsError("Upgrade failed: the database schema version is missing.");

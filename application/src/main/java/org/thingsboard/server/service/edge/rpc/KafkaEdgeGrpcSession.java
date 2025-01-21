@@ -73,7 +73,7 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
 
     private void processMsgs(List<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> consumer) {
         log.trace("[{}][{}] starting processing edge events", tenantId, sessionId);
-        if (isConnected() && isSyncCompleted() && !isHighPriorityProcessing) {
+        if (isConnected() && !isSyncInProgress() && !isHighPriorityProcessing) {
             List<EdgeEvent> edgeEvents = new ArrayList<>();
             for (TbProtoQueueMsg<ToEdgeEventNotificationMsg> msg : msgs) {
                 EdgeEvent edgeEvent = ProtoUtils.fromProto(msg.getValue().getEdgeEventMsg());
