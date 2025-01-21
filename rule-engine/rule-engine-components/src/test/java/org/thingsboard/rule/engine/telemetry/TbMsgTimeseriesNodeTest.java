@@ -49,6 +49,8 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.service.ConstraintValidator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -122,15 +124,14 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    public void givenPersistenceSettingsAreNull_whenInit_thenThrowsException() {
+    public void givenPersistenceSettingsAreNull_whenValidatingConstraints_thenThrowsException() {
         // GIVEN
         config.setPersistenceSettings(null);
 
         // WHEN-THEN
-        assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
-                .isInstanceOf(TbNodeException.class)
-                .matches(e -> ((TbNodeException) e).isUnrecoverable())
-                .hasMessage("Persistence settings cannot be null");
+        assertThatThrownBy(() -> ConstraintValidator.validateFields(config))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("Validation error: persistenceSettings must not be null");
     }
 
     @ParameterizedTest

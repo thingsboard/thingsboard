@@ -89,9 +89,6 @@ public class TbMsgTimeseriesNode implements TbNode {
         ctx.addTenantProfileListener(this::onTenantProfileUpdate);
         onTenantProfileUpdate(ctx.getTenantProfile());
         persistenceSettings = config.getPersistenceSettings();
-        if (persistenceSettings == null) {
-            throw new TbNodeException("Persistence settings cannot be null", true);
-        }
     }
 
     private void onTenantProfileUpdate(TenantProfile tenantProfile) {
