@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
+import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -141,9 +142,9 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
 
         Argument argument = new Argument();
-        argument.setEntityId(referencedEntityId);
-        argument.setType(ArgumentType.TS_LATEST);
-        argument.setRefEntityKey("temperature");
+        argument.setRefEntityId(referencedEntityId);
+        ReferencedEntityKey refEntityKey = new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null);
+        argument.setRefEntityKey(refEntityKey);
 
         config.setArguments(Map.of("T", argument));
 
