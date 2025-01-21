@@ -15,14 +15,16 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.AttributeScope;
 
 @Data
-public class ScriptCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
+@AllArgsConstructor
+public class ReferencedEntityKey {
 
-    @Override
-    public CalculatedFieldType getType() {
-        return CalculatedFieldType.SCRIPT;
-    }
+    private String key;
+    private ArgumentType type;
+    private AttributeScope scope;
+
 }

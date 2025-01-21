@@ -183,6 +183,18 @@ message TsKvListProto {
   repeated KeyValueProto kv = 2;
 }
 
+message AttributeKvProto {
+  AttributeKey key = 1;
+  AttributeValueProto value = 2;
+}
+
+message TelemetryProto {
+  oneof proto {
+    AttributeKvProto attrKv = 1;
+    TsKvProto tsKv = 2;
+  }
+}
+
 message DeviceInfoProto {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
@@ -809,56 +821,29 @@ message ProfileEntityMsgProto {
   bool deleted = 10;
 }
 
-message ToServerB {
+message TelemetryUpdateMsgProto {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
-  repeated CfIdEntityIdPair links = 3;
-  value = 4;
+  string entityType = 3;
+  int64 entityIdMSB = 4;
+  int64 entityIdLSB = 5;
+  repeated CalculatedFieldEntityCtxIdProto links = 6;
+  repeated CalculatedFieldIdProto previousCalculatedFields = 7;
+  string scope = 8;
+  repeated TelemetryProto updatedTelemetry = 9;
 }
 
-message CalculatedFieldStateMsgProto {
-  int64 tenantIdMSB = 1;
-  int64 tenantIdLSB = 2;
-  int64 calculatedFieldIdMSB = 3;
-  int64 calculatedFieldIdLSB = 4;
-  string entityType = 5;
-  int64 entityIdMSB = 6;
-  int64 entityIdLSB = 7;
-  bool clear = 8;
-  repeated CalculatedFieldIdProto previousCalculatedFields = 9;
-  map<string, ArgumentEntryProto> arguments = 10;
+message CalculatedFieldEntityCtxIdProto {
+  int64 calculatedFieldIdMSB = 1;
+  int64 calculatedFieldIdLSB = 2;
+  string entityType = 3;
+  int64 entityIdMSB = 4;
+  int64 entityIdLSB = 5;
 }
 
 message CalculatedFieldIdProto {
   int64 calculatedFieldIdMSB = 1;
   int64 calculatedFieldIdLSB = 2;
-}
-
-message ArgumentEntryProto {
-  oneof entry_type {
-    TsRollingProto tsRecords = 1;
-    SingleValueProto singleValue = 2;
-  }
-}
-
-message TsRollingProto {
-  map<int64, ObjectProto> tsRecords = 1;
-}
-
-message SingleValueProto {
-  int64 ts = 1;
-  ObjectProto value = 2;
-  int64 version = 3;
-}
-
-message ObjectProto {
-  oneof value {
-    string stringValue = 1;
-    int32 intValue = 2;
-    int64 longValue = 3;
-    double doubleValue = 4;
-    bool boolValue = 5;
-  }
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
@@ -1607,7 +1592,6 @@ message ToCoreMsg {
   CalculatedFieldMsgProto calculatedFieldMsg = 53;
   EntityProfileUpdateMsgProto entityProfileUpdateMsg = 54;
   ProfileEntityMsgProto profileEntityMsg = 55;
-  CalculatedFieldStateMsgProto calculatedFieldStateMsg = 56;
 }
 
 /* High priority messages with low latency are handled by ThingsBoard Core Service separately */
@@ -1655,6 +1639,9 @@ message ToRuleEngineMsg {
   bytes tbMsg = 3;
   repeated string relationTypes = 4;
   string failureMessage = 5;
+  TelemetryUpdateMsgProto cfTelemetryUpdateMsg = 6;
+  EntityProfileUpdateMsgProto entityProfileUpdateMsg = 7;
+  ProfileEntityMsgProto profileEntityMsg = 8;
 }
 
 message ToRuleEngineNotificationMsg {

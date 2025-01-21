@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
-import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
@@ -27,7 +26,6 @@ import org.thingsboard.server.utils.RocksDBConfig;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Service
@@ -54,17 +52,6 @@ public class RocksDBService {
     public void delete(String key) {
         try {
             db.delete(writeOptions, key.getBytes(StandardCharsets.UTF_8));
-        } catch (RocksDBException e) {
-            log.error("Failed to delete data from RocksDB", e);
-        }
-    }
-
-    public void deleteAll(List<String> keys) {
-        try (WriteBatch batch = new WriteBatch()) {
-            for (String key : keys) {
-                batch.delete(key.getBytes(StandardCharsets.UTF_8));
-            }
-            db.write(writeOptions, batch);
         } catch (RocksDBException e) {
             log.error("Failed to delete data from RocksDB", e);
         }

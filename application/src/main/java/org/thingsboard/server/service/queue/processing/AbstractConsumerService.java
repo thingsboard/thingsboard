@@ -194,7 +194,9 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             }
         } else if (EntityType.CALCULATED_FIELD.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             if (componentLifecycleMsg.getEvent() == ComponentLifecycleEvent.CREATED) {
-                calculatedFieldCache.updateCalculatedFieldLinks(componentLifecycleMsg.getTenantId(), (CalculatedFieldId) componentLifecycleMsg.getEntityId());
+                calculatedFieldCache.addCalculatedField(tenantId, (CalculatedFieldId) componentLifecycleMsg.getEntityId());
+            } else if (componentLifecycleMsg.getEvent() == ComponentLifecycleEvent.UPDATED) {
+                calculatedFieldCache.updateCalculatedField(tenantId, (CalculatedFieldId) componentLifecycleMsg.getEntityId());
             } else {
                 calculatedFieldCache.evict((CalculatedFieldId) componentLifecycleMsg.getEntityId());
             }

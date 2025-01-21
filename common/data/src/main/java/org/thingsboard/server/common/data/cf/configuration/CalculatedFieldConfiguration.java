@@ -18,15 +18,15 @@ package org.thingsboard.server.common.data.cf.configuration;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.JsonNode;
-import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -54,7 +54,8 @@ public interface CalculatedFieldConfiguration {
     @JsonIgnore
     CalculatedFieldLinkConfiguration getReferencedEntityConfig(EntityId entityId);
 
-    @JsonIgnore
-    JsonNode calculatedFieldConfigToJson(EntityType entityType, UUID entityId);
+    List<CalculatedFieldLink> buildCalculatedFieldLinks(TenantId tenantId, EntityId cfEntityId, CalculatedFieldId calculatedFieldId);
+
+    CalculatedFieldLink buildCalculatedFieldLink(TenantId tenantId, EntityId referencedEntityId, CalculatedFieldId calculatedFieldId);
 
 }

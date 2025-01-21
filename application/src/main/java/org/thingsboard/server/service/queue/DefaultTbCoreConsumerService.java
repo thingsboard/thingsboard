@@ -326,8 +326,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                         forwardToCalculatedFieldService(toCoreMsg.getEntityProfileUpdateMsg(), callback);
                     } else if (toCoreMsg.hasProfileEntityMsg()) {
                         forwardToCalculatedFieldService(toCoreMsg.getProfileEntityMsg(), callback);
-                    } else if (toCoreMsg.hasCalculatedFieldStateMsg()) {
-                        forwardToCalculatedFieldService(toCoreMsg.getCalculatedFieldStateMsg(), callback);
                     }
                 } catch (Throwable e) {
                     log.warn("[{}] Failed to process message: {}", id, msg, e);
@@ -736,18 +734,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 __ -> callback.onSuccess(),
                 t -> {
                     log.warn("[{}] Failed to process profile entity message for entityId [{}]", tenantId.getId(), entityId.getId(), t);
-                    callback.onFailure(t);
-                });
-    }
-
-    private void forwardToCalculatedFieldService(TransportProtos.CalculatedFieldStateMsgProto calculatedFieldStateMsgProto, TbCallback callback) {
-        var tenantId = toTenantId(calculatedFieldStateMsgProto.getTenantIdMSB(), calculatedFieldStateMsgProto.getTenantIdLSB());
-        var calculatedFieldId = new CalculatedFieldId(new UUID(calculatedFieldStateMsgProto.getCalculatedFieldIdMSB(), calculatedFieldStateMsgProto.getCalculatedFieldIdLSB()));
-        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onCalculatedFieldStateMsg(calculatedFieldStateMsgProto, callback));
-        DonAsynchron.withCallback(future,
-                __ -> callback.onSuccess(),
-                t -> {
-                    log.warn("[{}] Failed to process calculated field state message for entityId [{}]", tenantId.getId(), calculatedFieldId.getId(), t);
                     callback.onFailure(t);
                 });
     }

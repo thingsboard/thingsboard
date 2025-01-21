@@ -15,48 +15,29 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Data;
-import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Data
 public abstract class BaseCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
 
-    @JsonIgnore
-    private final ObjectMapper mapper = new ObjectMapper();
-
     protected Map<String, Argument> arguments;
     protected String expression;
     protected Output output;
 
-    public BaseCalculatedFieldConfiguration() {
-    }
-
-    public BaseCalculatedFieldConfiguration(JsonNode config, EntityType entityType, UUID entityId) {
-        BaseCalculatedFieldConfiguration calculatedFieldConfig = toCalculatedFieldConfig(config, entityType, entityId);
-        this.arguments = calculatedFieldConfig.getArguments();
-        this.expression = calculatedFieldConfig.getExpression();
-        this.output = calculatedFieldConfig.getOutput();
-    }
-
     @Override
     public List<EntityId> getReferencedEntities() {
         return arguments.values().stream()
-                .map(Argument::getEntityId)
+                .map(Argument::getRefEntityId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
@@ -66,21 +47,24 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
         CalculatedFieldLinkConfiguration linkConfiguration = new CalculatedFieldLinkConfiguration();
 
         arguments.entrySet().stream()
-                .filter(entry -> entry.getValue().getEntityId().equals(entityId))
+                .filter(entry -> entry.getValue().getRefEntityId() != null && entry.getValue().getRefEntityId().equals(entityId))
                 .forEach(entry -> {
-                    Argument argument = entry.getValue();
-                    String argumentKey = entry.getKey();
+                    ReferencedEntityKey refEntityKey = entry.getValue().getRefEntityKey();
+                    String argumentName = entry.getKey();
 
-                    switch (argument.getType()) {
+                    switch (refEntityKey.getType()) {
                         case ATTRIBUTE -> {
-                            switch (argument.getScope()) {
-                                case CLIENT_SCOPE -> linkConfiguration.getClientAttributes().put(entry.getKey(), argument.getKey());
-                                case SERVER_SCOPE -> linkConfiguration.getServerAttributes().put(entry.getKey(), argument.getKey());
-                                case SHARED_SCOPE -> linkConfiguration.getSharedAttributes().put(entry.getKey(), argument.getKey());
+                            switch (refEntityKey.getScope()) {
+                                case CLIENT_SCOPE ->
+                                        linkConfiguration.getClientAttributes().put(refEntityKey.getKey(), argumentName);
+                                case SERVER_SCOPE ->
+                                        linkConfiguration.getServerAttributes().put(refEntityKey.getKey(), argumentName);
+                                case SHARED_SCOPE ->
+                                        linkConfiguration.getSharedAttributes().put(refEntityKey.getKey(), argumentName);
                             }
                         }
                         case TS_LATEST, TS_ROLLING ->
-                                linkConfiguration.getTimeSeries().put(argumentKey, argument.getKey());
+                                linkConfiguration.getTimeSeries().put(refEntityKey.getKey(), argumentName);
                     }
                 });
 
@@ -88,107 +72,21 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
     }
 
     @Override
-    public JsonNode calculatedFieldConfigToJson(EntityType entityType, UUID entityId) {
-        ObjectNode configNode = mapper.createObjectNode();
-
-        ObjectNode argumentsNode = configNode.putObject("arguments");
-        arguments.forEach((key, argument) -> {
-            ObjectNode argumentNode = argumentsNode.putObject(key);
-            EntityId referencedEntityId = argument.getEntityId();
-            if (referencedEntityId != null) {
-                argumentNode.put("entityType", referencedEntityId.getEntityType().name());
-                argumentNode.put("entityId", referencedEntityId.getId().toString());
-            } else {
-                argumentNode.put("entityType", entityType.name());
-                argumentNode.put("entityId", entityId.toString());
-            }
-            argumentNode.put("key", argument.getKey());
-            argumentNode.put("type", String.valueOf(argument.getType()));
-            argumentNode.put("scope", String.valueOf(argument.getScope()));
-            argumentNode.put("defaultValue", argument.getDefaultValue());
-            argumentNode.put("limit", String.valueOf(argument.getLimit()));
-            argumentNode.put("timeWindow", String.valueOf(argument.getTimeWindow()));
-        });
-
-        if (expression != null) {
-            configNode.put("expression", expression);
-        }
-
-        if (output != null) {
-            ObjectNode outputNode = configNode.putObject("output");
-            outputNode.put("name", output.getName());
-            outputNode.put("type", String.valueOf(output.getType()));
-            if (output.getScope() != null) {
-                outputNode.put("scope", String.valueOf(output.getScope()));
-            }
-        }
-
-        return configNode;
+    public List<CalculatedFieldLink> buildCalculatedFieldLinks(TenantId tenantId, EntityId cfEntityId, CalculatedFieldId calculatedFieldId) {
+        return getReferencedEntities().stream()
+                .filter(referencedEntity -> !referencedEntity.equals(cfEntityId))
+                .map(referencedEntityId -> buildCalculatedFieldLink(tenantId, referencedEntityId, calculatedFieldId))
+                .collect(Collectors.toList());
     }
 
-    private BaseCalculatedFieldConfiguration toCalculatedFieldConfig(JsonNode config, EntityType entityType, UUID entityId) {
-        if (config == null || !config.isObject()) {
-            return null;
-        }
-
-        Map<String, Argument> arguments = new HashMap<>();
-        JsonNode argumentsNode = config.get("arguments");
-        if (argumentsNode != null && argumentsNode.isObject()) {
-            argumentsNode.fields().forEachRemaining(entry -> {
-                String key = entry.getKey();
-                JsonNode argumentNode = entry.getValue();
-                Argument argument = new Argument();
-                if (argumentNode.hasNonNull("entityType") && argumentNode.hasNonNull("entityId")) {
-                    String referencedEntityType = argumentNode.get("entityType").asText();
-                    UUID referencedEntityId = UUID.fromString(argumentNode.get("entityId").asText());
-                    argument.setEntityId(EntityIdFactory.getByTypeAndUuid(referencedEntityType, referencedEntityId));
-                } else {
-                    argument.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
-                }
-                argument.setKey(argumentNode.get("key").asText());
-                JsonNode type = argumentNode.get("type");
-                if (type != null && !type.isNull() && !type.asText().equals("null")) {
-                    argument.setType(ArgumentType.valueOf(type.asText()));
-                }
-                JsonNode scope = argumentNode.get("scope");
-                if (scope != null && !scope.isNull() && !scope.asText().equals("null")) {
-                    argument.setScope(AttributeScope.valueOf(scope.asText()));
-                }
-                if (argumentNode.hasNonNull("defaultValue")) {
-                    argument.setDefaultValue(argumentNode.get("defaultValue").asText());
-                }
-                if (argumentNode.hasNonNull("limit")) {
-                    argument.setLimit(argumentNode.get("limit").asInt());
-                }
-                if (argumentNode.hasNonNull("timeWindow")) {
-                    argument.setTimeWindow(argumentNode.get("timeWindow").asInt());
-                }
-                arguments.put(key, argument);
-            });
-        }
-        this.setArguments(arguments);
-
-        JsonNode expressionNode = config.get("expression");
-        if (expressionNode != null && expressionNode.isTextual()) {
-            this.setExpression(expressionNode.asText());
-        }
-
-        JsonNode outputNode = config.get("output");
-        if (outputNode != null) {
-            Output output = new Output();
-            output.setName(outputNode.get("name").asText());
-            JsonNode type = outputNode.get("type");
-            if (type != null && !type.isNull() && !type.asText().equals("null")) {
-                output.setType(OutputType.valueOf(type.asText()));
-            }
-            JsonNode scope = outputNode.get("scope");
-            if (scope != null && !scope.isNull() && !scope.asText().equals("null")) {
-                output.setScope(AttributeScope.valueOf(scope.asText()));
-            }
-            this.setOutput(output);
-        }
-
-        return this;
+    @Override
+    public CalculatedFieldLink buildCalculatedFieldLink(TenantId tenantId, EntityId referencedEntityId, CalculatedFieldId calculatedFieldId) {
+        CalculatedFieldLink link = new CalculatedFieldLink();
+        link.setTenantId(tenantId);
+        link.setEntityId(referencedEntityId);
+        link.setCalculatedFieldId(calculatedFieldId);
+        link.setConfiguration(getReferencedEntityConfig(referencedEntityId));
+        return link;
     }
 
 }

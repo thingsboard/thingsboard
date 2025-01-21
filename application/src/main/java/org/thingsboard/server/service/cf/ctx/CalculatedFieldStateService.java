@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.server.service.cf.ctx;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import java.util.Map;
 
-@Data
-public class ScriptCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
+public interface CalculatedFieldStateService {
 
-    @Override
-    public CalculatedFieldType getType() {
-        return CalculatedFieldType.SCRIPT;
-    }
+    Map<CalculatedFieldEntityCtxId, CalculatedFieldEntityCtx> restoreStates();
+
+    CalculatedFieldEntityCtx restoreState(CalculatedFieldEntityCtxId ctxId);
+
+    void persistState(CalculatedFieldEntityCtxId ctxId, CalculatedFieldEntityCtx state);
+
+    void removeState(CalculatedFieldEntityCtxId ctxId);
+
 }

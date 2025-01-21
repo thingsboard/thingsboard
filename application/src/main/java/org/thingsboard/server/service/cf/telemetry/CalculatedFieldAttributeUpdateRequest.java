@@ -17,13 +17,19 @@ package org.thingsboard.server.service.cf.telemetry;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.util.TbPair;
+import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,16 +40,44 @@ public class CalculatedFieldAttributeUpdateRequest implements CalculatedFieldTel
     private TenantId tenantId;
     private EntityId entityId;
     private AttributeScope scope;
-    private List<AttributeKvEntry> kvEntries;
+    private List<? extends KvEntry> kvEntries;
     private List<CalculatedFieldId> previousCalculatedFieldIds;
 
+    public CalculatedFieldAttributeUpdateRequest(AttributesSaveRequest request) {
+        this.tenantId = request.getTenantId();
+        this.entityId = request.getEntityId();
+        this.scope = request.getScope();
+        this.kvEntries = request.getEntries();
+        this.previousCalculatedFieldIds = request.getPreviousCalculatedFieldIds();
+    }
+
     @Override
-    public Map<String, String> getTelemetryKeysFromLink(CalculatedFieldLink link) {
+    public Map<String, String> getTelemetryKeysFromLink(CalculatedFieldLinkConfiguration linkConfiguration) {
         return switch (scope) {
-            case CLIENT_SCOPE -> link.getConfiguration().getClientAttributes();
-            case SERVER_SCOPE -> link.getConfiguration().getServerAttributes();
-            case SHARED_SCOPE -> link.getConfiguration().getSharedAttributes();
+            case CLIENT_SCOPE -> linkConfiguration.getClientAttributes();
+            case SERVER_SCOPE -> linkConfiguration.getServerAttributes();
+            case SHARED_SCOPE -> linkConfiguration.getSharedAttributes();
         };
+    }
+
+    @Override
+    public Map<String, KvEntry> getMappedTelemetry(CalculatedFieldCtx ctx) {
+        Map<String, KvEntry> mappedKvEntries = new HashMap<>();
+        Map<TbPair<EntityId, ReferencedEntityKey>, String> referencedKeys = ctx.getReferencedEntityKeys();
+
+        kvEntries.forEach(entry -> {
+            String key = entry.getKey();
+
+            ReferencedEntityKey referencedEntityKey = new ReferencedEntityKey(key, ArgumentType.ATTRIBUTE, scope);
+
+            String argName = referencedKeys.get(new TbPair<>(entityId, referencedEntityKey));
+
+            if (argName != null) {
+                mappedKvEntries.put(argName, entry);
+            }
+        });
+
+        return mappedKvEntries;
     }
 
 }

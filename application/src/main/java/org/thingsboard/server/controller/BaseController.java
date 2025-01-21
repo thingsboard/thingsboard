@@ -367,9 +367,6 @@ public abstract class BaseController {
     protected TbServiceInfoProvider serviceInfoProvider;
 
     @Autowired
-    protected CalculatedFieldService calculatedFieldService;
-
-    @Autowired
     protected NotificationTargetService notificationTargetService;
 
     @Autowired
@@ -996,10 +993,6 @@ public abstract class BaseController {
         } catch (Exception ignored) {
         }
         return null;
-    }
-
-    protected CalculatedField checkCalculatedFieldId(CalculatedFieldId calculatedFieldId, Operation operation) throws ThingsboardException {
-        return checkEntityId(calculatedFieldId, calculatedFieldService::findById, operation);
     }
 
     protected MediaType parseMediaType(String contentType) {

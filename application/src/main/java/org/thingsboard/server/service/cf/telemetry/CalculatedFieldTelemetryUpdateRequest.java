@@ -15,11 +15,12 @@
  */
 package org.thingsboard.server.service.cf.telemetry;
 
-import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,8 @@ public interface CalculatedFieldTelemetryUpdateRequest {
 
     List<CalculatedFieldId> getPreviousCalculatedFieldIds();
 
-    Map<String, String> getTelemetryKeysFromLink(CalculatedFieldLink link);
+    Map<String, String> getTelemetryKeysFromLink(CalculatedFieldLinkConfiguration linkConfiguration);
+
+    Map<String, KvEntry> getMappedTelemetry(CalculatedFieldCtx ctx);
 
 }

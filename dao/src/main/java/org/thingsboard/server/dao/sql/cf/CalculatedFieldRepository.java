@@ -28,6 +28,8 @@ public interface CalculatedFieldRepository extends JpaRepository<CalculatedField
 
     List<CalculatedFieldId> findCalculatedFieldIdsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 
+    List<CalculatedFieldEntity> findAllByTenantIdAndEntityId(UUID tenantId, UUID entityId);
+
     List<CalculatedFieldEntity> findAllByTenantId(UUID tenantId);
 
     List<CalculatedFieldEntity> removeAllByTenantIdAndEntityId(UUID tenantId, UUID entityId);

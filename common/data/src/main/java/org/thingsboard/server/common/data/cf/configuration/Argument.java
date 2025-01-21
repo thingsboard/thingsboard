@@ -16,16 +16,15 @@
 package org.thingsboard.server.common.data.cf.configuration;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.AttributeScope;
+import org.springframework.lang.Nullable;
 import org.thingsboard.server.common.data.id.EntityId;
 
 @Data
 public class Argument {
 
-    private EntityId entityId;
-    private String key;
-    private ArgumentType type;
-    private AttributeScope scope;
+    @Nullable
+    private EntityId refEntityId;
+    private ReferencedEntityKey refEntityKey;
     private String defaultValue;
 
     private int limit;
