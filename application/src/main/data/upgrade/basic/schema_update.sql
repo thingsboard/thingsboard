@@ -221,60 +221,36 @@ DO $$
             WHERE table_name = 'rule_node'
         ) THEN
 
-            -- CREATE JSON validation function
-            CREATE OR REPLACE FUNCTION is_valid_jsonb(input text)
-                RETURNS boolean
-                LANGUAGE plpgsql
-            AS $func$
-            DECLARE
-                dummy JSONB;
-            BEGIN
-                dummy := input::jsonb;
-                RETURN true;
-            EXCEPTION
-                WHEN others THEN
-                    RETURN false;
-            END;
-            $func$;
+            UPDATE rule_node
+            SET configuration = (
+                (configuration::jsonb - 'skipLatestPersistence')
+                    || jsonb_build_object(
+                        'persistenceSettings', jsonb_build_object(
+                                'type',       'ADVANCED',
+                                'timeseries', jsonb_build_object('type', 'ON_EVERY_MESSAGE'),
+                                'latest',     jsonb_build_object('type', 'SKIP'),
+                                'webSockets', jsonb_build_object('type', 'ON_EVERY_MESSAGE')
+                                               )
+                       )
+                )::text,
+                configuration_version = 1
+            WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode'
+              AND configuration_version = 0
+              AND configuration::jsonb ->> 'skipLatestPersistence' = 'true';
 
             UPDATE rule_node
-            SET configuration = CASE
-                -- Case 1: If configuration is NULL, invalid JSON, or not a JSON object - set default configuration
-                                    WHEN configuration IS NULL
-                                        OR NOT is_valid_jsonb(configuration)
-                                        OR jsonb_typeof(configuration::jsonb) <> 'object'
-                                        THEN jsonb_build_object(
-                                            'defaultTTL', 0,
-                                            'useServerTs', false,
-                                            'persistenceSettings', jsonb_build_object('type', 'ON_EVERY_MESSAGE')
-                                             )
-                -- Case 2: If a valid JSON object with persistenceSettings (rule node was already upgraded) - leave unchanged
-                                    WHEN configuration::jsonb ? 'persistenceSettings'
-                                        THEN configuration::jsonb
-                -- Case 3: If a valid JSON object without persistenceSettings and skipLatestPersistence = 'true' (string 'true' or boolean true) - set latest to SKIP
-                                    WHEN configuration::jsonb ->> 'skipLatestPersistence' = 'true'
-                                        THEN (configuration::jsonb - 'skipLatestPersistence')
-                                        || jsonb_build_object(
-                                                     'persistenceSettings', jsonb_build_object(
-                                                        'type',       'ADVANCED',
-                                                        'timeseries', jsonb_build_object('type', 'ON_EVERY_MESSAGE'),
-                                                        'latest',     jsonb_build_object('type', 'SKIP'),
-                                                        'webSockets', jsonb_build_object('type', 'ON_EVERY_MESSAGE')
-                                                                            )
-                                           )
-                -- Case 4: If a valid JSON object without persistenceSettings and skipLatestPersistence not 'true' (everything else) - set all to ON_EVERY_MESSAGE
-                                    ELSE (configuration::jsonb - 'skipLatestPersistence')
-                                        || jsonb_build_object(
-                                                     'persistenceSettings', jsonb_build_object(
-                                                        'type', 'ON_EVERY_MESSAGE'
-                                                                            )
-                                           )
-                END::text,
+            SET configuration = (
+                (configuration::jsonb - 'skipLatestPersistence')
+                    || jsonb_build_object(
+                        'persistenceSettings', jsonb_build_object(
+                                'type', 'ON_EVERY_MESSAGE'
+                                               )
+                       )
+                )::text,
                 configuration_version = 1
-            WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode' AND configuration_version = 0;
-
-            -- Drop the helper function
-            DROP FUNCTION is_valid_jsonb(text);
+            WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode'
+              AND configuration_version = 0
+              AND (configuration::jsonb ->> 'skipLatestPersistence' != 'true' OR configuration::jsonb ->> 'skipLatestPersistence' IS NULL);
 
         END IF;
     END;
