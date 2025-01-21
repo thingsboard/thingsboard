@@ -208,7 +208,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
             assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);
             assertThat(request.getEntries()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("ts").containsExactlyElementsOf(expectedList);
             assertThat(request.getTtl()).isEqualTo(extractTtlAsSeconds(tenantProfile));
-            assertThat(request.getSaveActions()).isEqualTo(TimeseriesSaveRequest.SaveActions.SAVE_ALL);
+            assertThat(request.getStrategy()).isEqualTo(TimeseriesSaveRequest.Strategy.SAVE_ALL);
             assertThat(request.getCallback()).isInstanceOf(TelemetryNodeCallback.class);
         }));
         verify(ctxMock).tellSuccess(msg);
@@ -265,7 +265,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
             assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);
             assertThat(request.getEntries()).containsExactlyElementsOf(expectedList);
             assertThat(request.getTtl()).isEqualTo(config.getDefaultTTL());
-            assertThat(request.getSaveActions()).isEqualTo(new TimeseriesSaveRequest.SaveActions(true, false, true));
+            assertThat(request.getStrategy()).isEqualTo(new TimeseriesSaveRequest.Strategy(true, false, true));
             assertThat(request.getCallback()).isInstanceOf(TelemetryNodeCallback.class);
         }));
         verify(ctxMock).tellSuccess(msg);
@@ -304,7 +304,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
             assertThat(request.getCustomerId()).isNull();
             assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);
             assertThat(request.getTtl()).isEqualTo(expectedTtl);
-            assertThat(request.getSaveActions()).isEqualTo(TimeseriesSaveRequest.SaveActions.SAVE_ALL);
+            assertThat(request.getStrategy()).isEqualTo(TimeseriesSaveRequest.Strategy.SAVE_ALL);
             assertThat(request.getCallback()).isInstanceOf(TelemetryNodeCallback.class);
         }));
     }
@@ -353,7 +353,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .entityId(msg.getOriginator())
                 .entry(new BasicTsKvEntry(123L, new DoubleDataEntry("temperature", 22.3)))
                 .ttl(extractTtlAsSeconds(tenantProfile))
-                .saveActions(TimeseriesSaveRequest.SaveActions.SAVE_ALL)
+                .strategy(TimeseriesSaveRequest.Strategy.SAVE_ALL)
                 .build();
 
         node.onMsg(ctxMock, msg);
@@ -388,7 +388,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .entityId(msg.getOriginator())
                 .entry(new BasicTsKvEntry(123L, new DoubleDataEntry("temperature", 22.3)))
                 .ttl(extractTtlAsSeconds(tenantProfile))
-                .saveActions(TimeseriesSaveRequest.SaveActions.SAVE_ALL)
+                .strategy(TimeseriesSaveRequest.Strategy.SAVE_ALL)
                 .build();
 
         node.onMsg(ctxMock, msg);
@@ -423,7 +423,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .entityId(msg.getOriginator())
                 .entry(new BasicTsKvEntry(123L, new DoubleDataEntry("temperature", 22.3)))
                 .ttl(extractTtlAsSeconds(tenantProfile))
-                .saveActions(TimeseriesSaveRequest.SaveActions.WS_ONLY)
+                .strategy(TimeseriesSaveRequest.Strategy.WS_ONLY)
                 .build();
 
         node.onMsg(ctxMock, msg);
@@ -462,7 +462,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .entityId(msg.getOriginator())
                 .entry(new BasicTsKvEntry(123L, new DoubleDataEntry("temperature", 22.3)))
                 .ttl(extractTtlAsSeconds(tenantProfile))
-                .saveActions(TimeseriesSaveRequest.SaveActions.SAVE_ALL)
+                .strategy(TimeseriesSaveRequest.Strategy.SAVE_ALL)
                 .build();
 
         node.onMsg(ctxMock, msg);
@@ -499,7 +499,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .metaData(new TbMsgMetaData(Map.of("ts", Long.toString(ts1))))
                 .build());
         then(telemetryServiceMock).should().saveTimeseries(assertArg(
-                actualSaveRequest -> assertThat(actualSaveRequest.getSaveActions()).isEqualTo(TimeseriesSaveRequest.SaveActions.SAVE_ALL)
+                actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(TimeseriesSaveRequest.Strategy.SAVE_ALL)
         ));
 
         clearInvocations(telemetryServiceMock);
@@ -511,7 +511,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .metaData(new TbMsgMetaData(Map.of("ts", Long.toString(ts2))))
                 .build());
         then(telemetryServiceMock).should().saveTimeseries(assertArg(
-                actualSaveRequest -> assertThat(actualSaveRequest.getSaveActions()).isEqualTo(new TimeseriesSaveRequest.SaveActions(true, false, false))
+                actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(new TimeseriesSaveRequest.Strategy(true, false, false))
         ));
 
         clearInvocations(telemetryServiceMock);
@@ -523,7 +523,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .metaData(new TbMsgMetaData(Map.of("ts", Long.toString(ts3))))
                 .build());
         then(telemetryServiceMock).should().saveTimeseries(assertArg(
-                actualSaveRequest -> assertThat(actualSaveRequest.getSaveActions()).isEqualTo(new TimeseriesSaveRequest.SaveActions(true, true, false))
+                actualSaveRequest -> assertThat(actualSaveRequest.getStrategy()).isEqualTo(new TimeseriesSaveRequest.Strategy(true, true, false))
         ));
     }
 

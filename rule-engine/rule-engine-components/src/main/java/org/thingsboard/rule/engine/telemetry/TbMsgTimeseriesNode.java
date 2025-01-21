@@ -104,10 +104,10 @@ public class TbMsgTimeseriesNode implements TbNode {
         }
         long ts = computeTs(msg, config.isUseServerTs());
 
-        TimeseriesSaveRequest.SaveActions saveActions = determineSaveActions(ts, msg.getOriginator().getId());
+        TimeseriesSaveRequest.Strategy strategy = determineSaveActions(ts, msg.getOriginator().getId());
 
         // short-circuit
-        if (!saveActions.saveTimeseries() && !saveActions.saveLatest() && !saveActions.sendWsUpdate()) {
+        if (!strategy.saveTimeseries() && !strategy.saveLatest() && !strategy.sendWsUpdate()) {
             ctx.tellSuccess(msg);
             return;
         }
@@ -135,7 +135,7 @@ public class TbMsgTimeseriesNode implements TbNode {
                 .entityId(msg.getOriginator())
                 .entries(tsKvEntryList)
                 .ttl(ttl)
-                .saveActions(saveActions)
+                .strategy(strategy)
                 .callback(new TelemetryNodeCallback(ctx, msg))
                 .build());
     }
@@ -144,19 +144,19 @@ public class TbMsgTimeseriesNode implements TbNode {
         return ignoreMetadataTs ? System.currentTimeMillis() : msg.getMetaDataTs();
     }
 
-    private TimeseriesSaveRequest.SaveActions determineSaveActions(long ts, UUID originatorUuid) {
+    private TimeseriesSaveRequest.Strategy determineSaveActions(long ts, UUID originatorUuid) {
         if (persistenceSettings instanceof OnEveryMessage) {
-            return TimeseriesSaveRequest.SaveActions.SAVE_ALL;
+            return TimeseriesSaveRequest.Strategy.SAVE_ALL;
         }
         if (persistenceSettings instanceof WebSocketsOnly) {
-            return TimeseriesSaveRequest.SaveActions.WS_ONLY;
+            return TimeseriesSaveRequest.Strategy.WS_ONLY;
         }
         if (persistenceSettings instanceof Deduplicate deduplicate) {
             boolean isFirstMsgInInterval = deduplicate.getDeduplicateStrategy().shouldPersist(ts, originatorUuid);
-            return isFirstMsgInInterval ? TimeseriesSaveRequest.SaveActions.SAVE_ALL : TimeseriesSaveRequest.SaveActions.SKIP_ALL;
+            return isFirstMsgInInterval ? TimeseriesSaveRequest.Strategy.SAVE_ALL : TimeseriesSaveRequest.Strategy.SKIP_ALL;
         }
         if (persistenceSettings instanceof Advanced advanced) {
-            return new TimeseriesSaveRequest.SaveActions(
+            return new TimeseriesSaveRequest.Strategy(
                     advanced.timeseries().shouldPersist(ts, originatorUuid),
                     advanced.latest().shouldPersist(ts, originatorUuid),
                     advanced.webSockets().shouldPersist(ts, originatorUuid)

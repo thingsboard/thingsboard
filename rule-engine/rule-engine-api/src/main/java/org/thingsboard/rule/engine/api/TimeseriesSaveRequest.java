@@ -38,15 +38,15 @@ public class TimeseriesSaveRequest {
     private final EntityId entityId;
     private final List<TsKvEntry> entries;
     private final long ttl;
-    private final SaveActions saveActions;
+    private final Strategy strategy;
     private final FutureCallback<Void> callback;
 
-    public record SaveActions(boolean saveTimeseries, boolean saveLatest, boolean sendWsUpdate) {
+    public record Strategy(boolean saveTimeseries, boolean saveLatest, boolean sendWsUpdate) {
 
-        public static final SaveActions SAVE_ALL = new SaveActions(true, true, true);
-        public static final SaveActions WS_ONLY = new SaveActions(false, false, true);
-        public static final SaveActions LATEST_AND_WS = new SaveActions(false, true, true);
-        public static final SaveActions SKIP_ALL = new SaveActions(false, false, false);
+        public static final Strategy SAVE_ALL = new Strategy(true, true, true);
+        public static final Strategy WS_ONLY = new Strategy(false, false, true);
+        public static final Strategy LATEST_AND_WS = new Strategy(false, true, true);
+        public static final Strategy SKIP_ALL = new Strategy(false, false, false);
 
     }
 
@@ -61,7 +61,7 @@ public class TimeseriesSaveRequest {
         private EntityId entityId;
         private List<TsKvEntry> entries;
         private long ttl;
-        private SaveActions saveActions = SaveActions.SAVE_ALL;
+        private Strategy strategy = Strategy.SAVE_ALL;
         private FutureCallback<Void> callback;
 
         Builder() {}
@@ -99,8 +99,8 @@ public class TimeseriesSaveRequest {
             return this;
         }
 
-        public Builder saveActions(SaveActions settings) {
-            this.saveActions = settings;
+        public Builder strategy(Strategy strategy) {
+            this.strategy = strategy;
             return this;
         }
 
@@ -124,7 +124,7 @@ public class TimeseriesSaveRequest {
         }
 
         public TimeseriesSaveRequest build() {
-            return new TimeseriesSaveRequest(tenantId, customerId, entityId, entries, ttl, saveActions, callback);
+            return new TimeseriesSaveRequest(tenantId, customerId, entityId, entries, ttl, strategy, callback);
         }
 
     }

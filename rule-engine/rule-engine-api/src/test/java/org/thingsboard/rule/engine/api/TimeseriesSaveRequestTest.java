@@ -22,30 +22,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TimeseriesSaveRequestTest {
 
     @Test
-    void testDefaultSaveActionsAreSaveAll() {
+    void testDefaultSaveStrategyIsSaveAll() {
         var request = TimeseriesSaveRequest.builder().build();
 
-        assertThat(request.getSaveActions()).isEqualTo(TimeseriesSaveRequest.SaveActions.SAVE_ALL);
+        assertThat(request.getStrategy()).isEqualTo(TimeseriesSaveRequest.Strategy.SAVE_ALL);
     }
 
     @Test
-    void testSaveActionsSaveAll() {
-        assertThat(TimeseriesSaveRequest.SaveActions.SAVE_ALL).isEqualTo(new TimeseriesSaveRequest.SaveActions(true, true, true));
+    void testSaveAllStrategy() {
+        assertThat(TimeseriesSaveRequest.Strategy.SAVE_ALL).isEqualTo(new TimeseriesSaveRequest.Strategy(true, true, true));
     }
 
     @Test
-    void testSaveActionsWsOnly() {
-        assertThat(TimeseriesSaveRequest.SaveActions.WS_ONLY).isEqualTo(new TimeseriesSaveRequest.SaveActions(false, false, true));
+    void testWsOnlyStrategy() {
+        assertThat(TimeseriesSaveRequest.Strategy.WS_ONLY).isEqualTo(new TimeseriesSaveRequest.Strategy(false, false, true));
     }
 
     @Test
-    void testSaveActionsLatestAndWs() {
-        assertThat(TimeseriesSaveRequest.SaveActions.LATEST_AND_WS).isEqualTo(new TimeseriesSaveRequest.SaveActions(false, true, true));
+    void testLatestAndWsStrategy() {
+        assertThat(TimeseriesSaveRequest.Strategy.LATEST_AND_WS).isEqualTo(new TimeseriesSaveRequest.Strategy(false, true, true));
     }
 
     @Test
-    void testSaveActionsSkipAll() {
-        assertThat(TimeseriesSaveRequest.SaveActions.SKIP_ALL).isEqualTo(new TimeseriesSaveRequest.SaveActions(false, false, false));
+    void testSkipAllStrategy() {
+        assertThat(TimeseriesSaveRequest.Strategy.SKIP_ALL).isEqualTo(new TimeseriesSaveRequest.Strategy(false, false, false));
     }
 
 }

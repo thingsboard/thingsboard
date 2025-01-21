@@ -173,7 +173,7 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .entityId(entityId)
                 .entries(sampleTelemetry)
                 .ttl(sampleTtl)
-                .saveActions(new TimeseriesSaveRequest.SaveActions(true, false, false))
+                .strategy(new TimeseriesSaveRequest.Strategy(true, false, false))
                 .callback(emptyCallback)
                 .build();
 
@@ -193,7 +193,7 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .entityId(entityId)
                 .entries(sampleTelemetry)
                 .ttl(sampleTtl)
-                .saveActions(TimeseriesSaveRequest.SaveActions.LATEST_AND_WS)
+                .strategy(TimeseriesSaveRequest.Strategy.LATEST_AND_WS)
                 .callback(emptyCallback)
                 .build();
 
@@ -216,7 +216,7 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .entityId(entityId)
                 .entries(sampleTelemetry)
                 .ttl(sampleTtl)
-                .saveActions(TimeseriesSaveRequest.SaveActions.SAVE_ALL)
+                .strategy(TimeseriesSaveRequest.Strategy.SAVE_ALL)
                 .future(future)
                 .build();
 
@@ -242,7 +242,7 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .entityId(entityId)
                 .entries(sampleTelemetry)
                 .ttl(sampleTtl)
-                .saveActions(TimeseriesSaveRequest.SaveActions.LATEST_AND_WS)
+                .strategy(TimeseriesSaveRequest.Strategy.LATEST_AND_WS)
                 .future(future)
                 .build();
 
@@ -275,7 +275,7 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .entityId(entityId)
                 .entries(sampleTelemetry)
                 .ttl(sampleTtl)
-                .saveActions(new TimeseriesSaveRequest.SaveActions(false, true, false))
+                .strategy(new TimeseriesSaveRequest.Strategy(false, true, false))
                 .callback(emptyCallback)
                 .build();
 
@@ -302,7 +302,7 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .entityId(entityId)
                 .entries(sampleTelemetry)
                 .ttl(sampleTtl)
-                .saveActions(new TimeseriesSaveRequest.SaveActions(true, false, false))
+                .strategy(new TimeseriesSaveRequest.Strategy(true, false, false))
                 .callback(emptyCallback)
                 .build();
 
@@ -328,7 +328,7 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .entityId(entityId)
                 .entries(sampleTelemetry)
                 .ttl(sampleTtl)
-                .saveActions(new TimeseriesSaveRequest.SaveActions(saveTimeseries, saveLatest, sendWsUpdate))
+                .strategy(new TimeseriesSaveRequest.Strategy(saveTimeseries, saveLatest, sendWsUpdate))
                 .callback(emptyCallback)
                 .build();
 
