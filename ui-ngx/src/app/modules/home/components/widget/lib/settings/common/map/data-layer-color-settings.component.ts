@@ -19,7 +19,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { ComponentStyle } from '@shared/models/widget-settings.models';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { DataLayerColorSettings, DataLayerColorType } from '@home/components/widget/lib/maps/map.models';
+import { DataLayerColorSettings, DataLayerColorType } from '@home/components/widget/lib/maps/models/map.models';
 import {
   DataLayerColorSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/map/data-layer-color-settings-panel.component';

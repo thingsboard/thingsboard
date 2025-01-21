@@ -251,6 +251,10 @@
                             formControlName="groups">
       </tb-string-items-list>
     </div>
+    <tb-marker-clustering-settings
+      *ngIf="dataLayerType === 'markers'"
+      formControlName="markerClustering">
+    </tb-marker-clustering-settings>
   </div>
   <div mat-dialog-actions class="flex items-center justify-between">
     <button mat-button color="primary"

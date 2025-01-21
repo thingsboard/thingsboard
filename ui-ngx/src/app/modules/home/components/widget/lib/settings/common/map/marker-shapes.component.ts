@@ -19,7 +19,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { createColorMarkerShapeURI, MarkerShape } from '@home/components/widget/lib/maps/marker-shape.models';
+import { createColorMarkerShapeURI, MarkerShape } from '@home/components/widget/lib/maps/models/marker-shape.models';
 import { Observable } from 'rxjs';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { MatIconRegistry } from '@angular/material/icon';

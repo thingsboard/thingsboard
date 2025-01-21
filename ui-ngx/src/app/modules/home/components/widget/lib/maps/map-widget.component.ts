@@ -32,7 +32,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { Observable } from 'rxjs';
 import { backgroundStyle, ComponentStyle, overlayStyle } from '@shared/models/widget-settings.models';
 import { TbMap } from '@home/components/widget/lib/maps/map';
-import { MapSetting } from '@home/components/widget/lib/maps/map.models';
+import { MapSetting } from '@home/components/widget/lib/maps/models/map.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';

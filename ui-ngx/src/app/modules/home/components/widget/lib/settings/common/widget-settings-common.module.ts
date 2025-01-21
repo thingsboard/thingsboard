@@ -223,6 +223,9 @@ import {
   MarkerShapeSettingsComponent
 } from '@home/components/widget/lib/settings/common/map/marker-shape-settings.component';
 import { MarkerShapesComponent } from '@home/components/widget/lib/settings/common/map/marker-shapes.component';
+import {
+  MarkerClusteringSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/marker-clustering-settings.component';
 
 @NgModule({
   declarations: [
@@ -303,6 +306,7 @@ import { MarkerShapesComponent } from '@home/components/widget/lib/settings/comm
     MarkerShapesComponent,
     MarkerImageSettingsComponent,
     MarkerImageSettingsPanelComponent,
+    MarkerClusteringSettingsComponent,
     MapDataLayerDialogComponent,
     MapDataLayerRowComponent,
     MapDataLayersComponent,

@@ -16,12 +16,12 @@
 
 import { FormattedData } from '@shared/models/widget.models';
 import L from 'leaflet';
-import { TileLayerOptions } from 'leaflet';
+import { TbMapDatasource } from '@home/components/widget/lib/maps/models/map.models';
 
 // redeclare module, maintains compatibility with @types/leaflet
 declare module 'leaflet' {
   interface MarkerOptions {
-    tbMarkerData?: FormattedData;
+    tbMarkerData?: FormattedData<TbMapDatasource>;
   }
 
   interface TileLayer {

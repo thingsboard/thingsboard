@@ -24,7 +24,7 @@ import {
   MarkersDataLayerSettings,
   MarkerType,
   PolygonsDataLayerSettings, ShapeDataLayerSettings
-} from '@home/components/widget/lib/maps/map.models';
+} from '@home/components/widget/lib/maps/models/map.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
@@ -119,6 +119,7 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         this.dataLayerFormGroup.addControl('markerImage', this.fb.control(markersDataLayer.markerImage, Validators.required));
         this.dataLayerFormGroup.addControl('markerOffsetX', this.fb.control(markersDataLayer.markerOffsetX));
         this.dataLayerFormGroup.addControl('markerOffsetY', this.fb.control(markersDataLayer.markerOffsetY));
+        this.dataLayerFormGroup.addControl('markerClustering', this.fb.control(markersDataLayer.markerClustering));
         this.dataLayerFormGroup.get('markerType').valueChanges.pipe(
           takeUntilDestroyed(this.destroyRef)
         ).subscribe(() =>

@@ -33,7 +33,7 @@ import {
   openStreetMapLayerTranslationMap,
   tencentLayerTranslationMap,
   tencentLayerTypes
-} from '@home/components/widget/lib/maps/map.models';
+} from '@home/components/widget/lib/maps/models/map.models';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({

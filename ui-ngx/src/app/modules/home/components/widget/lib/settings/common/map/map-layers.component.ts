@@ -35,7 +35,7 @@ import {
   mapLayerValid,
   mapLayerValidator,
   MapProvider
-} from '@home/components/widget/lib/maps/map.models';
+} from '@home/components/widget/lib/maps/models/map.models';
 
 @Component({
   selector: 'tb-map-layers',

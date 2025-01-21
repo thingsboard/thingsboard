@@ -32,7 +32,7 @@ import {
   DataLayerPatternSettings,
   DataLayerPatternType,
   DataLayerTooltipSettings, dataLayerTooltipTriggers, dataLayerTooltipTriggerTranslationMap
-} from '@home/components/widget/lib/maps/map.models';
+} from '@home/components/widget/lib/maps/models/map.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({

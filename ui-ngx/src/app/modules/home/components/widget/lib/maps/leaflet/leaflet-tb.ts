@@ -16,6 +16,11 @@
 
 import L, { Coords, TB, TileLayerOptions } from 'leaflet';
 import {  guid } from '@core/utils';
+import 'leaflet-providers';
+import '@geoman-io/leaflet-geoman-free';
+import 'leaflet.markercluster';
+
+L.MarkerCluster = L.MarkerCluster.mergeOptions({ pmIgnore: true });
 
 class SidebarControl extends L.Control<TB.SidebarControlOptions> {
 

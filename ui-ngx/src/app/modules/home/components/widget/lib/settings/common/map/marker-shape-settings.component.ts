@@ -33,7 +33,7 @@ import {
 } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { MarkerIconSettings, MarkerShapeSettings, MarkerType } from '@home/components/widget/lib/maps/map.models';
+import { MarkerIconSettings, MarkerShapeSettings, MarkerType } from '@home/components/widget/lib/maps/models/map.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable } from 'rxjs';
 import { DomSanitizer, SafeHtml, SafeUrl } from '@angular/platform-browser';
@@ -41,7 +41,7 @@ import { MatIconRegistry } from '@angular/material/icon';
 import {
   createColorMarkerIconElement,
   createColorMarkerShapeURI
-} from '@home/components/widget/lib/maps/marker-shape.models';
+} from '@home/components/widget/lib/maps/models/marker-shape.models';
 import tinycolor from 'tinycolor2';
 import { map, share } from 'rxjs/operators';
 import { MarkerShapesComponent } from '@home/components/widget/lib/settings/common/map/marker-shapes.component';

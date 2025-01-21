@@ -18,7 +18,7 @@ import { ChangeDetectorRef, Component, forwardRef, Input, Renderer2, ViewContain
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { MarkerImageSettings, MarkerImageType } from '@home/components/widget/lib/maps/map.models';
+import { MarkerImageSettings, MarkerImageType } from '@home/components/widget/lib/maps/models/map.models';
 import {
   MarkerImageSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/map/marker-image-settings-panel.component';

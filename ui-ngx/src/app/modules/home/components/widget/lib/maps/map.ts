@@ -22,7 +22,8 @@ import {
   defaultImageMapSettings,
   GeoMapSettings,
   ImageMapSettings,
-  latLngPointToBounds, MapActionHandler,
+  latLngPointToBounds,
+  MapActionHandler,
   MapSetting,
   MapType,
   MapZoomAction,
@@ -30,26 +31,23 @@ import {
   parseCenterPosition,
   TbCircleData,
   TbMapDatasource
-} from '@home/components/widget/lib/maps/map.models';
+} from '@home/components/widget/lib/maps/models/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { formattedDataFormDatasourceData, isDefinedAndNotNull, mergeDeepIgnoreArray } from '@core/utils';
 import { DeepPartial } from '@shared/models/common';
-import L, { LatLngBounds, LatLngTuple, LeafletMouseEvent, PointExpression, Projection } from 'leaflet';
+import L, { LatLngBounds, LatLngTuple, LeafletMouseEvent, Projection } from 'leaflet';
 import { forkJoin, Observable, of } from 'rxjs';
 import { TbMapLayer } from '@home/components/widget/lib/maps/map-layer';
 import { map, switchMap, tap } from 'rxjs/operators';
 import '@home/components/widget/lib/maps/leaflet/leaflet-tb';
-import {
-  MapDataLayerType,
-  TbCirclesDataLayer,
-  TbMapDataLayer,
-  TbMarkersDataLayer,
-  TbPolygonsDataLayer
-} from '@home/components/widget/lib/maps/map-data-layer';
+import { MapDataLayerType, TbMapDataLayer, } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { Datasource, WidgetActionDescriptor, widgetType } from '@shared/models/widget.models';
+import { WidgetActionDescriptor, widgetType } from '@shared/models/widget.models';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import { TbMarkersDataLayer } from '@home/components/widget/lib/maps/data-layer/markers-data-layer';
+import { TbPolygonsDataLayer } from '@home/components/widget/lib/maps/data-layer/polygons-data-layer';
+import { TbCirclesDataLayer } from '@home/components/widget/lib/maps/data-layer/circles-data-layer';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 
 export abstract class TbMap<S extends BaseMapSettings> {
@@ -277,7 +275,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
             side: ['topleft', 'bottomleft'].includes(this.settings.controlsPosition) ? 'right' : 'left',
             distance: 2,
             trackOrigin: true,
-            functionBefore: (instance, helper) => {
+            functionBefore: (_instance, helper) => {
               if (helper.origin.ariaDisabled === 'true' || helper.origin.parentElement.classList.contains('active')) {
                 return false;
               }
@@ -478,7 +476,9 @@ class TbGeoMap extends TbMap<GeoMapSettings> {
     const map = L.map(this.mapElement, {
       scrollWheelZoom: this.settings.zoomActions.includes(MapZoomAction.scroll),
       doubleClickZoom: this.settings.zoomActions.includes(MapZoomAction.doubleClick),
-      zoomControl: this.settings.zoomActions.includes(MapZoomAction.controlButtons)
+      zoomControl: this.settings.zoomActions.includes(MapZoomAction.controlButtons),
+      zoom: this.settings.defaultZoomLevel || DEFAULT_ZOOM_LEVEL,
+      center: this.defaultCenterPosition
     }).setView(this.defaultCenterPosition, this.settings.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
     return of(map);
   }

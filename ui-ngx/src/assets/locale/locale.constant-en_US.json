@@ -6926,7 +6926,21 @@
                     "marker-images": "Marker images",
                     "marker-offset": "Marker offset",
                     "offset-horizontal": "Horizontal",
-                    "offset-vertical": "Vertical"
+                    "offset-vertical": "Vertical",
+                    "clustering": {
+                        "use-map-markers-clustering": "Use map markers clustering",
+                        "zoom-on-cluster-click": "Zoom when clicking on a cluster",
+                        "max-zoom": "The maximum zoom level when a marker can be part of a cluster (0 - 18)",
+                        "max-radius": "Maximum radius that a cluster will cover",
+                        "zoom-animation": "Animation on markers when zooming",
+                        "bounds-on-cluster-mouse-over": "Bounds of markers when mouse over a cluster",
+                        "spiderfy-max-zoom-level": "Spiderfy at the max zoom level (to see all cluster markers)",
+                        "load-optimization": "Load optimization",
+                        "chunked-load": "Use chunks for adding markers so that the page does not freeze",
+                        "lazy-load": "Use lazy load for adding markers",
+                        "use-cluster-marker-color-function": "Use cluster markers color function",
+                        "marker-color-function": "Marker color function"
+                    }
                 },
                 "polygon": {
                     "polygon-key": "Polygon key",

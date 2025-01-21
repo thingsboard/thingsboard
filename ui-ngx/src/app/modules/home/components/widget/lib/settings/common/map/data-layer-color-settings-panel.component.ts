@@ -22,7 +22,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DataLayerColorSettings, DataLayerColorType } from '@home/components/widget/lib/maps/map.models';
+import { DataLayerColorSettings, DataLayerColorType } from '@home/components/widget/lib/maps/models/map.models';
 
 @Component({
   selector: 'tb-data-layer-color-settings-panel',

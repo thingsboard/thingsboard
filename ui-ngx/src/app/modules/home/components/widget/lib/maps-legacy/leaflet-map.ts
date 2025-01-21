@@ -16,9 +16,7 @@
 
 import L, { FeatureGroup, LatLngBounds, LatLngTuple, PointExpression, Projection } from 'leaflet';
 import tinycolor from 'tinycolor2';
-import 'leaflet-providers';
-import 'leaflet.markercluster';
-import '@geoman-io/leaflet-geoman-free';
+import '@home/components/widget/lib/maps/leaflet/leaflet-tb';
 
 import {
   CircleData,
@@ -125,10 +123,6 @@ export default abstract class LeafletMap {
     private initMarkerClusterSettings() {
       const markerClusteringSettings: WidgetMarkerClusteringSettings = this.options;
       if (markerClusteringSettings.useClusterMarkers) {
-        // disabled marker cluster icon
-        (L as any).MarkerCluster = (L as any).MarkerCluster.extend({
-          options: { pmIgnore: true, ...L.Icon.prototype.options }
-        });
         this.clusteringSettings = {
             spiderfyOnMaxZoom: markerClusteringSettings.spiderfyOnMaxZoom,
             zoomToBoundsOnClick: markerClusteringSettings.zoomOnClick,

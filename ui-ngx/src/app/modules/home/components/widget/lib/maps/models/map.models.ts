@@ -24,7 +24,7 @@ import { TbFunction } from '@shared/models/js-function.models';
 import { Observable, Observer, of, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ImagePipe } from '@shared/pipe/image.pipe';
-import { MarkerShape } from '@home/components/widget/lib/maps/marker-shape.models';
+import { MarkerShape } from '@home/components/widget/lib/maps/models/marker-shape.models';
 
 export enum MapType {
   geoMap = 'geoMap',
@@ -211,6 +211,20 @@ export interface MarkerShapeSettings extends BaseMarkerShapeSettings {
 export interface MarkerIconSettings extends BaseMarkerShapeSettings {
   icon: string;
 }
+export interface MarkerClusteringSettings {
+  enable: boolean;
+  zoomOnClick: boolean;
+  maxZoom: number;
+  maxClusterRadius: number;
+  zoomAnimation: boolean;
+  showCoverageOnHover: boolean;
+  spiderfyOnMaxZoom: boolean;
+  chunkedLoad: boolean;
+  lazyLoad: boolean;
+  useClusterMarkerColorFunction: boolean;
+  clusterMarkerColorFunction: TbFunction;
+}
+
 
 export interface MarkersDataLayerSettings extends MapDataLayerSettings {
   xKey: DataKey;
@@ -221,6 +235,7 @@ export interface MarkersDataLayerSettings extends MapDataLayerSettings {
   markerImage?: MarkerImageSettings;
   markerOffsetX: number;
   markerOffsetY: number;
+  markerClustering: MarkerClusteringSettings;
 }
 
 const defaultMarkerLatitudeFunction = 'var value = prevValue || 15.833293;\n' +
@@ -292,7 +307,20 @@ export const defaultBaseMarkersDataLayerSettings: Partial<MarkersDataLayerSettin
     imageSize: 34
   },
   markerOffsetX: 0.5,
-  markerOffsetY: 1
+  markerOffsetY: 1,
+  markerClustering: {
+    enable: false,
+    zoomOnClick: true,
+    maxZoom: null,
+    maxClusterRadius: 80,
+    zoomAnimation: true,
+    showCoverageOnHover: true,
+    spiderfyOnMaxZoom: false,
+    chunkedLoad: false,
+    lazyLoad: true,
+    useClusterMarkerColorFunction: false,
+    clusterMarkerColorFunction: null
+  }
 } as MarkersDataLayerSettings, defaultBaseDataLayerSettings);
 
 export interface ShapeDataLayerSettings extends MapDataLayerSettings {
@@ -743,6 +771,8 @@ export type MapStringFunction = (data: FormattedData<TbMapDatasource>,
 
 export type MarkerImageFunction = (data: FormattedData<TbMapDatasource>, markerImages: string[],
                                    dsData: FormattedData<TbMapDatasource>[]) => MarkerImageInfo;
+
+export type ClusterMarkerColorFunction = (data: FormattedData<TbMapDatasource>[], childCount: number) => string;
 
 export interface TbCircleData {
   latitude: number;

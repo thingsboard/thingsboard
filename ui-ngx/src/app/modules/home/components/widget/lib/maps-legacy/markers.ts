@@ -52,7 +52,7 @@ export class Marker {
         this.leafletMarker = L.marker(this.location, {
           pmIgnore: !settings.draggableMarker,
           snapIgnore: !snappable,
-          tbMarkerData: this.data
+          tbMarkerData: this.data as any
         });
 
         this.markerOffset = [
@@ -101,7 +101,7 @@ export class Marker {
     setDataSources(data: FormattedData, dataSources: FormattedData[]) {
       this.data = data;
       this.dataSources = dataSources;
-      this.leafletMarker.options.tbMarkerData = data;
+      this.leafletMarker.options.tbMarkerData = data as any;
     }
 
     updateMarkerTooltip(data: FormattedData) {

@@ -28,7 +28,7 @@ import {
   MapProvider,
   OpenStreetMapLayerSettings,
   TencentMapLayerSettings
-} from '@home/components/widget/lib/maps/map.models';
+} from '@home/components/widget/lib/maps/models/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DeepPartial } from '@shared/models/common';
 import { mergeDeep } from '@core/utils';

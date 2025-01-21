@@ -24,7 +24,7 @@ import {
   UntypedFormGroup,
   Validator
 } from '@angular/forms';
-import { ImageSourceType, MapDataLayerType, MapSetting, MapType } from '@home/components/widget/lib/maps/map.models';
+import { ImageSourceType, MapDataLayerType, MapSetting, MapType } from '@home/components/widget/lib/maps/models/map.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { merge, Observable } from 'rxjs';
 import { coerceBoolean } from '@shared/decorators/coercion';
