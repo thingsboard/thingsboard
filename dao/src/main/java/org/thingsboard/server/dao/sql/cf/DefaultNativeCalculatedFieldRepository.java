@@ -29,8 +29,6 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -90,7 +88,7 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
                 calculatedField.setType(type);
                 calculatedField.setName(name);
                 calculatedField.setConfigurationVersion(configurationVersion);
-                calculatedField.setConfiguration(readCalculatedFieldConfiguration(type, configuration, entityType, entityId));
+                calculatedField.setConfiguration(JacksonUtil.treeToValue(configuration, CalculatedFieldConfiguration.class));
                 calculatedField.setVersion(version);
                 calculatedField.setExternalId(externalIdObj != null ? new CalculatedFieldId(UUID.fromString((String) externalIdObj)) : null);
 
@@ -133,13 +131,6 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
             }).collect(Collectors.toList());
             return new PageData<>(data, totalPages, totalElements, hasNext);
         });
-    }
-
-    private CalculatedFieldConfiguration readCalculatedFieldConfiguration(CalculatedFieldType type, JsonNode config, EntityType entityType, UUID entityId) {
-        return switch (type) {
-            case SIMPLE -> new SimpleCalculatedFieldConfiguration(config, entityType, entityId);
-            case SCRIPT -> new ScriptCalculatedFieldConfiguration(config, entityType, entityId);
-        };
     }
 
 }

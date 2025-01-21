@@ -23,12 +23,9 @@ import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -96,8 +93,7 @@ public class CalculatedFieldEntity extends BaseSqlEntity<CalculatedField> implem
         this.type = calculatedField.getType().name();
         this.name = calculatedField.getName();
         this.configurationVersion = calculatedField.getConfigurationVersion();
-//        this.configuration = JacksonUtil.valueToTree(calculatedField.getConfiguration());
-        this.configuration = calculatedField.getConfiguration().calculatedFieldConfigToJson(EntityType.valueOf(entityType), entityId);
+        this.configuration = JacksonUtil.valueToTree(calculatedField.getConfiguration());
         this.version = calculatedField.getVersion();
         if (calculatedField.getExternalId() != null) {
             this.externalId = calculatedField.getExternalId().getId();
@@ -113,20 +109,12 @@ public class CalculatedFieldEntity extends BaseSqlEntity<CalculatedField> implem
         calculatedField.setType(CalculatedFieldType.valueOf(type));
         calculatedField.setName(name);
         calculatedField.setConfigurationVersion(configurationVersion);
-        calculatedField.setConfiguration(readCalculatedFieldConfiguration(configuration, EntityType.valueOf(entityType), entityId));
-//        calculatedField.setConfiguration(JacksonUtil.treeToValue(configuration, CalculatedFieldConfiguration.class));
+        calculatedField.setConfiguration(JacksonUtil.treeToValue(configuration, CalculatedFieldConfiguration.class));
         calculatedField.setVersion(version);
         if (externalId != null) {
             calculatedField.setExternalId(new CalculatedFieldId(externalId));
         }
         return calculatedField;
-    }
-
-    private CalculatedFieldConfiguration readCalculatedFieldConfiguration(JsonNode config, EntityType entityType, UUID entityId) {
-        return switch (CalculatedFieldType.valueOf(type)) {
-            case SIMPLE -> new SimpleCalculatedFieldConfiguration(config, entityType, entityId);
-            case SCRIPT -> new ScriptCalculatedFieldConfiguration(config, entityType, entityId);
-        };
     }
 
 }

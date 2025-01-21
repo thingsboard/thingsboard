@@ -15,23 +15,11 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
-
-import java.util.UUID;
 
 @Data
 public class ScriptCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
-
-    public ScriptCalculatedFieldConfiguration() {
-        super();
-    }
-
-    public ScriptCalculatedFieldConfiguration(JsonNode config, EntityType entityType, UUID entityId) {
-        super(config, entityType, entityId);
-    }
 
     @Override
     public CalculatedFieldType getType() {
