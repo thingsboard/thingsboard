@@ -38,10 +38,17 @@ public class TimeseriesSaveRequest {
     private final EntityId entityId;
     private final List<TsKvEntry> entries;
     private final long ttl;
-    private final boolean saveTimeseries;
-    private final boolean saveLatest;
-    private final boolean sendWsUpdate;
+    private final SaveActions saveActions;
     private final FutureCallback<Void> callback;
+
+    public record SaveActions(boolean saveTimeseries, boolean saveLatest, boolean sendWsUpdate) {
+
+        public static final SaveActions SAVE_ALL = new SaveActions(true, true, true);
+        public static final SaveActions WS_ONLY = new SaveActions(false, false, true);
+        public static final SaveActions LATEST_AND_WS = new SaveActions(false, true, true);
+        public static final SaveActions SKIP_ALL = new SaveActions(false, false, false);
+
+    }
 
     public static Builder builder() {
         return new Builder();
@@ -54,9 +61,7 @@ public class TimeseriesSaveRequest {
         private EntityId entityId;
         private List<TsKvEntry> entries;
         private long ttl;
-        private boolean saveTimeseries = true;
-        private boolean saveLatest = true;
-        private boolean sendWsUpdate = true;
+        private SaveActions saveActions = SaveActions.SAVE_ALL;
         private FutureCallback<Void> callback;
 
         Builder() {}
@@ -94,18 +99,8 @@ public class TimeseriesSaveRequest {
             return this;
         }
 
-        public Builder saveTimeseries(boolean saveTimeseries) {
-            this.saveTimeseries = saveTimeseries;
-            return this;
-        }
-
-        public Builder saveLatest(boolean saveLatest) {
-            this.saveLatest = saveLatest;
-            return this;
-        }
-
-        public Builder sendWsUpdate(boolean sendWsUpdate) {
-            this.sendWsUpdate = sendWsUpdate;
+        public Builder saveActions(SaveActions settings) {
+            this.saveActions = settings;
             return this;
         }
 
@@ -129,7 +124,7 @@ public class TimeseriesSaveRequest {
         }
 
         public TimeseriesSaveRequest build() {
-            return new TimeseriesSaveRequest(tenantId, customerId, entityId, entries, ttl, saveTimeseries, saveLatest, sendWsUpdate, callback);
+            return new TimeseriesSaveRequest(tenantId, customerId, entityId, entries, ttl, saveActions, callback);
         }
 
     }

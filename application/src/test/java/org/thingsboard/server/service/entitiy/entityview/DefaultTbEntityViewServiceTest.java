@@ -93,9 +93,7 @@ class DefaultTbEntityViewServiceTest {
                 .entityId(entityView.getId())
                 .entries(latest)
                 .ttl(0L)
-                .saveTimeseries(false)
-                .saveLatest(true)
-                .sendWsUpdate(true)
+                .saveActions(TimeseriesSaveRequest.SaveActions.LATEST_AND_WS)
                 .build();
 
         var actualCopyLatestRequest = captor.getValue();

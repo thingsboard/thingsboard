@@ -207,7 +207,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
             assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);
             assertThat(request.getEntries()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("ts").containsExactlyElementsOf(expectedList);
             assertThat(request.getTtl()).isEqualTo(extractTtlAsSeconds(tenantProfile));
-            assertThat(request.isSaveLatest()).isTrue();
+            assertThat(request.getSaveActions()).isEqualTo(TimeseriesSaveRequest.SaveActions.SAVE_ALL);
             assertThat(request.getCallback()).isInstanceOf(TelemetryNodeCallback.class);
         }));
         verify(ctxMock).tellSuccess(msg);
@@ -264,9 +264,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
             assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);
             assertThat(request.getEntries()).containsExactlyElementsOf(expectedList);
             assertThat(request.getTtl()).isEqualTo(config.getDefaultTTL());
-            assertThat(request.isSaveTimeseries()).isTrue();
-            assertThat(request.isSaveLatest()).isFalse();
-            assertThat(request.isSendWsUpdate()).isTrue();
+            assertThat(request.getSaveActions()).isEqualTo(new TimeseriesSaveRequest.SaveActions(true, false, true));
             assertThat(request.getCallback()).isInstanceOf(TelemetryNodeCallback.class);
         }));
         verify(ctxMock).tellSuccess(msg);
@@ -305,7 +303,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
             assertThat(request.getCustomerId()).isNull();
             assertThat(request.getEntityId()).isEqualTo(DEVICE_ID);
             assertThat(request.getTtl()).isEqualTo(expectedTtl);
-            assertThat(request.isSaveLatest()).isTrue();
+            assertThat(request.getSaveActions()).isEqualTo(TimeseriesSaveRequest.SaveActions.SAVE_ALL);
             assertThat(request.getCallback()).isInstanceOf(TelemetryNodeCallback.class);
         }));
     }
@@ -354,9 +352,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .entityId(msg.getOriginator())
                 .entry(new BasicTsKvEntry(123L, new DoubleDataEntry("temperature", 22.3)))
                 .ttl(extractTtlAsSeconds(tenantProfile))
-                .saveTimeseries(true)
-                .saveLatest(true)
-                .sendWsUpdate(true)
+                .saveActions(TimeseriesSaveRequest.SaveActions.SAVE_ALL)
                 .build();
 
         node.onMsg(ctxMock, msg);
@@ -391,9 +387,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .entityId(msg.getOriginator())
                 .entry(new BasicTsKvEntry(123L, new DoubleDataEntry("temperature", 22.3)))
                 .ttl(extractTtlAsSeconds(tenantProfile))
-                .saveTimeseries(true)
-                .saveLatest(true)
-                .sendWsUpdate(true)
+                .saveActions(TimeseriesSaveRequest.SaveActions.SAVE_ALL)
                 .build();
 
         node.onMsg(ctxMock, msg);
@@ -428,9 +422,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .entityId(msg.getOriginator())
                 .entry(new BasicTsKvEntry(123L, new DoubleDataEntry("temperature", 22.3)))
                 .ttl(extractTtlAsSeconds(tenantProfile))
-                .saveTimeseries(false)
-                .saveLatest(false)
-                .sendWsUpdate(true)
+                .saveActions(TimeseriesSaveRequest.SaveActions.WS_ONLY)
                 .build();
 
         node.onMsg(ctxMock, msg);
@@ -469,9 +461,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .entityId(msg.getOriginator())
                 .entry(new BasicTsKvEntry(123L, new DoubleDataEntry("temperature", 22.3)))
                 .ttl(extractTtlAsSeconds(tenantProfile))
-                .saveTimeseries(true)
-                .saveLatest(true)
-                .sendWsUpdate(true)
+                .saveActions(TimeseriesSaveRequest.SaveActions.SAVE_ALL)
                 .build();
 
         node.onMsg(ctxMock, msg);
@@ -508,11 +498,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .metaData(new TbMsgMetaData(Map.of("ts", Long.toString(ts1))))
                 .build());
         then(telemetryServiceMock).should().saveTimeseries(assertArg(
-                actualSaveRequest -> {
-                    assertThat(actualSaveRequest.isSaveTimeseries()).isTrue();
-                    assertThat(actualSaveRequest.isSaveLatest()).isTrue();
-                    assertThat(actualSaveRequest.isSendWsUpdate()).isTrue();
-                }
+                actualSaveRequest -> assertThat(actualSaveRequest.getSaveActions()).isEqualTo(TimeseriesSaveRequest.SaveActions.SAVE_ALL)
         ));
 
         clearInvocations(telemetryServiceMock);
@@ -524,11 +510,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .metaData(new TbMsgMetaData(Map.of("ts", Long.toString(ts2))))
                 .build());
         then(telemetryServiceMock).should().saveTimeseries(assertArg(
-                actualSaveRequest -> {
-                    assertThat(actualSaveRequest.isSaveTimeseries()).isTrue();
-                    assertThat(actualSaveRequest.isSaveLatest()).isFalse();
-                    assertThat(actualSaveRequest.isSendWsUpdate()).isFalse();
-                }
+                actualSaveRequest -> assertThat(actualSaveRequest.getSaveActions()).isEqualTo(new TimeseriesSaveRequest.SaveActions(true, false, false))
         ));
 
         clearInvocations(telemetryServiceMock);
@@ -540,11 +522,7 @@ public class TbMsgTimeseriesNodeTest extends AbstractRuleNodeUpgradeTest {
                 .metaData(new TbMsgMetaData(Map.of("ts", Long.toString(ts3))))
                 .build());
         then(telemetryServiceMock).should().saveTimeseries(assertArg(
-                actualSaveRequest -> {
-                    assertThat(actualSaveRequest.isSaveTimeseries()).isTrue();
-                    assertThat(actualSaveRequest.isSaveLatest()).isTrue();
-                    assertThat(actualSaveRequest.isSendWsUpdate()).isFalse();
-                }
+                actualSaveRequest -> assertThat(actualSaveRequest.getSaveActions()).isEqualTo(new TimeseriesSaveRequest.SaveActions(true, true, false))
         ));
     }
 

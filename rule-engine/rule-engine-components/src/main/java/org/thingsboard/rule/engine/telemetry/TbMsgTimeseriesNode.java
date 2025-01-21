@@ -107,13 +107,10 @@ public class TbMsgTimeseriesNode implements TbNode {
         }
         long ts = computeTs(msg, config.isUseServerTs());
 
-        PersistenceDecision persistenceDecision = makePersistenceDecision(ts, msg.getOriginator().getId());
-        boolean saveTimeseries = persistenceDecision.saveTimeseries();
-        boolean saveLatest = persistenceDecision.saveLatest();
-        boolean sendWsUpdate = persistenceDecision.sendWsUpdate();
+        TimeseriesSaveRequest.SaveActions saveActions = determineSaveActions(ts, msg.getOriginator().getId());
 
         // short-circuit
-        if (!saveTimeseries && !saveLatest && !sendWsUpdate) {
+        if (!saveActions.saveTimeseries() && !saveActions.saveLatest() && !saveActions.sendWsUpdate()) {
             ctx.tellSuccess(msg);
             return;
         }
@@ -141,9 +138,7 @@ public class TbMsgTimeseriesNode implements TbNode {
                 .entityId(msg.getOriginator())
                 .entries(tsKvEntryList)
                 .ttl(ttl)
-                .saveTimeseries(saveTimeseries)
-                .saveLatest(saveLatest)
-                .sendWsUpdate(sendWsUpdate)
+                .saveActions(saveActions)
                 .callback(new TelemetryNodeCallback(ctx, msg))
                 .build());
     }
@@ -152,35 +147,26 @@ public class TbMsgTimeseriesNode implements TbNode {
         return ignoreMetadataTs ? System.currentTimeMillis() : msg.getMetaDataTs();
     }
 
-    private record PersistenceDecision(boolean saveTimeseries, boolean saveLatest, boolean sendWsUpdate) {}
-
-    private PersistenceDecision makePersistenceDecision(long ts, UUID originatorUuid) {
-        boolean saveTimeseries;
-        boolean saveLatest;
-        boolean sendWsUpdate;
-
+    private TimeseriesSaveRequest.SaveActions determineSaveActions(long ts, UUID originatorUuid) {
         if (persistenceSettings instanceof OnEveryMessage) {
-            saveTimeseries = true;
-            saveLatest = true;
-            sendWsUpdate = true;
-        } else if (persistenceSettings instanceof WebSocketsOnly) {
-            saveTimeseries = false;
-            saveLatest = false;
-            sendWsUpdate = true;
-        } else if (persistenceSettings instanceof Deduplicate deduplicate) {
-            boolean isFirstMsgInInterval = deduplicate.getDeduplicateStrategy().shouldPersist(ts, originatorUuid);
-            saveTimeseries = isFirstMsgInInterval;
-            saveLatest = isFirstMsgInInterval;
-            sendWsUpdate = isFirstMsgInInterval;
-        } else if (persistenceSettings instanceof Advanced advanced) {
-            saveTimeseries = advanced.timeseries().shouldPersist(ts, originatorUuid);
-            saveLatest = advanced.latest().shouldPersist(ts, originatorUuid);
-            sendWsUpdate = advanced.webSockets().shouldPersist(ts, originatorUuid);
-        } else { // should not happen
-            throw new IllegalArgumentException("Unknown persistence settings type: " + persistenceSettings.getClass().getSimpleName());
+            return TimeseriesSaveRequest.SaveActions.SAVE_ALL;
         }
-
-        return new PersistenceDecision(saveTimeseries, saveLatest, sendWsUpdate);
+        if (persistenceSettings instanceof WebSocketsOnly) {
+            return TimeseriesSaveRequest.SaveActions.WS_ONLY;
+        }
+        if (persistenceSettings instanceof Deduplicate deduplicate) {
+            boolean isFirstMsgInInterval = deduplicate.getDeduplicateStrategy().shouldPersist(ts, originatorUuid);
+            return isFirstMsgInInterval ? TimeseriesSaveRequest.SaveActions.SAVE_ALL : TimeseriesSaveRequest.SaveActions.SKIP_ALL;
+        }
+        if (persistenceSettings instanceof Advanced advanced) {
+            return new TimeseriesSaveRequest.SaveActions(
+                    advanced.timeseries().shouldPersist(ts, originatorUuid),
+                    advanced.latest().shouldPersist(ts, originatorUuid),
+                    advanced.webSockets().shouldPersist(ts, originatorUuid)
+            );
+        }
+        // should not happen
+        throw new IllegalArgumentException("Unknown persistence settings type: " + persistenceSettings.getClass().getSimpleName());
     }
 
     @Override
