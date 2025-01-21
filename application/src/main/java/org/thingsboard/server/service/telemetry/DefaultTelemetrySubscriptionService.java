@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -126,10 +127,9 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         boolean sysTenant = TenantId.SYS_TENANT_ID.equals(tenantId) || tenantId == null;
         if (sysTenant || request.isOnlyLatest() || apiUsageStateService.getApiUsageState(tenantId).isDbStorageEnabled()) {
             KvUtils.validate(request.getEntries(), valueNoXssValidation);
-            ListenableFuture<Integer> future = saveTimeseriesInternal(request);
+            ListenableFuture<TimeseriesSaveResult> future = saveTimeseriesInternal(request);
             if (!request.isOnlyLatest()) {
-                FutureCallback<Integer> callback = getApiUsageCallback(tenantId, request.getCustomerId(), sysTenant, request.getCallback());
-                Futures.addCallback(future, callback, tsCallBackExecutor);
+                Futures.addCallback(future, getApiUsageCallback(tenantId, request.getCustomerId(), sysTenant), tsCallBackExecutor);
             }
         } else {
             request.getCallback().onFailure(new RuntimeException("DB storage writes are disabled due to API limits!"));
@@ -137,27 +137,27 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     @Override
-    public ListenableFuture<Integer> saveTimeseriesInternal(TimeseriesSaveRequest request) {
+    public ListenableFuture<TimeseriesSaveResult> saveTimeseriesInternal(TimeseriesSaveRequest request) {
         TenantId tenantId = request.getTenantId();
         EntityId entityId = request.getEntityId();
-        ListenableFuture<Integer> saveFuture;
+        ListenableFuture<TimeseriesSaveResult> resultFuture;
         if (request.isOnlyLatest()) {
-            saveFuture = Futures.transform(tsService.saveLatest(tenantId, entityId, request.getEntries()), result -> 0, MoreExecutors.directExecutor());
+            resultFuture = tsService.saveLatest(tenantId, entityId, request.getEntries());
         } else if (request.isSaveLatest()) {
-            saveFuture = tsService.save(tenantId, entityId, request.getEntries(), request.getTtl());
+            resultFuture = tsService.save(tenantId, entityId, request.getEntries(), request.getTtl());
         } else {
-            saveFuture = tsService.saveWithoutLatest(tenantId, entityId, request.getEntries(), request.getTtl());
+            resultFuture = tsService.saveWithoutLatest(tenantId, entityId, request.getEntries(), request.getTtl());
         }
 
-        addMainCallback(saveFuture, request.getCallback());
-        addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, request.getEntries()));
+        addMainCallback(resultFuture, request.getCallback());
+        addWsCallback(resultFuture, success -> onTimeSeriesUpdate(tenantId, entityId, request.getEntries()));
         if (request.isSaveLatest() && !request.isOnlyLatest()) {
             addEntityViewCallback(tenantId, entityId, request.getEntries());
         }
         // Use something very similar to addMainCallback. don't forget about tsCallBackExecutor.
         //CalculatedFieldTimeSeriesUpdateRequest - add constructor that accepts the TimeseriesSaveRequest
-        addCallback(saveFuture, success -> calculatedFieldExecutionService.onTelemetryUpdate(new CalculatedFieldTimeSeriesUpdateRequest(tenantId, entityId, request.getEntries(), request.getPreviousCalculatedFieldIds())), tsCallBackExecutor);
-        return saveFuture;
+        addCallback(resultFuture, success -> calculatedFieldExecutionService.onTelemetryUpdate(new CalculatedFieldTimeSeriesUpdateRequest(tenantId, entityId, request.getEntries(), request.getPreviousCalculatedFieldIds())), tsCallBackExecutor);
+        return resultFuture;
     }
 
     @Override
@@ -329,19 +329,18 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         }
     }
 
-    private FutureCallback<Integer> getApiUsageCallback(TenantId tenantId, CustomerId customerId, boolean sysTenant, FutureCallback<Void> callback) {
+    private FutureCallback<TimeseriesSaveResult> getApiUsageCallback(TenantId tenantId, CustomerId customerId, boolean sysTenant) {
         return new FutureCallback<>() {
             @Override
-            public void onSuccess(Integer result) {
-                if (!sysTenant && result != null && result > 0) {
-                    apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.STORAGE_DP_COUNT, result);
+            public void onSuccess(TimeseriesSaveResult result) {
+                Integer dataPoints = result.getDataPoints();
+                if (!sysTenant && dataPoints != null && dataPoints > 0) {
+                    apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.STORAGE_DP_COUNT, dataPoints);
                 }
-                callback.onSuccess(null);
             }
 
             @Override
             public void onFailure(Throwable t) {
-                callback.onFailure(t);
             }
         };
     }
