@@ -490,7 +490,7 @@ public abstract class EdgeGrpcSession implements Closeable {
                         stopCurrentSendDownlinkMsgsTask(false);
                     }
                 } else {
-                    stopCurrentSendDownlinkMsgsTask(false);
+                    stopCurrentSendDownlinkMsgsTask(true);
                 }
             } catch (Exception e) {
                 log.warn("[{}][{}] Failed to send downlink msgs. Error msg {}", tenantId, sessionId, e.getMessage(), e);
@@ -525,11 +525,12 @@ public abstract class EdgeGrpcSession implements Closeable {
     private void onDownlinkResponse(DownlinkResponseMsg msg) {
         try {
             if (msg.getSuccess()) {
-                sessionState.getPendingMsgsMap().remove(msg.getDownlinkMsgId());
                 log.debug("[{}][{}][{}] Msg has been processed successfully! Msg Id: [{}], Msg: {}", tenantId, edge.getId(), sessionId, msg.getDownlinkMsgId(), msg);
             } else {
                 log.error("[{}][{}][{}] Msg processing failed! Msg Id: [{}], Error msg: {}", tenantId, edge.getId(), sessionId, msg.getDownlinkMsgId(), msg.getErrorMsg());
             }
+
+            sessionState.getPendingMsgsMap().remove(msg.getDownlinkMsgId());
             if (sessionState.getPendingMsgsMap().isEmpty()) {
                 log.debug("[{}][{}][{}] Pending msgs map is empty. Stopping current iteration", tenantId, edge.getId(), sessionId);
                 stopCurrentSendDownlinkMsgsTask(false);
