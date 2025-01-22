@@ -39,7 +39,14 @@ class DeduplicatePersistenceStrategyTest {
     void shouldThrowWhenDeduplicationIntervalIsLessThanOneSecond() {
         assertThatThrownBy(() -> new DeduplicatePersistenceStrategy(0))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Deduplication interval must be at least 1 second(s), was 0 second(s)");
+                .hasMessageContaining("Deduplication interval must be at least 1 second(s) and at most 86400 second(s), was 0 second(s)");
+    }
+
+    @Test
+    void shouldThrowWhenDeduplicationIntervalIsMoreThan24Hours() {
+        assertThatThrownBy(() -> new DeduplicatePersistenceStrategy(86401))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Deduplication interval must be at least 1 second(s) and at most 86400 second(s), was 86401 second(s)");
     }
 
     @Test

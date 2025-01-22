@@ -28,14 +28,16 @@ import java.util.UUID;
 final class DeduplicatePersistenceStrategy implements PersistenceStrategy {
 
     private static final int MIN_DEDUPLICATION_INTERVAL_SECS = 1;
+    private static final int MAX_DEDUPLICATION_INTERVAL_SECS = (int) Duration.ofDays(1L).toSeconds();
 
     private final long deduplicationIntervalMillis;
     private final LoadingCache<Long, Set<UUID>> deduplicationCache;
 
     @JsonCreator
     public DeduplicatePersistenceStrategy(@JsonProperty("deduplicationIntervalSecs") int deduplicationIntervalSecs) {
-        if (deduplicationIntervalSecs < MIN_DEDUPLICATION_INTERVAL_SECS) {
-            throw new IllegalArgumentException("Deduplication interval must be at least " + MIN_DEDUPLICATION_INTERVAL_SECS + " second(s), was " + deduplicationIntervalSecs + " second(s)");
+        if (deduplicationIntervalSecs < MIN_DEDUPLICATION_INTERVAL_SECS || deduplicationIntervalSecs > MAX_DEDUPLICATION_INTERVAL_SECS) {
+            throw new IllegalArgumentException("Deduplication interval must be at least " + MIN_DEDUPLICATION_INTERVAL_SECS + " second(s) " +
+                    "and at most " + MAX_DEDUPLICATION_INTERVAL_SECS + " second(s), was " + deduplicationIntervalSecs + " second(s)");
         }
         deduplicationIntervalMillis = Duration.ofSeconds(deduplicationIntervalSecs).toMillis();
         deduplicationCache = Caffeine.newBuilder()
