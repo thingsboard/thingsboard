@@ -401,10 +401,11 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
           safeExecuteTbFunction(this.clusterMarkerColorFunction, [data, childCount]) : null;
         if (isDefinedAndNotNull(markerColor) && tinycolor(markerColor).isValid()) {
           const parsedColor = tinycolor(markerColor);
+          const alpha = parsedColor.getAlpha();
           return L.divIcon({
-            html: `<div style="background-color: ${parsedColor.setAlpha(0.4).toRgbString()};" ` +
+            html: `<div style="background-color: ${parsedColor.setAlpha(alpha * 0.4).toRgbString()};" ` +
               `class="marker-cluster tb-cluster-marker-element">` +
-              `<div style="background-color: ${parsedColor.setAlpha(0.9).toRgbString()};"><span>` + childCount + '</span></div></div>',
+              `<div style="background-color: ${parsedColor.setAlpha(alpha * 0.9).toRgbString()};"><span>` + childCount + '</span></div></div>',
             iconSize: new L.Point(40, 40),
             className: 'tb-cluster-marker-container'
           });

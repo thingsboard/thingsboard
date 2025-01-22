@@ -6874,6 +6874,11 @@
             "data-layer": {
                 "source": "Source",
                 "additional-data-keys": "Additional data keys",
+                "additional-datasources": "Additional datasources",
+                "data-keys": "Data keys",
+                "add-datasource": "Add datasource",
+                "no-datasources": "No datasources configured",
+                "remove-datasource": "Remove datasource",
                 "groups": "Groups",
                 "color": "Color",
                 "fill-color": "Fill color",

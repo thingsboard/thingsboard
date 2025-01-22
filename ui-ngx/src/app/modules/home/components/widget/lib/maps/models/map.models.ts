@@ -421,6 +421,31 @@ export const additionalMapDataSourcesToDatasources = (additionalMapDataSources: 
   });
 };
 
+export const additionalMapDataSourceValid = (dataSource: AdditionalMapDataSourceSettings): boolean => {
+  if (!dataSource.dsType || ![DatasourceType.function, DatasourceType.device, DatasourceType.entity].includes(dataSource.dsType)) {
+    return false;
+  }
+  return !!dataSource.dataKeys?.length;
+};
+
+export const additionalMapDataSourceValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+    const dataSource: AdditionalMapDataSourceSettings = control.value;
+    if (!additionalMapDataSourceValid(dataSource)) {
+      return {
+        dataSource: true
+      };
+    }
+    return null;
+};
+
+export const defaultAdditionalMapDataSourceSettings = (functionsOnly = false): AdditionalMapDataSourceSettings => {
+  return {
+    dsType: functionsOnly ? DatasourceType.function : DatasourceType.entity,
+    dsLabel: functionsOnly ? 'Additional data' : '',
+    dataKeys: []
+  };
+};
+
 export enum MapControlsPosition {
   topleft = 'topleft',
   topright = 'topright',

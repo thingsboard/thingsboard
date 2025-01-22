@@ -226,6 +226,10 @@ import { MarkerShapesComponent } from '@home/components/widget/lib/settings/comm
 import {
   MarkerClusteringSettingsComponent
 } from '@home/components/widget/lib/settings/common/map/marker-clustering-settings.component';
+import { MapDataSourcesComponent } from '@home/components/widget/lib/settings/common/map/map-data-sources.component';
+import {
+  MapDataSourceRowComponent
+} from '@home/components/widget/lib/settings/common/map/map-data-source-row.component';
 
 @NgModule({
   declarations: [
@@ -310,6 +314,8 @@ import {
     MapDataLayerDialogComponent,
     MapDataLayerRowComponent,
     MapDataLayersComponent,
+    MapDataSourceRowComponent,
+    MapDataSourcesComponent,
     MapSettingsComponent,
     EntityAliasSelectComponent,
     FilterSelectComponent,

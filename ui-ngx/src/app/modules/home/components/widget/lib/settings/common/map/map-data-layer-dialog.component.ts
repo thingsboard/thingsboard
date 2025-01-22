@@ -176,6 +176,16 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         }
         break;
     }
+    const additionalDataKeys: DataKey[] = this.dataLayerFormGroup.get('additionalDataKeys').value;
+    if (additionalDataKeys?.length) {
+      let updated = false;
+      for (const key of additionalDataKeys) {
+        updated = this.updateDataKeyToNewDsType(key, newDsType) || updated;
+      }
+      if (updated) {
+        this.dataLayerFormGroup.get('additionalDataKeys').patchValue(additionalDataKeys, {emitEvent: false});
+      }
+    }
     this.updateValidators();
   }
 

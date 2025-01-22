@@ -112,6 +112,10 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
 
   @Input()
   @coerceBoolean()
+  inlineField = false;
+
+  @Input()
+  @coerceBoolean()
   hideDataKeyLabel: boolean;
 
   @Input()

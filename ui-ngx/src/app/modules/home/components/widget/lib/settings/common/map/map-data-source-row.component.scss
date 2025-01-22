@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-.tb-form-table-row.tb-map-data-layer-row {
+.tb-form-table-row.tb-map-data-source-row {
 
   .tb-source-field {
     flex: 1 1 50%;
@@ -25,15 +25,7 @@
     }
   }
 
-  .tb-x-pos-field {
-    flex: 1 1 25%;
-  }
-
-  .tb-y-pos-field {
-    flex: 1 1 25%;
-  }
-
-  .tb-key-field {
+  .tb-data-keys-field {
     flex: 1 1 50%;
   }
 

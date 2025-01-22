@@ -16,9 +16,11 @@
 
 -->
 <mat-form-field [formGroup]="keysListFormGroup" class="mat-block tb-keys-field"
-                [appearance]="appearance"
-                [subscriptSizing]="subscriptSizing">
-  <mat-label>{{ label ? label : placeholder}}</mat-label>
+                [class]="{'tb-inline-field': inlineField,
+                          'tb-suffix-absolute': (inlineField && !keys?.length)}"
+                [appearance]="inlineField ? 'fill' : appearance"
+                [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing">
+  <mat-label *ngIf="!inlineField">{{ label ? label : placeholder}}</mat-label>
   <mat-chip-grid #chipList formControlName="keys" [required]="required">
     <div class="tb-datakeys-container"
          [dndDropzone]="[dndId]"
@@ -108,6 +110,15 @@
              (matChipInputTokenEnd)="add($event)">
     </div>
   </mat-chip-grid>
+  <mat-icon matSuffix
+            matTooltipPosition="above"
+            matTooltipClass="tb-error-tooltip"
+            [matTooltip]="requiredText"
+            *ngIf="inlineField && requiredText && keysListFormGroup.get('keys').hasError('required')
+                                && keysListFormGroup.get('keys').touched"
+            class="tb-error">
+    warning
+  </mat-icon>
   <mat-autocomplete #keyAutocomplete="matAutocomplete"
                     class="tb-autocomplete"
                     panelWidth="fit-content"
@@ -166,7 +177,7 @@
       </div>
     </mat-option>
   </mat-autocomplete>
-  <mat-error *ngIf="keysListFormGroup.get('keys').hasError('required')">
+  <mat-error *ngIf="!inlineField && keysListFormGroup.get('keys').hasError('required')">
     {{ requiredText }}
   </mat-error>
 </mat-form-field>

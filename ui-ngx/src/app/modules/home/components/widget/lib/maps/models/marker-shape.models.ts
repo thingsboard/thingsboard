@@ -58,10 +58,12 @@ const createColorMarkerShape = (iconRegistry: MatIconRegistry, domSanitizer: Dom
       const colorElements = Array.from(svgElement.getElementsByClassName('marker-color'));
       colorElements.forEach(el => {
         el.setAttribute('fill', '#'+color.toHex());
+        el.setAttribute('fill-opacity', `${color.getAlpha()}`);
       });
       const strokeElements = Array.from(svgElement.getElementsByClassName('marker-stroke'));
       strokeElements.forEach(el => {
         el.setAttribute('stroke', '#'+color.toHex());
+        el.setAttribute('stroke-opacity', `${color.getAlpha()}`);
       });
       return svgElement;
     })
@@ -90,8 +92,8 @@ const createIconElement = (iconRegistry: MatIconRegistry, icon: string, size: nu
       map((svgElement) => {
         const element = new Element(svgElement.firstChild);
         element.fill('#'+iconColor.toHex());
-        //const box = element.bbox();
-        const scale = size / 24;//box.height;
+        element.attr('fill-opacity', iconColor.getAlpha());
+        const scale = size / 24;
         element.scale(scale);
         return element;
       }),
@@ -110,6 +112,7 @@ const createIconElement = (iconRegistry: MatIconRegistry, icon: string, size: nu
       'text-anchor': 'start'
     });
     textElement.fill('#'+iconColor.toHex());
+    textElement.attr('fill-opacity', iconColor.getAlpha());
     const tspan = textElement.tspan(iconName);
     tspan.attr({
       'dominant-baseline': 'hanging'
