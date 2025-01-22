@@ -100,7 +100,6 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_RE
                 <br><br>
                 Output connections: <code>Success</code>, <code>Failure</code>.
                 """,
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeTimeseriesConfig",
         icon = "file_upload",
         version = 1

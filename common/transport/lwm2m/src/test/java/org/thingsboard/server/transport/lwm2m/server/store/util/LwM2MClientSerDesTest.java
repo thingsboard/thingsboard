@@ -18,13 +18,17 @@ package org.thingsboard.server.transport.lwm2m.server.store.util;
 import org.eclipse.leshan.core.LwM2m.LwM2mVersion;
 import org.eclipse.leshan.core.endpoint.EndpointUriUtil;
 import org.eclipse.leshan.core.link.Link;
+import org.eclipse.leshan.core.link.attributes.AttributeSet;
+import org.eclipse.leshan.core.link.attributes.ResourceTypeAttribute;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.peer.IpPeer;
 import org.eclipse.leshan.core.request.WriteRequest;
+import org.eclipse.leshan.server.registration.DefaultRegistrationDataExtractor;
 import org.eclipse.leshan.server.registration.Registration;
+import org.eclipse.leshan.server.registration.RegistrationDataExtractor;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.device.data.PowerMode;
@@ -83,12 +87,22 @@ public class LwM2MClientSerDesTest {
 
         client.init(credentialsResponse, UUID.randomUUID());
 
+        AttributeSet attrs = new AttributeSet( //
+                new ResourceTypeAttribute("oma.lwm2m"));
+
+        Link[] objs = new Link[]{new Link("/15", attrs), new Link("/17")};
+
+        RegistrationDataExtractor.RegistrationData dataFromObjectLinks = new DefaultRegistrationDataExtractor().extractDataFromObjectLinks(objs,
+                LwM2mVersion.V1_0);
+
         Registration registration = new Registration
                 .Builder("test", "endpoint", new IpPeer(new InetSocketAddress(Inet4Address.getLoopbackAddress(), 1000)),
-                        EndpointUriUtil.createUri("coap://localhost:5685"))
-                .supportedContentFormats()
-                .supportedObjects(Map.of(15, LwM2mVersion.V1_0, 17, LwM2mVersion.V1_0))
-                .objectLinks(new Link[] { new Link("/15"),  new Link("/17") })
+                EndpointUriUtil.createUri("coap://localhost:5685"))
+                .objectLinks(objs)
+                .rootPath(dataFromObjectLinks.getAlternatePath())
+                .supportedContentFormats(dataFromObjectLinks.getSupportedContentFormats())
+                .supportedObjects(dataFromObjectLinks.getSupportedObjects())
+                .availableInstances(dataFromObjectLinks.getAvailableInstances())
                 .build();
 
         client.setRegistration(registration);
@@ -135,12 +149,7 @@ public class LwM2MClientSerDesTest {
         assertEquals(client.getPsmActivityTimer(), desClient.getPsmActivityTimer());
         assertEquals(client.getPagingTransmissionWindow(), desClient.getPagingTransmissionWindow());
         assertEquals(client.getEdrxCycle(), desClient.getEdrxCycle());
-        if (((IpPeer)desClient.getRegistration().getClientTransportData()).getSocketAddress().isUnresolved()) {
-            String actualReg = desClient.getRegistration().toString().replaceAll("/<unresolved>", "");
-            assertEquals(client.getRegistration().toString(), actualReg);
-        } else {
-            assertEquals(client.getRegistration(), desClient.getRegistration());
-        }
+        assertEquals(client.getRegistration(), desClient.getRegistration());
         assertEquals(client.isAsleep(), desClient.isAsleep());
         assertEquals(client.getLastUplinkTime(), desClient.getLastUplinkTime());
         assertEquals(client.getSleepTask(), desClient.getSleepTask());

@@ -109,7 +109,7 @@ export const renderTimeSeriesBar = (params: CustomSeriesRenderItemParams, api: C
   if (offset !== 0 && isNumeric(value)) {
     lowerLeft = api.coord([startTime, Number(value) >= 0 ? Number(value) + offset : offset]);
   } else {
-    lowerLeft = api.coord([startTime, value]);
+    lowerLeft = api.coord([startTime, Number(value) >= 0 ? Number(value) : 0]);
   }
   const size = api.size([delta, value]);
   const width = size[0];

@@ -40,7 +40,6 @@ import java.util.concurrent.ExecutionException;
         nodeDescription = "Transforms incoming message body using JSONPath expression.",
         nodeDetails = "JSONPath expression specifies a path to an element or a set of elements in a JSON structure.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         icon = "functions",
         configDirective = "tbTransformationNodeJsonPathConfig"
 )

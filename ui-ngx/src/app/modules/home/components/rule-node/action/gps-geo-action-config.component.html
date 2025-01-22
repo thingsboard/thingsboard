@@ -1,0 +1,195 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="geoActionConfigForm" class="tb-form-panel no-border no-padding">
+  <section class="tb-form-panel stroked">
+    <div class="tb-form-panel-title" translate>rule-node-config.coordinate-field-names</div>
+    <section>
+      <div class="flex flex-row gap-4">
+        <mat-form-field class="mat-block max-w-50% flex-full">
+          <mat-label>{{ 'rule-node-config.latitude-field-name' | translate }}</mat-label>
+          <input matInput formControlName="latitudeKeyName" required>
+          <mat-error *ngIf="geoActionConfigForm.get('latitudeKeyName').hasError('required')">
+            {{ 'rule-node-config.latitude-field-name-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="mat-block max-w-50% flex-full">
+          <mat-label>{{ 'rule-node-config.longitude-field-name' | translate }}</mat-label>
+          <input matInput formControlName="longitudeKeyName" required>
+          <mat-error *ngIf="geoActionConfigForm.get('longitudeKeyName').hasError('required')">
+            {{ 'rule-node-config.longitude-field-name-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+      <div class="tb-form-hint tb-primary-fill" translate>rule-node-config.coordinate-field-hint</div>
+    </section>
+  </section>
+  <section class="tb-form-panel stroked" [class.no-padding-bottom]="!defaultPaddingEnable">
+    <div class="tb-form-panel-title" translate>rule-node-config.geofence-configuration</div>
+    <section class="flex flex-col">
+      <mat-form-field class="mat-block flex-1" hideRequiredMarker>
+        <mat-label>{{ 'rule-node-config.perimeter-type' | translate }}</mat-label>
+        <mat-select formControlName="perimeterType">
+          <mat-option *ngFor="let type of perimeterTypes" [value]="type">
+            {{ perimeterTypeTranslationMap.get(type) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <div tb-hint-tooltip-icon="{{ geoActionConfigForm.get('perimeterType').value === perimeterType.CIRCLE
+        ? ('rule-node-config.fetch-circle-parameter-info-from-metadata-hint'
+            | translate : { perimeterKeyName: geoActionConfigForm.get('perimeterKeyName').valid
+                              ? geoActionConfigForm.get('perimeterKeyName').value
+                              : 'ss_perimeter'})
+        : ('rule-node-config.fetch-poligon-parameter-info-from-metadata-hint'
+            | translate : { perimeterKeyName: geoActionConfigForm.get('perimeterKeyName').valid
+                              ? geoActionConfigForm.get('perimeterKeyName').value
+                              : 'ss_perimeter'}) }}"
+           class="tb-form-row no-border no-padding slide-toggle">
+        <mat-slide-toggle class="mat-slide" formControlName="fetchPerimeterInfoFromMessageMetadata">
+          {{ 'rule-node-config.fetch-perimeter-info-from-metadata' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <mat-form-field *ngIf="geoActionConfigForm.get('fetchPerimeterInfoFromMessageMetadata').value" class="mat-block">
+        <mat-label>{{ 'rule-node-config.perimeter-key-name' | translate }}</mat-label>
+        <input matInput formControlName="perimeterKeyName" required>
+        <mat-error *ngIf="geoActionConfigForm.get('perimeterKeyName').hasError('required')">
+          {{ 'rule-node-config.perimeter-key-name-required' | translate }}
+        </mat-error>
+        <mat-hint>{{ 'rule-node-config.perimeter-key-name-hint' | translate }}</mat-hint>
+      </mat-form-field>
+      <div class="flex flex-col"
+           *ngIf="geoActionConfigForm.get('perimeterType').value === perimeterType.CIRCLE &&
+              !geoActionConfigForm.get('fetchPerimeterInfoFromMessageMetadata').value">
+        <div class="flex flex-row gap-4">
+          <mat-form-field class="flex-1">
+            <mat-label>{{ 'rule-node-config.circle-center-latitude' | translate }}</mat-label>
+            <input type="number" min="-90" max="90" step="0.1" matInput formControlName="centerLatitude" required>
+            <mat-error *ngIf="geoActionConfigForm.get('centerLatitude').hasError('required')">
+              {{ 'rule-node-config.circle-center-latitude-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field class="flex-1">
+            <mat-label>{{ 'rule-node-config.circle-center-longitude' | translate }}</mat-label>
+            <input type="number" min="-180" max="180" step="0.1" matInput formControlName="centerLongitude" required>
+            <mat-error *ngIf="geoActionConfigForm.get('centerLongitude').hasError('required')">
+              {{ 'rule-node-config.circle-center-longitude-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+        <div class="flex flex-row gap-4">
+          <mat-form-field class="flex-1">
+            <mat-label>{{ 'rule-node-config.range' | translate }}</mat-label>
+            <input type="number" min="0" step="0.1" matInput formControlName="range" required>
+            <mat-error *ngIf="geoActionConfigForm.get('range').hasError('required')">
+              {{ 'rule-node-config.range-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field class="flex-1">
+            <mat-label>{{ 'rule-node-config.range-units' | translate }}</mat-label>
+            <mat-select formControlName="rangeUnit" required>
+              <mat-option *ngFor="let type of rangeUnits" [value]="type">
+                {{ rangeUnitTranslationMap.get(type) | translate }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="geoActionConfigForm.get('rangeUnit').hasError('required')">
+              {{ 'rule-node-config.range-units-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="flex flex-col" *ngIf="geoActionConfigForm.get('perimeterType').value === perimeterType.POLYGON &&
+                                 !geoActionConfigForm.get('fetchPerimeterInfoFromMessageMetadata').value">
+        <mat-form-field class="mat-block" subscriptSizing="dynamic">
+          <mat-label translate>rule-node-config.polygon-definition</mat-label>
+          <input matInput formControlName="polygonsDefinition" required>
+          <mat-icon matSuffix class="margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon"
+                    color="primary"
+                    matTooltip="{{ 'rule-node-config.polygon-definition-hint' | translate }}">
+            help
+          </mat-icon>
+          <mat-error *ngIf="geoActionConfigForm.get('polygonsDefinition').hasError('required')">
+            {{ 'rule-node-config.polygon-definition-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </section>
+  </section>
+  <section class="tb-form-panel stroked no-padding-bottom">
+    <div class="flex flex-col items-stretch justify-between gt-sm:flex-row lt-md:gap-4">
+      <div class="tb-form-panel-title">{{ 'rule-node-config.presence-monitoring-strategy' | translate }}</div>
+      <tb-toggle-select class="fetch-to-data-toggle" formControlName="reportPresenceStatusOnEachMessage" appearance="fill" >
+        <tb-toggle-option *ngFor="let strategy of presenceMonitoringStrategyKeys" [value]="presenceMonitoringStrategies.get(strategy).value">
+          {{ presenceMonitoringStrategies.get(strategy).name | translate }}
+        </tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+    <div class="tb-form-hint tb-primary-fill"> {{ geoActionConfigForm.get('reportPresenceStatusOnEachMessage').value === false ?
+        ('rule-node-config.presence-monitoring-strategy-on-first-message-hint' | translate) :
+        ('rule-node-config.presence-monitoring-strategy-on-each-message-hint' | translate) }}
+    </div>
+    <section class="flex flex-col">
+      <div *ngIf="geoActionConfigForm.get('reportPresenceStatusOnEachMessage').value === false">
+        <div class="flex flex-col gt-sm:flex-row gt-sm:gap-2">
+          <mat-form-field class="mat-block flex-1">
+            <mat-label translate>rule-node-config.min-inside-duration</mat-label>
+            <input type="number" step="1" min="1" max="2147483647" matInput formControlName="minInsideDuration" required>
+            <mat-error *ngIf="geoActionConfigForm.get('minInsideDuration').hasError('required')">
+              {{ 'rule-node-config.min-inside-duration-value-required' | translate }}
+            </mat-error>
+            <mat-error *ngIf="geoActionConfigForm.get('minInsideDuration').hasError('min')">
+              {{ 'rule-node-config.time-value-range' | translate }}
+            </mat-error>
+            <mat-error *ngIf="geoActionConfigForm.get('minInsideDuration').hasError('max')">
+              {{ 'rule-node-config.time-value-range' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field class="mat-block flex-1">
+            <mat-label translate>rule-node-config.min-inside-duration-time-unit</mat-label>
+            <mat-select formControlName="minInsideDurationTimeUnit" required>
+              <mat-option *ngFor="let timeUnit of timeUnits" [value]="timeUnit">
+                {{ timeUnitsTranslationMap.get(timeUnit) | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="flex flex-col gt-sm:flex-row gt-sm:gap-2">
+          <mat-form-field class="mat-block flex-1">
+            <mat-label translate>rule-node-config.min-outside-duration</mat-label>
+            <input type="number" step="1" min="1" max="2147483647" matInput formControlName="minOutsideDuration" required>
+            <mat-error *ngIf="geoActionConfigForm.get('minOutsideDuration').hasError('required')">
+              {{ 'rule-node-config.min-outside-duration-value-required' | translate }}
+            </mat-error>
+            <mat-error *ngIf="geoActionConfigForm.get('minOutsideDuration').hasError('min')">
+              {{ 'rule-node-config.time-value-range' | translate }}
+            </mat-error>
+            <mat-error *ngIf="geoActionConfigForm.get('minOutsideDuration').hasError('max')">
+              {{ 'rule-node-config.time-value-range' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field class="mat-block flex-1">
+            <mat-label translate>rule-node-config.min-outside-duration-time-unit</mat-label>
+            <mat-select formControlName="minOutsideDurationTimeUnit" required>
+              <mat-option *ngFor="let timeUnit of timeUnits" [value]="timeUnit">
+                {{ timeUnitsTranslationMap.get(timeUnit) | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+    </section>
+  </section>
+</section>

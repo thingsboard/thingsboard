@@ -357,7 +357,7 @@ export default abstract class LeafletMap {
         this.map.pm.Toolbar.copyDrawControl('Circle', {
           name: 'tbCircle',
           afterClick: () => this.selectEntityWithoutLocation('tbCircle'),
-          disabled: true,
+          disabled: false,
           actions
         });
       }

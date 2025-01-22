@@ -43,7 +43,6 @@ import java.util.concurrent.ExecutionException;
         nodeDetails = "Splits an array message into individual elements, with each element sent as a separate message. " +
                 "All outbound messages will have the same type and metadata as the original array message.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         icon = "content_copy",
         configDirective = "tbNodeEmptyConfig"
 )
