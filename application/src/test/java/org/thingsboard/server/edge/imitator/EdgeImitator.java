@@ -362,7 +362,9 @@ public class EdgeImitator {
     }
 
     private boolean checkFailureThreshold(int downlinkMsgId) {
-        return downlinkFailureCountMap.get(downlinkMsgId) == null || downlinkFailureCountMap.get(downlinkMsgId) < MAX_DOWNLINK_FAIL_ATTEMPTS;
+        return failureProbability == 100 ||
+                downlinkFailureCountMap.get(downlinkMsgId) == null ||
+                downlinkFailureCountMap.get(downlinkMsgId) < MAX_DOWNLINK_FAIL_ATTEMPTS;
     }
 
     private boolean getRandomBoolean() {
