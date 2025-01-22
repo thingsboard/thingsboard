@@ -15,8 +15,18 @@
 ///
 
 import { Component } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@shared/models/rule-node.models';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { RuleNodeConfigurationComponent } from '@shared/models/rule-node.models';
+import {
+  defaultAdvancedPersistenceStrategy,
+  maxDeduplicateTimeSecs,
+  PersistenceSettings,
+  PersistenceSettingsForm,
+  PersistenceType,
+  PersistenceTypeTranslationMap,
+  TimeseriesNodeConfiguration,
+  TimeseriesNodeConfigurationForm
+} from '@home/components/rule-node/action/timeseries-config.models';
 
 @Component({
   selector: 'tb-action-node-timeseries-config',
@@ -25,20 +35,98 @@ import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@shared/m
 })
 export class TimeseriesConfigComponent extends RuleNodeConfigurationComponent {
 
-  timeseriesConfigForm: UntypedFormGroup;
+  timeseriesConfigForm: FormGroup;
 
-  constructor(private fb: UntypedFormBuilder) {
+  PersistenceType = PersistenceType;
+  persistenceStrategies = [PersistenceType.ON_EVERY_MESSAGE, PersistenceType.DEDUPLICATE, PersistenceType.WEBSOCKETS_ONLY];
+  PersistenceTypeTranslationMap = PersistenceTypeTranslationMap;
+
+  maxDeduplicateTime = maxDeduplicateTimeSecs
+
+  constructor(private fb: FormBuilder) {
     super();
   }
 
-  protected configForm(): UntypedFormGroup {
+  protected configForm(): FormGroup {
     return this.timeseriesConfigForm;
   }
 
-  protected onConfigurationSet(configuration: RuleNodeConfiguration) {
+  protected validatorTriggers(): string[] {
+    return ['persistenceSettings.isAdvanced', 'persistenceSettings.type'];
+  }
+
+  protected prepareInputConfig(config: TimeseriesNodeConfiguration): TimeseriesNodeConfigurationForm {
+    let persistenceSettings: PersistenceSettingsForm;
+    if (config?.persistenceSettings) {
+      const isAdvanced = config?.persistenceSettings?.type === PersistenceType.ADVANCED;
+      persistenceSettings = {
+        ...config.persistenceSettings,
+        isAdvanced: isAdvanced,
+        type: isAdvanced ? PersistenceType.ON_EVERY_MESSAGE : config.persistenceSettings.type,
+        advanced: isAdvanced ? config.persistenceSettings : defaultAdvancedPersistenceStrategy
+      }
+    } else {
+      persistenceSettings = {
+        type: PersistenceType.ON_EVERY_MESSAGE,
+        isAdvanced: false,
+        deduplicationIntervalSecs: 10,
+        advanced: defaultAdvancedPersistenceStrategy
+      };
+    }
+    return {
+      ...config,
+      persistenceSettings: persistenceSettings
+    }
+  }
+
+  protected prepareOutputConfig(config: TimeseriesNodeConfigurationForm): TimeseriesNodeConfiguration {
+    let persistenceSettings: PersistenceSettings;
+    if (config.persistenceSettings.isAdvanced) {
+      persistenceSettings = {
+        ...config.persistenceSettings.advanced,
+        type: PersistenceType.ADVANCED
+      };
+    } else {
+      persistenceSettings = {
+        type: config.persistenceSettings.type,
+        deduplicationIntervalSecs: config.persistenceSettings?.deduplicationIntervalSecs
+      };
+    }
+    return {
+      ...config,
+      persistenceSettings
+    };
+  }
+
+  protected onConfigurationSet(config: TimeseriesNodeConfigurationForm) {
     this.timeseriesConfigForm = this.fb.group({
-      defaultTTL: [configuration ? configuration.defaultTTL : null, [Validators.required, Validators.min(0)]],
-      useServerTs: [configuration ? configuration.useServerTs : false, []]
+      persistenceSettings: this.fb.group({
+        isAdvanced: [config?.persistenceSettings?.isAdvanced ?? false],
+        type: [config?.persistenceSettings?.type ?? PersistenceType.ON_EVERY_MESSAGE],
+        deduplicationIntervalSecs: [
+          {value: config?.persistenceSettings?.deduplicationIntervalSecs ?? 10, disabled: true},
+          [Validators.required, Validators.max(maxDeduplicateTimeSecs)]
+        ],
+        advanced: [{value: null, disabled: true}]
+      }),
+      defaultTTL: [config?.defaultTTL ?? null, [Validators.required, Validators.min(0)]],
+      useServerTs: [config?.useServerTs ?? false]
     });
+  }
+
+  protected updateValidators(emitEvent: boolean, _trigger?: string) {
+    const persistenceForm = this.timeseriesConfigForm.get('persistenceSettings') as FormGroup;
+    const isAdvanced: boolean = persistenceForm.get('isAdvanced').value;
+    const type: PersistenceType = persistenceForm.get('type').value;
+    if (!isAdvanced && type === PersistenceType.DEDUPLICATE) {
+      persistenceForm.get('deduplicationIntervalSecs').enable({emitEvent});
+    } else {
+      persistenceForm.get('deduplicationIntervalSecs').disable({emitEvent});
+    }
+    if (isAdvanced) {
+      persistenceForm.get('advanced').enable({emitEvent});
+    } else {
+      persistenceForm.get('advanced').disable({emitEvent});
+    }
   }
 }

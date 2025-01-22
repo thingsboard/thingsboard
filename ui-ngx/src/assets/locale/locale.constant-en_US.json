@@ -5068,6 +5068,25 @@
         "units": "Units",
         "tell-failure-aws-lambda": "Tell Failure if AWS Lambda function execution raises exception",
         "tell-failure-aws-lambda-hint": "Rule node forces failure of message processing if AWS Lambda function execution raises exception.",
+        "basic-mode": "Basic",
+        "advanced-mode": "Advanced",
+        "save-time-series": {
+            "persistence-settings": "Persistence settings",
+            "persistence-settings-hint": "Persistence settings hint",
+            "strategy": "Strategy",
+            "deduplication-interval": "Deduplication interval",
+            "deduplication-interval-required": "Deduplication interval is required",
+            "deduplication-interval-min-max-range": "Deduplication interval should be at least 1 second and at most 1 day",
+            "strategy-type": {
+                "every-message": "On every message",
+                "skip": "Skip",
+                "deduplicate": "Deduplicate",
+                "web-sockets-only": "WebSockets only"
+            },
+            "time-series": "Time series",
+            "latest": "Latest",
+            "web-sockets": "WebSockets"
+        },
         "key-val": {
             "key": "Key",
             "value": "Value",

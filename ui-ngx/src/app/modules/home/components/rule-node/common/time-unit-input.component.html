@@ -16,12 +16,13 @@
 
 -->
 <section [formGroup]="timeInputForm" class="flex gap-4">
-  <mat-form-field class="max-w-66% flex-full">
+  <mat-form-field class="max-w-66% flex-full" subscriptSizing="dynamic">
     <mat-label *ngIf="labelText">{{ labelText }}</mat-label>
     <input type="number" min="0" step="1" matInput formControlName="time">
     <div matSuffix>
       <ng-content select="[matSuffix]"></ng-content>
     </div>
+    <mat-hint></mat-hint>
     <mat-error *ngIf="timeInputForm.get('time').hasError('required') && requiredText">
       {{ requiredText }}
     </mat-error>

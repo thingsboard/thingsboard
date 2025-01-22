@@ -16,6 +16,46 @@
 
 -->
 <section [formGroup]="timeseriesConfigForm" class="tb-form-panel no-border no-padding">
+  <div class="tb-form-panel stroked no-padding-bottom no-gap" formGroupName="persistenceSettings">
+    <div class="mb-4 flex flex-row items-center justify-between">
+      <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'rule-node-config.save-time-series.persistence-settings-hint' | translate}}" translate>
+        rule-node-config.save-time-series.persistence-settings
+      </div>
+      <tb-toggle-select appearance="fill" selectMediaBreakpoint="xs"
+                        formControlName="isAdvanced">
+        <tb-toggle-option [value]=false>{{ 'rule-node-config.basic-mode' | translate}}</tb-toggle-option>
+        <tb-toggle-option [value]=true>{{ 'rule-node-config.advanced-mode' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+    @if(!timeseriesConfigForm.get('persistenceSettings.isAdvanced').value) {
+      <mat-form-field>
+        <mat-label translate>rule-node-config.save-time-series.strategy</mat-label>
+        <mat-select formControlName="type">
+          @for (strategy of persistenceStrategies; track strategy) {
+            <mat-option [value]="strategy">{{ PersistenceTypeTranslationMap.get(strategy) | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      @if(timeseriesConfigForm.get('persistenceSettings.type').value === PersistenceType.DEDUPLICATE) {
+        <tb-time-unit-input
+          required
+          labelText="{{ 'rule-node-config.save-time-series.deduplication-interval' | translate }}"
+          requiredText="{{ 'rule-node-config.save-time-series.deduplication-interval-required' | translate }}"
+          minErrorText="{{ 'rule-node-config.save-time-series.deduplication-interval-min-max-range' | translate }}"
+          maxErrorText="{{ 'rule-node-config.save-time-series.deduplication-interval-min-max-range' | translate }}"
+          [maxTime]="maxDeduplicateTime"
+          formControlName="deduplicationIntervalSecs">
+        </tb-time-unit-input>
+      }
+    }
+    @else {
+      <tb-advanced-persistence-settings
+        class="mb-4"
+        formControlName="advanced"
+      ></tb-advanced-persistence-settings>
+    }
+  </div>
   <section class="tb-form-panel stroked">
     <mat-expansion-panel class="tb-settings">
       <mat-expansion-panel-header>
