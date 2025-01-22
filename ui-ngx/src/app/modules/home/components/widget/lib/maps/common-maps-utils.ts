@@ -260,7 +260,7 @@ export const parseWithTranslation = {
 
 export function functionValueCalculator<T>(useFunction: boolean, func: CompiledTbFunction<GenericFunction>, params = [], defaultValue: T): T {
   let res: T;
-  if (useFunction && isDefined(func) && isFunction(func)) {
+  if (useFunction && isDefinedAndNotNull(func)) {
     try {
       res = func.execute(...params);
       if (!isDefinedAndNotNull(res) || res === '') {
