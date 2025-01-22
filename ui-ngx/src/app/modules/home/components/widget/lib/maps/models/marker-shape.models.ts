@@ -136,6 +136,7 @@ export const createColorMarkerIconElement = (iconRegistry: MatIconRegistry, domS
           elements = svgElement.getElementsByClassName('marker-icon-background');
           if (elements.length) {
             (elements[0] as SVGGElement).style.display = '';
+            (elements[0] as SVGGElement).setAttribute('fill-opacity', `${color.getAlpha()}`);
           }
           return svgElement;
         })
