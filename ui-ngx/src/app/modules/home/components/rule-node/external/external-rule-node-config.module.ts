@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { NgModule, Type } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { SnsConfigComponent } from './sns-config.component';
 import { SqsConfigComponent } from './sqs-config.component';
 import { PubSubConfigComponent } from './pubsub-config.component';
@@ -27,7 +27,7 @@ import { SendEmailConfigComponent } from './send-email-config.component';
 import { AzureIotHubConfigComponent } from './azure-iot-hub-config.component';
 import { SendSmsConfigComponent } from './send-sms-config.component';
 import { CommonModule } from '@angular/common';
-import { IRuleNodeConfigurationComponent, SharedModule } from '@shared/public-api';
+import { SharedModule } from '@shared/public-api';
 import { HomeComponentsModule } from '@home/components/public-api';
 import { CommonRuleNodeConfigModule } from '../common/common-rule-node-config.module';
 import { SlackConfigComponent } from './slack-config.component';

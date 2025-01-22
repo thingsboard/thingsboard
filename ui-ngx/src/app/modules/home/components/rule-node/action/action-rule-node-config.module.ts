@@ -14,9 +14,9 @@
 /// limitations under the License.
 ///
 
-import { NgModule, Type } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IRuleNodeConfigurationComponent, SharedModule } from '@shared/public-api';
+import { SharedModule } from '@shared/public-api';
 import { HomeComponentsModule } from '@home/components/public-api';
 import { AttributesConfigComponent } from './attributes-config.component';
 import { TimeseriesConfigComponent } from './timeseries-config.component';

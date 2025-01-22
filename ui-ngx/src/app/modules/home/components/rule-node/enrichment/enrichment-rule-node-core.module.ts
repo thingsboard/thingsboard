@@ -14,9 +14,9 @@
 /// limitations under the License.
 ///
 
-import { NgModule, Type } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IRuleNodeConfigurationComponent, SharedModule } from '@shared/public-api';
+import { SharedModule } from '@shared/public-api';
 import { CustomerAttributesConfigComponent } from './customer-attributes-config.component';
 import { CommonRuleNodeConfigModule } from '../common/common-rule-node-config.module';
 import { EntityDetailsConfigComponent } from './entity-details-config.component';
