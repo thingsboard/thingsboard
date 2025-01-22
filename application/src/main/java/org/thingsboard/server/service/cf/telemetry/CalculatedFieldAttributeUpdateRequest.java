@@ -19,7 +19,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -52,16 +51,7 @@ public class CalculatedFieldAttributeUpdateRequest implements CalculatedFieldTel
     }
 
     @Override
-    public Map<String, String> getTelemetryKeysFromLink(CalculatedFieldLinkConfiguration linkConfiguration) {
-        return switch (scope) {
-            case CLIENT_SCOPE -> linkConfiguration.getClientAttributes();
-            case SERVER_SCOPE -> linkConfiguration.getServerAttributes();
-            case SHARED_SCOPE -> linkConfiguration.getSharedAttributes();
-        };
-    }
-
-    @Override
-    public Map<String, KvEntry> getMappedTelemetry(CalculatedFieldCtx ctx) {
+    public Map<String, KvEntry> getMappedTelemetry(CalculatedFieldCtx ctx, EntityId referencedEntityId) {
         Map<String, KvEntry> mappedKvEntries = new HashMap<>();
         Map<TbPair<EntityId, ReferencedEntityKey>, String> referencedKeys = ctx.getReferencedEntityKeys();
 
@@ -70,7 +60,7 @@ public class CalculatedFieldAttributeUpdateRequest implements CalculatedFieldTel
 
             ReferencedEntityKey referencedEntityKey = new ReferencedEntityKey(key, ArgumentType.ATTRIBUTE, scope);
 
-            String argName = referencedKeys.get(new TbPair<>(entityId, referencedEntityKey));
+            String argName = referencedKeys.get(new TbPair<>(referencedEntityId, referencedEntityKey));
 
             if (argName != null) {
                 mappedKvEntries.put(argName, entry);
@@ -79,5 +69,4 @@ public class CalculatedFieldAttributeUpdateRequest implements CalculatedFieldTel
 
         return mappedKvEntries;
     }
-
 }
