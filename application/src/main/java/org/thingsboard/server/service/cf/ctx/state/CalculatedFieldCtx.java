@@ -57,7 +57,7 @@ public class CalculatedFieldCtx {
         this.arguments = configuration.getArguments();
         this.referencedEntityKeys = arguments.entrySet().stream()
                 .collect(Collectors.toMap(
-                        entry -> new TbPair<>(entry.getValue().getRefEntityId(), entry.getValue().getRefEntityKey()),
+                        entry -> new TbPair<>(entry.getValue().getRefEntityId() == null ? entityId : entry.getValue().getRefEntityId(), entry.getValue().getRefEntityKey()),
                         Map.Entry::getKey
                 ));
         this.argNames = new ArrayList<>(arguments.keySet());

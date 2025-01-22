@@ -18,7 +18,6 @@ package org.thingsboard.server.service.cf.telemetry;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -49,12 +48,7 @@ public class CalculatedFieldTimeSeriesUpdateRequest implements CalculatedFieldTe
     }
 
     @Override
-    public Map<String, String> getTelemetryKeysFromLink(CalculatedFieldLinkConfiguration linkConfiguration) {
-        return linkConfiguration.getTimeSeries();
-    }
-
-    @Override
-    public Map<String, KvEntry> getMappedTelemetry(CalculatedFieldCtx ctx) {
+    public Map<String, KvEntry> getMappedTelemetry(CalculatedFieldCtx ctx, EntityId referencedEntityId) {
         Map<String, KvEntry> mappedKvEntries = new HashMap<>();
         Map<TbPair<EntityId, ReferencedEntityKey>, String> referencedKeys = ctx.getReferencedEntityKeys();
 
@@ -62,13 +56,13 @@ public class CalculatedFieldTimeSeriesUpdateRequest implements CalculatedFieldTe
             String key = entry.getKey();
 
             ReferencedEntityKey tsLatestKey = new ReferencedEntityKey(key, ArgumentType.TS_LATEST, null);
-            String argTsLatestName = referencedKeys.get(new TbPair<>(entityId, tsLatestKey));
+            String argTsLatestName = referencedKeys.get(new TbPair<>(referencedEntityId, tsLatestKey));
 
             if (argTsLatestName != null) {
                 mappedKvEntries.put(argTsLatestName, entry);
             } else {
                 ReferencedEntityKey tsRollingKey = new ReferencedEntityKey(key, ArgumentType.TS_ROLLING, null);
-                String argTsRollingName = referencedKeys.get(new TbPair<>(entityId, tsRollingKey));
+                String argTsRollingName = referencedKeys.get(new TbPair<>(referencedEntityId, tsRollingKey));
 
                 if (argTsRollingName != null) {
                     mappedKvEntries.put(argTsRollingName, entry);
@@ -78,5 +72,4 @@ public class CalculatedFieldTimeSeriesUpdateRequest implements CalculatedFieldTe
 
         return mappedKvEntries;
     }
-
 }
