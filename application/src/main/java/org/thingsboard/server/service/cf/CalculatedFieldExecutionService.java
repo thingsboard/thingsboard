@@ -21,6 +21,17 @@ import org.thingsboard.server.service.cf.telemetry.CalculatedFieldTelemetryUpdat
 
 public interface CalculatedFieldExecutionService {
 
+    /**
+     * Push incoming telemetry to the CF processing queue for async processing.
+     * @param request - telemetry request;
+     * @param callback - callback to be executed when the message is ack by the queue.
+     */
+    void pushRequestToQueue(CalculatedFieldTelemetryUpdateRequest request, TbCallback callback);
+
+    void pushEntityUpdateMsg(TransportProtos.CalculatedFieldEntityUpdateMsgProto proto, TbCallback callback);
+
+    /*  ===================================================== */
+
     void onCalculatedFieldMsg(TransportProtos.CalculatedFieldMsgProto proto, TbCallback callback);
 
     void onTelemetryUpdate(CalculatedFieldTelemetryUpdateRequest calculatedFieldTelemetryUpdateRequest);

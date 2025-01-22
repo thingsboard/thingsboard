@@ -183,18 +183,6 @@ message TsKvListProto {
   repeated KeyValueProto kv = 2;
 }
 
-message AttributeKvProto {
-  AttributeKey key = 1;
-  AttributeValueProto value = 2;
-}
-
-message TelemetryProto {
-  oneof proto {
-    AttributeKvProto attrKv = 1;
-    TsKvProto tsKv = 2;
-  }
-}
-
 message DeviceInfoProto {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
@@ -785,17 +773,7 @@ message DeviceInactivityProto {
   int64 lastInactivityTime = 5;
 }
 
-message CalculatedFieldMsgProto {
-  int64 tenantIdMSB = 1;
-  int64 tenantIdLSB = 2;
-  int64 calculatedFieldIdMSB = 3;
-  int64 calculatedFieldIdLSB = 4;
-  bool added = 5;
-  bool updated = 6;
-  bool deleted = 7;
-}
-
-message EntityProfileUpdateMsgProto {
+message CalculatedFieldEntityUpdateMsgProto {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
   string entityType = 3;
@@ -806,31 +784,26 @@ message EntityProfileUpdateMsgProto {
   int64 oldProfileIdLSB = 8;
   int64 newProfileIdMSB = 9;
   int64 newProfileIdLSB = 10;
+  bool added = 11;
+  bool updated = 12;
+  bool deleted = 13;
 }
 
-message ProfileEntityMsgProto {
+message CalculatedFieldTelemetryMsgProto {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
   string entityType = 3;
   int64 entityIdMSB = 4;
   int64 entityIdLSB = 5;
-  string entityProfileType = 6;
-  int64 profileIdMSB = 7;
-  int64 profileIdLSB = 8;
-  bool added = 9;
-  bool deleted = 10;
-}
-
-message TelemetryUpdateMsgProto {
-  int64 tenantIdMSB = 1;
-  int64 tenantIdLSB = 2;
-  string entityType = 3;
-  int64 entityIdMSB = 4;
-  int64 entityIdLSB = 5;
-  repeated CalculatedFieldEntityCtxIdProto links = 6;
   repeated CalculatedFieldIdProto previousCalculatedFields = 7;
-  string scope = 8;
-  repeated TelemetryProto updatedTelemetry = 9;
+  repeated TsKvProto tsData = 9;
+  AttributeScopeProto scope = 10;
+  repeated AttributeValueProto attrData = 11;
+}
+
+message CalculatedFieldLinkedTelemetryMsgProto {
+  CalculatedFieldTelemetryMsgProto msg = 1;
+  repeated CalculatedFieldEntityCtxIdProto links = 2;
 }
 
 message CalculatedFieldEntityCtxIdProto {
@@ -1589,9 +1562,8 @@ message ToCoreMsg {
   DeviceConnectProto deviceConnectMsg = 50;
   DeviceDisconnectProto deviceDisconnectMsg = 51;
   DeviceInactivityProto deviceInactivityMsg = 52;
-  CalculatedFieldMsgProto calculatedFieldMsg = 53;
-  EntityProfileUpdateMsgProto entityProfileUpdateMsg = 54;
-  ProfileEntityMsgProto profileEntityMsg = 55;
+//  CalculatedFieldMsgProto calculatedFieldMsg = 53;
+//  EntityProfileUpdateMsgProto entityProfileUpdateMsg = 54;
 }
 
 /* High priority messages with low latency are handled by ThingsBoard Core Service separately */
@@ -1611,8 +1583,8 @@ message ToCoreNotificationMsg {
   FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 12 [deprecated = true];
   ResourceCacheInvalidateMsg resourceCacheInvalidateMsg = 13;
   RestApiCallResponseMsgProto restApiCallResponseMsg = 50;
-  EntityProfileUpdateMsgProto entityProfileUpdateMsg = 51;
-  ProfileEntityMsgProto profileEntityMsg = 52;
+//  EntityProfileUpdateMsgProto entityProfileUpdateMsg = 51;
+//  ProfileEntityMsgProto profileEntityMsg = 52;
 }
 
 /* Messages to Edge queue that are handled by ThingsBoard Core Service */
@@ -1632,6 +1604,16 @@ message ToEdgeEventNotificationMsg {
   EdgeEventMsgProto edgeEventMsg = 1;
 }
 
+message ToCalculatedFieldMsg {
+  CalculatedFieldTelemetryMsgProto telemetryMsg = 1;
+  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 2;
+}
+
+message ToCalculatedFieldNotificationMsg {
+  ComponentLifecycleMsgProto componentLifecycle = 1;
+  CalculatedFieldEntityUpdateMsgProto entityUpdateMsg = 2;
+}
+
 /* Messages that are handled by ThingsBoard RuleEngine Service */
 message ToRuleEngineMsg {
   int64 tenantIdMSB = 1;
@@ -1639,9 +1621,6 @@ message ToRuleEngineMsg {
   bytes tbMsg = 3;
   repeated string relationTypes = 4;
   string failureMessage = 5;
-  TelemetryUpdateMsgProto cfTelemetryUpdateMsg = 6;
-  EntityProfileUpdateMsgProto entityProfileUpdateMsg = 7;
-  ProfileEntityMsgProto profileEntityMsg = 8;
 }
 
 message ToRuleEngineNotificationMsg {

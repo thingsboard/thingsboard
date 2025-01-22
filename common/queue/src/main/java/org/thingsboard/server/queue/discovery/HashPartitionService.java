@@ -51,8 +51,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.DataConstants.EDGE_QUEUE_NAME;
-import static org.thingsboard.server.common.data.DataConstants.MAIN_QUEUE_NAME;
+import static org.thingsboard.server.common.data.DataConstants.*;
 
 @Service
 @Slf4j
@@ -62,6 +61,10 @@ public class HashPartitionService implements PartitionService {
     private String coreTopic;
     @Value("${queue.core.partitions:10}")
     private Integer corePartitions;
+    @Value("${queue.calculated-fields.topic}")
+    private String cfTopic;
+    @Value("${queue.calculated-fields.partitions:10}")
+    private Integer cfPartitions;
     @Value("${queue.vc.topic:tb_version_control}")
     private String vcTopic;
     @Value("${queue.vc.partitions:10}")
@@ -108,9 +111,14 @@ public class HashPartitionService implements PartitionService {
     @PostConstruct
     public void init() {
         this.hashFunction = forName(hashFunctionName);
+
         QueueKey coreKey = new QueueKey(ServiceType.TB_CORE);
         partitionSizesMap.put(coreKey, corePartitions);
         partitionTopicsMap.put(coreKey, coreTopic);
+
+        QueueKey cfKey = new QueueKey(ServiceType.TB_RULE_ENGINE).withQueueName(CF_QUEUE_NAME);
+        partitionSizesMap.put(cfKey, cfPartitions);
+        partitionTopicsMap.put(cfKey, cfTopic);
 
         QueueKey vcKey = new QueueKey(ServiceType.TB_VC_EXECUTOR);
         partitionSizesMap.put(vcKey, vcPartitions);

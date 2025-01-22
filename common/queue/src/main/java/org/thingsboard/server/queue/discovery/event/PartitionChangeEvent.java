@@ -52,6 +52,10 @@ public class PartitionChangeEvent extends TbApplicationEvent {
         return getPartitionsByServiceTypeAndQueueName(ServiceType.TB_CORE, DataConstants.EDGE_QUEUE_NAME);
     }
 
+    public Set<TopicPartitionInfo> getCalculatedFieldsPartitions() {
+        return getPartitionsByServiceTypeAndQueueName(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME);
+    }
+
     private Set<TopicPartitionInfo> getPartitionsByServiceTypeAndQueueName(ServiceType serviceType, String queueName) {
         return partitionsMap.entrySet()
                 .stream()
