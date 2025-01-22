@@ -36,7 +36,6 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDescription = "Filter incoming messages by the type of message originator entity",
         nodeDetails = "Checks that the entity type of the incoming message originator matches one of the values specified in the filter.<br><br>" +
                 "Output connections: <code>True</code>, <code>False</code>, <code>Failure</code>",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeOriginatorTypeConfig")
 public class TbOriginatorTypeFilterNode implements TbNode {
 
