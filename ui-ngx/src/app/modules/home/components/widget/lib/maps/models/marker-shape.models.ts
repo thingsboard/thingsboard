@@ -82,7 +82,8 @@ export const createColorMarkerShapeURI = (iconRegistry: MatIconRegistry, domSani
 
 const createIconElement = (iconRegistry: MatIconRegistry, icon: string, size: number, color: tinycolor.Instance): Observable<Element> => {
   const isSvg = isSvgIcon(icon);
-  const iconColor = tinycolor.mix(color, tinycolor('rgba(0,0,0,0.38)'));
+  const iconAlpha = color.getAlpha();
+  const iconColor = tinycolor.mix(color.clone().setAlpha(1), tinycolor('rgba(0,0,0,0.38)'));
   if (isSvg) {
     const [namespace, iconName] = splitIconName(icon);
     return iconRegistry
@@ -92,7 +93,7 @@ const createIconElement = (iconRegistry: MatIconRegistry, icon: string, size: nu
       map((svgElement) => {
         const element = new Element(svgElement.firstChild);
         element.fill('#'+iconColor.toHex());
-        element.attr('fill-opacity', iconColor.getAlpha());
+        element.attr('fill-opacity', iconAlpha);
         const scale = size / 24;
         element.scale(scale);
         return element;
@@ -112,7 +113,7 @@ const createIconElement = (iconRegistry: MatIconRegistry, icon: string, size: nu
       'text-anchor': 'start'
     });
     textElement.fill('#'+iconColor.toHex());
-    textElement.attr('fill-opacity', iconColor.getAlpha());
+    textElement.attr('fill-opacity', iconAlpha);
     const tspan = textElement.tspan(iconName);
     tspan.attr({
       'dominant-baseline': 'hanging'
