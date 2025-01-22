@@ -80,7 +80,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class EdgeImitator {
 
-    private static final int MAX_DOWNLINK_FAIL_ATTEMPTS = 2;
+    private static final int MAX_DOWNLINK_FAILS = 2;
     private final String routingKey;
     private final String routingSecret;
 
@@ -364,7 +364,7 @@ public class EdgeImitator {
     private boolean checkFailureThreshold(int downlinkMsgId) {
         return failureProbability == 100 ||
                 downlinkFailureCountMap.get(downlinkMsgId) == null ||
-                downlinkFailureCountMap.get(downlinkMsgId) < MAX_DOWNLINK_FAIL_ATTEMPTS;
+                downlinkFailureCountMap.get(downlinkMsgId) < MAX_DOWNLINK_FAILS;
     }
 
     private boolean getRandomBoolean() {
