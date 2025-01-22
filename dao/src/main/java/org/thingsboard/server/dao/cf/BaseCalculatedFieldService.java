@@ -64,6 +64,7 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
             log.trace("Executing save calculated field, [{}]", calculatedField);
             CalculatedField savedCalculatedField = calculatedFieldDao.save(tenantId, calculatedField);
             createOrUpdateCalculatedFieldLink(tenantId, savedCalculatedField);
+            updateDebugSettings(tenantId, calculatedField, System.currentTimeMillis());
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedCalculatedField.getTenantId()).entityId(savedCalculatedField.getId())
                     .entity(savedCalculatedField).oldEntity(oldCalculatedField).created(calculatedField.getId() == null).build());
             return savedCalculatedField;

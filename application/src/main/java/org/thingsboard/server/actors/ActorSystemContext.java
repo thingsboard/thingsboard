@@ -42,10 +42,12 @@ import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.event.CalculatedFieldDebugEvent;
 import org.thingsboard.server.common.data.event.ErrorEvent;
 import org.thingsboard.server.common.data.event.LifecycleEvent;
 import org.thingsboard.server.common.data.event.RuleChainDebugEvent;
 import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -125,6 +127,7 @@ import org.thingsboard.server.service.transport.TbCoreToTransportService;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -154,6 +157,18 @@ public class ActorSystemContext {
         @Override
         public void onFailure(Throwable th) {
             log.error("Could not save debug Event for Node", th);
+        }
+    };
+
+    private static final FutureCallback<Void> CALCULATED_FIELD_DEBUG_EVENT_ERROR_CALLBACK = new FutureCallback<>() {
+        @Override
+        public void onSuccess(@Nullable Void event) {
+
+        }
+
+        @Override
+        public void onFailure(Throwable th) {
+            log.error("Could not save debug Event for Calculated Field", th);
         }
     };
 
@@ -719,6 +734,32 @@ public class ActorSystemContext {
                 Futures.addCallback(future, RULE_NODE_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
             } catch (IllegalArgumentException ex) {
                 log.warn("Failed to persist rule node debug message", ex);
+            }
+        }
+    }
+
+    public void persistCalculatedFieldDebugEvent(TenantId tenantId, CalculatedFieldId calculatedFieldId, EntityId entityId, Map<String, String> arguments, TbMsg tbMsg, Throwable error) {
+        if (checkLimits(tenantId, tbMsg, error)) {
+            try {
+                CalculatedFieldDebugEvent.CalculatedFieldDebugEventBuilder event = CalculatedFieldDebugEvent.builder()
+                        .tenantId(tenantId)
+                        .entityId(entityId.getId())
+                        .serviceId(getServiceId())
+                        .calculatedFieldId(calculatedFieldId)
+                        .eventEntity(tbMsg.getOriginator())
+                        .msgId(tbMsg.getId())
+                        .msgType(tbMsg.getType())
+                        .arguments(JacksonUtil.toString(arguments))
+                        .result(tbMsg.getData());
+
+                if (error != null) {
+                    event.error(toString(error));
+                }
+
+                ListenableFuture<Void> future = eventService.saveAsync(event.build());
+                Futures.addCallback(future, CALCULATED_FIELD_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
+            } catch (IllegalArgumentException ex) {
+                log.warn("Failed to persist calculated field debug message", ex);
             }
         }
     }

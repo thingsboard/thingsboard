@@ -42,7 +42,6 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
-import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -71,6 +70,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
+import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtx;
@@ -122,6 +122,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     private final CalculatedFieldStateService stateService;
     private final TbClusterService clusterService;
     private final TbelInvokeService tbelInvokeService;
+    private final EventService eventService;
 
     private ListeningExecutorService calculatedFieldExecutor;
     private ListeningExecutorService calculatedFieldCallbackExecutor;
@@ -253,7 +254,6 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             CalculatedField cf = calculatedFieldService.findById(tenantId, calculatedFieldId);
             if (proto.getUpdated()) {
                 log.info("Executing onCalculatedFieldUpdate, calculatedFieldId=[{}]", calculatedFieldId);
-                calculatedFieldCache.updateCalculatedField(tenantId, calculatedFieldId);
                 boolean shouldReinit = onCalculatedFieldUpdate(cf, callback);
                 if (!shouldReinit) {
                     return;
@@ -301,6 +301,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         if (hasSignificantChanges(oldCalculatedField, updatedCalculatedField)) {
             onCalculatedFieldDelete(updatedCalculatedField.getId(), callback);
         } else {
+            calculatedFieldCache.updateCalculatedField(updatedCalculatedField.getTenantId(), updatedCalculatedField.getId());
             callback.onSuccess();
             shouldReinit = false;
         }
@@ -329,13 +330,9 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         }
         boolean entityIdChanged = !oldCalculatedField.getEntityId().equals(newCalculatedField.getEntityId());
         boolean typeChanged = !oldCalculatedField.getType().equals(newCalculatedField.getType());
-        CalculatedFieldConfiguration oldConfig = oldCalculatedField.getConfiguration();
-        CalculatedFieldConfiguration newConfig = newCalculatedField.getConfiguration();
-        boolean argumentsChanged = !oldConfig.getArguments().equals(newConfig.getArguments());
-        boolean outputTypeChanged = !oldConfig.getOutput().getType().equals(newConfig.getOutput().getType());
-        boolean expressionChanged = !oldConfig.getExpression().equals(newConfig.getExpression());
+        boolean argumentsChanged = !oldCalculatedField.getConfiguration().getArguments().equals(newCalculatedField.getConfiguration().getArguments());
 
-        return entityIdChanged || typeChanged || argumentsChanged || outputTypeChanged || expressionChanged;
+        return entityIdChanged || typeChanged || argumentsChanged;
     }
 
     @Override

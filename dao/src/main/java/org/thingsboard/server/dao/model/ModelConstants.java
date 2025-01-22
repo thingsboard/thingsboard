@@ -373,6 +373,7 @@ public class ModelConstants {
     public static final String STATS_EVENT_TABLE_NAME = "stats_event";
     public static final String RULE_NODE_DEBUG_EVENT_TABLE_NAME = "rule_node_debug_event";
     public static final String RULE_CHAIN_DEBUG_EVENT_TABLE_NAME = "rule_chain_debug_event";
+    public static final String CALCULATED_FIELD_DEBUG_EVENT_TABLE_NAME = "cf_debug_event";
 
     public static final String EVENT_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String EVENT_SERVICE_ID_PROPERTY = "service_id";
@@ -396,6 +397,10 @@ public class ModelConstants {
     public static final String EVENT_DATA_COLUMN_NAME = "e_data";
     public static final String EVENT_METADATA_COLUMN_NAME = "e_metadata";
     public static final String EVENT_MESSAGE_COLUMN_NAME = "e_message";
+
+    public static final String EVENT_CALCULATED_FIELD_ID_COLUMN_NAME = "cf_id";
+    public static final String EVENT_CALCULATED_FIELD_ARGUMENTS_COLUMN_NAME = "e_args";
+    public static final String EVENT_CALCULATED_FIELD_RESULT_COLUMN_NAME = "e_result";
 
     public static final String DEBUG_MODE = "debug_mode";
     public static final String DEBUG_SETTINGS = "debug_settings";
