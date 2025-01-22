@@ -54,6 +54,57 @@ class DeduplicatePersistenceStrategyTest {
     }
 
     @Test
+    void shouldUseAtLeastTenMinutesForExpireAfterAccess() {
+        // GIVEN
+        int deduplicationIntervalSecs = 1; // min deduplication interval duration
+
+        // WHEN
+        strategy = new DeduplicatePersistenceStrategy(deduplicationIntervalSecs);
+
+        // THEN
+        var deduplicationCache = (LoadingCache<Long, Set<UUID>>) ReflectionTestUtils.getField(strategy, "deduplicationCache");
+
+        assertThat(deduplicationCache.policy().expireAfterAccess())
+                .isPresent()
+                .map(Policy.FixedExpiration::getExpiresAfter)
+                .hasValue(Duration.ofMinutes(10L));
+    }
+
+    @Test
+    void shouldCalculateExpireAfterAccessAsIntervalDurationMultipliedByTen() {
+        // GIVEN
+        int deduplicationIntervalSecs = (int) Duration.ofHours(1L).toSeconds(); // max deduplication interval duration
+
+        // WHEN
+        strategy = new DeduplicatePersistenceStrategy(deduplicationIntervalSecs);
+
+        // THEN
+        var deduplicationCache = (LoadingCache<Long, Set<UUID>>) ReflectionTestUtils.getField(strategy, "deduplicationCache");
+
+        assertThat(deduplicationCache.policy().expireAfterAccess())
+                .isPresent()
+                .map(Policy.FixedExpiration::getExpiresAfter)
+                .hasValue(Duration.ofHours(10L));
+    }
+
+    @Test
+    void shouldUseAtMostTwoDaysForExpireAfterAccess() {
+        // GIVEN
+        int deduplicationIntervalSecs = (int) Duration.ofDays(1L).toSeconds(); // max deduplication interval duration
+
+        // WHEN
+        strategy = new DeduplicatePersistenceStrategy(deduplicationIntervalSecs);
+
+        // THEN
+        var deduplicationCache = (LoadingCache<Long, Set<UUID>>) ReflectionTestUtils.getField(strategy, "deduplicationCache");
+
+        assertThat(deduplicationCache.policy().expireAfterAccess())
+                .isPresent()
+                .map(Policy.FixedExpiration::getExpiresAfter)
+                .hasValue(Duration.ofDays(2L));
+    }
+
+    @Test
     void shouldNotAllowMoreThan100DeduplicationIntervals() {
         // GIVEN
         int deduplicationIntervalSecs = 1; // min deduplication interval duration
