@@ -29,7 +29,8 @@ import {
   TranslateCompiler,
   TranslateLoader,
   TranslateModule,
-  TranslateParser
+  TranslateParser,
+  TranslateService
 } from '@ngx-translate/core';
 import { TbMissingTranslationHandler } from './translate/missing-translate-handler';
 import { MatButtonModule } from '@angular/material/button';
@@ -41,6 +42,7 @@ import { HotkeyModule } from 'angular2-hotkeys';
 import { TranslateDefaultParser } from '@core/translate/translate-default-parser';
 import { TranslateDefaultLoader } from '@core/translate/translate-default-loader';
 import { EntityConflictInterceptor } from '@core/interceptors/entity-conflict.interceptor';
+import { TranslateWithCustomService } from '@core/translate/translate-with-custom.service';
 
 @NgModule({ exports: [], imports: [CommonModule,
         MatDialogModule,
@@ -97,6 +99,10 @@ import { EntityConflictInterceptor } from '@core/interceptors/entity-conflict.in
                 ...new MatDialogConfig(),
                 restoreFocus: false
             }
+        },
+        {
+          provide: TranslateService,
+          useClass: TranslateWithCustomService,
         },
         WINDOW_PROVIDERS,
         provideHttpClient(withInterceptorsFromDi()),
