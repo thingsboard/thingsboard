@@ -1,0 +1,43 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="sendSmsConfigForm" class="flex flex-col">
+  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+    <mat-label translate>rule-node-config.numbers-to-template</mat-label>
+    <input required matInput formControlName="numbersToTemplate">
+    <mat-error *ngIf="sendSmsConfigForm.get('numbersToTemplate').hasError('required')">
+      {{ 'rule-node-config.numbers-to-template-required' | translate }}
+    </mat-error>
+    <mat-hint [innerHTML]="'rule-node-config.numbers-to-template-hint' | translate | safe: 'html'"></mat-hint>
+  </mat-form-field>
+  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+    <mat-label translate>rule-node-config.sms-message-template</mat-label>
+    <textarea required matInput formControlName="smsMessageTemplate" rows="6"></textarea>
+    <mat-error *ngIf="sendSmsConfigForm.get('smsMessageTemplate').hasError('required')">
+      {{ 'rule-node-config.sms-message-template-required' | translate }}
+    </mat-error>
+    <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
+  </mat-form-field>
+  <mat-checkbox formControlName="useSystemSmsSettings">
+    {{ 'rule-node-config.use-system-sms-settings' | translate }}
+  </mat-checkbox>
+  <tb-sms-provider-configuration
+    *ngIf="sendSmsConfigForm.get('useSystemSmsSettings').value === false"
+    formControlName="smsProviderConfiguration"
+    required>
+  </tb-sms-provider-configuration>
+</section>

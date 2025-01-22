@@ -43,7 +43,6 @@ import org.thingsboard.server.common.msg.TbMsg;
                 "that are not included in the incoming message to use them for further message processing. " +
                 "For example to filter messages based on the threshold value stored in the attributes.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeOriginatorAttributesConfig")
 public class TbGetAttributesNode extends TbAbstractGetAttributesNode<TbGetAttributesNodeConfiguration, EntityId> {
 

@@ -40,7 +40,6 @@ import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
         hasQueueName = true,
         nodeDescription = "transfers the message to another queue",
         nodeDetails = "After successful transfer incoming message is automatically acknowledged. Queue name is configurable.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig"
 )
 public class TbCheckpointNode implements TbNode {

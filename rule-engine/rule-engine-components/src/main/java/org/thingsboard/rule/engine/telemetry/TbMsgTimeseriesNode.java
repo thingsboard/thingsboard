@@ -58,7 +58,6 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_RE
                 "However, the timestamp of the messages originated by multiple devices/servers may be unsynchronized long before they are pushed to the queue. " +
                 "The DB layer has certain optimizations to ignore the updates of the \"attributes\" and \"latest values\" tables if the new record has a timestamp that is older than the previous record. " +
                 "So, to make sure that all the messages will be processed correctly, one should enable this parameter for sequential message processing scenarios.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeTimeseriesConfig",
         icon = "file_upload"
 )
