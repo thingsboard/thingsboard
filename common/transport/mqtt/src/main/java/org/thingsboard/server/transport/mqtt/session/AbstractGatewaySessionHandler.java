@@ -127,6 +127,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     private boolean overwriteDevicesActivity = false;
 
     public AbstractGatewaySessionHandler(DeviceSessionCtx deviceSessionCtx, UUID sessionId, boolean overwriteDevicesActivity) {
+        log.debug("[{}] Gateway connect [{}] session [{}]", deviceSessionCtx.getTenantId(), deviceSessionCtx.getDeviceId(), sessionId);
         this.context = deviceSessionCtx.getContext();
         this.transportService = context.getTransportService();
         this.deviceSessionCtx = deviceSessionCtx;
@@ -198,13 +199,13 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     }
 
     public void onDevicesDisconnect() {
-        log.info("[{}] Gateway disconnect [{}]", gateway.getTenantId(), gateway.getDeviceId());
+        log.debug("[{}] Gateway disconnect [{}]", gateway.getTenantId(), gateway.getDeviceId());
         try {
             deviceFutures.forEach((name, future) -> {
                 Futures.addCallback(future, new FutureCallback<T>() {
                     @Override
                     public void onSuccess(T result) {
-                        log.info("[{}] Gateway disconnect [{}] device deregister callback [{}]", gateway.getTenantId(), gateway.getDeviceId(), name);
+                        log.debug("[{}] Gateway disconnect [{}] device deregister callback [{}]", gateway.getTenantId(), gateway.getDeviceId(), name);
                         deregisterSession(name, result);
                     }
 
