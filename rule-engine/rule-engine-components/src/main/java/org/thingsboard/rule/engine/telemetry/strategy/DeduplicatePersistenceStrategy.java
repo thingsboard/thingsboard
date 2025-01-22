@@ -30,6 +30,9 @@ final class DeduplicatePersistenceStrategy implements PersistenceStrategy {
     private static final int MIN_DEDUPLICATION_INTERVAL_SECS = 1;
     private static final int MAX_DEDUPLICATION_INTERVAL_SECS = (int) Duration.ofDays(1L).toSeconds();
 
+    private static final int MAX_TOTAL_INTERVALS_DURATION_SECS = (int) Duration.ofDays(2L).toSeconds();
+    private static final int MAX_NUMBER_OF_INTERVALS = 100;
+
     private final long deduplicationIntervalMillis;
     private final LoadingCache<Long, Set<UUID>> deduplicationCache;
 
@@ -43,8 +46,17 @@ final class DeduplicatePersistenceStrategy implements PersistenceStrategy {
         deduplicationCache = Caffeine.newBuilder()
                 .softValues()
                 .expireAfterAccess(Duration.ofSeconds(deduplicationIntervalSecs * 10L))
-                .maximumSize(20L)
+                .maximumSize(calculateMaxNumberOfDeduplicationIntervals(deduplicationIntervalSecs))
                 .build(__ -> Sets.newConcurrentHashSet());
+    }
+
+    /**
+     * Calculates the maximum number of deduplication intervals we will store in the cache.
+     * We limit retention to two days to avoid stale data and cap it at 100 intervals to manage memory usage.
+     */
+    private static long calculateMaxNumberOfDeduplicationIntervals(int deduplicationIntervalSecs) {
+        int numberOfDeduplicationIntervals = MAX_TOTAL_INTERVALS_DURATION_SECS / deduplicationIntervalSecs;
+        return Math.min(numberOfDeduplicationIntervals, MAX_NUMBER_OF_INTERVALS);
     }
 
     @JsonProperty("deduplicationIntervalSecs")

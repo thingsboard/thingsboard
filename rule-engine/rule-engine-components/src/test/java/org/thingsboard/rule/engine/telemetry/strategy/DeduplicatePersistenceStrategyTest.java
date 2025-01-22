@@ -15,10 +15,14 @@
  */
 package org.thingsboard.rule.engine.telemetry.strategy;
 
+import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.Policy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Duration;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,6 +51,57 @@ class DeduplicatePersistenceStrategyTest {
         assertThatThrownBy(() -> new DeduplicatePersistenceStrategy(86401))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Deduplication interval must be at least 1 second(s) and at most 86400 second(s), was 86401 second(s)");
+    }
+
+    @Test
+    void shouldNotAllowMoreThan100DeduplicationIntervals() {
+        // GIVEN
+        int deduplicationIntervalSecs = 1; // min deduplication interval duration
+
+        // WHEN
+        strategy = new DeduplicatePersistenceStrategy(deduplicationIntervalSecs);
+
+        // THEN
+        var deduplicationCache = (LoadingCache<Long, Set<UUID>>) ReflectionTestUtils.getField(strategy, "deduplicationCache");
+
+        assertThat(deduplicationCache.policy().eviction())
+                .isPresent()
+                .map(Policy.Eviction::getMaximum)
+                .hasValue(100L);
+    }
+
+    @Test
+    void shouldCalculateMaxIntervalsAsTwoDaysDividedByIntervalDuration() {
+        // GIVEN
+        int deduplicationIntervalSecs = (int) Duration.ofHours(1L).toSeconds();
+
+        // WHEN
+        strategy = new DeduplicatePersistenceStrategy(deduplicationIntervalSecs);
+
+        // THEN
+        var deduplicationCache = (LoadingCache<Long, Set<UUID>>) ReflectionTestUtils.getField(strategy, "deduplicationCache");
+
+        assertThat(deduplicationCache.policy().eviction())
+                .isPresent()
+                .map(Policy.Eviction::getMaximum)
+                .hasValue(48L);
+    }
+
+    @Test
+    void shouldKeepAtLeastTwoDeduplicationIntervals() {
+        // GIVEN
+        int deduplicationIntervalSecs = (int) Duration.ofDays(1L).toSeconds(); // max deduplication interval duration
+
+        // WHEN
+        strategy = new DeduplicatePersistenceStrategy(deduplicationIntervalSecs);
+
+        // THEN
+        var deduplicationCache = (LoadingCache<Long, Set<UUID>>) ReflectionTestUtils.getField(strategy, "deduplicationCache");
+
+        assertThat(deduplicationCache.policy().eviction())
+                .isPresent()
+                .map(Policy.Eviction::getMaximum)
+                .hasValue(2L);
     }
 
     @Test

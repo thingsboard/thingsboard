@@ -104,7 +104,7 @@ public class TbMsgTimeseriesNode implements TbNode {
         }
         long ts = computeTs(msg, config.isUseServerTs());
 
-        TimeseriesSaveRequest.Strategy strategy = determineSaveActions(ts, msg.getOriginator().getId());
+        TimeseriesSaveRequest.Strategy strategy = determineSaveStrategy(ts, msg.getOriginator().getId());
 
         // short-circuit
         if (!strategy.saveTimeseries() && !strategy.saveLatest() && !strategy.sendWsUpdate()) {
@@ -144,7 +144,7 @@ public class TbMsgTimeseriesNode implements TbNode {
         return ignoreMetadataTs ? System.currentTimeMillis() : msg.getMetaDataTs();
     }
 
-    private TimeseriesSaveRequest.Strategy determineSaveActions(long ts, UUID originatorUuid) {
+    private TimeseriesSaveRequest.Strategy determineSaveStrategy(long ts, UUID originatorUuid) {
         if (persistenceSettings instanceof OnEveryMessage) {
             return TimeseriesSaveRequest.Strategy.SAVE_ALL;
         }
