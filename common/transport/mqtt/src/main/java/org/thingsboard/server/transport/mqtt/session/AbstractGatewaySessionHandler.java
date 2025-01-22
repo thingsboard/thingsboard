@@ -16,8 +16,10 @@
 package org.thingsboard.server.transport.mqtt.session;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -196,7 +198,27 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     }
 
     public void onDevicesDisconnect() {
-        devices.forEach(this::deregisterSession);
+        log.info("[{}] Gateway disconnect [{}]", gateway.getTenantId(), gateway.getDeviceId());
+        try {
+            deviceFutures.forEach((name, future) -> {
+                Futures.addCallback(future, new FutureCallback<T>() {
+                    @Override
+                    public void onSuccess(T result) {
+                        log.info("[{}] Gateway disconnect [{}] device deregister callback [{}]", gateway.getTenantId(), gateway.getDeviceId(), name);
+                        deregisterSession(name, result);
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+
+                    }
+                }, MoreExecutors.directExecutor());
+            });
+
+            devices.forEach(this::deregisterSession);
+        } catch (Exception e) {
+            log.error("Gateway disconnect failure", e);
+        }
     }
 
     public void onDeviceDeleted(String deviceName) {
