@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
@@ -58,12 +59,14 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
@@ -627,6 +630,136 @@ public class ProtoUtils {
         return new BaseAttributeKvEntry(entry, proto.getLastUpdateTs(), proto.hasVersion() ? proto.getVersion() : null);
     }
 
+    public static KvEntry fromProto(TransportProtos.TsKvProto proto) {
+        TransportProtos.KeyValueProto kvProto = proto.getKv();
+        String key = kvProto.getKey();
+        KvEntry entry = switch (kvProto.getType()) {
+            case BOOLEAN_V -> new BooleanDataEntry(key, kvProto.getBoolV());
+            case LONG_V -> new LongDataEntry(key, kvProto.getLongV());
+            case DOUBLE_V -> new DoubleDataEntry(key, kvProto.getDoubleV());
+            case STRING_V -> new StringDataEntry(key, kvProto.getStringV());
+            case JSON_V -> new JsonDataEntry(key, kvProto.getJsonV());
+            default -> null;
+        };
+        return new BasicTsKvEntry(proto.getTs(), entry, proto.hasVersion() ? proto.getVersion() : null);
+    }
+
+    public static KvEntry fromTelemetryProto(TransportProtos.TelemetryProto telemetryProto) {
+        if (telemetryProto.hasAttrKv()) {
+            return fromProto(telemetryProto.getAttrKv().getValue());
+        } else if (telemetryProto.hasTsKv()) {
+            return fromProto(telemetryProto.getTsKv());
+        } else {
+            throw new IllegalArgumentException("Unsupported TelemetryProto type: " + telemetryProto);
+        }
+    }
+
+    public static TransportProtos.AttributeKey toAttributeKeyProto(String key, AttributeScope scope) {
+        TransportProtos.AttributeKey.Builder builder = TransportProtos.AttributeKey.newBuilder();
+        builder.setAttributeKey(key);
+        switch (scope) {
+            case CLIENT_SCOPE:
+                builder.setScope(TransportProtos.AttributeScopeProto.CLIENT_SCOPE);
+                break;
+            case SERVER_SCOPE:
+                builder.setScope(TransportProtos.AttributeScopeProto.SERVER_SCOPE);
+                break;
+            case SHARED_SCOPE:
+                builder.setScope(TransportProtos.AttributeScopeProto.SHARED_SCOPE);
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported attribute scope: " + scope);
+        }
+        return builder.build();
+    }
+
+    public static TransportProtos.AttributeKvProto toAttributeKvProto(AttributeKvEntry attributeKvEntry, AttributeScope scope) {
+        return TransportProtos.AttributeKvProto.newBuilder()
+                .setKey(ProtoUtils.toAttributeKeyProto(attributeKvEntry.getKey(), scope))
+                .setValue(ProtoUtils.toAttributeValueProto(attributeKvEntry))
+                .build();
+    }
+
+    public static TransportProtos.AttributeValueProto toAttributeValueProto(AttributeKvEntry attributeKvEntry) {
+        TransportProtos.AttributeValueProto.Builder builder = TransportProtos.AttributeValueProto.newBuilder();
+        builder.setLastUpdateTs(attributeKvEntry.getLastUpdateTs());
+        switch (attributeKvEntry.getDataType()) {
+            case BOOLEAN:
+                builder.setType(TransportProtos.KeyValueType.BOOLEAN_V)
+                        .setHasV(true)
+                        .setBoolV(attributeKvEntry.getBooleanValue().orElse(false));
+                break;
+            case LONG:
+                builder.setType(TransportProtos.KeyValueType.LONG_V)
+                        .setHasV(true)
+                        .setLongV(attributeKvEntry.getLongValue().orElse(0L));
+                break;
+            case DOUBLE:
+                builder.setType(TransportProtos.KeyValueType.DOUBLE_V)
+                        .setHasV(true)
+                        .setDoubleV(attributeKvEntry.getDoubleValue().orElse(0.0));
+                break;
+            case STRING:
+                builder.setType(TransportProtos.KeyValueType.STRING_V)
+                        .setHasV(true)
+                        .setStringV(attributeKvEntry.getStrValue().orElse(""));
+                break;
+            case JSON:
+                builder.setType(TransportProtos.KeyValueType.JSON_V)
+                        .setHasV(true)
+                        .setJsonV(attributeKvEntry.getJsonValue().orElse("{}"));
+                break;
+            default:
+                builder.setHasV(false);
+                throw new IllegalArgumentException("Unsupported AttributeKvEntry data type: " + attributeKvEntry.getDataType());
+        }
+        if (attributeKvEntry.getKey() != null) {
+            builder.setKey(attributeKvEntry.getKey());
+        }
+        if (attributeKvEntry.getVersion() != null) {
+            builder.setVersion(attributeKvEntry.getVersion());
+        }
+        return builder.build();
+    }
+
+    public static TransportProtos.TsKvProto toTsKvProto(TsKvEntry tsKvEntry) {
+        return TransportProtos.TsKvProto.newBuilder()
+                .setTs(tsKvEntry.getTs())
+                .setKv(toKeyValueProto(tsKvEntry))
+                .setVersion(tsKvEntry.getVersion())
+                .build();
+    }
+
+    public static TransportProtos.KeyValueProto toKeyValueProto(KvEntry kvEntry) {
+        TransportProtos.KeyValueProto.Builder builder = TransportProtos.KeyValueProto.newBuilder();
+        builder.setKey(kvEntry.getKey());
+        switch (kvEntry.getDataType()) {
+            case BOOLEAN:
+                builder.setType(TransportProtos.KeyValueType.BOOLEAN_V)
+                        .setBoolV(kvEntry.getBooleanValue().orElse(false));
+                break;
+            case LONG:
+                builder.setType(TransportProtos.KeyValueType.LONG_V)
+                        .setLongV(kvEntry.getLongValue().orElse(0L));
+                break;
+            case DOUBLE:
+                builder.setType(TransportProtos.KeyValueType.DOUBLE_V)
+                        .setDoubleV(kvEntry.getDoubleValue().orElse(0.0));
+                break;
+            case STRING:
+                builder.setType(TransportProtos.KeyValueType.STRING_V)
+                        .setStringV(kvEntry.getStrValue().orElse(""));
+                break;
+            case JSON:
+                builder.setType(TransportProtos.KeyValueType.JSON_V)
+                        .setJsonV(kvEntry.getJsonValue().orElse("{}"));
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported KvEntry data type: " + kvEntry.getDataType());
+        }
+        return builder.build();
+    }
+
     public static TransportProtos.DeviceProto toProto(Device device) {
         var builder = TransportProtos.DeviceProto.newBuilder()
                 .setTenantIdMSB(device.getTenantId().getId().getMostSignificantBits())
@@ -1181,46 +1314,6 @@ public class ProtoUtils {
             }
         }
         return builder.build();
-    }
-
-    public static TransportProtos.ObjectProto toObjectProto(Object value) {
-        if (value == null) {
-            throw new IllegalArgumentException("Cannot convert null to ObjectProto");
-        }
-
-        TransportProtos.ObjectProto.Builder builder = TransportProtos.ObjectProto.newBuilder();
-
-        if (value instanceof String) {
-            builder.setStringValue((String) value);
-        } else if (value instanceof Integer) {
-            builder.setIntValue((Integer) value);
-        } else if (value instanceof Long) {
-            builder.setLongValue((Long) value);
-        } else if (value instanceof Double) {
-            builder.setDoubleValue((Double) value);
-        } else if (value instanceof Boolean) {
-            builder.setBoolValue((Boolean) value);
-        } else {
-            throw new IllegalArgumentException("Unsupported value type: " + value.getClass().getName());
-        }
-
-        return builder.build();
-    }
-
-    public static Object fromObjectProto(TransportProtos.ObjectProto proto) {
-        try {
-            return switch (proto.getValueCase()) {
-                case STRINGVALUE -> proto.getStringValue();
-                case INTVALUE -> proto.getIntValue();
-                case LONGVALUE -> proto.getLongValue();
-                case DOUBLEVALUE -> proto.getDoubleValue();
-                case BOOLVALUE -> proto.getBoolValue();
-                case VALUE_NOT_SET -> throw new IllegalArgumentException("Value not set in ObjectProto");
-            };
-        } catch (Exception e) {
-            log.error("Failed to deserialize ObjectProto: [{}]", proto, e);
-            return null;
-        }
     }
 
     private static boolean isNotNull(Object obj) {

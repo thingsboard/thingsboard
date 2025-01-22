@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
+import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -380,9 +381,9 @@ public class CustomerServiceTest extends AbstractServiceTest {
         SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
 
         Argument argument = new Argument();
-        argument.setEntityId(savedCustomer.getId());
-        argument.setType(ArgumentType.TS_LATEST);
-        argument.setKey("temperature");
+        argument.setRefEntityId(savedCustomer.getId());
+        ReferencedEntityKey refEntityKey = new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null);
+        argument.setRefEntityKey(refEntityKey);
 
         config.setArguments(Map.of("T", argument));
 

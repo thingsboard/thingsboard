@@ -25,7 +25,7 @@ public interface CalculatedFieldExecutionService {
 
     void onTelemetryUpdate(CalculatedFieldTelemetryUpdateRequest calculatedFieldTelemetryUpdateRequest);
 
-    void onCalculatedFieldStateMsg(TransportProtos.CalculatedFieldStateMsgProto proto, TbCallback callback);
+    void onTelemetryUpdateMsg(TransportProtos.TelemetryUpdateMsgProto proto);
 
     void onEntityProfileChangedMsg(TransportProtos.EntityProfileUpdateMsgProto proto, TbCallback callback);
 

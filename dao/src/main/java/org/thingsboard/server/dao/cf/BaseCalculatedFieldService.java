@@ -38,7 +38,6 @@ import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
@@ -96,6 +95,13 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
         log.trace("Executing findCalculatedFieldIdsByEntityId [{}]", entityId);
         validateId(entityId.getId(), id -> INCORRECT_ENTITY_ID + id);
         return calculatedFieldDao.findCalculatedFieldIdsByEntityId(tenantId, entityId);
+    }
+
+    @Override
+    public List<CalculatedField> findCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId) {
+        log.trace("Executing findCalculatedFieldsByEntityId [{}]", entityId);
+        validateId(entityId.getId(), id -> INCORRECT_ENTITY_ID + id);
+        return calculatedFieldDao.findCalculatedFieldsByEntityId(tenantId, entityId);
     }
 
     @Override
@@ -233,22 +239,8 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     }
 
     private void createOrUpdateCalculatedFieldLink(TenantId tenantId, CalculatedField calculatedField) {
-        List<CalculatedFieldLink> links = buildCalculatedFieldLinks(tenantId, calculatedField);
+        List<CalculatedFieldLink> links = calculatedField.getConfiguration().buildCalculatedFieldLinks(tenantId, calculatedField.getEntityId(), calculatedField.getId());
         links.forEach(link -> saveCalculatedFieldLink(tenantId, link));
-    }
-
-    private List<CalculatedFieldLink> buildCalculatedFieldLinks(TenantId tenantId, CalculatedField calculatedField) {
-        CalculatedFieldConfiguration cfConfig = calculatedField.getConfiguration();
-        return cfConfig.getReferencedEntities().stream()
-                .map(referencedEntityId -> {
-                    CalculatedFieldLink link = new CalculatedFieldLink();
-                    link.setTenantId(tenantId);
-                    link.setEntityId(referencedEntityId);
-                    link.setCalculatedFieldId(calculatedField.getId());
-                    link.setConfiguration(cfConfig.getReferencedEntityConfig(referencedEntityId));
-                    return link;
-                })
-                .collect(Collectors.toList());
     }
 
 }

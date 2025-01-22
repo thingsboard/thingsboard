@@ -22,13 +22,16 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.util.TbPair;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Data
 public class CalculatedFieldCtx {
@@ -38,7 +41,8 @@ public class CalculatedFieldCtx {
     private EntityId entityId;
     private CalculatedFieldType cfType;
     private final Map<String, Argument> arguments;
-    private final List<String> argKeys;
+    private final Map<TbPair<EntityId, ReferencedEntityKey>, String> referencedEntityKeys;
+    private final List<String> argNames;
     private Output output;
     private String expression;
     private TbelInvokeService tbelInvokeService;
@@ -51,7 +55,12 @@ public class CalculatedFieldCtx {
         this.cfType = calculatedField.getType();
         CalculatedFieldConfiguration configuration = calculatedField.getConfiguration();
         this.arguments = configuration.getArguments();
-        this.argKeys = new ArrayList<>(arguments.keySet());
+        this.referencedEntityKeys = arguments.entrySet().stream()
+                .collect(Collectors.toMap(
+                        entry -> new TbPair<>(entry.getValue().getRefEntityId() == null ? entityId : entry.getValue().getRefEntityId(), entry.getValue().getRefEntityKey()),
+                        Map.Entry::getKey
+                ));
+        this.argNames = new ArrayList<>(arguments.keySet());
         this.output = configuration.getOutput();
         this.expression = configuration.getExpression();
         this.tbelInvokeService = tbelInvokeService;
@@ -69,7 +78,7 @@ public class CalculatedFieldCtx {
                 tenantId,
                 tbelInvokeService,
                 expression,
-                argKeys.toArray(String[]::new)
+                argNames.toArray(String[]::new)
         );
     }
 
