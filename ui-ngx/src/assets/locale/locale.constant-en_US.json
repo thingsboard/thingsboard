@@ -1039,7 +1039,8 @@
         "open-details-page": "Open details page",
         "not-found": "Not found",
         "documentation": "Documentation",
-        "time-left": "{{time}} left"
+        "time-left": "{{time}} left",
+        "loading-please-wait": "Loading... Please wait"
     },
     "content-type": {
         "json": "Json",
