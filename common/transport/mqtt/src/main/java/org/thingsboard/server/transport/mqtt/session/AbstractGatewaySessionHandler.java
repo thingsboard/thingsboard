@@ -291,6 +291,15 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                                 log.trace("[{}][{}][{}] First got or created device [{}], type [{}] for the gateway session", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName, deviceType);
                                 SessionInfoProto deviceSessionInfo = deviceSessionCtx.getSessionInfo();
                                 transportService.registerAsyncSession(deviceSessionInfo, deviceSessionCtx);
+                                /**
+                                 *  3.0.0 Device Session Establishment:
+                                 * dcmd-subscribe
+                                 * [tck-id-message-flow-device-dcmd-subscribe] If the Device supports writing to outputs, the
+                                 * MQTT client associated with the Device MUST subscribe to a topic of the form
+                                 * spBv1.0/group_id/DCMD/edge_node_id/device_id where group_id is the Sparkplug Group ID
+                                 * the edge_node_id is the Sparkplug Edge Node ID and the device_id is the Sparkplug Device ID
+                                 * for this Device. It MUST subscribe on this topic with a QoS of 1
+                                 */
                                 transportService.process(TransportProtos.TransportToDeviceActorMsg.newBuilder()
                                         .setSessionInfo(deviceSessionInfo)
                                         .setSessionEvent(SESSION_EVENT_MSG_OPEN)
@@ -710,6 +719,10 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         keyValueProtoBuilder.setStringV(connectionState.name());
         TransportProtos.PostTelemetryMsg postTelemetryMsg = postTelemetryMsgCreated(keyValueProtoBuilder.build(), ts);
         transportService.process(sessionInfo, postTelemetryMsg, getPubAckCallback(channel, deviceName, -1, postTelemetryMsg));
+    }
+
+    public ConcurrentMap<String, T> getDevices () {
+        return this.devices;
     }
 
     private <T> TransportServiceCallback<Void> getPubAckCallback(final ChannelHandlerContext ctx, final String deviceName, final int msgId, final T msg) {

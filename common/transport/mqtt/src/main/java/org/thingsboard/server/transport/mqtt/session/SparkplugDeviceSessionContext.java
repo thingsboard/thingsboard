@@ -35,7 +35,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.DCMD;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.getTsKvProto;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.getTsKvProtoFromJsonNode;
 
 @Slf4j
 public class SparkplugDeviceSessionContext extends AbstractGatewayDeviceSessionContext<SparkplugNodeSessionHandler> {
@@ -51,7 +53,7 @@ public class SparkplugDeviceSessionContext extends AbstractGatewayDeviceSessionC
         super(parent, deviceInfo, deviceProfile, mqttQoSMap, transportService);
     }
 
-    public  Map<String, SparkplugBProto.Payload.Metric> getDeviceBirthMetrics() {
+    public Map<String, SparkplugBProto.Payload.Metric> getDeviceBirthMetrics() {
         return deviceBirthMetrics;
     }
 
@@ -64,14 +66,28 @@ public class SparkplugDeviceSessionContext extends AbstractGatewayDeviceSessionC
     @Override
     public void onAttributeUpdate(UUID sessionId, TransportProtos.AttributeUpdateNotificationMsg notification) {
         log.trace("[{}] Received attributes update notification to sparkplug device", sessionId);
-        notification.getSharedUpdatedList().forEach(tsKvProto -> {
-            if (getDeviceBirthMetrics().containsKey(tsKvProto.getKv().getKey())) {
+        notification.getSharedUpdatedList().forEach(tsKvProtoShared -> {
+            SparkplugMessageType messageType = DCMD;
+            TransportProtos.TsKvProto tsKvProto = tsKvProtoShared;
+            if ("JSON_V".equals(tsKvProtoShared.getKv().getType().name())) {
+                try {
+                    messageType = SparkplugMessageType.parseMessageType(tsKvProtoShared.getKv().getKey());
+                    tsKvProto = getTsKvProtoFromJsonNode(JacksonUtil.toJsonNode(tsKvProtoShared.getKv().getJsonV()), tsKvProtoShared.getTs());
+                } catch (ThingsboardException e) {
+                    messageType = null;
+                    log.error("Failed attributes update notification to sparkplug device [{}]. ", deviceInfo.getDeviceName(), e);
+                }
+            }
+            if (messageType != null && messageType.isSubscribe() && messageType.isDevice()
+                    && getDeviceBirthMetrics().containsKey(tsKvProto.getKv().getKey())) {
                 SparkplugTopic sparkplugTopic = new SparkplugTopic(parent.getSparkplugTopicNode(),
-                        SparkplugMessageType.DCMD, deviceInfo.getDeviceName());
+                        messageType, deviceInfo.getDeviceName());
                 parent.createSparkplugMqttPublishMsg(tsKvProto,
-                        sparkplugTopic.toString(),
-                        getDeviceBirthMetrics().get(tsKvProto.getKv().getKey()))
+                                sparkplugTopic.toString(),
+                                getDeviceBirthMetrics().get(tsKvProto.getKv().getKey()))
                         .ifPresent(this.parent::writeAndFlush);
+            } else {
+                log.trace("Failed attributes update notification to sparkplug device [{}]. ", deviceInfo.getDeviceName());
             }
         });
     }
@@ -81,20 +97,22 @@ public class SparkplugDeviceSessionContext extends AbstractGatewayDeviceSessionC
         log.trace("[{}] Received RPC Request notification to sparkplug device", sessionId);
         try {
             SparkplugMessageType messageType = SparkplugMessageType.parseMessageType(rpcRequest.getMethodName());
-            SparkplugRpcRequestHeader header = JacksonUtil.fromString(rpcRequest.getParams(), SparkplugRpcRequestHeader.class);
-            header.setMessageType(messageType.name());
-            TransportProtos.TsKvProto tsKvProto = getTsKvProto(header.getMetricName(), header.getValue(), new Date().getTime());
-            if (getDeviceBirthMetrics().containsKey(tsKvProto.getKv().getKey())) {
-                SparkplugTopic sparkplugTopic = new SparkplugTopic(parent.getSparkplugTopicNode(),
-                        messageType, deviceInfo.getDeviceName());
-                parent.createSparkplugMqttPublishMsg(tsKvProto,
-                        sparkplugTopic.toString(),
-                        getDeviceBirthMetrics().get(tsKvProto.getKv().getKey()))
-                        .ifPresent(payload -> parent.sendToDeviceRpcRequest(payload, rpcRequest, sessionInfo));
-            } else {
-                parent.sendErrorRpcResponse(sessionInfo, rpcRequest.getRequestId(),
-                        ThingsboardErrorCode.BAD_REQUEST_PARAMS, " Failed send To Device Rpc Request: " +
-                                rpcRequest.getMethodName() + ". This device does not have a metricName: [" + tsKvProto.getKv().getKey() + "]");
+            if (messageType.isSubscribe()) {
+                SparkplugRpcRequestHeader header = JacksonUtil.fromString(rpcRequest.getParams(), SparkplugRpcRequestHeader.class);
+                header.setMessageType(messageType.name());
+                TransportProtos.TsKvProto tsKvProto = getTsKvProto(header.getMetricName(), header.getValue(), new Date().getTime());
+                if (getDeviceBirthMetrics().containsKey(tsKvProto.getKv().getKey())) {
+                    SparkplugTopic sparkplugTopic = new SparkplugTopic(parent.getSparkplugTopicNode(),
+                            messageType, deviceInfo.getDeviceName());
+                    parent.createSparkplugMqttPublishMsg(tsKvProto,
+                                    sparkplugTopic.toString(),
+                                    getDeviceBirthMetrics().get(tsKvProto.getKv().getKey()))
+                            .ifPresent(payload -> parent.sendToDeviceRpcRequest(payload, rpcRequest, sessionInfo));
+                } else {
+                    parent.sendErrorRpcResponse(sessionInfo, rpcRequest.getRequestId(),
+                            ThingsboardErrorCode.BAD_REQUEST_PARAMS, " Failed send To Device Rpc Request: " +
+                                    rpcRequest.getMethodName() + ". This device does not have a metricName: [" + tsKvProto.getKv().getKey() + "]");
+                }
             }
         } catch (ThingsboardException e) {
             parent.sendErrorRpcResponse(sessionInfo, rpcRequest.getRequestId(),

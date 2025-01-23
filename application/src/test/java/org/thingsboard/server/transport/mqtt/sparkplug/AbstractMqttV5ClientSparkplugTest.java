@@ -67,7 +67,7 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataTyp
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt64;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType.UInt8;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.createMetric;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicUtil.NAMESPACE;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_ROOT_SPB_V_1_0;
 
 /**
  * Created by nickAS21 on 12.01.23
@@ -114,14 +114,14 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
     }
 
     public void clientWithCorrectNodeAccessTokenWithNDEATH(long ts, long value) throws Exception {
-        IMqttToken connectionResult = clientConnectWithNDEATH(ts, value);
+        IMqttToken connectionResult = clientMqttV5ConnectWithNDEATH(ts, value);
         MqttWireMessage response = connectionResult.getResponse();
         Assert.assertEquals(MESSAGE_TYPE_CONNACK, response.getType());
         MqttConnAck connAckMsg = (MqttConnAck) response;
         Assert.assertEquals(MqttReturnCode.RETURN_CODE_SUCCESS, connAckMsg.getReturnCode());
     }
 
-    public IMqttToken clientConnectWithNDEATH(long ts, long value, String... nameSpaceBad) throws Exception {
+    public IMqttToken clientMqttV5ConnectWithNDEATH(long ts, long value, String... nameSpaceBad) throws Exception {
         String key = keysBdSeq;
         MetricDataType metricDataType = Int64;
         SparkplugBProto.Payload.Builder deathPayload = SparkplugBProto.Payload.newBuilder()
@@ -132,11 +132,16 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         this.mqttCallback = new SparkplugMqttCallback();
         this.client.setCallback(this.mqttCallback);
         MqttConnectionOptions options = new MqttConnectionOptions();
+        // If the MQTT client is using MQTT v5.0, the Edge Node’s MQTT CONNECT packet MUST set the Clean Start flag to true and the Session Expiry Interval to 0
+        options.setCleanStart(true);
+        options.setSessionExpiryInterval(0L);
         options.setUserName(gatewayAccessToken);
-        String nameSpace = nameSpaceBad.length == 0 ? NAMESPACE : nameSpaceBad[0];
+        String nameSpace = nameSpaceBad.length == 0 ? TOPIC_ROOT_SPB_V_1_0 : nameSpaceBad[0];
         String topic = nameSpace + "/" + groupId + "/" + SparkplugMessageType.NDEATH.name() + "/" + edgeNode;
+        // The NDEATH message MUST set the MQTT Will QoS to 1 and Retained flag to false
         MqttMessage msg = new MqttMessage();
         msg.setId(0);
+        msg.setQos(1);
         msg.setPayload(deathBytes);
         options.setWill(topic, msg);
         return client.connect(options);
@@ -155,7 +160,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         payloadBirthNode.addMetrics(metric);
         payloadBirthNode.setTimestamp(ts);
         if (client.isConnected()) {
-            client.publish(NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
                     payloadBirthNode.build().toByteArray(), 0, false);
         }
 
@@ -169,7 +174,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
 
             payloadBirthDevice.addMetrics(metric);
             if (client.isConnected()) {
-                client.publish(NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.DBIRTH.name() + "/" + edgeNode + "/" + deviceName,
+                client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.DBIRTH.name() + "/" + edgeNode + "/" + deviceName,
                         payloadBirthDevice.build().toByteArray(), 0, false);
                 AtomicReference<Device> device = new AtomicReference<>();
                 await(alias + "find device [" + deviceName + "] after created")
@@ -216,7 +221,7 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         listKeys.add(metricKey);
 
         if (client.isConnected()) {
-            client.publish(NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
                     payloadBirthNode.build().toByteArray(), 0, false);
         }
         return listKeys;
