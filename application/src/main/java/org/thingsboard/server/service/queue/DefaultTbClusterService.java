@@ -69,7 +69,8 @@ import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.edge.EdgeService;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ComponentLifecycleMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceStateServiceMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.EdgeNotificationMsgProto;
@@ -108,7 +109,9 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.DataConstants.CF_QUEUE_NAME;
 import static org.thingsboard.server.common.util.ProtoUtils.toProto;
+import static org.thingsboard.server.queue.discovery.HashPartitionService.CALCULATED_FIELD_QUEUE_KEY;
 
 @Service
 @Slf4j
@@ -334,6 +337,13 @@ public class DefaultTbClusterService implements TbClusterService {
         log.trace("PUSHING msg: {} to:{}", response, tpi);
         producerProvider.getTransportNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), response), callback);
         toTransportNfs.incrementAndGet();
+    }
+
+    @Override
+    public void pushMsgToCalculatedFields(TenantId tenantId, EntityId entityId, ToCalculatedFieldMsg msg, TbQueueCallback callback) {
+        TopicPartitionInfo tpi = partitionService.resolve(CALCULATED_FIELD_QUEUE_KEY, entityId);
+        producerProvider.getCalculatedFieldsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), callback);
+        toCoreMsgs.incrementAndGet();
     }
 
     @Override

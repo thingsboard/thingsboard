@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.telemetry;
 
-import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -53,7 +52,6 @@ import org.thingsboard.server.dao.util.KvUtils;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.cf.CalculatedFieldExecutionService;
 import org.thingsboard.server.service.cf.telemetry.CalculatedFieldAttributeUpdateRequest;
-import org.thingsboard.server.service.cf.telemetry.CalculatedFieldTimeSeriesUpdateRequest;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
@@ -149,14 +147,13 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         } else {
             resultFuture = tsService.saveWithoutLatest(tenantId, entityId, request.getEntries(), request.getTtl());
         }
-        addMainCallback(resultFuture, request.getCallback());
+        DonAsynchron.withCallback(resultFuture, result -> {
+            calculatedFieldExecutionService.pushRequestToQueue(request, result);
+        }, safeCallback(request.getCallback()), tsCallBackExecutor);
         addWsCallback(resultFuture, success -> onTimeSeriesUpdate(tenantId, entityId, request.getEntries()));
         if (request.isSaveLatest() && !request.isOnlyLatest()) {
             addEntityViewCallback(tenantId, entityId, request.getEntries());
         }
-        // Use something very similar to addMainCallback. don't forget about tsCallBackExecutor.
-        //CalculatedFieldTimeSeriesUpdateRequest - add constructor that accepts the TimeseriesSaveRequest
-        addCallback(resultFuture, success -> calculatedFieldExecutionService.onTelemetryUpdate(new CalculatedFieldTimeSeriesUpdateRequest(tenantId, entityId, request.getEntries(), request.getPreviousCalculatedFieldIds())), tsCallBackExecutor);
         return resultFuture;
     }
 
@@ -171,6 +168,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         log.trace("Executing saveInternal [{}]", request);
         ListenableFuture<List<Long>> saveFuture = attrService.save(request.getTenantId(), request.getEntityId(), request.getScope(), request.getEntries());
         addMainCallback(saveFuture, request.getCallback());
+        //TODO: IM to push to CF queue
         addWsCallback(saveFuture, success -> onAttributesUpdate(request.getTenantId(), request.getEntityId(), request.getScope().name(), request.getEntries(), request.isNotifyDevice()));
         addCallback(saveFuture, success -> calculatedFieldExecutionService.onTelemetryUpdate(new CalculatedFieldAttributeUpdateRequest(request)), tsCallBackExecutor);
     }
@@ -268,27 +266,21 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     private void onAttributesUpdate(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice) {
-        forwardToSubscriptionManagerService(tenantId, entityId, subscriptionManagerService -> {
-            subscriptionManagerService.onAttributesUpdate(tenantId, entityId, scope, attributes, notifyDevice, TbCallback.EMPTY);
-        }, () -> {
-            return TbSubscriptionUtils.toAttributesUpdateProto(tenantId, entityId, scope, attributes);
-        });
+        forwardToSubscriptionManagerService(tenantId, entityId,
+                subscriptionManagerService -> subscriptionManagerService.onAttributesUpdate(tenantId, entityId, scope, attributes, notifyDevice, TbCallback.EMPTY),
+                () -> TbSubscriptionUtils.toAttributesUpdateProto(tenantId, entityId, scope, attributes));
     }
 
     private void onAttributesDelete(TenantId tenantId, EntityId entityId, String scope, List<String> keys, boolean notifyDevice) {
-        forwardToSubscriptionManagerService(tenantId, entityId, subscriptionManagerService -> {
-            subscriptionManagerService.onAttributesDelete(tenantId, entityId, scope, keys, notifyDevice, TbCallback.EMPTY);
-        }, () -> {
-            return TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys, notifyDevice);
-        });
+        forwardToSubscriptionManagerService(tenantId, entityId,
+                subscriptionManagerService -> subscriptionManagerService.onAttributesDelete(tenantId, entityId, scope, keys, notifyDevice, TbCallback.EMPTY),
+                () -> TbSubscriptionUtils.toAttributesDeleteProto(tenantId, entityId, scope, keys, notifyDevice));
     }
 
     private void onTimeSeriesUpdate(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
-        forwardToSubscriptionManagerService(tenantId, entityId, subscriptionManagerService -> {
-            subscriptionManagerService.onTimeSeriesUpdate(tenantId, entityId, ts, TbCallback.EMPTY);
-        }, () -> {
-            return TbSubscriptionUtils.toTimeseriesUpdateProto(tenantId, entityId, ts);
-        });
+        forwardToSubscriptionManagerService(tenantId, entityId,
+                subscriptionManagerService -> subscriptionManagerService.onTimeSeriesUpdate(tenantId, entityId, ts, TbCallback.EMPTY),
+                () -> TbSubscriptionUtils.toTimeseriesUpdateProto(tenantId, entityId, ts));
     }
 
     private void onTimeSeriesDelete(TenantId tenantId, EntityId entityId, List<String> keys, List<TsKvLatestRemovingResult> ts) {
@@ -308,9 +300,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
             subscriptionManagerService.onTimeSeriesUpdate(tenantId, entityId, updated, TbCallback.EMPTY);
             subscriptionManagerService.onTimeSeriesDelete(tenantId, entityId, deleted, TbCallback.EMPTY);
-        }, () -> {
-            return TbSubscriptionUtils.toTimeseriesDeleteProto(tenantId, entityId, keys);
-        });
+        }, () -> TbSubscriptionUtils.toTimeseriesDeleteProto(tenantId, entityId, keys));
     }
 
     private <S> void addMainCallback(ListenableFuture<S> saveFuture, final FutureCallback<Void> callback) {

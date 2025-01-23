@@ -116,4 +116,12 @@ public abstract class AbstractSubscriptionService extends TbApplicationEventList
         }, executor);
     }
 
+    protected static Consumer<Throwable> safeCallback(FutureCallback<Void> callback) {
+        if (callback != null) {
+            return callback::onFailure;
+        } else {
+            return throwable -> {};
+        }
+    }
+
 }
