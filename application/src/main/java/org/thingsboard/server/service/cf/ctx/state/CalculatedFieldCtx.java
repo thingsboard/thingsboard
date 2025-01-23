@@ -20,15 +20,18 @@ import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.util.TbPair;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -41,6 +44,9 @@ public class CalculatedFieldCtx {
     private EntityId entityId;
     private CalculatedFieldType cfType;
     private final Map<String, Argument> arguments;
+    private final Map<ReferencedEntityKey, String> mainEntityArguments;
+    private final Map<EntityId, Map<ReferencedEntityKey, String>> linkedEntityArguments;
+
     private final Map<TbPair<EntityId, ReferencedEntityKey>, String> referencedEntityKeys;
     private final List<String> argNames;
     private Output output;
@@ -55,6 +61,17 @@ public class CalculatedFieldCtx {
         this.cfType = calculatedField.getType();
         CalculatedFieldConfiguration configuration = calculatedField.getConfiguration();
         this.arguments = configuration.getArguments();
+        this.mainEntityArguments = new HashMap<>();
+        this.linkedEntityArguments = new HashMap<>();
+        for (Map.Entry<String, Argument> entry : arguments.entrySet()) {
+            var refId = entry.getValue().getRefEntityId();
+            var refKey = entry.getValue().getRefEntityKey();
+            if (refId == null) {
+                mainEntityArguments.put(refKey, entry.getKey());
+            } else {
+                linkedEntityArguments.computeIfAbsent(refId, key -> new HashMap<>()).put(refKey, entry.getKey());
+            }
+        }
         this.referencedEntityKeys = arguments.entrySet().stream()
                 .collect(Collectors.toMap(
                         entry -> new TbPair<>(entry.getValue().getRefEntityId() == null ? entityId : entry.getValue().getRefEntityId(), entry.getValue().getRefEntityKey()),
@@ -82,4 +99,30 @@ public class CalculatedFieldCtx {
         );
     }
 
+    public boolean matches(List<TsKvEntry> values) {
+        return matches(mainEntityArguments, values);
+    }
+
+    public boolean linkMatches(EntityId entityId, List<TsKvEntry> values) {
+        var map = linkedEntityArguments.get(entityId);
+        if (map == null) {
+            return false;
+        } else {
+            return matches(map, values);
+        }
+    }
+
+    private static boolean matches(Map<ReferencedEntityKey, String> argMap, List<TsKvEntry> values) {
+        for (TsKvEntry tsKv : values) {
+            ReferencedEntityKey latestKey = new ReferencedEntityKey(tsKv.getKey(), ArgumentType.TS_LATEST, null);
+            if (argMap.containsKey(latestKey)) {
+                return true;
+            }
+            ReferencedEntityKey rollingKey = new ReferencedEntityKey(tsKv.getKey(), ArgumentType.TS_ROLLING, null);
+            if (argMap.containsKey(rollingKey)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

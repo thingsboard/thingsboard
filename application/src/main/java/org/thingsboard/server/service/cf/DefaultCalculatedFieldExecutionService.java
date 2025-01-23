@@ -33,15 +33,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
-import org.thingsboard.script.api.tbel.TbelInvokeService;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -59,6 +61,7 @@ import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageDataIterable;
@@ -70,9 +73,10 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
-import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
+import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtx;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldStateService;
@@ -103,6 +107,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
@@ -113,6 +119,16 @@ import static org.thingsboard.server.common.util.ProtoUtils.toTsKvProto;
 @RequiredArgsConstructor
 public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBasedService<CalculatedFieldId> implements CalculatedFieldExecutionService {
 
+    public static final TbQueueCallback DUMMY_TB_QUEUE_CALLBACK = new TbQueueCallback() {
+        @Override
+        public void onSuccess(TbQueueMsgMetadata metadata) {
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+        }
+    };
+
     private final CalculatedFieldService calculatedFieldService;
     private final TbAssetProfileCache assetProfileCache;
     private final TbDeviceProfileCache deviceProfileCache;
@@ -121,8 +137,6 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     private final TimeseriesService timeseriesService;
     private final CalculatedFieldStateService stateService;
     private final TbClusterService clusterService;
-    private final TbelInvokeService tbelInvokeService;
-    private final EventService eventService;
 
     private ListeningExecutorService calculatedFieldExecutor;
     private ListeningExecutorService calculatedFieldCallbackExecutor;
@@ -168,6 +182,70 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     @Override
     protected String getSchedulerExecutorName() {
         return "calculated-field-scheduled";
+    }
+
+    @Override
+    public void pushRequestToQueue(TimeseriesSaveRequest request, TimeseriesSaveResult result) {
+        var tenantId = request.getTenantId();
+        var entityId = request.getEntityId();
+        //TODO: 1. check that request entity has calculated fields for entity or profile. If yes - push to corresponding partitions;
+        //TODO: 2. check that request entity has calculated field links. If yes - push to corresponding partitions;
+        //TODO: in 1 and 2 we should do the check as quick as possible. Should we also check the field/link keys?;
+        checkEntityAndPushToQueue(tenantId, entityId, cf -> cf.matches(request.getEntries()), cf -> cf.linkMatches(entityId, request.getEntries()),
+                () -> toCalculatedFieldTelemetryMsgProto(request, result), request.getCallback());
+    }
+
+    private void checkEntityAndPushToQueue(TenantId tenantId, EntityId entityId, Predicate<CalculatedFieldCtx> mainEntityFilter,  Predicate<CalculatedFieldCtx> linkedEntityFilter, Supplier<ToCalculatedFieldMsg> msg, FutureCallback<Void> callback) {
+        boolean send = checkEntityForCalculatedFields(tenantId, entityId, mainEntityFilter, linkedEntityFilter);
+        if (send) {
+            clusterService.pushMsgToCalculatedFields(tenantId, entityId, msg.get(), wrap(callback));
+        } else {
+            if (callback != null) {
+                callback.onSuccess(null);
+            }
+        }
+    }
+
+    private boolean checkEntityForCalculatedFields(TenantId tenantId, EntityId entityId, Predicate<CalculatedFieldCtx> filter, Predicate<CalculatedFieldCtx> linkedEntityFilter) {
+        boolean send = false;
+        if (supportedReferencedEntities.contains(entityId.getEntityType())) {
+            send = calculatedFieldCache.getCalculatedFieldCtxsByEntityId(entityId).stream().anyMatch(filter);
+            if (!send) {
+                send = calculatedFieldCache.getCalculatedFieldCtxsByEntityId(getProfileId(tenantId, entityId)).stream().anyMatch(filter);
+            }
+            if (!send) {
+                send = calculatedFieldCache.getCalculatedFieldLinksByEntityId(entityId).stream()
+                        .map(CalculatedFieldLink::getCalculatedFieldId)
+                        .map(calculatedFieldCache::getCalculatedFieldCtx)
+                        .anyMatch(linkedEntityFilter);
+            }
+        }
+        return send;
+    }
+
+    private ToCalculatedFieldMsg toCalculatedFieldTelemetryMsgProto(TimeseriesSaveRequest request, TimeseriesSaveResult result) {
+        ////TODO: IM to push to CF queue
+        return null;
+    }
+
+    private void processCalculatedFieldLinks(CalculatedFieldTelemetryUpdateRequest request, Map<TopicPartitionInfo, List<CalculatedFieldEntityCtxId>> tpiStates) {
+        TenantId tenantId = request.getTenantId();
+        EntityId entityId = request.getEntityId();
+
+        calculatedFieldCache.getCalculatedFieldLinksByEntityId(entityId)
+                .forEach(link -> {
+                    CalculatedFieldId calculatedFieldId = link.getCalculatedFieldId();
+                    CalculatedFieldCtx ctx = calculatedFieldCache.getCalculatedFieldCtx(calculatedFieldId, tbelInvokeService);
+                    EntityId targetEntityId = ctx.getEntityId();
+
+                    if (isProfileEntity(targetEntityId)) {
+                        calculatedFieldCache.getEntitiesByProfile(tenantId, targetEntityId).forEach(entityByProfile -> {
+                            processCalculatedFieldLink(request, entityByProfile, ctx, tpiStates);
+                        });
+                    } else {
+                        processCalculatedFieldLink(request, targetEntityId, ctx, tpiStates);
+                    }
+                });
     }
 
     @Override
@@ -371,7 +449,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
 
     private void processCalculatedFields(CalculatedFieldTelemetryUpdateRequest request, EntityId cfTargetEntityId) {
         if (cfTargetEntityId != null) {
-            calculatedFieldCache.getCalculatedFieldCtxsByEntityId(cfTargetEntityId, tbelInvokeService).forEach(ctx -> {
+            calculatedFieldCache.getCalculatedFieldCtxsByEntityId(cfTargetEntityId).forEach(ctx -> {
                 Map<String, KvEntry> updatedTelemetry = request.getMappedTelemetry(ctx, cfTargetEntityId);
                 if (!updatedTelemetry.isEmpty()) {
                     EntityId targetEntityId = isProfileEntity(cfTargetEntityId) ? request.getEntityId() : cfTargetEntityId;
@@ -388,7 +466,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         calculatedFieldCache.getCalculatedFieldLinksByEntityId(entityId)
                 .forEach(link -> {
                     CalculatedFieldId calculatedFieldId = link.getCalculatedFieldId();
-                    CalculatedFieldCtx ctx = calculatedFieldCache.getCalculatedFieldCtx(calculatedFieldId, tbelInvokeService);
+                    CalculatedFieldCtx ctx = calculatedFieldCache.getCalculatedFieldCtx(calculatedFieldId);
                     EntityId targetEntityId = ctx.getEntityId();
 
                     if (isProfileEntity(targetEntityId)) {
@@ -825,6 +903,32 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             case DEVICE -> deviceProfileCache.get(tenantId, (DeviceId) entityId).getId();
             default -> null;
         };
+    }
+
+    private static TbQueueCallback wrap(FutureCallback<Void> callback) {
+        if (callback != null) {
+            return new FutureCallbackWrapper(callback);
+        } else {
+            return DUMMY_TB_QUEUE_CALLBACK;
+        }
+    }
+
+    private static class FutureCallbackWrapper implements TbQueueCallback {
+        private final FutureCallback<Void> callback;
+
+        public FutureCallbackWrapper(FutureCallback<Void> callback) {
+            this.callback = callback;
+        }
+
+        @Override
+        public void onSuccess(TbQueueMsgMetadata metadata) {
+            callback.onSuccess(null);
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+            callback.onFailure(t);
+        }
     }
 
 }

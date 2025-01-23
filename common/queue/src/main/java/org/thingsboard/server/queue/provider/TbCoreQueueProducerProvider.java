@@ -17,6 +17,8 @@ package org.thingsboard.server.queue.provider;
 
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeEventNotificationMsg;
@@ -48,6 +50,8 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
     private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> toUsageStats;
     private TbQueueProducer<TbProtoQueueMsg<ToVersionControlServiceMsg>> toVersionControl;
     private TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> toHousekeeper;
+    private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCalculatedFieldMsg>> toCalculatedFields;
+    private TbQueueProducer<TbProtoQueueMsg<ToCalculatedFieldNotificationMsg>> toCalculatedFieldNotifications;
 
     public TbCoreQueueProducerProvider(TbCoreQueueFactory tbQueueProvider) {
         this.tbQueueProvider = tbQueueProvider;
@@ -66,6 +70,8 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
         this.toEdge = tbQueueProvider.createEdgeMsgProducer();
         this.toEdgeNotifications = tbQueueProvider.createEdgeNotificationsMsgProducer();
         this.toEdgeEvents = tbQueueProvider.createEdgeEventMsgProducer();
+        this.toCalculatedFields = tbQueueProvider.createToCalculatedFieldMsgProducer();
+        this.toCalculatedFieldNotifications = tbQueueProvider.createToCalculatedFieldNotificationMsgProducer();
     }
 
     @Override
@@ -122,6 +128,16 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToEdgeEventNotificationMsg>> getTbEdgeEventsMsgProducer() {
         return toEdgeEvents;
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCalculatedFieldMsg>> getCalculatedFieldsMsgProducer() {
+        return toCalculatedFields;
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToCalculatedFieldNotificationMsg>> getCalculatedFieldsNotificationsMsgProducer() {
+        return toCalculatedFieldNotifications;
     }
 
 }

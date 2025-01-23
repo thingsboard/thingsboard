@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.cf;
 
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
+import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.service.cf.telemetry.CalculatedFieldTelemetryUpdateRequest;
@@ -22,13 +24,13 @@ import org.thingsboard.server.service.cf.telemetry.CalculatedFieldTelemetryUpdat
 public interface CalculatedFieldExecutionService {
 
     /**
-     * Push incoming telemetry to the CF processing queue for async processing.
-     * @param request - telemetry request;
-     * @param callback - callback to be executed when the message is ack by the queue.
+     * Filter CFs based on the request entity. Push to the queue if any matching CF exist;
+     * @param request - telemetry save request;
+     * @param request - telemetry save result;
      */
-    void pushRequestToQueue(CalculatedFieldTelemetryUpdateRequest request, TbCallback callback);
+    void pushRequestToQueue(TimeseriesSaveRequest request, TimeseriesSaveResult result);
 
-    void pushEntityUpdateMsg(TransportProtos.CalculatedFieldEntityUpdateMsgProto proto, TbCallback callback);
+//    void pushEntityUpdateMsg(TransportProtos.CalculatedFieldEntityUpdateMsgProto proto, TbCallback callback);
 
     /*  ===================================================== */
 

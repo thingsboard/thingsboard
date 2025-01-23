@@ -36,6 +36,7 @@ import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -55,6 +56,7 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     private final CalculatedFieldService calculatedFieldService;
     private final AssetService assetService;
     private final DeviceService deviceService;
+    private final TbelInvokeService tbelInvokeService;
 
     private final ConcurrentMap<CalculatedFieldId, CalculatedField> calculatedFields = new ConcurrentHashMap<>();
     private final ConcurrentMap<EntityId, List<CalculatedField>> entityIdCalculatedFields = new ConcurrentHashMap<>();
@@ -105,7 +107,7 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     }
 
     @Override
-    public CalculatedFieldCtx getCalculatedFieldCtx(CalculatedFieldId calculatedFieldId, TbelInvokeService tbelInvokeService) {
+    public CalculatedFieldCtx getCalculatedFieldCtx(CalculatedFieldId calculatedFieldId) {
         CalculatedFieldCtx ctx = calculatedFieldsCtx.get(calculatedFieldId);
         if (ctx == null) {
             calculatedFieldFetchLock.lock();
@@ -128,9 +130,12 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     }
 
     @Override
-    public List<CalculatedFieldCtx> getCalculatedFieldCtxsByEntityId(EntityId entityId, TbelInvokeService tbelInvokeService) {
+    public List<CalculatedFieldCtx> getCalculatedFieldCtxsByEntityId(EntityId entityId) {
+        if (entityId == null) {
+            return Collections.emptyList();
+        }
         return getCalculatedFieldsByEntityId(entityId).stream()
-                .map(cf -> getCalculatedFieldCtx(cf.getId(), tbelInvokeService))
+                .map(cf -> getCalculatedFieldCtx(cf.getId()))
                 .toList();
     }
 

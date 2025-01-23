@@ -323,7 +323,8 @@ public class HashPartitionService implements PartitionService {
         }
     }
 
-    private TopicPartitionInfo resolve(QueueKey queueKey, EntityId entityId) {
+    @Override
+    public TopicPartitionInfo resolve(QueueKey queueKey, EntityId entityId) {
         Integer partitionSize = partitionSizesMap.get(queueKey);
         if (partitionSize == null) {
             throw new IllegalStateException("Partitions info for queue " + queueKey + " is missing");
