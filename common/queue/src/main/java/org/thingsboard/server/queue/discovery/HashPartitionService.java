@@ -61,9 +61,11 @@ public class HashPartitionService implements PartitionService {
     private String coreTopic;
     @Value("${queue.core.partitions:10}")
     private Integer corePartitions;
-    @Value("${queue.calculated-fields.topic}")
-    private String cfTopic;
-    @Value("${queue.calculated-fields.partitions:10}")
+    @Value("${queue.calculated_fields.event_topic}")
+    private String cfEventTopic;
+    @Value("${queue.calculated_fields.state_topic}")
+    private String cfStateTopic;
+    @Value("${queue.calculated_fields.partitions:10}")
     private Integer cfPartitions;
     @Value("${queue.vc.topic:tb_version_control}")
     private String vcTopic;
@@ -75,6 +77,8 @@ public class HashPartitionService implements PartitionService {
     private Integer edgePartitions;
     @Value("${queue.partitions.hash_function_name:murmur3_128}")
     private String hashFunctionName;
+
+    public static final QueueKey CALCULATED_FIELD_QUEUE_KEY = new QueueKey(ServiceType.TB_RULE_ENGINE).withQueueName(CF_QUEUE_NAME);
 
     private final ApplicationEventPublisher applicationEventPublisher;
     private final TbServiceInfoProvider serviceInfoProvider;
@@ -116,9 +120,8 @@ public class HashPartitionService implements PartitionService {
         partitionSizesMap.put(coreKey, corePartitions);
         partitionTopicsMap.put(coreKey, coreTopic);
 
-        QueueKey cfKey = new QueueKey(ServiceType.TB_RULE_ENGINE).withQueueName(CF_QUEUE_NAME);
-        partitionSizesMap.put(cfKey, cfPartitions);
-        partitionTopicsMap.put(cfKey, cfTopic);
+        partitionSizesMap.put(CALCULATED_FIELD_QUEUE_KEY, cfPartitions);
+        partitionTopicsMap.put(CALCULATED_FIELD_QUEUE_KEY, cfEventTopic);
 
         QueueKey vcKey = new QueueKey(ServiceType.TB_VC_EXECUTOR);
         partitionSizesMap.put(vcKey, vcPartitions);

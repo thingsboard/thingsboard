@@ -149,13 +149,13 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
             saveFuture = tsService.saveWithoutLatest(tenantId, entityId, request.getEntries(), request.getTtl());
         }
         // We need to guarantee, that the message is successfully pushed to the calculated fields service before we execute any callbacks.
-        saveFuture = Futures.transformAsync(saveFuture, new AsyncFunction<Integer, Integer>() {
-            @Override
-            public ListenableFuture<Integer> apply(Integer input) throws Exception {
-                calculatedFieldExecutionService.onTelemetryUpdate(new CalculatedFieldTimeSeriesUpdateRequest(request));
-                return input;
-            }
-        });
+//        saveFuture = Futures.transformAsync(saveFuture, new AsyncFunction<Integer, Integer>() {
+//            @Override
+//            public ListenableFuture<Integer> apply(Integer input) throws Exception {
+//                calculatedFieldExecutionService.onTelemetryUpdate(new CalculatedFieldTimeSeriesUpdateRequest(request));
+//                return input;
+//            }
+//        });
         addMainCallback(saveFuture, request.getCallback());
         addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, request.getEntries()));
         if (request.isSaveLatest() && !request.isOnlyLatest()) {

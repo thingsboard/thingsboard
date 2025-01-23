@@ -63,6 +63,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.queue.discovery.HashPartitionService.CALCULATED_FIELD_QUEUE_KEY;
+
 @Service
 @TbRuleEngineComponent
 @Slf4j
@@ -107,6 +109,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
         event.getPartitionsMap().forEach((queueKey, partitions) -> {
+            if (CALCULATED_FIELD_QUEUE_KEY.equals(queueKey)) {
+                return;
+            }
             if (partitionService.isManagedByCurrentService(queueKey.getTenantId())) {
                 var consumer = getConsumer(queueKey).orElseGet(() -> {
                     Queue config = queueService.findQueueByTenantIdAndName(queueKey.getTenantId(), queueKey.getQueueName());

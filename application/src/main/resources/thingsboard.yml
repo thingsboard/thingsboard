@@ -1738,17 +1738,21 @@ queue:
     topic-deletion-delay: "${TB_QUEUE_RULE_ENGINE_TOPIC_DELETION_DELAY_SEC:15}"
     # Size of the thread pool that handles such operations as partition changes, config updates, queue deletion
     management-thread-pool-size: "${TB_QUEUE_RULE_ENGINE_MGMT_THREAD_POOL_SIZE:12}"
-  calculated-fields:
-    # Topic name for Calculated Field (CF) tasks
-    topic: "${TB_QUEUE_CF_TOPIC:tb_calculated_fields}"
+  calculated_fields:
+    # Topic name for Calculated Field (CF) events from Rule Engine
+    event_topic: "${TB_QUEUE_CF_EVENT_TOPIC:tb_cf_event}"
+    # Topic name for Calculated Field (CF) compacted states
+    state_topic: "${TB_QUEUE_CF_STATE_TOPIC:tb_cf_state}"
     # Interval in milliseconds to poll messages by CF (Rule Engine) microservices
-    poll-interval: "${TB_QUEUE_CF_POLL_INTERVAL_MS:25}"
+    poll_interval: "${TB_QUEUE_CF_POLL_INTERVAL_MS:25}"
     # Amount of partitions used by CF microservices
     partitions: "${TB_QUEUE_CF_PARTITIONS:10}"
     # Timeout for processing a message pack by CF microservices
-    pack-processing-timeout: "${TB_QUEUE_CF_PACK_PROCESSING_TIMEOUT_MS:2000}"
+    pack_processing_timeout: "${TB_QUEUE_CF_PACK_PROCESSING_TIMEOUT_MS:2000}"
     # Enable/disable a separate consumer per partition for CF queue
-    consumer-per-partition: "${TB_QUEUE_CF_CONSUMER_PER_PARTITION:true}"
+    consumer_per_partition: "${TB_QUEUE_CF_CONSUMER_PER_PARTITION:true}"
+    # Thread pool size for processing of the incoming messages
+    pool_size: "${TB_QUEUE_CF_POOL_SIZE:8}"
   transport:
     # For high-priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb_transport.notifications}"
