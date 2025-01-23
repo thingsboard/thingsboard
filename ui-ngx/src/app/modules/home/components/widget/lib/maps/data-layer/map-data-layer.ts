@@ -48,11 +48,13 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings, D extends 
 
   protected layer: L;
   protected tooltip: L.Popup;
+  protected data: FormattedData<TbMapDatasource>;
 
   protected constructor(data: FormattedData<TbMapDatasource>,
                         dsData: FormattedData<TbMapDatasource>[],
                         protected settings: S,
                         protected dataLayer: D) {
+    this.data = data;
     this.layer = this.create(data, dsData);
     if (this.settings.tooltip?.show) {
       this.createTooltip(data.$datasource);
@@ -68,13 +70,24 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings, D extends 
 
   protected abstract create(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L;
 
+  protected abstract doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void;
+
+  protected abstract doInvalidateCoordinates(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void;
+
   protected abstract unbindLabel(): void;
 
   protected abstract bindLabel(content: L.Content): void;
 
   protected abstract createEventListeners(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void;
 
-  public abstract update(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void;
+  public invalidateCoordinates(): void {
+    this.doInvalidateCoordinates(this.data, this.dataLayer.getMap().getData());
+  }
+
+  public update(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
+    this.data = data;
+    this.doUpdate(data, dsData);
+  }
 
   public remove() {
     this.layer.off();
@@ -237,7 +250,7 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
 
   protected constructor(protected map: TbMap<any>,
                         inputSettings: S) {
-    this.settings = mergeDeepIgnoreArray({} as S, this.defaultBaseSettings() as S, inputSettings);
+    this.settings = mergeDeepIgnoreArray({} as S, this.defaultBaseSettings(map) as S, inputSettings);
     if (this.settings.groups?.length) {
       this.settings.groups.forEach((group) => {
         this.groupsState[group] = true;
@@ -325,6 +338,10 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
     }
   }
 
+  public invalidateCoordinates(): void {
+    this.layerItems.forEach(item => item.invalidateCoordinates());
+  }
+
   public getCtx(): WidgetContext {
     return this.map.getCtx();
   }
@@ -349,7 +366,7 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
 
   public abstract dataLayerType(): MapDataLayerType;
 
-  protected abstract defaultBaseSettings(): Partial<S>;
+  protected abstract defaultBaseSettings(map: TbMap<any>): Partial<S>;
 
   protected abstract doSetup(): Observable<any>;
 

@@ -230,6 +230,9 @@ import { MapDataSourcesComponent } from '@home/components/widget/lib/settings/co
 import {
   MapDataSourceRowComponent
 } from '@home/components/widget/lib/settings/common/map/map-data-source-row.component';
+import {
+  ImageMapSourceSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/image-map-source-settings.component';
 
 @NgModule({
   declarations: [
@@ -303,6 +306,7 @@ import {
     MapLayerSettingsPanelComponent,
     MapLayerRowComponent,
     MapLayersComponent,
+    ImageMapSourceSettingsComponent,
     DataLayerColorSettingsComponent,
     DataLayerColorSettingsPanelComponent,
     DataLayerPatternSettingsComponent,

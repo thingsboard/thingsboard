@@ -127,32 +127,33 @@ export class ImageMap extends LeafletMap {
       return this.imageFromAlias(result);
     }
 
-    private imageFromUrl(url: string): Observable<MapImage> {
+    private imageFromUrl(url: string, update = false): Observable<MapImage> {
       return loadImageWithAspect(this.ctx.$injector.get(ImagePipe), url).pipe(
         switchMap( aspectImage => {
             if (aspectImage) {
               return of({
                 imageUrl: aspectImage.url,
                 aspect: aspectImage.aspect,
-                update: false
+                update
               });
             } else {
-              return this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl);
+              return this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl, update);
             }
           }
         ),
-        catchError(() => this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl))
+        catchError(() => this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl, update))
       );
     }
 
     private imageFromAlias(alias: Observable<[DataSet, boolean]>): Observable<MapImage> {
       return alias.pipe(
         switchMap(res => {
+          const update = res[1];
           const url = res[0][0][1];
           const mapImage: MapImage = {
             imageUrl: null,
             aspect: null,
-            update: res[1]
+            update
           };
           return loadImageWithAspect(this.ctx.$injector.get(ImagePipe), url).pipe(
             switchMap((aspectImage) => {
@@ -161,10 +162,10 @@ export class ImageMap extends LeafletMap {
                   mapImage.imageUrl = aspectImage.url;
                   return of(mapImage);
                 } else {
-                  return this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl);
+                  return this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl, update);
                 }
               }),
-            catchError(() => this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl))
+            catchError(() => this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl, update))
           );
         })
       );

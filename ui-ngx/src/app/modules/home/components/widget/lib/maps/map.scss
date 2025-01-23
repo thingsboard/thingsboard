@@ -50,15 +50,20 @@
           border-bottom: none;
           position: relative;
           background: transparent;
-          &:hover {
-            border-bottom: none;
-            color: $tb-primary-color;  // primary color
-            &:before {
-              content: "";
-              position: absolute;
-              inset: 0;
-              border-radius: 50%;
-              background-color: rgba(0, 105, 92, 0.10);
+          &.leaflet-disabled {
+            color: rgba(0, 0, 0, 0.18);
+          }
+          &:not(.leaflet-disabled) {
+            &:hover {
+              border-bottom: none;
+              color: $tb-primary-color; // primary color
+              &:before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                border-radius: 50%;
+                background-color: rgba(0, 105, 92, 0.10);
+              }
             }
           }
           &:first-child {

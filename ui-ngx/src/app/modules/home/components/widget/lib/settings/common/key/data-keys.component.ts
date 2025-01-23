@@ -197,7 +197,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
   deviceId: string;
 
   @Input()
-  generateKey: (key: DataKey) => DataKey = (key) => key;
+  generateKey: (key: DataKey) => DataKey;
 
   private requiredValue: boolean;
   get required(): boolean {

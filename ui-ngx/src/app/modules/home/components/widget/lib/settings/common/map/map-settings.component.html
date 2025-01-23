@@ -27,7 +27,12 @@
       </tb-toggle-select>
     </div>
     <tb-map-layers *ngIf="MapType.geoMap === mapSettingsFormGroup.get('mapType').value"
-                   formControlName="layers"></tb-map-layers>
+                   formControlName="layers">
+    </tb-map-layers>
+    <tb-image-map-source-settings *ngIf="MapType.image === mapSettingsFormGroup.get('mapType').value"
+                                  [context]="context"
+                                  formControlName="imageSource">
+    </tb-image-map-source-settings>
   </div>
   <div class="tb-form-panel">
     <div class="flex flex-row items-center justify-between">
@@ -64,5 +69,60 @@
     <tb-map-data-sources formControlName="additionalDataSources"
                          [context]="context">
     </tb-map-data-sources>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title">
+      {{ 'widgets.maps.control.map-controls' | translate }}
+    </div>
+    <div class="tb-form-row space-between column-xs">
+      <div translate>widgets.maps.control.position</div>
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="controlsPosition">
+          <mat-option *ngFor="let position of mapControlPositions" [value]="position">
+            {{ mapControlsPositionTranslationMap.get(position) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between column-lt-md">
+      <div translate>widgets.maps.control.zoom-actions</div>
+      <mat-chip-listbox multiple formControlName="zoomActions">
+        <mat-chip-option *ngFor="let action of mapZoomActions" [value]="action">
+          {{ mapZoomActionTranslationMap.get(action) | translate }}
+        </mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title">
+      {{ 'widgets.maps.common.common-map-settings' | translate }}
+    </div>
+    <ng-container *ngIf="MapType.geoMap === mapSettingsFormGroup.get('mapType').value">
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="fitMapBounds">
+          {{ 'widgets.maps.common.fit-map-bounds' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div class="tb-form-row space-between column-xs">
+        <mat-slide-toggle class="mat-slide" formControlName="useDefaultCenterPosition">
+          {{ 'widgets.maps.common.default-map-center-position' | translate }}
+        </mat-slide-toggle>
+        <mat-form-field appearance="outline" class="medium-width" subscriptSizing="dynamic">
+          <input matInput formControlName="defaultCenterPosition" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+      <div class="tb-form-row space-between">
+        <div translate>widgets.maps.common.default-map-zoom-level</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput type="number" min="0" max="20" step="1" formControlName="defaultZoomLevel" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+    </ng-container>
+    <div class="tb-form-row space-between">
+      <div translate>widgets.maps.common.entities-limit</div>
+      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+        <input matInput type="number" min="1" step="1" formControlName="mapPageSize" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
   </div>
 </ng-container>

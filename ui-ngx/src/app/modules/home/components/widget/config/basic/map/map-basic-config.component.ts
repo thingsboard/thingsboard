@@ -46,6 +46,19 @@ export class MapBasicConfigComponent extends BasicWidgetConfigComponent {
     return this.mapWidgetConfigForm;
   }
 
+  protected setupDefaults(configData: WidgetConfigComponentData) {
+    const settings = configData.config.settings as MapWidgetSettings;
+    if (settings?.markers?.length) {
+      settings.markers = [];
+    }
+    if (settings?.polygons?.length) {
+      settings.polygons = [];
+    }
+    if (settings?.circles?.length) {
+      settings.circles = [];
+    }
+  }
+
   protected onConfigSet(configData: WidgetConfigComponentData) {
     const settings: MapWidgetSettings = mergeDeepIgnoreArray<MapWidgetSettings>({} as MapWidgetSettings,
       mapWidgetDefaultSettings, configData.config.settings as MapWidgetSettings);

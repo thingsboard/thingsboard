@@ -14,9 +14,14 @@
 /// limitations under the License.
 ///
 
-import { defaultMapSettings, MapSetting } from '@home/components/widget/lib/maps/models/map.models';
+import { defaultMapSettings, MapSetting, MapType } from '@home/components/widget/lib/maps/models/map.models';
 import { BackgroundSettings, BackgroundType } from '@shared/models/widget-settings.models';
 import { mergeDeep } from '@core/utils';
+import { WidgetContext } from '@home/models/widget-component.models';
+import { DeepPartial } from '@shared/models/common';
+import { TbMap } from '@home/components/widget/lib/maps/map';
+import { TbGeoMap } from '@home/components/widget/lib/maps/geo-map';
+import { TbImageMap } from '@home/components/widget/lib/maps/image-map';
 
 export interface MapWidgetSettings extends MapSetting {
   background: BackgroundSettings;
@@ -36,3 +41,14 @@ export const mapWidgetDefaultSettings: MapWidgetSettings =
     },
     padding: '8px'
 } as MapWidgetSettings);
+
+export const createMap = (ctx: WidgetContext,
+                          inputSettings: DeepPartial<MapSetting>,
+                          mapElement: HTMLElement): TbMap<MapSetting> => {
+  switch (inputSettings.mapType) {
+    case MapType.geoMap:
+      return new TbGeoMap(ctx, inputSettings, mapElement);
+    case MapType.image:
+      return new TbImageMap(ctx, inputSettings, mapElement);
+  }
+}

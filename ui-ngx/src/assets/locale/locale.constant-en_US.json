@@ -7548,6 +7548,33 @@
                 "map": "Map",
                 "image": "Image"
             },
+            "image": {
+                "image-source": "Image source",
+                "image-source-image": "Image",
+                "image-source-entity-key": "Entity key",
+                "source-entity-alias": "Source entity alias",
+                "image-url-key": "Image URL key",
+                "image-url-key-required": "Image URL key is required"
+            },
+            "control": {
+                "map-controls": "Map controls",
+                "position": "Position",
+                "position-topleft": "Top-left",
+                "position-topright": "Top-right",
+                "position-bottomleft": "Bottom-left",
+                "position-bottomright": "Bottom-right",
+                "zoom-actions": "Zoom actions",
+                "zoom-scroll": "Scroll",
+                "zoom-double-click": "Double click",
+                "zoom-control-buttons": "Control buttons"
+            },
+            "common": {
+                "common-map-settings": "Common map settings",
+                "fit-map-bounds": "Fit map bounds to cover all markers",
+                "default-map-center-position": "Default map center position",
+                "default-map-zoom-level": "Default map zoom level",
+                "entities-limit": "Limit of entities to load"
+            },
             "layer": {
                 "label": "Label",
                 "layer": "Layer",
@@ -7667,6 +7694,8 @@
                     "marker-offset": "Marker offset",
                     "offset-horizontal": "Horizontal",
                     "offset-vertical": "Vertical",
+                    "position-conversion": "Position conversion",
+                    "position-conversion-function": "Position conversion function, should return x,y coordinates as double from 0 to 1 each",
                     "clustering": {
                         "use-map-markers-clustering": "Use map markers clustering",
                         "zoom-on-cluster-click": "Zoom when clicking on a cluster",

@@ -32,6 +32,7 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
 
   private polygonContainer: L.FeatureGroup;
   private polygon: L.Polygon;
+  private polygonStyle: L.PathOptions;
 
   constructor(data: FormattedData<TbMapDatasource>,
               dsData: FormattedData<TbMapDatasource>[],
@@ -43,9 +44,9 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
   protected create(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.Layer {
     const polyData = this.dataLayer.extractPolygonCoordinates(data);
     const polyConstructor = isCutPolygon(polyData) || polyData.length !== 2 ? L.polygon : L.rectangle;
-    const style = this.dataLayer.getShapeStyle(data, dsData);
+    this.polygonStyle = this.dataLayer.getShapeStyle(data, dsData);
     this.polygon = polyConstructor(polyData, {
-      ...style
+      ...this.polygonStyle
     });
 
     this.polygonContainer = L.featureGroup();
@@ -68,14 +69,25 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
     .openTooltip(this.polygonContainer.getBounds().getCenter());
   }
 
-  public update(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
+  protected doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
+    this.polygonStyle = this.dataLayer.getShapeStyle(data, dsData);
+    this.updatePolygonShape(data);
+    this.updateTooltip(data, dsData);
+    this.updateLabel(data, dsData);
+    this.polygon.setStyle(this.polygonStyle);
+  }
+
+  protected doInvalidateCoordinates(data: FormattedData<TbMapDatasource>, _dsData: FormattedData<TbMapDatasource>[]): void {
+    this.updatePolygonShape(data);
+  }
+
+  private updatePolygonShape(data: FormattedData<TbMapDatasource>) {
     const polyData = this.dataLayer.extractPolygonCoordinates(data);
-    const style = this.dataLayer.getShapeStyle(data, dsData);
     if (isCutPolygon(polyData) || polyData.length !== 2) {
       if (this.polygon instanceof L.Rectangle) {
         this.polygonContainer.removeLayer(this.polygon);
         this.polygon = L.polygon(polyData, {
-          ...style
+          ...this.polygonStyle
         });
         this.polygon.addTo(this.polygonContainer);
       } else {
@@ -83,13 +95,10 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
       }
     } else if (polyData.length === 2) {
       const bounds = new L.LatLngBounds(polyData);
-      // @ts-ignore
-      this.leafletPoly.setBounds(bounds);
+      (this.polygon as L.Rectangle).setBounds(bounds);
     }
-    this.updateTooltip(data, dsData);
-    this.updateLabel(data, dsData);
-    this.polygon.setStyle(style);
   }
+
 }
 
 export class TbPolygonsDataLayer extends TbShapesDataLayer<PolygonsDataLayerSettings, TbPolygonsDataLayer> {
@@ -108,8 +117,8 @@ export class TbPolygonsDataLayer extends TbShapesDataLayer<PolygonsDataLayerSett
     return datasource;
   }
 
-  protected defaultBaseSettings(): Partial<PolygonsDataLayerSettings> {
-    return defaultBasePolygonsDataLayerSettings;
+  protected defaultBaseSettings(map: TbMap<any>): Partial<PolygonsDataLayerSettings> {
+    return defaultBasePolygonsDataLayerSettings(map.type());
   }
 
   protected doSetup(): Observable<any> {

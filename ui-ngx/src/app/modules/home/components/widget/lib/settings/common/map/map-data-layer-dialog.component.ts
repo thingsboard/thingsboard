@@ -17,13 +17,15 @@
 import { Component, DestroyRef, Inject, ViewEncapsulation } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import {
-  CirclesDataLayerSettings, defaultBaseMapDataLayerSettings,
+  CirclesDataLayerSettings,
+  defaultBaseMapDataLayerSettings,
   MapDataLayerSettings,
   MapDataLayerType,
   MapType,
   MarkersDataLayerSettings,
   MarkerType,
-  PolygonsDataLayerSettings, ShapeDataLayerSettings
+  PolygonsDataLayerSettings,
+  ShapeDataLayerSettings
 } from '@home/components/widget/lib/maps/models/map.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -36,6 +38,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityType } from '@shared/models/entity-type.models';
 import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
 import { genNextLabelForDataKeys, mergeDeepIgnoreArray } from '@core/utils';
+import { MapProviders } from '@home/components/widget/lib/maps-legacy/map-models';
+import { WidgetService } from '@core/http/widget.service';
 
 export interface MapDataLayerDialogData {
   settings: MapDataLayerSettings;
@@ -76,6 +80,8 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
 
   generateAdditionalDataKey = this.generateDataKey.bind(this);
 
+  functionScopeVariables = this.widgetService.getWidgetScopeVariables();
+
   dialogTitle: string;
 
   constructor(protected store: Store<AppState>,
@@ -83,6 +89,7 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
               @Inject(MAT_DIALOG_DATA) public data: MapDataLayerDialogData,
               public dialogRef: MatDialogRef<MapDataLayerDialogComponent, MapDataLayerSettings>,
               private fb: FormBuilder,
+              private widgetService: WidgetService,
               private destroyRef: DestroyRef) {
     super(store, router, dialogRef);
 
@@ -93,7 +100,7 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
     }
 
     this.settings = mergeDeepIgnoreArray({} as MapDataLayerSettings,
-      defaultBaseMapDataLayerSettings<MapDataLayerSettings>(this.dataLayerType), this.settings);
+      defaultBaseMapDataLayerSettings<MapDataLayerSettings>(this.mapType, this.dataLayerType), this.settings);
 
     this.dataLayerFormGroup = this.fb.group({
       dsType: [this.settings.dsType, [Validators.required]],
@@ -119,6 +126,9 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         this.dataLayerFormGroup.addControl('markerImage', this.fb.control(markersDataLayer.markerImage, Validators.required));
         this.dataLayerFormGroup.addControl('markerOffsetX', this.fb.control(markersDataLayer.markerOffsetX));
         this.dataLayerFormGroup.addControl('markerOffsetY', this.fb.control(markersDataLayer.markerOffsetY));
+        if (this.mapType === MapType.image) {
+          this.dataLayerFormGroup.addControl('positionFunction', this.fb.control(markersDataLayer.positionFunction));
+        }
         this.dataLayerFormGroup.addControl('markerClustering', this.fb.control(markersDataLayer.markerClustering));
         this.dataLayerFormGroup.get('markerType').valueChanges.pipe(
           takeUntilDestroyed(this.destroyRef)
@@ -292,4 +302,6 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
     const settings: MapDataLayerSettings = this.dataLayerFormGroup.getRawValue();
     this.dialogRef.close(settings);
   }
+
+  protected readonly mapProvider = MapProviders;
 }

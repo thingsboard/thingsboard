@@ -214,6 +214,17 @@
             </mat-form-field>
           </div>
         </div>
+        <div *ngIf="mapType === MapType.image" class="tb-form-panel stroked">
+          <div class="tb-form-panel-title" translate>widgets.maps.data-layer.marker.position-conversion</div>
+          <tb-js-func formControlName="positionFunction"
+                      withModules
+                      minHeight="100px"
+                      [globalVariables]="functionScopeVariables"
+                      [functionArgs]="['origXPos', 'origYPos', 'data', 'dsData', 'aspect']"
+                      functionTitle="{{ 'widgets.maps.data-layer.marker.position-conversion-function' | translate }}"
+                      helpId="widget/lib/map/position_fn">
+          </tb-js-func>
+        </div>
       </ng-container>
       <ng-container *ngIf="['polygons', 'circles'].includes(dataLayerType)">
         <div class="tb-form-row space-between">

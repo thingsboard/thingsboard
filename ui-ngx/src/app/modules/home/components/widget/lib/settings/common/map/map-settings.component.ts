@@ -22,9 +22,20 @@ import {
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
-  Validator
+  Validator,
+  Validators
 } from '@angular/forms';
-import { ImageSourceType, MapDataLayerType, MapSetting, MapType } from '@home/components/widget/lib/maps/models/map.models';
+import {
+  defaultImageMapSourceSettings,
+  ImageMapSourceSettings, imageMapSourceSettingsValidator,
+  mapControlPositions,
+  mapControlsPositionTranslationMap,
+  MapDataLayerType,
+  MapSetting,
+  MapType,
+  mapZoomActions,
+  mapZoomActionTranslationMap
+} from '@home/components/widget/lib/maps/models/map.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { merge, Observable } from 'rxjs';
 import { coerceBoolean } from '@shared/decorators/coercion';
@@ -36,7 +47,7 @@ import {
   DataKeyConfigDialogComponent,
   DataKeyConfigDialogData
 } from '@home/components/widget/lib/settings/common/key/data-key-config-dialog.component';
-import { deepClone } from '@core/utils';
+import { deepClone, mergeDeep } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
 
 @Component({
@@ -57,6 +68,14 @@ import { MatDialog } from '@angular/material/dialog';
   ]
 })
 export class MapSettingsComponent implements OnInit, ControlValueAccessor, Validator {
+
+  mapControlPositions = mapControlPositions;
+
+  mapZoomActions = mapZoomActions;
+
+  mapControlsPositionTranslationMap = mapControlsPositionTranslationMap;
+
+  mapZoomActionTranslationMap = mapZoomActionTranslationMap;
 
   MapType = MapType;
 
@@ -105,10 +124,7 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
     this.mapSettingsFormGroup = this.fb.group({
       mapType: [null, []],
       layers: [null, []],
-      imageSourceType: [null, []],
-      imageUrl: [null, []],
-      imageEntityAlias: [null, []],
-      imageUrlAttribute: [null, []],
+      imageSource: [null, [imageMapSourceSettingsValidator]],
       markers: [null, []],
       polygons: [null, []],
       circles: [null, []],
@@ -118,8 +134,8 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
       fitMapBounds: [null, []],
       useDefaultCenterPosition: [null, []],
       defaultCenterPosition: [null, []],
-      defaultZoomLevel: [null, []],
-      mapPageSize: [null, []]
+      defaultZoomLevel: [null, [Validators.min(0), Validators.max(20)]],
+      mapPageSize: [null, [Validators.min(1), Validators.required]]
     });
     this.mapSettingsFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
@@ -127,11 +143,16 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
       this.updateModel();
     });
     merge(this.mapSettingsFormGroup.get('mapType').valueChanges,
-      this.mapSettingsFormGroup.get('imageSourceType').valueChanges
+      this.mapSettingsFormGroup.get('useDefaultCenterPosition').valueChanges
     ).pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.updateValidators();
+    });
+    this.mapSettingsFormGroup.get('mapType').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((mapType: MapType) => {
+      this.mapTypeChanged(mapType);
     });
   }
 
@@ -160,7 +181,7 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
     this.updateValidators();
   }
 
-  public validate(c: UntypedFormControl) {
+  public validate(_c: UntypedFormControl) {
     const valid = this.mapSettingsFormGroup.valid;
     return valid ? null : {
       mapSettings: {
@@ -171,24 +192,34 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
 
   private updateValidators() {
     const mapType: MapType = this.mapSettingsFormGroup.get('mapType').value;
-    const imageSourceType: ImageSourceType = this.mapSettingsFormGroup.get('imageSourceType').value;
     if (mapType === MapType.geoMap) {
       this.mapSettingsFormGroup.get('layers').enable({emitEvent: false});
-      this.mapSettingsFormGroup.get('imageSourceType').disable({emitEvent: false});
-      this.mapSettingsFormGroup.get('imageUrl').disable({emitEvent: false});
-      this.mapSettingsFormGroup.get('imageEntityAlias').disable({emitEvent: false});
-      this.mapSettingsFormGroup.get('imageUrlAttribute').disable({emitEvent: false});
+      this.mapSettingsFormGroup.get('imageSource').disable({emitEvent: false});
+      this.mapSettingsFormGroup.get('fitMapBounds').enable({emitEvent: false});
+      this.mapSettingsFormGroup.get('useDefaultCenterPosition').enable({emitEvent: false});
+      const useDefaultCenterPosition: boolean = this.mapSettingsFormGroup.get('useDefaultCenterPosition').value;
+      if (useDefaultCenterPosition) {
+        this.mapSettingsFormGroup.get('defaultCenterPosition').enable({emitEvent: false});
+      } else {
+        this.mapSettingsFormGroup.get('defaultCenterPosition').disable({emitEvent: false});
+      }
+      this.mapSettingsFormGroup.get('defaultZoomLevel').enable({emitEvent: false});
     } else {
       this.mapSettingsFormGroup.get('layers').disable({emitEvent: false});
-      this.mapSettingsFormGroup.get('imageSourceType').enable({emitEvent: false});
-      if (imageSourceType === ImageSourceType.image) {
-        this.mapSettingsFormGroup.get('imageUrl').enable({emitEvent: false});
-        this.mapSettingsFormGroup.get('imageEntityAlias').disable({emitEvent: false});
-        this.mapSettingsFormGroup.get('imageUrlAttribute').disable({emitEvent: false});
-      } else {
-        this.mapSettingsFormGroup.get('imageUrl').disable({emitEvent: false});
-        this.mapSettingsFormGroup.get('imageEntityAlias').enable({emitEvent: false});
-        this.mapSettingsFormGroup.get('imageUrlAttribute').enable({emitEvent: false});
+      this.mapSettingsFormGroup.get('imageSource').enable({emitEvent: false});
+      this.mapSettingsFormGroup.get('fitMapBounds').disable({emitEvent: false});
+      this.mapSettingsFormGroup.get('useDefaultCenterPosition').disable({emitEvent: false});
+      this.mapSettingsFormGroup.get('defaultCenterPosition').disable({emitEvent: false});
+      this.mapSettingsFormGroup.get('defaultZoomLevel').disable({emitEvent: false});
+    }
+  }
+
+  private mapTypeChanged(mapType: MapType): void {
+    if (mapType === MapType.image) {
+      let imageSource: ImageMapSourceSettings = this.mapSettingsFormGroup.get('imageSource').value;
+      if (!imageSource?.sourceType) {
+        imageSource = mergeDeep({} as ImageMapSourceSettings, defaultImageMapSourceSettings);
+        this.mapSettingsFormGroup.get('imageSource').patchValue(imageSource);
       }
     }
   }

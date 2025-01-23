@@ -27,7 +27,11 @@ import {
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
-import { mapWidgetDefaultSettings, MapWidgetSettings } from '@home/components/widget/lib/maps/map-widget.models';
+import {
+  createMap,
+  mapWidgetDefaultSettings,
+  MapWidgetSettings
+} from '@home/components/widget/lib/maps/map-widget.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { Observable } from 'rxjs';
 import { backgroundStyle, ComponentStyle, overlayStyle } from '@shared/models/widget-settings.models';
@@ -88,7 +92,7 @@ export class MapWidgetComponent implements OnInit, OnDestroy {
     const borderRadius = this.ctx.$widgetElement.css('borderRadius');
     this.overlayStyle = {...this.overlayStyle, ...{borderRadius}};
     this.cd.detectChanges();
-    this.map = TbMap.fromSettings(this.ctx, this.settings, this.mapElement.nativeElement);
+    this.map = createMap(this.ctx, this.settings, this.mapElement.nativeElement);
   }
 
 }

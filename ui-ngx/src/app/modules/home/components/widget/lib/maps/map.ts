@@ -17,16 +17,8 @@
 import {
   additionalMapDataSourcesToDatasources,
   BaseMapSettings,
-  DEFAULT_ZOOM_LEVEL,
-  defaultGeoMapSettings,
-  defaultImageMapSettings,
-  GeoMapSettings,
-  ImageMapSettings,
-  latLngPointToBounds,
   MapActionHandler,
-  MapSetting,
   MapType,
-  MapZoomAction,
   mergeMapDatasources,
   parseCenterPosition,
   TbCircleData,
@@ -37,12 +29,11 @@ import { formattedDataFormDatasourceData, isDefinedAndNotNull, mergeDeepIgnoreAr
 import { DeepPartial } from '@shared/models/common';
 import L, { LatLngBounds, LatLngTuple, LeafletMouseEvent, Projection } from 'leaflet';
 import { forkJoin, Observable, of } from 'rxjs';
-import { TbMapLayer } from '@home/components/widget/lib/maps/map-layer';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 import '@home/components/widget/lib/maps/leaflet/leaflet-tb';
 import { MapDataLayerType, TbMapDataLayer, } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { WidgetActionDescriptor, widgetType } from '@shared/models/widget.models';
+import { FormattedData, WidgetActionDescriptor, widgetType } from '@shared/models/widget.models';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { TbMarkersDataLayer } from '@home/components/widget/lib/maps/data-layer/markers-data-layer';
@@ -51,17 +42,6 @@ import { TbCirclesDataLayer } from '@home/components/widget/lib/maps/data-layer/
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 
 export abstract class TbMap<S extends BaseMapSettings> {
-
-  static fromSettings(ctx: WidgetContext,
-                      inputSettings: DeepPartial<MapSetting>,
-                      mapElement: HTMLElement): TbMap<MapSetting> {
-    switch (inputSettings.mapType) {
-      case MapType.geoMap:
-        return new TbGeoMap(ctx, inputSettings, mapElement);
-      case MapType.image:
-        return new TbImageMap(ctx, inputSettings, mapElement);
-    }
-  }
 
   protected settings: S;
   protected map: L.Map;
@@ -73,6 +53,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected northEast = new L.LatLng(Projection.SphericalMercator['MAX_LATITUDE'], 180);
 
   protected dataLayers: TbMapDataLayer<any,any>[];
+  protected dsData: FormattedData<TbMapDatasource>[];
 
   protected mapElement: HTMLElement;
 
@@ -122,7 +103,9 @@ export abstract class TbMap<S extends BaseMapSettings> {
   }
 
   private setupControls(): Observable<any> {
-    this.map.zoomControl.setPosition(this.settings.controlsPosition);
+    if (this.map.zoomControl) {
+      this.map.zoomControl.setPosition(this.settings.controlsPosition);
+    }
     return this.doSetupControls();
   }
 
@@ -288,9 +271,9 @@ export abstract class TbMap<S extends BaseMapSettings> {
   }
 
   private update(subscription: IWidgetSubscription) {
-    const dsData = formattedDataFormDatasourceData<TbMapDatasource>(subscription.data,
+    this.dsData = formattedDataFormDatasourceData<TbMapDatasource>(subscription.data,
       undefined, undefined, el => el.datasource.entityId + el.datasource.mapDataIds[0]);
-    this.dataLayers.forEach(dl => dl.updateData(dsData));
+    this.dataLayers.forEach(dl => dl.updateData(this.dsData));
     this.updateBounds();
   }
 
@@ -306,7 +289,6 @@ export abstract class TbMap<S extends BaseMapSettings> {
     if (dataLayersBounds.length) {
       bounds = new L.LatLngBounds(null, null);
       dataLayersBounds.forEach(b => bounds.extend(b));
-
       const mapBounds = this.map.getBounds();
       if (bounds.isValid() && this.settings.fitMapBounds && !mapBounds.contains(bounds)) {
         if (!this.ignoreUpdateBounds) {
@@ -314,35 +296,6 @@ export abstract class TbMap<S extends BaseMapSettings> {
         }
       }
 
-    }
-  }
-
-  private fitBounds(bounds: LatLngBounds) {
-    if (bounds.isValid()) {
-      if (!this.settings.fitMapBounds && this.settings.defaultZoomLevel) {
-        this.map.setZoom(this.settings.defaultZoomLevel, { animate: false });
-        if (this.settings.useDefaultCenterPosition) {
-          this.map.panTo(this.defaultCenterPosition, { animate: false });
-        }
-        else {
-          this.map.panTo(bounds.getCenter());
-        }
-      } else {
-        this.map.once('zoomend', () => {
-          let minZoom = this.settings.minZoomLevel;
-          if (this.settings.defaultZoomLevel) {
-            minZoom = Math.max(minZoom, this.settings.defaultZoomLevel);
-          }
-          if (this.map.getZoom() > minZoom) {
-            this.map.setZoom(minZoom, { animate: false });
-          }
-        });
-        if (this.settings.useDefaultCenterPosition) {
-          bounds = bounds.extend(this.defaultCenterPosition);
-        }
-        this.map.fitBounds(bounds, { padding: [50, 50], animate: false });
-        this.map.invalidateSize();
-      }
     }
   }
 
@@ -373,8 +326,14 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   protected abstract onResize(): void;
 
+  protected abstract fitBounds(bounds: LatLngBounds): void;
+
   protected doSetupControls(): Observable<any> {
     return of(null);
+  }
+
+  protected invalidateDataLayersCoordinates(): void {
+    this.dataLayers.forEach(dl => dl.invalidateCoordinates());
   }
 
   protected getSidebar(): L.TB.SidebarControl {
@@ -390,6 +349,10 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   public getCtx(): WidgetContext {
     return this.ctx;
+  }
+
+  public getData(): FormattedData<TbMapDatasource>[] {
+    return this.dsData;
   }
 
   public getMap(): L.Map {
@@ -457,156 +420,5 @@ export abstract class TbMap<S extends BaseMapSettings> {
   public abstract toPolygonCoordinates(expression: (LatLngTuple | LatLngTuple[] | LatLngTuple[][])[]): any;
 
   public abstract convertCircleData(circle: TbCircleData): TbCircleData;
-
-}
-
-class TbGeoMap extends TbMap<GeoMapSettings> {
-
-  constructor(protected ctx: WidgetContext,
-              protected inputSettings: DeepPartial<GeoMapSettings>,
-              protected containerElement: HTMLElement) {
-    super(ctx, inputSettings, containerElement);
-  }
-
-  protected defaultSettings(): GeoMapSettings {
-    return defaultGeoMapSettings;
-  }
-
-  protected createMap(): Observable<L.Map> {
-    const map = L.map(this.mapElement, {
-      scrollWheelZoom: this.settings.zoomActions.includes(MapZoomAction.scroll),
-      doubleClickZoom: this.settings.zoomActions.includes(MapZoomAction.doubleClick),
-      zoomControl: this.settings.zoomActions.includes(MapZoomAction.controlButtons),
-      zoom: this.settings.defaultZoomLevel || DEFAULT_ZOOM_LEVEL,
-      center: this.defaultCenterPosition
-    }).setView(this.defaultCenterPosition, this.settings.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
-    return of(map);
-  }
-
-  protected onResize(): void {}
-
-  protected doSetupControls(): Observable<any> {
-    return this.loadLayers().pipe(
-      tap((layers: L.TB.LayerData[]) => {
-        if (layers.length) {
-          const layer = layers[0];
-          layer.layer.addTo(this.map);
-          this.map.attributionControl.setPrefix(layer.attributionPrefix);
-          if (layers.length > 1) {
-            const sidebar = this.getSidebar();
-            L.TB.layers({
-              layers,
-              sidebar,
-              position: this.settings.controlsPosition,
-              uiClass: 'tb-layers',
-              paneTitle: this.ctx.translate.instant('widgets.maps.layer.map-layers'),
-              buttonTitle: this.ctx.translate.instant('widgets.maps.layer.layers'),
-            }).addTo(this.map);
-          }
-        }
-      })
-    );
-
-  }
-
-  private loadLayers(): Observable<L.TB.LayerData[]> {
-    const layers = this.settings.layers.map(settings => TbMapLayer.fromSettings(this.ctx, settings));
-    return forkJoin(layers.map(layer => layer.loadLayer(this.map))).pipe(
-      map((layersData) => {
-        return layersData.filter(l => l !== null);
-      })
-    );
-  }
-
-  public positionToLatLng(position: {x: number; y: number}): L.LatLng {
-    return L.latLng(position.x, position.y) as L.LatLng;
-  }
-
-  public toPolygonCoordinates(expression: (LatLngTuple | LatLngTuple[] | LatLngTuple[][])[]): any {
-    return (expression).map((el) => {
-      if (!Array.isArray(el[0]) && el.length === 2) {
-        return el;
-      } else if (Array.isArray(el) && el.length) {
-        return this.toPolygonCoordinates(el as LatLngTuple[] | LatLngTuple[][]);
-      } else {
-        return null;
-      }
-    }).filter(el => !!el);
-  }
-
-  public convertCircleData(circle: TbCircleData): TbCircleData {
-    const centerPoint = latLngPointToBounds(new L.LatLng(circle.latitude, circle.longitude), this.southWest, this.northEast);
-    circle.latitude = centerPoint.lat;
-    circle.longitude = centerPoint.lng;
-    return circle;
-  }
-
-}
-
-class TbImageMap extends TbMap<ImageMapSettings> {
-
-  private maxZoom = 4;
-
-  private width = 0;
-  private height = 0;
-
-  constructor(protected ctx: WidgetContext,
-              protected inputSettings: DeepPartial<ImageMapSettings>,
-              protected mapElement: HTMLElement) {
-    super(ctx, inputSettings, mapElement);
-  }
-
-  protected defaultSettings(): ImageMapSettings {
-    return defaultImageMapSettings;
-  }
-
-  protected createMap(): Observable<L.Map> {
-    const map = L.map(this.mapElement, {
-      scrollWheelZoom: this.settings.zoomActions.includes(MapZoomAction.scroll),
-      doubleClickZoom: this.settings.zoomActions.includes(MapZoomAction.doubleClick),
-      zoomControl: this.settings.zoomActions.includes(MapZoomAction.controlButtons),
-      minZoom: 1,
-      maxZoom: this.maxZoom,
-      zoom: 1,
-      crs: L.CRS.Simple,
-      attributionControl: false
-    }).setView(this.defaultCenterPosition, this.settings.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
-    return of(map);
-  }
-
-  protected onResize(): void {}
-
-  public positionToLatLng(position: {x: number; y: number}): L.LatLng {
-    return this.pointToLatLng(
-      position.x * this.width,
-      position.y * this.height);
-  }
-
-  public pointToLatLng(x: number, y: number): L.LatLng {
-    return L.CRS.Simple.pointToLatLng({ x, y } as L.PointExpression, this.maxZoom - 1);
-  }
-
-  public toPolygonCoordinates(expression: (LatLngTuple | LatLngTuple[] | LatLngTuple[][])[]): any {
-    return (expression).map((el) => {
-      if (!Array.isArray(el[0]) && !Array.isArray(el[1]) && el.length === 2) {
-        return this.pointToLatLng(
-          el[0] * this.width,
-          el[1] * this.height
-        );
-      } else if (Array.isArray(el) && el.length) {
-        return this.toPolygonCoordinates(el as LatLngTuple[] | LatLngTuple[][]);
-      } else {
-        return null;
-      }
-    }).filter(el => !!el);
-  }
-
-  public convertCircleData(circle: TbCircleData): TbCircleData {
-    const centerPoint = this.pointToLatLng(circle.latitude * this.width, circle.longitude * this.height);
-    circle.latitude = centerPoint.lat;
-    circle.longitude = centerPoint.lng;
-    circle.radius = circle.radius * this.width;
-    return circle;
-  }
 
 }

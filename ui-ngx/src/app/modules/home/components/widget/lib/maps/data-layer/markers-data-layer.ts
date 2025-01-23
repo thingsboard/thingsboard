@@ -18,15 +18,18 @@ import {
   BaseMarkerShapeSettings,
   ClusterMarkerColorFunction,
   DataLayerColorType,
-  defaultBaseMarkersDataLayerSettings, isValidLatLng,
+  defaultBaseMarkersDataLayerSettings,
+  isValidLatLng,
   loadImageWithAspect,
-  MapStringFunction, MapType,
+  MapStringFunction,
+  MapType,
   MarkerIconInfo,
   MarkerIconSettings,
   MarkerImageFunction,
   MarkerImageInfo,
   MarkerImageSettings,
   MarkerImageType,
+  MarkerPositionFunction,
   MarkersDataLayerSettings,
   MarkerShapeSettings,
   MarkerType,
@@ -48,7 +51,12 @@ import {
 } from '@home/components/widget/lib/maps/models/marker-shape.models';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
-import { MapDataLayerType, TbDataLayerItem, TbMapDataLayer } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
+import {
+  MapDataLayerType,
+  TbDataLayerItem,
+  TbMapDataLayer
+} from '@home/components/widget/lib/maps/data-layer/map-data-layer';
+import { TbImageMap } from '@home/components/widget/lib/maps/image-map';
 
 class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, TbMarkersDataLayer, L.Marker> {
 
@@ -64,7 +72,7 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
   }
 
   protected create(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.Marker {
-    this.location = this.dataLayer.extractLocation(data);
+    this.location = this.dataLayer.extractLocation(data, dsData);
     this.marker = L.marker(this.location, {
       tbMarkerData: data
     });
@@ -86,15 +94,23 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
     this.marker.bindTooltip(content, { className: 'tb-marker-label', permanent: true, direction: 'top', offset: this.labelOffset });
   }
 
-  public update(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
-    const position = this.dataLayer.extractLocation(data);
+  protected doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
+    this.marker.options.tbMarkerData = data;
+    this.updateMarkerPosition(data, dsData);
+    this.updateTooltip(data, dsData);
+    this.updateMarkerIcon(data, dsData);
+  }
+
+  protected doInvalidateCoordinates(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
+    this.updateMarkerPosition(data, dsData);
+  }
+
+  private updateMarkerPosition(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
+    const position = this.dataLayer.extractLocation(data, dsData);
     if (!this.marker.getLatLng().equals(position)) {
       this.location = position;
       this.marker.setLatLng(position);
     }
-    this.marker.options.tbMarkerData = data;
-    this.updateTooltip(data, dsData);
-    this.updateMarkerIcon(data, dsData);
   }
 
   private updateMarkerIcon(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
@@ -310,6 +326,7 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
 
   private markersClusterContainer: L.MarkerClusterGroup;
   private clusterMarkerColorFunction: CompiledTbFunction<ClusterMarkerColorFunction>;
+  private positionFunction: CompiledTbFunction<MarkerPositionFunction>;
 
   constructor(protected map: TbMap<any>,
               inputSettings: MarkersDataLayerSettings) {
@@ -333,8 +350,8 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
     return datasource;
   }
 
-  protected defaultBaseSettings(): Partial<MarkersDataLayerSettings> {
-    return defaultBaseMarkersDataLayerSettings;
+  protected defaultBaseSettings(map: TbMap<any>): Partial<MarkersDataLayerSettings> {
+    return defaultBaseMarkersDataLayerSettings(map.type());
   }
 
   protected doSetup(): Observable<void> {
@@ -353,6 +370,16 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
         parseTbFunction<ClusterMarkerColorFunction>(this.getCtx().http, this.settings.markerClustering.clusterMarkerColorFunction, ['data', 'childCount']).pipe(
           map((parsed) => {
             this.clusterMarkerColorFunction = parsed;
+            return null;
+          })
+        )
+      );
+    }
+    if (this.map.type() === MapType.image) {
+      setup$.push(
+        parseTbFunction<MarkerPositionFunction>(this.getCtx().http, this.settings.positionFunction, ['origXPos', 'origYPos', 'data', 'dsData', 'aspect']).pipe(
+          map((parsed) => {
+            this.positionFunction = parsed;
             return null;
           })
         )
@@ -496,9 +523,13 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
     );
   }
 
-  public extractLocation(data: FormattedData<TbMapDatasource>): L.LatLng {
-    const position = this.extractPosition(data);
+  public extractLocation(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.LatLng {
+    let position = this.extractPosition(data);
     if (position) {
+      if (this.map.type() === MapType.image && this.positionFunction) {
+        const imageMap = this.map as TbImageMap;
+        position = this.positionFunction.execute(position.x, position.y, data, dsData, imageMap.getAspect()) || {x: 0, y: 0};
+      }
       return this.map.positionToLatLng(position);
     } else {
       return null;

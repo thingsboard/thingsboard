@@ -30,6 +30,7 @@ import { MapDataLayerType, TbDataLayerItem } from '@home/components/widget/lib/m
 class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, TbCirclesDataLayer> {
 
   private circle: L.Circle;
+  private circleStyle: L.PathOptions;
 
   constructor(data: FormattedData<TbMapDatasource>,
               dsData: FormattedData<TbMapDatasource>[],
@@ -41,10 +42,10 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
   protected create(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.Layer {
     const circleData = this.dataLayer.extractCircleCoordinates(data);
     const center = new L.LatLng(circleData.latitude, circleData.longitude);
-    const style = this.dataLayer.getShapeStyle(data, dsData);
+    this.circleStyle = this.dataLayer.getShapeStyle(data, dsData);
     this.circle = L.circle(center, {
       radius: circleData.radius,
-      ...style
+      ...this.circleStyle
     });
     this.updateLabel(data, dsData);
     return this.circle;
@@ -63,7 +64,19 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
     .openTooltip(this.circle.getLatLng());
   }
 
-  public update(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
+  protected doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
+    this.circleStyle = this.dataLayer.getShapeStyle(data, dsData);
+    this.updateCircleShape(data);
+    this.updateTooltip(data, dsData);
+    this.updateLabel(data, dsData);
+    this.circle.setStyle(this.circleStyle);
+  }
+
+  protected doInvalidateCoordinates(data: FormattedData<TbMapDatasource>, _dsData: FormattedData<TbMapDatasource>[]): void {
+    this.updateCircleShape(data);
+  }
+
+  private updateCircleShape(data: FormattedData<TbMapDatasource>) {
     const circleData = this.dataLayer.extractCircleCoordinates(data);
     const center = new L.LatLng(circleData.latitude, circleData.longitude);
     if (!this.circle.getLatLng().equals(center)) {
@@ -72,10 +85,6 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
     if (this.circle.getRadius() !== circleData.radius) {
       this.circle.setRadius(circleData.radius);
     }
-    this.updateTooltip(data, dsData);
-    this.updateLabel(data, dsData);
-    const style = this.dataLayer.getShapeStyle(data, dsData);
-    this.circle.setStyle(style);
   }
 }
 
@@ -95,8 +104,8 @@ export class TbCirclesDataLayer extends TbShapesDataLayer<CirclesDataLayerSettin
     return datasource;
   }
 
-  protected defaultBaseSettings(): Partial<CirclesDataLayerSettings> {
-    return defaultBaseCirclesDataLayerSettings;
+  protected defaultBaseSettings(map: TbMap<any>): Partial<CirclesDataLayerSettings> {
+    return defaultBaseCirclesDataLayerSettings(map.type());
   }
 
   protected doSetup(): Observable<void> {
