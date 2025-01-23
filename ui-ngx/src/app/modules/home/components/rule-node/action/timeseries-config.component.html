@@ -57,7 +57,7 @@
       ></tb-advanced-persistence-settings>
     }
   </div>
-  <section class="tb-form-panel stroked no-padding-bottom">
+  <section class="tb-form-panel stroked">
     <mat-expansion-panel class="tb-settings">
       <mat-expansion-panel-header>
         <mat-panel-title translate>rule-node-config.advanced-settings</mat-panel-title>
@@ -71,6 +71,7 @@
         </div>
         <tb-time-unit-input
           required
+          subscriptSizing="dynamic"
           labelText="{{ 'rule-node-config.default-ttl' | translate }}"
           requiredText="{{ 'rule-node-config.default-ttl-required' | translate }}"
           minErrorText="{{ 'rule-node-config.min-default-ttl-message' | translate }}"

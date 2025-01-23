@@ -30,6 +30,7 @@ import { isDefinedAndNotNull, isNumeric } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { coerceBoolean, coerceNumber } from '@shared/decorators/coercion';
 import { DAY, HOUR, MINUTE, SECOND } from '@shared/models/time/time.models';
+import { SubscriptSizing } from '@angular/material/form-field';
 
 interface TimeUnitInputModel {
   time: number;
@@ -74,6 +75,9 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
 
   @Input()
   maxErrorText: string;
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
 
   timeUnits = Object.values(TimeUnit).filter(item => item !== TimeUnit.MILLISECONDS) as TimeUnit[];
 

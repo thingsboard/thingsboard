@@ -22,7 +22,7 @@
     <div matSuffix>
       <ng-content select="[matSuffix]"></ng-content>
     </div>
-    <mat-hint></mat-hint>
+    <mat-hint *ngIf="subscriptSizing === 'fixed'"></mat-hint>
     <mat-error *ngIf="timeInputForm.get('time').hasError('required') && requiredText">
       {{ requiredText }}
     </mat-error>
@@ -33,7 +33,7 @@
       {{ maxErrorText }}
     </mat-error>
   </mat-form-field>
-  <mat-form-field class="h-fit max-w-33% flex-full">
+  <mat-form-field class="h-fit max-w-33% flex-full" [subscriptSizing]="subscriptSizing">
     <mat-label translate>rule-node-config.units</mat-label>
     <mat-select formControlName="timeUnit">
       @for (timeUnit of timeUnits; track timeUnit) {
