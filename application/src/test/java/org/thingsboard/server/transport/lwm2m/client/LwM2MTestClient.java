@@ -458,6 +458,12 @@ public class LwM2MTestClient {
         }
     }
 
+    public void stop(boolean deregister) {
+        if (leshanClient != null) {
+            leshanClient.stop(deregister);
+        }
+    }
+
     private void awaitClientAfterStartConnectLw() {
         LwM2mClient lwM2MClient = this.clientContext.getClientByEndpoint(endpoint);
         Mockito.doAnswer(invocationOnMock -> null).when(defaultLwM2mUplinkMsgHandlerTest).initAttributes(lwM2MClient, true);

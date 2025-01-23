@@ -51,8 +51,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.DataConstants.EDGE_QUEUE_NAME;
-import static org.thingsboard.server.common.data.DataConstants.MAIN_QUEUE_NAME;
+import static org.thingsboard.server.common.data.DataConstants.*;
 
 @Service
 @Slf4j
@@ -62,6 +61,12 @@ public class HashPartitionService implements PartitionService {
     private String coreTopic;
     @Value("${queue.core.partitions:10}")
     private Integer corePartitions;
+    @Value("${queue.calculated_fields.event_topic}")
+    private String cfEventTopic;
+    @Value("${queue.calculated_fields.state_topic}")
+    private String cfStateTopic;
+    @Value("${queue.calculated_fields.partitions:10}")
+    private Integer cfPartitions;
     @Value("${queue.vc.topic:tb_version_control}")
     private String vcTopic;
     @Value("${queue.vc.partitions:10}")
@@ -72,6 +77,8 @@ public class HashPartitionService implements PartitionService {
     private Integer edgePartitions;
     @Value("${queue.partitions.hash_function_name:murmur3_128}")
     private String hashFunctionName;
+
+    public static final QueueKey CALCULATED_FIELD_QUEUE_KEY = new QueueKey(ServiceType.TB_RULE_ENGINE).withQueueName(CF_QUEUE_NAME);
 
     private final ApplicationEventPublisher applicationEventPublisher;
     private final TbServiceInfoProvider serviceInfoProvider;
@@ -108,9 +115,13 @@ public class HashPartitionService implements PartitionService {
     @PostConstruct
     public void init() {
         this.hashFunction = forName(hashFunctionName);
+
         QueueKey coreKey = new QueueKey(ServiceType.TB_CORE);
         partitionSizesMap.put(coreKey, corePartitions);
         partitionTopicsMap.put(coreKey, coreTopic);
+
+        partitionSizesMap.put(CALCULATED_FIELD_QUEUE_KEY, cfPartitions);
+        partitionTopicsMap.put(CALCULATED_FIELD_QUEUE_KEY, cfEventTopic);
 
         QueueKey vcKey = new QueueKey(ServiceType.TB_VC_EXECUTOR);
         partitionSizesMap.put(vcKey, vcPartitions);

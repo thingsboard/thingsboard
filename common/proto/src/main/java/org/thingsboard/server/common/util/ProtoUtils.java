@@ -644,15 +644,15 @@ public class ProtoUtils {
         return new BasicTsKvEntry(proto.getTs(), entry, proto.hasVersion() ? proto.getVersion() : null);
     }
 
-    public static KvEntry fromTelemetryProto(TransportProtos.TelemetryProto telemetryProto) {
-        if (telemetryProto.hasAttrKv()) {
-            return fromProto(telemetryProto.getAttrKv().getValue());
-        } else if (telemetryProto.hasTsKv()) {
-            return fromProto(telemetryProto.getTsKv());
-        } else {
-            throw new IllegalArgumentException("Unsupported TelemetryProto type: " + telemetryProto);
-        }
-    }
+//    public static KvEntry fromTelemetryProto(TransportProtos.TelemetryProto telemetryProto) {
+//        if (telemetryProto.hasAttrKv()) {
+//            return fromProto(telemetryProto.getAttrKv().getValue());
+//        } else if (telemetryProto.hasTsKv()) {
+//            return fromProto(telemetryProto.getTsKv());
+//        } else {
+//            throw new IllegalArgumentException("Unsupported TelemetryProto type: " + telemetryProto);
+//        }
+//    }
 
     public static TransportProtos.AttributeKey toAttributeKeyProto(String key, AttributeScope scope) {
         TransportProtos.AttributeKey.Builder builder = TransportProtos.AttributeKey.newBuilder();
@@ -673,12 +673,12 @@ public class ProtoUtils {
         return builder.build();
     }
 
-    public static TransportProtos.AttributeKvProto toAttributeKvProto(AttributeKvEntry attributeKvEntry, AttributeScope scope) {
-        return TransportProtos.AttributeKvProto.newBuilder()
-                .setKey(ProtoUtils.toAttributeKeyProto(attributeKvEntry.getKey(), scope))
-                .setValue(ProtoUtils.toAttributeValueProto(attributeKvEntry))
-                .build();
-    }
+//    public static TransportProtos.AttributeKvProto toAttributeKvProto(AttributeKvEntry attributeKvEntry, AttributeScope scope) {
+//        return TransportProtos.AttributeKvProto.newBuilder()
+//                .setKey(ProtoUtils.toAttributeKeyProto(attributeKvEntry.getKey(), scope))
+//                .setValue(ProtoUtils.toAttributeValueProto(attributeKvEntry))
+//                .build();
+//    }
 
     public static TransportProtos.AttributeValueProto toAttributeValueProto(AttributeKvEntry attributeKvEntry) {
         TransportProtos.AttributeValueProto.Builder builder = TransportProtos.AttributeValueProto.newBuilder();

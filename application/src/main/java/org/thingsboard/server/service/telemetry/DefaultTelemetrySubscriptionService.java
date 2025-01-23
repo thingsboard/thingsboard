@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.telemetry;
 
+import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -128,8 +129,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
             KvUtils.validate(request.getEntries(), valueNoXssValidation);
             ListenableFuture<Integer> future = saveTimeseriesInternal(request);
             if (!request.isOnlyLatest()) {
-                FutureCallback<Integer> callback = getApiUsageCallback(tenantId, request.getCustomerId(), sysTenant, request.getCallback());
-                Futures.addCallback(future, callback, tsCallBackExecutor);
+                Futures.addCallback(future, getApiUsageCallback(tenantId, request.getCustomerId(), sysTenant), tsCallBackExecutor);
             }
         } else {
             request.getCallback().onFailure(new RuntimeException("DB storage writes are disabled due to API limits!"));
@@ -148,7 +148,14 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         } else {
             saveFuture = tsService.saveWithoutLatest(tenantId, entityId, request.getEntries(), request.getTtl());
         }
-
+        // We need to guarantee, that the message is successfully pushed to the calculated fields service before we execute any callbacks.
+//        saveFuture = Futures.transformAsync(saveFuture, new AsyncFunction<Integer, Integer>() {
+//            @Override
+//            public ListenableFuture<Integer> apply(Integer input) throws Exception {
+//                calculatedFieldExecutionService.onTelemetryUpdate(new CalculatedFieldTimeSeriesUpdateRequest(request));
+//                return input;
+//            }
+//        });
         addMainCallback(saveFuture, request.getCallback());
         addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, request.getEntries()));
         if (request.isSaveLatest() && !request.isOnlyLatest()) {
@@ -326,19 +333,18 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         }
     }
 
-    private FutureCallback<Integer> getApiUsageCallback(TenantId tenantId, CustomerId customerId, boolean sysTenant, FutureCallback<Void> callback) {
+    private FutureCallback<Integer> getApiUsageCallback(TenantId tenantId, CustomerId customerId, boolean sysTenant) {
         return new FutureCallback<>() {
             @Override
             public void onSuccess(Integer result) {
                 if (!sysTenant && result != null && result > 0) {
                     apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.STORAGE_DP_COUNT, result);
                 }
-                callback.onSuccess(null);
             }
 
             @Override
             public void onFailure(Throwable t) {
-                callback.onFailure(t);
+
             }
         };
     }

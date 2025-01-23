@@ -115,7 +115,7 @@ public class QrCodeSettingServiceImpl extends AbstractCachedEntityService<Tenant
             qrCodeSettings.setQrCodeConfig(qrCodeConfig);
             qrCodeSettings.setMobileAppBundleId(qrCodeSettings.getMobileAppBundleId());
         }
-        if (qrCodeSettings.isUseDefaultApp()) {
+        if (qrCodeSettings.isUseDefaultApp() || qrCodeSettings.getMobileAppBundleId() == null) {
             qrCodeSettings.setGooglePlayLink(googlePlayLink);
             qrCodeSettings.setAppStoreLink(appStoreLink);
         } else {
