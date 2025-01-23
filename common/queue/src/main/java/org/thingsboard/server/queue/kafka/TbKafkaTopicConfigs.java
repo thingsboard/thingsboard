@@ -52,6 +52,8 @@ public class TbKafkaTopicConfigs {
     private String housekeeperProperties;
     @Value("${queue.kafka.topic-properties.housekeeper-reprocessing:}")
     private String housekeeperReprocessingProperties;
+    @Value("${queue.kafka.topic-properties.calculated-field:}")
+    private String calculatedFieldProperties;
 
     @Getter
     private Map<String, String> coreConfigs;
@@ -79,6 +81,8 @@ public class TbKafkaTopicConfigs {
     private Map<String, String> edgeConfigs;
     @Getter
     private Map<String, String> edgeEventConfigs;
+    @Getter
+    private Map<String, String> calculatedFieldConfigs;
 
     @PostConstruct
     private void init() {
@@ -97,6 +101,7 @@ public class TbKafkaTopicConfigs {
         housekeeperReprocessingConfigs = PropertyUtils.getProps(housekeeperReprocessingProperties);
         edgeConfigs = PropertyUtils.getProps(edgeProperties);
         edgeEventConfigs = PropertyUtils.getProps(edgeEventProperties);
+        calculatedFieldConfigs = PropertyUtils.getProps(calculatedFieldProperties);
     }
 
 }
