@@ -16,35 +16,73 @@
 
 -->
 <section [formGroup]="timeseriesConfigForm" class="tb-form-panel no-border no-padding">
-  <mat-form-field class="mat-block flex-1">
-    <mat-label translate>rule-node-config.default-ttl</mat-label>
-    <input type="number" min="0" step="1" matInput formControlName="defaultTTL" required>
-    <mat-icon class="help-icon margin-8 cursor-pointer"
-              aria-hidden="false"
-              aria-label="help-icon"
-              matSuffix
-              matTooltip="{{ 'rule-node-config.default-ttl-hint' | translate }}">
-      help
-    </mat-icon>
-    <mat-error *ngIf="timeseriesConfigForm.get('defaultTTL').hasError('required')">
-      {{ 'rule-node-config.default-ttl-required' | translate }}
-    </mat-error>
-    <mat-error *ngIf="timeseriesConfigForm.get('defaultTTL').hasError('min')">
-      {{ 'rule-node-config.min-default-ttl-message' | translate }}
-    </mat-error>
-  </mat-form-field>
-  <div class="tb-form-panel stroked">
-    <div tb-hint-tooltip-icon="{{ 'rule-node-config.use-server-ts-hint' | translate}}"
-         class="tb-form-row no-border no-padding">
-      <mat-slide-toggle class="mat-slide" formControlName="useServerTs">
-        {{ 'rule-node-config.use-server-ts' | translate }}
-      </mat-slide-toggle>
+  <div class="tb-form-panel stroked no-padding-bottom no-gap" formGroupName="persistenceSettings">
+    <div class="mb-4 flex flex-row items-center justify-between">
+      <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'rule-node-config.save-time-series.persistence-settings-hint' | translate}}" translate>
+        rule-node-config.save-time-series.persistence-settings
+      </div>
+      <tb-toggle-select appearance="fill" selectMediaBreakpoint="xs"
+                        formControlName="isAdvanced">
+        <tb-toggle-option [value]=false>{{ 'rule-node-config.basic-mode' | translate}}</tb-toggle-option>
+        <tb-toggle-option [value]=true>{{ 'rule-node-config.advanced-mode' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
     </div>
-    <div tb-hint-tooltip-icon="{{ 'rule-node-config.skip-latest-persistence-hint' | translate}}"
-         class="tb-form-row no-border no-padding">
-      <mat-slide-toggle class="mat-slide" formControlName="skipLatestPersistence">
-        {{ 'rule-node-config.skip-latest-persistence' | translate }}
-      </mat-slide-toggle>
-    </div>
+    @if(!timeseriesConfigForm.get('persistenceSettings.isAdvanced').value) {
+      <mat-form-field>
+        <mat-label translate>rule-node-config.save-time-series.strategy</mat-label>
+        <mat-select formControlName="type">
+          @for (strategy of persistenceStrategies; track strategy) {
+            <mat-option [value]="strategy">{{ PersistenceTypeTranslationMap.get(strategy) | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      @if(timeseriesConfigForm.get('persistenceSettings.type').value === PersistenceType.DEDUPLICATE) {
+        <tb-time-unit-input
+          required
+          labelText="{{ 'rule-node-config.save-time-series.deduplication-interval' | translate }}"
+          requiredText="{{ 'rule-node-config.save-time-series.deduplication-interval-required' | translate }}"
+          minErrorText="{{ 'rule-node-config.save-time-series.deduplication-interval-min-max-range' | translate }}"
+          maxErrorText="{{ 'rule-node-config.save-time-series.deduplication-interval-min-max-range' | translate }}"
+          [maxTime]="maxDeduplicateTime"
+          formControlName="deduplicationIntervalSecs">
+        </tb-time-unit-input>
+      }
+    }
+    @else {
+      <tb-advanced-persistence-settings
+        class="mb-4"
+        formControlName="advanced"
+      ></tb-advanced-persistence-settings>
+    }
   </div>
+  <section class="tb-form-panel stroked">
+    <mat-expansion-panel class="tb-settings">
+      <mat-expansion-panel-header>
+        <mat-panel-title translate>rule-node-config.advanced-settings</mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <tb-time-unit-input
+          required
+          labelText="{{ 'rule-node-config.default-ttl' | translate }}"
+          requiredText="{{ 'rule-node-config.default-ttl-required' | translate }}"
+          minErrorText="{{ 'rule-node-config.min-default-ttl-message' | translate }}"
+          formControlName="defaultTTL">
+          <mat-icon class="mr-2 cursor-pointer"
+                    aria-hidden="false"
+                    aria-label="help-icon"
+                    matSuffix
+                    matTooltip="{{ 'rule-node-config.default-ttl-hint' | translate }}">
+            help
+          </mat-icon>
+        </tb-time-unit-input>
+        <div tb-hint-tooltip-icon="{{ 'rule-node-config.use-server-ts-hint' | translate}}"
+             class="tb-form-row no-border no-padding">
+          <mat-slide-toggle class="mat-slide" formControlName="useServerTs">
+            {{ 'rule-node-config.use-server-ts' | translate }}
+          </mat-slide-toggle>
+        </div>
+      </ng-template>
+    </mat-expansion-panel>
+  </section>
 </section>
