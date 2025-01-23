@@ -22,7 +22,8 @@ import {
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
-  Validator, Validators
+  Validator,
+  Validators
 } from '@angular/forms';
 import { TimeUnit, timeUnitTranslations } from '../rule-node-config.models';
 import { isDefinedAndNotNull, isNumeric } from '@core/utils';
@@ -61,6 +62,10 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
   requiredText: string;
 
   @Input()
+  @coerceNumber()
+  minTime = 0;
+
+  @Input()
   minErrorText: string;
 
   @Input()
@@ -75,7 +80,7 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
   timeUnitTranslations = timeUnitTranslations;
 
   timeInputForm = this.fb.group({
-    time: [0, Validators.min(0)],
+    time: [0],
     timeUnit: [TimeUnit.SECONDS]
   });
 
@@ -97,7 +102,7 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
   ngOnInit() {
     if(this.required || this.maxTime) {
       const timeControl = this.timeInputForm.get('time');
-      const validators = [];
+      const validators = [Validators.pattern(/^\d*$/)];
       if (this.required) {
         validators.push(Validators.required);
       }
@@ -105,6 +110,9 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
         validators.push((control: AbstractControl) =>
           Validators.max(Math.floor(this.maxTime / this.timeIntervalsInSec.get(this.timeInputForm.get('timeUnit').value)))(control)
         );
+      }
+      if (isDefinedAndNotNull(this.minTime)) {
+        validators.push(Validators.min(this.minTime));
       }
 
       timeControl.setValidators(validators);
@@ -137,6 +145,9 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
       this.timeInputForm.disable({emitEvent: false});
     } else {
       this.timeInputForm.enable({emitEvent: false});
+      if(this.timeInputForm.invalid) {
+        setTimeout(() => this.updatedModel(this.timeInputForm.value, true))
+      }
     }
   }
 
@@ -161,9 +172,9 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
     };
   }
 
-  private updatedModel(value: Partial<TimeUnitInputModel>) {
+  private updatedModel(value: Partial<TimeUnitInputModel>, forceUpdated = false) {
     const time = value.time * this.timeIntervalsInSec.get(value.timeUnit);
-    if (this.modelValue !== time) {
+    if (this.modelValue !== time || forceUpdated) {
       this.modelValue = time;
       this.propagateChange(time);
     }

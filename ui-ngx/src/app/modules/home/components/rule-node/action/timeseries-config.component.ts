@@ -60,16 +60,16 @@ export class TimeseriesConfigComponent extends RuleNodeConfigurationComponent {
     if (config?.persistenceSettings) {
       const isAdvanced = config?.persistenceSettings?.type === PersistenceType.ADVANCED;
       persistenceSettings = {
-        ...config.persistenceSettings,
-        isAdvanced: isAdvanced,
         type: isAdvanced ? PersistenceType.ON_EVERY_MESSAGE : config.persistenceSettings.type,
+        isAdvanced: isAdvanced,
+        deduplicationIntervalSecs: config.persistenceSettings?.deduplicationIntervalSecs ?? 60,
         advanced: isAdvanced ? config.persistenceSettings : defaultAdvancedPersistenceStrategy
       }
     } else {
       persistenceSettings = {
         type: PersistenceType.ON_EVERY_MESSAGE,
         isAdvanced: false,
-        deduplicationIntervalSecs: 10,
+        deduplicationIntervalSecs: 60,
         advanced: defaultAdvancedPersistenceStrategy
       };
     }
@@ -104,7 +104,7 @@ export class TimeseriesConfigComponent extends RuleNodeConfigurationComponent {
         isAdvanced: [config?.persistenceSettings?.isAdvanced ?? false],
         type: [config?.persistenceSettings?.type ?? PersistenceType.ON_EVERY_MESSAGE],
         deduplicationIntervalSecs: [
-          {value: config?.persistenceSettings?.deduplicationIntervalSecs ?? 10, disabled: true},
+          {value: config?.persistenceSettings?.deduplicationIntervalSecs ?? 60, disabled: true},
           [Validators.required, Validators.max(maxDeduplicateTimeSecs)]
         ],
         advanced: [{value: null, disabled: true}]

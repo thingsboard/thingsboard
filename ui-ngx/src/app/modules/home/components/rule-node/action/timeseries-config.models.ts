@@ -16,7 +16,7 @@
 
 import { DAY, SECOND } from '@shared/models/time/time.models';
 
-export const maxDeduplicateTimeSecs = DAY / SECOND + 1;
+export const maxDeduplicateTimeSecs = DAY / SECOND;
 
 export interface TimeseriesNodeConfiguration {
   persistenceSettings: PersistenceSettings;

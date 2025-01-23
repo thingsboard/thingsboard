@@ -45,6 +45,7 @@
           minErrorText="{{ 'rule-node-config.save-time-series.deduplication-interval-min-max-range' | translate }}"
           maxErrorText="{{ 'rule-node-config.save-time-series.deduplication-interval-min-max-range' | translate }}"
           [maxTime]="maxDeduplicateTime"
+          [minTime]="1"
           formControlName="deduplicationIntervalSecs">
         </tb-time-unit-input>
       }
@@ -56,12 +57,18 @@
       ></tb-advanced-persistence-settings>
     }
   </div>
-  <section class="tb-form-panel stroked">
+  <section class="tb-form-panel stroked no-padding-bottom">
     <mat-expansion-panel class="tb-settings">
       <mat-expansion-panel-header>
         <mat-panel-title translate>rule-node-config.advanced-settings</mat-panel-title>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
+        <div tb-hint-tooltip-icon="{{ 'rule-node-config.use-server-ts-hint' | translate}}"
+             class="tb-form-row no-border no-padding">
+          <mat-slide-toggle class="mat-slide" formControlName="useServerTs">
+            {{ 'rule-node-config.use-server-ts' | translate }}
+          </mat-slide-toggle>
+        </div>
         <tb-time-unit-input
           required
           labelText="{{ 'rule-node-config.default-ttl' | translate }}"
@@ -76,12 +83,6 @@
             help
           </mat-icon>
         </tb-time-unit-input>
-        <div tb-hint-tooltip-icon="{{ 'rule-node-config.use-server-ts-hint' | translate}}"
-             class="tb-form-row no-border no-padding">
-          <mat-slide-toggle class="mat-slide" formControlName="useServerTs">
-            {{ 'rule-node-config.use-server-ts' | translate }}
-          </mat-slide-toggle>
-        </div>
       </ng-template>
     </mat-expansion-panel>
   </section>

@@ -32,6 +32,7 @@
       requiredText="{{ 'rule-node-config.save-time-series.deduplication-interval-required' | translate }}"
       minErrorText="{{ 'rule-node-config.save-time-series.deduplication-interval-min-max-range' | translate }}"
       maxErrorText="{{ 'rule-node-config.save-time-series.deduplication-interval-min-max-range' | translate }}"
+      [minTime]="1"
       [maxTime]="maxDeduplicateTime"
       formControlName="deduplicationIntervalSecs">
     </tb-time-unit-input>
