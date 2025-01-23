@@ -40,7 +40,7 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConn
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState.ONLINE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.STATE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.messageName;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicUtil.NAMESPACE;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_ROOT_SPB_V_1_0;
 
 /**
  * Created by nickAS21 on 12.01.23
@@ -80,7 +80,7 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
     protected void processClientWithCorrectNodeAccessTokenNameSpaceInvalid_Test() throws Exception {
         long ts = calendar.getTimeInMillis() - PUBLISH_TS_DELTA_MS;
         long value = bdSeq = 0;
-        MqttException actualException = Assert.assertThrows(MqttException.class, () -> clientConnectWithNDEATH(ts, value, "spBv1.2"));
+        MqttException actualException = Assert.assertThrows(MqttException.class, () -> clientMqttV5ConnectWithNDEATH(ts, value, "spBv1.2"));
         String expectedMessage = "Server unavailable.";
         int expectedReasonCode = 136;
         Assert.assertEquals(expectedMessage, actualException.getMessage());
@@ -135,7 +135,7 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
         if (client.isConnected()) {
             List<Device> devicesList = new ArrayList<>(devices);
             Device device =  devicesList.get(indexDeviceDisconnect);
-            client.publish(NAMESPACE + "/" + groupId + "/" + SparkplugMessageType.DDEATH.name() + "/" + edgeNode + "/" + device.getName(),
+            client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.DDEATH.name() + "/" + edgeNode + "/" + device.getName(),
                     payloadDeathDevice.build().toByteArray(), 0, false);
             await(alias + messageName(STATE) + ", device: " + device.getName())
                     .atMost(40, TimeUnit.SECONDS)
