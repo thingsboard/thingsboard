@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.TbResourceDeleteResult;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TbResourceInfoFilter;
 import org.thingsboard.server.common.data.id.TbResourceId;
@@ -71,7 +72,7 @@ public interface ResourceService extends EntityDaoService {
 
     void deleteResource(TenantId tenantId, TbResourceId resourceId);
 
-    void deleteResource(TenantId tenantId, TbResourceId resourceId, boolean force);
+    TbResourceDeleteResult deleteResource(TenantId tenantId, TbResourceId resourceId, boolean force);
 
     void deleteResourcesByTenantId(TenantId tenantId);
 

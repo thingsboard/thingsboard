@@ -213,4 +213,10 @@ public interface WidgetTypeInfoRepository extends JpaRepository<WidgetTypeInfoEn
                     "(select id from widget_type where image = :imageLink or descriptor ILIKE CONCAT('%', :imageLink, '%') limit :lmt)"
     )
     List<WidgetTypeInfoEntity> findByImageUrl(@Param("imageLink") String imageLink, @Param("lmt") int lmt);
+
+    @Query(value = "SELECT * FROM widget_type_info_view w WHERE w.tenant_id = :tenantId AND w.descriptor::text ILIKE CONCAT('%', :link, '%') LIMIT :lmt ", nativeQuery = true)
+    List<WidgetTypeInfoEntity> findWidgetTypeInfosByTenantIdAndResourceLink(@Param("tenantId") UUID tenantId, @Param("link") String link, @Param("lmt") int limit);
+
+    @Query(value = "SELECT * FROM widget_type_info_view w WHERE w.descriptor::text ILIKE CONCAT('%', :link, '%') LIMIT :lmt ", nativeQuery = true)
+    List<WidgetTypeInfoEntity> findWidgetTypeInfosByResourceLink(@Param("link") String link, @Param("lmt") int limit);
 }

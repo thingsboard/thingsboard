@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.widget.WidgetsBundleWidget;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.ImageContainerDao;
+import org.thingsboard.server.dao.ResourceContainerDao;
 
 import java.util.List;
 import java.util.UUID;
@@ -35,7 +36,7 @@ import java.util.UUID;
 /**
  * The Interface WidgetTypeDao.
  */
-public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityDao<WidgetTypeId, WidgetTypeDetails>, ImageContainerDao<WidgetTypeInfo> {
+public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityDao<WidgetTypeId, WidgetTypeDetails>, ImageContainerDao<WidgetTypeInfo>, ResourceContainerDao<WidgetTypeInfo> {
 
     /**
      * Save or update widget type object
@@ -95,8 +96,6 @@ public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityD
 
     WidgetTypeDetails findDetailsByTenantIdAndFqn(UUID tenantId, String fqn);
 
-    List<String> findWidgetTypesNamesByTenantIdAndResourceLink(UUID tenantId, String link);
-
     List<WidgetTypeId> findWidgetTypeIdsByTenantIdAndFqns(UUID tenantId, List<String> widgetFqns);
 
     List<WidgetsBundleWidget> findWidgetsBundleWidgetsByWidgetsBundleId(UUID tenantId, UUID widgetsBundleId);
@@ -106,5 +105,4 @@ public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityD
     void removeWidgetTypeFromWidgetsBundle(UUID widgetsBundleId, UUID widgetTypeId);
 
     PageData<WidgetTypeId> findAllWidgetTypesIds(PageLink pageLink);
-
 }

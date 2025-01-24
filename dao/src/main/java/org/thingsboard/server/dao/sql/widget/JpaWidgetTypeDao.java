@@ -186,11 +186,6 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
     }
 
     @Override
-    public List<String> findWidgetTypesNamesByTenantIdAndResourceLink(UUID tenantId, String link) {
-        return widgetTypeRepository.findNamesByTenantIdAndResourceLink(tenantId, link);
-    }
-
-    @Override
     public List<WidgetTypeId> findWidgetTypeIdsByTenantIdAndFqns(UUID tenantId, List<String> widgetFqns) {
         var idFqnPairs = widgetTypeRepository.findWidgetTypeIdsByTenantIdAndFqns(tenantId, widgetFqns);
         idFqnPairs.sort(Comparator.comparingInt(o -> widgetFqns.indexOf(o.getFqn())));
@@ -261,4 +256,13 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
     }
 
 
+    @Override
+    public List<WidgetTypeInfo> findByTenantIdAndResourceLink(TenantId tenantId, String link, int lmt) {
+        return DaoUtil.convertDataList(widgetTypeInfoRepository.findWidgetTypeInfosByTenantIdAndResourceLink(tenantId.getId(), link, lmt));
+    }
+
+    @Override
+    public List<WidgetTypeInfo> findByResourceLink(String link, int lmt) {
+        return DaoUtil.convertDataList(widgetTypeInfoRepository.findWidgetTypeInfosByResourceLink(link, lmt));
+    }
 }
