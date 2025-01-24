@@ -58,6 +58,7 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
@@ -626,6 +627,20 @@ public class ProtoUtils {
             default -> null;
         };
         return new BaseAttributeKvEntry(entry, proto.getLastUpdateTs(), proto.hasVersion() ? proto.getVersion() : null);
+    }
+
+    public static TsKvEntry fromProto(TransportProtos.TsKvProto proto) {
+        TransportProtos.KeyValueProto kvProto = proto.getKv();
+        String key = kvProto.getKey();
+        KvEntry entry = switch (kvProto.getType()) {
+            case BOOLEAN_V -> new BooleanDataEntry(key, kvProto.getBoolV());
+            case LONG_V -> new LongDataEntry(key, kvProto.getLongV());
+            case DOUBLE_V -> new DoubleDataEntry(key, kvProto.getDoubleV());
+            case STRING_V -> new StringDataEntry(key, kvProto.getStringV());
+            case JSON_V -> new JsonDataEntry(key, kvProto.getJsonV());
+            default -> null;
+        };
+        return new BasicTsKvEntry(proto.getTs(), entry, proto.hasVersion() ? proto.getVersion() : null);
     }
 
     public static TransportProtos.TsKvProto toTsKvProto(TsKvEntry tsKvEntry) {
