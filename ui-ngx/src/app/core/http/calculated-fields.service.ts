@@ -61,17 +61,17 @@ export class CalculatedFieldsService {
 
   public getCalculatedField(calculatedFieldId: string, config?: RequestConfig): Observable<CalculatedField> {
     return of(this.fieldsMock[0]);
-    // return this.http.get<any>(`/api/calculated-field/${calculatedFieldId}`, defaultHttpOptionsFromConfig(config));
+    // return this.http.get<any>(`/api/calculatedField/${calculatedFieldId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public saveCalculatedField(calculatedField: any, config?: RequestConfig): Observable<CalculatedField> {
     return of(this.fieldsMock[1]);
-    // return this.http.post<any>('/api/calculated-field', calculatedField, defaultHttpOptionsFromConfig(config));
+    // return this.http.post<any>('/api/calculatedField', calculatedField, defaultHttpOptionsFromConfig(config));
   }
 
   public deleteCalculatedField(calculatedFieldId: string, config?: RequestConfig): Observable<boolean> {
     return of(true);
-    // return this.http.delete<boolean>(`/api/calculated-field/${calculatedFieldId}`, defaultHttpOptionsFromConfig(config));
+    // return this.http.delete<boolean>(`/api/calculatedField/${calculatedFieldId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public getCalculatedFields(pageLink: PageLink,
@@ -82,7 +82,7 @@ export class CalculatedFieldsService {
       totalElements: 2,
       hasNext: false,
     });
-    // return this.http.get<PageData<any>>(`/api/calculated-field${pageLink.toQuery()}`,
+    // return this.http.get<PageData<any>>(`/api/calculatedField${pageLink.toQuery()}`,
     //   defaultHttpOptionsFromConfig(config));
   }
 }
