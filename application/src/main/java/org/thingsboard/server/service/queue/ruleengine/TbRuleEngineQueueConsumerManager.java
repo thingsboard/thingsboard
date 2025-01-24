@@ -28,14 +28,12 @@ import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.QueueKey;
-import org.thingsboard.server.service.cf.CalculatedFieldExecutionService;
 import org.thingsboard.server.service.queue.TbMsgPackCallback;
 import org.thingsboard.server.service.queue.TbMsgPackProcessingContext;
 import org.thingsboard.server.service.queue.TbRuleEngineConsumerStats;
@@ -65,18 +63,14 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
     private final TbRuleEngineConsumerContext ctx;
     private final TbRuleEngineConsumerStats stats;
 
-    private final CalculatedFieldExecutionService calculatedFieldExecutionService;
-
     @Builder(builderMethodName = "create") // not to conflict with super.builder()
     public TbRuleEngineQueueConsumerManager(TbRuleEngineConsumerContext ctx,
                                             QueueKey queueKey,
                                             ExecutorService consumerExecutor,
                                             ScheduledExecutorService scheduler,
-                                            ExecutorService taskExecutor,
-                                            CalculatedFieldExecutionService calculatedFieldExecutionService) {
+                                            ExecutorService taskExecutor) {
         super(queueKey, null, null, ctx.getQueueFactory()::createToRuleEngineMsgConsumer, consumerExecutor, scheduler, taskExecutor);
         this.ctx = ctx;
-        this.calculatedFieldExecutionService = calculatedFieldExecutionService;
         this.stats = new TbRuleEngineConsumerStats(queueKey, ctx.getStatsFactory());
     }
 
@@ -178,12 +172,6 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
         try {
             if (!toRuleEngineMsg.getTbMsg().isEmpty()) {
                 forwardToRuleEngineActor(config.getName(), tenantId, toRuleEngineMsg, callback);
-            } else if (toRuleEngineMsg.hasCfTelemetryUpdateMsg()) {
-                calculatedFieldExecutionService.onTelemetryUpdateMsg(toRuleEngineMsg.getCfTelemetryUpdateMsg());
-            } else if (toRuleEngineMsg.hasEntityProfileUpdateMsg()) {
-                calculatedFieldExecutionService.onEntityProfileChangedMsg(toRuleEngineMsg.getEntityProfileUpdateMsg(), TbCallback.EMPTY);
-            } else if (toRuleEngineMsg.hasProfileEntityMsg()) {
-                calculatedFieldExecutionService.onProfileEntityMsg(toRuleEngineMsg.getProfileEntityMsg(), TbCallback.EMPTY);
             } else {
                 callback.onSuccess();
             }

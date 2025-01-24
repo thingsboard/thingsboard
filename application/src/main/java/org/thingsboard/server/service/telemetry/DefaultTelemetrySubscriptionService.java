@@ -51,7 +51,6 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.util.KvUtils;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.cf.CalculatedFieldExecutionService;
-import org.thingsboard.server.service.cf.telemetry.CalculatedFieldAttributeUpdateRequest;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
@@ -171,7 +170,6 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
             calculatedFieldExecutionService.pushRequestToQueue(request, result);
         }, safeCallback(request.getCallback()), tsCallBackExecutor);
         addWsCallback(saveFuture, success -> onAttributesUpdate(request.getTenantId(), request.getEntityId(), request.getScope().name(), request.getEntries(), request.isNotifyDevice()));
-        addCallback(saveFuture, success -> calculatedFieldExecutionService.onTelemetryUpdate(new CalculatedFieldAttributeUpdateRequest(request)), tsCallBackExecutor);
     }
 
     @Override
