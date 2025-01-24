@@ -75,6 +75,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeScopeProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityUpdateMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldIdProto;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldLinkedTelemetryMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ComponentLifecycleEvent;
 import org.thingsboard.server.gen.transport.TransportProtos.ComponentLifecycleMsgProto;
@@ -232,6 +233,18 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             }
         }
         return send;
+    }
+
+    @Override
+    public void onTelemetryMsg(CalculatedFieldTelemetryMsgProto msg, TbCallback callback) {
+
+        callback.onSuccess();
+    }
+
+    @Override
+    public void onLinkedTelemetryMsg(CalculatedFieldLinkedTelemetryMsgProto linkedMsg, TbCallback callback) {
+
+        callback.onSuccess();
     }
 
     @Override

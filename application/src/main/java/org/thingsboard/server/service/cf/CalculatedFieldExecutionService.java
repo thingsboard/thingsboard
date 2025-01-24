@@ -20,6 +20,8 @@ import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityUpdateMsgProto;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldLinkedTelemetryMsgProto;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ComponentLifecycleMsgProto;
 import org.thingsboard.server.service.cf.telemetry.CalculatedFieldTelemetryUpdateRequest;
 
@@ -35,6 +37,10 @@ public interface CalculatedFieldExecutionService {
     void pushRequestToQueue(TimeseriesSaveRequest request, TimeseriesSaveResult result);
 
     void pushRequestToQueue(AttributesSaveRequest request, List<Long> result);
+
+    void onTelemetryMsg(CalculatedFieldTelemetryMsgProto msg, TbCallback callback);
+
+    void onLinkedTelemetryMsg(CalculatedFieldLinkedTelemetryMsgProto linkedMsg, TbCallback callback);
 
 //    void pushEntityUpdateMsg(TransportProtos.CalculatedFieldEntityUpdateMsgProto proto, TbCallback callback);
 
