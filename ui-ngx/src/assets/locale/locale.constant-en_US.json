@@ -1003,6 +1003,12 @@
             "all-messages": "Save all debug events during time limit."
         }
     },
+    "calculated-fields": {
+        "expression": "Expression",
+        "no-found": "No calculated fields found",
+        "list": "{ count, plural, =1 {One calculated field} other {List of # calculated fields} }",
+        "selected-fields": "{ count, plural, =1 {1 calculated field} other {# calculated fields} } selected"
+    },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
         "html-message": "You have unsaved changes.<br/>Are you sure you want to leave this page?",
@@ -1027,6 +1033,8 @@
         "city-max-length": "Specified city should be less than 256"
     },
     "common": {
+        "name": "Name",
+        "type": "Type",
         "username": "Username",
         "password": "Password",
         "enter-username": "Enter username",
@@ -2427,6 +2435,8 @@
         "type-current-tenant": "Current Tenant",
         "type-current-user": "Current User",
         "type-current-user-owner": "Current User Owner",
+        "type-calculated-field": "Calculated Field",
+        "type-calculated-fields": "Calculated Fields",
         "type-widgets-bundle": "Widgets bundle",
         "type-widgets-bundles": "Widgets bundles",
         "list-of-widgets-bundles": "{ count, plural, =1 {One widgets bundle} other {List of # widget bundles} }",

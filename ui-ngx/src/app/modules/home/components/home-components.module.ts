@@ -183,6 +183,8 @@ import {
 } from '@home/components/dashboard-page/layout/select-dashboard-breakpoint.component';
 import { EntityChipsComponent } from '@home/components/entity/entity-chips.component';
 import { DashboardViewComponent } from '@home/components/dashboard-view/dashboard-view.component';
+import { CalculatedFieldsTableComponent } from '@home/components/calculated-fields/calculated-fields-table.component';
+import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 
 @NgModule({
   declarations:
@@ -326,7 +328,8 @@ import { DashboardViewComponent } from '@home/components/dashboard-view/dashboar
       RateLimitsDetailsDialogComponent,
       SendNotificationButtonComponent,
       EntityChipsComponent,
-      DashboardViewComponent
+      DashboardViewComponent,
+      CalculatedFieldsTableComponent,
     ],
   imports: [
     CommonModule,
@@ -463,11 +466,13 @@ import { DashboardViewComponent } from '@home/components/dashboard-view/dashboar
     RateLimitsDetailsDialogComponent,
     SendNotificationButtonComponent,
     EntityChipsComponent,
-    DashboardViewComponent
+    DashboardViewComponent,
+    CalculatedFieldsTableComponent,
   ],
   providers: [
     WidgetComponentService,
     CustomDialogService,
+    DurationLeftPipe,
     {provide: EMBED_DASHBOARD_DIALOG_TOKEN, useValue: EmbedDashboardDialogComponent},
     {provide: COMPLEX_FILTER_PREDICATE_DIALOG_COMPONENT_TOKEN, useValue: ComplexFilterPredicateDialogComponent},
     {provide: DASHBOARD_PAGE_COMPONENT_TOKEN, useValue: DashboardPageComponent},
