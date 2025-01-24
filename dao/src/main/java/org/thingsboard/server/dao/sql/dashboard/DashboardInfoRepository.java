@@ -87,11 +87,11 @@ public interface DashboardInfoRepository extends JpaRepository<DashboardInfoEnti
     )
     List<DashboardInfoEntity> findByImageLink(@Param("imageLink") String imageLink, @Param("lmt") int lmt);
 
-    @Query(value = "SELECT * FROM dashboard_info_view d WHERE d.tenant_id = :tenantId and d.configuration::text ILIKE CONCAT('%', :link, '%') limit :lmt",
+    @Query(value = "SELECT * FROM dashboard d WHERE d.tenant_id = :tenantId and d.configuration::text ILIKE CONCAT('%', :link, '%') limit :lmt",
             nativeQuery = true)
     List<DashboardInfoEntity> findDashboardInfosByTenantIdAndResourceLink(@Param("tenantId") UUID tenantId, @Param("link") String link, @Param("lmt") int lmt);
 
-    @Query(value = "SELECT * FROM dashboard_info_view d WHERE d.configuration::text ILIKE CONCAT('%', :link, '%') limit :lmt",
+    @Query(value = "SELECT * FROM dashboard d WHERE d.configuration::text ILIKE CONCAT('%', :link, '%') limit :lmt",
             nativeQuery = true)
     List<DashboardInfoEntity> findDashboardInfosByResourceLink(@Param("link") String link, @Param("lmt") int lmt);
 }
