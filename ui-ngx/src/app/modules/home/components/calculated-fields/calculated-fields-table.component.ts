@@ -47,14 +47,23 @@ import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 })
 export class CalculatedFieldsTableComponent implements OnInit {
 
-  @Input() entityId: EntityId;
+  @Input()
+  set entityId(entityId: EntityId) {
+    if (this.entityIdValue !== entityId) {
+      this.entityIdValue = entityId;
+      this.entitiesTable.resetSortAndFilter(this.activeValue);
+      if (!this.activeValue) {
+        this.hasInitialized = true;
+      }
+    }
+  }
 
   @Input()
   set active(active: boolean) {
     if (this.activeValue !== active) {
       this.activeValue = active;
-      if (this.activeValue && this.dirtyValue) {
-        this.dirtyValue = false;
+      if (this.activeValue && this.hasInitialized) {
+        this.hasInitialized = false;
         this.entitiesTable.updateData();
       }
     }
@@ -65,7 +74,8 @@ export class CalculatedFieldsTableComponent implements OnInit {
   calculatedFieldsTableConfig: CalculatedFieldsTableConfig;
 
   private activeValue = false;
-  private dirtyValue = false;
+  private hasInitialized = false;
+  private entityIdValue: EntityId;
 
   constructor(private calculatedFieldsService: CalculatedFieldsService,
               private entityService: EntityService,
@@ -83,7 +93,7 @@ export class CalculatedFieldsTableComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.dirtyValue = !this.activeValue;
+    this.hasInitialized = !this.activeValue;
 
     this.calculatedFieldsTableConfig = new CalculatedFieldsTableConfig(
       this.calculatedFieldsService,
@@ -91,7 +101,7 @@ export class CalculatedFieldsTableComponent implements OnInit {
       this.dialogService,
       this.translate,
       this.dialog,
-      this.entityId,
+      this.entityIdValue,
       this.store,
       this.viewContainerRef,
       this.overlay,

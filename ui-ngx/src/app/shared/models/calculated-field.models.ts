@@ -17,13 +17,10 @@ import { EntityDebugSettings, HasTenantId, HasVersion } from '@shared/models/ent
 import { BaseData } from '@shared/models/base-data';
 import { CalculatedFieldId } from '@shared/models/id/calculated-field-id';
 
-export interface CalculatedField extends BaseData<CalculatedFieldId>, HasVersion, HasTenantId {
-  entityId: string;
+export interface CalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasTenantId {
   type: CalculatedFieldType;
-  name: string;
   debugSettings?: EntityDebugSettings;
   externalId?: string;
-  createdTime?: number;
   configuration: CalculatedFieldConfiguration;
 }
 
