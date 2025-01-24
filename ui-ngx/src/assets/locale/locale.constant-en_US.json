@@ -1004,7 +1004,6 @@
         }
     },
     "calculated-fields": {
-        "label": "Calculated fields",
         "expression": "Expression",
         "no-found": "No calculated fields found",
         "list": "{ count, plural, =1 {One calculated field} other {List of # calculated fields} }",
@@ -2436,6 +2435,8 @@
         "type-current-tenant": "Current Tenant",
         "type-current-user": "Current User",
         "type-current-user-owner": "Current User Owner",
+        "type-calculated-field": "Calculated Field",
+        "type-calculated-fields": "Calculated Fields",
         "type-widgets-bundle": "Widgets bundle",
         "type-widgets-bundles": "Widgets bundles",
         "list-of-widgets-bundles": "{ count, plural, =1 {One widgets bundle} other {List of # widget bundles} }",

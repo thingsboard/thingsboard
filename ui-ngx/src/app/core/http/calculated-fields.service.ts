@@ -19,6 +19,7 @@ import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable, of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageData } from '@shared/models/page/page-data';
+import { CalculatedField } from '@shared/models/calculated-field.models';
 
 @Injectable({
   providedIn: 'root'
@@ -30,7 +31,11 @@ export class CalculatedFieldsService {
     {
       name: 'Calculated Field 1',
       type: 'Simple',
-      expression: '1 + 2',
+      configuration: {
+        expression: '1 + 2',
+        type: 'SIMPLE',
+      },
+      entityId: '1',
       id: {
         id: '1',
       }
@@ -38,23 +43,27 @@ export class CalculatedFieldsService {
     {
       name: 'Calculated Field 2',
       type: 'Script',
-      expression: '${power}',
+      entityId: '2',
+      configuration: {
+        expression: '${power}',
+        type: 'SIMPLE',
+      },
       id: {
         id: '2',
       }
     }
-  ];
+  ] as any[];
 
   constructor(
     private http: HttpClient
   ) { }
 
-  public getCalculatedField(calculatedFieldId: string, config?: RequestConfig): Observable<any> {
+  public getCalculatedField(calculatedFieldId: string, config?: RequestConfig): Observable<CalculatedField> {
     return of(this.fieldsMock[0]);
     // return this.http.get<any>(`/api/calculated-field/${calculatedFieldId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public saveCalculatedField(calculatedField: any, config?: RequestConfig): Observable<any> {
+  public saveCalculatedField(calculatedField: any, config?: RequestConfig): Observable<CalculatedField> {
     return of(this.fieldsMock[1]);
     // return this.http.post<any>('/api/calculated-field', calculatedField, defaultHttpOptionsFromConfig(config));
   }
@@ -65,7 +74,7 @@ export class CalculatedFieldsService {
   }
 
   public getCalculatedFields(query: any,
-                   config?: RequestConfig): Observable<PageData<any>> {
+                   config?: RequestConfig): Observable<PageData<CalculatedField>> {
     return of({
       data: this.fieldsMock,
       totalPages: 1,

@@ -33,7 +33,7 @@
   </tb-attribute-table>
 </mat-tab>
 <mat-tab *ngIf="entity"
-         label="{{ 'calculated-fields.label' | translate }}" #calculatedFieldsTab="matTab">
+         label="{{ 'entity.type-calculated-fields' | translate }}" #calculatedFieldsTab="matTab">
   <tb-calculated-fields-table [active]="calculatedFieldsTab.isActive" [entityId]="entity.id"/>
 </mat-tab>
 <mat-tab *ngIf="entity"

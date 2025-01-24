@@ -39,8 +39,9 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { EntityDebugSettingsPanelComponent } from '@home/components/entity/debug/entity-debug-settings-panel.component';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { catchError, switchMap } from 'rxjs/operators';
+import { CalculatedField } from '@shared/models/calculated-field.models';
 
-export class CalculatedFieldsTableConfig extends EntityTableConfig<any, TimePageLink> {
+export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField, TimePageLink> {
 
   readonly calculatedFieldsDebugPerTenantLimitsConfiguration =
     getCurrentAuthState(this.store)['calculatedFieldsDebugPerTenantLimitsConfiguration'] || '1:1';
@@ -62,31 +63,31 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<any, TimePage
               private destroyRef: DestroyRef,
   ) {
     super();
-    this.tableTitle = this.translate.instant('calculated-fields.label');
+    this.tableTitle = this.translate.instant('entity.type-calculated-fields');
     this.detailsPanelEnabled = false;
     this.selectionEnabled = true;
     this.searchEnabled = true;
     this.addEnabled = true;
     this.entitiesDeleteEnabled = true;
     this.actionsColumnTitle = '';
-    this.entityType = EntityType.CALCULATED_FIELDS;
-    this.entityTranslations = entityTypeTranslations.get(EntityType.CALCULATED_FIELDS);
+    this.entityType = EntityType.CALCULATED_FIELD;
+    this.entityTranslations = entityTypeTranslations.get(EntityType.CALCULATED_FIELD);
 
     this.entitiesFetchFunction = pageLink => this.fetchCalculatedFields(pageLink);
 
     this.defaultSortOrder = {property: 'name', direction: Direction.DESC};
 
     this.columns.push(
-      new EntityTableColumn<any>('name', 'common.name', '33%'));
+      new EntityTableColumn<CalculatedField>('name', 'common.name', '33%'));
     this.columns.push(
-      new EntityTableColumn<any>('type', 'common.type', '50px'));
+      new EntityTableColumn<CalculatedField>('type', 'common.type', '50px'));
     this.columns.push(
-      new EntityTableColumn<any>('expression', 'calculated-fields.expression', '50%'));
+      new EntityTableColumn<CalculatedField>('expression', 'calculated-fields.expression', '50%', entity => entity.configuration.expression));
 
     this.cellActionDescriptors.push(
       {
         name: '',
-        nameFunction: (entity) => this.getDebugConfigLabel(entity?.debugSettings),
+        nameFunction: entity => this.getDebugConfigLabel(entity?.debugSettings),
         icon: 'mdi:bug',
         isEnabled: () => true,
         iconFunction: ({ debugSettings }) => this.isDebugActive(debugSettings?.allEnabledUntil) || debugSettings?.failuresEnabled ? 'mdi:bug' : 'mdi:bug-outline',
@@ -102,11 +103,11 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<any, TimePage
     );
   }
 
-  fetchCalculatedFields(pageLink: TimePageLink): Observable<PageData<any>> {
+  fetchCalculatedFields(pageLink: TimePageLink): Observable<PageData<CalculatedField>> {
     return this.calculatedFieldsService.getCalculatedFields(pageLink);
   }
 
-  onOpenDebugConfig($event: Event, { debugSettings = {}, id }: any): void {
+  onOpenDebugConfig($event: Event, { debugSettings = {}, id }: CalculatedField): void {
     const { renderer, viewContainerRef } = this.getTable();
     if ($event) {
       $event.stopPropagation();

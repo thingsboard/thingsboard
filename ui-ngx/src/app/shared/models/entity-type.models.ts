@@ -50,7 +50,7 @@ export enum EntityType {
   DOMAIN = 'DOMAIN',
   MOBILE_APP_BUNDLE = 'MOBILE_APP_BUNDLE',
   MOBILE_APP = 'MOBILE_APP',
-  CALCULATED_FIELDS = 'CALCULATED_FIELDS',
+  CALCULATED_FIELD = 'CALCULATED_FIELD',
 }
 
 export enum AliasEntityType {
@@ -481,10 +481,10 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       }
     ],
     [
-      EntityType.CALCULATED_FIELDS,
+      EntityType.CALCULATED_FIELD,
       {
-        type: 'calculated-fields.label',
-        typePlural: 'calculated-fields.label',
+        type: 'entity.type-calculated-field',
+        typePlural: 'entity.type-calculated-fields',
         list: 'calculated-fields.list',
         add: 'action.add',
         noEntities: 'calculated-fields.no-found',
