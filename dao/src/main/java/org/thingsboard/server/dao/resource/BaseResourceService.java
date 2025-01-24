@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.TbResourceDeleteResult;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TbResourceInfoFilter;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -48,6 +49,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.dao.ResourceContainerDao;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -85,6 +88,10 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     protected final TbResourceDao resourceDao;
     protected final TbResourceInfoDao resourceInfoDao;
     protected final ResourceDataValidator resourceValidator;
+    @Autowired
+    private List<Dao<?>> daos;
+    protected static final int MAX_ENTITIES_TO_FIND = 10;
+
     @Autowired @Lazy
     private ImageService imageService;
 
@@ -318,18 +325,46 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     @Override
-    public void deleteResource(TenantId tenantId, TbResourceId resourceId, boolean force) {
+    public TbResourceDeleteResult deleteResource(TenantId tenantId, TbResourceId resourceId, boolean force) {
         log.trace("Executing deleteResource [{}] [{}]", tenantId, resourceId);
         Validator.validateId(resourceId, id -> INCORRECT_RESOURCE_ID + id);
         TbResourceInfo resource = findResourceInfoById(tenantId, resourceId);
+        boolean success = true;
+        var result = TbResourceDeleteResult.builder();
+
         if (resource == null) {
-            return;
+            success = false;
+            return result.success(success)
+                    .build();
         }
+
         if (!force) {
-            resourceValidator.validateDelete(tenantId, resource);
+            if(resource.getResourceType() == ResourceType.JS_MODULE) {
+                var link = resource.getLink();
+                Map<String, List<? extends HasId<?>>> affectedEntities = new HashMap<>();
+
+                for (Dao<?> dao : daos) {
+                    if (dao instanceof ResourceContainerDao<?> libraryDao) {
+
+                        var entities = tenantId.isSysTenantId()
+                                ? libraryDao.findByResourceLink(link, MAX_ENTITIES_TO_FIND)
+                                : libraryDao.findByTenantIdAndResourceLink(tenantId, link, MAX_ENTITIES_TO_FIND);
+
+                        if (!entities.isEmpty()) {
+                            success = false;
+                            affectedEntities.put(dao.getEntityType().name(), entities);
+                            result.references(affectedEntities);
+                        }
+                    }
+                }
+            }
         }
-        resourceDao.removeById(tenantId, resourceId.getId());
-        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entity(resource).entityId(resourceId).build());
+        if(success) {
+            resourceDao.removeById(tenantId, resourceId.getId());
+            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entity(resource).entityId(resourceId).build());
+        }
+
+        return result.success(success).build();
     }
 
     @Override
@@ -666,7 +701,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
 
         @Override
         protected void removeEntity(TenantId tenantId, TbResourceId resourceId) {
-            deleteResource(tenantId, resourceId);
+            deleteResource(tenantId, resourceId, true);
         }
     };
 

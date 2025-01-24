@@ -75,8 +75,6 @@ import static org.thingsboard.server.common.data.StringUtils.isNotEmpty;
 @Slf4j
 public class BaseImageService extends BaseResourceService implements ImageService {
 
-    private static final int MAX_ENTITIES_TO_FIND = 10;
-
     public static Map<String, String> DASHBOARD_BASE64_MAPPING = new HashMap<>();
     public static Map<String, String> WIDGET_TYPE_BASE64_MAPPING = new HashMap<>();
 
@@ -311,7 +309,8 @@ public class BaseImageService extends BaseResourceService implements ImageServic
             }
         }
         if (success) {
-            deleteResource(tenantId, imageId, force);
+            success = deleteResource(tenantId, imageId, force)
+                    .isSuccess();
         }
         return result.success(success).build();
     }
