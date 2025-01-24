@@ -38,7 +38,6 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.event.ErrorEvent;
 import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.LifecycleEvent;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -698,42 +697,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 __ -> callback.onSuccess(),
                 t -> {
                     log.warn("[{}] Failed to process device inactivity message for device [{}]", tenantId.getId(), deviceId.getId(), t);
-                    callback.onFailure(t);
-                });
-    }
-
-    private void forwardToCalculatedFieldService(TransportProtos.CalculatedFieldMsgProto calculatedFieldMsg, TbCallback callback) {
-        var tenantId = toTenantId(calculatedFieldMsg.getTenantIdMSB(), calculatedFieldMsg.getTenantIdLSB());
-        var calculatedFieldId = new CalculatedFieldId(new UUID(calculatedFieldMsg.getCalculatedFieldIdMSB(), calculatedFieldMsg.getCalculatedFieldIdLSB()));
-        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onCalculatedFieldMsg(calculatedFieldMsg, callback));
-        DonAsynchron.withCallback(future,
-                __ -> callback.onSuccess(),
-                t -> {
-                    log.warn("[{}] Failed to process calculated field message for calculated field [{}]", tenantId.getId(), calculatedFieldId.getId(), t);
-                    callback.onFailure(t);
-                });
-    }
-
-    private void forwardToCalculatedFieldService(TransportProtos.EntityProfileUpdateMsgProto profileUpdateMsg, TbCallback callback) {
-        var tenantId = toTenantId(profileUpdateMsg.getTenantIdMSB(), profileUpdateMsg.getTenantIdLSB());
-        var entityId = EntityIdFactory.getByTypeAndUuid(profileUpdateMsg.getEntityType(), new UUID(profileUpdateMsg.getEntityIdMSB(), profileUpdateMsg.getEntityIdLSB()));
-        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onEntityProfileChangedMsg(profileUpdateMsg, callback));
-        DonAsynchron.withCallback(future,
-                __ -> callback.onSuccess(),
-                t -> {
-                    log.warn("[{}] Failed to process entity profile updated message for entity [{}]", tenantId.getId(), entityId.getId(), t);
-                    callback.onFailure(t);
-                });
-    }
-
-    private void forwardToCalculatedFieldService(TransportProtos.ProfileEntityMsgProto profileEntityMsgProto, TbCallback callback) {
-        var tenantId = toTenantId(profileEntityMsgProto.getTenantIdMSB(), profileEntityMsgProto.getTenantIdLSB());
-        var entityId = EntityIdFactory.getByTypeAndUuid(profileEntityMsgProto.getEntityType(), new UUID(profileEntityMsgProto.getEntityIdMSB(), profileEntityMsgProto.getEntityIdLSB()));
-        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onProfileEntityMsg(profileEntityMsgProto, callback));
-        DonAsynchron.withCallback(future,
-                __ -> callback.onSuccess(),
-                t -> {
-                    log.warn("[{}] Failed to process profile entity message for entityId [{}]", tenantId.getId(), entityId.getId(), t);
                     callback.onFailure(t);
                 });
     }

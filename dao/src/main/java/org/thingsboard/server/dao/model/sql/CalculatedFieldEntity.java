@@ -26,6 +26,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -45,6 +46,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_T
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_TENANT_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_TYPE;
 import static org.thingsboard.server.dao.model.ModelConstants.CALCULATED_FIELD_VERSION;
+import static org.thingsboard.server.dao.model.ModelConstants.DEBUG_SETTINGS;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -77,6 +79,9 @@ public class CalculatedFieldEntity extends BaseSqlEntity<CalculatedField> implem
     @Column(name = CALCULATED_FIELD_VERSION)
     private Long version;
 
+    @Column(name = DEBUG_SETTINGS)
+    private String debugSettings;
+
     @Column(name = CALCULATED_FIELD_EXTERNAL_ID)
     private UUID externalId;
 
@@ -95,6 +100,7 @@ public class CalculatedFieldEntity extends BaseSqlEntity<CalculatedField> implem
         this.configurationVersion = calculatedField.getConfigurationVersion();
         this.configuration = JacksonUtil.valueToTree(calculatedField.getConfiguration());
         this.version = calculatedField.getVersion();
+        this.debugSettings = JacksonUtil.toString(calculatedField.getDebugSettings());
         if (calculatedField.getExternalId() != null) {
             this.externalId = calculatedField.getExternalId().getId();
         }
@@ -111,6 +117,7 @@ public class CalculatedFieldEntity extends BaseSqlEntity<CalculatedField> implem
         calculatedField.setConfigurationVersion(configurationVersion);
         calculatedField.setConfiguration(JacksonUtil.treeToValue(configuration, CalculatedFieldConfiguration.class));
         calculatedField.setVersion(version);
+        calculatedField.setDebugSettings(JacksonUtil.fromString(debugSettings, DebugSettings.class));
         if (externalId != null) {
             calculatedField.setExternalId(new CalculatedFieldId(externalId));
         }

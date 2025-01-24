@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.service.cf;
 
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityUpdateMsgProto;
+import org.thingsboard.server.gen.transport.TransportProtos.ComponentLifecycleMsgProto;
 import org.thingsboard.server.service.cf.telemetry.CalculatedFieldTelemetryUpdateRequest;
 
 public interface CalculatedFieldExecutionService {
@@ -30,18 +32,18 @@ public interface CalculatedFieldExecutionService {
      */
     void pushRequestToQueue(TimeseriesSaveRequest request, TimeseriesSaveResult result);
 
+    void pushRequestToQueue(AttributesSaveRequest request);
+
 //    void pushEntityUpdateMsg(TransportProtos.CalculatedFieldEntityUpdateMsgProto proto, TbCallback callback);
 
     /*  ===================================================== */
 
-    void onCalculatedFieldMsg(TransportProtos.CalculatedFieldMsgProto proto, TbCallback callback);
+    void onCalculatedFieldLifecycleMsg(ComponentLifecycleMsgProto proto, TbCallback callback);
 
     void onTelemetryUpdate(CalculatedFieldTelemetryUpdateRequest calculatedFieldTelemetryUpdateRequest);
 
-    void onTelemetryUpdateMsg(TransportProtos.TelemetryUpdateMsgProto proto);
+//    void onTelemetryUpdateMsg(TransportProtos.TelemetryUpdateMsgProto proto);
 
-    void onEntityProfileChangedMsg(TransportProtos.EntityProfileUpdateMsgProto proto, TbCallback callback);
-
-    void onProfileEntityMsg(TransportProtos.ProfileEntityMsgProto proto, TbCallback callback);
+    void onEntityUpdateMsg(CalculatedFieldEntityUpdateMsgProto proto, TbCallback callback);
 
 }

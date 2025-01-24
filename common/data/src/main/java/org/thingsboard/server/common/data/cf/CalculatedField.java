@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.cf;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -22,11 +24,13 @@ import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.HasDebugSettings;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -36,7 +40,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class CalculatedField extends BaseData<CalculatedFieldId> implements HasName, HasTenantId, HasVersion, ExportableEntity<CalculatedFieldId> {
+public class CalculatedField extends BaseData<CalculatedFieldId> implements HasName, HasTenantId, HasVersion, ExportableEntity<CalculatedFieldId>, HasDebugSettings {
 
     private static final long serialVersionUID = 4491966747773381420L;
 
@@ -50,6 +54,11 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
     @Length(fieldName = "name")
     @Schema(description = "User defined name of the calculated field.")
     private String name;
+    @Deprecated
+    @Schema(description = "Enable/disable debug. ", example = "false", deprecated = true)
+    private boolean debugMode;
+    @Schema(description = "Debug settings object.")
+    private DebugSettings debugSettings;
     @Schema(description = "Version of calculated field configuration.", example = "0")
     private int configurationVersion;
     @Schema(implementation = SimpleCalculatedFieldConfiguration.class)
@@ -107,6 +116,18 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
                 .append(", createdTime=").append(createdTime)
                 .append(", id=").append(id).append(']')
                 .toString();
+    }
+
+    // Getter is ignored for serialization
+    @JsonIgnore
+    public boolean isDebugMode() {
+        return debugMode;
+    }
+
+    // Setter is annotated for deserialization
+    @JsonSetter
+    public void setDebugMode(boolean debugMode) {
+        this.debugMode = debugMode;
     }
 
 }

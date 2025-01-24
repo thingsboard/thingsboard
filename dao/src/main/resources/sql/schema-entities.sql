@@ -934,6 +934,7 @@ CREATE TABLE IF NOT EXISTS calculated_field (
     configuration_version int DEFAULT 0,
     configuration varchar(1000000),
     version BIGINT DEFAULT 1,
+    debug_settings varchar(1024),
     external_id UUID,
     CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, name),
     CONSTRAINT calculated_field_external_id_unq_key UNIQUE (tenant_id, external_id)
@@ -949,3 +950,19 @@ CREATE TABLE IF NOT EXISTS calculated_field_link (
     configuration varchar(10000),
     CONSTRAINT fk_calculated_field_id FOREIGN KEY (calculated_field_id) REFERENCES calculated_field(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS cf_debug_event (
+    id uuid NOT NULL,
+    tenant_id uuid NOT NULL ,
+    ts bigint NOT NULL,
+    entity_id uuid NOT NULL,
+    service_id varchar,
+    cf_id uuid NOT NULL,
+    e_entity_id uuid,
+    e_entity_type varchar,
+    e_msg_id uuid,
+    e_msg_type varchar,
+    e_args varchar,
+    e_result varchar,
+    e_error varchar
+) PARTITION BY RANGE (ts);

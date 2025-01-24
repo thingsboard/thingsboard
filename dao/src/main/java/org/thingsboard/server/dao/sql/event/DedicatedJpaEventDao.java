@@ -36,10 +36,11 @@ public class DedicatedJpaEventDao extends JpaBaseEventDao {
                                 RuleNodeDebugEventRepository ruleNodeDebugEventRepository,
                                 RuleChainDebugEventRepository ruleChainDebugEventRepository,
                                 ScheduledLogExecutorComponent logExecutor,
-                                StatsFactory statsFactory) {
+                                StatsFactory statsFactory,
+                                CalculatedFieldDebugEventRepository cfDebugEventRepository) {
         super(partitionConfiguration, partitioningRepository, lcEventRepository, statsEventRepository,
                 errorEventRepository, eventInsertRepository, ruleNodeDebugEventRepository,
-                ruleChainDebugEventRepository, logExecutor, statsFactory);
+                ruleChainDebugEventRepository, logExecutor, statsFactory, cfDebugEventRepository);
     }
 
 }
