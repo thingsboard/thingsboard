@@ -1,0 +1,584 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="400" height="200" fill="none" version="1.1" viewBox="0 0 400 200"><tb:metadata xmlns=""><![CDATA[{
+  "title": "HP Voltage stabilizer",
+  "description": "Voltage stabilizer with various states.",
+  "searchTags": [
+    "power",
+    "energy",
+    "protection"
+  ],
+  "widgetSizeX": 2,
+  "widgetSizeY": 1,
+  "tags": [
+    {
+      "tag": "background",
+      "stateRenderFunction": "var color = ctx.properties.stoppedColor;\nif (ctx.values.operatingMode === 1) {\n    color = ctx.properties.runningColor;\n} else if (ctx.values.operatingMode === 2) {\n    color = ctx.properties.bypassColor;\n}\nelement.attr({fill: color});",
+      "actions": null
+    },
+    {
+      "tag": "clickArea",
+      "stateRenderFunction": null,
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'click');"
+        }
+      }
+    },
+    {
+      "tag": "critical",
+      "stateRenderFunction": "element.attr({fill: ctx.properties.criticalColor});\nif (ctx.values.critical) {\n    element.show();\n} else {\n    element.hide();\n}\n\nvar elementCriticalAnimation = element.remember('criticalAnimation');\nvar criticalAnimation = ctx.values.critical && ctx.values.criticalAnimation;\n\nif (elementCriticalAnimation !== criticalAnimation) {\n    element.remember('criticalAnimation', criticalAnimation);\n    if (criticalAnimation) {\n        ctx.api.cssAnimate(element, 500).attr({opacity: 0.15}).loop(0, true);\n    } else {\n        ctx.api.resetCssAnimation(element);\n    }\n}\n\n",
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'criticalClick');"
+        }
+      }
+    },
+    {
+      "tag": "in-label",
+      "stateRenderFunction": "if (ctx.properties.showInputLabel) {\n    element.show();\n    ctx.api.font(element, ctx.properties.inputLabelFont, ctx.properties.inputLabelColor);\n    ctx.api.text(element, ctx.properties.inputLabel);\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
+      "tag": "in-value",
+      "stateRenderFunction": "if (ctx.values.operatingMode === 1) {\n    element.show();\n    ctx.api.font(element, ctx.properties.inputValutFont, ctx.properties.inputValueColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.inputVoltage, 0, null, 0));\n} else {\n    element.hide();\n}\n",
+      "actions": null
+    },
+    {
+      "tag": "in-value-box",
+      "stateRenderFunction": "var color = ctx.properties.stoppedColor;\nif (ctx.values.operatingMode === 1) {\n    color = ctx.properties.inputValueBoxBackground;\n} else if (ctx.values.operatingMode === 2) {\n    color = ctx.properties.bypassColor;\n}\nelement.attr({fill: color});",
+      "actions": null
+    },
+    {
+      "tag": "out-label",
+      "stateRenderFunction": "if (ctx.properties.showOutputLabel) {\n    element.show();\n    ctx.api.font(element, ctx.properties.outputLabelFont, ctx.properties.outputLabelColor);\n    ctx.api.text(element, ctx.properties.outputLabel);\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
+      "tag": "out-value",
+      "stateRenderFunction": "if (ctx.values.operatingMode === 1) {\n    element.show();\n    ctx.api.font(element, ctx.properties.outputValueFont, ctx.properties.outputValueColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.outputVoltage, 0, null, 0));\n} else {\n    element.hide();\n}\n",
+      "actions": null
+    },
+    {
+      "tag": "out-value-box",
+      "stateRenderFunction": "var color = ctx.properties.stoppedColor;\nif (ctx.values.operatingMode === 1) {\n    color = ctx.properties.outputValueBoxBackground;\n} else if (ctx.values.operatingMode === 2) {\n    color = ctx.properties.bypassColor;\n}\nelement.attr({fill: color});",
+      "actions": null
+    },
+    {
+      "tag": "warning",
+      "stateRenderFunction": "element.attr({fill: ctx.properties.warningColor});\nvar warning = ctx.values.warning && !(ctx.values.warning && ctx.values.critical)\nif (warning) {\n    element.show();\n} else {\n    element.hide();\n}\n\nvar elementCriticalAnimation = element.remember('criticalAnimation');\nvar criticalAnimation = warning && ctx.values.criticalAnimation;\n\nif (elementCriticalAnimation !== criticalAnimation) {\n    element.remember('criticalAnimation', criticalAnimation);\n    if (criticalAnimation) {\n        ctx.api.cssAnimate(element, 500).attr({opacity: 0.15}).loop(0, true);\n    } else {\n        ctx.api.resetCssAnimation(element);\n    }\n}\n",
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'warningClick');"
+        }
+      }
+    }
+  ],
+  "behavior": [
+    {
+      "id": "operatingMode",
+      "name": "{i18n:scada.symbol.operating-mode}",
+      "hint": "{i18n:scada.symbol.operating-mode-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "INTEGER",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": {
+        "action": "GET_ATTRIBUTE",
+        "defaultValue": null,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "operatingMode"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": null,
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "inputVoltage",
+      "name": "{i18n:scada.symbol.input-voltage}",
+      "hint": "{i18n:scada.symbol.input-voltage-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "DOUBLE",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": {
+        "action": "GET_TIME_SERIES",
+        "defaultValue": null,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "inputVoltage"
+        },
+        "getAlarmStatus": {
+          "severityList": null,
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "outputVoltage",
+      "name": "{i18n:scada.symbol.output-voltage}",
+      "hint": "{i18n:scada.symbol.output-voltage-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "DOUBLE",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": {
+        "action": "GET_TIME_SERIES",
+        "defaultValue": null,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "outputVoltage"
+        },
+        "getAlarmStatus": {
+          "severityList": null,
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "warning",
+      "name": "{i18n:scada.symbol.warning}",
+      "hint": "{i18n:scada.symbol.warning-state-hint}",
+      "group": "{i18n:scada.symbol.warning-state}",
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.warning}",
+      "defaultGetValueSettings": {
+        "action": "GET_ALARM_STATUS",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": [
+            "MAJOR",
+            "MINOR",
+            "WARNING",
+            "INDETERMINATE"
+          ],
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "warningClick",
+      "name": "{i18n:scada.symbol.warning-click}",
+      "hint": "{i18n:scada.symbol.on-click-hint}",
+      "group": "{i18n:scada.symbol.warning-state}",
+      "type": "widgetAction",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "targetDashboardStateId": null,
+        "openRightLayout": false,
+        "setEntityId": false,
+        "stateEntityParamName": null
+      }
+    },
+    {
+      "id": "critical",
+      "name": "{i18n:scada.symbol.critical}",
+      "hint": "{i18n:scada.symbol.critical-state-hint}",
+      "group": "{i18n:scada.symbol.critical-state}",
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.critical}",
+      "defaultGetValueSettings": {
+        "action": "GET_ALARM_STATUS",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": [
+            "CRITICAL"
+          ],
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "criticalClick",
+      "name": "{i18n:scada.symbol.critical-click}",
+      "hint": "{i18n:scada.symbol.on-click-hint}",
+      "group": "{i18n:scada.symbol.critical-state}",
+      "type": "widgetAction",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "targetDashboardStateId": null,
+        "openRightLayout": false,
+        "setEntityId": false,
+        "stateEntityParamName": null
+      }
+    },
+    {
+      "id": "criticalAnimation",
+      "name": "{i18n:scada.symbol.warning-critical-state-animation}",
+      "hint": "{i18n:scada.symbol.warning-critical-state-animation-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.animation}",
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "key": "state",
+          "scope": null
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "compareToValue": true,
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "click",
+      "name": "{i18n:scada.symbol.on-click}",
+      "hint": "{i18n:scada.symbol.on-click-hint}",
+      "group": null,
+      "type": "widgetAction",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "targetDashboardStateId": null,
+        "openRightLayout": false,
+        "setEntityId": false,
+        "stateEntityParamName": null
+      }
+    }
+  ],
+  "properties": [
+    {
+      "id": "runningColor",
+      "name": "{i18n:scada.symbol.colors}",
+      "type": "color",
+      "default": "#FFFFFF",
+      "subLabel": "{i18n:scada.symbol.running}",
+      "divider": true,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "bypassColor",
+      "name": "{i18n:scada.symbol.colors}",
+      "type": "color",
+      "default": "#DEDEDE",
+      "subLabel": "{i18n:scada.symbol.bypass-mode}",
+      "divider": true,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "stoppedColor",
+      "name": "{i18n:scada.symbol.colors}",
+      "type": "color",
+      "default": "#666666",
+      "subLabel": "{i18n:scada.symbol.stopped}",
+      "divider": false,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "warningColor",
+      "name": "{i18n:scada.symbol.alarm-colors}",
+      "type": "color",
+      "default": "#FAA405",
+      "subLabel": "{i18n:scada.symbol.warning}",
+      "divider": true,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "criticalColor",
+      "name": "{i18n:scada.symbol.alarm-colors}",
+      "type": "color",
+      "default": "#D12730",
+      "subLabel": "{i18n:scada.symbol.critical}",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "showInputLabel",
+      "name": "{i18n:scada.symbol.label}",
+      "group": "{i18n:scada.symbol.input-voltage}",
+      "type": "switch",
+      "default": true,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "inputLabel",
+      "name": "{i18n:scada.symbol.label}",
+      "group": "{i18n:scada.symbol.input-voltage}",
+      "type": "text",
+      "default": "in",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "inputLabelFont",
+      "name": "{i18n:scada.symbol.label}",
+      "group": "{i18n:scada.symbol.input-voltage}",
+      "type": "font",
+      "default": {
+        "size": 36,
+        "sizeUnit": "px",
+        "family": "Roboto",
+        "weight": "normal",
+        "style": "normal"
+      },
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "inputLabelColor",
+      "name": "{i18n:scada.symbol.label}",
+      "group": "{i18n:scada.symbol.input-voltage}",
+      "type": "color",
+      "default": "#000",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "inputValutFont",
+      "name": "{i18n:scada.symbol.value}",
+      "group": "{i18n:scada.symbol.input-voltage}",
+      "type": "font",
+      "default": {
+        "size": 44,
+        "sizeUnit": "px",
+        "family": "Roboto",
+        "weight": "normal",
+        "style": "normal"
+      },
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "inputValueColor",
+      "name": "{i18n:scada.symbol.value}",
+      "group": "{i18n:scada.symbol.input-voltage}",
+      "type": "color",
+      "default": "#002878",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "inputValueBoxBackground",
+      "name": "{i18n:scada.symbol.value-box-background}",
+      "group": "{i18n:scada.symbol.input-voltage}",
+      "type": "color",
+      "default": "#DEDEDE",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "showOutputLabel",
+      "name": "{i18n:scada.symbol.label}",
+      "group": "{i18n:scada.symbol.output-voltage}",
+      "type": "switch",
+      "default": true,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "outputLabel",
+      "name": "{i18n:scada.symbol.label}",
+      "group": "{i18n:scada.symbol.output-voltage}",
+      "type": "text",
+      "default": "out",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "outputLabelFont",
+      "name": "{i18n:scada.symbol.label}",
+      "group": "{i18n:scada.symbol.output-voltage}",
+      "type": "font",
+      "default": {
+        "size": 36,
+        "sizeUnit": "px",
+        "family": "Roboto",
+        "weight": "normal",
+        "style": "normal"
+      },
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "outputLabelColor",
+      "name": "{i18n:scada.symbol.label}",
+      "group": "{i18n:scada.symbol.output-voltage}",
+      "type": "color",
+      "default": "#000",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "outputValueFont",
+      "name": "{i18n:scada.symbol.value}",
+      "group": "{i18n:scada.symbol.output-voltage}",
+      "type": "font",
+      "default": {
+        "size": 44,
+        "sizeUnit": "px",
+        "family": "Roboto",
+        "weight": "normal",
+        "style": "normal"
+      },
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "outputValueColor",
+      "name": "{i18n:scada.symbol.value}",
+      "group": "{i18n:scada.symbol.output-voltage}",
+      "type": "color",
+      "default": "#002878",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "outputValueBoxBackground",
+      "name": "{i18n:scada.symbol.value-box-background}",
+      "group": "{i18n:scada.symbol.output-voltage}",
+      "type": "color",
+      "default": "#DEDEDE",
+      "disabled": false,
+      "visible": true
+    }
+  ]
+}]]></tb:metadata>
+<rect width="400" height="200" fill="#fff" tb:tag="background"/><rect x="1" y="1" width="398" height="198" stroke="#000" stroke-opacity=".87" stroke-width="2"/><rect x="213" y="81" width="126" height="78" rx="1" fill="#dedede" stroke="#000" stroke-opacity=".87" stroke-width="2" tb:tag="out-value-box"/><text x="275.76855" y="136.65625" fill="#002878" font-family="Roboto" font-size="44px" font-weight="400" text-anchor="middle" tb:tag="out-value" xml:space="default"><tspan dominant-baseline="start">220</tspan></text><rect x="61" y="81" width="126" height="78" rx="1" fill="#dedede" stroke="#000" stroke-opacity=".87" stroke-width="2" tb:tag="in-value-box"/><text x="123.76855" y="136.65625" fill="#002878" font-family="Roboto" font-size="44px" font-weight="400" text-anchor="middle" tb:tag="in-value" xml:space="default"><tspan dominant-baseline="start">230</tspan></text><text x="123.29346" y="57.832031" fill="#000000" font-family="Roboto" font-size="34px" font-weight="400" text-anchor="middle" tb:tag="in-label" xml:space="default"><tspan dominant-baseline="start">in</tspan></text><text x="275.96484" y="55.873047" fill="#000000" font-family="Roboto" font-size="34px" font-weight="400" text-anchor="middle" tb:tag="out-label" xml:space="default"><tspan dominant-baseline="start">out</tspan></text><path d="m134.53 0s-134.53 0-134.53 33.5v164.18c0 1.3256 3.5818 2.3202 8 2.3202h384c4.418 0 8-0.9946 8-2.3202v-164.18c0-33.5-132.14-33.5-132.14-33.5h-67.858zm134.14 40.6c-2.5774 0-4.6666 0.6268-4.6666 1.4v150.2c0 0.7732 2.0894 1.4 4.6666 1.4h29.332c2.5774 0 4.6666-0.6268 4.6666-1.4v-150.2c0-0.7732-2.0894-1.4-4.6666-1.4z" fill="#000" fill-opacity="0" style="stroke-width:.70711" tb:tag="clickArea"/><g fill="#d12730" style="display: none;" tb:tag="critical">
+  <rect width="84" height="84" rx="4" fill="#fff" style=""/>
+  <rect width="84" height="84" rx="4" style=""/>
+  <rect x="2" y="2" width="80" height="80" rx="2" stroke="#000" stroke-opacity=".87" stroke-width="4" style=""/>
+  <path d="m44.559 27.562-0.4688 20.059h-4.0234l-0.4883-20.059zm-5.1172 26.211c0-0.7161 0.2344-1.3151 0.7031-1.7968 0.4818-0.4948 1.1459-0.7422 1.9922-0.7422 0.8334 0 1.4909 0.2474 1.9727 0.7422 0.4817 0.4817 0.7226 1.0807 0.7226 1.7968 0 0.6901-0.2409 1.2826-0.7226 1.7774-0.4818 0.4818-1.1393 0.7226-1.9727 0.7226-0.8463 0-1.5104-0.2408-1.9922-0.7226-0.4687-0.4948-0.7031-1.0873-0.7031-1.7774z" fill="#000" fill-opacity=".87" style=""/>
+ </g><g fill="#faa405" style="display: none;" tb:tag="warning">
+  <path d="m35.955 2.2112c1.4741-2.9482 5.6813-2.9482 7.1554 0l35.528 71.056c1.3298 2.6596-0.6042 5.7889-3.5777 5.7889h-71.056c-2.9735 0-4.9075-3.1292-3.5777-5.7889z" fill="#fff" style=""/>
+  <path d="m35.955 2.2112c1.4741-2.9482 5.6813-2.9482 7.1554 0l35.528 71.056c1.3298 2.6596-0.6042 5.7889-3.5777 5.7889h-71.056c-2.9735 0-4.9075-3.1292-3.5777-5.7889z" style=""/>
+  <path d="m37.72 3.1061c0.7371-1.4741 2.8407-1.4741 3.5778-1e-5l35.528 71.056c0.6649 1.3298-0.3021 2.8944-1.7888 2.8944h-71.056c-1.4868 0-2.4538-1.5646-1.7889-2.8944z" stroke="#000" stroke-opacity=".87" stroke-width="4" style=""/>
+  <path d="m42.092 32.618-0.4688 20.059h-4.0234l-0.4883-20.059zm-5.1172 26.211c0-0.7161 0.2344-1.3151 0.7031-1.7968 0.4818-0.4948 1.1459-0.7422 1.9922-0.7422 0.8334 0 1.4909 0.2474 1.9727 0.7422 0.4817 0.4817 0.7226 1.0807 0.7226 1.7968 0 0.6901-0.2409 1.2826-0.7226 1.7774-0.4818 0.4818-1.1393 0.7226-1.9727 0.7226-0.8463 0-1.5104-0.2408-1.9922-0.7226-0.4687-0.4948-0.7031-1.0873-0.7031-1.7774z" fill="#000" fill-opacity=".87" style=""/>
+ </g>
+</svg>
