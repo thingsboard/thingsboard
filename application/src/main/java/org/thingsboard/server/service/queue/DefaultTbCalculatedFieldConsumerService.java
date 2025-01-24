@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.queue;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import jakarta.annotation.PostConstruct;
@@ -24,13 +25,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.QueueConfig;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
@@ -157,8 +162,12 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
 
     @Override
     protected void handleNotification(UUID id, TbProtoQueueMsg<ToCalculatedFieldNotificationMsg> msg, TbCallback callback) {
-        ToCalculatedFieldNotificationMsg notification = msg.getValue();
-
+        ToCalculatedFieldNotificationMsg toCfNotification = msg.getValue();
+        if (toCfNotification.hasComponentLifecycle()) {
+            forwardToCalculatedFieldService(toCfNotification.getComponentLifecycle(), callback);
+        } else if (toCfNotification.hasEntityUpdateMsg()) {
+            forwardToCalculatedFieldService(toCfNotification.getEntityUpdateMsg(), callback);
+        }
         callback.onSuccess();
     }
 
@@ -184,41 +193,29 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
 //        }
 //    }
 //
-//    private void forwardToCalculatedFieldService(TransportProtos.CalculatedFieldMsgProto calculatedFieldMsg, TbCallback callback) {
-//        var tenantId = toTenantId(calculatedFieldMsg.getTenantIdMSB(), calculatedFieldMsg.getTenantIdLSB());
-//        var calculatedFieldId = new CalculatedFieldId(new UUID(calculatedFieldMsg.getCalculatedFieldIdMSB(), calculatedFieldMsg.getCalculatedFieldIdLSB()));
-//        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onCalculatedFieldMsg(calculatedFieldMsg, callback));
-//        DonAsynchron.withCallback(future,
-//                __ -> callback.onSuccess(),
-//                t -> {
-//                    log.warn("[{}] Failed to process calculated field message for calculated field [{}]", tenantId.getId(), calculatedFieldId.getId(), t);
-//                    callback.onFailure(t);
-//                });
-//    }
-//
-//    private void forwardToCalculatedFieldService(TransportProtos.EntityProfileUpdateMsgProto profileUpdateMsg, TbCallback callback) {
-//        var tenantId = toTenantId(profileUpdateMsg.getTenantIdMSB(), profileUpdateMsg.getTenantIdLSB());
-//        var entityId = EntityIdFactory.getByTypeAndUuid(profileUpdateMsg.getEntityType(), new UUID(profileUpdateMsg.getEntityIdMSB(), profileUpdateMsg.getEntityIdLSB()));
-//        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onEntityProfileChangedMsg(profileUpdateMsg, callback));
-//        DonAsynchron.withCallback(future,
-//                __ -> callback.onSuccess(),
-//                t -> {
-//                    log.warn("[{}] Failed to process entity profile updated message for entity [{}]", tenantId.getId(), entityId.getId(), t);
-//                    callback.onFailure(t);
-//                });
-//    }
-//
-//    private void forwardToCalculatedFieldService(TransportProtos.ProfileEntityMsgProto profileEntityMsgProto, TbCallback callback) {
-//        var tenantId = toTenantId(profileEntityMsgProto.getTenantIdMSB(), profileEntityMsgProto.getTenantIdLSB());
-//        var entityId = EntityIdFactory.getByTypeAndUuid(profileEntityMsgProto.getEntityType(), new UUID(profileEntityMsgProto.getEntityIdMSB(), profileEntityMsgProto.getEntityIdLSB()));
-//        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onProfileEntityMsg(profileEntityMsgProto, callback));
-//        DonAsynchron.withCallback(future,
-//                __ -> callback.onSuccess(),
-//                t -> {
-//                    log.warn("[{}] Failed to process profile entity message for entityId [{}]", tenantId.getId(), entityId.getId(), t);
-//                    callback.onFailure(t);
-//                });
-//    }
+    private void forwardToCalculatedFieldService(TransportProtos.ComponentLifecycleMsgProto msg, TbCallback callback) {
+        var tenantId = toTenantId(msg.getTenantIdMSB(), msg.getTenantIdLSB());
+        var calculatedFieldId = new CalculatedFieldId(new UUID(msg.getEntityIdMSB(), msg.getEntityIdLSB()));
+        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onCalculatedFieldLifecycleMsg(msg, callback));
+        DonAsynchron.withCallback(future,
+                __ -> callback.onSuccess(),
+                t -> {
+                    log.warn("[{}] Failed to process calculated field message for calculated field [{}]", tenantId.getId(), calculatedFieldId.getId(), t);
+                    callback.onFailure(t);
+                });
+    }
+
+    private void forwardToCalculatedFieldService(TransportProtos.CalculatedFieldEntityUpdateMsgProto msg, TbCallback callback) {
+        var tenantId = toTenantId(msg.getTenantIdMSB(), msg.getTenantIdLSB());
+        var entityId = EntityIdFactory.getByTypeAndUuid(msg.getEntityType(), new UUID(msg.getEntityIdMSB(), msg.getEntityIdLSB()));
+        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onEntityUpdateMsg(msg, callback));
+        DonAsynchron.withCallback(future,
+                __ -> callback.onSuccess(),
+                t -> {
+                    log.warn("[{}] Failed to process entity updated message for entity [{}]", tenantId.getId(), entityId.getId(), t);
+                    callback.onFailure(t);
+                });
+    }
 
     private void throwNotHandled(Object msg, TbCallback callback) {
         log.warn("Message not handled: {}", msg);

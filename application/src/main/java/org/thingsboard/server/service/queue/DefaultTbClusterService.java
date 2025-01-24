@@ -69,8 +69,7 @@ import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.edge.EdgeService;
-import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ComponentLifecycleMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceStateServiceMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.EdgeNotificationMsgProto;
@@ -80,6 +79,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.QueueDeleteMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.QueueUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ResourceDeleteMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ResourceUpdateMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeMsg;
@@ -109,7 +110,6 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.DataConstants.CF_QUEUE_NAME;
 import static org.thingsboard.server.common.util.ProtoUtils.toProto;
 import static org.thingsboard.server.queue.discovery.HashPartitionService.CALCULATED_FIELD_QUEUE_KEY;
 
@@ -343,6 +343,13 @@ public class DefaultTbClusterService implements TbClusterService {
     public void pushMsgToCalculatedFields(TenantId tenantId, EntityId entityId, ToCalculatedFieldMsg msg, TbQueueCallback callback) {
         TopicPartitionInfo tpi = partitionService.resolve(CALCULATED_FIELD_QUEUE_KEY, entityId);
         producerProvider.getCalculatedFieldsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), callback);
+        toCoreMsgs.incrementAndGet();
+    }
+
+    @Override
+    public void pushNotificationToCalculatedFields(TenantId tenantId, EntityId entityId, ToCalculatedFieldNotificationMsg msg, TbQueueCallback callback) {
+        TopicPartitionInfo tpi = partitionService.resolve(CALCULATED_FIELD_QUEUE_KEY, entityId);
+        producerProvider.getCalculatedFieldsNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), callback);
         toCoreMsgs.incrementAndGet();
     }
 
@@ -809,16 +816,23 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     private void sendCalculatedFieldEvent(TenantId tenantId, CalculatedFieldId calculatedFieldId, boolean added, boolean updated, boolean deleted) {
-        TransportProtos.CalculatedFieldMsgProto.Builder builder = TransportProtos.CalculatedFieldMsgProto.newBuilder();
+        ComponentLifecycleMsgProto.Builder builder = ComponentLifecycleMsgProto.newBuilder();
         builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
-        builder.setCalculatedFieldIdMSB(calculatedFieldId.getId().getMostSignificantBits());
-        builder.setCalculatedFieldIdLSB(calculatedFieldId.getId().getLeastSignificantBits());
-        builder.setAdded(added);
-        builder.setUpdated(updated);
-        builder.setDeleted(deleted);
-        TransportProtos.CalculatedFieldMsgProto msg = builder.build();
-        pushMsgToCore(tenantId, calculatedFieldId, ToCoreMsg.newBuilder().setCalculatedFieldMsg(msg).build(), null);
+        builder.setEntityType(TransportProtos.EntityTypeProto.CALCULATED_FIELD);
+        builder.setEntityIdMSB(calculatedFieldId.getId().getMostSignificantBits());
+        builder.setEntityIdLSB(calculatedFieldId.getId().getLeastSignificantBits());
+        TransportProtos.ComponentLifecycleEvent event;
+        if (added) {
+            event = TransportProtos.ComponentLifecycleEvent.CREATED;
+        } else if (updated) {
+            event = TransportProtos.ComponentLifecycleEvent.UPDATED;
+        } else {
+            event = TransportProtos.ComponentLifecycleEvent.DELETED;
+        }
+        builder.setEvent(event);
+
+        pushNotificationToCalculatedFields(tenantId, calculatedFieldId, ToCalculatedFieldNotificationMsg.newBuilder().setComponentLifecycle(builder).build(), null);
     }
 
     private void handleEntityProfileUpdatedEvent(TenantId tenantId, EntityId entityId, EntityId oldProfileId, EntityId newProfileId) {

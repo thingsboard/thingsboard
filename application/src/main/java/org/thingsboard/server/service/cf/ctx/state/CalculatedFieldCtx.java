@@ -17,6 +17,7 @@ package org.thingsboard.server.service.cf.ctx.state;
 
 import lombok.Data;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
@@ -27,6 +28,7 @@ import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.util.TbPair;
 
@@ -99,20 +101,35 @@ public class CalculatedFieldCtx {
         );
     }
 
+    public boolean matches(List<AttributeKvEntry> values, AttributeScope scope) {
+        return matchesAttributes(mainEntityArguments, values, scope);
+    }
+
+    public boolean linkMatches(EntityId entityId, List<AttributeKvEntry> values, AttributeScope scope) {
+        var map = linkedEntityArguments.get(entityId);
+        return map != null && matchesAttributes(map, values, scope);
+    }
+
     public boolean matches(List<TsKvEntry> values) {
-        return matches(mainEntityArguments, values);
+        return matchesTimeSeries(mainEntityArguments, values);
     }
 
     public boolean linkMatches(EntityId entityId, List<TsKvEntry> values) {
         var map = linkedEntityArguments.get(entityId);
-        if (map == null) {
-            return false;
-        } else {
-            return matches(map, values);
-        }
+        return map != null && matchesTimeSeries(map, values);
     }
 
-    private static boolean matches(Map<ReferencedEntityKey, String> argMap, List<TsKvEntry> values) {
+    private static boolean matchesAttributes(Map<ReferencedEntityKey, String> argMap, List<AttributeKvEntry> values, AttributeScope scope) {
+        for (AttributeKvEntry attrKv : values) {
+            ReferencedEntityKey attrKey = new ReferencedEntityKey(attrKv.getKey(), ArgumentType.ATTRIBUTE, scope);
+            if (argMap.containsKey(attrKey)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean matchesTimeSeries(Map<ReferencedEntityKey, String> argMap, List<TsKvEntry> values) {
         for (TsKvEntry tsKv : values) {
             ReferencedEntityKey latestKey = new ReferencedEntityKey(tsKv.getKey(), ArgumentType.TS_LATEST, null);
             if (argMap.containsKey(latestKey)) {
