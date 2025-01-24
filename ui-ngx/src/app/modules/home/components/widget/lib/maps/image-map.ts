@@ -15,6 +15,7 @@
 ///
 
 import {
+  calculateNewPointCoordinate,
   defaultImageMapSettings,
   defaultImageMapSourceSettings,
   ImageMapSettings,
@@ -22,12 +23,12 @@ import {
   ImageSourceType,
   loadImageWithAspect,
   MapZoomAction,
-  TbCircleData
+  TbCircleData, TbPolygonCoordinate, TbPolygonCoordinates, TbPolygonRawCoordinate, TbPolygonRawCoordinates
 } from '@home/components/widget/lib/maps/models/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DeepPartial } from '@shared/models/common';
 import { Observable, of, ReplaySubject, switchMap } from 'rxjs';
-import L, { LatLngBounds, LatLngLiteral, LatLngTuple } from 'leaflet';
+import L from 'leaflet';
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { catchError } from 'rxjs/operators';
@@ -115,38 +116,62 @@ export class TbImageMap extends TbMap<ImageMapSettings> {
     }
   }
 
-  protected fitBounds(_bounds: LatLngBounds) {}
+  protected fitBounds(_bounds: L.LatLngBounds) {}
 
-  public positionToLatLng(position: {x: number; y: number}): L.LatLng {
+  public locationDataToLatLng(position: {x: number; y: number}): L.LatLng {
     return this.pointToLatLng(
       position.x * this.width,
       position.y * this.height);
   }
 
-  public pointToLatLng(x: number, y: number): L.LatLng {
-    return L.CRS.Simple.pointToLatLng({ x, y } as L.PointExpression, this.maxZoom - 1);
+  public latLngToLocationData(position: L.LatLng): {x: number; y: number} {
+    if (!position) {
+      return {
+        x: null,
+        y: null
+      };
+    }
+    const point = this.latLngToPoint(position);
+    const posX = calculateNewPointCoordinate(point.x, this.width);
+    const posY = calculateNewPointCoordinate(point.y, this.height);
+    return {
+      x: posX,
+      y: posY
+    };
   }
 
-  private latLngToPoint(latLng: LatLngLiteral): L.Point {
-    return L.CRS.Simple.latLngToPoint(latLng, this.maxZoom - 1);
-  }
-
-  public toPolygonCoordinates(expression: (LatLngTuple | LatLngTuple[] | LatLngTuple[][])[]): any {
-    return (expression).map((el) => {
+  public polygonDataToCoordinates(expression: TbPolygonRawCoordinates): TbPolygonRawCoordinates {
+    return expression.map((el: TbPolygonRawCoordinate) => {
       if (!Array.isArray(el[0]) && !Array.isArray(el[1]) && el.length === 2) {
-        return this.pointToLatLng(
+        const latLng = this.pointToLatLng(
           el[0] * this.width,
           el[1] * this.height
         );
+        return [latLng.lat, latLng.lng] as TbPolygonRawCoordinate;
       } else if (Array.isArray(el) && el.length) {
-        return this.toPolygonCoordinates(el as LatLngTuple[] | LatLngTuple[][]);
+        return this.polygonDataToCoordinates(el as TbPolygonRawCoordinates) as TbPolygonRawCoordinate;
       } else {
         return null;
       }
     }).filter(el => !!el);
   }
 
-  public convertCircleData(circle: TbCircleData): TbCircleData {
+  public coordinatesToPolygonData(coordinates: TbPolygonCoordinates): TbPolygonRawCoordinates {
+    if (coordinates.length) {
+      return coordinates.map((point: TbPolygonCoordinate) => {
+        if (Array.isArray(point)) {
+          return this.coordinatesToPolygonData(point) as TbPolygonRawCoordinate;
+        } else {
+          const pos = this.latLngToPoint(point);
+          return [calculateNewPointCoordinate(pos.x, this.width), calculateNewPointCoordinate(pos.y, this.height)];
+        }
+      });
+    } else {
+      return [];
+    }
+  }
+
+  public circleDataToCoordinates(circle: TbCircleData): TbCircleData {
     const centerPoint = this.pointToLatLng(circle.latitude * this.width, circle.longitude * this.height);
     circle.latitude = centerPoint.lat;
     circle.longitude = centerPoint.lng;
@@ -154,8 +179,32 @@ export class TbImageMap extends TbMap<ImageMapSettings> {
     return circle;
   }
 
+  public coordinatesToCircleData(center: L.LatLng, radius: number): TbCircleData {
+    let circleData: TbCircleData = null;
+    if (center) {
+      const point = this.latLngToPoint(center);
+      const posX = calculateNewPointCoordinate(point.x, this.width);
+      const posY = calculateNewPointCoordinate(point.y, this.height);
+      const convertedRadius = calculateNewPointCoordinate(radius, this.width);
+      circleData = {
+        latitude: posX,
+        longitude: posY,
+        radius: convertedRadius
+      };
+    }
+    return circleData;
+  }
+
   public getAspect(): number {
     return this.imageLayerData.aspect;
+  }
+
+  private pointToLatLng(x: number, y: number): L.LatLng {
+    return L.CRS.Simple.pointToLatLng({ x, y } as L.PointExpression, this.maxZoom - 1);
+  }
+
+  private latLngToPoint(latLng: L.LatLngLiteral): L.Point {
+    return L.CRS.Simple.latLngToPoint(latLng, this.maxZoom - 1);
   }
 
   private doCreateMap(updateImage?: boolean) {

@@ -15,6 +15,9 @@
  */
 @import '../../../../../../../scss/constants';
 
+//$map-element-hover-color: #307FE5;
+$map-element-hover-color: rgba(0,0,0,0.56);
+
 .tb-map-layout {
   display: flex;
   width: 100%;
@@ -104,6 +107,30 @@
       &.tb-marker-div-icon {
         background: none;
         border: none;
+        &.tb-draggable {
+          cursor: move;
+        }
+        &.tb-hoverable {
+          svg {
+            transition: filter 0.2s;
+          }
+          &:hover {
+            svg {
+              filter: drop-shadow( 0 0 4px $map-element-hover-color);
+            }
+          }
+        }
+      }
+    }
+    img.leaflet-marker-icon, path {
+      &.tb-draggable {
+        cursor: move;
+      }
+      &.tb-hoverable {
+        transition: filter 0.2s;
+        &:hover {
+          filter: drop-shadow( 0 0 4px $map-element-hover-color);
+        }
       }
     }
     .tb-cluster-marker-container {

@@ -60,9 +60,10 @@ import { TbImageMap } from '@home/components/widget/lib/maps/image-map';
 
 class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, TbMarkersDataLayer, L.Marker> {
 
-  private location: L.LatLng;
   private marker: L.Marker;
   private labelOffset: L.PointTuple;
+  private iconClassList: string[];
+  private moving = false;
 
   constructor(data: FormattedData<TbMapDatasource>,
               dsData: FormattedData<TbMapDatasource>[],
@@ -72,8 +73,9 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
   }
 
   protected create(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.Marker {
-    this.location = this.dataLayer.extractLocation(data, dsData);
-    this.marker = L.marker(this.location, {
+    this.iconClassList = [];
+    const location = this.dataLayer.extractLocation(data, dsData);
+    this.marker = L.marker(location, {
       tbMarkerData: data
     });
 
@@ -96,26 +98,69 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
 
   protected doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
     this.marker.options.tbMarkerData = data;
-    this.updateMarkerPosition(data, dsData);
+    this.updateMarkerLocation(data, dsData);
     this.updateTooltip(data, dsData);
     this.updateMarkerIcon(data, dsData);
   }
 
   protected doInvalidateCoordinates(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
-    this.updateMarkerPosition(data, dsData);
+    this.updateMarkerLocation(data, dsData);
   }
 
-  private updateMarkerPosition(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
-    const position = this.dataLayer.extractLocation(data, dsData);
-    if (!this.marker.getLatLng().equals(position)) {
-      this.location = position;
-      this.marker.setLatLng(position);
+  protected addItemClass(clazz: string): void {
+    if (!this.iconClassList.includes(clazz)) {
+      this.iconClassList.push(clazz);
+      this.marker.options.icon.options.className = this.updateIconClasses(this.marker.options.icon.options.className);
+      if ((this.marker as any)._icon) {
+        L.DomUtil.addClass((this.marker as any)._icon, clazz);
+      }
+    }
+  }
+
+  protected removeItemClass(clazz: string): void {
+    const index = this.iconClassList.indexOf(clazz);
+    if (index !== -1) {
+      this.iconClassList.splice(index, 1);
+      this.marker.options.icon.options.className = this.updateIconClasses(this.marker.options.icon.options.className);
+      if ((this.marker as any)._icon) {
+        L.DomUtil.removeClass((this.marker as any)._icon, clazz);
+      }
+    }
+  }
+
+  protected enableDrag(): void {
+    this.marker.options.draggable = true;
+    this.marker.on('dragstart', () => {
+      this.moving = true;
+    });
+    this.marker.on('dragend', () => {
+      this.saveMarkerLocation();
+      this.moving = false;
+    });
+  }
+
+  protected disableDrag(): void {
+    this.marker.options.draggable = false;
+    this.marker.off('dragstart');
+    this.marker.off('dragend');
+  }
+
+  private saveMarkerLocation() {
+    const location = this.marker.getLatLng();
+    this.dataLayer.saveMarkerLocation(this.data, location);
+  }
+
+  private updateMarkerLocation(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
+    const location = this.dataLayer.extractLocation(data, dsData);
+    if (!this.marker.getLatLng().equals(location) && !this.moving) {
+      this.marker.setLatLng(location);
     }
   }
 
   private updateMarkerIcon(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
     this.dataLayer.markerIconProcessor.createMarkerIcon(data, dsData).subscribe(
       (iconInfo) => {
+        iconInfo.icon.options.className = this.updateIconClasses(iconInfo.icon.options.className);
         this.marker.setIcon(iconInfo.icon);
         const anchor = iconInfo.icon.options.iconAnchor;
         if (anchor && Array.isArray(anchor)) {
@@ -124,8 +169,22 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
           this.labelOffset = [0, -iconInfo.size[1] * this.dataLayer.markerOffset[1] + 10];
         }
         this.updateLabel(data, dsData);
+        this.editModeUpdated();
       }
     );
+  }
+
+  private updateIconClasses(className: string): string {
+    const classes: string[] = [];
+    if (className?.length) {
+      classes.push(...className.split(' '));
+    }
+    this.iconClassList.forEach(clazz => {
+      if (!classes.includes(clazz)) {
+        classes.push(clazz);
+      }
+    });
+    return classes.join(' ');
   }
 }
 
@@ -390,7 +449,7 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
   }
 
   protected isValidLayerData(layerData: FormattedData<TbMapDatasource>): boolean {
-    return !!this.extractPosition(layerData);
+    return !!this.extractLocationData(layerData);
   }
 
   protected createLayerItem(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): TbMarkerDataLayerItem {
@@ -412,13 +471,7 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
       removeOutsideVisibleBounds: this.settings.markerClustering?.lazyLoad,
       animate: this.settings.markerClustering?.zoomAnimation,
       chunkedLoading: this.settings.markerClustering?.chunkedLoad,
-      pmIgnore: true,
-      spiderLegPolylineOptions: {
-        pmIgnore: true
-      },
-      polygonOptions: {
-        pmIgnore: true
-      }
+      snapIgnore: !this.snappable
     };
     if (this.settings.markerClustering?.useClusterMarkerColorFunction) {
       markerClusterOptions.iconCreateFunction = (cluster) => {
@@ -463,7 +516,7 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
     return this.markersClusterContainer;
   }
 
-  private extractPosition(data: FormattedData<TbMapDatasource>):  {x: number; y: number} {
+  private extractLocationData(data: FormattedData<TbMapDatasource>):  {x: number; y: number} {
     if (data) {
       const xKeyVal = data[this.settings.xKey.label];
       const yKeyVal = data[this.settings.yKey.label];
@@ -524,15 +577,31 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
   }
 
   public extractLocation(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.LatLng {
-    let position = this.extractPosition(data);
-    if (position) {
+    let locationData = this.extractLocationData(data);
+    if (locationData) {
       if (this.map.type() === MapType.image && this.positionFunction) {
         const imageMap = this.map as TbImageMap;
-        position = this.positionFunction.execute(position.x, position.y, data, dsData, imageMap.getAspect()) || {x: 0, y: 0};
+        locationData = this.positionFunction.execute(locationData.x, locationData.y, data, dsData, imageMap.getAspect()) || {x: 0, y: 0};
       }
-      return this.map.positionToLatLng(position);
+      return this.map.locationDataToLatLng(locationData);
     } else {
       return null;
     }
   }
+
+  public saveMarkerLocation(data: FormattedData<TbMapDatasource>, position: L.LatLng): void {
+    const converted = this.map.latLngToLocationData(position);
+    const locationData = [
+      {
+        dataKey: this.settings.xKey,
+        value: converted.x
+      },
+      {
+        dataKey: this.settings.yKey,
+        value: converted.y
+      }
+    ];
+    this.map.saveItemData(data.$datasource, locationData).subscribe();
+  }
+
 }

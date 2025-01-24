@@ -17,6 +17,7 @@
 import {
   DataLayerColorSettings,
   DataLayerColorType,
+  DataLayerEditAction,
   DataLayerPatternSettings,
   DataLayerPatternType,
   DataLayerTooltipTrigger,
@@ -63,6 +64,7 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings, D extends 
     this.createEventListeners(data, dsData);
     try {
       this.dataLayer.getDataLayerContainer().addLayer(this.layer);
+      this.editModeUpdated();
     } catch (e) {
       console.warn(e);
     }
@@ -80,8 +82,44 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings, D extends 
 
   protected abstract createEventListeners(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void;
 
+  protected abstract addItemClass(clazz: string): void;
+
+  protected abstract removeItemClass(clazz: string): void;
+
+  protected abstract enableDrag(): void;
+
+  protected abstract disableDrag(): void;
+
+  protected enableEdit(): void {
+    if (this.dataLayer.isHoverable()) {
+      this.addItemClass('tb-hoverable');
+    }
+    if (this.dataLayer.isDragEnabled()) {
+      this.enableDrag();
+      this.addItemClass('tb-draggable');
+    }
+  }
+
+  protected disableEdit(): void {
+    if (this.dataLayer.isHoverable()) {
+      this.removeItemClass('tb-hoverable');
+    }
+    if (this.dataLayer.isDragEnabled()) {
+      this.disableDrag();
+      this.removeItemClass('tb-draggable');
+    }
+  }
+
   public invalidateCoordinates(): void {
     this.doInvalidateCoordinates(this.data, this.dataLayer.getMap().getData());
+  }
+
+  public editModeUpdated() {
+    if (this.dataLayer.isEditMode()) {
+      this.enableEdit();
+    } else {
+      this.disableEdit();
+    }
   }
 
   public update(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
@@ -245,6 +283,17 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
 
   protected enabled = true;
 
+  protected addEnabled = false;
+  protected dragEnabled = false;
+  protected editEnabled = false;
+  protected removeEnabled = false;
+
+  protected selectable = false;
+  protected hoverable = false;
+  protected snappable = false;
+
+  private editMode = false;
+
   public dataLayerLabelProcessor: DataLayerPatternProcessor;
   public dataLayerTooltipProcessor: DataLayerPatternProcessor;
 
@@ -256,10 +305,22 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
         this.groupsState[group] = true;
       });
     }
+
+    if (this.settings.edit?.enabledActions) {
+      this.addEnabled = this.settings.edit.enabledActions.includes(DataLayerEditAction.add);
+      this.dragEnabled = this.settings.edit.enabledActions.includes(DataLayerEditAction.move);
+      this.editEnabled = this.settings.edit.enabledActions.includes(DataLayerEditAction.edit);
+      this.removeEnabled = this.settings.edit.enabledActions.includes(DataLayerEditAction.remove);
+
+      this.selectable = this.removeEnabled || this.editEnabled;
+      this.hoverable = this.selectable || this.dragEnabled;
+    }
+
     this.dataLayerContainer = this.createDataLayerContainer();
     this.dataLayerLabelProcessor = this.settings.label.show ? new DataLayerPatternProcessor(this, this.settings.label) : null;
     this.dataLayerTooltipProcessor = this.settings.tooltip.show ? new DataLayerPatternProcessor(this, this.settings.tooltip): null;
     this.map.getMap().addLayer(this.dataLayerContainer);
+    this.enableEditMode();
   }
 
   public setup(): Observable<any> {
@@ -291,6 +352,38 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
     return this.enabled;
   }
 
+  public isEditMode(): boolean {
+    return this.editMode;
+  }
+
+  public isAddEnabled(): boolean {
+    return this.addEnabled;
+  }
+
+  public isDragEnabled(): boolean {
+    return this.dragEnabled;
+  }
+
+  public isEditEnabled(): boolean {
+    return this.editEnabled;
+  }
+
+  public isRemoveEnabled(): boolean {
+    return this.removeEnabled;
+  }
+
+  public isHoverable(): boolean {
+    return this.hoverable;
+  }
+
+  public isSelectable(): boolean {
+    return this.selectable;
+  }
+
+  public isSnappable(): boolean {
+    return this.snappable;
+  }
+
   public getGroups(): string[] {
     return this.settings.groups || [];
   }
@@ -303,6 +396,7 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
         this.enabled = enabled;
         if (this.enabled) {
           this.map.getMap().addLayer(this.dataLayerContainer);
+          this.updateItemsEditMode();
         } else {
           this.map.getMap().removeLayer(this.dataLayerContainer);
         }
@@ -350,7 +444,7 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
   }
 
   protected createDataLayerContainer(): L.FeatureGroup {
-    return L.featureGroup();
+    return L.featureGroup([], {snapIgnore: !this.snappable});
   }
 
   protected setupDatasource(datasource: TbMapDatasource): TbMapDatasource {
@@ -362,6 +456,24 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
 
   protected mapType(): MapType {
     return this.map.type();
+  }
+
+  public enableEditMode() {
+    if (!this.editMode) {
+      this.editMode = true;
+      this.updateItemsEditMode();
+    }
+  }
+
+  public disableEditMode() {
+    if (this.editMode) {
+      this.editMode = false;
+      this.updateItemsEditMode();
+    }
+  }
+
+  private updateItemsEditMode() {
+    this.layerItems.forEach(item => item.editModeUpdated());
   }
 
   public abstract dataLayerType(): MapDataLayerType;

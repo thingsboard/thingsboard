@@ -19,7 +19,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { guid, hashCode, isDefinedAndNotNull, isNotEmptyStr, isString, mergeDeep } from '@core/utils';
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { materialColors } from '@shared/models/material.models';
-import L from 'leaflet';
+import L, { LatLngExpression } from 'leaflet';
 import { TbFunction } from '@shared/models/js-function.models';
 import { Observable, Observer, of, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -89,11 +89,35 @@ export interface DataLayerTooltipSettings extends DataLayerPatternSettings {
   offsetY: number;
 }
 
+export enum DataLayerEditAction {
+  add = 'add',
+  edit = 'edit',
+  move = 'move',
+  remove = 'remove'
+}
+
+export const dataLayerEditActions = Object.keys(DataLayerEditAction) as DataLayerEditAction[];
+
+export const dataLayerEditActionTranslationMap = new Map<DataLayerEditAction, string>(
+  [
+    [DataLayerEditAction.add, 'widgets.maps.data-layer.action-add'],
+    [DataLayerEditAction.edit, 'widgets.maps.data-layer.action-edit'],
+    [DataLayerEditAction.move, 'widgets.maps.data-layer.action-move'],
+    [DataLayerEditAction.remove, 'widgets.maps.data-layer.action-remove']
+  ]
+);
+
+export interface DataLayerEditSettings {
+  enabledActions: DataLayerEditAction[];
+  snappable: boolean;
+}
+
 export interface MapDataLayerSettings extends MapDataSourceSettings {
   additionalDataKeys?: DataKey[];
   label: DataLayerPatternSettings;
   tooltip: DataLayerTooltipSettings;
   groups?: string[];
+  edit:  DataLayerEditSettings;
 }
 
 export const defaultBaseDataLayerSettings = (mapType: MapType): Partial<MapDataLayerSettings> => ({
@@ -112,6 +136,10 @@ export const defaultBaseDataLayerSettings = (mapType: MapType): Partial<MapDataL
     : '<b>${entityName}</b><br/><br/><b>X Pos:</b> ${xPos:2}<br/><b>Y Pos:</b> ${yPos:2}<br/><b>Temperature:</b> ${temperature} °C<br/><small>See tooltip settings for details</small>',
     offsetX: 0,
     offsetY: -1
+  },
+  edit: {
+    enabledActions: [],
+    snappable: false
   }
 })
 
@@ -864,10 +892,21 @@ export type ClusterMarkerColorFunction = (data: FormattedData<TbMapDatasource>[]
 export type MarkerPositionFunction = (origXPos: number, origYPos: number, data: FormattedData<TbMapDatasource>,
                                       dsData: FormattedData<TbMapDatasource>[], aspect: number) => { x: number, y: number };
 
+export type TbPolygonRawCoordinate = L.LatLngTuple | L.LatLngTuple[] | L.LatLngTuple[][];
+export type TbPolygonRawCoordinates = TbPolygonRawCoordinate[];
+export type TbPolyData = L.LatLngTuple[] | L.LatLngTuple[][] | L.LatLngTuple[][][];
+export type TbPolygonCoordinate = L.LatLng | L.LatLng[] | L.LatLng[][];
+export type TbPolygonCoordinates = TbPolygonCoordinate[];
+
 export interface TbCircleData {
   latitude: number;
   longitude: number;
   radius: number;
+}
+
+export type DataKeyValuePair = {
+  dataKey: DataKey;
+  value: any;
 }
 
 export const isJSON = (data: string): boolean => {
@@ -892,7 +931,7 @@ export const isValidLongitude = (longitude: any): boolean =>
 export const isValidLatLng = (latitude: any, longitude: any): boolean =>
   isValidLatitude(latitude) && isValidLongitude(longitude);
 
-export const isCutPolygon = (data): boolean => {
+export const isCutPolygon = (data: TbPolygonCoordinates | TbPolygonRawCoordinates): boolean => {
   return data.length > 1 && Array.isArray(data[0]) && (Array.isArray(data[0][0]) || data[0][0] instanceof L.LatLng);
 }
 
@@ -1068,4 +1107,32 @@ export const processTooltipTemplate = (template: string): string => {
   }
 
   return template;
+}
+
+export function calculateNewPointCoordinate(coordinate: number, imageSize: number): number {
+  let pointCoordinate = coordinate / imageSize;
+  if (pointCoordinate < 0) {
+    pointCoordinate = 0;
+  } else if (pointCoordinate > 1) {
+    pointCoordinate = 1;
+  }
+  return pointCoordinate;
+}
+
+export function checkLngLat(point: L.LatLng, southWest: L.LatLng, northEast: L.LatLng, offset = 0): L.LatLng {
+  const maxLngMap = northEast.lng - offset;
+  const minLngMap = southWest.lng + offset;
+  const maxLatMap = northEast.lat - offset;
+  const minLatMap = southWest.lat + offset;
+  if (point.lng > maxLngMap) {
+    point.lng = maxLngMap;
+  } else if (point.lng < minLngMap) {
+    point.lng = minLngMap;
+  }
+  if (point.lat > maxLatMap) {
+    point.lat = maxLatMap;
+  } else if (point.lat < minLatMap) {
+    point.lat = minLatMap;
+  }
+  return point;
 }

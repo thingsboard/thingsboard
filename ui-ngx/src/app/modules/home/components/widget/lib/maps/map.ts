@@ -17,17 +17,18 @@
 import {
   additionalMapDataSourcesToDatasources,
   BaseMapSettings,
+  DataKeyValuePair,
   MapActionHandler,
   MapType,
   mergeMapDatasources,
   parseCenterPosition,
   TbCircleData,
-  TbMapDatasource
+  TbMapDatasource, TbPolygonCoordinates, TbPolygonRawCoordinates
 } from '@home/components/widget/lib/maps/models/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { formattedDataFormDatasourceData, isDefinedAndNotNull, mergeDeepIgnoreArray } from '@core/utils';
 import { DeepPartial } from '@shared/models/common';
-import L, { LatLngBounds, LatLngTuple, LeafletMouseEvent, Projection } from 'leaflet';
+import L from 'leaflet';
 import { forkJoin, Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import '@home/components/widget/lib/maps/leaflet/leaflet-tb';
@@ -39,6 +40,9 @@ import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { TbMarkersDataLayer } from '@home/components/widget/lib/maps/data-layer/markers-data-layer';
 import { TbPolygonsDataLayer } from '@home/components/widget/lib/maps/data-layer/polygons-data-layer';
 import { TbCirclesDataLayer } from '@home/components/widget/lib/maps/data-layer/circles-data-layer';
+import { AttributeService } from '@core/http/attribute.service';
+import { AttributeData, AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
+import { EntityId } from '@shared/models/id/entity-id';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 
 export abstract class TbMap<S extends BaseMapSettings> {
@@ -49,8 +53,8 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected defaultCenterPosition: [number, number];
   protected ignoreUpdateBounds = false;
 
-  protected southWest = new L.LatLng(-Projection.SphericalMercator['MAX_LATITUDE'], -180);
-  protected northEast = new L.LatLng(Projection.SphericalMercator['MAX_LATITUDE'], 180);
+  protected southWest = new L.LatLng(-L.Projection.SphericalMercator['MAX_LATITUDE'], -180);
+  protected northEast = new L.LatLng(L.Projection.SphericalMercator['MAX_LATITUDE'], 180);
 
   protected dataLayers: TbMapDataLayer<any,any>[];
   protected dsData: FormattedData<TbMapDatasource>[];
@@ -128,6 +132,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
       this.map.panTo(this.defaultCenterPosition);
     }
     this.setupDataLayers();
+    this.setupEditMode();
     this.createdControlButtonTooltip();
   }
 
@@ -222,6 +227,13 @@ export abstract class TbMap<S extends BaseMapSettings> {
           );
         }
       );
+    }
+  }
+
+  private setupEditMode() {
+    const dragEnabled = this.dataLayers.some(dl => dl.isDragEnabled());
+    if (dragEnabled) {
+      //this.map.pm.enableGlobalDragMode();
     }
   }
 
@@ -326,7 +338,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   protected abstract onResize(): void;
 
-  protected abstract fitBounds(bounds: LatLngBounds): void;
+  protected abstract fitBounds(bounds: L.LatLngBounds): void;
 
   protected doSetupControls(): Observable<any> {
     return of(null);
@@ -375,7 +387,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   public markerClick(marker: L.Layer, datasource: TbMapDatasource): void {
     if (Object.keys(this.markerClickActions).length) {
-      marker.on('click', (event: LeafletMouseEvent) => {
+      marker.on('click', (event: L.LeafletMouseEvent) => {
         for (const action in this.markerClickActions) {
           this.markerClickActions[action](event.originalEvent, datasource);
         }
@@ -385,7 +397,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   public polygonClick(polygon: L.Layer, datasource: TbMapDatasource): void {
     if (Object.keys(this.polygonClickActions).length) {
-      polygon.on('click', (event: LeafletMouseEvent) => {
+      polygon.on('click', (event: L.LeafletMouseEvent) => {
         for (const action in this.polygonClickActions) {
           this.polygonClickActions[action](event.originalEvent, datasource);
         }
@@ -395,11 +407,55 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   public circleClick(circle: L.Layer, datasource: TbMapDatasource): void {
     if (Object.keys(this.circleClickActions).length) {
-      circle.on('click', (event: LeafletMouseEvent) => {
+      circle.on('click', (event: L.LeafletMouseEvent) => {
         for (const action in this.circleClickActions) {
           this.circleClickActions[action](event.originalEvent, datasource);
         }
       });
+    }
+  }
+
+  public saveItemData(datasource: TbMapDatasource, data: DataKeyValuePair[]): Observable<any> {
+    const attributeService = this.ctx.$injector.get(AttributeService);
+    const attributes: AttributeData[] = [];
+    const timeseries: AttributeData[] = [];
+    const entityId: EntityId = {
+      entityType: datasource.entityType,
+      id: datasource.entityId
+    };
+    data.forEach(pair => {
+      const key = pair.dataKey;
+      if (key.type === DataKeyType.attribute) {
+        attributes.push({
+          key: key.name,
+          value: pair.value
+        });
+      } else if (key.type === DataKeyType.timeseries) {
+        timeseries.push({
+          key: key.name,
+          value: pair.value
+        });
+      }
+    });
+    const observables: Observable<any>[] = [];
+    if (timeseries.length) {
+      observables.push(attributeService.saveEntityTimeseries(
+        entityId,
+        LatestTelemetry.LATEST_TELEMETRY,
+        timeseries
+      ));
+    }
+    if (attributes.length) {
+      observables.push(attributeService.saveEntityAttributes(
+        entityId,
+        AttributeScope.SERVER_SCOPE,
+        attributes
+      ));
+    }
+    if (observables.length) {
+      return forkJoin(observables);
+    } else {
+      return of(null);
     }
   }
 
@@ -415,10 +471,18 @@ export abstract class TbMap<S extends BaseMapSettings> {
     });
   }
 
-  public abstract positionToLatLng(position: {x: number; y: number}): L.LatLng;
+  public abstract locationDataToLatLng(position: {x: number; y: number}): L.LatLng;
 
-  public abstract toPolygonCoordinates(expression: (LatLngTuple | LatLngTuple[] | LatLngTuple[][])[]): any;
+  public abstract latLngToLocationData(position: L.LatLng): {x: number; y: number};
 
-  public abstract convertCircleData(circle: TbCircleData): TbCircleData;
+  public abstract polygonDataToCoordinates(coordinates: TbPolygonRawCoordinates): TbPolygonRawCoordinates;
+
+  public abstract coordinatesToPolygonData(coordinates: TbPolygonCoordinates): TbPolygonRawCoordinates;
+
+  public abstract circleDataToCoordinates(circle: TbCircleData): TbCircleData;
+
+  public abstract coordinatesToCircleData(center: L.LatLng, radius: number): TbCircleData;
+
+
 
 }

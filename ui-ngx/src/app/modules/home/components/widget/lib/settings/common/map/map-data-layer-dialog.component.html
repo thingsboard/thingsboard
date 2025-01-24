@@ -262,6 +262,22 @@
                             formControlName="groups">
       </tb-string-items-list>
     </div>
+    <div class="tb-form-panel" formGroupName="edit">
+      <div class="tb-form-panel-title">{{ dataLayerEditTitle | translate }}</div>
+      <div class="tb-form-row space-between column-lt-md">
+        <div translate>widgets.maps.data-layer.edit-instruments</div>
+        <mat-chip-listbox multiple formControlName="enabledActions">
+          <mat-chip-option *ngFor="let action of dataLayerEditActions" [value]="action">
+            {{ dataLayerEditActionTranslationMap.get(action) | translate }}
+          </mat-chip-option>
+        </mat-chip-listbox>
+      </div>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="snappable">
+          {{ 'widgets.maps.data-layer.enable-snapping' | translate }}
+        </mat-slide-toggle>
+      </div>
+    </div>
     <tb-marker-clustering-settings
       *ngIf="dataLayerType === 'markers'"
       formControlName="markerClustering">

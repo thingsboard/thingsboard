@@ -7664,6 +7664,12 @@
                 "tooltip-offset": "Tooltip offset",
                 "tooltip-offset-horizontal": "Horizontal",
                 "tooltip-offset-vertical": "Vertical",
+                "action-add": "Add",
+                "action-edit": "Edit",
+                "action-move": "Move",
+                "action-remove": "Remove",
+                "edit-instruments": "Instruments",
+                "enable-snapping": "Enable snapping to other vertices for precision drawing",
                 "marker": {
                     "latitude-key": "Latitude key",
                     "longitude-key": "Longitude key",
@@ -7709,7 +7715,8 @@
                         "lazy-load": "Use lazy load for adding markers",
                         "use-cluster-marker-color-function": "Use cluster markers color function",
                         "marker-color-function": "Marker color function"
-                    }
+                    },
+                    "edit": "Edit marker"
                 },
                 "polygon": {
                     "polygon-key": "Polygon key",
@@ -7717,7 +7724,8 @@
                     "no-polygons": "No polygons configured",
                     "add-polygon": "Add polygon",
                     "polygon-configuration": "Polygon configuration",
-                    "remove-polygon": "Remove polygon"
+                    "remove-polygon": "Remove polygon",
+                    "edit": "Edit polygon"
                 },
                 "circle": {
                     "circle-key": "Circle key",
@@ -7725,7 +7733,8 @@
                     "no-circles": "No circles configured",
                     "add-circle": "Add circle",
                     "circle-configuration": "Circle configuration",
-                    "remove-circle": "Remove circle"
+                    "remove-circle": "Remove circle",
+                    "edit": "Edit circle"
                 }
             },
             "select-entity": "Select entity",

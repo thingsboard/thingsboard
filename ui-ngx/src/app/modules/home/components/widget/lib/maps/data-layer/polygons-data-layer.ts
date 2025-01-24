@@ -18,7 +18,7 @@ import {
   defaultBasePolygonsDataLayerSettings,
   isCutPolygon, isJSON,
   PolygonsDataLayerSettings,
-  TbMapDatasource
+  TbMapDatasource, TbPolyData, TbPolygonCoordinates, TbPolygonRawCoordinates
 } from '@home/components/widget/lib/maps/models/map.models';
 import L from 'leaflet';
 import { FormattedData } from '@shared/models/widget.models';
@@ -33,6 +33,7 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
   private polygonContainer: L.FeatureGroup;
   private polygon: L.Polygon;
   private polygonStyle: L.PathOptions;
+  private editing = false;
 
   constructor(data: FormattedData<TbMapDatasource>,
               dsData: FormattedData<TbMapDatasource>[],
@@ -45,8 +46,9 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
     const polyData = this.dataLayer.extractPolygonCoordinates(data);
     const polyConstructor = isCutPolygon(polyData) || polyData.length !== 2 ? L.polygon : L.rectangle;
     this.polygonStyle = this.dataLayer.getShapeStyle(data, dsData);
-    this.polygon = polyConstructor(polyData, {
-      ...this.polygonStyle
+    this.polygon = polyConstructor(polyData as (TbPolygonRawCoordinates & L.LatLngTuple[]), {
+      ...this.polygonStyle,
+      snapIgnore: !this.dataLayer.isSnappable()
     });
 
     this.polygonContainer = L.featureGroup();
@@ -81,20 +83,69 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
     this.updatePolygonShape(data);
   }
 
+  protected addItemClass(clazz: string): void {
+    if ((this.polygon as any)._path) {
+      L.DomUtil.addClass((this.polygon as any)._path, clazz);
+    }
+  }
+
+  protected removeItemClass(clazz: string): void {
+    if ((this.polygon as any)._path) {
+      L.DomUtil.removeClass((this.polygon as any)._path, clazz);
+    }
+  }
+
+  protected enableDrag(): void {
+    this.polygon.pm.enableLayerDrag();
+    this.polygon.on('pm:dragstart', () => {
+      this.editing = true;
+    });
+    this.polygon.on('pm:dragend', () => {
+      this.savePolygonCoordinates();
+      this.editing = false;
+    });
+  }
+
+  protected disableDrag(): void {
+    this.polygon.pm.disableLayerDrag();
+    this.polygon.off('pm:dragstart');
+    this.polygon.off('pm:dragend');
+  }
+
+  private savePolygonCoordinates() {
+    let coordinates: TbPolygonCoordinates = this.polygon.getLatLngs();
+    if (coordinates.length === 1) {
+      coordinates = coordinates[0] as TbPolygonCoordinates;
+    }
+    if (this.polygon instanceof L.Rectangle && !isCutPolygon(coordinates)) {
+      const bounds = this.polygon.getBounds();
+      const boundsArray = [bounds.getNorthWest(), bounds.getNorthEast(), bounds.getSouthWest(), bounds.getSouthEast()];
+      if (coordinates.every(point => boundsArray.find(boundPoint => boundPoint.equals(point as L.LatLng)) !== undefined)) {
+        coordinates = [bounds.getNorthWest(), bounds.getSouthEast()];
+      }
+    }
+    this.dataLayer.savePolygonCoordinates(this.data, coordinates);
+  }
+
   private updatePolygonShape(data: FormattedData<TbMapDatasource>) {
-    const polyData = this.dataLayer.extractPolygonCoordinates(data);
+    if (this.editing) {
+      return;
+    }
+    const polyData = this.dataLayer.extractPolygonCoordinates(data) as TbPolyData;
     if (isCutPolygon(polyData) || polyData.length !== 2) {
       if (this.polygon instanceof L.Rectangle) {
         this.polygonContainer.removeLayer(this.polygon);
         this.polygon = L.polygon(polyData, {
-          ...this.polygonStyle
+          ...this.polygonStyle,
+          snapIgnore: !this.dataLayer.isSnappable()
         });
         this.polygon.addTo(this.polygonContainer);
+        this.editModeUpdated();
       } else {
         this.polygon.setLatLngs(polyData);
       }
     } else if (polyData.length === 2) {
-      const bounds = new L.LatLngBounds(polyData);
+      const bounds = new L.LatLngBounds(polyData as L.LatLngTuple[]);
       (this.polygon as L.Rectangle).setBounds(bounds);
     }
   }
@@ -134,11 +185,22 @@ export class TbPolygonsDataLayer extends TbShapesDataLayer<PolygonsDataLayerSett
     return new TbPolygonDataLayerItem(data, dsData, this.settings, this);
   }
 
-  public extractPolygonCoordinates(data: FormattedData<TbMapDatasource>) {
+  public extractPolygonCoordinates(data: FormattedData<TbMapDatasource>): TbPolygonRawCoordinates {
     let rawPolyData = data[this.settings.polygonKey.label];
     if (isString(rawPolyData)) {
       rawPolyData = JSON.parse(rawPolyData);
     }
-    return this.map.toPolygonCoordinates(rawPolyData);
+    return this.map.polygonDataToCoordinates(rawPolyData);
+  }
+
+  public savePolygonCoordinates(data: FormattedData<TbMapDatasource>, coordinates: TbPolygonCoordinates): void {
+    const converted = this.map.coordinatesToPolygonData(coordinates);
+    const polygonData = [
+      {
+        dataKey: this.settings.polygonKey,
+        value: converted
+      }
+    ];
+    this.map.saveItemData(data.$datasource, polygonData).subscribe();
   }
 }

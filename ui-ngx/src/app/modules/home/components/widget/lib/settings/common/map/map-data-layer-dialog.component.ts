@@ -18,10 +18,12 @@ import { Component, DestroyRef, Inject, ViewEncapsulation } from '@angular/core'
 import { DialogComponent } from '@shared/components/dialog.component';
 import {
   CirclesDataLayerSettings,
+  DataLayerEditAction, dataLayerEditActions,
+  dataLayerEditActionTranslationMap,
   defaultBaseMapDataLayerSettings,
   MapDataLayerSettings,
   MapDataLayerType,
-  MapType,
+  MapType, mapZoomActions, mapZoomActionTranslationMap,
   MarkersDataLayerSettings,
   MarkerType,
   PolygonsDataLayerSettings,
@@ -71,6 +73,10 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
   datasourceTypes: Array<DatasourceType> = [];
   datasourceTypesTranslations = datasourceTypeTranslationMap;
 
+  dataLayerEditTitle: string;
+  dataLayerEditActions: Array<DataLayerEditAction> = [];
+  dataLayerEditActionTranslationMap = dataLayerEditActionTranslationMap;
+
   dataLayerFormGroup: UntypedFormGroup;
 
   settings = this.data.settings;
@@ -111,13 +117,19 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
       additionalDataKeys: [this.settings.additionalDataKeys, []],
       label: [this.settings.label, []],
       tooltip: [this.settings.tooltip, []],
-      groups: [this.settings.groups, []]
+      groups: [this.settings.groups, []],
+      edit: this.fb.group({
+        enabledActions: [this.settings.edit?.enabledActions, []],
+        snappable: [this.settings.edit?.snappable, []]
+      })
     });
 
     switch (this.dataLayerType) {
       case 'markers':
-        const markersDataLayer = this.settings as MarkersDataLayerSettings;
         this.dialogTitle = 'widgets.maps.data-layer.marker.marker-configuration';
+        this.dataLayerEditTitle = 'widgets.maps.data-layer.marker.edit';
+        this.dataLayerEditActions = [DataLayerEditAction.add, DataLayerEditAction.move, DataLayerEditAction.remove];
+        const markersDataLayer = this.settings as MarkersDataLayerSettings;
         this.dataLayerFormGroup.addControl('xKey', this.fb.control(markersDataLayer.xKey, Validators.required));
         this.dataLayerFormGroup.addControl('yKey', this.fb.control(markersDataLayer.yKey, Validators.required))
         this.dataLayerFormGroup.addControl('markerType', this.fb.control(markersDataLayer.markerType, Validators.required));
@@ -138,17 +150,20 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         break;
       case 'polygons':
       case 'circles':
+        this.dataLayerEditActions = dataLayerEditActions;
         const shapeDataLayer = this.settings as ShapeDataLayerSettings;
         this.dataLayerFormGroup.addControl('fillColor', this.fb.control(shapeDataLayer.fillColor, Validators.required));
         this.dataLayerFormGroup.addControl('strokeColor', this.fb.control(shapeDataLayer.strokeColor, Validators.required));
         this.dataLayerFormGroup.addControl('strokeWeight', this.fb.control(shapeDataLayer.strokeWeight, [Validators.required, Validators.min(0)]));
         if (this.dataLayerType === 'polygons') {
-          const polygonsDataLayer = this.settings as PolygonsDataLayerSettings;
           this.dialogTitle = 'widgets.maps.data-layer.polygon.polygon-configuration';
+          this.dataLayerEditTitle = 'widgets.maps.data-layer.marker.edit';
+          const polygonsDataLayer = this.settings as PolygonsDataLayerSettings;
           this.dataLayerFormGroup.addControl('polygonKey', this.fb.control(polygonsDataLayer.polygonKey, Validators.required));
         } else {
-          const circlesDataLayer = this.settings as CirclesDataLayerSettings;
           this.dialogTitle = 'widgets.maps.data-layer.circle.circle-configuration';
+          this.dataLayerEditTitle = 'widgets.maps.data-layer.circle.edit';
+          const circlesDataLayer = this.settings as CirclesDataLayerSettings;
           this.dataLayerFormGroup.addControl('circleKey', this.fb.control(circlesDataLayer.circleKey, Validators.required));
         }
         break;
@@ -304,4 +319,6 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
   }
 
   protected readonly mapProvider = MapProviders;
+  protected readonly mapZoomActions = mapZoomActions;
+  protected readonly mapZoomActionTranslationMap = mapZoomActionTranslationMap;
 }

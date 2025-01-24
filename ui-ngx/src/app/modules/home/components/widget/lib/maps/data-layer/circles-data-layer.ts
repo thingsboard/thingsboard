@@ -31,6 +31,7 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
 
   private circle: L.Circle;
   private circleStyle: L.PathOptions;
+  private editing = false;
 
   constructor(data: FormattedData<TbMapDatasource>,
               dsData: FormattedData<TbMapDatasource>[],
@@ -45,7 +46,8 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
     this.circleStyle = this.dataLayer.getShapeStyle(data, dsData);
     this.circle = L.circle(center, {
       radius: circleData.radius,
-      ...this.circleStyle
+      ...this.circleStyle,
+      snapIgnore: !this.dataLayer.isSnappable()
     });
     this.updateLabel(data, dsData);
     return this.circle;
@@ -76,7 +78,45 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
     this.updateCircleShape(data);
   }
 
+  protected addItemClass(clazz: string): void {
+    if ((this.circle as any)._path) {
+      L.DomUtil.addClass((this.circle as any)._path, clazz);
+    }
+  }
+
+  protected removeItemClass(clazz: string): void {
+    if ((this.circle as any)._path) {
+      L.DomUtil.removeClass((this.circle as any)._path, clazz);
+    }
+  }
+
+  protected enableDrag(): void {
+    this.circle.pm.enableLayerDrag();
+    this.circle.on('pm:dragstart', () => {
+      this.editing = true;
+    });
+    this.circle.on('pm:dragend', () => {
+      this.saveCircleCoordinates();
+      this.editing = false;
+    });
+  }
+
+  protected disableDrag(): void {
+    this.circle.pm.disableLayerDrag();
+    this.circle.off('pm:dragstart');
+    this.circle.off('pm:dragend');
+  }
+
+  private saveCircleCoordinates() {
+    const center = this.circle.getLatLng();
+    const radius = this.circle.getRadius();
+    this.dataLayer.saveCircleCoordinates(this.data, center, radius);
+  }
+
   private updateCircleShape(data: FormattedData<TbMapDatasource>) {
+    if (this.editing) {
+      return;
+    }
     const circleData = this.dataLayer.extractCircleCoordinates(data);
     const center = new L.LatLng(circleData.latitude, circleData.longitude);
     if (!this.circle.getLatLng().equals(center)) {
@@ -117,13 +157,22 @@ export class TbCirclesDataLayer extends TbShapesDataLayer<CirclesDataLayerSettin
   }
 
   protected createLayerItem(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): TbDataLayerItem<CirclesDataLayerSettings, TbCirclesDataLayer> {
-    throw new TbCircleDataLayerItem(data, dsData, this.settings, this);
+    return new TbCircleDataLayerItem(data, dsData, this.settings, this);
   }
 
   public extractCircleCoordinates(data: FormattedData<TbMapDatasource>) {
     const circleData: TbCircleData = JSON.parse(data[this.settings.circleKey.label]);
-    return this.map.convertCircleData(circleData);
+    return this.map.circleDataToCoordinates(circleData);
   }
 
-
+  public saveCircleCoordinates(data: FormattedData<TbMapDatasource>, center: L.LatLng, radius: number): void {
+    const converted = this.map.coordinatesToCircleData(center, radius);
+    const circleData = [
+      {
+        dataKey: this.settings.circleKey,
+        value: converted
+      }
+    ];
+    this.map.saveItemData(data.$datasource, circleData).subscribe();
+  }
 }

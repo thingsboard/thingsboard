@@ -15,15 +15,22 @@
 ///
 
 import {
+  checkLngLat,
   DEFAULT_ZOOM_LEVEL,
   defaultGeoMapSettings,
-  GeoMapSettings, latLngPointToBounds,
-  MapZoomAction, TbCircleData
+  GeoMapSettings,
+  latLngPointToBounds,
+  MapZoomAction,
+  TbCircleData,
+  TbPolygonCoordinate,
+  TbPolygonCoordinates,
+  TbPolygonRawCoordinate,
+  TbPolygonRawCoordinates
 } from '@home/components/widget/lib/maps/models/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DeepPartial } from '@shared/models/common';
 import { forkJoin, Observable, of } from 'rxjs';
-import L, { LatLngBounds, LatLngTuple } from 'leaflet';
+import L from 'leaflet';
 import { map, tap } from 'rxjs/operators';
 import { TbMapLayer } from '@home/components/widget/lib/maps/map-layer';
 import { TbMap } from '@home/components/widget/lib/maps/map';
@@ -53,7 +60,7 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
 
   protected onResize(): void {}
 
-  protected fitBounds(bounds: LatLngBounds) {
+  protected fitBounds(bounds: L.LatLngBounds) {
     if (bounds.isValid()) {
       if (!this.settings.fitMapBounds && this.settings.defaultZoomLevel) {
         this.map.setZoom(this.settings.defaultZoomLevel, { animate: false });
@@ -115,27 +122,63 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
     );
   }
 
-  public positionToLatLng(position: {x: number; y: number}): L.LatLng {
+  public locationDataToLatLng(position: {x: number; y: number}): L.LatLng {
     return L.latLng(position.x, position.y) as L.LatLng;
   }
 
-  public toPolygonCoordinates(expression: (LatLngTuple | LatLngTuple[] | LatLngTuple[][])[]): any {
-    return (expression).map((el) => {
-      if (!Array.isArray(el[0]) && el.length === 2) {
+  public latLngToLocationData(position: L.LatLng): {x: number; y: number} {
+    position = position ? checkLngLat(position, this.southWest, this.northEast, 0) : {lat: null, lng: null} as L.LatLng;
+    return {
+      x: position.lat,
+      y: position.lng
+    }
+  }
+
+  public polygonDataToCoordinates(expression: TbPolygonRawCoordinates): TbPolygonRawCoordinates {
+    return (expression).map((el: TbPolygonRawCoordinate) => {
+      if (!Array.isArray(el[0]) && !Array.isArray(el[1]) && el.length === 2) {
         return el;
       } else if (Array.isArray(el) && el.length) {
-        return this.toPolygonCoordinates(el as LatLngTuple[] | LatLngTuple[][]);
+        return this.polygonDataToCoordinates(el as TbPolygonRawCoordinates) as TbPolygonRawCoordinate;
       } else {
         return null;
       }
     }).filter(el => !!el);
   }
 
-  public convertCircleData(circle: TbCircleData): TbCircleData {
+  public coordinatesToPolygonData(coordinates: TbPolygonCoordinates): TbPolygonRawCoordinates {
+    if (coordinates.length) {
+      return coordinates.map((point: TbPolygonCoordinate) => {
+        if (Array.isArray(point)) {
+          return this.coordinatesToPolygonData(point) as TbPolygonRawCoordinate;
+        } else {
+          const convertPoint = checkLngLat(point, this.southWest, this.northEast);
+          return [convertPoint.lat, convertPoint.lng];
+        }
+      });
+    }
+    return [];
+  }
+
+  public circleDataToCoordinates(circle: TbCircleData): TbCircleData {
     const centerPoint = latLngPointToBounds(new L.LatLng(circle.latitude, circle.longitude), this.southWest, this.northEast);
     circle.latitude = centerPoint.lat;
     circle.longitude = centerPoint.lng;
     return circle;
   }
+
+  public coordinatesToCircleData(center: L.LatLng, radius: number): TbCircleData {
+    let circleData: TbCircleData = null;
+    if (center) {
+      const position = checkLngLat(center, this.southWest, this.northEast);
+      circleData = {
+        latitude: position.lat,
+        longitude: position.lng,
+        radius
+      };
+    }
+    return circleData;
+  }
+
 
 }
