@@ -39,8 +39,6 @@ import org.thingsboard.server.common.data.event.ErrorEvent;
 import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.LifecycleEvent;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -88,7 +86,6 @@ import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.cf.CalculatedFieldCache;
-import org.thingsboard.server.service.cf.CalculatedFieldExecutionService;
 import org.thingsboard.server.service.notification.NotificationSchedulerService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
@@ -110,7 +107,6 @@ import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpd
 import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -153,14 +149,12 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private final TbImageService imageService;
     private final RuleEngineCallService ruleEngineCallService;
     private final TbCoreConsumerStats stats;
-    private final CalculatedFieldExecutionService calculatedFieldExecutionService;
 
     private MainQueueConsumerManager<TbProtoQueueMsg<ToCoreMsg>, CoreQueueConfig> mainConsumer;
     private QueueConsumerManager<TbProtoQueueMsg<ToUsageStatsServiceMsg>> usageStatsConsumer;
     private QueueConsumerManager<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> firmwareStatesConsumer;
 
     private volatile ListeningExecutorService deviceActivityEventsExecutor;
-    private volatile ListeningExecutorService calculatedFieldsExecutor;
 
     public DefaultTbCoreConsumerService(TbCoreQueueFactory tbCoreQueueFactory,
                                         ActorSystemContext actorContext,
@@ -183,7 +177,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         NotificationRuleProcessor notificationRuleProcessor,
                                         TbImageService imageService,
                                         RuleEngineCallService ruleEngineCallService,
-                                        CalculatedFieldExecutionService calculatedFieldExecutionService,
                                         CalculatedFieldCache calculatedFieldCache) {
         super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, calculatedFieldCache, apiUsageStateService, partitionService,
                 eventPublisher, jwtSettingsService);
@@ -200,14 +193,12 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         this.imageService = imageService;
         this.ruleEngineCallService = ruleEngineCallService;
         this.queueFactory = tbCoreQueueFactory;
-        this.calculatedFieldExecutionService = calculatedFieldExecutionService;
     }
 
     @PostConstruct
     public void init() {
         super.init("tb-core");
         this.deviceActivityEventsExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-device-activity-events-executor")));
-        this.calculatedFieldsExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-calculated-fields-executor")));
 
         this.mainConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<ToCoreMsg>, CoreQueueConfig>builder()
                 .queueKey(new QueueKey(ServiceType.TB_CORE))
@@ -319,12 +310,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                         forwardToEventService(toCoreMsg.getErrorEventMsg(), callback);
                     } else if (toCoreMsg.hasLifecycleEventMsg()) {
                         forwardToEventService(toCoreMsg.getLifecycleEventMsg(), callback);
-                    } else if (toCoreMsg.hasCalculatedFieldMsg()) {
-                        forwardToCalculatedFieldService(toCoreMsg.getCalculatedFieldMsg(), callback);
-                    } else if (toCoreMsg.hasEntityProfileUpdateMsg()) {
-                        forwardToCalculatedFieldService(toCoreMsg.getEntityProfileUpdateMsg(), callback);
-                    } else if (toCoreMsg.hasProfileEntityMsg()) {
-                        forwardToCalculatedFieldService(toCoreMsg.getProfileEntityMsg(), callback);
                     }
                 } catch (Throwable e) {
                     log.warn("[{}] Failed to process message: {}", id, msg, e);
@@ -413,10 +398,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             callback.onSuccess();
         } else if (toCoreNotification.hasResourceCacheInvalidateMsg()) {
             forwardToResourceService(toCoreNotification.getResourceCacheInvalidateMsg(), callback);
-        } else if (toCoreNotification.hasEntityProfileUpdateMsg()) {
-            processEntityProfileUpdateMsg(toCoreNotification.getEntityProfileUpdateMsg());
-        } else if (toCoreNotification.hasProfileEntityMsg()) {
-            processProfileEntityMsg(toCoreNotification.getProfileEntityMsg());
         }
         if (statsEnabled) {
             stats.log(toCoreNotification);
@@ -533,28 +514,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             }
         }).forEach(imageService::evictETags);
         callback.onSuccess();
-    }
-
-    private void processEntityProfileUpdateMsg(TransportProtos.EntityProfileUpdateMsgProto profileUpdateMsg) {
-        var tenantId = toTenantId(profileUpdateMsg.getTenantIdMSB(), profileUpdateMsg.getTenantIdLSB());
-        var entityId = EntityIdFactory.getByTypeAndUuid(profileUpdateMsg.getEntityType(), new UUID(profileUpdateMsg.getEntityIdMSB(), profileUpdateMsg.getEntityIdLSB()));
-        var oldProfile = EntityIdFactory.getByTypeAndUuid(profileUpdateMsg.getEntityProfileType(), new UUID(profileUpdateMsg.getOldProfileIdMSB(), profileUpdateMsg.getOldProfileIdLSB()));
-        var newProfile = EntityIdFactory.getByTypeAndUuid(profileUpdateMsg.getEntityProfileType(), new UUID(profileUpdateMsg.getNewProfileIdMSB(), profileUpdateMsg.getNewProfileIdLSB()));
-        calculatedFieldCache.getEntitiesByProfile(tenantId, oldProfile).remove(entityId);
-        calculatedFieldCache.getEntitiesByProfile(tenantId, newProfile).add(entityId);
-    }
-
-    private void processProfileEntityMsg(TransportProtos.ProfileEntityMsgProto profileEntityMsg) {
-        var tenantId = toTenantId(profileEntityMsg.getTenantIdMSB(), profileEntityMsg.getTenantIdLSB());
-        var entityId = EntityIdFactory.getByTypeAndUuid(profileEntityMsg.getEntityType(), new UUID(profileEntityMsg.getEntityIdMSB(), profileEntityMsg.getEntityIdLSB()));
-        var profileId = EntityIdFactory.getByTypeAndUuid(profileEntityMsg.getEntityProfileType(), new UUID(profileEntityMsg.getProfileIdMSB(), profileEntityMsg.getProfileIdLSB()));
-        boolean added = profileEntityMsg.getAdded();
-        Set<EntityId> entitiesByProfile = calculatedFieldCache.getEntitiesByProfile(tenantId, profileId);
-        if (added) {
-            entitiesByProfile.add(entityId);
-        } else {
-            entitiesByProfile.remove(entityId);
-        }
     }
 
     private void forwardToSubMgrService(SubscriptionMgrMsgProto msg, TbCallback callback) {

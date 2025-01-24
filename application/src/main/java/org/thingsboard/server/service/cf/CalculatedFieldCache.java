@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.cf;
 
-import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -41,6 +40,10 @@ public interface CalculatedFieldCache {
     List<CalculatedFieldCtx> getCalculatedFieldCtxsByEntityId(EntityId entityId);
 
     Set<EntityId> getEntitiesByProfile(TenantId tenantId, EntityId entityId);
+
+    void evictProfile(TenantId tenantId, EntityId entityId);
+
+    void evictEntity(TenantId tenantId, EntityId entityId);
 
     void addCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 

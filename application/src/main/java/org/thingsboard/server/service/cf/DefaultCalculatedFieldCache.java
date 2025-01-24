@@ -22,11 +22,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -170,6 +175,33 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
         }
         log.trace("[{}] Found entities by profile in cache: {}", entityProfileId, entities);
         return entities;
+    }
+
+    @Override
+    public void evictProfile(TenantId tenantId, EntityId entityId) {
+        log.debug("[{}] evict entity profile from cache.", entityId);
+        profileEntities.remove(entityId);
+    }
+
+    @Override
+    public void evictEntity(TenantId tenantId, EntityId entityId) {
+        calculatedFieldFetchLock.lock();
+        try {
+            profileEntities.forEach((profile, entityIds) -> entityIds.remove(entityId));
+            if (EntityType.ASSET.equals(entityId.getEntityType())) {
+                Asset asset = assetService.findAssetById(tenantId, (AssetId) entityId);
+                if (asset != null) {
+                    profileEntities.computeIfAbsent(asset.getAssetProfileId(), profileId -> new HashSet<>()).add(entityId);
+                }
+            } else {
+                Device device = deviceService.findDeviceById(tenantId, (DeviceId) entityId);
+                if (device != null) {
+                    profileEntities.computeIfAbsent(device.getDeviceProfileId(), profileId -> new HashSet<>()).add(entityId);
+                }
+            }
+        } finally {
+            calculatedFieldFetchLock.unlock();
+        }
     }
 
     @Override

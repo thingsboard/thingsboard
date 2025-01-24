@@ -1591,8 +1591,6 @@ message ToCoreMsg {
   DeviceConnectProto deviceConnectMsg = 50;
   DeviceDisconnectProto deviceDisconnectMsg = 51;
   DeviceInactivityProto deviceInactivityMsg = 52;
-//  CalculatedFieldMsgProto calculatedFieldMsg = 53;
-//  EntityProfileUpdateMsgProto entityProfileUpdateMsg = 54;
 }
 
 /* High priority messages with low latency are handled by ThingsBoard Core Service separately */
@@ -1612,8 +1610,6 @@ message ToCoreNotificationMsg {
   FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 12 [deprecated = true];
   ResourceCacheInvalidateMsg resourceCacheInvalidateMsg = 13;
   RestApiCallResponseMsgProto restApiCallResponseMsg = 50;
-//  EntityProfileUpdateMsgProto entityProfileUpdateMsg = 51;
-//  ProfileEntityMsgProto profileEntityMsg = 52;
 }
 
 /* Messages to Edge queue that are handled by ThingsBoard Core Service */
