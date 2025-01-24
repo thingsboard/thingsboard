@@ -42,6 +42,7 @@ import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 @Component({
   selector: 'tb-calculated-fields-table',
   templateUrl: './calculated-fields-table.component.html',
+  styleUrls: ['./calculated-fields-table.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CalculatedFieldsTableComponent implements OnInit {
