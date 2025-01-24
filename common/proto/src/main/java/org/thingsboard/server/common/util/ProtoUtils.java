@@ -58,12 +58,14 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
@@ -625,6 +627,58 @@ public class ProtoUtils {
             default -> null;
         };
         return new BaseAttributeKvEntry(entry, proto.getLastUpdateTs(), proto.hasVersion() ? proto.getVersion() : null);
+    }
+
+    public static TsKvEntry fromProto(TransportProtos.TsKvProto proto) {
+        TransportProtos.KeyValueProto kvProto = proto.getKv();
+        String key = kvProto.getKey();
+        KvEntry entry = switch (kvProto.getType()) {
+            case BOOLEAN_V -> new BooleanDataEntry(key, kvProto.getBoolV());
+            case LONG_V -> new LongDataEntry(key, kvProto.getLongV());
+            case DOUBLE_V -> new DoubleDataEntry(key, kvProto.getDoubleV());
+            case STRING_V -> new StringDataEntry(key, kvProto.getStringV());
+            case JSON_V -> new JsonDataEntry(key, kvProto.getJsonV());
+            default -> null;
+        };
+        return new BasicTsKvEntry(proto.getTs(), entry, proto.hasVersion() ? proto.getVersion() : null);
+    }
+
+    public static TransportProtos.TsKvProto toTsKvProto(TsKvEntry tsKvEntry) {
+        return TransportProtos.TsKvProto.newBuilder()
+                .setTs(tsKvEntry.getTs())
+                .setKv(toKeyValueProto(tsKvEntry))
+                .setVersion(tsKvEntry.getVersion())
+                .build();
+    }
+
+    public static TransportProtos.KeyValueProto toKeyValueProto(KvEntry kvEntry) {
+        TransportProtos.KeyValueProto.Builder builder = TransportProtos.KeyValueProto.newBuilder();
+        builder.setKey(kvEntry.getKey());
+        switch (kvEntry.getDataType()) {
+            case BOOLEAN:
+                builder.setType(TransportProtos.KeyValueType.BOOLEAN_V)
+                        .setBoolV(kvEntry.getBooleanValue().orElse(false));
+                break;
+            case LONG:
+                builder.setType(TransportProtos.KeyValueType.LONG_V)
+                        .setLongV(kvEntry.getLongValue().orElse(0L));
+                break;
+            case DOUBLE:
+                builder.setType(TransportProtos.KeyValueType.DOUBLE_V)
+                        .setDoubleV(kvEntry.getDoubleValue().orElse(0.0));
+                break;
+            case STRING:
+                builder.setType(TransportProtos.KeyValueType.STRING_V)
+                        .setStringV(kvEntry.getStrValue().orElse(""));
+                break;
+            case JSON:
+                builder.setType(TransportProtos.KeyValueType.JSON_V)
+                        .setJsonV(kvEntry.getJsonValue().orElse("{}"));
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported KvEntry data type: " + kvEntry.getDataType());
+        }
+        return builder.build();
     }
 
     public static TransportProtos.DeviceProto toProto(Device device) {

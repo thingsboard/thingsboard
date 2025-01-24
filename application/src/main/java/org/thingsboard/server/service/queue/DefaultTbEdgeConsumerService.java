@@ -91,7 +91,7 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
 
     public DefaultTbEdgeConsumerService(TbCoreQueueFactory tbCoreQueueFactory, ActorSystemContext actorContext,
                                         StatsFactory statsFactory, EdgeContextComponent edgeCtx) {
-        super(actorContext, null, null, null, null, null,
+        super(actorContext, null, null, null, null, null, null,
                 null, null);
         this.edgeCtx = edgeCtx;
         this.stats = new EdgeConsumerStats(statsFactory);
@@ -137,7 +137,7 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
         CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
         TbPackProcessingContext<TbProtoQueueMsg<ToEdgeMsg>> ctx = new TbPackProcessingContext<>(
                 processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>());
-        PendingMsgHolder pendingMsgHolder = new PendingMsgHolder();
+        PendingMsgHolder<ToEdgeMsg> pendingMsgHolder = new PendingMsgHolder<>();
         Future<?> submitFuture = consumersExecutor.submit(() -> {
             orderedMsgList.forEach((element) -> {
                 UUID id = element.getUuid();
@@ -145,7 +145,7 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
                 TbCallback callback = new TbPackCallback<>(id, ctx);
                 try {
                     ToEdgeMsg toEdgeMsg = msg.getValue();
-                    pendingMsgHolder.setToEdgeMsg(toEdgeMsg);
+                    pendingMsgHolder.setMsg(toEdgeMsg);
                     if (toEdgeMsg.hasEdgeNotificationMsg()) {
                         pushNotificationToEdge(toEdgeMsg.getEdgeNotificationMsg(), 0, packProcessingRetries, callback);
                     }
@@ -161,18 +161,11 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
         if (!processingTimeoutLatch.await(packProcessingTimeout, TimeUnit.MILLISECONDS)) {
             if (!submitFuture.isDone()) {
                 submitFuture.cancel(true);
-                ToEdgeMsg lastSubmitMsg = pendingMsgHolder.getToEdgeMsg();
-                log.info("Timeout to process message: {}", lastSubmitMsg);
+                log.info("Timeout to process message: {}", pendingMsgHolder.getMsg());
             }
             ctx.getFailedMap().forEach((id, msg) -> log.warn("[{}] Failed to process message: {}", id, msg.getValue()));
         }
         consumer.commit();
-    }
-
-    private static class PendingMsgHolder {
-        @Getter
-        @Setter
-        private volatile ToEdgeMsg toEdgeMsg;
     }
 
     @Override
@@ -270,8 +263,10 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
                 case TENANT_PROFILE -> future = edgeCtx.getTenantProfileProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
                 case NOTIFICATION_RULE, NOTIFICATION_TARGET, NOTIFICATION_TEMPLATE ->
                         future = edgeCtx.getNotificationEdgeProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
-                case TB_RESOURCE -> future = edgeCtx.getResourceProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
-                case DOMAIN, OAUTH2_CLIENT -> future = edgeCtx.getOAuth2EdgeProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case TB_RESOURCE ->
+                        future = edgeCtx.getResourceProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case DOMAIN, OAUTH2_CLIENT ->
+                        future = edgeCtx.getOAuth2EdgeProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
                 default -> {
                     future = Futures.immediateFuture(null);
                     log.warn("[{}] Edge event type [{}] is not designed to be pushed to edge", tenantId, type);

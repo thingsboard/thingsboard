@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
@@ -138,6 +139,15 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
                                                                     @Param("assetProfileId") UUID assetProfileId,
                                                                     @Param("textSearch") String textSearch,
                                                                     Pageable pageable);
+
+    @Query("SELECT a.id FROM AssetEntity a " +
+            "WHERE a.tenantId = :tenantId " +
+            "AND a.assetProfileId = :assetProfileId " +
+            "AND (:textSearch IS NULL OR ilike(a.type, CONCAT('%', :textSearch, '%')) = true) ")
+    Page<UUID> findAssetIdsByTenantIdAndAssetProfileId(@Param("tenantId") UUID tenantId,
+                                                       @Param("assetProfileId") UUID assetProfileId,
+                                                       @Param("textSearch") String textSearch,
+                                                       Pageable pageable);
 
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
