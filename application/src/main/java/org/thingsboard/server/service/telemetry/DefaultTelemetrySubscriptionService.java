@@ -167,9 +167,8 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     public void saveAttributesInternal(AttributesSaveRequest request) {
         log.trace("Executing saveInternal [{}]", request);
         ListenableFuture<List<Long>> saveFuture = attrService.save(request.getTenantId(), request.getEntityId(), request.getScope(), request.getEntries());
-        addMainCallback(saveFuture, request.getCallback());
         DonAsynchron.withCallback(saveFuture, result -> {
-            calculatedFieldExecutionService.pushRequestToQueue(request);
+            calculatedFieldExecutionService.pushRequestToQueue(request, result);
         }, safeCallback(request.getCallback()), tsCallBackExecutor);
         addWsCallback(saveFuture, success -> onAttributesUpdate(request.getTenantId(), request.getEntityId(), request.getScope().name(), request.getEntries(), request.isNotifyDevice()));
         addCallback(saveFuture, success -> calculatedFieldExecutionService.onTelemetryUpdate(new CalculatedFieldAttributeUpdateRequest(request)), tsCallBackExecutor);

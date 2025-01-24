@@ -197,14 +197,16 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     }
 
     @Override
-    public void pushRequestToQueue(AttributesSaveRequest request) {
+    public void pushRequestToQueue(AttributesSaveRequest request, List<Long> result) {
         var tenantId = request.getTenantId();
         var entityId = request.getEntityId();
         checkEntityAndPushToQueue(tenantId, entityId, cf -> cf.matches(request.getEntries(), request.getScope()), cf -> cf.linkMatches(entityId, request.getEntries(), request.getScope()),
-                () -> toCalculatedFieldTelemetryMsgProto(request), request.getCallback());
+                () -> toCalculatedFieldTelemetryMsgProto(request, result), request.getCallback());
     }
 
-    private void checkEntityAndPushToQueue(TenantId tenantId, EntityId entityId, Predicate<CalculatedFieldCtx> mainEntityFilter, Predicate<CalculatedFieldCtx> linkedEntityFilter, Supplier<ToCalculatedFieldMsg> msg, FutureCallback<Void> callback) {
+    private void checkEntityAndPushToQueue(TenantId tenantId, EntityId entityId,
+                                           Predicate<CalculatedFieldCtx> mainEntityFilter, Predicate<CalculatedFieldCtx> linkedEntityFilter,
+                                           Supplier<ToCalculatedFieldMsg> msg, FutureCallback<Void> callback) {
         boolean send = checkEntityForCalculatedFields(tenantId, entityId, mainEntityFilter, linkedEntityFilter);
         if (send) {
             clusterService.pushMsgToCalculatedFields(tenantId, entityId, msg.get(), wrap(callback));
@@ -827,7 +829,8 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         return msg.build();
     }
 
-    private ToCalculatedFieldMsg toCalculatedFieldTelemetryMsgProto(AttributesSaveRequest request) {
+    private ToCalculatedFieldMsg toCalculatedFieldTelemetryMsgProto(AttributesSaveRequest request, List<Long> result) {
+        //TODO: IM Use result in both methods to update the versions of telemetry/attributes.
         ToCalculatedFieldMsg.Builder msg = ToCalculatedFieldMsg.newBuilder();
 
         CalculatedFieldTelemetryMsgProto.Builder telemetryMsg = buildTelemetryMsgProto(request.getTenantId(), request.getEntityId(), request.getPreviousCalculatedFieldIds());

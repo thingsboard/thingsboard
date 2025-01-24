@@ -62,9 +62,9 @@ import java.util.UUID;
 @Slf4j
 public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerService<ToCalculatedFieldNotificationMsg> implements TbCalculatedFieldConsumerService {
 
-    @Value("${queue.calculated_fields.poll_interval}")
+    @Value("${queue.calculated_fields.poll_interval:25}")
     private long pollInterval;
-    @Value("${queue.calculated_fields.pack_processing_timeout}")
+    @Value("${queue.calculated_fields.pack_processing_timeout:60000}")
     private long packProcessingTimeout;
     @Value("${queue.calculated_fields.consumer_per_partition:true}")
     private boolean consumerPerPartition;
@@ -102,7 +102,7 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
         this.calculatedFieldsExecutor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(poolSize, "tb-cf-executor")); // TODO: multiple threads.
 
         this.mainConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<ToCalculatedFieldMsg>, CalculatedFieldQueueConfig>builder()
-                .queueKey(new QueueKey(ServiceType.TB_CORE))
+                .queueKey(new QueueKey(ServiceType.TB_RULE_ENGINE))
                 .config(CalculatedFieldQueueConfig.of(consumerPerPartition, (int) pollInterval))
                 .msgPackProcessor(this::processMsgs)
                 .consumerCreator((config, partitionId) -> queueFactory.createToCalculatedFieldMsgConsumer())

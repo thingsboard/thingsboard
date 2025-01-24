@@ -23,6 +23,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntit
 import org.thingsboard.server.gen.transport.TransportProtos.ComponentLifecycleMsgProto;
 import org.thingsboard.server.service.cf.telemetry.CalculatedFieldTelemetryUpdateRequest;
 
+import java.util.List;
+
 public interface CalculatedFieldExecutionService {
 
     /**
@@ -32,7 +34,7 @@ public interface CalculatedFieldExecutionService {
      */
     void pushRequestToQueue(TimeseriesSaveRequest request, TimeseriesSaveResult result);
 
-    void pushRequestToQueue(AttributesSaveRequest request);
+    void pushRequestToQueue(AttributesSaveRequest request, List<Long> result);
 
 //    void pushEntityUpdateMsg(TransportProtos.CalculatedFieldEntityUpdateMsgProto proto, TbCallback callback);
 
