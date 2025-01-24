@@ -20,6 +20,7 @@ import { Observable, of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageData } from '@shared/models/page/page-data';
 import { CalculatedField } from '@shared/models/calculated-field.models';
+import { PageLink } from '@shared/models/page/page-link';
 
 @Injectable({
   providedIn: 'root'
@@ -73,7 +74,7 @@ export class CalculatedFieldsService {
     // return this.http.delete<boolean>(`/api/calculated-field/${calculatedFieldId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getCalculatedFields(query: any,
+  public getCalculatedFields(pageLink: PageLink,
                    config?: RequestConfig): Observable<PageData<CalculatedField>> {
     return of({
       data: this.fieldsMock,
@@ -81,7 +82,7 @@ export class CalculatedFieldsService {
       totalElements: 2,
       hasNext: false,
     });
-    // return this.http.get<PageData<any>>(`/api/calculated-field${query.toQuery()}`,
+    // return this.http.get<PageData<any>>(`/api/calculated-field${pageLink.toQuery()}`,
     //   defaultHttpOptionsFromConfig(config));
   }
 }
