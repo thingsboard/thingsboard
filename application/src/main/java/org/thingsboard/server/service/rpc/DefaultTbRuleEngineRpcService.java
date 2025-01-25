@@ -115,8 +115,9 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
         ToDeviceRpcRequest request = new ToDeviceRpcRequest(src.getRequestUUID(), src.getTenantId(), src.getDeviceId(),
                 src.isOneway(), src.getExpirationTime(), new ToDeviceRpcRequestBody(src.getMethod(), src.getBody()), src.isPersisted(), src.getRetries(), src.getAdditionalInfo());
         forwardRpcRequestToDeviceActor(request, response -> {
-            if (src.isRestApiCall()) {
-                sendRpcResponseToTbCore(src.getOriginServiceId(), response);
+            String originServiceId = src.getOriginServiceId();
+            if (src.isRestApiCall() && originServiceId != null) {
+                sendRpcResponseToTbCore(originServiceId, response);
             }
             consumer.accept(RuleEngineDeviceRpcResponse.builder()
                     .deviceId(src.getDeviceId())
