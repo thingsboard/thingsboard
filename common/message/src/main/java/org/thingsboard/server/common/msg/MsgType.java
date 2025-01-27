@@ -133,7 +133,16 @@ public enum MsgType {
      * Messages that are sent to and from edge session to start edge synchronization process
      */
     EDGE_SYNC_REQUEST_TO_EDGE_SESSION_MSG,
-    EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG;
+    EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG,
+
+    CF_INIT_MSG, // Sent to init particular calculated field;
+    CF_LINK_INIT_MSG, // Sent to init particular calculated field;
+    CF_STATE_RESTORE_MSG,// Sent to init particular calculated field entity state;
+    CF_TELEMETRY_MSG,
+    CF_ENTITY_TELEMETRY_MSG,
+    CF_LINKED_TELEMETRY_MSG,
+    CF_UPDATE_MSG,
+    CF_ENTITY_UPDATE_MSG;
 
     @Getter
     private final boolean ignoreOnStart;

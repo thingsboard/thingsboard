@@ -13,21 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf.ctx;
+package org.thingsboard.server.service.cf;
 
-import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
-
-import java.util.Map;
-
-public interface CalculatedFieldStateService {
-
-    Map<CalculatedFieldEntityCtxId, CalculatedFieldState> restoreStates();
-
-    CalculatedFieldState restoreState(CalculatedFieldEntityCtxId ctxId);
-
-    void persistState(CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback);
-
-    void removeState(CalculatedFieldEntityCtxId ctxId);
-
+public interface CalculatedFieldInitService {
 }

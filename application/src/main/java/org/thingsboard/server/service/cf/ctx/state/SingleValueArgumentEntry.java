@@ -21,6 +21,10 @@ import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.util.KvProtoUtil;
+import org.thingsboard.server.common.util.ProtoUtils;
+import org.thingsboard.server.gen.transport.TransportProtos.AttributeValueProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 
 @Data
 @NoArgsConstructor
@@ -33,6 +37,18 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     private Object value;
 
     private Long version;
+
+    public SingleValueArgumentEntry(TsKvProto entry) {
+        this.ts = entry.getTs();
+        this.version = entry.getVersion();
+        this.value = ProtoUtils.fromProto(entry).getValue();
+    }
+
+    public SingleValueArgumentEntry(AttributeValueProto entry) {
+        this.ts = entry.getLastUpdateTs();
+        this.version = entry.getVersion();
+        this.value = ProtoUtils.fromProto(entry).getValue();
+    }
 
     public SingleValueArgumentEntry(KvEntry entry) {
         if (entry instanceof TsKvEntry tsKvEntry) {

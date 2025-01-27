@@ -66,4 +66,9 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
         return stateUpdated;
     }
 
+    @Override
+    public boolean isReady() {
+        //TODO: IM
+        return true;
+    }
 }

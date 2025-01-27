@@ -13,11 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf.ctx;
+package org.thingsboard.server.actors.calculatedField;
 
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
+import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 
-public record CalculatedFieldEntityCtxId(TenantId tenantId, CalculatedFieldId cfId, EntityId entityId) {
+@Data
+public class CalculatedFieldTelemetryMsg implements ToCalculatedFieldSystemMsg {
+
+    private final TenantId tenantId;
+    private final EntityId entityId;
+    private final CalculatedFieldTelemetryMsgProto proto;
+    private final TbCallback callback;
+
+
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.CF_TELEMETRY_MSG;
+    }
 }

@@ -51,7 +51,6 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.util.KvUtils;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.cf.CalculatedFieldExecutionService;
-import org.thingsboard.server.service.cf.telemetry.CalculatedFieldAttributeUpdateRequest;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
@@ -148,7 +147,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
             resultFuture = tsService.saveWithoutLatest(tenantId, entityId, request.getEntries(), request.getTtl());
         }
         DonAsynchron.withCallback(resultFuture, result -> {
-            calculatedFieldExecutionService.pushRequestToQueue(request, result);
+            calculatedFieldExecutionService.pushRequestToQueue(request, result, request.getCallback());
         }, safeCallback(request.getCallback()), tsCallBackExecutor);
         addWsCallback(resultFuture, success -> onTimeSeriesUpdate(tenantId, entityId, request.getEntries()));
         if (request.isSaveLatest() && !request.isOnlyLatest()) {
@@ -168,10 +167,9 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         log.trace("Executing saveInternal [{}]", request);
         ListenableFuture<List<Long>> saveFuture = attrService.save(request.getTenantId(), request.getEntityId(), request.getScope(), request.getEntries());
         DonAsynchron.withCallback(saveFuture, result -> {
-            calculatedFieldExecutionService.pushRequestToQueue(request, result);
+            calculatedFieldExecutionService.pushRequestToQueue(request, result, request.getCallback());
         }, safeCallback(request.getCallback()), tsCallBackExecutor);
         addWsCallback(saveFuture, success -> onAttributesUpdate(request.getTenantId(), request.getEntityId(), request.getScope().name(), request.getEntries(), request.isNotifyDevice()));
-        addCallback(saveFuture, success -> calculatedFieldExecutionService.onTelemetryUpdate(new CalculatedFieldAttributeUpdateRequest(request)), tsCallBackExecutor);
     }
 
     @Override
