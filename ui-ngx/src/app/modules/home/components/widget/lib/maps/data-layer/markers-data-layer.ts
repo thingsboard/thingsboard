@@ -39,7 +39,14 @@ import L, { FeatureGroup } from 'leaflet';
 import { FormattedData } from '@shared/models/widget.models';
 import { forkJoin, Observable, of } from 'rxjs';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
-import { isDefined, isDefinedAndNotNull, isEmptyStr, parseTbFunction, safeExecuteTbFunction } from '@core/utils';
+import {
+  deepClone,
+  isDefined,
+  isDefinedAndNotNull,
+  isEmptyStr,
+  parseTbFunction,
+  safeExecuteTbFunction
+} from '@core/utils';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import tinycolor from 'tinycolor2';
 import { ImagePipe } from '@shared/pipe/image.pipe';
@@ -77,16 +84,15 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
     const location = this.dataLayer.extractLocation(data, dsData);
     this.marker = L.marker(location, {
       tbMarkerData: data,
-      snapIgnore: !this.dataLayer.isSnappable()
+      snapIgnore: !this.dataLayer.isSnappable(),
+      bubblingMouseEvents: false
     });
-
     this.updateMarkerIcon(data, dsData);
-
     return this.marker;
   }
 
   protected createEventListeners(data: FormattedData<TbMapDatasource>, _dsData: FormattedData<TbMapDatasource>[]): void {
-    this.dataLayer.getMap().markerClick(this.marker, data.$datasource);
+    this.dataLayer.getMap().markerClick(this, data.$datasource);
   }
 
   protected unbindLabel() {
@@ -122,7 +128,7 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
     const index = this.iconClassList.indexOf(clazz);
     if (index !== -1) {
       this.iconClassList.splice(index, 1);
-      this.marker.options.icon.options.className = this.updateIconClasses(this.marker.options.icon.options.className);
+      this.marker.options.icon.options.className = this.updateIconClasses(this.marker.options.icon.options.className, clazz);
       if ((this.marker as any)._icon) {
         L.DomUtil.removeClass((this.marker as any)._icon, clazz);
       }
@@ -166,6 +172,14 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
     }
   }
 
+  protected removeDataItem(): void {
+    this.dataLayer.saveMarkerLocation(this.data, null);
+  }
+
+  public isEditing() {
+    return this.moving;
+  }
+
   private saveMarkerLocation() {
     const location = this.marker.getLatLng();
     this.dataLayer.saveMarkerLocation(this.data, location);
@@ -181,9 +195,16 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
   private updateMarkerIcon(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
     this.dataLayer.markerIconProcessor.createMarkerIcon(data, dsData).subscribe(
       (iconInfo) => {
-        iconInfo.icon.options.className = this.updateIconClasses(iconInfo.icon.options.className);
-        this.marker.setIcon(iconInfo.icon);
-        const anchor = iconInfo.icon.options.iconAnchor;
+        let icon: L.Icon | L.DivIcon;
+        const options = deepClone(iconInfo.icon.options);
+        options.className = this.updateIconClasses(options.className);
+        if (iconInfo.icon instanceof L.Icon) {
+          icon = L.icon(options as L.IconOptions);
+        } else {
+          icon = L.divIcon(options);
+        }
+        this.marker.setIcon(icon);
+        const anchor = options.iconAnchor;
         if (anchor && Array.isArray(anchor)) {
           this.labelOffset = [iconInfo.size[0] / 2 - anchor[0], 10 - anchor[1]];
         } else {
@@ -195,10 +216,16 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
     );
   }
 
-  private updateIconClasses(className: string): string {
+  private updateIconClasses(className: string, toRemove?: string): string {
     const classes: string[] = [];
     if (className?.length) {
       classes.push(...className.split(' '));
+    }
+    if (toRemove?.length) {
+      const index = classes.indexOf(toRemove);
+      if (index !== -1) {
+        classes.splice(index, 1);
+      }
     }
     this.iconClassList.forEach(clazz => {
       if (!classes.includes(clazz)) {

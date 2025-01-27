@@ -15,7 +15,7 @@
 ///
 
 import { FormattedData } from '@shared/models/widget.models';
-import L from 'leaflet';
+import L, { Control, ControlOptions } from 'leaflet';
 import { TbMapDatasource } from '@home/components/widget/lib/maps/models/map.models';
 
 // redeclare module, maintains compatibility with @types/leaflet
@@ -89,6 +89,30 @@ declare module 'leaflet' {
       constructor(options: GroupsControlOptions);
     }
 
+    interface ToolbarButtonOptions extends ControlOptions{
+      title: string;
+      click: (e: MouseEvent, button: ToolbarButton) => void;
+      iconClass: string;
+    }
+
+    class ToolbarButton extends Control<ToolbarButtonOptions>{
+      constructor(options: ToolbarButtonOptions);
+      addToToolbar(toolbar: BottomToolbarControl): void;
+    }
+
+    interface BottomToolbarControlOptions extends ControlOptions {
+      mapElement: JQuery<HTMLElement>;
+      closeTitle: string;
+      onClose: () => void;
+    }
+
+    class BottomToolbarControl extends Control<BottomToolbarControlOptions> {
+      constructor(options: BottomToolbarControlOptions);
+      open(buttons: ToolbarButtonOptions[]): void;
+      close(): void;
+      container: HTMLElement;
+    }
+
     function sidebar(options: SidebarControlOptions): SidebarControl;
 
     function sidebarPane<O extends SidebarPaneControlOptions>(options: O): SidebarPaneControl<O>;
@@ -96,6 +120,8 @@ declare module 'leaflet' {
     function layers(options: LayersControlOptions): LayersControl;
 
     function groups(options: GroupsControlOptions): GroupsControl;
+
+    function bottomToolbar(options: BottomToolbarControlOptions): BottomToolbarControl;
 
     namespace TileLayer {
 

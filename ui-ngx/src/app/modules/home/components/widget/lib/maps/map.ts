@@ -32,7 +32,11 @@ import L from 'leaflet';
 import { forkJoin, Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import '@home/components/widget/lib/maps/leaflet/leaflet-tb';
-import { MapDataLayerType, TbMapDataLayer, } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
+import {
+  MapDataLayerType,
+  TbDataLayerItem,
+  TbMapDataLayer,
+} from '@home/components/widget/lib/maps/data-layer/map-data-layer';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { FormattedData, WidgetActionDescriptor, widgetType } from '@shared/models/widget.models';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
@@ -44,6 +48,9 @@ import { AttributeService } from '@core/http/attribute.service';
 import { AttributeData, AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
+import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
+
+type TooltipInstancesData = {root: HTMLElement, instances: ITooltipsterInstance[]};
 
 export abstract class TbMap<S extends BaseMapSettings> {
 
@@ -59,9 +66,13 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected dataLayers: TbMapDataLayer<any,any>[];
   protected dsData: FormattedData<TbMapDatasource>[];
 
+  protected selectedDataItem: TbDataLayerItem;
+
   protected mapElement: HTMLElement;
 
   protected sidebar: L.TB.SidebarControl;
+
+  protected editToolbar: L.TB.BottomToolbarControl;
 
   private readonly mapResize$: ResizeObserver;
 
@@ -70,7 +81,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   private readonly polygonClickActions: { [name: string]: MapActionHandler };
   private readonly circleClickActions: { [name: string]: MapActionHandler };
 
-  private tooltipInstances: ITooltipsterInstance[] = [];
+  private tooltipInstances: TooltipInstancesData[] = [];
 
   protected constructor(protected ctx: WidgetContext,
                         protected inputSettings: DeepPartial<S>,
@@ -133,7 +144,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
     }
     this.setupDataLayers();
     this.setupEditMode();
-    this.createdControlButtonTooltip();
+    this.createdControlButtonTooltip(this.mapElement, ['topleft', 'bottomleft'].includes(this.settings.controlsPosition) ? 'right' : 'left');
   }
 
   private setupDataLayers() {
@@ -231,21 +242,36 @@ export abstract class TbMap<S extends BaseMapSettings> {
   }
 
   private setupEditMode() {
-    const dragEnabled = this.dataLayers.some(dl => dl.isDragEnabled());
-    if (dragEnabled) {
-      //this.map.pm.enableGlobalDragMode();
-    }
+     this.editToolbar = L.TB.bottomToolbar({
+       mapElement: $(this.mapElement),
+       closeTitle: this.ctx.translate.instant('action.cancel'),
+       onClose: () => {
+         this.deselectItem();
+       }
+     }).addTo(this.map);
+
+     this.map.on('click', () => {
+       this.deselectItem();
+     });
   }
 
-  private createdControlButtonTooltip() {
+  private createdControlButtonTooltip(root: HTMLElement, side: TooltipPositioningSide) {
     import('tooltipster').then(() => {
+      let tooltipData = this.tooltipInstances.find(d => d.root === root);
+      if (!tooltipData) {
+        tooltipData = {
+          root,
+          instances: []
+        }
+        this.tooltipInstances.push(tooltipData);
+      }
       if ($.tooltipster) {
-        this.tooltipInstances.forEach((instance) => {
+        tooltipData.instances.forEach((instance) => {
           instance.destroy();
         });
-        this.tooltipInstances = [];
+        tooltipData.instances = [];
       }
-      $(this.mapElement)
+      $(root)
       .find('a[role="button"]:not(.leaflet-pm-action)')
       .each((_index, element) => {
         let title: string;
@@ -267,7 +293,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
               scroll: true,
               mouseleave: true
             },
-            side: ['topleft', 'bottomleft'].includes(this.settings.controlsPosition) ? 'right' : 'left',
+            side,
             distance: 2,
             trackOrigin: true,
             functionBefore: (_instance, helper) => {
@@ -277,7 +303,14 @@ export abstract class TbMap<S extends BaseMapSettings> {
             },
           }
         );
-        this.tooltipInstances.push(tooltip.tooltipster('instance'));
+        const instance = tooltip.tooltipster('instance');
+        tooltipData.instances.push(instance);
+        instance.on('destroyed', () => {
+          const index = tooltipData.instances.indexOf(instance);
+          if (index > -1) {
+            tooltipData.instances.splice(index, 1);
+          }
+        });
       });
     });
   }
@@ -385,34 +418,62 @@ export abstract class TbMap<S extends BaseMapSettings> {
     }
   }
 
-  public markerClick(marker: L.Layer, datasource: TbMapDatasource): void {
+  public markerClick(marker: TbDataLayerItem, datasource: TbMapDatasource): void {
     if (Object.keys(this.markerClickActions).length) {
-      marker.on('click', (event: L.LeafletMouseEvent) => {
-        for (const action in this.markerClickActions) {
-          this.markerClickActions[action](event.originalEvent, datasource);
+      marker.getLayer().on('click', (event: L.LeafletMouseEvent) => {
+        if (!marker.isEditing()) {
+          for (const action in this.markerClickActions) {
+            this.markerClickActions[action](event.originalEvent, datasource);
+          }
         }
       });
     }
   }
 
-  public polygonClick(polygon: L.Layer, datasource: TbMapDatasource): void {
+  public polygonClick(polygon: TbDataLayerItem, datasource: TbMapDatasource): void {
     if (Object.keys(this.polygonClickActions).length) {
-      polygon.on('click', (event: L.LeafletMouseEvent) => {
-        for (const action in this.polygonClickActions) {
-          this.polygonClickActions[action](event.originalEvent, datasource);
+      polygon.getLayer().on('click', (event: L.LeafletMouseEvent) => {
+        if (!polygon.isEditing()) {
+          for (const action in this.polygonClickActions) {
+            this.polygonClickActions[action](event.originalEvent, datasource);
+          }
         }
       });
     }
   }
 
-  public circleClick(circle: L.Layer, datasource: TbMapDatasource): void {
+  public circleClick(circle: TbDataLayerItem, datasource: TbMapDatasource): void {
     if (Object.keys(this.circleClickActions).length) {
-      circle.on('click', (event: L.LeafletMouseEvent) => {
-        for (const action in this.circleClickActions) {
-          this.circleClickActions[action](event.originalEvent, datasource);
+      circle.getLayer().on('click', (event: L.LeafletMouseEvent) => {
+        if (!circle.isEditing()) {
+          for (const action in this.circleClickActions) {
+            this.circleClickActions[action](event.originalEvent, datasource);
+          }
         }
       });
     }
+  }
+
+  public selectItem(item: TbDataLayerItem): void {
+    if (this.selectedDataItem) {
+      this.selectedDataItem.deselect();
+      this.selectedDataItem = null;
+      this.editToolbar.close();
+    }
+    this.selectedDataItem = item;
+    if (this.selectedDataItem) {
+      const buttons = this.selectedDataItem.select();
+      this.editToolbar.open(buttons);
+      this.createdControlButtonTooltip(this.editToolbar.container, 'top');
+    }
+  }
+
+  public deselectItem(): void {
+    this.selectItem(null);
+  }
+
+  public getSelectedDataItem(): TbDataLayerItem {
+    return this.selectedDataItem;
   }
 
   public saveItemData(datasource: TbMapDatasource, data: DataKeyValuePair[]): Observable<any> {
@@ -466,8 +527,10 @@ export abstract class TbMap<S extends BaseMapSettings> {
     if (this.map) {
       this.map.remove();
     }
-    this.tooltipInstances.forEach((instance) => {
-      instance.destroy();
+    this.tooltipInstances.forEach((data) => {
+      data.instances.forEach(instance => {
+        instance.destroy();
+      })
     });
   }
 

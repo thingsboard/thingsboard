@@ -39,17 +39,19 @@ import {
   parseTbFunction,
   safeExecuteTbFunction
 } from '@core/utils';
-import L, { LatLngBounds } from 'leaflet';
+import L from 'leaflet';
 import { CompiledTbFunction } from '@shared/models/js-function.models';
 import { map } from 'rxjs/operators';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 
-export abstract class TbDataLayerItem<S extends MapDataLayerSettings, D extends TbMapDataLayer<S,D>, L extends L.Layer = L.Layer> {
+export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLayerSettings,
+  D extends TbMapDataLayer<S,D> = TbMapDataLayer<any, any>, L extends L.Layer = L.Layer> {
 
   protected layer: L;
   protected tooltip: L.Popup;
   protected data: FormattedData<TbMapDatasource>;
+  protected selected = false;
 
   protected constructor(data: FormattedData<TbMapDatasource>,
                         dsData: FormattedData<TbMapDatasource>[],
@@ -61,6 +63,7 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings, D extends 
       this.createTooltip(data.$datasource);
       this.updateTooltip(data, dsData);
     }
+    this.bindEvents();
     this.createEventListeners(data, dsData);
     try {
       this.dataLayer.getDataLayerContainer().addLayer(this.layer);
@@ -90,6 +93,21 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings, D extends 
 
   protected abstract disableDrag(): void;
 
+  protected bindEvents(): void {
+    if (this.dataLayer.isSelectable()) {
+      this.layer.on('click', () => {
+        if (!this.isEditing()) {
+          this.dataLayer.getMap().selectItem(this);
+        }
+      });
+      this.layer.on('remove', () => {
+        if (this.selected) {
+          this.dataLayer.getMap().deselectItem();
+        }
+      });
+    }
+  }
+
   protected enableEdit(): void {
     if (this.dataLayer.isHoverable()) {
       this.addItemClass('tb-hoverable');
@@ -110,8 +128,48 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings, D extends 
     }
   }
 
+  protected updateSelectedState() {
+    if (this.selected) {
+      this.addItemClass('tb-selected');
+    } else {
+      this.removeItemClass('tb-selected');
+    }
+  }
+
   public invalidateCoordinates(): void {
     this.doInvalidateCoordinates(this.data, this.dataLayer.getMap().getData());
+  }
+
+  public select(): L.TB.ToolbarButtonOptions[] {
+    if (!this.selected) {
+      this.selected = true;
+      this.updateSelectedState();
+      const buttons: L.TB.ToolbarButtonOptions[] = [];
+      if (this.dataLayer.isRemoveEnabled()) {
+        buttons.push({
+          title: this.dataLayer.getCtx().translate.instant('action.remove'),
+          click: () => {
+            this.removeDataItem();
+          },
+          iconClass: 'tb-remove'
+        });
+      }
+      return buttons;
+    } else {
+      return [];
+    }
+  }
+
+  public deselect() {
+    if (this.selected) {
+      this.selected = false;
+      this.layer.closePopup();
+      this.updateSelectedState();
+    }
+  }
+
+  public isSelected() {
+    return this.selected;
   }
 
   public editModeUpdated() {
@@ -120,6 +178,7 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings, D extends 
     } else {
       this.disableEdit();
     }
+    this.updateSelectedState();
   }
 
   public update(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
@@ -128,12 +187,23 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings, D extends 
   }
 
   public remove() {
-    this.layer.off();
+    if (this.selected) {
+      this.dataLayer.getMap().deselectItem();
+    }
     this.dataLayer.getDataLayerContainer().removeLayer(this.layer);
+    this.layer.off();
   }
 
   public getLayer(): L {
     return this.layer;
+  }
+
+  public getDataLayer(): D {
+    return this.dataLayer;
+  }
+
+  public isEditing() {
+    return false;
   }
 
   protected updateTooltip(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
@@ -157,13 +227,25 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings, D extends 
     }
   }
 
+  protected abstract removeDataItem(): void;
+
   private createTooltip(datasource: TbMapDatasource) {
     this.tooltip = L.popup();
     this.layer.bindPopup(this.tooltip, {autoClose: this.settings.tooltip.autoclose, closeOnClick: false});
-    if (this.settings.tooltip.trigger === DataLayerTooltipTrigger.hover) {
-      this.layer.off('click');
+    this.layer.off('click');
+    if (this.settings.tooltip.trigger === DataLayerTooltipTrigger.click) {
+      this.layer.on('click', () => {
+        if (this.tooltip.isOpen()) {
+          this.layer.closePopup();
+        } else if (!this.isEditing()) {
+          this.layer.openPopup();
+        }
+      });
+    } else if (this.settings.tooltip.trigger === DataLayerTooltipTrigger.hover) {
       this.layer.on('mouseover', () => {
-        this.layer.openPopup();
+        if (!this.isEditing()) {
+          this.layer.openPopup();
+        }
       });
       this.layer.on('mousemove', (e) => {
         this.tooltip.setLatLng(e.latlng);
@@ -345,7 +427,7 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
     return this.dataLayerContainer;
   }
 
-  public getBounds(): LatLngBounds {
+  public getBounds(): L.LatLngBounds {
     return this.dataLayerContainer.getBounds();
   }
 

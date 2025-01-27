@@ -45,6 +45,7 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
     const center = new L.LatLng(circleData.latitude, circleData.longitude);
     this.circleStyle = this.dataLayer.getShapeStyle(data, dsData);
     this.circle = L.circle(center, {
+      bubblingMouseEvents: false,
       radius: circleData.radius,
       ...this.circleStyle,
       snapIgnore: !this.dataLayer.isSnappable()
@@ -54,7 +55,7 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
   }
 
   protected createEventListeners(data: FormattedData<TbMapDatasource>, _dsData: FormattedData<TbMapDatasource>[]): void {
-    this.dataLayer.getMap().circleClick(this.circle, data.$datasource);
+    this.dataLayer.getMap().circleClick(this, data.$datasource);
   }
 
   protected unbindLabel() {
@@ -62,7 +63,7 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
   }
 
   protected bindLabel(content: L.Content): void {
-    this.circle.bindTooltip(content, { className: 'tb-polygon-label', permanent: true, direction: 'center'})
+    this.circle.bindTooltip(content, { className: 'tb-circle-label', permanent: true, direction: 'center'})
     .openTooltip(this.circle.getLatLng());
   }
 
@@ -108,6 +109,14 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
     this.circle.pm.disableLayerDrag();
     this.circle.off('pm:dragstart');
     this.circle.off('pm:dragend');
+  }
+
+  protected removeDataItem(): void {
+    this.dataLayer.saveCircleCoordinates(this.data, null, null);
+  }
+
+  public isEditing() {
+    return this.editing;
   }
 
   private saveCircleCoordinates() {
@@ -169,7 +178,7 @@ export class TbCirclesDataLayer extends TbShapesDataLayer<CirclesDataLayerSettin
   }
 
   public saveCircleCoordinates(data: FormattedData<TbMapDatasource>, center: L.LatLng, radius: number): void {
-    const converted = this.map.coordinatesToCircleData(center, radius);
+    const converted = center ? this.map.coordinatesToCircleData(center, radius) : null;
     const circleData = [
       {
         dataKey: this.settings.circleKey,

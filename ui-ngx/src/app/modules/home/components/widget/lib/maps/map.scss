@@ -17,6 +17,7 @@
 
 //$map-element-hover-color: #307FE5;
 $map-element-hover-color: rgba(0,0,0,0.56);
+$map-element-selected-color: #307FE5;
 
 .tb-map-layout {
   display: flex;
@@ -79,6 +80,17 @@ $map-element-hover-color: rgba(0,0,0,0.56);
           }
         }
       }
+      .tb-map-bottom-toolbar {
+        left: 0;
+        right: 0;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        .leaflet-bar {
+          display: flex;
+          flex-direction: row;
+        }
+      }
     }
     .leaflet-control {
       .tb-control-button {
@@ -100,6 +112,27 @@ $map-element-hover-color: rgba(0,0,0,0.56);
           &.tb-groups {
             mask-image: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path d="M6 13.5C5.5875 13.5 5.2345 13.3533 4.941 13.0597C4.6475 12.7662 4.5005 12.413 4.5 12V3C4.5 2.5875 4.647 2.2345 4.941 1.941C5.235 1.6475 5.588 1.5005 6 1.5H15C15.4125 1.5 15.7657 1.647 16.0597 1.941C16.3538 2.235 16.5005 2.588 16.5 3V12C16.5 12.4125 16.3533 12.7657 16.0597 13.0597C15.7662 13.3538 15.413 13.5005 15 13.5H6ZM6 4.5H15V3H6V4.5ZM3 16.5C2.5875 16.5 2.2345 16.3533 1.941 16.0597C1.6475 15.7662 1.5005 15.413 1.5 15V4.5H3V15H13.5V16.5H3Z"/></svg>');
           }
+          &.tb-remove {
+            mask-image: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 14.25C4.5 14.6478 4.65804 15.0294 4.93934 15.3107C5.22064 15.592 5.60218 15.75 6 15.75H12C12.3978 15.75 12.7794 15.592 13.0607 15.3107C13.342 15.0294 13.5 14.6478 13.5 14.25V5.25H4.5V14.25ZM6 6.75H12V14.25H6V6.75ZM11.625 3L10.875 2.25H7.125L6.375 3H3.75V4.5H14.25V3H11.625Z"/></svg>');
+          }
+          &.tb-close {
+            background: #D12730;
+            mask-image: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path d="M14.25 4.8075L13.1925 3.75L9 7.9425L4.8075 3.75L3.75 4.8075L7.9425 9L3.75 13.1925L4.8075 14.25L9 10.0575L13.1925 14.25L14.25 13.1925L10.0575 9L14.25 4.8075Z"/></svg>');
+          }
+        }
+      }
+    }
+    .leaflet-map-pane:not(.leaflet-zoom-anim) {
+      .leaflet-marker-icon {
+        &.tb-hoverable:not(.tb-selected) {
+          svg {
+            transition: filter 0.2s;
+          }
+        }
+      }
+      img.leaflet-marker-icon, path {
+        &.tb-hoverable:not(.tb-selected) {
+          transition: filter 0.2s;
         }
       }
     }
@@ -110,14 +143,18 @@ $map-element-hover-color: rgba(0,0,0,0.56);
         &.tb-draggable {
           cursor: move;
         }
-        &.tb-hoverable {
-          svg {
-            transition: filter 0.2s;
-          }
+        &.tb-hoverable:not(.tb-selected) {
           &:hover {
             svg {
-              filter: drop-shadow( 0 0 4px $map-element-hover-color);
+              //filter: drop-shadow( 0 0 4px $map-element-hover-color);
+              filter: brightness(0.8) drop-shadow( 0 0 4px $map-element-hover-color);
             }
+          }
+        }
+        &.tb-selected {
+          svg {
+            filter: brightness(0.8);
+            //animation: tb-selected-animation 0.5s linear 0s infinite alternate;
           }
         }
       }
@@ -126,11 +163,14 @@ $map-element-hover-color: rgba(0,0,0,0.56);
       &.tb-draggable {
         cursor: move;
       }
-      &.tb-hoverable {
-        transition: filter 0.2s;
+      &.tb-hoverable:not(.tb-selected) {
         &:hover {
-          filter: drop-shadow( 0 0 4px $map-element-hover-color);
+          filter: brightness(0.8) drop-shadow( 0 0 4px $map-element-hover-color);
         }
+      }
+      &.tb-selected {
+        filter: brightness(0.8);
+        //animation: tb-selected-animation 0.5s linear 0s infinite alternate;
       }
     }
     .tb-cluster-marker-container {
@@ -143,6 +183,11 @@ $map-element-hover-color: rgba(0,0,0,0.56);
       left: 0;
       width: 40px;
       height: 40px;
+    }
+    .tb-marker-label, .tb-polygon-label, .tb-circle-label {
+      border: none;
+      background: none;
+      box-shadow: none;
     }
   }
   .tb-map-sidebar {
@@ -265,5 +310,16 @@ $map-element-hover-color: rgba(0,0,0,0.56);
         }
       }
     }
+  }
+}
+
+@keyframes tb-selected-animation {
+  0% {
+    //filter: drop-shadow( 0 0 2px $map-element-selected-color);
+    filter: brightness(1);
+  }
+  100% {
+    //filter: drop-shadow( 0 0 4px $map-element-selected-color) drop-shadow( 0 0 4px $map-element-selected-color);
+    filter: brightness(0.8);
   }
 }

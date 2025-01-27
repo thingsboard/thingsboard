@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import L, { Coords, TB, TileLayerOptions } from 'leaflet';
+import L, { TB } from 'leaflet';
 import {  guid } from '@core/utils';
 import 'leaflet-providers';
 import '@geoman-io/leaflet-geoman-free';
@@ -276,6 +276,81 @@ class GroupsControl extends SidebarPaneControl<TB.GroupsControlOptions> {
   }
 }
 
+class ToolbarButton extends L.Control<TB.ToolbarButtonOptions> {
+  private readonly button:  JQuery<HTMLElement>;
+  constructor(options: TB.ToolbarButtonOptions) {
+    super(options);
+
+    this.button = $("<a>")
+    .attr('class', 'tb-control-button')
+    .attr('href', '#')
+    .attr('role', 'button')
+    .attr('title', this.options.title)
+    .html('<div class="'+this.options.iconClass+'"></div>');
+
+    this.button.on('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      this.options.click(e.originalEvent, this);
+    });
+  }
+
+  addToToolbar(toolbar: BottomToolbarControl): void {
+    this.button.appendTo(toolbar.container);
+  }
+}
+
+class BottomToolbarControl extends L.Control<TB.BottomToolbarControlOptions> {
+
+  private readonly buttonContainer: JQuery<HTMLElement>;
+
+  container: HTMLElement;
+
+  constructor(options: TB.BottomToolbarControlOptions) {
+    super(options);
+    const controlContainer = $('.leaflet-control-container', options.mapElement);
+    const toolbar = $('<div class="tb-map-bottom-toolbar leaflet-bottom"></div>');
+    toolbar.appendTo(controlContainer);
+    this.buttonContainer = $('<div class="leaflet-bar leaflet-control"></div>');
+    this.buttonContainer.appendTo(toolbar);
+    this.container = this.buttonContainer[0];
+  }
+
+  addTo(map: L.Map): this {
+    return this;
+  }
+
+  open(buttons: TB.ToolbarButtonOptions[]): void {
+
+    buttons.forEach(buttonOption => {
+      const button = new ToolbarButton(buttonOption);
+      button.addToToolbar(this);
+    });
+
+    const closeButton = $("<a>")
+    .attr('class', 'tb-control-button')
+    .attr('href', '#')
+    .attr('role', 'button')
+    .attr('title', this.options.closeTitle)
+    .html('<div class="tb-close"></div>');
+
+    closeButton.on('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      this.close();
+    });
+    closeButton.appendTo(this.buttonContainer);
+  }
+
+  close(): void {
+    this.buttonContainer.empty();
+    if (this.options.onClose) {
+      this.options.onClose();
+    }
+  }
+
+}
+
 const sidebar = (options: TB.SidebarControlOptions): SidebarControl => {
   return new SidebarControl(options);
 }
@@ -292,6 +367,10 @@ const groups = (options: TB.GroupsControlOptions): GroupsControl => {
   return new GroupsControl(options);
 }
 
+const bottomToolbar = (options: TB.BottomToolbarControlOptions): BottomToolbarControl => {
+  return new BottomToolbarControl(options);
+}
+
 class ChinaProvider extends L.TileLayer {
 
   static chinaProviders: L.TB.TileLayer.ChinaProvidersData = {
@@ -303,7 +382,7 @@ class ChinaProvider extends L.TileLayer {
     }
   };
 
-  constructor(type: string, options?: TileLayerOptions) {
+  constructor(type: string, options?: L.TileLayerOptions) {
     options = options || {};
 
     const parts = type.split('.');
@@ -316,7 +395,7 @@ class ChinaProvider extends L.TileLayer {
     super(url, options);
   }
 
-  getTileUrl(coords: Coords): string {
+  getTileUrl(coords: L.Coords): string {
     const data = {
       s: this._getSubdomain(coords),
       x: coords.x,
@@ -338,7 +417,7 @@ class ChinaProvider extends L.TileLayer {
   }
 }
 
-const chinaProvider = (type: string, options?: TileLayerOptions): ChinaProvider => {
+const chinaProvider = (type: string, options?: L.TileLayerOptions): ChinaProvider => {
   return new ChinaProvider(type, options);
 }
 
@@ -347,10 +426,13 @@ L.TB = L.TB || {
   SidebarPaneControl,
   LayersControl,
   GroupsControl,
+  ToolbarButton,
+  BottomToolbarControl,
   sidebar,
   sidebarPane,
   layers,
   groups,
+  bottomToolbar,
   TileLayer: {
     ChinaProvider
   },

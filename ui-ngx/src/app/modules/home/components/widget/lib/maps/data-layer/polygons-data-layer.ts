@@ -48,7 +48,8 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
     this.polygonStyle = this.dataLayer.getShapeStyle(data, dsData);
     this.polygon = polyConstructor(polyData as (TbPolygonRawCoordinates & L.LatLngTuple[]), {
       ...this.polygonStyle,
-      snapIgnore: !this.dataLayer.isSnappable()
+      snapIgnore: !this.dataLayer.isSnappable(),
+      bubblingMouseEvents: false
     });
 
     this.polygonContainer = L.featureGroup();
@@ -59,7 +60,7 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
   }
 
   protected createEventListeners(data: FormattedData<TbMapDatasource>, _dsData: FormattedData<TbMapDatasource>[]): void {
-    this.dataLayer.getMap().polygonClick(this.polygonContainer, data.$datasource);
+    this.dataLayer.getMap().polygonClick(this, data.$datasource);
   }
 
   protected unbindLabel() {
@@ -103,7 +104,12 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
     this.polygon.on('pm:dragstart', () => {
       this.editing = true;
     });
-    this.polygon.on('pm:dragend', () => {
+    this.polygon.on('pm:drag', () => {
+      if (this.tooltip?.isOpen()) {
+        this.tooltip.setLatLng(this.polygon.getBounds().getCenter());
+      }
+    });
+    this.polygon.on('pm:dragend', (e) => {
       this.savePolygonCoordinates();
       this.editing = false;
     });
@@ -113,6 +119,14 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
     this.polygon.pm.disableLayerDrag();
     this.polygon.off('pm:dragstart');
     this.polygon.off('pm:dragend');
+  }
+
+  protected removeDataItem(): void {
+    this.dataLayer.savePolygonCoordinates(this.data, null);
+  }
+
+  public isEditing() {
+    return this.editing;
   }
 
   private savePolygonCoordinates() {
@@ -140,7 +154,8 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
         this.polygonContainer.removeLayer(this.polygon);
         this.polygon = L.polygon(polyData, {
           ...this.polygonStyle,
-          snapIgnore: !this.dataLayer.isSnappable()
+          snapIgnore: !this.dataLayer.isSnappable(),
+          bubblingMouseEvents: false
         });
         this.polygon.addTo(this.polygonContainer);
         this.editModeUpdated();
@@ -197,7 +212,7 @@ export class TbPolygonsDataLayer extends TbShapesDataLayer<PolygonsDataLayerSett
   }
 
   public savePolygonCoordinates(data: FormattedData<TbMapDatasource>, coordinates: TbPolygonCoordinates): void {
-    const converted = this.map.coordinatesToPolygonData(coordinates);
+    const converted = coordinates ? this.map.coordinatesToPolygonData(coordinates) : null;
     const polygonData = [
       {
         dataKey: this.settings.polygonKey,
