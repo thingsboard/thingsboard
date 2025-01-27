@@ -17,6 +17,7 @@ package org.thingsboard.server.service.cf;
 
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityUpdateMsgProto;
@@ -30,12 +31,15 @@ public interface CalculatedFieldExecutionService {
 
     /**
      * Filter CFs based on the request entity. Push to the queue if any matching CF exist;
+     *
      * @param request - telemetry save request;
      * @param request - telemetry save result;
      */
     void pushRequestToQueue(TimeseriesSaveRequest request, TimeseriesSaveResult result);
 
     void pushRequestToQueue(AttributesSaveRequest request, List<Long> result);
+
+    void pushCalculatedFieldLifecycleMsgToQueue(CalculatedField calculatedField, ComponentLifecycleMsgProto proto);
 
     void onTelemetryMsg(CalculatedFieldTelemetryMsgProto msg, TbCallback callback);
 
@@ -46,10 +50,6 @@ public interface CalculatedFieldExecutionService {
     /*  ===================================================== */
 
     void onCalculatedFieldLifecycleMsg(ComponentLifecycleMsgProto proto, TbCallback callback);
-
-    void onTelemetryUpdate(CalculatedFieldTelemetryMsgProto proto, TbCallback callback);
-
-    void onTelemetryUpdate(CalculatedFieldLinkedTelemetryMsgProto proto, TbCallback callback);
 
     void onEntityUpdateMsg(CalculatedFieldEntityUpdateMsgProto proto, TbCallback callback);
 

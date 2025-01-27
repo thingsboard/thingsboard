@@ -90,6 +90,7 @@ import org.thingsboard.server.common.msg.rule.engine.DeviceDeleteMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -644,11 +645,13 @@ public class ProtoUtils {
     }
 
     public static TransportProtos.TsKvProto toTsKvProto(TsKvEntry tsKvEntry) {
-        return TransportProtos.TsKvProto.newBuilder()
-                .setTs(tsKvEntry.getTs())
-                .setKv(toKeyValueProto(tsKvEntry))
-                .setVersion(tsKvEntry.getVersion())
-                .build();
+        TsKvProto.Builder builder = TsKvProto.newBuilder();
+        builder.setTs(tsKvEntry.getTs());
+        builder.setKv(toKeyValueProto(tsKvEntry));
+        if (tsKvEntry.getVersion() != null) {
+            builder.setVersion(tsKvEntry.getVersion());
+        }
+        return builder.build();
     }
 
     public static TransportProtos.KeyValueProto toKeyValueProto(KvEntry kvEntry) {

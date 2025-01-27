@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -126,5 +127,9 @@ public interface TbClusterService extends TbQueueClusterService {
     void pushMsgToEdge(TenantId tenantId, EntityId entityId, ToEdgeMsg msg, TbQueueCallback callback);
 
     void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action, EdgeId sourceEdgeId);
+
+    void onCalculatedFieldUpdated(CalculatedField calculatedField, CalculatedField oldCalculatedField, ComponentLifecycleMsg lifecycleMsg);
+
+    void onCalculatedFieldDeleted(TenantId tenantId, CalculatedField calculatedField, ComponentLifecycleMsg lifecycleMsg);
 
 }
