@@ -20,6 +20,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.common.data.edqs.fields.CustomerFields;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.CustomerEntity;
 
@@ -54,5 +56,9 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, UUID>,
             "ORDER BY c.tenant_id, c.title, c.id",
             nativeQuery = true)
     Page<CustomerEntity> findCustomersWithTheSameTitle(Pageable pageable);
+
+    @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.CustomerFields(c.id, c.createdTime, c.tenantId, " +
+            "c.title, c.version, c.additionalInfo, c.country, c.state, c.city, c.address, c.address2, c.zip, c.phone, c.email) FROM CustomerEntity c")
+    Page<CustomerFields> findAllFields(Pageable pageable);
 
 }

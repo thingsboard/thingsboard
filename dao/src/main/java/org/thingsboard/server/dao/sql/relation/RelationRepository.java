@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.relation;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -84,4 +85,6 @@ public interface RelationRepository
     @Query("DELETE FROM RelationEntity r where r.fromId = :fromId and r.fromType = :fromType and r.relationTypeGroup in :relationTypeGroups")
     void deleteByFromIdAndFromTypeAndRelationTypeGroupIn(@Param("fromId") UUID fromId, @Param("fromType") String fromType, @Param("relationTypeGroups") List<String> relationTypeGroups);
 
+    @Query("SELECT e FROM RelationEntity e ORDER BY e.fromId, e.fromType, e.toId, e.toType, e.relationType, e.relationTypeGroup")
+    Page<RelationEntity> findAll(Pageable pageable);
 }

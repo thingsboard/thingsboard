@@ -24,11 +24,14 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
+import org.thingsboard.server.common.data.ObjectType;
+import org.thingsboard.server.common.data.edqs.fields.GenericFields;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.entityview.EntityViewDao;
 import org.thingsboard.server.dao.model.sql.EntityViewEntity;
 import org.thingsboard.server.dao.model.sql.EntityViewInfoEntity;
@@ -47,8 +50,7 @@ import static org.thingsboard.server.dao.DaoUtil.convertTenantEntityTypesToDto;
 @Component
 @Slf4j
 @SqlDao
-public class JpaEntityViewDao extends JpaAbstractDao<EntityViewEntity, EntityView>
-        implements EntityViewDao {
+public class JpaEntityViewDao extends JpaAbstractDao<EntityViewEntity, EntityView> implements EntityViewDao, TenantEntityDao<EntityView> {
 
     @Autowired
     private EntityViewRepository entityViewRepository;
@@ -219,7 +221,23 @@ public class JpaEntityViewDao extends JpaAbstractDao<EntityViewEntity, EntityVie
     }
 
     @Override
+    public PageData<EntityView> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return findByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
+    public PageData<GenericFields> findAllFields(PageLink pageLink) {
+        return DaoUtil.pageToPageData(entityViewRepository.findAllFields(DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.ENTITY_VIEW;
     }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.ENTITY_VIEW;
+    }
+
 }

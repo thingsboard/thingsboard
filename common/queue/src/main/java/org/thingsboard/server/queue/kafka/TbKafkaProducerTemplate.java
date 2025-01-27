@@ -54,7 +54,7 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
 
     private final TbQueueAdmin admin;
 
-    private final Set<TopicPartitionInfo> topics;
+    private final Set<String> topics;
 
     @Getter
     private final String clientId;
@@ -97,16 +97,21 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
 
     @Override
     public void send(TopicPartitionInfo tpi, T msg, TbQueueCallback callback) {
+        send(tpi, msg.getKey().toString(), msg, callback);
+    }
+
+    public void send(TopicPartitionInfo tpi, String key, T msg, TbQueueCallback callback) {
         try {
-            createTopicIfNotExist(tpi);
-            String key = msg.getKey().toString();
+            String topic = tpi.getFullTopicName();
+            createTopicIfNotExist(topic);
             byte[] data = msg.getData();
             ProducerRecord<String, byte[]> record;
             List<Header> headers = msg.getHeaders().getData().entrySet().stream().map(e -> new RecordHeader(e.getKey(), e.getValue())).collect(Collectors.toList());
             if (log.isDebugEnabled()) {
                 addAnalyticHeaders(headers);
             }
-            record = new ProducerRecord<>(tpi.getFullTopicName(), null, key, data, headers);
+            Integer partition = tpi.isUseInternalPartition() ? tpi.getPartition().orElse(null) : null;
+            record = new ProducerRecord<>(topic, partition, key, data, headers);
             producer.send(record, (metadata, exception) -> {
                 if (exception == null) {
                     if (callback != null) {
@@ -130,12 +135,12 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
         }
     }
 
-    private void createTopicIfNotExist(TopicPartitionInfo tpi) {
-        if (topics.contains(tpi)) {
+    private void createTopicIfNotExist(String topic) {
+        if (topics.contains(topic)) {
             return;
         }
-        admin.createTopicIfNotExists(tpi.getFullTopicName());
-        topics.add(tpi);
+        admin.createTopicIfNotExists(topic);
+        topics.add(topic);
     }
 
     @Override
@@ -144,4 +149,5 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
             producer.close();
         }
     }
+
 }

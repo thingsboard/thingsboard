@@ -70,6 +70,7 @@ message ServiceInfo {
   repeated string transports = 6;
   SystemInfoProto systemInfo = 10;
   repeated string assignedTenantProfiles = 11;
+  string label = 12;
 }
 
 message SystemInfoProto {
@@ -170,10 +171,31 @@ message AttributeValueProto {
   optional int64 version = 10;
 }
 
+message AttributeKvProto {
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  EntityTypeProto entityType = 3;
+  AttributeScopeProto scope = 4;
+  string key = 5;
+  int64 version = 6;
+  int64 lastUpdateTs = 7;
+  KeyValueProto value = 8;
+}
+
 message TsKvProto {
   int64 ts = 1;
   KeyValueProto kv = 2;
   optional int64 version = 3;
+}
+
+message LatestTsKvProto {
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  EntityTypeProto entityType = 3;
+  string key = 4;
+  int64 ts = 5;
+  int64 version = 6;
+  KeyValueProto value = 7;
 }
 
 message TsKvListProto {
@@ -480,6 +502,10 @@ message ResourceCacheInvalidateMsg {
 message ImageCacheKeyProto {
   optional string resourceKey = 1;
   optional string publicResourceKey = 2;
+}
+
+message ToEdqsCoreServiceMsg {
+  bytes value = 1;
 }
 
 message LwM2MRegistrationRequestMsg {
@@ -1532,6 +1558,7 @@ message ToCoreNotificationMsg {
   ToEdgeSyncRequestMsgProto toEdgeSyncRequest = 11 [deprecated = true];
   FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 12 [deprecated = true];
   ResourceCacheInvalidateMsg resourceCacheInvalidateMsg = 13;
+  ToEdqsCoreServiceMsg toEdqsCoreServiceMsg = 17;
   RestApiCallResponseMsgProto restApiCallResponseMsg = 50;
 }
 
@@ -1659,4 +1686,34 @@ message HousekeeperTaskProto {
   // reprocessing
   int32 attempt = 50;
   repeated string errors = 51;
+}
+
+message ToEdqsMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 customerIdMSB = 3;
+  int64 customerIdLSB = 4;
+  int64 ts = 5;
+  EdqsEventMsg eventMsg = 6;
+  EdqsRequestMsg requestMsg = 7;
+}
+
+message FromEdqsMsg {
+  EdqsResponseMsg responseMsg = 1;
+}
+
+message EdqsEventMsg {
+  string key = 1;
+  string objectType = 2;
+  bytes data = 3;
+  string eventType = 4;
+  optional int64 version = 5;
+}
+
+message EdqsRequestMsg {
+  string value = 1;
+}
+
+message EdqsResponseMsg {
+  string value = 1;
 }

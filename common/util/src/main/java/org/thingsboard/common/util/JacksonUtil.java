@@ -559,6 +559,10 @@ public class JacksonUtil {
         }
     }
 
+    public static JsonNode getValueByPath(ObjectNode node, String path) {
+        return node.at("/" + path.replace(".", "/"));
+    }
+
     @Data
     public static class JsonNodeProcessingTask {
         private final String path;

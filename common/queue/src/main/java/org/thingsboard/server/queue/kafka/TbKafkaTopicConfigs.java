@@ -52,6 +52,12 @@ public class TbKafkaTopicConfigs {
     private String housekeeperProperties;
     @Value("${queue.kafka.topic-properties.housekeeper-reprocessing:}")
     private String housekeeperReprocessingProperties;
+    @Value("${queue.kafka.topic-properties.edqs-events:}")
+    private String edqsEventsProperties;
+    @Value("${queue.kafka.topic-properties.edqs-requests:}")
+    private String edqsRequestsProperties;
+    @Value("${queue.kafka.topic-properties.edqs-state:}")
+    private String edqsStateProperties;
 
     @Getter
     private Map<String, String> coreConfigs;
@@ -79,6 +85,12 @@ public class TbKafkaTopicConfigs {
     private Map<String, String> edgeConfigs;
     @Getter
     private Map<String, String> edgeEventConfigs;
+    @Getter
+    private Map<String, String> edqsEventsConfigs;
+    @Getter
+    private Map<String, String> edqsRequestsConfigs;
+    @Getter
+    private Map<String, String> edqsStateConfigs;
 
     @PostConstruct
     private void init() {
@@ -97,6 +109,9 @@ public class TbKafkaTopicConfigs {
         housekeeperReprocessingConfigs = PropertyUtils.getProps(housekeeperReprocessingProperties);
         edgeConfigs = PropertyUtils.getProps(edgeProperties);
         edgeEventConfigs = PropertyUtils.getProps(edgeEventProperties);
+        edqsEventsConfigs = PropertyUtils.getProps(edqsEventsProperties);
+        edqsRequestsConfigs = PropertyUtils.getProps(edqsRequestsProperties);
+        edqsStateConfigs = PropertyUtils.getProps(edqsStateProperties);
     }
 
 }

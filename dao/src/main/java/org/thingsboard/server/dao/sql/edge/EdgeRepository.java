@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.edqs.fields.EdgeFields;
 import org.thingsboard.server.dao.model.sql.EdgeEntity;
 import org.thingsboard.server.dao.model.sql.EdgeInfoEntity;
 
@@ -153,5 +154,9 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
     List<EdgeEntity> findEdgesByTenantIdAndIdIn(UUID tenantId, List<UUID> edgeIds);
 
     EdgeEntity findByRoutingKey(String routingKey);
+
+    @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.EdgeFields(e.id, e.createdTime, e.tenantId, e.customerId," +
+            "e.name, e.version, e.type, e.label, e.additionalInfo) FROM EdgeEntity e")
+    Page<EdgeFields> findAllFields(Pageable pageable);
 
 }

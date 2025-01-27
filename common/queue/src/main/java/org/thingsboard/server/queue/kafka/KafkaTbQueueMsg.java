@@ -28,7 +28,13 @@ public class KafkaTbQueueMsg implements TbQueueMsg {
     private final byte[] data;
 
     public KafkaTbQueueMsg(ConsumerRecord<String, byte[]> record) {
-        this.key = UUID.fromString(record.key());
+        UUID key;
+        try {
+            key = UUID.fromString(record.key());
+        } catch (IllegalArgumentException e) {
+            key = null; // FIXME
+        }
+        this.key = key;
         TbQueueMsgHeaders headers = new DefaultTbQueueMsgHeaders();
         record.headers().forEach(header -> {
             headers.put(header.key(), header.value());

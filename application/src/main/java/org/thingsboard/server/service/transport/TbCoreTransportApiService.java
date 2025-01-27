@@ -93,7 +93,8 @@ public class TbCoreTransportApiService {
     @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
     public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
         log.info("Received application ready event. Starting polling for events.");
-        transportApiTemplate.init(transportApiService);
+        transportApiTemplate.subscribe();
+        transportApiTemplate.launch(transportApiService);
     }
 
     @PreDestroy

@@ -76,7 +76,7 @@ public interface TbQueueProducerProvider {
      */
     TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> getTbUsageStatsMsgProducer();
 
-     /**
+    /**
      * Used to push messages to other instances of TB Core Service
      *
      * @return

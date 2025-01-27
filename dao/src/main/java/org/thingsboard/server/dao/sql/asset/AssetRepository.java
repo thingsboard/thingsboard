@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.edqs.fields.AssetFields;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
@@ -215,5 +216,10 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
 
     @Query(value = "SELECT DISTINCT new org.thingsboard.server.common.data.util.TbPair(a.tenantId , a.type) FROM  AssetEntity a")
     Page<TbPair<UUID, String>> getAllAssetTypes(Pageable pageable);
+
+
+    @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.AssetFields(a.id, a.createdTime, a.tenantId, a.customerId," +
+            "a.name, a.version, a.type, a.label, a.assetProfileId, a.additionalInfo) FROM AssetEntity a")
+    Page<AssetFields> findAllFields(Pageable pageable);
 
 }

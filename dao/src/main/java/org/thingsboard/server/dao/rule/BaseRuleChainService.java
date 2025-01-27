@@ -124,10 +124,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             if (ruleChain.getId() == null) {
                 entityCountService.publishCountEntityEvictEvent(ruleChain.getTenantId(), EntityType.RULE_CHAIN);
             }
-            if (publishSaveEvent) {
-                eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedRuleChain.getTenantId())
-                        .entity(savedRuleChain).entityId(savedRuleChain.getId()).created(ruleChain.getId() == null).build());
-            }
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedRuleChain.getTenantId())
+                    .entity(savedRuleChain).entityId(savedRuleChain.getId()).created(ruleChain.getId() == null)
+                    .broadcastEvent(publishSaveEvent).build());
             return savedRuleChain;
         } catch (Exception e) {
             checkConstraintViolation(e, "rule_chain_external_id_unq_key", "Rule Chain with such external id already exists!");
@@ -289,9 +288,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             relationService.saveRelations(tenantId, relations);
         }
         ruleChain = ruleChainDao.save(tenantId, ruleChain);
-        if (publishSaveEvent) {
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(ruleChain).entityId(ruleChain.getId()).build());
-        }
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(ruleChain)
+                .entityId(ruleChain.getId()).broadcastEvent(publishSaveEvent).build());
         return RuleChainUpdateResult.successful(updatedRuleNodes);
     }
 

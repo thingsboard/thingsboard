@@ -22,7 +22,10 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.util.TbPair;
+import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 
 import java.util.Collection;
 import java.util.List;
@@ -38,6 +41,8 @@ public interface AttributesDao {
     List<AttributeKvEntry> find(TenantId tenantId, EntityId entityId, AttributeScope attributeScope, Collection<String> attributeKey);
 
     List<AttributeKvEntry> findAll(TenantId tenantId, EntityId entityId, AttributeScope attributeScope);
+
+    PageData<AttributeKvEntity> findAll(PageLink pageLink);
 
     ListenableFuture<Long> save(TenantId tenantId, EntityId entityId, AttributeScope attributeScope, AttributeKvEntry attribute);
 

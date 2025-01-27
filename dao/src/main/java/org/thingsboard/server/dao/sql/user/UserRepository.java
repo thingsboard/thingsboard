@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.edqs.fields.UserFields;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.model.sql.UserEntity;
 
@@ -70,5 +71,10 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
                                                          Pageable pageable);
 
     Long countByTenantId(UUID tenantId);
+
+    @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.UserFields(u.id, u.createdTime, u.tenantId," +
+            "u.customerId, u.version, u.firstName, u.lastName, u.email, u.phone, u.additionalInfo) " +
+            "FROM UserEntity u")
+    Page<UserFields> findAllFields(Pageable pageable);
 
 }

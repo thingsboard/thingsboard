@@ -23,6 +23,8 @@ import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityInfo;
+import org.thingsboard.server.common.data.edqs.fields.DeviceProfileFields;
+import org.thingsboard.server.common.data.edqs.fields.GenericFields;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 
@@ -91,5 +93,9 @@ public interface DeviceProfileRepository extends JpaRepository<DeviceProfileEnti
     @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(d.id, 'DEVICE_PROFILE', d.name) " +
             "FROM DeviceProfileEntity d WHERE d.tenantId = :tenantId")
     List<EntityInfo> findAllTenantDeviceProfileNames(@Param("tenantId") UUID tenantId);
+
+    @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.DeviceProfileFields(d.id, d.createdTime, d.tenantId," +
+            "d.name, d.version, d.type, d.isDefault) FROM DeviceProfileEntity d")
+    Page<DeviceProfileFields> findAllFields(Pageable pageable);
 
 }

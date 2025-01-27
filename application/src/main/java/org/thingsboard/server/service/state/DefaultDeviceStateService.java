@@ -251,7 +251,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         }
         log.trace("[{}][{}] On device connect: processing connect event with ts [{}].", tenantId.getId(), deviceId.getId(), lastConnectTime);
         stateData.getState().setLastConnectTime(lastConnectTime);
-        save(deviceId, LAST_CONNECT_TIME, lastConnectTime);
+        save(tenantId, deviceId, LAST_CONNECT_TIME, lastConnectTime);
         pushRuleEngineMessage(stateData, TbMsgType.CONNECT_EVENT);
         checkAndUpdateState(deviceId, stateData);
     }
@@ -271,14 +271,14 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     void updateActivityState(DeviceId deviceId, DeviceStateData stateData, long lastReportedActivity) {
         log.trace("updateActivityState - fetched state {} for device {}, lastReportedActivity {}", stateData, deviceId, lastReportedActivity);
         if (stateData != null) {
-            save(deviceId, LAST_ACTIVITY_TIME, lastReportedActivity);
+            save(stateData.getTenantId(), deviceId, LAST_ACTIVITY_TIME, lastReportedActivity);
             DeviceState state = stateData.getState();
             state.setLastActivityTime(lastReportedActivity);
             if (!state.isActive()) {
                 state.setActive(true);
                 if (lastReportedActivity <= state.getLastInactivityAlarmTime()) {
                     state.setLastInactivityAlarmTime(0);
-                    save(deviceId, INACTIVITY_ALARM_TIME, 0);
+                    save(stateData.getTenantId(), deviceId, INACTIVITY_ALARM_TIME, 0);
                 }
                 onDeviceActivityStatusChange(deviceId, true, stateData);
             }
@@ -307,7 +307,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         }
         log.trace("[{}][{}] On device disconnect: processing disconnect event with ts [{}].", tenantId.getId(), deviceId.getId(), lastDisconnectTime);
         stateData.getState().setLastDisconnectTime(lastDisconnectTime);
-        save(deviceId, LAST_DISCONNECT_TIME, lastDisconnectTime);
+        save(tenantId, deviceId, LAST_DISCONNECT_TIME, lastDisconnectTime);
         pushRuleEngineMessage(stateData, TbMsgType.DISCONNECT_EVENT);
     }
 
@@ -418,7 +418,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     private void initializeActivityState(DeviceId deviceId, DeviceStateData fetchedState) {
         DeviceStateData cachedState = deviceStates.putIfAbsent(fetchedState.getDeviceId(), fetchedState);
         boolean activityState = Objects.requireNonNullElse(cachedState, fetchedState).getState().isActive();
-        save(deviceId, ACTIVITY_STATE, activityState);
+        save(fetchedState.getTenantId(), deviceId, ACTIVITY_STATE, activityState);
     }
 
     @Override
@@ -496,7 +496,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                 updateActivityState(deviceId, state, deviceState.getLastActivityTime());
                 if (deviceState.getLastInactivityAlarmTime() != 0L && deviceState.getLastInactivityAlarmTime() >= deviceState.getLastActivityTime()) {
                     deviceState.setLastInactivityAlarmTime(0L);
-                    save(deviceId, INACTIVITY_ALARM_TIME, 0L);
+                    save(state.getTenantId(), deviceId, INACTIVITY_ALARM_TIME, 0L);
                 }
             }
         }
@@ -583,7 +583,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         DeviceState state = stateData.getState();
         state.setActive(false);
         state.setLastInactivityAlarmTime(ts);
-        save(deviceId, INACTIVITY_ALARM_TIME, ts);
+        save(stateData.getTenantId(), deviceId, INACTIVITY_ALARM_TIME, ts);
         onDeviceActivityStatusChange(deviceId, false, stateData);
     }
 
@@ -611,7 +611,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     }
 
     private void onDeviceActivityStatusChange(DeviceId deviceId, boolean active, DeviceStateData stateData) {
-        save(deviceId, ACTIVITY_STATE, active);
+        save(stateData.getTenantId(), deviceId, ACTIVITY_STATE, active);
         pushRuleEngineMessage(stateData, active ? TbMsgType.ACTIVITY_EVENT : TbMsgType.INACTIVITY_EVENT);
         TbMsgMetaData metaData = stateData.getMetaData();
         notificationRuleProcessor.process(DeviceActivityTrigger.builder()
@@ -874,18 +874,18 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         }
     }
 
-    private void save(DeviceId deviceId, String key, long value) {
-        save(deviceId, new LongDataEntry(key, value), getCurrentTimeMillis());
+    private void save(TenantId tenantId, DeviceId deviceId, String key, long value) {
+        save(tenantId, deviceId, new LongDataEntry(key, value), getCurrentTimeMillis());
     }
 
-    private void save(DeviceId deviceId, String key, boolean value) {
-        save(deviceId, new BooleanDataEntry(key, value), getCurrentTimeMillis());
+    private void save(TenantId tenantId, DeviceId deviceId, String key, boolean value) {
+        save(tenantId, deviceId, new BooleanDataEntry(key, value), getCurrentTimeMillis());
     }
 
-    private void save(DeviceId deviceId, KvEntry kvEntry, long ts) {
+    private void save(TenantId tenantId, DeviceId deviceId, KvEntry kvEntry, long ts) {
         if (persistToTelemetry) {
             tsSubService.saveTimeseriesInternal(TimeseriesSaveRequest.builder()
-                    .tenantId(TenantId.SYS_TENANT_ID)
+                    .tenantId(tenantId)
                     .entityId(deviceId)
                     .entry(new BasicTsKvEntry(ts, kvEntry))
                     .ttl(telemetryTtl)
@@ -893,7 +893,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     .build());
         } else {
             tsSubService.saveAttributes(AttributesSaveRequest.builder()
-                    .tenantId(TenantId.SYS_TENANT_ID)
+                    .tenantId(tenantId)
                     .entityId(deviceId)
                     .scope(AttributeScope.SERVER_SCOPE)
                     .entry(new BaseAttributeKvEntry(ts, kvEntry))
@@ -925,4 +925,5 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             log.warn("[{}] Failed to update entry {}", deviceId, kvEntry, t);
         }
     }
+
 }
