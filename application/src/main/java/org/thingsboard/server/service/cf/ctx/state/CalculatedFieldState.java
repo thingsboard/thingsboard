@@ -44,5 +44,6 @@ public interface CalculatedFieldState {
 
     ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx);
 
+    @JsonIgnore
     boolean isReady();
 }

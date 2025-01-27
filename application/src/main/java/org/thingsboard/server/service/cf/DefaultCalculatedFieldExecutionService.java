@@ -837,8 +837,10 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         telemetryMsg.setEntityIdMSB(entityId.getId().getMostSignificantBits());
         telemetryMsg.setEntityIdLSB(entityId.getId().getLeastSignificantBits());
 
-        for (CalculatedFieldId cfId : calculatedFieldIds) {
-            telemetryMsg.addPreviousCalculatedFields(toProto(cfId));
+        if(calculatedFieldIds != null) {
+            for (CalculatedFieldId cfId : calculatedFieldIds) {
+                telemetryMsg.addPreviousCalculatedFields(toProto(cfId));
+            }
         }
 
         return telemetryMsg;

@@ -644,11 +644,13 @@ public class ProtoUtils {
     }
 
     public static TransportProtos.TsKvProto toTsKvProto(TsKvEntry tsKvEntry) {
-        return TransportProtos.TsKvProto.newBuilder()
+        var builder = TransportProtos.TsKvProto.newBuilder()
                 .setTs(tsKvEntry.getTs())
-                .setKv(toKeyValueProto(tsKvEntry))
-                .setVersion(tsKvEntry.getVersion())
-                .build();
+                .setKv(toKeyValueProto(tsKvEntry));
+        if (tsKvEntry.getVersion() != null) {
+            builder.setVersion(tsKvEntry.getVersion());
+        }
+        return builder.build();
     }
 
     public static TransportProtos.KeyValueProto toKeyValueProto(KvEntry kvEntry) {

@@ -78,6 +78,10 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         this.ctx = ctx;
     }
 
+    public void process(CalculatedFieldStateRestoreMsg msg) {
+        states.put(msg.getId().cfId(), msg.getState());
+    }
+
     public void process(EntityCalculatedFieldTelemetryMsg msg) {
         var proto = msg.getProto();
         var numberOfCallbacks = CALLBACKS_PER_CF * (msg.getEntityIdFields().size() + msg.getProfileIdFields().size());
@@ -191,9 +195,5 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             cfIds.add(new CalculatedFieldId(new UUID(cfId.getCalculatedFieldIdMSB(), cfId.getCalculatedFieldIdLSB())));
         }
         return cfIds;
-    }
-
-    public void process(CalculatedFieldStateRestoreMsg msg) {
-        states.put(msg.getId().cfId(), msg.getState());
     }
 }
