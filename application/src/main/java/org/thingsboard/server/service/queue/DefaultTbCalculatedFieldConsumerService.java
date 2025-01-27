@@ -21,8 +21,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -30,23 +28,20 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.calculatedField.CalculatedFieldLinkedTelemetryMsg;
+import org.thingsboard.server.actors.calculatedField.CalculatedFieldTelemetryMsg;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.QueueConfig;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
-import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldLinkedTelemetryMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -166,10 +161,10 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
                     pendingMsgHolder.setMsg(toCfMsg);
                     if (toCfMsg.hasTelemetryMsg()) {
                         log.trace("[{}] Forwarding regular telemetry message for processing {}", id, toCfMsg.getTelemetryMsg());
-                        forwardToCalculatedFieldService(toCfMsg.getTelemetryMsg(), callback);
+                        forwardToActorSystem(toCfMsg.getTelemetryMsg(), callback);
                     } else if (toCfMsg.hasLinkedTelemetryMsg()) {
                         log.trace("[{}] Forwarding linked telemetry message for processing {}", id, toCfMsg.getLinkedTelemetryMsg());
-                        forwardToCalculatedFieldService(toCfMsg.getLinkedTelemetryMsg(), callback);
+                        forwardToActorSystem(toCfMsg.getLinkedTelemetryMsg(), callback);
                     }
                 } catch (Throwable e) {
                     log.warn("[{}] Failed to process message: {}", id, msg, e);
@@ -219,9 +214,9 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
     protected void handleNotification(UUID id, TbProtoQueueMsg<ToCalculatedFieldNotificationMsg> msg, TbCallback callback) {
         ToCalculatedFieldNotificationMsg toCfNotification = msg.getValue();
         if (toCfNotification.hasComponentLifecycle()) {
-            forwardToCalculatedFieldService(toCfNotification.getComponentLifecycle(), callback);
+            forwardToActorSystem(toCfNotification.getComponentLifecycle(), callback);
         } else if (toCfNotification.hasEntityUpdateMsg()) {
-            forwardToCalculatedFieldService(toCfNotification.getEntityUpdateMsg(), callback);
+            forwardToActorSystem(toCfNotification.getEntityUpdateMsg(), callback);
         }
         callback.onSuccess();
     }
@@ -249,33 +244,20 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
 //    }
 //
 
-    private void forwardToCalculatedFieldService(CalculatedFieldLinkedTelemetryMsgProto linkedMsg, TbCallback callback) {
+    private void forwardToActorSystem(CalculatedFieldTelemetryMsgProto msg, TbCallback callback) {
+        var tenantId = toTenantId(msg.getTenantIdMSB(), msg.getTenantIdLSB());
+        var entityId = EntityIdFactory.getByTypeAndUuid(msg.getEntityType(), new UUID(msg.getEntityIdMSB(), msg.getEntityIdLSB()));
+        actorContext.tell(new CalculatedFieldTelemetryMsg(tenantId, entityId, msg, callback));
+    }
+
+    private void forwardToActorSystem(CalculatedFieldLinkedTelemetryMsgProto linkedMsg, TbCallback callback) {
         var msg = linkedMsg.getMsg();
         var tenantId = toTenantId(msg.getTenantIdMSB(), msg.getTenantIdLSB());
-        var calculatedFieldId = new CalculatedFieldId(new UUID(msg.getEntityIdMSB(), msg.getEntityIdLSB()));
-        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onLinkedTelemetryMsg(linkedMsg, callback));
-        DonAsynchron.withCallback(future,
-                __ -> callback.onSuccess(),
-                t -> {
-                    log.warn("[{}] Failed to process calculated field message for calculated field [{}]", tenantId.getId(), calculatedFieldId.getId(), t);
-                    callback.onFailure(t);
-                });
-
+        var entityId = EntityIdFactory.getByTypeAndUuid(msg.getEntityType(), new UUID(msg.getEntityIdMSB(), msg.getEntityIdLSB()));
+        actorContext.tell(new CalculatedFieldLinkedTelemetryMsg(tenantId, entityId, linkedMsg, callback));
     }
 
-    private void forwardToCalculatedFieldService(CalculatedFieldTelemetryMsgProto msg, TbCallback callback) {
-        var tenantId = toTenantId(msg.getTenantIdMSB(), msg.getTenantIdLSB());
-        var calculatedFieldId = new CalculatedFieldId(new UUID(msg.getEntityIdMSB(), msg.getEntityIdLSB()));
-        ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onTelemetryMsg(msg, callback));
-        DonAsynchron.withCallback(future,
-                __ -> callback.onSuccess(),
-                t -> {
-                    log.warn("[{}] Failed to process calculated field message for calculated field [{}]", tenantId.getId(), calculatedFieldId.getId(), t);
-                    callback.onFailure(t);
-                });
-    }
-
-    private void forwardToCalculatedFieldService(TransportProtos.ComponentLifecycleMsgProto msg, TbCallback callback) {
+    private void forwardToActorSystem(TransportProtos.ComponentLifecycleMsgProto msg, TbCallback callback) {
         var tenantId = toTenantId(msg.getTenantIdMSB(), msg.getTenantIdLSB());
         var calculatedFieldId = new CalculatedFieldId(new UUID(msg.getEntityIdMSB(), msg.getEntityIdLSB()));
         ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onCalculatedFieldLifecycleMsg(msg, callback));
@@ -287,7 +269,7 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
                 });
     }
 
-    private void forwardToCalculatedFieldService(TransportProtos.CalculatedFieldEntityUpdateMsgProto msg, TbCallback callback) {
+    private void forwardToActorSystem(TransportProtos.CalculatedFieldEntityUpdateMsgProto msg, TbCallback callback) {
         var tenantId = toTenantId(msg.getTenantIdMSB(), msg.getTenantIdLSB());
         var entityId = EntityIdFactory.getByTypeAndUuid(msg.getEntityType(), new UUID(msg.getEntityIdMSB(), msg.getEntityIdLSB()));
         ListenableFuture<?> future = calculatedFieldsExecutor.submit(() -> calculatedFieldExecutionService.onEntityUpdateMsg(msg, callback));

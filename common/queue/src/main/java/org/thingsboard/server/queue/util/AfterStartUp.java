@@ -38,6 +38,10 @@ public @interface AfterStartUp {
     int ACTOR_SYSTEM = 9;
     int REGULAR_SERVICE = 10;
 
+    int CF_INIT_SERVICE = 10;
+    int CF_STATE_RESTORE_SERVICE = 11;
+    int CF_CONSUMER_SERVICE = 12;
+
     int BEFORE_TRANSPORT_SERVICE = Integer.MAX_VALUE - 1001;
     int TRANSPORT_SERVICE = Integer.MAX_VALUE - 1000;
     int AFTER_TRANSPORT_SERVICE = Integer.MAX_VALUE - 999;

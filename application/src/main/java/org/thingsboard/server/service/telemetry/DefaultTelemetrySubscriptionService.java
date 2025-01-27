@@ -147,7 +147,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
             resultFuture = tsService.saveWithoutLatest(tenantId, entityId, request.getEntries(), request.getTtl());
         }
         DonAsynchron.withCallback(resultFuture, result -> {
-            calculatedFieldExecutionService.pushRequestToQueue(request, result);
+            calculatedFieldExecutionService.pushRequestToQueue(request, result, request.getCallback());
         }, safeCallback(request.getCallback()), tsCallBackExecutor);
         addWsCallback(resultFuture, success -> onTimeSeriesUpdate(tenantId, entityId, request.getEntries()));
         if (request.isSaveLatest() && !request.isOnlyLatest()) {
@@ -167,7 +167,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         log.trace("Executing saveInternal [{}]", request);
         ListenableFuture<List<Long>> saveFuture = attrService.save(request.getTenantId(), request.getEntityId(), request.getScope(), request.getEntries());
         DonAsynchron.withCallback(saveFuture, result -> {
-            calculatedFieldExecutionService.pushRequestToQueue(request, result);
+            calculatedFieldExecutionService.pushRequestToQueue(request, result, request.getCallback());
         }, safeCallback(request.getCallback()), tsCallBackExecutor);
         addWsCallback(saveFuture, success -> onAttributesUpdate(request.getTenantId(), request.getEntityId(), request.getScope().name(), request.getEntries(), request.isNotifyDevice()));
     }
