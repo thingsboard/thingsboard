@@ -314,6 +314,7 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
 
       this.selectable = this.removeEnabled || this.editEnabled;
       this.hoverable = this.selectable || this.dragEnabled;
+      this.snappable = this.settings.edit.snappable;
     }
 
     this.dataLayerContainer = this.createDataLayerContainer();

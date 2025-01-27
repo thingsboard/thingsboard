@@ -76,7 +76,8 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
     this.iconClassList = [];
     const location = this.dataLayer.extractLocation(data, dsData);
     this.marker = L.marker(location, {
-      tbMarkerData: data
+      tbMarkerData: data,
+      snapIgnore: !this.dataLayer.isSnappable()
     });
 
     this.updateMarkerIcon(data, dsData);
@@ -129,20 +130,40 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
   }
 
   protected enableDrag(): void {
-    this.marker.options.draggable = true;
-    this.marker.on('dragstart', () => {
-      this.moving = true;
-    });
-    this.marker.on('dragend', () => {
-      this.saveMarkerLocation();
-      this.moving = false;
-    });
+    if (this.settings.markerClustering?.enable) {
+      this.marker.options.draggable = true;
+      this.marker.on('dragstart', () => {
+        this.moving = true;
+      });
+      this.marker.on('dragend', () => {
+        this.saveMarkerLocation();
+        this.moving = false;
+      });
+    } else {
+      this.marker.pm.setOptions({
+        snappable: this.dataLayer.isSnappable()
+      });
+      this.marker.pm.enableLayerDrag();
+      this.marker.on('pm:dragstart', () => {
+        this.moving = true;
+      });
+      this.marker.on('pm:dragend', () => {
+        this.saveMarkerLocation();
+        this.moving = false;
+      });
+    }
   }
 
   protected disableDrag(): void {
-    this.marker.options.draggable = false;
-    this.marker.off('dragstart');
-    this.marker.off('dragend');
+    if (this.settings.markerClustering?.enable) {
+      this.marker.options.draggable = false;
+      this.marker.off('dragstart');
+      this.marker.off('dragend');
+    } else {
+      this.marker.pm.disableLayerDrag();
+      this.marker.off('pm:dragstart');
+      this.marker.off('pm:dragend');
+    }
   }
 
   private saveMarkerLocation() {

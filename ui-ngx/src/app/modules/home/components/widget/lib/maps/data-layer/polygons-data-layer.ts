@@ -96,6 +96,9 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
   }
 
   protected enableDrag(): void {
+    this.polygon.pm.setOptions({
+      snappable: this.dataLayer.isSnappable()
+    });
     this.polygon.pm.enableLayerDrag();
     this.polygon.on('pm:dragstart', () => {
       this.editing = true;

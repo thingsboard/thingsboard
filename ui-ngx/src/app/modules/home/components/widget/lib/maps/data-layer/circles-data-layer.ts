@@ -91,6 +91,9 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
   }
 
   protected enableDrag(): void {
+    this.circle.pm.setOptions({
+      snappable: this.dataLayer.isSnappable()
+    });
     this.circle.pm.enableLayerDrag();
     this.circle.on('pm:dragstart', () => {
       this.editing = true;
