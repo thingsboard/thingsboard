@@ -22,13 +22,13 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
-import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsgPack;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 
 public interface TbApiUsageStateService extends TbApiUsageStateClient, RuleEngineApiUsageStateService, ApplicationListener<PartitionChangeEvent> {
 
-    void process(TbProtoQueueMsg<ToUsageStatsServiceMsg> msg, TbCallback callback);
+    void process(TbProtoQueueMsg<ToUsageStatsServiceMsgPack> msg, TbCallback callback);
 
     void onTenantProfileUpdate(TenantProfileId tenantProfileId);
 
