@@ -104,6 +104,11 @@ declare module 'leaflet' {
       isDisabled(): boolean;
     }
 
+    class ToolbarControl extends Control<ControlOptions> {
+      constructor(options: ControlOptions);
+      toolbarButton(options: ToolbarButtonOptions): ToolbarButton;
+    }
+
     interface BottomToolbarControlOptions extends ControlOptions {
       mapElement: JQuery<HTMLElement>;
       closeTitle: string;
@@ -125,6 +130,8 @@ declare module 'leaflet' {
     function layers(options: LayersControlOptions): LayersControl;
 
     function groups(options: GroupsControlOptions): GroupsControl;
+
+    function toolbar(options: ControlOptions): ToolbarControl;
 
     function bottomToolbar(options: BottomToolbarControlOptions): BottomToolbarControl;
 

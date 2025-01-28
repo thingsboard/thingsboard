@@ -52,7 +52,6 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
   protected tooltip: L.Popup;
   protected data: FormattedData<TbMapDatasource>;
   protected selected = false;
-  protected removed = false;
 
   protected constructor(data: FormattedData<TbMapDatasource>,
                         dsData: FormattedData<TbMapDatasource>[],
@@ -99,11 +98,6 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
       this.layer.on('click', () => {
         if (!this.isEditing()) {
           this.dataLayer.getMap().selectItem(this);
-        }
-      });
-      this.layer.on('remove', () => {
-        if (this.selected) {
-          this.dataLayer.getMap().deselectItem();
         }
       });
     }
@@ -163,9 +157,9 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
     }
   }
 
-  public deselect(cancel = false): boolean {
+  public deselect(cancel = false, force = false): boolean {
     if (this.selected) {
-      if (this.canDeselect(cancel)) {
+      if (this.canDeselect(cancel) || force) {
         this.selected = false;
         this.layer.closePopup();
         this.updateSelectedState();
@@ -197,9 +191,8 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
   }
 
   public remove() {
-    this.removed = true;
     if (this.selected) {
-      this.dataLayer.getMap().deselectItem();
+      this.dataLayer.getMap().deselectItem(false, true);
     }
     this.dataLayer.getDataLayerContainer().removeLayer(this.layer);
     this.layer.off();
@@ -399,6 +392,8 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
 
   private editMode = false;
 
+  private unplacedItems: FormattedData<TbMapDatasource>[] = [];
+
   public dataLayerLabelProcessor: DataLayerPatternProcessor;
   public dataLayerTooltipProcessor: DataLayerPatternProcessor;
 
@@ -504,6 +499,12 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
           this.map.getMap().addLayer(this.dataLayerContainer);
           this.updateItemsEditMode();
         } else {
+          for (const item of this.layerItems) {
+            if (item[1].isSelected()) {
+              this.getMap().deselectItem(false, true);
+              break;
+            }
+          }
           this.map.getMap().removeLayer(this.dataLayerContainer);
         }
         return true;
@@ -513,20 +514,24 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
   }
 
   public updateData(dsData: FormattedData<TbMapDatasource>[]) {
+    this.unplacedItems.length = 0;
     const layerData = dsData.filter(d => d.$datasource.mapDataIds.includes(this.mapDataId));
-    const rawItems = layerData.filter(d => this.isValidLayerData(d));
     const toDelete = new Set(Array.from(this.layerItems.keys()));
     const updatedItems: TbDataLayerItem<S,D,L>[] = [];
-    rawItems.forEach((data) => {
-      let layerItem = this.layerItems.get(data.entityId);
-      if (layerItem) {
-        layerItem.update(data, dsData);
-        updatedItems.push(layerItem);
+    layerData.forEach((data) => {
+      if (this.isValidLayerData(data)) {
+        let layerItem = this.layerItems.get(data.entityId);
+        if (layerItem) {
+          layerItem.update(data, dsData);
+          updatedItems.push(layerItem);
+        } else {
+          layerItem = this.createLayerItem(data, dsData);
+          this.layerItems.set(data.entityId, layerItem);
+        }
+        toDelete.delete(data.entityId);
       } else {
-        layerItem = this.createLayerItem(data, dsData);
-        this.layerItems.set(data.entityId, layerItem);
+        this.unplacedItems.push(data);
       }
-      toDelete.delete(data.entityId);
     });
     toDelete.forEach((key) => {
       const item = this.layerItems.get(key);
@@ -545,8 +550,13 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
   public getCtx(): WidgetContext {
     return this.map.getCtx();
   }
+
   public getMap(): TbMap<any> {
     return this.map;
+  }
+
+  public hasUnplacedItems(): boolean {
+    return !!this.unplacedItems.length;
   }
 
   protected createDataLayerContainer(): L.FeatureGroup {

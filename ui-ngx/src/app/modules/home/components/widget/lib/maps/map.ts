@@ -23,7 +23,9 @@ import {
   mergeMapDatasources,
   parseCenterPosition,
   TbCircleData,
-  TbMapDatasource, TbPolygonCoordinates, TbPolygonRawCoordinates
+  TbMapDatasource,
+  TbPolygonCoordinates,
+  TbPolygonRawCoordinates
 } from '@home/components/widget/lib/maps/models/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { formattedDataFormDatasourceData, isDefinedAndNotNull, mergeDeepIgnoreArray } from '@core/utils';
@@ -73,6 +75,15 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected sidebar: L.TB.SidebarControl;
 
   protected editToolbar: L.TB.BottomToolbarControl;
+
+  protected addMarkerButton: L.TB.ToolbarButton;
+  protected addRectangleButton: L.TB.ToolbarButton;
+  protected addPolygonButton: L.TB.ToolbarButton;
+  protected addCircleButton: L.TB.ToolbarButton;
+
+  protected addMarkerDataLayers: TbMapDataLayer<any,any>[];
+  protected addPolygonDataLayers: TbMapDataLayer<any,any>[];
+  protected addCircleDataLayers: TbMapDataLayer<any,any>[];
 
   private readonly mapResize$: ResizeObserver;
 
@@ -253,6 +264,51 @@ export abstract class TbMap<S extends BaseMapSettings> {
      this.map.on('click', () => {
        this.deselectItem();
      });
+
+     const addSupportedDataLayers = this.dataLayers.filter(dl => dl.isAddEnabled());
+
+     if (addSupportedDataLayers.length) {
+       const drawToolbar = L.TB.toolbar({
+         position: this.settings.controlsPosition
+       }).addTo(this.map);
+       this.addMarkerDataLayers = addSupportedDataLayers.filter(dl => dl.dataLayerType() === MapDataLayerType.marker);
+       if (this.addMarkerDataLayers.length) {
+         this.addMarkerButton = drawToolbar.toolbarButton({
+           id: 'addMarker',
+           title: this.ctx.translate.instant('widgets.maps.data-layer.marker.place-marker'),
+           iconClass: 'tb-place-marker',
+           click: (e, button) => {}
+         });
+         this.addMarkerButton.setDisabled(true);
+       }
+       this.addPolygonDataLayers = addSupportedDataLayers.filter(dl => dl.dataLayerType() === MapDataLayerType.polygon);
+       if (this.addPolygonDataLayers.length) {
+         this.addRectangleButton = drawToolbar.toolbarButton({
+           id: 'addRectangle',
+           title: this.ctx.translate.instant('widgets.maps.data-layer.polygon.draw-rectangle'),
+           iconClass: 'tb-draw-rectangle',
+           click: (e, button) => {}
+         });
+         this.addRectangleButton.setDisabled(true);
+         this.addPolygonButton = drawToolbar.toolbarButton({
+           id: 'addPolygon',
+           title: this.ctx.translate.instant('widgets.maps.data-layer.polygon.draw-polygon'),
+           iconClass: 'tb-draw-polygon',
+           click: (e, button) => {}
+         });
+         this.addPolygonButton.setDisabled(true);
+       }
+       this.addCircleDataLayers = addSupportedDataLayers.filter(dl => dl.dataLayerType() === MapDataLayerType.circle);
+       if (this.addCircleDataLayers.length) {
+         this.addCircleButton = drawToolbar.toolbarButton({
+           id: 'addCircle',
+           title: this.ctx.translate.instant('widgets.maps.data-layer.circle.draw-circle'),
+           iconClass: 'tb-draw-circle',
+           click: (e, button) => {}
+         });
+         this.addCircleButton.setDisabled(true);
+       }
+     }
   }
 
   private createdControlButtonTooltip(root: HTMLElement, side: TooltipPositioningSide) {
@@ -320,6 +376,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
       undefined, undefined, el => el.datasource.entityId + el.datasource.mapDataIds[0]);
     this.dataLayers.forEach(dl => dl.updateData(this.dsData));
     this.updateBounds();
+    this.updateAddButtonsStates();
   }
 
   private resize() {
@@ -363,6 +420,21 @@ export abstract class TbMap<S extends BaseMapSettings> {
       entityType,
       id: entityId
     }, entityName, null, entityLabel);
+  }
+
+  private updateAddButtonsStates() {
+    if (this.addMarkerButton) {
+      this.addMarkerButton.setDisabled(!this.addMarkerDataLayers.some(dl => dl.hasUnplacedItems()));
+    }
+    if (this.addRectangleButton) {
+      this.addRectangleButton.setDisabled(!this.addPolygonDataLayers.some(dl => dl.hasUnplacedItems()));
+    }
+    if (this.addPolygonButton) {
+      this.addPolygonButton.setDisabled(!this.addPolygonDataLayers.some(dl => dl.hasUnplacedItems()));
+    }
+    if (this.addCircleButton) {
+      this.addCircleButton.setDisabled(!this.addCircleDataLayers.some(dl => dl.hasUnplacedItems()));
+    }
   }
 
   protected abstract defaultSettings(): S;
@@ -454,10 +526,10 @@ export abstract class TbMap<S extends BaseMapSettings> {
     }
   }
 
-  public selectItem(item: TbDataLayerItem, cancel = false): boolean {
+  public selectItem(item: TbDataLayerItem, cancel = false, force = false): boolean {
     let deselected = true;
     if (this.selectedDataItem) {
-      deselected = this.selectedDataItem.deselect(cancel);
+      deselected = this.selectedDataItem.deselect(cancel, force);
       if (deselected) {
         this.selectedDataItem = null;
         this.editToolbar.close();
@@ -475,8 +547,8 @@ export abstract class TbMap<S extends BaseMapSettings> {
     return deselected;
   }
 
-  public deselectItem(cancel = false): boolean {
-    return this.selectItem(null, cancel);
+  public deselectItem(cancel = false, force = false): boolean {
+    return this.selectItem(null, cancel, force);
   }
 
   public getSelectedDataItem(): TbDataLayerItem {

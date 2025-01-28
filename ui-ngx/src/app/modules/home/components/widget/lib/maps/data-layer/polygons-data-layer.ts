@@ -77,7 +77,9 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
     this.updatePolygonShape(data);
     this.updateTooltip(data, dsData);
     this.updateLabel(data, dsData);
-    this.polygon.setStyle(this.polygonStyle);
+    if (!this.editing || !this.dataLayer.getMap().getMap().pm.globalCutModeEnabled()) {
+      this.polygon.setStyle(this.polygonStyle);
+    }
   }
 
   protected doInvalidateCoordinates(data: FormattedData<TbMapDatasource>, _dsData: FormattedData<TbMapDatasource>[]): void {
@@ -171,19 +173,17 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
   }
 
   protected canDeselect(cancel = false): boolean {
-    if (!this.removed) {
-      const map = this.dataLayer.getMap().getMap();
-      if (map.pm.globalCutModeEnabled()) {
-        if (cancel) {
-          this.disablePolygonCutMode();
-        }
-        return false;
-      } else if (this.polygon.pm.rotateEnabled()) {
-        if (cancel) {
-          this.disablePolygonRotateMode();
-        }
-        return false;
+    const map = this.dataLayer.getMap().getMap();
+    if (map.pm.globalCutModeEnabled()) {
+      if (cancel) {
+        this.disablePolygonCutMode();
       }
+      return false;
+    } else if (this.polygon.pm.rotateEnabled()) {
+      if (cancel) {
+        this.disablePolygonRotateMode();
+      }
+      return false;
     }
     return true;
   }
@@ -222,6 +222,9 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
     this.polygonContainer.closePopup();
     this.editing = true;
     this.polygon.options.bubblingMouseEvents = true;
+    this.polygon.setStyle({...this.polygonStyle, dashArray: '5 5', weight: 3,
+      color: '#3388ff', opacity: 1, fillColor: '#3388ff', fillOpacity: 0.2});
+    this.addItemClass('tb-cut-mode');
     this.polygon.once('pm:cut', (e) => {
       if (this.polygon instanceof L.Rectangle) {
         this.polygonContainer.removeLayer(this.polygon);
@@ -271,6 +274,8 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
   private disablePolygonCutMode(cutButton?: L.TB.ToolbarButton) {
     this.editing = false;
     this.polygon.options.bubblingMouseEvents = false;
+    this.polygon.setStyle({...this.polygonStyle, dashArray: null});
+    this.removeItemClass('tb-cut-mode');
     this.polygon.off('pm:cut');
     const map = this.dataLayer.getMap().getMap();
     map.pm.disableGlobalCutMode();

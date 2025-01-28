@@ -15,10 +15,6 @@
  */
 @import '../../../../../../../scss/constants';
 
-//$map-element-hover-color: #307FE5;
-$map-element-hover-color: rgba(0,0,0,0.56);
-$map-element-selected-color: #307FE5;
-
 .tb-map-layout {
   display: flex;
   width: 100%;
@@ -36,19 +32,11 @@ $map-element-selected-color: #307FE5;
     flex: 1;
     &.leaflet-touch {
       .leaflet-bar {
-        border: none;
+        border: 1px solid rgba(0,0,0,0.38);
         border-radius: 15px;
-        box-shadow: 4px 4px 4px 0 rgba(0, 0, 0, 0.15);
+        box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.32);
         background: #fff;
         position: relative;
-        &:before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          border-radius: 15px;
-          background: $tb-primary-color;  // primary color
-          opacity: 0.05;
-        }
         a {
           color: rgba(0, 0, 0, 0.54);
           border-bottom: none;
@@ -111,10 +99,10 @@ $map-element-selected-color: #307FE5;
           mask-repeat: no-repeat;
           mask-position: center;
           &.tb-layers {
-            mask-image: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 18 16" xmlns="http://www.w3.org/2000/svg"><path d="M9 9.5L0.75 5L9 0.5L17.25 5L9 9.5ZM9 12.5L1.18125 8.24375L2.75625 7.38125L9 10.7938L15.2438 7.38125L16.8188 8.24375L9 12.5ZM9 15.5L1.18125 11.2438L2.75625 10.3813L9 13.7938L15.2438 10.3813L16.8188 11.2438L9 15.5Z"/></svg>');
+            mask-image: url('data:image/svg+xml,<svg width="18" height="18" viewBox="0 0 18 16" xmlns="http://www.w3.org/2000/svg"><path d="M9 9.5L0.75 5L9 0.5L17.25 5L9 9.5ZM9 12.5L1.18125 8.24375L2.75625 7.38125L9 10.7938L15.2438 7.38125L16.8188 8.24375L9 12.5ZM9 15.5L1.18125 11.2438L2.75625 10.3813L9 13.7938L15.2438 10.3813L16.8188 11.2438L9 15.5Z"/></svg>');
           }
           &.tb-groups {
-            mask-image: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path d="M6 13.5C5.5875 13.5 5.2345 13.3533 4.941 13.0597C4.6475 12.7662 4.5005 12.413 4.5 12V3C4.5 2.5875 4.647 2.2345 4.941 1.941C5.235 1.6475 5.588 1.5005 6 1.5H15C15.4125 1.5 15.7657 1.647 16.0597 1.941C16.3538 2.235 16.5005 2.588 16.5 3V12C16.5 12.4125 16.3533 12.7657 16.0597 13.0597C15.7662 13.3538 15.413 13.5005 15 13.5H6ZM6 4.5H15V3H6V4.5ZM3 16.5C2.5875 16.5 2.2345 16.3533 1.941 16.0597C1.6475 15.7662 1.5005 15.413 1.5 15V4.5H3V15H13.5V16.5H3Z"/></svg>');
+            mask-image: url('data:image/svg+xml,<svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path d="M6 13.5C5.5875 13.5 5.2345 13.3533 4.941 13.0597C4.6475 12.7662 4.5005 12.413 4.5 12V3C4.5 2.5875 4.647 2.2345 4.941 1.941C5.235 1.6475 5.588 1.5005 6 1.5H15C15.4125 1.5 15.7657 1.647 16.0597 1.941C16.3538 2.235 16.5005 2.588 16.5 3V12C16.5 12.4125 16.3533 12.7657 16.0597 13.0597C15.7662 13.3538 15.413 13.5005 15 13.5H6ZM6 4.5H15V3H6V4.5ZM3 16.5C2.5875 16.5 2.2345 16.3533 1.941 16.0597C1.6475 15.7662 1.5005 15.413 1.5 15V4.5H3V15H13.5V16.5H3Z"/></svg>');
           }
           &.tb-remove {
             mask-image: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 14.25C4.5 14.6478 4.65804 15.0294 4.93934 15.3107C5.22064 15.592 5.60218 15.75 6 15.75H12C12.3978 15.75 12.7794 15.592 13.0607 15.3107C13.342 15.0294 13.5 14.6478 13.5 14.25V5.25H4.5V14.25ZM6 6.75H12V14.25H6V6.75ZM11.625 3L10.875 2.25H7.125L6.375 3H3.75V4.5H14.25V3H11.625Z"/></svg>');
@@ -124,6 +112,18 @@ $map-element-selected-color: #307FE5;
           }
           &.tb-rotate {
             mask-image: url('data:image/svg+xml,<svg width="16" height="16" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg"><path d="M1.77 1.7625C2.8575 0.675 4.35 0 6.0075 0C9.3225 0 12 2.685 12 6C12 9.315 9.3225 12 6.0075 12C3.21 12 0.8775 10.0875 0.21 7.5H1.77C2.385 9.2475 4.05 10.5 6.0075 10.5C8.49 10.5 10.5075 8.4825 10.5075 6C10.5075 3.5175 8.49 1.5 6.0075 1.5C4.7625 1.5 3.6525 2.0175 2.8425 2.835L5.2575 5.25H0.00749922V0L1.77 1.7625Z"/></svg>');
+          }
+          &.tb-place-marker {
+            mask-image: url('data:image/svg+xml,<svg width="12" height="16" viewBox="0 0 12 16" xmlns="http://www.w3.org/2000/svg"><path d="M6 0.5C3.0975 0.5 0.75 2.8475 0.75 5.75C0.75 9.6875 6 15.5 6 15.5C6 15.5 11.25 9.6875 11.25 5.75C11.25 2.8475 8.9025 0.5 6 0.5ZM6 7.625C4.965 7.625 4.125 6.785 4.125 5.75C4.125 4.715 4.965 3.875 6 3.875C7.035 3.875 7.875 4.715 7.875 5.75C7.875 6.785 7.035 7.625 6 7.625Z"/></svg>');
+          }
+          &.tb-draw-rectangle {
+            mask-image: url('data:image/svg+xml,<svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 1.5H6V3H12V1.5H16.5V6H15V12H16.5V16.5H12V15H6V16.5H1.5V12H3V6H1.5V1.5ZM12 6V4.5H6V6H4.5V12H6V13.5H12V12H13.5V6H12ZM3 3V4.5H4.5V3H3ZM13.5 3V4.5H15V3H13.5ZM3 13.5V15H4.5V13.5H3ZM13.5 13.5V15H15V13.5H13.5Z"/></svg>');
+          }
+          &.tb-draw-polygon {
+            mask-image: url('data:image/svg+xml,<svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 6V1.5H12V4.35L10.8 6H7.2L6 4.35V1.5H1.5V6H3V12H1.5V16.5H6V15H12V16.5H16.5V12H15V6H16.5ZM8.25 7.5H9.75V9H8.25V7.5ZM3 3H4.5V4.5H3V3ZM4.5 15H3V13.5H4.5V15ZM12 13.5H6V12H4.5V6H5.325L6.75 7.95V10.5H11.25V7.95L12.675 6H13.5V12H12V13.5ZM15 15H13.5V13.5H15V15ZM13.5 4.5V3H15V4.5H13.5Z"/></svg>');
+          }
+          &.tb-draw-circle {
+            mask-image: url('data:image/svg+xml,<svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 6.75H14.9775C14.025 4.0575 11.4825 2.25 8.625 2.25C6.83479 2.25 5.1179 2.96116 3.85203 4.22703C2.58616 5.4929 1.875 7.20979 1.875 9C1.875 12.75 4.8975 15.75 8.625 15.75C11.4825 15.75 14.025 13.95 15 11.25H16.5M15 8.25V9.75H13.5V8.25M13.365 11.25C12.495 13.08 10.65 14.25 8.625 14.25C5.73 14.25 3.375 11.9025 3.375 9C3.375 6.105 5.73 3.75 8.625 3.75C10.65 3.75 12.495 4.9275 13.3575 6.75H12V11.25"/></svg>');
           }
           &.tb-close {
             background: #D12730;
@@ -156,15 +156,19 @@ $map-element-selected-color: #307FE5;
         &.tb-hoverable:not(.tb-selected) {
           &:hover {
             svg {
-              //filter: drop-shadow( 0 0 4px $map-element-hover-color);
-              filter: brightness(0.8) drop-shadow( 0 0 4px $map-element-hover-color);
+              filter: brightness(1.3)
+                      drop-shadow( 0 0 4px rgba(0,0,0,0.56))
+                      drop-shadow( 0 0 4px rgba(255,255,255,0.56));
             }
           }
         }
         &.tb-selected {
           svg {
-            filter: brightness(0.8);
-            //animation: tb-selected-animation 0.5s linear 0s infinite alternate;
+            filter: brightness(1.3)
+                    drop-shadow( 0 0 2px rgba(0,0,0,.6))
+                    drop-shadow( 0 0 4px rgba(255,255,255,.7))
+                    drop-shadow( 0 0 6px rgba(0,0,0,.8))
+                    drop-shadow( 0 0 8px rgba(255,255,255,.9));
           }
         }
       }
@@ -175,12 +179,28 @@ $map-element-selected-color: #307FE5;
       }
       &.tb-hoverable:not(.tb-selected) {
         &:hover {
-          filter: brightness(0.8) drop-shadow( 0 0 4px $map-element-hover-color);
+          filter: brightness(1.3)
+                  drop-shadow( 0 0 4px rgba(0,0,0,0.56))
+                  drop-shadow( 0 0 4px rgba(255,255,255,0.56));
         }
       }
+    }
+    img.leaflet-marker-icon {
       &.tb-selected {
-        filter: brightness(0.8);
-        //animation: tb-selected-animation 0.5s linear 0s infinite alternate;
+        filter: brightness(1.3)
+                drop-shadow( 0 0 2px rgba(0,0,0,.6))
+                drop-shadow( 0 0 4px rgba(255,255,255,.7))
+                drop-shadow( 0 0 6px rgba(0,0,0,.8))
+                drop-shadow( 0 0 8px rgba(255,255,255,.9));
+      }
+    }
+    path {
+      &.tb-selected:not(.tb-cut-mode) {
+        filter: brightness(1.3)
+                drop-shadow( 0 0 4px rgba(0,0,0,.4))
+                drop-shadow( 0 0 4px rgba(255,255,255,.3))
+                drop-shadow( 0 0 8px rgba(0,0,0,.6))
+                drop-shadow( 0 0 8px rgba(255,255,255,.5));
       }
     }
     .tb-cluster-marker-container {
@@ -320,16 +340,5 @@ $map-element-selected-color: #307FE5;
         }
       }
     }
-  }
-}
-
-@keyframes tb-selected-animation {
-  0% {
-    //filter: drop-shadow( 0 0 2px $map-element-selected-color);
-    filter: brightness(1);
-  }
-  100% {
-    //filter: drop-shadow( 0 0 4px $map-element-selected-color) drop-shadow( 0 0 4px $map-element-selected-color);
-    filter: brightness(0.8);
   }
 }

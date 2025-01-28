@@ -202,10 +202,10 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
         let icon: L.Icon | L.DivIcon;
         const options = deepClone(iconInfo.icon.options);
         options.className = this.updateIconClasses(options.className);
-        if (iconInfo.icon instanceof L.Icon) {
-          icon = L.icon(options as L.IconOptions);
-        } else {
+        if (iconInfo.icon instanceof L.DivIcon) {
           icon = L.divIcon(options);
+        } else {
+          icon = L.icon(options as L.IconOptions);
         }
         this.marker.setIcon(icon);
         const anchor = options.iconAnchor;

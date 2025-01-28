@@ -7717,7 +7717,8 @@
                         "marker-color-function": "Marker color function"
                     },
                     "edit": "Edit marker",
-                    "remove-marker-for": "Remove marker for '{{entityName}}'"
+                    "remove-marker-for": "Remove marker for '{{entityName}}'",
+                    "place-marker": "Place marker"
                 },
                 "polygon": {
                     "polygon-key": "Polygon key",
@@ -7732,7 +7733,9 @@
                     "rotate": "Rotate polygon",
                     "firstVertex-cut": "Click to place first point",
                     "continueLine-cut": "Click to continue drawing",
-                    "finishPoly-cut": "Click first marker to finish and save"
+                    "finishPoly-cut": "Click first marker to finish and save",
+                    "draw-rectangle": "Draw rectangle",
+                    "draw-polygon": "Draw polygon"
                 },
                 "circle": {
                     "circle-key": "Circle key",
@@ -7742,7 +7745,8 @@
                     "circle-configuration": "Circle configuration",
                     "remove-circle": "Remove circle",
                     "edit": "Edit circle",
-                    "remove-circle-for": "Remove circle for '{{entityName}}'"
+                    "remove-circle-for": "Remove circle for '{{entityName}}'",
+                    "draw-circle": "Draw circle"
                 }
             },
             "select-entity": "Select entity",

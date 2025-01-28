@@ -278,7 +278,7 @@ class GroupsControl extends SidebarPaneControl<TB.GroupsControlOptions> {
 
 class ToolbarButton extends L.Control<TB.ToolbarButtonOptions> {
   private readonly id: string;
-  private readonly button:  JQuery<HTMLElement>;
+  private readonly button: JQuery<HTMLElement>;
   private active = false;
   private disabled = false;
 
@@ -331,13 +331,39 @@ class ToolbarButton extends L.Control<TB.ToolbarButtonOptions> {
     return this.disabled;
   }
 
-  addToToolbar(toolbar: BottomToolbarControl): void {
-    this.button.appendTo(toolbar.container);
-  }
-
   getId(): string {
     return this.id;
   }
+
+  getButtonElement(): JQuery<HTMLElement> {
+    return this.button;
+  }
+}
+
+class ToolbarControl extends L.Control<L.ControlOptions> {
+
+  private buttonContainer: JQuery<HTMLElement>;
+
+  constructor(options: L.ControlOptions) {
+    super(options);
+  }
+
+  toolbarButton(options: TB.ToolbarButtonOptions): ToolbarButton {
+    const button = new ToolbarButton(options);
+    button.getButtonElement().appendTo(this.buttonContainer);
+    return button;
+  }
+
+  onAdd(map: L.Map): HTMLElement {
+    this.buttonContainer = $("<div>")
+    .attr('class', 'leaflet-bar');
+    return this.buttonContainer[0];
+  }
+
+  addTo(map: L.Map): this {
+    return super.addTo(map);
+  }
+
 }
 
 class BottomToolbarControl extends L.Control<TB.BottomToolbarControlOptions> {
@@ -372,7 +398,7 @@ class BottomToolbarControl extends L.Control<TB.BottomToolbarControlOptions> {
     buttons.forEach(buttonOption => {
       const button = new ToolbarButton(buttonOption);
       this.toolbarButtons.push(button);
-      button.addToToolbar(this);
+      button.getButtonElement().appendTo(this.container);
     });
 
     const closeButton = $("<a>")
@@ -416,6 +442,10 @@ const layers = (options: TB.LayersControlOptions): LayersControl => {
 
 const groups = (options: TB.GroupsControlOptions): GroupsControl => {
   return new GroupsControl(options);
+}
+
+const toolbar = (options: L.ControlOptions): ToolbarControl => {
+  return new ToolbarControl(options);
 }
 
 const bottomToolbar = (options: TB.BottomToolbarControlOptions): BottomToolbarControl => {
@@ -478,11 +508,13 @@ L.TB = L.TB || {
   LayersControl,
   GroupsControl,
   ToolbarButton,
+  ToolbarControl,
   BottomToolbarControl,
   sidebar,
   sidebarPane,
   layers,
   groups,
+  toolbar,
   bottomToolbar,
   TileLayer: {
     ChinaProvider
