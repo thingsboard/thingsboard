@@ -1612,6 +1612,7 @@ public class ControllerConstants {
     protected static final String TELEMETRY_KEYS_DESCRIPTION = TELEMETRY_KEYS_BASE_DESCRIPTION + " If keys are not selected, the result will return all latest time series. For example, 'temperature,humidity'.";
     protected static final String TELEMETRY_SCOPE_DESCRIPTION = "Value is deprecated, reserved for backward compatibility and not used in the API call implementation. Specify any scope for compatibility";
     protected static final String TELEMETRY_JSON_REQUEST_DESCRIPTION = "A JSON with the telemetry values. See API call description for more details.";
+    protected static final String INVALID_DEVICE_ID_DESCRIPTION = "Referencing a non-existing device Id will cause an error. ";
 
 
     protected static final String STRICT_DATA_TYPES_DESCRIPTION = "Enables/disables conversion of telemetry values to strings. Conversion is enabled by default. Set parameter to 'true' in order to disable the conversion.";
@@ -1687,6 +1688,8 @@ public class ControllerConstants {
             "    }\n" +
             "  ]\n" +
             "}";
+
+    protected static final String TS_STRICT_DATA_EXAMPLE_DEVICES = "{\"f1f84f60-6c3a-11ef-96b5-1189063e69f9\":{\"t\":[{\"ts\":1705874401000,\"value\":\"2\"},{\"ts\":1705874400000,\"value\":\"9\"},{\"ts\":1705269601000,\"value\":\"5\"},{\"ts\":1705269600000,\"value\":\"2\"},{\"ts\":1704899729000,\"value\":\"3\"},{\"ts\":1704899728000,\"value\":\"1\"}]},\"f24250b0-6c3a-11ef-96b5-1189063e69f9\":{\"t\":[{\"ts\":1705874401000,\"value\":\"4\"},{\"ts\":1705874400000,\"value\":\"18\"},{\"ts\":1705269601000,\"value\":\"10\"},{\"ts\":1705269600000,\"value\":\"4\"},{\"ts\":1704899729000,\"value\":\"6\"},{\"ts\":1704899728000,\"value\":\"2\"}]}}";
 
     protected static final String SAVE_ATTRIBUTES_REQUEST_PAYLOAD = "The request payload is a JSON object with key-value format of attributes to create or update. " +
             "For example:\n\n"

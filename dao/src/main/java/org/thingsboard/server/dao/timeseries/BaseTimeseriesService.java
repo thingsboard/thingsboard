@@ -42,11 +42,7 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.Validator;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.StringUtils.isBlank;
@@ -104,6 +100,24 @@ public class BaseTimeseriesService implements TimeseriesService {
             return timeseriesDao.findAllAsync(tenantId, entityView.getEntityId(), updateQueriesForEntityView(entityView, filteredQueries));
         }
         return timeseriesDao.findAllAsync(tenantId, entityId, queries);
+    }
+
+    public ListenableFuture<List<ReadTsKvQueryResult>> findAllByQueries(TenantId tenantId, List<EntityId> entitiesId, List<ReadTsKvQuery> queries) {
+        entitiesId.forEach(BaseTimeseriesService::validate);
+        queries.forEach(this::validate);
+        return timeseriesDao.findAllAsync(tenantId, entitiesId, queries);
+    }
+
+    public ListenableFuture<Map<EntityId, List<TsKvEntry>>> findAll(TenantId tenantId, List<EntityId> entitiesId, List<ReadTsKvQuery> queries) {
+        return Futures.transform(findAllByQueries(tenantId, entitiesId, queries),
+                result -> {
+                    if (result != null && !result.isEmpty()) {
+                        Map<EntityId, List<TsKvEntry>> collect = result.stream()
+                                .collect(Collectors.toMap(ReadTsKvQueryResult::getEntityId, ReadTsKvQueryResult::getData, (left, right) -> { left.addAll(right) ; return left; }  ));
+                        return collect;
+                    }
+                    return Collections.emptyMap();
+                }, MoreExecutors.directExecutor());
     }
 
     @Override
