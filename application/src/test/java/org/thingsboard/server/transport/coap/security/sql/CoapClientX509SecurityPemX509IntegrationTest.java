@@ -20,11 +20,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.transport.coap.security.AbstractCoapSecurityIntegrationTest;
+import org.thingsboard.server.transport.coap.security.AbstractCoapSecurityX509IntegrationTest;
 
 @Slf4j
 @DaoSqlTest
-public class CoapClientX509SecurityPemIntegrationTest extends AbstractCoapSecurityIntegrationTest {
+public class CoapClientX509SecurityPemX509IntegrationTest extends AbstractCoapSecurityX509IntegrationTest {
     @Before
     public void beforeTest() throws Exception {
         processBeforeTest();

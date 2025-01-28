@@ -20,17 +20,18 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.transport.coap.security.AbstractCoapSecurityIntegrationTest;
+import org.thingsboard.server.transport.coap.security.AbstractCoapSecurityX509IntegrationTest;
 
 @Slf4j
 @DaoSqlTest
 @TestPropertySource(properties = {
-        "coap.dtls.credentials.type=KEYSTORE",
-        "coap.dtls.credentials.keystore.store_file=coap/credentials/coapserverTest.jks",
-        "coap.dtls.credentials.keystore.key_password=server_ks_password",
-        "coap.dtls.credentials.keystore.key_alias=server",
+        "coap.dtls.x509.enabled=true",
+        "coap.dtls.x509.credentials.type=KEYSTORE",
+        "coap.dtls.x509.credentials.keystore.store_file=coap/credentials/coapserverTest.jks",
+        "coap.dtls.x509.credentials.keystore.key_password=server_ks_password",
+        "coap.dtls.x509.credentials.keystore.key_alias=server",
 })
-public class CoapClientX509SecurityJksIntegrationTest extends AbstractCoapSecurityIntegrationTest {
+public class CoapClientX509SecurityJksX509IntegrationTest extends AbstractCoapSecurityX509IntegrationTest {
 
     @Before
     public void beforeTest() throws Exception {

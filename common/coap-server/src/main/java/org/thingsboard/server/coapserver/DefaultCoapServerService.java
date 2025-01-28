@@ -113,10 +113,12 @@ public class DefaultCoapServerService implements CoapServerService {
             dtlsCoapEndpointBuilder.setConnector(connector);
             CoapEndpoint dtlsCoapEndpoint = dtlsCoapEndpointBuilder.build();
             server.addEndpoint(dtlsCoapEndpoint);
-            tbDtlsCertificateVerifier = (TbCoapDtlsCertificateVerifier) dtlsConnectorConfig.getAdvancedCertificateVerifier();
-            dtlsSessionsExecutor = ThingsBoardExecutors.newSingleThreadScheduledExecutor(getClass().getSimpleName());
-            dtlsSessionsExecutor.scheduleAtFixedRate(this::evictTimeoutSessions, new Random().nextInt((int) getDtlsSessionReportTimeout()), getDtlsSessionReportTimeout(), TimeUnit.MILLISECONDS);
-        }
+            if (dtlsConnectorConfig.getAdvancedCertificateVerifier() != null) {
+                tbDtlsCertificateVerifier = (TbCoapDtlsCertificateVerifier) dtlsConnectorConfig.getAdvancedCertificateVerifier();
+                dtlsSessionsExecutor = ThingsBoardExecutors.newSingleThreadScheduledExecutor(getClass().getSimpleName());
+                dtlsSessionsExecutor.scheduleAtFixedRate(this::evictTimeoutSessions, new Random().nextInt((int) getDtlsSessionReportTimeout()), getDtlsSessionReportTimeout(), TimeUnit.MILLISECONDS);
+
+            }}
         Resource root = server.getRoot();
         TbCoapServerMessageDeliverer messageDeliverer = new TbCoapServerMessageDeliverer(root);
         server.setMessageDeliverer(messageDeliverer);

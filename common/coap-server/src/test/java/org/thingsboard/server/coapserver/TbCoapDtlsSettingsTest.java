@@ -33,9 +33,11 @@ import static org.assertj.core.api.Assertions.assertThat;
         "coap.dtls.bind_port=1234",
         "coap.dtls.retransmission_timeout=100",
         "coap.dtls.connection_id_length=500",
-        "coap.dtls.x509.skip_validity_check_for_client_cert=true",
-        "coap.dtls.x509.dtls_session_inactivity_timeout=1000",
-        "coap.dtls.x509.dtls_session_report_timeout=3000",
+        "coap.dtls.x509.credentials.skip_validity_check_for_client_cert=true",
+        "coap.dtls.x509.credentials.dtls_session_inactivity_timeout=1000",
+        "coap.dtls.x509.credentials.dtls_session_report_timeout=3000",
+        "coap.dtls.psk.identity=server_psk_identity",
+        "coap.dtls.psk.secret_key=server_psk_secret_key_123"
 })
 class TbCoapDtlsSettingsTest {
 
@@ -54,9 +56,11 @@ class TbCoapDtlsSettingsTest {
         assertThat(coapDtlsSettings.getHost()).as("host").isEqualTo("192.168.1.1");
         assertThat(coapDtlsSettings.getPort()).as("port").isEqualTo(1234);
         assertThat(coapDtlsSettings.getDtlsRetransmissionTimeout()).as("retransmission_timeout").isEqualTo(100);
-        assertThat(coapDtlsSettings.isSkipValidityCheckForClientCert()).as("skip_validity_check_for_client_cert").isTrue();
+        assertThat(coapDtlsSettings.isSkipValidityCheckForClientCert()).as("coap.dtls.x509.credentials.skip_validity_check_for_client_cert").isTrue();
         assertThat(coapDtlsSettings.getDtlsSessionInactivityTimeout()).as("dtls_session_inactivity_timeout").isEqualTo(1000);
         assertThat(coapDtlsSettings.getDtlsSessionReportTimeout()).as("dtls_session_report_timeout").isEqualTo(3000);
+        assertThat(coapDtlsSettings.getPskIdentity()).as("identity").isEqualTo("server_psk_identity");
+        assertThat(coapDtlsSettings.getPskSecretKey()).as("secret_key").isEqualTo("server_psk_secret_key_123");
     }
 
 }

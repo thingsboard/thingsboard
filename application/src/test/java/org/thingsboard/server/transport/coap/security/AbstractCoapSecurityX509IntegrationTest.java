@@ -63,12 +63,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = {
         "coap.enabled=true",
         "coap.dtls.enabled=true",
-        "coap.dtls.credentials.pem.cert_file=coap/credentials/server/cert.pem",
+        "coap.dtls.x509.enabled=true",
+        "coap.dtls.x509.credentials.pem.cert_file=coap/credentials/server/cert.pem",
         "device.connectivity.coaps.enabled=true",
         "service.integrations.supported=ALL",
         "transport.coap.enabled=true",
 })
-public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIntegrationTest {
+public abstract class AbstractCoapSecurityX509IntegrationTest extends AbstractCoapIntegrationTest {
     private static final String COAPS_BASE_URL = "coaps://localhost:5684/api/v1/";
     protected final String CREDENTIALS_PATH = "coap/credentials/";
     protected final String CREDENTIALS_PATH_CLIENT = CREDENTIALS_PATH + "client/";
@@ -81,7 +82,7 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
     protected static final String CLIENT_STORE_PWD = "client_ks_password";
     protected static final String CLIENT_ALIAS_CERT_TRUST_NO = "client_alias_trust_no";
 
-    protected AbstractCoapSecurityIntegrationTest() {
+    protected AbstractCoapSecurityX509IntegrationTest() {
 
         try {
             // Get certificates from key store

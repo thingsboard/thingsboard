@@ -173,15 +173,15 @@ transport:
 
 # CoAP server parameters
 coap:
-  # Enable/disable coap transport protocol.
+  # Enable/disable coap server.
   enabled: "${COAP_SERVER_ENABLED:true}"
-  # CoAP bind-address
+  # CoAP bind address
   bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
   # CoAP bind port
   bind_port: "${COAP_BIND_PORT:5683}"
   dtls:
     # Enable/disable DTLS 1.2 support
-    enabled: "${COAP_DTLS_ENABLED:false}"
+    enabled: "${COAP_DTLS_ENABLED:true}"
     # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
     retransmission_timeout: "${COAP_DTLS_RETRANSMISSION_TIMEOUT_MS:9000}"
     # CoAP DTLS bind address
@@ -223,36 +223,40 @@ coap:
     # TLS already requires clients and servers to support fragmentation of handshake messages.
     max_fragment_length: "${COAP_DTLS_MAX_FRAGMENT_LENGTH:1024}"
     # Server DTLS credentials
-    credentials:
-      # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
-      type:  "${COAP_DTLS_CREDENTIALS_TYPE:PEM}"
-      # PEM server credentials
-      pem:
-        # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
-        cert_file: "${COAP_DTLS_PEM_CERT:coapserver.pem}"
-        # Path to the server certificate private key file. Optional by default. Required if the private key is not present in the server certificate file;
-        key_file: "${COAP_DTLS_PEM_KEY:coapserver_key.pem}"
-        # Server certificate private key password (optional)
-        key_password: "${COAP_DTLS_PEM_KEY_PASSWORD:server_key_password}"
-      # Keystore server credentials
-      keystore:
-        # Type of the key store (JKS or PKCS12)
-        type: "${COAP_DTLS_KEY_STORE_TYPE:JKS}"
-        # Path to the key store that holds the SSL certificate
-        store_file: "${COAP_DTLS_KEY_STORE:coapserver.jks}"
-        # Password used to access the key store
-        store_password: "${COAP_DTLS_KEY_STORE_PASSWORD:server_ks_password}"
-        # Key alias
-        key_alias: "${COAP_DTLS_KEY_ALIAS:serveralias}"
-        # Password used to access the key
-        key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
+    psk:
+      identity: "${PSK_IDENTITY:server_psk_identity}"
+      secret_key: "${PSK_SECRET_KEY:server_psk_secret_key_123}"
     x509:
-      # Skip certificate validity check for client certificates.
-      skip_validity_check_for_client_cert: "${TB_COAP_X509_DTLS_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
-      # Inactivity timeout of DTLS session. Used to cleanup cache
-      dtls_session_inactivity_timeout: "${TB_COAP_X509_DTLS_SESSION_INACTIVITY_TIMEOUT:86400000}"
-      # Interval of periodic eviction of the timed-out DTLS sessions
-      dtls_session_report_timeout: "${TB_COAP_X509_DTLS_SESSION_REPORT_TIMEOUT:1800000}"
+      credentials:
+        enabled: "${COAP_X509_ENABLED:false}"
+        # Inactivity timeout of DTLS session. Used to cleanup cache
+        dtls_session_inactivity_timeout: "${TB_COAP_X509_DTLS_SESSION_INACTIVITY_TIMEOUT:86400000}"
+        # Interval of periodic eviction of the timed-out DTLS sessions
+        dtls_session_report_timeout: "${TB_COAP_X509_DTLS_SESSION_REPORT_TIMEOUT:1800000}"
+        # Skip certificate validity check for client certificates.
+        skip_validity_check_for_client_cert: "${TB_COAP_X509_DTLS_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
+        # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
+        type: "${COAP_DTLS_CREDENTIALS_TYPE:PEM}"
+        # PEM server credentials
+        pem:
+          # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
+          cert_file: "${COAP_DTLS_PEM_CERT:coapserver.pem}"
+          # Path to the server certificate private key file. Optional by default. Required if the private key is not present in the server certificate file;
+          key_file: "${COAP_DTLS_PEM_KEY:coapserver_key.pem}"
+          # Server certificate private key password (optional)
+          key_password: "${COAP_DTLS_PEM_KEY_PASSWORD:server_key_password}"
+        # Keystore server credentials
+        keystore:
+          # Type of the key store (JKS or PKCS12)
+          type: "${COAP_DTLS_KEY_STORE_TYPE:JKS}"
+          # Path to the key store that holds the SSL certificate
+          store_file: "${COAP_DTLS_KEY_STORE:coapserver.jks}"
+          # Password used to access the key store
+          store_password: "${COAP_DTLS_KEY_STORE_PASSWORD:server_ks_password}"
+          # Key alias
+          key_alias: "${COAP_DTLS_KEY_ALIAS:serveralias}"
+          # Password used to access the key
+          key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
 
 # Queue configuration parameters
 queue:
