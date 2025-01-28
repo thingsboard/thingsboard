@@ -63,7 +63,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = {
         "coap.enabled=true",
         "coap.dtls.enabled=true",
-        "coap.dtls.x509.enabled=true",
+        "coap.dtls.x509.credentials.enabled=true",
         "coap.dtls.x509.credentials.pem.cert_file=coap/credentials/server/cert.pem",
         "device.connectivity.coaps.enabled=true",
         "service.integrations.supported=ALL",

@@ -25,7 +25,7 @@ import org.thingsboard.server.transport.coap.security.AbstractCoapSecurityX509In
 @Slf4j
 @DaoSqlTest
 @TestPropertySource(properties = {
-        "coap.dtls.x509.enabled=true",
+        "coap.dtls.x509.credentials.enabled=true",
         "coap.dtls.x509.credentials.type=KEYSTORE",
         "coap.dtls.x509.credentials.keystore.store_file=coap/credentials/coapserverTest.jks",
         "coap.dtls.x509.credentials.keystore.key_password=server_ks_password",
