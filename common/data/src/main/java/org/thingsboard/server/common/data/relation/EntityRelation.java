@@ -41,6 +41,7 @@ public class EntityRelation implements HasVersion, Serializable {
     public static final String EDGE_TYPE = "ManagedByEdge";
     public static final String CONTAINS_TYPE = "Contains";
     public static final String MANAGES_TYPE = "Manages";
+    public static final String USES_TYPE = "Uses";
 
     @Setter
     private EntityId from;
