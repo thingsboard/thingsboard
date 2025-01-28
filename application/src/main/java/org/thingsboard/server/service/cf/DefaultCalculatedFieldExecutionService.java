@@ -118,6 +118,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
+import static org.thingsboard.server.common.util.ProtoUtils.toTsKvProto;
+import static org.thingsboard.server.queue.discovery.HashPartitionService.CALCULATED_FIELD_QUEUE_KEY;
 
 @Service
 @Slf4j
@@ -326,6 +328,26 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     }
 
     @Override
+    public void pushCalculatedFieldLifecycleMsgToQueue(CalculatedField calculatedField, ComponentLifecycleMsgProto proto) {
+        EntityId entityId = calculatedField.getEntityId();
+        ToCalculatedFieldMsg msg = ToCalculatedFieldMsg.newBuilder().setComponentLifecycleMsg(proto).build();
+        switch (entityId.getEntityType()) {
+            case ASSET, DEVICE -> {
+                TopicPartitionInfo tpi = partitionService.resolve(CALCULATED_FIELD_QUEUE_KEY, entityId);
+                clusterService.pushMsgToCalculatedFields(tpi, UUID.randomUUID(), msg, null);
+            }
+            case ASSET_PROFILE, DEVICE_PROFILE -> {
+                Set<TopicPartitionInfo> tpiSet = calculatedFieldCache.getEntitiesByProfile(calculatedField.getTenantId(), entityId).stream()
+                        .map(targetEntityId -> partitionService.resolve(CALCULATED_FIELD_QUEUE_KEY, targetEntityId))
+                        .collect(Collectors.toSet());
+                tpiSet.forEach(tpi -> clusterService.pushMsgToCalculatedFields(tpi, UUID.randomUUID(), msg, null));
+            }
+            default -> throw new IllegalArgumentException("Entity type '" + calculatedField.getId().getEntityType()
+                    + "' does not support calculated fields.");
+        }
+    }
+
+    @Override
     public void onCalculatedFieldLifecycleMsg(ComponentLifecycleMsgProto proto, TbCallback callback) {
         try {
             TenantId tenantId = TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
@@ -505,7 +527,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             CalculatedFieldTelemetryUpdateRequest request = fromProto(proto.getMsg());
 
             if (proto.getLinksList().isEmpty()) {
-                onTelemetryUpdate(proto, callback);
+                onTelemetryUpdate(proto.getMsg(), callback);
                 return;
             }
 
@@ -803,7 +825,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         List<Long> versions = result.getVersions();
         for (int i = 0; i < entries.size(); i++) {
             long tsVersion = versions.get(i);
-            TsKvProto tsProto = ProtoUtils.toTsKvProto(entries.get(i)).toBuilder().setVersion(tsVersion).build();
+            TsKvProto tsProto = toTsKvProto(entries.get(i)).toBuilder().setVersion(tsVersion).build();
             telemetryMsg.addTsData(tsProto);
         }
         msg.setTelemetryMsg(telemetryMsg.build());
@@ -837,7 +859,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         telemetryMsg.setEntityIdMSB(entityId.getId().getMostSignificantBits());
         telemetryMsg.setEntityIdLSB(entityId.getId().getLeastSignificantBits());
 
-        if(calculatedFieldIds != null) {
+        if (calculatedFieldIds != null) {
             for (CalculatedFieldId cfId : calculatedFieldIds) {
                 telemetryMsg.addPreviousCalculatedFields(toProto(cfId));
             }

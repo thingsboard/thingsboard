@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -87,7 +88,7 @@ public class EntityStateSourcingListener {
             case ASSET -> {
                 onAssetUpdate(event.getEntity(), event.getOldEntity());
             }
-            case ASSET_PROFILE, ENTITY_VIEW, NOTIFICATION_RULE, CALCULATED_FIELD -> {
+            case ASSET_PROFILE, ENTITY_VIEW, NOTIFICATION_RULE -> {
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, lifecycleEvent);
             }
             case RULE_CHAIN -> {
@@ -122,6 +123,9 @@ public class EntityStateSourcingListener {
                 ApiUsageState apiUsageState = (ApiUsageState) event.getEntity();
                 tbClusterService.onApiStateChange(apiUsageState, null);
             }
+            case CALCULATED_FIELD -> {
+                onCalculatedFieldUpdate(event.getEntity(), event.getOldEntity(), lifecycleEvent);
+            }
             default -> {
             }
         }
@@ -146,7 +150,7 @@ public class EntityStateSourcingListener {
                 Asset asset = (Asset) event.getEntity();
                 tbClusterService.onAssetDeleted(tenantId, asset, null);
             }
-            case ASSET_PROFILE, ENTITY_VIEW, CUSTOMER, EDGE, NOTIFICATION_RULE, CALCULATED_FIELD -> {
+            case ASSET_PROFILE, ENTITY_VIEW, CUSTOMER, EDGE, NOTIFICATION_RULE -> {
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
             }
             case NOTIFICATION_REQUEST -> {
@@ -186,6 +190,11 @@ public class EntityStateSourcingListener {
             case TB_RESOURCE -> {
                 TbResourceInfo tbResource = (TbResourceInfo) event.getEntity();
                 tbClusterService.onResourceDeleted(tbResource, null);
+            }
+            case CALCULATED_FIELD -> {
+                CalculatedField calculatedField = (CalculatedField) event.getEntity();
+                ComponentLifecycleMsg lifecycleMsg = new ComponentLifecycleMsg(calculatedField.getTenantId(), calculatedField.getId(), ComponentLifecycleEvent.DELETED);
+                tbClusterService.onCalculatedFieldDeleted(calculatedField.getTenantId(), calculatedField, lifecycleMsg);
             }
             default -> {
             }
@@ -265,6 +274,15 @@ public class EntityStateSourcingListener {
         } else if (entity instanceof EdgeEvent edgeEvent) {
             tbClusterService.onEdgeEventUpdate(new EdgeEventUpdateMsg(tenantId, edgeEvent.getEdgeId()));
         }
+    }
+
+    private void onCalculatedFieldUpdate(Object entity, Object oldEntity, ComponentLifecycleEvent lifecycleEvent) {
+        CalculatedField calculatedField = (CalculatedField) entity;
+        CalculatedField oldCalculatedField = null;
+        if (oldEntity instanceof CalculatedField) {
+            oldCalculatedField = (CalculatedField) oldEntity;
+        }
+        tbClusterService.onCalculatedFieldUpdated(calculatedField, oldCalculatedField, new ComponentLifecycleMsg(calculatedField.getTenantId(), calculatedField.getId(), lifecycleEvent));
     }
 
     private void pushAssignedFromNotification(Tenant currentTenant, TenantId newTenantId, Device assignedDevice) {

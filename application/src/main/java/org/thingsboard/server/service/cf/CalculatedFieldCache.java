@@ -41,10 +41,6 @@ public interface CalculatedFieldCache {
 
     Set<EntityId> getEntitiesByProfile(TenantId tenantId, EntityId entityId);
 
-    void evictProfile(TenantId tenantId, EntityId entityId);
-
-    void evictEntity(TenantId tenantId, EntityId entityId);
-
     void addCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
     void updateCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId);

@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -39,7 +40,7 @@ public interface CalculatedFieldExecutionService {
     /**
      * Filter CFs based on the request entity. Push to the queue if any matching CF exist;
      *
-     * @param request  - telemetry save request;
+     * @param request - telemetry save request;
      * @param callback
      */
     void pushRequestToQueue(TimeseriesSaveRequest request, TimeseriesSaveResult result, FutureCallback<Void> callback);
@@ -47,6 +48,8 @@ public interface CalculatedFieldExecutionService {
     void pushRequestToQueue(AttributesSaveRequest request, List<Long> result, FutureCallback<Void> callback);
 
     void pushStateToStorage(CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback);
+
+    void pushCalculatedFieldLifecycleMsgToQueue(CalculatedField calculatedField, ComponentLifecycleMsgProto proto);
 
     ListenableFuture<CalculatedFieldState> fetchStateFromDb(CalculatedFieldCtx ctx, EntityId entityId);
 
