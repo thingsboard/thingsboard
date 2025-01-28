@@ -36,6 +36,10 @@ public abstract class BaseResourceProcessor extends BaseEdgeProcessor {
     private DataValidator<TbResource> resourceValidator;
 
     protected boolean saveOrUpdateTbResource(TenantId tenantId, TbResourceId tbResourceId, ResourceUpdateMsg resourceUpdateMsg) {
+        return saveOrUpdateTbResource(tenantId, tbResourceId, resourceUpdateMsg, true);
+    }
+
+    protected boolean saveOrUpdateTbResource(TenantId tenantId, TbResourceId tbResourceId, ResourceUpdateMsg resourceUpdateMsg, boolean doValidate) {
         boolean resourceKeyUpdated = false;
         try {
             TbResource resource = constructResourceFromUpdateMsg(tenantId, tbResourceId, resourceUpdateMsg);
@@ -64,7 +68,9 @@ public abstract class BaseResourceProcessor extends BaseEdgeProcessor {
                 }
             }
             resource.setResourceKey(resourceKey);
-            resourceValidator.validate(resource, TbResourceInfo::getTenantId);
+            if (doValidate) {
+                resourceValidator.validate(resource, TbResourceInfo::getTenantId);
+            }
             if (created) {
                 resource.setId(tbResourceId);
             }
