@@ -246,7 +246,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
        mapElement: $(this.mapElement),
        closeTitle: this.ctx.translate.instant('action.cancel'),
        onClose: () => {
-         this.deselectItem();
+         return this.deselectItem(true);
        }
      }).addTo(this.map);
 
@@ -454,26 +454,37 @@ export abstract class TbMap<S extends BaseMapSettings> {
     }
   }
 
-  public selectItem(item: TbDataLayerItem): void {
+  public selectItem(item: TbDataLayerItem, cancel = false): boolean {
+    let deselected = true;
     if (this.selectedDataItem) {
-      this.selectedDataItem.deselect();
-      this.selectedDataItem = null;
-      this.editToolbar.close();
+      deselected = this.selectedDataItem.deselect(cancel);
+      if (deselected) {
+        this.selectedDataItem = null;
+        this.editToolbar.close();
+      }
     }
-    this.selectedDataItem = item;
-    if (this.selectedDataItem) {
-      const buttons = this.selectedDataItem.select();
-      this.editToolbar.open(buttons);
-      this.createdControlButtonTooltip(this.editToolbar.container, 'top');
+    if (deselected) {
+      this.selectedDataItem = item;
+      if (this.selectedDataItem) {
+        const buttons = this.selectedDataItem.select();
+        this.editToolbar.open(buttons);
+        this.createdControlButtonTooltip(this.editToolbar.container, 'top');
+      }
     }
+    this.ignoreUpdateBounds = !!this.selectedDataItem;
+    return deselected;
   }
 
-  public deselectItem(): void {
-    this.selectItem(null);
+  public deselectItem(cancel = false): boolean {
+    return this.selectItem(null, cancel);
   }
 
   public getSelectedDataItem(): TbDataLayerItem {
     return this.selectedDataItem;
+  }
+
+  public getEditToolbar(): L.TB.BottomToolbarControl {
+    return this.editToolbar;
   }
 
   public saveItemData(datasource: TbMapDatasource, data: DataKeyValuePair[]): Observable<any> {

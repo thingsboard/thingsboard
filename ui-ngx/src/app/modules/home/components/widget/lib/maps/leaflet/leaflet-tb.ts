@@ -277,10 +277,14 @@ class GroupsControl extends SidebarPaneControl<TB.GroupsControlOptions> {
 }
 
 class ToolbarButton extends L.Control<TB.ToolbarButtonOptions> {
+  private readonly id: string;
   private readonly button:  JQuery<HTMLElement>;
+  private active = false;
+  private disabled = false;
+
   constructor(options: TB.ToolbarButtonOptions) {
     super(options);
-
+    this.id = options.id;
     this.button = $("<a>")
     .attr('class', 'tb-control-button')
     .attr('href', '#')
@@ -295,14 +299,51 @@ class ToolbarButton extends L.Control<TB.ToolbarButtonOptions> {
     });
   }
 
+  setActive(active: boolean): void {
+    if (this.active !== active) {
+      this.active = active;
+      if (this.active) {
+        L.DomUtil.addClass(this.button[0], 'active');
+      } else {
+        L.DomUtil.removeClass(this.button[0], 'active');
+      }
+    }
+  }
+
+  isActive(): boolean {
+    return this.active;
+  }
+
+  setDisabled(disabled: boolean): void {
+    if (this.disabled !== disabled) {
+      this.disabled = disabled;
+      if (this.disabled) {
+        L.DomUtil.addClass(this.button[0], 'leaflet-disabled');
+        this.button[0].setAttribute('aria-disabled', 'true');
+      } else {
+        L.DomUtil.removeClass(this.button[0], 'leaflet-disabled');
+        this.button[0].setAttribute('aria-disabled', 'false');
+      }
+    }
+  }
+
+  isDisabled(): boolean {
+    return this.disabled;
+  }
+
   addToToolbar(toolbar: BottomToolbarControl): void {
     this.button.appendTo(toolbar.container);
+  }
+
+  getId(): string {
+    return this.id;
   }
 }
 
 class BottomToolbarControl extends L.Control<TB.BottomToolbarControlOptions> {
 
   private readonly buttonContainer: JQuery<HTMLElement>;
+  private toolbarButtons: ToolbarButton[] = [];
 
   container: HTMLElement;
 
@@ -320,10 +361,17 @@ class BottomToolbarControl extends L.Control<TB.BottomToolbarControlOptions> {
     return this;
   }
 
+  getButton(id: string): ToolbarButton {
+    return this.toolbarButtons.find(b => b.getId() === id);
+  }
+
   open(buttons: TB.ToolbarButtonOptions[]): void {
+
+    this.toolbarButtons.length = 0;
 
     buttons.forEach(buttonOption => {
       const button = new ToolbarButton(buttonOption);
+      this.toolbarButtons.push(button);
       button.addToToolbar(this);
     });
 
@@ -343,9 +391,12 @@ class BottomToolbarControl extends L.Control<TB.BottomToolbarControlOptions> {
   }
 
   close(): void {
-    this.buttonContainer.empty();
     if (this.options.onClose) {
-      this.options.onClose();
+      if (this.options.onClose()) {
+        this.buttonContainer.empty();
+      }
+    } else {
+      this.buttonContainer.empty();
     }
   }
 

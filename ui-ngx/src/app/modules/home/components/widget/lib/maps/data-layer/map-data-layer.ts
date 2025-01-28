@@ -52,6 +52,7 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
   protected tooltip: L.Popup;
   protected data: FormattedData<TbMapDatasource>;
   protected selected = false;
+  protected removed = false;
 
   protected constructor(data: FormattedData<TbMapDatasource>,
                         dsData: FormattedData<TbMapDatasource>[],
@@ -143,11 +144,13 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
   public select(): L.TB.ToolbarButtonOptions[] {
     if (!this.selected) {
       this.selected = true;
+      this.disableEdit();
       this.updateSelectedState();
-      const buttons: L.TB.ToolbarButtonOptions[] = [];
+      const buttons = this.onSelected();
       if (this.dataLayer.isRemoveEnabled()) {
         buttons.push({
-          title: this.dataLayer.getCtx().translate.instant('action.remove'),
+          id: 'remove',
+          title: this.removeDataItemTitle(),
           click: () => {
             this.removeDataItem();
           },
@@ -160,12 +163,19 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
     }
   }
 
-  public deselect() {
+  public deselect(cancel = false): boolean {
     if (this.selected) {
-      this.selected = false;
-      this.layer.closePopup();
-      this.updateSelectedState();
+      if (this.canDeselect(cancel)) {
+        this.selected = false;
+        this.layer.closePopup();
+        this.updateSelectedState();
+        this.onDeselected();
+        this.editModeUpdated();
+      } else {
+        return false;
+      }
     }
+    return true;
   }
 
   public isSelected() {
@@ -187,6 +197,7 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
   }
 
   public remove() {
+    this.removed = true;
     if (this.selected) {
       this.dataLayer.getMap().deselectItem();
     }
@@ -226,6 +237,18 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
       this.bindLabel(content);
     }
   }
+
+  protected canDeselect(cancel = false): boolean {
+    return true;
+  }
+
+  protected onSelected(): L.TB.ToolbarButtonOptions[] {
+    return [];
+  }
+
+  protected onDeselected(): void {}
+
+  protected abstract removeDataItemTitle(): string;
 
   protected abstract removeDataItem(): void;
 

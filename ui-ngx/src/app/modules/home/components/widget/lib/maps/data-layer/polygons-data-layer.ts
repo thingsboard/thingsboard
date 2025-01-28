@@ -121,12 +121,182 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
     this.polygon.off('pm:dragend');
   }
 
+  protected onSelected(): L.TB.ToolbarButtonOptions[] {
+    const buttons:  L.TB.ToolbarButtonOptions[] = [];
+    if (this.dataLayer.isEditEnabled()) {
+      this.enablePolygonEditMode();
+      buttons.push(
+        {
+          id: 'cut',
+          title: this.getDataLayer().getCtx().translate.instant('widgets.maps.data-layer.polygon.cut'),
+          iconClass: 'tb-cut',
+          click: (e, button) => {
+            const map = this.dataLayer.getMap().getMap();
+            if (!map.pm.globalCutModeEnabled()) {
+              this.disablePolygonRotateMode();
+              this.disablePolygonEditMode();
+              this.enablePolygonCutMode(button);
+            } else {
+              this.disablePolygonCutMode(button);
+              this.enablePolygonEditMode();
+            }
+          }
+        },
+        {
+          id: 'rotate',
+          title: this.getDataLayer().getCtx().translate.instant('widgets.maps.data-layer.polygon.rotate'),
+          iconClass: 'tb-rotate',
+          click: (e, button) => {
+            if (!this.polygon.pm.rotateEnabled()) {
+              this.disablePolygonCutMode();
+              this.disablePolygonEditMode();
+              this.enablePolygonRotateMode(button);
+            } else {
+              this.disablePolygonRotateMode(button);
+              this.enablePolygonEditMode();
+            }
+          }
+        }
+      );
+    }
+    return buttons;
+  }
+
+  protected onDeselected(): void {
+    if (this.dataLayer.isEditEnabled()) {
+     this.disablePolygonEditMode();
+     this.disablePolygonCutMode();
+     this.disablePolygonRotateMode();
+    }
+  }
+
+  protected canDeselect(cancel = false): boolean {
+    if (!this.removed) {
+      const map = this.dataLayer.getMap().getMap();
+      if (map.pm.globalCutModeEnabled()) {
+        if (cancel) {
+          this.disablePolygonCutMode();
+        }
+        return false;
+      } else if (this.polygon.pm.rotateEnabled()) {
+        if (cancel) {
+          this.disablePolygonRotateMode();
+        }
+        return false;
+      }
+    }
+    return true;
+  }
+
+  protected removeDataItemTitle(): string {
+    return this.dataLayer.getCtx().translate.instant('widgets.maps.data-layer.polygon.remove-polygon-for', {entityName: this.data.entityName});
+  }
+
   protected removeDataItem(): void {
     this.dataLayer.savePolygonCoordinates(this.data, null);
   }
 
   public isEditing() {
     return this.editing;
+  }
+
+  private enablePolygonEditMode() {
+    this.polygon.on('pm:markerdragstart', () => this.editing = true);
+    this.polygon.on('pm:markerdragend', () => this.editing = false);
+    this.polygon.on('pm:edit', (e) => this.savePolygonCoordinates());
+    this.polygon.pm.enable();
+    const map = this.dataLayer.getMap();
+    map.getEditToolbar().getButton('remove')?.setDisabled(false);
+  }
+
+  private disablePolygonEditMode() {
+    this.polygon.pm.disable();
+    this.polygon.off('pm:markerdragstart');
+    this.polygon.off('pm:markerdragend');
+    this.polygon.off('pm:edit');
+    const map = this.dataLayer.getMap();
+    map.getEditToolbar().getButton('remove')?.setDisabled(true);
+  }
+
+  private enablePolygonCutMode(cutButton?: L.TB.ToolbarButton) {
+    this.polygonContainer.closePopup();
+    this.editing = true;
+    this.polygon.options.bubblingMouseEvents = true;
+    this.polygon.once('pm:cut', (e) => {
+      if (this.polygon instanceof L.Rectangle) {
+        this.polygonContainer.removeLayer(this.polygon);
+        // @ts-ignore
+        this.polygon = L.polygon(e.layer.getLatLngs(), {
+          ...this.polygonStyle,
+          snapIgnore: !this.dataLayer.isSnappable(),
+          bubblingMouseEvents: false
+        });
+        this.polygon.addTo(this.polygonContainer);
+      } else {
+        // @ts-ignore
+        this.polygon.setLatLngs(e.layer.getLatLngs());
+      }
+      // @ts-ignore
+      e.layer._pmTempLayer = true;
+      e.layer.remove();
+      this.polygonContainer.removeLayer(this.polygon);
+      // @ts-ignore
+      this.polygon._pmTempLayer = false;
+      this.polygon.addTo(this.polygonContainer);
+      this.updateSelectedState();
+      cutButton?.setActive(false);
+      this.savePolygonCoordinates()
+    });
+    const map = this.dataLayer.getMap().getMap();
+    map.pm.setLang('en', {
+      tooltips: {
+        firstVertex: this.getDataLayer().getCtx().translate.instant('widgets.maps.data-layer.polygon.firstVertex-cut'),
+        continueLine: this.getDataLayer().getCtx().translate.instant('widgets.maps.data-layer.polygon.continueLine-cut'),
+        finishPoly: this.getDataLayer().getCtx().translate.instant('widgets.maps.data-layer.polygon.finishPoly-cut')
+      }
+    }, 'en');
+    map.pm.enableGlobalCutMode({
+      // @ts-ignore
+      layersToCut: [this.polygon]
+    });
+    cutButton?.setActive(true);
+    map.once('pm:globalcutmodetoggled', (e) => {
+      if (!e.enabled) {
+        this.disablePolygonCutMode(cutButton);
+        this.enablePolygonEditMode();
+      }
+    });
+  }
+
+  private disablePolygonCutMode(cutButton?: L.TB.ToolbarButton) {
+    this.editing = false;
+    this.polygon.options.bubblingMouseEvents = false;
+    this.polygon.off('pm:cut');
+    const map = this.dataLayer.getMap().getMap();
+    map.pm.disableGlobalCutMode();
+    cutButton?.setActive(false);
+  }
+
+  private enablePolygonRotateMode(rotateButton?: L.TB.ToolbarButton) {
+    this.polygonContainer.closePopup();
+    this.editing = true;
+    this.polygon.on('pm:rotateend', (e) => {
+      this.savePolygonCoordinates();
+    });
+    this.polygon.pm.enableRotate();
+    rotateButton?.setActive(true);
+    this.polygon.on('pm:rotatedisable', (e) => {
+      this.disablePolygonRotateMode(rotateButton);
+      this.enablePolygonEditMode();
+    });
+  }
+
+  private disablePolygonRotateMode(rotateButton?: L.TB.ToolbarButton) {
+    this.editing = false;
+    this.polygon.pm.disableRotate();
+    this.polygon.off('pm:rotateend');
+    this.polygon.off('pm:rotatedisable');
+    rotateButton?.setActive(false);
   }
 
   private savePolygonCoordinates() {

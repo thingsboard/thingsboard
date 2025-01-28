@@ -7716,7 +7716,8 @@
                         "use-cluster-marker-color-function": "Use cluster markers color function",
                         "marker-color-function": "Marker color function"
                     },
-                    "edit": "Edit marker"
+                    "edit": "Edit marker",
+                    "remove-marker-for": "Remove marker for '{{entityName}}'"
                 },
                 "polygon": {
                     "polygon-key": "Polygon key",
@@ -7725,7 +7726,13 @@
                     "add-polygon": "Add polygon",
                     "polygon-configuration": "Polygon configuration",
                     "remove-polygon": "Remove polygon",
-                    "edit": "Edit polygon"
+                    "edit": "Edit polygon",
+                    "remove-polygon-for": "Remove polygon for '{{entityName}}'",
+                    "cut": "Cut polygon area",
+                    "rotate": "Rotate polygon",
+                    "firstVertex-cut": "Click to place first point",
+                    "continueLine-cut": "Click to continue drawing",
+                    "finishPoly-cut": "Click first marker to finish and save"
                 },
                 "circle": {
                     "circle-key": "Circle key",
@@ -7734,7 +7741,8 @@
                     "add-circle": "Add circle",
                     "circle-configuration": "Circle configuration",
                     "remove-circle": "Remove circle",
-                    "edit": "Edit circle"
+                    "edit": "Edit circle",
+                    "remove-circle-for": "Remove circle for '{{entityName}}'"
                 }
             },
             "select-entity": "Select entity",

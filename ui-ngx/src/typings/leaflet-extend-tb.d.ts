@@ -89,7 +89,8 @@ declare module 'leaflet' {
       constructor(options: GroupsControlOptions);
     }
 
-    interface ToolbarButtonOptions extends ControlOptions{
+    interface ToolbarButtonOptions extends ControlOptions {
+      id: string;
       title: string;
       click: (e: MouseEvent, button: ToolbarButton) => void;
       iconClass: string;
@@ -97,17 +98,21 @@ declare module 'leaflet' {
 
     class ToolbarButton extends Control<ToolbarButtonOptions>{
       constructor(options: ToolbarButtonOptions);
-      addToToolbar(toolbar: BottomToolbarControl): void;
+      setActive(active: boolean): void;
+      isActive(): boolean;
+      setDisabled(disabled: boolean): void;
+      isDisabled(): boolean;
     }
 
     interface BottomToolbarControlOptions extends ControlOptions {
       mapElement: JQuery<HTMLElement>;
       closeTitle: string;
-      onClose: () => void;
+      onClose: () => boolean;
     }
 
     class BottomToolbarControl extends Control<BottomToolbarControlOptions> {
       constructor(options: BottomToolbarControlOptions);
+      getButton(id: string): ToolbarButton | undefined;
       open(buttons: ToolbarButtonOptions[]): void;
       close(): void;
       container: HTMLElement;

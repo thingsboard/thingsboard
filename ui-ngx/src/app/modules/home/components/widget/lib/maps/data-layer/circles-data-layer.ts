@@ -111,6 +111,29 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
     this.circle.off('pm:dragend');
   }
 
+  protected onSelected(): L.TB.ToolbarButtonOptions[] {
+    if (this.dataLayer.isEditEnabled()) {
+      this.circle.on('pm:markerdragstart', () => this.editing = true);
+      this.circle.on('pm:markerdragend', () => this.editing = false);
+      this.circle.on('pm:edit', (e) => this.saveCircleCoordinates());
+      this.circle.pm.enable();
+    }
+    return [];
+  }
+
+  protected onDeselected(): void {
+    if (this.dataLayer.isEditEnabled()) {
+      this.circle.pm.disable();
+      this.circle.off('pm:markerdragstart');
+      this.circle.off('pm:markerdragend');
+      this.circle.off('pm:edit');
+    }
+  }
+
+  protected removeDataItemTitle(): string {
+    return this.dataLayer.getCtx().translate.instant('widgets.maps.data-layer.circle.remove-circle-for', {entityName: this.data.entityName});
+  }
+
   protected removeDataItem(): void {
     this.dataLayer.saveCircleCoordinates(this.data, null, null);
   }

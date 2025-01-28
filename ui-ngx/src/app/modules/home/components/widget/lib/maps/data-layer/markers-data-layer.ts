@@ -172,6 +172,10 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
     }
   }
 
+  protected removeDataItemTitle(): string {
+    return this.dataLayer.getCtx().translate.instant('widgets.maps.data-layer.marker.remove-marker-for', {entityName: this.data.entityName});
+  }
+
   protected removeDataItem(): void {
     this.dataLayer.saveMarkerLocation(this.data, null);
   }
