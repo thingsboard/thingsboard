@@ -104,6 +104,7 @@ import org.thingsboard.server.queue.discovery.DiscoveryService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.service.cf.CalculatedFieldExecutionService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
@@ -506,6 +507,11 @@ public class ActorSystemContext {
     @Autowired(required = false)
     @Getter
     private EntityService entityService;
+
+    @Lazy
+    @Autowired(required = false)
+    @Getter
+    private CalculatedFieldExecutionService calculatedFieldExecutionService;
 
     @Value("${actors.session.max_concurrent_sessions_per_device:1}")
     @Getter

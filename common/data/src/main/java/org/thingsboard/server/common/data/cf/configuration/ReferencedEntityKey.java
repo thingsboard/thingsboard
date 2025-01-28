@@ -27,4 +27,6 @@ public class ReferencedEntityKey {
     private ArgumentType type;
     private AttributeScope scope;
 
+
+
 }

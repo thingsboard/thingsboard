@@ -77,7 +77,7 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
                 String name = (String) row.get("name");
                 int configurationVersion = (int) row.get("configuration_version");
                 JsonNode configuration = JacksonUtil.toJsonNode((String) row.get("configuration"));
-                long version = (long) row.get("version");
+                long version = row.get("version") != null ? (long) row.get("version") : 0;
                 Object externalIdObj = row.get("external_id");
 
                 CalculatedField calculatedField = new CalculatedField();

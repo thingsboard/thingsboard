@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf.ctx;
+package org.thingsboard.server.common.msg.cf;
 
-import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
+import lombok.Data;
+import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 
-import java.util.Map;
+@Data
+public class CalculatedFieldInitMsg implements ToCalculatedFieldSystemMsg {
 
-public interface CalculatedFieldStateService {
+    private final TenantId tenantId;
+    private final CalculatedField cf;
 
-    Map<CalculatedFieldEntityCtxId, CalculatedFieldState> restoreStates();
-
-    CalculatedFieldState restoreState(CalculatedFieldEntityCtxId ctxId);
-
-    void persistState(CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback);
-
-    void removeState(CalculatedFieldEntityCtxId ctxId);
-
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.CF_INIT_MSG;
+    }
 }

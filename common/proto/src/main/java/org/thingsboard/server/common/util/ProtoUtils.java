@@ -645,9 +645,9 @@ public class ProtoUtils {
     }
 
     public static TransportProtos.TsKvProto toTsKvProto(TsKvEntry tsKvEntry) {
-        TsKvProto.Builder builder = TsKvProto.newBuilder();
-        builder.setTs(tsKvEntry.getTs());
-        builder.setKv(toKeyValueProto(tsKvEntry));
+        var builder = TransportProtos.TsKvProto.newBuilder()
+                .setTs(tsKvEntry.getTs())
+                .setKv(toKeyValueProto(tsKvEntry));
         if (tsKvEntry.getVersion() != null) {
             builder.setVersion(tsKvEntry.getVersion());
         }

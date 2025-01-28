@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.service.cf.RocksDBService;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtx;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
@@ -36,24 +37,25 @@ public class RocksDBStateService implements CalculatedFieldStateService {
     private final RocksDBService rocksDBService;
 
     @Override
-    public Map<CalculatedFieldEntityCtxId, CalculatedFieldEntityCtx> restoreStates() {
+    public Map<CalculatedFieldEntityCtxId, CalculatedFieldState> restoreStates() {
         return rocksDBService.getAll().entrySet().stream()
                 .collect(Collectors.toMap(
                         entry -> JacksonUtil.fromString(entry.getKey(), CalculatedFieldEntityCtxId.class),
-                        entry -> JacksonUtil.fromString(entry.getValue(), CalculatedFieldEntityCtx.class)
+                        entry -> JacksonUtil.fromString(entry.getValue(), CalculatedFieldState.class)
                 ));
     }
 
     @Override
-    public CalculatedFieldEntityCtx restoreState(CalculatedFieldEntityCtxId ctxId) {
+    public CalculatedFieldState restoreState(CalculatedFieldEntityCtxId ctxId) {
         return Optional.ofNullable(rocksDBService.get(JacksonUtil.writeValueAsString(ctxId)))
-                .map(storedState -> JacksonUtil.fromString(storedState, CalculatedFieldEntityCtx.class))
+                .map(storedState -> JacksonUtil.fromString(storedState, CalculatedFieldState.class))
                 .orElse(null);
     }
 
     @Override
-    public void persistState(CalculatedFieldEntityCtxId ctxId, CalculatedFieldEntityCtx state) {
-        rocksDBService.put(JacksonUtil.writeValueAsString(ctxId), JacksonUtil.writeValueAsString(state));
+    public void persistState(CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback){
+        rocksDBService.put(JacksonUtil.writeValueAsString(stateId), JacksonUtil.writeValueAsString(state));
+        callback.onSuccess();
     }
 
     @Override
