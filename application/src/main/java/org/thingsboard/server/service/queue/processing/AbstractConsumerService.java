@@ -178,16 +178,12 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             }
         } else if (EntityType.DEVICE_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             deviceProfileCache.evict(tenantId, new DeviceProfileId(componentLifecycleMsg.getEntityId().getId()));
-            calculatedFieldCache.evictProfile(tenantId, new DeviceProfileId(componentLifecycleMsg.getEntityId().getId()));
         } else if (EntityType.DEVICE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             deviceProfileCache.evict(tenantId, new DeviceId(componentLifecycleMsg.getEntityId().getId()));
-            calculatedFieldCache.evictEntity(tenantId, new DeviceId(componentLifecycleMsg.getEntityId().getId()));
         } else if (EntityType.ASSET_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             assetProfileCache.evict(tenantId, new AssetProfileId(componentLifecycleMsg.getEntityId().getId()));
-            calculatedFieldCache.evictProfile(tenantId, new AssetProfileId(componentLifecycleMsg.getEntityId().getId()));
         } else if (EntityType.ASSET.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             assetProfileCache.evict(tenantId, new AssetId(componentLifecycleMsg.getEntityId().getId()));
-            calculatedFieldCache.evictEntity(tenantId, new AssetId(componentLifecycleMsg.getEntityId().getId()));
         } else if (EntityType.ENTITY_VIEW.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             actorContext.getTbEntityViewService().onComponentLifecycleMsg(componentLifecycleMsg);
         } else if (EntityType.API_USAGE_STATE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {

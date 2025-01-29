@@ -18,6 +18,7 @@ package org.thingsboard.server.queue.provider;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
@@ -50,7 +51,7 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
     private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> toUsageStats;
     private TbQueueProducer<TbProtoQueueMsg<ToVersionControlServiceMsg>> toVersionControl;
     private TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> toHousekeeper;
-    private TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCalculatedFieldMsg>> toCalculatedFields;
+    private TbQueueProducer<TbProtoQueueMsg<ToCalculatedFieldMsg>> toCalculatedFields;
     private TbQueueProducer<TbProtoQueueMsg<ToCalculatedFieldNotificationMsg>> toCalculatedFieldNotifications;
 
     public TbCoreQueueProducerProvider(TbCoreQueueFactory tbQueueProvider) {
