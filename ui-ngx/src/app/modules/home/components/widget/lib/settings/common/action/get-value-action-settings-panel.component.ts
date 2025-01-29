@@ -167,6 +167,14 @@ export class GetValueActionSettingsPanelComponent extends PageComponent implemen
     this.getValueSettingsApplied.emit(getValueSettings);
   }
 
+  getParseValueFunctionHelpId(): string {
+    const action: GetValueAction = this.getValueSettingsFormGroup.get('action').value;
+    if (action === GetValueAction.GET_DASHBOARD_STATE_WITH_PARAMS) {
+      return 'widget/config/parse_value_get_dashboard_state_with_params_fn';
+    }
+    return 'widget/lib/rpc/parse_value_fn';
+  }
+
   private updateValidators() {
     const action: GetValueAction = this.getValueSettingsFormGroup.get('action').value;
     let dataToValueType: DataToValueType = this.getValueSettingsFormGroup.get('dataToValue').get('type').value;

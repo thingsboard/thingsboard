@@ -145,7 +145,7 @@
                   [globalVariables]="functionScopeVariables"
                   [functionArgs]="['data']"
                   functionTitle="{{ 'widgets.value-action.parse-value-function' | translate }}"
-                  helpId="widget/lib/rpc/parse_value_fn">
+                  [helpId]="getParseValueFunctionHelpId()">
       </tb-js-func>
       <div *ngIf="valueType === ValueType.BOOLEAN" class="tb-form-row align-start no-gap column-xs">
         <div class="fixed-title-width fixed-title-height">{{ 'widgets.value-action.state-when-result-is' | translate:{state: stateLabel} }}</div>
