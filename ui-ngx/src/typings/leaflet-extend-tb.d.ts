@@ -94,6 +94,7 @@ declare module 'leaflet' {
       title: string;
       click: (e: MouseEvent, button: ToolbarButton) => void;
       iconClass: string;
+      showText?: boolean;
     }
 
     class ToolbarButton extends Control<ToolbarButtonOptions>{
@@ -118,7 +119,7 @@ declare module 'leaflet' {
     class BottomToolbarControl extends Control<BottomToolbarControlOptions> {
       constructor(options: BottomToolbarControlOptions);
       getButton(id: string): ToolbarButton | undefined;
-      open(buttons: ToolbarButtonOptions[]): void;
+      open(buttons: ToolbarButtonOptions[], showCloseButton?: boolean): void;
       close(): void;
       container: HTMLElement;
     }

@@ -49,7 +49,7 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
     this.polygon = polyConstructor(polyData as (TbPolygonRawCoordinates & L.LatLngTuple[]), {
       ...this.polygonStyle,
       snapIgnore: !this.dataLayer.isSnappable(),
-      bubblingMouseEvents: false
+      bubblingMouseEvents: !this.dataLayer.isEditMode()
     });
 
     this.polygonContainer = L.featureGroup();
@@ -111,7 +111,7 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
         this.tooltip.setLatLng(this.polygon.getBounds().getCenter());
       }
     });
-    this.polygon.on('pm:dragend', (e) => {
+    this.polygon.on('pm:dragend', () => {
       this.savePolygonCoordinates();
       this.editing = false;
     });
@@ -200,10 +200,14 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
     return this.editing;
   }
 
+  public updateBubblingMouseEvents() {
+    this.polygon.options.bubblingMouseEvents = !this.dataLayer.isEditMode();
+  }
+
   private enablePolygonEditMode() {
     this.polygon.on('pm:markerdragstart', () => this.editing = true);
     this.polygon.on('pm:markerdragend', () => this.editing = false);
-    this.polygon.on('pm:edit', (e) => this.savePolygonCoordinates());
+    this.polygon.on('pm:edit', () => this.savePolygonCoordinates());
     this.polygon.pm.enable();
     const map = this.dataLayer.getMap();
     map.getEditToolbar().getButton('remove')?.setDisabled(false);
@@ -232,7 +236,7 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
         this.polygon = L.polygon(e.layer.getLatLngs(), {
           ...this.polygonStyle,
           snapIgnore: !this.dataLayer.isSnappable(),
-          bubblingMouseEvents: false
+          bubblingMouseEvents: !this.dataLayer.isEditMode()
         });
         this.polygon.addTo(this.polygonContainer);
       } else {
@@ -273,7 +277,7 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
 
   private disablePolygonCutMode(cutButton?: L.TB.ToolbarButton) {
     this.editing = false;
-    this.polygon.options.bubblingMouseEvents = false;
+    this.polygon.options.bubblingMouseEvents = !this.dataLayer.isEditMode();
     this.polygon.setStyle({...this.polygonStyle, dashArray: null});
     this.removeItemClass('tb-cut-mode');
     this.polygon.off('pm:cut');
@@ -285,12 +289,12 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
   private enablePolygonRotateMode(rotateButton?: L.TB.ToolbarButton) {
     this.polygonContainer.closePopup();
     this.editing = true;
-    this.polygon.on('pm:rotateend', (e) => {
+    this.polygon.on('pm:rotateend', () => {
       this.savePolygonCoordinates();
     });
     this.polygon.pm.enableRotate();
     rotateButton?.setActive(true);
-    this.polygon.on('pm:rotatedisable', (e) => {
+    this.polygon.on('pm:rotatedisable', () => {
       this.disablePolygonRotateMode(rotateButton);
       this.enablePolygonEditMode();
     });
@@ -330,7 +334,7 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
         this.polygon = L.polygon(polyData, {
           ...this.polygonStyle,
           snapIgnore: !this.dataLayer.isSnappable(),
-          bubblingMouseEvents: false
+          bubblingMouseEvents: !this.dataLayer.isEditMode()
         });
         this.polygon.addTo(this.polygonContainer);
         this.editModeUpdated();

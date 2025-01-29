@@ -93,6 +93,8 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
 
   protected abstract disableDrag(): void;
 
+  protected abstract updateBubblingMouseEvents(): void;
+
   protected bindEvents(): void {
     if (this.dataLayer.isSelectable()) {
       this.layer.on('click', () => {
@@ -177,12 +179,13 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
   }
 
   public editModeUpdated() {
-    if (this.dataLayer.isEditMode()) {
+    if (this.dataLayer.isEditMode() && !this.selected) {
       this.enableEdit();
     } else {
       this.disableEdit();
     }
     this.updateSelectedState();
+    this.updateBubblingMouseEvents();
   }
 
   public update(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
@@ -365,7 +368,12 @@ export class DataLayerColorProcessor {
 
 }
 
-export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends TbMapDataLayer<S,D>, L extends L.Layer = L.Layer> implements L.TB.DataLayer {
+export interface UnplacedMapDataItem {
+  entity: FormattedData<TbMapDatasource>;
+  dataLayer: TbMapDataLayer;
+}
+
+export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLayerSettings, D extends TbMapDataLayer<S,D> = any, L extends L.Layer = L.Layer> implements L.TB.DataLayer {
 
   protected settings: S;
 
@@ -386,13 +394,14 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
   protected editEnabled = false;
   protected removeEnabled = false;
 
+  protected editable = false;
   protected selectable = false;
   protected hoverable = false;
   protected snappable = false;
 
   private editMode = false;
 
-  private unplacedItems: FormattedData<TbMapDatasource>[] = [];
+  private unplacedItems: UnplacedMapDataItem[] = [];
 
   public dataLayerLabelProcessor: DataLayerPatternProcessor;
   public dataLayerTooltipProcessor: DataLayerPatternProcessor;
@@ -412,6 +421,7 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
       this.editEnabled = this.settings.edit.enabledActions.includes(DataLayerEditAction.edit);
       this.removeEnabled = this.settings.edit.enabledActions.includes(DataLayerEditAction.remove);
 
+      this.editable = this.addEnabled || this.dragEnabled || this.editEnabled || this.removeEnabled;
       this.selectable = this.removeEnabled || this.editEnabled;
       this.hoverable = this.selectable || this.dragEnabled;
       this.snappable = this.settings.edit.snappable;
@@ -473,6 +483,10 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
     return this.removeEnabled;
   }
 
+  public isEditable(): boolean {
+    return this.editable;
+  }
+
   public isHoverable(): boolean {
     return this.hoverable;
   }
@@ -507,6 +521,7 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
           }
           this.map.getMap().removeLayer(this.dataLayerContainer);
         }
+        this.map.enabledDataLayersUpdated();
         return true;
       }
     }
@@ -530,7 +545,10 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
         }
         toDelete.delete(data.entityId);
       } else {
-        this.unplacedItems.push(data);
+        this.unplacedItems.push({
+          entity: data,
+          dataLayer: this
+        });
       }
     });
     toDelete.forEach((key) => {
@@ -557,6 +575,25 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings, D extends T
 
   public hasUnplacedItems(): boolean {
     return !!this.unplacedItems.length;
+  }
+
+  private prepareUnplacedItems(): UnplacedMapDataItem[] {
+    const div = document.createElement('div');
+    for (const item of this.unplacedItems) {
+      if (!item.entity.entityDisplayName) {
+        if (this.settings.label.show) {
+          div.innerHTML = this.dataLayerLabelProcessor.processPattern(item.entity, this.getMap().getData());
+          item.entity.entityDisplayName = div.textContent || div.innerText || '';
+        } else {
+          item.entity.entityDisplayName = item.entity.entityName;
+        }
+      }
+    }
+    return this.unplacedItems;
+  }
+
+  public getUnplacedItems(): UnplacedMapDataItem[] {
+    return this.prepareUnplacedItems();
   }
 
   protected createDataLayerContainer(): L.FeatureGroup {

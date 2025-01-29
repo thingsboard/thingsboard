@@ -7718,7 +7718,8 @@
                     },
                     "edit": "Edit marker",
                     "remove-marker-for": "Remove marker for '{{entityName}}'",
-                    "place-marker": "Place marker"
+                    "place-marker": "Place marker",
+                    "place-marker-hint": "Click to place '{{entityName}}' entity"
                 },
                 "polygon": {
                     "polygon-key": "Polygon key",
@@ -7747,7 +7748,9 @@
                     "edit": "Edit circle",
                     "remove-circle-for": "Remove circle for '{{entityName}}'",
                     "draw-circle": "Draw circle"
-                }
+                },
+                "select-entity": "Select entity",
+                "select-entity-hint": "Hint: after selection click at the map to set position"
             },
             "select-entity": "Select entity",
             "select-entity-hint": "Hint: after selection click at the map to set position",

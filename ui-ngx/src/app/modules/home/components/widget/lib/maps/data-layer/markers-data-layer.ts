@@ -85,7 +85,7 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
     this.marker = L.marker(location, {
       tbMarkerData: data,
       snapIgnore: !this.dataLayer.isSnappable(),
-      bubblingMouseEvents: false
+      bubblingMouseEvents: !this.dataLayer.isEditMode()
     });
     this.updateMarkerIcon(data, dsData);
     return this.marker;
@@ -182,6 +182,10 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
 
   public isEditing() {
     return this.moving;
+  }
+
+  public updateBubblingMouseEvents() {
+    this.marker.options.bubblingMouseEvents = !this.dataLayer.isEditMode();
   }
 
   private saveMarkerLocation() {

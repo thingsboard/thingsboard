@@ -285,12 +285,18 @@ class ToolbarButton extends L.Control<TB.ToolbarButtonOptions> {
   constructor(options: TB.ToolbarButtonOptions) {
     super(options);
     this.id = options.id;
+
+    const buttonText = this.options.showText ? this.options.title : null;
     this.button = $("<a>")
     .attr('class', 'tb-control-button')
     .attr('href', '#')
     .attr('role', 'button')
-    .attr('title', this.options.title)
-    .html('<div class="'+this.options.iconClass+'"></div>');
+    .html('<div class="'+this.options.iconClass+'"></div>' + (buttonText ? `<div class="tb-control-text">${buttonText}</div>` : ''));
+    if (this.options.showText) {
+      L.DomUtil.addClass(this.button[0], 'tb-control-text-button');
+    } else {
+      this.button.attr('title', this.options.title);
+    }
 
     this.button.on('click', (e) => {
       e.stopPropagation();
@@ -391,7 +397,7 @@ class BottomToolbarControl extends L.Control<TB.BottomToolbarControlOptions> {
     return this.toolbarButtons.find(b => b.getId() === id);
   }
 
-  open(buttons: TB.ToolbarButtonOptions[]): void {
+  open(buttons: TB.ToolbarButtonOptions[], showCloseButton = true): void {
 
     this.toolbarButtons.length = 0;
 
@@ -401,19 +407,21 @@ class BottomToolbarControl extends L.Control<TB.BottomToolbarControlOptions> {
       button.getButtonElement().appendTo(this.container);
     });
 
-    const closeButton = $("<a>")
-    .attr('class', 'tb-control-button')
-    .attr('href', '#')
-    .attr('role', 'button')
-    .attr('title', this.options.closeTitle)
-    .html('<div class="tb-close"></div>');
+    if (showCloseButton) {
+      const closeButton = $("<a>")
+      .attr('class', 'tb-control-button')
+      .attr('href', '#')
+      .attr('role', 'button')
+      .attr('title', this.options.closeTitle)
+      .html('<div class="tb-close"></div>');
 
-    closeButton.on('click', (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      this.close();
-    });
-    closeButton.appendTo(this.buttonContainer);
+      closeButton.on('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        this.close();
+      });
+      closeButton.appendTo(this.buttonContainer);
+    }
   }
 
   close(): void {

@@ -89,6 +89,9 @@ import { EllipsisChipListDirective } from '@shared/directives/ellipsis-chip-list
 import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/scada-symbol-widget.component';
 import { TwoSegmentButtonWidgetComponent } from '@home/components/widget/lib/button/two-segment-button-widget.component';
 import { MapWidgetComponent } from '@home/components/widget/lib/maps/map-widget.component';
+import {
+  SelectMapEntityPanelComponent
+} from '@home/components/widget/lib/maps/panels/select-map-entity-panel.component';
 
 @NgModule({
   declarations: [
@@ -143,6 +146,7 @@ import { MapWidgetComponent } from '@home/components/widget/lib/maps/map-widget.
     UnreadNotificationWidgetComponent,
     NotificationTypeFilterPanelComponent,
     ScadaSymbolWidgetComponent,
+    SelectMapEntityPanelComponent,
     MapWidgetComponent
   ],
   imports: [

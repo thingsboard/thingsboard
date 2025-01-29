@@ -25,6 +25,7 @@ import { Observable, Observer, of, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { MarkerShape } from '@home/components/widget/lib/maps/models/marker-shape.models';
+import { UnplacedMapDataItem } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
 
 export enum MapType {
   geoMap = 'geoMap',
@@ -1017,6 +1018,16 @@ const mergeMapDatasource = (target: TbMapDatasource, source: TbMapDatasource): T
   }
   target.dataKeys.push(...appendKeys);
   return target;
+}
+
+export const mergeUnplacedDataItemsArrays = (dataItemsArrays: UnplacedMapDataItem[][]): UnplacedMapDataItem[] => {
+  const itemsMap = new Map<string, UnplacedMapDataItem>();
+  dataItemsArrays.forEach(dataItems => {
+    dataItems.forEach(dataItem => {
+      itemsMap.set(dataItem.entity.$datasource.entityId, dataItem);
+    });
+  });
+  return Array.from(itemsMap.values());
 }
 
 const imageAspectMap: {[key: string]: ImageWithAspect} = {};

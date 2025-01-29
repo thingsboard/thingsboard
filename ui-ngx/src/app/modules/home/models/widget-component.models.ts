@@ -46,7 +46,15 @@ import {
   WidgetActionsApi,
   WidgetSubscriptionApi
 } from '@core/api/widget-api.models';
-import { ChangeDetectorRef, InjectionToken, Injector, NgZone, TemplateRef, Type } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  InjectionToken,
+  Injector,
+  NgZone, Renderer2,
+  TemplateRef,
+  Type,
+  ViewContainerRef
+} from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { RafService } from '@core/services/raf.service';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
@@ -215,6 +223,8 @@ export class WidgetContext {
   http: HttpClient;
   sanitizer: DomSanitizer;
   router: Router;
+  renderer: Renderer2;
+  widgetContentContainer: ViewContainerRef;
 
   private changeDetectorValue: ChangeDetectorRef;
   private containerChangeDetectorValue: ChangeDetectorRef;

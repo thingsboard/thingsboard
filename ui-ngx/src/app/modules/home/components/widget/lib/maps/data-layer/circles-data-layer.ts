@@ -45,7 +45,7 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
     const center = new L.LatLng(circleData.latitude, circleData.longitude);
     this.circleStyle = this.dataLayer.getShapeStyle(data, dsData);
     this.circle = L.circle(center, {
-      bubblingMouseEvents: false,
+      bubblingMouseEvents: !this.dataLayer.isEditMode(),
       radius: circleData.radius,
       ...this.circleStyle,
       snapIgnore: !this.dataLayer.isSnappable()
@@ -115,7 +115,7 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
     if (this.dataLayer.isEditEnabled()) {
       this.circle.on('pm:markerdragstart', () => this.editing = true);
       this.circle.on('pm:markerdragend', () => this.editing = false);
-      this.circle.on('pm:edit', (e) => this.saveCircleCoordinates());
+      this.circle.on('pm:edit', () => this.saveCircleCoordinates());
       this.circle.pm.enable();
     }
     return [];
@@ -140,6 +140,10 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
 
   public isEditing() {
     return this.editing;
+  }
+
+  public updateBubblingMouseEvents() {
+    this.circle.options.bubblingMouseEvents =  !this.dataLayer.isEditMode();
   }
 
   private saveCircleCoordinates() {

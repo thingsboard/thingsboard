@@ -248,6 +248,8 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     this.widgetContext.isPreview = this.isPreview;
     this.widgetContext.isMobile = this.isMobile;
     this.widgetContext.toastTargetId = this.toastTargetId;
+    this.widgetContext.renderer = this.renderer;
+    this.widgetContext.widgetContentContainer = this.widgetContentContainer;
 
     this.widgetContext.subscriptionApi = {
       createSubscription: this.createSubscription.bind(this),
