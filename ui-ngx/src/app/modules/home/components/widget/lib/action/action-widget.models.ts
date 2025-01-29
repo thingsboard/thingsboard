@@ -57,6 +57,7 @@ import { isDefinedAndNotNull } from '@core/utils';
 import { parseError } from '@shared/models/error.models';
 import { CompiledTbFunction, compileTbFunction } from '@shared/models/js-function.models';
 import { HttpClient } from '@angular/common/http';
+import { StateObject } from '@core/api/widget-api.models';
 
 @Directive()
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
@@ -269,6 +270,8 @@ export abstract class ValueGetter<V> extends ValueAction {
         return new AlarmStatusValueGetter<V>(ctx, settings, valueType, valueObserver, simulated);
       case GetValueAction.GET_DASHBOARD_STATE:
         return new DashboardStateGetter<V>(ctx, settings, valueType, valueObserver, simulated);
+      case GetValueAction.GET_DASHBOARD_STATE_WITH_PARAMS:
+        return new DashboardStateWithParamsGetter<V>(ctx, settings, valueType, valueObserver, simulated);
     }
   }
 
@@ -637,6 +640,26 @@ export class DashboardStateGetter<V> extends ValueGetter<V> {
       return of('default');
     } else {
       return this.ctx.stateController.dashboardCtrl.dashboardCtx.stateId;
+    }
+  }
+}
+
+export class DashboardStateWithParamsGetter<V> extends ValueGetter<V> {
+  constructor(protected ctx: WidgetContext,
+              protected settings: GetValueSettings<V>,
+              protected valueType: ValueType,
+              protected valueObserver: Partial<Observer<V>>,
+              protected simulated: boolean) {
+    super(ctx, settings, valueType, valueObserver, simulated);
+  }
+
+  protected doGetValue(): Observable<StateObject> {
+    if (this.simulated) {
+      return of({id: 'default', params: {}});
+    } else {
+      return this.ctx.stateController.dashboardCtrl.dashboardCtx.stateId.pipe(
+        map(id => ({id, params: this.ctx.stateController.getStateParams()}))
+      );
     }
   }
 }

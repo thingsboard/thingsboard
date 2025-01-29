@@ -99,6 +99,8 @@ export class GetValueActionSettingsPanelComponent extends PageComponent implemen
 
   getValueSettingsFormGroup: UntypedFormGroup;
 
+  entityType = EntityType;
+
   alarmSeverities = Object.keys(AlarmSeverity) as AlarmSeverity[];
   alarmSeverityTranslationMap = alarmSeverityTranslations;
 
@@ -167,7 +169,7 @@ export class GetValueActionSettingsPanelComponent extends PageComponent implemen
 
   private updateValidators() {
     const action: GetValueAction = this.getValueSettingsFormGroup.get('action').value;
-    const dataToValueType: DataToValueType = this.getValueSettingsFormGroup.get('dataToValue').get('type').value;
+    let dataToValueType: DataToValueType = this.getValueSettingsFormGroup.get('dataToValue').get('type').value;
 
     this.getValueSettingsFormGroup.get('defaultValue').disable({emitEvent: false});
     this.getValueSettingsFormGroup.get('executeRpc').disable({emitEvent: false});
@@ -196,6 +198,10 @@ export class GetValueActionSettingsPanelComponent extends PageComponent implemen
       case GetValueAction.GET_ALARM_STATUS:
         this.getValueSettingsFormGroup.get('getAlarmStatus').enable({emitEvent: false});
         break;
+      case GetValueAction.GET_DASHBOARD_STATE_WITH_PARAMS:
+        this.getValueSettingsFormGroup.get('dataToValue.type').setValue(DataToValueType.FUNCTION, {emitEvent: false});
+        dataToValueType = DataToValueType.FUNCTION;
+        break
     }
     if (action === GetValueAction.DO_NOTHING || action === GetValueAction.GET_ALARM_STATUS) {
       this.getValueSettingsFormGroup.get('dataToValue').disable({emitEvent: false});
@@ -208,6 +214,4 @@ export class GetValueActionSettingsPanelComponent extends PageComponent implemen
       }
     }
   }
-
-  protected readonly entityType = EntityType;
 }
