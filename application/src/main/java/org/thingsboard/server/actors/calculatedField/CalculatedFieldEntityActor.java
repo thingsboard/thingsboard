@@ -43,7 +43,7 @@ public class CalculatedFieldEntityActor extends ContextAwareActor {
             log.debug("[{}][{}] CF entity actor started.", processor.tenantId, processor.entityId);
         } catch (Exception e) {
             log.warn("[{}][{}] Unknown failure", processor.tenantId, processor.entityId, e);
-            throw new TbActorException("Failed to initialize device actor", e);
+            throw new TbActorException("Failed to initialize CF entity actor", e);
         }
     }
 
@@ -55,6 +55,9 @@ public class CalculatedFieldEntityActor extends ContextAwareActor {
                 break;
             case CF_ENTITY_TELEMETRY_MSG:
                 processor.process((EntityCalculatedFieldTelemetryMsg) msg);
+                break;
+            case CF_LINKED_TELEMETRY_MSG:
+                processor.process((EntityCalculatedFieldLinkedTelemetryMsg) msg);
                 break;
             default:
                 return false;

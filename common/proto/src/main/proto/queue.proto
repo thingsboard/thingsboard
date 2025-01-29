@@ -803,7 +803,7 @@ message CalculatedFieldTelemetryMsgProto {
 
 message CalculatedFieldLinkedTelemetryMsgProto {
   CalculatedFieldTelemetryMsgProto msg = 1;
-  repeated CalculatedFieldEntityCtxIdProto links = 2;
+    repeated CalculatedFieldEntityCtxIdProto links = 2;
 }
 
 message CalculatedFieldEntityCtxIdProto {
@@ -1639,6 +1639,7 @@ message ToCalculatedFieldMsg {
 message ToCalculatedFieldNotificationMsg {
   ComponentLifecycleMsgProto componentLifecycle = 1;
   CalculatedFieldEntityUpdateMsgProto entityUpdateMsg = 2;
+  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 3;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */

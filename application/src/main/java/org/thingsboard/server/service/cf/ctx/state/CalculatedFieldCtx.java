@@ -31,7 +31,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.util.TbPair;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
+import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -142,5 +144,14 @@ public class CalculatedFieldCtx {
             }
         }
         return false;
+    }
+
+    public boolean linkMatches(EntityId entityId, CalculatedFieldTelemetryMsgProto proto) {
+        //TODO: IM - implement
+        return true;
+    }
+
+    public CalculatedFieldEntityCtxId toCalculatedFieldEntityCtxId() {
+        return new CalculatedFieldEntityCtxId(tenantId, cfId, entityId);
     }
 }

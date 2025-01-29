@@ -195,6 +195,19 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
+    public void broadcastToCalculatedFields(ToCalculatedFieldNotificationMsg toCfMsg, TbQueueCallback callback) {
+        UUID msgId = UUID.randomUUID();
+        TbQueueProducer<TbProtoQueueMsg<ToCalculatedFieldNotificationMsg>> toCfProducer = producerProvider.getCalculatedFieldsNotificationsMsgProducer();
+        Set<String> tbReServices = partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE);
+        for (String serviceId : tbReServices) {
+            TopicPartitionInfo tpi = topicService.getCalculatedFieldNotificationsTopic(serviceId);
+            toCfProducer.send(tpi, new TbProtoQueueMsg<>(msgId, toCfMsg), null);
+            toRuleEngineNfs.incrementAndGet();
+        }
+        callback.onSuccess(null); // TODO: refactor to be fair, similar to multi-value callback;
+    }
+
+    @Override
     public void pushMsgToVersionControl(TenantId tenantId, ToVersionControlServiceMsg msg, TbQueueCallback callback) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_VC_EXECUTOR, TenantId.SYS_TENANT_ID, tenantId);
         log.trace("PUSHING msg: {} to:{}", msg, tpi);
