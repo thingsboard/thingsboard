@@ -7386,7 +7386,7 @@
             "color": "Color",
             "columns": "Columns",
             "radio-options": "Radio options",
-            "no-radio-options-configured": "No radio options configured",
+            "no-radio-options": "No radio options configured",
             "add-radio-option": "Add radio option",
             "radio-label-position": "Label position",
             "radio-label-position-before": "Before",
