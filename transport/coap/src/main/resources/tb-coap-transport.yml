@@ -231,7 +231,8 @@ coap:
       secret_key: "${PSK_SECRET_KEY:server_psk_secret_key_123}"
     x509:
       credentials:
-        enabled: "${COAP_X509_ENABLED:false}"
+        # Enable/disable DTLS 1.2 support
+        enabled: "${COAP_X509_CREDENTIALS_ENABLED:false}"
         # Inactivity timeout of DTLS session. Used to cleanup cache
         dtls_session_inactivity_timeout: "${TB_COAP_X509_DTLS_SESSION_INACTIVITY_TIMEOUT:86400000}"
         # Interval of periodic eviction of the timed-out DTLS sessions
