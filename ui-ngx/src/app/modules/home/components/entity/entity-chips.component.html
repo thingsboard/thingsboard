@@ -18,5 +18,5 @@
 
 <a *ngFor="let subEntity of subEntities" class="tb-entity-chip"
    routerLink="{{entityDetailsPrefixUrl}}/{{subEntity.id.id}}" (click)="$event.stopPropagation();">
-  {{ subEntity.name }}
+  {{ subEntity.name | customTranslate }}
 </a>

@@ -1,0 +1,40 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-form-panel no-padding no-border" [formGroup]="originatorAttributesConfigForm">
+  <div class="tb-form-panel stroked">
+    <div class="tb-form-row no-padding no-border space-between">
+      <div class="tb-form-panel-title tb-required" translate>rule-node-config.originator-attributes</div>
+      <div class="tb-form-panel-hint tb-error" translate
+           [hidden]="!(originatorAttributesConfigForm.get('attributesControl').touched &&
+                        originatorAttributesConfigForm.get('attributesControl').hasError('atLeastOneRequired'))">
+        rule-node-config.at-least-one-field-required
+      </div>
+    </div>
+    <tb-select-attributes formControlName="attributesControl"
+                          popupHelpLink="rulenode/originator_attributes_node_fields_templatization">
+    </tb-select-attributes>
+    <tb-msg-metadata-chip [labelText]="'rule-node-config.add-originator-attributes-to' | translate"
+                          formControlName="fetchTo">
+    </tb-msg-metadata-chip>
+  </div>
+  <div tb-hint-tooltip-icon="{{ 'rule-node-config.tell-failure-tooltip' | translate }}" class="tb-form-row same-padding">
+    <mat-slide-toggle class="mat-slide margin" formControlName="tellFailureIfAbsent">
+      {{ 'rule-node-config.tell-failure' | translate }}
+    </mat-slide-toggle>
+  </div>
+</section>

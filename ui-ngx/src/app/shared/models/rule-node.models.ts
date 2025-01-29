@@ -21,13 +21,12 @@ import { ComponentDescriptor } from '@shared/models/component-descriptor.models'
 import { FcEdge, FcNode } from 'ngx-flowchart';
 import { Observable } from 'rxjs';
 import { PageComponent } from '@shared/components/page.component';
-import { AfterViewInit, EventEmitter, Inject, OnInit, Directive } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
+import { AfterViewInit, DestroyRef, Directive, EventEmitter, inject, OnInit } from '@angular/core';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { RuleChainType } from '@shared/models/rule-chain.models';
 import { DebugRuleNodeEventBody } from '@shared/models/event.models';
 import { HasEntityDebugSettings } from '@shared/models/entity.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface RuleNodeConfiguration {
   [key: string]: any;
@@ -102,6 +101,7 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
 
   private configurationSet = false;
   private disabledValue = false;
+  protected destroyRef = inject(DestroyRef);
 
   set disabled(value: boolean) {
     if (this.disabledValue !== value) {
@@ -132,8 +132,8 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
   configurationChangedEmiter = new EventEmitter<RuleNodeConfiguration>();
   configurationChanged = this.configurationChangedEmiter.asObservable();
 
-  protected constructor(@Inject(Store) protected store: Store<AppState>) {
-    super(store);
+  protected constructor(...args: unknown[]) {
+    super();
   }
 
   ngOnInit() {}
@@ -159,11 +159,15 @@ export abstract class RuleNodeConfigurationComponent extends PageComponent imple
       for (const part of path) {
         control = control.get(part);
       }
-      control.valueChanges.subscribe(() => {
+      control.valueChanges.pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => {
         this.updateValidators(true, trigger);
       });
     }
-    this.configForm().valueChanges.subscribe((updated: RuleNodeConfiguration) => {
+    this.configForm().valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((updated: RuleNodeConfiguration) => {
       this.onConfigurationChanged(updated);
     });
   }

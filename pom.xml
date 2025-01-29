@@ -117,7 +117,6 @@
         <aws.sdk.version>1.12.701</aws.sdk.version>
         <pubsub.client.version>1.128.1</pubsub.client.version>
         <google.common.protos.version>2.37.1</google.common.protos.version>
-        <azure-servicebus.version>3.6.7</azure-servicebus.version>
         <passay.version>1.6.4</passay.version>
         <ua-parser.version>1.6.1</ua-parser.version>
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
@@ -868,6 +867,29 @@
                             </goals>
                         </execution>
                     </executions>
+                </plugin>
+                <plugin>
+                    <groupId>io.github.git-commit-id</groupId>
+                    <artifactId>git-commit-id-maven-plugin</artifactId>
+                    <version>5.0.0</version>
+                    <executions>
+                        <execution>
+                            <id>get-the-git-infos</id>
+                            <goals>
+                                <goal>revision</goal>
+                            </goals>
+                            <phase>initialize</phase>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                        <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+<!--                        <includeOnlyProperties>-->
+<!--                            <includeOnlyProperty>^git.build.(time|version)$</includeOnlyProperty>-->
+<!--                            <includeOnlyProperty>^git.commit.id.(abbrev|full)$</includeOnlyProperty>-->
+<!--                        </includeOnlyProperties>-->
+                        <commitIdGenerationMode>full</commitIdGenerationMode>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -2014,21 +2036,6 @@
                 <groupId>com.google.api.grpc</groupId>
                 <artifactId>proto-google-common-protos</artifactId>
                 <version>${google.common.protos.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.microsoft.azure</groupId>
-                <artifactId>azure-servicebus</artifactId>
-                <version>${azure-servicebus.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>com.nimbusds</groupId>
-                        <artifactId>content-type</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.ow2.asm</groupId>
-                        <artifactId>asm</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.passay</groupId>

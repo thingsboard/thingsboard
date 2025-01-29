@@ -194,8 +194,13 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor implements DevicePr
             ObjectNode data = JacksonUtil.newObjectNode();
             data.put("method", deviceRpcCallMsg.getRequestMsg().getMethod());
             data.put("params", deviceRpcCallMsg.getRequestMsg().getParams());
-            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.TO_SERVER_RPC_REQUEST, deviceId, null, metaData,
-                    TbMsgDataType.JSON, JacksonUtil.toString(data));
+            TbMsg tbMsg = TbMsg.newMsg()
+                    .type(TbMsgType.TO_SERVER_RPC_REQUEST)
+                    .originator(deviceId)
+                    .copyMetaData(metaData)
+                    .dataType(TbMsgDataType.JSON)
+                    .data(JacksonUtil.toString(data))
+                    .build();
             edgeCtx.getClusterService().pushMsgToRuleEngine(tenantId, deviceId, tbMsg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {

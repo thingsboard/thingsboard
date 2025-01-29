@@ -14,7 +14,16 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  forwardRef,
+  Input,
+  OnChanges,
+  OnInit,
+  SimpleChanges
+} from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -22,9 +31,7 @@ import {
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
-  Validator,
-  ValidatorFn,
-  Validators
+  Validator
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -33,22 +40,20 @@ import {
   parseScadaSymbolMetadataFromContent,
   ScadaSymbolBehaviorType,
   ScadaSymbolMetadata,
-  ScadaSymbolObjectSettings,
-  ScadaSymbolPropertyType
+  ScadaSymbolObjectSettings
 } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { TargetDevice, widgetType } from '@shared/models/widget.models';
-import { isDefinedAndNotNull, mergeDeep } from '@core/utils';
+import { isDefinedAndNotNull, mergeDeepIgnoreArray } from '@core/utils';
 import {
   ScadaSymbolBehaviorGroup,
-  ScadaSymbolPropertyRow,
-  toBehaviorGroups,
-  toPropertyRows
+  toBehaviorGroups
 } from '@home/components/widget/lib/settings/common/scada/scada-symbol-object-settings.models';
-import { merge, Observable, of, Subscription } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { ImageService } from '@core/http/image.service';
 import { map } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-scada-symbol-object-settings',
@@ -70,8 +75,6 @@ import { map } from 'rxjs/operators';
 export class ScadaSymbolObjectSettingsComponent implements OnInit, OnChanges, ControlValueAccessor, Validator {
 
   ScadaSymbolBehaviorType = ScadaSymbolBehaviorType;
-
-  ScadaSymbolPropertyType = ScadaSymbolPropertyType;
 
   @Input()
   disabled: boolean;
@@ -101,27 +104,26 @@ export class ScadaSymbolObjectSettingsComponent implements OnInit, OnChanges, Co
 
   private propagateChange = null;
 
-  private validatorTriggers: string[];
-  private validatorSubscription: Subscription;
-
   public scadaSymbolObjectSettingsFormGroup: UntypedFormGroup;
 
   metadata: ScadaSymbolMetadata;
   behaviorGroups: ScadaSymbolBehaviorGroup[];
-  propertyRows: ScadaSymbolPropertyRow[];
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder,
               private imageService: ImageService,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
     this.scadaSymbolObjectSettingsFormGroup = this.fb.group({
       behavior: this.fb.group({}),
-      properties: this.fb.group({})
+      properties: [{}, []]
     });
-    this.scadaSymbolObjectSettingsFormGroup.valueChanges.subscribe(() => {
+    this.scadaSymbolObjectSettingsFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateModel();
     });
     this.loadMetadata();
@@ -151,7 +153,6 @@ export class ScadaSymbolObjectSettingsComponent implements OnInit, OnChanges, Co
       this.scadaSymbolObjectSettingsFormGroup.disable({emitEvent: false});
     } else {
       this.scadaSymbolObjectSettingsFormGroup.enable({emitEvent: false});
-      this.updateValidators();
     }
   }
 
@@ -170,12 +171,6 @@ export class ScadaSymbolObjectSettingsComponent implements OnInit, OnChanges, Co
   }
 
   private loadMetadata() {
-    if (this.validatorSubscription) {
-      this.validatorSubscription.unsubscribe();
-      this.validatorSubscription = null;
-    }
-    this.validatorTriggers = [];
-
     let metadata$: Observable<ScadaSymbolMetadata>;
     if (this.scadaSymbolMetadata) {
       metadata$ = of(this.scadaSymbolMetadata);
@@ -196,50 +191,12 @@ export class ScadaSymbolObjectSettingsComponent implements OnInit, OnChanges, Co
       (metadata) => {
         this.metadata = metadata;
         this.behaviorGroups = toBehaviorGroups(this.metadata.behavior);
-        this.propertyRows = toPropertyRows(this.metadata.properties);
         const behaviorFormGroup =  this.scadaSymbolObjectSettingsFormGroup.get('behavior') as UntypedFormGroup;
         for (const control of Object.keys(behaviorFormGroup.controls)) {
           behaviorFormGroup.removeControl(control, {emitEvent: false});
         }
-        const propertiesFormGroup =  this.scadaSymbolObjectSettingsFormGroup.get('properties') as UntypedFormGroup;
-        for (const control of Object.keys(propertiesFormGroup.controls)) {
-          propertiesFormGroup.removeControl(control, {emitEvent: false});
-        }
         for (const behavior of this.metadata.behavior) {
           behaviorFormGroup.addControl(behavior.id, this.fb.control(null, []), {emitEvent: false});
-        }
-        for (const property of this.metadata.properties) {
-          if (property.disableOnProperty) {
-            if (!this.validatorTriggers.includes(property.disableOnProperty)) {
-              this.validatorTriggers.push(property.disableOnProperty);
-            }
-          }
-          const validators: ValidatorFn[] = [];
-          if (property.required) {
-            validators.push(Validators.required);
-          }
-          if (property.type === ScadaSymbolPropertyType.number) {
-            if (isDefinedAndNotNull(property.min)) {
-              validators.push(Validators.min(property.min));
-            }
-            if (isDefinedAndNotNull(property.max)) {
-              validators.push(Validators.max(property.max));
-            }
-          }
-          propertiesFormGroup.addControl(property.id, this.fb.control(null, validators), {emitEvent: false});
-        }
-        if (this.validatorTriggers.length) {
-          const observables: Observable<any>[] = [];
-          for (const trigger of this.validatorTriggers) {
-            if (propertiesFormGroup.get(trigger)) {
-              observables.push(propertiesFormGroup.get(trigger).valueChanges);
-            }
-          }
-          if (observables.length) {
-            this.validatorSubscription = merge(...observables).subscribe(() => {
-              this.updateValidators();
-            });
-          }
         }
         this.setupValue();
         this.cd.markForCheck();
@@ -247,27 +204,10 @@ export class ScadaSymbolObjectSettingsComponent implements OnInit, OnChanges, Co
     );
   }
 
-  private updateValidators() {
-    const propertiesFormGroup =  this.scadaSymbolObjectSettingsFormGroup.get('properties') as UntypedFormGroup;
-    for (const trigger of this.validatorTriggers) {
-      const value: boolean = propertiesFormGroup.get(trigger).value;
-      this.metadata.properties.filter(p => p.disableOnProperty === trigger).forEach(
-        (p) => {
-          const control = propertiesFormGroup.get(p.id);
-          if (value) {
-            control.enable({emitEvent: false});
-          } else {
-            control.disable({emitEvent: false});
-          }
-        }
-      );
-    }
-  }
-
   private setupValue() {
     if (this.metadata) {
       const defaults = defaultScadaSymbolObjectSettings(this.metadata);
-      this.modelValue = mergeDeep<ScadaSymbolObjectSettings>(defaults, this.modelValue);
+      this.modelValue = mergeDeepIgnoreArray<ScadaSymbolObjectSettings>(defaults, this.modelValue);
       this.scadaSymbolObjectSettingsFormGroup.patchValue(
         this.modelValue, {emitEvent: false}
       );

@@ -923,6 +923,7 @@ public abstract class BaseController {
 
         UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
         info.put("userCredentialsEnabled", userCredentials.isEnabled());
+        info.put("userActivated", userCredentials.getActivateToken() == null);
         info.put("lastLoginTs", userCredentials.getLastLoginTs());
     }
 

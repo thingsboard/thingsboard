@@ -54,7 +54,6 @@ import static org.thingsboard.rule.engine.transform.OriginatorSource.RELATED;
                 "<li><strong>Entity by name pattern</strong> - specify entity type and name pattern of new originator. Following entity types are supported: " +
                 "'Device', 'Asset', 'Entity View', 'Edge' or 'User'.</li></ul>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeChangeOriginatorConfig",
         icon = "find_replace"
 )

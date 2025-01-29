@@ -14,7 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit, Renderer2, ViewChild, ViewContainerRef } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  forwardRef,
+  Input,
+  OnInit,
+  Renderer2,
+  ViewChild,
+  ViewContainerRef
+} from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormControl } from '@angular/forms';
 import {
   AutoDateFormatSettings,
@@ -36,6 +45,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import {
   AutoDateFormatSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/auto-date-format-settings-panel.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-date-format-select',
@@ -81,14 +91,17 @@ export class DateFormatSelectComponent implements OnInit, ControlValueAccessor {
               private date: DatePipe,
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
-              private viewContainerRef: ViewContainerRef) {}
+              private viewContainerRef: ViewContainerRef,
+              private destroyRef: DestroyRef) {}
 
   ngOnInit(): void {
     const targetDateFormats = this.includeAuto ? dateFormatsWithAuto : dateFormats;
     this.dateFormatList = this.excludeLastUpdateAgo ?
       targetDateFormats.filter(format => !format.lastUpdateAgo) : dateFormats;
     this.dateFormatFormControl = new UntypedFormControl();
-    this.dateFormatFormControl.valueChanges.subscribe((value: DateFormatSettings) => {
+    this.dateFormatFormControl.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((value: DateFormatSettings) => {
       this.updateModel(value);
       if (value?.custom) {
         setTimeout(() => {

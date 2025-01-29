@@ -346,7 +346,14 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
 
     protected void pushEntityEventToRuleEngine(TenantId tenantId, EntityId entityId, CustomerId customerId,
                                                TbMsgType msgType, String msgData, TbMsgMetaData metaData) {
-        TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, msgData);
+        TbMsg tbMsg = TbMsg.newMsg()
+                .type(msgType)
+                .originator(entityId)
+                .customerId(customerId)
+                .copyMetaData(metaData)
+                .dataType(TbMsgDataType.JSON)
+                .data(msgData)
+                .build();
         edgeCtx.getClusterService().pushMsgToRuleEngine(tenantId, entityId, tbMsg, new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {

@@ -17,6 +17,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   EventEmitter,
   forwardRef,
   Input,
@@ -52,6 +53,7 @@ import {
   ValueSourceType,
   ValueSourceTypeTranslation
 } from '@shared/models/widget-settings.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-time-series-chart-threshold-row',
@@ -121,7 +123,8 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
 
   constructor(private fb: UntypedFormBuilder,
               private thresholdsPanel: TimeSeriesChartThresholdsPanelComponent,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
@@ -137,16 +140,24 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
     this.latestKeyFormControl = this.fb.control(null, [Validators.required]);
     this.entityKeyFormControl = this.fb.control(null, [Validators.required]);
     this.thresholdSettingsFormControl = this.fb.control(null);
-    this.thresholdFormGroup.valueChanges.subscribe(
+    this.thresholdFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.updateModel()
     );
-    this.latestKeyFormControl.valueChanges.subscribe(
+    this.latestKeyFormControl.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.updateModel()
     );
-    this.entityKeyFormControl.valueChanges.subscribe(
+    this.entityKeyFormControl.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.updateModel()
     );
-    this.thresholdSettingsFormControl.valueChanges.subscribe((thresholdSettings: Partial<TimeSeriesChartThreshold>) => {
+    this.thresholdSettingsFormControl.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((thresholdSettings: Partial<TimeSeriesChartThreshold>) => {
       this.modelValue = {...this.modelValue, ...thresholdSettings};
       this.thresholdFormGroup.patchValue(
         {
@@ -158,7 +169,9 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
         {emitEvent: false});
       this.propagateChange(this.modelValue);
     });
-    this.thresholdFormGroup.get('type').valueChanges.subscribe(() => {
+    this.thresholdFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
   }

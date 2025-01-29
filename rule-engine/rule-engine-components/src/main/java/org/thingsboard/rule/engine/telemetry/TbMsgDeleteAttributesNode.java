@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.telemetry;
 
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -44,7 +45,6 @@ import static org.thingsboard.server.common.data.DataConstants.SCOPE;
                 " a key selected in the configuration, it will be ignored. If delete operation is completed successfully, " +
                 " rule node will send the \"Attributes Deleted\" event to the root chain of the message originator and " +
                 " send the incoming message via <b>Success</b> chain, otherwise, <b>Failure</b> chain is used.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeDeleteAttributesConfig",
         icon = "remove_circle"
 )
@@ -70,16 +70,16 @@ public class TbMsgDeleteAttributesNode implements TbNode {
             ctx.tellSuccess(msg);
         } else {
             AttributeScope scope = getScope(msg.getMetaData().getValue(SCOPE));
-            ctx.getTelemetryService().deleteAndNotify(
-                    ctx.getTenantId(),
-                    msg.getOriginator(),
-                    scope,
-                    keysToDelete,
-                    checkNotifyDevice(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY), scope),
-                    config.isSendAttributesDeletedNotification() ?
+            ctx.getTelemetryService().deleteAttributes(AttributesDeleteRequest.builder()
+                    .tenantId(ctx.getTenantId())
+                    .entityId(msg.getOriginator())
+                    .scope(scope)
+                    .keys(keysToDelete)
+                    .notifyDevice(checkNotifyDevice(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY), scope))
+                    .callback(config.isSendAttributesDeletedNotification() ?
                             new AttributesDeleteNodeCallback(ctx, msg, scope.name(), keysToDelete) :
-                            new TelemetryNodeCallback(ctx, msg)
-            );
+                            new TelemetryNodeCallback(ctx, msg))
+                    .build());
         }
     }
 

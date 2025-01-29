@@ -122,6 +122,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
         if (notificationTemplate == null) {
             throw new IllegalArgumentException("Template is missing");
         }
+        NotificationType notificationType = notificationTemplate.getNotificationType();
 
         Set<NotificationDeliveryMethod> deliveryMethods = new HashSet<>();
         List<NotificationTarget> targets = new ArrayList<>();
@@ -143,13 +144,13 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             try {
                 channels.get(deliveryMethod).check(tenantId);
             } catch (Exception e) {
-                if (ruleId == null) {
+                if (ruleId == null && !notificationType.isSystem()) {
                     throw new IllegalArgumentException(e.getMessage());
                 } else {
-                    return; // if originated by rule - just ignore delivery method
+                    return; // if originated by rule or notification type is system - just ignore delivery method
                 }
             }
-            if (ruleId == null && !notificationTemplate.getNotificationType().isSystem()) {
+            if (ruleId == null && !notificationType.isSystem()) {
                 if (targets.stream().noneMatch(target -> target.getConfiguration().getType().getSupportedDeliveryMethods().contains(deliveryMethod))) {
                     throw new IllegalArgumentException("Recipients for " + deliveryMethod.getName() + " delivery method not chosen");
                 }

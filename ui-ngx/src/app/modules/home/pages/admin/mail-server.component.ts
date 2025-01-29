@@ -18,8 +18,7 @@ import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
-import { FormBuilder, FormGroup, UntypedFormArray, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
   AdminSettings,
   MailConfigTemplate,
@@ -37,9 +36,6 @@ import { forkJoin, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { DomainSchema, domainSchemaTranslations, } from '@shared/models/oauth2.models';
 import { WINDOW } from '@core/services/window.service';
-import { AuthService } from '@core/auth/auth.service';
-import { COMMA, ENTER } from '@angular/cdk/keycodes';
-import { MatChipInputEvent } from '@angular/material/chips';
 
 @Component({
   selector: 'tb-mail-server',
@@ -51,7 +47,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   smtpProtocols = Object.values(SmtpProtocol);
   showChangePassword = false;
 
-  protocols = Object.values(DomainSchema).filter(value => value !== DomainSchema.MIXED);
+  protocols: DomainSchema[] = Object.values(DomainSchema).filter(value => value !== DomainSchema.MIXED);
   domainSchemaTranslations = domainSchemaTranslations;
 
   mailServerOauth2Provider = MailServerOauth2Provider;
@@ -63,8 +59,6 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   templates = new Map<string, MailConfigTemplate>();
 
   templateProvider = ['CUSTOM'];
-
-  readonly separatorKeysCodes: number[] = [ENTER, COMMA];
 
   private destroy$ = new Subject<void>();
   private DOMAIN_AND_PORT_REGEXP = /^(?:\w+(?::\w+)?@)?[^\s/]+(?::\d+)?$/;
@@ -98,7 +92,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     providerTenantId: [{value: '', disabled: true}, [Validators.required]],
     authUri: [{value: '', disabled: true}, [Validators.required, Validators.pattern(this.URL_REGEXP)]],
     tokenUri: [{value: '', disabled: true}, [Validators.required, Validators.pattern(this.URL_REGEXP)]],
-    scope: [],
+    scope: this.fb.control<Array<string>>({value: [], disabled: true}, Validators.required),
     redirectUri: [{ value:'', disabled: true}]
   });
 
@@ -134,10 +128,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   });
 
   constructor(protected store: Store<AppState>,
-              private router: Router,
-              private route: ActivatedRoute,
               private adminService: AdminService,
-              private authService: AuthService,
               private translate: TranslateService,
               public fb: FormBuilder,
               @Inject(WINDOW) private window: Window) {
@@ -148,14 +139,14 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     this.mailServerSettingsForm();
     this.domainFormConfiguration();
 
-    forkJoin([
-      this.adminService.getLoginProcessingUrl(),
-      this.adminService.getMailConfigTemplate(),
-      this.adminService.getAdminSettings<MailServerSettings>('mail')
-    ]).subscribe(([loginProcessingUrl, mailConfigTemplate, adminSettings]) => {
-      this.loginProcessingUrl = loginProcessingUrl;
-      this.initTemplates(mailConfigTemplate);
-      this.adminSettings = adminSettings;
+    forkJoin({
+      loginProcessingUrl: this.adminService.getLoginProcessingUrl(),
+      mailConfigTemplate: this.adminService.getMailConfigTemplate(),
+      adminSettings: this.adminService.getAdminSettings<MailServerSettings>('mail')
+    }).subscribe((data) => {
+      this.loginProcessingUrl = data.loginProcessingUrl;
+      this.initTemplates(data.mailConfigTemplate);
+      this.adminSettings = data.adminSettings;
       if (this.adminSettings.jsonValue && isString(this.adminSettings.jsonValue.enableTls)) {
         this.adminSettings.jsonValue.enableTls = (this.adminSettings.jsonValue.enableTls as any) === 'true';
       }
@@ -187,7 +178,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     super.ngOnDestroy();
   }
 
-  private initTemplates(templates): void {
+  private initTemplates(templates: Array<MailConfigTemplate>): void {
     templates.map(provider => {
       delete provider.additionalInfo;
       this.templates.set(provider.providerId, provider);
@@ -294,6 +285,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
       this.mailSettings.get('clientId').enable({emitEvent: false});
       this.mailSettings.get('clientSecret').enable({emitEvent: false});
       this.mailSettings.get('redirectUri').enable({emitEvent: false});
+      this.mailSettings.get('scope').enable({emitEvent: false});
       if (this.mailSettings.get('providerId').value === this.mailServerOauth2Provider.CUSTOM) {
         this.mailSettings.get('authUri').enable({emitEvent: false});
         this.mailSettings.get('tokenUri').enable({emitEvent: false});
@@ -307,6 +299,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
       this.mailSettings.get('redirectUri').disable({emitEvent: false});
       this.mailSettings.get('authUri').disable({emitEvent: false});
       this.mailSettings.get('tokenUri').disable({emitEvent: false});
+      this.mailSettings.get('scope').disable({emitEvent: false});
     }
   }
 
@@ -420,31 +413,6 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
       delete formValue.password;
     }
     return formValue;
-  }
-
-  trackByParams(index: number): number {
-    return index;
-  }
-
-  removeScope(i: number): void {
-    const controller = this.mailSettings.get('scope') as UntypedFormArray;
-    controller.removeAt(i);
-    controller.markAsTouched();
-    controller.markAsDirty();
-  }
-
-  addScope(event: MatChipInputEvent): void {
-    const input = event.chipInput.inputElement;
-    const value = event.value;
-    const controller = this.mailSettings.get('scope') as UntypedFormArray;
-    if ((value.trim() !== '')) {
-      controller.push(this.fb.control(value.trim()));
-      controller.markAsDirty();
-    }
-
-    if (input) {
-      input.value = '';
-    }
   }
 
   toggleEditMode(path: string): void {

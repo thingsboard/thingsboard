@@ -43,7 +43,6 @@ import java.util.concurrent.ExecutionException;
         nodeDetails = "Splits an array message into individual elements, with each element sent as a separate message. " +
                 "All outbound messages will have the same type and metadata as the original array message.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         icon = "content_copy",
         configDirective = "tbNodeEmptyConfig"
 )
@@ -64,7 +63,9 @@ public class TbSplitArrayMsgNode implements TbNode {
             if (data.isEmpty()) {
                 ctx.ack(msg);
             } else if (data.size() == 1) {
-                ctx.tellSuccess(TbMsg.transformMsgData(msg, JacksonUtil.toString(data.get(0))));
+                ctx.tellSuccess(msg.transform()
+                        .data(JacksonUtil.toString(data.get(0)))
+                        .build());
             } else {
                 TbMsgCallbackWrapper wrapper = new MultipleTbMsgsCallbackWrapper(data.size(), new TbMsgCallback() {
                     @Override
@@ -78,7 +79,9 @@ public class TbSplitArrayMsgNode implements TbNode {
                     }
                 });
                 data.forEach(msgNode -> {
-                    TbMsg outMsg = TbMsg.transformMsgData(msg, JacksonUtil.toString(msgNode));
+                    TbMsg outMsg = msg.transform()
+                            .data(JacksonUtil.toString(msgNode))
+                            .build();
                     ctx.enqueueForTellNext(outMsg, TbNodeConnectionType.SUCCESS, wrapper::onSuccess, wrapper::onFailure);
                 });
             }

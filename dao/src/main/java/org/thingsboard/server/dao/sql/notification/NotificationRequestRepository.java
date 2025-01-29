@@ -54,7 +54,7 @@ public interface NotificationRequestRepository extends JpaRepository<Notificatio
     List<UUID> findAllIdsByStatusAndRuleId(@Param("status") NotificationRequestStatus status,
                                            @Param("ruleId") UUID ruleId);
 
-    List<NotificationRequestEntity> findAllByRuleIdAndOriginatorEntityIdAndOriginatorEntityType(UUID ruleId, UUID originatorEntityId, EntityType originatorEntityType);
+    List<NotificationRequestEntity> findAllByRuleIdAndOriginatorEntityIdAndOriginatorEntityTypeAndStatus(UUID ruleId, UUID originatorEntityId, EntityType originatorEntityType, NotificationRequestStatus status);
 
     Page<NotificationRequestEntity> findAllByStatus(NotificationRequestStatus status, Pageable pageable);
 

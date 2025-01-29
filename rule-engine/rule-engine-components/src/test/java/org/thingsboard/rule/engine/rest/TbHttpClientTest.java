@@ -140,11 +140,18 @@ public class TbHttpClientTest {
 
         var httpClient = new TbHttpClient(config, eventLoop);
 
-        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, new DeviceId(EntityId.NULL_UUID), TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
-        var successMsg = TbMsg.newMsg(
-                TbMsgType.POST_TELEMETRY_REQUEST, msg.getOriginator(),
-                msg.getMetaData(), msg.getData()
-        );
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(new DeviceId(EntityId.NULL_UUID))
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
+        var successMsg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(msg.getOriginator())
+                .copyMetaData(msg.getMetaData())
+                .data(msg.getData())
+                .build();
 
         var ctx = mock(TbContext.class);
         when(ctx.transformMsg(
