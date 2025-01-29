@@ -1328,10 +1328,14 @@ coap:
     max_fragment_length: "${COAP_DTLS_MAX_FRAGMENT_LENGTH:1024}"
     # Server DTLS credentials
     psk:
+      # Create simple store with initial credentials.
+      # PSK Identity: UTF-8, max 128 byte, RFC 4279 (TLS PSK).
       identity: "${PSK_IDENTITY:server_psk_identity}"
+      # PSK Secret Key: UTF-8 (to byte[]). Optional: 16, 32 or 64 byte, any length is allowed. RFC 4279 (TLS PSK) та RFC 8446 (TLS 1.3 PSK).
       secret_key: "${PSK_SECRET_KEY:server_psk_secret_key_123}"
     x509:
       credentials:
+        # Enable/disable DTLS 1.2 support
         enabled: "${COAP_X509_CREDENTIALS_ENABLED:false}"
         # Inactivity timeout of DTLS session. Used to cleanup cache
         dtls_session_inactivity_timeout: "${TB_COAP_X509_DTLS_SESSION_INACTIVITY_TIMEOUT:86400000}"

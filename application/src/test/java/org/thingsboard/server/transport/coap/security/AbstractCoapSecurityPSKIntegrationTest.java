@@ -52,9 +52,6 @@ import static org.junit.Assert.assertTrue;
 })
 public abstract class AbstractCoapSecurityPSKIntegrationTest extends AbstractCoapIntegrationTest {
 
-    @Value("${coap.dtls.psk.identity:server_psk_identity}")
-    private String pskIdentity;
-
     @Value("${coap.dtls.psk.secret_key:server_psk_secret_key_123}")
     private String pskSecretKey;
 
