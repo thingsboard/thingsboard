@@ -223,15 +223,16 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
     protected void handleNotification(UUID id, TbProtoQueueMsg<ToCalculatedFieldNotificationMsg> msg, TbCallback callback) {
         ToCalculatedFieldNotificationMsg toCfNotification = msg.getValue();
         if (toCfNotification.hasComponentLifecycle()) {
-            // from upstream (maybe removed since we dont need to init state for each partition)
+            // from upstream (maybe removed since we don't need to init state for each partition)
             forwardToActorSystem(toCfNotification.getComponentLifecycle(), callback);
             handleComponentLifecycleMsg(id, ProtoUtils.fromProto(toCfNotification.getComponentLifecycle()));
         } else if (toCfNotification.hasEntityUpdateMsg()) {
             processEntityUpdateMsg(toCfNotification.getEntityUpdateMsg());
-            // from upstream (maybe removed since we dont need to update state for each partition)
+            // from upstream (maybe removed since we don't need to update state for each partition)
             forwardToActorSystem(toCfNotification.getEntityUpdateMsg(), callback);
+        } else if (toCfNotification.hasLinkedTelemetryMsg()) {
+            forwardToActorSystem(toCfNotification.getLinkedTelemetryMsg(), callback);
         }
-        callback.onSuccess();
     }
 
     private void forwardToActorSystem(CalculatedFieldTelemetryMsgProto msg, TbCallback callback) {

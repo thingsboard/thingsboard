@@ -73,6 +73,8 @@ public class CalculatedFieldManagerActor extends ContextAwareActor {
                 processor.onTelemetryMsg((CalculatedFieldTelemetryMsg) msg);
                 break;
             case CF_LINKED_TELEMETRY_MSG:
+                processor.onLinkedTelemetryMsg((CalculatedFieldLinkedTelemetryMsg) msg);
+                break;
             case CF_ENTITY_UPDATE_MSG:
 //                processor.onToCalculatedFieldSystemActorMsg((ToCalculatedFieldSystemMsg) msg);
                 break;

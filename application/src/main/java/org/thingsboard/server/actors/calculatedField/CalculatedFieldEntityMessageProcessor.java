@@ -18,15 +18,19 @@ package org.thingsboard.server.actors.calculatedField;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeScopeProto;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
@@ -40,6 +44,8 @@ import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -96,7 +102,25 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         }
     }
 
-    private void process(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, Set<CalculatedFieldId> cfIds, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) {
+    public void process(EntityCalculatedFieldLinkedTelemetryMsg msg) {
+        var proto = msg.getProto();
+        var ctx = msg.getCtx();
+        var callback = new MultipleTbCallback(CALLBACKS_PER_CF, msg.getCallback());
+        List<CalculatedFieldId> cfIds = getCalculatedFieldIds(proto);
+        if (cfIds.contains(ctx.getCfId())) {
+            callback.onSuccess(CALLBACKS_PER_CF);
+        } else {
+            if (proto.getTsDataCount() > 0) {
+                processArgumentValuesUpdate(ctx, cfIds, callback, mapToArguments(ctx, msg.getEntityId(), proto.getTsDataList()));
+            } else if (proto.getAttrDataCount() > 0) {
+                processArgumentValuesUpdate(ctx, cfIds, callback, mapToArguments(ctx, msg.getEntityId(), proto.getScope(), proto.getAttrDataList()));
+            } else {
+                callback.onSuccess(CALLBACKS_PER_CF);
+            }
+        }
+    }
+
+    private void process(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, Collection<CalculatedFieldId> cfIds, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) {
         if (cfIds.contains(ctx.getCfId())) {
             callback.onSuccess(CALLBACKS_PER_CF);
         } else {
@@ -120,8 +144,9 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         processArgumentValuesUpdate(ctx, cfIdList, callback, mapToArguments(ctx, proto.getScope(), proto.getAttrDataList()));
     }
 
+    @SneakyThrows
     private void processArgumentValuesUpdate(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback,
-                                             Map<String, ArgumentEntry> newArgValues) throws InterruptedException, ExecutionException, TimeoutException {
+                                             Map<String, ArgumentEntry> newArgValues) {
         if (newArgValues.isEmpty()) {
             callback.onSuccess(CALLBACKS_PER_CF);
         }
@@ -159,8 +184,22 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, List<TsKvProto> data) {
+        return mapToArguments(ctx.getMainEntityArguments(), data);
+    }
+
+    private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, EntityId entityId, List<TsKvProto> data) {
+        var argNames = ctx.getLinkedEntityArguments().get(entityId);
+        if(argNames.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return mapToArguments(argNames, data);
+    }
+
+    private static Map<String, ArgumentEntry> mapToArguments(Map<ReferencedEntityKey, String> argNames, List<TsKvProto> data) {
+        if (argNames.isEmpty()) {
+            return Collections.emptyMap();
+        }
         Map<String, ArgumentEntry> arguments = new HashMap<>();
-        var argNames = ctx.getMainEntityArguments();
         for (TsKvProto item : data) {
             ReferencedEntityKey key = new ReferencedEntityKey(item.getKv().getKey(), ArgumentType.TS_LATEST, null);
             String argName = argNames.get(key);
@@ -177,8 +216,19 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
+        return mapToArguments(ctx.getMainEntityArguments(), scope, attrDataList);
+    }
+
+    private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, EntityId entityId, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
+        var argNames = ctx.getLinkedEntityArguments().get(entityId);
+        if(argNames.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return mapToArguments(argNames, scope, attrDataList);
+    }
+
+    private static Map<String, ArgumentEntry> mapToArguments(Map<ReferencedEntityKey, String> argNames, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
         Map<String, ArgumentEntry> arguments = new HashMap<>();
-        var argNames = ctx.getMainEntityArguments();
         for (AttributeValueProto item : attrDataList) {
             ReferencedEntityKey key = new ReferencedEntityKey(item.getKey(), ArgumentType.ATTRIBUTE, AttributeScope.valueOf(scope.name()));
             String argName = argNames.get(key);
@@ -196,4 +246,5 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         }
         return cfIds;
     }
+
 }

@@ -34,6 +34,8 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
+import org.thingsboard.server.actors.calculatedField.CalculatedFieldTelemetryMsg;
+import org.thingsboard.server.actors.calculatedField.MultipleTbCallback;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
@@ -82,6 +84,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNot
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
+import org.thingsboard.server.queue.discovery.HashPartitionService;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtx;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldStateService;
@@ -635,60 +638,6 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         }, calculatedFieldCallbackExecutor);
     }
 
-//    private void updateOrInitializeState(CalculatedFieldCtx calculatedFieldCtx, EntityId entityId, Map<String, ArgumentEntry> argumentValues, List<CalculatedFieldId> previousCalculatedFieldIds) {
-//        CalculatedFieldId cfId = calculatedFieldCtx.getCfId();
-//        Map<String, ArgumentEntry> argumentsMap = new HashMap<>(argumentValues);
-//
-//        CalculatedFieldEntityCtxId entityCtxId = new CalculatedFieldEntityCtxId(cfId, entityId);
-//
-//        states.compute(entityCtxId, (ctxId, ctx) -> {
-//            CalculatedFieldEntityCtx calculatedFieldEntityCtx = ctx != null ? ctx : fetchCalculatedFieldEntityState(ctxId, calculatedFieldCtx.getCfType());
-//
-//            CompletableFuture<Void> updateFuture = new CompletableFuture<>();
-//
-//            Consumer<CalculatedFieldState> performUpdateState = (state) -> {
-//                if (state.updateState(argumentsMap)) {
-//                    calculatedFieldEntityCtx.setState(state);
-//                    stateService.persistState(entityCtxId, calculatedFieldEntityCtx);
-//                    Map<String, ArgumentEntry> arguments = state.getArguments();
-//                    boolean allArgsPresent = arguments.keySet().containsAll(calculatedFieldCtx.getArguments().keySet()) &&
-//                            !arguments.containsValue(SingleValueArgumentEntry.EMPTY) && !arguments.containsValue(TsRollingArgumentEntry.EMPTY);
-//                    if (allArgsPresent) {
-//                        performCalculation(calculatedFieldCtx, state, entityId, previousCalculatedFieldIds);
-//                    }
-//                    log.info("Successfully updated state: calculatedFieldId=[{}], entityId=[{}]", calculatedFieldCtx.getCfId(), entityId);
-//                }
-//                updateFuture.complete(null);
-//            };
-//
-//            CalculatedFieldState state = calculatedFieldEntityCtx.getState();
-//
-//            boolean allKeysPresent = argumentsMap.keySet().containsAll(calculatedFieldCtx.getArguments().keySet());
-//            boolean requiresTsRollingUpdate = calculatedFieldCtx.getArguments().values().stream()
-//                    .anyMatch(argument -> ArgumentType.TS_ROLLING.equals(argument.getRefEntityKey().getType()) && state.getArguments().get(argument.getRefEntityKey().getKey()) == null);
-//
-//            if (!allKeysPresent || requiresTsRollingUpdate) {
-//                Map<String, Argument> missingArguments = calculatedFieldCtx.getArguments().entrySet().stream()
-//                        .filter(entry -> !argumentsMap.containsKey(entry.getKey()) || (ArgumentType.TS_ROLLING.equals(entry.getValue().getRefEntityKey().getType()) && state.getArguments().get(entry.getKey()) == null))
-//                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-//
-//                fetchArguments(calculatedFieldCtx.getTenantId(), entityId, missingArguments, argumentsMap::putAll)
-//                        .addListener(() -> performUpdateState.accept(state),
-//                                calculatedFieldCallbackExecutor);
-//            } else {
-//                performUpdateState.accept(state);
-//            }
-//
-//            try {
-//                updateFuture.join();
-//            } catch (Exception e) {
-//                log.trace("Failed to update state for ctxId [{}].", ctxId, e);
-//                throw new RuntimeException("Failed to update or initialize state.", e);
-//            }
-//
-//            return calculatedFieldEntityCtx;
-//        });
-//    }
 
     @Override
     public void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, CalculatedFieldResult calculatedFieldResult, List<CalculatedFieldId> cfIds, TbCallback callback) {
@@ -712,7 +661,72 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             });
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to push message to rule engine. CalculatedFieldResult: {}", tenantId, entityId, calculatedFieldResult, e);
+            callback.onFailure(e);
         }
+    }
+
+    @Override
+    public void pushMsgToLinks(CalculatedFieldTelemetryMsg msg, List<CalculatedFieldEntityCtxId> linkedCalculatedFields, TbCallback callback) {
+        Map<TopicPartitionInfo, List<CalculatedFieldEntityCtxId>> unicasts = new HashMap<>();
+        List<CalculatedFieldEntityCtxId> broadcasts = new ArrayList<>();
+        for (CalculatedFieldEntityCtxId link : linkedCalculatedFields) {
+            var linkEntityId = link.entityId();
+            var linkEntityType = linkEntityId.getEntityType();
+            // Let's assume number of entities in profile is N, and number of partitions is P. If N > P, we save by broadcasting to all partitions. Usually N >> P.
+            boolean broadcast = EntityType.DEVICE_PROFILE.equals(linkEntityType) || EntityType.ASSET_PROFILE.equals(linkEntityType);
+            if (broadcast) {
+                broadcasts.add(link);
+            } else {
+                TopicPartitionInfo tpi = partitionService.resolve(HashPartitionService.CALCULATED_FIELD_QUEUE_KEY, link.entityId());
+                unicasts.computeIfAbsent(tpi, k -> new ArrayList<>()).add(link);
+            }
+        }
+        MultipleTbCallback linkCallback = new MultipleTbCallback(2, callback);
+        if (!broadcasts.isEmpty()) {
+            broadcast(broadcasts, msg, linkCallback);
+        } else {
+            linkCallback.onSuccess();
+        }
+        if (!unicasts.isEmpty()) {
+            unicast(unicasts, msg, linkCallback);
+        } else {
+            linkCallback.onSuccess();
+        }
+    }
+
+    private void unicast(Map<TopicPartitionInfo, List<CalculatedFieldEntityCtxId>> unicasts, CalculatedFieldTelemetryMsg msg, MultipleTbCallback mainCallback) {
+        TbQueueCallback callback = new TbCallbackWrapper(new MultipleTbCallback(unicasts.size(), mainCallback));
+        unicasts.forEach((topicPartitionInfo, ctxIds) -> {
+            CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsgProto = buildLinkedTelemetryMsgProto(msg.getProto(), ctxIds);
+            clusterService.pushMsgToCalculatedFields(topicPartitionInfo, UUID.randomUUID(),
+                    ToCalculatedFieldMsg.newBuilder().setLinkedTelemetryMsg(linkedTelemetryMsgProto).build(), callback);
+        });
+    }
+
+    private void broadcast(List<CalculatedFieldEntityCtxId> broadcasts, CalculatedFieldTelemetryMsg msg, MultipleTbCallback mainCallback) {
+        TbQueueCallback callback = new TbCallbackWrapper(mainCallback);
+        CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsgProto = buildLinkedTelemetryMsgProto(msg.getProto(), broadcasts);
+        clusterService.broadcastToCalculatedFields(ToCalculatedFieldNotificationMsg.newBuilder().setLinkedTelemetryMsg(linkedTelemetryMsgProto).build(), callback);
+    }
+
+    private CalculatedFieldLinkedTelemetryMsgProto buildLinkedTelemetryMsgProto(CalculatedFieldTelemetryMsgProto telemetryProto, List<CalculatedFieldEntityCtxId> links) {
+        TransportProtos.CalculatedFieldLinkedTelemetryMsgProto.Builder builder = TransportProtos.CalculatedFieldLinkedTelemetryMsgProto.newBuilder();
+        builder.setMsg(telemetryProto);
+        for (CalculatedFieldEntityCtxId link : links) {
+            builder.addLinks(toProto(link));
+        }
+        return builder.build();
+    }
+
+    //TODO: IM: move to utils;
+    private TransportProtos.CalculatedFieldEntityCtxIdProto toProto(CalculatedFieldEntityCtxId ctxId) {
+        return TransportProtos.CalculatedFieldEntityCtxIdProto.newBuilder()
+                .setCalculatedFieldIdMSB(ctxId.cfId().getId().getMostSignificantBits())
+                .setCalculatedFieldIdLSB(ctxId.cfId().getId().getLeastSignificantBits())
+                .setEntityType(ctxId.entityId().getEntityType().name())
+                .setEntityIdMSB(ctxId.entityId().getId().getMostSignificantBits())
+                .setEntityIdLSB(ctxId.entityId().getId().getLeastSignificantBits())
+                .build();
     }
 
     private ListenableFuture<Void> fetchArguments(TenantId tenantId, EntityId entityId, Map<String, Argument> necessaryArguments, Consumer<Map<String, ArgumentEntry>> onComplete) {
@@ -867,25 +881,6 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         return telemetryMsg;
     }
 
-    private CalculatedFieldLinkedTelemetryMsgProto buildLinkedTelemetryMsgProto(CalculatedFieldTelemetryMsgProto telemetryProto, List<CalculatedFieldEntityCtxId> links) {
-        TransportProtos.CalculatedFieldLinkedTelemetryMsgProto.Builder builder = TransportProtos.CalculatedFieldLinkedTelemetryMsgProto.newBuilder();
-        builder.setMsg(telemetryProto);
-        for (CalculatedFieldEntityCtxId link : links) {
-            builder.addLinks(toProto(link));
-        }
-        return builder.build();
-    }
-
-    private TransportProtos.CalculatedFieldEntityCtxIdProto toProto(CalculatedFieldEntityCtxId ctxId) {
-        return TransportProtos.CalculatedFieldEntityCtxIdProto.newBuilder()
-                .setCalculatedFieldIdMSB(ctxId.cfId().getId().getMostSignificantBits())
-                .setCalculatedFieldIdLSB(ctxId.cfId().getId().getLeastSignificantBits())
-                .setEntityType(ctxId.entityId().getEntityType().name())
-                .setEntityIdMSB(ctxId.entityId().getId().getMostSignificantBits())
-                .setEntityIdLSB(ctxId.entityId().getId().getLeastSignificantBits())
-                .build();
-    }
-
     private TransportProtos.CalculatedFieldIdProto toProto(CalculatedFieldId cfId) {
         return TransportProtos.CalculatedFieldIdProto.newBuilder()
                 .setCalculatedFieldIdMSB(cfId.getId().getMostSignificantBits())
@@ -939,6 +934,24 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         @Override
         public void onSuccess(TbQueueMsgMetadata metadata) {
             callback.onSuccess(null);
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+            callback.onFailure(t);
+        }
+    }
+
+    private static class TbCallbackWrapper implements TbQueueCallback {
+        private final TbCallback callback;
+
+        public TbCallbackWrapper(TbCallback callback) {
+            this.callback = callback;
+        }
+
+        @Override
+        public void onSuccess(TbQueueMsgMetadata metadata) {
+            callback.onSuccess();
         }
 
         @Override
