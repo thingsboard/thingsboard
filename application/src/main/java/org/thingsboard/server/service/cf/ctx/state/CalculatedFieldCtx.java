@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.cf.ctx.state;
 
 import lombok.Data;
+import net.objecthunter.exp4j.Expression;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.cf.CalculatedField;
@@ -31,7 +32,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.util.TbPair;
-import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,6 +56,7 @@ public class CalculatedFieldCtx {
     private String expression;
     private TbelInvokeService tbelInvokeService;
     private CalculatedFieldScriptEngine calculatedFieldScriptEngine;
+    private ThreadLocal<Expression> customExpression;
 
     public CalculatedFieldCtx(CalculatedField calculatedField, TbelInvokeService tbelInvokeService) {
         this.cfId = calculatedField.getId();
@@ -86,6 +87,8 @@ public class CalculatedFieldCtx {
         this.tbelInvokeService = tbelInvokeService;
         if (CalculatedFieldType.SCRIPT.equals(calculatedField.getType())) {
             this.calculatedFieldScriptEngine = initEngine(tenantId, expression, tbelInvokeService);
+        } else {
+            this.customExpression = new ThreadLocal<>();
         }
     }
 

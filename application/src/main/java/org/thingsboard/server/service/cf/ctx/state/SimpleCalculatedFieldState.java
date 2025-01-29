@@ -24,11 +24,15 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Data
 public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
+
+    public SimpleCalculatedFieldState(List<String> requiredArguments) {
+        super(requiredArguments);
+    }
 
     @Override
     public CalculatedFieldType getType() {
@@ -36,9 +40,16 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
+    protected void validateNewEntry(ArgumentEntry newEntry) {
+        if (newEntry instanceof TsRollingArgumentEntry) {
+            throw new IllegalArgumentException("Rolling argument entry is not supported for simple calculated fields.");
+        }
+    }
+
+    @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
         String expression = ctx.getExpression();
-        ThreadLocal<Expression> customExpression = new ThreadLocal<>();
+        ThreadLocal<Expression> customExpression = ctx.getCustomExpression();
         var expr = customExpression.get();
         if (expr == null) {
             expr = new ExpressionBuilder(expression)
@@ -47,9 +58,14 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
                     .build();
             customExpression.set(expr);
         }
-        Map<String, Double> variables = new HashMap<>();
-        this.arguments.forEach((k, v) -> variables.put(k, Double.parseDouble(v.getValue().toString())));
-        expr.setVariables(variables);
+
+        for (Map.Entry<String, ArgumentEntry> entry : this.arguments.entrySet()) {
+            try {
+                expr.setVariable(entry.getKey(), Double.parseDouble(entry.getValue().getValue().toString()));
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Argument '" + entry.getKey() + "' is not a number.");
+            }
+        }
 
         double expressionResult = expr.evaluate();
 

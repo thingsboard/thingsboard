@@ -39,7 +39,6 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
-import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -248,7 +247,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             argFutures.put(entry.getKey(), argValueFuture);
         }
         return Futures.whenAllComplete(argFutures.values()).call(() -> {
-            var result = createStateByType(ctx.getCfType());
+            var result = createStateByType(ctx);
             result.updateState(argFutures.entrySet().stream()
                     .collect(Collectors.toMap(
                             Entry::getKey, // Keep the key as is
@@ -798,10 +797,10 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         return payload;
     }
 
-    private CalculatedFieldState createStateByType(CalculatedFieldType calculatedFieldType) {
-        return switch (calculatedFieldType) {
-            case SIMPLE -> new SimpleCalculatedFieldState();
-            case SCRIPT -> new ScriptCalculatedFieldState();
+    private CalculatedFieldState createStateByType(CalculatedFieldCtx ctx) {
+        return switch (ctx.getCfType()) {
+            case SIMPLE -> new SimpleCalculatedFieldState(ctx.getArgNames());
+            case SCRIPT -> new ScriptCalculatedFieldState(ctx.getArgNames());
         };
     }
 

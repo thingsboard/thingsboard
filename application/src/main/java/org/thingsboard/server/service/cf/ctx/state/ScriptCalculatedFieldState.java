@@ -25,12 +25,17 @@ import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 @Data
 @Slf4j
 public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
+
+    public ScriptCalculatedFieldState(List<String> requiredArguments) {
+        super(requiredArguments);
+    }
 
     @Override
     public CalculatedFieldType getType() {
@@ -40,9 +45,9 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
         arguments.forEach((key, argumentEntry) -> {
-            if (argumentEntry instanceof TsRollingArgumentEntry) {
+            if (argumentEntry instanceof TsRollingArgumentEntry tsRollingEntry) {
                 Argument argument = ctx.getArguments().get(key);
-                TreeMap<Long, Object> tsRecords = ((TsRollingArgumentEntry) argumentEntry).getTsRecords();
+                TreeMap<Long, Object> tsRecords = tsRollingEntry.getTsRecords();
                 if (tsRecords.size() > argument.getLimit()) {
                     tsRecords.pollFirstEntry();
                 }

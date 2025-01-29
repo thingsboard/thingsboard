@@ -16,14 +16,21 @@
 package org.thingsboard.server.service.cf.ctx.state;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
+    protected List<String> requiredArguments;
     protected Map<String, ArgumentEntry> arguments;
 
     public BaseCalculatedFieldState() {
-        arguments = new HashMap<>();
+        this.arguments = new HashMap<>();
+    }
+
+    public BaseCalculatedFieldState(List<String> requiredArguments) {
+        this.requiredArguments = requiredArguments;
+        this.arguments = new HashMap<>();
     }
 
     @Override
@@ -44,22 +51,12 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
             ArgumentEntry newEntry = entry.getValue();
             ArgumentEntry existingEntry = arguments.get(key);
 
-            if (existingEntry == null || existingEntry.hasUpdatedValue(newEntry)) {
-                if (existingEntry instanceof TsRollingArgumentEntry existingTsRollingEntry && newEntry instanceof TsRollingArgumentEntry newTsRollingEntry) {
-                    existingTsRollingEntry.addAllTsRecords(newTsRollingEntry.getTsRecords());
-                } else if (existingEntry instanceof TsRollingArgumentEntry existingTsRollingEntry && newEntry instanceof SingleValueArgumentEntry singleValueEntry) {
-                    existingTsRollingEntry.addTsRecord(singleValueEntry.getTs(), singleValueEntry.getValue());
-                } else if (existingEntry instanceof SingleValueArgumentEntry existingSingleValueEntry && newEntry instanceof SingleValueArgumentEntry singleValueEntry) {
-//                    Long existingVersion = existingSingleValueEntry.getVersion();
-//                    Long newVersion = singleValueEntry.getVersion();
-//                    if (newVersion != null && (existingVersion == null || newVersion > existingVersion)) {
-//                        arguments.put(key, newEntry.copy());
-//                    }
-                    arguments.put(key, newEntry.copy());
-                } else {
-                    arguments.put(key, newEntry.copy());
-                }
+            if (existingEntry == null) {
+                validateNewEntry(newEntry);
+                arguments.put(key, newEntry.copy());
                 stateUpdated = true;
+            } else {
+                stateUpdated = existingEntry.updateEntry(newEntry);
             }
         }
 
@@ -68,7 +65,12 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
     @Override
     public boolean isReady() {
-        //TODO: IM
-        return true;
+        return arguments.keySet().containsAll(requiredArguments) &&
+                !arguments.containsValue(SingleValueArgumentEntry.EMPTY) &&
+                !arguments.containsValue(TsRollingArgumentEntry.EMPTY);
     }
+
+    protected void validateNewEntry(ArgumentEntry newEntry) {
+    }
+
 }

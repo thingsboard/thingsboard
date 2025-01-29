@@ -21,7 +21,6 @@ import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.util.KvProtoUtil;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
@@ -35,7 +34,6 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
 
     private long ts;
     private Object value;
-
     private Long version;
 
     public SingleValueArgumentEntry(TsKvProto entry) {
@@ -80,13 +78,27 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     }
 
     @Override
-    public boolean hasUpdatedValue(ArgumentEntry entry) {
-        return this.ts != ((SingleValueArgumentEntry) entry).getTs();
-    }
-
-    @Override
     public ArgumentEntry copy() {
         return new SingleValueArgumentEntry(this.ts, this.value, this.version);
     }
 
+    @Override
+    public boolean updateEntry(ArgumentEntry entry) {
+        if (entry instanceof SingleValueArgumentEntry singleValueEntry) {
+            if (singleValueEntry.getTs() == this.ts) {
+                return false;
+            }
+
+            Long newVersion = singleValueEntry.getVersion();
+            if (newVersion == null || this.version == null || newVersion > this.version) {
+                this.ts = singleValueEntry.getTs();
+                this.value = singleValueEntry.getValue();
+                this.version = newVersion;
+                return true;
+            }
+        } else {
+            throw new IllegalArgumentException("Unsupported argument entry type for single value argument entry: " + entry.getType());
+        }
+        return false;
+    }
 }
