@@ -61,30 +61,15 @@ import org.thingsboard.server.service.edge.rpc.processor.alarm.AlarmProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.alarm.comment.AlarmCommentProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.asset.AssetEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.asset.profile.AssetProfileEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.customer.CustomerEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.dashboard.DashboardEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.device.DeviceEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.device.profile.DeviceProfileEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.edge.EdgeEntityProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.notification.NotificationRuleEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.notification.NotificationTargetEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.notification.NotificationTemplateEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.oauth2.DomainEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.oauth2.OAuth2ClientEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.ota.OtaPackageEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.queue.QueueEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.relation.RelationEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.resource.ResourceEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.rule.RuleChainEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.rule.RuleChainMetadataEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.settings.AdminSettingsEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.telemetry.TelemetryEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.tenant.TenantEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.tenant.TenantProfileEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.user.UserEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.widget.WidgetBundleEdgeProcessor;
-import org.thingsboard.server.service.edge.rpc.processor.widget.WidgetTypeEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.sync.EdgeRequestsService;
 import org.thingsboard.server.service.executors.GrpcCallbackExecutorService;
 
@@ -214,9 +199,6 @@ public class EdgeContextComponent {
 
     // processors
     @Autowired
-    private AdminSettingsEdgeProcessor adminSettingsProcessor;
-
-    @Autowired
     private AlarmProcessor alarmProcessor;
 
     @Autowired
@@ -229,9 +211,6 @@ public class EdgeContextComponent {
     private AssetProfileEdgeProcessor assetProfileProcessor;
 
     @Autowired
-    private CustomerEdgeProcessor customerProcessor;
-
-    @Autowired
     private DashboardEdgeProcessor dashboardProcessor;
 
     @Autowired
@@ -241,34 +220,10 @@ public class EdgeContextComponent {
     private DeviceProfileEdgeProcessor deviceProfileProcessor;
 
     @Autowired
-    private EdgeEntityProcessor edgeEntityProcessor;
-
-    @Autowired
     private EntityViewEdgeProcessor entityViewProcessor;
 
     @Autowired
     private NotificationRuleProcessor ruleProcessor;
-
-    @Autowired
-    private NotificationRuleEdgeProcessor notificationRuleProcessor;
-
-    @Autowired
-    private NotificationTargetEdgeProcessor notificationTargetProcessor;
-
-    @Autowired
-    private NotificationTemplateEdgeProcessor notificationTemplateProcessor;
-
-    @Autowired
-    private DomainEdgeProcessor domainProcessor;
-
-    @Autowired
-    private OAuth2ClientEdgeProcessor oAuth2ClientProcessor;
-
-    @Autowired
-    private OtaPackageEdgeProcessor otaPackageProcessor;
-
-    @Autowired
-    private QueueEdgeProcessor queueProcessor;
 
     @Autowired
     private RelationEdgeProcessor relationProcessor;
@@ -284,21 +239,6 @@ public class EdgeContextComponent {
 
     @Autowired
     private TelemetryEdgeProcessor telemetryProcessor;
-
-    @Autowired
-    private TenantEdgeProcessor tenantProcessor;
-
-    @Autowired
-    private TenantProfileEdgeProcessor tenantProfileProcessor;
-
-    @Autowired
-    private UserEdgeProcessor userProcessor;
-
-    @Autowired
-    private WidgetBundleEdgeProcessor widgetBundleProcessor;
-
-    @Autowired
-    private WidgetTypeEdgeProcessor widgetTypeProcessor;
 
     // config
     @Autowired
