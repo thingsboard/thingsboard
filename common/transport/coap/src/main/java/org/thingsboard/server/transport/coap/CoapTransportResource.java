@@ -181,12 +181,10 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         Request request = advanced.getRequest();
 
         var dtlsSessionId = request.getSourceContext().get(KEY_SESSION_ID);
-        if (dtlsSessionsMap != null && dtlsSessionId != null && !dtlsSessionId.isEmpty()) {
+        if (dtlsSessionsMap != null && dtlsSessionId != null && !dtlsSessionId.isEmpty() && request.getSourceContext().getPeerIdentity() instanceof X509CertPath) {
             TbCoapDtlsSessionInfo tbCoapDtlsSessionInfo = this.getCoapDtlsSessionInfo(request.getSourceContext());
             if (tbCoapDtlsSessionInfo != null) {
                 processRequest(exchange, type, request, tbCoapDtlsSessionInfo.getMsg(), tbCoapDtlsSessionInfo.getDeviceProfile());
-            } else {
-                processAccessTokenRequest(exchange, type, request);
             }
         } else {
             processAccessTokenRequest(exchange, type, request);
