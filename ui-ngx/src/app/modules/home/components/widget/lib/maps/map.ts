@@ -20,8 +20,8 @@ import {
   DataKeyValuePair,
   MapActionHandler,
   MapType,
-  mergeUnplacedDataItemsArrays,
   mergeMapDatasources,
+  mergeUnplacedDataItemsArrays,
   parseCenterPosition,
   TbCircleData,
   TbMapDatasource,
@@ -38,10 +38,11 @@ import '@home/components/widget/lib/maps/leaflet/leaflet-tb';
 import {
   MapDataLayerType,
   TbDataLayerItem,
-  TbMapDataLayer, UnplacedMapDataItem,
+  TbMapDataLayer,
+  UnplacedMapDataItem,
 } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { FormattedData, WidgetActionDescriptor, widgetType } from '@shared/models/widget.models';
+import { FormattedData, WidgetAction, WidgetActionDescriptor, widgetType } from '@shared/models/widget.models';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { TbMarkersDataLayer } from '@home/components/widget/lib/maps/data-layer/markers-data-layer';
@@ -50,8 +51,6 @@ import { TbCirclesDataLayer } from '@home/components/widget/lib/maps/data-layer/
 import { AttributeService } from '@core/http/attribute.service';
 import { AttributeData, AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
-import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
 import { TbPopoverService } from '@shared/components/popover.service';
 import {
   SelectMapEntityPanelComponent
@@ -61,6 +60,8 @@ import { createColorMarkerShapeURI, MarkerShape } from '@home/components/widget/
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import tinycolor from 'tinycolor2';
+import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
+import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
 
 type TooltipInstancesData = {root: HTMLElement, instances: ITooltipsterInstance[]};
 
@@ -99,9 +100,6 @@ export abstract class TbMap<S extends BaseMapSettings> {
   private readonly mapResize$: ResizeObserver;
 
   private readonly tooltipActions: { [name: string]: MapActionHandler };
-  private readonly markerClickActions: { [name: string]: MapActionHandler };
-  private readonly polygonClickActions: { [name: string]: MapActionHandler };
-  private readonly circleClickActions: { [name: string]: MapActionHandler };
 
   private tooltipInstances: TooltipInstancesData[] = [];
 
@@ -118,9 +116,6 @@ export abstract class TbMap<S extends BaseMapSettings> {
     this.settings = mergeDeepIgnoreArray({} as S, this.defaultSettings(), this.inputSettings as S);
 
     this.tooltipActions = this.loadActions('tooltipAction');
-    this.markerClickActions = this.loadActions('markerClick');
-    this.polygonClickActions = this.loadActions('polygonClick');
-    this.circleClickActions = this.loadActions('circleClick');
 
     $(containerElement).empty();
     $(containerElement).addClass('tb-map-layout');
@@ -698,6 +693,18 @@ export abstract class TbMap<S extends BaseMapSettings> {
     this.updateAddButtonsStates();
   }
 
+  public dataItemClick($event: Event, action: WidgetAction, entityInfo: TbMapDatasource) {
+    if ($event) {
+      $event.preventDefault();
+      $event.stopPropagation();
+    }
+    const { entityId, entityName, entityLabel, entityType } = entityInfo;
+    this.ctx.actionsApi.handleWidgetAction($event, action, {
+      entityType,
+      id: entityId
+    }, entityName, null, entityLabel);
+  }
+
   public tooltipElementClick(element: HTMLElement, action: string, datasource: TbMapDatasource): void {
     if (element && this.tooltipActions[action]) {
       element.onclick = ($event) =>
@@ -705,42 +712,6 @@ export abstract class TbMap<S extends BaseMapSettings> {
         this.tooltipActions[action]($event, datasource);
         return false;
       };
-    }
-  }
-
-  public markerClick(marker: TbDataLayerItem, datasource: TbMapDatasource): void {
-    if (Object.keys(this.markerClickActions).length) {
-      marker.getLayer().on('click', (event: L.LeafletMouseEvent) => {
-        if (!marker.isEditing()) {
-          for (const action in this.markerClickActions) {
-            this.markerClickActions[action](event.originalEvent, datasource);
-          }
-        }
-      });
-    }
-  }
-
-  public polygonClick(polygon: TbDataLayerItem, datasource: TbMapDatasource): void {
-    if (Object.keys(this.polygonClickActions).length) {
-      polygon.getLayer().on('click', (event: L.LeafletMouseEvent) => {
-        if (!polygon.isEditing()) {
-          for (const action in this.polygonClickActions) {
-            this.polygonClickActions[action](event.originalEvent, datasource);
-          }
-        }
-      });
-    }
-  }
-
-  public circleClick(circle: TbDataLayerItem, datasource: TbMapDatasource): void {
-    if (Object.keys(this.circleClickActions).length) {
-      circle.getLayer().on('click', (event: L.LeafletMouseEvent) => {
-        if (!circle.isEditing()) {
-          for (const action in this.circleClickActions) {
-            this.circleClickActions[action](event.originalEvent, datasource);
-          }
-        }
-      });
     }
   }
 

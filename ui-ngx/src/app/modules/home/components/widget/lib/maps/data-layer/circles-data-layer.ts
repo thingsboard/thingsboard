@@ -16,7 +16,9 @@
 
 import {
   CirclesDataLayerSettings,
-  defaultBaseCirclesDataLayerSettings, isJSON, TbCircleData,
+  defaultBaseCirclesDataLayerSettings,
+  isJSON,
+  TbCircleData,
   TbMapDatasource
 } from '@home/components/widget/lib/maps/models/map.models';
 import L from 'leaflet';
@@ -57,10 +59,6 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
     });
     this.updateLabel(data, dsData);
     return this.circle;
-  }
-
-  protected createEventListeners(data: FormattedData<TbMapDatasource>, _dsData: FormattedData<TbMapDatasource>[]): void {
-    this.dataLayer.getMap().circleClick(this, data.$datasource);
   }
 
   protected unbindLabel() {

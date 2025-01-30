@@ -14,12 +14,19 @@
 /// limitations under the License.
 ///
 
-import { DataKey, Datasource, DatasourceType, FormattedData } from '@shared/models/widget.models';
+import {
+  DataKey,
+  Datasource,
+  DatasourceType,
+  FormattedData,
+  WidgetAction,
+  WidgetActionType
+} from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { guid, hashCode, isDefinedAndNotNull, isNotEmptyStr, isString, mergeDeep } from '@core/utils';
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { materialColors } from '@shared/models/material.models';
-import L, { LatLngExpression } from 'leaflet';
+import L from 'leaflet';
 import { TbFunction } from '@shared/models/js-function.models';
 import { Observable, Observer, of, switchMap } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -117,6 +124,7 @@ export interface MapDataLayerSettings extends MapDataSourceSettings {
   additionalDataKeys?: DataKey[];
   label: DataLayerPatternSettings;
   tooltip: DataLayerTooltipSettings;
+  click: WidgetAction;
   groups?: string[];
   edit:  DataLayerEditSettings;
 }
@@ -137,6 +145,9 @@ export const defaultBaseDataLayerSettings = (mapType: MapType): Partial<MapDataL
     : '<b>${entityName}</b><br/><br/><b>X Pos:</b> ${xPos:2}<br/><b>Y Pos:</b> ${yPos:2}<br/><b>Temperature:</b> ${temperature} °C<br/><small>See tooltip settings for details</small>',
     offsetX: 0,
     offsetY: -1
+  },
+  click: {
+    type: WidgetActionType.doNothing
   },
   edit: {
     enabledActions: [],

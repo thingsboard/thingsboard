@@ -64,10 +64,6 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
     return this.polygonContainer;
   }
 
-  protected createEventListeners(data: FormattedData<TbMapDatasource>, _dsData: FormattedData<TbMapDatasource>[]): void {
-    this.dataLayer.getMap().polygonClick(this, data.$datasource);
-  }
-
   protected unbindLabel() {
     this.polygonContainer.unbindTooltip();
   }

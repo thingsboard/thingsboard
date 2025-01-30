@@ -91,10 +91,6 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
     return this.marker;
   }
 
-  protected createEventListeners(data: FormattedData<TbMapDatasource>, _dsData: FormattedData<TbMapDatasource>[]): void {
-    this.dataLayer.getMap().markerClick(this, data.$datasource);
-  }
-
   protected unbindLabel() {
     this.marker.unbindTooltip();
   }

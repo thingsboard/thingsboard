@@ -117,6 +117,7 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
       additionalDataKeys: [this.settings.additionalDataKeys, []],
       label: [this.settings.label, []],
       tooltip: [this.settings.tooltip, []],
+      click: [this.settings.click, []],
       groups: [this.settings.groups, []],
       edit: this.fb.group({
         enabledActions: [this.settings.edit?.enabledActions, []],

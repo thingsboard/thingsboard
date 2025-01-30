@@ -253,6 +253,18 @@
       </tb-data-layer-pattern-settings>
     </div>
     <div class="tb-form-panel">
+      <div class="tb-form-panel-title" translate>widgets.maps.data-layer.behavior</div>
+      <div class="tb-form-row">
+        <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.maps.data-layer.on-click-hint' | translate}}" translate>widgets.maps.data-layer.on-click</div>
+        <tb-widget-action-settings class="flex-1"
+                                   panelTitle="{{ 'widgets.maps.data-layer.on-click' | translate }}"
+                                   [callbacks]="context.callbacks"
+                                   [widgetType]="widgetType"
+                                   formControlName="click">
+        </tb-widget-action-settings>
+      </div>
+    </div>
+    <div class="tb-form-panel">
       <div class="tb-form-panel-title">{{ 'widgets.maps.data-layer.groups' | translate }}</div>
       <tb-string-items-list class="tb-inline-chips"
                             editable

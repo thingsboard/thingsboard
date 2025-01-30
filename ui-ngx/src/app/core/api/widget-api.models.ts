@@ -93,7 +93,7 @@ export interface IWidgetUtils {
 export interface WidgetActionsApi {
   actionDescriptorsBySourceId: {[sourceId: string]: Array<WidgetActionDescriptor>};
   getActionDescriptors: (actionSourceId: string) => Array<WidgetActionDescriptor>;
-  handleWidgetAction: ($event: Event, descriptor: WidgetActionDescriptor,
+  handleWidgetAction: ($event: Event, descriptor: WidgetAction,
                        entityId?: EntityId, entityName?: string, additionalParams?: any, entityLabel?: string) => void;
   onWidgetAction: ($event: Event, action: WidgetAction) => void;
   elementClick: ($event: Event) => void;

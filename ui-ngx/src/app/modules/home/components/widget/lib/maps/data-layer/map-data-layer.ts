@@ -29,7 +29,7 @@ import {
   TbMapDatasource
 } from '@home/components/widget/lib/maps/models/map.models';
 import { TbMap } from '@home/components/widget/lib/maps/map';
-import { FormattedData } from '@shared/models/widget.models';
+import { FormattedData, WidgetActionType } from '@shared/models/widget.models';
 import { forkJoin, Observable, of } from 'rxjs';
 import {
   createLabelFromPattern,
@@ -64,7 +64,6 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
       this.updateTooltip(data, dsData);
     }
     this.bindEvents();
-    this.createEventListeners(data, dsData);
     try {
       this.dataLayer.getDataLayerContainer().addLayer(this.layer);
       this.editModeUpdated();
@@ -83,8 +82,6 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
 
   protected abstract bindLabel(content: L.Content): void;
 
-  protected abstract createEventListeners(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void;
-
   protected abstract addItemClass(clazz: string): void;
 
   protected abstract removeItemClass(clazz: string): void;
@@ -101,6 +98,12 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
         if (!this.isEditing()) {
           this.dataLayer.getMap().selectItem(this);
         }
+      });
+    }
+    const clickAction = this.settings.click;
+    if (clickAction && clickAction.type !== WidgetActionType.doNothing) {
+      this.layer.on('click', (event) => {
+        this.dataLayer.getMap().dataItemClick(event.originalEvent, clickAction, this.data.$datasource);
       });
     }
   }
