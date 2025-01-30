@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.edqs.fields.TenantFields;
 import org.thingsboard.server.dao.model.sql.TenantEntity;
 import org.thingsboard.server.dao.model.sql.TenantInfoEntity;
 
@@ -53,4 +54,8 @@ public interface TenantRepository extends JpaRepository<TenantEntity, UUID> {
 
     @Query("SELECT t.id FROM TenantEntity t where t.tenantProfileId = :tenantProfileId")
     List<UUID> findTenantIdsByTenantProfileId(@Param("tenantProfileId") UUID tenantProfileId);
+
+    @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.TenantFields(t.id, t.createdTime, t.title, t.version," +
+            "t.additionalInfo, t.country, t.state, t.city, t.address, t.address2, t.zip, t.phone, t.email, t.region) FROM TenantEntity t")
+    Page<TenantFields> findAllFields(Pageable pageable);
 }

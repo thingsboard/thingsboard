@@ -24,6 +24,11 @@ public class PageDataIterable<T> extends BasePageDataIterable<T> {
         this.function = function;
     }
 
+    public PageDataIterable(FetchFunction<T> function, int fetchSize, SortOrder sortOrder) {
+        super(fetchSize, sortOrder);
+        this.function = function;
+    }
+
     @Override
     PageData<T> fetchPageData(PageLink link) {
         return function.fetch(link);

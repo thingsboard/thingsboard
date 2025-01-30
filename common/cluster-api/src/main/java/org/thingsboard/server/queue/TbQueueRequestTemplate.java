@@ -26,6 +26,8 @@ public interface TbQueueRequestTemplate<Request extends TbQueueMsg, Response ext
 
     ListenableFuture<Response> send(Request request, long timeoutNs);
 
+    ListenableFuture<Response> send(Request request, Integer partition);
+
     void stop();
 
     void setMessagesStats(MessagesStats messagesStats);

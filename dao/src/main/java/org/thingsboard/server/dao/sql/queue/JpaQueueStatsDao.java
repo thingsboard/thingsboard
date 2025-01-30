@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.edqs.fields.QueueStatsFields;
 import org.thingsboard.server.common.data.id.QueueStatsId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -72,6 +73,11 @@ public class JpaQueueStatsDao extends JpaAbstractDao<QueueStatsEntity, QueueStat
     @Override
     public List<QueueStats> findByIds(TenantId tenantId, List<QueueStatsId> queueStatsIds) {
         return DaoUtil.convertDataList(queueStatsRepository.findByTenantIdAndIdIn(tenantId.getId(), toUUIDs(queueStatsIds)));
+    }
+
+    @Override
+    public PageData<QueueStatsFields> findAllFields(PageLink pageLink) {
+        return DaoUtil.pageToPageData(queueStatsRepository.findAllFields(DaoUtil.toPageable(pageLink)));
     }
 
     @Override

@@ -19,8 +19,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ObjectType;
+import org.thingsboard.server.common.data.edqs.fields.ApiUsageStateFields;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.ApiUsageStateEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
@@ -73,8 +77,23 @@ public class JpaApiUsageStateDao extends JpaAbstractDao<ApiUsageStateEntity, Api
     }
 
     @Override
+    public PageData<ApiUsageState> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(apiUsageStateRepository.findAllByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<ApiUsageStateFields> findAllFields(PageLink pageLink) {
+        return DaoUtil.pageToPageData(apiUsageStateRepository.findAllFields(DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.API_USAGE_STATE;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.API_USAGE_STATE;
     }
 
 }

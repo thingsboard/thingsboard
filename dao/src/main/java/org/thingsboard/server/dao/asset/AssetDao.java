@@ -36,7 +36,7 @@ import java.util.UUID;
  * The Interface AssetDao.
  *
  */
-public interface AssetDao extends Dao<Asset>, TenantEntityDao, ExportableEntityDao<AssetId, Asset> {
+public interface AssetDao extends Dao<Asset>, TenantEntityDao<Asset>, ExportableEntityDao<AssetId, Asset> {
 
     /**
      * Find asset info by id.
@@ -226,4 +226,5 @@ public interface AssetDao extends Dao<Asset>, TenantEntityDao, ExportableEntityD
     PageData<Asset> findAssetsByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, PageLink pageLink);
 
     PageData<TbPair<UUID, String>> getAllAssetTypes(PageLink pageLink);
+
 }

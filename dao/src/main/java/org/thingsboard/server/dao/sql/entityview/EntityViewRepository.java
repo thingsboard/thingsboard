@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.edqs.fields.GenericFields;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.EntityViewEntity;
 import org.thingsboard.server.dao.model.sql.EntityViewInfoEntity;
@@ -144,5 +145,9 @@ public interface EntityViewRepository extends JpaRepository<EntityViewEntity, UU
                                                    Pageable pageable);
     @Query("SELECT externalId FROM EntityViewEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
+
+    @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.GenericFields(e.id, e.createdTime, e.tenantId," +
+            "e.name, e.version) FROM EntityViewEntity e")
+    Page<GenericFields> findAllFields(Pageable pageable);
 
 }

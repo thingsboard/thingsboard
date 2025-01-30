@@ -17,7 +17,11 @@ package org.thingsboard.server.dao;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.edqs.fields.EntityFields;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.util.TbPair;
 
 import java.util.Collection;
 import java.util.List;
@@ -45,6 +49,12 @@ public interface Dao<T> {
 
     List<UUID> findIdsByTenantIdAndIdOffset(TenantId tenantId, UUID idOffset, int limit);
 
-    default EntityType getEntityType() { return null; }
+    default PageData<? extends EntityFields> findAllFields(PageLink pageLink) {
+        throw new UnsupportedOperationException();
+    }
+
+    default EntityType getEntityType() {
+        return null;
+    }
 
 }

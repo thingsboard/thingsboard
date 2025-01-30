@@ -22,6 +22,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.asset.AssetProfileInfo;
+import org.thingsboard.server.common.data.edqs.fields.AssetProfileFields;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.AssetProfileEntity;
 
@@ -80,5 +81,9 @@ public interface AssetProfileRepository extends JpaRepository<AssetProfileEntity
     @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(a.id, 'ASSET_PROFILE', a.name) " +
             "FROM AssetProfileEntity a WHERE a.tenantId = :tenantId")
     List<EntityInfo> findAllTenantAssetProfileNames(@Param("tenantId") UUID tenantId);
+
+    @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.AssetProfileFields(a.id, a.createdTime, a.tenantId," +
+            "a.name, a.version, a.isDefault) FROM AssetProfileEntity a")
+    Page<AssetProfileFields> findAllFields(Pageable pageable);
 
 }

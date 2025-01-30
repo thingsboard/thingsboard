@@ -1,0 +1,91 @@
+/**
+ * Copyright © 2016-2024 ThingsBoard, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.thingsboard.server.edqs.repo;
+
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.edqs.EdqsEvent;
+import org.thingsboard.server.common.data.edqs.query.QueryResult;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.permission.MergedUserPermissions;
+import org.thingsboard.server.common.data.query.EntityCountQuery;
+import org.thingsboard.server.common.data.query.EntityDataQuery;
+import org.thingsboard.server.edqs.stats.EdqsStatsService;
+import org.thingsboard.server.queue.edqs.EdqsComponent;
+
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Predicate;
+
+@EdqsComponent
+@AllArgsConstructor
+@Service
+@Slf4j
+public class InMemoryEdqRepository implements EdqRepository {
+
+    private final static ConcurrentMap<TenantId, TenantRepo> repos = new ConcurrentHashMap<>();
+    private final Optional<EdqsStatsService> statsService;
+
+    public TenantRepo get(TenantId tenantId) {
+        return repos.computeIfAbsent(tenantId, id -> new TenantRepo(id, statsService));
+    }
+
+    @Override
+    public void processEvent(EdqsEvent event) {
+        get(event.getTenantId()).processEvent(event);
+    }
+
+    @Override
+    public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, MergedUserPermissions userPermissions, EntityCountQuery query, boolean ignorePermissionCheck) {
+        long startNs = System.nanoTime();
+        long result = 0;
+        if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
+            for (TenantRepo repo : repos.values()) {
+                result += repo.countEntitiesByQuery(customerId, userPermissions, query, ignorePermissionCheck);
+            }
+        } else {
+            result = get(tenantId).countEntitiesByQuery(customerId, userPermissions, query, ignorePermissionCheck);
+        }
+        double timingMs = (double) (System.nanoTime() - startNs) / 1000_000;
+        log.info("countEntitiesByQuery: {} ms", timingMs);
+        return result;
+    }
+
+    @Override
+    public PageData<QueryResult> findEntityDataByQuery(TenantId tenantId, CustomerId customerId,
+                                                       MergedUserPermissions userPermissions, EntityDataQuery query, boolean ignorePermissionCheck) {
+        long startNs = System.nanoTime();
+        var result = get(tenantId).findEntityDataByQuery(customerId, userPermissions, query, ignorePermissionCheck);
+        double timingMs = (double) (System.nanoTime() - startNs) / 1000_000;
+        log.info("findEntityDataByQuery: {} ms", timingMs);
+        return result;
+    }
+
+    @Override
+    public void clearIf(Predicate<TenantId> predicate) {
+        repos.keySet().removeIf(predicate);
+    }
+
+    @Override
+    public void clear() {
+        repos.clear();
+    }
+
+}

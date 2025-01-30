@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
+import org.thingsboard.server.common.data.edqs.fields.TenantFields;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -94,4 +95,15 @@ public class JpaTenantDao extends JpaAbstractDao<TenantEntity, Tenant> implement
                 .map(TenantId::fromUUID)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public PageData<TenantFields> findAllFields(PageLink pageLink) {
+        return DaoUtil.pageToPageData(tenantRepository.findAllFields(DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.TENANT;
+    }
+
 }

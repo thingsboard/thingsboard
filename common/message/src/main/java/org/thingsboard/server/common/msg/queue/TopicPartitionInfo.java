@@ -30,24 +30,31 @@ public class TopicPartitionInfo {
     private final TenantId tenantId;
     private final Integer partition;
     @Getter
+    private final boolean useInternalPartition;
+    @Getter
     private final String fullTopicName;
     @Getter
     private final boolean myPartition;
 
     @Builder
-    public TopicPartitionInfo(String topic, TenantId tenantId, Integer partition, boolean myPartition) {
+    public TopicPartitionInfo(String topic, TenantId tenantId, Integer partition, boolean useInternalPartition, boolean myPartition) {
         this.topic = topic;
         this.tenantId = tenantId;
         this.partition = partition;
+        this.useInternalPartition = useInternalPartition;
         this.myPartition = myPartition;
         String tmp = topic;
         if (tenantId != null && !tenantId.isNullUid()) {
             tmp += ".isolated." + tenantId.getId().toString();
         }
-        if (partition != null) {
+        if (partition != null && !useInternalPartition) {
             tmp += "." + partition;
         }
         this.fullTopicName = tmp;
+    }
+
+    public TopicPartitionInfo(String topic, TenantId tenantId, Integer partition, boolean myPartition) {
+        this(topic, tenantId, partition, false, myPartition);
     }
 
     public TopicPartitionInfo newByTopic(String topic) {
@@ -66,6 +73,14 @@ public class TopicPartitionInfo {
         return Optional.ofNullable(partition);
     }
 
+    public TopicPartitionInfo withTopic(String topic) {
+        return new TopicPartitionInfo(topic, this.tenantId, this.partition, this.useInternalPartition, this.myPartition);
+    }
+
+    public TopicPartitionInfo withUseInternalPartition(boolean useInternalPartition) {
+        return new TopicPartitionInfo(this.topic, this.tenantId, this.partition, useInternalPartition, this.myPartition);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -79,6 +94,7 @@ public class TopicPartitionInfo {
 
     @Override
     public int hashCode() {
-        return Objects.hash(fullTopicName);
+        return Objects.hash(fullTopicName, partition);
     }
+
 }

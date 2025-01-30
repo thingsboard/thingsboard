@@ -556,7 +556,7 @@ public class DefaultDeviceStateServiceTest {
                 .thenReturn(new PageData<>(List.of(deviceIdInfo), 0, 1, false));
         PartitionChangeEvent event = new PartitionChangeEvent(this, ServiceType.TB_CORE, Map.of(
                 new QueueKey(ServiceType.TB_CORE), Collections.singleton(tpi)
-        ));
+        ), Collections.emptyMap());
         service.onApplicationEvent(event);
         Thread.sleep(100);
     }

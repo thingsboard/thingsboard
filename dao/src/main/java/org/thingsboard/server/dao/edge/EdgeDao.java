@@ -35,7 +35,7 @@ import java.util.UUID;
  * The Interface EdgeDao.
  *
  */
-public interface EdgeDao extends Dao<Edge>, TenantEntityDao {
+public interface EdgeDao extends Dao<Edge>, TenantEntityDao<Edge> {
 
     Edge save(TenantId tenantId, Edge edge);
 
