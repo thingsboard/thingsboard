@@ -61,7 +61,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import {
   MapDataLayerType,
   TbDataLayerItem,
-  TbMapDataLayer
+  TbMapDataLayer, UnplacedMapDataItem
 } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
 import { TbImageMap } from '@home/components/widget/lib/maps/image-map';
 
@@ -176,8 +176,8 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
     return this.dataLayer.getCtx().translate.instant('widgets.maps.data-layer.marker.remove-marker-for', {entityName: this.data.entityName});
   }
 
-  protected removeDataItem(): void {
-    this.dataLayer.saveMarkerLocation(this.data, null);
+  protected removeDataItem(): Observable<any> {
+    return this.dataLayer.saveMarkerLocation(this.data, null);
   }
 
   public isEditing() {
@@ -190,7 +190,7 @@ class TbMarkerDataLayerItem extends TbDataLayerItem<MarkersDataLayerSettings, Tb
 
   private saveMarkerLocation() {
     const location = this.marker.getLatLng();
-    this.dataLayer.saveMarkerLocation(this.data, location);
+    this.dataLayer.saveMarkerLocation(this.data, location).subscribe();
   }
 
   private updateMarkerLocation(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]) {
@@ -452,6 +452,21 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
     return MapDataLayerType.marker;
   }
 
+  public placeItem(item: UnplacedMapDataItem, layer: L.Layer): void {
+    if (layer instanceof L.Marker) {
+      const position = layer.getLatLng();
+      this.saveMarkerLocation(item.entity, position).subscribe(
+        (converted) => {
+          item.entity[this.settings.xKey.label] = converted.x;
+          item.entity[this.settings.yKey.label] = converted.y;
+          this.createItemFromUnplaced(item);
+        }
+      );
+    } else {
+      console.warn('Unable to place item, layer is not a marker.');
+    }
+  }
+
   protected createDataLayerContainer(): FeatureGroup {
     if (this.settings.markerClustering?.enable) {
       return this.createMarkersClusterContainer();
@@ -645,7 +660,7 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
     }
   }
 
-  public saveMarkerLocation(data: FormattedData<TbMapDatasource>, position: L.LatLng): void {
+  public saveMarkerLocation(data: FormattedData<TbMapDatasource>, position: L.LatLng): Observable<{x: number; y: number}> {
     const converted = this.map.latLngToLocationData(position);
     const locationData = [
       {
@@ -657,7 +672,9 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
         value: converted.y
       }
     ];
-    this.map.saveItemData(data.$datasource, locationData).subscribe();
+    return this.map.saveItemData(data.$datasource, locationData).pipe(
+      map(() => converted)
+    );
   }
 
 }

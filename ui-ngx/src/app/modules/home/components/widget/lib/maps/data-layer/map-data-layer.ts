@@ -148,7 +148,9 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
           id: 'remove',
           title: this.removeDataItemTitle(),
           click: () => {
-            this.removeDataItem();
+            this.removeDataItem().subscribe(
+              () => this.dataLayer.removeItem(this.data.entityId)
+            );
           },
           iconClass: 'tb-remove'
         });
@@ -246,7 +248,7 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
 
   protected abstract removeDataItemTitle(): string;
 
-  protected abstract removeDataItem(): void;
+  protected abstract removeDataItem(): Observable<any>;
 
   private createTooltip(datasource: TbMapDatasource) {
     this.tooltip = L.popup();
@@ -552,12 +554,28 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
       }
     });
     toDelete.forEach((key) => {
-      const item = this.layerItems.get(key);
-      item.remove();
-      this.layerItems.delete(key);
+      this.removeItem(key);
     });
     if (updatedItems.length) {
       this.layerItemsUpdated(updatedItems);
+    }
+  }
+
+  public removeItem(key: string): void {
+    const item = this.layerItems.get(key);
+    if (item) {
+      item.remove();
+      this.layerItems.delete(key);
+    }
+  }
+
+  protected createItemFromUnplaced(unplacedItem: UnplacedMapDataItem): void {
+    const index = this.unplacedItems.indexOf(unplacedItem);
+    if (index > -1) {
+      this.unplacedItems.splice(index, 1);
+      const layerItem = this.createLayerItem(unplacedItem.entity, this.map.getData());
+      this.layerItems.set(unplacedItem.entity.entityId, layerItem);
+      this.map.enabledDataLayersUpdated();
     }
   }
 
@@ -612,9 +630,11 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
   }
 
   public enableEditMode() {
-    if (!this.editMode) {
-      this.editMode = true;
-      this.updateItemsEditMode();
+    if (this.editable) {
+      if (!this.editMode) {
+        this.editMode = true;
+        this.updateItemsEditMode();
+      }
     }
   }
 
@@ -630,6 +650,8 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
   }
 
   public abstract dataLayerType(): MapDataLayerType;
+
+  public abstract placeItem(item: UnplacedMapDataItem, layer: L.Layer): void;
 
   protected abstract defaultBaseSettings(map: TbMap<any>): Partial<S>;
 

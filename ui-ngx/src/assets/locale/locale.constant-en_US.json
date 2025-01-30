@@ -7732,11 +7732,16 @@
                     "remove-polygon-for": "Remove polygon for '{{entityName}}'",
                     "cut": "Cut polygon area",
                     "rotate": "Rotate polygon",
-                    "firstVertex-cut": "Click to place first point",
-                    "continueLine-cut": "Click to continue drawing",
-                    "finishPoly-cut": "Click first marker to finish and save",
                     "draw-rectangle": "Draw rectangle",
-                    "draw-polygon": "Draw polygon"
+                    "draw-polygon": "Draw polygon",
+                    "polygon-place-first-point-cut-hint": "Click to place first point",
+                    "continue-polygon-cut-hint": "Click to continue drawing",
+                    "finish-polygon-cut-hint": "Click first marker to finish and save",
+                    "polygon-place-first-point-hint": "Polygon for '{{entityName}}': click to place first point",
+                    "continue-polygon-hint": "Polygon for '{{entityName}}': click to continue drawing",
+                    "finish-polygon-hint": "Polygon for '{{entityName}}': click first marker to finish and save",
+                    "rectangle-place-first-point-hint": "Rectangle for '{{entityName}}': click to place first point",
+                    "finish-rectangle-hint": "Rectangle for '{{entityName}}': click to finish and save"
                 },
                 "circle": {
                     "circle-key": "Circle key",
@@ -7747,7 +7752,9 @@
                     "remove-circle": "Remove circle",
                     "edit": "Edit circle",
                     "remove-circle-for": "Remove circle for '{{entityName}}'",
-                    "draw-circle": "Draw circle"
+                    "draw-circle": "Draw circle",
+                    "place-circle-center-hint": "Circle for '{{entityName}}': click to place circle center",
+                    "finish-circle-hint": "Circle for '{{entityName}}': click to finish and save circle"
                 },
                 "select-entity": "Select entity",
                 "select-entity-hint": "Hint: after selection click at the map to set position"

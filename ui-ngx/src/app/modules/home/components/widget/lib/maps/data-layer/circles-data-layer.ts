@@ -25,7 +25,12 @@ import { TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/s
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { Observable } from 'rxjs';
 import { isNotEmptyStr } from '@core/utils';
-import { MapDataLayerType, TbDataLayerItem } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
+import {
+  MapDataLayerType,
+  TbDataLayerItem,
+  UnplacedMapDataItem
+} from '@home/components/widget/lib/maps/data-layer/map-data-layer';
+import { map } from 'rxjs/operators';
 
 class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, TbCirclesDataLayer> {
 
@@ -134,8 +139,8 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
     return this.dataLayer.getCtx().translate.instant('widgets.maps.data-layer.circle.remove-circle-for', {entityName: this.data.entityName});
   }
 
-  protected removeDataItem(): void {
-    this.dataLayer.saveCircleCoordinates(this.data, null, null);
+  protected removeDataItem(): Observable<any> {
+    return this.dataLayer.saveCircleCoordinates(this.data, null, null);
   }
 
   public isEditing() {
@@ -149,7 +154,7 @@ class TbCircleDataLayerItem extends TbDataLayerItem<CirclesDataLayerSettings, Tb
   private saveCircleCoordinates() {
     const center = this.circle.getLatLng();
     const radius = this.circle.getRadius();
-    this.dataLayer.saveCircleCoordinates(this.data, center, radius);
+    this.dataLayer.saveCircleCoordinates(this.data, center, radius).subscribe();
   }
 
   private updateCircleShape(data: FormattedData<TbMapDatasource>) {
@@ -178,6 +183,21 @@ export class TbCirclesDataLayer extends TbShapesDataLayer<CirclesDataLayerSettin
     return MapDataLayerType.circle;
   }
 
+  public placeItem(item: UnplacedMapDataItem, layer: L.Layer): void {
+    if (layer instanceof L.Circle) {
+      const center = layer.getLatLng();
+      const radius = layer.getRadius();
+      this.saveCircleCoordinates(item.entity, center, radius).subscribe(
+        (converted) => {
+          item.entity[this.settings.circleKey.label] = JSON.stringify(converted);
+          this.createItemFromUnplaced(item);
+        }
+      );
+    } else {
+      console.warn('Unable to place item, layer is not a circle.');
+    }
+  }
+
   protected setupDatasource(datasource: TbMapDatasource): TbMapDatasource {
     datasource.dataKeys.push(this.settings.circleKey);
     return datasource;
@@ -204,7 +224,7 @@ export class TbCirclesDataLayer extends TbShapesDataLayer<CirclesDataLayerSettin
     return this.map.circleDataToCoordinates(circleData);
   }
 
-  public saveCircleCoordinates(data: FormattedData<TbMapDatasource>, center: L.LatLng, radius: number): void {
+  public saveCircleCoordinates(data: FormattedData<TbMapDatasource>, center: L.LatLng, radius: number): Observable<TbCircleData> {
     const converted = center ? this.map.coordinatesToCircleData(center, radius) : null;
     const circleData = [
       {
@@ -212,6 +232,8 @@ export class TbCirclesDataLayer extends TbShapesDataLayer<CirclesDataLayerSettin
         value: converted
       }
     ];
-    this.map.saveItemData(data.$datasource, circleData).subscribe();
+   return this.map.saveItemData(data.$datasource, circleData).pipe(
+     map(() => converted)
+   );
   }
 }

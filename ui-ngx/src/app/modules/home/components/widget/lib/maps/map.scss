@@ -81,7 +81,7 @@
               div.tb-control-text {
                 width: auto;
                 background: transparent;
-                font-family: Roboto;
+                font-family: Roboto, "Helvetica Neue", sans-serif;
                 font-size: 12px;
                 font-style: normal;
                 font-weight: 500;
@@ -239,6 +239,19 @@
       border: none;
       background: none;
       box-shadow: none;
+    }
+    .tb-place-item-label {
+      border: none;
+      box-shadow: none;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.56);
+      backdrop-filter: blur(4px);
+      padding: 4px 8px;
+      color: #fff;
+      font-family: Roboto, "Helvetica Neue", sans-serif;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 400;
     }
   }
   .tb-map-sidebar {

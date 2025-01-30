@@ -33,7 +33,7 @@ import { formattedDataFormDatasourceData, isDefinedAndNotNull, mergeDeepIgnoreAr
 import { DeepPartial } from '@shared/models/common';
 import L from 'leaflet';
 import { forkJoin, Observable, of } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { switchMap, tap } from 'rxjs/operators';
 import '@home/components/widget/lib/maps/leaflet/leaflet-tb';
 import {
   MapDataLayerType,
@@ -106,7 +106,11 @@ export abstract class TbMap<S extends BaseMapSettings> {
   private tooltipInstances: TooltipInstancesData[] = [];
 
   private currentPopover: TbPopoverComponent;
-  private isAddingItem = false;
+  private currentAddButton: L.TB.ToolbarButton;
+
+  private get isPlacingItem(): boolean {
+    return !!this.currentAddButton;
+  }
 
   protected constructor(protected ctx: WidgetContext,
                         protected inputSettings: DeepPartial<S>,
@@ -283,7 +287,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
      });
 
      if (this.dataLayers.some(dl => dl.isEditable())) {
-       this.map.pm.setGlobalOptions({ snappable: false } as L.PM.GlobalOptions);
+       this.map.pm.setGlobalOptions({ snappable: false });
        this.map.pm.applyGlobalOptions();
      }
 
@@ -358,13 +362,14 @@ export abstract class TbMap<S extends BaseMapSettings> {
   private placeMarker(e: MouseEvent, button: L.TB.ToolbarButton): void {
     this.placeItem(e, button, this.addMarkerDataLayers,
       (entity) => {
+        this.map.pm.setLang('en', {
+          tooltips: {
+            placeMarker: this.ctx.translate.instant('widgets.maps.data-layer.marker.place-marker-hint', {entityName: entity.entity.entityDisplayName})
+          }
+        }, 'en');
         this.map.pm.enableDraw('Marker');
-        const hintText = this.ctx.translate.instant('widgets.maps.data-layer.marker.place-marker-hint', {entityName: entity.entity.entityDisplayName});
         // @ts-ignore
-        this.map.pm.Draw.Marker._hintMarker.setTooltipContent(hintText);
-      },
-      (entity, layer) => {
-        (entity.dataLayer as TbMarkersDataLayer).saveMarkerLocation(entity.entity, (layer as L.Marker).getLatLng());
+        L.DomUtil.addClass(this.map.pm.Draw.Marker._hintMarker.getTooltip()._container, 'tb-place-item-label');
       }
     );
   }
@@ -372,9 +377,15 @@ export abstract class TbMap<S extends BaseMapSettings> {
   private drawRectangle(e: MouseEvent, button: L.TB.ToolbarButton): void {
     this.placeItem(e, button, this.addPolygonDataLayers,
       (entity) => {
-
-      },
-      (entity, layer) => {
+        this.map.pm.setLang('en', {
+          tooltips: {
+            firstVertex: this.ctx.translate.instant('widgets.maps.data-layer.polygon.rectangle-place-first-point-hint', {entityName: entity.entity.entityDisplayName}),
+            finishRect: this.ctx.translate.instant('widgets.maps.data-layer.polygon.finish-rectangle-hint', {entityName: entity.entity.entityDisplayName})
+          }
+        }, 'en');
+        this.map.pm.enableDraw('Rectangle');
+        // @ts-ignore
+        L.DomUtil.addClass(this.map.pm.Draw.Rectangle._hintMarker.getTooltip()._container, 'tb-place-item-label');
       }
     );
   }
@@ -382,9 +393,16 @@ export abstract class TbMap<S extends BaseMapSettings> {
   private drawPolygon(e: MouseEvent, button: L.TB.ToolbarButton): void {
     this.placeItem(e, button, this.addPolygonDataLayers,
       (entity) => {
-
-      },
-      (entity, layer) => {
+        this.map.pm.setLang('en', {
+          tooltips: {
+            firstVertex: this.ctx.translate.instant('widgets.maps.data-layer.polygon.polygon-place-first-point-hint', {entityName: entity.entity.entityDisplayName}),
+            continueLine: this.ctx.translate.instant('widgets.maps.data-layer.polygon.continue-polygon-hint', {entityName: entity.entity.entityDisplayName}),
+            finishPoly: this.ctx.translate.instant('widgets.maps.data-layer.polygon.finish-polygon-hint', {entityName: entity.entity.entityDisplayName})
+          }
+        }, 'en');
+        this.map.pm.enableDraw('Polygon');
+        // @ts-ignore
+        L.DomUtil.addClass(this.map.pm.Draw.Polygon._hintMarker.getTooltip()._container, 'tb-place-item-label');
       }
     );
   }
@@ -392,22 +410,25 @@ export abstract class TbMap<S extends BaseMapSettings> {
   private drawCircle(e: MouseEvent, button: L.TB.ToolbarButton): void {
     this.placeItem(e, button, this.addCircleDataLayers,
       (entity) => {
-
-      },
-      (entity, layer) => {
+        this.map.pm.setLang('en', {
+          tooltips: {
+            startCircle: this.ctx.translate.instant('widgets.maps.data-layer.circle.place-circle-center-hint', {entityName: entity.entity.entityDisplayName}),
+            finishCircle: this.ctx.translate.instant('widgets.maps.data-layer.circle.finish-circle-hint', {entityName: entity.entity.entityDisplayName}),
+          }
+        }, 'en');
+        this.map.pm.enableDraw('Circle');
+        // @ts-ignore
+        L.DomUtil.addClass(this.map.pm.Draw.Circle._hintMarker.getTooltip()._container, 'tb-place-item-label');
       }
     );
   }
 
   private placeItem(e: MouseEvent, button: L.TB.ToolbarButton, dataLayers: TbMapDataLayer[],
-                    prepareDrawMode: (entity: UnplacedMapDataItem) => void,
-                    saveLocation: (entity: UnplacedMapDataItem, layer: L.Layer) => void): void {
-    if (this.isAddingItem) {
+                    prepareDrawMode: (entity: UnplacedMapDataItem) => void): void {
+    if (this.isPlacingItem) {
       return;
     }
-    button.setActive(true);
-    this.deselectItem(false, true);
-    this.isAddingItem = true;
+    this.updatePlaceItemState(button);
     const items = mergeUnplacedDataItemsArrays(dataLayers.filter(dl => dl.isEnabled()).map(dl => dl.getUnplacedItems())).sort((entity1, entity2) => {
       return entity1.entity.entityDisplayName.localeCompare(entity2.entity.entityDisplayName);
     });
@@ -418,22 +439,21 @@ export abstract class TbMap<S extends BaseMapSettings> {
           this.map.off('pm:create');
           this.map.pm.disableDraw();
           this.dataLayers.forEach(dl => dl.enableEditMode());
-          button.setActive(false);
-          this.isAddingItem = false;
+          this.updatePlaceItemState();
           this.editToolbar.close();
         };
 
         this.map.once('pm:create', (e) => {
-          saveLocation(entity, e.layer);
+          entity.dataLayer.placeItem(entity, e.layer);
           // @ts-ignore
           e.layer._pmTempLayer = true;
           e.layer.remove();
           finishAdd();
         });
 
-        this.dataLayers.forEach(dl => dl.disableEditMode());
-
         prepareDrawMode(entity);
+
+        this.dataLayers.forEach(dl => dl.disableEditMode());
 
         this.editToolbar.open([
           {
@@ -445,8 +465,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
           }
         ], false);
       } else {
-        button.setActive(false);
-        this.isAddingItem = false;
+        this.updatePlaceItemState();
       }
     });
   }
@@ -476,6 +495,17 @@ export abstract class TbMap<S extends BaseMapSettings> {
         })
       );
     }
+  }
+
+  private updatePlaceItemState(addButton?: L.TB.ToolbarButton): void {
+    if (addButton) {
+      this.deselectItem(false, true);
+      addButton.setActive(true);
+    } else if (this.currentAddButton) {
+      this.currentAddButton.setActive(false);
+    }
+    this.currentAddButton = addButton;
+    this.updateAddButtonsStates();
   }
 
   private createdControlButtonTooltip(root: HTMLElement, side: TooltipPositioningSide) {
@@ -562,7 +592,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
       const mapBounds = this.map.getBounds();
       if (bounds.isValid() && (!this.bounds || !this.bounds.isValid() || !this.bounds.equals(bounds) && this.settings.fitMapBounds && !mapBounds.contains(bounds))) {
         this.bounds = bounds;
-        if (!this.ignoreUpdateBounds && !this.isAddingItem) {
+        if (!this.ignoreUpdateBounds && !this.isPlacingItem) {
           this.fitBounds(bounds);
         }
       }
@@ -592,17 +622,32 @@ export abstract class TbMap<S extends BaseMapSettings> {
   }
 
   private updateAddButtonsStates() {
-    if (this.addMarkerButton) {
-      this.addMarkerButton.setDisabled(!this.addMarkerDataLayers.some(dl => dl.isEnabled() && dl.hasUnplacedItems()));
-    }
-    if (this.addRectangleButton) {
-      this.addRectangleButton.setDisabled(!this.addPolygonDataLayers.some(dl => dl.isEnabled() && dl.hasUnplacedItems()));
-    }
-    if (this.addPolygonButton) {
-      this.addPolygonButton.setDisabled(!this.addPolygonDataLayers.some(dl => dl.isEnabled() && dl.hasUnplacedItems()));
-    }
-    if (this.addCircleButton) {
-      this.addCircleButton.setDisabled(!this.addCircleDataLayers.some(dl => dl.isEnabled() && dl.hasUnplacedItems()));
+    if (this.currentAddButton) {
+      if (this.addMarkerButton && this.addMarkerButton !== this.currentAddButton) {
+        this.addMarkerButton.setDisabled(true);
+      }
+      if (this.addRectangleButton && this.addRectangleButton !== this.currentAddButton) {
+        this.addRectangleButton.setDisabled(true);
+      }
+      if (this.addPolygonButton && this.addPolygonButton !== this.currentAddButton) {
+        this.addPolygonButton.setDisabled(true);
+      }
+      if (this.addCircleButton && this.addCircleButton !== this.currentAddButton) {
+        this.addCircleButton.setDisabled(true);
+      }
+    } else {
+      if (this.addMarkerButton) {
+        this.addMarkerButton.setDisabled(!this.addMarkerDataLayers.some(dl => dl.isEnabled() && dl.hasUnplacedItems()));
+      }
+      if (this.addRectangleButton) {
+        this.addRectangleButton.setDisabled(!this.addPolygonDataLayers.some(dl => dl.isEnabled() && dl.hasUnplacedItems()));
+      }
+      if (this.addPolygonButton) {
+        this.addPolygonButton.setDisabled(!this.addPolygonDataLayers.some(dl => dl.isEnabled() && dl.hasUnplacedItems()));
+      }
+      if (this.addCircleButton) {
+        this.addCircleButton.setDisabled(!this.addCircleDataLayers.some(dl => dl.isEnabled() && dl.hasUnplacedItems()));
+      }
     }
   }
 
@@ -700,7 +745,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   }
 
   public selectItem(item: TbDataLayerItem, cancel = false, force = false): boolean {
-    if (this.isAddingItem) {
+    if (this.isPlacingItem) {
       return false;
     }
     let deselected = true;
@@ -725,10 +770,6 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   public deselectItem(cancel = false, force = false): boolean {
     return this.selectItem(null, cancel, force);
-  }
-
-  public getSelectedDataItem(): TbDataLayerItem {
-    return this.selectedDataItem;
   }
 
   public getEditToolbar(): L.TB.BottomToolbarControl {

@@ -26,7 +26,12 @@ import { TbShapesDataLayer } from '@home/components/widget/lib/maps/data-layer/s
 import { TbMap } from '@home/components/widget/lib/maps/map';
 import { Observable } from 'rxjs';
 import { isNotEmptyStr, isString } from '@core/utils';
-import { MapDataLayerType, TbDataLayerItem } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
+import {
+  MapDataLayerType,
+  TbDataLayerItem,
+  UnplacedMapDataItem
+} from '@home/components/widget/lib/maps/data-layer/map-data-layer';
+import { map } from 'rxjs/operators';
 
 class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, TbPolygonsDataLayer> {
 
@@ -184,6 +189,8 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
         this.disablePolygonRotateMode();
       }
       return false;
+    } else if (this.editing) {
+      return false;
     }
     return true;
   }
@@ -192,8 +199,8 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
     return this.dataLayer.getCtx().translate.instant('widgets.maps.data-layer.polygon.remove-polygon-for', {entityName: this.data.entityName});
   }
 
-  protected removeDataItem(): void {
-    this.dataLayer.savePolygonCoordinates(this.data, null);
+  protected removeDataItem(): Observable<any> {
+    return this.dataLayer.savePolygonCoordinates(this.data, null);
   }
 
   public isEditing() {
@@ -206,7 +213,9 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
 
   private enablePolygonEditMode() {
     this.polygon.on('pm:markerdragstart', () => this.editing = true);
-    this.polygon.on('pm:markerdragend', () => this.editing = false);
+    this.polygon.on('pm:markerdragend', () => setTimeout(() => {
+      this.editing = false;
+    }) );
     this.polygon.on('pm:edit', () => this.savePolygonCoordinates());
     this.polygon.pm.enable();
     const map = this.dataLayer.getMap();
@@ -230,18 +239,18 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
       color: '#3388ff', opacity: 1, fillColor: '#3388ff', fillOpacity: 0.2});
     this.addItemClass('tb-cut-mode');
     this.polygon.once('pm:cut', (e) => {
-      if (this.polygon instanceof L.Rectangle) {
-        this.polygonContainer.removeLayer(this.polygon);
-        // @ts-ignore
-        this.polygon = L.polygon(e.layer.getLatLngs(), {
-          ...this.polygonStyle,
-          snapIgnore: !this.dataLayer.isSnappable(),
-          bubblingMouseEvents: !this.dataLayer.isEditMode()
-        });
-        this.polygon.addTo(this.polygonContainer);
-      } else {
-        // @ts-ignore
-        this.polygon.setLatLngs(e.layer.getLatLngs());
+      if (e.layer instanceof L.Polygon) {
+        if (this.polygon instanceof L.Rectangle) {
+          this.polygonContainer.removeLayer(this.polygon);
+          this.polygon = L.polygon(e.layer.getLatLngs(), {
+            ...this.polygonStyle,
+            snapIgnore: !this.dataLayer.isSnappable(),
+            bubblingMouseEvents: !this.dataLayer.isEditMode()
+          });
+          this.polygon.addTo(this.polygonContainer);
+        } else {
+          this.polygon.setLatLngs(e.layer.getLatLngs());
+        }
       }
       // @ts-ignore
       e.layer._pmTempLayer = true;
@@ -257,15 +266,17 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
     const map = this.dataLayer.getMap().getMap();
     map.pm.setLang('en', {
       tooltips: {
-        firstVertex: this.getDataLayer().getCtx().translate.instant('widgets.maps.data-layer.polygon.firstVertex-cut'),
-        continueLine: this.getDataLayer().getCtx().translate.instant('widgets.maps.data-layer.polygon.continueLine-cut'),
-        finishPoly: this.getDataLayer().getCtx().translate.instant('widgets.maps.data-layer.polygon.finishPoly-cut')
+        firstVertex: this.getDataLayer().getCtx().translate.instant('widgets.maps.data-layer.polygon.polygon-place-first-point-cut-hint'),
+        continueLine: this.getDataLayer().getCtx().translate.instant('widgets.maps.data-layer.polygon.continue-polygon-cut-hint'),
+        finishPoly: this.getDataLayer().getCtx().translate.instant('widgets.maps.data-layer.polygon.finish-polygon-cut-hint')
       }
     }, 'en');
     map.pm.enableGlobalCutMode({
       // @ts-ignore
       layersToCut: [this.polygon]
     });
+    // @ts-ignore
+    L.DomUtil.addClass(map.pm.Draw.Cut._hintMarker.getTooltip()._container, 'tb-place-item-label');
     cutButton?.setActive(true);
     map.once('pm:globalcutmodetoggled', (e) => {
       if (!e.enabled) {
@@ -320,7 +331,7 @@ class TbPolygonDataLayerItem extends TbDataLayerItem<PolygonsDataLayerSettings, 
         coordinates = [bounds.getNorthWest(), bounds.getSouthEast()];
       }
     }
-    this.dataLayer.savePolygonCoordinates(this.data, coordinates);
+    this.dataLayer.savePolygonCoordinates(this.data, coordinates).subscribe();
   }
 
   private updatePolygonShape(data: FormattedData<TbMapDatasource>) {
@@ -360,6 +371,29 @@ export class TbPolygonsDataLayer extends TbShapesDataLayer<PolygonsDataLayerSett
     return MapDataLayerType.polygon;
   }
 
+  public placeItem(item: UnplacedMapDataItem, layer: L.Layer): void {
+    if (layer instanceof L.Polygon) {
+      let coordinates: TbPolygonCoordinates;
+      if (layer instanceof L.Rectangle) {
+        const bounds = layer.getBounds();
+        coordinates = [bounds.getNorthWest(), bounds.getSouthEast()];
+      } else {
+        coordinates = layer.getLatLngs();
+        if (coordinates.length === 1) {
+          coordinates = coordinates[0] as TbPolygonCoordinates;
+        }
+      }
+      this.savePolygonCoordinates(item.entity, coordinates).subscribe(
+        (converted) => {
+          item.entity[this.settings.polygonKey.label] = JSON.stringify(converted);
+          this.createItemFromUnplaced(item);
+        }
+      );
+    } else {
+      console.warn('Unable to place item, layer is not a polygon.');
+    }
+  }
+
   protected setupDatasource(datasource: TbMapDatasource): TbMapDatasource {
     datasource.dataKeys.push(this.settings.polygonKey);
     return datasource;
@@ -390,7 +424,7 @@ export class TbPolygonsDataLayer extends TbShapesDataLayer<PolygonsDataLayerSett
     return this.map.polygonDataToCoordinates(rawPolyData);
   }
 
-  public savePolygonCoordinates(data: FormattedData<TbMapDatasource>, coordinates: TbPolygonCoordinates): void {
+  public savePolygonCoordinates(data: FormattedData<TbMapDatasource>, coordinates: TbPolygonCoordinates): Observable<TbPolygonRawCoordinates> {
     const converted = coordinates ? this.map.coordinatesToPolygonData(coordinates) : null;
     const polygonData = [
       {
@@ -398,6 +432,8 @@ export class TbPolygonsDataLayer extends TbShapesDataLayer<PolygonsDataLayerSett
         value: converted
       }
     ];
-    this.map.saveItemData(data.$datasource, polygonData).subscribe();
+    return this.map.saveItemData(data.$datasource, polygonData).pipe(
+      map(() => converted)
+    );
   }
 }
