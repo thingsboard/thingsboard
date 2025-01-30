@@ -83,7 +83,7 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
                 CalculatedField calculatedField = new CalculatedField();
                 calculatedField.setId(new CalculatedFieldId(id));
                 calculatedField.setCreatedTime(createdTime);
-                calculatedField.setTenantId(new TenantId(tenantId));
+                calculatedField.setTenantId(TenantId.fromUUID(tenantId));
                 calculatedField.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
                 calculatedField.setType(type);
                 calculatedField.setName(name);

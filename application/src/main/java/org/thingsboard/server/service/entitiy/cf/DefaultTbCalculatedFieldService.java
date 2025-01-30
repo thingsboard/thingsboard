@@ -29,6 +29,8 @@ import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
@@ -72,6 +74,13 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
     @Override
     public CalculatedField findById(CalculatedFieldId calculatedFieldId, SecurityUser user) {
         return calculatedFieldService.findById(user.getTenantId(), calculatedFieldId);
+    }
+
+    @Override
+    public PageData<CalculatedField> findAllByTenantIdAndEntityId(EntityId entityId, SecurityUser user, PageLink pageLink) {
+        TenantId tenantId = user.getTenantId();
+        checkEntityExistence(tenantId, entityId);
+        return calculatedFieldService.findAllCalculatedFieldsByEntityId(tenantId, entityId, pageLink);
     }
 
     @Override
