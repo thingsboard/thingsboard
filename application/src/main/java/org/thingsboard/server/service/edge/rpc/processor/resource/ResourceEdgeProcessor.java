@@ -52,7 +52,7 @@ public abstract class ResourceEdgeProcessor extends BaseResourceProcessor implem
             switch (resourceUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
-                    boolean resourceKeyUpdated = super.saveOrUpdateTbResource(tenantId, tbResourceId, resourceUpdateMsg, false);
+                    boolean resourceKeyUpdated = super.saveOrUpdateTbResource(tenantId, tbResourceId, resourceUpdateMsg);
                     if (resourceKeyUpdated) {
                         saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.TB_RESOURCE, EdgeEventActionType.UPDATED, tbResourceId, null);
                     }
