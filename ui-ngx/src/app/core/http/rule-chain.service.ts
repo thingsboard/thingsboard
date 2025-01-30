@@ -33,6 +33,7 @@ import {
   LinkLabel,
   RuleNodeComponentDescriptor,
   RuleNodeConfiguration,
+  RuleNodeConfigurationComponent,
   ScriptLanguage,
   TestScriptInputParams,
   TestScriptResult
@@ -181,7 +182,7 @@ export class RuleChainService {
   }
 
   public registerSystemRuleNodeConfigModule(module: any) {
-    Object.assign(this.ruleNodeConfigComponents, this.resourcesService.extractComponentsFromModule<IRuleNodeConfigurationComponent>(module, true));
+    Object.assign(this.ruleNodeConfigComponents, this.resourcesService.extractComponentsFromModule<IRuleNodeConfigurationComponent>(module, RuleNodeConfigurationComponent, true));
   }
 
   private loadRuleNodeComponents(ruleChainType: RuleChainType, config?: RequestConfig): Observable<Array<RuleNodeComponentDescriptor>> {
