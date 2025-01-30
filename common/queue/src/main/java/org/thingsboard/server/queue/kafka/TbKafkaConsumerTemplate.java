@@ -144,10 +144,11 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
         stopWatch.stop();
         log.trace("poll topic {} took {}ms", getTopic(), stopWatch.getTotalTimeMillis());
 
+        List<ConsumerRecord<String, byte[]>> recordList;
         if (records.isEmpty()) {
-            return Collections.emptyList();
+            recordList = Collections.emptyList();
         } else {
-            List<ConsumerRecord<String, byte[]>> recordList = new ArrayList<>(256);
+            recordList = new ArrayList<>(256);
             records.forEach(record -> {
                 recordList.add(record);
                 if (stopWhenRead) {
@@ -163,17 +164,18 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
                     }
                 }
             });
-            if (endOffsets != null && endOffsets.isEmpty()) {
-                log.info("Reached end offsets for {}, stopping consumer", consumer.assignment());
-                stop();
-            }
-            return recordList;
         }
+        if (stopWhenRead && endOffsets.isEmpty()) {
+            log.info("Reached end offset for {}, stopping consumer", consumer.assignment());
+            stop();
+        }
+        return recordList;
     }
 
     private void onPartitionsAssigned() {
         if (stopWhenRead) {
             endOffsets = consumer.endOffsets(consumer.assignment()).entrySet().stream()
+                    .filter(entry -> entry.getValue() > 0)
                     .collect(Collectors.toMap(entry -> entry.getKey().partition(), Map.Entry::getValue));
         }
     }

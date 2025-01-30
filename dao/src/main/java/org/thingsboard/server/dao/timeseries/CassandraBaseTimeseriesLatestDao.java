@@ -103,10 +103,6 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
         return Collections.emptyList();
     }
 
-    @Override
-    public PageData<TsKvLatestEntity> findAllLatest(PageLink pageLink) {
-        return null;
-    }
 
     @Override
     public ListenableFuture<Long> saveLatest(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry) {

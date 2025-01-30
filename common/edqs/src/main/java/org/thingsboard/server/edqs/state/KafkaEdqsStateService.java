@@ -71,7 +71,8 @@ public class KafkaEdqsStateService implements EdqsStateService {
     private ScheduledExecutorService scheduler;
 
     private final VersionsStore versionsStore = new VersionsStore();
-    private final AtomicInteger restoredCount = new AtomicInteger();
+    private final AtomicInteger stateReadCount = new AtomicInteger();
+    private final AtomicInteger eventsReadCount = new AtomicInteger();
 
     @PostConstruct
     private void init() {
@@ -79,7 +80,7 @@ public class KafkaEdqsStateService implements EdqsStateService {
         mgmtExecutor = ThingsBoardExecutors.newWorkStealingPool(4, "edqs-backup-consumer-mgmt");
         scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("edqs-backup-scheduler");
 
-        stateConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<ToEdqsMsg>, QueueConfig>builder()
+        stateConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<ToEdqsMsg>, QueueConfig>builder() // FIXME Slavik: if topic is empty
                 .queueKey(new QueueKey(ServiceType.EDQS, EdqsQueue.STATE.getTopic()))
                 .config(QueueConfig.of(true, config.getPollInterval()))
                 .msgPackProcessor((msgs, consumer, config) -> {
@@ -88,8 +89,8 @@ public class KafkaEdqsStateService implements EdqsStateService {
                             ToEdqsMsg msg = queueMsg.getValue();
                             log.trace("Processing message: {}", msg);
                             edqsProcessor.process(msg, EdqsQueue.STATE);
-                            if (restoredCount.incrementAndGet() % 1000 == 0) {
-                                log.info("Processed {} msgs", restoredCount.get());
+                            if (stateReadCount.incrementAndGet() % 100000 == 0) {
+                                log.info("[state] Processed {} msgs", stateReadCount.get());
                             }
                         } catch (Throwable t) {
                             log.error("Failed to process message: {}", queueMsg, t);
@@ -103,7 +104,7 @@ public class KafkaEdqsStateService implements EdqsStateService {
                 .scheduler(scheduler)
                 .build();
 
-        eventsConsumer = QueueConsumerManager.<TbProtoQueueMsg<ToEdqsMsg>>builder()
+        eventsConsumer = QueueConsumerManager.<TbProtoQueueMsg<ToEdqsMsg>>builder() // FIXME Slavik writes to the state while we read it, slows down the start
                 .name("edqs-events-to-backup-consumer")
                 .pollInterval(config.getPollInterval())
                 .msgPackProcessor((msgs, consumer) -> {
@@ -115,6 +116,9 @@ public class KafkaEdqsStateService implements EdqsStateService {
                             if (msg.hasEventMsg()) {
                                 EdqsEventMsg eventMsg = msg.getEventMsg();
                                 String key = eventMsg.getKey();
+                                if (eventsReadCount.incrementAndGet() % 100000 == 0) {
+                                    log.info("[events-to-backup] Processed {} msgs", eventsReadCount.get());
+                                }
                                 if (eventMsg.hasVersion()) {
                                     if (!versionsStore.isNew(key, eventMsg.getVersion())) {
                                         return;
@@ -153,14 +157,14 @@ public class KafkaEdqsStateService implements EdqsStateService {
 
     @Override
     public void restore(Set<TopicPartitionInfo> partitions) {
-        restoredCount.set(0);
+        stateReadCount.set(0); //TODO Slavik: do not support remote mode in monolith setup
         long startTs = System.currentTimeMillis();
         log.info("Restore started for partitions {}", partitions.stream().map(tpi -> tpi.getPartition().orElse(-1)).sorted().toList());
 
         stateConsumer.doUpdate(partitions); // calling blocking doUpdate instead of update
         stateConsumer.awaitStop(0); // consumers should stop on their own because EdqsQueue.STATE.stopWhenRead is true, we just need to wait
 
-        log.info("Restore finished in {} ms. Processed {} msgs", (System.currentTimeMillis() - startTs), restoredCount.get());
+        log.info("Restore finished in {} ms. Processed {} msgs", (System.currentTimeMillis() - startTs), stateReadCount.get());
     }
 
     @Override

@@ -32,8 +32,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
-import org.thingsboard.server.common.data.page.SortOrder;
-import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.attributes.AttributesDao;
@@ -41,13 +39,15 @@ import org.thingsboard.server.dao.dictionary.KeyDictionaryDao;
 import org.thingsboard.server.dao.entity.EntityDaoRegistry;
 import org.thingsboard.server.dao.group.EntityGroupDao;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
+import org.thingsboard.server.dao.model.sql.RelationEntity;
 import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryEntry;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
-import org.thingsboard.server.dao.relation.RelationDao;
+import org.thingsboard.server.dao.sql.relation.RelationRepository;
+import org.thingsboard.server.dao.sqlts.latest.TsKvLatestRepository;
 import org.thingsboard.server.dao.tenant.TenantDao;
-import org.thingsboard.server.dao.timeseries.TimeseriesLatestDao;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -92,11 +92,11 @@ public abstract class EdqsSyncService {
     @Autowired
     private KeyDictionaryDao keyDictionaryDao;
     @Autowired
-    private RelationDao relationDao;
+    private RelationRepository relationRepository;
     @Autowired
     private EntityGroupDao entityGroupDao;
     @Autowired
-    private TimeseriesLatestDao timeseriesLatestDao;
+    private TsKvLatestRepository tsKvLatestRepository;
     @Autowired
     @Lazy
     private DefaultEdqsService edqsService;
@@ -171,7 +171,7 @@ public abstract class EdqsSyncService {
     private void syncEntityGroups() {
         log.info("Synchronizing entity groups to EDQS");
         long ts = System.currentTimeMillis();
-        var entityGroups = new PageDataIterable<>(entityGroupDao::findAllFields, 10000);
+        var entityGroups = new PageDataIterable<>(entityGroupDao::findAllFields, 30000);
         for (EntityFields groupFields : entityGroups) {
             EntityIdInfo entityIdInfo = entityInfoMap.get(groupFields.getOwnerId());
             if (entityIdInfo != null) {
@@ -187,18 +187,43 @@ public abstract class EdqsSyncService {
     private void syncRelations() {
         log.info("Synchronizing relations to EDQS");
         long ts = System.currentTimeMillis();
-        var relations = new PageDataIterable<>(relationDao::findAll, 10000);
-        for (EntityRelation relation : relations) {
-            if (relation.getTypeGroup() == RelationTypeGroup.COMMON || relation.getTypeGroup() == RelationTypeGroup.FROM_ENTITY_GROUP) {
-                EntityIdInfo entityIdInfo = entityInfoMap.get(relation.getFrom().getId());
+        UUID lastFromEntityId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+        String lastFromEntityType = "";
+        String lastRelationTypeGroup = "";
+        String lastRelationType = "";
+        UUID lastToEntityId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+        String lastToEntityType = "";
+
+        while (true) {
+            List<RelationEntity> batch = relationRepository.findNextBatch(lastFromEntityId, lastFromEntityType, lastRelationTypeGroup,
+                    lastRelationType, lastToEntityId, lastToEntityType, 10000);
+            if (batch.isEmpty()) {
+                break;
+            }
+            processRelationBatch(batch);
+
+            RelationEntity lastRecord = batch.get(batch.size() - 1);
+            lastFromEntityId = lastRecord.getFromId();
+            lastFromEntityType = lastRecord.getFromType();
+            lastRelationTypeGroup = lastRecord.getRelationTypeGroup();
+            lastRelationType = lastRecord.getRelationType();
+            lastToEntityId = lastRecord.getToId();
+            lastToEntityType = lastRecord.getToType();
+        }
+        log.info("Finished synchronizing relations to EDQS in {} ms", (System.currentTimeMillis() - ts));
+    }
+
+    private void processRelationBatch(List<RelationEntity> relations) {
+        for (RelationEntity relation : relations) {
+            if (RelationTypeGroup.COMMON.name().equals(relation.getRelationTypeGroup()) || (RelationTypeGroup.FROM_ENTITY_GROUP.name().equals(relation.getRelationTypeGroup()))) {
+                EntityIdInfo entityIdInfo = entityInfoMap.get(relation.getFromId());
                 if (entityIdInfo != null) {
-                    process(entityIdInfo.tenantId(), RELATION, relation);
+                    process(entityIdInfo.tenantId(), RELATION, relation.toData());
                 } else {
-                    log.info("Relation from entity not found: " + relation.getFrom());
+                    log.info("Relation from entity not found: " + relation.getFromId());
                 }
             }
         }
-        log.info("Finished synchronizing relations to EDQS in {} ms", (System.currentTimeMillis() - ts));
     }
 
     private void loadKeyDictionary() {
@@ -214,8 +239,28 @@ public abstract class EdqsSyncService {
     private void syncAttributes() {
         log.info("Synchronizing attributes to EDQS");
         long ts = System.currentTimeMillis();
-        var attributes = new PageDataIterable<>(attributesDao::findAll, 10000);
-        for (AttributeKvEntity attribute : attributes) {
+
+        UUID lastEntityId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+        int lastAttributeType = Integer.MIN_VALUE;
+        int lastAttributeKey = Integer.MIN_VALUE;
+
+        while (true) {
+            List<AttributeKvEntity> batch = attributesDao.findNextBatch(lastEntityId, lastAttributeType, lastAttributeKey, 10000);
+            if (batch.isEmpty()) {
+                break;
+            }
+            processAttributeBatch(batch);
+
+            AttributeKvEntity lastRecord = batch.get(batch.size() - 1);
+            lastEntityId = lastRecord.getId().getEntityId();
+            lastAttributeType = lastRecord.getId().getAttributeType();
+            lastAttributeKey = lastRecord.getId().getAttributeKey();
+        }
+        log.info("Finished synchronizing attributes to EDQS in {} ms", (System.currentTimeMillis() - ts));
+    }
+
+    private void processAttributeBatch(List<AttributeKvEntity> batch) {
+        for (AttributeKvEntity attribute : batch) {
             attribute.setStrKey(getStrKeyOrFetchFromDb(attribute.getId().getAttributeKey()));
             UUID entityId = attribute.getId().getEntityId();
             EntityIdInfo entityIdInfo = entityInfoMap.get(entityId);
@@ -230,13 +275,29 @@ public abstract class EdqsSyncService {
                     attribute.getVersion());
             process(entityIdInfo.tenantId(), ATTRIBUTE_KV, attributeKv);
         }
-        log.info("Finished synchronizing attributes to EDQS in {} ms", (System.currentTimeMillis() - ts));
     }
 
     private void syncLatestTimeseries() {
         log.info("Synchronizing latest timeseries to EDQS");
         long ts = System.currentTimeMillis();
-        var tsKvLatestEntities = new PageDataIterable<>(pageLink -> timeseriesLatestDao.findAllLatest(pageLink), 10000);
+        UUID lastEntityId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+        int lastKey = Integer.MIN_VALUE;
+
+        while (true) {
+            List<TsKvLatestEntity> batch = tsKvLatestRepository.findNextBatch(lastEntityId, lastKey,  10000);
+            if (batch.isEmpty()) {
+                break;
+            }
+            processTsKvLatestBatch(batch);
+
+            TsKvLatestEntity lastRecord = batch.get(batch.size() - 1);
+            lastEntityId = lastRecord.getEntityId();
+            lastKey = lastRecord.getKey();
+        }
+        log.info("Finished synchronizing latest timeseries to EDQS in {} ms", (System.currentTimeMillis() - ts));
+    }
+
+    private void processTsKvLatestBatch(List<TsKvLatestEntity> tsKvLatestEntities) {
         for (TsKvLatestEntity tsKvLatestEntity : tsKvLatestEntities) {
             try {
                 String strKey = getStrKeyOrFetchFromDb(tsKvLatestEntity.getKey());
@@ -256,7 +317,6 @@ public abstract class EdqsSyncService {
                 log.error("Failed to sync latest timeseries: {}", tsKvLatestEntity, e);
             }
         }
-        log.info("Finished synchronizing latest timeseries to EDQS in {} ms", (System.currentTimeMillis() - ts));
     }
 
     private String getStrKeyOrFetchFromDb(int key) {
@@ -265,7 +325,9 @@ public abstract class EdqsSyncService {
             return strKey;
         } else {
             strKey = keyDictionaryDao.getKey(key);
-            keys.putIfAbsent(key, strKey);
+            if (strKey != null) {
+                keys.put(key, strKey);
+            }
         }
         return strKey;
     }

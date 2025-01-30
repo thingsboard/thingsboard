@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 
@@ -45,5 +46,12 @@ public interface TsKvLatestRepository extends JpaRepository<TsKvLatestEntity, Ts
 
     @Query("SELECT e FROM TsKvLatestEntity e ORDER BY e.entityId ASC, e.key ASC")
     Page<TsKvLatestEntity> findAll(Pageable pageable);
+
+
+    @Query(value = "SELECT entity_id, key, ts, bool_v, str_v, long_v, dbl_v, json_v, version FROM ts_kv_latest WHERE (entity_id, key) > " +
+            "(:entityId, :key) ORDER BY entity_id, key LIMIT :batchSize", nativeQuery = true)
+    List<TsKvLatestEntity> findNextBatch(@Param("entityId") UUID entityId,
+                                          @Param("key") int key,
+                                          @Param("batchSize") int batchSize);
 
 }

@@ -188,10 +188,6 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
         return tsKvLatestRepository.findAllKeysByEntityIds(entityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
     }
 
-    @Override
-    public PageData<TsKvLatestEntity> findAllLatest(PageLink pageLink) {
-        return DaoUtil.pageToPageData(tsKvLatestRepository.findAll(DaoUtil.toPageable(pageLink, "entityId", "key")));
-    }
 
     private ListenableFuture<TsKvLatestRemovingResult> getNewLatestEntryFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
         ListenableFuture<List<TsKvEntry>> future = findNewLatestEntryFuture(tenantId, entityId, query);

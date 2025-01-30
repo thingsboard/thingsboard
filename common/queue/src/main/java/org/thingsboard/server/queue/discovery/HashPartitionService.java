@@ -482,7 +482,7 @@ public class HashPartitionService implements PartitionService {
 
     private Set<TopicPartitionInfo> toTpiList(QueueKey queueKey, List<Integer> partitions) {
         if (partitions == null) {
-            return null;
+            return Collections.emptySet();
         }
         return partitions.stream()
                 .map(partition -> buildTopicPartitionInfo(queueKey, partition))

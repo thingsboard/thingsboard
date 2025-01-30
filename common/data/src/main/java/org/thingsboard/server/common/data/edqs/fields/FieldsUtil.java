@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -275,6 +276,7 @@ public class FieldsUtil {
         return ApiUsageStateFields.builder()
                 .id(entity.getUuidId())
                 .createdTime(entity.getCreatedTime())
+                .customerId(entity.getEntityId().getEntityType() == EntityType.CUSTOMER ? entity.getEntityId().getId() : null)
                 .entityId(entity.getEntityId())
                 .transportState(entity.getTransportState())
                 .dbStorageState(entity.getDbStorageState())

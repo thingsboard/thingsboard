@@ -30,7 +30,7 @@ import java.util.Arrays;
 @EnableAsync
 @EnableScheduling
 @ComponentScan({"org.thingsboard.server.edqs", "org.thingsboard.server.queue.edqs", "org.thingsboard.server.queue.discovery", "org.thingsboard.server.queue.kafka",
-        "org.thingsboard.server.queue.settings", "org.thingsboard.server.queue.environment"})
+        "org.thingsboard.server.queue.settings", "org.thingsboard.server.queue.environment", "org.thingsboard.server.common.stats"})
 @Slf4j
 public class ThingsboardEdqsApplication {
 
@@ -42,8 +42,8 @@ public class ThingsboardEdqsApplication {
     }
 
     //    @Bean
-    public ApplicationRunner runner(CSVLoader loader, EdqRepository edqRepository) {
-        return args -> {
+//    public ApplicationRunner runner(CSVLoader loader, EdqRepository edqRepository) {
+//        return args -> {
 //            long startTs = System.currentTimeMillis();
 //        var loader = new TenantRepoLoader(new TenantRepo(TenantId.fromUUID(UUID.fromString("2a209df0-c7ff-11ea-a3e0-f321b0429d60"))));
 //            loader.load();
@@ -103,8 +103,8 @@ public class ThingsboardEdqsApplication {
 //                });
 //                Thread.sleep(5000);
 //            }
-        };
-    }
+//        };
+//    }
 
     private static String[] updateArguments(String[] args) {
         if (Arrays.stream(args).noneMatch(arg -> arg.startsWith(SPRING_CONFIG_NAME_KEY))) {

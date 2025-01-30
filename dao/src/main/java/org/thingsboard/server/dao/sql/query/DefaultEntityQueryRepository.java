@@ -693,6 +693,10 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 SELECT_ADDRESS + ", " + SELECT_ADDRESS_2 + ", " + SELECT_ZIP + ", " + SELECT_PHONE + ", " +
                 SELECT_ADDITIONAL_INFO + (entityFilter.isMultiRoot() ? (", " + SELECT_RELATED_PARENT_ID) : "") +
                 ", entity.entity_type as entity_type";
+        /*
+        * FIXME:
+        *  target entities are duplicated in result list, if search direction is TO and multiple relations are references to target entity
+        * */
         String from = getQueryTemplate(entityFilter.getDirection(), entityFilter.isMultiRoot());
 
         if (entityFilter.isMultiRoot()) {

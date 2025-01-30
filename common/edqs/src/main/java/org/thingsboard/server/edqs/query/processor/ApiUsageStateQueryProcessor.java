@@ -76,8 +76,7 @@ public class ApiUsageStateQueryProcessor extends AbstractSingleEntityTypeQueryPr
     @Override
     protected boolean matches(EntityData<?> ed) {
         ApiUsageStateFields entityFields = (ApiUsageStateFields) ed.getFields();
-        return super.matches(ed) && (filter.getCustomerId() != null ? entityFields.getEntityId().equals(filter.getCustomerId()) :
-                entityFields.getEntityId().equals(repository.getTenantId()));
+        return super.matches(ed) && (filter.getCustomerId() == null || filter.getCustomerId().equals(entityFields.getEntityId()));
     }
 
     @Override

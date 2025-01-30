@@ -210,7 +210,6 @@ public class EntityServiceTest extends AbstractControllerTest {
         countByQueryAndCheck(countQuery, 0);
     }
 
-
     @Test
     public void testCountHierarchicalEntitiesByQuery() throws InterruptedException {
         List<Asset> assets = new ArrayList<>();
@@ -463,6 +462,7 @@ public class EntityServiceTest extends AbstractControllerTest {
         deviceService.deleteDevicesByTenantId(tenantId);
     }
 
+    // fails for sql implementation until we fix the issue with the relation query
     @Test
     public void testCountHierarchicalEntitiesByMultiRootQuery() throws InterruptedException {
         List<Asset> buildings = new ArrayList<>();
@@ -1443,18 +1443,29 @@ public class EntityServiceTest extends AbstractControllerTest {
         String deviceName = result.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue();
         assertThat(deviceName).isEqualTo(customerDevices.get(0).getName());
 
+        // find by customer user with generic permission
+        MergedUserPermissions mergedGenericPermission = new MergedUserPermissions(Map.of(Resource.DEVICE, Set.of(Operation.READ)), Collections.emptyMap());
+        PageData<EntityData> customerResults = findByQueryAndCheck(customerId, mergedGenericPermission, query, 1);
+
+        String cutomerDeviceName = customerResults.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue();
+        assertThat(cutomerDeviceName).isEqualTo(customerDevices.get(0).getName());
+
+        // find by customer user with group permission
+        MergedUserPermissions mergedGroupOnlyPermission = new MergedUserPermissions(Collections.emptyMap(), Map.of(customerDeviceGroup.getId(), new MergedGroupPermissionInfo(EntityType.DEVICE, Set.of(Operation.READ))));
+        PageData<EntityData> result2 = findByQueryAndCheck(customerId, mergedGroupOnlyPermission, query, 1);
+
+        String resultDeviceName2 = result2.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue();
+        assertThat(resultDeviceName2).isEqualTo(customerDevices.get(0).getName());
+
         // try to find tenant device by customer user
         SingleEntityFilter tenantDeviceFilter = new SingleEntityFilter();
         tenantDeviceFilter.setSingleEntity(tenantDevices.get(0).getId());
         EntityDataQuery customerQuery2 = new EntityDataQuery(tenantDeviceFilter, pageLink, entityFields, null, null);
-        PageData<EntityData> customerResults2 = entityService.findEntityDataByQuery(tenantId, customerId, customerQuery2);
-
-        assertEquals(0, customerResults2.getTotalElements());
+        findByQueryAndCheck(customerId, mergedGenericPermission, customerQuery2, 0);
 
         // find by tenant user with group permission
-        PageData<EntityData> results3 = entityService.findEntityDataByQuery(tenantId, new CustomerId(EntityId.NULL_UUID), query);
+        PageData<EntityData> results3 = findByQueryAndCheck(new CustomerId(EntityId.NULL_UUID), mergedGroupOnlyPermission, query, 1);
 
-        assertEquals(1, results3.getTotalElements());
         String deviceName3 = results3.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue();
         assertThat(deviceName3).isEqualTo(customerDevices.get(0).getName());
     }
@@ -1488,16 +1499,14 @@ public class EntityServiceTest extends AbstractControllerTest {
 
         // find by customer user with generic permissions
         apiUsageStateService.createDefaultApiUsageState(tenantId, customerId);
-        PageData<EntityData> customerResult = entityService.findEntityDataByQuery(tenantId, customerId, query);
+        PageData<EntityData> customerResult = findByQueryAndCheck(customerId, query, 1);
 
-        assertEquals(1, customerResult.getTotalElements());
         String customerResultName = customerResult.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue();
         assertThat(customerResultName).isEqualTo(TEST_CUSTOMER_NAME);
 
         // find by tenant user with customerId filter
         apiUsageStateFilter.setCustomerId(customerId);
-        PageData<EntityData> tenantResult = searchEntities(query);
-        assertEquals(1, tenantResult.getTotalElements());
+        PageData<EntityData> tenantResult = findByQueryAndCheck(query, 1);
         String tenantResultName = tenantResult.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue();
         assertThat(tenantResultName).isEqualTo(TEST_CUSTOMER_NAME);
     }
@@ -1623,6 +1632,231 @@ public class EntityServiceTest extends AbstractControllerTest {
 
         }
         deviceService.deleteDevicesByTenantId(tenantId);
+    }
+
+    @Test
+    public void testFindEntityDataByRelationQuery_blobEntity_customerLevel() {
+        final int deviceCnt = 2;
+        final int relationsCnt = 3;
+        final int blobEntitiesCnt = deviceCnt * relationsCnt;
+
+        Customer customer = new Customer();
+        customer.setTenantId(tenantId);
+        customer.setTitle("Customer Relation Query");
+        customer = customerService.saveCustomer(customer);
+
+        List<Device> devices = new ArrayList<>();
+        for (int i = 0; i < deviceCnt; i++) {
+            Device device = new Device();
+            device.setTenantId(tenantId);
+            device.setName("Device relation query " + i);
+            device.setCustomerId(customer.getId());
+            device.setType("default");
+            devices.add(deviceService.saveDevice(device));
+        }
+
+        List<BlobEntity> blobEntities = new ArrayList<>();
+        for (int i = 0; i < blobEntitiesCnt; i++) {
+            BlobEntity blobEntity = new BlobEntity();
+            blobEntity.setName("Blob relation query " + i);
+            blobEntity.setTenantId(tenantId);
+            blobEntity.setContentType("image/png");
+            blobEntity.setData(ByteBuffer.allocate(1024));
+            blobEntity.setCustomerId(customer.getId());
+            blobEntity.setType("Report");
+            blobEntities.add(blobEntityService.saveBlobEntity(blobEntity));
+        }
+
+        for (int i = 0; i < deviceCnt; i++) {
+            for (int j = 0; j < relationsCnt; j++) {
+                EntityRelation relationEntity = new EntityRelation();
+                relationEntity.setFrom(devices.get(i).getId());
+                relationEntity.setTo(blobEntities.get(j + (i * relationsCnt)).getId());
+                relationEntity.setTypeGroup(RelationTypeGroup.COMMON);
+                relationEntity.setType("fileAttached");
+                relationService.saveRelation(tenantId, relationEntity);
+            }
+        }
+
+        MergedUserPermissions mergedUserPermissions = new MergedUserPermissions(Map.of(ALL, Set.of(Operation.ALL)), Collections.emptyMap());
+
+        RelationEntityTypeFilter relationEntityTypeFilter = new RelationEntityTypeFilter("fileAttached", Collections.singletonList(EntityType.BLOB_ENTITY));
+        RelationsQueryFilter filter = new RelationsQueryFilter();
+        filter.setFilters(Collections.singletonList(relationEntityTypeFilter));
+        filter.setDirection(EntitySearchDirection.FROM);
+        EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, null);
+
+        for (Device device : devices) {
+            filter.setRootEntity(device.getId());
+
+            EntityDataQuery query = new EntityDataQuery(filter, pageLink, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+            findByQueryAndCheck(customer.getId(), mergedUserPermissions, query, relationsCnt);
+            countByQueryAndCheck(customer.getId(), mergedUserPermissions, query, relationsCnt);
+            /*
+            In order to be careful with updating Relation Query while adding new Entity Type,
+            this checkup will help to find place, where you could check the correctness of building query
+             */
+            Assert.assertEquals(38, EntityType.values().length);
+        }
+    }
+
+    @Test
+    public void testFindEntitiesByRelationEntityTypeFilterWithTenantGroupPermission() {
+        final int assetCount = 2;
+        final int relationsCnt = 4;
+        final int deviceEntitiesCnt = assetCount * relationsCnt;
+
+        EntityGroup deviceGroup = new EntityGroup();
+        deviceGroup.setName("Device Tenant Level Group");
+        deviceGroup.setOwnerId(tenantId);
+        deviceGroup.setTenantId(tenantId);
+        deviceGroup.setType(EntityType.DEVICE);
+        deviceGroup = entityGroupService.saveEntityGroup(tenantId, tenantId, deviceGroup);
+
+        List<Asset> assets = new ArrayList<>();
+        for (int i = 0; i < assetCount; i++) {
+            Asset building = new Asset();
+            building.setTenantId(tenantId);
+            building.setName("Building _" + i);
+            building.setType("building");
+            building = assetService.saveAsset(building);
+            assets.add(building);
+        }
+
+        List<Device> devices = new ArrayList<>();
+        for (int i = 0; i < deviceEntitiesCnt; i++) {
+            Device device = new Device();
+            device.setTenantId(tenantId);
+            device.setName("Test device " + i);
+            device.setType("default");
+            Device savedDevice = deviceService.saveDevice(device);
+            devices.add(savedDevice);
+            if (i % 2 == 0) {
+                entityGroupService.addEntityToEntityGroup(tenantId, deviceGroup.getId(), savedDevice.getId());
+            }
+        }
+
+        for (int i = 0; i < assetCount; i++) {
+            for (int j = 0; j < relationsCnt; j++) {
+                EntityRelation relationEntity = new EntityRelation();
+                relationEntity.setFrom(assets.get(i).getId());
+                relationEntity.setTo(devices.get(j + (i * relationsCnt)).getId());
+                relationEntity.setTypeGroup(RelationTypeGroup.COMMON);
+                relationEntity.setType("contains");
+                relationService.saveRelation(tenantId, relationEntity);
+            }
+        }
+
+        MergedUserPermissions groupOnlyPermission = new MergedUserPermissions(Collections.emptyMap(),
+                Map.of(deviceGroup.getId(), new MergedGroupPermissionInfo(EntityType.DEVICE, Set.of(Operation.READ))));
+
+        RelationEntityTypeFilter relationEntityTypeFilter = new RelationEntityTypeFilter("contains", Collections.singletonList(EntityType.DEVICE));
+        RelationsQueryFilter filter = new RelationsQueryFilter();
+        filter.setFilters(Collections.singletonList(relationEntityTypeFilter));
+        filter.setDirection(EntitySearchDirection.FROM);
+        EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, null);
+        List<KeyFilter> keyFiltersEqualString = createStringKeyFilters("name", EntityKeyType.ENTITY_FIELD, StringOperation.STARTS_WITH, "Test device ");
+
+        for (Asset asset : assets) {
+            filter.setRootEntity(asset.getId());
+
+            EntityDataQuery query = new EntityDataQuery(filter, pageLink, Collections.emptyList(), Collections.emptyList(), keyFiltersEqualString);
+            findByQueryAndCheck(new CustomerId(EntityId.NULL_UUID), groupOnlyPermission, query, relationsCnt / 2);
+            countByQueryAndCheck(new CustomerId(EntityId.NULL_UUID), groupOnlyPermission, query, relationsCnt / 2);
+        }
+    }
+
+    @Test
+    public void testFindEntitiesWithRelationEntityTypeFilterByCustomerUser() {
+        Customer customer = new Customer();
+        customer.setTenantId(tenantId);
+        customer.setTitle("Customer Relation Query");
+        customer = customerService.saveCustomer(customer);
+
+        final int assetCount = 2;
+        final int relationsCnt = 4;
+        final int deviceEntitiesCnt = assetCount * relationsCnt;
+
+        EntityGroup deviceGroup = new EntityGroup();
+        deviceGroup.setName("Device Tenant Level Group");
+        deviceGroup.setOwnerId(customer.getId());
+        deviceGroup.setTenantId(tenantId);
+        deviceGroup.setType(EntityType.DEVICE);
+        deviceGroup = entityGroupService.saveEntityGroup(tenantId, tenantId, deviceGroup);
+
+        List<Asset> assets = new ArrayList<>();
+        for (int i = 0; i < assetCount; i++) {
+            Asset building = new Asset();
+            building.setTenantId(tenantId);
+            building.setCustomerId(customer.getId());
+            building.setName("Building _" + i);
+            building.setType("building");
+            building = assetService.saveAsset(building);
+            assets.add(building);
+        }
+
+        List<Device> devices = new ArrayList<>();
+        for (int i = 0; i < deviceEntitiesCnt; i++) {
+            Device device = new Device();
+            device.setTenantId(tenantId);
+            device.setCustomerId(customer.getId());
+            device.setName("Test device " + i);
+            device.setType("default");
+            Device savedDevice = deviceService.saveDevice(device);
+            devices.add(savedDevice);
+            if (i % 2 == 0) {
+                entityGroupService.addEntityToEntityGroup(tenantId, deviceGroup.getId(), savedDevice.getId());
+            }
+        }
+
+        for (int i = 0; i < assetCount; i++) {
+            for (int j = 0; j < relationsCnt; j++) {
+                EntityRelation relationEntity = new EntityRelation();
+                relationEntity.setFrom(assets.get(i).getId());
+                relationEntity.setTo(devices.get(j + (i * relationsCnt)).getId());
+                relationEntity.setTypeGroup(RelationTypeGroup.COMMON);
+                relationEntity.setType("contains");
+                relationService.saveRelation(tenantId, relationEntity);
+            }
+        }
+
+        MergedUserPermissions mergedGroupOnlyPermission = new MergedUserPermissions(Collections.emptyMap(), Map.of(deviceGroup.getId(), new MergedGroupPermissionInfo(EntityType.DEVICE, Set.of(Operation.ALL))));
+        MergedUserPermissions mergedGenericOnlyPermission = new MergedUserPermissions(Map.of(Resource.ALL, Set.of(Operation.ALL)), Collections.emptyMap());
+        MergedUserPermissions mergedGenericAndGroupPermission = new MergedUserPermissions(Map.of(Resource.ALL, Set.of(Operation.ALL)), Map.of(deviceGroup.getId(), new MergedGroupPermissionInfo(EntityType.DEVICE, Set.of(Operation.ALL))));
+        RelationEntityTypeFilter relationEntityTypeFilter = new RelationEntityTypeFilter("contains", Collections.singletonList(EntityType.DEVICE));
+        RelationsQueryFilter filter = new RelationsQueryFilter();
+        filter.setFilters(Collections.singletonList(relationEntityTypeFilter));
+        filter.setDirection(EntitySearchDirection.FROM);
+        EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, null);
+        List<KeyFilter> keyFiltersEqualString = createStringKeyFilters("name", EntityKeyType.ENTITY_FIELD, StringOperation.STARTS_WITH, "Test device ");
+
+        EntityDataQuery query = new EntityDataQuery(filter, pageLink, Collections.emptyList(), Collections.emptyList(), keyFiltersEqualString);
+
+        for (Asset asset : assets) {
+            filter.setRootEntity(asset.getId());
+
+            //check by user with generic permission
+            PageData<EntityData> relationsResult = findByQueryAndCheck(customer.getId(), mergedGenericOnlyPermission, query, relationsCnt);
+            countByQueryAndCheck(customer.getId(), mergedGenericOnlyPermission, query, relationsCnt);
+
+            //check by user with generic and group permission
+            PageData<EntityData> relationsResult1 = findByQueryAndCheck(customer.getId(), mergedGenericAndGroupPermission, query, relationsCnt);
+            countByQueryAndCheck(customer.getId(), mergedGenericAndGroupPermission, query, relationsCnt);
+
+            //check by other customer user with group only permission
+            PageData<EntityData> relationsResult2 = findByQueryAndCheck(otherCustomerId, mergedGroupOnlyPermission, query, relationsCnt / 2);
+            long relationsResultCnt2 = countByQueryAndCheck(otherCustomerId, mergedGroupOnlyPermission, query, relationsCnt / 2);
+
+            Assert.assertEquals(relationsCnt / 2, relationsResult2.getData().size());
+            Assert.assertEquals(relationsCnt / 2, relationsResultCnt2);
+
+            //check by other customer user with generic and group only permission
+            PageData<EntityData> relationsResult3 = findByQueryAndCheck(otherCustomerId, mergedGenericAndGroupPermission, query, relationsCnt / 2);
+            long relationsResultCnt3 = countByQueryAndCheck(otherCustomerId, mergedGenericAndGroupPermission, query, relationsCnt / 2);
+
+            Assert.assertEquals(relationsCnt / 2, relationsResult3.getData().size());
+            Assert.assertEquals(relationsCnt / 2, relationsResultCnt3);
+        }
     }
 
     @Test
@@ -2422,7 +2656,7 @@ public class EntityServiceTest extends AbstractControllerTest {
         return timeseriesService.save(tenantId, entityId, timeseries);
     }
 
-    private void createMultiRootHierarchy(List<Asset> buildings, List<Asset> apartments,
+    protected void createMultiRootHierarchy(List<Asset> buildings, List<Asset> apartments,
                                           Map<String, Map<UUID, String>> entityNameByTypeMap,
                                           Map<UUID, UUID> childParentRelationMap) throws InterruptedException {
         for (int k = 0; k < 3; k++) {
@@ -2507,7 +2741,7 @@ public class EntityServiceTest extends AbstractControllerTest {
         entityView.setEndTimeMs(256);
         entityView.setExternalId(new EntityViewId(UUID.randomUUID()));
         entityView.setAdditionalInfo(JacksonUtil.newObjectNode().put("test", "test"));
-        entityView = entityViewDao.save(tenantId, entityView);
+        entityView = entityViewService.saveEntityView(entityView);
 
         EntityViewTypeFilter entityViewTypeFilter = new EntityViewTypeFilter();
         entityViewTypeFilter.setEntityViewNameFilter("test");
@@ -2518,21 +2752,18 @@ public class EntityServiceTest extends AbstractControllerTest {
         );
         EntityDataQuery query = new EntityDataQuery(entityViewTypeFilter, pageLink, entityFields, Collections.emptyList(), null);
 
-        PageData<EntityData> relationsResult = entityService.findEntityDataByQuery(tenantId, new CustomerId(EntityId.NULL_UUID), query);
-        assertThat(relationsResult.getData()).hasSize(1);
+        PageData<EntityData> relationsResult = findByQueryAndCheck(new CustomerId(EntityId.NULL_UUID), query, 1);
         assertThat(relationsResult.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue()).isEqualTo(entityView.getName());
 
         // find with non existing name
         entityViewTypeFilter.setEntityViewNameFilter("non-existing");
-        PageData<EntityData> relationsResult2 = entityService.findEntityDataByQuery(tenantId, new CustomerId(EntityId.NULL_UUID), query);
-        assertThat(relationsResult2.getData()).hasSize(0);
+        findByQueryAndCheck(new CustomerId(EntityId.NULL_UUID), query, 0);
 
         // find with non existing type
         entityViewTypeFilter.setEntityViewNameFilter(null);
         entityViewTypeFilter.setEntityViewTypes(Collections.singletonList("non-existing"));
 
-        PageData<EntityData> relationsResult3 = entityService.findEntityDataByQuery(tenantId, new CustomerId(EntityId.NULL_UUID), query);
-        assertThat(relationsResult3.getData()).hasSize(0);
+        findByQueryAndCheck(new CustomerId(EntityId.NULL_UUID), query, 0);
     }
 
     private PageData<EntityData> findByQuery(EntityDataQuery query) {

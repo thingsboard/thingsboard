@@ -1616,11 +1616,11 @@ queue:
       # Kafka properties for Edge event topic
       edge-event: "${TB_QUEUE_KAFKA_EDGE_EVENT_TOPIC_PROPERTIES:retention.ms:2592000000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       # Kafka properties for EDQS events topics. Partitions number must be the same as queue.edqs.partitions
-      edqs-events: "${TB_QUEUE_KAFKA_EDQS_EVENTS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:12;min.insync.replicas:1}"
+      edqs-events: "${TB_QUEUE_KAFKA_EDQS_EVENTS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:-1;partitions:12;min.insync.replicas:1}"
       # Kafka properties for EDQS requests topic (default: 3 minutes retention). Partitions number must be the same as queue.edqs.partitions
       edqs-requests: "${TB_QUEUE_KAFKA_EDQS_REQUESTS_TOPIC_PROPERTIES:retention.ms:180000;segment.bytes:52428800;retention.bytes:1048576000;partitions:12;min.insync.replicas:1}"
       # Kafka properties for EDQS state topic (infinite retention, compaction). Partitions number must be the same as queue.edqs.partitions
-      edqs-state: "${TB_QUEUE_KAFKA_EDQS_LATEST_EVENTS_TOPIC_PROPERTIES:retention.ms:-1;segment.bytes:52428800;retention.bytes:1048576000;partitions:12;min.insync.replicas:1;cleanup.policy:compact}"
+      edqs-state: "${TB_QUEUE_KAFKA_EDQS_STATE_TOPIC_PROPERTIES:retention.ms:-1;segment.bytes:52428800;retention.bytes:-1;partitions:12;min.insync.replicas:1;cleanup.policy:compact}"
     consumer-stats:
       # Prints lag between consumer group offset and last messages offset in Kafka topics
       enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
@@ -1701,6 +1701,7 @@ queue:
     local:
       rocksdb_path: "${TB_EDQS_ROCKSDB_PATH:/tmp/edqs-backup}"
     partitions: "${TB_EDQS_PARTITIONS:12}"
+    partitioning_strategy: "${TB_EDQS_PARTITIONING_STRATEGY:tenant}" # tenant or none. For 'none', each instance handles all partitions and duplicates all the data
     requests_topic: "${TB_EDQS_REQUESTS_TOPIC:edqs.requests}"
     responses_topic: "${TB_EDQS_RESPONSES_TOPIC:edqs.responses}"
     poll_interval: "${TB_EDQS_POLL_INTERVAL_MS:125}"

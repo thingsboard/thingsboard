@@ -42,10 +42,11 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.queue.QueueConfig;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.edqs.state.EdqsStateService;
 import org.thingsboard.server.edqs.repo.EdqRepository;
+import org.thingsboard.server.edqs.state.EdqsStateService;
 import org.thingsboard.server.edqs.util.EdqsPartitionService;
 import org.thingsboard.server.edqs.util.VersionsStore;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -70,6 +71,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @EdqsComponent
@@ -95,6 +97,8 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
     private ListeningExecutorService requestExecutor;
 
     private final VersionsStore versionsStore = new VersionsStore();
+
+    private final AtomicInteger counter = new AtomicInteger(); // FIXME: TMP
 
     @PostConstruct
     private void init() {
@@ -152,15 +156,17 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
                 responseTemplate.subscribe(withTopic(partitions, config.getRequestsTopic()));
 
                 Set<TopicPartitionInfo> oldPartitions = event.getOldPartitions().get(new QueueKey(ServiceType.EDQS));
-                Set<Integer> removedPartitions = Sets.difference(oldPartitions, newPartitions).stream()
-                        .map(tpi -> tpi.getPartition().orElse(-1)).collect(Collectors.toSet());
-                if (config.getPartitioningStrategy() != EdqsPartitioningStrategy.TENANT && !removedPartitions.isEmpty()) {
-                    log.warn("Partitions {} were removed but shouldn't be (due to NONE partitioning strategy)", removedPartitions);
+                if (CollectionsUtil.isNotEmpty(oldPartitions)) {
+                    Set<Integer> removedPartitions = Sets.difference(oldPartitions, newPartitions).stream()
+                            .map(tpi -> tpi.getPartition().orElse(-1)).collect(Collectors.toSet());
+                    if (config.getPartitioningStrategy() != EdqsPartitioningStrategy.TENANT && !removedPartitions.isEmpty()) {
+                        log.warn("Partitions {} were removed but shouldn't be (due to NONE partitioning strategy)", removedPartitions);
+                    }
+                    repository.clearIf(tenantId -> {
+                        Integer partition = partitionService.resolvePartition(tenantId);
+                        return partition != null && removedPartitions.contains(partition);
+                    });
                 }
-                repository.clearIf(tenantId -> {
-                    Integer partition = partitionService.resolvePartition(tenantId);
-                    return partition != null && removedPartitions.contains(partition);
-                });
             } catch (Throwable t) {
                 log.error("Failed to handle partition change event {}", event, t);
             }
@@ -221,7 +227,11 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
             }
 
             EdqsObject object = converter.deserialize(objectType, eventMsg.getData().toByteArray());
-            log.info("[{}] Processing event [{}] [{}] [{}] [{}]", tenantId, objectType, eventType, key, version);
+            log.debug("[{}] Processing event [{}] [{}] [{}] [{}]", tenantId, objectType, eventType, key, version);
+            int count = counter.incrementAndGet();
+            if (count % 100000 == 0) {
+                log.info("Processed {} events", count);
+            }
 
             EdqsEvent event = EdqsEvent.builder()
                     .tenantId(tenantId)

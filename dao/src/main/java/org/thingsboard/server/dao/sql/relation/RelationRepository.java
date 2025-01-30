@@ -85,6 +85,15 @@ public interface RelationRepository
     @Query("DELETE FROM RelationEntity r where r.fromId = :fromId and r.fromType = :fromType and r.relationTypeGroup in :relationTypeGroups")
     void deleteByFromIdAndFromTypeAndRelationTypeGroupIn(@Param("fromId") UUID fromId, @Param("fromType") String fromType, @Param("relationTypeGroups") List<String> relationTypeGroups);
 
-    @Query("SELECT e FROM RelationEntity e ORDER BY e.fromId, e.fromType, e.toId, e.toType, e.relationType, e.relationTypeGroup")
-    Page<RelationEntity> findAll(Pageable pageable);
+    @Query(value = "SELECT from_id, from_type, relation_type_group, relation_type, to_id, to_type, additional_info, version FROM relation" +
+            " WHERE (from_id, from_type, relation_type_group, relation_type, to_id, to_type) > " +
+            "(:fromId, :fromType, :relationTypeGroup, :relationType, :toId, :toType) ORDER BY " +
+            "from_id, from_type, relation_type_group, relation_type, to_id, to_type LIMIT :batchSize", nativeQuery = true)
+    List<RelationEntity> findNextBatch(@Param("fromId") UUID fromId,
+                                       @Param("fromType") String fromType,
+                                       @Param("relationTypeGroup") String relationTypeGroup,
+                                       @Param("relationType") String relationType,
+                                       @Param("toId") UUID toId,
+                                       @Param("toType") String toType,
+                                       @Param("batchSize") int batchSize);
 }
