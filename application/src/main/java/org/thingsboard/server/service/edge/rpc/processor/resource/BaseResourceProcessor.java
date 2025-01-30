@@ -17,29 +17,19 @@ package org.thingsboard.server.service.edge.rpc.processor.resource;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
-import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
-import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
 @Slf4j
 public abstract class BaseResourceProcessor extends BaseEdgeProcessor {
 
-    @Autowired
-    private DataValidator<TbResource> resourceValidator;
-
     protected boolean saveOrUpdateTbResource(TenantId tenantId, TbResourceId tbResourceId, ResourceUpdateMsg resourceUpdateMsg) {
-        return saveOrUpdateTbResource(tenantId, tbResourceId, resourceUpdateMsg, true);
-    }
-
-    protected boolean saveOrUpdateTbResource(TenantId tenantId, TbResourceId tbResourceId, ResourceUpdateMsg resourceUpdateMsg, boolean doValidate) {
         boolean resourceKeyUpdated = false;
         try {
             TbResource resource = constructResourceFromUpdateMsg(tenantId, tbResourceId, resourceUpdateMsg);
@@ -68,9 +58,6 @@ public abstract class BaseResourceProcessor extends BaseEdgeProcessor {
                 }
             }
             resource.setResourceKey(resourceKey);
-            if (doValidate) {
-                resourceValidator.validate(resource, TbResourceInfo::getTenantId);
-            }
             if (created) {
                 resource.setId(tbResourceId);
             }
