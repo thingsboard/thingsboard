@@ -17,6 +17,9 @@ package org.thingsboard.server.service.cf.ctx.state;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.thingsboard.server.common.data.kv.BasicKvEntry;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -32,10 +35,10 @@ public class TsRollingArgumentEntryTest {
 
     @BeforeEach
     void setUp() {
-        TreeMap<Long, Object> values = new TreeMap<>();
-        values.put(ts - 40, 10);
-        values.put(ts - 30, 12);
-        values.put(ts - 20, 17);
+        TreeMap<Long, BasicKvEntry> values = new TreeMap<>();
+        values.put(ts - 40, new DoubleDataEntry("key", 10.0));
+        values.put(ts - 30, new DoubleDataEntry("key", 12.0));
+        values.put(ts - 20, new DoubleDataEntry("key", 17.0));
 
         entry = new TsRollingArgumentEntry(values);
     }
@@ -47,7 +50,7 @@ public class TsRollingArgumentEntryTest {
 
     @Test
     void testUpdateEntryWhenSingleValueEntryPassed() {
-        SingleValueArgumentEntry newEntry = new SingleValueArgumentEntry(ts - 10, 23, 123L);
+        SingleValueArgumentEntry newEntry = new SingleValueArgumentEntry(ts - 10, new DoubleDataEntry("key", 23.0), 123L);
 
         assertThat(entry.updateEntry(newEntry)).isTrue();
         assertThat(entry.getTsRecords()).hasSize(4);
@@ -56,7 +59,7 @@ public class TsRollingArgumentEntryTest {
 
     @Test
     void testUpdateEntryWhenSingleValueEntryWithTheSameTsPassed() {
-        SingleValueArgumentEntry newEntry = new SingleValueArgumentEntry(ts - 20, 23, 123L);
+        SingleValueArgumentEntry newEntry = new SingleValueArgumentEntry(ts - 20, new DoubleDataEntry("key", 23.0), 123L);
 
         assertThat(entry.updateEntry(newEntry)).isFalse();
     }
@@ -64,10 +67,10 @@ public class TsRollingArgumentEntryTest {
     @Test
     void testUpdateEntryWhenRollingEntryPassed() {
         TsRollingArgumentEntry newEntry = new TsRollingArgumentEntry();
-        TreeMap<Long, Object> values = new TreeMap<>();
-        values.put(ts - 20, 16);
-        values.put(ts - 10, 7);
-        values.put(ts - 5, 1);
+        TreeMap<Long, BasicKvEntry> values = new TreeMap<>();
+        values.put(ts - 20, new DoubleDataEntry("key", 16.0));
+        values.put(ts - 10, new DoubleDataEntry("key", 7.0));
+        values.put(ts - 5, new DoubleDataEntry("key", 1.0));
         newEntry.setTsRecords(values);
 
         assertThat(entry.updateEntry(newEntry)).isTrue();
@@ -83,7 +86,7 @@ public class TsRollingArgumentEntryTest {
 
     @Test
     void testUpdateEntryWhenValueIsNotNumber() {
-        SingleValueArgumentEntry newEntry = new SingleValueArgumentEntry(ts - 10, "string", 123L);
+        SingleValueArgumentEntry newEntry = new SingleValueArgumentEntry(ts - 10, new StringDataEntry("key", "string"), 123L);
 
         assertThatThrownBy(() -> entry.updateEntry(newEntry))
                 .isInstanceOf(IllegalArgumentException.class)

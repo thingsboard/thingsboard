@@ -21,6 +21,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.List;
@@ -52,7 +53,8 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
 
         for (Map.Entry<String, ArgumentEntry> entry : this.arguments.entrySet()) {
             try {
-                expr.setVariable(entry.getKey(), Double.parseDouble(entry.getValue().getValue().toString()));
+                BasicKvEntry kvEntry = ((SingleValueArgumentEntry) entry.getValue()).getValue();
+                expr.setVariable(entry.getKey(), Double.parseDouble(kvEntry.getValueAsString()));
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Argument '" + entry.getKey() + "' is not a number.");
             }

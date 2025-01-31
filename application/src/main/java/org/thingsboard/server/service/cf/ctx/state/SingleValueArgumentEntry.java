@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.util.ProtoUtils;
@@ -33,19 +34,19 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     public static final ArgumentEntry EMPTY = new SingleValueArgumentEntry(0);
 
     private long ts;
-    private Object value;
+    private BasicKvEntry value;
     private Long version;
 
     public SingleValueArgumentEntry(TsKvProto entry) {
         this.ts = entry.getTs();
         this.version = entry.getVersion();
-        this.value = ProtoUtils.fromProto(entry).getValue();
+        this.value = ProtoUtils.fromProto(entry.getKv());
     }
 
     public SingleValueArgumentEntry(AttributeValueProto entry) {
         this.ts = entry.getLastUpdateTs();
         this.version = entry.getVersion();
-        this.value = ProtoUtils.fromProto(entry).getValue();
+        this.value = ProtoUtils.basicKvEntryFromProto(entry);
     }
 
     public SingleValueArgumentEntry(KvEntry entry) {
@@ -56,7 +57,7 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
             this.ts = attributeKvEntry.getLastUpdateTs();
             this.version = attributeKvEntry.getVersion();
         }
-        this.value = entry.getValue();
+        this.value = ProtoUtils.basicKvEntryFromKvEntry(entry);
     }
 
     /**
@@ -70,11 +71,6 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     @Override
     public ArgumentEntryType getType() {
         return ArgumentEntryType.SINGLE_VALUE;
-    }
-
-    @Override
-    public Object getValue() {
-        return value;
     }
 
     @Override

@@ -71,11 +71,13 @@ import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeScopeProto;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeValueProto;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityUpdateMsgProto;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldLinkedTelemetryMsgProto;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldLinkedTelemetryMsgProto.Builder;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ComponentLifecycleEvent;
 import org.thingsboard.server.gen.transport.TransportProtos.ComponentLifecycleMsgProto;
@@ -84,7 +86,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNot
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
-import org.thingsboard.server.queue.discovery.HashPartitionService;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtx;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldStateService;
@@ -383,7 +384,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
                         log.info("Initializing state for all entities in profile: tenantId=[{}], profileId=[{}]", tenantId, entityId);
                         Map<String, Argument> commonArguments = calculatedFieldCtx.getArguments().entrySet().stream()
                                 .filter(entry -> entry.getValue().getRefEntityId() != null)
-                                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
                         fetchArguments(tenantId, entityId, commonArguments, commonArgs -> {
                             calculatedFieldCache.getEntitiesByProfile(tenantId, entityId).forEach(targetEntityId -> {
                                 initializeStateForEntity(calculatedFieldCtx, targetEntityId, commonArgs, callback);
@@ -551,7 +552,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     private void executeTelemetryUpdate(CalculatedFieldCtx cfCtx, EntityId entityId, List<CalculatedFieldId> previousCalculatedFieldIds, Map<String, KvEntry> updatedTelemetry) {
         log.info("Received telemetry update msg: tenantId=[{}], entityId=[{}], calculatedFieldId=[{}]", cfCtx.getTenantId(), entityId, cfCtx.getCfId());
         Map<String, ArgumentEntry> argumentValues = updatedTelemetry.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> ArgumentEntry.createSingleValueArgument(entry.getValue())));
+                .collect(Collectors.toMap(Entry::getKey, entry -> ArgumentEntry.createSingleValueArgument(entry.getValue())));
 
 //        updateOrInitializeState(cfCtx, entityId, argumentValues, previousCalculatedFieldIds);
     }
@@ -677,7 +678,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             if (broadcast) {
                 broadcasts.add(link);
             } else {
-                TopicPartitionInfo tpi = partitionService.resolve(HashPartitionService.CALCULATED_FIELD_QUEUE_KEY, link.entityId());
+                TopicPartitionInfo tpi = partitionService.resolve(CALCULATED_FIELD_QUEUE_KEY, link.entityId());
                 unicasts.computeIfAbsent(tpi, k -> new ArrayList<>()).add(link);
             }
         }
@@ -710,7 +711,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     }
 
     private CalculatedFieldLinkedTelemetryMsgProto buildLinkedTelemetryMsgProto(CalculatedFieldTelemetryMsgProto telemetryProto, List<CalculatedFieldEntityCtxId> links) {
-        TransportProtos.CalculatedFieldLinkedTelemetryMsgProto.Builder builder = TransportProtos.CalculatedFieldLinkedTelemetryMsgProto.newBuilder();
+        Builder builder = CalculatedFieldLinkedTelemetryMsgProto.newBuilder();
         builder.setMsg(telemetryProto);
         for (CalculatedFieldEntityCtxId link : links) {
             builder.addLinks(toProto(link));
@@ -719,8 +720,10 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     }
 
     //TODO: IM: move to utils;
-    private TransportProtos.CalculatedFieldEntityCtxIdProto toProto(CalculatedFieldEntityCtxId ctxId) {
-        return TransportProtos.CalculatedFieldEntityCtxIdProto.newBuilder()
+    private CalculatedFieldEntityCtxIdProto toProto(CalculatedFieldEntityCtxId ctxId) {
+        return CalculatedFieldEntityCtxIdProto.newBuilder()
+                .setTenantIdMSB(ctxId.tenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(ctxId.tenantId().getId().getLeastSignificantBits())
                 .setCalculatedFieldIdMSB(ctxId.cfId().getId().getMostSignificantBits())
                 .setCalculatedFieldIdLSB(ctxId.cfId().getId().getLeastSignificantBits())
                 .setEntityType(ctxId.entityId().getEntityType().name())
@@ -890,8 +893,8 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         return telemetryMsg;
     }
 
-    private TransportProtos.CalculatedFieldIdProto toProto(CalculatedFieldId cfId) {
-        return TransportProtos.CalculatedFieldIdProto.newBuilder()
+    private CalculatedFieldIdProto toProto(CalculatedFieldId cfId) {
+        return CalculatedFieldIdProto.newBuilder()
                 .setCalculatedFieldIdMSB(cfId.getId().getMostSignificantBits())
                 .setCalculatedFieldIdLSB(cfId.getId().getLeastSignificantBits())
                 .build();

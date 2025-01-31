@@ -22,6 +22,8 @@ import org.rocksdb.RocksIterator;
 import org.rocksdb.WriteOptions;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.utils.RocksDBConfig;
 
 import java.nio.charset.StandardCharsets;
@@ -49,6 +51,14 @@ public class RocksDBService {
         }
     }
 
+    public void put(CalculatedFieldEntityCtxIdProto key, CalculatedFieldStateProto value) {
+        try {
+            db.put(writeOptions, key.toByteArray(), value.toByteArray());
+        } catch (RocksDBException e) {
+            log.error("Failed to store data to RocksDB", e);
+        }
+    }
+
     public void delete(String key) {
         try {
             db.delete(writeOptions, key.getBytes(StandardCharsets.UTF_8));
@@ -67,18 +77,20 @@ public class RocksDBService {
         }
     }
 
-    public Map<String, String> getAll() {
-        Map<String, String> map = new HashMap<>();
+    public Map<CalculatedFieldEntityCtxIdProto, CalculatedFieldStateProto> getAll() {
+        Map<CalculatedFieldEntityCtxIdProto, CalculatedFieldStateProto> results = new HashMap<>();
         try (RocksIterator iterator = db.newIterator()) {
             for (iterator.seekToFirst(); iterator.isValid(); iterator.next()) {
-                String key = new String(iterator.key(), StandardCharsets.UTF_8);
-                String value = new String(iterator.value(), StandardCharsets.UTF_8);
-                map.put(key, value);
+                try {
+                    CalculatedFieldEntityCtxIdProto key = CalculatedFieldEntityCtxIdProto.parseFrom(iterator.key());
+                    CalculatedFieldStateProto value = CalculatedFieldStateProto.parseFrom(iterator.value());
+                    results.put(key, value);
+                } catch (Exception e) {
+                    log.error("Failed to retrieve data from RocksDB", e);
+                }
             }
-        } catch (Exception e) {
-            log.error("Failed to retrieve data from RocksDB", e);
         }
-        return map;
+        return results;
     }
 
 }

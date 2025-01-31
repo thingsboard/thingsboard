@@ -24,8 +24,6 @@ public interface CalculatedFieldStateService {
 
     Map<CalculatedFieldEntityCtxId, CalculatedFieldState> restoreStates();
 
-    CalculatedFieldState restoreState(CalculatedFieldEntityCtxId ctxId);
-
     void persistState(CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback);
 
     void removeState(CalculatedFieldEntityCtxId ctxId);
