@@ -53,6 +53,12 @@ public class CalculatedFieldEntityActor extends ContextAwareActor {
             case CF_STATE_RESTORE_MSG:
                 processor.process((CalculatedFieldStateRestoreMsg) msg);
                 break;
+            case CF_ENTITY_INIT_CF_MSG:
+                processor.process((EntityInitCalculatedFieldMsg) msg);
+                break;
+            case CF_ENTITY_DELETE_MSG:
+                processor.process((CalculatedFieldEntityDeleteMsg) msg);
+                break;
             case CF_ENTITY_TELEMETRY_MSG:
                 processor.process((EntityCalculatedFieldTelemetryMsg) msg);
                 break;

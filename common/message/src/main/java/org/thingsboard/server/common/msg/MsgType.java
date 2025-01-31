@@ -135,14 +135,18 @@ public enum MsgType {
     EDGE_SYNC_REQUEST_TO_EDGE_SESSION_MSG,
     EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG,
 
+
     CF_INIT_MSG, // Sent to init particular calculated field;
     CF_LINK_INIT_MSG, // Sent to init particular calculated field;
-    CF_STATE_RESTORE_MSG,// Sent to init particular calculated field entity state;
-    CF_TELEMETRY_MSG,
+    CF_STATE_RESTORE_MSG, // Sent to restore particular calculated field entity state;
+    CF_ENTITY_LIFECYCLE_MSG, // Sent on CF/Device/Asset create/update/delete;
+    CF_TELEMETRY_MSG, // Sent from queue to actor system;
+    CF_LINKED_TELEMETRY_MSG, // Sent from queue to actor system;
+
+    /* CF Manager Actor -> CF Entity actor */
     CF_ENTITY_TELEMETRY_MSG,
-    CF_LINKED_TELEMETRY_MSG,
-    CF_UPDATE_MSG,
-    CF_ENTITY_UPDATE_MSG;
+    CF_ENTITY_INIT_CF_MSG,
+    CF_ENTITY_DELETE_MSG;
 
     @Getter
     private final boolean ignoreOnStart;
