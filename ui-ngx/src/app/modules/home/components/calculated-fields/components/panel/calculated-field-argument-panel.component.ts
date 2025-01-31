@@ -36,6 +36,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityFilter } from '@shared/models/query/query.models';
 import { AliasFilterType } from '@shared/models/alias.models';
 import { merge } from 'rxjs';
+import { MINUTE } from '@shared/models/time/time.models';
 
 @Component({
   selector: 'tb-calculated-field-argument-panel',
@@ -68,8 +69,8 @@ export class CalculatedFieldArgumentPanelComponent extends PageComponent impleme
       scope: [{ value: AttributeScope.SERVER_SCOPE, disabled: true }],
     }),
     defaultValue: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
-    limit: [null],
-    timeWindow: [null],
+    limit: [10],
+    timeWindow: [MINUTE * 15],
   });
 
   argumentTypes: ArgumentType[];

@@ -168,22 +168,20 @@
           </div>
         </div>
       } @else {
-        <div class="tb-form-row">
-          <div class="fixed-title-width">{{ 'calculated-fields.time-window' | translate }}</div>
-          <div class="tb-flex no-gap">
-            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-              <input matInput type="number" min="0" name="value" formControlName="timeWindow" placeholder="{{ 'action.set' | translate }}"/>
-              <span class="block pr-2" matSuffix>{{ 'common.suffix.ms' | translate }}</span>
-            </mat-form-field>
+        <div class="tb-form-panel stroked">
+          <div class="tb-form-panel-title">{{ 'calculated-fields.time-window' | translate }}</div>
+          <div class="tb-form-row no-border">
+            <tb-timeinterval
+              subscriptSizing="dynamic"
+              appearance="outline"
+              class="w-full"
+              formControlName="timeWindow"
+            />
           </div>
         </div>
         <div class="tb-form-row">
           <div class="fixed-title-width">{{ 'calculated-fields.limit' | translate }}</div>
-          <div class="tb-flex no-gap">
-            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-              <input matInput type="number" min="0" name="value" formControlName="limit" placeholder="{{ 'action.set' | translate }}"/>
-            </mat-form-field>
-          </div>
+          <tb-datapoints-limit class="w-full" formControlName="limit"/>
         </div>
       }
     </div>

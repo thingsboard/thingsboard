@@ -1037,7 +1037,7 @@
         "shared-attributes": "Shared attributes",
         "attribute-key": "Attribute key",
         "default-value": "Default value",
-        "limit": "Limit",
+        "limit": "Max values",
         "time-window": "Time window",
         "customer-name": "Customer name",
         "timeseries": "Time series",
