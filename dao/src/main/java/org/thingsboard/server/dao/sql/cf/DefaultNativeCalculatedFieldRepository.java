@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLinkConfiguration;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -78,18 +79,20 @@ public class DefaultNativeCalculatedFieldRepository implements NativeCalculatedF
                 int configurationVersion = (int) row.get("configuration_version");
                 JsonNode configuration = JacksonUtil.toJsonNode((String) row.get("configuration"));
                 long version = row.get("version") != null ? (long) row.get("version") : 0;
+                String debugSettings = (String) row.get("debug_settings");
                 Object externalIdObj = row.get("external_id");
 
                 CalculatedField calculatedField = new CalculatedField();
                 calculatedField.setId(new CalculatedFieldId(id));
                 calculatedField.setCreatedTime(createdTime);
-                calculatedField.setTenantId(new TenantId(tenantId));
+                calculatedField.setTenantId(TenantId.fromUUID(tenantId));
                 calculatedField.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
                 calculatedField.setType(type);
                 calculatedField.setName(name);
                 calculatedField.setConfigurationVersion(configurationVersion);
                 calculatedField.setConfiguration(JacksonUtil.treeToValue(configuration, CalculatedFieldConfiguration.class));
                 calculatedField.setVersion(version);
+                calculatedField.setDebugSettings(JacksonUtil.fromString(debugSettings, DebugSettings.class));
                 calculatedField.setExternalId(externalIdObj != null ? new CalculatedFieldId(UUID.fromString((String) externalIdObj)) : null);
 
                 return calculatedField;

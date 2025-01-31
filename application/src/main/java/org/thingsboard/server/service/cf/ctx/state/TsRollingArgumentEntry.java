@@ -62,31 +62,49 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
     }
 
     @Override
-    public boolean hasUpdatedValue(ArgumentEntry entry) {
-        return entry instanceof SingleValueArgumentEntry ?
-                !tsRecords.containsKey(((SingleValueArgumentEntry) entry).getTs()) :
-                !tsRecords.keySet().containsAll(((TsRollingArgumentEntry) entry).getTsRecords().keySet());
-    }
-
-    @Override
     public ArgumentEntry copy() {
         return new TsRollingArgumentEntry(new TreeMap<>(tsRecords));
     }
 
-    public void addTsRecord(Long key, Object value) {
+    @Override
+    public boolean updateEntry(ArgumentEntry entry) {
+        if (entry instanceof TsRollingArgumentEntry tsRollingEntry) {
+            return updateTsRollingEntry(tsRollingEntry);
+        } else if (entry instanceof SingleValueArgumentEntry singleValueEntry) {
+            return updateSingleValueEntry(singleValueEntry);
+        } else {
+            throw new IllegalArgumentException("Unsupported argument entry type for rolling argument entry: " + entry.getType());
+        }
+    }
+
+    private boolean updateTsRollingEntry(TsRollingArgumentEntry tsRollingEntry) {
+        boolean updated = false;
+        for (Map.Entry<Long, Object> tsRecordEntry : tsRollingEntry.getTsRecords().entrySet()) {
+            updated |= addTsRecordIfAbsent(tsRecordEntry.getKey(), tsRecordEntry.getValue());
+        }
+        return updated;
+    }
+
+    private boolean updateSingleValueEntry(SingleValueArgumentEntry singleValueEntry) {
+        return addTsRecordIfAbsent(singleValueEntry.getTs(), singleValueEntry.getValue());
+    }
+
+    private boolean addTsRecordIfAbsent(Long ts, Object value) {
+        if (!tsRecords.containsKey(ts)) {
+            addTsRecord(ts, value);
+            return true;
+        }
+        return false;
+    }
+
+    private void addTsRecord(Long ts, Object value) {
         if (NumberUtils.isParsable(value.toString())) {
-            tsRecords.put(key, value);
+            tsRecords.put(ts, value);
             if (tsRecords.size() > MAX_ROLLING_ARGUMENT_ENTRY_SIZE) {
                 tsRecords.pollFirstEntry();
             }
         } else {
-            log.warn("Argument type 'TS_ROLLING' only supports numeric values.");
-        }
-    }
-
-    public void addAllTsRecords(Map<Long, Object> newRecords) {
-        for (Map.Entry<Long, Object> entry : newRecords.entrySet()) {
-            addTsRecord(entry.getKey(), entry.getValue());
+            throw new IllegalArgumentException("Argument type " + getType() + " only supports numeric values.");
         }
     }
 

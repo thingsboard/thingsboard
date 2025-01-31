@@ -119,6 +119,14 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     }
 
     @Override
+    public PageData<CalculatedField> findAllCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
+        log.trace("Executing findAllByEntityId, entityId [{}], pageLink [{}]", entityId, pageLink);
+        validateId(entityId.getId(), id -> INCORRECT_ENTITY_ID + id);
+        validatePageLink(pageLink);
+        return calculatedFieldDao.findAllByEntityId(tenantId, entityId, pageLink);
+    }
+
+    @Override
     public void deleteCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId) {
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validateId(calculatedFieldId, id -> INCORRECT_CALCULATED_FIELD_ID + id);

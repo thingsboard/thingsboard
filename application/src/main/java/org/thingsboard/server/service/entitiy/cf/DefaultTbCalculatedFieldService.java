@@ -29,6 +29,8 @@ import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
@@ -56,6 +58,10 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
         ActionType actionType = calculatedField.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = calculatedField.getTenantId();
         try {
+            if (ActionType.UPDATED.equals(actionType)) {
+                CalculatedField existingCf = calculatedFieldService.findById(tenantId, calculatedField.getId());
+                checkForEntityChange(existingCf, calculatedField);
+            }
             checkCalculatedFieldNumber(tenantId, calculatedField.getEntityId());
             checkEntityExistence(tenantId, calculatedField.getEntityId());
             checkArgumentSize(calculatedField.getConfiguration());
@@ -75,6 +81,13 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
     }
 
     @Override
+    public PageData<CalculatedField> findAllByTenantIdAndEntityId(EntityId entityId, SecurityUser user, PageLink pageLink) {
+        TenantId tenantId = user.getTenantId();
+        checkEntityExistence(tenantId, entityId);
+        return calculatedFieldService.findAllCalculatedFieldsByEntityId(tenantId, entityId, pageLink);
+    }
+
+    @Override
     @Transactional
     public void delete(CalculatedField calculatedField, SecurityUser user) {
         ActionType actionType = ActionType.DELETED;
@@ -86,6 +99,12 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.CALCULATED_FIELD), actionType, user, e, calculatedFieldId.toString());
             throw e;
+        }
+    }
+
+    private void checkForEntityChange(CalculatedField oldCalculatedField, CalculatedField newCalculatedField) {
+        if (!oldCalculatedField.getEntityId().equals(newCalculatedField.getEntityId())) {
+            throw new IllegalArgumentException("Changing the calculated field target entity after initialization is prohibited.");
         }
     }
 

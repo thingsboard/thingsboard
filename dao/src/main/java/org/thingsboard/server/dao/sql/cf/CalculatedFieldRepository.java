@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.dao.sql.cf;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.dao.model.sql.CalculatedFieldEntity;
@@ -29,6 +31,8 @@ public interface CalculatedFieldRepository extends JpaRepository<CalculatedField
     List<CalculatedFieldId> findCalculatedFieldIdsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 
     List<CalculatedFieldEntity> findAllByTenantIdAndEntityId(UUID tenantId, UUID entityId);
+
+    Page<CalculatedFieldEntity> findAllByTenantIdAndEntityId(UUID tenantId, UUID entityId, Pageable pageable);
 
     List<CalculatedFieldEntity> findAllByTenantId(UUID tenantId);
 

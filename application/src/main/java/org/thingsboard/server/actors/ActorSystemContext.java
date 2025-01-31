@@ -50,6 +50,7 @@ import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -105,6 +106,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.cf.CalculatedFieldExecutionService;
+import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
@@ -129,6 +131,7 @@ import org.thingsboard.server.service.transport.TbCoreToTransportService;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -744,29 +747,34 @@ public class ActorSystemContext {
         }
     }
 
-    public void persistCalculatedFieldDebugEvent(TenantId tenantId, CalculatedFieldId calculatedFieldId, EntityId entityId, Map<String, String> arguments, TbMsg tbMsg, Throwable error) {
-        if (checkLimits(tenantId, tbMsg, error)) {
-            try {
-                CalculatedFieldDebugEvent.CalculatedFieldDebugEventBuilder event = CalculatedFieldDebugEvent.builder()
-                        .tenantId(tenantId)
-                        .entityId(entityId.getId())
-                        .serviceId(getServiceId())
-                        .calculatedFieldId(calculatedFieldId)
-                        .eventEntity(tbMsg.getOriginator())
-                        .msgId(tbMsg.getId())
-                        .msgType(tbMsg.getType())
-                        .arguments(JacksonUtil.toString(arguments))
-                        .result(tbMsg.getData());
-
-                if (error != null) {
-                    event.error(toString(error));
-                }
-
-                ListenableFuture<Void> future = eventService.saveAsync(event.build());
-                Futures.addCallback(future, CALCULATED_FIELD_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
-            } catch (IllegalArgumentException ex) {
-                log.warn("Failed to persist calculated field debug message", ex);
+    public void persistCalculatedFieldDebugEvent(TenantId tenantId, CalculatedFieldId calculatedFieldId, EntityId entityId, Map<String, ArgumentEntry> arguments, UUID tbMsgId, TbMsgType tbMsgType, String result, Throwable error) {
+        try {
+            CalculatedFieldDebugEvent.CalculatedFieldDebugEventBuilder eventBuilder = CalculatedFieldDebugEvent.builder()
+                    .tenantId(tenantId)
+                    .entityId(entityId.getId())
+                    .serviceId(getServiceId())
+                    .calculatedFieldId(calculatedFieldId)
+                    .eventEntity(entityId);
+            if (tbMsgId != null) {
+                eventBuilder.msgId(tbMsgId);
             }
+            if (tbMsgType != null) {
+                eventBuilder.msgType(tbMsgType.name());
+            }
+            if (arguments != null) {
+                eventBuilder.arguments(JacksonUtil.toString(arguments));
+            }
+            if (result != null) {
+                eventBuilder.result(result);
+            }
+            if (error != null) {
+                eventBuilder.error(toString(error));
+            }
+
+            ListenableFuture<Void> future = eventService.saveAsync(eventBuilder.build());
+            Futures.addCallback(future, CALCULATED_FIELD_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
+        } catch (IllegalArgumentException ex) {
+            log.warn("Failed to persist calculated field debug message", ex);
         }
     }
 

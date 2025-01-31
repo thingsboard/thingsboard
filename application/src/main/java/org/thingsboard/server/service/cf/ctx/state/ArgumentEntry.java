@@ -39,7 +39,7 @@ public interface ArgumentEntry {
 
     Object getValue();
 
-    boolean hasUpdatedValue(ArgumentEntry entry);
+    boolean updateEntry(ArgumentEntry entry);
 
     static ArgumentEntry createSingleValueArgument(KvEntry kvEntry) {
         return new SingleValueArgumentEntry(kvEntry);
