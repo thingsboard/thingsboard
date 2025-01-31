@@ -85,6 +85,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   protected sidebar: L.TB.SidebarControl;
 
+  protected customActionsToolbar: L.TB.TopToolbarControl;
   protected editToolbar: L.TB.BottomToolbarControl;
 
   protected addMarkerButton: L.TB.ToolbarButton;
@@ -166,6 +167,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
     }
     this.setupDataLayers();
     this.setupEditMode();
+    this.setupCustomActions();
     this.createdControlButtonTooltip(this.mapElement, ['topleft', 'bottomleft'].includes(this.settings.controlsPosition) ? 'right' : 'left');
   }
 
@@ -270,7 +272,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
        onClose: () => {
          return this.deselectItem(true);
        }
-     }).addTo(this.map);
+     });
 
      this.map.on('click', () => {
        this.deselectItem();
@@ -347,6 +349,24 @@ export abstract class TbMap<S extends BaseMapSettings> {
          this.addCircleButton.setDisabled(true);
        }
      }
+  }
+
+  private setupCustomActions() {
+    this.customActionsToolbar = L.TB.topToolbar({
+      mapElement: $(this.mapElement)
+    });
+
+    /*const customButton = this.customActionsToolbar.toolbarButton({
+      title: 'Super button',
+      icon: 'add'
+    });
+    this.customActionsToolbar.toolbarButton({
+      title: 'Super button 2',
+      icon: 'add'
+    });
+    customButton.onClick(e => {
+      console.log("Called!");
+    });*/
   }
 
   private placeMarker(e: MouseEvent, button: L.TB.ToolbarButton): void {

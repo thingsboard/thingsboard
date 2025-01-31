@@ -89,7 +89,27 @@ declare module 'leaflet' {
       constructor(options: GroupsControlOptions);
     }
 
-    interface ToolbarButtonOptions extends ControlOptions {
+    interface TopToolbarButtonOptions {
+      icon: string;
+      iconColor?: string;
+      title: string;
+    }
+
+    class TopToolbarButton {
+      constructor(options: TopToolbarButtonOptions);
+      onClick(onClick: (e: MouseEvent) => void): void;
+    }
+
+    interface TopToolbarControlOptions {
+      mapElement: JQuery<HTMLElement>;
+    }
+
+    class TopToolbarControl {
+      constructor(options: TopToolbarControlOptions);
+      toolbarButton(options: TopToolbarButtonOptions): TopToolbarButton;
+    }
+
+    interface ToolbarButtonOptions {
       id: string;
       title: string;
       click: (e: MouseEvent, button: ToolbarButton) => void;
@@ -97,7 +117,7 @@ declare module 'leaflet' {
       showText?: boolean;
     }
 
-    class ToolbarButton extends Control<ToolbarButtonOptions>{
+    class ToolbarButton {
       constructor(options: ToolbarButtonOptions);
       setActive(active: boolean): void;
       isActive(): boolean;
@@ -110,13 +130,13 @@ declare module 'leaflet' {
       toolbarButton(options: ToolbarButtonOptions): ToolbarButton;
     }
 
-    interface BottomToolbarControlOptions extends ControlOptions {
+    interface BottomToolbarControlOptions {
       mapElement: JQuery<HTMLElement>;
       closeTitle: string;
       onClose: () => boolean;
     }
 
-    class BottomToolbarControl extends Control<BottomToolbarControlOptions> {
+    class BottomToolbarControl {
       constructor(options: BottomToolbarControlOptions);
       getButton(id: string): ToolbarButton | undefined;
       open(buttons: ToolbarButtonOptions[], showCloseButton?: boolean): void;
@@ -131,6 +151,8 @@ declare module 'leaflet' {
     function layers(options: LayersControlOptions): LayersControl;
 
     function groups(options: GroupsControlOptions): GroupsControl;
+
+    function topToolbar(options: TopToolbarControlOptions): TopToolbarControl;
 
     function toolbar(options: ControlOptions): ToolbarControl;
 

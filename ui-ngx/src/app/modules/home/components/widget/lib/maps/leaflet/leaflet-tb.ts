@@ -276,16 +276,49 @@ class GroupsControl extends SidebarPaneControl<TB.GroupsControlOptions> {
   }
 }
 
-class ToolbarButton extends L.Control<TB.ToolbarButtonOptions> {
+class TopToolbarButton {
+  private readonly button: JQuery<HTMLElement>;
+  private _onClick: (e: MouseEvent) => void;
+
+  constructor(private readonly options: TB.TopToolbarButtonOptions) {
+    const iconElement = $('<div class="tb-control-button-icon"></div>');
+    this.button = $("<a>")
+    .attr('class', 'tb-control-button tb-control-text-button')
+    .attr('href', '#')
+    .attr('role', 'button');
+    this.button.append(iconElement);
+    this.button.append(`<div class="tb-control-text">${this.options.title}</div>`);
+    this.loadIcon(iconElement);
+    this.button.on('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (this._onClick) {
+        this._onClick(e.originalEvent);
+      }
+    });
+  }
+
+  onClick(onClick: (e: MouseEvent) => void): void {
+   this._onClick = onClick;
+  }
+
+  private loadIcon(iconElement: JQuery<HTMLElement>) {
+    // this.options.icon
+  }
+
+  getButtonElement(): JQuery<HTMLElement> {
+    return this.button;
+  }
+}
+
+class ToolbarButton {
   private readonly id: string;
   private readonly button: JQuery<HTMLElement>;
   private active = false;
   private disabled = false;
 
-  constructor(options: TB.ToolbarButtonOptions) {
-    super(options);
+  constructor(private readonly options: TB.ToolbarButtonOptions) {
     this.id = options.id;
-
     const buttonText = this.options.showText ? this.options.title : null;
     this.button = $("<a>")
     .attr('class', 'tb-control-button')
@@ -346,6 +379,25 @@ class ToolbarButton extends L.Control<TB.ToolbarButtonOptions> {
   }
 }
 
+class TopToolbarControl {
+
+  private readonly toolbarElement: JQuery<HTMLElement>;
+
+  constructor(private readonly options: TB.TopToolbarControlOptions) {
+    const controlContainer = $('.leaflet-control-container', options.mapElement);
+    this.toolbarElement = $('<div class="tb-map-top-toolbar leaflet-top"></div>');
+    this.toolbarElement.appendTo(controlContainer);
+  }
+
+  toolbarButton(options: TB.TopToolbarButtonOptions): TopToolbarButton {
+    const button = new TopToolbarButton(options);
+    const buttonContainer = $('<div class="leaflet-bar leaflet-control"></div>');
+    button.getButtonElement().appendTo(buttonContainer);
+    buttonContainer.appendTo(this.toolbarElement);
+    return button;
+  }
+}
+
 class ToolbarControl extends L.Control<L.ControlOptions> {
 
   private buttonContainer: JQuery<HTMLElement>;
@@ -372,25 +424,20 @@ class ToolbarControl extends L.Control<L.ControlOptions> {
 
 }
 
-class BottomToolbarControl extends L.Control<TB.BottomToolbarControlOptions> {
+class BottomToolbarControl {
 
   private readonly buttonContainer: JQuery<HTMLElement>;
   private toolbarButtons: ToolbarButton[] = [];
 
   container: HTMLElement;
 
-  constructor(options: TB.BottomToolbarControlOptions) {
-    super(options);
+  constructor(private readonly options: TB.BottomToolbarControlOptions) {
     const controlContainer = $('.leaflet-control-container', options.mapElement);
     const toolbar = $('<div class="tb-map-bottom-toolbar leaflet-bottom"></div>');
     toolbar.appendTo(controlContainer);
     this.buttonContainer = $('<div class="leaflet-bar leaflet-control"></div>');
     this.buttonContainer.appendTo(toolbar);
     this.container = this.buttonContainer[0];
-  }
-
-  addTo(map: L.Map): this {
-    return this;
   }
 
   getButton(id: string): ToolbarButton {
@@ -450,6 +497,10 @@ const layers = (options: TB.LayersControlOptions): LayersControl => {
 
 const groups = (options: TB.GroupsControlOptions): GroupsControl => {
   return new GroupsControl(options);
+}
+
+const topToolbar = (options: TB.TopToolbarControlOptions): TopToolbarControl => {
+  return new TopToolbarControl(options);
 }
 
 const toolbar = (options: L.ControlOptions): ToolbarControl => {
@@ -515,6 +566,8 @@ L.TB = L.TB || {
   SidebarPaneControl,
   LayersControl,
   GroupsControl,
+  TopToolbarButton,
+  TopToolbarControl,
   ToolbarButton,
   ToolbarControl,
   BottomToolbarControl,
@@ -522,6 +575,7 @@ L.TB = L.TB || {
   sidebarPane,
   layers,
   groups,
+  topToolbar,
   toolbar,
   bottomToolbar,
   TileLayer: {
