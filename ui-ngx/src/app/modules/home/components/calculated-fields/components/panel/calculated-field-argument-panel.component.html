@@ -1,0 +1,198 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="w-screen max-w-xl" [formGroup]="argumentFormGroup">
+  <div class="tb-form-panel no-border no-padding mb-2">
+    <div class="tb-form-panel-title">{{ 'calculated-fields.argument-settings' | translate }}</div>
+    <div class="tb-form-panel no-border no-padding">
+      <div class="tb-form-row">
+        <div class="fixed-title-width tb-required">{{ 'calculated-fields.argument-name' | translate }}</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput name="value" formControlName="argumentName" maxlength="255" placeholder="{{ 'action.set' | translate }}"/>
+            @if (argumentFormGroup.get('argumentName').hasError('required') && argumentFormGroup.get('argumentName').touched) {
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="'calculated-fields.hint.argument-name-required' | translate"
+                        class="tb-error">
+                warning
+              </mat-icon>
+            } @else if (argumentFormGroup.get('argumentName').hasError('pattern') && argumentFormGroup.get('argumentName').touched) {
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="'calculated-fields.hint.argument-name-pattern' | translate"
+                        class="tb-error">
+                warning
+              </mat-icon>
+            } @else if (argumentFormGroup.get('argumentName').hasError('maxlength') && argumentFormGroup.get('argumentName').touched) {
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="'calculated-fields.hint.argument-name-max-length' | translate"
+                        class="tb-error">
+                warning
+              </mat-icon>
+            }
+          </mat-form-field>
+        </div>
+      </div>
+      <ng-container [formGroup]="refEntityIdFormGroup">
+        <div class="tb-form-row">
+          <div class="fixed-title-width tb-required">{{ 'entity.entity-type' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="entityType">
+              @for (type of argumentEntityTypes; track type) {
+                <mat-option [value]="type">{{ ArgumentEntityTypeTranslations.get(type) | translate }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+        @if (entityType === ArgumentEntityType.Device || entityType === ArgumentEntityType.Asset) {
+          <div class="tb-form-row">
+            <div class="fixed-title-width tb-required">{{ 'calculated-fields.device-name' | translate }}</div>
+            <tb-entity-autocomplete
+              class="entity-autocomplete w-full"
+              formControlName="id"
+              [withLabel]="false"
+              [placeholder]="'action.set' | translate"
+              [appearance]="'outline'"
+              [required]="true"
+              [iconError]="true"
+              [subscriptSizing]="'dynamic'"
+              [entityType]="EntityType.DEVICE"
+            />
+          </div>
+        } @else if (entityType === ArgumentEntityType.Customer) {
+          <div class="tb-form-row">
+            <div class="fixed-title-width tb-required">{{ 'calculated-fields.customer-name' | translate }}</div>
+            <tb-entity-autocomplete
+              class="entity-autocomplete w-full"
+              formControlName="id"
+              [withLabel]="false"
+              [placeholder]="'action.set' | translate"
+              [appearance]="'outline'"
+              [iconError]="true"
+              [required]="true"
+              [subscriptSizing]="'dynamic'"
+              [entityType]="EntityType.CUSTOMER"
+            />
+          </div>
+        }
+      </ng-container>
+      <ng-container [formGroup]="refEntityKeyFormGroup">
+        <div class="tb-form-row">
+          <div class="fixed-title-width tb-required">{{ 'calculated-fields.argument-type' | translate }}</div>
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="type">
+              @for (type of argumentTypes; track type) {
+                <mat-option [value]="type">{{ ArgumentTypeTranslations.get(type) | translate }}</mat-option>
+              }
+            </mat-select>
+            @if (refEntityKeyFormGroup.get('type').hasError('required') && refEntityKeyFormGroup.get('type').touched) {
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="'calculated-fields.hint.argument-type-required' | translate"
+                        class="tb-error">
+                warning
+              </mat-icon>
+            }
+          </mat-form-field>
+        </div>
+        @if (refEntityKeyFormGroup.get('type').value !== ArgumentType.Attribute) {
+          <div class="tb-form-row">
+            <div class="fixed-title-width tb-required">{{ 'calculated-fields.timeseries-key' | translate }}</div>
+            <tb-entity-key-autocomplete formControlName="key" [dataKeyType]="DataKeyType.timeseries" [entityFilter]="entityFilter"/>
+          </div>
+        } @else {
+          <div class="tb-form-row">
+            <div class="fixed-title-width tb-required">{{ 'calculated-fields.attribute-scope' | translate }}</div>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="scope" class="w-full">
+                <mat-option [value]="AttributeScope.SERVER_SCOPE">
+                  {{ 'calculated-fields.server-attributes' | translate }}
+                </mat-option>
+                @if ((keyEntityType$ | async) === EntityType.DEVICE) {
+                  <mat-option [value]="AttributeScope.CLIENT_SCOPE">
+                    {{ 'calculated-fields.client-attributes' | translate }}
+                  </mat-option>
+                  <mat-option [value]="AttributeScope.SHARED_SCOPE">
+                    {{ 'calculated-fields.shared-attributes' | translate }}
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row">
+            <div class="fixed-title-width tb-required">{{ 'calculated-fields.attribute-key' | translate }}</div>
+            <tb-entity-key-autocomplete
+              formControlName="key"
+              [dataKeyType]="DataKeyType.attribute"
+              [entityFilter]="entityFilter"
+              [keyScopeType]="argumentFormGroup.get('refEntityKey').get('scope').value"
+            />
+          </div>
+        }
+      </ng-container>
+      @if (refEntityKeyFormGroup.get('type').value !== ArgumentType.Rolling) {
+        <div class="tb-form-row">
+          <div class="fixed-title-width">{{ 'calculated-fields.default-value' | translate }}</div>
+          <div class="tb-flex no-gap">
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput autocomplete="off" name="value" formControlName="defaultValue" placeholder="{{ 'action.set' | translate }}"/>
+            </mat-form-field>
+          </div>
+        </div>
+      } @else {
+        <div class="tb-form-row">
+          <div class="fixed-title-width">{{ 'calculated-fields.time-window' | translate }}</div>
+          <div class="tb-flex no-gap">
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput type="number" min="0" name="value" formControlName="timeWindow" placeholder="{{ 'action.set' | translate }}"/>
+              <span class="block pr-2" matSuffix>{{ 'common.suffix.ms' | translate }}</span>
+            </mat-form-field>
+          </div>
+        </div>
+        <div class="tb-form-row">
+          <div class="fixed-title-width">{{ 'calculated-fields.limit' | translate }}</div>
+          <div class="tb-flex no-gap">
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput type="number" min="0" name="value" formControlName="limit" placeholder="{{ 'action.set' | translate }}"/>
+            </mat-form-field>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+  <div class="tb-flex flex-end">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="saveArgument()"
+            [disabled]="argumentFormGroup.invalid || !argumentFormGroup.dirty">
+      {{ buttonTitle | translate }}
+    </button>
+  </div>
+</div>

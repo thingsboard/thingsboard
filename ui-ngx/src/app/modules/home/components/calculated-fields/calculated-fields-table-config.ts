@@ -23,41 +23,33 @@ import { TimePageLink } from '@shared/models/page/page-link';
 import { Observable, of } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
-import { DialogService } from '@core/services/dialog.service';
 import { MINUTE } from '@shared/models/time/time.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { getCurrentAuthState } from '@core/auth/auth.selectors';
-import { ChangeDetectorRef, DestroyRef, ViewContainerRef } from '@angular/core';
-import { Overlay } from '@angular/cdk/overlay';
-import { UtilsService } from '@core/services/utils.service';
-import { EntityService } from '@core/http/entity.service';
+import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { DestroyRef } from '@angular/core';
 import { EntityDebugSettings } from '@shared/models/entity.models';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { EntityDebugSettingsPanelComponent } from '@home/components/entity/debug/entity-debug-settings-panel.component';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, filter, switchMap } from 'rxjs/operators';
 import { CalculatedField } from '@shared/models/calculated-field.models';
+import { CalculatedFieldDialogComponent } from './components/public-api';
 
 export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField, TimePageLink> {
 
   readonly calculatedFieldsDebugPerTenantLimitsConfiguration =
     getCurrentAuthState(this.store)['calculatedFieldsDebugPerTenantLimitsConfiguration'] || '1:1';
   readonly maxDebugModeDuration = getCurrentAuthState(this.store).maxDebugModeDurationMinutes * MINUTE;
+  readonly tenantId = getCurrentAuthUser(this.store).tenantId;
 
   constructor(private calculatedFieldsService: CalculatedFieldsService,
-              private entityService: EntityService,
-              private dialogService: DialogService,
               private translate: TranslateService,
               private dialog: MatDialog,
               public entityId: EntityId = null,
               private store: Store<AppState>,
-              private viewContainerRef: ViewContainerRef,
-              private overlay: Overlay,
-              private cd: ChangeDetectorRef,
-              private utilsService: UtilsService,
               private durationLeft: DurationLeftPipe,
               private popoverService: TbPopoverService,
               private destroyRef: DestroyRef,
@@ -67,6 +59,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     this.detailsPanelEnabled = false;
     this.selectionEnabled = true;
     this.searchEnabled = true;
+    this.pageMode = false;
     this.addEnabled = true;
     this.entitiesDeleteEnabled = true;
     this.actionsColumnTitle = '';
@@ -74,6 +67,12 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     this.entityTranslations = entityTypeTranslations.get(EntityType.CALCULATED_FIELD);
 
     this.entitiesFetchFunction = pageLink => this.fetchCalculatedFields(pageLink);
+    this.addEntity = this.addCalculatedField.bind(this);
+    this.deleteEntityTitle = (field) => this.translate.instant('calculated-fields.delete-title', {title: field.name});
+    this.deleteEntityContent = () => this.translate.instant('calculated-fields.delete-text');
+    this.deleteEntitiesTitle = count => this.translate.instant('calculated-fields.delete-multiple-title', {count});
+    this.deleteEntitiesContent = () => this.translate.instant('calculated-fields.delete-multiple-text');
+    this.deleteEntity = id => this.calculatedFieldsService.deleteCalculatedField(id.id);
 
     this.defaultSortOrder = {property: 'name', direction: Direction.DESC};
 
@@ -97,8 +96,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         name: this.translate.instant('action.edit'),
         icon: 'edit',
         isEnabled: () => true,
-        // // [TODO]: [Calculated fields] - implement edit
-        onAction: (_, entity) => {}
+        onAction: (_, entity) => this.editCalculatedField(entity)
       }
     );
   }
@@ -121,7 +119,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         {
           debugLimitsConfiguration: this.calculatedFieldsDebugPerTenantLimitsConfiguration,
           maxDebugModeDuration: this.maxDebugModeDuration,
-          entityLabel: this.translate.instant('debug-settings.integration'),
+          entityLabel: this.translate.instant('debug-settings.calculated-field'),
           ...debugSettings
         },
         {},
@@ -132,6 +130,48 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         debugStrategyPopover.hide();
       });
     }
+  }
+
+  private addCalculatedField(): void {
+    this.getCalculatedFieldDialog()
+      .afterClosed()
+      .pipe(
+        filter(Boolean),
+        switchMap(calculatedField => this.calculatedFieldsService.saveCalculatedField({ entityId: this.entityId, ...calculatedField} as any)),
+      )
+      .subscribe((res) => {
+        if (res) {
+          this.updateData();
+        }
+      });
+  }
+
+  private editCalculatedField(calculatedField: CalculatedField): void {
+    this.getCalculatedFieldDialog(calculatedField, 'action.apply')
+      .afterClosed()
+      .pipe(
+        filter(Boolean),
+        switchMap((updatedCalculatedField) => this.calculatedFieldsService.saveCalculatedField({ ...calculatedField, ...updatedCalculatedField} as any)),
+      )
+      .subscribe((res) => {
+        if (res) {
+          this.updateData();
+        }
+      });
+  }
+
+  private getCalculatedFieldDialog(value = {}, buttonTitle = 'action.add') {
+    return this.dialog.open<CalculatedFieldDialogComponent, any, CalculatedField>(CalculatedFieldDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        value,
+        buttonTitle,
+        entityId: this.entityId,
+        debugLimitsConfiguration: this.calculatedFieldsDebugPerTenantLimitsConfiguration,
+        tenantId: this.tenantId,
+      }
+    })
   }
 
   private getDebugConfigLabel(debugSettings: EntityDebugSettings): string {
@@ -149,7 +189,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   }
 
   private onDebugConfigChanged(id: string, debugSettings: EntityDebugSettings): void {
-    this.calculatedFieldsService.getCalculatedField(id).pipe(
+    this.calculatedFieldsService.getCalculatedFieldById(id).pipe(
       switchMap(field => this.calculatedFieldsService.saveCalculatedField({ ...field, debugSettings })),
       catchError(() => of(null)),
       takeUntilDestroyed(this.destroyRef),

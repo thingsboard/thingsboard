@@ -13,29 +13,109 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 ///
+
 import { EntityDebugSettings, HasTenantId, HasVersion } from '@shared/models/entity.models';
 import { BaseData } from '@shared/models/base-data';
 import { CalculatedFieldId } from '@shared/models/id/calculated-field-id';
+import { EntityId } from '@shared/models/id/entity-id';
+import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 
 export interface CalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasTenantId {
-  type: CalculatedFieldType;
   debugSettings?: EntityDebugSettings;
   externalId?: string;
   configuration: CalculatedFieldConfiguration;
+  type: CalculatedFieldType;
 }
 
 export enum CalculatedFieldType {
   SIMPLE = 'SIMPLE',
-  COMPLEX = 'COMPLEX',
+  SCRIPT = 'SCRIPT',
 }
+
+export const CalculatedFieldTypeTranslations = new Map<CalculatedFieldType, string>(
+  [
+    [CalculatedFieldType.SIMPLE, 'calculated-fields.type.simple'],
+    [CalculatedFieldType.SCRIPT, 'calculated-fields.type.script'],
+  ]
+)
 
 export interface CalculatedFieldConfiguration {
-  type: CalculatedFieldConfigType;
+  type: CalculatedFieldType;
   expression: string;
-  arguments: Record<string, unknown>;
+  arguments: Record<string, CalculatedFieldArgument>;
 }
 
-export enum CalculatedFieldConfigType {
-  SIMPLE = 'SIMPLE',
-  SCRIPT = 'SCRIPT',
+export enum ArgumentEntityType {
+  Current = 'CURRENT',
+  Device = 'DEVICE',
+  Asset = 'ASSET',
+  Customer = 'CUSTOMER',
+  Tenant = 'TENANT',
+}
+
+export const ArgumentEntityTypeTranslations = new Map<ArgumentEntityType, string>(
+  [
+    [ArgumentEntityType.Current, 'calculated-fields.argument-current'],
+    [ArgumentEntityType.Device, 'calculated-fields.argument-device'],
+    [ArgumentEntityType.Asset, 'calculated-fields.argument-asset'],
+    [ArgumentEntityType.Customer, 'calculated-fields.argument-customer'],
+    [ArgumentEntityType.Tenant, 'calculated-fields.argument-tenant'],
+  ]
+)
+
+export enum ArgumentType {
+  Attribute = 'ATTRIBUTE',
+  LatestTelemetry = 'TS_LATEST',
+  Rolling = 'TS_ROLLING',
+}
+
+export enum OutputType {
+  Attribute = 'ATTRIBUTES',
+  Timeseries = 'TIME_SERIES',
+}
+
+export const OutputTypeTranslations = new Map<OutputType, string>(
+  [
+    [OutputType.Attribute, 'calculated-fields.attribute'],
+    [OutputType.Timeseries, 'calculated-fields.timeseries'],
+  ]
+)
+
+export const ArgumentTypeTranslations = new Map<ArgumentType, string>(
+  [
+    [ArgumentType.Attribute, 'calculated-fields.attribute'],
+    [ArgumentType.LatestTelemetry, 'calculated-fields.latest-telemetry'],
+    [ArgumentType.Rolling, 'calculated-fields.rolling'],
+  ]
+)
+
+export interface CalculatedFieldArgument {
+  refEntityKey: RefEntityKey;
+  defaultValue?: string;
+  refEntityId?: RefEntityKey;
+  limit?: number;
+  timeWindow?: number;
+}
+
+export interface RefEntityKey {
+  key: string;
+  type: ArgumentType;
+  scope?: AttributeScope;
+}
+
+export interface RefEntityKey {
+  entityType: ArgumentEntityType;
+  id: string;
+}
+
+export interface CalculatedFieldArgumentValue extends CalculatedFieldArgument {
+  argumentName: string;
+}
+
+export interface CalculatedFieldDialogData {
+  value: CalculatedField;
+  buttonTitle: string;
+  entityId: EntityId;
+  debugLimitsConfiguration: string;
+  tenantId: string;
 }

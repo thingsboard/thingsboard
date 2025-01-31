@@ -185,6 +185,16 @@ import { EntityChipsComponent } from '@home/components/entity/entity-chips.compo
 import { DashboardViewComponent } from '@home/components/dashboard-view/dashboard-view.component';
 import { CalculatedFieldsTableComponent } from '@home/components/calculated-fields/calculated-fields-table.component';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
+import { CalculatedFieldDialogComponent } from '@home/components/calculated-fields/components/dialog/calculated-field-dialog.component';
+import {
+  EntityDebugSettingsButtonComponent
+} from '@home/components/entity/debug/entity-debug-settings-button.component';
+import {
+  CalculatedFieldArgumentsTableComponent
+} from '@home/components/calculated-fields/components/arguments-table/calculated-field-arguments-table.component';
+import {
+  CalculatedFieldArgumentPanelComponent
+} from '@home/components/calculated-fields/components/panel/calculated-field-argument-panel.component';
 
 @NgModule({
   declarations:
@@ -330,6 +340,9 @@ import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
       EntityChipsComponent,
       DashboardViewComponent,
       CalculatedFieldsTableComponent,
+      CalculatedFieldDialogComponent,
+      CalculatedFieldArgumentsTableComponent,
+      CalculatedFieldArgumentPanelComponent,
     ],
   imports: [
     CommonModule,
@@ -341,7 +354,8 @@ import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
     SnmpDeviceProfileTransportModule,
     StatesControllerModule,
     DeviceCredentialsModule,
-    DeviceProfileCommonModule
+    DeviceProfileCommonModule,
+    EntityDebugSettingsButtonComponent
   ],
   exports: [
     RouterTabsComponent,
@@ -468,6 +482,9 @@ import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
     EntityChipsComponent,
     DashboardViewComponent,
     CalculatedFieldsTableComponent,
+    CalculatedFieldDialogComponent,
+    CalculatedFieldArgumentsTableComponent,
+    CalculatedFieldArgumentPanelComponent,
   ],
   providers: [
     WidgetComponentService,

@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageData } from '@shared/models/page/page-data';
 import { CalculatedField } from '@shared/models/calculated-field.models';
@@ -25,64 +25,26 @@ import { PageLink } from '@shared/models/page/page-link';
 @Injectable({
   providedIn: 'root'
 })
-// [TODO]: [Calculated fields] - implement when BE ready
 export class CalculatedFieldsService {
-
-  fieldsMock = [
-    {
-      name: 'Calculated Field 1',
-      type: 'Simple',
-      configuration: {
-        expression: '1 + 2',
-        type: 'SIMPLE',
-      },
-      entityId: '1',
-      id: {
-        id: '1',
-      }
-    },
-    {
-      name: 'Calculated Field 2',
-      type: 'Script',
-      entityId: '2',
-      configuration: {
-        expression: '${power}',
-        type: 'SIMPLE',
-      },
-      id: {
-        id: '2',
-      }
-    }
-  ] as any[];
 
   constructor(
     private http: HttpClient
   ) { }
 
-  public getCalculatedField(calculatedFieldId: string, config?: RequestConfig): Observable<CalculatedField> {
-    return of(this.fieldsMock[0]);
-    // return this.http.get<any>(`/api/calculatedField/${calculatedFieldId}`, defaultHttpOptionsFromConfig(config));
+  public getCalculatedFieldById(calculatedFieldId: string, config?: RequestConfig): Observable<CalculatedField> {
+    return this.http.get<any>(`/api/calculatedField/${calculatedFieldId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public saveCalculatedField(calculatedField: any, config?: RequestConfig): Observable<CalculatedField> {
-    return of(this.fieldsMock[1]);
-    // return this.http.post<any>('/api/calculatedField', calculatedField, defaultHttpOptionsFromConfig(config));
+  public saveCalculatedField(calculatedField: CalculatedField, config?: RequestConfig): Observable<CalculatedField> {
+    return this.http.post<any>('/api/calculatedField', calculatedField, defaultHttpOptionsFromConfig(config));
   }
 
   public deleteCalculatedField(calculatedFieldId: string, config?: RequestConfig): Observable<boolean> {
-    return of(true);
-    // return this.http.delete<boolean>(`/api/calculatedField/${calculatedFieldId}`, defaultHttpOptionsFromConfig(config));
+    return this.http.delete<boolean>(`/api/calculatedField/${calculatedFieldId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getCalculatedFields(pageLink: PageLink,
-                   config?: RequestConfig): Observable<PageData<CalculatedField>> {
-    return of({
-      data: this.fieldsMock,
-      totalPages: 1,
-      totalElements: 2,
-      hasNext: false,
-    });
-    // return this.http.get<PageData<any>>(`/api/calculatedField${pageLink.toQuery()}`,
-    //   defaultHttpOptionsFromConfig(config));
+  public getCalculatedFields(pageLink: PageLink, config?: RequestConfig): Observable<PageData<CalculatedField>> {
+    return this.http.get<PageData<any>>(`/api/calculatedFields${pageLink.toQuery()}`,
+      defaultHttpOptionsFromConfig(config));
   }
 }

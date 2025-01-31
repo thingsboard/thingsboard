@@ -996,6 +996,7 @@
         "failures": "Failures",
         "entity": "entity",
         "rule-node": "rule node",
+        "calculated-field": "calculated field",
         "hint": {
             "main": "All node debug messages rate limited with:",
             "main-limited": "All {{entity}} debug messages will be rate-limited, with a maximum of {{msg}} messages allowed per {{time}}.",
@@ -1007,7 +1008,56 @@
         "expression": "Expression",
         "no-found": "No calculated fields found",
         "list": "{ count, plural, =1 {One calculated field} other {List of # calculated fields} }",
-        "selected-fields": "{ count, plural, =1 {1 calculated field} other {# calculated fields} } selected"
+        "selected-fields": "{ count, plural, =1 {1 calculated field} other {# calculated fields} } selected",
+        "type": {
+            "simple": "Simple",
+            "script": "Script"
+        },
+        "arguments": "Arguments",
+        "argument-name": "Argument name",
+        "datasource": "Datasource",
+        "add-argument": "Add argument",
+        "no-arguments": "No arguments configured",
+        "argument-settings": "Argument settings",
+        "argument-current": "Current entity",
+        "argument-current-tenant": "Current tenant",
+        "argument-device": "Device",
+        "argument-asset": "Asset",
+        "argument-customer": "Customer",
+        "argument-tenant": "Current tenant",
+        "argument-type": "Argument type",
+        "attribute": "Attribute",
+        "timeseries-key": "Time series key",
+        "device-name": "Device name",
+        "latest-telemetry": "Latest telemetry",
+        "rolling": "Rolling",
+        "attribute-scope": "Attribute scope",
+        "server-attributes": "Server attributes",
+        "client-attributes": "Client attributes",
+        "shared-attributes": "Shared attributes",
+        "attribute-key": "Attribute key",
+        "default-value": "Default value",
+        "limit": "Limit",
+        "time-window": "Time window",
+        "customer-name": "Customer name",
+        "timeseries": "Time series",
+        "output": "Output",
+        "output-type": "Output type",
+        "delete-title": "Are you sure you want to delete the calculated field '{{title}}'?",
+        "delete-text": "Be careful, after the confirmation the calculated field and all related data will become unrecoverable.",
+        "delete-multiple-title": "Are you sure you want to delete { count, plural, =1 {1 calculated field} other {# calculated fields} }?",
+        "delete-multiple-text": "Be careful, after the confirmation all selected calculated fields will be removed and all related data will become unrecoverable.",
+        "hint": {
+            "arguments-simple-with-rolling": "Simple type calculated field should not contain keys with rolling type.",
+            "arguments-empty": "Arguments should not be empty.",
+            "expression-required": "Expression is required.",
+            "expression-invalid": "Expression is invalid",
+            "expression-max-length": "Expression length should be less than 255 characters.",
+            "argument-name-required": "Argument name is required.",
+            "argument-name-pattern": "Argument name is invalid.",
+            "argument-name-max-length": "Argument name should be less than 256 characters.",
+            "argument-type-required": "Argument type is required."
+        }
     },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
@@ -1035,6 +1085,7 @@
     "common": {
         "name": "Name",
         "type": "Type",
+        "general": "General",
         "username": "Username",
         "password": "Password",
         "enter-username": "Enter username",
@@ -1047,7 +1098,19 @@
         "open-details-page": "Open details page",
         "not-found": "Not found",
         "documentation": "Documentation",
-        "time-left": "{{time}} left"
+        "time-left": "{{time}} left",
+        "suffix": {
+            "s": "s",
+            "ms": "ms"
+        },
+        "hint": {
+            "name-required": "Name is required.",
+            "name-pattern": "Name is invalid.",
+            "name-max-length": "Name should be less than 256 characters.",
+            "key-required": "Key is required.",
+            "key-pattern": "Key is invalid.",
+            "key-max-length": "Key should be less than 256 characters."
+        }
     },
     "content-type": {
         "json": "Json",

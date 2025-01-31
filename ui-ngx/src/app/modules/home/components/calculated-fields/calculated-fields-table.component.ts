@@ -16,24 +16,18 @@
 
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   DestroyRef,
   Input,
   OnInit,
   ViewChild,
-  ViewContainerRef,
 } from '@angular/core';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
-import { EntityService } from '@core/http/entity.service';
-import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { Overlay } from '@angular/cdk/overlay';
-import { UtilsService } from '@core/services/utils.service';
 import { CalculatedFieldsTableConfig } from '@home/components/calculated-fields/calculated-fields-table-config';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { TbPopoverService } from '@shared/components/popover.service';
@@ -51,7 +45,6 @@ export class CalculatedFieldsTableComponent implements OnInit {
   set entityId(entityId: EntityId) {
     if (this.entityIdValue !== entityId) {
       this.entityIdValue = entityId;
-      this.entitiesTable.resetSortAndFilter(this.activeValue);
       if (!this.activeValue) {
         this.hasInitialized = true;
       }
@@ -78,18 +71,12 @@ export class CalculatedFieldsTableComponent implements OnInit {
   private entityIdValue: EntityId;
 
   constructor(private calculatedFieldsService: CalculatedFieldsService,
-              private entityService: EntityService,
-              private dialogService: DialogService,
               private translate: TranslateService,
               private dialog: MatDialog,
               private store: Store<AppState>,
-              private overlay: Overlay,
-              private viewContainerRef: ViewContainerRef,
-              private cd: ChangeDetectorRef,
               private durationLeft: DurationLeftPipe,
               private popoverService: TbPopoverService,
-              private destroyRef: DestroyRef,
-              private utilsService: UtilsService) {
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
@@ -97,19 +84,13 @@ export class CalculatedFieldsTableComponent implements OnInit {
 
     this.calculatedFieldsTableConfig = new CalculatedFieldsTableConfig(
       this.calculatedFieldsService,
-      this.entityService,
-      this.dialogService,
       this.translate,
       this.dialog,
       this.entityIdValue,
       this.store,
-      this.viewContainerRef,
-      this.overlay,
-      this.cd,
-      this.utilsService,
       this.durationLeft,
       this.popoverService,
-      this.destroyRef
+      this.destroyRef,
     );
   }
 }
