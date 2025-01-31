@@ -133,7 +133,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
       };
       this.keysPopupClosed = false;
       const argumentsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, CalculatedFieldArgumentPanelComponent, 'leftBottom', false, null,
+        this.viewContainerRef, CalculatedFieldArgumentPanelComponent, 'left', false, null,
         ctx,
         {},
         {}, {}, true);

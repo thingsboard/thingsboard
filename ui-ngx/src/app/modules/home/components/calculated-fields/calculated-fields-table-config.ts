@@ -77,12 +77,12 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
 
     this.defaultSortOrder = {property: 'name', direction: Direction.DESC};
 
-    this.columns.push(
-      new EntityTableColumn<CalculatedField>('name', 'common.name', '33%'));
-    this.columns.push(
-      new EntityTableColumn<CalculatedField>('type', 'common.type', '50px'));
-    this.columns.push(
-      new EntityTableColumn<CalculatedField>('expression', 'calculated-fields.expression', '50%', entity => entity.configuration.expression));
+    const expressionColumn = new EntityTableColumn<CalculatedField>('expression', 'calculated-fields.expression', '33%', entity => entity.configuration?.expression);
+    expressionColumn.sortable = false;
+
+    this.columns.push(new EntityTableColumn<CalculatedField>('name', 'common.name', '33%'));
+    this.columns.push(new EntityTableColumn<CalculatedField>('type', 'common.type', '50px'));
+    this.columns.push(expressionColumn);
 
     this.cellActionDescriptors.push(
       {

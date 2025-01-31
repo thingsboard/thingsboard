@@ -16,7 +16,7 @@
 
 -->
 <mat-form-field class="tb-flex no-gap !w-full" appearance="outline" subscriptSizing="dynamic">
-  <input matInput type="text" placeholder="{{ 'entity.key-name' | translate }}"
+  <input matInput type="text" placeholder="{{ 'action.set' | translate }}"
          #keyInput
          [formControl]="keyControl"
          required
@@ -28,12 +28,22 @@
             (click)="clear()">
       <mat-icon class="material-icons">close</mat-icon>
     </button>
+  } @else if (keyControl.hasError('required') && keyControl.touched) {
+    <mat-icon matSuffix
+              matTooltipPosition="above"
+              matTooltipClass="tb-error-tooltip"
+              [matTooltip]="'common.hint.key-required' | translate"
+              class="tb-error">
+      warning
+    </mat-icon>
   }
   <mat-autocomplete
     class="tb-autocomplete"
     #keysAutocomplete="matAutocomplete">
     @for (key of filteredKeys$ | async; track key) {
       <mat-option [value]="key"><span [innerHTML]="key | highlight: searchText"></span></mat-option>
+    } @empty {
+      <mat-option [value]="''">{{ 'entity.no-keys-found' | translate }}</mat-option>
     }
   </mat-autocomplete>
 </mat-form-field>

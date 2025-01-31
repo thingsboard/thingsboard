@@ -29,7 +29,7 @@
   <a *ngIf="selectEntityFormGroup.get('entity').value && disabled" aria-label="Open device profile" [routerLink]=entityURL>
     {{ displayEntityFn(selectEntityFormGroup.get('entity').value) }}
   </a>
-  <mat-icon *ngIf="selectEntityFormGroup.get('entity').hasError('required') && iconError"
+  <mat-icon *ngIf="iconError && selectEntityFormGroup.get('entity').hasError('required') && selectEntityFormGroup.get('entity').touched"
             matSuffix
             matTooltipPosition="above"
             matTooltipClass="tb-error-tooltip"

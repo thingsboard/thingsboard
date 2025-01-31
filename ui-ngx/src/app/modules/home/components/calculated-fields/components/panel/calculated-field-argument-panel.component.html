@@ -24,33 +24,35 @@
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <input matInput name="value" formControlName="argumentName" maxlength="255" placeholder="{{ 'action.set' | translate }}"/>
-            @if (argumentFormGroup.get('argumentName').touched) {
-              @if (argumentFormGroup.get('argumentName').hasError('required')) {
-                <mat-icon matSuffix
-                          matTooltipPosition="above"
-                          matTooltipClass="tb-error-tooltip"
-                          [matTooltip]="'calculated-fields.hint.argument-name-required' | translate"
-                          class="tb-error">
-                  warning
-                </mat-icon>
-              } @else if (argumentFormGroup.get('argumentName').hasError('pattern')) {
-                <mat-icon matSuffix
-                          matTooltipPosition="above"
-                          matTooltipClass="tb-error-tooltip"
-                          [matTooltip]="'calculated-fields.hint.argument-name-pattern' | translate"
-                          class="tb-error">
-                  warning
-                </mat-icon>
-              } @else if (argumentFormGroup.get('argumentName').hasError('maxlength')) {
-                <mat-icon matSuffix
-                          matTooltipPosition="above"
-                          matTooltipClass="tb-error-tooltip"
-                          [matTooltip]="'calculated-fields.hint.argument-name-max-length' | translate"
-                          class="tb-error">
-                  warning
-                </mat-icon>
+            <div class="h-5 pr-2">
+              @if (argumentFormGroup.get('argumentName').touched) {
+                @if (argumentFormGroup.get('argumentName').hasError('required')) {
+                  <mat-icon matSuffix
+                            matTooltipPosition="above"
+                            matTooltipClass="tb-error-tooltip"
+                            [matTooltip]="'calculated-fields.hint.argument-name-required' | translate"
+                            class="tb-error">
+                    warning
+                  </mat-icon>
+                } @else if (argumentFormGroup.get('argumentName').hasError('pattern')) {
+                  <mat-icon matSuffix
+                            matTooltipPosition="above"
+                            matTooltipClass="tb-error-tooltip"
+                            [matTooltip]="'calculated-fields.hint.argument-name-pattern' | translate"
+                            class="tb-error">
+                    warning
+                  </mat-icon>
+                } @else if (argumentFormGroup.get('argumentName').hasError('maxlength')) {
+                  <mat-icon matSuffix
+                            matTooltipPosition="above"
+                            matTooltipClass="tb-error-tooltip"
+                            [matTooltip]="'calculated-fields.hint.argument-name-max-length' | translate"
+                            class="tb-error">
+                    warning
+                  </mat-icon>
+                }
               }
-            }
+            </div>
           </mat-form-field>
         </div>
       </div>
@@ -117,40 +119,42 @@
             }
           </mat-form-field>
         </div>
-        @if (refEntityKeyFormGroup.get('type').value !== ArgumentType.Attribute) {
-          <div class="tb-form-row">
-            <div class="fixed-title-width tb-required">{{ 'calculated-fields.timeseries-key' | translate }}</div>
-            <tb-entity-key-autocomplete class="w-full" formControlName="key" [dataKeyType]="DataKeyType.timeseries" [entityFilter]="entityFilter"/>
-          </div>
-        } @else {
-          <div class="tb-form-row">
-            <div class="fixed-title-width tb-required">{{ 'calculated-fields.attribute-scope' | translate }}</div>
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
-              <mat-select formControlName="scope" class="w-full">
-                <mat-option [value]="AttributeScope.SERVER_SCOPE">
-                  {{ 'calculated-fields.server-attributes' | translate }}
-                </mat-option>
-                @if ((keyEntityType$ | async) === EntityType.DEVICE) {
-                  <mat-option [value]="AttributeScope.CLIENT_SCOPE">
-                    {{ 'calculated-fields.client-attributes' | translate }}
+        @if (entityFilter.singleEntity.id || entityType === ArgumentEntityType.Current || entityType === ArgumentEntityType.Tenant) {
+          @if (refEntityKeyFormGroup.get('type').value !== ArgumentType.Attribute) {
+            <div class="tb-form-row">
+              <div class="fixed-title-width tb-required">{{ 'calculated-fields.timeseries-key' | translate }}</div>
+              <tb-entity-key-autocomplete class="w-full" formControlName="key" [dataKeyType]="DataKeyType.timeseries" [entityFilter]="entityFilter"/>
+            </div>
+          } @else {
+            <div class="tb-form-row">
+              <div class="fixed-title-width tb-required">{{ 'calculated-fields.attribute-scope' | translate }}</div>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="scope" class="w-full">
+                  <mat-option [value]="AttributeScope.SERVER_SCOPE">
+                    {{ 'calculated-fields.server-attributes' | translate }}
                   </mat-option>
-                  <mat-option [value]="AttributeScope.SHARED_SCOPE">
-                    {{ 'calculated-fields.shared-attributes' | translate }}
-                  </mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-          </div>
-          <div class="tb-form-row">
-            <div class="fixed-title-width tb-required">{{ 'calculated-fields.attribute-key' | translate }}</div>
-            <tb-entity-key-autocomplete
-              formControlName="key"
-              class="w-full"
-              [dataKeyType]="DataKeyType.attribute"
-              [entityFilter]="entityFilter"
-              [keyScopeType]="argumentFormGroup.get('refEntityKey').get('scope').value"
-            />
-          </div>
+                  @if ((keyEntityType$ | async) === EntityType.DEVICE) {
+                    <mat-option [value]="AttributeScope.CLIENT_SCOPE">
+                      {{ 'calculated-fields.client-attributes' | translate }}
+                    </mat-option>
+                    <mat-option [value]="AttributeScope.SHARED_SCOPE">
+                      {{ 'calculated-fields.shared-attributes' | translate }}
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row">
+              <div class="fixed-title-width tb-required">{{ 'calculated-fields.attribute-key' | translate }}</div>
+              <tb-entity-key-autocomplete
+                formControlName="key"
+                class="w-full"
+                [dataKeyType]="DataKeyType.attribute"
+                [entityFilter]="entityFilter"
+                [keyScopeType]="argumentFormGroup.get('refEntityKey').get('scope').value"
+              />
+            </div>
+          }
         }
       </ng-container>
       @if (refEntityKeyFormGroup.get('type').value !== ArgumentType.Rolling) {

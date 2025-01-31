@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, Input, OnInit, output, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Input, OnInit, output, ViewChild } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -27,7 +27,7 @@ import {
   CalculatedFieldArgumentValue,
   CalculatedFieldType
 } from '@shared/models/calculated-field.models';
-import { debounceTime, delay, distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
+import { delay, distinctUntilChanged, filter, map, startWith, throttleTime } from 'rxjs/operators';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { DatasourceType } from '@shared/models/widget.models';
@@ -92,6 +92,7 @@ export class CalculatedFieldArgumentPanelComponent extends PageComponent impleme
 
   constructor(
     private fb: FormBuilder,
+    private cd: ChangeDetectorRef
   ) {
     super();
 
@@ -154,22 +155,24 @@ export class CalculatedFieldArgumentPanelComponent extends PageComponent impleme
       default:
         entityId = this.argumentFormGroup.get('refEntityId').value as any;
     }
-    if (onInit) {
+    if (!onInit) {
       this.argumentFormGroup.get('refEntityKey').get('key').setValue('');
     }
     this.entityFilter = {
       type: AliasFilterType.singleEntity,
       singleEntity: entityId,
     };
+    this.cd.markForCheck();
   }
 
   private observeEntityFilterChanges(): void {
     merge(
       this.refEntityIdFormGroup.get('entityType').valueChanges,
+      this.refEntityKeyFormGroup.get('type').valueChanges,
       this.refEntityIdFormGroup.get('id').valueChanges.pipe(filter(Boolean)),
       this.refEntityKeyFormGroup.get('scope').valueChanges,
     )
-      .pipe(debounceTime(300), delay(50), takeUntilDestroyed())
+      .pipe(throttleTime(100), delay(50), takeUntilDestroyed())
       .subscribe(() => this.updateEntityFilter(this.entityType));
   }
 

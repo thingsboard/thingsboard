@@ -84,10 +84,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
               public fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
     this.applyDialogData();
-    this.outputFormGroup.get('type').valueChanges
-      .pipe(takeUntilDestroyed())
-      .subscribe(type => this.toggleScopeByOutputType(type));
-    this.toggleScopeByOutputType(this.outputFormGroup.get('type').value);
+    this.observeTypeChanges();
   }
 
   get configFormGroup(): FormGroup {
@@ -113,10 +110,26 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
   private applyDialogData(): void {
     const { configuration = {}, type = CalculatedFieldType.SIMPLE, ...value } = this.data.value;
     const { expression, ...restConfig } = configuration as CalculatedFieldConfiguration;
-    this.fieldFormGroup.patchValue({ configuration: { ...restConfig, ['expression'+type]: expression }, ...value });
+    this.fieldFormGroup.patchValue({ configuration: { ...restConfig, ['expression'+type]: expression }, type, ...value });
+  }
+
+  private observeTypeChanges(): void {
+    this.toggleKeyByCalculatedFieldType(this.fieldFormGroup.get('type').value);
+    this.toggleScopeByOutputType(this.outputFormGroup.get('type').value);
+
+    this.outputFormGroup.get('type').valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(type => this.toggleScopeByOutputType(type));
+    this.fieldFormGroup.get('type').valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(type => this.toggleKeyByCalculatedFieldType(type));
   }
 
   private toggleScopeByOutputType(type: OutputType): void {
     this.outputFormGroup.get('scope')[type === OutputType.Attribute? 'enable' : 'disable']({emitEvent: false});
+  }
+
+  private toggleKeyByCalculatedFieldType(type: CalculatedFieldType): void {
+    this.outputFormGroup.get('name')[type === CalculatedFieldType.SIMPLE? 'enable' : 'disable']({emitEvent: false});
   }
 }
