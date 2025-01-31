@@ -183,6 +183,18 @@ import {
 } from '@home/components/dashboard-page/layout/select-dashboard-breakpoint.component';
 import { EntityChipsComponent } from '@home/components/entity/entity-chips.component';
 import { DashboardViewComponent } from '@home/components/dashboard-view/dashboard-view.component';
+import { CalculatedFieldsTableComponent } from '@home/components/calculated-fields/calculated-fields-table.component';
+import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
+import { CalculatedFieldDialogComponent } from '@home/components/calculated-fields/components/dialog/calculated-field-dialog.component';
+import {
+  EntityDebugSettingsButtonComponent
+} from '@home/components/entity/debug/entity-debug-settings-button.component';
+import {
+  CalculatedFieldArgumentsTableComponent
+} from '@home/components/calculated-fields/components/arguments-table/calculated-field-arguments-table.component';
+import {
+  CalculatedFieldArgumentPanelComponent
+} from '@home/components/calculated-fields/components/panel/calculated-field-argument-panel.component';
 
 @NgModule({
   declarations:
@@ -326,7 +338,11 @@ import { DashboardViewComponent } from '@home/components/dashboard-view/dashboar
       RateLimitsDetailsDialogComponent,
       SendNotificationButtonComponent,
       EntityChipsComponent,
-      DashboardViewComponent
+      DashboardViewComponent,
+      CalculatedFieldsTableComponent,
+      CalculatedFieldDialogComponent,
+      CalculatedFieldArgumentsTableComponent,
+      CalculatedFieldArgumentPanelComponent,
     ],
   imports: [
     CommonModule,
@@ -338,7 +354,8 @@ import { DashboardViewComponent } from '@home/components/dashboard-view/dashboar
     SnmpDeviceProfileTransportModule,
     StatesControllerModule,
     DeviceCredentialsModule,
-    DeviceProfileCommonModule
+    DeviceProfileCommonModule,
+    EntityDebugSettingsButtonComponent
   ],
   exports: [
     RouterTabsComponent,
@@ -463,11 +480,16 @@ import { DashboardViewComponent } from '@home/components/dashboard-view/dashboar
     RateLimitsDetailsDialogComponent,
     SendNotificationButtonComponent,
     EntityChipsComponent,
-    DashboardViewComponent
+    DashboardViewComponent,
+    CalculatedFieldsTableComponent,
+    CalculatedFieldDialogComponent,
+    CalculatedFieldArgumentsTableComponent,
+    CalculatedFieldArgumentPanelComponent,
   ],
   providers: [
     WidgetComponentService,
     CustomDialogService,
+    DurationLeftPipe,
     {provide: EMBED_DASHBOARD_DIALOG_TOKEN, useValue: EmbedDashboardDialogComponent},
     {provide: COMPLEX_FILTER_PREDICATE_DIALOG_COMPONENT_TOKEN, useValue: ComplexFilterPredicateDialogComponent},
     {provide: DASHBOARD_PAGE_COMPONENT_TOKEN, useValue: DashboardPageComponent},

@@ -16,6 +16,7 @@
 
 import {
   AfterViewInit,
+  booleanAttribute,
   Component,
   ElementRef,
   EventEmitter,
@@ -134,6 +135,12 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   @Input()
   @coerceBoolean()
   allowCreateNew: boolean;
+
+  @Input({ transform: booleanAttribute }) withLabel = true;
+
+  @Input({ transform: booleanAttribute }) iconError = false;
+
+  @Input() placeholder: string;
 
   @Input()
   subscriptSizing: SubscriptSizing = 'fixed';
