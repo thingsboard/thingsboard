@@ -7400,6 +7400,7 @@
             "datakey-value-type-date": "Date",
             "datakey-value-type-time": "Time",
             "datakey-value-type-select": "Select",
+            "datakey-value-type-radio": "Radio",
             "datakey-value-type-color": "Color",
             "value-is-required": "Value is required",
             "ability-to-edit-attribute": "Ability to edit attribute",
@@ -7440,7 +7441,16 @@
             "set-value-function": "setValue function",
             "json-invalid": "JSON value has an invalid format",
             "title": "Title",
-            "cancel-button-label": "'Cancel' button label"
+            "cancel-button-label": "'Cancel' button label",
+            "radio-button-settings": "Radio button settings",
+            "color": "Color",
+            "columns": "Columns",
+            "radio-options": "Radio options",
+            "no-radio-options": "No radio options configured",
+            "add-radio-option": "Add radio option",
+            "radio-label-position": "Label position",
+            "radio-label-position-before": "Before",
+            "radio-label-position-after": "After"
         },
         "invalid-qr-code-text": "Invalid input text for QR code. Input should have a string type",
         "qr-code": {
