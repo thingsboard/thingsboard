@@ -18,8 +18,7 @@ package org.thingsboard.server.service.cf.ctx.state;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
-import net.objecthunter.exp4j.Expression;
-import net.objecthunter.exp4j.ExpressionBuilder;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
@@ -28,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 @Data
+@NoArgsConstructor
 public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
 
     public SimpleCalculatedFieldState(List<String> requiredArguments) {
@@ -48,16 +48,7 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
 
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
-        String expression = ctx.getExpression();
-        ThreadLocal<Expression> customExpression = ctx.getCustomExpression();
-        var expr = customExpression.get();
-        if (expr == null) {
-            expr = new ExpressionBuilder(expression)
-                    .implicitMultiplication(true)
-                    .variables(this.arguments.keySet())
-                    .build();
-            customExpression.set(expr);
-        }
+        var expr = ctx.getCustomExpression().get();
 
         for (Map.Entry<String, ArgumentEntry> entry : this.arguments.entrySet()) {
             try {

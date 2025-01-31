@@ -58,6 +58,10 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
         ActionType actionType = calculatedField.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = calculatedField.getTenantId();
         try {
+            if (ActionType.UPDATED.equals(actionType)) {
+                CalculatedField existingCf = calculatedFieldService.findById(tenantId, calculatedField.getId());
+                checkForEntityChange(existingCf, calculatedField);
+            }
             checkCalculatedFieldNumber(tenantId, calculatedField.getEntityId());
             checkEntityExistence(tenantId, calculatedField.getEntityId());
             checkArgumentSize(calculatedField.getConfiguration());
@@ -95,6 +99,12 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.CALCULATED_FIELD), actionType, user, e, calculatedFieldId.toString());
             throw e;
+        }
+    }
+
+    private void checkForEntityChange(CalculatedField oldCalculatedField, CalculatedField newCalculatedField) {
+        if (!oldCalculatedField.getEntityId().equals(newCalculatedField.getEntityId())) {
+            throw new IllegalArgumentException("Changing the calculated field target entity after initialization is prohibited.");
         }
     }
 

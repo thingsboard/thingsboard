@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
+import java.util.List;
 import java.util.Map;
 
 @JsonTypeInfo(
@@ -40,9 +41,12 @@ public interface CalculatedFieldState {
 
     Map<String, ArgumentEntry> getArguments();
 
+    List<String> getRequiredArguments();
+
     boolean updateState(Map<String, ArgumentEntry> argumentValues);
 
     ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx);
 
+    @JsonIgnore
     boolean isReady();
 }

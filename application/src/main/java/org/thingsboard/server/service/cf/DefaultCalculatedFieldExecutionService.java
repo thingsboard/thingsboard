@@ -833,7 +833,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     private ToCalculatedFieldMsg toCalculatedFieldTelemetryMsgProto(TimeseriesSaveRequest request, TimeseriesSaveResult result) {
         ToCalculatedFieldMsg.Builder msg = ToCalculatedFieldMsg.newBuilder();
 
-        CalculatedFieldTelemetryMsgProto.Builder telemetryMsg = buildTelemetryMsgProto(request.getTenantId(), request.getEntityId(), request.getPreviousCalculatedFieldIds());
+        CalculatedFieldTelemetryMsgProto.Builder telemetryMsg = buildTelemetryMsgProto(request.getTenantId(), request.getEntityId(), request.getPreviousCalculatedFieldIds(), request.getTbMsgId(), request.getTbMsgType());
         List<TsKvEntry> entries = request.getEntries();
         List<Long> versions = result.getVersions();
         for (int i = 0; i < entries.size(); i++) {
@@ -849,7 +849,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     private ToCalculatedFieldMsg toCalculatedFieldTelemetryMsgProto(AttributesSaveRequest request, List<Long> versions) {
         ToCalculatedFieldMsg.Builder msg = ToCalculatedFieldMsg.newBuilder();
 
-        CalculatedFieldTelemetryMsgProto.Builder telemetryMsg = buildTelemetryMsgProto(request.getTenantId(), request.getEntityId(), request.getPreviousCalculatedFieldIds());
+        CalculatedFieldTelemetryMsgProto.Builder telemetryMsg = buildTelemetryMsgProto(request.getTenantId(), request.getEntityId(), request.getPreviousCalculatedFieldIds(), request.getTbMsgId(), request.getTbMsgType());
         telemetryMsg.setScope(AttributeScopeProto.valueOf(request.getScope().name()));
         List<AttributeKvEntry> entries = request.getEntries();
         for (int i = 0; i < entries.size(); i++) {
@@ -862,7 +862,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         return msg.build();
     }
 
-    private CalculatedFieldTelemetryMsgProto.Builder buildTelemetryMsgProto(TenantId tenantId, EntityId entityId, List<CalculatedFieldId> calculatedFieldIds) {
+    private CalculatedFieldTelemetryMsgProto.Builder buildTelemetryMsgProto(TenantId tenantId, EntityId entityId, List<CalculatedFieldId> calculatedFieldIds, UUID tbMsgId, TbMsgType tbMsgType) {
         CalculatedFieldTelemetryMsgProto.Builder telemetryMsg = CalculatedFieldTelemetryMsgProto.newBuilder();
 
         telemetryMsg.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
@@ -876,6 +876,15 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             for (CalculatedFieldId cfId : calculatedFieldIds) {
                 telemetryMsg.addPreviousCalculatedFields(toProto(cfId));
             }
+        }
+
+        if (tbMsgId != null) {
+            telemetryMsg.setTbMsgIdMSB(tbMsgId.getMostSignificantBits());
+            telemetryMsg.setTbMsgIdLSB(tbMsgId.getLeastSignificantBits());
+        }
+
+        if (tbMsgType != null) {
+            telemetryMsg.setTbMsgType(tbMsgType.name());
         }
 
         return telemetryMsg;

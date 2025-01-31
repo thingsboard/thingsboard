@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
@@ -31,6 +32,7 @@ import java.util.TreeMap;
 
 @Data
 @Slf4j
+@NoArgsConstructor
 public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
 
     public ScriptCalculatedFieldState(List<String> requiredArguments) {
@@ -40,6 +42,10 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
     @Override
     public CalculatedFieldType getType() {
         return CalculatedFieldType.SCRIPT;
+    }
+
+    @Override
+    protected void validateNewEntry(ArgumentEntry newEntry) {
     }
 
     @Override

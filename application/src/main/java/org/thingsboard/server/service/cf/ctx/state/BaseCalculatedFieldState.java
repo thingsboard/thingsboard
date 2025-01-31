@@ -15,18 +15,17 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import lombok.NoArgsConstructor;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@NoArgsConstructor
 public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
     protected List<String> requiredArguments;
     protected Map<String, ArgumentEntry> arguments;
-
-    public BaseCalculatedFieldState() {
-        this.arguments = new HashMap<>();
-    }
 
     public BaseCalculatedFieldState(List<String> requiredArguments) {
         this.requiredArguments = requiredArguments;
@@ -35,7 +34,12 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
     @Override
     public Map<String, ArgumentEntry> getArguments() {
-        return this.arguments;
+        return arguments;
+    }
+
+    @Override
+    public List<String> getRequiredArguments() {
+        return requiredArguments;
     }
 
     @Override
@@ -53,7 +57,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
             if (existingEntry == null) {
                 validateNewEntry(newEntry);
-                arguments.put(key, newEntry.copy());
+                arguments.put(key, newEntry);
                 stateUpdated = true;
             } else {
                 stateUpdated = existingEntry.updateEntry(newEntry);
@@ -70,7 +74,6 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
                 !arguments.containsValue(TsRollingArgumentEntry.EMPTY);
     }
 
-    protected void validateNewEntry(ArgumentEntry newEntry) {
-    }
+    protected abstract void validateNewEntry(ArgumentEntry newEntry);
 
 }
