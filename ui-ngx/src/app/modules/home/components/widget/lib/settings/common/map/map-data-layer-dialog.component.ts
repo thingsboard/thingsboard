@@ -18,12 +18,13 @@ import { Component, DestroyRef, Inject, ViewEncapsulation } from '@angular/core'
 import { DialogComponent } from '@shared/components/dialog.component';
 import {
   CirclesDataLayerSettings,
-  DataLayerEditAction, dataLayerEditActions,
+  DataLayerEditAction,
+  dataLayerEditActions,
   dataLayerEditActionTranslationMap,
   defaultBaseMapDataLayerSettings,
   MapDataLayerSettings,
   MapDataLayerType,
-  MapType, mapZoomActions, mapZoomActionTranslationMap,
+  MapType,
   MarkersDataLayerSettings,
   MarkerType,
   PolygonsDataLayerSettings,
@@ -40,7 +41,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityType } from '@shared/models/entity-type.models';
 import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
 import { genNextLabelForDataKeys, mergeDeepIgnoreArray } from '@core/utils';
-import { MapProviders } from '@home/components/widget/lib/maps-legacy/map-models';
 import { WidgetService } from '@core/http/widget.service';
 
 export interface MapDataLayerDialogData {
@@ -318,8 +318,4 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
     const settings: MapDataLayerSettings = this.dataLayerFormGroup.getRawValue();
     this.dialogRef.close(settings);
   }
-
-  protected readonly mapProvider = MapProviders;
-  protected readonly mapZoomActions = mapZoomActions;
-  protected readonly mapZoomActionTranslationMap = mapZoomActionTranslationMap;
 }

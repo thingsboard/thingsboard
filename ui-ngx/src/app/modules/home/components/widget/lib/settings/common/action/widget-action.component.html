@@ -16,6 +16,23 @@
 
 -->
 <div class="tb-form-panel no-padding no-border" [formGroup]="widgetActionFormGroup">
+  <div *ngIf="withName" class="tb-form-row">
+    <div class="fixed-title-width">{{'widget-config.action-name' | translate}}*</div>
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <input required matInput formControlName="name" placeholder="{{ 'widget-config.set' | translate }}">
+      <mat-icon matSuffix
+                matTooltipPosition="above"
+                matTooltipClass="tb-error-tooltip"
+                [matTooltip]="(widgetActionFormGroup.get('name').hasError('required')
+                                     ? 'widget-config.action-name-required'
+                                     : 'widget-config.action-name-not-unique') | translate"
+                *ngIf="widgetActionFormGroup.get('name').invalid
+                       && (widgetActionFormGroup.get('name').touched || widgetActionFormGroup.get('name').hasError('actionNameNotUnique'))"
+                class="tb-error">
+        warning
+      </mat-icon>
+    </mat-form-field>
+  </div>
   <div class="tb-form-row">
     <div translate>widget-config.action</div>
     <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">

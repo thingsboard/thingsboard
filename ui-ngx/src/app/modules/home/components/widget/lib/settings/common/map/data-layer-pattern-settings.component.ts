@@ -34,6 +34,7 @@ import {
   DataLayerTooltipSettings, dataLayerTooltipTriggers, dataLayerTooltipTriggerTranslationMap
 } from '@home/components/widget/lib/maps/models/map.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { MapSettingsContext } from '@home/components/widget/lib/settings/common/map/map-settings.component.models';
 
 @Component({
   selector: 'tb-data-layer-pattern-settings',
@@ -74,6 +75,9 @@ export class DataLayerPatternSettingsComponent implements OnInit, ControlValueAc
   @coerceBoolean()
   hasTooltipOffset = false;
 
+  @Input()
+  context: MapSettingsContext;
+
   private modelValue: DataLayerPatternSettings | DataLayerTooltipSettings;
 
   private propagateChange = null;
@@ -100,6 +104,7 @@ export class DataLayerPatternSettingsComponent implements OnInit, ControlValueAc
         this.patternSettingsFormGroup.addControl('offsetX', this.fb.control(null, []));
         this.patternSettingsFormGroup.addControl('offsetY', this.fb.control(null, []));
       }
+      this.patternSettingsFormGroup.addControl('tagActions', this.fb.control(null, []));
     }
     this.patternSettingsFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)

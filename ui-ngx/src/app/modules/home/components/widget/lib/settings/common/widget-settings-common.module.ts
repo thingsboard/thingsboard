@@ -233,6 +233,9 @@ import {
 import {
   ImageMapSourceSettingsComponent
 } from '@home/components/widget/lib/settings/common/map/image-map-source-settings.component';
+import {
+  MapTooltipTagActionsComponent
+} from '@home/components/widget/lib/settings/common/map/map-tooltip-tag-actions.component';
 
 @NgModule({
   declarations: [
@@ -309,6 +312,7 @@ import {
     ImageMapSourceSettingsComponent,
     DataLayerColorSettingsComponent,
     DataLayerColorSettingsPanelComponent,
+    MapTooltipTagActionsComponent,
     DataLayerPatternSettingsComponent,
     MarkerShapeSettingsComponent,
     MarkerShapesComponent,

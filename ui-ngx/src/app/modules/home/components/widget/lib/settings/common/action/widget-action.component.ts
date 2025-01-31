@@ -15,13 +15,13 @@
 ///
 
 import {
-  ControlValueAccessor,
+  ControlValueAccessor, FormControl,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
-  Validator,
+  Validator, ValidatorFn,
   Validators
 } from '@angular/forms';
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
@@ -46,6 +46,7 @@ import {
   CustomActionEditorCompleter,
   toCustomAction
 } from '@home/components/widget/lib/settings/common/action/custom-action.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 const stateDisplayTypes = ['normal', 'separateDialog', 'popover'] as const;
 type stateDisplayTypeTuple = typeof  stateDisplayTypes;
@@ -88,6 +89,13 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
 
   @Input()
   callbacks: WidgetActionCallbacks;
+
+  @Input()
+  @coerceBoolean()
+  withName = false;
+
+  @Input()
+  actionNames: string[];
 
   widgetActionTypes = widgetActionTypes;
   widgetActionTypeTranslations = widgetActionTypeTranslationMap;
@@ -147,6 +155,10 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
 
   ngOnInit() {
     this.widgetActionFormGroup = this.fb.group({});
+    if (this.withName) {
+      this.widgetActionFormGroup.addControl('name',
+        this.fb.control(null, [this.validateActionName(), Validators.required]));
+    }
     this.widgetActionFormGroup.addControl('type',
       this.fb.control(null, [Validators.required]));
     this.widgetActionFormGroup.get('type').valueChanges.pipe(
@@ -162,6 +174,11 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
   }
 
   writeValue(widgetAction?: WidgetAction): void {
+    if (this.withName) {
+      this.widgetActionFormGroup.patchValue({
+        name: widgetAction?.name
+      }, {emitEvent: false});
+    }
     this.widgetActionFormGroup.patchValue({
       type: widgetAction?.type
     }, {emitEvent: false});
@@ -455,6 +472,24 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
       }
     }
     return res;
+  }
+
+  private validateActionName(): ValidatorFn {
+    return (c: FormControl) => {
+      const newName = c.value;
+      const valid = this.checkActionName(newName);
+      return !valid ? {
+        actionNameNotUnique: true
+      } : null;
+    };
+  }
+
+  private checkActionName(name: string): boolean {
+    let actionNameIsUnique = true;
+    if (this.actionNames?.length) {
+      actionNameIsUnique = !this.actionNames.includes(name);
+    }
+    return actionNameIsUnique;
   }
 
   private widgetActionUpdated() {

@@ -244,10 +244,12 @@
       </ng-container>
       <tb-data-layer-pattern-settings
         patternType="label"
+        [context]="context"
         formControlName="label">
       </tb-data-layer-pattern-settings>
       <tb-data-layer-pattern-settings
         patternType="tooltip"
+        [context]="context"
         [hasTooltipOffset]="dataLayerType === 'markers'"
         formControlName="tooltip">
       </tb-data-layer-pattern-settings>
@@ -259,7 +261,7 @@
         <tb-widget-action-settings class="flex-1"
                                    panelTitle="{{ 'widgets.maps.data-layer.on-click' | translate }}"
                                    [callbacks]="context.callbacks"
-                                   [widgetType]="widgetType"
+                                   [widgetType]="widgetType.latest"
                                    formControlName="click">
         </tb-widget-action-settings>
       </div>

@@ -692,6 +692,7 @@ export interface CustomActionDescriptor {
 }
 
 export interface WidgetAction extends CustomActionDescriptor {
+  name?: string;
   type: WidgetActionType;
   targetDashboardId?: string;
   targetDashboardStateId?: string;

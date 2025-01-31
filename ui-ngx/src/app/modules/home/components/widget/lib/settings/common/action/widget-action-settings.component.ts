@@ -118,7 +118,6 @@ export class WidgetActionSettingsComponent implements OnInit, ControlValueAccess
         ctx,
         {},
         {}, {}, true);
-      widgetActionSettingsPanelPopover.tbComponentRef.instance.popover = widgetActionSettingsPanelPopover;
       widgetActionSettingsPanelPopover.tbComponentRef.instance.widgetActionApplied.subscribe((widgetAction) => {
         widgetActionSettingsPanelPopover.hide();
         this.modelValue = widgetAction;

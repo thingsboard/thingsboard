@@ -60,7 +60,7 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
     this.data = data;
     this.layer = this.create(data, dsData);
     if (this.settings.tooltip?.show) {
-      this.createTooltip(data.$datasource);
+      this.createTooltip();
       this.updateTooltip(data, dsData);
     }
     this.bindEvents();
@@ -224,7 +224,7 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
       tooltipTemplate = processTooltipTemplate(tooltipTemplate);
       this.tooltip.setContent(tooltipTemplate);
       if (this.tooltip.isOpen() && this.tooltip.getElement()) {
-        this.bindTooltipActions(data.$datasource);
+        this.bindTooltipActions();
       }
     }
   }
@@ -253,7 +253,7 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
 
   protected abstract removeDataItem(): Observable<any>;
 
-  private createTooltip(datasource: TbMapDatasource) {
+  private createTooltip() {
     this.tooltip = L.popup();
     this.layer.bindPopup(this.tooltip, {autoClose: this.settings.tooltip.autoclose, closeOnClick: false});
     this.layer.off('click');
@@ -279,22 +279,30 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
       });
     }
     this.layer.on('popupopen', () => {
-      this.bindTooltipActions(datasource);
+      this.bindTooltipActions();
       (this.layer as any)._popup._closeButton.addEventListener('click', (event: Event) => {
         event.preventDefault();
       });
     });
   }
 
-  private bindTooltipActions(datasource: TbMapDatasource) {
+  private bindTooltipActions() {
     const actions = this.tooltip.getElement().getElementsByClassName('tb-custom-action');
     Array.from(actions).forEach(
       (element: HTMLElement) => {
         const actionName = element.getAttribute('data-action-name');
-        this.dataLayer.getMap().tooltipElementClick(element, actionName, datasource);
+        if (this.settings.tooltip?.tagActions) {
+          const action = this.settings.tooltip.tagActions.find(action => action.name === actionName);
+          if (action) {
+            element.onclick = ($event) =>
+            {
+              this.dataLayer.getMap().dataItemClick($event, action, this.data.$datasource);
+              return false;
+            };
+          }
+        }
       });
   }
-
 }
 
 export enum MapDataLayerType {

@@ -95,6 +95,7 @@ export interface DataLayerTooltipSettings extends DataLayerPatternSettings {
   autoclose: boolean;
   offsetX: number;
   offsetY: number;
+  tagActions?: WidgetAction[];
 }
 
 export enum DataLayerEditAction {
@@ -878,8 +879,6 @@ export const defaultImageMapSettings: ImageMapSettings = {
 export type MapSetting = GeoMapSettings & ImageMapSettings;
 
 export const defaultMapSettings: MapSetting = defaultGeoMapSettings;
-
-export type MapActionHandler = ($event: Event, datasource: TbMapDatasource) => void;
 
 export interface MarkerImageInfo {
   url: string;

@@ -18,7 +18,6 @@ import {
   additionalMapDataSourcesToDatasources,
   BaseMapSettings,
   DataKeyValuePair,
-  MapActionHandler,
   MapType,
   mergeMapDatasources,
   mergeUnplacedDataItemsArrays,
@@ -99,8 +98,6 @@ export abstract class TbMap<S extends BaseMapSettings> {
 
   private readonly mapResize$: ResizeObserver;
 
-  private readonly tooltipActions: { [name: string]: MapActionHandler };
-
   private tooltipInstances: TooltipInstancesData[] = [];
 
   private currentPopover: TbPopoverComponent;
@@ -114,8 +111,6 @@ export abstract class TbMap<S extends BaseMapSettings> {
                         protected inputSettings: DeepPartial<S>,
                         protected containerElement: HTMLElement) {
     this.settings = mergeDeepIgnoreArray({} as S, this.defaultSettings(), this.inputSettings as S);
-
-    this.tooltipActions = this.loadActions('tooltipAction');
 
     $(containerElement).empty();
     $(containerElement).addClass('tb-map-layout');
@@ -595,27 +590,6 @@ export abstract class TbMap<S extends BaseMapSettings> {
     }
   }
 
-  private loadActions(name: string): { [name: string]: MapActionHandler } {
-    const descriptors = this.ctx.actionsApi.getActionDescriptors(name);
-    const actions: { [name: string]: MapActionHandler } = {};
-    descriptors.forEach(descriptor => {
-      actions[descriptor.name] = ($event: Event, datasource: TbMapDatasource) => this.onCustomAction(descriptor, $event, datasource);
-    });
-    return actions;
-  }
-
-  private onCustomAction(descriptor: WidgetActionDescriptor, $event: Event, entityInfo: TbMapDatasource) {
-    if ($event) {
-      $event.preventDefault();
-      $event.stopPropagation();
-    }
-    const { entityId, entityName, entityLabel, entityType } = entityInfo;
-    this.ctx.actionsApi.handleWidgetAction($event, descriptor, {
-      entityType,
-      id: entityId
-    }, entityName, null, entityLabel);
-  }
-
   private updateAddButtonsStates() {
     if (this.currentAddButton) {
       if (this.addMarkerButton && this.addMarkerButton !== this.currentAddButton) {
@@ -703,16 +677,6 @@ export abstract class TbMap<S extends BaseMapSettings> {
       entityType,
       id: entityId
     }, entityName, null, entityLabel);
-  }
-
-  public tooltipElementClick(element: HTMLElement, action: string, datasource: TbMapDatasource): void {
-    if (element && this.tooltipActions[action]) {
-      element.onclick = ($event) =>
-      {
-        this.tooltipActions[action]($event, datasource);
-        return false;
-      };
-    }
   }
 
   public selectItem(item: TbDataLayerItem, cancel = false, force = false): boolean {
