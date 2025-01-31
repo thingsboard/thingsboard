@@ -34,7 +34,7 @@ import {
 import { noLeadTrailSpacesRegex } from '@shared/models/regex.constants';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { map } from 'rxjs/operators';
+import { map, startWith } from 'rxjs/operators';
 import { isObject } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
@@ -63,6 +63,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
 
   functionArgs$ = this.configFormGroup.valueChanges
     .pipe(
+      startWith(this.data.value?.configuration ?? {}),
       map(configuration => isObject(configuration?.arguments) ? Object.keys(configuration.arguments) : [])
     );
 
