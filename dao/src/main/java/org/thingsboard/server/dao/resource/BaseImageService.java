@@ -385,6 +385,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
             JsonNode defaultConfig = widgetTypeDetails.getDefaultConfig();
             if (defaultConfig != null) {
                 updated |= convertToImageUrlsByMapping(tenantId, WIDGET_TYPE_BASE64_MAPPING, Collections.singletonMap("prefix", prefix), defaultConfig, imagesLinks);
+                updated |= convertToImageUrls(tenantId, prefix, defaultConfig, imagesLinks);
                 widgetTypeDetails.setDefaultConfig(defaultConfig);
             }
         }
