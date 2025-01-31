@@ -26,7 +26,8 @@ public enum ServiceType {
     TB_RULE_ENGINE("TB Rule Engine"),
     TB_TRANSPORT("TB Transport"),
     JS_EXECUTOR("JS Executor"),
-    TB_VC_EXECUTOR("TB VC Executor");
+    TB_VC_EXECUTOR("TB VC Executor"),
+    TB_CF_ENGINE("TB Calculated Fields Engine");
 
     private final String label;
 

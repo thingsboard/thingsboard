@@ -25,6 +25,7 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -43,6 +44,7 @@ import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.service.cf.CalculatedFieldCache;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.TbPackCallback;
@@ -68,6 +70,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final TbTenantProfileCache tenantProfileCache;
     protected final TbDeviceProfileCache deviceProfileCache;
     protected final TbAssetProfileCache assetProfileCache;
+    protected final CalculatedFieldCache calculatedFieldCache;
     protected final TbApiUsageStateService apiUsageStateService;
     protected final PartitionService partitionService;
     protected final ApplicationEventPublisher eventPublisher;
@@ -188,6 +191,14 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
         } else if (EntityType.CUSTOMER.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             if (componentLifecycleMsg.getEvent() == ComponentLifecycleEvent.DELETED) {
                 apiUsageStateService.onCustomerDelete((CustomerId) componentLifecycleMsg.getEntityId());
+            }
+        } else if (EntityType.CALCULATED_FIELD.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+            if (componentLifecycleMsg.getEvent() == ComponentLifecycleEvent.CREATED) {
+                calculatedFieldCache.addCalculatedField(tenantId, (CalculatedFieldId) componentLifecycleMsg.getEntityId());
+            } else if (componentLifecycleMsg.getEvent() == ComponentLifecycleEvent.UPDATED) {
+                calculatedFieldCache.updateCalculatedField(tenantId, (CalculatedFieldId) componentLifecycleMsg.getEntityId());
+            } else {
+                calculatedFieldCache.evict((CalculatedFieldId) componentLifecycleMsg.getEntityId());
             }
         }
 

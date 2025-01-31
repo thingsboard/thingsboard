@@ -177,8 +177,8 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
             asset.setType(assetProfile.getName());
             savedAsset = assetDao.saveAndFlush(asset.getTenantId(), asset);
             publishEvictEvent(evictEvent);
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedAsset.getTenantId())
-                    .entityId(savedAsset.getId()).created(asset.getId() == null).build());
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedAsset.getTenantId()).entityId(savedAsset.getId())
+                    .entity(savedAsset).oldEntity(oldAsset).created(asset.getId() == null).build());
             if (asset.getId() == null) {
                 countService.publishCountEntityEvictEvent(savedAsset.getTenantId(), EntityType.ASSET);
             }
@@ -222,8 +222,8 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     @Transactional
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
-        if (!force && entityViewService.existsByTenantIdAndEntityId(tenantId, id)) {
-            throw new DataValidationException("Can't delete asset that has entity views!");
+        if (!force && (entityViewService.existsByTenantIdAndEntityId(tenantId, id) || calculatedFieldService.referencedInAnyCalculatedField(tenantId, id))) {
+            throw new DataValidationException("Can't delete asset that has entity views or is referenced in calculated fields!");
         }
 
         Asset asset = assetDao.findById(tenantId, id.getId());
@@ -239,7 +239,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
 
         publishEvictEvent(new AssetCacheEvictEvent(asset.getTenantId(), asset.getName(), null));
         countService.publishCountEntityEvictEvent(tenantId, EntityType.ASSET);
-        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(asset.getId()).build());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(asset.getId()).entity(asset).build());
     }
 
     @Override
@@ -283,6 +283,15 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         validateId(assetProfileId, id -> INCORRECT_ASSET_PROFILE_ID + id);
         validatePageLink(pageLink);
         return assetDao.findAssetInfosByTenantIdAndAssetProfileId(tenantId.getId(), assetProfileId.getId(), pageLink);
+    }
+
+    @Override
+    public PageData<AssetId> findAssetIdsByTenantIdAndAssetProfileId(TenantId tenantId, AssetProfileId assetProfileId, PageLink pageLink) {
+        log.trace("Executing findAssetIdsByTenantIdAndAssetProfileId, tenantId [{}], assetProfileId [{}]", tenantId, assetProfileId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(assetProfileId, id -> INCORRECT_ASSET_PROFILE_ID + id);
+        validatePageLink(pageLink);
+        return assetDao.findAssetIdsByTenantIdAndAssetProfileId(tenantId.getId(), assetProfileId.getId(), pageLink);
     }
 
     @Override

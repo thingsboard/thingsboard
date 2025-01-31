@@ -337,8 +337,8 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     @Override
     @Transactional
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
-        if (!force && entityViewService.existsByTenantIdAndEntityId(tenantId, id)) {
-            throw new DataValidationException("Can't delete device that has entity views!");
+        if (!force && (entityViewService.existsByTenantIdAndEntityId(tenantId, id) || calculatedFieldService.referencedInAnyCalculatedField(tenantId, id))) {
+            throw new DataValidationException("Can't delete device that has entity views or is referenced in calculated fields!");
         }
 
         Device device = deviceDao.findById(tenantId, id.getId());
@@ -393,6 +393,15 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         validateString(type, t -> "Incorrect type " + t);
         validatePageLink(pageLink);
         return deviceDao.findDevicesByTenantIdAndType(tenantId.getId(), type, pageLink);
+    }
+
+    @Override
+    public PageData<DeviceId> findDeviceIdsByTenantIdAndDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId, PageLink pageLink) {
+        log.trace("Executing findDeviceIdsByTenantIdAndType, tenantId [{}], deviceProfileId [{}], pageLink [{}]", tenantId, deviceProfileId, pageLink);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(deviceProfileId, id -> INCORRECT_DEVICE_PROFILE_ID + id);
+        validatePageLink(pageLink);
+        return deviceDao.findDeviceIdsByTenantIdAndDeviceProfileId(tenantId.getId(), deviceProfileId.getId(), pageLink);
     }
 
     @Override
