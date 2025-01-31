@@ -97,7 +97,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         name: this.translate.instant('action.edit'),
         icon: 'edit',
         isEnabled: () => true,
-        onAction: (_, entity) => this.editCalculatedField(entity)
+        onAction: (_, entity) => this.editCalculatedField(entity),
       }
     );
   }
@@ -171,7 +171,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         tenantId: this.tenantId,
       }
     })
-      .afterClosed()
+      .afterClosed();
   }
 
   private getDebugConfigLabel(debugSettings: EntityDebugSettings): string {
@@ -180,7 +180,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     if (!isDebugActive) {
       return debugSettings?.failuresEnabled ? this.translate.instant('debug-settings.failures') : this.translate.instant('common.disabled');
     } else {
-      return this.durationLeft.transform(debugSettings?.allEnabledUntil)
+      return this.durationLeft.transform(debugSettings?.allEnabledUntil);
     }
   }
 

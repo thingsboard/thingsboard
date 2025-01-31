@@ -16,6 +16,7 @@
 
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   DestroyRef,
   effect,
@@ -43,7 +44,7 @@ export class CalculatedFieldsTableComponent {
 
   @ViewChild(EntitiesTableComponent, {static: true}) entitiesTable: EntitiesTableComponent;
 
-  active = input();
+  active = input<boolean>();
   entityId = input<EntityId>();
 
   calculatedFieldsTableConfig: CalculatedFieldsTableConfig;
@@ -54,6 +55,7 @@ export class CalculatedFieldsTableComponent {
               private store: Store<AppState>,
               private durationLeft: DurationLeftPipe,
               private popoverService: TbPopoverService,
+              private cd: ChangeDetectorRef,
               private destroyRef: DestroyRef) {
 
     effect(() => {
@@ -68,6 +70,7 @@ export class CalculatedFieldsTableComponent {
           this.popoverService,
           this.destroyRef,
         );
+        this.cd.markForCheck();
       }
     });
   }

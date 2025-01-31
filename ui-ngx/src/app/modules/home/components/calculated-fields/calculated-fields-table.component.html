@@ -15,4 +15,6 @@
     limitations under the License.
 
 -->
-<tb-entities-table [entitiesTableConfig]="calculatedFieldsTableConfig"></tb-entities-table>
+@if (calculatedFieldsTableConfig) {
+  <tb-entities-table [entitiesTableConfig]="calculatedFieldsTableConfig"></tb-entities-table>
+}
