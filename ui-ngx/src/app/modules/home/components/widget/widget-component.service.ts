@@ -36,7 +36,8 @@ import {
   ResourcesService
 } from '@core/services/resources.service';
 import {
-  IWidgetSettingsComponent, migrateWidgetTypeToDynamicForms,
+  IWidgetSettingsComponent,
+  migrateWidgetTypeToDynamicForms,
   Widget,
   widgetActionSources,
   WidgetControllerDescriptor,
@@ -58,8 +59,6 @@ import tinycolor from 'tinycolor2';
 import moment from 'moment';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
-import { widgetSettingsComponentsMap } from '@home/components/widget/lib/settings/widget-settings.module';
-import { basicWidgetConfigComponentsMap } from '@home/components/widget/config/basic/basic-widget-config.module';
 import { IBasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { compileTbFunction, TbFunction } from '@shared/models/js-function.models';
 import { HttpClient } from '@angular/common/http';
@@ -437,17 +436,17 @@ export class WidgetComponentService {
       basicDirectives.push(widgetInfo.basicModeDirective);
     }
 
-    this.expandSettingComponentMap(widgetSettingsComponentsMap, directives, modulesWithComponents);
-    this.expandSettingComponentMap(basicWidgetConfigComponentsMap, basicDirectives, modulesWithComponents);
+    this.expandSettingComponentMap(this.widgetService.putWidgetSettingsComponentToMap, directives, modulesWithComponents);
+    this.expandSettingComponentMap(this.widgetService.putBasicWidgetSettingsComponentToMap, basicDirectives, modulesWithComponents);
   }
 
-  private expandSettingComponentMap(settingsComponentsMap: {[key: string]: Type<IWidgetSettingsComponent | IBasicWidgetConfigComponent>},
+  private expandSettingComponentMap(putComponentToMap: (selector: string, comp: Type<IWidgetSettingsComponent | IBasicWidgetConfigComponent>) => void,
                                     directives: string[], modulesWithComponents: ModulesWithComponents): void {
     if (directives.length) {
       directives.forEach(selector => {
         const compType = componentTypeBySelector(modulesWithComponents, selector);
         if (compType) {
-          settingsComponentsMap[selector] = compType;
+          putComponentToMap(selector, compType);
         }
       });
     }
