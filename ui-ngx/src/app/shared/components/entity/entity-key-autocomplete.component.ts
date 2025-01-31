@@ -47,9 +47,6 @@ import { EntityFilter } from '@shared/models/query/query.models';
       multi: true
     }
   ],
-  host: {
-    class: 'w-full'
-  }
 })
 export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Validator {
 
@@ -63,7 +60,7 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
   searchText = '';
   keyInputSubject = new Subject<void>();
 
-  private onChange: (value: string) => void;
+  private propagateChange: (value: string) => void;
   private cachedResult: EntitiesKeysByQuery;
 
   keys$ = this.keyInputSubject.asObservable()
@@ -101,7 +98,7 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
     ) {
     this.keyControl.valueChanges
       .pipe(takeUntilDestroyed())
-      .subscribe(value => this.onChange(value));
+      .subscribe(value => this.propagateChange(value));
     effect(() => {
       if (this.keyScopeType() || this.entityFilter() && this.dataKeyType()) {
         this.cachedResult = null;
@@ -119,7 +116,7 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
   }
 
   registerOnChange(onChange: (value: string) => void): void {
-    this.onChange = onChange;
+    this.propagateChange = onChange;
   }
 
   registerOnTouched(_): void {}

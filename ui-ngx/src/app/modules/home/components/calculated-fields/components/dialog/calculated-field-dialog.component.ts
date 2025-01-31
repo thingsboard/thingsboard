@@ -47,7 +47,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
 
   fieldFormGroup = this.fb.group({
     name: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex), Validators.maxLength(255)]],
-    type: [CalculatedFieldType.SIMPLE, [Validators.required]],
+    type: [CalculatedFieldType.SIMPLE],
     debugSettings: [],
     configuration: this.fb.group({
       arguments: [{}],
@@ -72,7 +72,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
   readonly EntityType = EntityType;
   readonly CalculatedFieldType = CalculatedFieldType;
   readonly ScriptLanguage = ScriptLanguage;
-  readonly helpLink = `${helpBaseUrl}/[TODO: ADD VALID LINK!!!]`;
+  readonly helpLink = `${helpBaseUrl}/[TODO: [Calculated Fields] add valid link]`;
   readonly fieldTypes = Object.values(CalculatedFieldType) as CalculatedFieldType[];
   readonly outputTypes = Object.values(OutputType) as OutputType[];
   readonly CalculatedFieldTypeTranslations = CalculatedFieldTypeTranslations;

@@ -88,6 +88,7 @@ export class CalculatedFieldArgumentPanelComponent extends PageComponent impleme
   readonly datasourceType = DatasourceType;
   readonly ArgumentTypeTranslations = ArgumentTypeTranslations;
   readonly AttributeScope = AttributeScope;
+  readonly ArgumentEntityType = ArgumentEntityType;
 
   constructor(
     private fb: FormBuilder,
@@ -164,9 +165,9 @@ export class CalculatedFieldArgumentPanelComponent extends PageComponent impleme
 
   private observeEntityFilterChanges(): void {
     merge(
-      this.argumentFormGroup.get('refEntityId').get('entityType').valueChanges,
-      this.argumentFormGroup.get('refEntityId').get('id').valueChanges.pipe(filter(Boolean)),
-      this.argumentFormGroup.get('refEntityKey').get('scope').valueChanges,
+      this.refEntityIdFormGroup.get('entityType').valueChanges,
+      this.refEntityIdFormGroup.get('id').valueChanges.pipe(filter(Boolean)),
+      this.refEntityKeyFormGroup.get('scope').valueChanges,
     )
       .pipe(debounceTime(300), delay(50), takeUntilDestroyed())
       .subscribe(() => this.updateEntityFilter(this.entityType));
@@ -196,6 +197,4 @@ export class CalculatedFieldArgumentPanelComponent extends PageComponent impleme
       typeControl.updateValueAndValidity();
     }
   }
-
-  protected readonly ArgumentEntityType = ArgumentEntityType;
 }

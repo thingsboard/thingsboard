@@ -43,9 +43,7 @@ import {
   CalculatedFieldArgumentValue,
   CalculatedFieldType,
 } from '@shared/models/calculated-field.models';
-import {
-  CalculatedFieldArgumentPanelComponent
-} from '@home/components/calculated-fields/components/panel/calculated-field-argument-panel.component';
+import { CalculatedFieldArgumentPanelComponent } from '@home/components/calculated-fields/components/public-api';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -87,7 +85,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
   readonly EntityType = EntityType;
   readonly ArgumentEntityType = ArgumentEntityType;
 
-  private onChange: (argumentsObj: Record<string, CalculatedFieldArgument>) => void = () => {};
+  private propagateChange: (argumentsObj: Record<string, CalculatedFieldArgument>) => void = () => {};
 
   constructor(
     private fb: FormBuilder,
@@ -98,58 +96,26 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
     private renderer: Renderer2
   ) {
     this.argumentsFormArray.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
-      this.onChange(this.getArgumentsObject());
+      this.propagateChange(this.getArgumentsObject());
     });
     effect(() => this.calculatedFieldType() && this.argumentsFormArray.updateValueAndValidity());
   }
 
   registerOnChange(fn: (argumentsObj: Record<string, CalculatedFieldArgument>) => void): void {
-    this.onChange = fn;
+    this.propagateChange = fn;
   }
 
   registerOnTouched(_): void {}
 
   validate(): ValidationErrors | null {
-    if (this.calculatedFieldType() === CalculatedFieldType.SIMPLE
-      && this.argumentsFormArray.controls.some(control => control.get('refEntityKey').get('type').value === ArgumentType.Rolling)) {
-      this.errorText = 'calculated-fields.hint.arguments-simple-with-rolling';
-    } else if (!this.argumentsFormArray.controls.length) {
-      this.errorText = 'calculated-fields.hint.arguments-empty';
-    } else {
-      this.errorText = '';
-    }
+    this.updateErrorText();
     return this.errorText ? { argumentsFormArray: false } : null;
   }
 
-  private getArgumentsObject(): Record<string, CalculatedFieldArgument> {
-    return this.argumentsFormArray.controls.reduce((acc, control) => {
-      const rawValue = control.getRawValue();
-      const { argumentName, ...argument } = rawValue as CalculatedFieldArgumentValue;
-      acc[argumentName] = argument;
-      return acc;
-    }, {} as Record<string, CalculatedFieldArgument>);
+  onDelete(index: number): void {
+    this.argumentsFormArray.removeAt(index);
+    this.argumentsFormArray.markAsDirty();
   }
-
-  writeValue(argumentsObj: Record<string, CalculatedFieldArgument>): void {
-    this.argumentsFormArray.clear();
-    Object.keys(argumentsObj).forEach(key => {
-      this.argumentsFormArray.push(this.fb.group({
-        argumentName: [key, [Validators.required, Validators.maxLength(255), Validators.pattern(noLeadTrailSpacesRegex)]],
-        ...argumentsObj[key],
-        ...(argumentsObj[key].refEntityId ? {
-          refEntityId: this.fb.group({
-            entityType: [{ value: argumentsObj[key].refEntityId.entityType, disabled: true }],
-            id: [{ value: argumentsObj[key].refEntityId.id , disabled: true }],
-          }),
-        } : {}),
-        refEntityKey: this.fb.group({
-          type: [{ value: argumentsObj[key].refEntityKey.type, disabled: true }],
-          key: [{ value: argumentsObj[key].refEntityKey.key, disabled: true }],
-        }),
-      }) as AbstractControl);
-    });
-  }
-
 
   manageArgument($event: Event, matButton: MatButton, index?: number): void {
     $event?.stopPropagation();
@@ -189,7 +155,51 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
     }
   }
 
-  getArgumentFormGroup(value: CalculatedFieldArgumentValue): AbstractControl {
+  private updateErrorText(): void {
+    if (this.calculatedFieldType() === CalculatedFieldType.SIMPLE
+      && this.argumentsFormArray.controls.some(control => control.get('refEntityKey').get('type').value === ArgumentType.Rolling)) {
+      this.errorText = 'calculated-fields.hint.arguments-simple-with-rolling';
+    } else if (!this.argumentsFormArray.controls.length) {
+      this.errorText = 'calculated-fields.hint.arguments-empty';
+    } else {
+      this.errorText = '';
+    }
+  }
+
+  private getArgumentsObject(): Record<string, CalculatedFieldArgument> {
+    return this.argumentsFormArray.controls.reduce((acc, control) => {
+      const rawValue = control.getRawValue();
+      const { argumentName, ...argument } = rawValue as CalculatedFieldArgumentValue;
+      acc[argumentName] = argument;
+      return acc;
+    }, {} as Record<string, CalculatedFieldArgument>);
+  }
+
+  writeValue(argumentsObj: Record<string, CalculatedFieldArgument>): void {
+    this.argumentsFormArray.clear();
+    this.populateArgumentsFormArray(argumentsObj)
+  }
+
+  private populateArgumentsFormArray(argumentsObj: Record<string, CalculatedFieldArgument>): void {
+    Object.keys(argumentsObj).forEach(key => {
+      this.argumentsFormArray.push(this.fb.group({
+        argumentName: [key, [Validators.required, Validators.maxLength(255), Validators.pattern(noLeadTrailSpacesRegex)]],
+        ...argumentsObj[key],
+        ...(argumentsObj[key].refEntityId ? {
+          refEntityId: this.fb.group({
+            entityType: [{ value: argumentsObj[key].refEntityId.entityType, disabled: true }],
+            id: [{ value: argumentsObj[key].refEntityId.id , disabled: true }],
+          }),
+        } : {}),
+        refEntityKey: this.fb.group({
+          type: [{ value: argumentsObj[key].refEntityKey.type, disabled: true }],
+          key: [{ value: argumentsObj[key].refEntityKey.key, disabled: true }],
+        }),
+      }) as AbstractControl);
+    });
+  }
+
+  private getArgumentFormGroup(value: CalculatedFieldArgumentValue): AbstractControl {
     return this.fb.group({
       ...value,
       argumentName: [value.argumentName, [Validators.required, Validators.maxLength(255), Validators.pattern(noLeadTrailSpacesRegex)]],
@@ -204,10 +214,5 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
         key: [{ value: value.refEntityKey.key, disabled: true }],
       }),
     })
-  }
-
-  onDelete(index: number): void {
-    this.argumentsFormArray.removeAt(index);
-    this.argumentsFormArray.markAsDirty();
   }
 }

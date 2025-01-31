@@ -40,6 +40,7 @@ import { CalculatedFieldDialogComponent } from './components/public-api';
 
 export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField, TimePageLink> {
 
+  // TODO: [Calculated Fields] remove hardcode when BE variable implemented
   readonly calculatedFieldsDebugPerTenantLimitsConfiguration =
     getCurrentAuthState(this.store)['calculatedFieldsDebugPerTenantLimitsConfiguration'] || '1:1';
   readonly maxDebugModeDuration = getCurrentAuthState(this.store).maxDebugModeDurationMinutes * MINUTE;
@@ -66,9 +67,9 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     this.entityType = EntityType.CALCULATED_FIELD;
     this.entityTranslations = entityTypeTranslations.get(EntityType.CALCULATED_FIELD);
 
-    this.entitiesFetchFunction = pageLink => this.fetchCalculatedFields(pageLink);
+    this.entitiesFetchFunction = (pageLink: TimePageLink) => this.fetchCalculatedFields(pageLink);
     this.addEntity = this.addCalculatedField.bind(this);
-    this.deleteEntityTitle = (field) => this.translate.instant('calculated-fields.delete-title', {title: field.name});
+    this.deleteEntityTitle = (field: CalculatedField) => this.translate.instant('calculated-fields.delete-title', {title: field.name});
     this.deleteEntityContent = () => this.translate.instant('calculated-fields.delete-text');
     this.deleteEntitiesTitle = count => this.translate.instant('calculated-fields.delete-multiple-title', {count});
     this.deleteEntitiesContent = () => this.translate.instant('calculated-fields.delete-multiple-text');
@@ -102,7 +103,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   }
 
   fetchCalculatedFields(pageLink: TimePageLink): Observable<PageData<CalculatedField>> {
-    return this.calculatedFieldsService.getCalculatedFields(pageLink);
+    return this.calculatedFieldsService.getCalculatedFields(this.entityId, pageLink);
   }
 
   onOpenDebugConfig($event: Event, { debugSettings = {}, id }: CalculatedField): void {
@@ -134,10 +135,9 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
 
   private addCalculatedField(): void {
     this.getCalculatedFieldDialog()
-      .afterClosed()
       .pipe(
         filter(Boolean),
-        switchMap(calculatedField => this.calculatedFieldsService.saveCalculatedField({ entityId: this.entityId, ...calculatedField} as any)),
+        switchMap(calculatedField => this.calculatedFieldsService.saveCalculatedField({ entityId: this.entityId, ...calculatedField })),
       )
       .subscribe((res) => {
         if (res) {
@@ -148,10 +148,9 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
 
   private editCalculatedField(calculatedField: CalculatedField): void {
     this.getCalculatedFieldDialog(calculatedField, 'action.apply')
-      .afterClosed()
       .pipe(
         filter(Boolean),
-        switchMap((updatedCalculatedField) => this.calculatedFieldsService.saveCalculatedField({ ...calculatedField, ...updatedCalculatedField} as any)),
+        switchMap((updatedCalculatedField) => this.calculatedFieldsService.saveCalculatedField({ ...calculatedField, ...updatedCalculatedField })),
       )
       .subscribe((res) => {
         if (res) {
@@ -160,7 +159,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       });
   }
 
-  private getCalculatedFieldDialog(value = {}, buttonTitle = 'action.add') {
+  private getCalculatedFieldDialog(value = {}, buttonTitle = 'action.add'): Observable<CalculatedField> {
     return this.dialog.open<CalculatedFieldDialogComponent, any, CalculatedField>(CalculatedFieldDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
@@ -172,6 +171,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         tenantId: this.tenantId,
       }
     })
+      .afterClosed()
   }
 
   private getDebugConfigLabel(debugSettings: EntityDebugSettings): string {

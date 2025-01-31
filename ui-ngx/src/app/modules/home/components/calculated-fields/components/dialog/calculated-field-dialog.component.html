@@ -68,7 +68,7 @@
             formControlName="arguments"
             [entityId]="data.entityId"
             [tenantId]="data.tenantId"
-            [calculatedFieldType]="fieldFormGroup.get('type').valueChanges | async"
+            [calculatedFieldType]="fieldFormGroup.get('type').value"
           />
         </div>
         <div class="tb-form-panel">
@@ -96,7 +96,7 @@
               [functionArgs]="functionArgs$ | async"
               [disableUndefinedCheck]="true"
               [scriptLanguage]="ScriptLanguage.TBEL"
-              helpId="[TODO]: ADD VALID LINK HERE!!!"
+              helpId="[TODO]: [Calculated Fields] add valid link"
             />
           }
         </div>
