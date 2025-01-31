@@ -23,7 +23,7 @@
         <div class="fixed-title-width tb-required">{{ 'calculated-fields.argument-name' | translate }}</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-            <input matInput name="value" formControlName="argumentName" maxlength="255" placeholder="{{ 'action.set' | translate }}"/>
+            <input matInput autocomplete="off" name="value" formControlName="argumentName" maxlength="255" placeholder="{{ 'action.set' | translate }}"/>
             <div class="h-5 pr-2">
               @if (argumentFormGroup.get('argumentName').touched) {
                 @if (argumentFormGroup.get('argumentName').hasError('required')) {

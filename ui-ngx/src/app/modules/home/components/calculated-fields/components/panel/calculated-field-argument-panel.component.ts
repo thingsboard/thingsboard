@@ -18,7 +18,7 @@ import { ChangeDetectorRef, Component, ElementRef, Input, OnInit, output, ViewCh
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { charNumRegex, noLeadTrailSpacesRegex } from '@shared/models/regex.constants';
+import { charsWithNumRegex, noLeadTrailSpacesRegex } from '@shared/models/regex.constants';
 import {
   ArgumentEntityType,
   ArgumentEntityTypeTranslations,
@@ -58,7 +58,7 @@ export class CalculatedFieldArgumentPanelComponent extends PageComponent impleme
   argumentsDataApplied = output<{ value: CalculatedFieldArgumentValue, index: number }>();
 
   argumentFormGroup = this.fb.group({
-    argumentName: ['', [Validators.required, Validators.pattern(charNumRegex), Validators.maxLength(255)]],
+    argumentName: ['', [Validators.required, Validators.pattern(charsWithNumRegex), Validators.maxLength(255)]],
     refEntityId: this.fb.group({
       entityType: [ArgumentEntityType.Current],
       id: ['']
@@ -66,10 +66,10 @@ export class CalculatedFieldArgumentPanelComponent extends PageComponent impleme
     refEntityKey: this.fb.group({
       type: [ArgumentType.LatestTelemetry, [Validators.required]],
       key: [''],
-      scope: [{ value: AttributeScope.SERVER_SCOPE, disabled: true }],
+      scope: [{ value: AttributeScope.SERVER_SCOPE, disabled: true }, [Validators.required]],
     }),
     defaultValue: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
-    limit: [10],
+    limit: [1000],
     timeWindow: [MINUTE * 15],
   });
 

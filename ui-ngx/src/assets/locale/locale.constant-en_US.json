@@ -1048,7 +1048,7 @@
         "delete-multiple-title": "Are you sure you want to delete { count, plural, =1 {1 calculated field} other {# calculated fields} }?",
         "delete-multiple-text": "Be careful, after the confirmation all selected calculated fields will be removed and all related data will become unrecoverable.",
         "hint": {
-            "arguments-simple-with-rolling": "Simple type calculated field should not contain keys with rolling type.",
+            "arguments-simple-with-rolling": "Simple type calculated field should not contain keys with time series rolling type.",
             "arguments-empty": "Arguments should not be empty.",
             "expression-required": "Expression is required.",
             "expression-invalid": "Expression is invalid",

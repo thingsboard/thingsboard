@@ -61,7 +61,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
     }),
   });
 
-  functionArgs$ = this.fieldFormGroup.get('configuration').valueChanges
+  functionArgs$ = this.configFormGroup.valueChanges
     .pipe(
       map(configuration => isObject(configuration?.arguments) ? Object.keys(configuration.arguments) : [])
     );
