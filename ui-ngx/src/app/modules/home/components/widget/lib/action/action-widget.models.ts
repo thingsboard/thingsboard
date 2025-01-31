@@ -53,7 +53,7 @@ import {
 import { ValueType } from '@shared/models/constants';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import { isDefinedAndNotNull } from '@core/utils';
+import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { parseError } from '@shared/models/error.models';
 import { CompiledTbFunction, compileTbFunction } from '@shared/models/js-function.models';
 import { HttpClient } from '@angular/common/http';
@@ -658,7 +658,7 @@ export class DashboardStateWithParamsGetter<V> extends ValueGetter<V> {
       return of({id: 'default', params: {}});
     } else {
       return this.ctx.stateController.dashboardCtrl.dashboardCtx.stateId.pipe(
-        map(id => ({id, params: this.ctx.stateController.getStateParams()}))
+        map(id => ({id, params: deepClone(this.ctx.stateController.getStateParams())}))
       );
     }
   }
