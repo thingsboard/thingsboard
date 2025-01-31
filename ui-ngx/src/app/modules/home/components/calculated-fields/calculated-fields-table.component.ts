@@ -18,8 +18,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
-  Input,
-  OnInit,
+  effect,
+  input,
   ViewChild,
 } from '@angular/core';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -39,36 +39,14 @@ import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
   styleUrls: ['./calculated-fields-table.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CalculatedFieldsTableComponent implements OnInit {
-
-  @Input()
-  set entityId(entityId: EntityId) {
-    if (this.entityIdValue !== entityId) {
-      this.entityIdValue = entityId;
-      if (!this.activeValue) {
-        this.hasInitialized = true;
-      }
-    }
-  }
-
-  @Input()
-  set active(active: boolean) {
-    if (this.activeValue !== active) {
-      this.activeValue = active;
-      if (this.activeValue && this.hasInitialized) {
-        this.hasInitialized = false;
-        this.entitiesTable.updateData();
-      }
-    }
-  }
+export class CalculatedFieldsTableComponent {
 
   @ViewChild(EntitiesTableComponent, {static: true}) entitiesTable: EntitiesTableComponent;
 
-  calculatedFieldsTableConfig: CalculatedFieldsTableConfig;
+  active = input();
+  entityId = input<EntityId>();
 
-  private activeValue = false;
-  private hasInitialized = false;
-  private entityIdValue: EntityId;
+  calculatedFieldsTableConfig: CalculatedFieldsTableConfig;
 
   constructor(private calculatedFieldsService: CalculatedFieldsService,
               private translate: TranslateService,
@@ -77,20 +55,20 @@ export class CalculatedFieldsTableComponent implements OnInit {
               private durationLeft: DurationLeftPipe,
               private popoverService: TbPopoverService,
               private destroyRef: DestroyRef) {
-  }
 
-  ngOnInit() {
-    this.hasInitialized = !this.activeValue;
-
-    this.calculatedFieldsTableConfig = new CalculatedFieldsTableConfig(
-      this.calculatedFieldsService,
-      this.translate,
-      this.dialog,
-      this.entityIdValue,
-      this.store,
-      this.durationLeft,
-      this.popoverService,
-      this.destroyRef,
-    );
+    effect(() => {
+      if (this.active()) {
+        this.calculatedFieldsTableConfig = new CalculatedFieldsTableConfig(
+          this.calculatedFieldsService,
+          this.translate,
+          this.dialog,
+          this.entityId(),
+          this.store,
+          this.durationLeft,
+          this.popoverService,
+          this.destroyRef,
+        );
+      }
+    });
   }
 }
