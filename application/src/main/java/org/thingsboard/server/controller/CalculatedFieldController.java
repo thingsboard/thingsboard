@@ -94,11 +94,11 @@ public class CalculatedFieldController extends BaseController {
         return calculatedField;
     }
 
-    @ApiOperation(value = "Get Calculated Fields (getCalculatedFieldsByEntityId)",
+    @ApiOperation(value = "Get Calculated Fields by Entity Id (getCalculatedFieldsByEntityId)",
             notes = "Fetch the Calculated Fields based on the provided Entity Id."
     )
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/{entityType}/{entityId}/calculatedField", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @RequestMapping(value = "/{entityType}/{entityId}/calculatedFields", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<CalculatedField> getCalculatedFieldsByEntityId(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
