@@ -56,6 +56,7 @@ import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.queue.TbQueueCallback;
 
 import java.util.Set;
 
@@ -124,7 +125,7 @@ public class EntityStateSourcingListener {
                 tbClusterService.onApiStateChange(apiUsageState, null);
             }
             case CALCULATED_FIELD -> {
-                onCalculatedFieldUpdate(event.getEntity(), event.getOldEntity(), lifecycleEvent);
+                onCalculatedFieldUpdate(event.getEntity(), event.getOldEntity());
             }
             default -> {
             }
@@ -193,8 +194,7 @@ public class EntityStateSourcingListener {
             }
             case CALCULATED_FIELD -> {
                 CalculatedField calculatedField = (CalculatedField) event.getEntity();
-                ComponentLifecycleMsg lifecycleMsg = new ComponentLifecycleMsg(calculatedField.getTenantId(), calculatedField.getId(), ComponentLifecycleEvent.DELETED);
-                tbClusterService.onCalculatedFieldDeleted(calculatedField.getTenantId(), calculatedField, lifecycleMsg);
+                tbClusterService.onCalculatedFieldDeleted(calculatedField, null);
             }
             default -> {
             }
@@ -276,13 +276,13 @@ public class EntityStateSourcingListener {
         }
     }
 
-    private void onCalculatedFieldUpdate(Object entity, Object oldEntity, ComponentLifecycleEvent lifecycleEvent) {
+    private void onCalculatedFieldUpdate(Object entity, Object oldEntity) {
         CalculatedField calculatedField = (CalculatedField) entity;
         CalculatedField oldCalculatedField = null;
         if (oldEntity instanceof CalculatedField) {
             oldCalculatedField = (CalculatedField) oldEntity;
         }
-        tbClusterService.onCalculatedFieldUpdated(calculatedField, oldCalculatedField, new ComponentLifecycleMsg(calculatedField.getTenantId(), calculatedField.getId(), lifecycleEvent));
+        tbClusterService.onCalculatedFieldUpdated(calculatedField, oldCalculatedField, TbQueueCallback.EMPTY);
     }
 
     private void pushAssignedFromNotification(Tenant currentTenant, TenantId newTenantId, Device assignedDevice) {

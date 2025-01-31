@@ -32,7 +32,6 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
-import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 
 import java.util.ArrayList;
@@ -154,4 +153,12 @@ public class CalculatedFieldCtx {
     public CalculatedFieldEntityCtxId toCalculatedFieldEntityCtxId() {
         return new CalculatedFieldEntityCtxId(tenantId, cfId, entityId);
     }
+
+    public boolean hasSignificantChanges(CalculatedFieldCtx other) {
+        boolean entityIdChanged = !entityId.equals(other.entityId);
+        boolean typeChanged = !cfType.equals(other.cfType);
+        boolean argumentsChanged = !arguments.equals(other.arguments);
+        return entityIdChanged || typeChanged || argumentsChanged;
+    }
+
 }

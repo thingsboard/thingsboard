@@ -170,12 +170,11 @@ public class TenantActor extends RuleChainManagerActor {
             case CF_INIT_MSG:
             case CF_LINK_INIT_MSG:
             case CF_STATE_RESTORE_MSG:
-            case CF_UPDATE_MSG:
+            case CF_ENTITY_LIFECYCLE_MSG:
                 onToCalculatedFieldSystemActorMsg((ToCalculatedFieldSystemMsg) msg, true);
                 break;
             case CF_TELEMETRY_MSG:
             case CF_LINKED_TELEMETRY_MSG:
-            case CF_ENTITY_UPDATE_MSG:
                 onToCalculatedFieldSystemActorMsg((ToCalculatedFieldSystemMsg) msg, false);
                 break;
             default:

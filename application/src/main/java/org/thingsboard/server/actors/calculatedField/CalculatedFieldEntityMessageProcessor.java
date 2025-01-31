@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeScopeProto;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
@@ -86,6 +87,29 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
     public void process(CalculatedFieldStateRestoreMsg msg) {
         states.put(msg.getId().cfId(), msg.getState());
+    }
+
+    public void process(EntityInitCalculatedFieldMsg msg) {
+        var cfCtx = msg.getCtx();
+        if (msg.isForceReinit()) {
+            states.remove(cfCtx.getCfId());
+        }
+        var cfState = getOrInitState(cfCtx);
+        processStateIfReady(cfCtx, Collections.singletonList(cfCtx.getCfId()), cfState, msg.getCallback());
+    }
+
+    public void process(CalculatedFieldEntityDeleteMsg msg) {
+        if (this.entityId.equals(msg.getEntityId())) {
+            MultipleTbCallback multipleTbCallback = new MultipleTbCallback(states.size(), msg.getCallback());
+            states.forEach((cfId, state) -> cfService.deleteStateFromStorage(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), multipleTbCallback));
+            ctx.stop(ctx.getSelf());
+        } else {
+            var cfId = new CalculatedFieldId(msg.getEntityId().getId());
+            var state = states.remove(cfId);
+            if (state != null) {
+                cfService.deleteStateFromStorage(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), msg.getCallback());
+            }
+        }
     }
 
     public void process(EntityCalculatedFieldTelemetryMsg msg) {
@@ -152,15 +176,9 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         }
         CalculatedFieldState state = getOrInitState(ctx);
         if (state.updateState(newArgValues)) {
-            if (state.isReady()) {
-                CalculatedFieldResult calculationResult = state.performCalculation(ctx).get(5, TimeUnit.SECONDS);
-                cfIdList = new ArrayList<>(cfIdList);
-                cfIdList.add(ctx.getCfId());
-                cfService.pushMsgToRuleEngine(tenantId, entityId, calculationResult, cfIdList, callback);
-            } else {
-                callback.onSuccess(); // State was updated but no calculation performed;
-            }
-            cfService.pushStateToStorage(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), state, callback);
+            cfIdList = new ArrayList<>(cfIdList);
+            cfIdList.add(ctx.getCfId());
+            processStateIfReady(ctx, cfIdList, state, callback);
         } else {
             callback.onSuccess(CALLBACKS_PER_CF);
         }
@@ -183,13 +201,24 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         return state;
     }
 
+    @SneakyThrows
+    private void processStateIfReady(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, CalculatedFieldState state, TbCallback callback) {
+        if (state.isReady()) {
+            CalculatedFieldResult calculationResult = state.performCalculation(ctx).get(5, TimeUnit.SECONDS);
+            cfService.pushMsgToRuleEngine(tenantId, entityId, calculationResult, cfIdList, callback);
+        } else {
+            callback.onSuccess(); // State was updated but no calculation performed;
+        }
+        cfService.pushStateToStorage(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), state, callback);
+    }
+
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, List<TsKvProto> data) {
         return mapToArguments(ctx.getMainEntityArguments(), data);
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, EntityId entityId, List<TsKvProto> data) {
         var argNames = ctx.getLinkedEntityArguments().get(entityId);
-        if(argNames.isEmpty()) {
+        if (argNames.isEmpty()) {
             return Collections.emptyMap();
         }
         return mapToArguments(argNames, data);
@@ -221,7 +250,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, EntityId entityId, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
         var argNames = ctx.getLinkedEntityArguments().get(entityId);
-        if(argNames.isEmpty()) {
+        if (argNames.isEmpty()) {
             return Collections.emptyMap();
         }
         return mapToArguments(argNames, scope, attrDataList);

@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.service.cf.RocksDBService;
-import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtx;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldStateService;
 
@@ -59,8 +58,9 @@ public class RocksDBStateService implements CalculatedFieldStateService {
     }
 
     @Override
-    public void removeState(CalculatedFieldEntityCtxId ctxId) {
+    public void removeState(CalculatedFieldEntityCtxId ctxId, TbCallback callback) {
         rocksDBService.delete(JacksonUtil.writeValueAsString(ctxId));
+        callback.onSuccess();
     }
 
 }
