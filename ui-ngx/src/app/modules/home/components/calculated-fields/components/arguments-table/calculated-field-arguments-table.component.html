@@ -28,7 +28,7 @@
         <mat-form-field appearance="outline" class="tb-inline-field w-1/6" subscriptSizing="dynamic">
           <input matInput formControlName="argumentName" placeholder="{{ 'action.set' | translate }}">
         </mat-form-field>
-        @if (group.get('refEntityId')?.get('id').value) {
+        @if (group.get('refEntityId')?.get('id')?.value) {
           <ng-container [formGroup]="group.get('refEntityId')">
             <mat-form-field appearance="outline" class="tb-inline-field w-1/6" subscriptSizing="dynamic">
               <mat-select [value]="group.get('refEntityId').get('entityType').value" formControlName="entityType">
@@ -51,7 +51,7 @@
             <mat-select [value]="'current'" [disabled]="true">
               <mat-option [value]="'current'">
                 {{
-                  (group.get('refEntityId')?.get('entityType').value === ArgumentEntityType.Tenant
+                  (group.get('refEntityId')?.get('entityType')?.value === ArgumentEntityType.Tenant
                     ? 'calculated-fields.argument-current-tenant'
                     : 'calculated-fields.argument-current') | translate
                 }}

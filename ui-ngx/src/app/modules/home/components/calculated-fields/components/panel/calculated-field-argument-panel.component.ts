@@ -119,7 +119,9 @@ export class CalculatedFieldArgumentPanelComponent extends PageComponent impleme
   }
 
   saveArgument(): void {
-    this.argumentsDataApplied.emit({ value: this.argumentFormGroup.value as CalculatedFieldArgumentValue, index: this.index });
+    const { refEntityId, ...restConfig } = this.argumentFormGroup.value;
+    const value = (refEntityId.entityType === ArgumentEntityType.Current ? restConfig : { refEntityId, ...restConfig }) as CalculatedFieldArgumentValue;
+    this.argumentsDataApplied.emit({ value, index: this.index });
   }
 
   cancel(): void {
@@ -148,7 +150,7 @@ export class CalculatedFieldArgumentPanelComponent extends PageComponent impleme
         };
         break;
       default:
-        entityId = this.argumentFormGroup.get('refEntityId').value as any;
+        entityId = this.argumentFormGroup.get('refEntityId').value as unknown as EntityId;
     }
     if (!onInit) {
       this.argumentFormGroup.get('refEntityKey').get('key').setValue('');
