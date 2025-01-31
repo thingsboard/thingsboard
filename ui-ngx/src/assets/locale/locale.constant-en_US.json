@@ -1030,7 +1030,7 @@
         "timeseries-key": "Time series key",
         "device-name": "Device name",
         "latest-telemetry": "Latest telemetry",
-        "rolling": "Rolling",
+        "rolling": "Time series rolling",
         "attribute-scope": "Attribute scope",
         "server-attributes": "Server attributes",
         "client-attributes": "Client attributes",

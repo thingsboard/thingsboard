@@ -133,7 +133,8 @@
                   <mat-option [value]="AttributeScope.SERVER_SCOPE">
                     {{ 'calculated-fields.server-attributes' | translate }}
                   </mat-option>
-                  @if ((keyEntityType$ | async) === EntityType.DEVICE) {
+                  @if (entityType === ArgumentEntityType.Device
+                  || entityType === ArgumentEntityType.Current && entityId.entityType === EntityType.DEVICE) {
                     <mat-option [value]="AttributeScope.CLIENT_SCOPE">
                       {{ 'calculated-fields.client-attributes' | translate }}
                     </mat-option>

@@ -18,7 +18,7 @@ import { ChangeDetectorRef, Component, ElementRef, Input, OnInit, output, ViewCh
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { noLeadTrailSpacesRegex } from '@shared/models/regex.constants';
+import { charNumRegex, noLeadTrailSpacesRegex } from '@shared/models/regex.constants';
 import {
   ArgumentEntityType,
   ArgumentEntityTypeTranslations,
@@ -27,7 +27,7 @@ import {
   CalculatedFieldArgumentValue,
   CalculatedFieldType
 } from '@shared/models/calculated-field.models';
-import { delay, distinctUntilChanged, filter, map, startWith, throttleTime } from 'rxjs/operators';
+import { delay, distinctUntilChanged, filter, throttleTime } from 'rxjs/operators';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { DatasourceType } from '@shared/models/widget.models';
@@ -57,7 +57,7 @@ export class CalculatedFieldArgumentPanelComponent extends PageComponent impleme
   argumentsDataApplied = output<{ value: CalculatedFieldArgumentValue, index: number }>();
 
   argumentFormGroup = this.fb.group({
-    argumentName: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex), Validators.maxLength(255)]],
+    argumentName: ['', [Validators.required, Validators.pattern(charNumRegex), Validators.maxLength(255)]],
     refEntityId: this.fb.group({
       entityType: [ArgumentEntityType.Current],
       id: ['']
@@ -74,11 +74,6 @@ export class CalculatedFieldArgumentPanelComponent extends PageComponent impleme
 
   argumentTypes: ArgumentType[];
   entityFilter: EntityFilter;
-  keyEntityType$ = this.refEntityIdFormGroup.get('entityType').valueChanges
-    .pipe(
-      startWith(this.refEntityIdFormGroup.get('entityType').value),
-      map(type => type === ArgumentEntityType.Current ? this.entityId.entityType : type)
-    );
 
   readonly argumentEntityTypes = Object.values(ArgumentEntityType) as ArgumentEntityType[];
   readonly ArgumentEntityTypeTranslations = ArgumentEntityTypeTranslations;
@@ -140,7 +135,7 @@ export class CalculatedFieldArgumentPanelComponent extends PageComponent impleme
     this.argumentFormGroup.get('defaultValue')[isRolling? 'disable' : 'enable']({ emitEvent: false });
   }
 
-  private updateEntityFilter(entityType: ArgumentEntityType, onInit = false): void {
+  private updateEntityFilter(entityType: ArgumentEntityType = ArgumentEntityType.Current, onInit = false): void {
     let entityId: EntityId;
     switch (entityType) {
       case ArgumentEntityType.Current:

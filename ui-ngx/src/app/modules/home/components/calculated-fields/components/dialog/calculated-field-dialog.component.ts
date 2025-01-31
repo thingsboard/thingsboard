@@ -110,7 +110,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
   private applyDialogData(): void {
     const { configuration = {}, type = CalculatedFieldType.SIMPLE, ...value } = this.data.value;
     const { expression, ...restConfig } = configuration as CalculatedFieldConfiguration;
-    this.fieldFormGroup.patchValue({ configuration: { ...restConfig, ['expression'+type]: expression }, type, ...value });
+    this.fieldFormGroup.patchValue({ configuration: { ...restConfig, ['expression'+type]: expression }, type, ...value }, {emitEvent: false});
   }
 
   private observeTypeChanges(): void {
@@ -131,5 +131,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
 
   private toggleKeyByCalculatedFieldType(type: CalculatedFieldType): void {
     this.outputFormGroup.get('name')[type === CalculatedFieldType.SIMPLE? 'enable' : 'disable']({emitEvent: false});
+    this.configFormGroup.get('expression'+CalculatedFieldType.SIMPLE)[type === CalculatedFieldType.SIMPLE? 'enable' : 'disable']({emitEvent: false});
+    this.configFormGroup.get('expression'+CalculatedFieldType.SCRIPT)[type === CalculatedFieldType.SCRIPT? 'enable' : 'disable']({emitEvent: false});
   }
 }

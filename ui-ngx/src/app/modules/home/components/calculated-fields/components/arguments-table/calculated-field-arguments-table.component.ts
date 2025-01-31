@@ -50,7 +50,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { isDefinedAndNotNull } from '@core/utils';
-import { noLeadTrailSpacesRegex } from '@shared/models/regex.constants';
+import { charNumRegex } from '@shared/models/regex.constants';
 
 @Component({
   selector: 'tb-calculated-field-arguments-table',
@@ -98,7 +98,11 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
     this.argumentsFormArray.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.propagateChange(this.getArgumentsObject());
     });
-    effect(() => this.calculatedFieldType() && this.argumentsFormArray.updateValueAndValidity());
+    effect(() => {
+      if (this.calculatedFieldType() && this.argumentsFormArray.dirty) {
+        this.argumentsFormArray.updateValueAndValidity();
+      }
+    });
   }
 
   registerOnChange(fn: (argumentsObj: Record<string, CalculatedFieldArgument>) => void): void {
@@ -183,7 +187,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
   private populateArgumentsFormArray(argumentsObj: Record<string, CalculatedFieldArgument>): void {
     Object.keys(argumentsObj).forEach(key => {
       this.argumentsFormArray.push(this.fb.group({
-        argumentName: [key, [Validators.required, Validators.maxLength(255), Validators.pattern(noLeadTrailSpacesRegex)]],
+        argumentName: [key, [Validators.required, Validators.maxLength(255), Validators.pattern(charNumRegex)]],
         ...argumentsObj[key],
         ...(argumentsObj[key].refEntityId ? {
           refEntityId: this.fb.group({
@@ -202,7 +206,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
   private getArgumentFormGroup(value: CalculatedFieldArgumentValue): AbstractControl {
     return this.fb.group({
       ...value,
-      argumentName: [value.argumentName, [Validators.required, Validators.maxLength(255), Validators.pattern(noLeadTrailSpacesRegex)]],
+      argumentName: [value.argumentName, [Validators.required, Validators.maxLength(255), Validators.pattern(charNumRegex)]],
       ...(value.refEntityId ? {
         refEntityId: this.fb.group({
           entityType: [{ value: value.refEntityId.entityType, disabled: true }],

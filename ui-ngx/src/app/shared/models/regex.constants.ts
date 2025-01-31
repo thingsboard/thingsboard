@@ -15,3 +15,5 @@
 ///
 
 export const noLeadTrailSpacesRegex = /^\S+(?: \S+)*$/;
+
+export const charNumRegex = /^[a-zA-Z0-9]+$/;
