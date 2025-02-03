@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 ThingsBoard, Inc.
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.thingsboard.server.edqs.repo;
 
 import org.junit.After;
@@ -27,7 +28,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import org.springframework.test.context.support.DirtiesContextTestExecutionListener;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
@@ -40,7 +40,6 @@ import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edqs.EdqsObject;
 import org.thingsboard.server.common.data.edqs.query.QueryResult;
-import org.thingsboard.server.common.data.group.EntityGroup;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -48,11 +47,8 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EntityGroupId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
-import org.thingsboard.server.common.data.id.SchedulerEventId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.EntityKey;
@@ -63,7 +59,6 @@ import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.common.data.scheduler.SchedulerEvent;
 import org.thingsboard.server.edqs.processor.EdqsConverter;
 
 import java.util.Collections;
@@ -114,23 +109,9 @@ public abstract class AbstractEDQTest {
         Customer entity = new Customer();
         entity.setId(new CustomerId(id));
         entity.setTitle(title);
-        entity.setOwnerId(parentCustomerId != null ? new CustomerId(parentCustomerId) : tenantId);
         addOrUpdate(EntityType.CUSTOMER, entity);
     }
 
-    protected UUID createGroup(EntityType entityType, String groupName) {
-        return createGroup(null, entityType, groupName);
-    }
-
-    protected UUID createGroup(UUID customerId, EntityType entityType, String groupName) {
-        EntityGroup eg = new EntityGroup();
-        eg.setId(new EntityGroupId(UUID.randomUUID()));
-        eg.setType(entityType);
-        eg.setName(groupName);
-        eg.setOwnerId(customerId != null ? new CustomerId(customerId) : tenantId);
-        addOrUpdate(EntityType.ENTITY_GROUP, eg);
-        return eg.getId().getId();
-    }
 
     protected UUID createDevice(String name) {
         return createDevice(null, defaultDeviceProfileId, name);
@@ -156,16 +137,9 @@ public abstract class AbstractEDQTest {
     }
 
     protected UUID createDashboard(String name) {
-        return createDashboard(null, name);
-    }
-
-    protected UUID createDashboard(UUID customerId, String name) {
         UUID entityId = UUID.randomUUID();
         Dashboard entity = new Dashboard();
         entity.setId(new DashboardId(entityId));
-        if (customerId != null) {
-            entity.setCustomerId(new CustomerId(customerId));
-        }
         entity.setTitle(name);
         addOrUpdate(EntityType.DEVICE, entity);
         return entityId;
@@ -215,27 +189,6 @@ public abstract class AbstractEDQTest {
         return id;
     }
 
-    protected UUID createSchedulerEvent(String type, EntityId originatorId, String name) {
-        return createSchedulerEvent(null, type, originatorId, name);
-    }
-
-    protected UUID createSchedulerEvent(UUID customerId, String type, EntityId originatorId, String name) {
-        UUID id = UUID.randomUUID();
-        SchedulerEvent schedulerEvent = new SchedulerEvent();
-        schedulerEvent.setId(new SchedulerEventId(id));
-        schedulerEvent.setTenantId(tenantId);
-        if (customerId != null) {
-            schedulerEvent.setCustomerId(new CustomerId(customerId));
-        }
-        schedulerEvent.setType(type);
-        schedulerEvent.setName(name);
-        schedulerEvent.setConfiguration(JacksonUtil.newObjectNode());
-        schedulerEvent.setSchedule(JacksonUtil.newObjectNode());
-        schedulerEvent.setOriginatorId(originatorId);
-        schedulerEvent.setCreatedTime(42L);
-        addOrUpdate(EntityType.SCHEDULER_EVENT, schedulerEvent);
-        return id;
-    }
 
     protected UUID createAsset(String name) {
         return createAsset(null, defaultAssetProfileId, name);

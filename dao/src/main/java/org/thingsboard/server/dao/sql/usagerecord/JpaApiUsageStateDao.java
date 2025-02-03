@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.usagerecord;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.ApiUsageState;
@@ -31,6 +32,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -82,8 +84,8 @@ public class JpaApiUsageStateDao extends JpaAbstractDao<ApiUsageStateEntity, Api
     }
 
     @Override
-    public PageData<ApiUsageStateFields> findAllFields(PageLink pageLink) {
-        return DaoUtil.pageToPageData(apiUsageStateRepository.findAllFields(DaoUtil.toPageable(pageLink)));
+    public List<ApiUsageStateFields> findNextBatch(UUID id, int batchSize) {
+        return apiUsageStateRepository.findNextBatch(id, Limit.of(batchSize));
     }
 
     @Override

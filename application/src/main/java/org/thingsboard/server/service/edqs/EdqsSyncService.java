@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.edqs.EdqsObject;
 import org.thingsboard.server.common.data.edqs.Entity;
 import org.thingsboard.server.common.data.edqs.LatestTsKv;
 import org.thingsboard.server.common.data.edqs.fields.EntityFields;
-import org.thingsboard.server.common.data.edqs.fields.TenantFields;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -37,7 +36,6 @@ import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.attributes.AttributesDao;
 import org.thingsboard.server.dao.dictionary.KeyDictionaryDao;
 import org.thingsboard.server.dao.entity.EntityDaoRegistry;
-import org.thingsboard.server.dao.group.EntityGroupDao;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
 import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryEntry;
@@ -46,39 +44,16 @@ import org.thingsboard.server.dao.sql.relation.RelationRepository;
 import org.thingsboard.server.dao.sqlts.latest.TsKvLatestRepository;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.thingsboard.server.common.data.ObjectType.API_USAGE_STATE;
-import static org.thingsboard.server.common.data.ObjectType.ASSET;
-import static org.thingsboard.server.common.data.ObjectType.ASSET_PROFILE;
 import static org.thingsboard.server.common.data.ObjectType.ATTRIBUTE_KV;
-import static org.thingsboard.server.common.data.ObjectType.BLOB_ENTITY;
-import static org.thingsboard.server.common.data.ObjectType.CONVERTER;
-import static org.thingsboard.server.common.data.ObjectType.CUSTOMER;
-import static org.thingsboard.server.common.data.ObjectType.DASHBOARD;
-import static org.thingsboard.server.common.data.ObjectType.DEVICE;
-import static org.thingsboard.server.common.data.ObjectType.DEVICE_PROFILE;
-import static org.thingsboard.server.common.data.ObjectType.EDGE;
-import static org.thingsboard.server.common.data.ObjectType.ENTITY_GROUP;
-import static org.thingsboard.server.common.data.ObjectType.ENTITY_VIEW;
-import static org.thingsboard.server.common.data.ObjectType.INTEGRATION;
 import static org.thingsboard.server.common.data.ObjectType.LATEST_TS_KV;
-import static org.thingsboard.server.common.data.ObjectType.QUEUE_STATS;
 import static org.thingsboard.server.common.data.ObjectType.RELATION;
-import static org.thingsboard.server.common.data.ObjectType.ROLE;
-import static org.thingsboard.server.common.data.ObjectType.RULE_CHAIN;
-import static org.thingsboard.server.common.data.ObjectType.SCHEDULER_EVENT;
-import static org.thingsboard.server.common.data.ObjectType.TENANT;
-import static org.thingsboard.server.common.data.ObjectType.TENANT_PROFILE;
-import static org.thingsboard.server.common.data.ObjectType.USER;
-import static org.thingsboard.server.common.data.ObjectType.WIDGETS_BUNDLE;
-import static org.thingsboard.server.common.data.ObjectType.WIDGET_TYPE;
+import static org.thingsboard.server.common.data.ObjectType.edqsTenantTypes;
 
 @Slf4j
 public abstract class EdqsSyncService {
@@ -94,8 +69,6 @@ public abstract class EdqsSyncService {
     @Autowired
     private RelationRepository relationRepository;
     @Autowired
-    private EntityGroupDao entityGroupDao;
-    @Autowired
     private TsKvLatestRepository tsKvLatestRepository;
     @Autowired
     @Lazy
@@ -106,12 +79,6 @@ public abstract class EdqsSyncService {
 
     private final Map<ObjectType, AtomicInteger> counters = new ConcurrentHashMap<>();
 
-    public static final Set<ObjectType> edqsTenantTypes = EnumSet.of(
-            TENANT_PROFILE, CUSTOMER, DEVICE_PROFILE, DEVICE, ASSET_PROFILE, ASSET, EDGE, ENTITY_VIEW, USER, DASHBOARD,
-            RULE_CHAIN, WIDGET_TYPE, WIDGETS_BUNDLE, CONVERTER, INTEGRATION, SCHEDULER_EVENT, ROLE,
-            BLOB_ENTITY, API_USAGE_STATE, QUEUE_STATS
-    );
-
     public abstract boolean isSyncNeeded();
 
     public void sync() {
@@ -119,9 +86,7 @@ public abstract class EdqsSyncService {
         long startTs = System.currentTimeMillis();
         counters.clear();
 
-        syncTenants();
         syncTenantEntities();
-        syncEntityGroups();
         syncRelations();
         loadKeyDictionary();
         syncAttributes();
@@ -139,49 +104,28 @@ public abstract class EdqsSyncService {
         edqsService.processEvent(tenantId, type, EdqsEventType.UPDATED, object);
     }
 
-    private void syncTenants() {
-        log.info("Synchronizing tenants to EDQS");
-        long ts = System.currentTimeMillis();
-        var tenants = new PageDataIterable<>(tenantDao::findAllFields, 10000);
-        for (EntityFields entityFields : tenants) {
-            TenantId tenantId = TenantId.fromUUID(entityFields.getId());
-            entityInfoMap.put(entityFields.getId(), new EntityIdInfo(EntityType.TENANT, tenantId));
-            process(tenantId, TENANT, new Entity(EntityType.TENANT, entityFields));
-        }
-        process(TenantId.SYS_TENANT_ID, TENANT, new Entity(EntityType.TENANT, new TenantFields(TenantId.SYS_TENANT_ID.getId(), Long.MAX_VALUE)));
-        log.info("Finished synchronizing tenants to EDQS in {} ms", (System.currentTimeMillis() - ts));
-    }
-
     private void syncTenantEntities() {
         for (ObjectType type : edqsTenantTypes) {
-            log.info("Synchronizing tenant {} entities to EDQS", type);
+            log.info("Synchronizing {} entities to EDQS", type);
             long ts = System.currentTimeMillis();
             EntityType entityType = type.toEntityType();
             Dao<?> dao = entityDaoRegistry.getDao(entityType);
-            var entities = new PageDataIterable<>(dao::findAllFields, 10000);
-            for (EntityFields entityFields : entities) {
-                TenantId tenantId = TenantId.fromUUID(entityFields.getTenantId());
-                entityInfoMap.put(entityFields.getId(), new EntityIdInfo(entityType, tenantId));
-                process(tenantId, type, new Entity(type.toEntityType(), entityFields));
+            UUID lastFromEntityId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+            while (true) {
+                var batch = dao.findNextBatch(lastFromEntityId, 10000);
+                if (batch.isEmpty()) {
+                    break;
+                }
+                for (EntityFields entityFields : batch) {
+                    TenantId tenantId = TenantId.fromUUID(entityFields.getTenantId());
+                    entityInfoMap.put(entityFields.getId(), new EntityIdInfo(entityType, tenantId));
+                    process(tenantId, type, new Entity(entityType, entityFields));
+                }
+                EntityFields lastRecord = batch.get(batch.size() - 1);
+                lastFromEntityId = lastRecord.getId();
             }
-            log.info("Finished synchronizing tenant {} entities to EDQS in {} ms", type, (System.currentTimeMillis() - ts));
+            log.info("Finished synchronizing {} entities to EDQS in {} ms", type, (System.currentTimeMillis() - ts));
         }
-    }
-
-    private void syncEntityGroups() {
-        log.info("Synchronizing entity groups to EDQS");
-        long ts = System.currentTimeMillis();
-        var entityGroups = new PageDataIterable<>(entityGroupDao::findAllFields, 30000);
-        for (EntityFields groupFields : entityGroups) {
-            EntityIdInfo entityIdInfo = entityInfoMap.get(groupFields.getOwnerId());
-            if (entityIdInfo != null) {
-                entityInfoMap.put(groupFields.getId(), new EntityIdInfo(EntityType.ENTITY_GROUP, entityIdInfo.tenantId()));
-                process(entityIdInfo.tenantId(), ENTITY_GROUP, new Entity(EntityType.ENTITY_GROUP, groupFields));
-            } else {
-                log.info("Entity group owner not found: " + groupFields.getOwnerId());
-            }
-        }
-        log.info("Finished synchronizing entity groups to EDQS in {} ms", (System.currentTimeMillis() - ts));
     }
 
     private void syncRelations() {
@@ -215,7 +159,7 @@ public abstract class EdqsSyncService {
 
     private void processRelationBatch(List<RelationEntity> relations) {
         for (RelationEntity relation : relations) {
-            if (RelationTypeGroup.COMMON.name().equals(relation.getRelationTypeGroup()) || (RelationTypeGroup.FROM_ENTITY_GROUP.name().equals(relation.getRelationTypeGroup()))) {
+            if (RelationTypeGroup.COMMON.name().equals(relation.getRelationTypeGroup())) {
                 EntityIdInfo entityIdInfo = entityInfoMap.get(relation.getFromId());
                 if (entityIdInfo != null) {
                     process(entityIdInfo.tenantId(), RELATION, relation.toData());
@@ -284,7 +228,7 @@ public abstract class EdqsSyncService {
         int lastKey = Integer.MIN_VALUE;
 
         while (true) {
-            List<TsKvLatestEntity> batch = tsKvLatestRepository.findNextBatch(lastEntityId, lastKey,  10000);
+            List<TsKvLatestEntity> batch = tsKvLatestRepository.findNextBatch(lastEntityId, lastKey, 10000);
             if (batch.isEmpty()) {
                 break;
             }
@@ -332,6 +276,7 @@ public abstract class EdqsSyncService {
         return strKey;
     }
 
-    public record EntityIdInfo(EntityType entityType, TenantId tenantId) {}
+    public record EntityIdInfo(EntityType entityType, TenantId tenantId) {
+    }
 
 }

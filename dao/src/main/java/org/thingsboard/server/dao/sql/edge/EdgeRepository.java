@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.edge;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -156,7 +157,6 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
     EdgeEntity findByRoutingKey(String routingKey);
 
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.EdgeFields(e.id, e.createdTime, e.tenantId, e.customerId," +
-            "e.name, e.version, e.type, e.label, e.additionalInfo) FROM EdgeEntity e")
-    Page<EdgeFields> findAllFields(Pageable pageable);
-
+            "e.name, e.version, e.type, e.label, e.additionalInfo) FROM EdgeEntity e WHERE e.id > :id ORDER BY e.id")
+    List<EdgeFields> findNextBatch(@Param("id") UUID id, Limit limit);
 }

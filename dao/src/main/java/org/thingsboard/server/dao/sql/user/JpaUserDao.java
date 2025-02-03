@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.user;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
@@ -147,8 +148,8 @@ public class JpaUserDao extends JpaAbstractDao<UserEntity, User> implements User
     }
 
     @Override
-    public PageData<UserFields> findAllFields(PageLink pageLink) {
-        return DaoUtil.pageToPageData(userRepository.findAllFields(DaoUtil.toPageable(pageLink)));
+    public List<UserFields> findNextBatch(UUID id, int batchSize) {
+        return userRepository.findNextBatch(id, Limit.of(batchSize));
     }
 
     @Override

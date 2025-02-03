@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 ThingsBoard, Inc.
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
-import org.thingsboard.server.edqs.util.RepositoryUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -70,7 +69,7 @@ public class EdgeTypeFilterTest extends AbstractEDQTest {
     @Test
     public void testFindTenantEdges() {
         // find edges with type "default"
-        var result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEdgeTypeQuery(Collections.singletonList("default"), null, null), false);
+        var result = repository.findEntityDataByQuery(tenantId, null, getEdgeTypeQuery(Collections.singletonList("default"), null, null), false);
 
         Assert.assertEquals(2, result.getTotalElements());
         Optional<QueryResult> firstView = result.getData().stream().filter(queryResult -> queryResult.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue().equals("Edge 1")).findFirst();
@@ -79,7 +78,7 @@ public class EdgeTypeFilterTest extends AbstractEDQTest {
         assertThat(firstView.get().getLatest().get(EntityKeyType.ENTITY_FIELD).get("createdTime").getValue()).isEqualTo(String.valueOf(edge.getCreatedTime()));
 
         // find edges with types "default" and "edge v2"
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEdgeTypeQuery(Arrays.asList("default", "edge v2"), null, null), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getEdgeTypeQuery(Arrays.asList("default", "edge v2"), null, null), false);
 
         Assert.assertEquals(3, result.getTotalElements());
         Optional<QueryResult> thirdView = result.getData().stream().filter(queryResult -> queryResult.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue().equals("Edge 3")).findFirst();
@@ -88,29 +87,29 @@ public class EdgeTypeFilterTest extends AbstractEDQTest {
         assertThat(thirdView.get().getLatest().get(EntityKeyType.ENTITY_FIELD).get("createdTime").getValue()).isEqualTo(String.valueOf(edge.getCreatedTime()));
 
         // find entity view with type "day 3"
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEdgeTypeQuery(List.of("edge v3"), null, null), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getEdgeTypeQuery(List.of("edge v3"), null, null), false);
         Assert.assertEquals(0, result.getTotalElements());
 
         // find entity view with name "%Edge%"
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEdgeTypeQuery(List.of("default"), "%Edge%", null), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getEdgeTypeQuery(List.of("default"), "%Edge%", null), false);
         Assert.assertEquals(2, result.getTotalElements());
 
         // find entity view with name "Edge 1"
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEdgeTypeQuery(List.of("default"), "Edge 1", null), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getEdgeTypeQuery(List.of("default"), "Edge 1", null), false);
         Assert.assertEquals(1, result.getTotalElements());
 
         // find entity view with name "%Edge 4%"
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEdgeTypeQuery(List.of("default"), "%Edge 4%", null), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getEdgeTypeQuery(List.of("default"), "%Edge 4%", null), false);
         Assert.assertEquals(0, result.getTotalElements());
 
         // find entity view with key filter: name contains "Edge"
         KeyFilter containsNameFilter = getEntityViewNameKeyFilter(StringFilterPredicate.StringOperation.CONTAINS, "Edge", true);
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEdgeTypeQuery(List.of("default"), null, List.of(containsNameFilter)), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getEdgeTypeQuery(List.of("default"), null, List.of(containsNameFilter)), false);
         Assert.assertEquals(2, result.getTotalElements());
 
         // find entity view with key filter: name starts with "edge" and matches case
         KeyFilter startsWithNameFilter = getEntityViewNameKeyFilter(StringFilterPredicate.StringOperation.STARTS_WITH, "edge", false);
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEdgeTypeQuery(List.of("default"), null, List.of(startsWithNameFilter)), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getEdgeTypeQuery(List.of("default"), null, List.of(startsWithNameFilter)), false);
         Assert.assertEquals(0, result.getTotalElements());
     }
 
@@ -118,7 +117,7 @@ public class EdgeTypeFilterTest extends AbstractEDQTest {
     public void testFindCustomerEdges() {
         addOrUpdate(new LatestTsKv(edge.getId(), new BasicTsKvEntry(43, new StringDataEntry("state", "TEST")), 0L));
 
-        var result = repository.findEntityDataByQuery(tenantId, customerId, RepositoryUtils.ALL_READ_PERMISSIONS, getEdgeTypeQuery(List.of("default"), null, null), false);
+        var result = repository.findEntityDataByQuery(tenantId, customerId, getEdgeTypeQuery(List.of("default"), null, null), false);
         Assert.assertEquals(0, result.getTotalElements());
 
         edge.setCustomerId(customerId);
@@ -128,7 +127,7 @@ public class EdgeTypeFilterTest extends AbstractEDQTest {
         addOrUpdate(EntityType.EDGE, edge2);
         addOrUpdate(EntityType.EDGE, edge3);
 
-        result = repository.findEntityDataByQuery(tenantId, customerId, RepositoryUtils.ALL_READ_PERMISSIONS, getEdgeTypeQuery(List.of("default"), null, null), false);
+        result = repository.findEntityDataByQuery(tenantId, customerId, getEdgeTypeQuery(List.of("default"), null, null), false);
 
         Assert.assertEquals(2, result.getTotalElements());
         Optional<QueryResult> firstView = result.getData().stream().filter(queryResult -> queryResult.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue().equals("Edge 1")).findFirst();
@@ -136,7 +135,7 @@ public class EdgeTypeFilterTest extends AbstractEDQTest {
         assertThat(firstView.get().getEntityId()).isEqualTo(edge.getId());
         assertThat(firstView.get().getLatest().get(EntityKeyType.ENTITY_FIELD).get("createdTime").getValue()).isEqualTo(String.valueOf(edge.getCreatedTime()));
 
-        result = repository.findEntityDataByQuery(tenantId, customerId, RepositoryUtils.ALL_READ_PERMISSIONS, getEdgeTypeQuery(List.of("edge v3"), null, null), false);
+        result = repository.findEntityDataByQuery(tenantId, customerId, getEdgeTypeQuery(List.of("edge v3"), null, null), false);
         Assert.assertEquals(0, result.getTotalElements());
     }
 

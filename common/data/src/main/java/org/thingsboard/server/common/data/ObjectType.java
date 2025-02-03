@@ -30,16 +30,8 @@ public enum ObjectType {
     RULE_CHAIN,
     OTA_PACKAGE,
     RESOURCE,
-    ROLE,
-    ENTITY_GROUP,
-    DEVICE_GROUP_OTA_PACKAGE,
-    GROUP_PERMISSION,
-    BLOB_ENTITY,
-    SCHEDULER_EVENT,
     EVENT,
     RULE_NODE,
-    CONVERTER,
-    INTEGRATION,
     USER,
     USER_CREDENTIALS,
     USER_AUTH_SETTINGS,
@@ -62,8 +54,6 @@ public enum ObjectType {
     NOTIFICATION_TARGET,
     NOTIFICATION_TEMPLATE,
     NOTIFICATION_RULE,
-    WHITE_LABELING,
-    CUSTOM_TRANSLATION,
     ALARM_COMMENT,
     ALARM_TYPE,
     API_USAGE_STATE,
@@ -75,16 +65,15 @@ public enum ObjectType {
     LATEST_TS_KV;
 
     public static final Set<ObjectType> edqsTenantTypes = EnumSet.of(
-            TENANT_PROFILE, CUSTOMER, DEVICE_PROFILE, DEVICE, ASSET_PROFILE, ASSET, EDGE, ENTITY_VIEW, USER, DASHBOARD,
-            RULE_CHAIN, WIDGET_TYPE, WIDGETS_BUNDLE, CONVERTER, INTEGRATION, SCHEDULER_EVENT, ROLE,
-            BLOB_ENTITY, API_USAGE_STATE, QUEUE_STATS
+            TENANT, TENANT_PROFILE, CUSTOMER, DEVICE_PROFILE, DEVICE, ASSET_PROFILE, ASSET, EDGE, ENTITY_VIEW, USER, DASHBOARD,
+            RULE_CHAIN, WIDGET_TYPE, WIDGETS_BUNDLE, API_USAGE_STATE, QUEUE_STATS
     );
     public static final Set<ObjectType> edqsTypes = new HashSet<>(edqsTenantTypes);
     public static final Set<ObjectType> edqsSystemTypes = EnumSet.of(TENANT, TENANT_PROFILE, USER, DASHBOARD,
             API_USAGE_STATE, ATTRIBUTE_KV, LATEST_TS_KV);
 
     static {
-        edqsTypes.addAll(Arrays.asList(TENANT, ENTITY_GROUP, RELATION, ATTRIBUTE_KV, LATEST_TS_KV));
+        edqsTypes.addAll(Arrays.asList(TENANT, RELATION, ATTRIBUTE_KV, LATEST_TS_KV));
     }
 
     public EntityType toEntityType() {

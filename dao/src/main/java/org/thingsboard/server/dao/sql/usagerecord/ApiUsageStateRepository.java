@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.usagerecord;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.edqs.fields.ApiUsageStateFields;
 import org.thingsboard.server.dao.model.sql.ApiUsageStateEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -51,7 +53,7 @@ public interface ApiUsageStateRepository extends JpaRepository<ApiUsageStateEnti
     void deleteByEntityIdAndEntityType(@Param("entityId") UUID entityId, @Param("entityType") String entityType);
 
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.ApiUsageStateFields(a.id, a.createdTime, a.tenantId," +
-            "a.entityId, a.entityType, a.transportState, a.dbStorageState, a.reExecState, a.jsExecState, a.tbelExecState, a.emailExecState, a.smsExecState, a.alarmExecState) FROM ApiUsageStateEntity a")
-    Page<ApiUsageStateFields> findAllFields(Pageable pageable);
-
+            "a.entityId, a.entityType, a.transportState, a.dbStorageState, a.reExecState, a.jsExecState, a.tbelExecState, " +
+            "a.emailExecState, a.smsExecState, a.alarmExecState) FROM ApiUsageStateEntity a WHERE a.id > :id ORDER BY a.id")
+    List<ApiUsageStateFields> findNextBatch(@Param("id") UUID id, Limit limit);
 }

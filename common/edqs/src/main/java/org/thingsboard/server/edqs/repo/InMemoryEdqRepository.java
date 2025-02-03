@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 ThingsBoard, Inc.
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@ package org.thingsboard.server.edqs.repo;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.EdqsEvent;
+import org.thingsboard.server.common.data.edqs.EdqsEventType;
 import org.thingsboard.server.common.data.edqs.query.QueryResult;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.permission.MergedUserPermissions;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.edqs.stats.EdqsStatsService;
@@ -49,19 +50,24 @@ public class InMemoryEdqRepository implements EdqRepository {
 
     @Override
     public void processEvent(EdqsEvent event) {
-        get(event.getTenantId()).processEvent(event);
+        if (event.getEventType() == EdqsEventType.DELETED && event.getObjectType() == ObjectType.TENANT) {
+            log.info("Deleting tenant repo: {}", event);
+            repos.remove(event.getTenantId());
+        } else {
+            get(event.getTenantId()).processEvent(event);
+        }
     }
 
     @Override
-    public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, MergedUserPermissions userPermissions, EntityCountQuery query, boolean ignorePermissionCheck) {
+    public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query, boolean ignorePermissionCheck) {
         long startNs = System.nanoTime();
         long result = 0;
         if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
             for (TenantRepo repo : repos.values()) {
-                result += repo.countEntitiesByQuery(customerId, userPermissions, query, ignorePermissionCheck);
+                result += repo.countEntitiesByQuery(customerId, query, ignorePermissionCheck);
             }
         } else {
-            result = get(tenantId).countEntitiesByQuery(customerId, userPermissions, query, ignorePermissionCheck);
+            result = get(tenantId).countEntitiesByQuery(customerId, query, ignorePermissionCheck);
         }
         double timingMs = (double) (System.nanoTime() - startNs) / 1000_000;
         log.info("countEntitiesByQuery: {} ms", timingMs);
@@ -70,9 +76,9 @@ public class InMemoryEdqRepository implements EdqRepository {
 
     @Override
     public PageData<QueryResult> findEntityDataByQuery(TenantId tenantId, CustomerId customerId,
-                                                       MergedUserPermissions userPermissions, EntityDataQuery query, boolean ignorePermissionCheck) {
+                                                        EntityDataQuery query, boolean ignorePermissionCheck) {
         long startNs = System.nanoTime();
-        var result = get(tenantId).findEntityDataByQuery(customerId, userPermissions, query, ignorePermissionCheck);
+        var result = get(tenantId).findEntityDataByQuery(customerId, query, ignorePermissionCheck);
         double timingMs = (double) (System.nanoTime() - startNs) / 1000_000;
         log.info("findEntityDataByQuery: {} ms", timingMs);
         return result;

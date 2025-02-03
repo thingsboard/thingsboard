@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.rule;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -72,6 +73,6 @@ public interface RuleChainRepository extends JpaRepository<RuleChainEntity, UUID
     UUID getExternalIdById(@Param("id") UUID id);
 
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.RuleChainFields(r.id, r.createdTime, r.tenantId," +
-            "r.name, r.version, r.additionalInfo) FROM RuleChainEntity r")
-    Page<RuleChainFields> findAllFields(Pageable pageable);
+            "r.name, r.version, r.additionalInfo) FROM RuleChainEntity r WHERE r.id > :id ORDER BY r.id")
+    List<RuleChainFields> findNextBatch(@Param("id") UUID id, Limit limit);
 }

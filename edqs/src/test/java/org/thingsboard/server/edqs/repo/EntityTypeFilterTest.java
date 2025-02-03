@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 ThingsBoard, Inc.
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
-import org.thingsboard.server.edqs.util.RepositoryUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -71,7 +70,7 @@ public class EntityTypeFilterTest extends AbstractEDQTest {
     @Test
     public void testFindTenantDeviceEntities() {
         // find all tenant devices
-        var result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityTypeQuery(EntityType.DEVICE,  null), false);
+        var result = repository.findEntityDataByQuery(tenantId, null, getEntityTypeQuery(EntityType.DEVICE,  null), false);
 
         Assert.assertEquals(3, result.getTotalElements());
         var first = result.getData().stream().filter(queryResult -> queryResult.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue().equals("LoRa-1")).findAny();
@@ -82,23 +81,23 @@ public class EntityTypeFilterTest extends AbstractEDQTest {
 
         // find all tenant devices with filter by name
         KeyFilter keyFilter = getDeviceNameKeyFilter(StringFilterPredicate.StringOperation.CONTAINS, "Lora", true);
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityTypeQuery(EntityType.DEVICE,  List.of(keyFilter)), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getEntityTypeQuery(EntityType.DEVICE,  List.of(keyFilter)), false);
         Assert.assertEquals(2, result.getTotalElements());
 
         // find asset entities
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityTypeQuery(EntityType.ASSET,  null),  false);
+        result = repository.findEntityDataByQuery(tenantId, null, getEntityTypeQuery(EntityType.ASSET,  null),  false);
         Assert.assertEquals(0, result.getTotalElements());
     }
 
     @Test
     public void testFindCustomerDeviceEntities() {
-        var result = repository.findEntityDataByQuery(tenantId, customerId, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityTypeQuery(EntityType.DEVICE,  null),  false);
+        var result = repository.findEntityDataByQuery(tenantId, customerId, getEntityTypeQuery(EntityType.DEVICE,  null),  false);
         Assert.assertEquals(0, result.getTotalElements());
 
         device.setCustomerId(customerId);
         addOrUpdate(EntityType.DEVICE, device);
 
-        result = repository.findEntityDataByQuery(tenantId, customerId, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityTypeQuery(EntityType.DEVICE,  null), false);
+        result = repository.findEntityDataByQuery(tenantId, customerId, getEntityTypeQuery(EntityType.DEVICE,  null), false);
 
         Assert.assertEquals(1, result.getTotalElements());
         var first = result.getData().get(0);
@@ -107,7 +106,7 @@ public class EntityTypeFilterTest extends AbstractEDQTest {
         Assert.assertEquals("42", first.getLatest().get(EntityKeyType.ENTITY_FIELD).get("createdTime").getValue());
         Assert.assertEquals("enabled", first.getLatest().get(EntityKeyType.TIME_SERIES).get("state").getValue());
 
-        result = repository.findEntityDataByQuery(tenantId, customerId, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityTypeQuery(EntityType.ASSET,  null), false);
+        result = repository.findEntityDataByQuery(tenantId, customerId, getEntityTypeQuery(EntityType.ASSET,  null), false);
         Assert.assertEquals(0, result.getTotalElements());
     }
 

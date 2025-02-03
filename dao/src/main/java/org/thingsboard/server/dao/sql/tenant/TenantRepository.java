@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.tenant;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -56,6 +57,6 @@ public interface TenantRepository extends JpaRepository<TenantEntity, UUID> {
     List<UUID> findTenantIdsByTenantProfileId(@Param("tenantProfileId") UUID tenantProfileId);
 
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.TenantFields(t.id, t.createdTime, t.title, t.version," +
-            "t.additionalInfo, t.country, t.state, t.city, t.address, t.address2, t.zip, t.phone, t.email, t.region) FROM TenantEntity t")
-    Page<TenantFields> findAllFields(Pageable pageable);
+            "t.additionalInfo, t.country, t.state, t.city, t.address, t.address2, t.zip, t.phone, t.email, t.region) FROM TenantEntity t WHERE t.id > :id ORDER BY t.id")
+    List<TenantFields> findNextBatch(@Param("id") UUID id, Limit limit);
 }

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.queue;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -47,7 +48,7 @@ public interface QueueStatsRepository extends JpaRepository<QueueStatsEntity, UU
     List<QueueStatsEntity> findByTenantIdAndIdIn(UUID tenantId, List<UUID> queueStatsIds);
 
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.QueueStatsFields(q.id, q.createdTime," +
-            "q.tenantId, q.queueName, q.serviceId) FROM QueueStatsEntity q")
-    Page<QueueStatsFields> findAllFields(Pageable pageable);
+            "q.tenantId, q.queueName, q.serviceId) FROM QueueStatsEntity q WHERE q.id > :id ORDER BY q.id")
+    List<QueueStatsFields> findNextBatch(@Param("id") UUID id, Limit limit);
 
 }

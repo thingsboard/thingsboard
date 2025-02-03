@@ -16,11 +16,11 @@
 package org.thingsboard.server.dao.sql.widget;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ObjectType;
-import org.thingsboard.server.common.data.edqs.fields.UserFields;
 import org.thingsboard.server.common.data.edqs.fields.WidgetTypeFields;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
@@ -265,8 +265,8 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
     }
 
     @Override
-    public PageData<WidgetTypeFields> findAllFields(PageLink pageLink) {
-        return DaoUtil.pageToPageData(widgetTypeRepository.findAllFields(DaoUtil.toPageable(pageLink)));
+    public List<WidgetTypeFields> findNextBatch(UUID id, int batchSize) {
+        return widgetTypeRepository.findNextBatch(id, Limit.of(batchSize));
     }
 
     @Override

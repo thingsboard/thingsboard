@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 ThingsBoard, Inc.
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.thingsboard.server.edqs.query.processor;
 import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.permission.QueryContext;
-import org.thingsboard.server.common.data.permission.Resource;
 import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -37,7 +36,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
 
-import static org.thingsboard.server.edqs.util.RepositoryUtils.getSortValue;
 
 public abstract class AbstractRelationQueryProcessor<T extends EntityFilter> extends AbstractQueryProcessor<T> {
 
@@ -76,121 +74,34 @@ public abstract class AbstractRelationQueryProcessor<T extends EntityFilter> ext
         var entities = getEntitiesSet(relations);
         long result = 0;
 
-        RelationQueryPermissions[] permissionsArray = buildPermissionsArray();
         if (ctx.isTenantUser()) {
-            for (EntityData<?> ed : entities) {
-                var permissions = permissionsArray[ed.getEntityType().ordinal()];
-                if (permissions != null) {
-                    if (permissions.isHasGroups()) {
-                        CombinedPermissions combinedPermissions = getCombinedPermissions(ed.getId(),
-                                permissions.isReadEntity(), permissions.isReadAttrs(), permissions.isReadTs(), permissions.getGroupPermissions());
-                        if (combinedPermissions.isRead()) {
-                            result++;
-                        }
-                    } else if (permissions.isReadEntity()) {
-                        result++;
-                    }
-                }
-            }
+            return entities.size();
         } else {
-            var customerIds = repository.getAllCustomers(ctx.getCustomerId().getId());
+            var customerId = ctx.getCustomerId().getId();
             for (EntityData<?> ed : entities) {
-                var permissions = permissionsArray[ed.getEntityType().ordinal()];
-                if (permissions != null) {
-                    boolean isReadEntity = permissions.isReadEntity() && ed.getCustomerId() != null && customerIds.contains(ed.getCustomerId());
-                    if (permissions.isHasGroups()) {
-                        CombinedPermissions combinedPermissions = getCombinedPermissions(ed.getId(),
-                                isReadEntity,
-                                permissions.isReadAttrs(), permissions.isReadTs(), permissions.getGroupPermissions());
-                        if (combinedPermissions.isRead()) {
-                            result++;
-                        }
-                    } else if (isReadEntity) {
-                        result++;
-                    }
+                if (checkCustomer(customerId, ed)) {
+                    result++;
                 }
             }
             return result;
         }
-        return result;
     }
 
     private List<SortableEntityData> processTenantQuery(Set<EntityData<?>> entities) {
-        List<SortableEntityData> result = new ArrayList<>();
-        RelationQueryPermissions[] permissionsArray = buildPermissionsArray();
-        for (EntityData<?> ed : entities) {
-            var permissions = permissionsArray[ed.getEntityType().ordinal()];
-            if (permissions != null) {
-                if (permissions.isHasGroups()) {
-                    CombinedPermissions combinedPermissions = getCombinedPermissions(ed.getId(),
-                            permissions.isReadEntity(), permissions.isReadAttrs(), permissions.isReadTs(), permissions.getGroupPermissions());
-                    if (combinedPermissions.isRead()) {
-                        SortableEntityData sortData = new SortableEntityData(ed);
-                        sortData.setSortValue(getSortValue(ed, sortKey));
-                        sortData.setReadAttrs(combinedPermissions.isReadAttrs());
-                        sortData.setReadTs(combinedPermissions.isReadTs());
-                        result.add(sortData);
-                    }
-                } else if (permissions.isReadEntity()) {
-                    result.add(toSortData(ed, permissions));
-                }
-            }
-        }
-        return result;
+        return entities.stream()
+                .map(this::toSortData)
+                .toList();
     }
 
     private List<SortableEntityData> processCustomerQuery(Set<EntityData<?>> entities) {
-        var customerIds = repository.getAllCustomers(ctx.getCustomerId().getId());
-        RelationQueryPermissions[] permissionsArray = buildPermissionsArray();
+        var customerId = ctx.getCustomerId().getId();
         List<SortableEntityData> result = new ArrayList<>();
         for (EntityData<?> ed : entities) {
-            var permissions = permissionsArray[ed.getEntityType().ordinal()];
-            if (permissions != null) {
-                boolean isReadEntity = permissions.isReadEntity() && ed.getCustomerId() != null && customerIds.contains(ed.getCustomerId());
-                if (permissions.isHasGroups()) {
-                    SortableEntityData sortData = new SortableEntityData(ed);
-                    sortData.setSortValue(getSortValue(ed, sortKey));
-                    CombinedPermissions combinedPermissions = getCombinedPermissions(ed.getId(),
-                            isReadEntity,
-                            permissions.isReadAttrs(), permissions.isReadTs(), permissions.getGroupPermissions());
-                    if (combinedPermissions.isRead()) {
-                        sortData.setReadAttrs(combinedPermissions.isReadAttrs());
-                        sortData.setReadTs(combinedPermissions.isReadTs());
-                        result.add(sortData);
-                    }
-                } else if (isReadEntity) {
-                    result.add(toSortData(ed, permissions));
-                }
+            if (checkCustomer(customerId, ed)) {
+                result.add(toSortData(ed));
             }
         }
         return result;
-    }
-
-    private RelationQueryPermissions[] buildPermissionsArray() {
-        RelationQueryPermissions[] permissionsArray = new RelationQueryPermissions[EntityType.values().length];
-        var readEntityPermissionsMap = ctx.getMergedReadEntityPermissionsMap();
-        var readAttrPermissionsMap = ctx.getMergedReadAttrPermissionsMap();
-        var readTsPermissionsMap = ctx.getMergedReadTsPermissionsMap();
-        for (EntityType et : EntityType.values()) {
-            var resource = Resource.resourceFromEntityType(et);
-            if (resource == null) {
-                continue;
-            }
-            var readEntityPermissions = readEntityPermissionsMap.get(resource);
-            var readAttrPermissions = readAttrPermissionsMap.get(resource);
-            var readTsPermissions = readTsPermissionsMap.get(resource);
-            var groupPermissions = toGroupPermissions(readEntityPermissions, readAttrPermissions, readTsPermissions);
-            RelationQueryPermissions entityPermissions = RelationQueryPermissions
-                    .builder()
-                    .readEntity(readEntityPermissions.isHasGenericRead())
-                    .readAttrs(readAttrPermissions.isHasGenericRead())
-                    .readTs(readTsPermissions.isHasGenericRead())
-                    .hasGroups(!groupPermissions.isEmpty())
-                    .groupPermissions(groupPermissions)
-                    .build();
-            permissionsArray[et.ordinal()] = entityPermissions;
-        }
-        return permissionsArray;
     }
 
     private Set<EntityData<?>> getEntitiesSet(RelationsRepo relations) {

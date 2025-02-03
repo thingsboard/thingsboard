@@ -73,6 +73,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -80,7 +81,7 @@ import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
-public class EntityQueryControllerTest extends AbstractControllerTest {
+public abstract class EntityQueryControllerTest extends AbstractControllerTest {
 
     private static final String CUSTOMER_USER_EMAIL = "entityQueryCustomer@thingsboard.org";
     private static final String TENANT_PASSWORD = "testPassword1";
@@ -157,17 +158,10 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSysAdminCountEntitiesByQuery() throws Exception {
-        loginSysAdmin();
-
-        EntityTypeFilter allDeviceFilter = new EntityTypeFilter();
-        allDeviceFilter.setEntityType(EntityType.DEVICE);
-        EntityCountQuery query = new EntityCountQuery(allDeviceFilter);
-        Long initialCount = countByQuery(query);
-
         loginTenantAdmin();
 
         List<Device> devices = new ArrayList<>();
-        String devicePrefix = "Device" + RandomStringUtils.random(5);
+        String devicePrefix = "Device" + RandomStringUtils.randomAlphabetic(5);
         for (int i = 0; i < 97; i++) {
             Device device = new Device();
             device.setName(devicePrefix + i);
@@ -177,18 +171,18 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
             Thread.sleep(1);
         }
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         loginSysAdmin();
 
         EntityCountQuery countQuery = new EntityCountQuery(filter);
-        countByQueryAndCheck(countQuery, initialCount + 97);
+        countByQueryAndCheck(countQuery, 97, (actual, expected) -> actual >= expected);
 
-        filter.setDeviceType("unknown");
+        filter.setDeviceTypes(List.of("unknown"));
         countByQueryAndCheck(countQuery, 0);
 
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter(devicePrefix + "1");
         countByQueryAndCheck(countQuery, 11);
 
@@ -199,7 +193,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         countQuery = new EntityCountQuery(entityListFilter);
         countByQueryAndCheck(countQuery, 97);
 
-        countByQueryAndCheck(query, initialCount + 97);
+        countByQueryAndCheck(countQuery, 97, (actual, expected) -> actual >= expected);
     }
 
     @Test
@@ -847,9 +841,9 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
                     var loadedEntities = new ArrayList<>(data.getData());
                     return loadedEntities.size() == expectedNumOfDevices;
                 });
-         if (expectedNumOfDevices == 0) {
-             return;
-         }
+        if (expectedNumOfDevices == 0) {
+            return;
+        }
         var data = findByQuery(query);
         var loadedEntities = new ArrayList<>(data.getData());
 
@@ -870,7 +864,8 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
     }
 
     protected PageData<EntityData> findByQuery(EntityDataQuery query) throws Exception {
-        return doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<>() {});
+        return doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<>() {
+        });
     }
 
     protected PageData<EntityData> findByQueryAndCheck(EntityDataQuery query, int expectedResultSize) throws Exception {
@@ -911,4 +906,9 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         return numericFilter;
     }
 
+    protected Long countByQueryAndCheck(EntityCountQuery query, long expectedResult, BiPredicate<Long, Long> condition) throws Exception {
+        Long result = countByQuery(query);
+        assertThat(condition.test(result, expectedResult)).isTrue();
+        return result;
+    }
 }

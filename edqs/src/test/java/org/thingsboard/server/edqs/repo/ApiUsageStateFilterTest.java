@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 ThingsBoard, Inc.
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
-import org.thingsboard.server.edqs.util.RepositoryUtils;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -62,7 +61,7 @@ public class ApiUsageStateFilterTest extends AbstractEDQTest {
         ApiUsageState apiUsageState = buildApiUsageState(customerId);
         addOrUpdate(EntityType.API_USAGE_STATE, apiUsageState);
 
-        var result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityDataQuery(new CustomerId(customerId)), false);
+        var result = repository.findEntityDataByQuery(tenantId, null, getEntityDataQuery(new CustomerId(customerId)), false);
 
         Assert.assertEquals(1, result.getTotalElements());
         var customer = result.getData().get(0);

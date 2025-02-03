@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 ThingsBoard, Inc.
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,24 +25,19 @@ import org.thingsboard.server.common.data.edqs.EdqsObject;
 import org.thingsboard.server.common.data.edqs.Entity;
 import org.thingsboard.server.common.data.edqs.LatestTsKv;
 import org.thingsboard.server.common.data.edqs.fields.AssetFields;
-import org.thingsboard.server.common.data.edqs.fields.CustomerFields;
 import org.thingsboard.server.common.data.edqs.fields.EntityFields;
-import org.thingsboard.server.common.data.edqs.fields.EntityGroupFields;
 import org.thingsboard.server.common.data.edqs.query.QueryResult;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.permission.MergedUserPermissions;
 import org.thingsboard.server.common.data.permission.QueryContext;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.common.data.query.EntityKeyType;
-import org.thingsboard.server.common.data.query.SingleEntityFilter;
-import org.thingsboard.server.common.data.query.StateEntityOwnerFilter;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -51,7 +46,6 @@ import org.thingsboard.server.edqs.data.AssetData;
 import org.thingsboard.server.edqs.data.CustomerData;
 import org.thingsboard.server.edqs.data.DeviceData;
 import org.thingsboard.server.edqs.data.EntityData;
-import org.thingsboard.server.edqs.data.EntityGroupData;
 import org.thingsboard.server.edqs.data.EntityProfileData;
 import org.thingsboard.server.edqs.data.GenericData;
 import org.thingsboard.server.edqs.data.RelationsRepo;
@@ -76,12 +70,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -95,7 +86,6 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.edqs.util.RepositoryUtils.SORT_ASC;
 import static org.thingsboard.server.edqs.util.RepositoryUtils.SORT_DESC;
-import static org.thingsboard.server.edqs.util.RepositoryUtils.SYS_ADMIN_PERMISSIONS;
 import static org.thingsboard.server.edqs.util.RepositoryUtils.resolveEntityType;
 
 @Slf4j
@@ -108,8 +98,6 @@ public class TenantRepo {
 
     private final ConcurrentMap<EntityType, Set<EntityData<?>>> entitySetByType = new ConcurrentHashMap<>();
     private final ConcurrentMap<EntityType, ConcurrentMap<UUID, EntityData<?>>> entityMapByType = new ConcurrentHashMap<>();
-    private final ConcurrentMap<UUID, Set<UUID>> customersHierarchy = new ConcurrentHashMap<>();
-    private final ConcurrentMap<UUID, EntityGroupData> entityGroups = new ConcurrentHashMap<>();
     private final ConcurrentMap<RelationTypeGroup, RelationsRepo> relations = new ConcurrentHashMap<>();
 
     private final Lock entityUpdateLock = new ReentrantLock();
@@ -167,10 +155,10 @@ public class TenantRepo {
                 if (added) {
                     edqsStatsService.ifPresent(statService -> statService.reportTenantEdqsObject(tenantId, ObjectType.RELATION, EdqsEventType.UPDATED));
                 }
-            } else if (RelationTypeGroup.FROM_ENTITY_GROUP.equals(entity.getTypeGroup())) {
-                var eg = getEntityGroup(entity.getFrom().getId());
-                if (eg != null) {
-                    eg.addOrUpdate(getOrCreate(entity.getTo()));
+            } else if (RelationTypeGroup.DASHBOARD.equals(entity.getTypeGroup())) {
+                if (EntityRelation.CONTAINS_TYPE.equals(entity.getType()) && entity.getFrom().getEntityType() == EntityType.CUSTOMER) {
+                    ((CustomerData) getEntityMap(EntityType.CUSTOMER).computeIfAbsent(entity.getFrom().getId(), CustomerData::new))
+                            .addOrUpdate(getEntityMap(EntityType.DASHBOARD).get(entity.getTo().getId()));
                 }
             }
         } finally {
@@ -187,10 +175,10 @@ public class TenantRepo {
                     edqsStatsService.ifPresent(statService -> statService.reportTenantEdqsObject(tenantId, ObjectType.RELATION, EdqsEventType.DELETED));
                 }
             }
-        } else if (RelationTypeGroup.FROM_ENTITY_GROUP.equals(entityRelation.getTypeGroup())) {
-            var eg = getEntityGroup(entityRelation.getFrom().getId());
-            if (eg != null) {
-                eg.remove(entityRelation.getTo().getId());
+        } else if (RelationTypeGroup.DASHBOARD.equals(entityRelation.getTypeGroup())) {
+            if (EntityRelation.CONTAINS_TYPE.equals(entityRelation.getType()) && entityRelation.getFrom().getEntityType() == EntityType.CUSTOMER) {
+                ((CustomerData) getEntityMap(EntityType.CUSTOMER).computeIfAbsent(entityRelation.getFrom().getId(), CustomerData::new))
+                        .remove(getEntityMap(EntityType.DASHBOARD).get(entityRelation.getTo().getId()));
             }
         }
     }
@@ -208,29 +196,6 @@ public class TenantRepo {
             entityData.setFields(entity.getFields());
 
             switch (entity.getType()) {
-                case ENTITY_GROUP -> {
-                    EntityGroupFields entityGroupFields = (EntityGroupFields) fields;
-                    UUID ownerId = entityGroupFields.getOwnerId();
-                    if (EntityType.CUSTOMER.equals(entityGroupFields.getOwnerType())) {
-                        entityData.setCustomerId(ownerId);
-                        ((CustomerData) getEntityMap(EntityType.CUSTOMER).computeIfAbsent(ownerId, CustomerData::new)).addOrUpdate(entityData);
-                    }
-                    entityGroups.put(fields.getId(), (EntityGroupData) entityData);
-                }
-                case CUSTOMER -> {
-                    CustomerFields customerFields = (CustomerFields) fields;
-                    UUID newParentId = customerFields.getCustomerId(); // for customer, customerId is parentCustomerId
-                    UUID oldParentId = entityData.getCustomerId();
-                    entityData.setCustomerId(newParentId);
-                    if (entityIdMismatch(oldParentId, newParentId)) {
-                        if (oldParentId != null) {
-                            customersHierarchy.computeIfAbsent(oldParentId, id -> new HashSet<>()).remove(entityData.getId());
-                        }
-                        if (newParentId != null) {
-                            customersHierarchy.computeIfAbsent(newParentId, id -> new HashSet<>()).add(entityData.getId());
-                        }
-                    }
-                }
                 default -> {
                     UUID newCustomerId = fields.getCustomerId();
                     UUID oldCustomerId = entityData.getCustomerId();
@@ -263,14 +228,6 @@ public class TenantRepo {
             if (removed != null) {
                 getEntitySet(entityType).remove(removed);
                 edqsStatsService.ifPresent(statService -> statService.reportTenantEdqsObject(tenantId, ObjectType.fromEntityType(entityType), EdqsEventType.DELETED));
-            }
-            switch (entityType) {
-                case ENTITY_GROUP -> {
-                    entityGroups.remove(entityId);
-                }
-                case CUSTOMER -> {
-                    customersHierarchy.remove(entityId);
-                }
             }
         } finally {
             entityUpdateLock.unlock();
@@ -387,7 +344,6 @@ public class TenantRepo {
             case DEVICE_PROFILE, ASSET_PROFILE -> new EntityProfileData(id, entityType);
             case CUSTOMER -> new CustomerData(id);
             case TENANT -> new TenantData(id);
-            case ENTITY_GROUP -> new EntityGroupData(id);
             case API_USAGE_STATE -> new ApiUsageStateData(id);
             default -> new GenericData(entityType, id);
         };
@@ -407,11 +363,10 @@ public class TenantRepo {
         return entitySetByType.computeIfAbsent(entityType, et -> new ConcurrentSkipListSet<>(CREATED_TIME_AND_ID_DESC_COMPARATOR));
     }
 
-    public PageData<QueryResult> findEntityDataByQuery(CustomerId customerId, MergedUserPermissions userPermissions,
-                                                       EntityDataQuery oldQuery, boolean ignorePermissionCheck) {
+    public PageData<QueryResult> findEntityDataByQuery(CustomerId customerId, EntityDataQuery oldQuery, boolean ignorePermissionCheck) {
         EdqsDataQuery query = RepositoryUtils.toNewQuery(oldQuery);
         log.info("[{}][{}] findEntityDataByQuery: {}", tenantId, customerId, query);
-        QueryContext ctx = buildContext(customerId, userPermissions, query.getEntityFilter(), ignorePermissionCheck);
+        QueryContext ctx = buildContext(customerId, query.getEntityFilter(), ignorePermissionCheck);
         if (ctx == null) {
             return PageData.emptyPageData();
         }
@@ -419,10 +374,10 @@ public class TenantRepo {
         return sortAndConvert(query, queryProcessor.processQuery(), ctx);
     }
 
-    public long countEntitiesByQuery(CustomerId customerId, MergedUserPermissions userPermissions, EntityCountQuery oldQuery, boolean ignorePermissionCheck) {
+    public long countEntitiesByQuery(CustomerId customerId, EntityCountQuery oldQuery, boolean ignorePermissionCheck) {
         EdqsQuery query = RepositoryUtils.toNewQuery(oldQuery);
         log.info("[{}][{}] countEntitiesByQuery: {}", tenantId, customerId, query);
-        QueryContext ctx = buildContext(customerId, userPermissions, query.getEntityFilter(), ignorePermissionCheck);
+        QueryContext ctx = buildContext(customerId, query.getEntityFilter(), ignorePermissionCheck);
         if (ctx == null) {
             return 0;
         }
@@ -485,85 +440,22 @@ public class TenantRepo {
                 latest.computeIfAbsent(key.type(), t -> new HashMap<>()).put(KeyDictionary.get(key.keyId()), v);
             }
 
-            results.add(new QueryResult(entityData.getEntityId(), entityData.isReadAttrs(), entityData.isReadTs(), latest));
+            results.add(new QueryResult(entityData.getEntityId(), latest));
         }
         return results;
     }
 
-    private QueryContext buildContext(CustomerId customerId, MergedUserPermissions userPermissions, EntityFilter filter, boolean ignorePermissionCheck) {
-        QueryContext queryContext;
-        if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
-            queryContext = new QueryContext(tenantId, customerId, resolveEntityType(filter), SYS_ADMIN_PERMISSIONS, filter, ignorePermissionCheck);
-        } else {
-            switch (filter.getType()) {
-                case STATE_ENTITY_OWNER:
-                    var singleEntity = ((StateEntityOwnerFilter) filter).getSingleEntity();
-                    EntityData ed = getEntityMap(singleEntity.getEntityType()).get(singleEntity.getId());
-                    if (ed != null) {
-                        EntityId owner = ed.getCustomerId() != null ? new CustomerId(ed.getCustomerId()) : tenantId;
-                        queryContext = new QueryContext(tenantId, customerId, owner.getEntityType(), userPermissions, filter, owner, ignorePermissionCheck);
-                    } else {
-                        return null;
-                    }
-                    break;
-                case SINGLE_ENTITY:
-                    SingleEntityFilter seFilter = (SingleEntityFilter) filter;
-                    EntityId entityId = seFilter.getSingleEntity();
-                    if (entityId != null && entityId.getEntityType().equals(EntityType.ENTITY_GROUP)) {
-                        EntityGroupData entityGroupData = entityGroups.get(entityId.getId());
-                        if (entityGroupData != null) {
-                            queryContext = new QueryContext(tenantId, customerId, EntityType.ENTITY_GROUP, userPermissions, filter, entityGroupData.getEntityType(), ignorePermissionCheck);
-                        } else {
-                            return null;
-                        }
-                    } else {
-                        queryContext = new QueryContext(tenantId, customerId, resolveEntityType(filter), userPermissions, filter, ignorePermissionCheck);
-                    }
-                    break;
-                default:
-                    queryContext = new QueryContext(tenantId, customerId, resolveEntityType(filter), userPermissions, filter, ignorePermissionCheck);
-            }
-        }
-        return queryContext;
+    private QueryContext buildContext(CustomerId customerId, EntityFilter filter, boolean ignorePermissionCheck) {
+        return new QueryContext(tenantId, customerId, resolveEntityType(filter), ignorePermissionCheck);
     }
 
     public TenantId getTenantId() {
         return tenantId;
     }
 
-    public Set<UUID> getAllCustomers(UUID customerId) {
-        Set<UUID> result = new HashSet<>();
-        Queue<UUID> queue = new LinkedList<>();
-
-        if (customerId != null) {
-            queue.add(customerId);
-        }
-
-        while (!queue.isEmpty()) {
-            UUID current = queue.poll();
-            if (!result.contains(current)) {
-                result.add(current);
-                Set<UUID> children = customersHierarchy.get(current);
-                if (children != null) {
-                    queue.addAll(children);
-                }
-            }
-        }
-
-        return result;
-    }
-
-    public boolean contains(UUID entityGroupID, UUID entityId) {
-        var groupData = entityGroups.get(entityGroupID);
-        return groupData != null && groupData.getEntity(entityId) != null;
-    }
-
-    public EntityGroupData getEntityGroup(UUID groupId) {
-        return entityGroups.get(groupId);
-    }
 
     public RelationsRepo getRelations(RelationTypeGroup relationTypeGroup) {
-        return relations.get(relationTypeGroup);
+        return relations.computeIfAbsent(relationTypeGroup, type -> new RelationsRepo());
     }
 
     public String getOwnerName(EntityId ownerId) {

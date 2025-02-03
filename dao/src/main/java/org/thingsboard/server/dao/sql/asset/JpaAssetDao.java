@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql.asset;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -275,8 +276,8 @@ public class JpaAssetDao extends JpaAbstractDao<AssetEntity, Asset> implements A
     }
 
     @Override
-    public PageData<AssetFields> findAllFields(PageLink pageLink) {
-        return DaoUtil.pageToPageData(assetRepository.findAllFields(DaoUtil.toPageable(pageLink)));
+    public List<AssetFields> findNextBatch(UUID uuid, int batchSize) {
+        return assetRepository.findAllFields(uuid, Limit.of(batchSize));
     }
 
     @Override
