@@ -19,7 +19,8 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { charsWithNumRegex, noLeadTrailSpacesRegex } from '@shared/models/regex.constants';
 import {
-  ArgumentEntityType, ArgumentEntityTypeParamsMap,
+  ArgumentEntityType,
+  ArgumentEntityTypeParamsMap,
   ArgumentEntityTypeTranslations,
   ArgumentType,
   ArgumentTypeTranslations,
@@ -117,6 +118,9 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
   saveArgument(): void {
     const { refEntityId, ...restConfig } = this.argumentFormGroup.value;
     const value = (refEntityId.entityType === ArgumentEntityType.Current ? restConfig : { refEntityId, ...restConfig }) as CalculatedFieldArgumentValue;
+    if (refEntityId.entityType === ArgumentEntityType.Tenant) {
+      refEntityId.id = this.tenantId;
+    }
     this.argumentsDataApplied.emit({ value, index: this.index });
   }
 
