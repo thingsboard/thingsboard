@@ -89,6 +89,11 @@ public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity,
     }
 
     @Override
+    public long countCFByEntityId(TenantId tenantId, EntityId entityId) {
+        return calculatedFieldRepository.countByTenantIdAndEntityId(tenantId.getId(), entityId.getId());
+    }
+
+    @Override
     protected Class<CalculatedFieldEntity> getEntityClass() {
         return CalculatedFieldEntity.class;
     }

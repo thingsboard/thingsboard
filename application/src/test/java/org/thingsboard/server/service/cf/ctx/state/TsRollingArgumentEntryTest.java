@@ -54,7 +54,7 @@ public class TsRollingArgumentEntryTest {
 
         assertThat(entry.updateEntry(newEntry)).isTrue();
         assertThat(entry.getTsRecords()).hasSize(4);
-        assertThat(entry.getTsRecords().get(ts - 10)).isEqualTo(23);
+        assertThat(entry.getTsRecords().get(ts - 10).getValue()).isEqualTo(23.0);
     }
 
     @Test
@@ -76,11 +76,11 @@ public class TsRollingArgumentEntryTest {
         assertThat(entry.updateEntry(newEntry)).isTrue();
         assertThat(entry.getTsRecords()).hasSize(5);
         assertThat(entry.getTsRecords()).isEqualTo(Map.of(
-                ts - 40, 10,
-                ts - 30, 12,
-                ts - 20, 17,
-                ts - 10, 7,
-                ts - 5, 1
+                ts - 40, new DoubleDataEntry("key", 10.0),
+                ts - 30, new DoubleDataEntry("key", 12.0),
+                ts - 20, new DoubleDataEntry("key", 17.0),
+                ts - 10, new DoubleDataEntry("key", 7.0),
+                ts - 5, new DoubleDataEntry("key", 1.0)
         ));
     }
 

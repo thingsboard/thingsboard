@@ -34,6 +34,8 @@ import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedField
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.BasicKvEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.HashMap;
@@ -51,7 +53,7 @@ public class ScriptCalculatedFieldStateTest {
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("5512071d-5abc-411d-a907-4cdb6539c2eb"));
     private final AssetId ASSET_ID = new AssetId(UUID.fromString("5bc010ae-bcfd-46c8-98b9-8ee8c8955a76"));
 
-    private final SingleValueArgumentEntry assetHumidityArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis() - 10, 43, 122L);
+    private final SingleValueArgumentEntry assetHumidityArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis() - 10, new LongDataEntry("assetHumidity", 43L), 122L);
     private final TsRollingArgumentEntry deviceTemperatureArgEntry = createRollingArgEntry();
 
     private final long ts = System.currentTimeMillis();
@@ -65,6 +67,7 @@ public class ScriptCalculatedFieldStateTest {
     @BeforeEach
     void setUp() {
         ctx = new CalculatedFieldCtx(getCalculatedField(), tbelInvokeService);
+        ctx.init();
         state = new ScriptCalculatedFieldState(ctx.getArgNames());
     }
 
@@ -93,7 +96,7 @@ public class ScriptCalculatedFieldStateTest {
     void testUpdateStateWhenUpdateExistingEntry() {
         state.arguments = new HashMap<>(Map.of("deviceTemperature", deviceTemperatureArgEntry, "assetHumidity", assetHumidityArgEntry));
 
-        SingleValueArgumentEntry newArgEntry = new SingleValueArgumentEntry(ts, 41, 349L);
+        SingleValueArgumentEntry newArgEntry = new SingleValueArgumentEntry(ts, new LongDataEntry("assetHumidity", 41L), 349L);
         Map<String, ArgumentEntry> newArgs = Map.of("assetHumidity", newArgEntry);
         boolean stateUpdated = state.updateState(newArgs);
 
@@ -116,17 +119,17 @@ public class ScriptCalculatedFieldStateTest {
         Output output = getCalculatedFieldConfig().getOutput();
         assertThat(result.getType()).isEqualTo(output.getType());
         assertThat(result.getScope()).isEqualTo(output.getScope());
-        assertThat(result.getResultMap()).isEqualTo(Map.of("averageDeviceTemperature", 13.0, "assetHumidity", 43));
+        assertThat(result.getResultMap()).isEqualTo(Map.of("averageDeviceTemperature", 13.0, "assetHumidity", 43L));
     }
 
     @Test
     void testPerformCalculationWhenOldTelemetry() throws ExecutionException, InterruptedException {
         TsRollingArgumentEntry argumentEntry = new TsRollingArgumentEntry();
 
-        TreeMap<Long, Object> values = new TreeMap<>();
-        values.put(ts - 40000, 4);// will not be used for calculation
-        values.put(ts - 45000, 2);// will not be used for calculation
-        values.put(ts - 20, 0);
+        TreeMap<Long, BasicKvEntry> values = new TreeMap<>();
+        values.put(ts - 40000, new LongDataEntry("deviceTemperature", 4L));// will not be used for calculation
+        values.put(ts - 45000, new LongDataEntry("deviceTemperature", 2L));// will not be used for calculation
+        values.put(ts - 20, new LongDataEntry("deviceTemperature", 0L));
 
         argumentEntry.setTsRecords(values);
 
@@ -138,19 +141,19 @@ public class ScriptCalculatedFieldStateTest {
         Output output = getCalculatedFieldConfig().getOutput();
         assertThat(result.getType()).isEqualTo(output.getType());
         assertThat(result.getScope()).isEqualTo(output.getScope());
-        assertThat(result.getResultMap()).isEqualTo(Map.of("averageDeviceTemperature", 0.0, "assetHumidity", 43));
+        assertThat(result.getResultMap()).isEqualTo(Map.of("averageDeviceTemperature", 0.0, "assetHumidity", 43L));
     }
 
     @Test
     void testPerformCalculationWhenArgumentsMoreThanLimit() throws ExecutionException, InterruptedException {
         TsRollingArgumentEntry argumentEntry = new TsRollingArgumentEntry();
-        TreeMap<Long, Object> values = new TreeMap<>();
-        values.put(ts - 20, 1000);// will not be used
-        values.put(ts - 18, 0);
-        values.put(ts - 16, 0);
-        values.put(ts - 14, 0);
-        values.put(ts - 12, 0);
-        values.put(ts - 10, 0);
+        TreeMap<Long, BasicKvEntry> values = new TreeMap<>();
+        values.put(ts - 20, new LongDataEntry("deviceTemperature", 1000L));// will not be used
+        values.put(ts - 18, new LongDataEntry("deviceTemperature", 0L));
+        values.put(ts - 16, new LongDataEntry("deviceTemperature", 0L));
+        values.put(ts - 14, new LongDataEntry("deviceTemperature", 0L));
+        values.put(ts - 12, new LongDataEntry("deviceTemperature", 0L));
+        values.put(ts - 10, new LongDataEntry("deviceTemperature", 0L));
         argumentEntry.setTsRecords(values);
 
         state.arguments = new HashMap<>(Map.of("deviceTemperature", argumentEntry, "assetHumidity", assetHumidityArgEntry));
@@ -161,7 +164,7 @@ public class ScriptCalculatedFieldStateTest {
         Output output = getCalculatedFieldConfig().getOutput();
         assertThat(result.getType()).isEqualTo(output.getType());
         assertThat(result.getScope()).isEqualTo(output.getScope());
-        assertThat(result.getResultMap()).isEqualTo(Map.of("averageDeviceTemperature", 0.0, "assetHumidity", 43));
+        assertThat(result.getResultMap()).isEqualTo(Map.of("averageDeviceTemperature", 0.0, "assetHumidity", 43L));
     }
 
     @Test
@@ -187,10 +190,10 @@ public class ScriptCalculatedFieldStateTest {
         TsRollingArgumentEntry argumentEntry = new TsRollingArgumentEntry();
         long ts = System.currentTimeMillis();
 
-        TreeMap<Long, Object> values = new TreeMap<>();
-        values.put(ts - 40, 10);
-        values.put(ts - 30, 12);
-        values.put(ts - 20, 17);
+        TreeMap<Long, BasicKvEntry> values = new TreeMap<>();
+        values.put(ts - 40, new LongDataEntry("deviceTemperature", 10L));
+        values.put(ts - 30, new LongDataEntry("deviceTemperature", 12L));
+        values.put(ts - 20, new LongDataEntry("deviceTemperature", 17L));
 
         argumentEntry.setTsRecords(values);
         return argumentEntry;

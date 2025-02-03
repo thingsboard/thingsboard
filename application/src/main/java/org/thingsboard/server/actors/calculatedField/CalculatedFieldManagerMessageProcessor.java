@@ -217,6 +217,13 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 callback.onSuccess();
             } else {
                 var cfCtx = new CalculatedFieldCtx(cf, systemContext.getTbelInvokeService());
+                try {
+                    cfCtx.init();
+                } catch (Exception e) {
+                    if (DebugModeUtil.isDebugAllAvailable(cf)) {
+                        systemContext.persistCalculatedFieldDebugEvent(cf.getTenantId(), cf.getId(), cf.getEntityId(), null, null, null, null, e);
+                    }
+                }
                 calculatedFields.put(cf.getId(), cfCtx);
                 // We use copy on write lists to safely pass the reference to another actor for the iteration.
                 // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
@@ -257,6 +264,13 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 // We use copy on write lists to safely pass the reference to another actor for the iteration.
                 // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
                 if (newCfCtx.hasSignificantChanges(oldCfCtx)) {
+                    try {
+                        newCfCtx.init();
+                    } catch (Exception e) {
+                        if (DebugModeUtil.isDebugAllAvailable(newCf)) {
+                            systemContext.persistCalculatedFieldDebugEvent(newCf.getTenantId(), newCf.getId(), newCf.getEntityId(), null, null, null, null, e);
+                        }
+                    }
                     initCf(newCfCtx, callback, true);
                 }
             }

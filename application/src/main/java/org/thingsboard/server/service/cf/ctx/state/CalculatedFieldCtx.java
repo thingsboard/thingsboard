@@ -197,7 +197,8 @@ public class CalculatedFieldCtx {
         boolean entityIdChanged = !entityId.equals(other.entityId);
         boolean typeChanged = !cfType.equals(other.cfType);
         boolean argumentsChanged = !arguments.equals(other.arguments);
-        return entityIdChanged || typeChanged || argumentsChanged;
+        boolean expressionChanged = !expression.equals(other.expression);
+        return entityIdChanged || typeChanged || argumentsChanged || expressionChanged;
     }
 
 }

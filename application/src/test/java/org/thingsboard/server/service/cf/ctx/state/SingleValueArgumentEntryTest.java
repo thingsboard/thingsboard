@@ -17,6 +17,7 @@ package org.thingsboard.server.service.cf.ctx.state;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -29,7 +30,7 @@ public class SingleValueArgumentEntryTest {
 
     @BeforeEach
     void setUp() {
-        entry = new SingleValueArgumentEntry(ts, 11, 363L);
+        entry = new SingleValueArgumentEntry(ts, new LongDataEntry("key", 11L), 363L);
     }
 
     @Test
@@ -46,26 +47,26 @@ public class SingleValueArgumentEntryTest {
 
     @Test
     void testUpdateEntryWithThaSameTs() {
-        assertThat(entry.updateEntry(new SingleValueArgumentEntry(ts, 13, 363L))).isFalse();
+        assertThat(entry.updateEntry(new SingleValueArgumentEntry(ts, new LongDataEntry("key", 13L), 363L))).isFalse();
     }
 
     @Test
     void testUpdateEntryWhenNewVersionIsNull() {
-        assertThat(entry.updateEntry(new SingleValueArgumentEntry(ts + 16, 13, null))).isTrue();
-        assertThat(entry.getValue()).isEqualTo(13);
+        assertThat(entry.updateEntry(new SingleValueArgumentEntry(ts + 16, new LongDataEntry("key", 13L), null))).isTrue();
+        assertThat(entry.getValue()).isEqualTo(13L);
         assertThat(entry.getVersion()).isNull();
     }
 
     @Test
     void testUpdateEntryWhenNewVersionIsGreaterThanCurrent() {
-        assertThat(entry.updateEntry(new SingleValueArgumentEntry(ts + 18, 18, 369L))).isTrue();
-        assertThat(entry.getValue()).isEqualTo(18);
+        assertThat(entry.updateEntry(new SingleValueArgumentEntry(ts + 18, new LongDataEntry("key", 18L), 369L))).isTrue();
+        assertThat(entry.getValue()).isEqualTo(18L);
         assertThat(entry.getVersion()).isEqualTo(369L);
     }
 
     @Test
     void testUpdateEntryWhenNewVersionIsLessThanCurrent() {
-        assertThat(entry.updateEntry(new SingleValueArgumentEntry(ts + 18, 18, 234L))).isFalse();
+        assertThat(entry.updateEntry(new SingleValueArgumentEntry(ts + 18, new LongDataEntry("key", 18L), 234L))).isFalse();
     }
 
 }

@@ -43,4 +43,6 @@ public interface CalculatedFieldDao extends Dao<CalculatedField> {
 
     boolean existsByEntityId(TenantId tenantId, EntityId entityId);
 
+    long countCFByEntityId(TenantId tenantId, EntityId entityId);
+
 }

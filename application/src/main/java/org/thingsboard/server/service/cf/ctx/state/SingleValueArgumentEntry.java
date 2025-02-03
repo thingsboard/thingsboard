@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -34,19 +35,19 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     public static final ArgumentEntry EMPTY = new SingleValueArgumentEntry(0);
 
     private long ts;
-    private BasicKvEntry value;
+    private BasicKvEntry kvEntryValue;
     private Long version;
 
     public SingleValueArgumentEntry(TsKvProto entry) {
         this.ts = entry.getTs();
         this.version = entry.getVersion();
-        this.value = ProtoUtils.fromProto(entry.getKv());
+        this.kvEntryValue = ProtoUtils.fromProto(entry.getKv());
     }
 
     public SingleValueArgumentEntry(AttributeValueProto entry) {
         this.ts = entry.getLastUpdateTs();
         this.version = entry.getVersion();
-        this.value = ProtoUtils.basicKvEntryFromProto(entry);
+        this.kvEntryValue = ProtoUtils.basicKvEntryFromProto(entry);
     }
 
     public SingleValueArgumentEntry(KvEntry entry) {
@@ -57,7 +58,7 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
             this.ts = attributeKvEntry.getLastUpdateTs();
             this.version = attributeKvEntry.getVersion();
         }
-        this.value = ProtoUtils.basicKvEntryFromKvEntry(entry);
+        this.kvEntryValue = ProtoUtils.basicKvEntryFromKvEntry(entry);
     }
 
     /**
@@ -65,7 +66,7 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
      * */
     private SingleValueArgumentEntry(int ignored) {
         this.ts = System.currentTimeMillis();
-        this.value = null;
+        this.kvEntryValue = null;
     }
 
     @Override
@@ -73,9 +74,14 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
         return ArgumentEntryType.SINGLE_VALUE;
     }
 
+    @JsonIgnore
+    public Object getValue() {
+        return kvEntryValue.getValue();
+    }
+
     @Override
     public ArgumentEntry copy() {
-        return new SingleValueArgumentEntry(this.ts, this.value, this.version);
+        return new SingleValueArgumentEntry(this.ts, this.kvEntryValue, this.version);
     }
 
     @Override
@@ -88,7 +94,7 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
             Long newVersion = singleValueEntry.getVersion();
             if (newVersion == null || this.version == null || newVersion > this.version) {
                 this.ts = singleValueEntry.getTs();
-                this.value = singleValueEntry.getValue();
+                this.kvEntryValue = singleValueEntry.getKvEntryValue();
                 this.version = newVersion;
                 return true;
             }

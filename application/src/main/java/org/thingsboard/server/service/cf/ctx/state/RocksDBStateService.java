@@ -115,7 +115,7 @@ public class RocksDBStateService implements CalculatedFieldStateService {
             singleValueProtoBuilder.setVersion(entry.getVersion());
         }
 
-        KvEntry value = entry.getValue();
+        KvEntry value = entry.getKvEntryValue();
         if (value != null) {
             singleValueProtoBuilder.setHasV(true)
                     .setValue(ProtoUtils.toKeyValueProto(value));

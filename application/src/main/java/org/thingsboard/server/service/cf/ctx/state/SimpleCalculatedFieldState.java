@@ -53,7 +53,7 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
 
         for (Map.Entry<String, ArgumentEntry> entry : this.arguments.entrySet()) {
             try {
-                BasicKvEntry kvEntry = ((SingleValueArgumentEntry) entry.getValue()).getValue();
+                BasicKvEntry kvEntry = ((SingleValueArgumentEntry) entry.getValue()).getKvEntryValue();
                 expr.setVariable(entry.getKey(), Double.parseDouble(kvEntry.getValueAsString()));
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Argument '" + entry.getKey() + "' is not a number.");

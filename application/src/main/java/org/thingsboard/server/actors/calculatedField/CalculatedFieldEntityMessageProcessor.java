@@ -198,20 +198,6 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         return state;
     }
 
-    private UUID toTbMsgId(CalculatedFieldTelemetryMsgProto proto) {
-        if (proto.getTbMsgIdMSB() != 0 && proto.getTbMsgIdLSB() != 0) {
-            return new UUID(proto.getTbMsgIdMSB(), proto.getTbMsgIdLSB());
-        }
-        return null;
-    }
-
-    private TbMsgType toTbMsgType(CalculatedFieldTelemetryMsgProto proto) {
-        if (!proto.getTbMsgType().isEmpty()) {
-            return TbMsgType.valueOf(proto.getTbMsgType());
-        }
-        return null;
-    }
-    
     @SneakyThrows
     private void processStateIfReady(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, CalculatedFieldState state, UUID tbMsgId, TbMsgType tbMsgType, TbCallback callback) {
         if (state.isReady()) {
@@ -288,6 +274,20 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             cfIds.add(new CalculatedFieldId(new UUID(cfId.getCalculatedFieldIdMSB(), cfId.getCalculatedFieldIdLSB())));
         }
         return cfIds;
+    }
+
+    private UUID toTbMsgId(CalculatedFieldTelemetryMsgProto proto) {
+        if (proto.getTbMsgIdMSB() != 0 && proto.getTbMsgIdLSB() != 0) {
+            return new UUID(proto.getTbMsgIdMSB(), proto.getTbMsgIdLSB());
+        }
+        return null;
+    }
+
+    private TbMsgType toTbMsgType(CalculatedFieldTelemetryMsgProto proto) {
+        if (!proto.getTbMsgType().isEmpty()) {
+            return TbMsgType.valueOf(proto.getTbMsgType());
+        }
+        return null;
     }
 
 }

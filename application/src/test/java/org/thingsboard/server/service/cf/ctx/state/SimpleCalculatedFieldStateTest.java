@@ -30,6 +30,8 @@ import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedField
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.HashMap;
@@ -46,9 +48,9 @@ public class SimpleCalculatedFieldStateTest {
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("5512071d-5abc-411d-a907-4cdb6539c2eb"));
     private final AssetId ASSET_ID = new AssetId(UUID.fromString("5bc010ae-bcfd-46c8-98b9-8ee8c8955a76"));
 
-    private final SingleValueArgumentEntry key1ArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis() - 10, 11, 145L);
-    private final SingleValueArgumentEntry key2ArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis() - 6, 15, 165L);
-    private final SingleValueArgumentEntry key3ArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis() - 3, 23, 184L);
+    private final SingleValueArgumentEntry key1ArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis() - 10, new LongDataEntry("key1", 11L), 145L);
+    private final SingleValueArgumentEntry key2ArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis() - 6, new LongDataEntry("key2", 15L), 165L);
+    private final SingleValueArgumentEntry key3ArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis() - 3, new LongDataEntry("key3", 23L), 184L);
 
     private SimpleCalculatedFieldState state;
     private CalculatedFieldCtx ctx;
@@ -56,6 +58,7 @@ public class SimpleCalculatedFieldStateTest {
     @BeforeEach
     void setUp() {
         ctx = new CalculatedFieldCtx(getCalculatedField(), null);
+        ctx.init();
         state = new SimpleCalculatedFieldState(ctx.getArgNames());
     }
 
@@ -88,7 +91,7 @@ public class SimpleCalculatedFieldStateTest {
     void testUpdateStateWhenUpdateExistingEntry() {
         state.arguments = new HashMap<>(Map.of("key1", key1ArgEntry));
 
-        SingleValueArgumentEntry newArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis(), 18, 190L);
+        SingleValueArgumentEntry newArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis(), new LongDataEntry("key1", 18L), 190L);
         Map<String, ArgumentEntry> newArgs = Map.of("key1", newArgEntry);
         boolean stateUpdated = state.updateState(newArgs);
 
@@ -130,7 +133,7 @@ public class SimpleCalculatedFieldStateTest {
     void testPerformCalculationWhenPassedNotNumber() {
         state.arguments = new HashMap<>(Map.of(
                 "key1", key1ArgEntry,
-                "key2", new SingleValueArgumentEntry(System.currentTimeMillis() - 9, "string", 124L),
+                "key2", new SingleValueArgumentEntry(System.currentTimeMillis() - 9, new StringDataEntry("key2", "string"), 124L),
                 "key3", key3ArgEntry
         ));
 

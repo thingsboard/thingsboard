@@ -38,4 +38,6 @@ public interface CalculatedFieldRepository extends JpaRepository<CalculatedField
 
     List<CalculatedFieldEntity> removeAllByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 
+    long countByTenantIdAndEntityId(UUID tenantId, UUID entityId);
+
 }

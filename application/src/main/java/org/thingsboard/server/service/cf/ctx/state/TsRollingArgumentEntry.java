@@ -98,7 +98,7 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
     }
 
     private boolean updateSingleValueEntry(SingleValueArgumentEntry singleValueEntry) {
-        return addTsRecordIfAbsent(singleValueEntry.getTs(), singleValueEntry.getValue());
+        return addTsRecordIfAbsent(singleValueEntry.getTs(), singleValueEntry.getKvEntryValue());
     }
 
     private boolean addTsRecordIfAbsent(Long ts, KvEntry value) {
