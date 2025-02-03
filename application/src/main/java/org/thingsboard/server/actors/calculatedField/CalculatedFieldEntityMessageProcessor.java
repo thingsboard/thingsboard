@@ -18,19 +18,18 @@ package org.thingsboard.server.actors.calculatedField;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
+import org.thingsboard.common.util.DebugModeUtil;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
-import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageDataIterable;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeScopeProto;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeValueProto;
@@ -54,9 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 
 /**
@@ -95,7 +92,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             states.remove(cfCtx.getCfId());
         }
         var cfState = getOrInitState(cfCtx);
-        processStateIfReady(cfCtx, Collections.singletonList(cfCtx.getCfId()), cfState, msg.getCallback());
+        processStateIfReady(cfCtx, Collections.singletonList(cfCtx.getCfId()), cfState, null, null, msg.getCallback());
     }
 
     public void process(CalculatedFieldEntityDeleteMsg msg) {
@@ -135,9 +132,9 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             callback.onSuccess(CALLBACKS_PER_CF);
         } else {
             if (proto.getTsDataCount() > 0) {
-                processArgumentValuesUpdate(ctx, cfIds, callback, mapToArguments(ctx, msg.getEntityId(), proto.getTsDataList()));
+                processArgumentValuesUpdate(ctx, cfIds, callback, mapToArguments(ctx, msg.getEntityId(), proto.getTsDataList()), toTbMsgId(proto), toTbMsgType(proto));
             } else if (proto.getAttrDataCount() > 0) {
-                processArgumentValuesUpdate(ctx, cfIds, callback, mapToArguments(ctx, msg.getEntityId(), proto.getScope(), proto.getAttrDataList()));
+                processArgumentValuesUpdate(ctx, cfIds, callback, mapToArguments(ctx, msg.getEntityId(), proto.getScope(), proto.getAttrDataList()), toTbMsgId(proto), toTbMsgType(proto));
             } else {
                 callback.onSuccess(CALLBACKS_PER_CF);
             }
@@ -160,17 +157,17 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
     @SneakyThrows
     private void processTelemetry(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) {
-        processArgumentValuesUpdate(ctx, cfIdList, callback, mapToArguments(ctx, proto.getTsDataList()));
+        processArgumentValuesUpdate(ctx, cfIdList, callback, mapToArguments(ctx, proto.getTsDataList()), toTbMsgId(proto), toTbMsgType(proto));
     }
 
     @SneakyThrows
     private void processAttributes(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) {
-        processArgumentValuesUpdate(ctx, cfIdList, callback, mapToArguments(ctx, proto.getScope(), proto.getAttrDataList()));
+        processArgumentValuesUpdate(ctx, cfIdList, callback, mapToArguments(ctx, proto.getScope(), proto.getAttrDataList()), toTbMsgId(proto), toTbMsgType(proto));
     }
 
     @SneakyThrows
     private void processArgumentValuesUpdate(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback,
-                                             Map<String, ArgumentEntry> newArgValues) {
+                                             Map<String, ArgumentEntry> newArgValues, UUID tbMsgId, TbMsgType tbMsgType) {
         if (newArgValues.isEmpty()) {
             callback.onSuccess(CALLBACKS_PER_CF);
         }
@@ -178,7 +175,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         if (state.updateState(newArgValues)) {
             cfIdList = new ArrayList<>(cfIdList);
             cfIdList.add(ctx.getCfId());
-            processStateIfReady(ctx, cfIdList, state, callback);
+            processStateIfReady(ctx, cfIdList, state, tbMsgId, tbMsgType, callback);
         } else {
             callback.onSuccess(CALLBACKS_PER_CF);
         }
@@ -202,10 +199,13 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     @SneakyThrows
-    private void processStateIfReady(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, CalculatedFieldState state, TbCallback callback) {
+    private void processStateIfReady(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, CalculatedFieldState state, UUID tbMsgId, TbMsgType tbMsgType, TbCallback callback) {
         if (state.isReady()) {
             CalculatedFieldResult calculationResult = state.performCalculation(ctx).get(5, TimeUnit.SECONDS);
             cfService.pushMsgToRuleEngine(tenantId, entityId, calculationResult, cfIdList, callback);
+            if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
+                systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, JacksonUtil.writeValueAsString(calculationResult.getResultMap()), null);
+            }
         } else {
             callback.onSuccess(); // State was updated but no calculation performed;
         }
@@ -274,6 +274,20 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             cfIds.add(new CalculatedFieldId(new UUID(cfId.getCalculatedFieldIdMSB(), cfId.getCalculatedFieldIdLSB())));
         }
         return cfIds;
+    }
+
+    private UUID toTbMsgId(CalculatedFieldTelemetryMsgProto proto) {
+        if (proto.getTbMsgIdMSB() != 0 && proto.getTbMsgIdLSB() != 0) {
+            return new UUID(proto.getTbMsgIdMSB(), proto.getTbMsgIdLSB());
+        }
+        return null;
+    }
+
+    private TbMsgType toTbMsgType(CalculatedFieldTelemetryMsgProto proto) {
+        if (!proto.getTbMsgType().isEmpty()) {
+            return TbMsgType.valueOf(proto.getTbMsgType());
+        }
+        return null;
     }
 
 }

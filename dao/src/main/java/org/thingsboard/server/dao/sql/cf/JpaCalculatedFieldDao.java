@@ -72,6 +72,12 @@ public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity,
     }
 
     @Override
+    public PageData<CalculatedField> findAllByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
+        log.debug("Try to find calculated fields by entityId[{}] and pageLink [{}]", entityId, pageLink);
+        return DaoUtil.toPageData(calculatedFieldRepository.findAllByTenantIdAndEntityId(tenantId.getId(), entityId.getId(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
     @Transactional
     public List<CalculatedField> removeAllByEntityId(TenantId tenantId, EntityId entityId) {
         return DaoUtil.convertDataList(calculatedFieldRepository.removeAllByTenantIdAndEntityId(tenantId.getId(), entityId.getId()));
@@ -80,6 +86,11 @@ public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity,
     @Override
     public boolean existsByEntityId(TenantId tenantId, EntityId entityId) {
         return calculatedFieldRepository.existsByTenantIdAndEntityId(tenantId.getId(), entityId.getId());
+    }
+
+    @Override
+    public long countCFByEntityId(TenantId tenantId, EntityId entityId) {
+        return calculatedFieldRepository.countByTenantIdAndEntityId(tenantId.getId(), entityId.getId());
     }
 
     @Override

@@ -19,18 +19,26 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 @Data
 @Slf4j
+@NoArgsConstructor
 public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
+
+    public ScriptCalculatedFieldState(List<String> requiredArguments) {
+        super(requiredArguments);
+    }
 
     @Override
     public CalculatedFieldType getType() {
@@ -38,11 +46,15 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
+    protected void validateNewEntry(ArgumentEntry newEntry) {
+    }
+
+    @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
         arguments.forEach((key, argumentEntry) -> {
-            if (argumentEntry instanceof TsRollingArgumentEntry) {
+            if (argumentEntry instanceof TsRollingArgumentEntry tsRollingEntry) {
                 Argument argument = ctx.getArguments().get(key);
-                TreeMap<Long, Object> tsRecords = ((TsRollingArgumentEntry) argumentEntry).getTsRecords();
+                TreeMap<Long, BasicKvEntry> tsRecords = tsRollingEntry.getTsRecords();
                 if (tsRecords.size() > argument.getLimit()) {
                     tsRecords.pollFirstEntry();
                 }

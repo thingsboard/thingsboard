@@ -783,6 +783,9 @@ message CalculatedFieldTelemetryMsgProto {
   repeated TsKvProto tsData = 9;
   AttributeScopeProto scope = 10;
   repeated AttributeValueProto attrData = 11;
+  int64 tbMsgIdMSB = 12;
+  int64 tbMsgIdLSB = 13;
+  string tbMsgType = 14;
 }
 
 message CalculatedFieldLinkedTelemetryMsgProto {
@@ -791,11 +794,13 @@ message CalculatedFieldLinkedTelemetryMsgProto {
 }
 
 message CalculatedFieldEntityCtxIdProto {
-  int64 calculatedFieldIdMSB = 1;
-  int64 calculatedFieldIdLSB = 2;
-  string entityType = 3;
-  int64 entityIdMSB = 4;
-  int64 entityIdLSB = 5;
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 calculatedFieldIdMSB = 3;
+  int64 calculatedFieldIdLSB = 4;
+  string entityType = 5;
+  int64 entityIdMSB = 6;
+  int64 entityIdLSB = 7;
 }
 
 message CalculatedFieldIdProto {
@@ -806,13 +811,8 @@ message CalculatedFieldIdProto {
 message SingleValueProto {
   int64 ts = 1;
   int64 version = 2;
-  KeyValueType type = 3;
   bool has_v = 4;
-  bool bool_v = 5;
-  int64 long_v = 6;
-  double double_v = 7;
-  string string_v = 8;
-  string json_v = 9;
+  KeyValueProto value = 5;
 }
 
 message SingleValueArgumentProto {
@@ -828,8 +828,10 @@ message RollingArgumentProto {
 message CalculatedFieldStateProto {
   CalculatedFieldEntityCtxIdProto id = 1;
   // int32 version = 2;
-  repeated SingleValueArgumentProto singleValueArguments = 3;
-  repeated RollingArgumentProto rollingValueArguments = 4;
+  string type = 3;
+  repeated string requiredArguments = 4;
+  repeated SingleValueArgumentProto singleValueArguments = 5;
+  repeated RollingArgumentProto rollingValueArguments = 6;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.

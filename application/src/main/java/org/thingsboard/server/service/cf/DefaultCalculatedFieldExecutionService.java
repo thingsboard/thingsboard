@@ -40,7 +40,6 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
-import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -62,6 +61,7 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -70,17 +70,19 @@ import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeScopeProto;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeValueProto;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldLinkedTelemetryMsgProto;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldLinkedTelemetryMsgProto.Builder;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
-import org.thingsboard.server.queue.discovery.HashPartitionService;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtx;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldStateService;
@@ -117,6 +119,7 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 import static org.thingsboard.server.common.util.ProtoUtils.toTsKvProto;
+import static org.thingsboard.server.queue.discovery.HashPartitionService.CALCULATED_FIELD_QUEUE_KEY;
 
 @Service
 @Slf4j
@@ -141,13 +144,12 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     private final TimeseriesService timeseriesService;
     private final CalculatedFieldStateService stateService;
     private final TbClusterService clusterService;
+    private final ApiLimitService apiLimitService;
 
     private ListeningExecutorService calculatedFieldExecutor;
     private ListeningExecutorService calculatedFieldCallbackExecutor;
 
     private final ConcurrentMap<CalculatedFieldEntityCtxId, CalculatedFieldEntityCtx> states = new ConcurrentHashMap<>();
-
-    private static final int MAX_LAST_RECORDS_VALUE = 1024;
 
     private static final Set<EntityType> supportedReferencedEntities = EnumSet.of(
             EntityType.DEVICE, EntityType.ASSET, EntityType.CUSTOMER, EntityType.TENANT
@@ -245,7 +247,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             argFutures.put(entry.getKey(), argValueFuture);
         }
         return Futures.whenAllComplete(argFutures.values()).call(() -> {
-            var result = createStateByType(ctx.getCfType());
+            var result = createStateByType(ctx);
             result.updateState(argFutures.entrySet().stream()
                     .collect(Collectors.toMap(
                             Entry::getKey, // Keep the key as is
@@ -450,7 +452,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             if (broadcast) {
                 broadcasts.add(link);
             } else {
-                TopicPartitionInfo tpi = partitionService.resolve(HashPartitionService.CALCULATED_FIELD_QUEUE_KEY, link.entityId());
+                TopicPartitionInfo tpi = partitionService.resolve(CALCULATED_FIELD_QUEUE_KEY, link.entityId());
                 unicasts.computeIfAbsent(tpi, k -> new ArrayList<>()).add(link);
             }
         }
@@ -483,7 +485,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     }
 
     private CalculatedFieldLinkedTelemetryMsgProto buildLinkedTelemetryMsgProto(CalculatedFieldTelemetryMsgProto telemetryProto, List<CalculatedFieldEntityCtxId> links) {
-        TransportProtos.CalculatedFieldLinkedTelemetryMsgProto.Builder builder = TransportProtos.CalculatedFieldLinkedTelemetryMsgProto.newBuilder();
+        Builder builder = CalculatedFieldLinkedTelemetryMsgProto.newBuilder();
         builder.setMsg(telemetryProto);
         for (CalculatedFieldEntityCtxId link : links) {
             builder.addLinks(toProto(link));
@@ -492,8 +494,10 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     }
 
     //TODO: IM: move to utils;
-    private TransportProtos.CalculatedFieldEntityCtxIdProto toProto(CalculatedFieldEntityCtxId ctxId) {
-        return TransportProtos.CalculatedFieldEntityCtxIdProto.newBuilder()
+    private CalculatedFieldEntityCtxIdProto toProto(CalculatedFieldEntityCtxId ctxId) {
+        return CalculatedFieldEntityCtxIdProto.newBuilder()
+                .setTenantIdMSB(ctxId.tenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(ctxId.tenantId().getId().getLeastSignificantBits())
                 .setCalculatedFieldIdMSB(ctxId.cfId().getId().getMostSignificantBits())
                 .setCalculatedFieldIdLSB(ctxId.cfId().getId().getLeastSignificantBits())
                 .setEntityType(ctxId.entityId().getEntityType().name())
@@ -557,7 +561,8 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         long currentTime = System.currentTimeMillis();
         long timeWindow = argument.getTimeWindow() == 0 ? System.currentTimeMillis() : argument.getTimeWindow();
         long startTs = currentTime - timeWindow;
-        int limit = argument.getLimit() == 0 ? MAX_LAST_RECORDS_VALUE : argument.getLimit();
+        long maxDataPoints = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxDataPointsPerRollingArg);
+        int limit = argument.getLimit() == 0 ? (int) maxDataPoints : argument.getLimit();
 
         ReadTsKvQuery query = new BaseReadTsKvQuery(argument.getRefEntityKey().getKey(), startTs, currentTime, 0, limit, Aggregation.NONE);
         ListenableFuture<List<TsKvEntry>> tsRollingFuture = timeseriesService.findAll(tenantId, entityId, List.of(query));
@@ -584,10 +589,10 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         return payload;
     }
 
-    private CalculatedFieldState createStateByType(CalculatedFieldType calculatedFieldType) {
-        return switch (calculatedFieldType) {
-            case SIMPLE -> new SimpleCalculatedFieldState();
-            case SCRIPT -> new ScriptCalculatedFieldState();
+    private CalculatedFieldState createStateByType(CalculatedFieldCtx ctx) {
+        return switch (ctx.getCfType()) {
+            case SIMPLE -> new SimpleCalculatedFieldState(ctx.getArgNames());
+            case SCRIPT -> new ScriptCalculatedFieldState(ctx.getArgNames());
         };
     }
 
@@ -606,7 +611,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     private ToCalculatedFieldMsg toCalculatedFieldTelemetryMsgProto(TimeseriesSaveRequest request, TimeseriesSaveResult result) {
         ToCalculatedFieldMsg.Builder msg = ToCalculatedFieldMsg.newBuilder();
 
-        CalculatedFieldTelemetryMsgProto.Builder telemetryMsg = buildTelemetryMsgProto(request.getTenantId(), request.getEntityId(), request.getPreviousCalculatedFieldIds());
+        CalculatedFieldTelemetryMsgProto.Builder telemetryMsg = buildTelemetryMsgProto(request.getTenantId(), request.getEntityId(), request.getPreviousCalculatedFieldIds(), request.getTbMsgId(), request.getTbMsgType());
         List<TsKvEntry> entries = request.getEntries();
         List<Long> versions = result.getVersions();
         for (int i = 0; i < entries.size(); i++) {
@@ -622,7 +627,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     private ToCalculatedFieldMsg toCalculatedFieldTelemetryMsgProto(AttributesSaveRequest request, List<Long> versions) {
         ToCalculatedFieldMsg.Builder msg = ToCalculatedFieldMsg.newBuilder();
 
-        CalculatedFieldTelemetryMsgProto.Builder telemetryMsg = buildTelemetryMsgProto(request.getTenantId(), request.getEntityId(), request.getPreviousCalculatedFieldIds());
+        CalculatedFieldTelemetryMsgProto.Builder telemetryMsg = buildTelemetryMsgProto(request.getTenantId(), request.getEntityId(), request.getPreviousCalculatedFieldIds(), request.getTbMsgId(), request.getTbMsgType());
         telemetryMsg.setScope(AttributeScopeProto.valueOf(request.getScope().name()));
         List<AttributeKvEntry> entries = request.getEntries();
         for (int i = 0; i < entries.size(); i++) {
@@ -635,7 +640,7 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         return msg.build();
     }
 
-    private CalculatedFieldTelemetryMsgProto.Builder buildTelemetryMsgProto(TenantId tenantId, EntityId entityId, List<CalculatedFieldId> calculatedFieldIds) {
+    private CalculatedFieldTelemetryMsgProto.Builder buildTelemetryMsgProto(TenantId tenantId, EntityId entityId, List<CalculatedFieldId> calculatedFieldIds, UUID tbMsgId, TbMsgType tbMsgType) {
         CalculatedFieldTelemetryMsgProto.Builder telemetryMsg = CalculatedFieldTelemetryMsgProto.newBuilder();
 
         telemetryMsg.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
@@ -651,11 +656,20 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
             }
         }
 
+        if (tbMsgId != null) {
+            telemetryMsg.setTbMsgIdMSB(tbMsgId.getMostSignificantBits());
+            telemetryMsg.setTbMsgIdLSB(tbMsgId.getLeastSignificantBits());
+        }
+
+        if (tbMsgType != null) {
+            telemetryMsg.setTbMsgType(tbMsgType.name());
+        }
+
         return telemetryMsg;
     }
 
-    private TransportProtos.CalculatedFieldIdProto toProto(CalculatedFieldId cfId) {
-        return TransportProtos.CalculatedFieldIdProto.newBuilder()
+    private CalculatedFieldIdProto toProto(CalculatedFieldId cfId) {
+        return CalculatedFieldIdProto.newBuilder()
                 .setCalculatedFieldIdMSB(cfId.getId().getMostSignificantBits())
                 .setCalculatedFieldIdLSB(cfId.getId().getLeastSignificantBits())
                 .build();

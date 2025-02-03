@@ -16,6 +16,9 @@
 package org.thingsboard.server.service.cf.ctx.state;
 
 import lombok.Data;
+import net.objecthunter.exp4j.Expression;
+import net.objecthunter.exp4j.ExpressionBuilder;
+import org.mvel2.MVEL;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.cf.CalculatedField;
@@ -31,6 +34,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.util.TbPair;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 
@@ -42,6 +46,8 @@ import java.util.stream.Collectors;
 
 @Data
 public class CalculatedFieldCtx {
+
+    private CalculatedField calculatedField;
 
     private CalculatedFieldId cfId;
     private TenantId tenantId;
@@ -57,8 +63,13 @@ public class CalculatedFieldCtx {
     private String expression;
     private TbelInvokeService tbelInvokeService;
     private CalculatedFieldScriptEngine calculatedFieldScriptEngine;
+    private ThreadLocal<Expression> customExpression;
+
+    private boolean initialized;
 
     public CalculatedFieldCtx(CalculatedField calculatedField, TbelInvokeService tbelInvokeService) {
+        this.calculatedField = calculatedField;
+
         this.cfId = calculatedField.getId();
         this.tenantId = calculatedField.getTenantId();
         this.entityId = calculatedField.getEntityId();
@@ -85,8 +96,28 @@ public class CalculatedFieldCtx {
         this.output = configuration.getOutput();
         this.expression = configuration.getExpression();
         this.tbelInvokeService = tbelInvokeService;
-        if (CalculatedFieldType.SCRIPT.equals(calculatedField.getType())) {
-            this.calculatedFieldScriptEngine = initEngine(tenantId, expression, tbelInvokeService);
+    }
+
+    public void init() {
+        if (CalculatedFieldType.SCRIPT.equals(cfType)) {
+            try {
+                this.calculatedFieldScriptEngine = initEngine(tenantId, expression, tbelInvokeService);
+                initialized = true;
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.", e);
+            }
+        } else {
+            if (isValidExpression(expression)) {
+                this.customExpression = ThreadLocal.withInitial(() ->
+                        new ExpressionBuilder(expression)
+                                .implicitMultiplication(true)
+                                .variables(this.arguments.keySet())
+                                .build()
+                );
+                initialized = true;
+            } else {
+                throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.");
+            }
         }
     }
 
@@ -101,6 +132,15 @@ public class CalculatedFieldCtx {
                 expression,
                 argNames.toArray(String[]::new)
         );
+    }
+
+    private boolean isValidExpression(String expression) {
+        try {
+            MVEL.compileExpression(expression);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public boolean matches(List<AttributeKvEntry> values, AttributeScope scope) {
@@ -146,8 +186,18 @@ public class CalculatedFieldCtx {
     }
 
     public boolean linkMatches(EntityId entityId, CalculatedFieldTelemetryMsgProto proto) {
-        //TODO: IM - implement
-        return true;
+        if (!proto.getTsDataList().isEmpty()) {
+            List<TsKvEntry> updatedTelemetry = proto.getTsDataList().stream()
+                    .map(ProtoUtils::fromProto)
+                    .toList();
+            return linkMatches(entityId, updatedTelemetry);
+        } else {
+            AttributeScope scope = AttributeScope.valueOf(proto.getScope().name());
+            List<AttributeKvEntry> updatedTelemetry = proto.getAttrDataList().stream()
+                    .map(ProtoUtils::fromProto)
+                    .toList();
+            return linkMatches(entityId, updatedTelemetry, scope);
+        }
     }
 
     public CalculatedFieldEntityCtxId toCalculatedFieldEntityCtxId() {
@@ -158,7 +208,8 @@ public class CalculatedFieldCtx {
         boolean entityIdChanged = !entityId.equals(other.entityId);
         boolean typeChanged = !cfType.equals(other.cfType);
         boolean argumentsChanged = !arguments.equals(other.arguments);
-        return entityIdChanged || typeChanged || argumentsChanged;
+        boolean expressionChanged = !expression.equals(other.expression);
+        return entityIdChanged || typeChanged || argumentsChanged || expressionChanged;
     }
 
 }

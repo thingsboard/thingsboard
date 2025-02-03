@@ -28,8 +28,10 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @ToString
@@ -42,6 +44,8 @@ public class AttributesSaveRequest {
     private final List<AttributeKvEntry> entries;
     private final boolean notifyDevice;
     private final List<CalculatedFieldId> previousCalculatedFieldIds;
+    private final UUID tbMsgId;
+    private final TbMsgType tbMsgType;
     private final FutureCallback<Void> callback;
 
     public static Builder builder() {
@@ -56,6 +60,8 @@ public class AttributesSaveRequest {
         private List<AttributeKvEntry> entries;
         private boolean notifyDevice = true;
         private List<CalculatedFieldId> previousCalculatedFieldIds;
+        private UUID tbMsgId;
+        private TbMsgType tbMsgType;
         private FutureCallback<Void> callback;
 
         Builder() {}
@@ -108,6 +114,16 @@ public class AttributesSaveRequest {
             return this;
         }
 
+        public Builder tbMsgId(UUID tbMsgId) {
+            this.tbMsgId = tbMsgId;
+            return this;
+        }
+
+        public Builder tbMsgType(TbMsgType tbMsgType) {
+            this.tbMsgType = tbMsgType;
+            return this;
+        }
+
         public Builder callback(FutureCallback<Void> callback) {
             this.callback = callback;
             return this;
@@ -128,7 +144,7 @@ public class AttributesSaveRequest {
         }
 
         public AttributesSaveRequest build() {
-            return new AttributesSaveRequest(tenantId, entityId, scope, entries, notifyDevice, previousCalculatedFieldIds, callback);
+            return new AttributesSaveRequest(tenantId, entityId, scope, entries, notifyDevice, previousCalculatedFieldIds, tbMsgId, tbMsgType, callback);
         }
 
     }

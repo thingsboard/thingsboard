@@ -15,13 +15,14 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.util.KvProtoUtil;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
@@ -34,20 +35,19 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     public static final ArgumentEntry EMPTY = new SingleValueArgumentEntry(0);
 
     private long ts;
-    private Object value;
-
+    private BasicKvEntry kvEntryValue;
     private Long version;
 
     public SingleValueArgumentEntry(TsKvProto entry) {
         this.ts = entry.getTs();
         this.version = entry.getVersion();
-        this.value = ProtoUtils.fromProto(entry).getValue();
+        this.kvEntryValue = ProtoUtils.fromProto(entry.getKv());
     }
 
     public SingleValueArgumentEntry(AttributeValueProto entry) {
         this.ts = entry.getLastUpdateTs();
         this.version = entry.getVersion();
-        this.value = ProtoUtils.fromProto(entry).getValue();
+        this.kvEntryValue = ProtoUtils.basicKvEntryFromProto(entry);
     }
 
     public SingleValueArgumentEntry(KvEntry entry) {
@@ -58,7 +58,7 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
             this.ts = attributeKvEntry.getLastUpdateTs();
             this.version = attributeKvEntry.getVersion();
         }
-        this.value = entry.getValue();
+        this.kvEntryValue = ProtoUtils.basicKvEntryFromKvEntry(entry);
     }
 
     /**
@@ -66,7 +66,7 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
      * */
     private SingleValueArgumentEntry(int ignored) {
         this.ts = System.currentTimeMillis();
-        this.value = null;
+        this.kvEntryValue = null;
     }
 
     @Override
@@ -74,19 +74,33 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
         return ArgumentEntryType.SINGLE_VALUE;
     }
 
-    @Override
+    @JsonIgnore
     public Object getValue() {
-        return value;
-    }
-
-    @Override
-    public boolean hasUpdatedValue(ArgumentEntry entry) {
-        return this.ts != ((SingleValueArgumentEntry) entry).getTs();
+        return kvEntryValue.getValue();
     }
 
     @Override
     public ArgumentEntry copy() {
-        return new SingleValueArgumentEntry(this.ts, this.value, this.version);
+        return new SingleValueArgumentEntry(this.ts, this.kvEntryValue, this.version);
     }
 
+    @Override
+    public boolean updateEntry(ArgumentEntry entry) {
+        if (entry instanceof SingleValueArgumentEntry singleValueEntry) {
+            if (singleValueEntry.getTs() == this.ts) {
+                return false;
+            }
+
+            Long newVersion = singleValueEntry.getVersion();
+            if (newVersion == null || this.version == null || newVersion > this.version) {
+                this.ts = singleValueEntry.getTs();
+                this.kvEntryValue = singleValueEntry.getKvEntryValue();
+                this.version = newVersion;
+                return true;
+            }
+        } else {
+            throw new IllegalArgumentException("Unsupported argument entry type for single value argument entry: " + entry.getType());
+        }
+        return false;
+    }
 }

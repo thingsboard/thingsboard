@@ -18,17 +18,22 @@ package org.thingsboard.server.service.cf.ctx.state;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
-import net.objecthunter.exp4j.Expression;
-import net.objecthunter.exp4j.ExpressionBuilder;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Data
+@NoArgsConstructor
 public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
+
+    public SimpleCalculatedFieldState(List<String> requiredArguments) {
+        super(requiredArguments);
+    }
 
     @Override
     public CalculatedFieldType getType() {
@@ -36,20 +41,24 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
-    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
-        String expression = ctx.getExpression();
-        ThreadLocal<Expression> customExpression = new ThreadLocal<>();
-        var expr = customExpression.get();
-        if (expr == null) {
-            expr = new ExpressionBuilder(expression)
-                    .implicitMultiplication(true)
-                    .variables(this.arguments.keySet())
-                    .build();
-            customExpression.set(expr);
+    protected void validateNewEntry(ArgumentEntry newEntry) {
+        if (newEntry instanceof TsRollingArgumentEntry) {
+            throw new IllegalArgumentException("Rolling argument entry is not supported for simple calculated fields.");
         }
-        Map<String, Double> variables = new HashMap<>();
-        this.arguments.forEach((k, v) -> variables.put(k, Double.parseDouble(v.getValue().toString())));
-        expr.setVariables(variables);
+    }
+
+    @Override
+    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
+        var expr = ctx.getCustomExpression().get();
+
+        for (Map.Entry<String, ArgumentEntry> entry : this.arguments.entrySet()) {
+            try {
+                BasicKvEntry kvEntry = ((SingleValueArgumentEntry) entry.getValue()).getKvEntryValue();
+                expr.setVariable(entry.getKey(), Double.parseDouble(kvEntry.getValueAsString()));
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Argument '" + entry.getKey() + "' is not a number.");
+            }
+        }
 
         double expressionResult = expr.evaluate();
 

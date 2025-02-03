@@ -21,11 +21,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.thingsboard.server.common.data.kv.BasicKvEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.util.ProtoUtils;
 
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
@@ -37,10 +41,10 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
 
     private static final int MAX_ROLLING_ARGUMENT_ENTRY_SIZE = 1000;
 
-    private TreeMap<Long, Object> tsRecords = new TreeMap<>();
+    private TreeMap<Long, BasicKvEntry> tsRecords = new TreeMap<>();
 
     public TsRollingArgumentEntry(List<TsKvEntry> kvEntries) {
-        kvEntries.forEach(tsKvEntry -> addTsRecord(tsKvEntry.getTs(), tsKvEntry.getValue()));
+        kvEntries.forEach(tsKvEntry -> addTsRecord(tsKvEntry.getTs(), tsKvEntry));
     }
 
     /**
@@ -58,14 +62,15 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
     @JsonIgnore
     @Override
     public Object getValue() {
-        return tsRecords;
-    }
+        return tsRecords.entrySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> entry.getValue().getValue(),
+                        (oldValue, newValue) -> oldValue,
+                        TreeMap::new
+                ));
 
-    @Override
-    public boolean hasUpdatedValue(ArgumentEntry entry) {
-        return entry instanceof SingleValueArgumentEntry ?
-                !tsRecords.containsKey(((SingleValueArgumentEntry) entry).getTs()) :
-                !tsRecords.keySet().containsAll(((TsRollingArgumentEntry) entry).getTsRecords().keySet());
     }
 
     @Override
@@ -73,20 +78,45 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
         return new TsRollingArgumentEntry(new TreeMap<>(tsRecords));
     }
 
-    public void addTsRecord(Long key, Object value) {
-        if (NumberUtils.isParsable(value.toString())) {
-            tsRecords.put(key, value);
+    @Override
+    public boolean updateEntry(ArgumentEntry entry) {
+        if (entry instanceof TsRollingArgumentEntry tsRollingEntry) {
+            return updateTsRollingEntry(tsRollingEntry);
+        } else if (entry instanceof SingleValueArgumentEntry singleValueEntry) {
+            return updateSingleValueEntry(singleValueEntry);
+        } else {
+            throw new IllegalArgumentException("Unsupported argument entry type for rolling argument entry: " + entry.getType());
+        }
+    }
+
+    private boolean updateTsRollingEntry(TsRollingArgumentEntry tsRollingEntry) {
+        boolean updated = false;
+        for (Map.Entry<Long, BasicKvEntry> tsRecordEntry : tsRollingEntry.getTsRecords().entrySet()) {
+            updated |= addTsRecordIfAbsent(tsRecordEntry.getKey(), tsRecordEntry.getValue());
+        }
+        return updated;
+    }
+
+    private boolean updateSingleValueEntry(SingleValueArgumentEntry singleValueEntry) {
+        return addTsRecordIfAbsent(singleValueEntry.getTs(), singleValueEntry.getKvEntryValue());
+    }
+
+    private boolean addTsRecordIfAbsent(Long ts, KvEntry value) {
+        if (!tsRecords.containsKey(ts)) {
+            addTsRecord(ts, value);
+            return true;
+        }
+        return false;
+    }
+
+    private void addTsRecord(Long ts, KvEntry value) {
+        if (NumberUtils.isParsable(value.getValue().toString())) {
+            tsRecords.put(ts, ProtoUtils.basicKvEntryFromKvEntry(value));
             if (tsRecords.size() > MAX_ROLLING_ARGUMENT_ENTRY_SIZE) {
                 tsRecords.pollFirstEntry();
             }
         } else {
-            log.warn("Argument type 'TS_ROLLING' only supports numeric values.");
-        }
-    }
-
-    public void addAllTsRecords(Map<Long, Object> newRecords) {
-        for (Map.Entry<Long, Object> entry : newRecords.entrySet()) {
-            addTsRecord(entry.getKey(), entry.getValue());
+            throw new IllegalArgumentException("Argument type " + getType() + " only supports numeric values.");
         }
     }
 
