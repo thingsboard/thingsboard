@@ -17,7 +17,6 @@
 import {
   ChangeDetectorRef,
   Component,
-  DestroyRef,
   effect,
   forwardRef,
   input,
@@ -29,6 +28,7 @@ import {
   AbstractControl,
   ControlValueAccessor,
   FormBuilder,
+  FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -51,6 +51,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import { charsWithNumRegex } from '@shared/models/regex.constants';
+import { TbPopoverComponent } from '@shared/components/popover.component';
 
 @Component({
   selector: 'tb-calculated-field-arguments-table',
@@ -78,20 +79,19 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
 
   errorText = '';
   argumentsFormArray = this.fb.array<AbstractControl>([]);
-  keysPopupClosed = true;
 
   readonly entityTypeTranslations = entityTypeTranslations;
   readonly ArgumentTypeTranslations = ArgumentTypeTranslations;
   readonly EntityType = EntityType;
   readonly ArgumentEntityType = ArgumentEntityType;
 
+  private popoverComponent: TbPopoverComponent<CalculatedFieldArgumentPanelComponent>;
   private propagateChange: (argumentsObj: Record<string, CalculatedFieldArgument>) => void = () => {};
 
   constructor(
     private fb: FormBuilder,
     private popoverService: TbPopoverService,
     private viewContainerRef: ViewContainerRef,
-    private destroyRef: DestroyRef,
     private cd: ChangeDetectorRef,
     private renderer: Renderer2
   ) {
@@ -123,6 +123,9 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
 
   manageArgument($event: Event, matButton: MatButton, index?: number): void {
     $event?.stopPropagation();
+    if (this.popoverComponent && !this.popoverComponent.tbHidden) {
+      this.popoverComponent.hide();
+    }
     const trigger = matButton._elementRef.nativeElement;
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
@@ -135,26 +138,21 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
         buttonTitle: this.argumentsFormArray.at(index)?.value ? 'action.apply' : 'action.add',
         tenantId: this.tenantId,
       };
-      this.keysPopupClosed = false;
-      const argumentsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
+      this.popoverComponent = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, CalculatedFieldArgumentPanelComponent, 'left', false, null,
         ctx,
         {},
         {}, {}, true);
-      argumentsPanelPopover.tbComponentRef.instance.popover = argumentsPanelPopover;
-      argumentsPanelPopover.tbComponentRef.instance.argumentsDataApplied.subscribe(({ value, index }) => {
-        argumentsPanelPopover.hide();
+      this.popoverComponent.tbComponentRef.instance.argumentsDataApplied.subscribe(({ value, index }) => {
+        this.popoverComponent.hide();
         const formGroup = this.getArgumentFormGroup(value);
         if (isDefinedAndNotNull(index)) {
           this.argumentsFormArray.setControl(index, formGroup);
         } else {
           this.argumentsFormArray.push(formGroup);
         }
-        this.argumentsFormArray.markAsDirty();
+        formGroup.markAsDirty();
         this.cd.markForCheck();
-      });
-      argumentsPanelPopover.tbHideStart.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-        this.keysPopupClosed = true;
       });
     }
   }
@@ -171,8 +169,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
   }
 
   private getArgumentsObject(): Record<string, CalculatedFieldArgument> {
-    return this.argumentsFormArray.controls.reduce((acc, control) => {
-      const rawValue = control.getRawValue();
+    return this.argumentsFormArray.getRawValue().reduce((acc, rawValue) => {
       const { argumentName, ...argument } = rawValue as CalculatedFieldArgumentValue;
       acc[argumentName] = argument;
       return acc;
@@ -186,24 +183,15 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
 
   private populateArgumentsFormArray(argumentsObj: Record<string, CalculatedFieldArgument>): void {
     Object.keys(argumentsObj).forEach(key => {
-      this.argumentsFormArray.push(this.fb.group({
-        argumentName: [key, [Validators.required, Validators.maxLength(255), Validators.pattern(charsWithNumRegex)]],
+      const value: CalculatedFieldArgumentValue = {
         ...argumentsObj[key],
-        ...(argumentsObj[key].refEntityId ? {
-          refEntityId: this.fb.group({
-            entityType: [{ value: argumentsObj[key].refEntityId.entityType, disabled: true }],
-            id: [{ value: argumentsObj[key].refEntityId.id , disabled: true }],
-          }),
-        } : {}),
-        refEntityKey: this.fb.group({
-          type: [{ value: argumentsObj[key].refEntityKey.type, disabled: true }],
-          key: [{ value: argumentsObj[key].refEntityKey.key, disabled: true }],
-        }),
-      }) as AbstractControl);
+        argumentName: key
+      };
+      this.argumentsFormArray.push(this.getArgumentFormGroup(value), {emitEvent: false});
     });
   }
 
-  private getArgumentFormGroup(value: CalculatedFieldArgumentValue): AbstractControl {
+  private getArgumentFormGroup(value: CalculatedFieldArgumentValue): FormGroup {
     return this.fb.group({
       ...value,
       argumentName: [value.argumentName, [Validators.required, Validators.maxLength(255), Validators.pattern(charsWithNumRegex)]],

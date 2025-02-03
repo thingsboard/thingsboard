@@ -14,18 +14,7 @@
  * limitations under the License.
  */
 :host ::ng-deep {
-  .inline-entity-autocomplete {
-    .mat-mdc-form-field-infix {
-      padding-top: 8px;
-      padding-bottom: 8px;
-      min-height: 40px;
-      width: auto;
-      .mdc-text-field__input, .mat-mdc-select {
-        font-weight: 400;
-        line-height: 20px;
-      }
-    }
-
+  .tb-inline-field {
     a {
       font-size: 14px;
     }

@@ -25,7 +25,6 @@ import {
   OnChanges,
   OnDestroy,
   OnInit,
-  Renderer2,
   SimpleChanges,
   ViewChild,
   ViewContainerRef,
@@ -144,8 +143,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
               private elementRef: ElementRef,
               private fb: FormBuilder,
               private zone: NgZone,
-              public viewContainerRef: ViewContainerRef,
-              public renderer: Renderer2) {
+              public viewContainerRef: ViewContainerRef) {
     super(store);
   }
 

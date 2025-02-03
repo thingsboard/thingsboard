@@ -14,20 +14,19 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, ElementRef, Input, OnInit, output, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit, output } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { charsWithNumRegex, noLeadTrailSpacesRegex } from '@shared/models/regex.constants';
 import {
-  ArgumentEntityType,
+  ArgumentEntityType, ArgumentEntityTypeParamsMap,
   ArgumentEntityTypeTranslations,
   ArgumentType,
   ArgumentTypeTranslations,
   CalculatedFieldArgumentValue,
   CalculatedFieldType
 } from '@shared/models/calculated-field.models';
-import { delay, distinctUntilChanged, filter, throttleTime } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { DatasourceType } from '@shared/models/widget.models';
@@ -41,19 +40,15 @@ import { MINUTE } from '@shared/models/time/time.models';
 @Component({
   selector: 'tb-calculated-field-argument-panel',
   templateUrl: './calculated-field-argument-panel.component.html',
-  styleUrls: ['./calculated-field-argument-panel.component.scss']
 })
-export class CalculatedFieldArgumentPanelComponent extends PageComponent implements OnInit {
+export class CalculatedFieldArgumentPanelComponent implements OnInit {
 
-  @Input() popover: TbPopoverComponent<CalculatedFieldArgumentPanelComponent>;
   @Input() buttonTitle: string;
   @Input() index: number;
   @Input() argument: CalculatedFieldArgumentValue;
   @Input() entityId: EntityId;
   @Input() tenantId: string;
   @Input() calculatedFieldType: CalculatedFieldType;
-
-  @ViewChild('timeseriesInput') timeseriesInput: ElementRef;
 
   argumentsDataApplied = output<{ value: CalculatedFieldArgumentValue, index: number }>();
 
@@ -85,13 +80,13 @@ export class CalculatedFieldArgumentPanelComponent extends PageComponent impleme
   readonly ArgumentTypeTranslations = ArgumentTypeTranslations;
   readonly AttributeScope = AttributeScope;
   readonly ArgumentEntityType = ArgumentEntityType;
+  readonly ArgumentEntityTypeParamsMap = ArgumentEntityTypeParamsMap;
 
   constructor(
     private fb: FormBuilder,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private popover: TbPopoverComponent<CalculatedFieldArgumentPanelComponent>
   ) {
-    super();
-
     this.observeEntityFilterChanges();
     this.observeEntityTypeChanges()
     this.observeEntityKeyChanges();
@@ -170,7 +165,7 @@ export class CalculatedFieldArgumentPanelComponent extends PageComponent impleme
       this.refEntityIdFormGroup.get('id').valueChanges.pipe(filter(Boolean)),
       this.refEntityKeyFormGroup.get('scope').valueChanges,
     )
-      .pipe(throttleTime(100), delay(50), takeUntilDestroyed())
+      .pipe(debounceTime(50), takeUntilDestroyed())
       .subscribe(() => this.updateEntityFilter(this.entityType));
   }
 
@@ -195,7 +190,6 @@ export class CalculatedFieldArgumentPanelComponent extends PageComponent impleme
       const typeControl = this.argumentFormGroup.get('refEntityKey').get('type');
       typeControl.setValue(null);
       typeControl.markAsTouched();
-      typeControl.updateValueAndValidity();
     }
   }
 }

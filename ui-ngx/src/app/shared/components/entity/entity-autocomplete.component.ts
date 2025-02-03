@@ -136,9 +136,9 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   @coerceBoolean()
   allowCreateNew: boolean;
 
-  @Input({ transform: booleanAttribute }) withLabel = true;
+  @Input({ transform: booleanAttribute }) hideLabel = false;
 
-  @Input({ transform: booleanAttribute }) iconError = false;
+  @Input({ transform: booleanAttribute }) inlineField = false;
 
   @Input() placeholder: string;
 

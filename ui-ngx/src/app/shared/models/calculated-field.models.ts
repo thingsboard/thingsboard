@@ -19,6 +19,7 @@ import { BaseData } from '@shared/models/base-data';
 import { CalculatedFieldId } from '@shared/models/id/calculated-field-id';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import { EntityType } from '@shared/models/entity-type.models';
 
 export interface CalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasTenantId {
   debugSettings?: EntityDebugSettings;
@@ -114,9 +115,20 @@ export interface CalculatedFieldArgumentValue extends CalculatedFieldArgument {
 }
 
 export interface CalculatedFieldDialogData {
-  value: CalculatedField;
+  value?: CalculatedField;
   buttonTitle: string;
   entityId: EntityId;
   debugLimitsConfiguration: string;
   tenantId: string;
 }
+
+export interface ArgumentEntityTypeParams {
+  title: string;
+  entityType: EntityType
+}
+
+export const ArgumentEntityTypeParamsMap =new Map<ArgumentEntityType, ArgumentEntityTypeParams>([
+  [ArgumentEntityType.Device, { title: 'calculated-fields.device-name', entityType: EntityType.DEVICE }],
+  [ArgumentEntityType.Asset, { title: 'calculated-fields.asset-name', entityType: EntityType.ASSET }],
+  [ArgumentEntityType.Customer, { title: 'calculated-fields.customer-name', entityType: EntityType.CUSTOMER }],
+])

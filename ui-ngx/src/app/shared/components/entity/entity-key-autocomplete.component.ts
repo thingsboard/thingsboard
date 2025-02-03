@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, effect, ElementRef, forwardRef, input, ViewChild, } from '@angular/core';
+import { Component, effect, ElementRef, forwardRef, input, OnChanges, SimpleChanges, ViewChild, } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -31,6 +31,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { EntitiesKeysByQuery } from '@shared/models/entity.models';
 import { EntityFilter } from '@shared/models/query/query.models';
+import { isEqual } from '@core/utils';
 
 @Component({
   selector: 'tb-entity-key-autocomplete',
@@ -48,9 +49,9 @@ import { EntityFilter } from '@shared/models/query/query.models';
     }
   ],
 })
-export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Validator {
+export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Validator, OnChanges {
 
-  @ViewChild('keyInput') keyInput: ElementRef;
+  @ViewChild('keyInput', {static: true}) keyInput: ElementRef;
 
   entityFilter = input.required<EntityFilter>();
   dataKeyType = input.required<DataKeyType>();
@@ -95,7 +96,7 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
   constructor(
     private fb: FormBuilder,
     private entityService: EntityService,
-    ) {
+  ) {
     this.keyControl.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(value => this.propagateChange(value));
@@ -105,6 +106,19 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
         this.searchText = '';
       }
     });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    const filterChanged = changes.entityFilter?.previousValue &&
+      !isEqual(changes.entityFilter.currentValue, changes.entityFilter.previousValue);
+    const keyScopeChanged = changes.keyScopeType?.previousValue &&
+      changes.keyScopeType.currentValue !== changes.keyScopeType.previousValue;
+    const keyTypeChanged = changes.dataKeyType?.previousValue &&
+      changes.dataKeyType.currentValue !== changes.dataKeyType.previousValue;
+
+    if (filterChanged || keyScopeChanged || keyTypeChanged) {
+      this.keyControl.setValue('', {emitEvent: false});
+    }
   }
 
   clear(): void {

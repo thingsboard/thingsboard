@@ -1040,6 +1040,7 @@
         "limit": "Max values",
         "time-window": "Time window",
         "customer-name": "Customer name",
+        "asset-name": "Asset name",
         "timeseries": "Time series",
         "output": "Output",
         "output-type": "Output type",
@@ -1107,6 +1108,9 @@
             "name-required": "Name is required.",
             "name-pattern": "Name is invalid.",
             "name-max-length": "Name should be less than 256 characters.",
+            "title-required": "Title is required.",
+            "title-pattern": "Title is invalid.",
+            "title-max-length": "Title should be less than 256 characters.",
             "key-required": "Key is required.",
             "key-pattern": "Key is invalid.",
             "key-max-length": "Key should be less than 256 characters."

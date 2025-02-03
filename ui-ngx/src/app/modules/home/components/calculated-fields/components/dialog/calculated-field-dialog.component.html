@@ -19,7 +19,7 @@
   <mat-toolbar color="primary">
     <h2>{{ 'entity.type-calculated-field' | translate}}</h2>
     <span class="flex-1"></span>
-    <div [tb-help]="helpLink"></div>
+    <div tb-help="calculatedField"></div>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -37,24 +37,25 @@
             @if (fieldFormGroup.get('name').errors && fieldFormGroup.get('name').touched) {
               <mat-error>
                 @if (fieldFormGroup.get('name').hasError('required')) {
-                  {{ 'common.hint.name-required' | translate }}
+                  {{ 'common.hint.title-required' | translate }}
                 } @else if (fieldFormGroup.get('name').hasError('pattern')) {
-                  {{ 'common.hint.name-pattern' | translate }}
+                  {{ 'common.hint.title-pattern' | translate }}
                 } @else if (fieldFormGroup.get('name').hasError('maxlength')) {
-                  {{ 'common.hint.name-max-length' | translate }}
+                  {{ 'common.hint.title-max-length' | translate }}
                 }
               </mat-error>
             }
           </mat-form-field>
           <tb-entity-debug-settings-button
             formControlName="debugSettings"
+            [class.mb-5]="fieldFormGroup.get('name').errors && fieldFormGroup.get('name').touched"
             [entityLabel]="'debug-settings.calculated-field' | translate"
             [debugLimitsConfiguration]="data.debugLimitsConfiguration"
           />
         </div>
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'common.type' | translate }}</mat-label>
-          <mat-select formControlName="type" required>
+          <mat-select formControlName="type">
             @for (type of fieldTypes; track type) {
               <mat-option [value]="type">{{ CalculatedFieldTypeTranslations.get(type) | translate}}</mat-option>
             }
@@ -102,10 +103,10 @@
         </div>
         <div class="tb-form-panel" [formGroup]="outputFormGroup">
           <div class="tb-form-panel-title">{{ 'calculated-fields.output' | translate }}</div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-3">
             <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
               <mat-label>{{ 'calculated-fields.output-type' | translate }}</mat-label>
-              <mat-select formControlName="type" required>
+              <mat-select formControlName="type">
                 @for (type of outputTypes; track type) {
                   <mat-option [value]="type">{{ OutputTypeTranslations.get(type) | translate}}</mat-option>
                 }

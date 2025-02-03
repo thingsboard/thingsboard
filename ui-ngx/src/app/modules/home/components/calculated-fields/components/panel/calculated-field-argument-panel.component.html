@@ -21,44 +21,38 @@
     <div class="tb-form-panel no-border no-padding">
       <div class="tb-form-row">
         <div class="fixed-title-width tb-required">{{ 'calculated-fields.argument-name' | translate }}</div>
-        <div class="tb-flex no-gap">
-          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-            <input matInput autocomplete="off" name="value" formControlName="argumentName" maxlength="255" placeholder="{{ 'action.set' | translate }}"/>
-            <div class="h-5 pr-2">
-              @if (argumentFormGroup.get('argumentName').touched) {
-                @if (argumentFormGroup.get('argumentName').hasError('required')) {
-                  <mat-icon matSuffix
-                            matTooltipPosition="above"
-                            matTooltipClass="tb-error-tooltip"
-                            [matTooltip]="'calculated-fields.hint.argument-name-required' | translate"
-                            class="tb-error">
-                    warning
-                  </mat-icon>
-                } @else if (argumentFormGroup.get('argumentName').hasError('pattern')) {
-                  <mat-icon matSuffix
-                            matTooltipPosition="above"
-                            matTooltipClass="tb-error-tooltip"
-                            [matTooltip]="'calculated-fields.hint.argument-name-pattern' | translate"
-                            class="tb-error">
-                    warning
-                  </mat-icon>
-                } @else if (argumentFormGroup.get('argumentName').hasError('maxlength')) {
-                  <mat-icon matSuffix
-                            matTooltipPosition="above"
-                            matTooltipClass="tb-error-tooltip"
-                            [matTooltip]="'calculated-fields.hint.argument-name-max-length' | translate"
-                            class="tb-error">
-                    warning
-                  </mat-icon>
-                }
-              }
-            </div>
-          </mat-form-field>
-        </div>
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <input matInput autocomplete="off" name="value" formControlName="argumentName" maxlength="255" placeholder="{{ 'action.set' | translate }}"/>
+          @if (argumentFormGroup.get('argumentName').touched && argumentFormGroup.get('argumentName').hasError('required')) {
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'calculated-fields.hint.argument-name-required' | translate"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          } @else if (argumentFormGroup.get('argumentName').touched && argumentFormGroup.get('argumentName').hasError('pattern')) {
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'calculated-fields.hint.argument-name-pattern' | translate"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          } @else if (argumentFormGroup.get('argumentName').touched && argumentFormGroup.get('argumentName').hasError('maxlength')) {
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'calculated-fields.hint.argument-name-max-length' | translate"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          }
+        </mat-form-field>
       </div>
       <ng-container [formGroup]="refEntityIdFormGroup">
         <div class="tb-form-row">
-          <div class="fixed-title-width tb-required">{{ 'entity.entity-type' | translate }}</div>
+          <div class="fixed-title-width">{{ 'entity.entity-type' | translate }}</div>
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="entityType">
               @for (type of argumentEntityTypes; track type) {
@@ -67,34 +61,17 @@
             </mat-select>
           </mat-form-field>
         </div>
-        @if (entityType === ArgumentEntityType.Device || entityType === ArgumentEntityType.Asset) {
+        @if (ArgumentEntityTypeParamsMap.has(entityType)) {
           <div class="tb-form-row">
-            <div class="fixed-title-width tb-required">{{ 'calculated-fields.device-name' | translate }}</div>
+            <div class="fixed-title-width tb-required">{{ ArgumentEntityTypeParamsMap.get(entityType).title | translate }}</div>
             <tb-entity-autocomplete
-              class="entity-autocomplete w-full"
+              class="flex flex-1"
               formControlName="id"
-              [withLabel]="false"
+              [hideLabel]="true"
+              [inlineField]="true"
               [placeholder]="'action.set' | translate"
-              [appearance]="'outline'"
               [required]="true"
-              [iconError]="true"
-              [subscriptSizing]="'dynamic'"
-              [entityType]="EntityType.DEVICE"
-            />
-          </div>
-        } @else if (entityType === ArgumentEntityType.Customer) {
-          <div class="tb-form-row">
-            <div class="fixed-title-width tb-required">{{ 'calculated-fields.customer-name' | translate }}</div>
-            <tb-entity-autocomplete
-              class="entity-autocomplete w-full"
-              formControlName="id"
-              [withLabel]="false"
-              [placeholder]="'action.set' | translate"
-              [appearance]="'outline'"
-              [iconError]="true"
-              [required]="true"
-              [subscriptSizing]="'dynamic'"
-              [entityType]="EntityType.CUSTOMER"
+              [entityType]="ArgumentEntityTypeParamsMap.get(entityType).entityType"
             />
           </div>
         }
@@ -123,13 +100,13 @@
           @if (refEntityKeyFormGroup.get('type').value !== ArgumentType.Attribute) {
             <div class="tb-form-row">
               <div class="fixed-title-width tb-required">{{ 'calculated-fields.timeseries-key' | translate }}</div>
-              <tb-entity-key-autocomplete class="w-full" formControlName="key" [dataKeyType]="DataKeyType.timeseries" [entityFilter]="entityFilter"/>
+              <tb-entity-key-autocomplete class="flex-1" formControlName="key" [dataKeyType]="DataKeyType.timeseries" [entityFilter]="entityFilter"/>
             </div>
           } @else {
             <div class="tb-form-row">
               <div class="fixed-title-width tb-required">{{ 'calculated-fields.attribute-scope' | translate }}</div>
-              <mat-form-field appearance="outline" subscriptSizing="dynamic">
-                <mat-select formControlName="scope" class="w-full">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="flex-1">
+                <mat-select formControlName="scope">
                   <mat-option [value]="AttributeScope.SERVER_SCOPE">
                     {{ 'calculated-fields.server-attributes' | translate }}
                   </mat-option>
@@ -149,7 +126,7 @@
               <div class="fixed-title-width tb-required">{{ 'calculated-fields.attribute-key' | translate }}</div>
               <tb-entity-key-autocomplete
                 formControlName="key"
-                class="w-full"
+                class="flex-1"
                 [dataKeyType]="DataKeyType.attribute"
                 [entityFilter]="entityFilter"
                 [keyScopeType]="argumentFormGroup.get('refEntityKey').get('scope').value"
@@ -161,32 +138,28 @@
       @if (refEntityKeyFormGroup.get('type').value !== ArgumentType.Rolling) {
         <div class="tb-form-row">
           <div class="fixed-title-width">{{ 'calculated-fields.default-value' | translate }}</div>
-          <div class="tb-flex no-gap">
-            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-              <input matInput autocomplete="off" name="value" formControlName="defaultValue" placeholder="{{ 'action.set' | translate }}"/>
-            </mat-form-field>
-          </div>
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+            <input matInput autocomplete="off" name="value" formControlName="defaultValue" placeholder="{{ 'action.set' | translate }}"/>
+          </mat-form-field>
         </div>
       } @else {
-        <div class="tb-form-panel stroked">
-          <div class="tb-form-panel-title">{{ 'calculated-fields.time-window' | translate }}</div>
-          <div class="tb-form-row no-border">
-            <tb-timeinterval
-              subscriptSizing="dynamic"
-              appearance="outline"
-              class="w-full"
-              formControlName="timeWindow"
-            />
-          </div>
+        <div class="tb-form-row">
+          <div class="fixed-title-width">{{ 'calculated-fields.time-window' | translate }}</div>
+          <tb-timeinterval
+            subscriptSizing="dynamic"
+            appearance="outline"
+            class="flex-1"
+            formControlName="timeWindow"
+          />
         </div>
         <div class="tb-form-row">
           <div class="fixed-title-width">{{ 'calculated-fields.limit' | translate }}</div>
-          <tb-datapoints-limit class="w-full" formControlName="limit"/>
+          <tb-datapoints-limit class="flex-1" formControlName="limit"/>
         </div>
       }
     </div>
   </div>
-  <div class="tb-flex flex-end">
+  <div class="flex justify-end gap-2">
     <button mat-button
             color="primary"
             type="button"

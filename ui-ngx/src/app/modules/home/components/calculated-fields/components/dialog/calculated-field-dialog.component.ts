@@ -18,10 +18,9 @@ import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { helpBaseUrl } from '@shared/models/constants';
 import {
   CalculatedField,
   CalculatedFieldConfiguration,
@@ -35,7 +34,6 @@ import { noLeadTrailSpacesRegex } from '@shared/models/regex.constants';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { map, startWith } from 'rxjs/operators';
-import { isObject } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 
@@ -50,7 +48,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
     type: [CalculatedFieldType.SIMPLE],
     debugSettings: [],
     configuration: this.fb.group({
-      arguments: [{}],
+      arguments: this.fb.control({}),
       expressionSIMPLE: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex), Validators.maxLength(255)]],
       expressionSCRIPT: [],
       output: this.fb.group({
@@ -64,7 +62,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
   functionArgs$ = this.configFormGroup.valueChanges
     .pipe(
       startWith(this.data.value?.configuration ?? {}),
-      map(configuration => isObject(configuration?.arguments) ? Object.keys(configuration.arguments) : [])
+      map(configuration => Object.keys(configuration.arguments))
     );
 
   readonly OutputTypeTranslations = OutputTypeTranslations;
@@ -73,7 +71,6 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
   readonly EntityType = EntityType;
   readonly CalculatedFieldType = CalculatedFieldType;
   readonly ScriptLanguage = ScriptLanguage;
-  readonly helpLink = `${helpBaseUrl}/[TODO: [Calculated Fields] add valid link]`;
   readonly fieldTypes = Object.values(CalculatedFieldType) as CalculatedFieldType[];
   readonly outputTypes = Object.values(OutputType) as OutputType[];
   readonly CalculatedFieldTypeTranslations = CalculatedFieldTypeTranslations;
@@ -81,8 +78,8 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: CalculatedFieldDialogData,
-              public dialogRef: MatDialogRef<CalculatedFieldDialogComponent, CalculatedField>,
-              public fb: UntypedFormBuilder) {
+              protected dialogRef: MatDialogRef<CalculatedFieldDialogComponent, CalculatedField>,
+              private fb: FormBuilder) {
     super(store, router, dialogRef);
     this.applyDialogData();
     this.observeTypeChanges();
@@ -104,14 +101,15 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
     if (this.fieldFormGroup.valid) {
       const { configuration, type, ...rest } = this.fieldFormGroup.value;
       const { expressionSIMPLE, expressionSCRIPT, ...restConfig } = configuration;
-      this.dialogRef.close({ configuration: { ...restConfig, type, expression: configuration['expression'+type] }, ...rest, type });
+      this.dialogRef.close({ configuration: { ...restConfig, type, expression: configuration['expression'+type] }, ...rest, type } as CalculatedField);
     }
   }
 
   private applyDialogData(): void {
-    const { configuration = {}, type = CalculatedFieldType.SIMPLE, ...value } = this.data.value;
+    const { configuration = {}, type = CalculatedFieldType.SIMPLE, ...value } = this.data.value ?? {};
     const { expression, ...restConfig } = configuration as CalculatedFieldConfiguration;
-    this.fieldFormGroup.patchValue({ configuration: { ...restConfig, ['expression'+type]: expression }, type, ...value }, {emitEvent: false});
+    const updatedConfig = { ...restConfig , ['expression'+type]: expression };
+    this.fieldFormGroup.patchValue({ configuration: updatedConfig, type, ...value }, {emitEvent: false});
   }
 
   private observeTypeChanges(): void {
@@ -131,8 +129,14 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
   }
 
   private toggleKeyByCalculatedFieldType(type: CalculatedFieldType): void {
-    this.outputFormGroup.get('name')[type === CalculatedFieldType.SIMPLE? 'enable' : 'disable']({emitEvent: false});
-    this.configFormGroup.get('expression'+CalculatedFieldType.SIMPLE)[type === CalculatedFieldType.SIMPLE? 'enable' : 'disable']({emitEvent: false});
-    this.configFormGroup.get('expression'+CalculatedFieldType.SCRIPT)[type === CalculatedFieldType.SCRIPT? 'enable' : 'disable']({emitEvent: false});
+    if (type === CalculatedFieldType.SIMPLE) {
+      this.outputFormGroup.get('name').enable({emitEvent: false});
+      this.configFormGroup.get('expressionSIMPLE').enable({emitEvent: false});
+      this.configFormGroup.get('expressionSCRIPT').disable({emitEvent: false});
+    } else {
+      this.outputFormGroup.get('name').disable({emitEvent: false});
+      this.configFormGroup.get('expressionSIMPLE').disable({emitEvent: false});
+      this.configFormGroup.get('expressionSCRIPT').enable({emitEvent: false});
+    }
   }
 }

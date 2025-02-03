@@ -21,6 +21,7 @@ import {
   DestroyRef,
   effect,
   input,
+  Renderer2,
   ViewChild,
 } from '@angular/core';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -56,6 +57,7 @@ export class CalculatedFieldsTableComponent {
               private durationLeft: DurationLeftPipe,
               private popoverService: TbPopoverService,
               private cd: ChangeDetectorRef,
+              private renderer: Renderer2,
               private destroyRef: DestroyRef) {
 
     effect(() => {
@@ -69,6 +71,7 @@ export class CalculatedFieldsTableComponent {
           this.durationLeft,
           this.popoverService,
           this.destroyRef,
+          this.renderer
         );
         this.cd.markForCheck();
       }

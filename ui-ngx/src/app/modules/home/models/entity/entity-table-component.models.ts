@@ -65,7 +65,6 @@ export interface IEntitiesTableComponent {
   sort: MatSort;
   route: ActivatedRoute;
   viewContainerRef: ViewContainerRef;
-  renderer: Renderer2;
 
   addEnabled(): boolean;
   clearSelection(): void;

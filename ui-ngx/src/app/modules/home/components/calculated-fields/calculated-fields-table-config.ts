@@ -19,7 +19,7 @@ import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.m
 import { TranslateService } from '@ngx-translate/core';
 import { Direction } from '@shared/models/page/sort-order';
 import { MatDialog } from '@angular/material/dialog';
-import { TimePageLink } from '@shared/models/page/page-link';
+import { PageLink } from '@shared/models/page/page-link';
 import { Observable, of } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -27,7 +27,7 @@ import { MINUTE } from '@shared/models/time/time.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
-import { DestroyRef } from '@angular/core';
+import { DestroyRef, Renderer2 } from '@angular/core';
 import { EntityDebugSettings } from '@shared/models/entity.models';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -35,10 +35,10 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { EntityDebugSettingsPanelComponent } from '@home/components/entity/debug/entity-debug-settings-panel.component';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { catchError, filter, switchMap } from 'rxjs/operators';
-import { CalculatedField } from '@shared/models/calculated-field.models';
+import { CalculatedField, CalculatedFieldDialogData } from '@shared/models/calculated-field.models';
 import { CalculatedFieldDialogComponent } from './components/public-api';
 
-export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField, TimePageLink> {
+export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField, PageLink> {
 
   // TODO: [Calculated Fields] remove hardcode when BE variable implemented
   readonly calculatedFieldsDebugPerTenantLimitsConfiguration =
@@ -54,20 +54,16 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
               private durationLeft: DurationLeftPipe,
               private popoverService: TbPopoverService,
               private destroyRef: DestroyRef,
+              private renderer: Renderer2
   ) {
     super();
     this.tableTitle = this.translate.instant('entity.type-calculated-fields');
     this.detailsPanelEnabled = false;
-    this.selectionEnabled = true;
-    this.searchEnabled = true;
     this.pageMode = false;
-    this.addEnabled = true;
-    this.entitiesDeleteEnabled = true;
-    this.actionsColumnTitle = '';
     this.entityType = EntityType.CALCULATED_FIELD;
     this.entityTranslations = entityTypeTranslations.get(EntityType.CALCULATED_FIELD);
 
-    this.entitiesFetchFunction = (pageLink: TimePageLink) => this.fetchCalculatedFields(pageLink);
+    this.entitiesFetchFunction = (pageLink: PageLink) => this.fetchCalculatedFields(pageLink);
     this.addEntity = this.addCalculatedField.bind(this);
     this.deleteEntityTitle = (field: CalculatedField) => this.translate.instant('calculated-fields.delete-title', {title: field.name});
     this.deleteEntityContent = () => this.translate.instant('calculated-fields.delete-text');
@@ -102,12 +98,12 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     );
   }
 
-  fetchCalculatedFields(pageLink: TimePageLink): Observable<PageData<CalculatedField>> {
+  fetchCalculatedFields(pageLink: PageLink): Observable<PageData<CalculatedField>> {
     return this.calculatedFieldsService.getCalculatedFields(this.entityId, pageLink);
   }
 
   onOpenDebugConfig($event: Event, { debugSettings = {}, id }: CalculatedField): void {
-    const { renderer, viewContainerRef } = this.getTable();
+    const { viewContainerRef } = this.getTable();
     if ($event) {
       $event.stopPropagation();
     }
@@ -115,7 +111,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const debugStrategyPopover = this.popoverService.displayPopover(trigger, renderer,
+      const debugStrategyPopover = this.popoverService.displayPopover(trigger, this.renderer,
         viewContainerRef, EntityDebugSettingsPanelComponent, 'bottom', true, null,
         {
           debugLimitsConfiguration: this.calculatedFieldsDebugPerTenantLimitsConfiguration,
@@ -125,7 +121,6 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         },
         {},
         {}, {}, true);
-      debugStrategyPopover.tbComponentRef.instance.popover = debugStrategyPopover;
       debugStrategyPopover.tbComponentRef.instance.onSettingsApplied.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((settings: EntityDebugSettings) => {
         this.onDebugConfigChanged(id.id, settings);
         debugStrategyPopover.hide();
@@ -133,17 +128,12 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     }
   }
 
-  private addCalculatedField(): void {
-    this.getCalculatedFieldDialog()
+  private addCalculatedField(): Observable<CalculatedField> {
+    return this.getCalculatedFieldDialog()
       .pipe(
         filter(Boolean),
         switchMap(calculatedField => this.calculatedFieldsService.saveCalculatedField({ entityId: this.entityId, ...calculatedField })),
       )
-      .subscribe((res) => {
-        if (res) {
-          this.updateData();
-        }
-      });
   }
 
   private editCalculatedField(calculatedField: CalculatedField): void {
@@ -159,8 +149,8 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       });
   }
 
-  private getCalculatedFieldDialog(value = {}, buttonTitle = 'action.add'): Observable<CalculatedField> {
-    return this.dialog.open<CalculatedFieldDialogComponent, any, CalculatedField>(CalculatedFieldDialogComponent, {
+  private getCalculatedFieldDialog(value?: CalculatedField, buttonTitle = 'action.add'): Observable<CalculatedField> {
+    return this.dialog.open<CalculatedFieldDialogComponent, CalculatedFieldDialogData, CalculatedField>(CalculatedFieldDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
