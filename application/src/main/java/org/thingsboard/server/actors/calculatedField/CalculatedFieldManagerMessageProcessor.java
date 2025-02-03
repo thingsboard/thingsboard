@@ -122,7 +122,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         if (calculatedFields.containsKey(msg.getId().cfId())) {
             getOrCreateActor(msg.getId().entityId()).tell(msg);
         } else {
-            // TODO: remove state from storage
+            cfExecService.deleteStateFromStorage(msg.getId(), msg.getCallback());
         }
     }
 

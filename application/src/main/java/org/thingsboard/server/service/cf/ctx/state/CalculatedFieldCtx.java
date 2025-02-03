@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.util.TbPair;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 
@@ -185,8 +186,18 @@ public class CalculatedFieldCtx {
     }
 
     public boolean linkMatches(EntityId entityId, CalculatedFieldTelemetryMsgProto proto) {
-        //TODO: IM - implement
-        return true;
+        if (!proto.getTsDataList().isEmpty()) {
+            List<TsKvEntry> updatedTelemetry = proto.getTsDataList().stream()
+                    .map(ProtoUtils::fromProto)
+                    .toList();
+            return linkMatches(entityId, updatedTelemetry);
+        } else {
+            AttributeScope scope = AttributeScope.valueOf(proto.getScope().name());
+            List<AttributeKvEntry> updatedTelemetry = proto.getAttrDataList().stream()
+                    .map(ProtoUtils::fromProto)
+                    .toList();
+            return linkMatches(entityId, updatedTelemetry, scope);
+        }
     }
 
     public CalculatedFieldEntityCtxId toCalculatedFieldEntityCtxId() {

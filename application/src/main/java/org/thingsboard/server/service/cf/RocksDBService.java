@@ -59,9 +59,9 @@ public class RocksDBService {
         }
     }
 
-    public void delete(String key) {
+    public void delete(CalculatedFieldEntityCtxIdProto key) {
         try {
-            db.delete(writeOptions, key.getBytes(StandardCharsets.UTF_8));
+            db.delete(writeOptions, key.toByteArray());
         } catch (RocksDBException e) {
             log.error("Failed to delete data from RocksDB", e);
         }

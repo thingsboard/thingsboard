@@ -18,7 +18,6 @@ package org.thingsboard.server.service.cf.ctx.state;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -67,7 +66,7 @@ public class RocksDBStateService implements CalculatedFieldStateService {
 
     @Override
     public void removeState(CalculatedFieldEntityCtxId ctxId, TbCallback callback) {
-        rocksDBService.delete(JacksonUtil.writeValueAsString(ctxId));
+        rocksDBService.delete(toProto(ctxId));
         callback.onSuccess();
     }
 
