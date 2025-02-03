@@ -48,7 +48,6 @@ import { distinctUntilChanged, map, startWith, switchMap, takeWhile } from 'rxjs
 })
 export class EntityDebugSettingsPanelComponent extends PageComponent implements OnInit {
 
-  @Input() popover: TbPopoverComponent<EntityDebugSettingsPanelComponent>;
   @Input({ transform: booleanAttribute }) failuresEnabled = false;
   @Input({ transform: booleanAttribute }) allEnabled = false;
   @Input() entityLabel: string;
@@ -82,7 +81,8 @@ export class EntityDebugSettingsPanelComponent extends PageComponent implements 
   onSettingsApplied = new EventEmitter<EntityDebugSettings>();
 
   constructor(private fb: FormBuilder,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private popover: TbPopoverComponent<EntityDebugSettingsPanelComponent>) {
     super();
 
     this.debugAllControl.valueChanges.pipe(
@@ -107,7 +107,7 @@ export class EntityDebugSettingsPanelComponent extends PageComponent implements 
   }
 
   onCancel(): void {
-    this.popover?.hide();
+    this.popover.hide();
   }
 
   onApply(): void {

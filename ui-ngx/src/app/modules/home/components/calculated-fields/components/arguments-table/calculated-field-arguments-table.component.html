@@ -1,0 +1,114 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="flex flex-col gap-3">
+    <div class="tb-form-table">
+        <div class="tb-form-table-header">
+            <div class="tb-form-table-header-cell w-1/6">{{ 'calculated-fields.argument-name' | translate }}</div>
+            <div class="tb-form-table-header-cell w-1/3">{{ 'calculated-fields.datasource' | translate }}</div>
+            <div class="tb-form-table-header-cell w-1/6">{{ 'common.type' | translate }}</div>
+            <div class="tb-form-table-header-cell w-1/6">{{ 'entity.key' | translate }}</div>
+            <div class="tb-form-table-header-cell w-24 min-w-24"></div>
+        </div>
+        <div class="tb-form-table-body tb-drop-list">
+            @for (group of argumentsFormArray.controls; track group) {
+                <div [formGroup]="group" class="tb-form-table-row">
+                    <mat-form-field appearance="outline" class="tb-inline-field w-1/6" subscriptSizing="dynamic">
+                        <input matInput formControlName="argumentName" placeholder="{{ 'action.set' | translate }}">
+                    </mat-form-field>
+                    <section class="flex w-1/3 gap-2">
+                        @if (group.get('refEntityId')?.get('id')?.value) {
+                            <ng-container [formGroup]="group.get('refEntityId')">
+                                <mat-form-field appearance="outline" class="tb-inline-field flex-1" subscriptSizing="dynamic">
+                                    <mat-select [value]="group.get('refEntityId').get('entityType').value" formControlName="entityType">
+                                        <mat-option [value]="group.get('refEntityId').get('entityType').value">
+                                            {{ entityTypeTranslations.get(group.get('refEntityId').get('entityType').value)?.type | translate }}
+                                        </mat-option>
+                                    </mat-select>
+                                </mat-form-field>
+                                <tb-entity-autocomplete
+                                        class="flex-1"
+                                        formControlName="id"
+                                        [inlineField]="true"
+                                        [hideLabel]="true"
+                                        [placeholder]="'action.set' | translate"
+                                        [entityType]="group.get('refEntityId').get('entityType').value"/>
+                            </ng-container>
+                        } @else {
+                            <mat-form-field appearance="outline" class="tb-inline-field flex-1" subscriptSizing="dynamic">
+                                <mat-select [value]="'current'" [disabled]="true">
+                                    <mat-option [value]="'current'">
+                                        {{
+                                            (group.get('refEntityId')?.get('entityType')?.value === ArgumentEntityType.Tenant
+                                                ? 'calculated-fields.argument-current-tenant'
+                                                : 'calculated-fields.argument-current') | translate
+                                        }}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                        }
+                    </section>
+                    <ng-container [formGroup]="group.get('refEntityKey')">
+                        <mat-form-field appearance="outline" class="tb-inline-field w-1/6" subscriptSizing="dynamic">
+                            @if (group.get('refEntityKey').get('type').value; as type) {
+                                <mat-select [value]="type" formControlName="type">
+                                    <mat-option [value]="type">
+                                        {{ ArgumentTypeTranslations.get(type) | translate }}
+                                    </mat-option>
+                                </mat-select>
+                            }
+                        </mat-form-field>
+                        <mat-chip-listbox formControlName="key" class="tb-inline-field w-1/6">
+                            <mat-chip>
+                                <div tbTruncateWithTooltip class="max-w-25">
+                                    {{ group.get('refEntityKey').get('key').value }}
+                                </div>
+                            </mat-chip>
+                        </mat-chip-listbox>
+                    </ng-container>
+                    <div class="flex opacity-55">
+                        <button type="button"
+                                mat-icon-button
+                                #button
+                                (click)="manageArgument($event, button, $index)"
+                                [matTooltip]="'action.edit' | translate"
+                                matTooltipPosition="above">
+                            <mat-icon>edit</mat-icon>
+                        </button>
+                        <button type="button"
+                                mat-icon-button
+                                (click)="onDelete($index)"
+                                [matTooltip]="'action.delete' | translate"
+                                matTooltipPosition="above">
+                            <mat-icon>delete</mat-icon>
+                        </button>
+                    </div>
+                </div>
+            } @empty {
+                <span class="tb-prompt flex items-center justify-center">{{ 'calculated-fields.no-arguments' | translate }}</span>
+            }
+        </div>
+        @if (errorText && this.argumentsFormArray.dirty) {
+            <tb-error noMargin [error]="errorText | translate" class="pl-3"/>
+        }
+    </div>
+    <div>
+        <button type="button" mat-stroked-button color="primary" #button (click)="manageArgument($event, button)">
+            {{ 'calculated-fields.add-argument' | translate }}
+        </button>
+    </div>
+</div>
