@@ -33,11 +33,11 @@ export class CalculatedFieldsService {
   ) { }
 
   public getCalculatedFieldById(calculatedFieldId: string, config?: RequestConfig): Observable<CalculatedField> {
-    return this.http.get<any>(`/api/calculatedField/${calculatedFieldId}`, defaultHttpOptionsFromConfig(config));
+    return this.http.get<CalculatedField>(`/api/calculatedField/${calculatedFieldId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public saveCalculatedField(calculatedField: CalculatedField, config?: RequestConfig): Observable<CalculatedField> {
-    return this.http.post<any>('/api/calculatedField', calculatedField, defaultHttpOptionsFromConfig(config));
+    return this.http.post<CalculatedField>('/api/calculatedField', calculatedField, defaultHttpOptionsFromConfig(config));
   }
 
   public deleteCalculatedField(calculatedFieldId: string, config?: RequestConfig): Observable<boolean> {
