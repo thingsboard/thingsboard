@@ -773,22 +773,6 @@ message DeviceInactivityProto {
   int64 lastInactivityTime = 5;
 }
 
-message CalculatedFieldEntityUpdateMsgProto {
-  int64 tenantIdMSB = 1;
-  int64 tenantIdLSB = 2;
-  string entityType = 3;
-  int64 entityIdMSB = 4;
-  int64 entityIdLSB = 5;
-  string entityProfileType = 6;
-  int64 oldProfileIdMSB = 7;
-  int64 oldProfileIdLSB = 8;
-  int64 newProfileIdMSB = 9;
-  int64 newProfileIdLSB = 10;
-  bool added = 11;
-  bool updated = 12;
-  bool deleted = 13;
-}
-
 message CalculatedFieldTelemetryMsgProto {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
@@ -1205,6 +1189,13 @@ message ComponentLifecycleMsgProto {
   int64 entityIdMSB = 4;
   int64 entityIdLSB = 5;
   ComponentLifecycleEvent event = 6;
+  //Since 4.0. To replace the
+  string oldName = 7;
+  string name = 8;
+  int64 oldProfileIdMSB = 9;
+  int64 oldProfileIdLSB = 10;
+  int64 profileIdMSB = 11;
+  int64 profileIdLSB = 12;
 }
 
 message EdgeEventMsgProto {
@@ -1632,16 +1623,14 @@ message ToEdgeEventNotificationMsg {
 }
 
 message ToCalculatedFieldMsg {
-  CalculatedFieldTelemetryMsgProto telemetryMsg = 1;
-  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 2;
-  ComponentLifecycleMsgProto componentLifecycleMsg = 3;
-  CalculatedFieldEntityUpdateMsgProto entityUpdateMsg = 4;
+  ComponentLifecycleMsgProto componentLifecycleMsg = 1;
+  CalculatedFieldTelemetryMsgProto telemetryMsg = 2;
+  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 3;
 }
 
 message ToCalculatedFieldNotificationMsg {
-  ComponentLifecycleMsgProto componentLifecycle = 1;
-  CalculatedFieldEntityUpdateMsgProto entityUpdateMsg = 2;
-  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 3;
+  ComponentLifecycleMsgProto componentLifecycleMsg = 1;
+  CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 2;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */

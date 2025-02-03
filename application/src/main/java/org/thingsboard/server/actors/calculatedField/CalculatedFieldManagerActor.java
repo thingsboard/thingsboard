@@ -22,6 +22,7 @@ import org.thingsboard.server.actors.TbActorException;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldLinkInitMsg;
 
@@ -66,17 +67,14 @@ public class CalculatedFieldManagerActor extends ContextAwareActor {
             case CF_STATE_RESTORE_MSG:
                 processor.onStateRestoreMsg((CalculatedFieldStateRestoreMsg) msg);
                 break;
-            case CF_UPDATE_MSG:
-//                processor.onToCalculatedFieldSystemActorMsg((ToCalculatedFieldSystemMsg) msg);
+            case CF_ENTITY_LIFECYCLE_MSG:
+                processor.onEntityLifecycleMsg((CalculatedFieldEntityLifecycleMsg) msg);
                 break;
             case CF_TELEMETRY_MSG:
                 processor.onTelemetryMsg((CalculatedFieldTelemetryMsg) msg);
                 break;
             case CF_LINKED_TELEMETRY_MSG:
                 processor.onLinkedTelemetryMsg((CalculatedFieldLinkedTelemetryMsg) msg);
-                break;
-            case CF_ENTITY_UPDATE_MSG:
-//                processor.onToCalculatedFieldSystemActorMsg((ToCalculatedFieldSystemMsg) msg);
                 break;
             default:
                 return false;

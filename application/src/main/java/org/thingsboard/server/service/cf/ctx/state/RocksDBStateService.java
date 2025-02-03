@@ -66,8 +66,9 @@ public class RocksDBStateService implements CalculatedFieldStateService {
     }
 
     @Override
-    public void removeState(CalculatedFieldEntityCtxId ctxId) {
+    public void removeState(CalculatedFieldEntityCtxId ctxId, TbCallback callback) {
         rocksDBService.delete(JacksonUtil.writeValueAsString(ctxId));
+        callback.onSuccess();
     }
 
     private CalculatedFieldEntityCtxIdProto toProto(CalculatedFieldEntityCtxId ctxId) {

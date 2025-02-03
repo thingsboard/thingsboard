@@ -26,6 +26,6 @@ public interface CalculatedFieldStateService {
 
     void persistState(CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback);
 
-    void removeState(CalculatedFieldEntityCtxId ctxId);
+    void removeState(CalculatedFieldEntityCtxId stateId, TbCallback callback);
 
 }

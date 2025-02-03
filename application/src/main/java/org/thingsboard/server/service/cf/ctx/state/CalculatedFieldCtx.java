@@ -192,4 +192,12 @@ public class CalculatedFieldCtx {
     public CalculatedFieldEntityCtxId toCalculatedFieldEntityCtxId() {
         return new CalculatedFieldEntityCtxId(tenantId, cfId, entityId);
     }
+
+    public boolean hasSignificantChanges(CalculatedFieldCtx other) {
+        boolean entityIdChanged = !entityId.equals(other.entityId);
+        boolean typeChanged = !cfType.equals(other.cfType);
+        boolean argumentsChanged = !arguments.equals(other.arguments);
+        return entityIdChanged || typeChanged || argumentsChanged;
+    }
+
 }

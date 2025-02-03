@@ -131,8 +131,8 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action, EdgeId sourceEdgeId);
 
-    void onCalculatedFieldUpdated(CalculatedField calculatedField, CalculatedField oldCalculatedField, ComponentLifecycleMsg lifecycleMsg);
+    void onCalculatedFieldUpdated(CalculatedField calculatedField, CalculatedField oldCalculatedField, TbQueueCallback callback);
 
-    void onCalculatedFieldDeleted(TenantId tenantId, CalculatedField calculatedField, ComponentLifecycleMsg lifecycleMsg);
+    void onCalculatedFieldDeleted(CalculatedField calculatedField, TbQueueCallback callback);
 
 }

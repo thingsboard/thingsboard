@@ -70,7 +70,6 @@ import org.thingsboard.server.common.msg.rule.engine.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityUpdateMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ComponentLifecycleMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceStateServiceMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.EdgeNotificationMsgProto;
@@ -362,8 +361,7 @@ public class DefaultTbClusterService implements TbClusterService {
     @Override
     public void pushMsgToCalculatedFields(TenantId tenantId, EntityId entityId, ToCalculatedFieldMsg msg, TbQueueCallback callback) {
         TopicPartitionInfo tpi = partitionService.resolve(CALCULATED_FIELD_QUEUE_KEY, entityId);
-        producerProvider.getCalculatedFieldsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), callback);
-        toRuleEngineMsgs.incrementAndGet();
+        pushMsgToCalculatedFields(tpi, UUID.randomUUID(), msg, callback);
     }
 
     @Override
@@ -435,7 +433,7 @@ public class DefaultTbClusterService implements TbClusterService {
     public void onDeviceDeleted(TenantId tenantId, Device device, TbQueueCallback callback) {
         DeviceId deviceId = device.getId();
         gatewayNotificationsService.onDeviceDeleted(device);
-        handleCalculatedFieldEntityDeleted(tenantId, deviceId, device.getDeviceProfileId());
+        handleCalculatedFieldEntityDeleted(tenantId, deviceId);
         broadcastEntityDeleteToTransport(tenantId, deviceId, device.getName(), callback);
         sendDeviceStateServiceEvent(tenantId, deviceId, false, false, true);
         broadcastEntityStateChangeEvent(tenantId, deviceId, ComponentLifecycleEvent.DELETED);
@@ -444,7 +442,7 @@ public class DefaultTbClusterService implements TbClusterService {
     @Override
     public void onAssetDeleted(TenantId tenantId, Asset asset, TbQueueCallback callback) {
         AssetId assetId = asset.getId();
-        handleCalculatedFieldEntityDeleted(tenantId, assetId, asset.getAssetProfileId());
+        handleCalculatedFieldEntityDeleted(tenantId, assetId);
         broadcastEntityStateChangeEvent(tenantId, assetId, ComponentLifecycleEvent.DELETED);
     }
 
@@ -597,9 +595,7 @@ public class DefaultTbClusterService implements TbClusterService {
     private void broadcast(ComponentLifecycleMsg msg) {
         ComponentLifecycleMsgProto componentLifecycleMsgProto = toProto(msg);
         TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> toRuleEngineProducer = producerProvider.getRuleEngineNotificationsMsgProducer();
-        TbQueueProducer<TbProtoQueueMsg<ToCalculatedFieldNotificationMsg>> toCalculatedFieldProducer = producerProvider.getCalculatedFieldsNotificationsMsgProducer();
         Set<String> tbRuleEngineServices = partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE);
-        Set<String> tbCalculatedFieldServices = new HashSet<>(tbRuleEngineServices);
         EntityType entityType = msg.getEntityId().getEntityType();
         if (entityType.equals(EntityType.TENANT)
                 || entityType.equals(EntityType.TENANT_PROFILE)
@@ -621,14 +617,6 @@ public class DefaultTbClusterService implements TbClusterService {
             }
             // No need to push notifications twice
             tbRuleEngineServices.removeAll(tbCoreServices);
-        }
-        if (entityType.equals(EntityType.CALCULATED_FIELD)) {
-            for (String serviceId : tbCalculatedFieldServices) {
-                TopicPartitionInfo tpi = topicService.getCalculatedFieldNotificationsTopic(serviceId);
-                ToCalculatedFieldNotificationMsg toCfNotificationMsg = ToCalculatedFieldNotificationMsg.newBuilder().setComponentLifecycle(componentLifecycleMsgProto).build();
-                toCalculatedFieldProducer.send(tpi, new TbProtoQueueMsg<>(msg.getEntityId().getId(), toCfNotificationMsg), null);
-                toRuleEngineNfs.incrementAndGet(); // TODO: add separate counter when we will have new ServiceType.CALCULATED_FIELDS
-            }
         }
         for (String serviceId : tbRuleEngineServices) {
             TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceId);
@@ -669,56 +657,86 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
-    public void onDeviceUpdated(Device device, Device old) {
+    public void onDeviceUpdated(Device entity, Device old) {
         var created = old == null;
-        broadcastEntityChangeToTransport(device.getTenantId(), device.getId(), device, null);
+        broadcastEntityChangeToTransport(entity.getTenantId(), entity.getId(), entity, null);
         if (old != null) {
-            boolean deviceNameChanged = !device.getName().equals(old.getName());
+            boolean deviceNameChanged = !entity.getName().equals(old.getName());
             if (deviceNameChanged) {
-                gatewayNotificationsService.onDeviceUpdated(device, old);
+                gatewayNotificationsService.onDeviceUpdated(entity, old);
             }
-            boolean deviceProfileChanged = !device.getDeviceProfileId().equals(old.getDeviceProfileId());
+            boolean deviceProfileChanged = !entity.getDeviceProfileId().equals(old.getDeviceProfileId());
             if (deviceProfileChanged) {
-                handleCalculatedFieldEntityUpdated(device.getTenantId(), device.getId(), old.getDeviceProfileId(), device.getDeviceProfileId());
+                ComponentLifecycleMsg msg = ComponentLifecycleMsg.builder()
+                        .tenantId(entity.getTenantId())
+                        .entityId(entity.getId())
+                        .event(ComponentLifecycleEvent.UPDATED)
+                        .oldProfileId(old.getDeviceProfileId())
+                        .profileId(entity.getDeviceProfileId())
+                        .oldName(old.getName())
+                        .name(entity.getName())
+                        .build();
+                pushMsgToCalculatedFields(entity.getTenantId(), entity.getId(), ToCalculatedFieldMsg.newBuilder().setComponentLifecycleMsg(toProto(msg)).build(), TbQueueCallback.EMPTY);
             }
             if (deviceNameChanged || deviceProfileChanged) {
-                pushMsgToCore(new DeviceNameOrTypeUpdateMsg(device.getTenantId(), device.getId(), device.getName(), device.getType()), null);
+                pushMsgToCore(new DeviceNameOrTypeUpdateMsg(entity.getTenantId(), entity.getId(), entity.getName(), entity.getType()), null);
             }
         } else {
-            handleCalculatedFieldEntityAdded(device.getTenantId(), device.getId(), device.getDeviceProfileId());
+            ComponentLifecycleMsg msg = ComponentLifecycleMsg.builder()
+                    .tenantId(entity.getTenantId())
+                    .entityId(entity.getId())
+                    .event(ComponentLifecycleEvent.CREATED)
+                    .profileId(entity.getDeviceProfileId())
+                    .name(entity.getName())
+                    .build();
+            pushMsgToCalculatedFields(entity.getTenantId(), entity.getId(), ToCalculatedFieldMsg.newBuilder().setComponentLifecycleMsg(toProto(msg)).build(), TbQueueCallback.EMPTY);
         }
-        broadcastEntityStateChangeEvent(device.getTenantId(), device.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
-        sendDeviceStateServiceEvent(device.getTenantId(), device.getId(), created, !created, false);
-        otaPackageStateService.update(device, old);
+        broadcastEntityStateChangeEvent(entity.getTenantId(), entity.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+        sendDeviceStateServiceEvent(entity.getTenantId(), entity.getId(), created, !created, false);
+        otaPackageStateService.update(entity, old);
     }
 
     @Override
-    public void onAssetUpdated(Asset asset, Asset old) {
+    public void onAssetUpdated(Asset entity, Asset old) {
         var created = old == null;
-        broadcastEntityChangeToTransport(asset.getTenantId(), asset.getId(), asset, null);
+        broadcastEntityChangeToTransport(entity.getTenantId(), entity.getId(), entity, null);
         if (old != null) {
-            boolean assetTypeChanged = !asset.getType().equals(old.getType());
+            boolean assetTypeChanged = !entity.getAssetProfileId().equals(old.getAssetProfileId());
             if (assetTypeChanged) {
-                handleCalculatedFieldEntityUpdated(asset.getTenantId(), asset.getId(), old.getAssetProfileId(), asset.getAssetProfileId());
+                ComponentLifecycleMsg msg = ComponentLifecycleMsg.builder()
+                        .tenantId(entity.getTenantId())
+                        .entityId(entity.getId())
+                        .event(ComponentLifecycleEvent.UPDATED)
+                        .oldProfileId(old.getAssetProfileId())
+                        .profileId(entity.getAssetProfileId())
+                        .oldName(old.getName())
+                        .name(entity.getName())
+                        .build();
+                pushMsgToCalculatedFields(entity.getTenantId(), entity.getId(), ToCalculatedFieldMsg.newBuilder().setComponentLifecycleMsg(toProto(msg)).build(), TbQueueCallback.EMPTY);
             }
         } else {
-            handleCalculatedFieldEntityAdded(asset.getTenantId(), asset.getId(), asset.getAssetProfileId());
+            ComponentLifecycleMsg msg = ComponentLifecycleMsg.builder()
+                    .tenantId(entity.getTenantId())
+                    .entityId(entity.getId())
+                    .event(ComponentLifecycleEvent.CREATED)
+                    .profileId(entity.getAssetProfileId())
+                    .name(entity.getName())
+                    .build();
+            pushMsgToCalculatedFields(entity.getTenantId(), entity.getId(), ToCalculatedFieldMsg.newBuilder().setComponentLifecycleMsg(toProto(msg)).build(), TbQueueCallback.EMPTY);
         }
-        broadcastEntityStateChangeEvent(asset.getTenantId(), asset.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+        broadcastEntityStateChangeEvent(entity.getTenantId(), entity.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
     }
 
     @Override
-    public void onCalculatedFieldUpdated(CalculatedField calculatedField, CalculatedField oldCalculatedField, ComponentLifecycleMsg lifecycleMsg) {
-        var created = oldCalculatedField == null;
-        calculatedFieldExecutionService.pushCalculatedFieldLifecycleMsgToQueue(calculatedField, toProto(lifecycleMsg));
-        broadcastEntityStateChangeEvent(calculatedField.getTenantId(), calculatedField.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+    public void onCalculatedFieldUpdated(CalculatedField calculatedField, CalculatedField oldCalculatedField, TbQueueCallback callback) {
+        var msg = new ComponentLifecycleMsg(calculatedField.getTenantId(), calculatedField.getEntityId(), oldCalculatedField == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+        broadcastToCalculatedFields(ToCalculatedFieldNotificationMsg.newBuilder().setComponentLifecycleMsg(toProto(msg)).build(), callback);
     }
 
     @Override
-    public void onCalculatedFieldDeleted(TenantId tenantId, CalculatedField calculatedField, ComponentLifecycleMsg lifecycleMsg) {
-        CalculatedFieldId calculatedFieldId = calculatedField.getId();
-        calculatedFieldExecutionService.pushCalculatedFieldLifecycleMsgToQueue(calculatedField, toProto(lifecycleMsg));
-        broadcastEntityStateChangeEvent(tenantId, calculatedFieldId, ComponentLifecycleEvent.DELETED);
+    public void onCalculatedFieldDeleted(CalculatedField calculatedField, TbQueueCallback callback) {
+        var msg = new ComponentLifecycleMsg(calculatedField.getTenantId(), calculatedField.getEntityId(), ComponentLifecycleEvent.DELETED);
+        broadcastToCalculatedFields(ToCalculatedFieldNotificationMsg.newBuilder().setComponentLifecycleMsg(toProto(msg)).build(), callback);
     }
 
     @Override
@@ -849,54 +867,8 @@ public class DefaultTbClusterService implements TbClusterService {
         }
     }
 
-    private void handleCalculatedFieldEntityAdded(TenantId tenantId, EntityId entityId, EntityId newProfileId) {
-        handleCalculatedFieldEntityUpdateEvent(tenantId, entityId, null, newProfileId, true, false, false);
+    private void handleCalculatedFieldEntityDeleted(TenantId tenantId, EntityId entityId) {
+        ComponentLifecycleMsg msg = new ComponentLifecycleMsg(tenantId, entityId, ComponentLifecycleEvent.DELETED);
+        pushMsgToCalculatedFields(tenantId, entityId, ToCalculatedFieldMsg.newBuilder().setComponentLifecycleMsg(toProto(msg)).build(), TbQueueCallback.EMPTY);
     }
-
-    private void handleCalculatedFieldEntityUpdated(TenantId tenantId, EntityId entityId, EntityId oldProfileId, EntityId newProfileId) {
-        handleCalculatedFieldEntityUpdateEvent(tenantId, entityId, oldProfileId, newProfileId, false, true, true);
-    }
-
-    private void handleCalculatedFieldEntityDeleted(TenantId tenantId, EntityId entityId, EntityId oldProfileId) {
-        handleCalculatedFieldEntityUpdateEvent(tenantId, entityId, oldProfileId, null, false, false, true);
-    }
-
-    private void handleCalculatedFieldEntityUpdateEvent(TenantId tenantId, EntityId entityId, EntityId oldProfileId, EntityId newProfileId, boolean added, boolean updated, boolean deleted) {
-        CalculatedFieldEntityUpdateMsgProto.Builder builder = CalculatedFieldEntityUpdateMsgProto.newBuilder();
-        builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
-        builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
-        builder.setEntityType(entityId.getEntityType().name());
-        builder.setEntityIdMSB(entityId.getId().getMostSignificantBits());
-        builder.setEntityIdLSB(entityId.getId().getLeastSignificantBits());
-        if (oldProfileId != null) {
-            builder.setEntityProfileType(oldProfileId.getEntityType().name());
-            builder.setOldProfileIdMSB(oldProfileId.getId().getMostSignificantBits());
-            builder.setOldProfileIdLSB(oldProfileId.getId().getLeastSignificantBits());
-        }
-        if (newProfileId != null) {
-            builder.setEntityProfileType(newProfileId.getEntityType().name());
-            builder.setNewProfileIdMSB(newProfileId.getId().getMostSignificantBits());
-            builder.setNewProfileIdLSB(newProfileId.getId().getLeastSignificantBits());
-        }
-        builder.setAdded(added);
-        builder.setUpdated(updated);
-        builder.setDeleted(deleted);
-        CalculatedFieldEntityUpdateMsgProto msg = builder.build();
-
-        broadcastEntityUpdateEvent(msg);
-        pushMsgToCalculatedFields(tenantId, entityId, ToCalculatedFieldMsg.newBuilder().setEntityUpdateMsg(msg).build(), null);
-    }
-
-    private void broadcastEntityUpdateEvent(CalculatedFieldEntityUpdateMsgProto proto) {
-        TbQueueProducer<TbProtoQueueMsg<ToCalculatedFieldNotificationMsg>> toCalculatedFieldProducer = producerProvider.getCalculatedFieldsNotificationsMsgProducer();
-        Set<String> tbRuleEngineServices = partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE);
-        Set<String> tbCalculatedFieldServices = new HashSet<>(tbRuleEngineServices);
-        for (String serviceId : tbCalculatedFieldServices) {
-            TopicPartitionInfo tpi = topicService.getCalculatedFieldNotificationsTopic(serviceId);
-            ToCalculatedFieldNotificationMsg toCfNotificationMsg = ToCalculatedFieldNotificationMsg.newBuilder().setEntityUpdateMsg(proto).build();
-            toCalculatedFieldProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), toCfNotificationMsg), null);
-            toRuleEngineNfs.incrementAndGet(); // TODO: add separate counter when we will have new ServiceType.CALCULATED_FIELDS
-        }
-    }
-
 }

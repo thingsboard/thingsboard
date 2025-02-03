@@ -115,14 +115,28 @@ public class ProtoUtils {
     }
 
     public static TransportProtos.ComponentLifecycleMsgProto toProto(ComponentLifecycleMsg msg) {
-        return TransportProtos.ComponentLifecycleMsgProto.newBuilder()
+        var builder = TransportProtos.ComponentLifecycleMsgProto.newBuilder()
                 .setTenantIdMSB(msg.getTenantId().getId().getMostSignificantBits())
                 .setTenantIdLSB(msg.getTenantId().getId().getLeastSignificantBits())
                 .setEntityType(toProto(msg.getEntityId().getEntityType()))
                 .setEntityIdMSB(msg.getEntityId().getId().getMostSignificantBits())
                 .setEntityIdLSB(msg.getEntityId().getId().getLeastSignificantBits())
-                .setEvent(TransportProtos.ComponentLifecycleEvent.forNumber(msg.getEvent().ordinal()))
-                .build();
+                .setEvent(TransportProtos.ComponentLifecycleEvent.forNumber(msg.getEvent().ordinal()));
+        if (msg.getProfileId() != null) {
+            builder.setProfileIdMSB(msg.getProfileId().getId().getMostSignificantBits());
+            builder.setProfileIdLSB(msg.getProfileId().getId().getLeastSignificantBits());
+        }
+        if (msg.getOldProfileId() != null) {
+            builder.setProfileIdMSB(msg.getOldProfileId().getId().getMostSignificantBits());
+            builder.setProfileIdLSB(msg.getOldProfileId().getId().getLeastSignificantBits());
+        }
+        if (msg.getName() != null) {
+            builder.setName(msg.getName());
+        }
+        if (msg.getOldName() != null) {
+            builder.setName(msg.getOldName());
+        }
+        return builder.build();
     }
 
     public static TransportProtos.EntityTypeProto toProto(EntityType entityType) {
@@ -130,11 +144,22 @@ public class ProtoUtils {
     }
 
     public static ComponentLifecycleMsg fromProto(TransportProtos.ComponentLifecycleMsgProto proto) {
-        return new ComponentLifecycleMsg(
-                TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
-                EntityIdFactory.getByTypeAndUuid(fromProto(proto.getEntityType()), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB())),
-                ComponentLifecycleEvent.values()[proto.getEventValue()]
-        );
+        EntityId entityId = EntityIdFactory.getByTypeAndUuid(fromProto(proto.getEntityType()), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
+        var builder = ComponentLifecycleMsg.builder()
+                .tenantId(TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())))
+                .entityId(entityId)
+                .event(ComponentLifecycleEvent.values()[proto.getEventValue()])
+                .name(proto.getName())
+                .oldName(proto.getOldName());
+        if (proto.getProfileIdMSB() != 0 || proto.getProfileIdLSB() != 0) {
+            var profileType = EntityType.DEVICE.equals(entityId.getEntityType()) ? EntityType.DEVICE_PROFILE : EntityType.ASSET_PROFILE;
+            builder.profileId(EntityIdFactory.getByTypeAndUuid(profileType, new UUID(proto.getProfileIdMSB(), proto.getProfileIdLSB())));
+        }
+        if (proto.getOldProfileIdMSB() != 0 || proto.getOldProfileIdLSB() != 0) {
+            var profileType = EntityType.DEVICE.equals(entityId.getEntityType()) ? EntityType.DEVICE_PROFILE : EntityType.ASSET_PROFILE;
+            builder.oldProfileId(EntityIdFactory.getByTypeAndUuid(profileType, new UUID(proto.getOldProfileIdMSB(), proto.getOldProfileIdLSB())));
+        }
+        return builder.build();
     }
 
     public static EntityType fromProto(TransportProtos.EntityTypeProto entityType) {
