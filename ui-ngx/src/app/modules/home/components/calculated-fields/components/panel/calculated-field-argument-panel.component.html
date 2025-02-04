@@ -96,7 +96,7 @@
             }
           </mat-form-field>
         </div>
-        @if (entityFilter.singleEntity.id || entityType === ArgumentEntityType.Current || entityType === ArgumentEntityType.Tenant) {
+        @if (entityFilter.singleEntity?.id || entityType === ArgumentEntityType.Current || entityType === ArgumentEntityType.Tenant) {
           @if (refEntityKeyFormGroup.get('type').value !== ArgumentType.Attribute) {
             <div class="tb-form-row">
               <div class="fixed-title-width tb-required">{{ 'calculated-fields.timeseries-key' | translate }}</div>

@@ -21,7 +21,9 @@ import {
   forwardRef,
   input,
   Input,
+  OnChanges,
   Renderer2,
+  SimpleChanges,
   ViewContainerRef,
 } from '@angular/core';
 import {
@@ -70,10 +72,11 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
     }
   ],
 })
-export class CalculatedFieldArgumentsTableComponent implements ControlValueAccessor, Validator {
+export class CalculatedFieldArgumentsTableComponent implements ControlValueAccessor, Validator, OnChanges {
 
   @Input() entityId: EntityId;
   @Input() tenantId: string;
+  @Input() entityName: string;
 
   calculatedFieldType = input<CalculatedFieldType>()
 
@@ -84,6 +87,8 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
   readonly ArgumentTypeTranslations = ArgumentTypeTranslations;
   readonly EntityType = EntityType;
   readonly ArgumentEntityType = ArgumentEntityType;
+  readonly ArgumentType = ArgumentType;
+  readonly CalculatedFieldType = CalculatedFieldType;
 
   private popoverComponent: TbPopoverComponent<CalculatedFieldArgumentPanelComponent>;
   private propagateChange: (argumentsObj: Record<string, CalculatedFieldArgument>) => void = () => {};
@@ -103,6 +108,13 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
         this.argumentsFormArray.updateValueAndValidity();
       }
     });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes.calculatedFieldType?.previousValue
+      && changes.calculatedFieldType.currentValue !== changes.calculatedFieldType.previousValue) {
+      this.argumentsFormArray.markAsDirty();
+    }
   }
 
   registerOnChange(fn: (argumentsObj: Record<string, CalculatedFieldArgument>) => void): void {
@@ -137,6 +149,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
         calculatedFieldType: this.calculatedFieldType(),
         buttonTitle: this.argumentsFormArray.at(index)?.value ? 'action.apply' : 'action.add',
         tenantId: this.tenantId,
+        entityName: this.entityName,
       };
       this.popoverComponent = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, CalculatedFieldArgumentPanelComponent, 'left', false, null,
@@ -202,6 +215,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
         }),
       } : {}),
       refEntityKey: this.fb.group({
+        ...value.refEntityKey,
         type: [{ value: value.refEntityKey.type, disabled: true }],
         key: [{ value: value.refEntityKey.key, disabled: true }],
       }),
