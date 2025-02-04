@@ -173,7 +173,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
     switch (this.entityId.entityType) {
       case EntityType.ASSET_PROFILE:
         return {
-          deviceTypes: [this.entityName],
+          assetTypes: [this.entityName],
           type: AliasFilterType.assetType
         };
       case EntityType.DEVICE_PROFILE:
