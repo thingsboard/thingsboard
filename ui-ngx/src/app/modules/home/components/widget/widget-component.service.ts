@@ -436,8 +436,8 @@ export class WidgetComponentService {
       basicDirectives.push(widgetInfo.basicModeDirective);
     }
 
-    this.expandSettingComponentMap(this.widgetService.putWidgetSettingsComponentToMap, directives, modulesWithComponents);
-    this.expandSettingComponentMap(this.widgetService.putBasicWidgetSettingsComponentToMap, basicDirectives, modulesWithComponents);
+    this.expandSettingComponentMap(this.widgetService.putWidgetSettingsComponentToMap.bind(this.widgetService), directives, modulesWithComponents);
+    this.expandSettingComponentMap(this.widgetService.putBasicWidgetSettingsComponentToMap.bind(this.widgetService), basicDirectives, modulesWithComponents);
   }
 
   private expandSettingComponentMap(putComponentToMap: (selector: string, comp: Type<IWidgetSettingsComponent | IBasicWidgetConfigComponent>) => void,
