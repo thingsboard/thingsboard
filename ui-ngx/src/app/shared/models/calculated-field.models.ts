@@ -120,6 +120,7 @@ export interface CalculatedFieldDialogData {
   entityId: EntityId;
   debugLimitsConfiguration: string;
   tenantId: string;
+  entityName?: string;
 }
 
 export interface ArgumentEntityTypeParams {

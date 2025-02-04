@@ -36,6 +36,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { map, startWith } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
+import { merge } from 'rxjs';
 
 @Component({
   selector: 'tb-calculated-field-dialog',
@@ -59,10 +60,10 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
     }),
   });
 
-  functionArgs$ = this.configFormGroup.valueChanges
+  functionArgs$ = merge(this.configFormGroup.get('arguments').valueChanges, this.fieldFormGroup.get('type').valueChanges)
     .pipe(
-      startWith(this.data.value?.configuration ?? {}),
-      map(configuration => Object.keys(configuration.arguments))
+      startWith(null),
+      map(() => Object.keys(this.configFormGroup.get('arguments').value ?? this.data.value.configuration.arguments))
     );
 
   readonly OutputTypeTranslations = OutputTypeTranslations;

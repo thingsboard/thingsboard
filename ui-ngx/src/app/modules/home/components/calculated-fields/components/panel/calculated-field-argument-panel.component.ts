@@ -49,6 +49,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
   @Input() argument: CalculatedFieldArgumentValue;
   @Input() entityId: EntityId;
   @Input() tenantId: string;
+  @Input() entityName: string;
   @Input() calculatedFieldType: CalculatedFieldType;
 
   argumentsDataApplied = output<{ value: CalculatedFieldArgumentValue, index: number }>();
@@ -83,6 +84,8 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
   readonly ArgumentEntityType = ArgumentEntityType;
   readonly ArgumentEntityTypeParamsMap = ArgumentEntityTypeParamsMap;
 
+  private currentEntityFilter: EntityFilter;
+
   constructor(
     private fb: FormBuilder,
     private cd: ChangeDetectorRef,
@@ -107,6 +110,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
 
   ngOnInit(): void {
     this.argumentFormGroup.patchValue(this.argument, {emitEvent: false});
+    this.currentEntityFilter = this.getCurrentEntityFilter();
     this.updateEntityFilter(this.argument.refEntityId?.entityType, true);
     this.toggleByEntityKeyType(this.argument.refEntityKey?.type);
     this.setInitialEntityKeyType();
@@ -138,28 +142,51 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
   }
 
   private updateEntityFilter(entityType: ArgumentEntityType = ArgumentEntityType.Current, onInit = false): void {
-    let entityId: EntityId;
+    let entityFilter: EntityFilter;
     switch (entityType) {
       case ArgumentEntityType.Current:
-        entityId = this.entityId
+        entityFilter = this.currentEntityFilter;
         break;
       case ArgumentEntityType.Tenant:
-        entityId = {
-          id: this.tenantId,
-          entityType: EntityType.TENANT
+        entityFilter = {
+          type: AliasFilterType.singleEntity,
+          singleEntity: {
+            id: this.tenantId,
+            entityType: EntityType.TENANT
+          },
         };
         break;
       default:
-        entityId = this.argumentFormGroup.get('refEntityId').value as unknown as EntityId;
+        entityFilter = {
+          type: AliasFilterType.singleEntity,
+          singleEntity: this.argumentFormGroup.get('refEntityId').value as unknown as EntityId,
+        };
     }
     if (!onInit) {
       this.argumentFormGroup.get('refEntityKey').get('key').setValue('');
     }
-    this.entityFilter = {
-      type: AliasFilterType.singleEntity,
-      singleEntity: entityId,
-    };
+    this.entityFilter = entityFilter;
     this.cd.markForCheck();
+  }
+
+  private getCurrentEntityFilter(): EntityFilter {
+    switch (this.entityId.entityType) {
+      case EntityType.ASSET_PROFILE:
+        return {
+          deviceTypes: [this.entityName],
+          type: AliasFilterType.assetType
+        };
+      case EntityType.DEVICE_PROFILE:
+        return {
+          deviceTypes: [this.entityName],
+          type: AliasFilterType.deviceType
+        };
+      default:
+        return {
+          type: AliasFilterType.singleEntity,
+          singleEntity: this.entityId,
+        };
+    }
   }
 
   private observeEntityFilterChanges(): void {
