@@ -98,6 +98,7 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
@@ -515,6 +516,11 @@ public class ActorSystemContext {
     @Autowired(required = false)
     @Getter
     private CalculatedFieldExecutionService calculatedFieldExecutionService;
+
+    @Lazy
+    @Autowired(required = false)
+    @Getter
+    private ApiLimitService apiLimitService;
 
     @Value("${actors.session.max_concurrent_sessions_per_device:1}")
     @Getter

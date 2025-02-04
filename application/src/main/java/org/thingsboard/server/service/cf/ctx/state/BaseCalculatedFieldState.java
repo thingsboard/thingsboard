@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 @Data
+@AllArgsConstructor
 public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
     protected List<String> requiredArguments;
@@ -34,8 +36,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     }
 
     public BaseCalculatedFieldState() {
-        this.requiredArguments = new ArrayList<>();
-        this.arguments = new HashMap<>();
+        this(new ArrayList<>(), new HashMap<>());
     }
 
     @Override

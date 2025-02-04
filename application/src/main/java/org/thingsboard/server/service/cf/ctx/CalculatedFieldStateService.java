@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.cf.ctx;
 
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 
 import java.util.Map;
@@ -24,7 +25,7 @@ public interface CalculatedFieldStateService {
 
     Map<CalculatedFieldEntityCtxId, CalculatedFieldState> restoreStates();
 
-    void persistState(CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback);
+    void persistState(CalculatedFieldCtx ctx, CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback);
 
     void removeState(CalculatedFieldEntityCtxId stateId, TbCallback callback);
 

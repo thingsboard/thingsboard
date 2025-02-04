@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.thingsboard.script.api.tbel.DefaultTbelInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -36,6 +37,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.HashMap;
@@ -45,6 +47,8 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest(classes = DefaultTbelInvokeService.class)
 public class ScriptCalculatedFieldStateTest {
@@ -64,9 +68,13 @@ public class ScriptCalculatedFieldStateTest {
     @Autowired
     private TbelInvokeService tbelInvokeService;
 
+    @MockBean
+    private ApiLimitService apiLimitService;
+
     @BeforeEach
     void setUp() {
-        ctx = new CalculatedFieldCtx(getCalculatedField(), tbelInvokeService);
+        when(apiLimitService.getLimit(any(), any())).thenReturn(1000L);
+        ctx = new CalculatedFieldCtx(getCalculatedField(), tbelInvokeService, apiLimitService);
         ctx.init();
         state = new ScriptCalculatedFieldState(ctx.getArgNames());
     }
@@ -219,7 +227,7 @@ public class ScriptCalculatedFieldStateTest {
         ReferencedEntityKey refEntityKey1 = new ReferencedEntityKey("temperature", ArgumentType.TS_ROLLING, null);
         argument1.setRefEntityKey(refEntityKey1);
         argument1.setLimit(5);
-        argument1.setTimeWindow(30000);
+        argument1.setTimeWindow(30000L);
 
         Argument argument2 = new Argument();
         ReferencedEntityKey refEntityKey2 = new ReferencedEntityKey("humidity", ArgumentType.TS_LATEST, null);

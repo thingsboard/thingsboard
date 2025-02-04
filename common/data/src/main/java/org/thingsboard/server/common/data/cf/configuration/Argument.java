@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import org.springframework.lang.Nullable;
 import org.thingsboard.server.common.data.id.EntityId;
 
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Argument {
 
     @Nullable
@@ -27,7 +29,7 @@ public class Argument {
     private ReferencedEntityKey refEntityKey;
     private String defaultValue;
 
-    private int limit;
-    private long timeWindow;
+    private Integer limit;
+    private Long timeWindow;
 
 }
