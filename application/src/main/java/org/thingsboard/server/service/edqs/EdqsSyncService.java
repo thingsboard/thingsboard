@@ -110,9 +110,9 @@ public abstract class EdqsSyncService {
             long ts = System.currentTimeMillis();
             EntityType entityType = type.toEntityType();
             Dao<?> dao = entityDaoRegistry.getDao(entityType);
-            UUID lastFromEntityId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+            UUID lastId = UUID.fromString("00000000-0000-0000-0000-000000000000");
             while (true) {
-                var batch = dao.findNextBatch(lastFromEntityId, 10000);
+                var batch = dao.findNextBatch(lastId, 10000);
                 if (batch.isEmpty()) {
                     break;
                 }
@@ -122,7 +122,7 @@ public abstract class EdqsSyncService {
                     process(tenantId, type, new Entity(entityType, entityFields));
                 }
                 EntityFields lastRecord = batch.get(batch.size() - 1);
-                lastFromEntityId = lastRecord.getId();
+                lastId = lastRecord.getId();
             }
             log.info("Finished synchronizing {} entities to EDQS in {} ms", type, (System.currentTimeMillis() - ts));
         }

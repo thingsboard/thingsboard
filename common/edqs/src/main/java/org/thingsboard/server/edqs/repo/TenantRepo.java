@@ -195,23 +195,19 @@ public class TenantRepo {
             processFields(fields);
             entityData.setFields(entity.getFields());
 
-            switch (entity.getType()) {
-                default -> {
-                    UUID newCustomerId = fields.getCustomerId();
-                    UUID oldCustomerId = entityData.getCustomerId();
-                    entityData.setCustomerId(newCustomerId);
-                    if (entityIdMismatch(oldCustomerId, newCustomerId)) {
-                        if (oldCustomerId != null) {
-                            CustomerData old = (CustomerData) getEntityMap(EntityType.CUSTOMER).get(oldCustomerId);
-                            if (old != null) {
-                                old.remove(entityData);
-                            }
-                        }
-                        if (newCustomerId != null) {
-                            CustomerData newData = (CustomerData) getEntityMap(EntityType.CUSTOMER).computeIfAbsent(newCustomerId, CustomerData::new);
-                            newData.addOrUpdate(entityData);
-                        }
+            UUID newCustomerId = fields.getCustomerId();
+            UUID oldCustomerId = entityData.getCustomerId();
+            entityData.setCustomerId(newCustomerId);
+            if (entityIdMismatch(oldCustomerId, newCustomerId)) {
+                if (oldCustomerId != null) {
+                    CustomerData old = (CustomerData) getEntityMap(EntityType.CUSTOMER).get(oldCustomerId);
+                    if (old != null) {
+                        old.remove(entityData);
                     }
+                }
+                if (newCustomerId != null) {
+                    CustomerData newData = (CustomerData) getEntityMap(EntityType.CUSTOMER).computeIfAbsent(newCustomerId, CustomerData::new);
+                    newData.addOrUpdate(entityData);
                 }
             }
         } finally {
@@ -228,6 +224,13 @@ public class TenantRepo {
             if (removed != null) {
                 getEntitySet(entityType).remove(removed);
                 edqsStatsService.ifPresent(statService -> statService.reportTenantEdqsObject(tenantId, ObjectType.fromEntityType(entityType), EdqsEventType.DELETED));
+                UUID customerId = removed.getCustomerId();
+                if (customerId != null) {
+                    CustomerData customerData = (CustomerData) getEntityMap(EntityType.CUSTOMER).get(customerId);
+                    if (customerData != null) {
+                        customerData.remove(removed);
+                    }
+                }
             }
         } finally {
             entityUpdateLock.unlock();

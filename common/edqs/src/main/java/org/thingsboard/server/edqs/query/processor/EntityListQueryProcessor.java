@@ -41,7 +41,7 @@ public class EntityListQueryProcessor extends AbstractSingleEntityTypeQueryProce
     @Override
     protected void processCustomerQuery(UUID customerId, Consumer<EntityData<?>> processor) {
         processAll(ed -> {
-            if (checkCustomer(customerId, ed)) {
+            if (checkCustomerId(customerId, ed)) {
                 processor.accept(ed);
             }
         });

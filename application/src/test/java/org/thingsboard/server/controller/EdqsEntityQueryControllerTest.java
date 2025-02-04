@@ -65,9 +65,4 @@ public class EdqsEntityQueryControllerTest extends EntityQueryControllerTest {
                 result -> result == expectedResult);
     }
 
-    @Override
-    protected Long countByQueryAndCheck(EntityCountQuery query, long expectedResult, BiPredicate<Long, Long> condition) {
-        return await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> countByQuery(query),
-                result -> condition.test(result, expectedResult));
-    }
 }

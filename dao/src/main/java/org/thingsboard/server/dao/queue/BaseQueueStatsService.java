@@ -85,7 +85,7 @@ public class BaseQueueStatsService extends AbstractEntityService implements Queu
     public PageData<QueueStats> findByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findByTenantId, tenantId: [{}]", tenantId);
         Validator.validatePageLink(pageLink);
-        return queueStatsDao.findByTenantId(tenantId, pageLink);
+        return queueStatsDao.findAllByTenantId(tenantId, pageLink);
     }
 
     @Override

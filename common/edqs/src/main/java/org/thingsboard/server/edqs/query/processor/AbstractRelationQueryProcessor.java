@@ -16,7 +16,6 @@
 package org.thingsboard.server.edqs.query.processor;
 
 import lombok.RequiredArgsConstructor;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.permission.QueryContext;
 import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
@@ -79,7 +78,7 @@ public abstract class AbstractRelationQueryProcessor<T extends EntityFilter> ext
         } else {
             var customerId = ctx.getCustomerId().getId();
             for (EntityData<?> ed : entities) {
-                if (checkCustomer(customerId, ed)) {
+                if (checkCustomerId(customerId, ed)) {
                     result++;
                 }
             }
@@ -97,7 +96,7 @@ public abstract class AbstractRelationQueryProcessor<T extends EntityFilter> ext
         var customerId = ctx.getCustomerId().getId();
         List<SortableEntityData> result = new ArrayList<>();
         for (EntityData<?> ed : entities) {
-            if (checkCustomer(customerId, ed)) {
+            if (checkCustomerId(customerId, ed)) {
                 result.add(toSortData(ed));
             }
         }

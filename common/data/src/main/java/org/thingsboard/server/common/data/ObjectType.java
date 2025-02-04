@@ -73,7 +73,7 @@ public enum ObjectType {
             API_USAGE_STATE, ATTRIBUTE_KV, LATEST_TS_KV);
 
     static {
-        edqsTypes.addAll(Arrays.asList(TENANT, RELATION, ATTRIBUTE_KV, LATEST_TS_KV));
+        edqsTypes.addAll(Arrays.asList(RELATION, ATTRIBUTE_KV, LATEST_TS_KV));
     }
 
     public EntityType toEntityType() {

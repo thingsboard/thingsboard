@@ -81,7 +81,7 @@ import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
-public abstract class EntityQueryControllerTest extends AbstractControllerTest {
+public class EntityQueryControllerTest extends AbstractControllerTest {
 
     private static final String CUSTOMER_USER_EMAIL = "entityQueryCustomer@thingsboard.org";
     private static final String TENANT_PASSWORD = "testPassword1";
@@ -158,6 +158,13 @@ public abstract class EntityQueryControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSysAdminCountEntitiesByQuery() throws Exception {
+        loginSysAdmin();
+
+        EntityTypeFilter allDeviceFilter = new EntityTypeFilter();
+        allDeviceFilter.setEntityType(EntityType.DEVICE);
+        EntityCountQuery query = new EntityCountQuery(allDeviceFilter);
+        countByQueryAndCheck(query, 0);
+
         loginTenantAdmin();
 
         List<Device> devices = new ArrayList<>();
@@ -177,7 +184,7 @@ public abstract class EntityQueryControllerTest extends AbstractControllerTest {
         loginSysAdmin();
 
         EntityCountQuery countQuery = new EntityCountQuery(filter);
-        countByQueryAndCheck(countQuery, 97, (actual, expected) -> actual >= expected);
+        countByQueryAndCheck(countQuery, 97);
 
         filter.setDeviceTypes(List.of("unknown"));
         countByQueryAndCheck(countQuery, 0);
@@ -193,7 +200,7 @@ public abstract class EntityQueryControllerTest extends AbstractControllerTest {
         countQuery = new EntityCountQuery(entityListFilter);
         countByQueryAndCheck(countQuery, 97);
 
-        countByQueryAndCheck(countQuery, 97, (actual, expected) -> actual >= expected);
+        countByQueryAndCheck(countQuery, 97);
     }
 
     @Test
@@ -906,9 +913,4 @@ public abstract class EntityQueryControllerTest extends AbstractControllerTest {
         return numericFilter;
     }
 
-    protected Long countByQueryAndCheck(EntityCountQuery query, long expectedResult, BiPredicate<Long, Long> condition) throws Exception {
-        Long result = countByQuery(query);
-        assertThat(condition.test(result, expectedResult)).isTrue();
-        return result;
-    }
 }
