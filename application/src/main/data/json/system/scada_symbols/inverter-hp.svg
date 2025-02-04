@@ -1,0 +1,578 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="600" height="600" fill="none" version="1.1" viewBox="0 0 600 600"><tb:metadata xmlns=""><![CDATA[{
+  "title": "HP Inverter",
+  "description": "Inverter with various states.",
+  "searchTags": [
+    "energy",
+    "power",
+    "hybrid",
+    "solar",
+    "backup"
+  ],
+  "widgetSizeX": 3,
+  "widgetSizeY": 3,
+  "tags": [
+    {
+      "tag": "absorption",
+      "stateRenderFunction": "if (ctx.values.running && ctx.values.chargingMode === 2) {\n    element.fill(ctx.properties.chargingIndicatorsColor);\n} else {\n    element.fill('#dedede');\n}",
+      "actions": null
+    },
+    {
+      "tag": "background",
+      "stateRenderFunction": "var color = ctx.properties.stoppedColor;\nif (ctx.values.running) {\n    color = ctx.properties.runningColor;\n}\nelement.attr({fill: color});",
+      "actions": null
+    },
+    {
+      "tag": "bulk",
+      "stateRenderFunction": "if (ctx.values.running && ctx.values.chargingMode === 1) {\n    element.fill(ctx.properties.chargingIndicatorsColor);\n} else {\n    element.fill('#dedede');\n}",
+      "actions": null
+    },
+    {
+      "tag": "clickArea",
+      "stateRenderFunction": null,
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'click');"
+        }
+      }
+    },
+    {
+      "tag": "critical",
+      "stateRenderFunction": "element.attr({fill: ctx.properties.criticalColor});\nif (ctx.values.critical) {\n    element.show();\n} else {\n    element.hide();\n}\n\nvar elementCriticalAnimation = element.remember('criticalAnimation');\nvar criticalAnimation = ctx.values.critical && ctx.values.criticalAnimation;\n\nif (elementCriticalAnimation !== criticalAnimation) {\n    element.remember('criticalAnimation', criticalAnimation);\n    if (criticalAnimation) {\n        ctx.api.cssAnimate(element, 500).attr({opacity: 0.15}).loop(0, true);\n    } else {\n        ctx.api.resetCssAnimation(element);\n    }\n}\n\n",
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'criticalClick');"
+        }
+      }
+    },
+    {
+      "tag": "float",
+      "stateRenderFunction": "if (ctx.values.running && ctx.values.chargingMode === 3) {\n    element.fill(ctx.properties.chargingIndicatorsColor);\n} else {\n    element.fill('#dedede');\n}",
+      "actions": null
+    },
+    {
+      "tag": "inverterOn",
+      "stateRenderFunction": "if (ctx.values.running && !ctx.values.operationMode) {\n    element.fill(ctx.properties.operationIndicatorsColor);\n} else {\n    element.fill('#dedede');\n}",
+      "actions": null
+    },
+    {
+      "tag": "lowBattery",
+      "stateRenderFunction": "if (ctx.values.running && ctx.values.lowBattery) {\n    element.fill(ctx.properties.faultIndicatorsColor);\n} else {\n    element.fill('#dedede');\n}",
+      "actions": null
+    },
+    {
+      "tag": "mainsOn",
+      "stateRenderFunction": "if (ctx.values.running && ctx.values.operationMode) {\n    element.fill(ctx.properties.operationIndicatorsColor);\n} else {\n    element.fill('#dedede');\n}",
+      "actions": null
+    },
+    {
+      "tag": "overload",
+      "stateRenderFunction": "if (ctx.values.running && ctx.values.overload) {\n    element.fill(ctx.properties.faultIndicatorsColor);\n} else {\n    element.fill('#dedede');\n}",
+      "actions": null
+    },
+    {
+      "tag": "temperature",
+      "stateRenderFunction": "if (ctx.values.running && ctx.values.temperature) {\n    element.fill(ctx.properties.faultIndicatorsColor);\n} else {\n    element.fill('#dedede');\n}",
+      "actions": null
+    },
+    {
+      "tag": "warning",
+      "stateRenderFunction": "element.attr({fill: ctx.properties.warningColor});\nvar warning = ctx.values.warning && !(ctx.values.warning && ctx.values.critical)\nif (warning) {\n    element.show();\n} else {\n    element.hide();\n}\n\nvar elementCriticalAnimation = element.remember('criticalAnimation');\nvar criticalAnimation = warning && ctx.values.criticalAnimation;\n\nif (elementCriticalAnimation !== criticalAnimation) {\n    element.remember('criticalAnimation', criticalAnimation);\n    if (criticalAnimation) {\n        ctx.api.cssAnimate(element, 500).attr({opacity: 0.15}).loop(0, true);\n    } else {\n        ctx.api.resetCssAnimation(element);\n    }\n}\n",
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'warningClick');"
+        }
+      }
+    }
+  ],
+  "behavior": [
+    {
+      "id": "running",
+      "name": "{i18n:scada.symbol.running}",
+      "hint": "{i18n:scada.symbol.running-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.running}",
+      "defaultGetValueSettings": {
+        "action": "GET_ATTRIBUTE",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "running"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": null,
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "operationMode",
+      "name": "{i18n:scada.symbol.operation-mode}",
+      "hint": "{i18n:scada.symbol.operation-mode-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": "{i18n:scada.symbol.mains-on-mode}",
+      "falseLabel": "{i18n:scada.symbol.inverter-on-mode}",
+      "stateLabel": null,
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": true,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": null,
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "chargingMode",
+      "name": "{i18n:scada.symbol.charging-mode}",
+      "hint": "{i18n:scada.symbol.charging-mode-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "INTEGER",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": {
+        "action": "GET_ATTRIBUTE",
+        "defaultValue": null,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "chargingMode"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": null,
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "overload",
+      "name": "{i18n:scada.symbol.overload-fault}",
+      "hint": "{i18n:scada.symbol.overload-fault-hint}",
+      "group": "{i18n:scada.symbol.inverter-faults}",
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "key": "state",
+          "scope": null
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": null,
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "compareToValue": true,
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "lowBattery",
+      "name": "{i18n:scada.symbol.low-battery-fault}",
+      "hint": "{i18n:scada.symbol.low-battery-fault-hint}",
+      "group": "{i18n:scada.symbol.inverter-faults}",
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "key": "state",
+          "scope": null
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": null,
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "compareToValue": true,
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "temperature",
+      "name": "{i18n:scada.symbol.temperature-fault}",
+      "hint": "{i18n:scada.symbol.temperature-fault-hint}",
+      "group": "{i18n:scada.symbol.inverter-faults}",
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "key": "state",
+          "scope": null
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": null,
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "compareToValue": true,
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "warning",
+      "name": "{i18n:scada.symbol.warning}",
+      "hint": "{i18n:scada.symbol.warning-state-hint}",
+      "group": "{i18n:scada.symbol.warning-state}",
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.warning}",
+      "defaultGetValueSettings": {
+        "action": "GET_ALARM_STATUS",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": [
+            "MAJOR",
+            "MINOR",
+            "WARNING",
+            "INDETERMINATE"
+          ],
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "warningClick",
+      "name": "{i18n:scada.symbol.warning-click}",
+      "hint": "{i18n:scada.symbol.on-click-hint}",
+      "group": "{i18n:scada.symbol.warning-state}",
+      "type": "widgetAction",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "targetDashboardStateId": null,
+        "openRightLayout": false,
+        "setEntityId": false,
+        "stateEntityParamName": null
+      }
+    },
+    {
+      "id": "critical",
+      "name": "{i18n:scada.symbol.critical}",
+      "hint": "{i18n:scada.symbol.critical-state-hint}",
+      "group": "{i18n:scada.symbol.critical-state}",
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.critical}",
+      "defaultGetValueSettings": {
+        "action": "GET_ALARM_STATUS",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "getAlarmStatus": {
+          "severityList": [
+            "CRITICAL"
+          ],
+          "typeList": null
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "criticalClick",
+      "name": "{i18n:scada.symbol.critical-click}",
+      "hint": "{i18n:scada.symbol.on-click-hint}",
+      "group": "{i18n:scada.symbol.critical-state}",
+      "type": "widgetAction",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "targetDashboardStateId": null,
+        "openRightLayout": false,
+        "setEntityId": false,
+        "stateEntityParamName": null
+      }
+    },
+    {
+      "id": "criticalAnimation",
+      "name": "{i18n:scada.symbol.warning-critical-state-animation}",
+      "hint": "{i18n:scada.symbol.warning-critical-state-animation-hint}",
+      "group": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": "{i18n:scada.symbol.animation}",
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "key": "state",
+          "scope": null
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "compareToValue": true,
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
+    },
+    {
+      "id": "click",
+      "name": "{i18n:scada.symbol.on-click}",
+      "hint": "{i18n:scada.symbol.on-click-hint}",
+      "group": null,
+      "type": "widgetAction",
+      "valueType": "BOOLEAN",
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "targetDashboardStateId": null,
+        "openRightLayout": false,
+        "setEntityId": false,
+        "stateEntityParamName": null
+      }
+    }
+  ],
+  "properties": [
+    {
+      "id": "runningColor",
+      "name": "{i18n:scada.symbol.colors}",
+      "type": "color",
+      "default": "#FFFFFF",
+      "subLabel": "{i18n:scada.symbol.running}",
+      "divider": true,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "stoppedColor",
+      "name": "{i18n:scada.symbol.colors}",
+      "type": "color",
+      "default": "#666666",
+      "subLabel": "{i18n:scada.symbol.stopped}",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "warningColor",
+      "name": "{i18n:scada.symbol.alarm-colors}",
+      "type": "color",
+      "default": "#FAA405",
+      "subLabel": "{i18n:scada.symbol.warning}",
+      "divider": true,
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "criticalColor",
+      "name": "{i18n:scada.symbol.alarm-colors}",
+      "type": "color",
+      "default": "#D12730",
+      "subLabel": "{i18n:scada.symbol.critical}",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "operationIndicatorsColor",
+      "name": "{i18n:scada.symbol.operation-mode-indicators-color}",
+      "type": "color",
+      "default": "#198038",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "chargingIndicatorsColor",
+      "name": "{i18n:scada.symbol.charging-mode-indicators-color}",
+      "type": "color",
+      "default": "#FAA405",
+      "disabled": false,
+      "visible": true
+    },
+    {
+      "id": "faultIndicatorsColor",
+      "name": "{i18n:scada.symbol.inverter-fault-indicators-color}",
+      "type": "color",
+      "default": "#D12730",
+      "disabled": false,
+      "visible": true
+    }
+  ]
+}]]></tb:metadata>
+<path d="m1 6c0-2.7614 2.2386-5 5-5h588c2.761 0 5 2.2386 5 5v588c0 2.761-2.239 5-5 5h-8c-2.761 0-5-2.239-5-5v-17.9c0-3.866-3.134-7-7-7h-548c-3.866 0-7 3.134-7 7v17.9c0 2.761-2.2386 5-5 5h-8c-2.7614 0-5-2.239-5-5v-588z" fill="#fff" stroke="#1A1A1A" stroke-width="2" tb:tag="background"/><rect x="51" y="569" width="98" height="30" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><rect x="151" y="569" width="98" height="30" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><rect x="251" y="569" width="98" height="30" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><rect x="476" y="569" width="48" height="30" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2"/><path d="m89.269 122.87h-6.375c-0.1818-1.045-0.5171-1.971-1.0057-2.778-0.4886-0.818-1.0966-1.511-1.8239-2.08-0.7272-0.568-1.5568-0.994-2.4886-1.278-0.9205-0.295-1.9148-0.443-2.983-0.443-1.8977 0-3.5795 0.477-5.0454 1.432-1.4659 0.943-2.6137 2.329-3.4432 4.159-0.8295 1.818-1.2443 4.039-1.2443 6.664 0 2.671 0.4148 4.921 1.2443 6.75 0.8409 1.819 1.9886 3.194 3.4432 4.125 1.4659 0.921 3.142 1.381 5.0284 1.381 1.0454 0 2.0227-0.136 2.9318-0.409 0.9205-0.284 1.7443-0.699 2.4716-1.244 0.7386-0.546 1.358-1.216 1.858-2.012 0.5113-0.795 0.8636-1.704 1.0568-2.727l6.375 0.034c-0.2387 1.659-0.7557 3.216-1.5512 4.671-0.7841 1.454-1.8125 2.738-3.0852 3.852-1.2727 1.102-2.7613 1.966-4.4659 2.591-1.7045 0.613-3.5966 0.92-5.6761 0.92-3.0682 0-5.8069-0.71-8.2159-2.13-2.4091-1.421-4.3069-3.472-5.6932-6.154-1.3864-2.682-2.0796-5.898-2.0796-9.648 0-3.761 0.6989-6.977 2.0966-9.647 1.3977-2.682 3.3012-4.733 5.7102-6.154 2.4091-1.42 5.1364-2.13 8.1819-2.13 1.9431 0 3.75 0.272 5.4204 0.818 1.6705 0.545 3.1591 1.346 4.4659 2.403 1.3068 1.046 2.3807 2.33 3.2216 3.853 0.8523 1.511 1.4091 3.238 1.6705 5.181zm11.689 7.79v15.341h-6.1704v-34.909h6.0344v13.176h0.307c0.613-1.477 1.562-2.642 2.846-3.494 1.296-0.864 2.943-1.296 4.943-1.296 1.819 0 3.404 0.381 4.756 1.142 1.352 0.762 2.398 1.875 3.136 3.341 0.75 1.466 1.125 3.256 1.125 5.37v16.67h-6.17v-15.716c0-1.761-0.455-3.131-1.364-4.108-0.897-0.989-2.159-1.483-3.784-1.483-1.091 0-2.068 0.239-2.932 0.716-0.852 0.466-1.522 1.142-2.011 2.029-0.477 0.886-0.716 1.96-0.716 3.221zm30.801 15.869c-1.659 0-3.153-0.295-4.483-0.886-1.318-0.602-2.363-1.489-3.136-2.659-0.761-1.171-1.142-2.614-1.142-4.33 0-1.477 0.273-2.698 0.818-3.664 0.546-0.966 1.29-1.739 2.233-2.319 0.943-0.579 2.006-1.017 3.188-1.312 1.193-0.307 2.426-0.528 3.698-0.665 1.534-0.159 2.779-0.301 3.733-0.426 0.955-0.136 1.648-0.341 2.08-0.614 0.443-0.284 0.665-0.721 0.665-1.312v-0.102c0-1.284-0.381-2.279-1.142-2.983-0.762-0.705-1.858-1.057-3.29-1.057-1.512 0-2.71 0.329-3.597 0.989-0.875 0.659-1.466 1.437-1.772 2.335l-5.762-0.818c0.455-1.591 1.205-2.921 2.25-3.989 1.046-1.08 2.324-1.886 3.835-2.421 1.512-0.545 3.182-0.818 5.012-0.818 1.261 0 2.517 0.148 3.767 0.443 1.25 0.296 2.392 0.785 3.426 1.466 1.034 0.671 1.864 1.586 2.489 2.745 0.636 1.159 0.954 2.608 0.954 4.346v17.523h-5.932v-3.597h-0.204c-0.375 0.728-0.904 1.409-1.585 2.046-0.671 0.625-1.518 1.131-2.54 1.517-1.012 0.375-2.199 0.562-3.563 0.562zm1.603-4.534c1.238 0 2.312-0.244 3.221-0.733 0.909-0.5 1.608-1.159 2.097-1.977 0.5-0.818 0.75-1.71 0.75-2.676v-3.085c-0.193 0.159-0.523 0.307-0.989 0.443-0.454 0.136-0.966 0.256-1.534 0.358s-1.131 0.193-1.688 0.273c-0.556 0.079-1.039 0.147-1.448 0.204-0.921 0.125-1.745 0.33-2.472 0.614s-1.301 0.682-1.722 1.193c-0.42 0.5-0.63 1.148-0.63 1.943 0 1.137 0.415 1.994 1.244 2.574 0.83 0.58 1.886 0.869 3.171 0.869zm18.426 4.006v-26.182h5.983v4.364h0.272c0.478-1.512 1.296-2.676 2.455-3.494 1.17-0.83 2.506-1.245 4.006-1.245 0.34 0 0.721 0.017 1.142 0.051 0.431 0.023 0.789 0.063 1.073 0.12v5.676c-0.261-0.091-0.676-0.171-1.244-0.239-0.557-0.079-1.096-0.119-1.619-0.119-1.125 0-2.137 0.244-3.034 0.733-0.887 0.477-1.585 1.142-2.097 1.994-0.511 0.852-0.767 1.835-0.767 2.949v15.392h-6.17zm29.339 10.364c-2.216 0-4.119-0.301-5.71-0.904-1.591-0.591-2.869-1.386-3.835-2.386s-1.637-2.108-2.012-3.324l5.557-1.347c0.25 0.512 0.614 1.017 1.091 1.517 0.477 0.512 1.119 0.932 1.926 1.262 0.818 0.341 1.847 0.511 3.085 0.511 1.75 0 3.199-0.426 4.347-1.278 1.148-0.841 1.722-2.227 1.722-4.159v-4.961h-0.307c-0.318 0.637-0.784 1.29-1.398 1.961-0.602 0.67-1.403 1.233-2.403 1.687-0.989 0.455-2.233 0.682-3.733 0.682-2.012 0-3.836-0.472-5.472-1.415-1.625-0.954-2.92-2.375-3.886-4.261-0.955-1.898-1.432-4.273-1.432-7.125 0-2.875 0.477-5.301 1.432-7.279 0.966-1.988 2.267-3.494 3.903-4.517 1.636-1.034 3.46-1.551 5.472-1.551 1.534 0 2.795 0.262 3.784 0.784 1 0.512 1.795 1.131 2.386 1.858 0.591 0.716 1.04 1.392 1.347 2.029h0.341v-4.33h6.085v26.608c0 2.239-0.534 4.091-1.602 5.557-1.069 1.466-2.529 2.562-4.381 3.29-1.852 0.727-3.955 1.091-6.307 1.091zm0.051-15.58c1.307 0 2.421-0.318 3.341-0.954 0.921-0.637 1.619-1.552 2.097-2.745 0.477-1.193 0.716-2.625 0.716-4.295 0-1.648-0.239-3.091-0.716-4.33-0.466-1.238-1.159-2.199-2.08-2.88-0.909-0.694-2.028-1.04-3.358-1.04-1.375 0-2.522 0.358-3.443 1.074-0.92 0.716-1.614 1.698-2.079 2.948-0.466 1.239-0.699 2.648-0.699 4.228 0 1.602 0.233 3.005 0.699 4.21 0.477 1.193 1.176 2.125 2.096 2.795 0.932 0.66 2.074 0.989 3.426 0.989zm30.154 5.727c-2.625 0-4.892-0.545-6.801-1.636-1.898-1.102-3.358-2.659-4.381-4.67-1.023-2.023-1.534-4.404-1.534-7.143 0-2.693 0.511-5.056 1.534-7.09 1.034-2.046 2.477-3.637 4.329-4.773 1.853-1.148 4.029-1.722 6.529-1.722 1.613 0 3.136 0.262 4.568 0.784 1.443 0.512 2.716 1.307 3.818 2.387 1.114 1.079 1.989 2.454 2.625 4.125 0.637 1.659 0.955 3.636 0.955 5.932v1.892h-21.461v-4.159h15.546c-0.011-1.182-0.267-2.233-0.767-3.154-0.5-0.932-1.199-1.665-2.097-2.199-0.886-0.534-1.92-0.801-3.102-0.801-1.261 0-2.369 0.307-3.324 0.921-0.954 0.602-1.699 1.397-2.233 2.386-0.523 0.977-0.79 2.051-0.801 3.221v3.631c0 1.523 0.278 2.83 0.835 3.921 0.557 1.079 1.336 1.909 2.336 2.488 1 0.568 2.17 0.853 3.511 0.853 0.898 0 1.71-0.125 2.437-0.375 0.728-0.262 1.358-0.642 1.892-1.142 0.535-0.5 0.938-1.12 1.211-1.858l5.761 0.647c-0.364 1.523-1.057 2.853-2.08 3.989-1.011 1.125-2.306 2-3.886 2.625-1.579 0.614-3.386 0.92-5.42 0.92zm16.862-0.511v-26.182h5.983v4.364h0.273c0.477-1.512 1.295-2.676 2.454-3.494 1.171-0.83 2.506-1.245 4.006-1.245 0.341 0 0.721 0.017 1.142 0.051 0.432 0.023 0.79 0.063 1.074 0.12v5.676c-0.262-0.091-0.676-0.171-1.245-0.239-0.556-0.079-1.096-0.119-1.619-0.119-1.125 0-2.136 0.244-3.034 0.733-0.886 0.477-1.585 1.142-2.097 1.994-0.511 0.852-0.767 1.835-0.767 2.949v15.392h-6.17z" fill="#1A1A1A"/><circle cx="42" cy="212" r="10" fill="#198038" tb:tag="mainsOn"/><path d="m63.523 197.91h4.2046l9.8863 24.148h0.3409l9.8864-24.148h4.2046v29.091h-3.2955v-22.102h-0.2841l-9.0909 22.102h-3.1818l-9.0909-22.102h-0.2841v22.102h-3.2955v-29.091zm41.552 29.602c-1.383 0-2.638-0.26-3.765-0.781-1.127-0.53-2.0214-1.292-2.6843-2.287-0.6629-1.004-0.9943-2.216-0.9943-3.636 0-1.25 0.2462-2.263 0.7386-3.04 0.4925-0.786 1.1506-1.401 1.974-1.847 0.824-0.445 1.733-0.776 2.728-0.994 1.004-0.227 2.012-0.407 3.025-0.54 1.326-0.17 2.401-0.298 3.225-0.383 0.833-0.095 1.439-0.251 1.818-0.469 0.388-0.218 0.582-0.597 0.582-1.136v-0.114c0-1.401-0.383-2.49-1.15-3.267-0.758-0.776-1.908-1.165-3.452-1.165-1.6 0-2.855 0.351-3.764 1.051-0.909 0.701-1.548 1.449-1.918 2.245l-3.1816-1.137c0.5682-1.325 1.3257-2.358 2.2726-3.096 0.957-0.748 1.998-1.269 3.125-1.563 1.136-0.303 2.254-0.454 3.352-0.454 0.701 0 1.506 0.085 2.415 0.255 0.919 0.161 1.804 0.498 2.656 1.009 0.862 0.511 1.577 1.283 2.145 2.315s0.853 2.415 0.853 4.148v14.375h-3.353v-2.955h-0.17c-0.227 0.474-0.606 0.981-1.137 1.52-0.53 0.54-1.235 0.999-2.116 1.378s-1.955 0.568-3.224 0.568zm0.511-3.011c1.326 0 2.443-0.26 3.352-0.781 0.919-0.521 1.61-1.193 2.074-2.017 0.474-0.824 0.71-1.691 0.71-2.6v-3.068c-0.142 0.171-0.454 0.327-0.937 0.469-0.474 0.132-1.023 0.251-1.648 0.355-0.615 0.095-1.217 0.18-1.804 0.256-0.578 0.066-1.046 0.123-1.406 0.17-0.871 0.114-1.686 0.298-2.443 0.554-0.748 0.246-1.355 0.62-1.819 1.122-0.454 0.493-0.681 1.165-0.681 2.017 0 1.165 0.431 2.046 1.292 2.642 0.871 0.587 1.975 0.881 3.31 0.881zm15.607 2.5v-21.818h3.352v21.818h-3.352zm1.705-25.455c-0.654 0-1.217-0.222-1.691-0.667-0.464-0.445-0.696-0.98-0.696-1.605s0.232-1.16 0.696-1.605c0.474-0.445 1.037-0.668 1.691-0.668 0.653 0 1.212 0.223 1.676 0.668 0.473 0.445 0.71 0.98 0.71 1.605s-0.237 1.16-0.71 1.605c-0.464 0.445-1.023 0.667-1.676 0.667zm11.14 12.33v13.125h-3.353v-21.818h3.239v3.409h0.284c0.511-1.108 1.288-1.998 2.33-2.671 1.041-0.681 2.386-1.022 4.034-1.022 1.477 0 2.77 0.303 3.878 0.909 1.108 0.596 1.969 1.505 2.585 2.727 0.615 1.212 0.923 2.746 0.923 4.602v13.864h-3.352v-13.636c0-1.714-0.445-3.05-1.335-4.006-0.891-0.966-2.112-1.449-3.665-1.449-1.07 0-2.027 0.232-2.869 0.696-0.834 0.464-1.492 1.141-1.975 2.031-0.483 0.891-0.724 1.97-0.724 3.239zm35.5-3.807-3.011 0.852c-0.189-0.501-0.469-0.989-0.838-1.463-0.36-0.483-0.852-0.88-1.477-1.193-0.625-0.312-1.426-0.469-2.401-0.469-1.335 0-2.448 0.308-3.338 0.924-0.881 0.606-1.321 1.378-1.321 2.315 0 0.833 0.303 1.492 0.909 1.975 0.606 0.482 1.553 0.885 2.841 1.207l3.239 0.795c1.95 0.474 3.404 1.198 4.36 2.174 0.957 0.966 1.435 2.211 1.435 3.735 0 1.25-0.36 2.368-1.079 3.353-0.711 0.985-1.705 1.761-2.983 2.329-1.279 0.568-2.766 0.853-4.461 0.853-2.225 0-4.067-0.483-5.525-1.449-1.459-0.966-2.382-2.377-2.77-4.233l3.182-0.796c0.303 1.175 0.876 2.055 1.718 2.642 0.853 0.587 1.965 0.881 3.339 0.881 1.562 0 2.803-0.331 3.721-0.994 0.928-0.673 1.392-1.478 1.392-2.415 0-0.758-0.265-1.392-0.795-1.903-0.531-0.521-1.345-0.91-2.443-1.165l-3.637-0.853c-1.998-0.473-3.466-1.207-4.403-2.201-0.928-1.004-1.392-2.259-1.392-3.764 0-1.232 0.345-2.321 1.037-3.267 0.7-0.947 1.652-1.691 2.855-2.231 1.212-0.539 2.585-0.809 4.119-0.809 2.159 0 3.854 0.473 5.085 1.42 1.241 0.947 2.122 2.197 2.642 3.75zm25.558 17.387c-1.97 0-3.698-0.469-5.185-1.407-1.477-0.937-2.632-2.249-3.466-3.934-0.824-1.686-1.235-3.656-1.235-5.909 0-2.273 0.411-4.257 1.235-5.952 0.834-1.695 1.989-3.012 3.466-3.949 1.487-0.938 3.215-1.406 5.185-1.406s3.693 0.468 5.17 1.406c1.487 0.937 2.642 2.254 3.466 3.949 0.834 1.695 1.25 3.679 1.25 5.952 0 2.253-0.416 4.223-1.25 5.909-0.824 1.685-1.979 2.997-3.466 3.934-1.477 0.938-3.2 1.407-5.17 1.407zm0-3.012c1.496 0 2.727-0.383 3.693-1.15s1.681-1.776 2.145-3.026 0.696-2.604 0.696-4.062c0-1.459-0.232-2.818-0.696-4.077-0.464-1.26-1.179-2.278-2.145-3.054-0.966-0.777-2.197-1.165-3.693-1.165s-2.727 0.388-3.693 1.165c-0.966 0.776-1.681 1.794-2.145 3.054-0.464 1.259-0.696 2.618-0.696 4.077 0 1.458 0.232 2.812 0.696 4.062s1.179 2.259 2.145 3.026 2.197 1.15 3.693 1.15zm18.356-10.568v13.125h-3.353v-21.818h3.239v3.409h0.284c0.512-1.108 1.288-1.998 2.33-2.671 1.041-0.681 2.386-1.022 4.034-1.022 1.477 0 2.77 0.303 3.878 0.909 1.108 0.596 1.969 1.505 2.585 2.727 0.615 1.212 0.923 2.746 0.923 4.602v13.864h-3.352v-13.636c0-1.714-0.445-3.05-1.335-4.006-0.89-0.966-2.112-1.449-3.665-1.449-1.07 0-2.027 0.232-2.869 0.696-0.834 0.464-1.492 1.141-1.975 2.031-0.483 0.891-0.724 1.97-0.724 3.239z" fill="#1A1A1A"/><circle cx="42" cy="280" r="10" fill="#DEDEDE" tb:tag="bulk"/><path d="m63.523 295v-29.091h10.17c2.0265 0 3.6979 0.35 5.0142 1.051 1.3163 0.692 2.2964 1.624 2.9403 2.799 0.644 1.164 0.9659 2.457 0.9659 3.877 0 1.25-0.2225 2.283-0.6676 3.097-0.4356 0.814-1.0132 1.458-1.7329 1.932-0.7103 0.473-1.482 0.824-2.3154 1.051v0.284c0.8902 0.057 1.7851 0.369 2.6847 0.938 0.8996 0.568 1.6524 1.382 2.2585 2.443 0.6061 1.06 0.9091 2.358 0.9091 3.892 0 1.458-0.3314 2.77-0.9943 3.934-0.6629 1.165-1.7093 2.088-3.1392 2.77s-3.2907 1.023-5.5824 1.023h-10.511zm3.5228-3.125h6.9886c2.3011 0 3.9347-0.445 4.9006-1.335 0.9753-0.9 1.463-1.989 1.463-3.267 0-0.985-0.2509-1.894-0.7528-2.728-0.5019-0.842-1.2169-1.515-2.1449-2.017-0.928-0.511-2.0265-0.767-3.2955-0.767h-7.159v10.114zm0-13.182h6.534c1.0607 0 2.0171-0.208 2.8694-0.625 0.8617-0.416 1.5435-1.004 2.0454-1.761 0.5114-0.758 0.7671-1.648 0.7671-2.671 0-1.278-0.4451-2.362-1.3353-3.252-0.8901-0.9-2.3011-1.35-4.2329-1.35h-6.6477v9.659zm35.788 7.387v-12.898h3.352v21.818h-3.352v-3.693h-0.227c-0.512 1.108-1.307 2.05-2.387 2.827-1.0794 0.767-2.443 1.15-4.0907 1.15-1.3637 0-2.5758-0.298-3.6364-0.895-1.0606-0.606-1.8939-1.515-2.5-2.727-0.6061-1.222-0.9091-2.76-0.9091-4.617v-13.863h3.3523v13.636c0 1.591 0.4451 2.86 1.3352 3.807 0.8996 0.947 2.0455 1.42 3.4375 1.42 0.8333 0 1.6809-0.213 2.5426-0.639 0.8716-0.426 1.6006-1.079 2.1876-1.96 0.597-0.881 0.895-2.003 0.895-3.366zm12.844-20.171v29.091h-3.352v-29.091h3.352zm9.265 21.136-0.057-4.147h0.682l9.546-9.716h4.147l-10.17 10.284h-0.284l-3.864 3.579zm-3.125 7.955v-29.091h3.352v29.091h-3.352zm13.864 0-8.523-10.795 2.386-2.33 10.398 13.125h-4.261z" fill="#1A1A1A"/><circle cx="42" cy="348" r="10" fill="#DEDEDE" tb:tag="absorption"/><path d="m64.716 363h-3.6932l10.682-29.091h3.6364l10.682 29.091h-3.6932l-8.6931-24.489h-0.2273l-8.6932 24.489zm1.3636-11.364h14.886v3.125h-14.886v-3.125zm24.474 11.364v-29.091h3.3522v10.739h0.2841c0.2463-0.379 0.5872-0.862 1.0228-1.449 0.445-0.597 1.0795-1.127 1.9034-1.591 0.8333-0.474 1.9602-0.71 3.3805-0.71 1.837 0 3.457 0.459 4.858 1.378 1.402 0.918 2.495 2.22 3.281 3.906 0.786 1.685 1.179 3.674 1.179 5.966 0 2.31-0.393 4.313-1.179 6.008-0.786 1.686-1.875 2.993-3.267 3.921-1.392 0.918-2.997 1.378-4.815 1.378-1.4015 0-2.5237-0.232-3.3665-0.696-0.8428-0.474-1.4915-1.009-1.946-1.606-0.4546-0.606-0.8049-1.108-1.0512-1.505h-0.3977v3.352h-3.2386zm3.2954-10.909c0 1.648 0.2415 3.101 0.7245 4.361 0.4829 1.25 1.1884 2.23 2.1164 2.94 0.9281 0.701 2.0644 1.051 3.4087 1.051 1.402 0 2.571-0.369 3.509-1.108 0.947-0.748 1.657-1.752 2.131-3.011 0.483-1.269 0.724-2.68 0.724-4.233 0-1.534-0.237-2.917-0.71-4.148-0.464-1.24-1.17-2.22-2.117-2.94-0.937-0.729-2.116-1.094-3.537-1.094-1.3632 0-2.509 0.346-3.4371 1.037-0.928 0.682-1.6288 1.638-2.1022 2.869-0.4735 1.222-0.7103 2.647-0.7103 4.276zm36.549-6.023-3.012 0.852c-0.189-0.501-0.468-0.989-0.838-1.463-0.36-0.483-0.852-0.88-1.477-1.193-0.625-0.312-1.425-0.469-2.401-0.469-1.335 0-2.447 0.308-3.338 0.924-0.88 0.606-1.321 1.378-1.321 2.315 0 0.833 0.303 1.492 0.909 1.975 0.607 0.482 1.553 0.885 2.841 1.207l3.239 0.795c1.951 0.474 3.404 1.198 4.361 2.174 0.956 0.966 1.434 2.211 1.434 3.735 0 1.25-0.359 2.368-1.079 3.353-0.71 0.985-1.705 1.761-2.983 2.329s-2.765 0.853-4.46 0.853c-2.226 0-4.068-0.483-5.526-1.449s-2.381-2.377-2.77-4.233l3.182-0.796c0.303 1.175 0.876 2.055 1.719 2.642 0.852 0.587 1.965 0.881 3.338 0.881 1.562 0 2.803-0.331 3.722-0.994 0.928-0.673 1.392-1.478 1.392-2.415 0-0.758-0.266-1.392-0.796-1.903-0.53-0.521-1.345-0.91-2.443-1.165l-3.636-0.853c-1.999-0.473-3.466-1.207-4.404-2.201-0.928-1.004-1.392-2.259-1.392-3.764 0-1.232 0.346-2.321 1.037-3.267 0.701-0.947 1.652-1.691 2.855-2.231 1.212-0.539 2.585-0.809 4.119-0.809 2.16 0 3.855 0.473 5.086 1.42 1.24 0.947 2.121 2.197 2.642 3.75zm14.307 17.387c-1.969 0-3.698-0.469-5.184-1.407-1.478-0.937-2.633-2.249-3.466-3.934-0.824-1.686-1.236-3.656-1.236-5.909 0-2.273 0.412-4.257 1.236-5.952 0.833-1.695 1.988-3.012 3.466-3.949 1.486-0.938 3.215-1.406 5.184-1.406 1.97 0 3.693 0.468 5.171 1.406 1.486 0.937 2.642 2.254 3.466 3.949 0.833 1.695 1.25 3.679 1.25 5.952 0 2.253-0.417 4.223-1.25 5.909-0.824 1.685-1.98 2.997-3.466 3.934-1.478 0.938-3.201 1.407-5.171 1.407zm0-3.012c1.496 0 2.728-0.383 3.693-1.15 0.966-0.767 1.681-1.776 2.145-3.026s0.696-2.604 0.696-4.062c0-1.459-0.232-2.818-0.696-4.077-0.464-1.26-1.179-2.278-2.145-3.054-0.965-0.777-2.197-1.165-3.693-1.165s-2.727 0.388-3.693 1.165c-0.966 0.776-1.681 1.794-2.145 3.054-0.464 1.259-0.696 2.618-0.696 4.077 0 1.458 0.232 2.812 0.696 4.062s1.179 2.259 2.145 3.026 2.197 1.15 3.693 1.15zm15.004 2.557v-21.818h3.238v3.295h0.228c0.397-1.079 1.117-1.955 2.159-2.628 1.041-0.672 2.216-1.008 3.523-1.008 0.246 0 0.554 5e-3 0.923 0.014 0.369 0.01 0.649 0.024 0.838 0.043v3.409c-0.114-0.029-0.374-0.071-0.781-0.128-0.398-0.066-0.819-0.099-1.265-0.099-1.06 0-2.007 0.222-2.84 0.667-0.824 0.436-1.478 1.042-1.961 1.818-0.473 0.767-0.71 1.643-0.71 2.628v13.807h-3.352zm14.883 8.182v-30h3.238v3.466h0.398c0.246-0.379 0.587-0.862 1.023-1.449 0.445-0.597 1.079-1.127 1.903-1.591 0.833-0.474 1.96-0.71 3.381-0.71 1.837 0 3.456 0.459 4.858 1.378 1.401 0.918 2.495 2.22 3.281 3.906 0.786 1.685 1.179 3.674 1.179 5.966 0 2.31-0.393 4.313-1.179 6.008-0.786 1.686-1.875 2.993-3.267 3.921-1.392 0.918-2.997 1.378-4.815 1.378-1.402 0-2.524-0.232-3.367-0.696-0.843-0.474-1.491-1.009-1.946-1.606-0.454-0.606-0.805-1.108-1.051-1.505h-0.284v11.534h-3.352zm3.295-19.091c0 1.648 0.242 3.101 0.725 4.361 0.482 1.25 1.188 2.23 2.116 2.94 0.928 0.701 2.064 1.051 3.409 1.051 1.402 0 2.571-0.369 3.509-1.108 0.947-0.748 1.657-1.752 2.13-3.011 0.483-1.269 0.725-2.68 0.725-4.233 0-1.534-0.237-2.917-0.711-4.148-0.464-1.24-1.169-2.22-2.116-2.94-0.937-0.729-2.116-1.094-3.537-1.094-1.364 0-2.509 0.346-3.437 1.037-0.928 0.682-1.629 1.638-2.103 2.869-0.473 1.222-0.71 2.647-0.71 4.276zm30.568-10.909v2.841h-11.307v-2.841h11.307zm-8.011-5.227h3.352v20.795c0 0.947 0.137 1.657 0.412 2.131 0.284 0.464 0.644 0.776 1.08 0.937 0.445 0.152 0.913 0.227 1.406 0.227 0.369 0 0.672-0.018 0.909-0.056 0.237-0.048 0.426-0.086 0.568-0.114l0.682 3.011c-0.227 0.086-0.545 0.171-0.952 0.256-0.407 0.095-0.923 0.142-1.548 0.142-0.947 0-1.875-0.204-2.784-0.611-0.9-0.407-1.648-1.027-2.244-1.861-0.588-0.833-0.881-1.884-0.881-3.153v-21.704zm13.054 27.045v-21.818h3.352v21.818h-3.352zm1.704-25.455c-0.653 0-1.216-0.222-1.69-0.667-0.464-0.445-0.696-0.98-0.696-1.605s0.232-1.16 0.696-1.605c0.474-0.445 1.037-0.668 1.69-0.668 0.654 0 1.213 0.223 1.677 0.668 0.473 0.445 0.71 0.98 0.71 1.605s-0.237 1.16-0.71 1.605c-0.464 0.445-1.023 0.667-1.677 0.667zm16.652 25.91c-1.97 0-3.698-0.469-5.185-1.407-1.477-0.937-2.633-2.249-3.466-3.934-0.824-1.686-1.236-3.656-1.236-5.909 0-2.273 0.412-4.257 1.236-5.952 0.833-1.695 1.989-3.012 3.466-3.949 1.487-0.938 3.215-1.406 5.185-1.406 1.969 0 3.693 0.468 5.17 1.406 1.487 0.937 2.642 2.254 3.466 3.949 0.833 1.695 1.25 3.679 1.25 5.952 0 2.253-0.417 4.223-1.25 5.909-0.824 1.685-1.979 2.997-3.466 3.934-1.477 0.938-3.201 1.407-5.17 1.407zm0-3.012c1.496 0 2.727-0.383 3.693-1.15s1.681-1.776 2.145-3.026 0.696-2.604 0.696-4.062c0-1.459-0.232-2.818-0.696-4.077-0.464-1.26-1.179-2.278-2.145-3.054-0.966-0.777-2.197-1.165-3.693-1.165-1.497 0-2.728 0.388-3.693 1.165-0.966 0.776-1.681 1.794-2.145 3.054-0.464 1.259-0.696 2.618-0.696 4.077 0 1.458 0.232 2.812 0.696 4.062s1.179 2.259 2.145 3.026c0.965 0.767 2.196 1.15 3.693 1.15zm18.356-10.568v13.125h-3.353v-21.818h3.239v3.409h0.284c0.511-1.108 1.288-1.998 2.33-2.671 1.041-0.681 2.386-1.022 4.034-1.022 1.477 0 2.769 0.303 3.877 0.909 1.108 0.596 1.97 1.505 2.586 2.727 0.615 1.212 0.923 2.746 0.923 4.602v13.864h-3.352v-13.636c0-1.714-0.445-3.05-1.336-4.006-0.89-0.966-2.111-1.449-3.664-1.449-1.07 0-2.027 0.232-2.87 0.696-0.833 0.464-1.491 1.141-1.974 2.031-0.483 0.891-0.724 1.97-0.724 3.239z" fill="#1A1A1A"/><circle cx="42" cy="416" r="10" fill="#DEDEDE" tb:tag="float"/><path d="m63.523 431v-29.091h17.443v3.125h-13.92v9.83h12.614v3.125h-12.614v13.011h-3.5228zm26.374-29.091v29.091h-3.3523v-29.091h3.3523zm15.004 29.546c-1.97 0-3.698-0.469-5.1851-1.407-1.4773-0.937-2.6326-2.249-3.4659-3.934-0.8239-1.686-1.2358-3.656-1.2358-5.909 0-2.273 0.4119-4.257 1.2358-5.952 0.8333-1.695 1.9886-3.012 3.4659-3.949 1.4871-0.938 3.2151-1.406 5.1851-1.406 1.969 0 3.693 0.468 5.17 1.406 1.487 0.937 2.642 2.254 3.466 3.949 0.833 1.695 1.25 3.679 1.25 5.952 0 2.253-0.417 4.223-1.25 5.909-0.824 1.685-1.979 2.997-3.466 3.934-1.477 0.938-3.201 1.407-5.17 1.407zm0-3.012c1.496 0 2.727-0.383 3.693-1.15s1.681-1.776 2.145-3.026 0.696-2.604 0.696-4.062c0-1.459-0.232-2.818-0.696-4.077-0.464-1.26-1.179-2.278-2.145-3.054-0.966-0.777-2.197-1.165-3.693-1.165-1.497 0-2.728 0.388-3.694 1.165-0.966 0.776-1.6805 1.794-2.1445 3.054-0.464 1.259-0.696 2.618-0.696 4.077 0 1.458 0.232 2.812 0.696 4.062s1.1785 2.259 2.1445 3.026 2.197 1.15 3.694 1.15zm21.424 3.068c-1.383 0-2.638-0.26-3.765-0.781-1.127-0.53-2.021-1.292-2.684-2.287-0.663-1.004-0.995-2.216-0.995-3.636 0-1.25 0.247-2.263 0.739-3.04 0.492-0.786 1.151-1.401 1.974-1.847 0.824-0.445 1.733-0.776 2.728-0.994 1.004-0.227 2.012-0.407 3.025-0.54 1.326-0.17 2.401-0.298 3.225-0.383 0.833-0.095 1.439-0.251 1.818-0.469 0.388-0.218 0.582-0.597 0.582-1.136v-0.114c0-1.401-0.383-2.49-1.15-3.267-0.758-0.776-1.908-1.165-3.452-1.165-1.6 0-2.855 0.351-3.764 1.051-0.909 0.701-1.548 1.449-1.918 2.245l-3.182-1.137c0.569-1.325 1.326-2.358 2.273-3.096 0.957-0.748 1.998-1.269 3.125-1.563 1.136-0.303 2.254-0.454 3.352-0.454 0.701 0 1.506 0.085 2.415 0.255 0.919 0.161 1.804 0.498 2.656 1.009 0.862 0.511 1.577 1.283 2.145 2.315s0.853 2.415 0.853 4.148v14.375h-3.353v-2.955h-0.17c-0.227 0.474-0.606 0.981-1.137 1.52-0.53 0.54-1.235 0.999-2.116 1.378s-1.955 0.568-3.224 0.568zm0.511-3.011c1.326 0 2.443-0.26 3.352-0.781 0.919-0.521 1.61-1.193 2.074-2.017 0.474-0.824 0.71-1.691 0.71-2.6v-3.068c-0.142 0.171-0.454 0.327-0.937 0.469-0.474 0.132-1.023 0.251-1.648 0.355-0.615 0.095-1.217 0.18-1.804 0.256-0.578 0.066-1.046 0.123-1.406 0.17-0.871 0.114-1.686 0.298-2.443 0.554-0.748 0.246-1.355 0.62-1.819 1.122-0.454 0.493-0.681 1.165-0.681 2.017 0 1.165 0.431 2.046 1.292 2.642 0.871 0.587 1.975 0.881 3.31 0.881zm25.096-19.318v2.841h-11.307v-2.841h11.307zm-8.012-5.227h3.353v20.795c0 0.947 0.137 1.657 0.412 2.131 0.284 0.464 0.644 0.776 1.079 0.937 0.445 0.152 0.914 0.227 1.406 0.227 0.37 0 0.673-0.018 0.91-0.056 0.236-0.048 0.426-0.086 0.568-0.114l0.682 3.011c-0.228 0.086-0.545 0.171-0.952 0.256-0.407 0.095-0.923 0.142-1.548 0.142-0.947 0-1.875-0.204-2.785-0.611-0.899-0.407-1.647-1.027-2.244-1.861-0.587-0.833-0.881-1.884-0.881-3.153v-21.704z" fill="#1A1A1A"/><path d="m351.98 111.09v34.909h-6.324v-34.909h6.324zm12.746 19.568v15.341h-6.171v-26.182h5.898v4.449h0.307c0.602-1.466 1.562-2.631 2.88-3.494 1.33-0.864 2.972-1.296 4.927-1.296 1.806 0 3.38 0.387 4.721 1.159 1.352 0.773 2.398 1.892 3.137 3.358 0.75 1.466 1.119 3.245 1.108 5.336v16.67h-6.171v-15.716c0-1.75-0.454-3.119-1.364-4.108-0.897-0.989-2.142-1.483-3.733-1.483-1.079 0-2.039 0.239-2.88 0.716-0.83 0.466-1.483 1.142-1.96 2.029-0.466 0.886-0.699 1.96-0.699 3.221zm45.528-10.841-9.324 26.182h-6.818l-9.324-26.182h6.58l6.017 19.449h0.273l6.034-19.449h6.562zm14.97 26.693c-2.625 0-4.892-0.545-6.801-1.636-1.898-1.102-3.358-2.659-4.381-4.67-1.022-2.023-1.534-4.404-1.534-7.143 0-2.693 0.512-5.056 1.534-7.09 1.035-2.046 2.478-3.637 4.33-4.773 1.852-1.148 4.028-1.722 6.528-1.722 1.614 0 3.137 0.262 4.569 0.784 1.443 0.512 2.716 1.307 3.818 2.387 1.113 1.079 1.988 2.454 2.625 4.125 0.636 1.659 0.954 3.636 0.954 5.932v1.892h-21.46v-4.159h15.546c-0.012-1.182-0.267-2.233-0.767-3.154-0.5-0.932-1.199-1.665-2.097-2.199-0.886-0.534-1.921-0.801-3.102-0.801-1.262 0-2.37 0.307-3.324 0.921-0.955 0.602-1.699 1.397-2.233 2.386-0.523 0.977-0.79 2.051-0.801 3.221v3.631c0 1.523 0.278 2.83 0.835 3.921 0.557 1.079 1.335 1.909 2.335 2.488 1 0.568 2.171 0.853 3.512 0.853 0.897 0 1.71-0.125 2.437-0.375 0.727-0.262 1.358-0.642 1.892-1.142s0.938-1.12 1.21-1.858l5.762 0.647c-0.364 1.523-1.057 2.853-2.08 3.989-1.011 1.125-2.307 2-3.886 2.625-1.58 0.614-3.387 0.92-5.421 0.92zm16.863-0.511v-26.182h5.982v4.364h0.273c0.477-1.512 1.296-2.676 2.455-3.494 1.17-0.83 2.505-1.245 4.005-1.245 0.341 0 0.722 0.017 1.142 0.051 0.432 0.023 0.79 0.063 1.074 0.12v5.676c-0.261-0.091-0.676-0.171-1.244-0.239-0.557-0.079-1.097-0.119-1.619-0.119-1.125 0-2.137 0.244-3.034 0.733-0.887 0.477-1.586 1.142-2.097 1.994s-0.767 1.835-0.767 2.949v15.392h-6.17zm33.511-26.182v4.773h-15.051v-4.773h15.051zm-11.335-6.273h6.17v24.58c0 0.83 0.125 1.466 0.375 1.909 0.261 0.432 0.602 0.727 1.023 0.886 0.42 0.16 0.886 0.239 1.398 0.239 0.386 0 0.738-0.028 1.056-0.085 0.33-0.057 0.58-0.108 0.75-0.154l1.04 4.824c-0.329 0.114-0.801 0.239-1.415 0.375-0.602 0.137-1.341 0.216-2.216 0.239-1.545 0.045-2.937-0.188-4.176-0.699-1.238-0.523-2.221-1.329-2.949-2.42-0.715-1.091-1.068-2.455-1.056-4.091v-25.603zm27.805 32.966c-2.625 0-4.892-0.545-6.801-1.636-1.898-1.102-3.358-2.659-4.381-4.67-1.022-2.023-1.534-4.404-1.534-7.143 0-2.693 0.512-5.056 1.534-7.09 1.034-2.046 2.478-3.637 4.33-4.773 1.852-1.148 4.028-1.722 6.528-1.722 1.614 0 3.137 0.262 4.568 0.784 1.444 0.512 2.716 1.307 3.819 2.387 1.113 1.079 1.988 2.454 2.625 4.125 0.636 1.659 0.954 3.636 0.954 5.932v1.892h-21.46v-4.159h15.545c-0.011-1.182-0.267-2.233-0.767-3.154-0.5-0.932-1.199-1.665-2.096-2.199-0.887-0.534-1.921-0.801-3.103-0.801-1.261 0-2.369 0.307-3.323 0.921-0.955 0.602-1.699 1.397-2.233 2.386-0.523 0.977-0.79 2.051-0.802 3.221v3.631c0 1.523 0.279 2.83 0.836 3.921 0.557 1.079 1.335 1.909 2.335 2.488 1 0.568 2.17 0.853 3.511 0.853 0.898 0 1.711-0.125 2.438-0.375 0.727-0.262 1.358-0.642 1.892-1.142s0.937-1.12 1.21-1.858l5.761 0.647c-0.363 1.523-1.056 2.853-2.079 3.989-1.011 1.125-2.307 2-3.886 2.625-1.58 0.614-3.387 0.92-5.421 0.92zm16.862-0.511v-26.182h5.983v4.364h0.273c0.477-1.512 1.295-2.676 2.454-3.494 1.171-0.83 2.506-1.245 4.006-1.245 0.341 0 0.722 0.017 1.142 0.051 0.432 0.023 0.79 0.063 1.074 0.12v5.676c-0.261-0.091-0.676-0.171-1.244-0.239-0.557-0.079-1.097-0.119-1.62-0.119-1.125 0-2.136 0.244-3.034 0.733-0.886 0.477-1.585 1.142-2.096 1.994-0.512 0.852-0.767 1.835-0.767 2.949v15.392h-6.171z" fill="#1A1A1A"/><circle cx="309" cy="212" r="10" fill="#DEDEDE" tb:tag="inverterOn"/><path d="m334.04 197.91v29.091h-3.522v-29.091h3.522zm9.961 15.966v13.125h-3.352v-21.818h3.239v3.409h0.284c0.511-1.108 1.288-1.998 2.329-2.671 1.042-0.681 2.387-1.022 4.034-1.022 1.478 0 2.77 0.303 3.878 0.909 1.108 0.596 1.97 1.505 2.586 2.727 0.615 1.212 0.923 2.746 0.923 4.602v13.864h-3.352v-13.636c0-1.714-0.446-3.05-1.336-4.006-0.89-0.966-2.111-1.449-3.664-1.449-1.071 0-2.027 0.232-2.87 0.696-0.833 0.464-1.491 1.141-1.974 2.031-0.483 0.891-0.725 1.97-0.725 3.239zm37.106-8.693-8.068 21.818h-3.409l-8.068-21.818h3.636l6.023 17.386h0.227l6.023-17.386h3.636zm12.791 22.273c-2.102 0-3.915-0.464-5.44-1.393-1.515-0.937-2.685-2.244-3.508-3.92-0.815-1.686-1.222-3.646-1.222-5.881 0-2.234 0.407-4.204 1.222-5.909 0.823-1.714 1.969-3.049 3.437-4.005 1.477-0.966 3.201-1.449 5.17-1.449 1.137 0 2.259 0.189 3.367 0.568s2.116 0.994 3.026 1.846c0.909 0.843 1.633 1.961 2.173 3.353s0.81 3.106 0.81 5.142v1.42h-16.819v-2.897h13.409c0-1.232-0.246-2.33-0.738-3.296-0.483-0.966-1.174-1.728-2.074-2.287-0.89-0.559-1.941-0.838-3.154-0.838-1.335 0-2.49 0.332-3.465 0.994-0.966 0.654-1.71 1.506-2.231 2.557-0.52 1.051-0.781 2.178-0.781 3.381v1.932c0 1.647 0.284 3.044 0.853 4.19 0.577 1.136 1.377 2.003 2.4 2.599 1.023 0.588 2.211 0.881 3.565 0.881 0.881 0 1.677-0.123 2.387-0.369 0.719-0.256 1.34-0.635 1.861-1.136 0.52-0.512 0.923-1.146 1.207-1.904l3.239 0.909c-0.341 1.099-0.914 2.065-1.719 2.898-0.805 0.824-1.799 1.468-2.983 1.932-1.184 0.454-2.514 0.682-3.992 0.682zm14.134-0.455v-21.818h3.239v3.295h0.227c0.398-1.079 1.117-1.955 2.159-2.628 1.042-0.672 2.216-1.008 3.523-1.008 0.246 0 0.554 5e-3 0.923 0.014 0.369 0.01 0.649 0.024 0.838 0.043v3.409c-0.114-0.029-0.374-0.071-0.781-0.128-0.398-0.066-0.819-0.099-1.264-0.099-1.061 0-2.008 0.222-2.841 0.667-0.824 0.436-1.478 1.042-1.961 1.818-0.473 0.767-0.71 1.643-0.71 2.628v13.807h-3.352zm25.739-21.818v2.841h-11.307v-2.841h11.307zm-8.012-5.227h3.352v20.795c0 0.947 0.138 1.657 0.412 2.131 0.285 0.464 0.644 0.776 1.08 0.937 0.445 0.152 0.914 0.227 1.406 0.227 0.37 0 0.673-0.018 0.909-0.056 0.237-0.048 0.426-0.086 0.568-0.114l0.682 3.011c-0.227 0.086-0.544 0.171-0.951 0.256-0.408 0.095-0.924 0.142-1.549 0.142-0.947 0-1.875-0.204-2.784-0.611-0.899-0.407-1.648-1.027-2.244-1.861-0.587-0.833-0.881-1.884-0.881-3.153v-21.704zm21.968 27.5c-2.103 0-3.916-0.464-5.441-1.393-1.515-0.937-2.684-2.244-3.508-3.92-0.815-1.686-1.222-3.646-1.222-5.881 0-2.234 0.407-4.204 1.222-5.909 0.824-1.714 1.969-3.049 3.437-4.005 1.477-0.966 3.201-1.449 5.171-1.449 1.136 0 2.258 0.189 3.366 0.568s2.117 0.994 3.026 1.846c0.909 0.843 1.633 1.961 2.173 3.353s0.81 3.106 0.81 5.142v1.42h-16.819v-2.897h13.41c0-1.232-0.247-2.33-0.739-3.296-0.483-0.966-1.174-1.728-2.074-2.287-0.89-0.559-1.941-0.838-3.153-0.838-1.336 0-2.491 0.332-3.466 0.994-0.966 0.654-1.71 1.506-2.23 2.557-0.521 1.051-0.782 2.178-0.782 3.381v1.932c0 1.647 0.284 3.044 0.853 4.19 0.577 1.136 1.377 2.003 2.4 2.599 1.023 0.588 2.211 0.881 3.566 0.881 0.88 0 1.676-0.123 2.386-0.369 0.72-0.256 1.34-0.635 1.861-1.136 0.521-0.512 0.923-1.146 1.207-1.904l3.239 0.909c-0.341 1.099-0.914 2.065-1.719 2.898-0.805 0.824-1.799 1.468-2.983 1.932-1.184 0.454-2.514 0.682-3.991 0.682zm14.133-0.455v-21.818h3.239v3.295h0.227c0.398-1.079 1.117-1.955 2.159-2.628 1.042-0.672 2.216-1.008 3.523-1.008 0.246 0 0.554 5e-3 0.923 0.014 0.369 0.01 0.649 0.024 0.838 0.043v3.409c-0.113-0.029-0.374-0.071-0.781-0.128-0.398-0.066-0.819-0.099-1.264-0.099-1.061 0-2.008 0.222-2.841 0.667-0.824 0.436-1.477 1.042-1.96 1.818-0.474 0.767-0.711 1.643-0.711 2.628v13.807h-3.352zm34.997 0.455c-1.97 0-3.698-0.469-5.185-1.407-1.477-0.937-2.633-2.249-3.466-3.934-0.824-1.686-1.236-3.656-1.236-5.909 0-2.273 0.412-4.257 1.236-5.952 0.833-1.695 1.989-3.012 3.466-3.949 1.487-0.938 3.215-1.406 5.185-1.406 1.969 0 3.693 0.468 5.17 1.406 1.487 0.937 2.642 2.254 3.466 3.949 0.833 1.695 1.25 3.679 1.25 5.952 0 2.253-0.417 4.223-1.25 5.909-0.824 1.685-1.979 2.997-3.466 3.934-1.477 0.938-3.201 1.407-5.17 1.407zm0-3.012c1.496 0 2.727-0.383 3.693-1.15s1.681-1.776 2.145-3.026 0.696-2.604 0.696-4.062c0-1.459-0.232-2.818-0.696-4.077-0.464-1.26-1.179-2.278-2.145-3.054-0.966-0.777-2.197-1.165-3.693-1.165-1.497 0-2.728 0.388-3.694 1.165-0.966 0.776-1.681 1.794-2.145 3.054-0.464 1.259-0.696 2.618-0.696 4.077 0 1.458 0.232 2.812 0.696 4.062s1.179 2.259 2.145 3.026 2.197 1.15 3.694 1.15zm18.355-10.568v13.125h-3.352v-21.818h3.239v3.409h0.284c0.511-1.108 1.288-1.998 2.329-2.671 1.042-0.681 2.387-1.022 4.034-1.022 1.478 0 2.77 0.303 3.878 0.909 1.108 0.596 1.97 1.505 2.585 2.727 0.616 1.212 0.924 2.746 0.924 4.602v13.864h-3.352v-13.636c0-1.714-0.446-3.05-1.336-4.006-0.89-0.966-2.111-1.449-3.664-1.449-1.071 0-2.027 0.232-2.87 0.696-0.833 0.464-1.491 1.141-1.974 2.031-0.483 0.891-0.725 1.97-0.725 3.239z" fill="#1A1A1A"/><circle cx="309" cy="280" r="10" fill="#DEDEDE" tb:tag="overload"/><path d="m355.07 280.46c0 3.068-0.554 5.719-1.662 7.954s-2.628 3.958-4.559 5.171c-1.932 1.212-4.139 1.818-6.62 1.818s-4.687-0.606-6.619-1.818c-1.932-1.213-3.452-2.936-4.56-5.171s-1.662-4.886-1.662-7.954c0-3.069 0.554-5.72 1.662-7.955s2.628-3.958 4.56-5.17c1.932-1.213 4.138-1.819 6.619-1.819s4.688 0.606 6.62 1.819c1.931 1.212 3.451 2.935 4.559 5.17s1.662 4.886 1.662 7.955zm-3.409 0c0-2.519-0.421-4.645-1.264-6.378-0.833-1.733-1.965-3.045-3.395-3.935-1.42-0.89-3.011-1.335-4.773-1.335-1.761 0-3.357 0.445-4.787 1.335-1.42 0.89-2.552 2.202-3.395 3.935-0.833 1.733-1.25 3.859-1.25 6.378 0 2.518 0.417 4.644 1.25 6.377 0.843 1.733 1.975 3.045 3.395 3.935 1.43 0.89 3.026 1.335 4.787 1.335 1.762 0 3.353-0.445 4.773-1.335 1.43-0.89 2.562-2.202 3.395-3.935 0.843-1.733 1.264-3.859 1.264-6.377zm26.719-7.273-8.068 21.818h-3.409l-8.069-21.818h3.637l6.022 17.386h0.228l6.022-17.386h3.637zm12.791 22.273c-2.102 0-3.916-0.464-5.44-1.393-1.515-0.937-2.685-2.244-3.509-3.92-0.814-1.686-1.221-3.646-1.221-5.881 0-2.234 0.407-4.204 1.221-5.909 0.824-1.714 1.97-3.049 3.438-4.005 1.477-0.966 3.2-1.449 5.17-1.449 1.136 0 2.259 0.189 3.367 0.568s2.116 0.994 3.025 1.846c0.909 0.843 1.634 1.961 2.173 3.353 0.54 1.392 0.81 3.106 0.81 5.142v1.42h-16.818v-2.897h13.409c0-1.232-0.246-2.33-0.739-3.296-0.483-0.966-1.174-1.728-2.073-2.287-0.891-0.559-1.942-0.838-3.154-0.838-1.335 0-2.49 0.332-3.466 0.994-0.966 0.654-1.709 1.506-2.23 2.557s-0.781 2.178-0.781 3.381v1.932c0 1.647 0.284 3.044 0.852 4.19 0.578 1.136 1.378 2.003 2.401 2.599 1.022 0.588 2.211 0.881 3.565 0.881 0.881 0 1.676-0.123 2.386-0.369 0.72-0.256 1.34-0.635 1.861-1.136 0.521-0.512 0.923-1.146 1.208-1.904l3.238 0.909c-0.341 1.099-0.914 2.065-1.719 2.898-0.804 0.824-1.799 1.468-2.982 1.932-1.184 0.454-2.515 0.682-3.992 0.682zm14.134-0.455v-21.818h3.238v3.295h0.227c0.398-1.079 1.118-1.955 2.16-2.628 1.041-0.672 2.215-1.008 3.522-1.008 0.246 0 0.554 5e-3 0.924 0.014 0.369 0.01 0.648 0.024 0.838 0.043v3.409c-0.114-0.029-0.374-0.071-0.782-0.128-0.397-0.066-0.819-0.099-1.264-0.099-1.06 0-2.007 0.222-2.841 0.667-0.824 0.436-1.477 1.042-1.96 1.818-0.473 0.767-0.71 1.643-0.71 2.628v13.807h-3.352zm18.235-29.091v29.091h-3.353v-29.091h3.353zm15.003 29.546c-1.97 0-3.698-0.469-5.184-1.407-1.478-0.937-2.633-2.249-3.466-3.934-0.824-1.686-1.236-3.656-1.236-5.909 0-2.273 0.412-4.257 1.236-5.952 0.833-1.695 1.988-3.012 3.466-3.949 1.486-0.938 3.214-1.406 5.184-1.406s3.693 0.468 5.171 1.406c1.486 0.937 2.642 2.254 3.466 3.949 0.833 1.695 1.25 3.679 1.25 5.952 0 2.253-0.417 4.223-1.25 5.909-0.824 1.685-1.98 2.997-3.466 3.934-1.478 0.938-3.201 1.407-5.171 1.407zm0-3.012c1.496 0 2.727-0.383 3.693-1.15s1.681-1.776 2.145-3.026 0.696-2.604 0.696-4.062c0-1.459-0.232-2.818-0.696-4.077-0.464-1.26-1.179-2.278-2.145-3.054-0.966-0.777-2.197-1.165-3.693-1.165s-2.727 0.388-3.693 1.165c-0.966 0.776-1.681 1.794-2.145 3.054-0.464 1.259-0.696 2.618-0.696 4.077 0 1.458 0.232 2.812 0.696 4.062s1.179 2.259 2.145 3.026 2.197 1.15 3.693 1.15zm21.424 3.068c-1.382 0-2.637-0.26-3.764-0.781-1.127-0.53-2.022-1.292-2.685-2.287-0.663-1.004-0.994-2.216-0.994-3.636 0-1.25 0.246-2.263 0.739-3.04 0.492-0.786 1.15-1.401 1.974-1.847 0.824-0.445 1.733-0.776 2.727-0.994 1.004-0.227 2.013-0.407 3.026-0.54 1.326-0.17 2.4-0.298 3.224-0.383 0.834-0.095 1.44-0.251 1.819-0.469 0.388-0.218 0.582-0.597 0.582-1.136v-0.114c0-1.401-0.384-2.49-1.151-3.267-0.757-0.776-1.908-1.165-3.451-1.165-1.601 0-2.855 0.351-3.765 1.051-0.909 0.701-1.548 1.449-1.917 2.245l-3.182-1.137c0.568-1.325 1.326-2.358 2.273-3.096 0.956-0.748 1.998-1.269 3.125-1.563 1.136-0.303 2.254-0.454 3.352-0.454 0.701 0 1.506 0.085 2.415 0.255 0.918 0.161 1.804 0.498 2.656 1.009 0.862 0.511 1.577 1.283 2.145 2.315s0.852 2.415 0.852 4.148v14.375h-3.352v-2.955h-0.171c-0.227 0.474-0.606 0.981-1.136 1.52-0.53 0.54-1.236 0.999-2.116 1.378-0.881 0.379-1.956 0.568-3.225 0.568zm0.512-3.011c1.325 0 2.443-0.26 3.352-0.781 0.918-0.521 1.61-1.193 2.074-2.017 0.473-0.824 0.71-1.691 0.71-2.6v-3.068c-0.142 0.171-0.455 0.327-0.938 0.469-0.473 0.132-1.022 0.251-1.647 0.355-0.616 0.095-1.217 0.18-1.804 0.256-0.578 0.066-1.047 0.123-1.407 0.17-0.871 0.114-1.685 0.298-2.443 0.554-0.748 0.246-1.354 0.62-1.818 1.122-0.454 0.493-0.682 1.165-0.682 2.017 0 1.165 0.431 2.046 1.293 2.642 0.871 0.587 1.974 0.881 3.31 0.881zm23.845 2.955c-1.818 0-3.423-0.46-4.815-1.378-1.392-0.928-2.481-2.235-3.267-3.921-0.786-1.695-1.179-3.698-1.179-6.008 0-2.292 0.393-4.281 1.179-5.966 0.786-1.686 1.88-2.988 3.281-3.906 1.402-0.919 3.021-1.378 4.858-1.378 1.421 0 2.543 0.236 3.367 0.71 0.833 0.464 1.468 0.994 1.903 1.591 0.445 0.587 0.791 1.07 1.037 1.449h0.284v-10.739h3.352v29.091h-3.238v-3.352h-0.398c-0.246 0.397-0.597 0.899-1.051 1.505-0.455 0.597-1.103 1.132-1.946 1.606-0.843 0.464-1.965 0.696-3.367 0.696zm0.455-3.012c1.345 0 2.481-0.35 3.409-1.051 0.928-0.71 1.634-1.69 2.117-2.94 0.483-1.26 0.724-2.713 0.724-4.361 0-1.629-0.237-3.054-0.71-4.276-0.474-1.231-1.174-2.187-2.103-2.869-0.928-0.691-2.073-1.037-3.437-1.037-1.42 0-2.604 0.365-3.551 1.094-0.938 0.72-1.643 1.7-2.117 2.94-0.464 1.231-0.696 2.614-0.696 4.148 0 1.553 0.237 2.964 0.711 4.233 0.483 1.259 1.193 2.263 2.13 3.011 0.947 0.739 2.121 1.108 3.523 1.108z" fill="#1A1A1A"/><circle cx="309" cy="348" r="10" fill="#DEDEDE" tb:tag="lowBattery"/><path d="m330.52 363v-29.091h3.522v25.966h13.523v3.125h-17.045zm30.909 0.455c-1.97 0-3.698-0.469-5.185-1.407-1.477-0.937-2.632-2.249-3.466-3.934-0.824-1.686-1.236-3.656-1.236-5.909 0-2.273 0.412-4.257 1.236-5.952 0.834-1.695 1.989-3.012 3.466-3.949 1.487-0.938 3.215-1.406 5.185-1.406s3.693 0.468 5.17 1.406c1.487 0.937 2.642 2.254 3.466 3.949 0.834 1.695 1.25 3.679 1.25 5.952 0 2.253-0.416 4.223-1.25 5.909-0.824 1.685-1.979 2.997-3.466 3.934-1.477 0.938-3.2 1.407-5.17 1.407zm0-3.012c1.496 0 2.727-0.383 3.693-1.15s1.681-1.776 2.145-3.026 0.696-2.604 0.696-4.062c0-1.459-0.232-2.818-0.696-4.077-0.464-1.26-1.179-2.278-2.145-3.054-0.966-0.777-2.197-1.165-3.693-1.165s-2.727 0.388-3.693 1.165c-0.966 0.776-1.681 1.794-2.145 3.054-0.464 1.259-0.696 2.618-0.696 4.077 0 1.458 0.232 2.812 0.696 4.062s1.179 2.259 2.145 3.026 2.197 1.15 3.693 1.15zm19.204 2.557-6.647-21.818h3.522l4.716 16.704h0.228l4.659-16.704h3.579l4.602 16.648h0.228l4.716-16.648h3.522l-6.647 21.818h-3.296l-4.773-16.761h-0.34l-4.773 16.761h-3.296zm39.262 0v-29.091h3.352v10.739h0.284c0.246-0.379 0.587-0.862 1.023-1.449 0.445-0.597 1.079-1.127 1.903-1.591 0.834-0.474 1.96-0.71 3.381-0.71 1.837 0 3.456 0.459 4.858 1.378 1.401 0.918 2.495 2.22 3.281 3.906 0.786 1.685 1.179 3.674 1.179 5.966 0 2.31-0.393 4.313-1.179 6.008-0.786 1.686-1.875 2.993-3.267 3.921-1.392 0.918-2.997 1.378-4.815 1.378-1.402 0-2.524-0.232-3.367-0.696-0.843-0.474-1.491-1.009-1.946-1.606-0.454-0.606-0.805-1.108-1.051-1.505h-0.398v3.352h-3.238zm3.295-10.909c0 1.648 0.242 3.101 0.725 4.361 0.483 1.25 1.188 2.23 2.116 2.94 0.928 0.701 2.064 1.051 3.409 1.051 1.402 0 2.571-0.369 3.509-1.108 0.947-0.748 1.657-1.752 2.13-3.011 0.483-1.269 0.725-2.68 0.725-4.233 0-1.534-0.237-2.917-0.71-4.148-0.464-1.24-1.17-2.22-2.117-2.94-0.937-0.729-2.116-1.094-3.537-1.094-1.363 0-2.509 0.346-3.437 1.037-0.928 0.682-1.629 1.638-2.103 2.869-0.473 1.222-0.71 2.647-0.71 4.276zm27.514 11.42c-1.382 0-2.637-0.26-3.764-0.781-1.127-0.53-2.022-1.292-2.684-2.287-0.663-1.004-0.995-2.216-0.995-3.636 0-1.25 0.246-2.263 0.739-3.04 0.492-0.786 1.15-1.401 1.974-1.847 0.824-0.445 1.733-0.776 2.728-0.994 1.003-0.227 2.012-0.407 3.025-0.54 1.326-0.17 2.401-0.298 3.225-0.383 0.833-0.095 1.439-0.251 1.818-0.469 0.388-0.218 0.582-0.597 0.582-1.136v-0.114c0-1.401-0.383-2.49-1.15-3.267-0.758-0.776-1.909-1.165-3.452-1.165-1.601 0-2.855 0.351-3.764 1.051-0.909 0.701-1.549 1.449-1.918 2.245l-3.182-1.137c0.568-1.325 1.326-2.358 2.273-3.096 0.956-0.748 1.998-1.269 3.125-1.563 1.136-0.303 2.254-0.454 3.352-0.454 0.701 0 1.506 0.085 2.415 0.255 0.919 0.161 1.804 0.498 2.656 1.009 0.862 0.511 1.577 1.283 2.145 2.315s0.852 2.415 0.852 4.148v14.375h-3.352v-2.955h-0.17c-0.228 0.474-0.606 0.981-1.137 1.52-0.53 0.54-1.235 0.999-2.116 1.378s-1.956 0.568-3.225 0.568zm0.512-3.011c1.326 0 2.443-0.26 3.352-0.781 0.919-0.521 1.61-1.193 2.074-2.017 0.473-0.824 0.71-1.691 0.71-2.6v-3.068c-0.142 0.171-0.454 0.327-0.937 0.469-0.474 0.132-1.023 0.251-1.648 0.355-0.616 0.095-1.217 0.18-1.804 0.256-0.578 0.066-1.046 0.123-1.406 0.17-0.872 0.114-1.686 0.298-2.444 0.554-0.748 0.246-1.354 0.62-1.818 1.122-0.454 0.493-0.682 1.165-0.682 2.017 0 1.165 0.431 2.046 1.293 2.642 0.871 0.587 1.975 0.881 3.31 0.881zm25.096-19.318v2.841h-11.307v-2.841h11.307zm-8.012-5.227h3.353v20.795c0 0.947 0.137 1.657 0.411 2.131 0.285 0.464 0.644 0.776 1.08 0.937 0.445 0.152 0.914 0.227 1.406 0.227 0.37 0 0.673-0.018 0.909-0.056 0.237-0.048 0.426-0.086 0.569-0.114l0.681 3.011c-0.227 0.086-0.544 0.171-0.951 0.256-0.408 0.095-0.924 0.142-1.549 0.142-0.947 0-1.875-0.204-2.784-0.611-0.899-0.407-1.647-1.027-2.244-1.861-0.587-0.833-0.881-1.884-0.881-3.153v-21.704zm22.543 5.227v2.841h-11.307v-2.841h11.307zm-8.011-5.227h3.352v20.795c0 0.947 0.137 1.657 0.412 2.131 0.284 0.464 0.644 0.776 1.079 0.937 0.445 0.152 0.914 0.227 1.407 0.227 0.369 0 0.672-0.018 0.909-0.056 0.236-0.048 0.426-0.086 0.568-0.114l0.682 3.011c-0.228 0.086-0.545 0.171-0.952 0.256-0.407 0.095-0.923 0.142-1.548 0.142-0.947 0-1.875-0.204-2.784-0.611-0.9-0.407-1.648-1.027-2.245-1.861-0.587-0.833-0.88-1.884-0.88-3.153v-21.704zm21.967 27.5c-2.102 0-3.916-0.464-5.44-1.393-1.516-0.937-2.685-2.244-3.509-3.92-0.814-1.686-1.222-3.646-1.222-5.881 0-2.234 0.408-4.204 1.222-5.909 0.824-1.714 1.97-3.049 3.437-4.005 1.478-0.966 3.201-1.449 5.171-1.449 1.136 0 2.258 0.189 3.366 0.568s2.117 0.994 3.026 1.846c0.909 0.843 1.634 1.961 2.173 3.353 0.54 1.392 0.81 3.106 0.81 5.142v1.42h-16.818v-2.897h13.409c0-1.232-0.246-2.33-0.739-3.296-0.483-0.966-1.174-1.728-2.074-2.287-0.89-0.559-1.941-0.838-3.153-0.838-1.335 0-2.491 0.332-3.466 0.994-0.966 0.654-1.709 1.506-2.23 2.557s-0.781 2.178-0.781 3.381v1.932c0 1.647 0.284 3.044 0.852 4.19 0.578 1.136 1.378 2.003 2.401 2.599 1.022 0.588 2.211 0.881 3.565 0.881 0.881 0 1.676-0.123 2.386-0.369 0.72-0.256 1.34-0.635 1.861-1.136 0.521-0.512 0.923-1.146 1.207-1.904l3.239 0.909c-0.341 1.099-0.914 2.065-1.719 2.898-0.805 0.824-1.799 1.468-2.983 1.932-1.183 0.454-2.514 0.682-3.991 0.682zm14.133-0.455v-21.818h3.239v3.295h0.227c0.398-1.079 1.118-1.955 2.159-2.628 1.042-0.672 2.216-1.008 3.523-1.008 0.246 0 0.554 5e-3 0.923 0.014 0.37 0.01 0.649 0.024 0.838 0.043v3.409c-0.113-0.029-0.374-0.071-0.781-0.128-0.398-0.066-0.819-0.099-1.264-0.099-1.061 0-2.008 0.222-2.841 0.667-0.824 0.436-1.477 1.042-1.96 1.818-0.474 0.767-0.71 1.643-0.71 2.628v13.807h-3.353zm17.706 8.182c-0.568 0-1.074-0.048-1.52-0.142-0.445-0.085-0.752-0.171-0.923-0.256l0.852-2.954c0.815 0.208 1.535 0.284 2.16 0.227s1.178-0.336 1.661-0.838c0.493-0.493 0.943-1.293 1.35-2.401l0.625-1.704-8.068-21.932h3.636l6.023 17.386h0.227l6.023-17.386h3.636l-9.261 25c-0.417 1.127-0.933 2.059-1.549 2.798-0.615 0.748-1.33 1.302-2.144 1.662-0.805 0.36-1.714 0.54-2.728 0.54z" fill="#1A1A1A"/><circle cx="309" cy="416" r="10" fill="#DEDEDE" tb:tag="temperature"/><path d="m328.93 405.03v-3.125h21.818v3.125h-9.148v25.966h-3.522v-25.966h-9.148zm32.784 26.421c-2.102 0-3.916-0.464-5.44-1.393-1.516-0.937-2.685-2.244-3.509-3.92-0.814-1.686-1.222-3.646-1.222-5.881 0-2.234 0.408-4.204 1.222-5.909 0.824-1.714 1.97-3.049 3.438-4.005 1.477-0.966 3.2-1.449 5.17-1.449 1.136 0 2.259 0.189 3.366 0.568 1.108 0.379 2.117 0.994 3.026 1.846 0.909 0.843 1.634 1.961 2.173 3.353 0.54 1.392 0.81 3.106 0.81 5.142v1.42h-16.818v-2.897h13.409c0-1.232-0.246-2.33-0.739-3.296-0.483-0.966-1.174-1.728-2.074-2.287-0.89-0.559-1.941-0.838-3.153-0.838-1.335 0-2.491 0.332-3.466 0.994-0.966 0.654-1.709 1.506-2.23 2.557s-0.781 2.178-0.781 3.381v1.932c0 1.647 0.284 3.044 0.852 4.19 0.578 1.136 1.378 2.003 2.401 2.599 1.022 0.588 2.211 0.881 3.565 0.881 0.881 0 1.676-0.123 2.386-0.369 0.72-0.256 1.34-0.635 1.861-1.136 0.521-0.512 0.923-1.146 1.207-1.904l3.239 0.909c-0.341 1.099-0.914 2.065-1.719 2.898-0.805 0.824-1.799 1.468-2.983 1.932-1.183 0.454-2.514 0.682-3.991 0.682zm14.133-0.455v-21.818h3.239v3.409h0.284c0.455-1.165 1.189-2.069 2.202-2.713 1.013-0.654 2.23-0.98 3.65-0.98 1.44 0 2.638 0.326 3.594 0.98 0.966 0.644 1.719 1.548 2.259 2.713h0.227c0.559-1.127 1.397-2.022 2.514-2.685 1.118-0.672 2.458-1.008 4.02-1.008 1.951 0 3.546 0.611 4.787 1.832 1.241 1.212 1.861 3.101 1.861 5.668v14.602h-3.352v-14.602c0-1.61-0.441-2.761-1.322-3.452-0.88-0.691-1.917-1.037-3.11-1.037-1.534 0-2.723 0.464-3.566 1.392-0.842 0.919-1.264 2.083-1.264 3.494v14.205h-3.409v-14.943c0-1.241-0.402-2.24-1.207-2.997-0.805-0.767-1.842-1.151-3.111-1.151-0.871 0-1.686 0.232-2.443 0.696-0.748 0.464-1.354 1.108-1.818 1.932-0.455 0.814-0.682 1.757-0.682 2.827v13.636h-3.353zm34.766 8.182v-30h3.239v3.466h0.397c0.247-0.379 0.588-0.862 1.023-1.449 0.445-0.597 1.08-1.127 1.904-1.591 0.833-0.474 1.96-0.71 3.38-0.71 1.837 0 3.457 0.459 4.858 1.378 1.402 0.918 2.495 2.22 3.281 3.906 0.786 1.685 1.179 3.674 1.179 5.966 0 2.31-0.393 4.313-1.179 6.008-0.786 1.686-1.875 2.993-3.267 3.921-1.392 0.918-2.997 1.378-4.815 1.378-1.401 0-2.524-0.232-3.366-0.696-0.843-0.474-1.492-1.009-1.946-1.606-0.455-0.606-0.805-1.108-1.052-1.505h-0.284v11.534h-3.352zm3.296-19.091c0 1.648 0.241 3.101 0.724 4.361 0.483 1.25 1.188 2.23 2.116 2.94 0.928 0.701 2.065 1.051 3.41 1.051 1.401 0 2.571-0.369 3.508-1.108 0.947-0.748 1.657-1.752 2.131-3.011 0.483-1.269 0.724-2.68 0.724-4.233 0-1.534-0.237-2.917-0.71-4.148-0.464-1.24-1.17-2.22-2.117-2.94-0.937-0.729-2.116-1.094-3.536-1.094-1.364 0-2.51 0.346-3.438 1.037-0.928 0.682-1.629 1.638-2.102 2.869-0.474 1.222-0.71 2.647-0.71 4.276zm30.227 11.364c-2.102 0-3.916-0.464-5.441-1.393-1.515-0.937-2.684-2.244-3.508-3.92-0.814-1.686-1.222-3.646-1.222-5.881 0-2.234 0.408-4.204 1.222-5.909 0.824-1.714 1.97-3.049 3.437-4.005 1.478-0.966 3.201-1.449 5.171-1.449 1.136 0 2.258 0.189 3.366 0.568s2.117 0.994 3.026 1.846c0.909 0.843 1.633 1.961 2.173 3.353s0.81 3.106 0.81 5.142v1.42h-16.818v-2.897h13.409c0-1.232-0.246-2.33-0.739-3.296-0.483-0.966-1.174-1.728-2.074-2.287-0.89-0.559-1.941-0.838-3.153-0.838-1.335 0-2.491 0.332-3.466 0.994-0.966 0.654-1.709 1.506-2.23 2.557s-0.781 2.178-0.781 3.381v1.932c0 1.647 0.284 3.044 0.852 4.19 0.578 1.136 1.378 2.003 2.4 2.599 1.023 0.588 2.212 0.881 3.566 0.881 0.88 0 1.676-0.123 2.386-0.369 0.72-0.256 1.34-0.635 1.861-1.136 0.521-0.512 0.923-1.146 1.207-1.904l3.239 0.909c-0.341 1.099-0.914 2.065-1.719 2.898-0.805 0.824-1.799 1.468-2.983 1.932-1.183 0.454-2.514 0.682-3.991 0.682zm14.133-0.455v-21.818h3.239v3.295h0.227c0.398-1.079 1.118-1.955 2.159-2.628 1.042-0.672 2.216-1.008 3.523-1.008 0.246 0 0.554 5e-3 0.923 0.014 0.37 0.01 0.649 0.024 0.838 0.043v3.409c-0.113-0.029-0.374-0.071-0.781-0.128-0.398-0.066-0.819-0.099-1.264-0.099-1.061 0-2.008 0.222-2.841 0.667-0.824 0.436-1.477 1.042-1.96 1.818-0.474 0.767-0.71 1.643-0.71 2.628v13.807h-3.353zm21.304 0.511c-1.383 0-2.638-0.26-3.765-0.781-1.127-0.53-2.021-1.292-2.684-2.287-0.663-1.004-0.995-2.216-0.995-3.636 0-1.25 0.247-2.263 0.739-3.04 0.492-0.786 1.151-1.401 1.974-1.847 0.824-0.445 1.733-0.776 2.728-0.994 1.004-0.227 2.012-0.407 3.025-0.54 1.326-0.17 2.401-0.298 3.225-0.383 0.833-0.095 1.439-0.251 1.818-0.469 0.388-0.218 0.582-0.597 0.582-1.136v-0.114c0-1.401-0.383-2.49-1.15-3.267-0.758-0.776-1.908-1.165-3.452-1.165-1.6 0-2.855 0.351-3.764 1.051-0.909 0.701-1.548 1.449-1.918 2.245l-3.182-1.137c0.569-1.325 1.326-2.358 2.273-3.096 0.957-0.748 1.998-1.269 3.125-1.563 1.136-0.303 2.254-0.454 3.352-0.454 0.701 0 1.506 0.085 2.415 0.255 0.919 0.161 1.804 0.498 2.656 1.009 0.862 0.511 1.577 1.283 2.145 2.315s0.853 2.415 0.853 4.148v14.375h-3.353v-2.955h-0.17c-0.227 0.474-0.606 0.981-1.137 1.52-0.53 0.54-1.235 0.999-2.116 1.378s-1.955 0.568-3.224 0.568zm0.511-3.011c1.326 0 2.443-0.26 3.352-0.781 0.919-0.521 1.61-1.193 2.074-2.017 0.474-0.824 0.71-1.691 0.71-2.6v-3.068c-0.142 0.171-0.454 0.327-0.937 0.469-0.474 0.132-1.023 0.251-1.648 0.355-0.615 0.095-1.217 0.18-1.804 0.256-0.578 0.066-1.046 0.123-1.406 0.17-0.871 0.114-1.686 0.298-2.443 0.554-0.748 0.246-1.355 0.62-1.819 1.122-0.454 0.493-0.681 1.165-0.681 2.017 0 1.165 0.431 2.046 1.292 2.642 0.871 0.587 1.975 0.881 3.31 0.881zm25.096-19.318v2.841h-11.307v-2.841h11.307zm-8.012-5.227h3.353v20.795c0 0.947 0.137 1.657 0.412 2.131 0.284 0.464 0.644 0.776 1.079 0.937 0.445 0.152 0.914 0.227 1.406 0.227 0.37 0 0.673-0.018 0.91-0.056 0.236-0.048 0.426-0.086 0.568-0.114l0.682 3.011c-0.228 0.086-0.545 0.171-0.952 0.256-0.407 0.095-0.923 0.142-1.548 0.142-0.947 0-1.875-0.204-2.785-0.611-0.899-0.407-1.647-1.027-2.244-1.861-0.587-0.833-0.881-1.884-0.881-3.153v-21.704zm26.804 18.125v-12.898h3.353v21.818h-3.353v-3.693h-0.227c-0.511 1.108-1.307 2.05-2.386 2.827-1.08 0.767-2.443 1.15-4.091 1.15-1.364 0-2.576-0.298-3.636-0.895-1.061-0.606-1.894-1.515-2.5-2.727-0.607-1.222-0.91-2.76-0.91-4.617v-13.863h3.353v13.636c0 1.591 0.445 2.86 1.335 3.807 0.9 0.947 2.045 1.42 3.437 1.42 0.834 0 1.681-0.213 2.543-0.639 0.871-0.426 1.6-1.079 2.188-1.96 0.596-0.881 0.894-2.003 0.894-3.366zm9.493 8.92v-21.818h3.238v3.295h0.228c0.397-1.079 1.117-1.955 2.159-2.628 1.041-0.672 2.216-1.008 3.522-1.008 0.247 0 0.554 5e-3 0.924 0.014 0.369 0.01 0.648 0.024 0.838 0.043v3.409c-0.114-0.029-0.374-0.071-0.782-0.128-0.397-0.066-0.819-0.099-1.264-0.099-1.06 0-2.007 0.222-2.841 0.667-0.824 0.436-1.477 1.042-1.96 1.818-0.473 0.767-0.71 1.643-0.71 2.628v13.807h-3.352zm23.366 0.455c-2.102 0-3.916-0.464-5.44-1.393-1.515-0.937-2.685-2.244-3.509-3.92-0.814-1.686-1.221-3.646-1.221-5.881 0-2.234 0.407-4.204 1.221-5.909 0.824-1.714 1.97-3.049 3.438-4.005 1.477-0.966 3.2-1.449 5.17-1.449 1.137 0 2.259 0.189 3.367 0.568s2.116 0.994 3.025 1.846c0.909 0.843 1.634 1.961 2.174 3.353 0.539 1.392 0.809 3.106 0.809 5.142v1.42h-16.818v-2.897h13.409c0-1.232-0.246-2.33-0.739-3.296-0.482-0.966-1.174-1.728-2.073-2.287-0.891-0.559-1.942-0.838-3.154-0.838-1.335 0-2.49 0.332-3.466 0.994-0.966 0.654-1.709 1.506-2.23 2.557s-0.781 2.178-0.781 3.381v1.932c0 1.647 0.284 3.044 0.852 4.19 0.578 1.136 1.378 2.003 2.401 2.599 1.022 0.588 2.211 0.881 3.565 0.881 0.881 0 1.676-0.123 2.386-0.369 0.72-0.256 1.34-0.635 1.861-1.136 0.521-0.512 0.924-1.146 1.208-1.904l3.238 0.909c-0.341 1.099-0.914 2.065-1.718 2.898-0.805 0.824-1.8 1.468-2.983 1.932-1.184 0.454-2.515 0.682-3.992 0.682z" fill="#1A1A1A"/><path d="m201.79-2e-4s-201.79 0-201.79 100.5v492.54c0 3.9768 5.3727 6.9604 12 6.9604h576c6.627 0 12-2.9838 12-6.9604v-492.54c0-100.5-198.21-100.5-198.21-100.5h-101.79zm201.21 121.8c-3.8661 0-6.9996 1.8804-6.9996 4.2v450.6c0 2.3196 3.1341 4.2 6.9996 4.2h43.998c3.8661 0 6.9996-1.8804 6.9996-4.2v-450.6c0-2.3196-3.1341-4.2-6.9996-4.2z" fill-opacity="0" tb:tag="clickArea"/><g fill="#d12730" style="display: none;" tb:tag="critical">
+  <rect width="84" height="84" rx="4" fill="#fff" style=""/>
+  <rect width="84" height="84" rx="4" style=""/>
+  <rect x="2" y="2" width="80" height="80" rx="2" stroke="#000" stroke-opacity=".87" stroke-width="4" style=""/>
+  <path d="m44.559 27.562-0.4688 20.059h-4.0234l-0.4883-20.059zm-5.1172 26.211c0-0.7161 0.2344-1.3151 0.7031-1.7968 0.4818-0.4948 1.1459-0.7422 1.9922-0.7422 0.8334 0 1.4909 0.2474 1.9727 0.7422 0.4817 0.4817 0.7226 1.0807 0.7226 1.7968 0 0.6901-0.2409 1.2826-0.7226 1.7774-0.4818 0.4818-1.1393 0.7226-1.9727 0.7226-0.8463 0-1.5104-0.2408-1.9922-0.7226-0.4687-0.4948-0.7031-1.0873-0.7031-1.7774z" fill="#000" fill-opacity=".87" style=""/>
+ </g><g fill="#faa405" style="display: none;" tb:tag="warning">
+  <path d="m35.955 2.2112c1.4741-2.9482 5.6813-2.9482 7.1554 0l35.528 71.056c1.3298 2.6596-0.6042 5.7889-3.5777 5.7889h-71.056c-2.9735 0-4.9075-3.1292-3.5777-5.7889z" fill="#fff" style=""/>
+  <path d="m35.955 2.2112c1.4741-2.9482 5.6813-2.9482 7.1554 0l35.528 71.056c1.3298 2.6596-0.6042 5.7889-3.5777 5.7889h-71.056c-2.9735 0-4.9075-3.1292-3.5777-5.7889z" style=""/>
+  <path d="m37.72 3.1061c0.7371-1.4741 2.8407-1.4741 3.5778-1e-5l35.528 71.056c0.6649 1.3298-0.3021 2.8944-1.7888 2.8944h-71.056c-1.4868 0-2.4538-1.5646-1.7889-2.8944z" stroke="#000" stroke-opacity=".87" stroke-width="4" style=""/>
+  <path d="m42.092 32.618-0.4688 20.059h-4.0234l-0.4883-20.059zm-5.1172 26.211c0-0.7161 0.2344-1.3151 0.7031-1.7968 0.4818-0.4948 1.1459-0.7422 1.9922-0.7422 0.8334 0 1.4909 0.2474 1.9727 0.7422 0.4817 0.4817 0.7226 1.0807 0.7226 1.7968 0 0.6901-0.2409 1.2826-0.7226 1.7774-0.4818 0.4818-1.1393 0.7226-1.9727 0.7226-0.8463 0-1.5104-0.2408-1.9922-0.7226-0.4687-0.4948-0.7031-1.0873-0.7031-1.7774z" fill="#000" fill-opacity=".87" style=""/>
+ </g>
+</svg>
