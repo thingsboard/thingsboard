@@ -137,7 +137,6 @@ export class EntityDebugSettingsButtonComponent implements ControlValueAccessor 
         },
         {},
         {}, {}, true);
-      debugStrategyPopover.tbComponentRef.instance.popover = debugStrategyPopover;
       debugStrategyPopover.tbComponentRef.instance.onSettingsApplied.subscribe((settings: EntityDebugSettings) => {
         this.debugSettingsFormGroup.patchValue(settings);
         this.cd.markForCheck();
