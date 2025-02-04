@@ -25,6 +25,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import {
   BehaviorSubject,
   forkJoin,
+  merge,
   Observable,
   Observer,
   of,
@@ -33,7 +34,7 @@ import {
   switchMap,
   throwError
 } from 'rxjs';
-import { catchError, delay, map, share, take } from 'rxjs/operators';
+import { catchError, debounceTime, delay, map, share, take } from 'rxjs/operators';
 import { AfterViewInit, ChangeDetectorRef, Directive, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import {
   DataToValueSettings,
@@ -657,8 +658,15 @@ export class DashboardStateWithParamsGetter<V> extends ValueGetter<V> {
     if (this.simulated) {
       return of({id: 'default', params: {}});
     } else {
-      return this.ctx.stateController.dashboardCtrl.dashboardCtx.stateId.pipe(
-        map(id => ({id, params: deepClone(this.ctx.stateController.getStateParams())}))
+      return merge(
+        this.ctx.stateController.dashboardCtrl.dashboardCtx.stateId,
+        this.ctx.stateController.dashboardCtrl.dashboardCtx.stateChanged
+      ).pipe(
+        debounceTime(10),
+        map(() => ({
+          id: this.ctx.stateController.getStateId(),
+          params: deepClone(this.ctx.stateController.getStateParams())
+        }))
       );
     }
   }
