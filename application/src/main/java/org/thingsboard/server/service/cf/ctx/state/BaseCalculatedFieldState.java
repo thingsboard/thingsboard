@@ -15,13 +15,14 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
-import lombok.NoArgsConstructor;
+import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@NoArgsConstructor
+@Data
 public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
     protected List<String> requiredArguments;
@@ -32,14 +33,9 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
         this.arguments = new HashMap<>();
     }
 
-    @Override
-    public Map<String, ArgumentEntry> getArguments() {
-        return arguments;
-    }
-
-    @Override
-    public List<String> getRequiredArguments() {
-        return requiredArguments;
+    public BaseCalculatedFieldState() {
+        this.requiredArguments = new ArrayList<>();
+        this.arguments = new HashMap<>();
     }
 
     @Override
