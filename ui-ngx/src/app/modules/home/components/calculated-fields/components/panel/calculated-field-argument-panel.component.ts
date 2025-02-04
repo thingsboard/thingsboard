@@ -25,7 +25,8 @@ import {
   ArgumentType,
   ArgumentTypeTranslations,
   CalculatedFieldArgumentValue,
-  CalculatedFieldType
+  CalculatedFieldType,
+  getCalculatedFieldCurrentEntityFilter
 } from '@shared/models/calculated-field.models';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -110,7 +111,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
 
   ngOnInit(): void {
     this.argumentFormGroup.patchValue(this.argument, {emitEvent: false});
-    this.currentEntityFilter = this.getCurrentEntityFilter();
+    this.currentEntityFilter = getCalculatedFieldCurrentEntityFilter(this.entityName, this.entityId);
     this.updateEntityFilter(this.argument.refEntityId?.entityType, true);
     this.toggleByEntityKeyType(this.argument.refEntityKey?.type);
     this.setInitialEntityKeyType();
@@ -167,26 +168,6 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
     }
     this.entityFilter = entityFilter;
     this.cd.markForCheck();
-  }
-
-  private getCurrentEntityFilter(): EntityFilter {
-    switch (this.entityId.entityType) {
-      case EntityType.ASSET_PROFILE:
-        return {
-          assetTypes: [this.entityName],
-          type: AliasFilterType.assetType
-        };
-      case EntityType.DEVICE_PROFILE:
-        return {
-          deviceTypes: [this.entityName],
-          type: AliasFilterType.deviceType
-        };
-      default:
-        return {
-          type: AliasFilterType.singleEntity,
-          singleEntity: this.entityId,
-        };
-    }
   }
 
   private observeEntityFilterChanges(): void {

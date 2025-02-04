@@ -87,19 +87,24 @@
                                 (click)="manageArgument($event, button, $index)"
                                 [matTooltip]="'action.edit' | translate"
                                 matTooltipPosition="above">
-                            <mat-icon class="opacity-55">edit</mat-icon>
-                            @if (argumentsFormArray.dirty
-                            && group.get('refEntityKey').get('type').value === ArgumentType.Rolling
-                            && calculatedFieldType() === CalculatedFieldType.SIMPLE) {
-                              <tb-error class="edit-hint absolute right-0 top-0" [error]="'*'"/>
-                            }
+                            <mat-icon
+                              [matBadgeHidden]="!(argumentsFormArray.dirty
+                                  && group.get('refEntityKey').get('type').value === ArgumentType.Rolling
+                                  && calculatedFieldType() === CalculatedFieldType.SIMPLE)"
+                              matBadgeColor="warn"
+                              matBadgeSize="small"
+                              matBadge="!"
+                              class="field-action"
+                            >
+                              edit
+                            </mat-icon>
                         </button>
                         <button type="button"
                                 mat-icon-button
                                 (click)="onDelete($index)"
                                 [matTooltip]="'action.delete' | translate"
                                 matTooltipPosition="above">
-                            <mat-icon class="opacity-55">delete</mat-icon>
+                            <mat-icon class="field-action">delete</mat-icon>
                         </button>
                     </div>
                 </div>

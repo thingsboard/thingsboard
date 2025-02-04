@@ -20,6 +20,7 @@ import { CalculatedFieldId } from '@shared/models/id/calculated-field-id';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityType } from '@shared/models/entity-type.models';
+import { AliasFilterType } from '@shared/models/alias.models';
 
 export interface CalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasTenantId {
   debugSettings?: EntityDebugSettings;
@@ -133,3 +134,23 @@ export const ArgumentEntityTypeParamsMap =new Map<ArgumentEntityType, ArgumentEn
   [ArgumentEntityType.Asset, { title: 'calculated-fields.asset-name', entityType: EntityType.ASSET }],
   [ArgumentEntityType.Customer, { title: 'calculated-fields.customer-name', entityType: EntityType.CUSTOMER }],
 ])
+
+export const getCalculatedFieldCurrentEntityFilter = (entityName: string, entityId: EntityId) => {
+  switch (entityId.entityType) {
+    case EntityType.ASSET_PROFILE:
+      return {
+        assetTypes: [entityName],
+        type: AliasFilterType.assetType
+      };
+    case EntityType.DEVICE_PROFILE:
+      return {
+        deviceTypes: [entityName],
+        type: AliasFilterType.deviceType
+      };
+    default:
+      return {
+        type: AliasFilterType.singleEntity,
+        singleEntity: entityId,
+      };
+  }
+}
