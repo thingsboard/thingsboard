@@ -119,7 +119,11 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     public void onStateRestoreMsg(CalculatedFieldStateRestoreMsg msg) {
-        if (calculatedFields.containsKey(msg.getId().cfId())) {
+        var cfId = msg.getId().cfId();
+        var calculatedField = calculatedFields.get(cfId);
+
+        if (calculatedField != null) {
+            msg.getState().setRequiredArguments(calculatedField.getArgNames());
             getOrCreateActor(msg.getId().entityId()).tell(msg);
         } else {
             cfExecService.deleteStateFromStorage(msg.getId(), msg.getCallback());
