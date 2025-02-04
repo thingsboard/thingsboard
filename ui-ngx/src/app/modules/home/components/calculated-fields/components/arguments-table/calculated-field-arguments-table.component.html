@@ -80,7 +80,7 @@
                             </mat-chip>
                         </mat-chip-listbox>
                     </ng-container>
-                    <div class="flex">
+                    <div class="tb-form-table-row-cell-buttons flex">
                         <button type="button"
                                 mat-icon-button
                                 #button
@@ -93,8 +93,7 @@
                                   && calculatedFieldType() === CalculatedFieldType.SIMPLE)"
                               matBadgeColor="warn"
                               matBadgeSize="small"
-                              matBadge="!"
-                              class="field-action"
+                              matBadge="*"
                             >
                               edit
                             </mat-icon>
@@ -104,7 +103,7 @@
                                 (click)="onDelete($index)"
                                 [matTooltip]="'action.delete' | translate"
                                 matTooltipPosition="above">
-                            <mat-icon class="field-action">delete</mat-icon>
+                            <mat-icon>delete</mat-icon>
                         </button>
                     </div>
                 </div>
