@@ -31,15 +31,11 @@ public interface CalculatedFieldCache {
 
     List<CalculatedField> getCalculatedFieldsByEntityId(EntityId entityId);
 
-    List<CalculatedFieldLink> getCalculatedFieldLinks(CalculatedFieldId calculatedFieldId);
-
     List<CalculatedFieldLink> getCalculatedFieldLinksByEntityId(EntityId entityId);
 
     CalculatedFieldCtx getCalculatedFieldCtx(CalculatedFieldId calculatedFieldId);
 
     List<CalculatedFieldCtx> getCalculatedFieldCtxsByEntityId(EntityId entityId);
-
-    Set<EntityId> getEntitiesByProfile(TenantId tenantId, EntityId entityId);
 
     void addCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 

@@ -277,48 +277,6 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     @Override
     protected Map<TopicPartitionInfo, List<ListenableFuture<?>>> onAddedPartitions(Set<TopicPartitionInfo> addedPartitions) {
         var result = new HashMap<TopicPartitionInfo, List<ListenableFuture<?>>>();
-//        PageDataIterable<CalculatedField> cfs = new PageDataIterable<>(calculatedFieldService::findAllCalculatedFields, initFetchPackSize);
-//        Map<TopicPartitionInfo, List<CalculatedFieldEntityCtxId>> tpiTargetEntityMap = new HashMap<>();
-//
-//        for (CalculatedField cf : cfs) {
-//
-//            Consumer<EntityId> resolvePartition = entityId -> {
-//                TopicPartitionInfo tpi;
-//                try {
-//                    tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, cf.getTenantId(), entityId);
-//                    if (addedPartitions.contains(tpi) && states.keySet().stream().noneMatch(ctxId -> ctxId.cfId().equals(cf.getId()))) {
-//                        tpiTargetEntityMap.computeIfAbsent(tpi, k -> new ArrayList<>()).add(new CalculatedFieldEntityCtxId(cf.getId(), entityId));
-//                    }
-//                } catch (Exception e) {
-//                    log.warn("Failed to resolve partition for CalculatedFieldEntityCtxId: entityId=[{}], tenantId=[{}]. Reason: {}",
-//                            entityId, cf.getTenantId(), e.getMessage());
-//                }
-//            };
-//
-//            EntityId cfEntityId = cf.getEntityId();
-//            if (isProfileEntity(cfEntityId)) {
-//                calculatedFieldCache.getEntitiesByProfile(cf.getTenantId(), cfEntityId).forEach(resolvePartition);
-//            } else {
-//                resolvePartition.accept(cfEntityId);
-//            }
-//        }
-//
-//        for (var entry : tpiTargetEntityMap.entrySet()) {
-//            for (List<CalculatedFieldEntityCtxId> partition : Lists.partition(entry.getValue(), 1000)) {
-//                log.info("[{}] Submit task for CalculatedFields: {}", entry.getKey(), partition.size());
-//                var future = calculatedFieldExecutor.submit(() -> {
-//                    try {
-//                        for (CalculatedFieldEntityCtxId ctxId : partition) {
-//                            restoreState(ctxId.cfId(), ctxId.entityId());
-//                        }
-//                    } catch (Throwable t) {
-//                        log.error("Unexpected exception while restoring CalculatedField states", t);
-//                        throw t;
-//                    }
-//                });
-//                result.computeIfAbsent(entry.getKey(), k -> new ArrayList<>()).add(future);
-//            }
-//        }
         return result;
     }
 
@@ -330,89 +288,6 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     private void cleanupEntity(CalculatedFieldId calculatedFieldId) {
         states.keySet().removeIf(ctxId -> ctxId.cfId().equals(calculatedFieldId));
     }
-
-//    @Override
-//    public void onEntityUpdateMsg(CalculatedFieldEntityUpdateMsgProto proto, TbCallback callback) {
-//        try {
-//            TenantId tenantId = TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
-//            EntityId entityId = EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
-//
-//            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tenantId, entityId);
-//            if (tpi.isMyPartition()) {
-//                log.info("Received CalculatedFieldEntityUpdateMsgProto for processing: tenantId=[{}], entityId=[{}]", tenantId, entityId);
-//                if (proto.getDeleted()) {
-//                    log.info("Executing CalculatedFieldEntityUpdateMsgProto msg: entity deleted from profile, tenantId=[{}], entityId=[{}]", tenantId, entityId);
-//
-//                    EntityId oldProfileId = EntityIdFactory.getByTypeAndUuid(proto.getEntityProfileType(), new UUID(proto.getOldProfileIdMSB(), proto.getOldProfileIdLSB()));
-//                    calculatedFieldCache.getCalculatedFieldsByEntityId(entityId).forEach(cf -> clearState(cf.getId(), entityId));
-//                    calculatedFieldCache.getCalculatedFieldsByEntityId(oldProfileId).forEach(cf -> clearState(cf.getId(), entityId));
-//                }
-//                if (proto.getAdded()) {
-//                    log.info("Executing CalculatedFieldEntityUpdateMsgProto msg: entity added to profile, tenantId=[{}], entityId=[{}]", tenantId, entityId);
-//
-//                    EntityId newProfileId = EntityIdFactory.getByTypeAndUuid(proto.getEntityProfileType(), new UUID(proto.getNewProfileIdMSB(), proto.getNewProfileIdLSB()));
-//                    initializeStateForEntityByProfile(entityId, newProfileId, callback);
-//                }
-//                if (proto.getUpdated()) {
-//                    log.info("Executing CalculatedFieldEntityUpdateMsgProto msg: entity changed the profile, tenantId=[{}], entityId=[{}]", tenantId, entityId);
-//
-//                    EntityId oldProfileId = EntityIdFactory.getByTypeAndUuid(proto.getEntityProfileType(), new UUID(proto.getOldProfileIdMSB(), proto.getOldProfileIdLSB()));
-//                    EntityId newProfileId = EntityIdFactory.getByTypeAndUuid(proto.getEntityProfileType(), new UUID(proto.getNewProfileIdMSB(), proto.getNewProfileIdLSB()));
-//
-//                    calculatedFieldCache.getCalculatedFieldsByEntityId(oldProfileId).forEach(cf -> clearState(cf.getId(), entityId));
-//                    initializeStateForEntityByProfile(entityId, newProfileId, callback);
-//                }
-//            } else {
-//                clusterService.pushNotificationToCalculatedFields(tenantId, entityId, ToCalculatedFieldNotificationMsg.newBuilder().setEntityUpdateMsg(proto).build(), null);
-//            }
-//        } catch (Exception e) {
-//            log.trace("Failed to process entity update msg: [{}]", proto, e);
-//        }
-//    }
-
-    private void clearState(CalculatedFieldId calculatedFieldId, EntityId entityId) {
-        log.warn("Executing clearState, calculatedFieldId=[{}], entityId=[{}]", calculatedFieldId, entityId);
-    }
-
-    private void initializeStateForEntityByProfile(EntityId entityId, EntityId profileId, TbCallback callback) {
-        calculatedFieldCache.getCalculatedFieldsByEntityId(profileId).stream()
-                .map(cf -> calculatedFieldCache.getCalculatedFieldCtx(cf.getId()))
-                .forEach(cfCtx -> initializeStateForEntity(cfCtx, entityId, callback));
-    }
-
-    private void initializeStateForEntity(CalculatedFieldCtx calculatedFieldCtx, EntityId entityId, TbCallback callback) {
-        initializeStateForEntity(calculatedFieldCtx, entityId, new HashMap<>(), callback);
-    }
-
-    private void initializeStateForEntity(CalculatedFieldCtx calculatedFieldCtx, EntityId entityId, Map<String, ArgumentEntry> commonArguments, TbCallback callback) {
-        Map<String, ArgumentEntry> argumentValues = new HashMap<>(commonArguments);
-        List<ListenableFuture<ArgumentEntry>> futures = new ArrayList<>();
-
-        calculatedFieldCtx.getArguments().forEach((key, argument) -> {
-            if (!commonArguments.containsKey(key)) {
-                futures.add(Futures.transform(fetchArgumentValue(calculatedFieldCtx.getTenantId(), entityId, argument),
-                        result -> {
-                            argumentValues.put(key, result);
-                            return result;
-                        }, calculatedFieldCallbackExecutor));
-            }
-        });
-
-        Futures.addCallback(Futures.allAsList(futures), new FutureCallback<>() {
-            @Override
-            public void onSuccess(List<ArgumentEntry> results) {
-//                updateOrInitializeState(calculatedFieldCtx, entityId, argumentValues, new ArrayList<>());
-                callback.onSuccess();
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                log.error("Failed to initialize state for entity: [{}]", entityId, t);
-                callback.onFailure(t);
-            }
-        }, calculatedFieldCallbackExecutor);
-    }
-
 
     @Override
     public void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, CalculatedFieldResult calculatedFieldResult, List<CalculatedFieldId> cfIds, TbCallback callback) {

@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -384,6 +385,13 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         log.trace("Executing findTenantDeviceIdPairs, pageLink [{}]", pageLink);
         validatePageLink(pageLink);
         return deviceDao.findDeviceIdInfos(pageLink);
+    }
+
+    @Override
+    public PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(PageLink pageLink) {
+        log.trace("Executing findProfileEntityIdInfos, pageLink [{}]", pageLink);
+        validatePageLink(pageLink);
+        return deviceDao.findProfileEntityIdInfos(pageLink);
     }
 
     @Override

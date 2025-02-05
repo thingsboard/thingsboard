@@ -26,14 +26,11 @@ import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldLinkInitMsg;
@@ -42,6 +39,7 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
 import org.thingsboard.server.service.cf.CalculatedFieldExecutionService;
+import org.thingsboard.server.service.cf.cache.CalculatedFieldEntityProfileCache;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
@@ -50,7 +48,6 @@ import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -69,19 +66,19 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private final Map<CalculatedFieldId, CalculatedFieldCtx> calculatedFields = new HashMap<>();
     private final Map<EntityId, List<CalculatedFieldCtx>> entityIdCalculatedFields = new ConcurrentHashMap<>();
     private final ConcurrentMap<EntityId, List<CalculatedFieldLink>> entityIdCalculatedFieldLinks = new ConcurrentHashMap<>();
-    private final ConcurrentMap<EntityId, Set<EntityId>> profileEntities = new ConcurrentHashMap<>();
 
     private final CalculatedFieldExecutionService cfExecService;
+    private final CalculatedFieldEntityProfileCache cfEntityCache;
     private final CalculatedFieldService cfDaoService;
     private final TbAssetProfileCache assetProfileCache;
     private final TbDeviceProfileCache deviceProfileCache;
 
     protected TbActorCtx ctx;
     final TenantId tenantId;
-    private final static int initFetchPackSize = 1024;
 
     CalculatedFieldManagerMessageProcessor(ActorSystemContext systemContext, TenantId tenantId) {
         super(systemContext);
+        this.cfEntityCache = systemContext.getCalculatedFieldEntityProfileCache();
         this.cfExecService = systemContext.getCalculatedFieldExecutionService();
         this.cfDaoService = systemContext.getCalculatedFieldService();
         this.assetProfileCache = systemContext.getAssetProfileCache();
@@ -173,8 +170,10 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     private void onEntityCreated(ComponentLifecycleMsg msg, TbCallback callback) {
         EntityId entityId = msg.getEntityId();
+        EntityId profileId = getProfileId(tenantId, entityId);
+        cfEntityCache.add(tenantId, entityId, profileId);
         var entityIdFields = getCalculatedFieldsByEntityId(entityId);
-        var profileIdFields = getCalculatedFieldsByEntityId(getProfileId(tenantId, entityId));
+        var profileIdFields = getCalculatedFieldsByEntityId(profileId);
         var fieldsCount = entityIdFields.size() + profileIdFields.size();
         if (fieldsCount > 0) {
             MultipleTbCallback multiCallback = new MultipleTbCallback(fieldsCount, callback);
@@ -187,6 +186,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     private void onEntityUpdated(ComponentLifecycleMsg msg, TbCallback callback) {
         if (msg.getOldProfileId() != null && msg.getOldProfileId() != msg.getProfileId()) {
+            cfEntityCache.update(tenantId, msg.getOldProfileId(), msg.getProfileId(), msg.getEntityId());
             var oldProfileCfs = getCalculatedFieldsByEntityId(msg.getOldProfileId());
             var newProfileCfs = getCalculatedFieldsByEntityId(msg.getProfileId());
             var fieldsCount = oldProfileCfs.size() + newProfileCfs.size();
@@ -202,6 +202,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     private void onEntityDeleted(ComponentLifecycleMsg msg, TbCallback callback) {
+        cfEntityCache.evict(tenantId, msg.getEntityId());
         getOrCreateActor(msg.getEntityId()).tell(new CalculatedFieldEntityDeleteMsg(tenantId, msg.getEntityId(), callback));
     }
 
@@ -288,7 +289,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             EntityId entityId = cfCtx.getEntityId();
             EntityType entityType = cfCtx.getEntityId().getEntityType();
             if (isProfileEntity(entityType)) {
-                var entityIds = getEntitiesByProfile(entityId);
+                var entityIds = cfEntityCache.getMyEntityIdsByProfileId(tenantId, entityId);
                 if (!entityIds.isEmpty()) {
                     //TODO: no need to do this if we cache all created actors and know which one belong to us;
                     var multiCallback = new MultipleTbCallback(entityIds.size(), callback);
@@ -335,7 +336,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             var cf = calculatedFields.get(link.cfId());
             if (EntityType.DEVICE_PROFILE.equals(targetEntityType) || EntityType.ASSET_PROFILE.equals(targetEntityType)) {
                 // iterate over all entities that belong to profile and push the message for corresponding CF
-                var entityIds = getEntitiesByProfile(targetEntityId);
+                var entityIds = cfEntityCache.getMyEntityIdsByProfileId(tenantId, targetEntityId);
                 if (!entityIds.isEmpty()) {
                     MultipleTbCallback callback = new MultipleTbCallback(entityIds.size(), msg.getCallback());
                     var newMsg = new EntityCalculatedFieldLinkedTelemetryMsg(tenantId, sourceEntityId, proto.getMsg(), cf, callback);
@@ -392,34 +393,11 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         return result;
     }
 
-    private Set<EntityId> getEntitiesByProfile(EntityId entityProfileId) {
-        Set<EntityId> entities = profileEntities.get(entityProfileId);
-        if (entities == null) {
-            entities = switch (entityProfileId.getEntityType()) {
-                case ASSET_PROFILE -> profileEntities.computeIfAbsent(entityProfileId, profileId -> {
-                    Set<EntityId> assetIds = new HashSet<>();
-                    (new PageDataIterable<>(pageLink ->
-                            systemContext.getAssetService().findAssetIdsByTenantIdAndAssetProfileId(tenantId, (AssetProfileId) profileId, pageLink), initFetchPackSize)).forEach(assetIds::add);
-                    return assetIds;
-                });
-                case DEVICE_PROFILE -> profileEntities.computeIfAbsent(entityProfileId, profileId -> {
-                    Set<EntityId> deviceIds = new HashSet<>();
-                    (new PageDataIterable<>(pageLink ->
-                            systemContext.getDeviceService().findDeviceIdsByTenantIdAndDeviceProfileId(tenantId, (DeviceProfileId) entityProfileId, pageLink), initFetchPackSize)).forEach(deviceIds::add);
-                    return deviceIds;
-                });
-                default -> throw new IllegalArgumentException("Entity type should be ASSET_PROFILE or DEVICE_PROFILE.");
-            };
-        }
-        log.trace("[{}] Found entities by profile in cache: {}", entityProfileId, entities);
-        return entities;
-    }
-
     private void initCf(CalculatedFieldCtx cfCtx, TbCallback callback, boolean forceStateReinit) {
         EntityId entityId = cfCtx.getEntityId();
         EntityType entityType = cfCtx.getEntityId().getEntityType();
         if (isProfileEntity(entityType)) {
-            var entityIds = getEntitiesByProfile(entityId);
+            var entityIds = cfEntityCache.getMyEntityIdsByProfileId(tenantId, entityId);
             if (!entityIds.isEmpty()) {
                 var multiCallback = new MultipleTbCallback(entityIds.size(), callback);
                 entityIds.forEach(id -> initCfForEntity(id, cfCtx, forceStateReinit, multiCallback));
