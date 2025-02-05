@@ -34,10 +34,10 @@ import java.util.function.BiConsumer;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class LinkedHashMapRemoveEldest<K, V> extends LinkedHashMap<K, V> {
-    final long maxEntries;
+    final int maxEntries;
     final BiConsumer<K, V> removalConsumer;
 
-    public LinkedHashMapRemoveEldest(long maxEntries, BiConsumer<K, V> removalConsumer) {
+    public LinkedHashMapRemoveEldest(int maxEntries, BiConsumer<K, V> removalConsumer) {
         this.maxEntries = maxEntries;
         this.removalConsumer = removalConsumer;
     }
