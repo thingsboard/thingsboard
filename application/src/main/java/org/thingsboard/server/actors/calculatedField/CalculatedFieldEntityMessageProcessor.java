@@ -201,10 +201,16 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     @SneakyThrows
     private void processStateIfReady(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, CalculatedFieldState state, UUID tbMsgId, TbMsgType tbMsgType, TbCallback callback) {
         if (state.isReady() && ctx.isInitialized()) {
-            CalculatedFieldResult calculationResult = state.performCalculation(ctx).get(5, TimeUnit.SECONDS);
-            cfService.pushMsgToRuleEngine(tenantId, entityId, calculationResult, cfIdList, callback);
-            if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
-                systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, JacksonUtil.writeValueAsString(calculationResult.getResultMap()), null);
+            try {
+                CalculatedFieldResult calculationResult = state.performCalculation(ctx).get(5, TimeUnit.SECONDS);
+                cfService.pushMsgToRuleEngine(tenantId, entityId, calculationResult, cfIdList, callback);
+                if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
+                    systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, JacksonUtil.writeValueAsString(calculationResult.getResultMap()), null);
+                }
+            } catch (Exception e) {
+                if (DebugModeUtil.isDebugFailuresAvailable(ctx.getCalculatedField())) {
+                    systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, null, e);
+                }
             }
         } else {
             callback.onSuccess(); // State was updated but no calculation performed;
