@@ -59,8 +59,12 @@ public class RocksDBStateService implements CalculatedFieldStateService {
     }
 
     @Override
-    public void persistState(CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback) {
-        rocksDBService.put(toProto(stateId), toProto(stateId, state));
+    public void persistState(CalculatedFieldCtx ctx, CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback) {
+        CalculatedFieldStateProto stateProto = toProto(stateId, state);
+        long maxStateSizeInKBytes = ctx.getMaxStateSizeInKBytes();
+        if (maxStateSizeInKBytes <= 0 || stateProto.getSerializedSize() <= ctx.getMaxStateSizeInKBytes()) {
+            rocksDBService.put(toProto(stateId), toProto(stateId, state));
+        }
         callback.onSuccess();
     }
 

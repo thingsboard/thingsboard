@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
 import java.util.Collections;
@@ -57,6 +58,7 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     private final AssetService assetService;
     private final DeviceService deviceService;
     private final TbelInvokeService tbelInvokeService;
+    private final ApiLimitService apiLimitService;
 
     private final ConcurrentMap<CalculatedFieldId, CalculatedField> calculatedFields = new ConcurrentHashMap<>();
     private final ConcurrentMap<EntityId, List<CalculatedField>> entityIdCalculatedFields = new ConcurrentHashMap<>();
@@ -116,7 +118,7 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
                 if (ctx == null) {
                     CalculatedField calculatedField = getCalculatedField(calculatedFieldId);
                     if (calculatedField != null) {
-                        ctx = new CalculatedFieldCtx(calculatedField, tbelInvokeService);
+                        ctx = new CalculatedFieldCtx(calculatedField, tbelInvokeService, apiLimitService);
                         calculatedFieldsCtx.put(calculatedFieldId, ctx);
                         log.debug("[{}] Put calculated field ctx into cache: {}", calculatedFieldId, ctx);
                     }

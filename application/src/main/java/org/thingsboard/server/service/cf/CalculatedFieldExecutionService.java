@@ -43,7 +43,7 @@ public interface CalculatedFieldExecutionService {
 
     void pushRequestToQueue(AttributesSaveRequest request, List<Long> result, FutureCallback<Void> callback);
 
-    void pushStateToStorage(CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback);
+    void pushStateToStorage(CalculatedFieldCtx ctx, CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback);
 
     ListenableFuture<CalculatedFieldState> fetchStateFromDb(CalculatedFieldCtx ctx, EntityId entityId);
 

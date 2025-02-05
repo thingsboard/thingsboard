@@ -955,10 +955,10 @@ CREATE TABLE IF NOT EXISTS cf_debug_event (
     id uuid NOT NULL,
     tenant_id uuid NOT NULL ,
     ts bigint NOT NULL,
-    entity_id uuid NOT NULL,
+    entity_id uuid NOT NULL, -- calculated field id
     service_id varchar,
     cf_id uuid NOT NULL,
-    e_entity_id uuid,
+    e_entity_id uuid, -- target entity id
     e_entity_type varchar,
     e_msg_id uuid,
     e_msg_type varchar,
