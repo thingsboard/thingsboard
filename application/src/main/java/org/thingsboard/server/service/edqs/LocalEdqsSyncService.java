@@ -22,7 +22,7 @@ import org.thingsboard.server.edqs.util.EdqsRocksDb;
 
 @Service
 @RequiredArgsConstructor
-@ConditionalOnExpression("'${queue.edqs.sync_enabled:true}' == 'true' && '${queue.type:null}' == 'in-memory'")
+@ConditionalOnExpression("'${queue.edqs.sync.enabled:true}' == 'true' && '${queue.type:null}' == 'in-memory'")
 public class LocalEdqsSyncService extends EdqsSyncService {
 
     private final EdqsRocksDb db;

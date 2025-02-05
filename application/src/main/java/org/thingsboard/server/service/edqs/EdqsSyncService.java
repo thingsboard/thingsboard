@@ -17,6 +17,7 @@ package org.thingsboard.server.service.edqs;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
@@ -42,7 +43,6 @@ import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryEntry;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 import org.thingsboard.server.dao.sql.relation.RelationRepository;
 import org.thingsboard.server.dao.sqlts.latest.TsKvLatestRepository;
-import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.List;
 import java.util.Map;
@@ -58,10 +58,12 @@ import static org.thingsboard.server.common.data.ObjectType.edqsTenantTypes;
 @Slf4j
 public abstract class EdqsSyncService {
 
+    @Value("${queue.edqs.sync.entity_batch_size:10000}")
+    private int entityBatchSize;
+    @Value("${queue.edqs.sync.ts_batch_size:10000}")
+    private int tsBatchSize;
     @Autowired
     private EntityDaoRegistry entityDaoRegistry;
-    @Autowired
-    private TenantDao tenantDao;
     @Autowired
     private AttributesDao attributesDao;
     @Autowired
@@ -112,7 +114,7 @@ public abstract class EdqsSyncService {
             Dao<?> dao = entityDaoRegistry.getDao(entityType);
             UUID lastId = UUID.fromString("00000000-0000-0000-0000-000000000000");
             while (true) {
-                var batch = dao.findNextBatch(lastId, 10000);
+                var batch = dao.findNextBatch(lastId, entityBatchSize);
                 if (batch.isEmpty()) {
                     break;
                 }
@@ -140,7 +142,7 @@ public abstract class EdqsSyncService {
 
         while (true) {
             List<RelationEntity> batch = relationRepository.findNextBatch(lastFromEntityId, lastFromEntityType, lastRelationTypeGroup,
-                    lastRelationType, lastToEntityId, lastToEntityType, 10000);
+                    lastRelationType, lastToEntityId, lastToEntityType, entityBatchSize);
             if (batch.isEmpty()) {
                 break;
             }
@@ -189,7 +191,7 @@ public abstract class EdqsSyncService {
         int lastAttributeKey = Integer.MIN_VALUE;
 
         while (true) {
-            List<AttributeKvEntity> batch = attributesDao.findNextBatch(lastEntityId, lastAttributeType, lastAttributeKey, 10000);
+            List<AttributeKvEntity> batch = attributesDao.findNextBatch(lastEntityId, lastAttributeType, lastAttributeKey, tsBatchSize);
             if (batch.isEmpty()) {
                 break;
             }
@@ -228,7 +230,7 @@ public abstract class EdqsSyncService {
         int lastKey = Integer.MIN_VALUE;
 
         while (true) {
-            List<TsKvLatestEntity> batch = tsKvLatestRepository.findNextBatch(lastEntityId, lastKey, 10000);
+            List<TsKvLatestEntity> batch = tsKvLatestRepository.findNextBatch(lastEntityId, lastKey, tsBatchSize);
             if (batch.isEmpty()) {
                 break;
             }

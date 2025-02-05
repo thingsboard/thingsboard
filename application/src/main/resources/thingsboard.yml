@@ -1695,7 +1695,10 @@ queue:
         # Statistics printing interval for Housekeeper
         print-interval-ms: "${TB_HOUSEKEEPER_STATS_PRINT_INTERVAL_MS:60000}"
   edqs:
-    sync_enabled: "${TB_EDQS_SYNC_ENABLED:true}" # FIXME: disable by default before release
+    sync:
+      enabled: "${TB_EDQS_SYNC_ENABLED:true}" # Enable/disable EDQS synchronization with postgres db FIXME: disable by default before release
+      entity_batch_size: "${TB_EDQS_SYNC_ENTITY_BATCH_SIZE:10000}" # batch size of entities being synced with EDQS
+      ts_batch_size: "${TB_EDQS_SYNC_TS_BATCH_SIZE:10000}" # batch size of timeseries data being synced with EDQS
     api_enabled: "${TB_EDQS_API_ENABLED:true}" # FIXME: disable by default before release
     mode: "${TB_EDQS_MODE:local}" # local or remote
     local:

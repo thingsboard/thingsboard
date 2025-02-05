@@ -34,7 +34,7 @@ import static org.awaitility.Awaitility.await;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
-        "queue.edqs.sync_enabled=true",
+        "queue.edqs.sync.enabled=true",
         "queue.edqs.api_enabled=true",
         "queue.edqs.mode=local"
 })

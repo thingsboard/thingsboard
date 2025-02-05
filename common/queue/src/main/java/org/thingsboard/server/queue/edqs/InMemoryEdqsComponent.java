@@ -21,6 +21,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
-@ConditionalOnExpression("'${queue.edqs.sync_enabled:true}'=='true' && '${service.type:null}'=='monolith' && '${queue.edqs.mode:null}'=='local' && '${queue.type:null}'=='in-memory'")
+@ConditionalOnExpression("'${queue.edqs.sync.enabled:true}'=='true' && '${service.type:null}'=='monolith' && '${queue.edqs.mode:null}'=='local' && '${queue.type:null}'=='in-memory'")
 public @interface InMemoryEdqsComponent {
 }
