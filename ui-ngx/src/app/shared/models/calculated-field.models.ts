@@ -15,16 +15,15 @@
 ///
 
 import { EntityDebugSettings, HasTenantId, HasVersion } from '@shared/models/entity.models';
-import { BaseData } from '@shared/models/base-data';
+import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { CalculatedFieldId } from '@shared/models/id/calculated-field-id';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType } from '@shared/models/alias.models';
 
-export interface CalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasTenantId {
+export interface CalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasTenantId, ExportableEntity<CalculatedFieldId> {
   debugSettings?: EntityDebugSettings;
-  externalId?: string;
   configuration: CalculatedFieldConfiguration;
   type: CalculatedFieldType;
   entityId: EntityId;
@@ -46,6 +45,13 @@ export interface CalculatedFieldConfiguration {
   type: CalculatedFieldType;
   expression: string;
   arguments: Record<string, CalculatedFieldArgument>;
+  output: CalculatedFieldOutput;
+}
+
+export interface CalculatedFieldOutput {
+  type: OutputType;
+  name: string;
+  scope?: AttributeScope;
 }
 
 export enum ArgumentEntityType {
