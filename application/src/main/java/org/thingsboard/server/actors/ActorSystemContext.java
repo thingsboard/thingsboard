@@ -489,7 +489,7 @@ public class ActorSystemContext {
 
     @Value("${actors.session.max_concurrent_sessions_per_device:1}")
     @Getter
-    private int maxConcurrentSessionsPerDevice;
+    private long maxConcurrentSessionsPerDevice;
 
     @Value("${actors.session.sync.timeout:10000}")
     @Getter
