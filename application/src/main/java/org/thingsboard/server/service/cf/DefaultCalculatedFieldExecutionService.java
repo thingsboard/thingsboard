@@ -136,7 +136,6 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
         }
     };
 
-    private final CalculatedFieldService calculatedFieldService;
     private final TbAssetProfileCache assetProfileCache;
     private final TbDeviceProfileCache deviceProfileCache;
     private final CalculatedFieldCache calculatedFieldCache;

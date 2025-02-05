@@ -70,20 +70,25 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
 
     @AfterStartUp(order = AfterStartUp.CF_READ_CF_SERVICE)
     public void init() {
+        //TODO: move to separate place to avoid circular references with the ActorSystemContext (@Lazy for tsSubService)
         PageDataIterable<CalculatedField> cfs = new PageDataIterable<>(calculatedFieldService::findAllCalculatedFields, initFetchPackSize);
-        cfs.forEach(cf -> calculatedFields.putIfAbsent(cf.getId(), cf));
-        calculatedFields.values().forEach(cf ->
-                entityIdCalculatedFields.computeIfAbsent(cf.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(cf)
-        );
-        cfs.forEach(cf -> actorSystemContext.tell(new CalculatedFieldInitMsg(cf.getTenantId(), cf)));
+        cfs.forEach(cf -> {
+            calculatedFields.putIfAbsent(cf.getId(), cf);
+            actorSystemContext.tell(new CalculatedFieldInitMsg(cf.getTenantId(), cf));
+        });
+        calculatedFields.values().forEach(cf -> {
+            entityIdCalculatedFields.computeIfAbsent(cf.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(cf);
+        });
         PageDataIterable<CalculatedFieldLink> cfls = new PageDataIterable<>(calculatedFieldService::findAllCalculatedFieldLinks, initFetchPackSize);
-        cfls.forEach(link -> calculatedFieldLinks.computeIfAbsent(link.getCalculatedFieldId(), id -> new CopyOnWriteArrayList<>()).add(link));
+        cfls.forEach(link -> {
+            calculatedFieldLinks.computeIfAbsent(link.getCalculatedFieldId(), id -> new CopyOnWriteArrayList<>()).add(link);
+            actorSystemContext.tell(new CalculatedFieldLinkInitMsg(link.getTenantId(), link));
+        });
         calculatedFieldLinks.values().stream()
                 .flatMap(List::stream)
                 .forEach(link ->
                         entityIdCalculatedFieldLinks.computeIfAbsent(link.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(link)
                 );
-        cfls.forEach(link -> actorSystemContext.tell(new CalculatedFieldLinkInitMsg(link.getTenantId(), link)));
     }
 
     @Override

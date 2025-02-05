@@ -314,6 +314,7 @@ public class ActorSystemContext {
     @Getter
     private TbEntityViewService tbEntityViewService;
 
+    @Lazy
     @Autowired
     @Getter
     private TelemetrySubscriptionService tsSubService;

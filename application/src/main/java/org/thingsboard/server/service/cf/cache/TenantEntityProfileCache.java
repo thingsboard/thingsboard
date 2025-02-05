@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.cf.cache;
 
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.ArrayList;
@@ -88,6 +89,9 @@ public class TenantEntityProfileCache {
     public void add(EntityId profileId, EntityId entityId, Integer partition, boolean mine) {
         lock.writeLock().lock();
         try {
+            if(EntityType.DEVICE.equals(profileId.getEntityType())){
+                throw new RuntimeException("WTF?");
+            }
             if (mine) {
                 myEntities.computeIfAbsent(profileId, k -> new HashSet<>()).add(entityId);
             }

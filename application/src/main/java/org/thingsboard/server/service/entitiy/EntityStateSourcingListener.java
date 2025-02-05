@@ -178,11 +178,11 @@ public class EntityStateSourcingListener {
             }
             case TENANT_PROFILE -> {
                 TenantProfile tenantProfile = (TenantProfile) event.getEntity();
-                tbClusterService.onTenantProfileDelete(tenantProfile, null);
+                tbClusterService.onTenantProfileDelete(tenantProfile, TbQueueCallback.EMPTY);
             }
             case DEVICE -> {
                 Device device = (Device) event.getEntity();
-                tbClusterService.onDeviceDeleted(tenantId, device, null);
+                tbClusterService.onDeviceDeleted(tenantId, device, TbQueueCallback.EMPTY);
             }
             case DEVICE_PROFILE -> {
                 DeviceProfile deviceProfile = (DeviceProfile) event.getEntity();
@@ -190,11 +190,11 @@ public class EntityStateSourcingListener {
             }
             case TB_RESOURCE -> {
                 TbResourceInfo tbResource = (TbResourceInfo) event.getEntity();
-                tbClusterService.onResourceDeleted(tbResource, null);
+                tbClusterService.onResourceDeleted(tbResource, TbQueueCallback.EMPTY);
             }
             case CALCULATED_FIELD -> {
                 CalculatedField calculatedField = (CalculatedField) event.getEntity();
-                tbClusterService.onCalculatedFieldDeleted(calculatedField, null);
+                tbClusterService.onCalculatedFieldDeleted(calculatedField, TbQueueCallback.EMPTY);
             }
             default -> {
             }

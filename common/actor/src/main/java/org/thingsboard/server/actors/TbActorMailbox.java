@@ -159,7 +159,8 @@ public final class TbActorMailbox implements TbActorCtx {
                     stopReason = TbActorStopReason.INIT_FAILED;
                     destroy(updateException.getCause());
                 } catch (Throwable t) {
-                    log.debug("[{}] Failed to process message: {}", selfId, msg, t);
+                    //TODO: revert;
+                    log.error("[{}] Failed to process message: {}", selfId, msg, t);
                     ProcessFailureStrategy strategy = actor.onProcessFailure(msg, t);
                     if (strategy.isStop()) {
                         system.stop(selfId);
