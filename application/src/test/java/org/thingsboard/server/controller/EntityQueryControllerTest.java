@@ -817,26 +817,14 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
 
-        PageData<EntityData> data =
-                doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
-                });
-
-        Assert.assertEquals(1, data.getTotalElements());
-        Assert.assertEquals(1, data.getTotalPages());
-        Assert.assertEquals(1, data.getData().size());
+        findByQueryAndCheck(query, 1);
 
         // unnassign dashboard
         login(TENANT_EMAIL, TENANT_PASSWORD);
         doDelete("/api/customer/" + savedCustomer.getId().getId().toString() + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
 
         login(CUSTOMER_USER_EMAIL, CUSTOMER_USER_PASSWORD);
-        PageData<EntityData> dataAfterUnassign =
-                doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
-                });
-
-        Assert.assertEquals(0, dataAfterUnassign.getTotalElements());
-        Assert.assertEquals(0, dataAfterUnassign.getTotalPages());
-        Assert.assertEquals(0, dataAfterUnassign.getData().size());
+        findByQueryAndCheck(query, 0);
     }
 
     private void checkEntitiesByQuery(EntityDataQuery query, int expectedNumOfDevices, String expectedOwnerName, String expectedOwnerType) throws Exception {

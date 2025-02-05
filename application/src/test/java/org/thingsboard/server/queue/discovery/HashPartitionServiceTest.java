@@ -431,6 +431,7 @@ public class HashPartitionServiceTest {
         ReflectionTestUtils.setField(partitionService, "hashFunctionName", hashFunctionName);
         ReflectionTestUtils.setField(partitionService, "edgeTopic", "tb.edge");
         ReflectionTestUtils.setField(partitionService, "edgePartitions", 10);
+        ReflectionTestUtils.setField(partitionService, "edqsPartitions", 12);
         partitionService.init();
         partitionService.partitionsInit();
         return partitionService;
