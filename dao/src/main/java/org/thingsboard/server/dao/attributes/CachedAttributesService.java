@@ -266,7 +266,9 @@ public class CachedAttributesService implements AttributesService {
             String key = keyVersionPair.getFirst();
             Long version = keyVersionPair.getSecond();
             cache.evict(new AttributeCacheKey(scope, entityId, key), version);
-            edqsService.onDelete(tenantId, ObjectType.ATTRIBUTE_KV, new AttributeKv(entityId, scope, key, version));
+            if (version != null) {
+                edqsService.onDelete(tenantId, ObjectType.ATTRIBUTE_KV, new AttributeKv(entityId, scope, key, version));
+            }
             return key;
         }, cacheExecutor)).collect(Collectors.toList()));
     }
