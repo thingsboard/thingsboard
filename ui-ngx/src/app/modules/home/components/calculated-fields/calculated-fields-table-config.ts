@@ -37,6 +37,7 @@ import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { catchError, filter, switchMap } from 'rxjs/operators';
 import { CalculatedField, CalculatedFieldDialogData } from '@shared/models/calculated-field.models';
 import { CalculatedFieldDialogComponent } from './components/public-api';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 
 export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField, PageLink> {
 
@@ -55,7 +56,8 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
               private popoverService: TbPopoverService,
               private destroyRef: DestroyRef,
               private renderer: Renderer2,
-              public entityName: string
+              public entityName: string,
+              private importExportService: ImportExportService
   ) {
     super();
     this.tableTitle = this.translate.instant('entity.type-calculated-fields');
@@ -71,6 +73,20 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     this.deleteEntitiesTitle = count => this.translate.instant('calculated-fields.delete-multiple-title', {count});
     this.deleteEntitiesContent = () => this.translate.instant('calculated-fields.delete-multiple-text');
     this.deleteEntity = id => this.calculatedFieldsService.deleteCalculatedField(id.id);
+    this.addActionDescriptors = [
+      {
+        name: this.translate.instant('calculated-fields.create'),
+        icon: 'insert_drive_file',
+        isEnabled: () => true,
+        onAction: ($event) => this.getTable().addEntity($event)
+      },
+      {
+        name: this.translate.instant('calculated-fields.import'),
+        icon: 'file_upload',
+        isEnabled: () => true,
+        onAction: () => this.importCalculatedField()
+      }
+    ];
 
     this.defaultSortOrder = {property: 'name', direction: Direction.DESC};
 
@@ -82,6 +98,12 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     this.columns.push(expressionColumn);
 
     this.cellActionDescriptors.push(
+      {
+        name: this.translate.instant('action.export'),
+        icon: 'file_download',
+        isEnabled: () => true,
+        onAction: (event$, entity) => this.exportCalculatedField(event$, entity),
+      },
       {
         name: '',
         nameFunction: entity => this.getDebugConfigLabel(entity?.debugSettings),
@@ -164,6 +186,19 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       }
     })
       .afterClosed();
+  }
+
+  private exportCalculatedField($event: Event, calculatedField: CalculatedField): void {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.importExportService.exportCalculatedField(calculatedField.id.id);
+  }
+
+  private importCalculatedField(): void {
+    this.importExportService.importCalculatedField(this.entityId)
+      .pipe(filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.updateData());
   }
 
   private getDebugConfigLabel(debugSettings: EntityDebugSettings): string {
