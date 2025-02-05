@@ -98,6 +98,7 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
@@ -137,6 +138,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -178,6 +180,8 @@ public class ActorSystemContext {
     };
 
     private final ConcurrentMap<TenantId, DebugTbRateLimits> debugPerTenantLimits = new ConcurrentHashMap<>();
+
+    private final ConcurrentMap<TenantId, TbRateLimits> cfDebugPerTenantLimits = new ConcurrentHashMap<>();
 
     public ConcurrentMap<TenantId, DebugTbRateLimits> getDebugPerTenantLimits() {
         return debugPerTenantLimits;
@@ -441,6 +445,11 @@ public class ActorSystemContext {
     @Getter
     private TbCoreToTransportService tbCoreToTransportService;
 
+    @Lazy
+    @Autowired(required = false)
+    @Getter
+    private ApiLimitService apiLimitService;
+
     /**
      * The following Service will be null if we operate in tb-core mode
      */
@@ -625,6 +634,14 @@ public class ActorSystemContext {
     @Getter
     private String deviceStateNodeRateLimitConfig;
 
+    @Value("${actors.calculated_fields.debug_mode_rate_limits_per_tenant.enabled:true}")
+    @Getter
+    private boolean cfDebugPerTenantEnabled;
+
+    @Value("${actors.calculated_fields.debug_mode_rate_limits_per_tenant.configuration:50000:3600}")
+    @Getter
+    private String cfDebugPerTenantLimitsConfiguration;
+
     @Getter
     @Setter
     private TbActorSystem actorSystem;
@@ -753,37 +770,6 @@ public class ActorSystemContext {
         }
     }
 
-    public void persistCalculatedFieldDebugEvent(TenantId tenantId, CalculatedFieldId calculatedFieldId, EntityId entityId, Map<String, ArgumentEntry> arguments, UUID tbMsgId, TbMsgType tbMsgType, String result, Throwable error) {
-        try {
-            CalculatedFieldDebugEvent.CalculatedFieldDebugEventBuilder eventBuilder = CalculatedFieldDebugEvent.builder()
-                    .tenantId(tenantId)
-                    .entityId(entityId.getId())
-                    .serviceId(getServiceId())
-                    .calculatedFieldId(calculatedFieldId)
-                    .eventEntity(entityId);
-            if (tbMsgId != null) {
-                eventBuilder.msgId(tbMsgId);
-            }
-            if (tbMsgType != null) {
-                eventBuilder.msgType(tbMsgType.name());
-            }
-            if (arguments != null) {
-                eventBuilder.arguments(JacksonUtil.toString(arguments));
-            }
-            if (result != null) {
-                eventBuilder.result(result);
-            }
-            if (error != null) {
-                eventBuilder.error(toString(error));
-            }
-
-            ListenableFuture<Void> future = eventService.saveAsync(eventBuilder.build());
-            Futures.addCallback(future, CALCULATED_FIELD_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
-        } catch (IllegalArgumentException ex) {
-            log.warn("Failed to persist calculated field debug message", ex);
-        }
-    }
-
     private boolean checkLimits(TenantId tenantId, TbMsg tbMsg, Throwable error) {
         if (debugPerTenantEnabled) {
             DebugTbRateLimits debugTbRateLimits = debugPerTenantLimits.computeIfAbsent(tenantId, id ->
@@ -815,6 +801,49 @@ public class ActorSystemContext {
 
         ListenableFuture<Void> future = eventService.saveAsync(event.build());
         Futures.addCallback(future, RULE_CHAIN_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
+    }
+
+    public void persistCalculatedFieldDebugEvent(TenantId tenantId, CalculatedFieldId calculatedFieldId, EntityId entityId, Map<String, ArgumentEntry> arguments, UUID tbMsgId, TbMsgType tbMsgType, String result, Throwable error) {
+        if (cfDebugPerTenantEnabled) {
+            TbRateLimits rateLimits = cfDebugPerTenantLimits.computeIfAbsent(tenantId, id -> new TbRateLimits(cfDebugPerTenantLimitsConfiguration));
+
+            if (rateLimits.tryConsume()) {
+                try {
+                    CalculatedFieldDebugEvent.CalculatedFieldDebugEventBuilder eventBuilder = CalculatedFieldDebugEvent.builder()
+                            .tenantId(tenantId)
+                            .entityId(calculatedFieldId.getId())
+                            .serviceId(getServiceId())
+                            .calculatedFieldId(calculatedFieldId)
+                            .eventEntity(entityId);
+                    if (tbMsgId != null) {
+                        eventBuilder.msgId(tbMsgId);
+                    }
+                    if (tbMsgType != null) {
+                        eventBuilder.msgType(tbMsgType.name());
+                    }
+                    if (arguments != null) {
+                        eventBuilder.arguments(JacksonUtil.toString(
+                                arguments.entrySet().stream()
+                                        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getValue()))
+                        ));
+                    }
+                    if (result != null) {
+                        eventBuilder.result(result);
+                    }
+                    if (error != null) {
+                        eventBuilder.error(toString(error));
+                    }
+
+                    ListenableFuture<Void> future = eventService.saveAsync(eventBuilder.build());
+                    Futures.addCallback(future, CALCULATED_FIELD_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
+                } catch (IllegalArgumentException ex) {
+                    log.warn("Failed to persist calculated field debug message", ex);
+                }
+                if (log.isTraceEnabled()) {
+                    log.trace("[{}] Tenant level debug mode rate limit detected: {}", tenantId, calculatedFieldId);
+                }
+            }
+        }
     }
 
     public static Exception toException(Throwable error) {

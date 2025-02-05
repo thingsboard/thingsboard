@@ -47,6 +47,7 @@ export class CalculatedFieldsTableComponent {
 
   active = input<boolean>();
   entityId = input<EntityId>();
+  entityName = input<string>();
 
   calculatedFieldsTableConfig: CalculatedFieldsTableConfig;
 
@@ -71,7 +72,8 @@ export class CalculatedFieldsTableComponent {
           this.durationLeft,
           this.popoverService,
           this.destroyRef,
-          this.renderer
+          this.renderer,
+          this.entityName()
         );
         this.cd.markForCheck();
       }

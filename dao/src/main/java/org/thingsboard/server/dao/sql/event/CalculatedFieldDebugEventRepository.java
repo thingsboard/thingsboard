@@ -35,7 +35,7 @@ public interface CalculatedFieldDebugEventRepository extends EventRepository<Cal
     List<CalculatedFieldDebugEventEntity> findLatestEvents(@Param("tenantId") UUID tenantId, @Param("entityId") UUID entityId, @Param("limit") int limit);
 
     @Override
-    @Query("SELECT e FROM RuleNodeDebugEventEntity e WHERE " +
+    @Query("SELECT e FROM CalculatedFieldDebugEventEntity e WHERE " +
             "e.tenantId = :tenantId " +
             "AND e.entityId = :entityId " +
             "AND (:startTime IS NULL OR e.ts >= :startTime) " +

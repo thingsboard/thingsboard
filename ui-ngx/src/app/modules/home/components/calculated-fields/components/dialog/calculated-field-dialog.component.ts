@@ -59,10 +59,10 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
     }),
   });
 
-  functionArgs$ = this.configFormGroup.valueChanges
+  functionArgs$ = this.configFormGroup.get('arguments').valueChanges
     .pipe(
-      startWith(this.data.value?.configuration ?? {}),
-      map(configuration => Object.keys(configuration.arguments))
+      startWith(this.data.value?.configuration?.arguments ?? {}),
+      map(argumentsObj => Object.keys(argumentsObj))
     );
 
   readonly OutputTypeTranslations = OutputTypeTranslations;

@@ -265,8 +265,8 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     }
 
     @Override
-    public void pushStateToStorage(CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback) {
-        stateService.persistState(stateId, state, callback);
+    public void pushStateToStorage(CalculatedFieldCtx ctx, CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback) {
+        stateService.persistState(ctx, stateId, state, callback);
     }
 
     @Override

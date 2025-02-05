@@ -33,8 +33,10 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.util.ProtoUtils;
+import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 
@@ -67,7 +69,10 @@ public class CalculatedFieldCtx {
 
     private boolean initialized;
 
-    public CalculatedFieldCtx(CalculatedField calculatedField, TbelInvokeService tbelInvokeService) {
+    private long maxDataPointsPerRollingArg;
+    private long maxStateSizeInKBytes;
+
+    public CalculatedFieldCtx(CalculatedField calculatedField, TbelInvokeService tbelInvokeService, ApiLimitService apiLimitService) {
         this.calculatedField = calculatedField;
 
         this.cfId = calculatedField.getId();
@@ -96,6 +101,9 @@ public class CalculatedFieldCtx {
         this.output = configuration.getOutput();
         this.expression = configuration.getExpression();
         this.tbelInvokeService = tbelInvokeService;
+
+        this.maxDataPointsPerRollingArg = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxDataPointsPerRollingArg);
+        this.maxStateSizeInKBytes = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes);
     }
 
     public void init() {

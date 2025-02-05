@@ -92,7 +92,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     public void onFieldInitMsg(CalculatedFieldInitMsg msg) {
         var cf = msg.getCf();
-        var cfCtx = new CalculatedFieldCtx(cf, systemContext.getTbelInvokeService());
+        var cfCtx = new CalculatedFieldCtx(cf, systemContext.getTbelInvokeService(), systemContext.getApiLimitService());
         try {
             cfCtx.init();
         } catch (Exception e) {
@@ -116,7 +116,11 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     public void onStateRestoreMsg(CalculatedFieldStateRestoreMsg msg) {
-        if (calculatedFields.containsKey(msg.getId().cfId())) {
+        var cfId = msg.getId().cfId();
+        var calculatedField = calculatedFields.get(cfId);
+
+        if (calculatedField != null) {
+            msg.getState().setRequiredArguments(calculatedField.getArgNames());
             getOrCreateActor(msg.getId().entityId()).tell(msg);
         } else {
             cfExecService.deleteStateFromStorage(msg.getId(), msg.getCallback());
@@ -217,7 +221,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 log.warn("[{}] Failed to lookup CF by id [{}]", tenantId, cfId);
                 callback.onSuccess();
             } else {
-                var cfCtx = new CalculatedFieldCtx(cf, systemContext.getTbelInvokeService());
+                var cfCtx = new CalculatedFieldCtx(cf, systemContext.getTbelInvokeService(), systemContext.getApiLimitService());
                 try {
                     cfCtx.init();
                 } catch (Exception e) {
@@ -245,7 +249,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 log.warn("[{}] Failed to lookup CF by id [{}]", tenantId, cfId);
                 callback.onSuccess();
             } else {
-                var newCfCtx = new CalculatedFieldCtx(newCf, systemContext.getTbelInvokeService());
+                var newCfCtx = new CalculatedFieldCtx(newCf, systemContext.getTbelInvokeService(), systemContext.getApiLimitService());
                 calculatedFields.put(newCf.getId(), newCfCtx);
                 List<CalculatedFieldCtx> oldCfList = entityIdCalculatedFields.get(newCf.getId());
                 List<CalculatedFieldCtx> newCfList = new ArrayList<>(oldCfList.size());

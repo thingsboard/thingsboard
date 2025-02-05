@@ -17,6 +17,9 @@ package org.thingsboard.server.service.cf.ctx.state;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -32,6 +35,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.HashMap;
@@ -41,7 +45,10 @@ import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 public class SimpleCalculatedFieldStateTest {
 
     private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("5b18e321-3327-4290-b996-d72a65e90382"));
@@ -55,9 +62,13 @@ public class SimpleCalculatedFieldStateTest {
     private SimpleCalculatedFieldState state;
     private CalculatedFieldCtx ctx;
 
+    @Mock
+    private ApiLimitService apiLimitService;
+
     @BeforeEach
     void setUp() {
-        ctx = new CalculatedFieldCtx(getCalculatedField(), null);
+        when(apiLimitService.getLimit(any(), any())).thenReturn(1000L);
+        ctx = new CalculatedFieldCtx(getCalculatedField(), null, apiLimitService);
         ctx.init();
         state = new SimpleCalculatedFieldState(ctx.getArgNames());
     }

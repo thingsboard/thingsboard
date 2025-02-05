@@ -54,7 +54,8 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
               private durationLeft: DurationLeftPipe,
               private popoverService: TbPopoverService,
               private destroyRef: DestroyRef,
-              private renderer: Renderer2
+              private renderer: Renderer2,
+              public entityName: string
   ) {
     super();
     this.tableTitle = this.translate.instant('entity.type-calculated-fields');
@@ -159,6 +160,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         entityId: this.entityId,
         debugLimitsConfiguration: this.calculatedFieldsDebugPerTenantLimitsConfiguration,
         tenantId: this.tenantId,
+        entityName: this.entityName,
       }
     })
       .afterClosed();

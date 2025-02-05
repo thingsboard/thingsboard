@@ -200,7 +200,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
     @SneakyThrows
     private void processStateIfReady(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, CalculatedFieldState state, UUID tbMsgId, TbMsgType tbMsgType, TbCallback callback) {
-        if (state.isReady()) {
+        if (state.isReady() && ctx.isInitialized()) {
             CalculatedFieldResult calculationResult = state.performCalculation(ctx).get(5, TimeUnit.SECONDS);
             cfService.pushMsgToRuleEngine(tenantId, entityId, calculationResult, cfIdList, callback);
             if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
@@ -209,7 +209,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         } else {
             callback.onSuccess(); // State was updated but no calculation performed;
         }
-        cfService.pushStateToStorage(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), state, callback);
+        cfService.pushStateToStorage(ctx, new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), state, callback);
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, List<TsKvProto> data) {
