@@ -271,7 +271,7 @@ export abstract class ValueGetter<V> extends ValueAction {
         return new AlarmStatusValueGetter<V>(ctx, settings, valueType, valueObserver, simulated);
       case GetValueAction.GET_DASHBOARD_STATE:
         return new DashboardStateGetter<V>(ctx, settings, valueType, valueObserver, simulated);
-      case GetValueAction.GET_DASHBOARD_STATE_WITH_PARAMS:
+      case GetValueAction.GET_DASHBOARD_STATE_OBJECT:
         return new DashboardStateWithParamsGetter<V>(ctx, settings, valueType, valueObserver, simulated);
     }
   }

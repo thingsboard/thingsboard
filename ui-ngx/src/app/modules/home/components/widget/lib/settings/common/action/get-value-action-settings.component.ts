@@ -191,12 +191,12 @@ export class GetValueActionSettingsComponent implements OnInit, ControlValueAcce
           this.displayValue = this.translate.instant('widgets.value-action.get-dashboard-state-text');
         }
         break;
-      case GetValueAction.GET_DASHBOARD_STATE_WITH_PARAMS:
+      case GetValueAction.GET_DASHBOARD_STATE_OBJECT:
         if (this.valueType === ValueType.BOOLEAN) {
           const state = this.modelValue.dataToValue?.compareToValue;
-          this.displayValue = this.translate.instant('widgets.value-action.when-dashboard-state-with-params-function-is-text', {state});
+          this.displayValue = this.translate.instant('widgets.value-action.when-dashboard-state-object-function-is-text', {state});
         } else {
-          this.displayValue = this.translate.instant('widgets.value-action.get-dashboard-state-with-params-text');
+          this.displayValue = this.translate.instant('widgets.value-action.get-dashboard-state-object-text');
         }
         break;
     }

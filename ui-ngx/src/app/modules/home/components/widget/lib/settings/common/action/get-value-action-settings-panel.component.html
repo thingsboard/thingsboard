@@ -133,7 +133,7 @@
         <div class="fixed-title-width" translate>widgets.value-action.action-result-converter</div>
         <tb-toggle-select formControlName="type"
                           class="flex-1"
-                          [class.invisible]="getValueSettingsFormGroup.get('action').value === getValueAction.GET_DASHBOARD_STATE_WITH_PARAMS">
+                          [class.invisible]="getValueSettingsFormGroup.get('action').value === getValueAction.GET_DASHBOARD_STATE_OBJECT">
           <tb-toggle-option [value]="dataToValueType.NONE">{{ 'widgets.value-action.converter-none' | translate }}</tb-toggle-option>
           <tb-toggle-option [value]="dataToValueType.FUNCTION">{{ 'widgets.value-action.converter-function' | translate }}</tb-toggle-option>
         </tb-toggle-select>

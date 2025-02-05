@@ -5,7 +5,7 @@
 
 *function (data): boolean*
 
-A JavaScript function that converts the current dashboard state and parameters into a boolean value.
+A JavaScript function that converts the current dashboard state object into a boolean value.
 
 **Parameters:**
 
@@ -22,7 +22,7 @@ A JavaScript function that converts the current dashboard state and parameters i
 
 ##### Examples
 
-* Check if the current dashboard state ID is "default":
+* Check if the current dashboard state id is "default":
 
 ```javascript
 return data.id === 'default' ? true : false;

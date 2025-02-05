@@ -26,7 +26,7 @@ export enum GetValueAction {
   GET_TIME_SERIES = 'GET_TIME_SERIES',
   GET_ALARM_STATUS = 'GET_ALARM_STATUS',
   GET_DASHBOARD_STATE = 'GET_DASHBOARD_STATE',
-  GET_DASHBOARD_STATE_WITH_PARAMS = 'GET_DASHBOARD_STATE_WITH_PARAMS',
+  GET_DASHBOARD_STATE_OBJECT = 'GET_DASHBOARD_STATE_OBJECT',
 }
 
 export const getValueActions = Object.keys(GetValueAction) as GetValueAction[];
@@ -47,7 +47,7 @@ export const getValueActionTranslations = new Map<GetValueAction, string>(
     [GetValueAction.GET_TIME_SERIES, 'widgets.value-action.get-time-series'],
     [GetValueAction.GET_ALARM_STATUS, 'widgets.value-action.get-alarm-status'],
     [GetValueAction.GET_DASHBOARD_STATE, 'widgets.value-action.get-dashboard-state'],
-    [GetValueAction.GET_DASHBOARD_STATE_WITH_PARAMS, 'widgets.value-action.get-dashboard-state-with-params'],
+    [GetValueAction.GET_DASHBOARD_STATE_OBJECT, 'widgets.value-action.get-dashboard-state-object'],
   ]
 );
 

@@ -169,8 +169,8 @@ export class GetValueActionSettingsPanelComponent extends PageComponent implemen
 
   getParseValueFunctionHelpId(): string {
     const action: GetValueAction = this.getValueSettingsFormGroup.get('action').value;
-    if (action === GetValueAction.GET_DASHBOARD_STATE_WITH_PARAMS) {
-      return 'widget/config/parse_value_get_dashboard_state_with_params_fn';
+    if (action === GetValueAction.GET_DASHBOARD_STATE_OBJECT) {
+      return 'widget/config/parse_value_get_dashboard_state_object_fn';
     }
     return 'widget/lib/rpc/parse_value_fn';
   }
@@ -206,7 +206,7 @@ export class GetValueActionSettingsPanelComponent extends PageComponent implemen
       case GetValueAction.GET_ALARM_STATUS:
         this.getValueSettingsFormGroup.get('getAlarmStatus').enable({emitEvent: false});
         break;
-      case GetValueAction.GET_DASHBOARD_STATE_WITH_PARAMS:
+      case GetValueAction.GET_DASHBOARD_STATE_OBJECT:
         this.getValueSettingsFormGroup.get('dataToValue.type').setValue(DataToValueType.FUNCTION, {emitEvent: false});
         dataToValueType = DataToValueType.FUNCTION;
         break
