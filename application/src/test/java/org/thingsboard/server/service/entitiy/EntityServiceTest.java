@@ -1178,8 +1178,7 @@ public class EntityServiceTest extends AbstractControllerTest {
 
         EntityDataQuery query = new EntityDataQuery(singleEntityFilter, pageLink, entityFields, null, null);
 
-        PageData<EntityData> result = searchEntities(query);
-        assertEquals(1, result.getTotalElements());
+        PageData<EntityData> result = findByQueryAndCheck(query, 1);
 
         String deviceName = result.getData().get(0).getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue();
         assertThat(deviceName).isEqualTo(devices.get(0).getName());
@@ -1240,11 +1239,8 @@ public class EntityServiceTest extends AbstractControllerTest {
             filter.setRootEntity(asset.getId());
 
             EntityDataQuery query = new EntityDataQuery(filter, pageLink, Collections.emptyList(), Collections.emptyList(), keyFiltersEqualString);
-            PageData<EntityData> relationsResult = entityService.findEntityDataByQuery(tenantId, customer.getId(), query);
-            long relationsResultCnt = entityService.countEntitiesByQuery(tenantId, customer.getId(), query);
-
-            Assert.assertEquals(relationsCnt, relationsResult.getData().size());
-            Assert.assertEquals(relationsCnt, relationsResultCnt);
+            findByQueryAndCheck(customer.getId(), query, relationsCnt);
+            countByQueryAndCheck(customer.getId(), query, relationsCnt);
         }
     }
 
@@ -1497,9 +1493,6 @@ public class EntityServiceTest extends AbstractControllerTest {
         assertThat(tenantResultName).isEqualTo(TEST_CUSTOMER_NAME);
     }
 
-    private PageData<EntityData> searchEntities(EntityDataQuery query) {
-        return entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
-    }
 
     private EntityDataQuery createDeviceSearchQuery(String deviceField, StringOperation operation, String searchQuery) {
         DeviceTypeFilter deviceTypeFilter = new DeviceTypeFilter();
@@ -1593,7 +1586,7 @@ public class EntityServiceTest extends AbstractControllerTest {
                         .getLatest().get(currentAttributeKeyType).get("temperature").getValue());
             }
             List<String> deviceTemperatures = temperatures.stream().map(aLong -> Long.toString(aLong)).collect(Collectors.toList());
-            Assert.assertEquals(deviceTemperatures, loadedTemperatures);
+            assertThat(loadedTemperatures).containsExactlyInAnyOrderElementsOf(deviceTemperatures);
 
             pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
             KeyFilter highTemperatureFilter = createNumericKeyFilter("temperature", currentAttributeKeyType, NumericFilterPredicate.NumericOperation.GREATER, 45);
@@ -1614,8 +1607,7 @@ public class EntityServiceTest extends AbstractControllerTest {
                     entityData.getLatest().get(currentAttributeKeyType).get("temperature").getValue()).collect(Collectors.toList());
             List<String> deviceHighTemperatures = highTemperatures.stream().map(aLong -> Long.toString(aLong)).collect(Collectors.toList());
 
-            Assert.assertEquals(deviceHighTemperatures, loadedHighTemperatures);
-
+            assertThat(loadedHighTemperatures).containsExactlyInAnyOrderElementsOf(deviceHighTemperatures);
         }
         deviceService.deleteDevicesByTenantId(tenantId);
     }
