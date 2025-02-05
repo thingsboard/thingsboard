@@ -69,6 +69,7 @@
             formControlName="arguments"
             [entityId]="data.entityId"
             [tenantId]="data.tenantId"
+            [entityName]="data.entityName"
             [calculatedFieldType]="fieldFormGroup.get('type').value"
           />
         </div>
@@ -114,7 +115,7 @@
             </mat-form-field>
             @if (outputFormGroup.get('type').value === OutputType.Attribute) {
               <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-                <mat-label>{{ 'calculated-fields.output-type' | translate }}</mat-label>
+                <mat-label>{{ 'calculated-fields.attribute-scope' | translate }}</mat-label>
                 <mat-select formControlName="scope" class="w-full">
                   <mat-option [value]="AttributeScope.SERVER_SCOPE">
                     {{ 'calculated-fields.server-attributes' | translate }}

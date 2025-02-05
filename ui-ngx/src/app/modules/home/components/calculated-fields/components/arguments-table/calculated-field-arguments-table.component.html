@@ -80,14 +80,23 @@
                             </mat-chip>
                         </mat-chip-listbox>
                     </ng-container>
-                    <div class="flex opacity-55">
+                    <div class="tb-form-table-row-cell-buttons flex">
                         <button type="button"
                                 mat-icon-button
                                 #button
                                 (click)="manageArgument($event, button, $index)"
                                 [matTooltip]="'action.edit' | translate"
                                 matTooltipPosition="above">
-                            <mat-icon>edit</mat-icon>
+                            <mat-icon
+                              [matBadgeHidden]="!(argumentsFormArray.dirty
+                                  && group.get('refEntityKey').get('type').value === ArgumentType.Rolling
+                                  && calculatedFieldType() === CalculatedFieldType.SIMPLE)"
+                              matBadgeColor="warn"
+                              matBadgeSize="small"
+                              matBadge="*"
+                            >
+                              edit
+                            </mat-icon>
                         </button>
                         <button type="button"
                                 mat-icon-button
