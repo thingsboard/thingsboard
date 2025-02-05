@@ -15,12 +15,17 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="selectEntityFormGroup" class="mat-block" [appearance]="appearance" [subscriptSizing]="subscriptSizing"
+<mat-form-field [formGroup]="selectEntityFormGroup" class="mat-block"
+                [appearance]="inlineField ? 'outline' : appearance"
+                [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing"
+                [class.tb-inline-field]="inlineField"
+                [class.flex]="inlineField"
                 [class]="additionalClasses">
-  <mat-label>{{ label | translate }}</mat-label>
+  <mat-label *ngIf="!hideLabel">{{ label | translate }}</mat-label>
   <input matInput type="text"
          #entityInput
          formControlName="entity"
+         [placeholder]="placeholder"
          (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="entityAutocomplete"
@@ -28,6 +33,14 @@
   <a *ngIf="selectEntityFormGroup.get('entity').value && disabled" aria-label="Open device profile" [routerLink]=entityURL>
     {{ displayEntityFn(selectEntityFormGroup.get('entity').value) }}
   </a>
+  <mat-icon *ngIf="inlineField && selectEntityFormGroup.get('entity').hasError('required') && selectEntityFormGroup.get('entity').touched"
+            matSuffix
+            matTooltipPosition="above"
+            matTooltipClass="tb-error-tooltip"
+            [matTooltip]="requiredErrorText | translate"
+            class="tb-error">
+    warning
+  </mat-icon>
   <button *ngIf="selectEntityFormGroup.get('entity').value && !disabled"
           type="button"
           matSuffix mat-icon-button aria-label="Clear"
@@ -59,7 +72,7 @@
       </div>
     </mat-option>
   </mat-autocomplete>
-  <mat-error *ngIf="selectEntityFormGroup.get('entity').hasError('required')">
+  <mat-error *ngIf="selectEntityFormGroup.get('entity').hasError('required') && !inlineField">
     {{ requiredErrorText | translate }}
   </mat-error>
 </mat-form-field>

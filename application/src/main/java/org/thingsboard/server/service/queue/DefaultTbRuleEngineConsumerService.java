@@ -46,6 +46,7 @@ import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.service.cf.CalculatedFieldCache;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
@@ -61,6 +62,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.queue.discovery.HashPartitionService.CALCULATED_FIELD_QUEUE_KEY;
 
 @Service
 @TbRuleEngineComponent
@@ -83,8 +86,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                                               TbApiUsageStateService apiUsageStateService,
                                               PartitionService partitionService,
                                               ApplicationEventPublisher eventPublisher,
-                                              JwtSettingsService jwtSettingsService) {
-        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService, eventPublisher, jwtSettingsService);
+                                              JwtSettingsService jwtSettingsService,
+                                              CalculatedFieldCache calculatedFieldCache) {
+        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, calculatedFieldCache, apiUsageStateService, partitionService, eventPublisher, jwtSettingsService);
         this.ctx = ctx;
         this.tbDeviceRpcService = tbDeviceRpcService;
         this.queueService = queueService;
@@ -105,6 +109,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
         event.getPartitionsMap().forEach((queueKey, partitions) -> {
+            if (CALCULATED_FIELD_QUEUE_KEY.equals(queueKey)) {
+                return;
+            }
             if (partitionService.isManagedByCurrentService(queueKey.getTenantId())) {
                 var consumer = getConsumer(queueKey).orElseGet(() -> {
                     Queue config = queueService.findQueueByTenantIdAndName(queueKey.getTenantId(), queueKey.getQueueName());

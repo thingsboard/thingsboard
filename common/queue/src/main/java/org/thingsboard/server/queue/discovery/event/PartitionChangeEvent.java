@@ -23,9 +23,12 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.discovery.QueueKey;
 
 import java.io.Serial;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.queue.discovery.HashPartitionService.CALCULATED_FIELD_QUEUE_KEY;
 
 @ToString(callSuper = true)
 public class PartitionChangeEvent extends TbApplicationEvent {
@@ -50,6 +53,10 @@ public class PartitionChangeEvent extends TbApplicationEvent {
 
     public Set<TopicPartitionInfo> getEdgePartitions() {
         return getPartitionsByServiceTypeAndQueueName(ServiceType.TB_CORE, DataConstants.EDGE_QUEUE_NAME);
+    }
+
+    public Set<TopicPartitionInfo> getCalculatedFieldsPartitions() {
+        return partitionsMap.getOrDefault(CALCULATED_FIELD_QUEUE_KEY, Collections.emptySet());
     }
 
     private Set<TopicPartitionInfo> getPartitionsByServiceTypeAndQueueName(ServiceType serviceType, String queueName) {

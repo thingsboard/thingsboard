@@ -85,6 +85,7 @@ import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
+import org.thingsboard.server.service.cf.CalculatedFieldCache;
 import org.thingsboard.server.service.notification.NotificationSchedulerService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
@@ -175,8 +176,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         NotificationSchedulerService notificationSchedulerService,
                                         NotificationRuleProcessor notificationRuleProcessor,
                                         TbImageService imageService,
-                                        RuleEngineCallService ruleEngineCallService) {
-        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService,
+                                        RuleEngineCallService ruleEngineCallService,
+                                        CalculatedFieldCache calculatedFieldCache) {
+        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, calculatedFieldCache, apiUsageStateService, partitionService,
                 eventPublisher, jwtSettingsService);
         this.stateService = stateService;
         this.localSubscriptionService = localSubscriptionService;
@@ -258,7 +260,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
         TbPackProcessingContext<TbProtoQueueMsg<ToCoreMsg>> ctx = new TbPackProcessingContext<>(
                 processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>());
-        PendingMsgHolder pendingMsgHolder = new PendingMsgHolder();
+        PendingMsgHolder<ToCoreMsg> pendingMsgHolder = new PendingMsgHolder<>();
         Future<?> packSubmitFuture = consumersExecutor.submit(() -> {
             orderedMsgList.forEach((element) -> {
                 UUID id = element.getUuid();
@@ -267,7 +269,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 TbCallback callback = new TbPackCallback<>(id, ctx);
                 try {
                     ToCoreMsg toCoreMsg = msg.getValue();
-                    pendingMsgHolder.setToCoreMsg(toCoreMsg);
+                    pendingMsgHolder.setMsg(toCoreMsg);
                     if (toCoreMsg.hasToSubscriptionMgrMsg()) {
                         log.trace("[{}] Forwarding message to subscription manager service {}", id, toCoreMsg.getToSubscriptionMgrMsg());
                         forwardToSubMgrService(toCoreMsg.getToSubscriptionMgrMsg(), callback);
@@ -318,8 +320,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         if (!processingTimeoutLatch.await(packProcessingTimeout, TimeUnit.MILLISECONDS)) {
             if (!packSubmitFuture.isDone()) {
                 packSubmitFuture.cancel(true);
-                ToCoreMsg lastSubmitMsg = pendingMsgHolder.getToCoreMsg();
-                log.info("Timeout to process message: {}", lastSubmitMsg);
+                log.info("Timeout to process message: {}", pendingMsgHolder.getMsg());
             }
             if (log.isDebugEnabled()) {
                 ctx.getAckMap().forEach((id, msg) -> log.debug("[{}] Timeout to process message: {}", id, msg.getValue()));
@@ -327,12 +328,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             ctx.getFailedMap().forEach((id, msg) -> log.warn("[{}] Failed to process message: {}", id, msg.getValue()));
         }
         consumer.commit();
-    }
-
-    private static class PendingMsgHolder {
-        @Getter
-        @Setter
-        private volatile ToCoreMsg toCoreMsg;
     }
 
     @Override

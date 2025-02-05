@@ -20,14 +20,17 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -40,6 +43,9 @@ public class TimeseriesSaveRequest {
     private final long ttl;
     private final boolean saveLatest;
     private final boolean onlyLatest;
+    private final List<CalculatedFieldId> previousCalculatedFieldIds;
+    private final UUID tbMsgId;
+    private final TbMsgType tbMsgType;
     private final FutureCallback<Void> callback;
 
     public static Builder builder() {
@@ -56,6 +62,9 @@ public class TimeseriesSaveRequest {
         private FutureCallback<Void> callback;
         private boolean saveLatest = true;
         private boolean onlyLatest;
+        private List<CalculatedFieldId> previousCalculatedFieldIds;
+        private UUID tbMsgId;
+        private TbMsgType tbMsgType;
 
         Builder() {}
 
@@ -103,6 +112,21 @@ public class TimeseriesSaveRequest {
             return this;
         }
 
+        public Builder previousCalculatedFieldIds(List<CalculatedFieldId> previousCalculatedFieldIds) {
+            this.previousCalculatedFieldIds = previousCalculatedFieldIds;
+            return this;
+        }
+
+        public Builder tbMsgId(UUID tbMsgId) {
+            this.tbMsgId = tbMsgId;
+            return this;
+        }
+
+        public Builder tbMsgType(TbMsgType tbMsgType) {
+            this.tbMsgType = tbMsgType;
+            return this;
+        }
+
         public Builder callback(FutureCallback<Void> callback) {
             this.callback = callback;
             return this;
@@ -123,7 +147,7 @@ public class TimeseriesSaveRequest {
         }
 
         public TimeseriesSaveRequest build() {
-            return new TimeseriesSaveRequest(tenantId, customerId, entityId, entries, ttl, saveLatest, onlyLatest, callback);
+            return new TimeseriesSaveRequest(tenantId, customerId, entityId, entries, ttl, saveLatest, onlyLatest, previousCalculatedFieldIds, tbMsgId, tbMsgType, callback);
         }
 
     }

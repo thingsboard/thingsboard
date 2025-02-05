@@ -224,6 +224,7 @@ import { IntervalOptionsConfigPanelComponent } from '@shared/components/time/int
 import { GroupingIntervalOptionsComponent } from '@shared/components/time/aggregation/grouping-interval-options.component';
 import { JsFuncModulesComponent } from '@shared/components/js-func-modules.component';
 import { JsFuncModuleRowComponent } from '@shared/components/js-func-module-row.component';
+import { EntityKeyAutocompleteComponent } from '@shared/components/entity/entity-key-autocomplete.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -432,7 +433,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ImageGalleryDialogComponent,
     WidgetButtonComponent,
     HexInputComponent,
-    ScadaSymbolInputComponent
+    ScadaSymbolInputComponent,
+    EntityKeyAutocompleteComponent,
   ],
   imports: [
     CommonModule,
@@ -694,7 +696,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     EmbedImageDialogComponent,
     ImageGalleryDialogComponent,
     WidgetButtonComponent,
-    ScadaSymbolInputComponent
+    ScadaSymbolInputComponent,
+    EntityKeyAutocompleteComponent,
   ]
 })
 export class SharedModule { }
