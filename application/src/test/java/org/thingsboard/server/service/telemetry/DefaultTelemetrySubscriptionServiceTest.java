@@ -345,7 +345,7 @@ class DefaultTelemetrySubscriptionServiceTest {
                 .callback(emptyCallback)
                 .build();
 
-        given(tsService.save(tenantId, entityId, sampleTelemetry, sampleTtl)).willReturn(immediateFailedFuture(new RuntimeException("failed to save latest on main entity")));
+        given(tsService.save(tenantId, entityId, sampleTelemetry, sampleTtl)).willReturn(immediateFailedFuture(new RuntimeException("failed to save data on main entity")));
 
         // WHEN
         telemetryService.saveTimeseries(request);
