@@ -35,8 +35,12 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { EntityDebugSettingsPanelComponent } from '@home/components/entity/debug/entity-debug-settings-panel.component';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { catchError, filter, switchMap } from 'rxjs/operators';
-import { CalculatedField, CalculatedFieldDialogData } from '@shared/models/calculated-field.models';
-import { CalculatedFieldDialogComponent } from './components/public-api';
+import {
+  CalculatedField,
+  CalculatedFieldDebugDialogData,
+  CalculatedFieldDialogData
+} from '@shared/models/calculated-field.models';
+import { CalculatedFieldDebugDialogComponent, CalculatedFieldDialogComponent } from './components/public-api';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 
 export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField, PageLink> {
@@ -46,6 +50,14 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     getCurrentAuthState(this.store)['calculatedFieldsDebugPerTenantLimitsConfiguration'] || '1:1';
   readonly maxDebugModeDuration = getCurrentAuthState(this.store).maxDebugModeDurationMinutes * MINUTE;
   readonly tenantId = getCurrentAuthUser(this.store).tenantId;
+  additionalDebugActionConfig = {
+    title: this.translate.instant('calculated-fields.see-debug-events'),
+    action: this.openDebugDialog.bind(this),
+    data: {
+      tenantId: this.tenantId,
+      entityId: this.entityId,
+    },
+  };
 
   constructor(private calculatedFieldsService: CalculatedFieldsService,
               private translate: TranslateService,
@@ -126,6 +138,10 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   }
 
   onOpenDebugConfig($event: Event, { debugSettings = {}, id }: CalculatedField): void {
+    const additionalActionConfig = {
+      ...this.additionalDebugActionConfig,
+      action: () => this.openDebugDialog({...this.additionalDebugActionConfig.data, id }),
+    };
     const { viewContainerRef } = this.getTable();
     if ($event) {
       $event.stopPropagation();
@@ -140,6 +156,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
           debugLimitsConfiguration: this.calculatedFieldsDebugPerTenantLimitsConfiguration,
           maxDebugModeDuration: this.maxDebugModeDuration,
           entityLabel: this.translate.instant('debug-settings.calculated-field'),
+          additionalActionConfig,
           ...debugSettings
         },
         {},
@@ -183,9 +200,20 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         debugLimitsConfiguration: this.calculatedFieldsDebugPerTenantLimitsConfiguration,
         tenantId: this.tenantId,
         entityName: this.entityName,
+        additionalDebugActionConfig: this.additionalDebugActionConfig,
       }
     })
       .afterClosed();
+  }
+
+  private openDebugDialog(data: CalculatedFieldDebugDialogData): void {
+    this.dialog.open<CalculatedFieldDebugDialogComponent, CalculatedFieldDebugDialogData, null>(CalculatedFieldDebugDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data
+    })
+      .afterClosed()
+      .subscribe();
   }
 
   private exportCalculatedField($event: Event, calculatedField: CalculatedField): void {
