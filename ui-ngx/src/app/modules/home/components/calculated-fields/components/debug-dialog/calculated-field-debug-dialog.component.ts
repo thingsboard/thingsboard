@@ -26,6 +26,7 @@ import { CalculatedFieldDebugDialogData } from '@shared/models/calculated-field.
 
 @Component({
   selector: 'tb-calculated-field-debug-dialog',
+  styleUrls: ['calculated-field-debug-dialog.component.scss'],
   templateUrl: './calculated-field-debug-dialog.component.html',
 })
 export class CalculatedFieldDebugDialogComponent extends DialogComponent<CalculatedFieldDebugDialogComponent, null> implements AfterViewInit {
