@@ -358,7 +358,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
       case DebugEventType.DEBUG_CALCULATED_FIELD:
         this.columns[0].width = '160px';
         this.columns.push(
-          new EntityTableColumn<Event>('entityId', 'event.entity-id', '150px',
+          new EntityTableColumn<Event>('entityId', 'event.entity-id', '85px',
             (entity) => entity.body.entityId,
             () => ({padding: '0 12px 0 0'}),
             false,
@@ -378,7 +378,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               type: CellActionDescriptorType.COPY_BUTTON
             }
           ),
-          new EntityTableColumn<Event>('messageId', 'event.message-id', '150px',
+          new EntityTableColumn<Event>('messageId', 'event.message-id', '85px',
             (entity) => entity.body.msgId,
             () => ({padding: '0 12px 0 0'}),
             false,
@@ -398,7 +398,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               type: CellActionDescriptorType.COPY_BUTTON
             }
           ),
-          new EntityTableColumn<Event>('messageType', 'event.message-type', '150px',
+          new EntityTableColumn<Event>('messageType', 'event.message-type', '100px',
             (entity) => entity.body.msgType,
             () => ({padding: '0 12px 0 0'}),
             false
@@ -411,7 +411,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               onAction: ($event, entity) => this.showContent($event, entity.body.arguments,
                 'event.arguments', ContentType.JSON, true)
             },
-            '100px'
+            '48px'
           ),
           new EntityActionTableColumn<Event>('result', 'event.result',
             {
@@ -421,7 +421,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               onAction: ($event, entity) => this.showContent($event, entity.body.result,
                 'event.result', ContentType.JSON, true)
             },
-            '100px'
+            '48px'
           ),
           new EntityActionTableColumn<Event>('error', 'event.error',
             {
@@ -431,7 +431,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               onAction: ($event, entity) => this.showContent($event, entity.body.error,
                 'event.error')
             },
-            '100px'
+            '48px'
           )
         );
         break;
