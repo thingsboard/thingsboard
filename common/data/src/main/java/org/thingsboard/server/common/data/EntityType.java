@@ -84,4 +84,16 @@ public enum EntityType {
         this.tableName = tableName;
     }
 
+    public boolean isOneOf(EntityType... types) {
+        if (types == null) {
+            return false;
+        }
+        for (EntityType type : types) {
+            if (this == type) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

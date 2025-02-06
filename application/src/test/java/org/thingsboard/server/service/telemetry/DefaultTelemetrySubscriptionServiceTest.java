@@ -71,6 +71,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import static com.google.common.util.concurrent.Futures.immediateFailedFuture;
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -312,6 +313,46 @@ class DefaultTelemetrySubscriptionServiceTest {
         // THEN
         // should save only time series for the main entity
         then(tsService).should().saveWithoutLatest(tenantId, entityId, sampleTelemetry, sampleTtl);
+        then(tsService).shouldHaveNoMoreInteractions();
+
+        // should not send any WS updates
+        then(subscriptionManagerService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void shouldNotCopyLatestToEntityViewWhenTimeseriesSaveFailedOnMainEntity() {
+        // GIVEN
+        var entityView = new EntityView(new EntityViewId(UUID.randomUUID()));
+        entityView.setTenantId(tenantId);
+        entityView.setCustomerId(customerId);
+        entityView.setEntityId(entityId);
+        entityView.setKeys(new TelemetryEntityView(sampleTelemetry.stream().map(KvEntry::getKey).toList(), new AttributesEntityView()));
+
+        // mock that there is one entity view
+        lenient().when(tbEntityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId)).thenReturn(immediateFuture(List.of(entityView)));
+        // mock that save latest call for entity view is successful
+        lenient().when(tsService.saveLatest(tenantId, entityView.getId(), sampleTelemetry)).thenReturn(immediateFuture(listOfNNumbers(sampleTelemetry.size())));
+        // mock TPI for entity view
+        lenient().when(partitionService.resolve(ServiceType.TB_CORE, tenantId, entityView.getId())).thenReturn(tpi);
+
+        var request = TimeseriesSaveRequest.builder()
+                .tenantId(tenantId)
+                .customerId(customerId)
+                .entityId(entityId)
+                .entries(sampleTelemetry)
+                .ttl(sampleTtl)
+                .strategy(new TimeseriesSaveRequest.Strategy(true, true, false))
+                .callback(emptyCallback)
+                .build();
+
+        given(tsService.save(tenantId, entityId, sampleTelemetry, sampleTtl)).willReturn(immediateFailedFuture(new RuntimeException("failed to save latest on main entity")));
+
+        // WHEN
+        telemetryService.saveTimeseries(request);
+
+        // THEN
+        // should save only time series for the main entity
+        then(tsService).should().save(tenantId, entityId, sampleTelemetry, sampleTtl);
         then(tsService).shouldHaveNoMoreInteractions();
 
         // should not send any WS updates

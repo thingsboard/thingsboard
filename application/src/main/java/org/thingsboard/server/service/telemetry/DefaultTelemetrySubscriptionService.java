@@ -151,7 +151,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
             addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, request.getEntries()));
         }
         if (strategy.saveLatest()) {
-            copyLatestToEntityViews(tenantId, entityId, request.getEntries());
+            addMainCallback(saveFuture, __ -> copyLatestToEntityViews(tenantId, entityId, request.getEntries()));
         }
         return saveFuture;
     }
@@ -207,8 +207,8 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     private void copyLatestToEntityViews(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
-        if (EntityType.DEVICE.equals(entityId.getEntityType()) || EntityType.ASSET.equals(entityId.getEntityType())) {
-            Futures.addCallback(this.tbEntityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId),
+        if (entityId.getEntityType().isOneOf(EntityType.DEVICE, EntityType.ASSET)) {
+            Futures.addCallback(tbEntityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId),
                     new FutureCallback<>() {
                         @Override
                         public void onSuccess(@Nullable List<EntityView> result) {
@@ -310,6 +310,10 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     private <S> void addMainCallback(ListenableFuture<S> saveFuture, final FutureCallback<Void> callback) {
         if (callback == null) return;
         addMainCallback(saveFuture, result -> callback.onSuccess(null), callback::onFailure);
+    }
+
+    private <S> void addMainCallback(ListenableFuture<S> saveFuture, Consumer<S> onSuccess) {
+        DonAsynchron.withCallback(saveFuture, onSuccess, null, tsCallBackExecutor);
     }
 
     private <S> void addMainCallback(ListenableFuture<S> saveFuture, Consumer<S> onSuccess, Consumer<Throwable> onFailure) {
