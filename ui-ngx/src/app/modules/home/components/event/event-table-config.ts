@@ -355,6 +355,87 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             '48px')
         );
         break;
+      case DebugEventType.DEBUG_CALCULATED_FIELD:
+        this.columns[0].width = '80px';
+        this.columns[1].width = '20%';
+        this.columns.push(
+          new EntityTableColumn<Event>('entityId', 'event.entity-id', '85px',
+            (entity) => `<span style="display: inline-block; width: 7ch">${entity.body.entityId.substring(0, 6)}…</span>`,
+            () => ({padding: '0 12px 0 0'}),
+            false,
+            () => ({padding: '0 12px 0 0'}),
+            () => undefined,
+            false,
+            {
+              name: this.translate.instant('event.copy-entity-id'),
+              icon: 'content_paste',
+              style: {
+                padding: '4px',
+                'font-size': '16px',
+                color: 'rgba(0,0,0,.87)'
+              },
+              isEnabled: () => true,
+              onAction: ($event, entity) => entity.body.entityId,
+              type: CellActionDescriptorType.COPY_BUTTON
+            }
+          ),
+          new EntityTableColumn<Event>('messageId', 'event.message-id', '85px',
+            (entity) => `<span style="display: inline-block; width: 7ch">${entity.body.msgId?.substring(0, 6)}…</span>`,
+            () => ({padding: '0 12px 0 0'}),
+            false,
+            () => ({padding: '0 12px 0 0'}),
+            () => undefined,
+            false,
+            {
+              name: this.translate.instant('event.copy-message-id'),
+              icon: 'content_paste',
+              style: {
+                padding: '4px',
+                'font-size': '16px',
+                color: 'rgba(0,0,0,.87)'
+              },
+              isEnabled: () => true,
+              onAction: ($event, entity) => entity.body.msgId,
+              type: CellActionDescriptorType.COPY_BUTTON
+            }
+          ),
+          new EntityTableColumn<Event>('messageType', 'event.message-type', '100px',
+            (entity) => entity.body.msgType,
+            () => ({padding: '0 12px 0 0'}),
+            false
+          ),
+          new EntityActionTableColumn<Event>('arguments', 'event.arguments',
+            {
+              name: this.translate.instant('action.view'),
+              icon: 'more_horiz',
+              isEnabled: (entity) => entity.body.arguments !== undefined,
+              onAction: ($event, entity) => this.showContent($event, entity.body.arguments,
+                'event.arguments', ContentType.JSON, true)
+            },
+            '48px'
+          ),
+          new EntityActionTableColumn<Event>('result', 'event.result',
+            {
+              name: this.translate.instant('action.view'),
+              icon: 'more_horiz',
+              isEnabled: (entity) => entity.body.result !== undefined,
+              onAction: ($event, entity) => this.showContent($event, entity.body.result,
+                'event.result', ContentType.JSON, true)
+            },
+            '48px'
+          ),
+          new EntityActionTableColumn<Event>('error', 'event.error',
+            {
+              name: this.translate.instant('action.view'),
+              icon: 'more_horiz',
+              isEnabled: (entity) => entity.body.error && entity.body.error.length > 0,
+              onAction: ($event, entity) => this.showContent($event, entity.body.error,
+                'event.error')
+            },
+            '48px'
+          )
+        );
+        break;
     }
     if (updateTableColumns) {
       this.getTable().columnsUpdated(true);
@@ -442,6 +523,15 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
       case DebugEventType.DEBUG_RULE_CHAIN:
         this.filterColumns.push(
           {key: 'message', title: 'event.message'},
+          {key: 'isError', title: 'event.error'},
+          {key: 'errorStr', title: 'event.error'}
+        );
+        break;
+      case DebugEventType.DEBUG_CALCULATED_FIELD:
+        this.filterColumns.push(
+          {key: 'entityId', title: 'event.entity-id'},
+          {key: 'messageId', title: 'event.message-id'},
+          {key: 'messageType', title: 'event.message-type'},
           {key: 'isError', title: 'event.error'},
           {key: 'errorStr', title: 'event.error'}
         );

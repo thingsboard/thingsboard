@@ -51,6 +51,7 @@
             [class.mb-5]="fieldFormGroup.get('name').errors && fieldFormGroup.get('name').touched"
             [entityLabel]="'debug-settings.calculated-field' | translate"
             [debugLimitsConfiguration]="data.debugLimitsConfiguration"
+            [additionalActionConfig]="additionalDebugActionConfig"
           />
         </div>
         <mat-form-field appearance="outline" subscriptSizing="dynamic">

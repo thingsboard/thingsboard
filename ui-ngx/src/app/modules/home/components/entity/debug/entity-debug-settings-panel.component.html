@@ -48,20 +48,32 @@
       </button>
     </div>
   </div>
-  <div class="flex justify-end">
-    <button mat-button
-            color="primary"
-            type="button"
-            (click)="onCancel()">
-      {{ 'action.cancel' | translate }}
-    </button>
-    <button mat-raised-button
-            color="primary"
-            type="button"
-            [disabled]="(isLoading$ | async) || !onFailuresControl.dirty && !debugAllControl.dirty"
-            (click)="onApply()">
-      {{ 'action.apply' | translate }}
-    </button>
+  <div class="flex justify-between">
+    <div>
+      @if (additionalActionConfig) {
+        <button mat-button
+                color="primary"
+                type="button"
+                (click)="additionalActionConfig.action()">
+          {{ additionalActionConfig.title | translate }}
+        </button>
+      }
+    </div>
+    <div class="flex gap-2">
+      <button mat-button
+              color="primary"
+              type="button"
+              (click)="onCancel()">
+        {{ 'action.cancel' | translate }}
+      </button>
+      <button mat-raised-button
+              color="primary"
+              type="button"
+              [disabled]="(isLoading$ | async) || !onFailuresControl.dirty && !debugAllControl.dirty"
+              (click)="onApply()">
+        {{ 'action.apply' | translate }}
+      </button>
+    </div>
   </div>
 </div>
 

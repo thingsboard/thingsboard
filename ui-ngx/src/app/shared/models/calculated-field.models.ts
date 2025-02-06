@@ -14,7 +14,12 @@
 /// limitations under the License.
 ///
 
-import { EntityDebugSettings, HasTenantId, HasVersion } from '@shared/models/entity.models';
+import {
+  AdditionalDebugActionConfig,
+  EntityDebugSettings,
+  HasTenantId,
+  HasVersion
+} from '@shared/models/entity.models';
 import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { CalculatedFieldId } from '@shared/models/id/calculated-field-id';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -128,6 +133,13 @@ export interface CalculatedFieldDialogData {
   debugLimitsConfiguration: string;
   tenantId: string;
   entityName?: string;
+  additionalDebugActionConfig: AdditionalDebugActionConfig;
+}
+
+export interface CalculatedFieldDebugDialogData {
+  id?: CalculatedFieldId;
+  entityId: EntityId;
+  tenantId: string;
 }
 
 export interface ArgumentEntityTypeParams {
