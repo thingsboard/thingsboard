@@ -24,6 +24,7 @@ import org.thingsboard.server.actors.TbCalculatedFieldEntityActorId;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -50,7 +51,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -175,7 +175,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private void onEntityCreated(ComponentLifecycleMsg msg, TbCallback callback) {
         EntityId entityId = msg.getEntityId();
         EntityId profileId = getProfileId(tenantId, entityId);
-        cfEntityCache.add(tenantId, entityId, profileId);
+        cfEntityCache.add(tenantId, profileId, entityId);
         var entityIdFields = getCalculatedFieldsByEntityId(entityId);
         var profileIdFields = getCalculatedFieldsByEntityId(profileId);
         var fieldsCount = entityIdFields.size() + profileIdFields.size();
@@ -233,6 +233,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 // We use copy on write lists to safely pass the reference to another actor for the iteration.
                 // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
                 entityIdCalculatedFields.computeIfAbsent(cf.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(cfCtx);
+                addLinks(cf);
                 initCf(cfCtx, callback, false);
             }
         }
@@ -251,7 +252,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             } else {
                 var newCfCtx = new CalculatedFieldCtx(newCf, systemContext.getTbelInvokeService(), systemContext.getApiLimitService());
                 calculatedFields.put(newCf.getId(), newCfCtx);
-                List<CalculatedFieldCtx> oldCfList = entityIdCalculatedFields.get(newCf.getId());
+                List<CalculatedFieldCtx> oldCfList = entityIdCalculatedFields.get(newCf.getEntityId());
                 List<CalculatedFieldCtx> newCfList = new ArrayList<>(oldCfList.size());
                 boolean found = false;
                 for (CalculatedFieldCtx oldCtx : oldCfList) {
@@ -265,10 +266,15 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 if (!found) {
                     newCfList.add(newCfCtx);
                 }
-                entityIdCalculatedFields.put(newCf.getId(), newCfList);
+                entityIdCalculatedFields.put(newCf.getEntityId(), newCfList);
+
+                deleteLinks(oldCfCtx);
+                addLinks(newCf);
+
                 // We use copy on write lists to safely pass the reference to another actor for the iteration.
                 // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
-                if (newCfCtx.hasSignificantChanges(oldCfCtx)) {
+                var stateChanges = newCfCtx.hasStateChanges(oldCfCtx);
+                if (stateChanges ||  newCfCtx.hasOtherSignificantChanges(oldCfCtx)) {
                     try {
                         newCfCtx.init();
                     } catch (Exception e) {
@@ -276,11 +282,12 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                             systemContext.persistCalculatedFieldDebugEvent(newCf.getTenantId(), newCf.getId(), newCf.getEntityId(), null, null, null, null, e);
                         }
                     }
-                    initCf(newCfCtx, callback, true);
+                    initCf(newCfCtx, callback, stateChanges);
+                } else {
+                    callback.onSuccess();
                 }
             }
         }
-
     }
 
     private void onCfDeleted(ComponentLifecycleMsg msg, TbCallback callback) {
@@ -290,6 +297,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             log.warn("[{}] CF was already deleted [{}]", tenantId, cfId);
             callback.onSuccess();
         } else {
+            deleteLinks(cfCtx);
+
             EntityId entityId = cfCtx.getEntityId();
             EntityType entityType = cfCtx.getEntityId().getEntityType();
             if (isProfileEntity(entityType)) {
@@ -439,5 +448,17 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 () -> new CalculatedFieldEntityActorCreator(systemContext, tenantId, entityId),
                 () -> true);
     }
+
+    private void addLinks(CalculatedField newCf) {
+        var newLinks = newCf.getConfiguration().buildCalculatedFieldLinks(tenantId, newCf.getEntityId(), newCf.getId());
+        newLinks.forEach(link -> entityIdCalculatedFieldLinks.computeIfAbsent(link.getEntityId(), id -> new ArrayList<>()).add(link));
+    }
+
+    private void deleteLinks(CalculatedFieldCtx cfCtx) {
+        var oldCf = cfCtx.getCalculatedField();
+        var oldLinks = oldCf.getConfiguration().buildCalculatedFieldLinks(tenantId, oldCf.getEntityId(), oldCf.getId());
+        oldLinks.forEach(link -> entityIdCalculatedFieldLinks.computeIfAbsent(link.getEntityId(), id -> new ArrayList<>()).remove(link));
+    }
+
 
 }

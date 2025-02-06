@@ -212,12 +212,16 @@ public class CalculatedFieldCtx {
         return new CalculatedFieldEntityCtxId(tenantId, cfId, entityId);
     }
 
-    public boolean hasSignificantChanges(CalculatedFieldCtx other) {
-        boolean entityIdChanged = !entityId.equals(other.entityId);
+    public boolean hasOtherSignificantChanges(CalculatedFieldCtx other) {
+        boolean expressionChanged = !expression.equals(other.expression);
+        boolean outputChanged = !output.equals(other.output);
+        return expressionChanged || outputChanged;
+    }
+
+    public boolean hasStateChanges(CalculatedFieldCtx other) {
         boolean typeChanged = !cfType.equals(other.cfType);
         boolean argumentsChanged = !arguments.equals(other.arguments);
-        boolean expressionChanged = !expression.equals(other.expression);
-        return entityIdChanged || typeChanged || argumentsChanged || expressionChanged;
+        return typeChanged || argumentsChanged;
     }
 
 }

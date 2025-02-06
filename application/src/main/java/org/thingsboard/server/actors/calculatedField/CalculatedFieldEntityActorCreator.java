@@ -18,6 +18,7 @@ package org.thingsboard.server.actors.calculatedField;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActor;
 import org.thingsboard.server.actors.TbActorId;
+import org.thingsboard.server.actors.TbCalculatedFieldEntityActorId;
 import org.thingsboard.server.actors.TbEntityActorId;
 import org.thingsboard.server.actors.device.DeviceActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
@@ -38,7 +39,7 @@ public class CalculatedFieldEntityActorCreator extends ContextBasedCreator {
 
     @Override
     public TbActorId createActorId() {
-        return new TbEntityActorId(entityId);
+        return new TbCalculatedFieldEntityActorId(entityId);
     }
 
     @Override

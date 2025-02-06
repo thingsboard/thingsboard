@@ -34,6 +34,7 @@ import { CalculatedFieldsTableConfig } from '@home/components/calculated-fields/
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 
 @Component({
   selector: 'tb-calculated-fields-table',
@@ -59,6 +60,7 @@ export class CalculatedFieldsTableComponent {
               private popoverService: TbPopoverService,
               private cd: ChangeDetectorRef,
               private renderer: Renderer2,
+              private importExportService: ImportExportService,
               private destroyRef: DestroyRef) {
 
     effect(() => {
@@ -73,7 +75,8 @@ export class CalculatedFieldsTableComponent {
           this.popoverService,
           this.destroyRef,
           this.renderer,
-          this.entityName()
+          this.entityName(),
+          this.importExportService
         );
         this.cd.markForCheck();
       }
