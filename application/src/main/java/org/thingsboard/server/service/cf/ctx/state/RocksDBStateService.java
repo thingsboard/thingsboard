@@ -63,7 +63,7 @@ public class RocksDBStateService implements CalculatedFieldStateService {
         CalculatedFieldStateProto stateProto = toProto(stateId, state);
         long maxStateSizeInKBytes = ctx.getMaxStateSizeInKBytes();
         if (maxStateSizeInKBytes <= 0 || stateProto.getSerializedSize() <= ctx.getMaxStateSizeInKBytes()) {
-            rocksDBService.put(toProto(stateId), toProto(stateId, state));
+            rocksDBService.put(toProto(stateId), stateProto);
         }
         callback.onSuccess();
     }
@@ -111,8 +111,11 @@ public class RocksDBStateService implements CalculatedFieldStateService {
 
     private SingleValueArgumentProto toSingleValueArgumentProto(String argName, SingleValueArgumentEntry entry) {
         SingleValueArgumentProto.Builder builder = SingleValueArgumentProto.newBuilder()
-                .setArgName(argName)
-                .setValue(KvProtoUtil.toTsValueProto(entry.getTs(), entry.getKvEntryValue()));
+                .setArgName(argName);
+
+        if (entry != SingleValueArgumentEntry.EMPTY) {
+            builder.setValue(KvProtoUtil.toTsValueProto(entry.getTs(), entry.getKvEntryValue()));
+        }
 
         Optional.ofNullable(entry.getVersion()).ifPresent(builder::setVersion);
 
@@ -122,7 +125,9 @@ public class RocksDBStateService implements CalculatedFieldStateService {
     private TsValueListProto toRollingArgumentProto(String argName, TsRollingArgumentEntry entry) {
         TsValueListProto.Builder builder = TsValueListProto.newBuilder().setKey(argName);
 
-        entry.getTsRecords().forEach((ts, value) -> builder.addTsValue(KvProtoUtil.toTsValueProto(ts, value)));
+        if (entry != TsRollingArgumentEntry.EMPTY) {
+            entry.getTsRecords().forEach((ts, value) -> builder.addTsValue(KvProtoUtil.toTsValueProto(ts, value)));
+        }
 
         return builder.build();
     }
@@ -151,6 +156,9 @@ public class RocksDBStateService implements CalculatedFieldStateService {
     }
 
     private SingleValueArgumentEntry fromSingleValueArgumentProto(SingleValueArgumentProto proto) {
+        if (!proto.hasValue()) {
+            return (SingleValueArgumentEntry) SingleValueArgumentEntry.EMPTY;
+        }
         TsValueProto tsValueProto = proto.getValue();
         long ts = tsValueProto.getTs();
         BasicKvEntry kvEntry = (BasicKvEntry) KvProtoUtil.fromTsValueProto(proto.getArgName(), tsValueProto);
@@ -158,6 +166,9 @@ public class RocksDBStateService implements CalculatedFieldStateService {
     }
 
     private TsRollingArgumentEntry fromRollingArgumentProto(TsValueListProto proto) {
+        if (proto.getTsValueCount() <= 0) {
+            return (TsRollingArgumentEntry) TsRollingArgumentEntry.EMPTY;
+        }
         TreeMap<Long, BasicKvEntry> tsRecords = new TreeMap<>();
         proto.getTsValueList().forEach(tsValueProto -> {
             BasicKvEntry kvEntry = (BasicKvEntry) KvProtoUtil.fromTsValueProto(proto.getKey(), tsValueProto);

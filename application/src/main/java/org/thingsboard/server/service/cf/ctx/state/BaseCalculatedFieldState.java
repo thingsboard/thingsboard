@@ -52,7 +52,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
             ArgumentEntry newEntry = entry.getValue();
             ArgumentEntry existingEntry = arguments.get(key);
 
-            if (existingEntry == null) {
+            if (existingEntry == null || existingEntry == SingleValueArgumentEntry.EMPTY || existingEntry == TsRollingArgumentEntry.EMPTY) {
                 validateNewEntry(newEntry);
                 arguments.put(key, newEntry);
                 stateUpdated = true;

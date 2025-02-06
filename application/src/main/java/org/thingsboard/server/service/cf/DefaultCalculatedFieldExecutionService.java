@@ -39,6 +39,7 @@ import org.thingsboard.server.actors.calculatedField.MultipleTbCallback;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
@@ -68,7 +69,6 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.attributes.AttributesService;
-import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeScopeProto;
@@ -447,6 +447,9 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     private KvEntry createDefaultKvEntry(Argument argument) {
         String key = argument.getRefEntityKey().getKey();
         String defaultValue = argument.getDefaultValue();
+        if (StringUtils.isBlank(defaultValue)) {
+            return new StringDataEntry(key, null);
+        }
         if (NumberUtils.isParsable(defaultValue)) {
             return new DoubleDataEntry(key, Double.parseDouble(defaultValue));
         }
