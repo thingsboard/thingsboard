@@ -16,6 +16,7 @@
 :host {
   .debug-dialog-container {
     height: 77vh;
+    min-width: 90vw;
 
     .debug-dialog-content {
       border-radius: 0;
