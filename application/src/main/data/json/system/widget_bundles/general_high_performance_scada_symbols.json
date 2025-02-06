@@ -26,6 +26,12 @@
     "hp_bottom_tee_connector",
     "hp_right_tee_connector",
     "hp_left_tee_connector",
-    "hp_top_tee_connector"
+    "hp_top_tee_connector",
+    "hp_drawwork",
+    "hp_crane",
+    "hp_consumers",
+    "hp_house",
+    "hp_apartments",
+    "hp_manufacture"
   ]
 }

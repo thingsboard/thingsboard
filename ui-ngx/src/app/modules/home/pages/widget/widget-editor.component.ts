@@ -21,8 +21,10 @@ import {
   EventEmitter,
   Inject,
   OnDestroy,
-  OnInit, Renderer2,
-  ViewChild, ViewContainerRef,
+  OnInit,
+  Renderer2,
+  ViewChild,
+  ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
 import { Store } from '@ngrx/store';
@@ -30,6 +32,7 @@ import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
 import { detailsToWidgetInfo, WidgetInfo } from '@home/models/widget-component.models';
 import {
+  migrateWidgetTypeToDynamicForms,
   TargetDeviceType,
   Widget,
   WidgetConfig,
@@ -65,12 +68,13 @@ import { Observable } from 'rxjs/internal/Observable';
 import { catchError, map, tap } from 'rxjs/operators';
 import { beautifyCss, beautifyHtml, beautifyJs } from '@shared/models/beautify.models';
 import { HttpClient, HttpStatusCode } from '@angular/common/http';
-import Timeout = NodeJS.Timeout;
-import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { loadModulesCompleter } from '@shared/models/js-function.models';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { JsFuncModulesComponent } from '@shared/components/js-func-modules.component';
 import { MatIconButton } from '@angular/material/button';
+import { formPropertyCompletions } from '@shared/models/dynamic-form.models';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import Timeout = NodeJS.Timeout;
 
 // @dynamic
 @Component({
@@ -104,15 +108,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
 
   @ViewChild('cssInput', {static: true})
   cssInputElmRef: ElementRef;
-
-  @ViewChild('settingsJsonInput', {static: true})
-  settingsJsonInputElmRef: ElementRef;
-
-  @ViewChild('dataKeySettingsJsonInput', {static: true})
-  dataKeySettingsJsonInputElmRef: ElementRef;
-
-  @ViewChild('latestDataKeySettingsJsonInput', {static: true})
-  latestDataKeySettingsJsonInputElmRef: ElementRef;
 
   @ViewChild('javascriptInput', {static: true})
   javascriptInputElmRef: ElementRef;
@@ -151,9 +146,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   fullscreen = false;
   htmlFullscreen = false;
   cssFullscreen = false;
-  jsonSettingsFullscreen = false;
-  jsonDataKeySettingsFullscreen = false;
-  jsonLatestDataKeySettingsFullscreen = false;
   javascriptFullscreen = false;
   iFrameFullscreen = false;
 
@@ -161,9 +153,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   editorsResizeCafs: {[editorId: string]: CancelAnimationFrame} = {};
   htmlEditor: Ace.Editor;
   cssEditor: Ace.Editor;
-  jsonSettingsEditor: Ace.Editor;
-  dataKeyJsonSettingsEditor: Ace.Editor;
-  latestDataKeyJsonSettingsEditor: Ace.Editor;
   jsEditor: Ace.Editor;
   private initialCompleters: Ace.Completer[];
   aceResize$: ResizeObserver;
@@ -197,6 +186,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
+              private customTranslate: CustomTranslatePipe,
               private http: HttpClient) {
     super(store);
 
@@ -353,45 +343,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
       })
     ));
 
-    editorsObservables.push(this.createAceEditor(this.settingsJsonInputElmRef, 'json').pipe(
-      tap((editor) => {
-        this.jsonSettingsEditor = editor;
-        this.jsonSettingsEditor.on('input', () => {
-          const editorValue = this.jsonSettingsEditor.getValue();
-          if (this.widget.settingsSchema !== editorValue) {
-            this.widget.settingsSchema = editorValue;
-            this.isDirty = true;
-          }
-        });
-      })
-    ));
-
-    editorsObservables.push(this.createAceEditor(this.dataKeySettingsJsonInputElmRef, 'json').pipe(
-      tap((editor) => {
-        this.dataKeyJsonSettingsEditor = editor;
-        this.dataKeyJsonSettingsEditor.on('input', () => {
-          const editorValue = this.dataKeyJsonSettingsEditor.getValue();
-          if (this.widget.dataKeySettingsSchema !== editorValue) {
-            this.widget.dataKeySettingsSchema = editorValue;
-            this.isDirty = true;
-          }
-        });
-      })
-    ));
-
-    editorsObservables.push(this.createAceEditor(this.latestDataKeySettingsJsonInputElmRef, 'json').pipe(
-      tap((editor) => {
-        this.latestDataKeyJsonSettingsEditor = editor;
-        this.latestDataKeyJsonSettingsEditor.on('input', () => {
-          const editorValue = this.latestDataKeyJsonSettingsEditor.getValue();
-          if (this.widget.latestDataKeySettingsSchema !== editorValue) {
-            this.widget.latestDataKeySettingsSchema = editorValue;
-            this.isDirty = true;
-          }
-        });
-      })
-    ));
-
     editorsObservables.push(this.createAceEditor(this.javascriptInputElmRef, 'javascript').pipe(
       tap((editor) => {
         this.jsEditor = editor;
@@ -405,6 +356,11 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
         this.jsEditor.on('change', () => {
           this.cleanupJsErrors();
         });
+        if (!(this.jsEditor as any).completer) {
+          this.jsEditor.execCommand("startAutocomplete");
+          (this.jsEditor as any).completer.detach();
+        }
+        (this.jsEditor as any).completer.popup.container.style.width = '500px';
         this.initialCompleters = this.jsEditor.completers || [];
       })
     ));
@@ -420,10 +376,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   private setAceEditorValues() {
     this.htmlEditor.setValue(this.widget.templateHtml ? this.widget.templateHtml : '', -1);
     this.cssEditor.setValue(this.widget.templateCss ? this.widget.templateCss : '', -1);
-    this.jsonSettingsEditor.setValue(this.widget.settingsSchema ? this.widget.settingsSchema : '', -1);
-    this.dataKeyJsonSettingsEditor.setValue(this.widget.dataKeySettingsSchema ? this.widget.dataKeySettingsSchema : '', -1);
-    this.latestDataKeyJsonSettingsEditor.setValue(this.widget.latestDataKeySettingsSchema ?
-      this.widget.latestDataKeySettingsSchema : '', -1);
     this.jsEditor.setValue(this.controllerScriptBody ? this.controllerScriptBody : '', -1);
     this.updateControllerScriptCompleters();
   }
@@ -596,7 +548,11 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
       }),
       catchError((err) => {
         if (id && err.status === HttpStatusCode.Conflict) {
-          return this.widgetService.getWidgetTypeById(id.id);
+          return this.widgetService.getWidgetTypeById(id.id).pipe(
+            map((details) => {
+              return migrateWidgetTypeToDynamicForms(details);
+            })
+          );
         }
         return throwError(() => err);
       }),
@@ -754,43 +710,6 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     );
   }
 
-  beautifyJson(): void {
-    beautifyJs(this.widget.settingsSchema, {indent_size: 4}).subscribe(
-      (res) => {
-        if (this.widget.settingsSchema !== res) {
-          this.isDirty = true;
-          this.widget.settingsSchema = res;
-          this.jsonSettingsEditor.setValue(this.widget.settingsSchema ? this.widget.settingsSchema : '', -1);
-        }
-      }
-    );
-  }
-
-  beautifyDataKeyJson(): void {
-    beautifyJs(this.widget.dataKeySettingsSchema, {indent_size: 4}).subscribe(
-      (res) => {
-        if (this.widget.dataKeySettingsSchema !== res) {
-          this.isDirty = true;
-          this.widget.dataKeySettingsSchema = res;
-          this.dataKeyJsonSettingsEditor.setValue(this.widget.dataKeySettingsSchema ? this.widget.dataKeySettingsSchema : '', -1);
-        }
-      }
-    );
-  }
-
-  beautifyLatestDataKeyJson(): void {
-    beautifyJs(this.widget.latestDataKeySettingsSchema, {indent_size: 4}).subscribe(
-      (res) => {
-        if (this.widget.latestDataKeySettingsSchema !== res) {
-          this.isDirty = true;
-          this.widget.latestDataKeySettingsSchema = res;
-          this.latestDataKeyJsonSettingsEditor.setValue(this.widget.latestDataKeySettingsSchema ?
-            this.widget.latestDataKeySettingsSchema : '', -1);
-        }
-      }
-    );
-  }
-
   beautifyJs(): void {
     beautifyJs(this.controllerScriptBody, {indent_size: 4, wrap_line_length: 60}).subscribe(
       (res) => {
@@ -873,6 +792,19 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.isDirty = true;
   }
 
+  settingsFormUpdated() {
+    this.isDirty = true;
+    this.updateControllerScriptCompleters();
+  }
+
+  dataKeySettingsFormUpdated() {
+    this.isDirty = true;
+  }
+
+  latestDataKeySettingsFormUpdated() {
+    this.isDirty = true;
+  }
+
   editControllerScriptModules($event: Event, button: MatIconButton) {
     if ($event) {
       $event.stopPropagation();
@@ -951,7 +883,8 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     const modulesCompleterObservable = loadModulesCompleter(this.http, this.controllerScriptModules);
     modulesCompleterObservable.subscribe((modulesCompleter) => {
       const completers: Ace.Completer[] = [];
-      completers.push(widgetEditorCompleter);
+      const formPropertiesCompletions = formPropertyCompletions(this.widget.settingsForm || [], this.customTranslate);
+      completers.push(widgetEditorCompleter(formPropertiesCompletions));
       if (modulesCompleter) {
         completers.push(modulesCompleter);
       }

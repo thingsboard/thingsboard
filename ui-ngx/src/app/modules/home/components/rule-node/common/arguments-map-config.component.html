@@ -1,0 +1,129 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="flex flex-col">
+
+  <div [class.readonly]="disabled"
+       style="max-height: 500px; overflow: auto;">
+    <mat-list class="tb-drop-list arguments-list" cdkDropList cdkDropListOrientation="vertical"
+              [formGroup]="argumentsFormGroup"
+              (cdkDropListDropped)="onDrop($event)"
+              [cdkDropListDisabled]="disabled">
+      <mat-list-item *ngFor="let argumentControl of argumentsFormArray.controls; let $index = index"
+                     formArrayName="arguments"
+                     cdkDrag class="tb-argument tb-draggable"
+                     [cdkDragDisabled]="disabled"
+                     style="height: 100%">
+        <div class="flex flex-1 flex-row items-center justify-start">
+          <button *ngIf="!disabled" mat-icon-button color="primary"
+                  cdkDragHandle
+                  class="tb-drag-handle handle"
+                  style="min-width: 40px; margin: 0"
+                  matTooltip="{{ 'action.drag' | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>drag_handle</mat-icon>
+          </button>
+          <div class="flex flex-1 flex-row items-center justify-start gap-4">
+            <span *ngIf="displayArgumentName"
+                  style="padding: 0 10px; min-width: 20px;">{{argumentControl.get('name').value}}.</span>
+            <div class="flex flex-1 flex-col">
+              <mat-form-field class="mat-block">
+                <mat-label translate>rule-node-config.argument-source-field-input</mat-label>
+                <mat-select [formControl]="argumentControl.get('type')" required>
+                  <mat-select-trigger>
+                    {{ argumentTypeMap.get(argumentControl.get('type').value)?.name | translate }}
+                  </mat-select-trigger>
+                  <mat-option *ngFor="let argument of arguments" [value]="argument"
+                              style="border-bottom: 1px solid #eee;">
+                    {{ argumentTypeMap.get(argument).name | translate }}
+                    <small style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                      {{ argumentTypeMap.get(argument).description |  translate }}
+                    </small>
+                  </mat-option>
+                </mat-select>
+                <mat-error *ngIf="argumentControl.get('type').hasError('required')" translate>
+                  rule-node-config.argument-source-field-input-required
+                </mat-error>
+              </mat-form-field>
+              <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+                <mat-form-field floatLabel="always" class="mat-block gt-xs:max-w-50% gt-xs:flex-full"
+                                *ngIf="argumentControl.get('type').value && argumentControl.get('type').value !== ArgumentType.CONSTANT">
+                  <mat-label translate>rule-node-config.argument-key-field-input</mat-label>
+                  <input [formControl]="argumentControl.get('key')" matInput required/>
+                  <mat-icon class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon" matSuffix
+                            color="primary"
+                            matTooltip="{{ 'rule-node-config.math-templatization-tooltip' | translate }}">
+                    help
+                  </mat-icon>
+                  <mat-error *ngIf="argumentControl.get('key').hasError('required')" translate>
+                    rule-node-config.argument-key-field-input-required
+                  </mat-error>
+                </mat-form-field>
+                <mat-form-field floatLabel="always" class="mat-block flex-1"
+                                *ngIf="argumentControl.get('type').value === ArgumentType.CONSTANT">
+                  <mat-label translate>rule-node-config.constant-value-field-input</mat-label>
+                  <input [formControl]="argumentControl.get('key')"
+                         matInput
+                         required
+                         step="1" min="0"
+                         type="number"/>
+                  <mat-error *ngIf="argumentControl.get('key').hasError('required')" translate>
+                    rule-node-config.constant-value-field-input-required
+                  </mat-error>
+                </mat-form-field>
+                <mat-form-field *ngIf="argumentControl.get('type').value && argumentControl.get('type').value !== ArgumentType.CONSTANT"
+                                floatLabel="always" class="mat-block gt-xs:max-w-50% gt-xs:flex-full">
+                  <mat-label translate>rule-node-config.default-value-field-input</mat-label>
+                  <input [formControl]="argumentControl.get('defaultValue')" matInput step="1" type="number"/>
+                </mat-form-field>
+              </div>
+              <mat-form-field *ngIf="argumentControl.get('type').value === ArgumentType.ATTRIBUTE" class="mat-block">
+                <mat-label translate>rule-node-config.attribute-scope-field-input</mat-label>
+                <mat-select required [formControl]="argumentControl.get('attributeScope')">
+                  <mat-option *ngFor="let scope of attributeScope" [value]="scope">
+                    {{ attributeScopeMap.get(scope) | translate }}
+                  </mat-option>
+                </mat-select>
+                <mat-error *ngIf="argumentControl.get('attributeScope').hasError('required')" translate>
+                  rule-node-config.attribute-scope-field-input-required
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <button *ngIf="!disabled" mat-icon-button color="primary" style="min-width: 40px;"
+                    (click)="removeArgument($index)"
+                    matTooltip="{{ 'action.remove' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        </div>
+      </mat-list-item>
+    </mat-list>
+  </div>
+  <div *ngIf="!argumentsFormArray.length">
+      <span translate
+            class="tb-prompt flex items-center justify-center">rule-node-config.no-arguments-prompt</span>
+  </div>
+  <button mat-button mat-raised-button color="primary"
+          [disabled]="argumentsFormArray.length >= maxArgs"
+          (click)="addArgument()"
+          type="button"
+          matTooltipPosition="above">
+    <mat-icon>add</mat-icon>
+    {{ 'action.add' | translate }}
+  </button>
+</section>

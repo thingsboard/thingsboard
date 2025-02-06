@@ -105,7 +105,12 @@ class TbSnsNodeTest {
         given(publishResultMock.getSdkResponseMetadata()).willReturn(responseMetadataMock);
         given(responseMetadataMock.getRequestId()).willReturn(requestId);
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(metaData)
+                .data(data)
+                .build();
         node.onMsg(ctxMock, msg);
 
         then(ctxMock).should().ack(msg);
@@ -143,7 +148,12 @@ class TbSnsNodeTest {
         ListenableFuture<TbMsg> failedFuture = Futures.immediateFailedFuture(new RuntimeException(errorMsg));
         given(listeningExecutor.executeAsync(any(Callable.class))).willReturn(failedFuture);
 
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         node.onMsg(ctxMock, msg);
 
         then(ctxMock).should(never()).enqueueForTellNext(any(), any(String.class));

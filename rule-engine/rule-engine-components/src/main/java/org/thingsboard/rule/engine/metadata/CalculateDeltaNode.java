@@ -53,7 +53,6 @@ import java.util.Map;
                 "and current value for this key from the incoming message",
         nodeDetails = "Useful for metering use cases, when you need to calculate consumption based on pulse counter reading.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Other</code> or <code>Failure</code>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeCalculateDeltaConfig")
 public class CalculateDeltaNode implements TbNode {
 
@@ -175,7 +174,9 @@ public class CalculateDeltaNode implements TbNode {
                 long period = previousData != null ? msg.getMetaDataTs() - previousData.ts : 0;
                 json.put(config.getPeriodValueKey(), period);
             }
-            return TbMsg.transformMsgData(msg, JacksonUtil.toString(json));
+            return msg.transform()
+                    .data(JacksonUtil.toString(json))
+                    .build();
         }, MoreExecutors.directExecutor());
     }
 

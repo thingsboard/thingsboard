@@ -1,0 +1,79 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="attributesConfigForm" class="tb-form-panel no-border no-padding">
+  <div class="tb-form-panel stroked">
+    <tb-example-hint [hintText]="'rule-node-config.attributes-scope-hint'">
+    </tb-example-hint>
+    <div class="tb-form-row no-border no-padding tb-standard-fields">
+      <mat-form-field class="flex">
+        <mat-label>{{ 'rule-node-config.attributes-scope' | translate }}</mat-label>
+        <mat-select required
+                    class="tb-entity-type-select" matInput formControlName="scope">
+          <mat-option *ngFor="let scope of attributeScopes" [value]="scope">
+            {{ telemetryTypeTranslationsMap.get(scope) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field class="flex">
+        <mat-label>{{ 'rule-node-config.attributes-scope-value' | translate }}</mat-label>
+        <input type="text" matInput readonly disabled [ngModel]="attributesConfigForm.get('scope').value" [ngModelOptions]="{standalone: true}">
+        <button type="button"
+                matSuffix
+                mat-icon-button
+                aria-label="Copy"
+                ngxClipboard
+                [cbContent]="attributesConfigForm.get('scope').value"
+                matTooltip="{{ 'rule-node-config.attributes-scope-value-copy' | translate }}">
+          <mat-icon aria-hidden="false"
+                    aria-label="help-icon">content_copy
+          </mat-icon>
+        </button>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <section class="tb-form-panel stroked">
+    <mat-expansion-panel class="tb-settings">
+      <mat-expansion-panel-header>
+        <mat-panel-title translate>rule-node-config.advanced-settings</mat-panel-title>
+      </mat-expansion-panel-header>
+      <div tb-hint-tooltip-icon="{{ (attributesConfigForm.get('updateAttributesOnlyOnValueChange').value
+                                     ? 'rule-node-config.update-attributes-only-on-value-change-hint-enabled'
+                                     : 'rule-node-config.update-attributes-only-on-value-change-hint') | translate }}"
+           class="tb-form-row no-border no-padding">
+        <mat-slide-toggle class="mat-slide" formControlName="updateAttributesOnlyOnValueChange">
+          {{ 'rule-node-config.update-attributes-only-on-value-change' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div tb-hint-tooltip-icon="{{ 'rule-node-config.send-attributes-updated-notification-hint' | translate }}"
+           *ngIf="attributesConfigForm.get('scope').value !== attributeScopeMap.CLIENT_SCOPE"
+           class="tb-form-row no-border no-padding">
+        <mat-slide-toggle class="mat-slide" formControlName="sendAttributesUpdatedNotification">
+          {{ 'rule-node-config.send-attributes-updated-notification' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div tb-hint-tooltip-icon="{{ 'rule-node-config.notify-device-on-update-hint' | translate }}"
+           *ngIf="attributesConfigForm.get('scope').value === attributeScopeMap.SHARED_SCOPE"
+           class="tb-form-row no-border no-padding">
+        <mat-slide-toggle class="mat-slide" formControlName="notifyDevice">
+          {{ 'rule-node-config.notify-device' | translate }}
+        </mat-slide-toggle>
+      </div>
+    </mat-expansion-panel>
+  </section>
+</section>

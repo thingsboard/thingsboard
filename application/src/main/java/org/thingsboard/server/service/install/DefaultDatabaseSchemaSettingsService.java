@@ -17,6 +17,8 @@ package org.thingsboard.server.service.install;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -31,12 +33,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSettingsService {
 
-    private static final String CURRENT_PRODUCT = "CE";
     // This list should include all versions which are compatible for the upgrade.
     // The compatibility cycle usually breaks when we have some scripts written in Java that may not work after new release.
     private static final List<String> SUPPORTED_VERSIONS_FOR_UPGRADE = List.of("3.9.0");
 
-    private final BuildProperties buildProperties;
+    private final ProjectInfo projectInfo;
     private final JdbcTemplate jdbcTemplate;
 
     private String packageSchemaVersion;
@@ -50,8 +51,8 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
         }
 
         String product = getProductFromDb();
-        if (!CURRENT_PRODUCT.equals(product)) {
-            onSchemaSettingsError(String.format("Upgrade failed: can't upgrade ThingsBoard %s database using ThingsBoard %s.", product, CURRENT_PRODUCT));
+        if (!projectInfo.getProductType().equals(product)) {
+            onSchemaSettingsError(String.format("Upgrade failed: can't upgrade ThingsBoard %s database using ThingsBoard %s.", product, projectInfo.getProductType()));
         }
 
         String dbSchemaVersion = getDbSchemaVersion();
@@ -70,7 +71,7 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
     public void createSchemaSettings() {
         Long schemaVersion = getSchemaVersionFromDb();
         if (schemaVersion == null) {
-            jdbcTemplate.execute("INSERT INTO tb_schema_settings (schema_version, product) VALUES (" + getPackageSchemaVersionForDb() + ", '" + CURRENT_PRODUCT + "')");
+            jdbcTemplate.execute("INSERT INTO tb_schema_settings (schema_version, product) VALUES (" + getPackageSchemaVersionForDb() + ", '" + projectInfo.getProductType() + "')");
         }
     }
 
@@ -82,7 +83,7 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
     @Override
     public String getPackageSchemaVersion() {
         if (packageSchemaVersion == null) {
-            packageSchemaVersion = buildProperties.getVersion().replaceAll("[^\\d.]", "");
+            packageSchemaVersion = projectInfo.getProjectVersion();
         }
         return packageSchemaVersion;
     }
