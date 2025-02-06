@@ -42,6 +42,7 @@ import {
 } from '@shared/models/calculated-field.models';
 import { CalculatedFieldDebugDialogComponent, CalculatedFieldDialogComponent } from './components/public-api';
 import { ImportExportService } from '@shared/import-export/import-export.service';
+import { CalculatedFieldId } from '@shared/models/id/calculated-field-id';
 
 export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField, PageLink> {
 
@@ -52,11 +53,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   readonly tenantId = getCurrentAuthUser(this.store).tenantId;
   additionalDebugActionConfig = {
     title: this.translate.instant('calculated-fields.see-debug-events'),
-    action: this.openDebugDialog.bind(this),
-    data: {
-      tenantId: this.tenantId,
-      entityId: this.entityId,
-    },
+    action: (id?: CalculatedFieldId) => this.openDebugDialog.call(this, id),
   };
 
   constructor(private calculatedFieldsService: CalculatedFieldsService,
@@ -140,7 +137,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   onOpenDebugConfig($event: Event, { debugSettings = {}, id }: CalculatedField): void {
     const additionalActionConfig = {
       ...this.additionalDebugActionConfig,
-      action: () => this.openDebugDialog({...this.additionalDebugActionConfig.data, id }),
+      action: () => this.openDebugDialog(id)
     };
     const { viewContainerRef } = this.getTable();
     if ($event) {
@@ -206,11 +203,15 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       .afterClosed();
   }
 
-  private openDebugDialog(data: CalculatedFieldDebugDialogData): void {
+  private openDebugDialog(id: CalculatedFieldId): void {
     this.dialog.open<CalculatedFieldDebugDialogComponent, CalculatedFieldDebugDialogData, null>(CalculatedFieldDebugDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data
+      data: {
+        tenantId: this.tenantId,
+        entityId: this.entityId,
+        id
+      }
     })
       .afterClosed()
       .subscribe();

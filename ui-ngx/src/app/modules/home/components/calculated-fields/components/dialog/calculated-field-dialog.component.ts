@@ -67,10 +67,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
 
   additionalDebugActionConfig = this.data.value?.id ? {
     ...this.data.additionalDebugActionConfig,
-    action: () => this.data.additionalDebugActionConfig.action({
-      ...this.data.additionalDebugActionConfig.data,
-      id: this.data.value.id,
-    }),
+    action: () => this.data.additionalDebugActionConfig.action(this.data.value.id)
   } : null;
 
   readonly OutputTypeTranslations = OutputTypeTranslations;

@@ -21,7 +21,6 @@ import { DeviceCredentialMQTTBasic } from '@shared/models/device.models';
 import { Lwm2mSecurityConfigModels } from '@shared/models/lwm2m-security-config.models';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { RuleChainMetaData } from '@shared/models/rule-chain.models';
-import { CalculatedFieldDebugDialogData } from '@shared/models/calculated-field.models';
 
 export interface EntityInfo {
   name?: string;
@@ -204,12 +203,9 @@ export interface EntityDebugSettings {
   allEnabledUntil?: number;
 }
 
-export type AdditionalDebugActionConfigData = CalculatedFieldDebugDialogData;
-
 export interface AdditionalDebugActionConfig {
-  action?: (data?: AdditionalDebugActionConfigData) => void;
+  action?: (id?: EntityId) => void;
   title: string;
-  data: AdditionalDebugActionConfigData;
 }
 
 export type VersionedEntity = EntityInfoData & HasVersion | RuleChainMetaData;
