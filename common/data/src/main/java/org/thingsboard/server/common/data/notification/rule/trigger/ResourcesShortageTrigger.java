@@ -17,21 +17,22 @@ package org.thingsboard.server.common.data.notification.rule.trigger;
 
 import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 
+import java.io.Serial;
+import java.util.concurrent.TimeUnit;
+
 @Data
 @Builder
-public class NewPlatformVersionTrigger implements NotificationRuleTrigger {
+public class ResourcesShortageTrigger implements NotificationRuleTrigger {
 
-    private final UpdateMessage updateInfo;
+    @Serial
+    private static final long serialVersionUID = 6024216015202949570L;
 
-    @Override
-    public NotificationRuleTriggerType getType() {
-        return NotificationRuleTriggerType.NEW_PLATFORM_VERSION;
-    }
+    private Resource resource;
+    private Integer usage;
 
     @Override
     public TenantId getTenantId() {
@@ -43,7 +44,6 @@ public class NewPlatformVersionTrigger implements NotificationRuleTrigger {
         return TenantId.SYS_TENANT_ID;
     }
 
-
     @Override
     public boolean deduplicate() {
         return true;
@@ -51,8 +51,21 @@ public class NewPlatformVersionTrigger implements NotificationRuleTrigger {
 
     @Override
     public String getDeduplicationKey() {
-        return String.join(":", NotificationRuleTrigger.super.getDeduplicationKey(),
-                updateInfo.getCurrentVersion(), updateInfo.getLatestVersion());
+        return resource.name();
+    }
+
+    @Override
+    public long getDefaultDeduplicationDuration() {
+        return TimeUnit.HOURS.toMillis(1);
+    }
+
+    @Override
+    public NotificationRuleTriggerType getType() {
+        return NotificationRuleTriggerType.RESOURCES_SHORTAGE;
+    }
+
+    public enum Resource {
+        CPU, RAM, STORAGE
     }
 
 }

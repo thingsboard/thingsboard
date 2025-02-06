@@ -13,34 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.common.data.notification.info;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@AllArgsConstructor
+import java.util.Map;
+
+@Data
 @NoArgsConstructor
-public enum NotificationType {
+@AllArgsConstructor
+@Builder
+public class ResourcesShortageNotificationInfo implements RuleOriginatedNotificationInfo {
 
-    GENERAL,
-    ALARM,
-    DEVICE_ACTIVITY,
-    ENTITY_ACTION,
-    ALARM_COMMENT,
-    RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
-    ALARM_ASSIGNMENT,
-    NEW_PLATFORM_VERSION,
-    ENTITIES_LIMIT,
-    API_USAGE_LIMIT,
-    RULE_NODE,
-    RATE_LIMITS,
-    EDGE_CONNECTION,
-    EDGE_COMMUNICATION_FAILURE,
-    TASK_PROCESSING_FAILURE,
-    RESOURCES_SHORTAGE;
+    private String resource;
+    private Integer usage;
 
-    @Getter
-    private boolean system; // for future use and compatibility with PE
+    @Override
+    public Map<String, String> getTemplateData() {
+        return Map.of(
+                "resource", resource,
+                "usage", String.valueOf(usage)
+        );
+    }
 
 }
