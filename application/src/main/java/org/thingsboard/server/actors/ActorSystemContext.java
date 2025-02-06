@@ -315,10 +315,6 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private SmsExecutorService smsExecutor;
-
-    @Autowired
-    @Getter
     private DbCallbackExecutorService dbCallbackExecutor;
 
     @Autowired

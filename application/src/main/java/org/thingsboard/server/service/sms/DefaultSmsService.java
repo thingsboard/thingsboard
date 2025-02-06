@@ -16,12 +16,14 @@
 package org.thingsboard.server.service.sms;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.sms.SmsSender;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
@@ -37,26 +39,31 @@ import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class DefaultSmsService implements SmsService {
 
+    public static final int TIMEOUT = 30;
     private final SmsSenderFactory smsSenderFactory;
     private final AdminSettingsService adminSettingsService;
     private final TbApiUsageStateService apiUsageStateService;
     private final TbApiUsageReportClient apiUsageClient;
+    private final SmsExecutorService smsExecutor;
+    ScheduledExecutorService timeoutScheduler;
 
     private SmsSender smsSender;
 
-    public DefaultSmsService(SmsSenderFactory smsSenderFactory, AdminSettingsService adminSettingsService, TbApiUsageStateService apiUsageStateService, TbApiUsageReportClient apiUsageClient) {
-        this.smsSenderFactory = smsSenderFactory;
-        this.adminSettingsService = adminSettingsService;
-        this.apiUsageStateService = apiUsageStateService;
-        this.apiUsageClient = apiUsageClient;
-    }
-
     @PostConstruct
     private void init() {
+        this.timeoutScheduler = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("sms-service-watchdog"));
         updateSmsConfiguration();
     }
 
@@ -64,6 +71,9 @@ public class DefaultSmsService implements SmsService {
     private void destroy() {
         if (this.smsSender != null) {
             this.smsSender.destroy();
+        }
+        if (timeoutScheduler != null) {
+            timeoutScheduler.shutdownNow();
         }
     }
 
@@ -93,14 +103,36 @@ public class DefaultSmsService implements SmsService {
     }
 
     @Override
-    public void sendSms(TenantId tenantId, CustomerId customerId, String[] numbersTo, String message) throws ThingsboardException {
+    public ListenableFuture<Void> sendSms(SmsSender smsSender, String[] numbersToList, String message) {
+        ListenableFuture<Void> future = smsExecutor.executeAsync(() -> {
+            for (String numberTo : numbersToList) {
+                this.smsSender.sendSms(numberTo, message);
+            }
+            return null;
+        });
+        return Futures.withTimeout(future, TIMEOUT, TimeUnit.SECONDS, timeoutScheduler);
+    }
+
+    @Override
+    public ListenableFuture<Void> sendSms(TenantId tenantId, CustomerId customerId, String[] numbersTo, String message) {
+        ListenableFuture<Void> future = smsExecutor.executeAsync(() -> {
+            doSendSms(tenantId, customerId, numbersTo, message);
+            return null;
+        });
+        return Futures.withTimeout(future, TIMEOUT, TimeUnit.SECONDS, timeoutScheduler);
+    }
+
+    public void doSendSms(TenantId tenantId, CustomerId customerId, String[] numbersTo, String message) {
         if (apiUsageStateService.getApiUsageState(tenantId).isSmsSendEnabled()) {
             int smsCount = 0;
             try {
                 for (String numberTo : numbersTo) {
                     smsCount += this.sendSms(numberTo, message);
                 }
-            } finally {
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            finally {
                 if (smsCount > 0) {
                     apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.SMS_EXEC_COUNT, smsCount);
                 }
@@ -111,15 +143,16 @@ public class DefaultSmsService implements SmsService {
     }
 
     @Override
-    public void sendTestSms(TestSmsRequest testSmsRequest) throws ThingsboardException {
-        SmsSender testSmsSender;
-        try {
-            testSmsSender = this.smsSenderFactory.createSmsSender(testSmsRequest.getProviderConfiguration());
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-        this.sendSms(testSmsSender, testSmsRequest.getNumberTo(), testSmsRequest.getMessage());
-        testSmsSender.destroy();
+    public ListenableFuture<Void> sendTestSms(TestSmsRequest testSmsRequest) {
+        ListenableFuture<Void> future = smsExecutor.executeAsync(() -> {
+            try (SmsSender testSmsSender = this.smsSenderFactory.createSmsSender(testSmsRequest.getProviderConfiguration())){
+                this.sendSms(testSmsSender, testSmsRequest.getNumberTo(), testSmsRequest.getMessage());
+            } catch (Exception e) {
+                throw handleException(e);
+            }
+            return null;
+        });
+        return Futures.withTimeout(future, TIMEOUT, TimeUnit.SECONDS, timeoutScheduler);
     }
 
     @Override
