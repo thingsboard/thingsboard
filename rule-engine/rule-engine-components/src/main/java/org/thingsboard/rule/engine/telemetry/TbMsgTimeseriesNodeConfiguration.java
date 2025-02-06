@@ -73,12 +73,12 @@ public class TbMsgTimeseriesNodeConfiguration implements NodeConfiguration<TbMsg
             private final int deduplicationIntervalSecs;
 
             @JsonIgnore
-            private final PersistenceStrategy deduplicateStrategy;
+            private final PersistenceStrategy persistenceStrategy;
 
             @JsonCreator
             Deduplicate(@JsonProperty("deduplicationIntervalSecs") int deduplicationIntervalSecs) {
                 this.deduplicationIntervalSecs = deduplicationIntervalSecs;
-                deduplicateStrategy = PersistenceStrategy.deduplicate(deduplicationIntervalSecs);
+                persistenceStrategy = PersistenceStrategy.deduplicate(deduplicationIntervalSecs);
             }
 
         }

@@ -182,7 +182,7 @@ public class TbMsgTimeseriesNode implements TbNode {
             return TimeseriesSaveRequest.Strategy.WS_ONLY;
         }
         if (persistenceSettings instanceof Deduplicate deduplicate) {
-            boolean isFirstMsgInInterval = deduplicate.getDeduplicateStrategy().shouldPersist(ts, originatorUuid);
+            boolean isFirstMsgInInterval = deduplicate.getPersistenceStrategy().shouldPersist(ts, originatorUuid);
             return isFirstMsgInInterval ? TimeseriesSaveRequest.Strategy.SAVE_ALL : TimeseriesSaveRequest.Strategy.SKIP_ALL;
         }
         if (persistenceSettings instanceof Advanced advanced) {
