@@ -20,7 +20,7 @@ import { AppState } from '@core/core.state';
 import { Observable, Subscription } from 'rxjs';
 import { selectIsLoading } from '@core/interceptors/load.selectors';
 import { delay, share } from 'rxjs/operators';
-import { AbstractControl } from '@angular/forms';
+import { AbstractControl, FormGroup } from '@angular/forms';
 
 @Directive()
 export abstract class PageComponent implements OnDestroy {
@@ -28,8 +28,7 @@ export abstract class PageComponent implements OnDestroy {
   protected store: Store<AppState> = inject(Store<AppState>);
 
   isLoading$: Observable<boolean>;
-  loadingSubscription: Subscription;
-  disabledOnLoadFormControls: Array<AbstractControl> = [];
+  loadingSubscriptions: Subscription[] = [];
 
   showMainLoadingBar = true;
 
@@ -37,25 +36,31 @@ export abstract class PageComponent implements OnDestroy {
     this.isLoading$ = this.store.pipe(delay(0), select(selectIsLoading), share());
   }
 
-  protected registerDisableOnLoadFormControl(control: AbstractControl) {
-    this.disabledOnLoadFormControls.push(control);
-    if (!this.loadingSubscription) {
-      this.loadingSubscription = this.isLoading$.subscribe((isLoading) => {
-        for (const formControl of this.disabledOnLoadFormControls) {
-          if (isLoading) {
-            formControl.disable({emitEvent: false});
-          } else {
-            formControl.enable({emitEvent: false});
-          }
-        }
+  protected registerDisableOnLoadFormControl(control: AbstractControl): void {
+    this.registerSubscription(control);
+    if (control instanceof FormGroup) {
+      Object.values(control.controls).forEach((childControl: AbstractControl) => {
+        this.registerDisableOnLoadFormControl(childControl);
       });
     }
   }
 
-  ngOnDestroy(): void {
-    if (this.loadingSubscription) {
-      this.loadingSubscription.unsubscribe();
+  protected toggleOnLoadFormControl(formControl: AbstractControl, isLoading: boolean): void {
+    if (isLoading) {
+      formControl.disable({emitEvent: false});
+    } else {
+      formControl.enable({emitEvent: false});
     }
+  }
+
+  private registerSubscription(control: AbstractControl): void {
+    this.loadingSubscriptions.push(
+      this.isLoading$.subscribe((isLoading) => this.toggleOnLoadFormControl(control, isLoading))
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.loadingSubscriptions.forEach(subscription => subscription.unsubscribe());
   }
 
 }
