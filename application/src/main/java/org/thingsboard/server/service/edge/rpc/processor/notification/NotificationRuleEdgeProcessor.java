@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.rpc.processor.ota;
+package org.thingsboard.server.service.edge.rpc.processor.notification;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
-import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
-import org.thingsboard.server.common.data.id.OtaPackageId;
+import org.thingsboard.server.common.data.id.NotificationRuleId;
+import org.thingsboard.server.common.data.notification.rule.NotificationRule;
+import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
-import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.NotificationRuleUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
@@ -32,37 +34,41 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 @Slf4j
 @Component
 @TbCoreComponent
-public class OtaPackageEdgeProcessor extends BaseEdgeProcessor {
+public class NotificationRuleEdgeProcessor extends BaseEdgeProcessor {
+
+    @Autowired
+    private NotificationRuleService notificationRuleService;
 
     @Override
     public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
-        OtaPackageId otaPackageId = new OtaPackageId(edgeEvent.getEntityId());
+        NotificationRuleId notificationRuleId = new NotificationRuleId(edgeEvent.getEntityId());
+        DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED -> {
-                OtaPackage otaPackage = edgeCtx.getOtaPackageService().findOtaPackageById(edgeEvent.getTenantId(), otaPackageId);
-                if (otaPackage != null) {
+                NotificationRule notificationRule = notificationRuleService.findNotificationRuleById(edgeEvent.getTenantId(), notificationRuleId);
+                if (notificationRule != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    OtaPackageUpdateMsg otaPackageUpdateMsg = EdgeMsgConstructorUtils.constructOtaPackageUpdatedMsg(msgType, otaPackage);
-                    return DownlinkMsg.newBuilder()
+                    NotificationRuleUpdateMsg notificationRuleUpdateMsg = EdgeMsgConstructorUtils.constructNotificationRuleUpdateMsg(msgType, notificationRule);
+                    downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addOtaPackageUpdateMsg(otaPackageUpdateMsg)
+                            .addNotificationRuleUpdateMsg(notificationRuleUpdateMsg)
                             .build();
                 }
             }
             case DELETED -> {
-                OtaPackageUpdateMsg otaPackageUpdateMsg = EdgeMsgConstructorUtils.constructOtaPackageDeleteMsg(otaPackageId);
-                return DownlinkMsg.newBuilder()
+                NotificationRuleUpdateMsg notificationRuleUpdateMsg = EdgeMsgConstructorUtils.constructNotificationRuleDeleteMsg(notificationRuleId);
+                downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addOtaPackageUpdateMsg(otaPackageUpdateMsg)
+                        .addNotificationRuleUpdateMsg(notificationRuleUpdateMsg)
                         .build();
             }
         }
-        return null;
+        return downlinkMsg;
     }
 
     @Override
     public EdgeEventType getEdgeEventType() {
-        return EdgeEventType.OTA_PACKAGE;
+        return EdgeEventType.NOTIFICATION_RULE;
     }
 
 }
