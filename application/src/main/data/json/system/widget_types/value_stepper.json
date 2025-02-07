@@ -1,5 +1,5 @@
 {
-  "fqn": "slider",
+  "fqn": "value_stepper",
   "name": "Value stepper",
   "deprecated": false,
   "image": "tb-image;/api/images/system/value-stepper-widget.svg",
