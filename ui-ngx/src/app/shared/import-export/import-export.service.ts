@@ -997,7 +997,6 @@ export class ImportExportService {
       && !!Object.keys(configuration.arguments).length
       && isDefined(configuration.expression)
       && isDefined(configuration.output)
-      && isNotEmptyStr(configuration.output.name);
   }
 
   private validateImportedImage(image: ImageExportData): boolean {

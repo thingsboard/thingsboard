@@ -16,7 +16,7 @@
 
 import { ChangeDetectorRef, Component, Input, OnInit, output } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, UntypedFormControl, ValidatorFn, Validators } from '@angular/forms';
 import { charsWithNumRegex, noLeadTrailSpacesRegex } from '@shared/models/regex.constants';
 import {
   ArgumentEntityType,
@@ -42,6 +42,7 @@ import { MINUTE } from '@shared/models/time/time.models';
 @Component({
   selector: 'tb-calculated-field-argument-panel',
   templateUrl: './calculated-field-argument-panel.component.html',
+  styleUrls: ['./calculated-field-argument-panel.component.scss']
 })
 export class CalculatedFieldArgumentPanelComponent implements OnInit {
 
@@ -52,11 +53,12 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
   @Input() tenantId: string;
   @Input() entityName: string;
   @Input() calculatedFieldType: CalculatedFieldType;
+  @Input() argumentNames: string[];
 
   argumentsDataApplied = output<{ value: CalculatedFieldArgumentValue, index: number }>();
 
   argumentFormGroup = this.fb.group({
-    argumentName: ['', [Validators.required, Validators.pattern(charsWithNumRegex), Validators.maxLength(255)]],
+    argumentName: ['', [Validators.required, this.uniqNameRequired(), Validators.pattern(charsWithNumRegex), Validators.maxLength(255)]],
     refEntityId: this.fb.group({
       entityType: [ArgumentEntityType.Current],
       id: ['']
@@ -107,6 +109,12 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
 
   get refEntityKeyFormGroup(): FormGroup {
     return this.argumentFormGroup.get('refEntityKey') as FormGroup;
+  }
+
+  get isDeviceEntity(): boolean {
+    return this.entityType === ArgumentEntityType.Device
+      || (this.entityType === ArgumentEntityType.Current
+        && (this.entityId.entityType === EntityType.DEVICE || this.entityId.entityType === EntityType.DEVICE_PROFILE))
   }
 
   ngOnInit(): void {
@@ -188,7 +196,19 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
         this.argumentFormGroup.get('refEntityId').get('id').setValue('');
         this.argumentFormGroup.get('refEntityId')
           .get('id')[type === ArgumentEntityType.Tenant || type === ArgumentEntityType.Current ? 'disable' : 'enable']();
+        if (!this.isDeviceEntity) {
+          this.refEntityKeyFormGroup.get('scope').setValue(AttributeScope.SERVER_SCOPE);
+        }
       });
+  }
+
+  private uniqNameRequired(): ValidatorFn {
+    return (control: UntypedFormControl) => {
+      const newName = control.value.trim().toLowerCase();
+      const isDuplicate = this.argumentNames?.some(name => name.toLowerCase() === newName);
+
+      return isDuplicate ? { duplicateName: true } : null;
+    };
   }
 
   private observeEntityKeyChanges(): void {

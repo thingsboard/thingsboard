@@ -31,7 +31,15 @@
                       class="tb-error">
               warning
             </mat-icon>
-          } @else if (argumentFormGroup.get('argumentName').touched && argumentFormGroup.get('argumentName').hasError('pattern')) {
+          } @else if (argumentFormGroup.get('argumentName').touched && argumentFormGroup.get('argumentName').hasError('duplicateName')) {
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'calculated-fields.hint.argument-name-duplicate' | translate"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        } @else if (argumentFormGroup.get('argumentName').touched && argumentFormGroup.get('argumentName').hasError('pattern')) {
             <mat-icon matSuffix
                       matTooltipPosition="above"
                       matTooltipClass="tb-error-tooltip"
@@ -103,25 +111,24 @@
               <tb-entity-key-autocomplete class="flex-1" formControlName="key" [dataKeyType]="DataKeyType.timeseries" [entityFilter]="entityFilter"/>
             </div>
           } @else {
-            <div class="tb-form-row">
-              <div class="fixed-title-width tb-required">{{ 'calculated-fields.attribute-scope' | translate }}</div>
-              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="flex-1">
-                <mat-select formControlName="scope">
-                  <mat-option [value]="AttributeScope.SERVER_SCOPE">
-                    {{ 'calculated-fields.server-attributes' | translate }}
-                  </mat-option>
-                  @if (entityType === ArgumentEntityType.Device
-                  || entityType === ArgumentEntityType.Current && entityId.entityType === EntityType.DEVICE) {
+            @if (isDeviceEntity) {
+              <div class="tb-form-row">
+                <div class="fixed-title-width tb-required">{{ 'calculated-fields.attribute-scope' | translate }}</div>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="flex-1">
+                  <mat-select formControlName="scope">
+                    <mat-option [value]="AttributeScope.SERVER_SCOPE">
+                      {{ 'calculated-fields.server-attributes' | translate }}
+                    </mat-option>
                     <mat-option [value]="AttributeScope.CLIENT_SCOPE">
                       {{ 'calculated-fields.client-attributes' | translate }}
                     </mat-option>
                     <mat-option [value]="AttributeScope.SHARED_SCOPE">
                       {{ 'calculated-fields.shared-attributes' | translate }}
                     </mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-            </div>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            }
             <div class="tb-form-row">
               <div class="fixed-title-width tb-required">{{ 'calculated-fields.attribute-key' | translate }}</div>
               <tb-entity-key-autocomplete
@@ -148,7 +155,7 @@
           <tb-timeinterval
             subscriptSizing="dynamic"
             appearance="outline"
-            class="flex-1"
+            class="time-window-field flex-1"
             formControlName="timeWindow"
           />
         </div>

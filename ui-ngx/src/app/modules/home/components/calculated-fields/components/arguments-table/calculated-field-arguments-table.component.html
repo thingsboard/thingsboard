@@ -88,9 +88,8 @@
                                 [matTooltip]="'action.edit' | translate"
                                 matTooltipPosition="above">
                             <mat-icon
-                              [matBadgeHidden]="!(argumentsFormArray.dirty
-                                  && group.get('refEntityKey').get('type').value === ArgumentType.Rolling
-                                  && calculatedFieldType() === CalculatedFieldType.SIMPLE)"
+                              [matBadgeHidden]="!(group.get('refEntityKey').get('type').value === ArgumentType.Rolling
+                                  && calculatedFieldType === CalculatedFieldType.SIMPLE)"
                               matBadgeColor="warn"
                               matBadgeSize="small"
                               matBadge="*"
@@ -111,7 +110,7 @@
                 <span class="tb-prompt flex items-center justify-center">{{ 'calculated-fields.no-arguments' | translate }}</span>
             }
         </div>
-        @if (errorText && this.argumentsFormArray.dirty) {
+        @if (errorText) {
             <tb-error noMargin [error]="errorText | translate" class="pl-3"/>
         }
     </div>
