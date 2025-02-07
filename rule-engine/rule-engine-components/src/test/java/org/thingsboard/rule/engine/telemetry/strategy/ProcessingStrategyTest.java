@@ -22,23 +22,23 @@ import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class PersistenceStrategyTest {
+class ProcessingStrategyTest {
 
     @Test
     void testOnEveryMessageReturnsCorrectInstance() {
-        PersistenceStrategy strategy = PersistenceStrategy.onEveryMessage();
+        ProcessingStrategy strategy = ProcessingStrategy.onEveryMessage();
         assertThat(strategy)
                 .isNotNull()
-                .isInstanceOf(OnEveryMessagePersistenceStrategy.class);
+                .isInstanceOf(OnEveryMessageProcessingStrategy.class);
     }
 
     @Test
     void testDeduplicateReturnsCorrectInstance() {
         int validDeduplicationIntervalSecs = 5;
-        PersistenceStrategy strategy = PersistenceStrategy.deduplicate(validDeduplicationIntervalSecs);
+        ProcessingStrategy strategy = ProcessingStrategy.deduplicate(validDeduplicationIntervalSecs);
         assertThat(strategy)
                 .isNotNull()
-                .isInstanceOf(DeduplicatePersistenceStrategy.class);
+                .isInstanceOf(DeduplicateProcessingStrategy.class);
 
         long actualDeduplicationIntervalMillis = (long) ReflectionTestUtils.getField(strategy, "deduplicationIntervalMillis");
         assertThat(actualDeduplicationIntervalMillis).isEqualTo(Duration.ofSeconds(validDeduplicationIntervalSecs).toMillis());
@@ -46,10 +46,10 @@ class PersistenceStrategyTest {
 
     @Test
     void testSkipReturnsCorrectInstance() {
-        PersistenceStrategy strategy = PersistenceStrategy.skip();
+        ProcessingStrategy strategy = ProcessingStrategy.skip();
         assertThat(strategy)
                 .isNotNull()
-                .isInstanceOf(SkipPersistenceStrategy.class);
+                .isInstanceOf(SkipProcessingStrategy.class);
     }
 
 }

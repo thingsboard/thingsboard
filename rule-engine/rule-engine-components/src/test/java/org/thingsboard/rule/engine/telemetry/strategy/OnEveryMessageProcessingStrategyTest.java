@@ -24,13 +24,13 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class OnEveryMessagePersistenceStrategyTest {
+class OnEveryMessageProcessingStrategyTest {
 
     @ParameterizedTest
     @MethodSource("edgeCaseProvider")
     void shouldAlwaysReturnTrueForAnyInput(long timestamp, UUID originator) {
-        var onEveryMessage = OnEveryMessagePersistenceStrategy.getInstance();
-        assertThat(onEveryMessage.shouldPersist(timestamp, originator)).isTrue();
+        var onEveryMessage = OnEveryMessageProcessingStrategy.getInstance();
+        assertThat(onEveryMessage.shouldProcess(timestamp, originator)).isTrue();
     }
 
     private static Stream<Arguments> edgeCaseProvider() {

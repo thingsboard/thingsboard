@@ -26,24 +26,24 @@ import java.util.UUID;
         property = "type"
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = OnEveryMessagePersistenceStrategy.class, name = "ON_EVERY_MESSAGE"),
-        @JsonSubTypes.Type(value = DeduplicatePersistenceStrategy.class, name = "DEDUPLICATE"),
-        @JsonSubTypes.Type(value = SkipPersistenceStrategy.class, name = "SKIP")
+        @JsonSubTypes.Type(value = OnEveryMessageProcessingStrategy.class, name = "ON_EVERY_MESSAGE"),
+        @JsonSubTypes.Type(value = DeduplicateProcessingStrategy.class, name = "DEDUPLICATE"),
+        @JsonSubTypes.Type(value = SkipProcessingStrategy.class, name = "SKIP")
 })
-public sealed interface PersistenceStrategy permits OnEveryMessagePersistenceStrategy, DeduplicatePersistenceStrategy, SkipPersistenceStrategy {
+public sealed interface ProcessingStrategy permits OnEveryMessageProcessingStrategy, DeduplicateProcessingStrategy, SkipProcessingStrategy {
 
-    static PersistenceStrategy onEveryMessage() {
-        return OnEveryMessagePersistenceStrategy.getInstance();
+    static ProcessingStrategy onEveryMessage() {
+        return OnEveryMessageProcessingStrategy.getInstance();
     }
 
-    static PersistenceStrategy deduplicate(int deduplicationIntervalSecs) {
-        return new DeduplicatePersistenceStrategy(deduplicationIntervalSecs);
+    static ProcessingStrategy deduplicate(int deduplicationIntervalSecs) {
+        return new DeduplicateProcessingStrategy(deduplicationIntervalSecs);
     }
 
-    static PersistenceStrategy skip() {
-        return SkipPersistenceStrategy.getInstance();
+    static ProcessingStrategy skip() {
+        return SkipProcessingStrategy.getInstance();
     }
 
-    boolean shouldPersist(long ts, UUID originatorUuid);
+    boolean shouldProcess(long ts, UUID originatorUuid);
 
 }

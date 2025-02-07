@@ -25,7 +25,7 @@
         "configuration": {
           "defaultTTL": 0,
           "useServerTs": false,
-          "persistenceSettings": {
+          "processingSettings": {
             "type": "ON_EVERY_MESSAGE"
           }
         },
@@ -281,7 +281,7 @@
         "configuration": {
           "defaultTTL": 0,
           "useServerTs": false,
-          "persistenceSettings": {
+          "processingSettings": {
             "type": "ON_EVERY_MESSAGE"
           }
         },
@@ -319,7 +319,7 @@
         "configuration": {
           "defaultTTL": 180,
           "useServerTs": false,
-          "persistenceSettings": {
+          "processingSettings": {
             "type": "ON_EVERY_MESSAGE"
           }
         },

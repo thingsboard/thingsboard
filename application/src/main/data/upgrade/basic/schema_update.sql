@@ -225,7 +225,7 @@ DO $$
             SET configuration = (
                 (configuration::jsonb - 'skipLatestPersistence')
                     || jsonb_build_object(
-                        'persistenceSettings', jsonb_build_object(
+                        'processingSettings', jsonb_build_object(
                                 'type',       'ADVANCED',
                                 'timeseries', jsonb_build_object('type', 'ON_EVERY_MESSAGE'),
                                 'latest',     jsonb_build_object('type', 'SKIP'),
@@ -242,7 +242,7 @@ DO $$
             SET configuration = (
                 (configuration::jsonb - 'skipLatestPersistence')
                     || jsonb_build_object(
-                        'persistenceSettings', jsonb_build_object(
+                        'processingSettings', jsonb_build_object(
                                 'type', 'ON_EVERY_MESSAGE'
                                                )
                        )

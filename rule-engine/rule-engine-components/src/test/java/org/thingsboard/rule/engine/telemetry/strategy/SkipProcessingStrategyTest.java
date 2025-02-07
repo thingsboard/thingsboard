@@ -24,13 +24,13 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class SkipPersistenceStrategyTest {
+class SkipProcessingStrategyTest {
 
     @ParameterizedTest
     @MethodSource("edgeCaseProvider")
     void shouldAlwaysReturnFalseForAnyInput(long timestamp, UUID originator) {
-        var skipStrategy = SkipPersistenceStrategy.getInstance();
-        assertThat(skipStrategy.shouldPersist(timestamp, originator)).isFalse();
+        var skipStrategy = SkipProcessingStrategy.getInstance();
+        assertThat(skipStrategy.shouldProcess(timestamp, originator)).isFalse();
     }
 
     private static Stream<Arguments> edgeCaseProvider() {
