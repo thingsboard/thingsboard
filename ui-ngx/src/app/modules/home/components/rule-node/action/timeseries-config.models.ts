@@ -28,7 +28,7 @@ export interface TimeseriesNodeConfigurationForm extends Omit<TimeseriesNodeConf
   processingSettings: ProcessingSettingsForm
 }
 
-export type ProcessingSettings = ProcessingSettingsSettings & Partial<DeduplicateProcessingStrategy> & Partial<AdvancedProcessingStrategy>;
+export type ProcessingSettings = BasicProcessingSettings & Partial<DeduplicateProcessingStrategy> & Partial<AdvancedProcessingStrategy>;
 
 export type ProcessingSettingsForm = Omit<ProcessingSettings, keyof AdvancedProcessingStrategy> & {
   isAdvanced: boolean;
@@ -51,15 +51,15 @@ export const ProcessingTypeTranslationMap = new Map<ProcessingType, string>([
   [ProcessingType.SKIP, 'rule-node-config.save-time-series.strategy-type.skip'],
 ])
 
-export interface ProcessingSettingsSettings {
+export interface BasicProcessingSettings {
   type: ProcessingType;
 }
 
-export interface DeduplicateProcessingStrategy extends ProcessingSettingsSettings{
+export interface DeduplicateProcessingStrategy extends BasicProcessingSettings{
   deduplicationIntervalSecs: number;
 }
 
-export interface AdvancedProcessingStrategy extends ProcessingSettingsSettings{
+export interface AdvancedProcessingStrategy extends BasicProcessingSettings{
   timeseries: AdvancedProcessingConfig;
   latest: AdvancedProcessingConfig;
   webSockets: AdvancedProcessingConfig;
