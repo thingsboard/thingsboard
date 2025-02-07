@@ -116,6 +116,7 @@ public class ThingsboardInstallService {
                     entityDatabaseSchemaService.createDatabaseIndexes();
 
                     // TODO: cleanup update code after each release
+                    systemDataLoaderService.updateDefaultNotificationConfigs(false);
 
                     // Runs upgrade scripts that are not possible in plain SQL.
                     dataUpdateService.updateData();
