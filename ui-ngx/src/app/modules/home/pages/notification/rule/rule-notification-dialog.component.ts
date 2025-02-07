@@ -347,9 +347,9 @@ export class RuleNotificationDialogComponent extends
 
     this.resourceUsageShortageTemplateForm = this.fb.group({
       triggerConfig: this.fb.group({
-        cpuThreshold: [.9, [Validators.min(0), Validators.max(1)]],
-        ramThreshold: [.9, [Validators.min(0), Validators.max(1)]],
-        storageThreshold: [.9, [Validators.min(0), Validators.max(1)]]
+        cpuThreshold: [.8, [Validators.min(0), Validators.max(1)]],
+        ramThreshold: [.8, [Validators.min(0), Validators.max(1)]],
+        storageThreshold: [.8, [Validators.min(0), Validators.max(1)]]
       })
     });
 

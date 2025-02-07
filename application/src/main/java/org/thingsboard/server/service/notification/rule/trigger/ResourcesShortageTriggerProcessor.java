@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.config.Resou
 
 @Service
 @RequiredArgsConstructor
-public class ResourcesShortageLimitTriggerProcessor implements NotificationRuleTriggerProcessor<ResourcesShortageTrigger, ResourcesShortageNotificationRuleTriggerConfig> {
+public class ResourcesShortageTriggerProcessor implements NotificationRuleTriggerProcessor<ResourcesShortageTrigger, ResourcesShortageNotificationRuleTriggerConfig> {
 
     @Override
     public boolean matchesFilter(ResourcesShortageTrigger trigger, ResourcesShortageNotificationRuleTriggerConfig triggerConfig) {
