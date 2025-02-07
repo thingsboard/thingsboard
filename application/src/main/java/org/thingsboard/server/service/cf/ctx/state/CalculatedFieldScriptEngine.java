@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.Map;
@@ -24,6 +25,8 @@ public interface CalculatedFieldScriptEngine {
     ListenableFuture<Object> executeScriptAsync(Object[] args);
 
     ListenableFuture<Map<String, Object>> executeToMapAsync(Object[] args);
+
+    ListenableFuture<JsonNode> executeJsonAsync(Object[] args);
 
     ListenableFuture<Map<String, Object>> executeToMapTransform(Object result);
 

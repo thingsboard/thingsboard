@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -72,6 +74,11 @@ public class CalculatedFieldTbelScriptEngine implements CalculatedFieldScriptEng
     @Override
     public ListenableFuture<Map<String, Object>> executeToMapAsync(Object[] args) {
         return Futures.transformAsync(executeScriptAsync(args), this::executeToMapTransform, MoreExecutors.directExecutor());
+    }
+
+    @Override
+    public ListenableFuture<JsonNode> executeJsonAsync(Object[] args) {
+        return Futures.transform(executeScriptAsync(args), JacksonUtil::valueToTree, MoreExecutors.directExecutor());
     }
 
     @Override
