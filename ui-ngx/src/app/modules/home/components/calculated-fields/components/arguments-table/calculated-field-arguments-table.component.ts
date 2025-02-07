@@ -143,7 +143,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
         buttonTitle: this.argumentsFormArray.at(index)?.value ? 'action.apply' : 'action.add',
         tenantId: this.tenantId,
         entityName: this.entityName,
-        argumentNames: this.argumentsFormArray.value.map(({ argumentName }) => argumentName).filter(name => name !== argumentObj.argumentName),
+        usedArgumentNames: this.argumentsFormArray.value.map(({ argumentName }) => argumentName).filter(name => name !== argumentObj.argumentName),
       };
       this.popoverComponent = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, CalculatedFieldArgumentPanelComponent, 'left', false, null,

@@ -111,7 +111,7 @@
               <tb-entity-key-autocomplete class="flex-1" formControlName="key" [dataKeyType]="DataKeyType.timeseries" [entityFilter]="entityFilter"/>
             </div>
           } @else {
-            @if (isDeviceEntity) {
+            @if (enableAttributeScopeSelection) {
               <div class="tb-form-row">
                 <div class="fixed-title-width tb-required">{{ 'calculated-fields.attribute-scope' | translate }}</div>
                 <mat-form-field appearance="outline" subscriptSizing="dynamic" class="flex-1">
@@ -155,7 +155,7 @@
           <tb-timeinterval
             subscriptSizing="dynamic"
             appearance="outline"
-            class="time-window-field flex-1"
+            class="flex-1"
             formControlName="timeWindow"
           />
         </div>

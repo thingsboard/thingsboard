@@ -16,7 +16,7 @@
 
 import { ChangeDetectorRef, Component, Input, OnInit, output } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { FormBuilder, FormGroup, UntypedFormControl, ValidatorFn, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { charsWithNumRegex, noLeadTrailSpacesRegex } from '@shared/models/regex.constants';
 import {
   ArgumentEntityType,
@@ -42,7 +42,6 @@ import { MINUTE } from '@shared/models/time/time.models';
 @Component({
   selector: 'tb-calculated-field-argument-panel',
   templateUrl: './calculated-field-argument-panel.component.html',
-  styleUrls: ['./calculated-field-argument-panel.component.scss']
 })
 export class CalculatedFieldArgumentPanelComponent implements OnInit {
 
@@ -53,7 +52,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
   @Input() tenantId: string;
   @Input() entityName: string;
   @Input() calculatedFieldType: CalculatedFieldType;
-  @Input() argumentNames: string[];
+  @Input() usedArgumentNames: string[];
 
   argumentsDataApplied = output<{ value: CalculatedFieldArgumentValue, index: number }>();
 
@@ -111,7 +110,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
     return this.argumentFormGroup.get('refEntityKey') as FormGroup;
   }
 
-  get isDeviceEntity(): boolean {
+  get enableAttributeScopeSelection(): boolean {
     return this.entityType === ArgumentEntityType.Device
       || (this.entityType === ArgumentEntityType.Current
         && (this.entityId.entityType === EntityType.DEVICE || this.entityId.entityType === EntityType.DEVICE_PROFILE))
@@ -196,16 +195,16 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
         this.argumentFormGroup.get('refEntityId').get('id').setValue('');
         this.argumentFormGroup.get('refEntityId')
           .get('id')[type === ArgumentEntityType.Tenant || type === ArgumentEntityType.Current ? 'disable' : 'enable']();
-        if (!this.isDeviceEntity) {
+        if (!this.enableAttributeScopeSelection) {
           this.refEntityKeyFormGroup.get('scope').setValue(AttributeScope.SERVER_SCOPE);
         }
       });
   }
 
   private uniqNameRequired(): ValidatorFn {
-    return (control: UntypedFormControl) => {
+    return (control: FormControl) => {
       const newName = control.value.trim().toLowerCase();
-      const isDuplicate = this.argumentNames?.some(name => name.toLowerCase() === newName);
+      const isDuplicate = this.usedArgumentNames?.some(name => name.toLowerCase() === newName);
 
       return isDuplicate ? { duplicateName: true } : null;
     };
