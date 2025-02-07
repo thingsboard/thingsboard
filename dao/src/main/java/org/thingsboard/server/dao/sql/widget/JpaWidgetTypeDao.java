@@ -257,12 +257,13 @@ public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, Wi
 
 
     @Override
-    public List<WidgetTypeInfo> findByTenantIdAndResourceLink(TenantId tenantId, String link, int lmt) {
-        return DaoUtil.convertDataList(widgetTypeInfoRepository.findWidgetTypeInfosByTenantIdAndResourceLink(tenantId.getId(), link, lmt));
+    public List<WidgetTypeInfo> findByTenantIdAndResourceLink(TenantId tenantId, String link, int limit) {
+        return DaoUtil.convertDataList(widgetTypeInfoRepository.findWidgetTypeInfosByTenantIdAndResourceLink(tenantId.getId(), link, limit));
     }
 
     @Override
-    public List<WidgetTypeInfo> findByResourceLink(String link, int lmt) {
-        return DaoUtil.convertDataList(widgetTypeInfoRepository.findWidgetTypeInfosByResourceLink(link, lmt));
+    public List<WidgetTypeInfo> findByResourceLink(String link, int limit) {
+        return DaoUtil.convertDataList(widgetTypeInfoRepository.findWidgetTypeInfosByResourceLink(link, limit));
     }
+
 }

@@ -129,7 +129,6 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         imageContainerDaoMap.put(EntityType.DASHBOARD, dashboardInfoDao);
     }
 
-
     @Override
     @SneakyThrows
     public TbResourceInfo saveImage(TbResource image) {
@@ -309,7 +308,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
             }
         }
         if (success) {
-            success = deleteResource(tenantId, imageId, force)
+            success = deleteResource(tenantId, imageId, true)
                     .isSuccess();
         }
         return result.success(success).build();

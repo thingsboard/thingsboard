@@ -257,7 +257,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         assertEquals(foundResource.getTitle(), savedResource.getTitle());
         assertArrayEquals(foundResource.getData(), TEST_DATA);
 
-        tbResourceService.delete(savedResource, null, true);
+        tbResourceService.delete(savedResource, true, null);
     }
 
     @Test
@@ -278,7 +278,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         assertEquals("0_1.0", savedResource.getResourceKey());
         assertArrayEquals(savedResource.getData(), LWM2M_TEST_MODEL.getBytes());
 
-        tbResourceService.delete(savedResource, null, true);
+        tbResourceService.delete(savedResource, true, null);
     }
 
     @Test
@@ -292,7 +292,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
 
         assertEquals(TenantId.SYS_TENANT_ID, savedResource.getTenantId());
 
-        tbResourceService.delete(savedResource, null, true);
+        tbResourceService.delete(savedResource, true, null);
     }
 
     @Test
@@ -370,7 +370,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         TbResource foundResource = resourceService.findResourceById(tenantId, savedResource.getId());
         Assert.assertNotNull(foundResource);
         assertEquals(savedResource, foundResource);
-        tbResourceService.delete(savedResource, null, true);
+        tbResourceService.delete(savedResource, true, null);
     }
 
     @Test
@@ -386,7 +386,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         TbResource foundResource = resourceService.findResourceByTenantIdAndKey(tenantId, savedResource.getResourceType(), savedResource.getResourceKey());
         Assert.assertNotNull(foundResource);
         assertEquals(savedResource, foundResource);
-        tbResourceService.delete(savedResource, null, true);
+        tbResourceService.delete(savedResource, true, null);
     }
 
     @Test
@@ -400,7 +400,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
 
         TbResource foundResource = resourceService.findResourceById(savedTenant.getId(), savedResource.getId());
         Assert.assertNotNull(foundResource);
-        tbResourceService.delete(savedResource, null, true);
+        tbResourceService.delete(savedResource, true, null);
         foundResource = resourceService.findResourceById(savedTenant.getId(), savedResource.getId());
         Assert.assertNull(foundResource);
     }
@@ -439,7 +439,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         Assertions.assertNotNull(resourceLink);
         Assert.assertEquals(resourceLink, link);
 
-        TbResourceDeleteResult result = tbResourceService.delete(savedResource, null, false);
+        TbResourceDeleteResult result = tbResourceService.delete(savedResource, false, null);
         Assert.assertNotNull(result);
         Assert.assertFalse(result.isSuccess());
         Assert.assertFalse(result.getReferences().isEmpty());
@@ -491,7 +491,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         Assertions.assertNotNull(resourceLink);
         Assert.assertEquals(resourceLink, link);
 
-        TbResourceDeleteResult result = tbResourceService.delete(savedResource, null, true);
+        TbResourceDeleteResult result = tbResourceService.delete(savedResource, true, null);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
         Assert.assertNull(result.getReferences());
@@ -532,7 +532,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         Assertions.assertNotNull(resourceLink);
         Assert.assertEquals(resourceLink, link);
 
-        TbResourceDeleteResult result = tbResourceService.delete(savedResource, null, false);
+        TbResourceDeleteResult result = tbResourceService.delete(savedResource, false, null);
         Assert.assertNotNull(result);
         Assert.assertFalse(result.isSuccess());
         Assert.assertNotNull(result.getReferences());
@@ -581,7 +581,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         Assertions.assertNotNull(resourceLink);
         Assert.assertEquals(resourceLink, link);
 
-        TbResourceDeleteResult result = tbResourceService.delete(savedResource, null, true);
+        TbResourceDeleteResult result = tbResourceService.delete(savedResource, true, null);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.isSuccess());
         Assert.assertNull(result.getReferences());
@@ -601,7 +601,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
 
         TbResource foundResource = resourceService.findResourceById(savedTenant.getId(), savedResource.getId());
         Assert.assertNotNull(foundResource);
-        tbResourceService.delete(savedResource, null, true);
+        tbResourceService.delete(savedResource, true, null);
         foundResource = resourceService.findResourceById(savedTenant.getId(), savedResource.getId());
         Assert.assertNull(foundResource);
     }

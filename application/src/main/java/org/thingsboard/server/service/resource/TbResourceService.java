@@ -32,11 +32,11 @@ import java.util.List;
 
 public interface TbResourceService extends SimpleTbEntityService<TbResource> {
 
-    TbResourceDeleteResult delete(TbResource entity, User user, boolean force);
+    TbResourceDeleteResult delete(TbResource entity, boolean force, User user);
 
     @Override
     default void delete(TbResource entity, User user) {
-        delete(entity, user, true);
+        delete(entity,true, user);
     }
 
     List<LwM2mObject> findLwM2mObject(TenantId tenantId,

@@ -49,7 +49,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
-import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ResourceContainerDao;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
@@ -89,7 +88,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     protected final TbResourceInfoDao resourceInfoDao;
     protected final ResourceDataValidator resourceValidator;
     @Autowired
-    private List<Dao<?>> daos;
+    private List<ResourceContainerDao<?>> resourceContainerDaos;
     protected static final int MAX_ENTITIES_TO_FIND = 10;
 
     @Autowired @Lazy
@@ -320,11 +319,6 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     @Override
-    public void deleteResource(TenantId tenantId, TbResourceId resourceId) {
-        deleteResource(tenantId, resourceId, false);
-    }
-
-    @Override
     public TbResourceDeleteResult deleteResource(TenantId tenantId, TbResourceId resourceId, boolean force) {
         log.trace("Executing deleteResource [{}] [{}]", tenantId, resourceId);
         Validator.validateId(resourceId, id -> INCORRECT_RESOURCE_ID + id);
@@ -333,33 +327,35 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         var result = TbResourceDeleteResult.builder();
 
         if (resource == null) {
-            success = false;
-            return result.success(success)
-                    .build();
+            if (!force) {
+                success = false;
+            }
+            return result.success(success).build();
         }
 
         if (!force) {
-            if(resource.getResourceType() == ResourceType.JS_MODULE) {
+            if (resource.getResourceType() == ResourceType.JS_MODULE) {
                 var link = resource.getLink();
                 Map<String, List<? extends HasId<?>>> affectedEntities = new HashMap<>();
 
-                for (Dao<?> dao : daos) {
-                    if (dao instanceof ResourceContainerDao<?> libraryDao) {
+                for (ResourceContainerDao<?> resourceContainerDao : resourceContainerDaos) {
 
-                        var entities = tenantId.isSysTenantId()
-                                ? libraryDao.findByResourceLink(link, MAX_ENTITIES_TO_FIND)
-                                : libraryDao.findByTenantIdAndResourceLink(tenantId, link, MAX_ENTITIES_TO_FIND);
+                    var entities = tenantId.isSysTenantId()
+                            ? resourceContainerDao.findByResourceLink(link, MAX_ENTITIES_TO_FIND)
+                            : resourceContainerDao.findByTenantIdAndResourceLink(tenantId, link, MAX_ENTITIES_TO_FIND);
 
-                        if (!entities.isEmpty()) {
-                            success = false;
-                            affectedEntities.put(dao.getEntityType().name(), entities);
-                            result.references(affectedEntities);
-                        }
+                    if (!entities.isEmpty()) {
+                        affectedEntities.put(resourceContainerDao.getEntityType().name(), entities);
                     }
+                }
+
+                if (!affectedEntities.isEmpty()) {
+                    success = false;
+                    result.references(affectedEntities);
                 }
             }
         }
-        if(success) {
+        if (success) {
             resourceDao.removeById(tenantId, resourceId.getId());
             eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entity(resource).entityId(resourceId).build());
         }

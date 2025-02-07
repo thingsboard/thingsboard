@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.widget;
 
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -105,4 +106,8 @@ public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityD
     void removeWidgetTypeFromWidgetsBundle(UUID widgetsBundleId, UUID widgetTypeId);
 
     PageData<WidgetTypeId> findAllWidgetTypesIds(PageLink pageLink);
+
+    @Override
+    EntityType getEntityType();
+
 }

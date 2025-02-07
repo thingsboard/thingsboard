@@ -136,17 +136,18 @@ public class JpaDashboardInfoDao extends JpaAbstractDao<DashboardInfoEntity, Das
     }
 
     @Override
-    public List<DashboardInfo> findByTenantIdAndResourceLink(TenantId tenantId, String url, int lmt) {
-        return DaoUtil.convertDataList(dashboardInfoRepository.findDashboardInfosByTenantIdAndResourceLink(tenantId.getId(), url, lmt));
+    public List<DashboardInfo> findByTenantIdAndResourceLink(TenantId tenantId, String url, int limit) {
+        return DaoUtil.convertDataList(dashboardInfoRepository.findDashboardInfosByTenantIdAndResourceLink(tenantId.getId(), url, limit));
     }
 
     @Override
-    public List<DashboardInfo> findByResourceLink(String link, int lmt) {
-        return DaoUtil.convertDataList(dashboardInfoRepository.findDashboardInfosByResourceLink(link, lmt));
+    public List<DashboardInfo> findByResourceLink(String link, int limit) {
+        return DaoUtil.convertDataList(dashboardInfoRepository.findDashboardInfosByResourceLink(link, limit));
     }
 
     @Override
     public EntityType getEntityType() {
         return EntityType.DASHBOARD;
     }
+
 }

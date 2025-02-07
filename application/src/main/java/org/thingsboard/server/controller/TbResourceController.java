@@ -324,12 +324,12 @@ public class TbResourceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @DeleteMapping(value = "/resource/{resourceId}")
     public ResponseEntity<TbResourceDeleteResult> deleteResource(@Parameter(description = RESOURCE_ID_PARAM_DESCRIPTION)
-                               @PathVariable("resourceId") String strResourceId,
+                                                                 @PathVariable("resourceId") String strResourceId,
                                                                  @RequestParam(name = "force", required = false) boolean force) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
         TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
         TbResource tbResource = checkResourceId(resourceId, Operation.DELETE);
-        TbResourceDeleteResult tbResourceDeleteResult = tbResourceService.delete(tbResource, getCurrentUser(), force);
+        TbResourceDeleteResult tbResourceDeleteResult = tbResourceService.delete(tbResource, force, getCurrentUser());
         return (tbResourceDeleteResult.isSuccess() ? ResponseEntity.ok() : ResponseEntity.badRequest()).body(tbResourceDeleteResult);
     }
 

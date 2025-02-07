@@ -70,8 +70,6 @@ public interface ResourceService extends EntityDaoService {
 
     PageData<TbResource> findTenantResourcesByResourceTypeAndPageLink(TenantId tenantId, ResourceType lwm2mModel, PageLink pageLink);
 
-    void deleteResource(TenantId tenantId, TbResourceId resourceId);
-
     TbResourceDeleteResult deleteResource(TenantId tenantId, TbResourceId resourceId, boolean force);
 
     void deleteResourcesByTenantId(TenantId tenantId);
