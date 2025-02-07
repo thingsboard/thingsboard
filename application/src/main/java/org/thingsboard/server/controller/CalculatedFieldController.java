@@ -48,7 +48,7 @@ import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldTbelScriptEngi
 import org.thingsboard.server.service.entitiy.cf.TbCalculatedFieldService;
 import org.thingsboard.server.service.security.permission.Operation;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
@@ -85,7 +85,6 @@ public class CalculatedFieldController extends BaseController {
             + MARKDOWN_CODE_BLOCK_START
             + "{\n" +
             "  \"expression\": \"var temp = 0; foreach(element: temperature.entrySet()) { temp += element.getValue(); } var avgTemperature = temp / temperature.size(); var adjustedTemperature = avgTemperature + 0.1 * humidity; return { \\\"adjustedTemperature\\\": adjustedTemperature };\",\n" +
-            "  \"argNames\": [\"temperature\", \"humidity\"],\n" +
             "  \"arguments\": {\n" +
             "    \"temperature\": {\n" +
             "      \"14327856345\": 22.4,\n" +
@@ -173,12 +172,12 @@ public class CalculatedFieldController extends BaseController {
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Test calculated field TBEL expression.")
             @RequestBody JsonNode inputParams) {
         String expression = inputParams.get("expression").asText();
-        String[] argNames = JacksonUtil.treeToValue(inputParams.get("argNames"), String[].class);
         Map<String, Object> arguments = Objects.requireNonNullElse(
                 JacksonUtil.convertValue(inputParams.get("arguments"), new TypeReference<Map<String, Object>>() {
                 }),
                 Collections.emptyMap()
         );
+        ArrayList<String> argNames = new ArrayList<>(arguments.keySet());
 
         String output = "";
         String errorText = "";
@@ -192,10 +191,10 @@ public class CalculatedFieldController extends BaseController {
                     getTenantId(),
                     tbelInvokeService,
                     expression,
-                    argNames
+                    argNames.toArray(String[]::new)
             );
 
-            Object[] args = Arrays.stream(argNames)
+            Object[] args = argNames.stream()
                     .map(arguments::get)
                     .toArray();
 
