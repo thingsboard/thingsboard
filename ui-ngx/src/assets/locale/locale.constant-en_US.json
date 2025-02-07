@@ -5135,8 +5135,8 @@
         "advanced-mode": "Advanced",
         "save-time-series": {
             "processing-settings": "Processing settings",
-            "processing-settings-hint": "Define how time series data is processed. In Basic mode, select a preconfigured processing strategy or enable only WebSocket updates. Advanced mode allows you to select individual processing strategies for each action.",
-            "advanced-settings-hint": "Advanced settings mode is dangerous, and if you do not understand it, you may lose telemetry.",
+            "processing-settings-hint": "Define how incoming messages are processed. In Basic mode, select a preconfigured processing strategy or enable only WebSocket updates. Advanced mode allows you to select individual processing strategies for each action.",
+            "advanced-settings-hint": "Be cautious when configuring processing strategies. Certain combinations can lead to unexpected behavior.",
             "strategy": "Strategy",
             "deduplication-interval": "Deduplication interval",
             "deduplication-interval-required": "Deduplication interval is required",
@@ -5148,7 +5148,7 @@
                 "web-sockets-only": "WebSockets only"
             },
             "time-series": "Time series",
-            "latest": "Latest",
+            "latest": "Latest values",
             "web-sockets": "WebSockets"
         },
         "key-val": {
