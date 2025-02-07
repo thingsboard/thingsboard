@@ -17,9 +17,7 @@
 import {
   ChangeDetectorRef,
   Component,
-  effect,
   forwardRef,
-  input,
   Input,
   OnChanges,
   Renderer2,
@@ -77,8 +75,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
   @Input() entityId: EntityId;
   @Input() tenantId: string;
   @Input() entityName: string;
-
-  calculatedFieldType = input<CalculatedFieldType>()
+  @Input() calculatedFieldType: CalculatedFieldType;
 
   errorText = '';
   argumentsFormArray = this.fb.array<AbstractControl>([]);
@@ -103,17 +100,12 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
     this.argumentsFormArray.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.propagateChange(this.getArgumentsObject());
     });
-    effect(() => {
-      if (this.calculatedFieldType() && this.argumentsFormArray.dirty) {
-        this.argumentsFormArray.updateValueAndValidity();
-      }
-    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.calculatedFieldType?.previousValue
       && changes.calculatedFieldType.currentValue !== changes.calculatedFieldType.previousValue) {
-      this.argumentsFormArray.markAsDirty();
+      this.argumentsFormArray.updateValueAndValidity();
     }
   }
 
@@ -142,14 +134,16 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
+      const argumentObj = this.argumentsFormArray.at(index)?.getRawValue() ?? {};
       const ctx = {
         index,
-        argument: this.argumentsFormArray.at(index)?.getRawValue() ?? {},
+        argument: argumentObj,
         entityId: this.entityId,
-        calculatedFieldType: this.calculatedFieldType(),
+        calculatedFieldType: this.calculatedFieldType,
         buttonTitle: this.argumentsFormArray.at(index)?.value ? 'action.apply' : 'action.add',
         tenantId: this.tenantId,
         entityName: this.entityName,
+        usedArgumentNames: this.argumentsFormArray.value.map(({ argumentName }) => argumentName).filter(name => name !== argumentObj.argumentName),
       };
       this.popoverComponent = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, CalculatedFieldArgumentPanelComponent, 'left', false, null,
@@ -171,7 +165,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
   }
 
   private updateErrorText(): void {
-    if (this.calculatedFieldType() === CalculatedFieldType.SIMPLE
+    if (this.calculatedFieldType === CalculatedFieldType.SIMPLE
       && this.argumentsFormArray.controls.some(control => control.get('refEntityKey').get('type').value === ArgumentType.Rolling)) {
       this.errorText = 'calculated-fields.hint.arguments-simple-with-rolling';
     } else if (!this.argumentsFormArray.controls.length) {

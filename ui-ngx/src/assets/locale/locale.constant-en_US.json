@@ -1064,6 +1064,7 @@
             "expression-max-length": "Expression length should be less than 255 characters.",
             "argument-name-required": "Argument name is required.",
             "argument-name-pattern": "Argument name is invalid.",
+            "argument-name-duplicate": "Argument with such name already exists.",
             "argument-name-max-length": "Argument name should be less than 256 characters.",
             "argument-type-required": "Argument type is required."
         }
