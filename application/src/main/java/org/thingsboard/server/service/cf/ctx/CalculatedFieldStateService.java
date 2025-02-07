@@ -19,11 +19,7 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 
-import java.util.Map;
-
 public interface CalculatedFieldStateService {
-
-    Map<CalculatedFieldEntityCtxId, CalculatedFieldState> restoreStates();
 
     void persistState(CalculatedFieldCtx ctx, CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback);
 

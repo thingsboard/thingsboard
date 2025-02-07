@@ -43,13 +43,10 @@ public interface CalculatedFieldExecutionService {
 
     void pushRequestToQueue(AttributesSaveRequest request, List<Long> result, FutureCallback<Void> callback);
 
-    void pushStateToStorage(CalculatedFieldCtx ctx, CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback);
-
     ListenableFuture<CalculatedFieldState> fetchStateFromDb(CalculatedFieldCtx ctx, EntityId entityId);
 
     void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, CalculatedFieldResult calculationResult, List<CalculatedFieldId> cfIds, TbCallback callback);
 
     void pushMsgToLinks(CalculatedFieldTelemetryMsg msg, List<CalculatedFieldEntityCtxId> linkedCalculatedFields, TbCallback callback);
 
-    void deleteStateFromStorage(CalculatedFieldEntityCtxId calculatedFieldEntityCtxId, TbCallback callback);
 }

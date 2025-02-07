@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2024 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,6 +38,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.service.cf.CalculatedFieldExecutionService;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
+import org.thingsboard.server.service.cf.ctx.CalculatedFieldStateService;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
@@ -67,6 +68,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     final TenantId tenantId;
     final EntityId entityId;
     final CalculatedFieldExecutionService cfService;
+    final CalculatedFieldStateService cfStateService;
 
     TbActorCtx ctx;
     Map<CalculatedFieldId, CalculatedFieldState> states = new HashMap<>();
@@ -76,6 +78,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         this.tenantId = tenantId;
         this.entityId = entityId;
         this.cfService = systemContext.getCalculatedFieldExecutionService();
+        this.cfStateService = systemContext.getCalculatedFieldStateService();
     }
 
     void init(TbActorCtx ctx) {
@@ -102,13 +105,13 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         log.info("[{}] Processing CF entity delete msg.", msg.getEntityId());
         if (this.entityId.equals(msg.getEntityId())) {
             MultipleTbCallback multipleTbCallback = new MultipleTbCallback(states.size(), msg.getCallback());
-            states.forEach((cfId, state) -> cfService.deleteStateFromStorage(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), multipleTbCallback));
+            states.forEach((cfId, state) -> cfStateService.removeState(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), multipleTbCallback));
             ctx.stop(ctx.getSelf());
         } else {
             var cfId = new CalculatedFieldId(msg.getEntityId().getId());
             var state = states.remove(cfId);
             if (state != null) {
-                cfService.deleteStateFromStorage(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), msg.getCallback());
+                cfStateService.removeState(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), msg.getCallback());
             }
         }
     }
@@ -178,8 +181,13 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             log.info("[{}] No new argument values to process for CF.", ctx.getCfId());
             callback.onSuccess(CALLBACKS_PER_CF);
         }
-        CalculatedFieldState state = getOrInitState(ctx);
-        if (state.updateState(newArgValues)) {
+        CalculatedFieldState state = states.get(ctx.getCfId());
+        boolean justRestored = false;
+        if (state == null) {
+            state = getOrInitState(ctx);
+            justRestored = true;
+        }
+        if (state.updateState(newArgValues) || justRestored) {
             cfIdList = new ArrayList<>(cfIdList);
             cfIdList.add(ctx.getCfId());
             processStateIfReady(ctx, cfIdList, state, tbMsgId, tbMsgType, callback);
@@ -222,7 +230,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         } else {
             callback.onSuccess(); // State was updated but no calculation performed;
         }
-        cfService.pushStateToStorage(ctx, new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), state, callback);
+        cfStateService.persistState(ctx, new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), state, callback);
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, List<TsKvProto> data) {

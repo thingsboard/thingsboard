@@ -141,7 +141,6 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
     private final CalculatedFieldCache calculatedFieldCache;
     private final AttributesService attributesService;
     private final TimeseriesService timeseriesService;
-    private final CalculatedFieldStateService stateService;
     private final TbClusterService clusterService;
     private final ApiLimitService apiLimitService;
 
@@ -261,16 +260,6 @@ public class DefaultCalculatedFieldExecutionService extends AbstractPartitionBas
                     )));
             return result;
         }, calculatedFieldCallbackExecutor);
-    }
-
-    @Override
-    public void pushStateToStorage(CalculatedFieldCtx ctx, CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback) {
-        stateService.persistState(ctx, stateId, state, callback);
-    }
-
-    @Override
-    public void deleteStateFromStorage(CalculatedFieldEntityCtxId calculatedFieldEntityCtxId, TbCallback callback) {
-        stateService.removeState(calculatedFieldEntityCtxId, callback);
     }
 
     @Override

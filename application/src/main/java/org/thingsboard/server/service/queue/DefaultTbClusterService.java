@@ -674,7 +674,7 @@ public class DefaultTbClusterService implements TbClusterService {
                         .oldName(old.getName())
                         .name(entity.getName())
                         .build();
-                pushMsgToCalculatedFields(entity.getTenantId(), entity.getId(), ToCalculatedFieldMsg.newBuilder().setComponentLifecycleMsg(toProto(msg)).build(), TbQueueCallback.EMPTY);
+                broadcastToCalculatedFields(ToCalculatedFieldNotificationMsg.newBuilder().setComponentLifecycleMsg(toProto(msg)).build(), TbQueueCallback.EMPTY);
             }
             if (deviceNameChanged || deviceProfileChanged) {
                 pushMsgToCore(new DeviceNameOrTypeUpdateMsg(entity.getTenantId(), entity.getId(), entity.getName(), entity.getType()), null);
@@ -687,7 +687,7 @@ public class DefaultTbClusterService implements TbClusterService {
                     .profileId(entity.getDeviceProfileId())
                     .name(entity.getName())
                     .build();
-            pushMsgToCalculatedFields(entity.getTenantId(), entity.getId(), ToCalculatedFieldMsg.newBuilder().setComponentLifecycleMsg(toProto(msg)).build(), TbQueueCallback.EMPTY);
+            broadcastToCalculatedFields(ToCalculatedFieldNotificationMsg.newBuilder().setComponentLifecycleMsg(toProto(msg)).build(), TbQueueCallback.EMPTY);
         }
         broadcastEntityStateChangeEvent(entity.getTenantId(), entity.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
         sendDeviceStateServiceEvent(entity.getTenantId(), entity.getId(), created, !created, false);
@@ -710,7 +710,7 @@ public class DefaultTbClusterService implements TbClusterService {
                         .oldName(old.getName())
                         .name(entity.getName())
                         .build();
-                pushMsgToCalculatedFields(entity.getTenantId(), entity.getId(), ToCalculatedFieldMsg.newBuilder().setComponentLifecycleMsg(toProto(msg)).build(), TbQueueCallback.EMPTY);
+                broadcastToCalculatedFields(ToCalculatedFieldNotificationMsg.newBuilder().setComponentLifecycleMsg(toProto(msg)).build(), TbQueueCallback.EMPTY);
             }
         } else {
             ComponentLifecycleMsg msg = ComponentLifecycleMsg.builder()
@@ -720,7 +720,7 @@ public class DefaultTbClusterService implements TbClusterService {
                     .profileId(entity.getAssetProfileId())
                     .name(entity.getName())
                     .build();
-            pushMsgToCalculatedFields(entity.getTenantId(), entity.getId(), ToCalculatedFieldMsg.newBuilder().setComponentLifecycleMsg(toProto(msg)).build(), TbQueueCallback.EMPTY);
+            broadcastToCalculatedFields(ToCalculatedFieldNotificationMsg.newBuilder().setComponentLifecycleMsg(toProto(msg)).build(), TbQueueCallback.EMPTY);
         }
         broadcastEntityStateChangeEvent(entity.getTenantId(), entity.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
     }
@@ -872,6 +872,6 @@ public class DefaultTbClusterService implements TbClusterService {
 
     private void handleCalculatedFieldEntityDeleted(TenantId tenantId, EntityId entityId) {
         ComponentLifecycleMsg msg = new ComponentLifecycleMsg(tenantId, entityId, ComponentLifecycleEvent.DELETED);
-        pushMsgToCalculatedFields(tenantId, entityId, ToCalculatedFieldMsg.newBuilder().setComponentLifecycleMsg(toProto(msg)).build(), TbQueueCallback.EMPTY);
+        broadcastToCalculatedFields(ToCalculatedFieldNotificationMsg.newBuilder().setComponentLifecycleMsg(toProto(msg)).build(), TbQueueCallback.EMPTY);
     }
 }

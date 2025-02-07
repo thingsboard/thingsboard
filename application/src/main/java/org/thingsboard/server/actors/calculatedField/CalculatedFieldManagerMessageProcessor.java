@@ -42,6 +42,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntit
 import org.thingsboard.server.service.cf.CalculatedFieldExecutionService;
 import org.thingsboard.server.service.cf.cache.CalculatedFieldEntityProfileCache;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
+import org.thingsboard.server.service.cf.ctx.CalculatedFieldStateService;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
@@ -68,6 +69,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private final ConcurrentMap<EntityId, List<CalculatedFieldLink>> entityIdCalculatedFieldLinks = new ConcurrentHashMap<>();
 
     private final CalculatedFieldExecutionService cfExecService;
+    private final CalculatedFieldStateService cfStateService;
     private final CalculatedFieldEntityProfileCache cfEntityCache;
     private final CalculatedFieldService cfDaoService;
     private final TbAssetProfileCache assetProfileCache;
@@ -80,6 +82,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         super(systemContext);
         this.cfEntityCache = systemContext.getCalculatedFieldEntityProfileCache();
         this.cfExecService = systemContext.getCalculatedFieldExecutionService();
+        this.cfStateService = systemContext.getCalculatedFieldStateService();
         this.cfDaoService = systemContext.getCalculatedFieldService();
         this.assetProfileCache = systemContext.getAssetProfileCache();
         this.deviceProfileCache = systemContext.getDeviceProfileCache();
@@ -127,7 +130,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             log.info("Pushing CF state restore msg to specific actor [{}]", msg.getId().entityId());
             getOrCreateActor(msg.getId().entityId()).tell(msg);
         } else {
-            cfExecService.deleteStateFromStorage(msg.getId(), msg.getCallback());
+            cfStateService.removeState(msg.getId(), msg.getCallback());
         }
     }
 

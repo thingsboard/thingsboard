@@ -21,6 +21,7 @@ import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.WriteOptions;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
@@ -32,7 +33,7 @@ import java.util.Map;
 
 @Service
 @Slf4j
-@ConditionalOnExpression("'${service.type:null}'=='monolith'")
+@ConditionalOnProperty(prefix = "zk", value = "enabled", havingValue = "false", matchIfMissing = true)
 public class RocksDBService {
 
     private final RocksDB db;

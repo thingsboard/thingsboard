@@ -29,7 +29,6 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.cf.cache.CalculatedFieldEntityProfileCache;
-import org.thingsboard.server.service.cf.ctx.CalculatedFieldStateService;
 
 @Slf4j
 @Service
@@ -38,9 +37,6 @@ import org.thingsboard.server.service.cf.ctx.CalculatedFieldStateService;
 public class DefaultCalculatedFieldInitService implements CalculatedFieldInitService {
 
     private final CalculatedFieldEntityProfileCache entityProfileCache;
-    private final CalculatedFieldStateService stateService;
-
-    private final ActorSystemContext actorSystemContext;
     private final AssetService assetService;
     private final DeviceService deviceService;
 
@@ -60,11 +56,6 @@ public class DefaultCalculatedFieldInitService implements CalculatedFieldInitSer
             log.trace("Processing asset record: {}", idInfo);
             entityProfileCache.add(idInfo.getTenantId(), idInfo.getProfileId(), idInfo.getEntityId());
         }
-    }
-
-    @AfterStartUp(order = AfterStartUp.CF_STATE_RESTORE_SERVICE)
-    public void initCalculatedFieldStates() {
-        stateService.restoreStates().forEach((k, v) -> actorSystemContext.tell(new CalculatedFieldStateRestoreMsg(k, v)));
     }
 
 }

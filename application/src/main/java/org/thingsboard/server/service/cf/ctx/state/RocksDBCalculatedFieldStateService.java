@@ -16,8 +16,10 @@
 package org.thingsboard.server.service.cf.ctx.state;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.calculatedField.CalculatedFieldStateRestoreMsg;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -32,6 +34,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldState
 import org.thingsboard.server.gen.transport.TransportProtos.SingleValueArgumentProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsValueListProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsValueProto;
+import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.service.cf.RocksDBService;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldStateService;
@@ -44,12 +47,12 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@ConditionalOnExpression("'${service.type:null}'=='monolith'")
-public class RocksDBStateService implements CalculatedFieldStateService {
+@ConditionalOnProperty(prefix = "zk", value = "enabled", havingValue = "false", matchIfMissing = true)
+public class RocksDBCalculatedFieldStateService implements CalculatedFieldStateService {
 
+    private final ActorSystemContext actorSystemContext;
     private final RocksDBService rocksDBService;
 
-    @Override
     public Map<CalculatedFieldEntityCtxId, CalculatedFieldState> restoreStates() {
         return rocksDBService.getAll().entrySet().stream()
                 .collect(Collectors.toMap(
@@ -57,6 +60,12 @@ public class RocksDBStateService implements CalculatedFieldStateService {
                         entry -> fromProto(entry.getValue())
                 ));
     }
+
+    @AfterStartUp(order = AfterStartUp.CF_STATE_RESTORE_SERVICE)
+    public void initCalculatedFieldStates() {
+        restoreStates().forEach((k, v) -> actorSystemContext.tell(new CalculatedFieldStateRestoreMsg(k, v)));
+    }
+
 
     @Override
     public void persistState(CalculatedFieldCtx ctx, CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback) {
