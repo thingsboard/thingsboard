@@ -258,14 +258,6 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 callback.onSuccess();
             } else {
                 var newCfCtx = new CalculatedFieldCtx(newCf, systemContext.getTbelInvokeService(), systemContext.getApiLimitService());
-                try {
-                    newCfCtx.init();
-                } catch (Exception e) {
-                    log.debug("[{}] Failed to initialize CF context.", newCf.getId(), e);
-                    if (DebugModeUtil.isDebugAllAvailable(newCf)) {
-                        systemContext.persistCalculatedFieldDebugEvent(newCf.getTenantId(), newCf.getId(), newCf.getEntityId(), null, null, null, null, e);
-                    }
-                }
                 calculatedFields.put(newCf.getId(), newCfCtx);
                 List<CalculatedFieldCtx> oldCfList = entityIdCalculatedFields.get(newCf.getEntityId());
                 List<CalculatedFieldCtx> newCfList = new ArrayList<>(oldCfList.size());
@@ -289,7 +281,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 // We use copy on write lists to safely pass the reference to another actor for the iteration.
                 // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
                 var stateChanges = newCfCtx.hasStateChanges(oldCfCtx);
-                if (stateChanges ||  newCfCtx.hasOtherSignificantChanges(oldCfCtx)) {
+                if (stateChanges || newCfCtx.hasOtherSignificantChanges(oldCfCtx)) {
                     try {
                         newCfCtx.init();
                     } catch (Exception e) {
