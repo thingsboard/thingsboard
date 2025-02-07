@@ -203,4 +203,9 @@ export interface EntityDebugSettings {
   allEnabledUntil?: number;
 }
 
+export interface AdditionalDebugActionConfig {
+  action?: (id?: EntityId) => void;
+  title: string;
+}
+
 export type VersionedEntity = EntityInfoData & HasVersion | RuleChainMetaData;
