@@ -32,8 +32,8 @@ import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldLinkInitMsg;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
-import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
+import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
 import java.util.Collections;
@@ -117,6 +117,7 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
                     CalculatedField calculatedField = getCalculatedField(calculatedFieldId);
                     if (calculatedField != null) {
                         ctx = new CalculatedFieldCtx(calculatedField, tbelInvokeService, apiLimitService);
+                        ctx.init();
                         calculatedFieldsCtx.put(calculatedFieldId, ctx);
                         log.debug("[{}] Put calculated field ctx into cache: {}", calculatedFieldId, ctx);
                     }

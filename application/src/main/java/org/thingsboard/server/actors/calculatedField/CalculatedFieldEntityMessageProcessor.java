@@ -83,12 +83,15 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     public void process(CalculatedFieldStateRestoreMsg msg) {
+        log.info("[{}] [{}] Processing CF state restore msg.", msg.getId().entityId(), msg.getId().cfId());
         states.put(msg.getId().cfId(), msg.getState());
     }
 
     public void process(EntityInitCalculatedFieldMsg msg) {
+        log.info("[{}] Processing entity init CF msg.", msg.getCtx().getCfId());
         var cfCtx = msg.getCtx();
         if (msg.isForceReinit()) {
+            log.info("Force reinitialization of CF: [{}].", cfCtx.getCfId());
             states.remove(cfCtx.getCfId());
         }
         var cfState = getOrInitState(cfCtx);
@@ -96,6 +99,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     public void process(CalculatedFieldEntityDeleteMsg msg) {
+        log.info("[{}] Processing CF entity delete msg.", msg.getEntityId());
         if (this.entityId.equals(msg.getEntityId())) {
             MultipleTbCallback multipleTbCallback = new MultipleTbCallback(states.size(), msg.getCallback());
             states.forEach((cfId, state) -> cfService.deleteStateFromStorage(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), multipleTbCallback));
@@ -110,6 +114,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     public void process(EntityCalculatedFieldTelemetryMsg msg) {
+        log.info("[{}] Processing CF telemetry msg.", msg.getEntityId());
         var proto = msg.getProto();
         var numberOfCallbacks = CALLBACKS_PER_CF * (msg.getEntityIdFields().size() + msg.getProfileIdFields().size());
         MultipleTbCallback callback = new MultipleTbCallback(numberOfCallbacks, msg.getCallback());
@@ -124,6 +129,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     public void process(EntityCalculatedFieldLinkedTelemetryMsg msg) {
+        log.info("[{}] Processing CF link telemetry msg.", msg.getEntityId());
         var proto = msg.getProto();
         var ctx = msg.getCtx();
         var callback = new MultipleTbCallback(CALLBACKS_PER_CF, msg.getCallback());
@@ -169,6 +175,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     private void processArgumentValuesUpdate(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback,
                                              Map<String, ArgumentEntry> newArgValues, UUID tbMsgId, TbMsgType tbMsgType) {
         if (newArgValues.isEmpty()) {
+            log.info("[{}] No new argument values to process for CF.", ctx.getCfId());
             callback.onSuccess(CALLBACKS_PER_CF);
         }
         CalculatedFieldState state = getOrInitState(ctx);
@@ -201,10 +208,16 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     @SneakyThrows
     private void processStateIfReady(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, CalculatedFieldState state, UUID tbMsgId, TbMsgType tbMsgType, TbCallback callback) {
         if (state.isReady() && ctx.isInitialized()) {
-            CalculatedFieldResult calculationResult = state.performCalculation(ctx).get(5, TimeUnit.SECONDS);
-            cfService.pushMsgToRuleEngine(tenantId, entityId, calculationResult, cfIdList, callback);
-            if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
-                systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, JacksonUtil.writeValueAsString(calculationResult.getResultMap()), null);
+            try {
+                CalculatedFieldResult calculationResult = state.performCalculation(ctx).get(5, TimeUnit.SECONDS);
+                cfService.pushMsgToRuleEngine(tenantId, entityId, calculationResult, cfIdList, callback);
+                if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
+                    systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, JacksonUtil.writeValueAsString(calculationResult.getResultMap()), null);
+                }
+            } catch (Exception e) {
+                if (DebugModeUtil.isDebugFailuresAvailable(ctx.getCalculatedField())) {
+                    systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, null, e);
+                }
             }
         } else {
             callback.onSuccess(); // State was updated but no calculation performed;

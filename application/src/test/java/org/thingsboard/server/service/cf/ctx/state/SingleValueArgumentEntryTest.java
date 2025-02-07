@@ -69,4 +69,8 @@ public class SingleValueArgumentEntryTest {
         assertThat(entry.updateEntry(new SingleValueArgumentEntry(ts + 18, new LongDataEntry("key", 18L), 234L))).isFalse();
     }
 
+    @Test
+    void testUpdateEntryWhenValueWasNotChanged() {
+        assertThat(entry.updateEntry(new SingleValueArgumentEntry(ts + 18, new LongDataEntry("key", 11L), 237L))).isFalse();
+    }
 }
