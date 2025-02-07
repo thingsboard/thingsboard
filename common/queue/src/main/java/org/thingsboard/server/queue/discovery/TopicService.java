@@ -44,6 +44,9 @@ public class TopicService {
     @Value("${queue.edge.notifications-topic:tb_edge.notifications}")
     private String tbEdgeNotificationsTopic;
 
+    @Value("${queue.edge.event-notifications-topic:tb_edge.notifications}")
+    private String tbEdgeEventNotificationsTopic;
+
     private final ConcurrentMap<String, TopicPartitionInfo> tbCoreNotificationTopics = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TopicPartitionInfo> tbRuleEngineNotificationTopics = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TopicPartitionInfo> tbEdgeNotificationTopics = new ConcurrentHashMap<>();
@@ -88,7 +91,7 @@ public class TopicService {
     }
 
     public TopicPartitionInfo buildEdgeEventNotificationsTopicPartitionInfo(TenantId tenantId, EdgeId edgeId) {
-        return buildTopicPartitionInfo("tb_edge_event.notifications." + tenantId + "." + edgeId, null, null, false);
+        return buildTopicPartitionInfo(tbEdgeEventNotificationsTopic + "." + tenantId + "." + edgeId, null, null, false);
     }
 
     public String buildTopicName(String topic) {

@@ -1748,6 +1748,8 @@ queue:
     topic: "${TB_QUEUE_EDGE_TOPIC:tb_edge}"
     # For high-priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_EDGE_NOTIFICATIONS_TOPIC:tb_edge.notifications}"
+    # For edge events messages
+    event_notifications_topic: "${TB_QUEUE_EDGE_EVENT_NOTIFICATIONS_TOPIC:tb_edge_event.notifications}"
     # Amount of partitions used by Edge services
     partitions: "${TB_QUEUE_EDGE_PARTITIONS:10}"
     # Poll interval for topics related to Edge services
