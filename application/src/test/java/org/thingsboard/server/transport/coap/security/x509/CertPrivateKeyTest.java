@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.coap.x509;
+package org.thingsboard.server.transport.coap.security.x509;
 
 import org.apache.commons.io.FileUtils;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
@@ -28,11 +28,11 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
 import java.util.List;
 
-public class CertPrivateKey {
+public class CertPrivateKeyTest {
     private final X509Certificate cert;
     private PrivateKey privateKey;
 
-    public CertPrivateKey(String certFilePathPem, String keyFilePathPem) throws Exception {
+    public CertPrivateKeyTest(String certFilePathPem, String keyFilePathPem) throws Exception {
         List<X509Certificate> certs = SslUtil.readCertFile(fileRead(certFilePathPem));
         this.cert = certs.get(0);
         this.privateKey = SslUtil.readPrivateKey(fileRead(keyFilePathPem), null);
@@ -46,7 +46,7 @@ public class CertPrivateKey {
         }
     }
 
-    public CertPrivateKey(X509Certificate cert, PrivateKey privateKey) {
+    public CertPrivateKeyTest(X509Certificate cert, PrivateKey privateKey) {
         this.cert = cert;
         this.privateKey = privateKey;
     }

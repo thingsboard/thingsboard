@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.coap.x509;
+package org.thingsboard.server.transport.coap.security;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -37,10 +37,13 @@ import org.eclipse.californium.scandium.dtls.SignatureAndHashAlgorithm;
 import org.eclipse.californium.scandium.dtls.SignatureAndHashAlgorithm.HashAlgorithm;
 import org.eclipse.californium.scandium.dtls.SignatureAndHashAlgorithm.SignatureAlgorithm;
 import org.eclipse.californium.scandium.dtls.cipher.CipherSuite;
+import org.eclipse.californium.scandium.dtls.pskstore.AdvancedSinglePskStore;
 import org.eclipse.californium.scandium.dtls.x509.CertificateProvider;
 import org.eclipse.californium.scandium.dtls.x509.SingleCertificateProvider;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.transport.coap.CoapTestCallback;
+import org.thingsboard.server.transport.coap.security.x509.CertPrivateKeyTest;
+import org.thingsboard.server.transport.coap.security.x509.TbAdvancedCertificateVerifierTest;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -73,29 +76,48 @@ import static org.eclipse.californium.scandium.dtls.SignatureAndHashAlgorithm.SH
 import static org.eclipse.californium.scandium.dtls.SignatureAndHashAlgorithm.SHA384_WITH_ECDSA;
 
 @Slf4j
-public class CoapClientX509Test {
+public class CoapClientDTLSTest {
 
     private static final long CLIENT_REQUEST_TIMEOUT = 60000L;
 
-    private final CoapClient clientX509;
-    private final DTLSConnector dtlsConnector;
-    private final Configuration config;
-    private final CertPrivateKey certPrivateKey;
+    private CoapClient clientWithDTLS;
+    private DTLSConnector dtlsConnector;
+    private Configuration config;
+    private final CertPrivateKeyTest certPrivateKey;
     private final String coapsBaseUrl;
+
+    private final String pskIdentity;
+
+    private final String pskSecretKey;
 
     @Getter
     private CoAP.Type type = CoAP.Type.CON;
 
-    public CoapClientX509Test(CertPrivateKey certPrivateKey, FeatureType featureType, String coapsBaseUrl, Integer fixedPort) {
+    public CoapClientDTLSTest(CertPrivateKeyTest certPrivateKey, FeatureType featureType, String coapsBaseUrl, Integer fixedPort) {
         this.certPrivateKey = certPrivateKey;
+        this.pskIdentity = null;
+        this.pskSecretKey = null;
         this.coapsBaseUrl = coapsBaseUrl;
+        initDTLSConfig(featureType, fixedPort);
+    }
+
+    public CoapClientDTLSTest(String pskIdentity, String pskSecretKey, FeatureType featureType, String coapsBaseUrl, Integer fixedPort) {
+        this.certPrivateKey = null;
+        this.pskIdentity = pskIdentity;
+        this.pskSecretKey = pskSecretKey;
+        this.coapsBaseUrl = coapsBaseUrl;
+        initDTLSConfig(featureType, fixedPort);
+    }
+
+    private void initDTLSConfig(FeatureType featureType, Integer fixedPort) {
         this.config = createConfiguration();
         this.dtlsConnector = createDTLSConnector(fixedPort);
-        this.clientX509 = createClient(getFeatureTokenUrl(featureType));
+        this.clientWithDTLS = createClient(getFeatureTokenUrl(featureType));
     }
+
     public void disconnect() {
-        if (clientX509 != null) {
-            clientX509.shutdown();
+        if (clientWithDTLS != null) {
+            clientWithDTLS.shutdown();
         }
     }
 
@@ -104,22 +126,23 @@ public class CoapClientX509Test {
     }
 
     public CoapResponse postMethod(byte[] requestBodyBytes) throws ConnectorException, IOException {
-        return clientX509.setTimeout(CLIENT_REQUEST_TIMEOUT).post(requestBodyBytes, MediaTypeRegistry.APPLICATION_JSON);
+        return clientWithDTLS.setTimeout(CLIENT_REQUEST_TIMEOUT).post(requestBodyBytes, MediaTypeRegistry.APPLICATION_JSON);
     }
 
     public void postMethod(CoapHandler handler, String payload, int format) {
-        clientX509.setTimeout(CLIENT_REQUEST_TIMEOUT).post(handler, payload, format);
+        clientWithDTLS.setTimeout(CLIENT_REQUEST_TIMEOUT).post(handler, payload, format);
     }
 
     public void postMethod(CoapHandler handler, byte[] payload) {
-        clientX509.setTimeout(CLIENT_REQUEST_TIMEOUT).post(handler, payload,  MediaTypeRegistry.APPLICATION_JSON);
+        clientWithDTLS.setTimeout(CLIENT_REQUEST_TIMEOUT).post(handler, payload, MediaTypeRegistry.APPLICATION_JSON);
     }
+
     public void postMethod(CoapHandler handler, byte[] payload, int format) {
-        clientX509.setTimeout(CLIENT_REQUEST_TIMEOUT).post(handler, payload, format);
+        clientWithDTLS.setTimeout(CLIENT_REQUEST_TIMEOUT).post(handler, payload, format);
     }
 
     public CoapResponse getMethod() throws ConnectorException, IOException {
-        return clientX509.setTimeout(CLIENT_REQUEST_TIMEOUT).get();
+        return clientWithDTLS.setTimeout(CLIENT_REQUEST_TIMEOUT).get();
     }
 
     public CoapObserveRelation getObserveRelation(CoapTestCallback callback) {
@@ -129,14 +152,14 @@ public class CoapClientX509Test {
     public CoapObserveRelation getObserveRelation(CoapTestCallback callback, boolean confirmable) {
         Request request = Request.newGet().setObserve();
         request.setType(confirmable ? CoAP.Type.CON : CoAP.Type.NON);
-        return clientX509.observe(request, callback);
+        return clientWithDTLS.observe(request, callback);
     }
 
     public void setURI(String featureTokenUrl) {
-        if (clientX509 == null) {
+        if (clientWithDTLS == null) {
             throw new RuntimeException("Failed to connect! CoapClient is not initialized!");
         }
-        clientX509.setURI(featureTokenUrl);
+        clientWithDTLS.setURI(featureTokenUrl);
     }
 
     public void setURI(String accessToken, FeatureType featureType) {
@@ -147,19 +170,19 @@ public class CoapClientX509Test {
     }
 
     public void useCONs() {
-        if (clientX509 == null) {
+        if (clientWithDTLS == null) {
             throw new RuntimeException("Failed to connect! CoapClient is not initialized!");
         }
         type = CoAP.Type.CON;
-        clientX509.useCONs();
+        clientWithDTLS.useCONs();
     }
 
     public void useNONs() {
-        if (clientX509 == null) {
+        if (clientWithDTLS == null) {
             throw new RuntimeException("Failed to connect! CoapClient is not initialized!");
         }
         type = CoAP.Type.NON;
-        clientX509.useNONs();
+        clientWithDTLS.useNONs();
     }
 
     private Configuration createConfiguration() {
@@ -178,26 +201,31 @@ public class CoapClientX509Test {
         clientCoapConfig.set(DTLS_USE_HELLO_VERIFY_REQUEST, false);
         clientCoapConfig.set(DTLS_VERIFY_SERVER_CERTIFICATES_SUBJECT, false);
         clientCoapConfig.set(DTLS_MAX_FRAGMENTED_HANDSHAKE_MESSAGE_LENGTH, 22490);
-        clientCoapConfig.set(DTLS_AUTO_HANDSHAKE_TIMEOUT, 100000,  TimeUnit.MILLISECONDS);
+        clientCoapConfig.set(DTLS_AUTO_HANDSHAKE_TIMEOUT, 100000, TimeUnit.MILLISECONDS);
         clientCoapConfig.set(DTLS_MAX_PENDING_HANDSHAKE_RESULT_JOBS, 64);
         clientCoapConfig.set(DTLS_USE_MULTI_HANDSHAKE_MESSAGE_RECORDS, false);
         clientCoapConfig.set(DTLS_RECEIVE_BUFFER_SIZE, 8192);
-        clientCoapConfig.setTransient(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY);
-        SignatureAndHashAlgorithmsDefinition algorithmsDefinition = new SignatureAndHashAlgorithmsDefinition(MODULE + "SIGNATURE_AND_HASH_ALGORITHMS", "List of DTLS signature- and hash-algorithms.\nValues e.g SHA256withECDSA or ED25519.");
-        SignatureAndHashAlgorithm SHA384_WITH_RSA = new SignatureAndHashAlgorithm(HashAlgorithm.SHA384,
-                SignatureAlgorithm.RSA);
-        List<SignatureAndHashAlgorithm> algorithms = null;
-        try {
-            algorithms = algorithmsDefinition.checkValue(Arrays.asList(SHA256_WITH_ECDSA, SHA256_WITH_RSA, SHA384_WITH_ECDSA, SHA384_WITH_RSA));
-        } catch (ValueException e) {
-            throw new RuntimeException(e);
+        if (this.certPrivateKey != null) {
+            clientCoapConfig.setTransient(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY);
+            SignatureAndHashAlgorithmsDefinition algorithmsDefinition = new SignatureAndHashAlgorithmsDefinition(MODULE + "SIGNATURE_AND_HASH_ALGORITHMS", "List of DTLS signature- and hash-algorithms.\nValues e.g SHA256withECDSA or ED25519.");
+            SignatureAndHashAlgorithm SHA384_WITH_RSA = new SignatureAndHashAlgorithm(HashAlgorithm.SHA384,
+                    SignatureAlgorithm.RSA);
+            List<SignatureAndHashAlgorithm> algorithms = null;
+            try {
+                algorithms = algorithmsDefinition.checkValue(Arrays.asList(SHA256_WITH_ECDSA, SHA256_WITH_RSA, SHA384_WITH_ECDSA, SHA384_WITH_RSA));
+            } catch (ValueException e) {
+                throw new RuntimeException(e);
+            }
+            clientCoapConfig.setTransient(DTLS_SIGNATURE_AND_HASH_ALGORITHMS);
+            clientCoapConfig.set(DTLS_SIGNATURE_AND_HASH_ALGORITHMS, algorithms);
+            clientCoapConfig.setTransient(DTLS_CIPHER_SUITES);
+            clientCoapConfig.set(DTLS_CIPHER_SUITES, Arrays.asList(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256));
+            clientCoapConfig.setTransient(DTLS_VERIFY_SERVER_CERTIFICATES_SUBJECT);
+            clientCoapConfig.set(DTLS_VERIFY_SERVER_CERTIFICATES_SUBJECT, false);
+        } else { // PSK
+            clientCoapConfig.setTransient(DTLS_CIPHER_SUITES);
+            clientCoapConfig.set(DTLS_CIPHER_SUITES, Arrays.asList(CipherSuite.TLS_PSK_WITH_AES_128_CCM_8));
         }
-        clientCoapConfig.setTransient(DTLS_SIGNATURE_AND_HASH_ALGORITHMS);
-        clientCoapConfig.set(DTLS_SIGNATURE_AND_HASH_ALGORITHMS, algorithms);
-        clientCoapConfig.setTransient(DTLS_CIPHER_SUITES);
-        clientCoapConfig.set(DTLS_CIPHER_SUITES, Arrays.asList(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256));
-        clientCoapConfig.setTransient(DTLS_VERIFY_SERVER_CERTIFICATES_SUBJECT);
-        clientCoapConfig.set(DTLS_VERIFY_SERVER_CERTIFICATES_SUBJECT, false);
         return clientCoapConfig;
     }
 
@@ -205,10 +233,14 @@ public class CoapClientX509Test {
         try {
             // Create DTLS config client
             DtlsConnectorConfig.Builder configBuilder = new DtlsConnectorConfig.Builder(this.config);
-            configBuilder.setAdvancedCertificateVerifier(new TbAdvancedCertificateVerifier());
-            X509Certificate[] certificateChainClient = new X509Certificate[]{this.certPrivateKey.getCert()};
-            CertificateProvider certificateProvider = new SingleCertificateProvider(this.certPrivateKey.getPrivateKey(), certificateChainClient, Collections.singletonList(CertificateType.X_509));
-            configBuilder.setCertificateIdentityProvider(certificateProvider);
+            if (this.certPrivateKey != null) {
+                configBuilder.setAdvancedCertificateVerifier(new TbAdvancedCertificateVerifierTest());
+                X509Certificate[] certificateChainClient = new X509Certificate[]{this.certPrivateKey.getCert()};
+                CertificateProvider certificateProvider = new SingleCertificateProvider(this.certPrivateKey.getPrivateKey(), certificateChainClient, Collections.singletonList(CertificateType.X_509));
+                configBuilder.setCertificateIdentityProvider(certificateProvider);
+            } else {
+                configBuilder.setAdvancedPskStore(new AdvancedSinglePskStore(this.pskIdentity, this.pskSecretKey.getBytes()));
+            }
             if (fixedPort != null) {
                 InetSocketAddress localAddress = new InetSocketAddress("0.0.0.0", fixedPort);
                 configBuilder.setAddress(localAddress);

@@ -75,23 +75,30 @@ public class TbCoapDtlsSettings {
     @Value("${coap.dtls.max_fragment_length:1024}")
     private Integer maxFragmentLength;
 
+    @Value("${coap.dtls.psk.identity:server_psk_identity}")
+    private String pskIdentity;
+
+    @Value("${coap.dtls.psk.secret_key:server_psk_secret_key_123}")
+    private String pskSecretKey;
+
     @Bean
-    @ConfigurationProperties(prefix = "coap.dtls.credentials")
+    @ConfigurationProperties(prefix = "coap.dtls.x509.credentials")
+    @ConditionalOnProperty(prefix = "coap.dtls.x509.credentials", value = "enabled", havingValue = "true")
     public SslCredentialsConfig coapDtlsCredentials() {
         return new SslCredentialsConfig("COAP DTLS Credentials", false);
     }
 
-    @Autowired
+    @Autowired(required = false)
     @Qualifier("coapDtlsCredentials")
     private SslCredentialsConfig coapDtlsCredentialsConfig;
 
-    @Value("${coap.dtls.x509.skip_validity_check_for_client_cert:false}")
+    @Value("${coap.dtls.x509.credentials.skip_validity_check_for_client_cert:false}")
     private boolean skipValidityCheckForClientCert;
 
-    @Value("${coap.dtls.x509.dtls_session_inactivity_timeout:86400000}")
+    @Value("${coap.dtls.x509.credentials.dtls_session_inactivity_timeout:86400000}")
     private long dtlsSessionInactivityTimeout;
 
-    @Value("${coap.dtls.x509.dtls_session_report_timeout:1800000}")
+    @Value("${coap.dtls.x509.credentials.dtls_session_report_timeout:1800000}")
     private long dtlsSessionReportTimeout;
 
     @Autowired(required = false)
@@ -103,9 +110,6 @@ public class TbCoapDtlsSettings {
     public DtlsConnectorConfig dtlsConnectorConfig(Configuration configuration) throws UnknownHostException {
         DtlsConnectorConfig.Builder configBuilder = new DtlsConnectorConfig.Builder(configuration);
         configBuilder.setAddress(getInetSocketAddress());
-        SslCredentials sslCredentials = this.coapDtlsCredentialsConfig.getCredentials();
-        SslContextUtil.Credentials serverCredentials =
-                new SslContextUtil.Credentials(sslCredentials.getPrivateKey(), null, sslCredentials.getCertificateChain());
         configBuilder.set(DTLS_CLIENT_AUTHENTICATION_MODE, WANTED);
         configBuilder.set(DTLS_RETRANSMISSION_TIMEOUT, dtlsRetransmissionTimeout, MILLISECONDS);
         configBuilder.set(DTLS_ROLE, SERVER_ONLY);
@@ -126,17 +130,27 @@ public class TbCoapDtlsSettings {
                 configBuilder.set(DTLS_MAX_FRAGMENT_LENGTH, length);
             }
         }
-        configBuilder.setAdvancedCertificateVerifier(
-                new TbCoapDtlsCertificateVerifier(
-                        transportService,
-                        serviceInfoProvider,
-                        dtlsSessionInactivityTimeout,
-                        dtlsSessionReportTimeout,
-                        skipValidityCheckForClientCert
-                )
-        );
-        configBuilder.setCertificateIdentityProvider(new SingleCertificateProvider(serverCredentials.getPrivateKey(), serverCredentials.getCertificateChain(),
-                Collections.singletonList(CertificateType.X_509)));
+        configBuilder.setAdvancedPskStore(new TbAdvancedMultiPskStore(
+                transportService,
+                pskIdentity,
+                pskSecretKey.getBytes()));
+
+        if (this.coapDtlsCredentialsConfig != null) {
+            configBuilder.setAdvancedCertificateVerifier(
+                    new TbCoapDtlsCertificateVerifier(
+                            transportService,
+                            serviceInfoProvider,
+                            dtlsSessionInactivityTimeout,
+                            dtlsSessionReportTimeout,
+                            skipValidityCheckForClientCert
+                    )
+            );
+            SslCredentials sslCredentials = this.coapDtlsCredentialsConfig.getCredentials();
+            SslContextUtil.Credentials serverCredentials =
+                    new SslContextUtil.Credentials(sslCredentials.getPrivateKey(), null, sslCredentials.getCertificateChain());
+            configBuilder.setCertificateIdentityProvider(new SingleCertificateProvider(serverCredentials.getPrivateKey(), serverCredentials.getCertificateChain(),
+                    Collections.singletonList(CertificateType.X_509)));
+        }
         return configBuilder.build();
     }
 

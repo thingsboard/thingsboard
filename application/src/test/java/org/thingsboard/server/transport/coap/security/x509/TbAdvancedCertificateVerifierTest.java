@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.coap.x509;
+package org.thingsboard.server.transport.coap.security.x509;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.scandium.dtls.AlertMessage;
@@ -36,7 +36,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
-public class TbAdvancedCertificateVerifier implements NewAdvancedCertificateVerifier {
+public class TbAdvancedCertificateVerifierTest implements NewAdvancedCertificateVerifier {
 
     private HandshakeResultHandler resultHandler;
     /**

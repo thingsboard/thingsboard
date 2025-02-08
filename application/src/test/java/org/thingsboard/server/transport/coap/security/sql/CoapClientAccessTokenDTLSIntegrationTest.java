@@ -20,25 +20,31 @@ import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.transport.coap.security.AbstractCoapSecurityIntegrationTest;
+import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
+import org.thingsboard.server.transport.coap.security.AbstractCoapSecurityPSKIntegrationTest;
 
 @Slf4j
 @DaoSqlTest
-public class CoapClientX509SecurityPemIntegrationTest extends AbstractCoapSecurityIntegrationTest {
+public class CoapClientAccessTokenDTLSIntegrationTest extends AbstractCoapSecurityPSKIntegrationTest {
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest();
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test AccessTokenDTLS device")
+                .build();
+        processBeforeTest(configProperties);
     }
 
     @Test
-    public void testX509NoTrustFromPathConnectCoapSuccessUpdateAttributesSuccess() throws Exception {
-        clientX509FromPathUpdateFeatureTypeTest(FeatureType.ATTRIBUTES);
+    public void testAccessTokenDTLSCoapSuccessUpdateAttributesSuccess() throws Exception {
+        clientPSKUpdateFeatureTypeTest(FeatureType.ATTRIBUTES);
     }
     @Test
-    public void testX509NoTrustFromPathConnectCoapSuccessUpdateTelemetrySuccess() throws Exception {
-        clientX509FromPathUpdateFeatureTypeTest(FeatureType.TELEMETRY);
-    }    @Test
-    public void testTwoDevicesWithSamePortX509NoTrustFromPathConnectCoapSuccess() throws Exception {
-        twoClientWithSamePortX509FromPathConnectTest();
+    public void testAccessTokenDTLSCoapSuccessUpdateTelemetrySuccess() throws Exception {
+        clientPSKUpdateFeatureTypeTest(FeatureType.TELEMETRY);
+    }
+
+    @Test
+    public void testTwoDevicesWithAccessTokenDTLSCoapSuccess() throws Exception {
+        twoClientPSKConnectTest();
     }
 }
