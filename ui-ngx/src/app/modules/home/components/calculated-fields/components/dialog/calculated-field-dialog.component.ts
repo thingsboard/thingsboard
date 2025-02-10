@@ -33,7 +33,7 @@ import {
 import { noLeadTrailSpacesRegex } from '@shared/models/regex.constants';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { map, startWith } from 'rxjs/operators';
+import { filter, map, startWith } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 
@@ -67,7 +67,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
 
   additionalDebugActionConfig = this.data.value?.id ? {
     ...this.data.additionalDebugActionConfig,
-    action: () => this.data.additionalDebugActionConfig.action(this.data.value.id)
+    action: () => this.data.additionalDebugActionConfig.action(this.data.value.id, this.data.value.configuration.expression)
   } : null;
 
   readonly OutputTypeTranslations = OutputTypeTranslations;
@@ -108,6 +108,14 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
       const { expressionSIMPLE, expressionSCRIPT, ...restConfig } = configuration;
       this.dialogRef.close({ configuration: { ...restConfig, type, expression: configuration['expression'+type] }, ...rest, type } as CalculatedField);
     }
+  }
+
+  onTestScript(): void {
+    this.data.testScriptFn(
+        Object.fromEntries(Object.keys(this.configFormGroup.get('arguments').value).map(k => [k, ''])),
+        this.configFormGroup.get('expressionSCRIPT').value,
+        true
+    ).pipe(filter(Boolean)).subscribe((expression: string) => this.configFormGroup.get('expressionSCRIPT').setValue(expression));
   }
 
   private applyDialogData(): void {

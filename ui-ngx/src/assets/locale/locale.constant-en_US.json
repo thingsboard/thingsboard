@@ -65,6 +65,7 @@
         "next-with-label": "Next: {{label}}",
         "read-more": "Read more",
         "hide": "Hide",
+        "test": "Test",
         "done": "Done",
         "print": "Print",
         "restore": "Restore",
@@ -1018,6 +1019,7 @@
         "argument-name": "Argument name",
         "datasource": "Datasource",
         "add-argument": "Add argument",
+        "test-script-function": "Test script function",
         "no-arguments": "No arguments configured",
         "argument-settings": "Argument settings",
         "argument-current": "Current entity",
@@ -1107,8 +1109,12 @@
         "proceed": "Proceed",
         "open-details-page": "Open details page",
         "not-found": "Not found",
+        "value": "Value",
         "documentation": "Documentation",
         "time-left": "{{time}} left",
+        "output": "Output",
+        "test-function": "Test function",
+        "test-with-this-message": "{{test}} with this message",
         "suffix": {
             "s": "s",
             "ms": "ms"

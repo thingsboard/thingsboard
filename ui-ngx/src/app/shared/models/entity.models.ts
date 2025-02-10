@@ -204,7 +204,7 @@ export interface EntityDebugSettings {
 }
 
 export interface AdditionalDebugActionConfig {
-  action?: (id?: EntityId) => void;
+  action?: (id?: EntityId, ...restArguments: unknown[]) => void;
   title: string;
 }
 

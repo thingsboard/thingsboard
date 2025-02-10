@@ -457,6 +457,16 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
           });
         }
         break;
+      case DebugEventType.DEBUG_CALCULATED_FIELD:
+        this.cellActionDescriptors.push({
+          name: this.translate.instant('common.test-with-this-message', {test: this.translate.instant(this.testButtonLabel)}),
+          icon: 'bug_report',
+          isEnabled: () => true,
+          onAction: (_, entity) => {
+            this.debugEventSelected.next(entity.body);
+          }
+        });
+        break;
     }
     this.getTable()?.cellActionDescriptorsUpdated();
   }

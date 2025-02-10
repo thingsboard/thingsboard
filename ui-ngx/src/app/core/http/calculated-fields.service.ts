@@ -22,6 +22,7 @@ import { PageData } from '@shared/models/page/page-data';
 import { CalculatedField } from '@shared/models/calculated-field.models';
 import { PageLink } from '@shared/models/page/page-link';
 import { EntityId } from '@shared/models/id/entity-id';
+import { TestScriptResult } from '@shared/models/rule-node.models';
 
 @Injectable({
   providedIn: 'root'
@@ -47,5 +48,9 @@ export class CalculatedFieldsService {
   public getCalculatedFields({ entityType, id }: EntityId, pageLink: PageLink, config?: RequestConfig): Observable<PageData<CalculatedField>> {
     return this.http.get<PageData<CalculatedField>>(`/api/${entityType}/${id}/calculatedFields${pageLink.toQuery()}`,
       defaultHttpOptionsFromConfig(config));
+  }
+
+  public testScript(inputParams: any, config?: RequestConfig): Observable<TestScriptResult> {
+    return this.http.post<TestScriptResult>('/api/calculatedField/testScript', inputParams, defaultHttpOptionsFromConfig(config));
   }
 }

@@ -101,6 +101,14 @@
               [scriptLanguage]="ScriptLanguage.TBEL"
               helpId="[TODO]: [Calculated Fields] add valid link"
             />
+            <div>
+              <button mat-button mat-raised-button color="primary"
+                      type="button"
+                      (click)="onTestScript()"
+                      [disabled]="configFormGroup.get('expressionSCRIPT').invalid || configFormGroup.get('arguments').invalid ">
+                {{ 'common.test-function' | translate }}
+              </button>
+            </div>
           }
         </div>
         <div class="tb-form-panel" [formGroup]="outputFormGroup">

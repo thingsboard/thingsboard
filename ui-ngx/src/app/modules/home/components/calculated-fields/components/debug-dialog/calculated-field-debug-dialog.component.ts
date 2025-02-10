@@ -20,7 +20,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { DebugEventType, EventType } from '@shared/models/event.models';
+import { CalculatedFieldEventBody, DebugEventType, EventType } from '@shared/models/event.models';
 import { EventTableComponent } from '@home/components/event/event-table.component';
 import { CalculatedFieldDebugDialogData } from '@shared/models/calculated-field.models';
 
@@ -50,5 +50,9 @@ export class CalculatedFieldDebugDialogComponent extends DialogComponent<Calcula
 
   cancel(): void {
     this.dialogRef.close(null);
+  }
+
+  onDebugEventSelected(event: CalculatedFieldEventBody): void {
+    this.data.testScriptFn(JSON.parse(event.arguments), this.data.expression);
   }
 }

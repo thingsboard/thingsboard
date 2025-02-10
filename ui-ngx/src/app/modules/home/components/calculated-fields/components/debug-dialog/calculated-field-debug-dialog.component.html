@@ -34,6 +34,7 @@
       [active]="true"
       [entityId]="data.id"
       [functionTestButtonLabel]="'common.test-function' | translate"
+      (debugEventSelected)="onDebugEventSelected($event)"
     />
   </div>
   <div mat-dialog-actions class="justify-end">
