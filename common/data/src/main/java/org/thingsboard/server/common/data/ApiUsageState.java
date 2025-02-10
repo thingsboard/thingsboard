@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenantId {
+public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenantId, HasVersion {
 
     private static final long serialVersionUID = 8250339805336035966L;
 
@@ -41,6 +41,7 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
     private ApiUsageStateValue emailExecState;
     private ApiUsageStateValue smsExecState;
     private ApiUsageStateValue alarmExecState;
+    private Long version;
 
     public ApiUsageState() {
         super();
@@ -62,6 +63,7 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
         this.emailExecState = ur.getEmailExecState();
         this.smsExecState = ur.getSmsExecState();
         this.alarmExecState = ur.getAlarmExecState();
+        this.version = ur.getVersion();
     }
 
     public boolean isTransportEnabled() {
@@ -95,4 +97,5 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
     public boolean isAlarmCreationEnabled() {
         return alarmExecState != ApiUsageStateValue.DISABLED;
     }
+
 }
