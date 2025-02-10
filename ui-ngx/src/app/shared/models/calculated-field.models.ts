@@ -148,10 +148,13 @@ export interface CalculatedFieldDebugDialogData {
   testScriptFn: CalculatedFieldTestScriptFn;
 }
 
-export interface CalculatedFieldScriptTestDialogData {
+export interface CalculatedFieldScriptTestDialogData extends CalculatedFieldTestScriptInputParams {
+  withApply: boolean;
+}
+
+export interface CalculatedFieldTestScriptInputParams {
   arguments: Record<string, unknown>,
   expression: string;
-  withApply: boolean;
 }
 
 export interface ArgumentEntityTypeParams {

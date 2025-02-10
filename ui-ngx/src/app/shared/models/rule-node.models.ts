@@ -374,11 +374,6 @@ export interface TestScriptInputParams {
   msgType: string;
 }
 
-export interface TestScriptResult {
-  output: string;
-  error: string;
-}
-
 export enum MessageType {
   POST_ATTRIBUTES_REQUEST = 'POST_ATTRIBUTES_REQUEST',
   POST_TELEMETRY_REQUEST = 'POST_TELEMETRY_REQUEST',

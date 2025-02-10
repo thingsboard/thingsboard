@@ -37,6 +37,7 @@ import { beautifyJs } from '@shared/models/beautify.models';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CalculatedFieldScriptTestDialogData } from '@shared/models/calculated-field.models';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-calculated-field-script-test-dialog',
@@ -71,10 +72,8 @@ export class CalculatedFieldScriptTestDialogComponent extends DialogComponent<Ca
               private destroyRef: DestroyRef,
               private calculatedFieldService: CalculatedFieldsService) {
     super(store, router, dialogRef);
-    beautifyJs(this.data.expression, {indent_size: 4}).pipe(takeUntilDestroyed()).subscribe(
-      (res) => {
-        this.calculatedFieldScriptTestFormGroup.get('expression').patchValue(res, {emitEvent: false});
-      }
+    beautifyJs(this.data.expression, {indent_size: 4}).pipe(filter(Boolean), takeUntilDestroyed()).subscribe(
+      (res) => this.calculatedFieldScriptTestFormGroup.get('expression').patchValue(res, {emitEvent: false})
     );
     this.calculatedFieldScriptTestFormGroup.get('arguments').patchValue(this.data.arguments, {emitEvent: false});
   }

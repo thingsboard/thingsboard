@@ -115,7 +115,10 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
         Object.fromEntries(Object.keys(this.configFormGroup.get('arguments').value).map(k => [k, ''])),
         this.configFormGroup.get('expressionSCRIPT').value,
         true
-    ).pipe(filter(Boolean)).subscribe((expression: string) => this.configFormGroup.get('expressionSCRIPT').setValue(expression));
+    ).pipe(filter(Boolean)).subscribe((expression: string) => {
+      this.configFormGroup.get('expressionSCRIPT').setValue(expression);
+      this.configFormGroup.get('expressionSCRIPT').markAsDirty();
+    });
   }
 
   private applyDialogData(): void {

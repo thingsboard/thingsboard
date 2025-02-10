@@ -38,7 +38,8 @@ import { catchError, filter, switchMap } from 'rxjs/operators';
 import {
   CalculatedField,
   CalculatedFieldDebugDialogData,
-  CalculatedFieldDialogData, CalculatedFieldScriptTestDialogData
+  CalculatedFieldDialogData,
+  CalculatedFieldScriptTestDialogData
 } from '@shared/models/calculated-field.models';
 import {
   CalculatedFieldDebugDialogComponent,
