@@ -96,7 +96,7 @@ import org.thingsboard.server.queue.common.TbRuleEngineProducerService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
-import org.thingsboard.server.service.cf.CalculatedFieldExecutionService;
+import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
@@ -148,7 +148,7 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Autowired
     @Lazy
-    private CalculatedFieldExecutionService calculatedFieldExecutionService;
+    private CalculatedFieldProcessingService calculatedFieldProcessingService;
 
     private final TopicService topicService;
     private final TbDeviceProfileCache deviceProfileCache;

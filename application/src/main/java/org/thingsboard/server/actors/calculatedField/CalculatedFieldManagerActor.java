@@ -25,6 +25,7 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldLinkInitMsg;
+import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
 
 /**
  * Created by ashvayka on 15.03.18.
@@ -55,8 +56,8 @@ public class CalculatedFieldManagerActor extends ContextAwareActor {
     @Override
     protected boolean doProcess(TbActorMsg msg) {
         switch (msg.getMsgType()) {
-            case PARTITION_CHANGE_MSG:
-                ctx.broadcastToChildren(msg, true); // TODO
+            case CF_PARTITIONS_CHANGE_MSG:
+                processor.onPartitionChange((CalculatedFieldPartitionChangeMsg) msg);
                 break;
             case CF_INIT_MSG:
                 processor.onFieldInitMsg((CalculatedFieldInitMsg) msg);

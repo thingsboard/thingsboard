@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 //TODO: remove and use TenantEntityProfileCache in each CalculatedFieldManagerMessageProcessor;
 public class DefaultCalculatedFieldEntityProfileCache extends TbApplicationEventListener<PartitionChangeEvent> implements CalculatedFieldEntityProfileCache {
 
-    private static final Integer UNKNOWN = -1;
+    private static final Integer UNKNOWN = 0;
     private final ConcurrentMap<TenantId, TenantEntityProfileCache> tenantCache = new ConcurrentHashMap<>();
     private final PartitionService partitionService;
     private volatile List<Integer> myPartitions = Collections.emptyList();
@@ -84,4 +84,11 @@ public class DefaultCalculatedFieldEntityProfileCache extends TbApplicationEvent
     public Collection<EntityId> getMyEntityIdsByProfileId(TenantId tenantId, EntityId profileId) {
         return tenantCache.computeIfAbsent(tenantId, id -> new TenantEntityProfileCache()).getMyEntityIdsByProfileId(profileId);
     }
+
+    @Override
+    public int getEntityIdPartition(TenantId tenantId, EntityId entityId) {
+        var tpi = partitionService.resolve(HashPartitionService.CALCULATED_FIELD_QUEUE_KEY, entityId);
+        return tpi.getPartition().orElse(UNKNOWN);
+    }
+
 }

@@ -32,4 +32,5 @@ public interface CalculatedFieldEntityProfileCache extends ApplicationListener<P
 
     Collection<EntityId> getMyEntityIdsByProfileId(TenantId tenantId, EntityId profileId);
 
+    int getEntityIdPartition(TenantId tenantId, EntityId entityId);
 }

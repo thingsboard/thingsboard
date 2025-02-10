@@ -77,4 +77,6 @@ public interface PartitionService {
 
     boolean isManagedByCurrentService(TenantId tenantId);
 
+    int getTotalCalculatedFieldPartitions();
+
 }

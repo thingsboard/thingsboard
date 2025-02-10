@@ -23,6 +23,7 @@ import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
 
 @Slf4j
 public class CalculatedFieldEntityActor extends ContextAwareActor {
@@ -50,6 +51,9 @@ public class CalculatedFieldEntityActor extends ContextAwareActor {
     @Override
     protected boolean doProcess(TbActorMsg msg) {
         switch (msg.getMsgType()) {
+            case CF_PARTITIONS_CHANGE_MSG:
+                processor.process((CalculatedFieldPartitionChangeMsg) msg);
+                break;
             case CF_STATE_RESTORE_MSG:
                 processor.process((CalculatedFieldStateRestoreMsg) msg);
                 break;

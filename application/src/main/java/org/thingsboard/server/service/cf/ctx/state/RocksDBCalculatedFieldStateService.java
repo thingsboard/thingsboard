@@ -37,7 +37,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TsValueProto;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.service.cf.RocksDBService;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
-import org.thingsboard.server.service.cf.ctx.CalculatedFieldStateService;
+import org.thingsboard.server.service.cf.CalculatedFieldStateService;
 
 import java.util.Map;
 import java.util.Optional;

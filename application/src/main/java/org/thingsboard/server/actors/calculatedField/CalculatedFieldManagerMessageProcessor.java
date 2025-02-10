@@ -35,14 +35,15 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldLinkInitMsg;
+import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
-import org.thingsboard.server.service.cf.CalculatedFieldExecutionService;
+import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.cache.CalculatedFieldEntityProfileCache;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
-import org.thingsboard.server.service.cf.ctx.CalculatedFieldStateService;
+import org.thingsboard.server.service.cf.CalculatedFieldStateService;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
@@ -52,6 +53,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -68,20 +70,20 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private final Map<EntityId, List<CalculatedFieldCtx>> entityIdCalculatedFields = new ConcurrentHashMap<>();
     private final ConcurrentMap<EntityId, List<CalculatedFieldLink>> entityIdCalculatedFieldLinks = new ConcurrentHashMap<>();
 
-    private final CalculatedFieldExecutionService cfExecService;
+    private final CalculatedFieldProcessingService cfExecService;
     private final CalculatedFieldStateService cfStateService;
     private final CalculatedFieldEntityProfileCache cfEntityCache;
     private final CalculatedFieldService cfDaoService;
     private final TbAssetProfileCache assetProfileCache;
     private final TbDeviceProfileCache deviceProfileCache;
+    protected final TenantId tenantId;
 
     protected TbActorCtx ctx;
-    final TenantId tenantId;
 
     CalculatedFieldManagerMessageProcessor(ActorSystemContext systemContext, TenantId tenantId) {
         super(systemContext);
         this.cfEntityCache = systemContext.getCalculatedFieldEntityProfileCache();
-        this.cfExecService = systemContext.getCalculatedFieldExecutionService();
+        this.cfExecService = systemContext.getCalculatedFieldProcessingService();
         this.cfStateService = systemContext.getCalculatedFieldStateService();
         this.cfDaoService = systemContext.getCalculatedFieldService();
         this.assetProfileCache = systemContext.getAssetProfileCache();
@@ -478,4 +480,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         oldLinks.forEach(link -> entityIdCalculatedFieldLinks.computeIfAbsent(link.getEntityId(), id -> new ArrayList<>()).remove(link));
     }
 
+    public void onPartitionChange(CalculatedFieldPartitionChangeMsg msg) {
+        ctx.broadcastToChildren(msg, true);
+    }
 }

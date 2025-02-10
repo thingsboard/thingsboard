@@ -526,6 +526,11 @@ public class HashPartitionService implements PartitionService {
         return list == null ? 0 : list.size();
     }
 
+    @Override
+    public int getTotalCalculatedFieldPartitions() {
+        return cfPartitions;
+    }
+
     private Map<QueueKey, List<ServiceInfo>> getServiceKeyListMap(List<ServiceInfo> services) {
         final Map<QueueKey, List<ServiceInfo>> currentMap = new HashMap<>();
         services.forEach(serviceInfo -> {

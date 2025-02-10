@@ -88,6 +88,7 @@ public class AppActor extends ContextAwareActor {
             case APP_INIT_MSG:
                 break;
             case PARTITION_CHANGE_MSG:
+            case CF_PARTITIONS_CHANGE_MSG:
                 ctx.broadcastToChildren(msg, true);
                 break;
             case COMPONENT_LIFE_CYCLE_MSG:

@@ -30,15 +30,16 @@ import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeScopeProto;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
-import org.thingsboard.server.service.cf.CalculatedFieldExecutionService;
+import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
-import org.thingsboard.server.service.cf.ctx.CalculatedFieldStateService;
+import org.thingsboard.server.service.cf.CalculatedFieldStateService;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
@@ -67,8 +68,9 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
     final TenantId tenantId;
     final EntityId entityId;
-    final CalculatedFieldExecutionService cfService;
+    final CalculatedFieldProcessingService cfService;
     final CalculatedFieldStateService cfStateService;
+    final int partition;
 
     TbActorCtx ctx;
     Map<CalculatedFieldId, CalculatedFieldState> states = new HashMap<>();
@@ -77,12 +79,20 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         super(systemContext);
         this.tenantId = tenantId;
         this.entityId = entityId;
-        this.cfService = systemContext.getCalculatedFieldExecutionService();
+        this.cfService = systemContext.getCalculatedFieldProcessingService();
         this.cfStateService = systemContext.getCalculatedFieldStateService();
+        this.partition = systemContext.getCalculatedFieldEntityProfileCache().getEntityIdPartition(tenantId, entityId);
     }
 
     void init(TbActorCtx ctx) {
         this.ctx = ctx;
+    }
+
+    public void process(CalculatedFieldPartitionChangeMsg msg) {
+        if (!msg.getPartitions()[partition]) {
+            log.info("[{}][{}] Stopping entity actor due to change partition event.", partition, entityId);
+            ctx.stop(ctx.getSelf());
+        }
     }
 
     public void process(CalculatedFieldStateRestoreMsg msg) {
@@ -202,7 +212,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         if (state != null) {
             return state;
         } else {
-            ListenableFuture<CalculatedFieldState> stateFuture = systemContext.getCalculatedFieldExecutionService().fetchStateFromDb(ctx, entityId);
+            ListenableFuture<CalculatedFieldState> stateFuture = systemContext.getCalculatedFieldProcessingService().fetchStateFromDb(ctx, entityId);
             // Ugly but necessary. We do not expect to often fetch data from DB. Only once per <Entity, CalculatedField> pair lifetime.
             // This call happens while processing the CF pack from the queue consumer. So the timeout should be relatively low.
             // Alternatively, we can fetch the state outside the actor system and push separate command to create this actor,

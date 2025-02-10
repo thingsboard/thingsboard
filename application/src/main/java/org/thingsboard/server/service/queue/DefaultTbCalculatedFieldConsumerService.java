@@ -21,6 +21,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -32,8 +33,10 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.QueueConfig;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
+import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldLinkedTelemetryMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
@@ -49,7 +52,6 @@ import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.cf.CalculatedFieldCache;
-import org.thingsboard.server.service.cf.CalculatedFieldExecutionService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.consumer.MainQueueConsumerManager;
@@ -58,6 +60,7 @@ import org.thingsboard.server.service.queue.processing.IdMsgPair;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -134,8 +137,23 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractConsumerSer
 
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
-        log.debug("Subscribing to partitions: {}", event.getCalculatedFieldsPartitions());
+        var partitions = event.getCalculatedFieldsPartitions();
+        log.info("Subscribing to partitions: {}", partitions);
+        // TODO: @vklimov - before update of the main consumer, we should read the state topics and use
+        // CalculatedFieldStateService (KafkaCalculatedFieldStateService) to restore the states for entities that belong to new partitions.
+        // Cleanup entities that do not belong to current partition;
         mainConsumer.update(event.getCalculatedFieldsPartitions());
+        // Cleanup old entities after corresponding consumers are stopped.
+        // Any periodic tasks need to check that the entity is still managed by the current server before processing.
+        actorContext.tell(new CalculatedFieldPartitionChangeMsg(partitionsToBooleanIndexArray(partitions)));
+    }
+
+    private boolean[] partitionsToBooleanIndexArray(Set<TopicPartitionInfo> partitions) {
+        boolean[] myPartitions = new boolean[partitionService.getTotalCalculatedFieldPartitions()];
+        for(var tpi : partitions) {
+            tpi.getPartition().ifPresent(partition -> myPartitions[partition] = true);
+        }
+        return myPartitions;
     }
 
     private void processMsgs(List<TbProtoQueueMsg<ToCalculatedFieldMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToCalculatedFieldMsg>> consumer, CalculatedFieldQueueConfig config) throws Exception {

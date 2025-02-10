@@ -17,34 +17,11 @@ package org.thingsboard.server.service.cf.ctx.state;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.actors.calculatedField.CalculatedFieldStateRestoreMsg;
-import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.cf.CalculatedFieldType;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.common.util.KvProtoUtil;
-import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
-import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
-import org.thingsboard.server.gen.transport.TransportProtos.SingleValueArgumentProto;
-import org.thingsboard.server.gen.transport.TransportProtos.TsValueListProto;
-import org.thingsboard.server.gen.transport.TransportProtos.TsValueProto;
 import org.thingsboard.server.queue.util.AfterStartUp;
-import org.thingsboard.server.service.cf.RocksDBService;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
-import org.thingsboard.server.service.cf.ctx.CalculatedFieldStateService;
-
-import java.util.Map;
-import java.util.Optional;
-import java.util.TreeMap;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import org.thingsboard.server.service.cf.CalculatedFieldStateService;
 
 @Service
 @RequiredArgsConstructor
