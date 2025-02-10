@@ -352,7 +352,13 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     @Override
     public long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query) {
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        return alarmDao.countAlarmsByQuery(tenantId, customerId, query);
+        return alarmDao.countAlarmsByQuery(tenantId, customerId, query, Collections.emptyList());
+    }
+
+    @Override
+    public long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query, Collection<EntityId> orderedEntityIds) {
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        return alarmDao.countAlarmsByQuery(tenantId, customerId, query, orderedEntityIds);
     }
 
     @Override

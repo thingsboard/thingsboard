@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -30,6 +31,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
+@Setter
 @ToString
 public class AlarmCountQuery extends EntityCountQuery {
     private long startTs;
@@ -40,4 +42,9 @@ public class AlarmCountQuery extends EntityCountQuery {
     private List<AlarmSeverity> severityList;
     private boolean searchPropagatedAlarms;
     private UserId assigneeId;
+
+    public AlarmCountQuery(EntityFilter entityFilter) {
+        super(entityFilter);
+    }
+
 }

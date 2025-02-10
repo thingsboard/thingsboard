@@ -33,7 +33,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
@@ -41,7 +40,6 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.ComparisonTsValue;
-import org.thingsboard.server.common.data.query.OriginatorAlarmFilter;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityKey;
@@ -55,7 +53,6 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
-import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.ws.WebSocketService;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AggHistoryCmd;
@@ -65,7 +62,6 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmDataCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmDataUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmStatusCmd;
-import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityCountCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
@@ -74,7 +70,6 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.GetTsCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.TimeSeriesCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.UnsubscribeCmd;
-import org.thingsboard.server.service.ws.telemetry.sub.AlarmSubscriptionUpdate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,7 +78,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -555,7 +549,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     private TbAlarmCountSubCtx createSubCtx(WebSocketSessionRef sessionRef, AlarmCountCmd cmd) {
         Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new ConcurrentHashMap<>());
         TbAlarmCountSubCtx ctx = new TbAlarmCountSubCtx(serviceId, wsService, entityService, localSubscriptionService,
-                attributesService, stats, alarmService, sessionRef, cmd.getCmdId());
+                attributesService, stats, alarmService, sessionRef, cmd.getCmdId(), maxEntitiesPerAlarmSubscription);
         if (cmd.getQuery() != null) {
             ctx.setAndResolveQuery(cmd.getQuery());
         }
