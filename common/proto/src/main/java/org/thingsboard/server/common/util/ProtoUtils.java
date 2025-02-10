@@ -127,8 +127,8 @@ public class ProtoUtils {
             builder.setProfileIdLSB(msg.getProfileId().getId().getLeastSignificantBits());
         }
         if (msg.getOldProfileId() != null) {
-            builder.setProfileIdMSB(msg.getOldProfileId().getId().getMostSignificantBits());
-            builder.setProfileIdLSB(msg.getOldProfileId().getId().getLeastSignificantBits());
+            builder.setOldProfileIdMSB(msg.getOldProfileId().getId().getMostSignificantBits());
+            builder.setOldProfileIdLSB(msg.getOldProfileId().getId().getLeastSignificantBits());
         }
         if (msg.getName() != null) {
             builder.setName(msg.getName());

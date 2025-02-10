@@ -52,7 +52,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
     }
 
     @Test
-    public void testSimpleCalculatedField() throws Exception {
+    public void testSimpleCalculatedFieldWhenAllTelemetryPresent() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
         doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"temperature\":25}"));
         doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"deviceTemperature\":40}"));
@@ -69,6 +69,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         Argument argument = new Argument();
         ReferencedEntityKey refEntityKey = new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null);
         argument.setRefEntityKey(refEntityKey);
+        argument.setDefaultValue("12"); // not used because real telemetry value in db is present
         config.setArguments(Map.of("T", argument));
         config.setExpression("(T * 9/5) + 32");
 
@@ -131,6 +132,99 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         temperatureF = getServerAttributes(testDevice.getId(), "temperatureF");
         assertThat(temperatureF).isNotNull();
         assertThat(temperatureF.get(0).get("value").asText()).isEqualTo("104.0");
+    }
+
+    @Test
+    public void testSimpleCalculatedFieldWhenNotAllTelemetryPresent() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(testDevice.getId());
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setName("C to F");
+        calculatedField.setDebugSettings(DebugSettings.all());
+        calculatedField.setConfigurationVersion(1);
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+
+        Argument argument = new Argument();
+        ReferencedEntityKey refEntityKey = new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null);
+        argument.setRefEntityKey(refEntityKey);
+        config.setArguments(Map.of("T", argument));
+        config.setExpression("(T * 9/5) + 32");
+
+        Output output = new Output();
+        output.setName("fahrenheitTemp");
+        output.setType(OutputType.TIME_SERIES);
+        config.setOutput(output);
+
+        calculatedField.setConfiguration(config);
+        calculatedField.setVersion(1L);
+
+        // create CF -> state is not ready -> no calculation performed
+        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        Thread.sleep(300);
+
+        ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
+        assertThat(fahrenheitTemp).isNotNull();
+        assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").isNull()).isTrue();
+
+        // update telemetry -> perform calculation
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"temperature\":30}"));
+
+        Thread.sleep(300);
+
+        fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
+        assertThat(fahrenheitTemp).isNotNull();
+        assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").asText()).isEqualTo("86.0");
+    }
+
+    @Test
+    public void testSimpleCalculatedFieldWhenNotAllTelemetryPresentButDefaultValueIsSet() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(testDevice.getId());
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setName("C to F");
+        calculatedField.setDebugSettings(DebugSettings.all());
+        calculatedField.setConfigurationVersion(1);
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+
+        Argument argument = new Argument();
+        ReferencedEntityKey refEntityKey = new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null);
+        argument.setRefEntityKey(refEntityKey);
+        argument.setDefaultValue("12");
+        config.setArguments(Map.of("T", argument));
+        config.setExpression("(T * 9/5) + 32");
+
+        Output output = new Output();
+        output.setName("fahrenheitTemp");
+        output.setType(OutputType.TIME_SERIES);
+        config.setOutput(output);
+
+        calculatedField.setConfiguration(config);
+        calculatedField.setVersion(1L);
+
+        // create CF -> perform initial calculation with default value
+        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        Thread.sleep(300);
+
+        ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
+        assertThat(fahrenheitTemp).isNotNull();
+        assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").asText()).isEqualTo("53.6");
+
+        // update telemetry -> recalculate state
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"temperature\":30}"));
+
+        Thread.sleep(300);
+
+        fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
+        assertThat(fahrenheitTemp).isNotNull();
+        assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").asText()).isEqualTo("86.0");
     }
 
     @Test
@@ -237,6 +331,110 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         z2 = getServerAttributes(asset2.getId(), "z");
         assertThat(z2).isNotNull();
         assertThat(z2.get(0).get("value").asText()).isEqualTo("30.0");
+
+        // add new entity to profile -> calculate state for new entity
+        Asset asset3 = createAsset("Test asset 3", assetProfile.getId());
+        doPost("/api/plugins/telemetry/ASSET/" + asset3.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"y\":13}"));
+
+        Thread.sleep(300);
+
+        // result of asset 3
+        ArrayNode z3 = getServerAttributes(asset3.getId(), "z");
+        assertThat(z3).isNotNull();
+        assertThat(z3.get(0).get("value").asText()).isEqualTo("38.0");
+
+        // update device telemetry -> recalculate state for all assets
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"x\":20}"));
+
+        Thread.sleep(300);
+
+        // result of asset 1
+        z1 = getServerAttributes(asset1.getId(), "z");
+        assertThat(z1).isNotNull();
+        assertThat(z1.get(0).get("value").asText()).isEqualTo("35.0");
+
+        // result of asset 2
+        z2 = getServerAttributes(asset2.getId(), "z");
+        assertThat(z2).isNotNull();
+        assertThat(z2.get(0).get("value").asText()).isEqualTo("25.0");
+
+        // result of asset 3
+        z3 = getServerAttributes(asset3.getId(), "z");
+        assertThat(z3).isNotNull();
+        assertThat(z3.get(0).get("value").asText()).isEqualTo("33.0");
+
+        // update profile for asset 3 -> delete state for asset 3
+        AssetProfile newAssetProfile = doPost("/api/assetProfile", createAssetProfile("New Asset Profile"), AssetProfile.class);
+        asset3.setAssetProfileId(newAssetProfile.getId());
+        asset3 = doPost("/api/asset", asset3, Asset.class);
+
+        // update device telemetry -> recalculate state for asset 1 and asset 2
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"x\":15}"));
+
+        Thread.sleep(300);
+
+        // result of asset 1
+        z1 = getServerAttributes(asset1.getId(), "z");
+        assertThat(z1).isNotNull();
+        assertThat(z1.get(0).get("value").asText()).isEqualTo("30.0");
+
+        // result of asset 2
+        z2 = getServerAttributes(asset2.getId(), "z");
+        assertThat(z2).isNotNull();
+        assertThat(z2.get(0).get("value").asText()).isEqualTo("20.0");
+
+        // no changes for asset 3
+        z3 = getServerAttributes(asset3.getId(), "z");
+        assertThat(z3).isNotNull();
+        assertThat(z3.get(0).get("value").asText()).isEqualTo("33.0");
+    }
+
+    @Test
+    public void testSimpleCalculatedFieldWhenExpressionIsInvalid() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"temperature\":25}"));
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(testDevice.getId());
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setName("C to F");
+        calculatedField.setDebugSettings(DebugSettings.all());
+        calculatedField.setConfigurationVersion(1);
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+
+        Argument argument = new Argument();
+        ReferencedEntityKey refEntityKey = new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null);
+        argument.setRefEntityKey(refEntityKey);
+        argument.setDefaultValue("12"); // not used because real telemetry value in db is present
+        config.setArguments(Map.of("T", argument));
+        config.setExpression("(T * 9/0) + 32");
+
+        Output output = new Output();
+        output.setName("fahrenheitTemp");
+        output.setType(OutputType.TIME_SERIES);
+        config.setOutput(output);
+
+        calculatedField.setConfiguration(config);
+        calculatedField.setVersion(1L);
+
+        // create CF -> ctx is not initialized -> no calculation perform
+        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        Thread.sleep(300);
+
+        ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
+        assertThat(fahrenheitTemp).isNotNull();
+        assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").isNull()).isTrue();
+
+        // update telemetry -> ctx is not initialized -> no calculation perform
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"temperature\":30}"));
+
+        Thread.sleep(300);
+
+        fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
+        assertThat(fahrenheitTemp).isNotNull();
+        assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").isNull()).isTrue();
     }
 
     private ObjectNode getLatestTelemetry(EntityId entityId, String... keys) throws Exception {
