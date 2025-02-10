@@ -27,7 +27,7 @@ import java.util.List;
 public class EntityCountQuery {
 
     @Getter
-    protected EntityFilter entityFilter;
+    private EntityFilter entityFilter;
 
     @Getter
     protected List<KeyFilter> keyFilters;

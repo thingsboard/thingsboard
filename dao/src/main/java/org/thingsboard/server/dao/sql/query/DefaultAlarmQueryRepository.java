@@ -327,7 +327,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                 ctx.append(" and a.customer_id = :customerId and ea.customer_id = :customerId");
                 ctx.addUuidParameter("customerId", customerId.getId());
             }
-            if (!orderedEntityIds.isEmpty()) {
+            if (orderedEntityIds != null) {
                 ctx.addUuidListParameter("entity_filter_entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
                 ctx.append(" and ea.entity_id in (:entity_filter_entity_ids)");
             }
@@ -339,7 +339,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                 ctx.append(" and a.customer_id = :customerId");
                 ctx.addUuidParameter("customerId", customerId.getId());
             }
-            if (!orderedEntityIds.isEmpty()) {
+            if (orderedEntityIds != null) {
                 ctx.addUuidListParameter("entity_filter_entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
                 ctx.append(" and a.originator_id in (:entity_filter_entity_ids)");
             }

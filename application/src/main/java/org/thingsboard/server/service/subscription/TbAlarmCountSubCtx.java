@@ -80,14 +80,15 @@ public class TbAlarmCountSubCtx extends TbAbstractEntityQuerySubCtx<AlarmCountQu
     }
 
     private int countAlarms() {
-        PageData<EntityData> data = entityService.findEntityDataByQuery(getTenantId(), getCustomerId(), buildEntityDataQuery());
-        List<EntityId> entityIds = data.getData().stream().map(EntityData::getEntityId).toList();
-        if (entityIds.isEmpty()) {
-            return 0;
-        } else {
-            return (int) alarmService.countAlarmsByQuery(getTenantId(), getCustomerId(), query, entityIds);
+        List<EntityId> entityIds = null;
+        if (query.getEntityFilter() != null) {
+            PageData<EntityData> data = entityService.findEntityDataByQuery(getTenantId(), getCustomerId(), buildEntityDataQuery());
+            if (data.getData().isEmpty()) {
+                return 0;
+            }
+            entityIds = data.getData().stream().map(EntityData::getEntityId).toList();
         }
-
+        return (int) alarmService.countAlarmsByQuery(getTenantId(), getCustomerId(), query, entityIds);
     }
 
     private EntityDataQuery buildEntityDataQuery() {
