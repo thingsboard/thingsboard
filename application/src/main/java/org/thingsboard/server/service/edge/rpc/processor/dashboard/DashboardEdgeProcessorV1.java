@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.util.HashSet;
 import java.util.Set;
 
 @Component
@@ -44,7 +45,7 @@ public class DashboardEdgeProcessorV1 extends DashboardEdgeProcessor {
         Set<ShortCustomerInfo> assignedCustomers;
         if (dashboardUpdateMsg.hasAssignedCustomers()) {
             assignedCustomers = JacksonUtil.fromString(dashboardUpdateMsg.getAssignedCustomers(), new TypeReference<>() {});
-            assignedCustomers = filterNonExistingCustomers(tenantId, assignedCustomers);
+            assignedCustomers = filterNonExistingCustomers(tenantId, new HashSet<>(), assignedCustomers);
             dashboard.setAssignedCustomers(assignedCustomers);
         }
         dashboard.setMobileOrder(dashboardUpdateMsg.hasMobileOrder() ? dashboardUpdateMsg.getMobileOrder() : null);
