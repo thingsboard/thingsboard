@@ -529,11 +529,16 @@ public abstract class EdgeGrpcSession implements Closeable {
     private void onDownlinkResponse(DownlinkResponseMsg msg) {
         try {
             if (msg.getSuccess()) {
+                sessionState.getPendingMsgsMap().remove(msg.getDownlinkMsgId());
                 log.debug("[{}][{}][{}] Msg has been processed successfully! Msg Id: [{}], Msg: {}", tenantId, edge.getId(), sessionId, msg.getDownlinkMsgId(), msg);
             } else {
                 log.error("[{}][{}][{}] Msg processing failed! Msg Id: [{}], Error msg: {}", tenantId, edge.getId(), sessionId, msg.getDownlinkMsgId(), msg.getErrorMsg());
+                DownlinkMsg downlinkMsg = sessionState.getPendingMsgsMap().get(msg.getDownlinkMsgId());
+                // if NOT timeseries or attributes failures - ack failed downlink
+                if (downlinkMsg.getEntityDataCount() == 0) {
+                    sessionState.getPendingMsgsMap().remove(msg.getDownlinkMsgId());
+                }
             }
-            sessionState.getPendingMsgsMap().remove(msg.getDownlinkMsgId());
             if (sessionState.getPendingMsgsMap().isEmpty()) {
                 log.debug("[{}][{}][{}] Pending msgs map is empty. Stopping current iteration", tenantId, edge.getId(), sessionId);
                 stopCurrentSendDownlinkMsgsTask(false);
