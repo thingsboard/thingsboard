@@ -80,7 +80,7 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
                 resource.setResourceKey(resource.getFileName());
             }
             TbResource savedResource = resourceService.saveResource(resource);
-            logEntityActionService.logEntityAction(tenantId, savedResource.getId(), savedResource, actionType, user);
+            logEntityActionService.logEntityAction(tenantId, savedResource.getId(), new TbResourceInfo(savedResource), actionType, user);
             return savedResource;
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
