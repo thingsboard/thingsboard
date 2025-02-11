@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 :host {
-  .debug-dialog-container {
-    height: 77vh;
-
-    .debug-dialog-content {
-      border-radius: 0;
-    }
+  .debug-dialog-content {
+    height: 65vh;
+    border-radius: 0;
   }
 }
