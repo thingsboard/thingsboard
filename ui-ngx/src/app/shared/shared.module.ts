@@ -224,6 +224,7 @@ import { IntervalOptionsConfigPanelComponent } from '@shared/components/time/int
 import { GroupingIntervalOptionsComponent } from '@shared/components/time/aggregation/grouping-interval-options.component';
 import { JsFuncModulesComponent } from '@shared/components/js-func-modules.component';
 import { JsFuncModuleRowComponent } from '@shared/components/js-func-module-row.component';
+import { TranslateWithCustomService } from '@core/translate/translate-with-custom.service';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -243,6 +244,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ShortNumberPipe,
     ImagePipe,
     CustomTranslatePipe,
+    TranslateWithCustomService,
     {
       provide: FlowInjectionToken,
       useValue: Flow
