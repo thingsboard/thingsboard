@@ -24,7 +24,7 @@
             <div class="tb-form-table-header-cell w-1/6">{{ 'entity.key' | translate }}</div>
             <div class="tb-form-table-header-cell w-24 min-w-24"></div>
         </div>
-        <div class="tb-form-table-body tb-drop-list">
+        <div class="tb-form-table-body">
             @for (group of argumentsFormArray.controls; track group) {
                 <div [formGroup]="group" class="tb-form-table-row">
                     <mat-form-field appearance="outline" class="tb-inline-field w-1/6" subscriptSizing="dynamic">

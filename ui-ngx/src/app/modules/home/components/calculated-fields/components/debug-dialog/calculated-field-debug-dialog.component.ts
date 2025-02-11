@@ -20,16 +20,16 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
-import { DebugEventType, EventType } from '@shared/models/event.models';
+import { CalculatedFieldEventBody, DebugEventType, EventType } from '@shared/models/event.models';
 import { EventTableComponent } from '@home/components/event/event-table.component';
-import { CalculatedFieldDebugDialogData } from '@shared/models/calculated-field.models';
+import { CalculatedFieldDebugDialogData, CalculatedFieldType } from '@shared/models/calculated-field.models';
 
 @Component({
   selector: 'tb-calculated-field-debug-dialog',
   styleUrls: ['calculated-field-debug-dialog.component.scss'],
   templateUrl: './calculated-field-debug-dialog.component.html',
 })
-export class CalculatedFieldDebugDialogComponent extends DialogComponent<CalculatedFieldDebugDialogComponent, null> implements AfterViewInit {
+export class CalculatedFieldDebugDialogComponent extends DialogComponent<CalculatedFieldDebugDialogComponent, string> implements AfterViewInit {
 
   @ViewChild(EventTableComponent, {static: true}) eventsTable: EventTableComponent;
 
@@ -40,15 +40,21 @@ export class CalculatedFieldDebugDialogComponent extends DialogComponent<Calcula
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: CalculatedFieldDebugDialogData,
-              protected dialogRef: MatDialogRef<CalculatedFieldDebugDialogComponent, null>) {
+              protected dialogRef: MatDialogRef<CalculatedFieldDebugDialogComponent, string>) {
     super(store, router, dialogRef);
   }
 
   ngAfterViewInit(): void {
     this.eventsTable.entitiesTable.updateData();
+    this.eventsTable.entitiesTable.cellActionDescriptors[0].isEnabled = () => this.data.value.type === CalculatedFieldType.SCRIPT;
   }
 
   cancel(): void {
     this.dialogRef.close(null);
+  }
+
+  onDebugEventSelected(event: CalculatedFieldEventBody): void {
+    this.data.getTestScriptDialogFn(this.data.value, JSON.parse(event.arguments))
+      .subscribe(expression => this.dialogRef.close(expression));
   }
 }
