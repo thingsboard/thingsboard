@@ -66,7 +66,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'liquid-level-card-basic-config',
+  selector: 'tb-liquid-level-card-basic-config',
   templateUrl: './liquid-level-card-basic-config.component.html',
   styleUrls: ['../basic-config.scss']
 })
