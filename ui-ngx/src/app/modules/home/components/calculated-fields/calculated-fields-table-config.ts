@@ -205,7 +205,8 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         additionalDebugActionConfig: this.additionalDebugActionConfig,
         getTestScriptDialogFn: this.getTestScriptDialog.bind(this),
         isDirty
-      }
+      },
+      ...(isDirty ? { enterAnimationDuration: 0 } : {})
     })
       .afterClosed();
   }
@@ -265,7 +266,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-fullscreen-dialog-gt-xs'],
         data: {
-          arguments: argumentsObj ?? Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => ({...acc, [key]: '' }), {}),
+          arguments: argumentsObj ?? Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => { acc[key] = ''; return acc; }, {}),
           expression: calculatedField.configuration.expression,
         }
       }).afterClosed()

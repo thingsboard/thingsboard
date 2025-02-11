@@ -209,7 +209,7 @@ export interface EntityTestScriptResult {
 }
 
 export interface AdditionalDebugActionConfig<Action = (...args: unknown[]) => void> {
-  action?: Action;
+  action: Action;
   title: string;
 }
 

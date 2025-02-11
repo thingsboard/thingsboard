@@ -33,7 +33,7 @@ import {
 import { noLeadTrailSpacesRegex } from '@shared/models/regex.constants';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityType } from '@shared/models/entity-type.models';
-import { filter, map, startWith } from 'rxjs/operators';
+import { map, startWith } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 
@@ -121,11 +121,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
   }
 
   onTestScript(): void {
-    this.data.getTestScriptDialogFn(this.fromGroupValue)
-      .pipe(filter(Boolean)).subscribe((expression: string) => {
-      this.configFormGroup.get('expressionSCRIPT').setValue(expression);
-      this.configFormGroup.get('expressionSCRIPT').markAsDirty();
-    });
+    this.data.getTestScriptDialogFn(this.fromGroupValue).subscribe();
   }
 
   private applyDialogData(): void {

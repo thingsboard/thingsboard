@@ -360,7 +360,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         this.columns[1].width = '20%';
         this.columns.push(
           new EntityTableColumn<Event>('entityId', 'event.entity-id', '85px',
-            (entity) => `<span style="display: inline-block; width: 7ch">${entity.body.entityId.substring(0, 8)}…</span>`,
+            (entity) => `<span style="display: inline-block; width: 9ch">${entity.body.entityId.substring(0, 8)}…</span>`,
             () => ({padding: '0 12px 0 0'}),
             false,
             () => ({padding: '0 12px 0 0'}),
@@ -380,7 +380,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             }
           ),
           new EntityTableColumn<Event>('messageId', 'event.message-id', '85px',
-            (entity) => `<span style="display: inline-block; width: 7ch">${entity.body.msgId?.substring(0, 8)}…</span>`,
+            (entity) => `<span style="display: inline-block; width: 9ch">${entity.body.msgId?.substring(0, 8)}…</span>`,
             () => ({padding: '0 12px 0 0'}),
             false,
             () => ({padding: '0 12px 0 0'}),
