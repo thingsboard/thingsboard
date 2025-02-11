@@ -43,19 +43,6 @@ volumes:
 Execute the following command to start upgrade process:
 
 ```bash
-docker compose -f docker-compose-upgrade.yml up
-{:copy-code}
-```
-
-Once upgrade process successfully completed, exit from the docker-compose shell by this combination:
-
-```text
-Ctrl + C
-```
-
-Execute the following command to stop TB Edge upgrade container:
-
-```bash
-docker compose -f docker-compose-upgrade.yml stop
+docker compose -f docker-compose-upgrade.yml up --abort-on-container-exit
 {:copy-code}
 ```
