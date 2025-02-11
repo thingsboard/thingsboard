@@ -34,15 +34,20 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { EntityDebugSettingsPanelComponent } from '@home/components/entity/debug/entity-debug-settings-panel.component';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
-import { catchError, filter, switchMap } from 'rxjs/operators';
+import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import {
   CalculatedField,
   CalculatedFieldDebugDialogData,
-  CalculatedFieldDialogData
+  CalculatedFieldDialogData,
+  CalculatedFieldTestScriptDialogData,
 } from '@shared/models/calculated-field.models';
-import { CalculatedFieldDebugDialogComponent, CalculatedFieldDialogComponent } from './components/public-api';
+import {
+  CalculatedFieldDebugDialogComponent,
+  CalculatedFieldDialogComponent,
+  CalculatedFieldScriptTestDialogComponent
+} from './components/public-api';
 import { ImportExportService } from '@shared/import-export/import-export.service';
-import { CalculatedFieldId } from '@shared/models/id/calculated-field-id';
+import { isObject } from '@core/utils';
 
 export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField, PageLink> {
 
@@ -53,7 +58,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   readonly tenantId = getCurrentAuthUser(this.store).tenantId;
   additionalDebugActionConfig = {
     title: this.translate.instant('calculated-fields.see-debug-events'),
-    action: (id?: CalculatedFieldId) => this.openDebugDialog.call(this, id),
+    action: (calculatedField: CalculatedField) => this.openDebugDialog.call(this, calculatedField),
   };
 
   constructor(private calculatedFieldsService: CalculatedFieldsService,
@@ -134,10 +139,11 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     return this.calculatedFieldsService.getCalculatedFields(this.entityId, pageLink);
   }
 
-  onOpenDebugConfig($event: Event, { debugSettings = {}, id }: CalculatedField): void {
+  onOpenDebugConfig($event: Event, calculatedField: CalculatedField): void {
+    const { debugSettings = {}, id } = calculatedField;
     const additionalActionConfig = {
       ...this.additionalDebugActionConfig,
-      action: () => this.openDebugDialog(id)
+      action: () => this.openDebugDialog(calculatedField)
     };
     const { viewContainerRef } = this.getTable();
     if ($event) {
@@ -173,8 +179,8 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       )
   }
 
-  private editCalculatedField(calculatedField: CalculatedField): void {
-    this.getCalculatedFieldDialog(calculatedField, 'action.apply')
+  private editCalculatedField(calculatedField: CalculatedField, isDirty = false): void {
+    this.getCalculatedFieldDialog(calculatedField, 'action.apply', isDirty)
       .pipe(
         filter(Boolean),
         switchMap((updatedCalculatedField) => this.calculatedFieldsService.saveCalculatedField({ ...calculatedField, ...updatedCalculatedField })),
@@ -186,7 +192,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       });
   }
 
-  private getCalculatedFieldDialog(value?: CalculatedField, buttonTitle = 'action.add'): Observable<CalculatedField> {
+  private getCalculatedFieldDialog(value?: CalculatedField, buttonTitle = 'action.add', isDirty = false): Observable<CalculatedField> {
     return this.dialog.open<CalculatedFieldDialogComponent, CalculatedFieldDialogData, CalculatedField>(CalculatedFieldDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
@@ -198,19 +204,22 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         tenantId: this.tenantId,
         entityName: this.entityName,
         additionalDebugActionConfig: this.additionalDebugActionConfig,
-      }
+        getTestScriptDialogFn: this.getTestScriptDialog.bind(this),
+        isDirty
+      },
+      enterAnimationDuration: isDirty ? 0 : null,
     })
       .afterClosed();
   }
 
-  private openDebugDialog(id: CalculatedFieldId): void {
+  private openDebugDialog(calculatedField: CalculatedField): void {
     this.dialog.open<CalculatedFieldDebugDialogComponent, CalculatedFieldDebugDialogData, null>(CalculatedFieldDebugDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         tenantId: this.tenantId,
-        entityId: this.entityId,
-        id
+        value: calculatedField,
+        getTestScriptDialogFn: this.getTestScriptDialog.bind(this),
       }
     })
       .afterClosed()
@@ -250,5 +259,30 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       catchError(() => of(null)),
       takeUntilDestroyed(this.destroyRef),
     ).subscribe(() => this.updateData());
+  }
+
+  private getTestScriptDialog(calculatedField: CalculatedField, argumentsObj?: Record<string, unknown>, openCalculatedFieldEdit = true): Observable<string> {
+    const resultArguments = Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => {
+      acc[key] = isObject(argumentsObj) && argumentsObj.hasOwnProperty(key) ? argumentsObj[key] : '';
+      return acc;
+    }, {});
+    return this.dialog.open<CalculatedFieldScriptTestDialogComponent, CalculatedFieldTestScriptDialogData, string>(CalculatedFieldScriptTestDialogComponent,
+      {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-fullscreen-dialog-gt-xs'],
+        data: {
+          arguments: resultArguments,
+          expression: calculatedField.configuration.expression,
+          openCalculatedFieldEdit
+        }
+      }).afterClosed()
+      .pipe(
+        filter(Boolean),
+        tap(expression => {
+          if (openCalculatedFieldEdit) {
+            this.editCalculatedField({...calculatedField, configuration: {...calculatedField.configuration, expression } }, true)
+          }
+        }),
+      );
   }
 }

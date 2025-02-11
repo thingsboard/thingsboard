@@ -198,6 +198,12 @@ import {
 import {
   CalculatedFieldDebugDialogComponent
 } from '@home/components/calculated-fields/components/debug-dialog/calculated-field-debug-dialog.component';
+import {
+  CalculatedFieldScriptTestDialogComponent
+} from '@home/components/calculated-fields/components/test-dialog/calculated-field-script-test-dialog.component';
+import {
+  CalculatedFieldTestArgumentsComponent
+} from '@home/components/calculated-fields/components/test-arguments/calculated-field-test-arguments.component';
 
 @NgModule({
   declarations:
@@ -347,6 +353,8 @@ import {
       CalculatedFieldArgumentsTableComponent,
       CalculatedFieldArgumentPanelComponent,
       CalculatedFieldDebugDialogComponent,
+      CalculatedFieldScriptTestDialogComponent,
+      CalculatedFieldTestArgumentsComponent,
     ],
   imports: [
     CommonModule,
@@ -490,6 +498,8 @@ import {
     CalculatedFieldArgumentsTableComponent,
     CalculatedFieldArgumentPanelComponent,
     CalculatedFieldDebugDialogComponent,
+    CalculatedFieldScriptTestDialogComponent,
+    CalculatedFieldTestArgumentsComponent,
   ],
   providers: [
     WidgetComponentService,

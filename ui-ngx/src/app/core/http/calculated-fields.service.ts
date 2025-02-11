@@ -19,9 +19,10 @@ import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageData } from '@shared/models/page/page-data';
-import { CalculatedField } from '@shared/models/calculated-field.models';
+import { CalculatedField, CalculatedFieldTestScriptInputParams } from '@shared/models/calculated-field.models';
 import { PageLink } from '@shared/models/page/page-link';
 import { EntityId } from '@shared/models/id/entity-id';
+import { EntityTestScriptResult } from '@shared/models/entity.models';
 
 @Injectable({
   providedIn: 'root'
@@ -47,5 +48,9 @@ export class CalculatedFieldsService {
   public getCalculatedFields({ entityType, id }: EntityId, pageLink: PageLink, config?: RequestConfig): Observable<PageData<CalculatedField>> {
     return this.http.get<PageData<CalculatedField>>(`/api/${entityType}/${id}/calculatedFields${pageLink.toQuery()}`,
       defaultHttpOptionsFromConfig(config));
+  }
+
+  public testScript(inputParams: CalculatedFieldTestScriptInputParams, config?: RequestConfig): Observable<EntityTestScriptResult> {
+    return this.http.post<EntityTestScriptResult>('/api/calculatedField/testScript', inputParams, defaultHttpOptionsFromConfig(config));
   }
 }

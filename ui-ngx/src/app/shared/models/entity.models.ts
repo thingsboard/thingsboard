@@ -203,8 +203,13 @@ export interface EntityDebugSettings {
   allEnabledUntil?: number;
 }
 
-export interface AdditionalDebugActionConfig {
-  action?: (id?: EntityId) => void;
+export interface EntityTestScriptResult {
+  output: string;
+  error: string;
+}
+
+export interface AdditionalDebugActionConfig<Action = (...args: unknown[]) => void> {
+  action: Action;
   title: string;
 }
 

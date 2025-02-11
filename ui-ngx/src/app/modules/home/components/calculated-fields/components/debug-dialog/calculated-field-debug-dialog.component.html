@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="debug-dialog-container w-screen max-w-5xl">
+<div class="w-screen max-w-5xl">
   <mat-toolbar color="primary">
     <h2>{{ 'calculated-fields.debugging' | translate}}</h2>
     <span class="flex-1"></span>
@@ -25,15 +25,16 @@
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
-  <div mat-dialog-content class="tb-form-panel stroked debug-dialog-content h-full">
+  <div mat-dialog-content class="tb-form-panel stroked debug-dialog-content">
     <tb-event-table
       [tenantId]="data.tenantId"
       [debugEventTypes]="[debugEventTypes.DEBUG_CALCULATED_FIELD]"
       [disabledEventTypes]="[EventType.LC_EVENT, EventType.ERROR, EventType.STATS]"
       [defaultEventType]="DebugEventType.DEBUG_CALCULATED_FIELD"
       [active]="true"
-      [entityId]="data.id"
+      [entityId]="data.value.id"
       [functionTestButtonLabel]="'common.test-function' | translate"
+      (debugEventSelected)="onDebugEventSelected($event)"
     />
   </div>
   <div mat-dialog-actions class="justify-end">
