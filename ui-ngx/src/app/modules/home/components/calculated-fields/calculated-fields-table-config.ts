@@ -47,6 +47,7 @@ import {
   CalculatedFieldScriptTestDialogComponent
 } from './components/public-api';
 import { ImportExportService } from '@shared/import-export/import-export.service';
+import { isObject } from '@core/utils';
 
 export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField, PageLink> {
 
@@ -206,7 +207,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         getTestScriptDialogFn: this.getTestScriptDialog.bind(this),
         isDirty
       },
-      ...(isDirty ? { enterAnimationDuration: 0 } : {})
+      enterAnimationDuration: isDirty ? 0 : null,
     })
       .afterClosed();
   }
@@ -261,11 +262,8 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   }
 
   private getTestScriptDialog(calculatedField: CalculatedField, argumentsObj?: Record<string, unknown>, openCalculatedFieldEdit = true): Observable<string> {
-    const emptyArguments = Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => { acc[key] = ''; return acc; }, {});
-    const filledArguments = Object.keys(argumentsObj ?? {}).reduce((acc, key) => {
-      if (emptyArguments.hasOwnProperty(key)) {
-        acc[key] = argumentsObj[key];
-      }
+    const resultArguments = Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => {
+      acc[key] = isObject(argumentsObj) && argumentsObj.hasOwnProperty(key) ? argumentsObj[key] : '';
       return acc;
     }, {});
     return this.dialog.open<CalculatedFieldScriptTestDialogComponent, CalculatedFieldTestScriptDialogData, string>(CalculatedFieldScriptTestDialogComponent,
@@ -273,7 +271,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-fullscreen-dialog-gt-xs'],
         data: {
-          arguments: { ...emptyArguments, ...filledArguments },
+          arguments: resultArguments,
           expression: calculatedField.configuration.expression,
           openCalculatedFieldEdit
         }
