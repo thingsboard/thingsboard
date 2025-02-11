@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.widget;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -86,7 +87,6 @@ public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEnt
     Page<UUID> findIdsByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
 
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.WidgetTypeFields(w.id, w.createdTime, w.tenantId," +
-            "w.name, w.version) FROM WidgetTypeEntity w")
-    Page<WidgetTypeFields> findAllFields(Pageable pageable);
-
+            "w.name, w.version) FROM WidgetTypeEntity w WHERE w.id > :id ORDER BY w.id")
+    List<WidgetTypeFields> findNextBatch(@Param("id") UUID id, Limit limit);
 }

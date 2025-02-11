@@ -1,5 +1,20 @@
 /**
- * Copyright © 2016-2024 ThingsBoard, Inc.
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +30,6 @@
  */
 package org.thingsboard.server.edqs.repo;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -38,7 +52,6 @@ import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
-import org.thingsboard.server.edqs.util.RepositoryUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -83,7 +96,7 @@ public class AssetTypeFilterTest extends AbstractEDQTest {
     @Test
     public void testFindTenantAsset() {
         // find asset with type "Office"
-        var result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getAssetTypeQuery(Collections.singletonList("Office"), null, null), false);
+        var result = repository.findEntityDataByQuery(tenantId, null, getAssetTypeQuery(Collections.singletonList("Office"), null, null), false);
 
         Assert.assertEquals(2, result.getTotalElements());
         var first = result.getData().stream().filter(queryResult -> queryResult.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue().equals("Office 1")).findAny();
@@ -92,7 +105,7 @@ public class AssetTypeFilterTest extends AbstractEDQTest {
         assertThat(first.get().getLatest().get(EntityKeyType.ENTITY_FIELD).get("createdTime").getValue()).isEqualTo(String.valueOf(asset.getCreatedTime()));
 
         // find asset with type "Office" and "Street"
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getAssetTypeQuery(List.of("Office", "Street"), null, null), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getAssetTypeQuery(List.of("Office", "Street"), null, null), false);
 
         Assert.assertEquals(3, result.getTotalElements());
         var third = result.getData().stream().filter(queryResult -> queryResult.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue().equals("Abbey Road")).findAny();
@@ -101,29 +114,29 @@ public class AssetTypeFilterTest extends AbstractEDQTest {
         assertThat(third.get().getLatest().get(EntityKeyType.ENTITY_FIELD).get("createdTime").getValue()).isEqualTo(String.valueOf(asset.getCreatedTime()));
 
         // find asset with type "Supermarket"
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getAssetTypeQuery(List.of("Supermarket"), null, null), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getAssetTypeQuery(List.of("Supermarket"), null, null), false);
         Assert.assertEquals(0, result.getTotalElements());
 
         // find asset with name "%Office%"
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getAssetTypeQuery(List.of("Office"), "%Office%", null), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getAssetTypeQuery(List.of("Office"), "%Office%", null), false);
         Assert.assertEquals(2, result.getTotalElements());
 
         // find asset with name "Office 1"
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getAssetTypeQuery(List.of("Office"), "Office 1", null), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getAssetTypeQuery(List.of("Office"), "Office 1", null), false);
         Assert.assertEquals(1, result.getTotalElements());
 
         // find asset with name "%Super%"
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getAssetTypeQuery(List.of("Office"), "%Super%", null), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getAssetTypeQuery(List.of("Office"), "%Super%", null), false);
         Assert.assertEquals(0, result.getTotalElements());
 
         // find asset with key filter: name contains "Office"
         KeyFilter containsNameFilter = getAssetNameKeyFilter(StringFilterPredicate.StringOperation.CONTAINS, "office", true);
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getAssetTypeQuery(List.of("Office"), null, Arrays.asList(containsNameFilter)), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getAssetTypeQuery(List.of("Office"), null, Arrays.asList(containsNameFilter)), false);
         Assert.assertEquals(2, result.getTotalElements());
 
         // find asset with key filter: name starts with "office" and matches case
         KeyFilter startsWithNameFilter = getAssetNameKeyFilter(StringFilterPredicate.StringOperation.STARTS_WITH, "office", false);
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getAssetTypeQuery(List.of("Office"), null, Arrays.asList(startsWithNameFilter)), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getAssetTypeQuery(List.of("Office"), null, Arrays.asList(startsWithNameFilter)), false);
         Assert.assertEquals(0, result.getTotalElements());
     }
 
@@ -132,13 +145,13 @@ public class AssetTypeFilterTest extends AbstractEDQTest {
         addOrUpdate(EntityType.ASSET, asset);
         addOrUpdate(new LatestTsKv(asset.getId(), new BasicTsKvEntry(43, new StringDataEntry("state", "TEST")), 0L));
 
-        var result = repository.findEntityDataByQuery(tenantId, customerId, RepositoryUtils.ALL_READ_PERMISSIONS, getAssetTypeQuery(List.of("Office"), null, null), false);
+        var result = repository.findEntityDataByQuery(tenantId, customerId, getAssetTypeQuery(List.of("Office"), null, null), false);
         Assert.assertEquals(0, result.getTotalElements());
 
         asset.setCustomerId(customerId);
         addOrUpdate(EntityType.ASSET, asset);
 
-        result = repository.findEntityDataByQuery(tenantId, customerId, RepositoryUtils.ALL_READ_PERMISSIONS, getAssetTypeQuery(List.of("Office"), null, null), false);
+        result = repository.findEntityDataByQuery(tenantId, customerId, getAssetTypeQuery(List.of("Office"), null, null), false);
 
         Assert.assertEquals(1, result.getTotalElements());
         var first = result.getData().get(0);
@@ -146,7 +159,7 @@ public class AssetTypeFilterTest extends AbstractEDQTest {
         Assert.assertEquals("Office 1", first.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue());
         Assert.assertEquals("42", first.getLatest().get(EntityKeyType.ENTITY_FIELD).get("createdTime").getValue());
 
-        result = repository.findEntityDataByQuery(tenantId, customerId, RepositoryUtils.ALL_READ_PERMISSIONS, getAssetTypeQuery(List.of("Supermarket"), null, null), false);
+        result = repository.findEntityDataByQuery(tenantId, customerId, getAssetTypeQuery(List.of("Supermarket"), null, null), false);
         Assert.assertEquals(0, result.getTotalElements());
     }
 

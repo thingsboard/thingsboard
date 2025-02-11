@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 ThingsBoard, Inc.
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public abstract class AbstractEntitySearchQueryProcessor<T extends EntitySearchQ
 
     @Override
     public Set<UUID> getRootEntities() {
-        return  Set.of(filter.getRootEntity().getId());
+        return Set.of(filter.getRootEntity().getId());
     }
 
     @Override

@@ -17,9 +17,11 @@ package org.thingsboard.server.dao.sql.queue;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.fields.QueueStatsFields;
 import org.thingsboard.server.common.data.id.QueueStatsId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -61,8 +63,13 @@ public class JpaQueueStatsDao extends JpaAbstractDao<QueueStatsEntity, QueueStat
     }
 
     @Override
-    public PageData<QueueStats> findByTenantId(TenantId tenantId, PageLink pageLink) {
+    public PageData<QueueStats> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(queueStatsRepository.findByTenantId(tenantId.getId(), pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.QUEUE_STATS;
     }
 
     @Override
@@ -76,8 +83,8 @@ public class JpaQueueStatsDao extends JpaAbstractDao<QueueStatsEntity, QueueStat
     }
 
     @Override
-    public PageData<QueueStatsFields> findAllFields(PageLink pageLink) {
-        return DaoUtil.pageToPageData(queueStatsRepository.findAllFields(DaoUtil.toPageable(pageLink)));
+    public List<QueueStatsFields> findNextBatch(UUID id, int batchSize) {
+        return queueStatsRepository.findNextBatch(id, Limit.of(batchSize));
     }
 
     @Override

@@ -81,7 +81,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnProperty(value = "queue.edqs.sync_enabled", havingValue = "true")
+@ConditionalOnProperty(value = "queue.edqs.sync.enabled", havingValue = "true")
 public class DefaultEdqsService implements EdqsService {
 
     private final EdqsClientQueueFactory queueFactory;

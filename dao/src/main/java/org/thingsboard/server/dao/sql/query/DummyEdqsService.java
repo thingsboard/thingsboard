@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.edqs.EdqsService;
 
 @Service
-@ConditionalOnProperty(value = "queue.edqs.sync_enabled", havingValue = "false", matchIfMissing = true)
+@ConditionalOnProperty(value = "queue.edqs.sync.enabled", havingValue = "false", matchIfMissing = true)
 public class DummyEdqsService implements EdqsService {
 
     @Override

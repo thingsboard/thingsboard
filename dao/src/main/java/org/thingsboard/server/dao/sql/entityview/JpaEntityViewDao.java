@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql.entityview;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -25,7 +26,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.ObjectType;
-import org.thingsboard.server.common.data.edqs.fields.GenericFields;
+import org.thingsboard.server.common.data.edqs.fields.EntityViewFields;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -226,8 +227,8 @@ public class JpaEntityViewDao extends JpaAbstractDao<EntityViewEntity, EntityVie
     }
 
     @Override
-    public PageData<GenericFields> findAllFields(PageLink pageLink) {
-        return DaoUtil.pageToPageData(entityViewRepository.findAllFields(DaoUtil.toPageable(pageLink)));
+    public List<EntityViewFields> findNextBatch(UUID id, int batchSize) {
+        return entityViewRepository.findNextBatch(id, Limit.of(batchSize));
     }
 
     @Override

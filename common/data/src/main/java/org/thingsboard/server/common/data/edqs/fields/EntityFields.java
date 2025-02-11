@@ -19,6 +19,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thingsboard.server.common.data.id.EntityId;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 public interface EntityFields {
@@ -35,6 +37,10 @@ public interface EntityFields {
 
     default UUID getCustomerId() {
         return null;
+    }
+
+    default List<UUID> getAssignedCustomerIds() {
+        return Collections.emptyList();
     }
 
     default long getCreatedTime() {

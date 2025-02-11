@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.customer;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Customer;
@@ -32,6 +33,7 @@ import org.thingsboard.server.dao.model.sql.CustomerEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -112,8 +114,8 @@ public class JpaCustomerDao extends JpaAbstractDao<CustomerEntity, Customer> imp
     }
 
     @Override
-    public PageData<CustomerFields> findAllFields(PageLink pageLink) {
-        return DaoUtil.pageToPageData(customerRepository.findAllFields(DaoUtil.toPageable(pageLink)));
+    public List<CustomerFields> findNextBatch(UUID id, int batchSize) {
+        return customerRepository.findNextBatch(id, Limit.of(batchSize));
     }
 
     @Override

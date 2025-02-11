@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.dashboard;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -48,7 +49,6 @@ public interface DashboardRepository extends JpaRepository<DashboardEntity, UUID
     Page<UUID> findAllIds(Pageable pageable);
 
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.DashboardFields(d.id, d.createdTime, d.tenantId, " +
-            "d.customerId, d.title, d.version) FROM DashboardEntity d")
-    Page<DashboardFields> findAllFields(Pageable pageable);
-
+            "d.assignedCustomers, d.title, d.version) FROM DashboardEntity d WHERE d.id > :id ORDER BY d.id")
+    List<DashboardFields> findNextBatch(@Param("id") UUID id, Limit limit);
 }

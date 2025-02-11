@@ -44,4 +44,7 @@ public class QueryContext {
         this(tenantId, customerId, entityType, false);
     }
 
+    public boolean isTenantUser() {
+        return customerId == null || customerId.isNullUid();
+    }
 }

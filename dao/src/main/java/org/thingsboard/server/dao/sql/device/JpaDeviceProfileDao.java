@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.device;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
@@ -165,8 +166,8 @@ public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, Dev
     }
 
     @Override
-    public PageData<DeviceProfileFields> findAllFields(PageLink pageLink) {
-        return DaoUtil.pageToPageData(deviceProfileRepository.findAllFields(DaoUtil.toPageable(pageLink)));
+    public List<DeviceProfileFields> findNextBatch(UUID id, int batchSize) {
+        return deviceProfileRepository.findNextBatch(id, Limit.of(batchSize));
     }
 
     @Override

@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.sql.rule;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
@@ -35,6 +36,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -141,8 +143,8 @@ public class JpaRuleChainDao extends JpaAbstractDao<RuleChainEntity, RuleChain> 
     }
 
     @Override
-    public PageData<RuleChainFields> findAllFields(PageLink pageLink) {
-        return DaoUtil.pageToPageData(ruleChainRepository.findAllFields(DaoUtil.toPageable(pageLink)));
+    public List<RuleChainFields> findNextBatch(UUID id, int batchSize) {
+        return ruleChainRepository.findNextBatch(id, Limit.of(batchSize));
     }
 
     @Override

@@ -27,7 +27,7 @@ import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
-@ConditionalOnExpression("'${queue.edqs.sync_enabled:true}' == 'true' && '${queue.type:null}' == 'kafka'")
+@ConditionalOnExpression("'${queue.edqs.sync.enabled:true}' == 'true' && '${queue.type:null}' == 'kafka'")
 public class KafkaEdqsSyncService extends EdqsSyncService {
 
     private final TbKafkaSettings kafkaSettings;

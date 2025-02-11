@@ -73,6 +73,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -162,12 +163,12 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         EntityTypeFilter allDeviceFilter = new EntityTypeFilter();
         allDeviceFilter.setEntityType(EntityType.DEVICE);
         EntityCountQuery query = new EntityCountQuery(allDeviceFilter);
-        Long initialCount = countByQuery(query);
+        countByQueryAndCheck(query, 0);
 
         loginTenantAdmin();
 
         List<Device> devices = new ArrayList<>();
-        String devicePrefix = "Device" + RandomStringUtils.random(5);
+        String devicePrefix = "Device" + RandomStringUtils.randomAlphabetic(5);
         for (int i = 0; i < 97; i++) {
             Device device = new Device();
             device.setName(devicePrefix + i);
@@ -177,18 +178,18 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
             Thread.sleep(1);
         }
         DeviceTypeFilter filter = new DeviceTypeFilter();
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("");
 
         loginSysAdmin();
 
         EntityCountQuery countQuery = new EntityCountQuery(filter);
-        countByQueryAndCheck(countQuery, initialCount + 97);
+        countByQueryAndCheck(countQuery, 97);
 
-        filter.setDeviceType("unknown");
+        filter.setDeviceTypes(List.of("unknown"));
         countByQueryAndCheck(countQuery, 0);
 
-        filter.setDeviceType("default");
+        filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter(devicePrefix + "1");
         countByQueryAndCheck(countQuery, 11);
 
@@ -199,7 +200,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         countQuery = new EntityCountQuery(entityListFilter);
         countByQueryAndCheck(countQuery, 97);
 
-        countByQueryAndCheck(query, initialCount + 97);
+        countByQueryAndCheck(countQuery, 97);
     }
 
     @Test
@@ -816,26 +817,14 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
 
-        PageData<EntityData> data =
-                doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
-                });
-
-        Assert.assertEquals(1, data.getTotalElements());
-        Assert.assertEquals(1, data.getTotalPages());
-        Assert.assertEquals(1, data.getData().size());
+        findByQueryAndCheck(query, 1);
 
         // unnassign dashboard
         login(TENANT_EMAIL, TENANT_PASSWORD);
         doDelete("/api/customer/" + savedCustomer.getId().getId().toString() + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
 
         login(CUSTOMER_USER_EMAIL, CUSTOMER_USER_PASSWORD);
-        PageData<EntityData> dataAfterUnassign =
-                doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
-                });
-
-        Assert.assertEquals(0, dataAfterUnassign.getTotalElements());
-        Assert.assertEquals(0, dataAfterUnassign.getTotalPages());
-        Assert.assertEquals(0, dataAfterUnassign.getData().size());
+        findByQueryAndCheck(query, 0);
     }
 
     private void checkEntitiesByQuery(EntityDataQuery query, int expectedNumOfDevices, String expectedOwnerName, String expectedOwnerType) throws Exception {
@@ -847,9 +836,9 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
                     var loadedEntities = new ArrayList<>(data.getData());
                     return loadedEntities.size() == expectedNumOfDevices;
                 });
-         if (expectedNumOfDevices == 0) {
-             return;
-         }
+        if (expectedNumOfDevices == 0) {
+            return;
+        }
         var data = findByQuery(query);
         var loadedEntities = new ArrayList<>(data.getData());
 
@@ -870,7 +859,8 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
     }
 
     protected PageData<EntityData> findByQuery(EntityDataQuery query) throws Exception {
-        return doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<>() {});
+        return doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<>() {
+        });
     }
 
     protected PageData<EntityData> findByQueryAndCheck(EntityDataQuery query, int expectedResultSize) throws Exception {

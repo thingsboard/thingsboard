@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.asset;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -83,7 +84,7 @@ public interface AssetProfileRepository extends JpaRepository<AssetProfileEntity
     List<EntityInfo> findAllTenantAssetProfileNames(@Param("tenantId") UUID tenantId);
 
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.AssetProfileFields(a.id, a.createdTime, a.tenantId," +
-            "a.name, a.version, a.isDefault) FROM AssetProfileEntity a")
-    Page<AssetProfileFields> findAllFields(Pageable pageable);
+            "a.name, a.version, a.isDefault) FROM AssetProfileEntity a WHERE a.id > :id ORDER BY a.id")
+    List<AssetProfileFields> findNextBatch(@Param("id") UUID id, Limit limit);
 
 }

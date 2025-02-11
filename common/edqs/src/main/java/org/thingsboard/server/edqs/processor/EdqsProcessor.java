@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 ThingsBoard, Inc.
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,8 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
     private final EdqRepository repository;
     private final EdqsConfig config;
     private final EdqsPartitionService partitionService;
-    @Autowired @Lazy
+    @Autowired
+    @Lazy
     private EdqsStateService stateService;
 
     private MainQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>, QueueConfig> eventsConsumer;
@@ -186,10 +187,10 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
 
                 if (request.getEntityDataQuery() != null) {
                     PageData<QueryResult> result = repository.findEntityDataByQuery(tenantId, customerId,
-                            request.getUserPermissions(), request.getEntityDataQuery(), false);
+                            request.getEntityDataQuery(), false);
                     response.setEntityDataQueryResult(result.mapData(QueryResult::toOldEntityData));
                 } else if (request.getEntityCountQuery() != null) {
-                    long result = repository.countEntitiesByQuery(tenantId, customerId, request.getUserPermissions(), request.getEntityCountQuery(), tenantId.isSysTenantId());
+                    long result = repository.countEntitiesByQuery(tenantId, customerId, request.getEntityCountQuery(), tenantId.isSysTenantId());
                     response.setEntityCountQueryResult(result);
                 }
 

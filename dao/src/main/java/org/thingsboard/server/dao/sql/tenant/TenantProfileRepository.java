@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.tenant;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -57,7 +58,7 @@ public interface TenantProfileRepository extends JpaRepository<TenantProfileEnti
     List<TenantProfileEntity> findByIdIn(List<UUID> ids);
 
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.TenantProfileFields(t.id, t.createdTime, t.name," +
-            "t.isDefault) FROM TenantProfileEntity t")
-    Page<TenantProfileFields> findAllFields(Pageable pageable);
+            "t.isDefault) FROM TenantProfileEntity t WHERE t.id > :id ORDER BY t.id")
+    List<TenantProfileFields> findNextBatch(@Param("id") UUID id, Limit limit);
 
 }

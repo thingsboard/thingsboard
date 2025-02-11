@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.tenant;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
@@ -97,13 +98,7 @@ public class JpaTenantDao extends JpaAbstractDao<TenantEntity, Tenant> implement
     }
 
     @Override
-    public PageData<TenantFields> findAllFields(PageLink pageLink) {
-        return DaoUtil.pageToPageData(tenantRepository.findAllFields(DaoUtil.toPageable(pageLink)));
+    public List<TenantFields> findNextBatch(UUID id, int batchSize) {
+        return tenantRepository.findNextBatch(id, Limit.of(batchSize));
     }
-
-    @Override
-    public EntityType getEntityType() {
-        return EntityType.TENANT;
-    }
-
 }

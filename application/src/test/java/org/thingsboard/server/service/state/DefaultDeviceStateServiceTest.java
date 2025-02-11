@@ -211,7 +211,7 @@ public class DefaultDeviceStateServiceTest {
 
         // THEN
         then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
-                request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
+                request.getTenantId().equals(tenantId) && request.getEntityId().equals(deviceId) &&
                         request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
                         request.getEntries().get(0).getKey().equals(LAST_CONNECT_TIME) &&
                         request.getEntries().get(0).getValue().equals(lastConnectTime)
@@ -298,7 +298,7 @@ public class DefaultDeviceStateServiceTest {
 
         // THEN
         then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
-                request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
+                request.getTenantId().equals(tenantId) && request.getEntityId().equals(deviceId) &&
                         request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
                         request.getEntries().get(0).getKey().equals(LAST_DISCONNECT_TIME) &&
                         request.getEntries().get(0).getValue().equals(lastDisconnectTime)
@@ -421,13 +421,13 @@ public class DefaultDeviceStateServiceTest {
 
         // THEN
         then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
-                request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
+                request.getTenantId().equals(tenantId) && request.getEntityId().equals(deviceId) &&
                         request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
                         request.getEntries().get(0).getKey().equals(INACTIVITY_ALARM_TIME) &&
                         request.getEntries().get(0).getValue().equals(lastInactivityTime)
         ));
         then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
-                request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
+                request.getTenantId().equals(tenantId) && request.getEntityId().equals(deviceId) &&
                         request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
                         request.getEntries().get(0).getKey().equals(ACTIVITY_STATE) &&
                         request.getEntries().get(0).getValue().equals(false)
@@ -465,12 +465,12 @@ public class DefaultDeviceStateServiceTest {
 
         // THEN
         then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
-                request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
+                request.getTenantId().equals(tenantId) && request.getEntityId().equals(deviceId) &&
                         request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
                         request.getEntries().get(0).getKey().equals(INACTIVITY_ALARM_TIME)
         ));
         then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
-                request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
+                request.getTenantId().equals(tenantId) && request.getEntityId().equals(deviceId) &&
                         request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
                         request.getEntries().get(0).getKey().equals(ACTIVITY_STATE) &&
                         request.getEntries().get(0).getValue().equals(false)
@@ -1002,7 +1002,7 @@ public class DefaultDeviceStateServiceTest {
             assertThat(actualNotification.isActive()).isFalse();
 
             then(telemetrySubscriptionService).should().saveAttributes(argThat(request ->
-                    request.getTenantId().equals(TenantId.SYS_TENANT_ID) && request.getEntityId().equals(deviceId) &&
+                    request.getTenantId().equals(tenantId) && request.getEntityId().equals(deviceId) &&
                             request.getScope().equals(AttributeScope.SERVER_SCOPE) &&
                             request.getEntries().get(0).getKey().equals(INACTIVITY_ALARM_TIME) &&
                             request.getEntries().get(0).getValue().equals(expectedLastInactivityAlarmTime)
@@ -1170,7 +1170,7 @@ public class DefaultDeviceStateServiceTest {
 
             assertThat(attributeRequestCaptor.getAllValues()).hasSize(2)
                     .anySatisfy(request -> {
-                        assertThat(request.getTenantId()).isEqualTo(TenantId.SYS_TENANT_ID);
+                        assertThat(request.getTenantId()).isEqualTo(tenantId);
                         assertThat(request.getEntityId()).isEqualTo(deviceId);
                         assertThat(request.getScope()).isEqualTo(AttributeScope.SERVER_SCOPE);
                         assertThat(request.getEntries()).singleElement().satisfies(attributeKvEntry -> {
@@ -1179,7 +1179,7 @@ public class DefaultDeviceStateServiceTest {
                         });
                     })
                     .anySatisfy(request -> {
-                        assertThat(request.getTenantId()).isEqualTo(TenantId.SYS_TENANT_ID);
+                        assertThat(request.getTenantId()).isEqualTo(tenantId);
                         assertThat(request.getEntityId()).isEqualTo(deviceId);
                         assertThat(request.getScope()).isEqualTo(AttributeScope.SERVER_SCOPE);
                         assertThat(request.getEntries()).singleElement().satisfies(attributeKvEntry -> {

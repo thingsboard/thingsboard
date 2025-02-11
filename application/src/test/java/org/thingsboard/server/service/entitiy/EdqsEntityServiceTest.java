@@ -21,7 +21,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.permission.MergedUserPermissions;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -35,7 +34,7 @@ import static org.awaitility.Awaitility.await;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
-        "queue.edqs.sync_enabled=true",
+        "queue.edqs.sync.enabled=true",
         "queue.edqs.api_enabled=true",
         "queue.edqs.mode=local"
 })
@@ -53,19 +52,19 @@ public class EdqsEntityServiceTest extends EntityServiceTest {
     }
 
     @Override
-    protected PageData<EntityData> findByQueryAndCheck(CustomerId customerId, MergedUserPermissions permissions, EntityDataQuery query, long expectedResultSize) {
-        return await().atMost(15, TimeUnit.SECONDS).until(() -> findByQuery(customerId, permissions, query),
+    protected PageData<EntityData> findByQueryAndCheck(CustomerId customerId, EntityDataQuery query, long expectedResultSize) {
+        return await().atMost(15, TimeUnit.SECONDS).until(() -> findByQuery(customerId, query),
                 result -> result.getTotalElements() == expectedResultSize);
     }
 
     @Override
     protected long countByQueryAndCheck(EntityCountQuery countQuery, int expectedResult) {
-        return countByQueryAndCheck(new CustomerId(CustomerId.NULL_UUID), mergedUserPermissionsPE, countQuery, expectedResult);
+        return countByQueryAndCheck(new CustomerId(CustomerId.NULL_UUID), countQuery, expectedResult);
     }
 
     @Override
-    protected long countByQueryAndCheck(CustomerId customerId, MergedUserPermissions permissions, EntityCountQuery query, int expectedResult) {
-        return await().atMost(15, TimeUnit.SECONDS).until(() -> countByQuery(customerId, permissions, query),
+    protected long countByQueryAndCheck(CustomerId customerId, EntityCountQuery query, int expectedResult) {
+        return await().atMost(15, TimeUnit.SECONDS).until(() -> countByQuery(customerId, query),
                 result -> result == expectedResult);
     }
 

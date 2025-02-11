@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 ThingsBoard, Inc.
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import org.thingsboard.server.common.data.query.EntityViewTypeFilter;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
-import org.thingsboard.server.edqs.util.RepositoryUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -70,7 +69,7 @@ public class EntityViewTypeFilterTest extends AbstractEDQTest {
     @Test
     public void testFindTenantEntityView() {
         // find entity view with type "day 1"
-        var result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityViewTypeQuery(Collections.singletonList("day 1"), null, null), false);
+        var result = repository.findEntityDataByQuery(tenantId, null, getEntityViewTypeQuery(Collections.singletonList("day 1"), null, null), false);
 
         Assert.assertEquals(2, result.getTotalElements());
         Optional<QueryResult> firstView = result.getData().stream().filter(queryResult -> queryResult.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue().equals("day 1 lora 1 view")).findFirst();
@@ -79,7 +78,7 @@ public class EntityViewTypeFilterTest extends AbstractEDQTest {
         assertThat(firstView.get().getLatest().get(EntityKeyType.ENTITY_FIELD).get("createdTime").getValue()).isEqualTo(String.valueOf(entityView.getCreatedTime()));
 
         // find entity view with types "day 1" and "day 2"
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityViewTypeQuery(Arrays.asList("day 1", "day 2"), null, null), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getEntityViewTypeQuery(Arrays.asList("day 1", "day 2"), null, null), false);
 
         Assert.assertEquals(3, result.getTotalElements());
         Optional<QueryResult> thirdView = result.getData().stream().filter(queryResult -> queryResult.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue().equals("day 2 lora 1 view")).findFirst();
@@ -88,29 +87,29 @@ public class EntityViewTypeFilterTest extends AbstractEDQTest {
         assertThat(thirdView.get().getLatest().get(EntityKeyType.ENTITY_FIELD).get("createdTime").getValue()).isEqualTo(String.valueOf(entityView.getCreatedTime()));
 
         // find entity view with type "day 3"
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityViewTypeQuery(Collections.singletonList("day 3"), null, null), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getEntityViewTypeQuery(Collections.singletonList("day 3"), null, null), false);
         Assert.assertEquals(0, result.getTotalElements());
 
         // find entity view with name "%Lora%"
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityViewTypeQuery(Collections.singletonList("day 1"), "%day 1 lora%", null), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getEntityViewTypeQuery(Collections.singletonList("day 1"), "%day 1 lora%", null), false);
         Assert.assertEquals(2, result.getTotalElements());
 
         // find entity view with name "Lora 1 device view"
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityViewTypeQuery(Collections.singletonList("day 1"), "day 1 lora 1 view", null), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getEntityViewTypeQuery(Collections.singletonList("day 1"), "day 1 lora 1 view", null), false);
         Assert.assertEquals(1, result.getTotalElements());
 
         // find entity view with name "%Parking sensor%"
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityViewTypeQuery(Collections.singletonList("day 1"), "%day 3 lora%", null), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getEntityViewTypeQuery(Collections.singletonList("day 1"), "%day 3 lora%", null), false);
         Assert.assertEquals(0, result.getTotalElements());
 
         // find entity view with key filter: name contains "Lora"
         KeyFilter containsNameFilter = getEntityViewNameKeyFilter(StringFilterPredicate.StringOperation.CONTAINS, "Lora", true);
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityViewTypeQuery(Collections.singletonList("day 1"), null, Arrays.asList(containsNameFilter)), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getEntityViewTypeQuery(Collections.singletonList("day 1"), null, Arrays.asList(containsNameFilter)), false);
         Assert.assertEquals(2, result.getTotalElements());
 
         // find entity view with key filter: name starts with "lora" and matches case
         KeyFilter startsWithNameFilter = getEntityViewNameKeyFilter(StringFilterPredicate.StringOperation.STARTS_WITH, "lora", false);
-        result = repository.findEntityDataByQuery(tenantId, null, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityViewTypeQuery(Collections.singletonList("day 1"), null, Arrays.asList(startsWithNameFilter)), false);
+        result = repository.findEntityDataByQuery(tenantId, null, getEntityViewTypeQuery(Collections.singletonList("day 1"), null, Arrays.asList(startsWithNameFilter)), false);
         Assert.assertEquals(0, result.getTotalElements());
     }
 
@@ -118,7 +117,7 @@ public class EntityViewTypeFilterTest extends AbstractEDQTest {
     public void testFindCustomerEntityView() {
         addOrUpdate(new LatestTsKv(entityView.getId(), new BasicTsKvEntry(43, new StringDataEntry("state", "TEST")), 0L));
 
-        var result = repository.findEntityDataByQuery(tenantId, customerId, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityViewTypeQuery(Collections.singletonList("day 1"), null, null), false);
+        var result = repository.findEntityDataByQuery(tenantId, customerId, getEntityViewTypeQuery(Collections.singletonList("day 1"), null, null), false);
         Assert.assertEquals(0, result.getTotalElements());
 
         entityView.setCustomerId(customerId);
@@ -128,7 +127,7 @@ public class EntityViewTypeFilterTest extends AbstractEDQTest {
         addOrUpdate(EntityType.ENTITY_VIEW, entityView2);
         addOrUpdate(EntityType.ENTITY_VIEW, entityView3);
 
-        result = repository.findEntityDataByQuery(tenantId, customerId, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityViewTypeQuery(Collections.singletonList("day 1"), null, null), false);
+        result = repository.findEntityDataByQuery(tenantId, customerId, getEntityViewTypeQuery(Collections.singletonList("day 1"), null, null), false);
 
         Assert.assertEquals(2, result.getTotalElements());
         Optional<QueryResult> firstView = result.getData().stream().filter(queryResult -> queryResult.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue().equals("day 1 lora 1 view")).findFirst();
@@ -136,7 +135,7 @@ public class EntityViewTypeFilterTest extends AbstractEDQTest {
         assertThat(firstView.get().getEntityId()).isEqualTo(entityView.getId());
         assertThat(firstView.get().getLatest().get(EntityKeyType.ENTITY_FIELD).get("createdTime").getValue()).isEqualTo(String.valueOf(entityView.getCreatedTime()));
 
-        result = repository.findEntityDataByQuery(tenantId, customerId, RepositoryUtils.ALL_READ_PERMISSIONS, getEntityViewTypeQuery(Collections.singletonList("day 3"), null, null), false);
+        result = repository.findEntityDataByQuery(tenantId, customerId, getEntityViewTypeQuery(Collections.singletonList("day 3"), null, null), false);
         Assert.assertEquals(0, result.getTotalElements());
     }
 

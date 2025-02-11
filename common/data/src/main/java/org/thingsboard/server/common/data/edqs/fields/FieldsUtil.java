@@ -85,7 +85,6 @@ public class FieldsUtil {
         return CustomerFields.builder()
                 .id(entity.getUuidId())
                 .createdTime(entity.getCreatedTime())
-                .customerId(getCustomerId(entity.getCustomerId()))
                 .name(entity.getTitle())
                 .additionalInfo(getText(entity.getAdditionalInfo()))
                 .email(entity.getEmail())
@@ -199,7 +198,6 @@ public class FieldsUtil {
         return DashboardFields.builder()
                 .id(entity.getUuidId())
                 .createdTime(entity.getCreatedTime())
-                .customerId(getCustomerId(entity.getCustomerId()))
                 .name(entity.getTitle())
                 .version(entity.getVersion())
                 .build();

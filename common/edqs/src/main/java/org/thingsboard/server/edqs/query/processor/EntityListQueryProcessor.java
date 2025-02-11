@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 ThingsBoard, Inc.
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,12 @@ import org.thingsboard.server.common.data.permission.QueryContext;
 import org.thingsboard.server.common.data.query.EntityListFilter;
 import org.thingsboard.server.edqs.data.EntityData;
 import org.thingsboard.server.edqs.query.EdqsQuery;
-import org.thingsboard.server.edqs.query.SortableEntityData;
 import org.thingsboard.server.edqs.repo.TenantRepo;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import static org.thingsboard.server.edqs.util.RepositoryUtils.getSortValue;
 
 public class EntityListQueryProcessor extends AbstractSingleEntityTypeQueryProcessor<EntityListFilter> {
 
@@ -44,35 +39,12 @@ public class EntityListQueryProcessor extends AbstractSingleEntityTypeQueryProce
     }
 
     @Override
-    protected void processCustomerGenericRead(UUID customerId, Consumer<EntityData<?>> processor) {
-        var customers = repository.getAllCustomers(customerId);
+    protected void processCustomerQuery(UUID customerId, Consumer<EntityData<?>> processor) {
         processAll(ed -> {
-            if (checkCustomerHierarchy(customers, ed)) {
+            if (checkCustomerId(customerId, ed)) {
                 processor.accept(ed);
             }
         });
-    }
-
-    @Override
-    protected List<SortableEntityData> processCustomerGenericReadWithGroups(UUID customerId, boolean readAttrPermissions, boolean readTsPermissions, List<GroupPermissions> groupPermissions) {
-        List<SortableEntityData> result = new ArrayList<>(getProbableResultSize());
-        var customers = repository.getAllCustomers(customerId);
-        processAll(ed -> {
-            CombinedPermissions permissions = getCombinedPermissions(ed.getId(), checkCustomerHierarchy(customers, ed), readAttrPermissions, readTsPermissions, groupPermissions);
-            if (permissions.isRead()) {
-                SortableEntityData sortData = new SortableEntityData(ed);
-                sortData.setSortValue(getSortValue(ed, sortKey));
-                sortData.setReadAttrs(permissions.isReadAttrs());
-                sortData.setReadTs(permissions.isReadTs());
-                result.add(sortData);
-            }
-        });
-        return result;
-    }
-
-    @Override
-    protected void processGroupsOnly(List<GroupPermissions> groupPermissions, Consumer<EntityData<?>> processor) {
-        processAll(processor);
     }
 
     @Override

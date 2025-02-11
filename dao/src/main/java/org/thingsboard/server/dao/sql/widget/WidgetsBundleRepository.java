@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.dao.sql.widget;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.edqs.fields.WidgetTypeFields;
 import org.thingsboard.server.common.data.edqs.fields.WidgetsBundleFields;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleEntity;
@@ -142,6 +144,6 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
     List<WidgetsBundleEntity> findByImageUrl(@Param("imageLink") String imageLink, @Param("lmt") int lmt);
 
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.WidgetsBundleFields(w.id, w.createdTime, w.tenantId," +
-            "w.alias, w.version) FROM WidgetsBundleEntity w")
-    Page<WidgetsBundleFields> findAllFields(Pageable pageable);
+            "w.alias, w.version) FROM WidgetsBundleEntity w WHERE w.id > :id ORDER BY w.id")
+    List<WidgetsBundleFields> findNextBatch(@Param("id") UUID id, Limit limit);
 }

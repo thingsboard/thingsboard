@@ -28,7 +28,7 @@ import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 
 @Service
 @RequiredArgsConstructor
-@ConditionalOnProperty(value = "queue.edqs.sync_enabled", havingValue = "true")
+@ConditionalOnProperty(value = "queue.edqs.sync.enabled", havingValue = "true")
 public class EdqsListener {
 
     private final EdqsService edqsService;

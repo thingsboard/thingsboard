@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 ThingsBoard, Inc.
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edqs.query.QueryResult;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.permission.MergedGroupPermissionInfo;
-import org.thingsboard.server.common.data.permission.MergedUserPermissions;
-import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.query.EdgeSearchQueryFilter;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -35,12 +31,9 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.edqs.util.RepositoryUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -63,38 +56,19 @@ public class EdgeSearchQueryFilterTest extends AbstractEDQTest {
         createRelation(EntityType.EDGE, edge2, EntityType.DEVICE, device3, "Manages");
 
         // find devices managed by edge
-        PageData<QueryResult> relationsResult = findData(RepositoryUtils.ALL_READ_PERMISSIONS, null, new DeviceId(device1),
-                EntitySearchDirection.TO,  "Manages", 2, false, Arrays.asList("default"));
+        PageData<QueryResult> relationsResult = findData(null, new DeviceId(device1),
+                EntitySearchDirection.TO, "Manages", 2, false, Arrays.asList("default"));
         Assert.assertEquals(1, relationsResult.getData().size());
         Assert.assertTrue(checkContains(relationsResult, edge1));
 
         // find devices managed by edge with non-existing type
-        relationsResult = findData(RepositoryUtils.ALL_READ_PERMISSIONS, null, new DeviceId(device1),
-                EntitySearchDirection.TO,  "Manages", 1, false, Arrays.asList("non-existing type"));
+        relationsResult = findData(null, new DeviceId(device1),
+                EntitySearchDirection.TO, "Manages", 1, false, Arrays.asList("non-existing type"));
         Assert.assertEquals(0, relationsResult.getData().size());
 
         // find all entity views last level only, level = 2
-        relationsResult = findData(RepositoryUtils.ALL_READ_PERMISSIONS, null, new DeviceId(device1),
-                EntitySearchDirection.TO,  "Manages", 2, true, Arrays.asList("default"));
-        Assert.assertEquals(1, relationsResult.getData().size());
-        Assert.assertTrue(checkContains(relationsResult, edge1));
-    }
-
-    @Test
-    public void testFindTenantEdgesWithGroupPermissionOnly() {
-        UUID eg1 = createGroup(EntityType.EDGE, "Group A");
-
-        UUID edge1 = createEdge("E1");
-        UUID edge2 = createEdge("E2");
-        createRelation(EntityType.TENANT, tenantId.getId(), EntityType.EDGE, edge1, "Manages");
-        createRelation(EntityType.TENANT, tenantId.getId(), EntityType.EDGE, edge2, "Manages");
-        createRelation(EntityType.ENTITY_GROUP, eg1, EntityType.ENTITY_VIEW, edge1, RelationTypeGroup.FROM_ENTITY_GROUP, "Contains");
-
-        // find all devices with group permission only
-        MergedUserPermissions readGroupPermissions = new MergedUserPermissions(Collections.emptyMap(), Collections.singletonMap(new EntityGroupId(eg1),
-                new MergedGroupPermissionInfo(EntityType.EDGE, new HashSet<>(Arrays.asList(Operation.READ, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY)))));
-        PageData<QueryResult> relationsResult = findData(readGroupPermissions, null, tenantId,
-                EntitySearchDirection.FROM,  "Manages", 2, false, Arrays.asList("default"));
+        relationsResult = findData(null, new DeviceId(device1),
+                EntitySearchDirection.TO, "Manages", 2, true, Arrays.asList("default"));
         Assert.assertEquals(1, relationsResult.getData().size());
         Assert.assertTrue(checkContains(relationsResult, edge1));
     }
@@ -107,49 +81,24 @@ public class EdgeSearchQueryFilterTest extends AbstractEDQTest {
         createRelation(EntityType.CUSTOMER, customerId.getId(), EntityType.EDGE, edge2, "Manages");
 
         // find all edges managed by customer
-        PageData<QueryResult> relationsResult = findData(RepositoryUtils.ALL_READ_PERMISSIONS, customerId, customerId,
-                EntitySearchDirection.FROM,  "Manages", 2, false, Arrays.asList("default"));
+        PageData<QueryResult> relationsResult = findData(customerId, customerId,
+                EntitySearchDirection.FROM, "Manages", 2, false, Arrays.asList("default"));
         Assert.assertEquals(2, relationsResult.getData().size());
         Assert.assertTrue(checkContains(relationsResult, edge1));
         Assert.assertTrue(checkContains(relationsResult, edge2));
 
         // find all edges managed by customer with non-existing type
-        relationsResult = findData(RepositoryUtils.ALL_READ_PERMISSIONS, customerId, customerId,
-                EntitySearchDirection.FROM,  "Manages", 2, false, Arrays.asList("non existing"));
+        relationsResult = findData(customerId, customerId,
+                EntitySearchDirection.FROM, "Manages", 2, false, Arrays.asList("non existing"));
         Assert.assertEquals(0, relationsResult.getData().size());
 
         // find all entity views with other customer
-        relationsResult = findData(RepositoryUtils.ALL_READ_PERMISSIONS, new CustomerId(UUID.randomUUID()), customerId,
-                EntitySearchDirection.FROM,  "Manages", 2, false, Arrays.asList("default"));
+        relationsResult = findData(new CustomerId(UUID.randomUUID()), customerId,
+                EntitySearchDirection.FROM, "Manages", 2, false, Arrays.asList("default"));
         Assert.assertEquals(0, relationsResult.getData().size());
     }
 
-    @Test
-    public void testFindCustomerEdgesWithGroupPermission() {
-        UUID eg1 = createGroup(EntityType.EDGE, "Group A");
-
-        UUID edge1 = createEdge(customerId, "E1");
-        UUID edge2 = createEdge(customerId, "E2");
-        UUID edge3 = createEdge(customerId, "E3");
-
-        createRelation(EntityType.ENTITY_GROUP, eg1, EntityType.ENTITY_VIEW, edge1, RelationTypeGroup.FROM_ENTITY_GROUP, "Contains");
-        createRelation(EntityType.ENTITY_GROUP, eg1, EntityType.ENTITY_VIEW, edge2, RelationTypeGroup.FROM_ENTITY_GROUP, "Contains");
-
-        createRelation(EntityType.CUSTOMER, customerId.getId(), EntityType.EDGE, edge1, "Manages");
-        createRelation(EntityType.CUSTOMER, customerId.getId(), EntityType.EDGE, edge2, "Manages");
-        createRelation(EntityType.CUSTOMER, customerId.getId(), EntityType.EDGE, edge3, "Manages");
-
-        // find all entity views with group permission only
-        MergedUserPermissions readGroupPermissions = new MergedUserPermissions(Collections.emptyMap(), Collections.singletonMap(new EntityGroupId(eg1),
-                new MergedGroupPermissionInfo(EntityType.EDGE, new HashSet<>(Arrays.asList(Operation.READ, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY)))));
-        PageData<QueryResult> relationsResult = findData(readGroupPermissions, customerId, customerId,
-                EntitySearchDirection.FROM,  "Manages", 2, false, Arrays.asList("default"));
-        Assert.assertEquals(2, relationsResult.getData().size());
-        Assert.assertTrue(checkContains(relationsResult, edge1));
-        Assert.assertTrue(checkContains(relationsResult, edge2));
-    }
-
-     private PageData<QueryResult> findData(MergedUserPermissions permissions, CustomerId customerId, EntityId rootId,
+    private PageData<QueryResult> findData(CustomerId customerId, EntityId rootId,
                                            EntitySearchDirection direction, String relationType, int maxLevel, boolean lastLevelOnly, List<String> edgeTypes) {
         EdgeSearchQueryFilter filter = new EdgeSearchQueryFilter();
         filter.setRootEntity(rootId);
@@ -161,7 +110,7 @@ public class EdgeSearchQueryFilterTest extends AbstractEDQTest {
         EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, null);
         List<KeyFilter> keyFiltersEqualString = createStringKeyFilters("name", EntityKeyType.ENTITY_FIELD, StringFilterPredicate.StringOperation.STARTS_WITH, "E");
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, Collections.emptyList(), Collections.emptyList(), keyFiltersEqualString);
-        return repository.findEntityDataByQuery(tenantId, customerId, permissions, query, false);
+        return repository.findEntityDataByQuery(tenantId, customerId, query, false);
     }
 
 }

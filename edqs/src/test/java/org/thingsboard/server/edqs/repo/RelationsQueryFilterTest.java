@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 ThingsBoard, Inc.
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edqs.query.QueryResult;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityGroupId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.permission.MergedGroupPermissionInfo;
-import org.thingsboard.server.common.data.permission.MergedUserPermissions;
-import org.thingsboard.server.common.data.permission.Operation;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityKeyType;
@@ -36,12 +32,9 @@ import org.thingsboard.server.common.data.query.RelationsQueryFilter;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.edqs.util.RepositoryUtils;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -94,59 +87,33 @@ public class RelationsQueryFilterTest extends AbstractEDQTest {
         createRelation(EntityType.ASSET, da2, EntityType.DEVICE, da3, "Contains");
         createRelation(EntityType.ASSET, da3, EntityType.DEVICE, da4, "Contains");
 
-        PageData<QueryResult> relationsResult = filter(RepositoryUtils.ALL_READ_PERMISSIONS, null, new AssetId(root), 1, true,
+        PageData<QueryResult> relationsResult = filter(null, new AssetId(root), 1, true,
                 new RelationEntityTypeFilter("Contains", Arrays.asList(EntityType.DEVICE, EntityType.ASSET)));
         Assert.assertEquals(2, relationsResult.getData().size());
         Assert.assertTrue(checkContains(relationsResult, ta1));
         Assert.assertTrue(checkContains(relationsResult, ta2));
 
-        relationsResult = filter(RepositoryUtils.ALL_READ_PERMISSIONS, null, new AssetId(root), 2, true,
+        relationsResult = filter(null, new AssetId(root), 2, true,
                 new RelationEntityTypeFilter("Contains", Arrays.asList(EntityType.DEVICE, EntityType.ASSET)));
         Assert.assertEquals(3, relationsResult.getData().size());
         Assert.assertTrue(checkContains(relationsResult, ta1));
         Assert.assertTrue(checkContains(relationsResult, da1));
         Assert.assertTrue(checkContains(relationsResult, da2));
 
-        relationsResult = filter(RepositoryUtils.ALL_READ_PERMISSIONS, null, new AssetId(root), 3, true,
+        relationsResult = filter(null, new AssetId(root), 3, true,
                 new RelationEntityTypeFilter("Contains", Arrays.asList(EntityType.DEVICE, EntityType.ASSET)));
         Assert.assertEquals(3, relationsResult.getData().size());
         Assert.assertTrue(checkContains(relationsResult, ta1));
         Assert.assertTrue(checkContains(relationsResult, da1));
         Assert.assertTrue(checkContains(relationsResult, da3));
 
-        relationsResult = filter(RepositoryUtils.ALL_READ_PERMISSIONS, null, new AssetId(root), 4, true,
+        relationsResult = filter(null, new AssetId(root), 4, true,
                 new RelationEntityTypeFilter("Contains", Arrays.asList(EntityType.DEVICE, EntityType.ASSET)));
         Assert.assertEquals(3, relationsResult.getData().size());
         Assert.assertTrue(checkContains(relationsResult, ta1));
         Assert.assertTrue(checkContains(relationsResult, da1));
         Assert.assertTrue(checkContains(relationsResult, da4));
 
-    }
-
-    @Test
-    public void testFindTenantDevicesGroupsOnly() {
-        UUID ta1 = createAsset("T A1");
-        UUID ta2 = createAsset("T A2");
-        UUID da1 = createDevice("T D1");
-        UUID da2 = createDevice(customerId, "T D2");
-
-        UUID eg1 = createGroup(EntityType.DEVICE, "Group A");
-        createRelation(EntityType.ENTITY_GROUP, eg1, EntityType.DEVICE, da1, RelationTypeGroup.FROM_ENTITY_GROUP, "Contains");
-
-        // A1 --Contains--> A2, A1 --Contains--> D1. A1 --Manages--> D2.
-        createRelation(EntityType.ASSET, ta1, EntityType.ASSET, ta2, "Contains");
-        createRelation(EntityType.ASSET, ta1, EntityType.DEVICE, da1, "Contains");
-        createRelation(EntityType.ASSET, ta1, EntityType.DEVICE, da2, "Manages");
-
-        MergedUserPermissions readGroupPermissions = new MergedUserPermissions(Collections.emptyMap(), Collections.singletonMap(new EntityGroupId(eg1),
-                new MergedGroupPermissionInfo(EntityType.DEVICE, new HashSet<>(Arrays.asList(Operation.READ, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY)))));
-
-        PageData<QueryResult> relationsResult = filter(readGroupPermissions, new AssetId(ta1), new RelationEntityTypeFilter("Contains", Arrays.asList(EntityType.DEVICE, EntityType.ASSET)));
-        Assert.assertEquals(1, relationsResult.getData().size());
-        Assert.assertTrue(checkContains(relationsResult, da1));
-
-        relationsResult = filter(readGroupPermissions, new AssetId(ta1), new RelationEntityTypeFilter("Manages", Arrays.asList(EntityType.DEVICE, EntityType.ASSET)));
-        Assert.assertEquals(0, relationsResult.getData().size());
     }
 
     @Test
@@ -169,55 +136,15 @@ public class RelationsQueryFilterTest extends AbstractEDQTest {
         Assert.assertEquals(0, relationsResult.getData().size());
     }
 
-    @Test
-    public void testFindCustomerDevicesGroupsOnly() {
-        UUID ta1 = createAsset("T A1");
-        UUID ta2 = createAsset("T A2");
-        UUID da1 = createDevice(customerId, "T D1");
-        UUID da2 = createDevice(customerId, "T D2");
-        UUID da3 = createDevice(customerId, "T D3");
-
-        UUID eg1 = createGroup(EntityType.DEVICE, "Group A");
-        createRelation(EntityType.ENTITY_GROUP, eg1, EntityType.DEVICE, da1, RelationTypeGroup.FROM_ENTITY_GROUP, "Contains");
-        createRelation(EntityType.ENTITY_GROUP, eg1, EntityType.DEVICE, da2, RelationTypeGroup.FROM_ENTITY_GROUP, "Contains");
-        createRelation(EntityType.ENTITY_GROUP, eg1, EntityType.DEVICE, da3, RelationTypeGroup.FROM_ENTITY_GROUP, "Contains");
-
-        // A1 --Contains--> A2, A1 --Contains--> D1. A1 --Manages--> D2.
-        createRelation(EntityType.ASSET, ta1, EntityType.ASSET, ta2, "Contains");
-        createRelation(EntityType.ASSET, ta1, EntityType.DEVICE, da1, "Contains");
-        createRelation(EntityType.ASSET, ta1, EntityType.DEVICE, da2, "Manages");
-        createRelation(EntityType.DEVICE, da2, EntityType.DEVICE, da3, "Contains");
-
-        MergedUserPermissions readGroupPermissions = new MergedUserPermissions(Collections.emptyMap(), Collections.singletonMap(new EntityGroupId(eg1),
-                new MergedGroupPermissionInfo(EntityType.DEVICE, new HashSet<>(Arrays.asList(Operation.READ, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY)))));
-
-        PageData<QueryResult> relationsResult = filter(readGroupPermissions, customerId, new AssetId(ta1), new RelationEntityTypeFilter("Contains", Arrays.asList(EntityType.DEVICE, EntityType.ASSET)));
-        Assert.assertEquals(2, relationsResult.getData().size());
-        Assert.assertTrue(checkContains(relationsResult, da1));
-        Assert.assertTrue(checkContains(relationsResult, da3));
-
-        relationsResult = filter(readGroupPermissions, customerId, new AssetId(ta1), new RelationEntityTypeFilter("Manages", Arrays.asList(EntityType.DEVICE, EntityType.ASSET)));
-        Assert.assertEquals(1, relationsResult.getData().size());
-        Assert.assertTrue(checkContains(relationsResult, da2));
-    }
-
     private PageData<QueryResult> filter(EntityId rootId, RelationEntityTypeFilter... relationEntityTypeFilters) {
-        return filter(RepositoryUtils.ALL_READ_PERMISSIONS, rootId, relationEntityTypeFilters);
-    }
-
-    private PageData<QueryResult> filter(MergedUserPermissions permissions, EntityId rootId, RelationEntityTypeFilter... relationEntityTypeFilters) {
-        return filter(permissions, null, rootId, relationEntityTypeFilters);
+        return filter(null, rootId, relationEntityTypeFilters);
     }
 
     private PageData<QueryResult> filter(CustomerId customerId, EntityId rootId, RelationEntityTypeFilter... relationEntityTypeFilters) {
-        return filter(RepositoryUtils.ALL_READ_PERMISSIONS, customerId, rootId, relationEntityTypeFilters);
+        return filter(customerId, rootId, 3, false, relationEntityTypeFilters);
     }
 
-    private PageData<QueryResult> filter(MergedUserPermissions permissions, CustomerId customerId, EntityId rootId, RelationEntityTypeFilter... relationEntityTypeFilters) {
-        return filter(permissions, customerId, rootId, 3, false, relationEntityTypeFilters);
-    }
-
-    private PageData<QueryResult> filter(MergedUserPermissions permissions, CustomerId customerId, EntityId rootId, int maxLevel, boolean lastLevelOnly, RelationEntityTypeFilter... relationEntityTypeFilters) {
+    private PageData<QueryResult> filter(CustomerId customerId, EntityId rootId, int maxLevel, boolean lastLevelOnly, RelationEntityTypeFilter... relationEntityTypeFilters) {
         RelationsQueryFilter filter = new RelationsQueryFilter();
         filter.setRootEntity(rootId);
         filter.setFilters(Arrays.asList(relationEntityTypeFilters));
@@ -227,7 +154,7 @@ public class RelationsQueryFilterTest extends AbstractEDQTest {
         EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, null);
         List<KeyFilter> keyFiltersEqualString = createStringKeyFilters("name", EntityKeyType.ENTITY_FIELD, StringFilterPredicate.StringOperation.STARTS_WITH, "T");
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, Collections.emptyList(), Collections.emptyList(), keyFiltersEqualString);
-        return repository.findEntityDataByQuery(tenantId, customerId, permissions, query, false);
+        return repository.findEntityDataByQuery(tenantId, customerId, query, false);
     }
 
 }

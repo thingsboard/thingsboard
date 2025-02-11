@@ -30,12 +30,10 @@ import java.util.Map;
 public class QueryResult {
 
     private final EntityId entityId;
-    private final boolean readAttrs;
-    private final boolean readTs;
     private final Map<EntityKeyType, Map<String, TsValue>> latest;
 
     public EntityData toOldEntityData() {
-        return new EntityData(entityId, readAttrs, readTs, latest, Collections.emptyMap(), Collections.emptyMap());
+        return new EntityData(entityId, latest, Collections.emptyMap(), Collections.emptyMap());
     }
 
 }

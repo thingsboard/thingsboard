@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.device;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -197,7 +198,7 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID>, Exp
 
 
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.DeviceFields(d.id, d.createdTime, d.tenantId, d.customerId," +
-            "d.name, d.version, d.type, d.label, d.deviceProfileId, d.additionalInfo) FROM DeviceEntity d")
-    Page<DeviceFields> findAllFields(Pageable pageable);
+            "d.name, d.version, d.type, d.label, d.deviceProfileId, d.additionalInfo) FROM DeviceEntity d WHERE d.id > :id ORDER BY d.id")
+    List<DeviceFields> findNextBatch(@Param("id") UUID id, Limit limit);
 
 }

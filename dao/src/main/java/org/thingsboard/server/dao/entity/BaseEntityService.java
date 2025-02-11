@@ -45,18 +45,8 @@ import org.thingsboard.server.common.data.query.EntityListFilter;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
-import org.thingsboard.server.common.data.query.StateEntityOwnerFilter;
 import org.thingsboard.server.common.msg.edqs.EdqsService;
-import org.thingsboard.server.dao.asset.AssetService;
-import org.thingsboard.server.dao.customer.CustomerService;
-import org.thingsboard.server.dao.dashboard.DashboardService;
-import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.edge.EdgeService;
-import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.thingsboard.server.dao.sql.alarm.AlarmRepository;
-import org.thingsboard.server.dao.sql.query.EntityMapping;
-import org.thingsboard.server.dao.user.UserService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -68,9 +58,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.query.EntityFilterType.ENTITY_GROUP_NAME;
-import static org.thingsboard.server.common.data.query.EntityFilterType.ENTITY_TYPE;
 import static org.thingsboard.server.common.data.id.EntityId.NULL_UUID;
+import static org.thingsboard.server.common.data.query.EntityFilterType.ENTITY_TYPE;
 import static org.thingsboard.server.dao.service.Validator.validateEntityDataPageLink;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -109,7 +98,6 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         if (edqsService.isApiEnabled() && validForEdqs(query)) { // TODO: separate boolean param whether to use in dashboards; but sync to edqs - always
             EdqsRequest request = EdqsRequest.builder()
                     .entityCountQuery(query)
-                    .userPermissions(userPermissions)
                     .build();
             EdqsResponse response = processEdqsRequest(tenantId, customerId, request);
             return response.getEntityCountQueryResult();
@@ -127,7 +115,6 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         if (edqsService.isApiEnabled() && validForEdqs(query)) { // TODO: separate boolean param whether to use in dashboards; but sync to edqs - always
             EdqsRequest request = EdqsRequest.builder()
                     .entityDataQuery(query)
-                    .userPermissions(userPermissions)
                     .build();
             EdqsResponse response = processEdqsRequest(tenantId, customerId, request);
             return response.getEntityDataQueryResult();
@@ -149,7 +136,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     }
 
     private boolean validForEdqs(EntityCountQuery query) {
-        return !(query.getEntityFilter() instanceof StateEntityOwnerFilter filter) || !EntityType.ALARM.equals(filter.getSingleEntity().getEntityType());
+        return true;
     }
 
     private EdqsResponse processEdqsRequest(TenantId tenantId, CustomerId customerId, EdqsRequest request) {
@@ -243,8 +230,6 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             validateRelationQuery((RelationsQueryFilter) query.getEntityFilter());
         } else if (query.getEntityFilter().getType().equals(ENTITY_TYPE)) {
             validateEntityTypeQuery((EntityTypeFilter) query.getEntityFilter());
-        } else if (query.getEntityFilter().getType().equals(ENTITY_GROUP_NAME)) {
-            validateGroupNameQuery((EntityGroupNameFilter) query.getEntityFilter());
         }
     }
 
@@ -256,12 +241,6 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     private static void validateEntityTypeQuery(EntityTypeFilter filter) {
         if (filter.getEntityType() == null) {
             throw new IncorrectParameterException("Entity type is required");
-        }
-    }
-
-    private static void validateGroupNameQuery(EntityGroupNameFilter filter) {
-        if (filter.getGroupType() == null) {
-            throw new IncorrectParameterException("Group type is required");
         }
     }
 
