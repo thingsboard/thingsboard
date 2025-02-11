@@ -28,7 +28,7 @@
           <mat-form-field appearance="outline" class="tb-inline-field w-1/4" subscriptSizing="dynamic">
             <input matInput formControlName="argumentName" placeholder="{{ 'action.set' | translate }}">
           </mat-form-field>
-          <tb-value-input class="flex-1" formControlName="value"/>
+          <tb-value-input class="flex-1" [required]="false" formControlName="value"/>
         </div>
       }
     </div>
