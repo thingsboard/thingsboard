@@ -261,12 +261,19 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   }
 
   private getTestScriptDialog(calculatedField: CalculatedField, argumentsObj?: Record<string, unknown>, openCalculatedFieldEdit = true): Observable<string> {
+    const emptyArguments = Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => { acc[key] = ''; return acc; }, {});
+    const filledArguments = Object.keys(argumentsObj ?? {}).reduce((acc, key) => {
+      if (emptyArguments.hasOwnProperty(key)) {
+        acc[key] = argumentsObj[key];
+      }
+      return acc;
+    }, {});
     return this.dialog.open<CalculatedFieldScriptTestDialogComponent, CalculatedFieldTestScriptDialogData, string>(CalculatedFieldScriptTestDialogComponent,
       {
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-fullscreen-dialog-gt-xs'],
         data: {
-          arguments: argumentsObj ?? Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => { acc[key] = ''; return acc; }, {}),
+          arguments: { ...emptyArguments, ...filledArguments },
           expression: calculatedField.configuration.expression,
           openCalculatedFieldEdit
         }

@@ -357,7 +357,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         break;
       case DebugEventType.DEBUG_CALCULATED_FIELD:
         this.columns[0].width = '80px';
-        this.columns[1].width = '20%';
+        this.columns[1].width = '100px';
         this.columns.push(
           new EntityTableColumn<Event>('entityId', 'event.entity-id', '85px',
             (entity) => `<span style="display: inline-block; width: 9ch">${entity.body.entityId.substring(0, 8)}…</span>`,
