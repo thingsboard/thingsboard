@@ -22,7 +22,7 @@ import {
   Inject,
   ViewChild,
 } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder } from '@angular/forms';
@@ -36,8 +36,8 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 import { beautifyJs } from '@shared/models/beautify.models';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CalculatedFieldScriptTestDialogData } from '@shared/models/calculated-field.models';
 import { filter } from 'rxjs/operators';
+import { CalculatedFieldTestScriptInputParams } from '@shared/models/calculated-field.models';
 
 @Component({
   selector: 'tb-calculated-field-script-test-dialog',
@@ -66,8 +66,9 @@ export class CalculatedFieldScriptTestDialogComponent extends DialogComponent<Ca
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              @Inject(MAT_DIALOG_DATA) public data: CalculatedFieldScriptTestDialogData,
+              @Inject(MAT_DIALOG_DATA) public data: CalculatedFieldTestScriptInputParams,
               protected dialogRef: MatDialogRef<CalculatedFieldScriptTestDialogComponent, string>,
+              private dialog: MatDialog,
               private fb: FormBuilder,
               private destroyRef: DestroyRef,
               private calculatedFieldService: CalculatedFieldsService) {
@@ -101,13 +102,13 @@ export class CalculatedFieldScriptTestDialogComponent extends DialogComponent<Ca
   }
 
   save(): void {
-    this.testScript().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+    this.testScript(true).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.calculatedFieldScriptTestFormGroup.get('expression').markAsPristine();
       this.dialogRef.close(this.calculatedFieldScriptTestFormGroup.get('expression').value);
     });
   }
 
-  private testScript(): Observable<string> {
+  private testScript(onSave = false): Observable<string> {
     if (this.checkInputParamErrors()) {
       return this.calculatedFieldService.testScript({
         expression: this.calculatedFieldScriptTestFormGroup.get('expression').value,
@@ -122,6 +123,9 @@ export class CalculatedFieldScriptTestDialogComponent extends DialogComponent<Ca
               }));
             return NEVER;
           } else {
+            if (onSave) {
+              this.dialog.closeAll();
+            }
             return of(result.output);
           }
         }),

@@ -27,7 +27,7 @@ import { AppState } from '@core/core.state';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { RuleChainType } from '@shared/models/rule-chain.models';
 import { DebugRuleNodeEventBody } from '@shared/models/event.models';
-import { HasEntityDebugSettings } from '@shared/models/entity.models';
+import { EntityTestScriptResult, HasEntityDebugSettings } from '@shared/models/entity.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface RuleNodeConfiguration {
@@ -373,6 +373,8 @@ export interface TestScriptInputParams {
   metadata: {[key: string]: string};
   msgType: string;
 }
+
+export type TestScriptResult = EntityTestScriptResult;
 
 export enum MessageType {
   POST_ATTRIBUTES_REQUEST = 'POST_ATTRIBUTES_REQUEST',

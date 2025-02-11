@@ -35,6 +35,7 @@ import {
   RuleNodeConfiguration,
   ScriptLanguage,
   TestScriptInputParams,
+  TestScriptResult
 } from '@app/shared/models/rule-node.models';
 import { componentTypeBySelector, ResourcesService } from '../services/resources.service';
 import { catchError, map, mergeMap } from 'rxjs/operators';
@@ -43,7 +44,6 @@ import { deepClone, snakeCase } from '@core/utils';
 import { DebugRuleNodeEventBody } from '@app/shared/models/event.models';
 import { Edge } from '@shared/models/edge.models';
 import { IModulesMap } from '@modules/common/modules-map.models';
-import { TestScriptResult } from '@shared/models/entity.models';
 
 @Injectable({
   providedIn: 'root'

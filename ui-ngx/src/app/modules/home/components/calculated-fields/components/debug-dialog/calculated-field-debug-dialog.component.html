@@ -32,7 +32,7 @@
       [disabledEventTypes]="[EventType.LC_EVENT, EventType.ERROR, EventType.STATS]"
       [defaultEventType]="DebugEventType.DEBUG_CALCULATED_FIELD"
       [active]="true"
-      [entityId]="data.id"
+      [entityId]="data.value.id"
       [functionTestButtonLabel]="'common.test-function' | translate"
       (debugEventSelected)="onDebugEventSelected($event)"
     />

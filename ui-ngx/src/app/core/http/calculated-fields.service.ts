@@ -22,7 +22,7 @@ import { PageData } from '@shared/models/page/page-data';
 import { CalculatedField, CalculatedFieldTestScriptInputParams } from '@shared/models/calculated-field.models';
 import { PageLink } from '@shared/models/page/page-link';
 import { EntityId } from '@shared/models/id/entity-id';
-import { TestScriptResult } from '@shared/models/entity.models';
+import { EntityTestScriptResult } from '@shared/models/entity.models';
 
 @Injectable({
   providedIn: 'root'
@@ -50,7 +50,7 @@ export class CalculatedFieldsService {
       defaultHttpOptionsFromConfig(config));
   }
 
-  public testScript(inputParams: CalculatedFieldTestScriptInputParams, config?: RequestConfig): Observable<TestScriptResult> {
-    return this.http.post<TestScriptResult>('/api/calculatedField/testScript', inputParams, defaultHttpOptionsFromConfig(config));
+  public testScript(inputParams: CalculatedFieldTestScriptInputParams, config?: RequestConfig): Observable<EntityTestScriptResult> {
+    return this.http.post<EntityTestScriptResult>('/api/calculatedField/testScript', inputParams, defaultHttpOptionsFromConfig(config));
   }
 }

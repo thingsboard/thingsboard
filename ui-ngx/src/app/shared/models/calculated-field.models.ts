@@ -127,7 +127,7 @@ export interface CalculatedFieldArgumentValue extends CalculatedFieldArgument {
   argumentName: string;
 }
 
-export type CalculatedFieldTestScriptFn = (argumentsObj: Record<string, unknown>, expression: string, withApply?: boolean) => Observable<string>;
+export type CalculatedFieldTestScriptFn = (calculatedField: CalculatedField, argumentsObj?: Record<string, unknown>) => Observable<string>;
 
 export interface CalculatedFieldDialogData {
   value?: CalculatedField;
@@ -136,20 +136,15 @@ export interface CalculatedFieldDialogData {
   debugLimitsConfiguration: string;
   tenantId: string;
   entityName?: string;
-  additionalDebugActionConfig: AdditionalDebugActionConfig;
+  additionalDebugActionConfig: AdditionalDebugActionConfig<(calculatedField: CalculatedField) => void>;
   testScriptFn: CalculatedFieldTestScriptFn;
+  isDirty?: boolean;
 }
 
 export interface CalculatedFieldDebugDialogData {
-  id?: CalculatedFieldId;
-  entityId: EntityId;
   tenantId: string;
-  expression?: string;
-  testScriptFn: CalculatedFieldTestScriptFn;
-}
-
-export interface CalculatedFieldScriptTestDialogData extends CalculatedFieldTestScriptInputParams {
-  withApply: boolean;
+  value: CalculatedField;
+  getTestScriptDialogFn: CalculatedFieldTestScriptFn;
 }
 
 export interface CalculatedFieldTestScriptInputParams {

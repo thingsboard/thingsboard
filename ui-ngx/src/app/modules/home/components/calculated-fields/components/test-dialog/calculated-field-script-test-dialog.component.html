@@ -17,7 +17,7 @@
 -->
 <form class="test-dialog-container size-full" [formGroup]="calculatedFieldScriptTestFormGroup">
   <mat-toolbar class="flex justify-between" color="primary">
-    <h2>{{ 'calculated-fields.test-script-function' | translate }} ({{ 'TBEL' }})</h2>
+    <h2>{{ 'calculated-fields.test-script-function' | translate }} ({{ 'api-usage.tbel' | translate }})</h2>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -29,7 +29,7 @@
       <div class="tb-fullscreen-panel flex size-full flex-row">
         <div #leftPanel class="test-block-content overflow-hidden">
           <div class="relative size-full min-w-64">
-            <div class="absolute right-28 top-[9px] z-10 text-[12px] font-bold">
+            <div class="block-label-container left">
               <span class="block-label">{{ 'calculated-fields.expression' | translate }}</span>
             </div>
             <tb-js-func
@@ -41,14 +41,14 @@
               [fillHeight]="true"
               [scriptLanguage]="ScriptLanguage.TBEL"
               resultType="object"
-              helpId="[TODO]: [Calculated Fields] add valid link"
+              helpId="calculated-field/test-expression_fn"
             />
           </div>
         </div>
         <div #rightPanel>
           <div #topRightPanel class="test-block-content">
             <div class="relative flex size-full min-w-96 gap-2">
-              <div class="absolute right-2 top-[6px] z-10 text-[12px] font-bold">
+              <div class="block-label-container right-top">
                 <span class="block-label">{{ 'calculated-fields.arguments' | translate }}</span>
               </div>
               <tb-calculated-field-test-arguments class="size-full" formControlName="arguments"/>
@@ -56,7 +56,7 @@
           </div>
           <div #bottomRightPanel class="test-block-content">
             <div class="relative size-full">
-              <div class="absolute right-10 top-[6px] z-10 text-[12px] font-bold">
+              <div class="block-label-container right-bottom">
                 <span class="block-label" translate>common.output</span>
               </div>
               <tb-json-content
@@ -89,13 +89,11 @@
             (click)="cancel()">
       {{ 'action.cancel' | translate }}
     </button>
-    @if (data.withApply) {
-      <button mat-button mat-raised-button color="primary"
-              type="submit"
-              (click)="save()"
-              [disabled]="(isLoading$ | async) || calculatedFieldScriptTestFormGroup.get('expression').invalid || !calculatedFieldScriptTestFormGroup.get('expression').dirty">
-        {{ 'action.save' | translate }}
-      </button>
-    }
+    <button mat-button mat-raised-button color="primary"
+            type="submit"
+            (click)="save()"
+            [disabled]="(isLoading$ | async) || calculatedFieldScriptTestFormGroup.get('expression').invalid || !calculatedFieldScriptTestFormGroup.get('expression').dirty">
+      {{ 'action.save' | translate }}
+    </button>
   </div>
 </form>

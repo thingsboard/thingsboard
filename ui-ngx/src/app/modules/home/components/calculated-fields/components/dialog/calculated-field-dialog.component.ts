@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject } from '@angular/core';
+import { AfterViewInit, Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -41,7 +41,7 @@ import { ScriptLanguage } from '@shared/models/rule-node.models';
   selector: 'tb-calculated-field-dialog',
   templateUrl: './calculated-field-dialog.component.html',
 })
-export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFieldDialogComponent, CalculatedField> {
+export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFieldDialogComponent, CalculatedField> implements AfterViewInit {
 
   fieldFormGroup = this.fb.group({
     name: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex), Validators.maxLength(255)]],
@@ -67,7 +67,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
 
   additionalDebugActionConfig = this.data.value?.id ? {
     ...this.data.additionalDebugActionConfig,
-    action: () => this.data.additionalDebugActionConfig.action(this.data.value.id, this.data.value.configuration.expression)
+    action: () => this.data.additionalDebugActionConfig.action({ id: this.data.value.id, ...this.fromGroupValue }),
   } : null;
 
   readonly OutputTypeTranslations = OutputTypeTranslations;
@@ -98,24 +98,31 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
     return this.fieldFormGroup.get('configuration').get('output') as FormGroup;
   }
 
+  get fromGroupValue(): CalculatedField {
+    const { configuration, type, ...rest } = this.fieldFormGroup.value;
+    const { expressionSIMPLE, expressionSCRIPT, ...restConfig } = configuration;
+    return { configuration: { ...restConfig, type, expression: configuration['expression'+type] }, ...rest, type } as CalculatedField;
+  }
+
+  ngAfterViewInit(): void {
+    if (this.data.isDirty) {
+      this.fieldFormGroup.markAsDirty();
+    }
+  }
+
   cancel(): void {
     this.dialogRef.close(null);
   }
 
   add(): void {
     if (this.fieldFormGroup.valid) {
-      const { configuration, type, ...rest } = this.fieldFormGroup.value;
-      const { expressionSIMPLE, expressionSCRIPT, ...restConfig } = configuration;
-      this.dialogRef.close({ configuration: { ...restConfig, type, expression: configuration['expression'+type] }, ...rest, type } as CalculatedField);
+      this.dialogRef.close(this.fromGroupValue);
     }
   }
 
   onTestScript(): void {
-    this.data.testScriptFn(
-        Object.fromEntries(Object.keys(this.configFormGroup.get('arguments').value).map(k => [k, ''])),
-        this.configFormGroup.get('expressionSCRIPT').value,
-        true
-    ).pipe(filter(Boolean)).subscribe((expression: string) => {
+    this.data.testScriptFn(this.fromGroupValue)
+      .pipe(filter(Boolean)).subscribe((expression: string) => {
       this.configFormGroup.get('expressionSCRIPT').setValue(expression);
       this.configFormGroup.get('expressionSCRIPT').markAsDirty();
     });
