@@ -203,7 +203,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         tenantId: this.tenantId,
         entityName: this.entityName,
         additionalDebugActionConfig: this.additionalDebugActionConfig,
-        testScriptFn: this.getTestScriptDialog.bind(this),
+        getTestScriptDialogFn: this.getTestScriptDialog.bind(this),
         isDirty
       }
     })

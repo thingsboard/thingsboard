@@ -121,7 +121,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
   }
 
   onTestScript(): void {
-    this.data.testScriptFn(this.fromGroupValue)
+    this.data.getTestScriptDialogFn(this.fromGroupValue)
       .pipe(filter(Boolean)).subscribe((expression: string) => {
       this.configFormGroup.get('expressionSCRIPT').setValue(expression);
       this.configFormGroup.get('expressionSCRIPT').markAsDirty();

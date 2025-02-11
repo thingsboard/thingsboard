@@ -137,7 +137,7 @@ export interface CalculatedFieldDialogData {
   tenantId: string;
   entityName?: string;
   additionalDebugActionConfig: AdditionalDebugActionConfig<(calculatedField: CalculatedField) => void>;
-  testScriptFn: CalculatedFieldTestScriptFn;
+  getTestScriptDialogFn: CalculatedFieldTestScriptFn;
   isDirty?: boolean;
 }
 
