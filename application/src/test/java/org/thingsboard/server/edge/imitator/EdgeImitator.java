@@ -66,12 +66,10 @@ import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -80,7 +78,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class EdgeImitator {
 
-    private static final int MAX_DOWNLINK_FAILS = 2;
     private final String routingKey;
     private final String routingSecret;
 
@@ -94,9 +91,9 @@ public class EdgeImitator {
 
     @Setter
     private boolean randomFailuresOnTimeseriesDownlink = false;
-    @Setter
-    private double failureProbability = 0.0;
-    private final Map<Integer, Integer> downlinkFailureCountMap = new HashMap<>();
+
+    private List<Boolean> failureList;
+    private int currentIndex = 0;
 
     @Getter
     private EdgeConfiguration configuration;
@@ -247,15 +244,10 @@ public class EdgeImitator {
         }
         if (downlinkMsg.getEntityDataCount() > 0) {
             for (EntityDataProto entityData : downlinkMsg.getEntityDataList()) {
-                if (randomFailuresOnTimeseriesDownlink) {
-                    int downlinkMsgId = downlinkMsg.getDownlinkMsgId();
+                boolean isFailure = randomFailuresOnTimeseriesDownlink && getRandomBoolean();
 
-                    if (getRandomBoolean() && checkFailureThreshold(downlinkMsgId)) {
-                        result.add(Futures.immediateFailedFuture(new RuntimeException("Random failure. This is expected error for edge test")));
-                        downlinkFailureCountMap.put(downlinkMsgId, downlinkFailureCountMap.getOrDefault(downlinkMsgId, 0) + 1);
-                    } else {
-                        result.add(saveDownlinkMsg(entityData));
-                    }
+                if (isFailure) {
+                    result.add(Futures.immediateFailedFuture(new RuntimeException("Random failure. This is expected error for edge test")));
                 } else {
                     result.add(saveDownlinkMsg(entityData));
                 }
@@ -361,15 +353,23 @@ public class EdgeImitator {
         return Futures.allAsList(result);
     }
 
-    private boolean checkFailureThreshold(int downlinkMsgId) {
-        return failureProbability == 100 ||
-                downlinkFailureCountMap.get(downlinkMsgId) == null ||
-                downlinkFailureCountMap.get(downlinkMsgId) < MAX_DOWNLINK_FAILS;
+    public void prepareRandomSequence(int allMessage, int failureCount) {
+        failureList = new ArrayList<>(Collections.nCopies(allMessage, false));
+
+        for (int i = 0; i < failureCount; i++) {
+            failureList.set(i, true);
+        }
+
+        Collections.shuffle(failureList);
+        currentIndex = 0;
     }
 
     private boolean getRandomBoolean() {
-        double randomValue = ThreadLocalRandom.current().nextDouble() * 100;
-        return randomValue <= this.failureProbability;
+        if (currentIndex >= failureList.size()) {
+            return false;
+        }
+
+        return failureList.get(currentIndex++);
     }
 
     private ListenableFuture<Void> saveDownlinkMsg(AbstractMessage message) {
