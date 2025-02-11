@@ -21,12 +21,18 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.mvel2.execution.ExecutionArrayList;
+import org.thingsboard.script.api.tbel.TbCfArg;
+import org.thingsboard.script.api.tbel.TbCfSingleValueArg;
+import org.thingsboard.script.api.tbel.TbCfTsRollingArg;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -62,14 +68,31 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
             }
         });
         Object[] args = ctx.getArgNames().stream()
-                .map(key -> arguments.get(key).getValue())
+                .map(this::toTbelArgument)
                 .toArray();
+
         ListenableFuture<Map<String, Object>> resultFuture = ctx.getCalculatedFieldScriptEngine().executeToMapAsync(args);
         Output output = ctx.getOutput();
         return Futures.transform(resultFuture,
                 result -> new CalculatedFieldResult(output.getType(), output.getScope(), result),
                 MoreExecutors.directExecutor()
         );
+    }
+
+    private TbCfArg toTbelArgument(String key) {
+        ArgumentEntry argEntry = arguments.get(key);
+        if (argEntry instanceof SingleValueArgumentEntry svArg) {
+            return new TbCfSingleValueArg(svArg.getTs(), argEntry.getValue());
+        } else if (argEntry instanceof TsRollingArgumentEntry rollingArg) {
+            var tsRecords = rollingArg.getTsRecords();
+            List<TbCfSingleValueArg> values = new ArrayList<>(tsRecords.size());
+            for(var e : tsRecords.entrySet()){
+                values.add(new TbCfSingleValueArg(e.getKey(), e.getValue().getValue()));
+            }
+            return new TbCfTsRollingArg(values);
+        } else {
+            throw new RuntimeException("Argument is not supported for TBEL execution!");
+        }
     }
 
 }
