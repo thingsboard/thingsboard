@@ -187,7 +187,9 @@ usage:
       # Enable/Disable the collection of API usage statistics on a customer level
       enabled_per_customer: "${USAGE_STATS_REPORT_PER_CUSTOMER_ENABLED:false}"
       # Statistics reporting interval, set to send summarized data every 10 seconds by default
-      interval: "${USAGE_STATS_REPORT_INTERVAL:10}"
+      interval: "${USAGE_STATS_REPORT_INTERVAL:60}"
+      # Amount of statistic messages in pack
+      pack_size: "${USAGE_STATS_REPORT_PACK_SIZE:1024}"
     check:
       # Interval of checking the start of the next cycle and re-enabling the blocked tenants/customers
       cycle: "${USAGE_STATS_CHECK_CYCLE:60000}"
