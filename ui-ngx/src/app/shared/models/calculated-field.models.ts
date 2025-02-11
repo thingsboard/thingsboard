@@ -127,7 +127,7 @@ export interface CalculatedFieldArgumentValue extends CalculatedFieldArgument {
   argumentName: string;
 }
 
-export type CalculatedFieldTestScriptFn = (calculatedField: CalculatedField, argumentsObj?: Record<string, unknown>) => Observable<string>;
+export type CalculatedFieldTestScriptFn = (calculatedField: CalculatedField, argumentsObj?: Record<string, unknown>, closeAllOnSave?: boolean) => Observable<string>;
 
 export interface CalculatedFieldDialogData {
   value?: CalculatedField;
@@ -150,6 +150,10 @@ export interface CalculatedFieldDebugDialogData {
 export interface CalculatedFieldTestScriptInputParams {
   arguments: Record<string, unknown>,
   expression: string;
+}
+
+export interface CalculatedFieldTestScriptDialogData extends CalculatedFieldTestScriptInputParams {
+  openCalculatedFieldEdit?: boolean;
 }
 
 export interface ArgumentEntityTypeParams {

@@ -39,7 +39,7 @@ import {
   CalculatedField,
   CalculatedFieldDebugDialogData,
   CalculatedFieldDialogData,
-  CalculatedFieldTestScriptInputParams,
+  CalculatedFieldTestScriptDialogData,
 } from '@shared/models/calculated-field.models';
 import {
   CalculatedFieldDebugDialogComponent,
@@ -260,21 +260,24 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     ).subscribe(() => this.updateData());
   }
 
-  private getTestScriptDialog(calculatedField: CalculatedField, argumentsObj?: Record<string, unknown>): Observable<string> {
-    return this.dialog.open<CalculatedFieldScriptTestDialogComponent, CalculatedFieldTestScriptInputParams, string>(CalculatedFieldScriptTestDialogComponent,
+  private getTestScriptDialog(calculatedField: CalculatedField, argumentsObj?: Record<string, unknown>, openCalculatedFieldEdit = true): Observable<string> {
+    return this.dialog.open<CalculatedFieldScriptTestDialogComponent, CalculatedFieldTestScriptDialogData, string>(CalculatedFieldScriptTestDialogComponent,
       {
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-fullscreen-dialog-gt-xs'],
         data: {
           arguments: argumentsObj ?? Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => { acc[key] = ''; return acc; }, {}),
           expression: calculatedField.configuration.expression,
+          openCalculatedFieldEdit
         }
       }).afterClosed()
       .pipe(
         filter(Boolean),
-        tap(expression =>
-          this.editCalculatedField({...calculatedField, configuration: {...calculatedField.configuration, expression } }, true)
-        ),
+        tap(expression => {
+          if (openCalculatedFieldEdit) {
+            this.editCalculatedField({...calculatedField, configuration: {...calculatedField.configuration, expression } }, true)
+          }
+        }),
       );
   }
 }

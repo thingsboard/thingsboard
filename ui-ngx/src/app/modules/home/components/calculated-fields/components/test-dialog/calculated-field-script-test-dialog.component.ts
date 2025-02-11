@@ -37,7 +37,7 @@ import { beautifyJs } from '@shared/models/beautify.models';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs/operators';
-import { CalculatedFieldTestScriptInputParams } from '@shared/models/calculated-field.models';
+import { CalculatedFieldTestScriptDialogData } from '@shared/models/calculated-field.models';
 
 @Component({
   selector: 'tb-calculated-field-script-test-dialog',
@@ -66,7 +66,7 @@ export class CalculatedFieldScriptTestDialogComponent extends DialogComponent<Ca
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              @Inject(MAT_DIALOG_DATA) public data: CalculatedFieldTestScriptInputParams,
+              @Inject(MAT_DIALOG_DATA) public data: CalculatedFieldTestScriptDialogData,
               protected dialogRef: MatDialogRef<CalculatedFieldScriptTestDialogComponent, string>,
               private dialog: MatDialog,
               private fb: FormBuilder,
@@ -123,7 +123,7 @@ export class CalculatedFieldScriptTestDialogComponent extends DialogComponent<Ca
               }));
             return NEVER;
           } else {
-            if (onSave) {
+            if (onSave && this.data.openCalculatedFieldEdit) {
               this.dialog.closeAll();
             }
             return of(result.output);
