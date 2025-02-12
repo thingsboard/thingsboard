@@ -16,16 +16,14 @@
 @use '../../../../../../../scss/constants' as constants;
 
 :host {
-  display: flex;
-  min-width: 520px;
+  .dialog-container {
 
-  @media #{constants.$mat-lt-sm} {
-    min-width: 320px;
-  }
+    @media #{constants.$mat-sm} {
+      min-width: 526px;
+    }
 
-  .fixed-title-width {
-    @media #{constants.$mat-lt-sm} {
-      min-width: 120px;
+    @media #{constants.$mat-gt-sm} {
+      min-width: 770px;
     }
   }
 }
