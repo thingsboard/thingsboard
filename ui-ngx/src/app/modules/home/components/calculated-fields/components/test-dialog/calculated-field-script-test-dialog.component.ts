@@ -20,6 +20,7 @@ import {
   DestroyRef,
   ElementRef,
   Inject,
+  OnDestroy,
   ViewChild,
 } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -45,7 +46,7 @@ import { CalculatedFieldTestScriptDialogData } from '@shared/models/calculated-f
   styleUrls: ['./calculated-field-script-test-dialog.component.scss'],
 })
 export class CalculatedFieldScriptTestDialogComponent extends DialogComponent<CalculatedFieldScriptTestDialogComponent,
-  string> implements AfterViewInit {
+  string> implements AfterViewInit, OnDestroy {
 
   @ViewChild('leftPanel', {static: true}) leftPanelElmRef: ElementRef<HTMLElement>;
   @ViewChild('rightPanel', {static: true}) rightPanelElmRef: ElementRef<HTMLElement>;
@@ -85,6 +86,11 @@ export class CalculatedFieldScriptTestDialogComponent extends DialogComponent<Ca
 
   ngAfterViewInit(): void {
     this.observeResize();
+  }
+
+  ngOnDestroy(): void {
+    super.ngOnDestroy();
+    this.testScriptResize.disconnect();
   }
 
   cancel(): void {
