@@ -17,11 +17,8 @@
 
 :host {
   display: flex;
-  min-width: 520px;
-
-  @media #{constants.$mat-lt-sm} {
-    min-width: 280px;
-  }
+  width: 520px;
+  max-width: 100%;
 
   .fixed-title-width {
     @media #{constants.$mat-lt-sm} {

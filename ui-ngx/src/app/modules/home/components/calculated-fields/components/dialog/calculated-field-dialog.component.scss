@@ -17,13 +17,7 @@
 
 :host {
   .dialog-container {
-
-    @media #{constants.$mat-sm} {
-      min-width: 526px;
-    }
-
-    @media #{constants.$mat-gt-sm} {
-      min-width: 770px;
-    }
+    width: 869px;
+    max-width: 100%;
   }
 }
