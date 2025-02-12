@@ -42,6 +42,7 @@ import { MINUTE } from '@shared/models/time/time.models';
 @Component({
   selector: 'tb-calculated-field-argument-panel',
   templateUrl: './calculated-field-argument-panel.component.html',
+  styleUrls: ['./calculated-field-argument-panel.component.scss']
 })
 export class CalculatedFieldArgumentPanelComponent implements OnInit {
 
