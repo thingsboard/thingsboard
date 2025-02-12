@@ -94,6 +94,6 @@ public class TbAlarmCountSubCtx extends TbAbstractEntityQuerySubCtx<AlarmCountQu
     private EntityDataQuery buildEntityDataQuery() {
         EntityDataPageLink edpl = new EntityDataPageLink(maxEntitiesPerAlarmSubscription, 0, null,
                 new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, ModelConstants.CREATED_TIME_PROPERTY)));
-        return new EntityDataQuery(query.getEntityFilter(), edpl, null, null, null);
+        return new EntityDataQuery(query.getEntityFilter(), edpl, null, null, query.getKeyFilters());
     }
 }
