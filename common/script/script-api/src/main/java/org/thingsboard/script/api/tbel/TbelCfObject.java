@@ -15,7 +15,7 @@
  */
 package org.thingsboard.script.api.tbel;
 
-public interface TbCfArg {
+public interface TbelCfObject {
 
     long memorySize();
 

@@ -32,7 +32,6 @@ import org.mvel2.MVEL;
 import org.mvel2.ParserContext;
 import org.mvel2.SandboxedParserConfiguration;
 import org.mvel2.ScriptMemoryOverflowException;
-import org.mvel2.integration.PropertyHandlerFactory;
 import org.mvel2.optimizers.OptimizerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -134,8 +133,9 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
         parserConfig.registerDataType("Date", TbDate.class, val -> 8L);
         parserConfig.registerDataType("Random", Random.class, val -> 8L);
         parserConfig.registerDataType("Calendar", Calendar.class, val -> 8L);
-        parserConfig.registerDataType("TbCfSingleValueArg", TbCfSingleValueArg.class, TbCfSingleValueArg::memorySize);
-        parserConfig.registerDataType("TbCfTsRollingArg", TbCfTsRollingArg.class, TbCfTsRollingArg::memorySize);
+        parserConfig.registerDataType("TbelCfSingleValueArg", TbelCfSingleValueArg.class, TbelCfSingleValueArg::memorySize);
+        parserConfig.registerDataType("TbelCfTsRollingArg", TbelCfTsRollingArg.class, TbelCfTsRollingArg::memorySize);
+        parserConfig.registerDataType("TbelCfTsDoubleVal", TbelCfTsDoubleVal.class, TbelCfTsDoubleVal::memorySize);
         TbUtils.register(parserConfig);
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, "tbel-executor"));
         try {

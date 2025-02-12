@@ -32,6 +32,8 @@ import org.thingsboard.server.common.util.KvProtoUtil;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SingleValueArgumentProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TsDoubleValProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TsRollingArgumentProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsValueListProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsValueProto;
 import org.thingsboard.server.queue.util.AfterStartUp;
@@ -130,11 +132,11 @@ public class RocksDBCalculatedFieldStateService implements CalculatedFieldStateS
         return builder.build();
     }
 
-    private TsValueListProto toRollingArgumentProto(String argName, TsRollingArgumentEntry entry) {
-        TsValueListProto.Builder builder = TsValueListProto.newBuilder().setKey(argName);
+    private TsRollingArgumentProto toRollingArgumentProto(String argName, TsRollingArgumentEntry entry) {
+        TsRollingArgumentProto.Builder builder = TsRollingArgumentProto.newBuilder().setKey(argName);
 
         if (entry != TsRollingArgumentEntry.EMPTY) {
-            entry.getTsRecords().forEach((ts, value) -> builder.addTsValue(KvProtoUtil.toTsValueProto(ts, value)));
+            entry.getTsRecords().forEach((ts, value) -> builder.addTsValue(TsDoubleValProto.newBuilder().setTs(ts).setValue(value).build()));
         }
 
         return builder.build();
@@ -173,15 +175,12 @@ public class RocksDBCalculatedFieldStateService implements CalculatedFieldStateS
         return new SingleValueArgumentEntry(ts, kvEntry, proto.getVersion());
     }
 
-    private TsRollingArgumentEntry fromRollingArgumentProto(TsValueListProto proto) {
+    private TsRollingArgumentEntry fromRollingArgumentProto(TsRollingArgumentProto proto) {
         if (proto.getTsValueCount() <= 0) {
             return (TsRollingArgumentEntry) TsRollingArgumentEntry.EMPTY;
         }
-        TreeMap<Long, BasicKvEntry> tsRecords = new TreeMap<>();
-        proto.getTsValueList().forEach(tsValueProto -> {
-            BasicKvEntry kvEntry = (BasicKvEntry) KvProtoUtil.fromTsValueProto(proto.getKey(), tsValueProto);
-            tsRecords.put(tsValueProto.getTs(), kvEntry);
-        });
+        TreeMap<Long, Double> tsRecords = new TreeMap<>();
+        proto.getTsValueList().forEach(tsValueProto -> tsRecords.put(tsValueProto.getTs(), tsValueProto.getValue()));
         return new TsRollingArgumentEntry(tsRecords);
     }
 

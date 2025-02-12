@@ -15,16 +15,6 @@
  */
 package org.thingsboard.script.api.tbel;
 
-import lombok.Data;
+public interface TbelCfArg extends TbelCfObject {
 
-@Data
-public class TbCfSingleValueArg implements TbCfArg {
-
-    private final long ts;
-    private final Object value;
-
-    @Override
-    public long memorySize() {
-        return 8L; // TODO;
-    }
 }

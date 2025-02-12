@@ -15,33 +15,17 @@
  */
 package org.thingsboard.script.api.tbel;
 
-import lombok.Getter;
+import lombok.Data;
 
-import java.util.List;
+@Data
+public class TbelCfSingleValueArg implements TbelCfArg {
 
-public class TbCfTsRollingArg implements TbCfArg {
-
-    @Getter
-    private final List<TbCfSingleValueArg> values;
-
-    public TbCfTsRollingArg(List<TbCfSingleValueArg> values) {
-        this.values = values;
-    }
+    private final long ts;
+    private final Object value;
 
     @Override
     public long memorySize() {
-        return values.size() * 8L; //TODO;
-    }
-
-    public double max() {
-        double max = Double.MIN_VALUE;
-        for (TbCfSingleValueArg arg : values) {
-            double val = Double.valueOf(arg.getValue().toString());
-            if (max < val) {
-                max = val;
-            }
-        }
-        return max;
+        return 8L; // TODO;
     }
 
 }

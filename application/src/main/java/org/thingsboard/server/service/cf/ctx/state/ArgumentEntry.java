@@ -18,6 +18,7 @@ package org.thingsboard.server.service.cf.ctx.state;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 
@@ -51,5 +52,7 @@ public interface ArgumentEntry {
 
     @JsonIgnore
     ArgumentEntry copy();
+
+    TbelCfArg toTbelCfArg();
 
 }
