@@ -60,8 +60,6 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
-import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
-import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldLinkedTelemetryMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldLinkedTelemetryMsgProto.Builder;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
@@ -92,6 +90,7 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 import static org.thingsboard.server.queue.discovery.HashPartitionService.CALCULATED_FIELD_QUEUE_KEY;
+import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
 
 @TbRuleEngineComponent
 @Service
@@ -229,19 +228,6 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
         return builder.build();
     }
 
-    //TODO: IM: move to utils;
-    private CalculatedFieldEntityCtxIdProto toProto(CalculatedFieldEntityCtxId ctxId) {
-        return CalculatedFieldEntityCtxIdProto.newBuilder()
-                .setTenantIdMSB(ctxId.tenantId().getId().getMostSignificantBits())
-                .setTenantIdLSB(ctxId.tenantId().getId().getLeastSignificantBits())
-                .setCalculatedFieldIdMSB(ctxId.cfId().getId().getMostSignificantBits())
-                .setCalculatedFieldIdLSB(ctxId.cfId().getId().getLeastSignificantBits())
-                .setEntityType(ctxId.entityId().getEntityType().name())
-                .setEntityIdMSB(ctxId.entityId().getId().getMostSignificantBits())
-                .setEntityIdLSB(ctxId.entityId().getId().getLeastSignificantBits())
-                .build();
-    }
-
     private ListenableFuture<ArgumentEntry> fetchKvEntry(TenantId tenantId, EntityId entityId, Argument argument) {
         return switch (argument.getRefEntityKey().getType()) {
             case TS_ROLLING -> fetchTsRolling(tenantId, entityId, argument);
@@ -264,7 +250,7 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
             if (kvEntry.isPresent() && kvEntry.get().getValue() != null) {
                 return ArgumentEntry.createSingleValueArgument(kvEntry.get());
             } else {
-                return SingleValueArgumentEntry.EMPTY;
+                return new SingleValueArgumentEntry();
             }
         }, calculatedFieldCallbackExecutor);
     }
@@ -279,7 +265,7 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
         ReadTsKvQuery query = new BaseReadTsKvQuery(argument.getRefEntityKey().getKey(), startTs, currentTime, 0, limit, Aggregation.NONE);
         ListenableFuture<List<TsKvEntry>> tsRollingFuture = timeseriesService.findAll(tenantId, entityId, List.of(query));
 
-        return Futures.transform(tsRollingFuture, tsRolling -> tsRolling == null ? TsRollingArgumentEntry.EMPTY : ArgumentEntry.createTsRollingArgument(tsRolling), calculatedFieldCallbackExecutor);
+        return Futures.transform(tsRollingFuture, tsRolling -> tsRolling == null ? new TsRollingArgumentEntry(limit, timeWindow) : ArgumentEntry.createTsRollingArgument(tsRolling, limit, timeWindow), calculatedFieldCallbackExecutor);
     }
 
     private KvEntry createDefaultKvEntry(Argument argument) {
@@ -309,13 +295,6 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
             case SIMPLE -> new SimpleCalculatedFieldState(ctx.getArgNames());
             case SCRIPT -> new ScriptCalculatedFieldState(ctx.getArgNames());
         };
-    }
-
-    private CalculatedFieldIdProto toProto(CalculatedFieldId cfId) {
-        return CalculatedFieldIdProto.newBuilder()
-                .setCalculatedFieldIdMSB(cfId.getId().getMostSignificantBits())
-                .setCalculatedFieldIdLSB(cfId.getId().getLeastSignificantBits())
-                .build();
     }
 
     private static class TbCallbackWrapper implements TbQueueCallback {

@@ -38,8 +38,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelem
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
-import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.CalculatedFieldStateService;
+import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
@@ -225,9 +225,11 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
     @SneakyThrows
     private void processStateIfReady(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, CalculatedFieldState state, UUID tbMsgId, TbMsgType tbMsgType, TbCallback callback) {
+        CalculatedFieldEntityCtxId ctxId = new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId);
         if (state.isReady() && ctx.isInitialized()) {
             try {
                 CalculatedFieldResult calculationResult = state.performCalculation(ctx).get(5, TimeUnit.SECONDS);
+                state.checkStateSize(ctxId, ctx.getMaxStateSizeInKBytes());
                 cfService.pushMsgToRuleEngine(tenantId, entityId, calculationResult, cfIdList, callback);
                 if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
                     systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, JacksonUtil.writeValueAsString(calculationResult.getResultMap()), null);
@@ -240,7 +242,13 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         } else {
             callback.onSuccess(); // State was updated but no calculation performed;
         }
-        cfStateService.persistState(ctx, new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), state, callback);
+        try {
+            cfStateService.persistState(ctxId, state, callback);
+        } catch (Exception e) {
+            if (DebugModeUtil.isDebugFailuresAvailable(ctx.getCalculatedField())) {
+                systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, null, e);
+            }
+        }
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, List<TsKvProto> data) {

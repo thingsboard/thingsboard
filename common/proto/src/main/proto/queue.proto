@@ -814,12 +814,18 @@ message SingleValueArgumentProto {
   int64 version = 3;
 }
 
+message TsRollingArgumentEntryProto {
+  TsValueListProto records = 1;
+  int32 limit = 2;
+  int64 timeWindow = 3;
+}
+
 message CalculatedFieldStateProto {
   CalculatedFieldEntityCtxIdProto id = 1;
   // int32 version = 2;
   string type = 3;
   repeated SingleValueArgumentProto singleValueArguments = 4;
-  repeated TsValueListProto rollingValueArguments = 5;
+  repeated TsRollingArgumentEntryProto rollingValueArguments = 5;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.

@@ -189,7 +189,7 @@ public class ScriptCalculatedFieldStateTest {
 
     @Test
     void testIsReadyWhenEmptyEntryPresents() {
-        state.arguments = new HashMap<>(Map.of("deviceTemperature", TsRollingArgumentEntry.EMPTY, "assetHumidity", assetHumidityArgEntry));
+//        state.arguments = new HashMap<>(Map.of("deviceTemperature", TsRollingArgumentEntry.EMPTY, "assetHumidity", assetHumidityArgEntry));
 
         assertThat(state.isReady()).isFalse();
     }

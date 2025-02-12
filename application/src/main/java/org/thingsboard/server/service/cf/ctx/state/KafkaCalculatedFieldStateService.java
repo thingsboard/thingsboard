@@ -20,8 +20,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.queue.util.AfterStartUp;
-import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.CalculatedFieldStateService;
+import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +33,7 @@ public class KafkaCalculatedFieldStateService implements CalculatedFieldStateSer
     }
 
     @Override
-    public void persistState(CalculatedFieldCtx ctx, CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback) {
+    public void persistState(CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback) {
         callback.onSuccess();
     }
 

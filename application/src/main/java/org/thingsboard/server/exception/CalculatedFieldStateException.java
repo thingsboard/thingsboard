@@ -13,17 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf;
+package org.thingsboard.server.exception;
 
-import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.exception.CalculatedFieldStateException;
-import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
-import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
+public class CalculatedFieldStateException extends Exception {
 
-public interface CalculatedFieldStateService {
-
-    void persistState(CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback) throws CalculatedFieldStateException;
-
-    void removeState(CalculatedFieldEntityCtxId stateId, TbCallback callback);
+    public CalculatedFieldStateException(String message) {
+        super(message);
+    }
 
 }

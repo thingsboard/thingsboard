@@ -41,15 +41,14 @@ public interface ArgumentEntry {
 
     boolean updateEntry(ArgumentEntry entry);
 
+    boolean isEmpty();
+
     static ArgumentEntry createSingleValueArgument(KvEntry kvEntry) {
         return new SingleValueArgumentEntry(kvEntry);
     }
 
-    static ArgumentEntry createTsRollingArgument(List<TsKvEntry> kvEntries) {
-        return new TsRollingArgumentEntry(kvEntries);
+    static ArgumentEntry createTsRollingArgument(List<TsKvEntry> kvEntries, int limit, long timeWindow) {
+        return new TsRollingArgumentEntry(kvEntries, limit, timeWindow);
     }
-
-    @JsonIgnore
-    ArgumentEntry copy();
 
 }

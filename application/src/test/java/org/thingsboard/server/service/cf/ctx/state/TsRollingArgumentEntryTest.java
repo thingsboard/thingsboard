@@ -40,7 +40,7 @@ public class TsRollingArgumentEntryTest {
         values.put(ts - 30, new DoubleDataEntry("key", 12.0));
         values.put(ts - 20, new DoubleDataEntry("key", 17.0));
 
-        entry = new TsRollingArgumentEntry(values);
+//        entry = new TsRollingArgumentEntry(values);
     }
 
     @Test

@@ -32,8 +32,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 @AllArgsConstructor
 public class SingleValueArgumentEntry implements ArgumentEntry {
 
-    public static final ArgumentEntry EMPTY = new SingleValueArgumentEntry(0);
-
     private long ts;
     private BasicKvEntry kvEntryValue;
     private Long version;
@@ -61,27 +59,19 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
         this.kvEntryValue = ProtoUtils.basicKvEntryFromKvEntry(entry);
     }
 
-    /**
-     * Internal constructor to create immutable SingleValueArgumentEntry.EMPTY
-     * */
-    private SingleValueArgumentEntry(int ignored) {
-        this.ts = System.currentTimeMillis();
-        this.kvEntryValue = null;
-    }
-
     @Override
     public ArgumentEntryType getType() {
         return ArgumentEntryType.SINGLE_VALUE;
     }
 
-    @JsonIgnore
-    public Object getValue() {
-        return kvEntryValue.getValue();
+    @Override
+    public boolean isEmpty() {
+        return kvEntryValue == null;
     }
 
-    @Override
-    public ArgumentEntry copy() {
-        return new SingleValueArgumentEntry(this.ts, this.kvEntryValue, this.version);
+    @JsonIgnore
+    public Object getValue() {
+        return isEmpty() ? null : kvEntryValue.getValue();
     }
 
     @Override
@@ -98,7 +88,7 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
 
                 // TODO: should we persist updated ts and version values?
                 BasicKvEntry newValue = singleValueEntry.getKvEntryValue();
-                if (this.kvEntryValue.getValue().equals(newValue.getValue())) {
+                if (this.kvEntryValue != null && this.kvEntryValue.getValue().equals(newValue.getValue())) {
                     return false;
                 }
                 this.kvEntryValue = singleValueEntry.getKvEntryValue();

@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
+import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 
 import java.util.List;
 import java.util.Map;
@@ -41,8 +42,6 @@ public interface CalculatedFieldState {
 
     Map<String, ArgumentEntry> getArguments();
 
-    List<String> getRequiredArguments();
-
     void setRequiredArguments(List<String> requiredArguments);
 
     boolean updateState(Map<String, ArgumentEntry> argumentValues);
@@ -51,4 +50,9 @@ public interface CalculatedFieldState {
 
     @JsonIgnore
     boolean isReady();
+
+    boolean isStateTooLarge();
+
+    void checkStateSize(CalculatedFieldEntityCtxId ctxId, long maxStateSize);
+
 }

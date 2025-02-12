@@ -37,26 +37,36 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TsRollingArgumentEntry implements ArgumentEntry {
 
-    public static final ArgumentEntry EMPTY = new TsRollingArgumentEntry(0);
-
-    private static final int MAX_ROLLING_ARGUMENT_ENTRY_SIZE = 1000;
-
+    private Integer limit;
+    private Long timeWindow;
     private TreeMap<Long, BasicKvEntry> tsRecords = new TreeMap<>();
 
-    public TsRollingArgumentEntry(List<TsKvEntry> kvEntries) {
+    public TsRollingArgumentEntry(List<TsKvEntry> kvEntries, int limit, long timeWindow) {
         kvEntries.forEach(tsKvEntry -> addTsRecord(tsKvEntry.getTs(), tsKvEntry));
+        this.limit = limit;
+        this.timeWindow = timeWindow;
     }
 
-    /**
-     * Internal constructor to create immutable TsRollingArgumentEntry.EMPTY
-     */
-    private TsRollingArgumentEntry(int ignored) {
+    public TsRollingArgumentEntry(TreeMap<Long, BasicKvEntry> tsRecords, int limit, long timeWindow) {
+        this.tsRecords = tsRecords;
+        this.limit = limit;
+        this.timeWindow = timeWindow;
+    }
+
+    public TsRollingArgumentEntry(int limit, long timeWindow) {
         this.tsRecords = new TreeMap<>();
+        this.limit = limit;
+        this.timeWindow = timeWindow;
     }
 
     @Override
     public ArgumentEntryType getType() {
         return ArgumentEntryType.TS_ROLLING;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return tsRecords.isEmpty();
     }
 
     @JsonIgnore
@@ -70,12 +80,6 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
                         (oldValue, newValue) -> oldValue,
                         TreeMap::new
                 ));
-
-    }
-
-    @Override
-    public ArgumentEntry copy() {
-        return new TsRollingArgumentEntry(new TreeMap<>(tsRecords));
     }
 
     @Override
@@ -112,9 +116,10 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
     private void addTsRecord(Long ts, KvEntry value) {
         if (NumberUtils.isParsable(value.getValue().toString())) {
             tsRecords.put(ts, ProtoUtils.basicKvEntryFromKvEntry(value));
-            if (tsRecords.size() > MAX_ROLLING_ARGUMENT_ENTRY_SIZE) {
+            if (tsRecords.size() > limit) {
                 tsRecords.pollFirstEntry();
             }
+            tsRecords.entrySet().removeIf(tsRecord -> tsRecord.getKey() < System.currentTimeMillis() - timeWindow);
         } else {
             throw new IllegalArgumentException("Argument type " + getType() + " only supports numeric values.");
         }
