@@ -380,7 +380,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             }
           ),
           new EntityTableColumn<Event>('messageId', 'event.message-id', '85px',
-            (entity) => `<span style="display: inline-block; width: 9ch">${entity.body.msgId?.substring(0, 8)}…</span>`,
+            (entity) => entity.body.msgId ? `<span style="display: inline-block; width: 9ch">${entity.body.msgId?.substring(0, 8)}…</span>` : '-',
             () => ({padding: '0 12px 0 0'}),
             false,
             () => ({padding: '0 12px 0 0'}),
@@ -394,13 +394,13 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
                 'font-size': '16px',
                 color: 'rgba(0,0,0,.87)'
               },
-              isEnabled: () => true,
-              onAction: ($event, entity) => entity.body.msgId,
+              isEnabled: (entity) => !!entity.body.msgId,
+              onAction: (_, entity) => entity.body.msgId,
               type: CellActionDescriptorType.COPY_BUTTON
             }
           ),
           new EntityTableColumn<Event>('messageType', 'event.message-type', '100px',
-            (entity) => entity.body.msgType,
+            (entity) => entity.body.msgType ?? '-',
             () => ({padding: '0 12px 0 0'}),
             false
           ),

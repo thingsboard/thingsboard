@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  .debug-dialog-container {
-    width: 80vw;
+@use '../../../../../../../scss/constants' as constants;
 
-    .debug-dialog-content {
-      height: 65vh;
-      border-radius: 0;
+:host::ng-deep {
+  .tb-form-table-row {
+    .argument-value {
+      .tb-value-type.row {
+        @media #{constants.$mat-lt-sm} {
+          width: 100px;
+          min-width: 100px;
+        }
+      }
     }
   }
 }

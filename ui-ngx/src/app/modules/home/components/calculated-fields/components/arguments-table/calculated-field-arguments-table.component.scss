@@ -27,4 +27,10 @@
       font-size: 14px;
     }
   }
+
+  .mat-mdc-standard-chip {
+    .mdc-evolution-chip__cell--primary, .mdc-evolution-chip__action--primary, .mdc-evolution-chip__text-label {
+      overflow: hidden;
+    }
+  }
 }

@@ -19,7 +19,7 @@
   <div>{{ 'calculated-fields.arguments' | translate }}</div>
   <div class="tb-form-table">
     <div class="tb-form-table-header">
-      <div class="tb-form-table-header-cell w-1/4">{{ 'calculated-fields.argument-name' | translate }}</div>
+      <div class="tb-form-table-header-cell w-1/4" tbTruncateWithTooltip>{{ 'calculated-fields.argument-name' | translate }}</div>
       <div class="tb-form-table-header-cell flex-1">{{ 'common.value' | translate }}</div>
     </div>
     <div class="tb-form-table-body">
@@ -28,7 +28,7 @@
           <mat-form-field appearance="outline" class="tb-inline-field w-1/4" subscriptSizing="dynamic">
             <input matInput formControlName="argumentName" placeholder="{{ 'action.set' | translate }}">
           </mat-form-field>
-          <tb-value-input class="flex-1" [required]="false" formControlName="value"/>
+          <tb-value-input class="flex-1 argument-value" [required]="false" formControlName="value"/>
         </div>
       }
     </div>

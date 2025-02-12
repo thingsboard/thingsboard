@@ -30,6 +30,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 @Component({
   selector: 'tb-calculated-field-test-arguments',
   templateUrl: './calculated-field-test-arguments.component.html',
+  styleUrls: ['./calculated-field-test-arguments.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

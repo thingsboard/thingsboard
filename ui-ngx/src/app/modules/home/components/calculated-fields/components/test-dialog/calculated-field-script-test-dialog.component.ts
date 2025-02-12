@@ -51,6 +51,7 @@ export class CalculatedFieldScriptTestDialogComponent extends DialogComponent<Ca
   @ViewChild('rightPanel', {static: true}) rightPanelElmRef: ElementRef<HTMLElement>;
   @ViewChild('topRightPanel', {static: true}) topRightPanelElmRef: ElementRef<HTMLElement>;
   @ViewChild('bottomRightPanel', {static: true}) bottomRightPanelElmRef: ElementRef<HTMLElement>;
+  @ViewChild('testScriptContainer', {static: true}) testScriptContainer: ElementRef<HTMLElement>;
 
   @ViewChild('expressionContent', {static: true}) expressionContent: JsonContentComponent;
 
@@ -63,6 +64,9 @@ export class CalculatedFieldScriptTestDialogComponent extends DialogComponent<Ca
   readonly ContentType = ContentType;
   readonly ScriptLanguage = ScriptLanguage;
   readonly functionArgs = Object.keys(this.data.arguments);
+
+  private testScriptResize: ResizeObserver;
+  private splitObjects: SplitObject[] = [];
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -80,12 +84,7 @@ export class CalculatedFieldScriptTestDialogComponent extends DialogComponent<Ca
   }
 
   ngAfterViewInit(): void {
-    this.initSplitLayout(
-      this.leftPanelElmRef.nativeElement,
-      this.rightPanelElmRef.nativeElement,
-      this.topRightPanelElmRef.nativeElement,
-      this.bottomRightPanelElmRef.nativeElement
-    );
+    this.observeResize();
   }
 
   cancel(): void {
@@ -140,18 +139,58 @@ export class CalculatedFieldScriptTestDialogComponent extends DialogComponent<Ca
     return !this.calculatedFieldScriptTestFormGroup.get('expression').invalid;
   }
 
-  private initSplitLayout(leftPanel, rightPanel, topRightPanel, bottomRightPanel): void {
-    Split([leftPanel, rightPanel], {
-      sizes: [50, 50],
-      gutterSize: 8,
-      cursor: 'col-resize'
+  private observeResize(): void {
+    this.testScriptResize = new ResizeObserver(() => {
+      this.updateSizes();
     });
 
-    Split([topRightPanel, bottomRightPanel], {
-      sizes: [50, 50],
-      gutterSize: 8,
-      cursor: 'row-resize',
-      direction: 'vertical'
-    });
+    this.testScriptResize.observe(this.testScriptContainer.nativeElement);
+  }
+
+  private updateSizes(): void {
+    this.initSplitLayout(this.testScriptContainer.nativeElement.clientWidth <= 960);
+  }
+
+  private initSplitLayout(smallMode = false): void {
+    const [leftPanel, rightPanel, topRightPanel, bottomRightPanel] = [
+      this.leftPanelElmRef.nativeElement,
+      this.rightPanelElmRef.nativeElement,
+      this.topRightPanelElmRef.nativeElement,
+      this.bottomRightPanelElmRef.nativeElement
+    ] as unknown as string[];
+
+    this.splitObjects.forEach(obj => obj.destroy());
+    this.splitObjects = [];
+
+    if (smallMode) {
+      this.splitObjects.push(
+        Split([leftPanel, rightPanel], {
+          sizes: [33, 67],
+          gutterSize: 8,
+          cursor: 'row-resize',
+          direction: 'vertical'
+        }),
+        Split([topRightPanel, bottomRightPanel], {
+          sizes: [50, 50],
+          gutterSize: 8,
+          cursor: 'row-resize',
+          direction: 'vertical'
+        }),
+      );
+    } else {
+      this.splitObjects.push(
+        Split([leftPanel, rightPanel], {
+          sizes: [50, 50],
+          gutterSize: 8,
+          cursor: 'col-resize'
+        }),
+        Split([topRightPanel, bottomRightPanel], {
+          sizes: [50, 50],
+          gutterSize: 8,
+          cursor: 'row-resize',
+          direction: 'vertical'
+        })
+      );
+    }
   }
 }
