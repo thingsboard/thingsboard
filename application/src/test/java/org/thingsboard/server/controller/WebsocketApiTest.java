@@ -84,7 +84,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DaoSqlTest
 @TestPropertySource(properties = {
         "server.ws.alarms_per_alarm_status_subscription_cache_size=5",
-        "server.ws.dynamic_page_link.refresh_interval=2"
+        "server.ws.dynamic_page_link.refresh_interval=3"
 })
 public class WebsocketApiTest extends AbstractControllerTest {
     @Autowired
@@ -422,7 +422,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         alarm = doPost("/api/alarm", alarm, Alarm.class);
 
-        update = getWsClient().parseAlarmCountReply(getWsClient().waitForUpdate(3000));
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForUpdate(4000));
         Assert.assertEquals(1, update.getCmdId());
         Assert.assertEquals(1, update.getCount());
 

@@ -321,27 +321,35 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         if (query.isSearchPropagatedAlarms()) {
             ctx.append("select count(distinct(a.id)) from alarm_info a ");
             ctx.append(JOIN_ENTITY_ALARMS);
-            ctx.append("where a.tenant_id = :tenantId and ea.tenant_id = :tenantId");
-            ctx.addUuidParameter("tenantId", tenantId.getId());
-            if (customerId != null && !customerId.isNullUid()) {
-                ctx.append(" and a.customer_id = :customerId and ea.customer_id = :customerId");
-                ctx.addUuidParameter("customerId", customerId.getId());
-            }
             if (orderedEntityIds != null) {
+                if (orderedEntityIds.isEmpty()) {
+                    return 0;
+                }
                 ctx.addUuidListParameter("entity_filter_entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
-                ctx.append(" and ea.entity_id in (:entity_filter_entity_ids)");
+                ctx.append("where ea.entity_id in (:entity_filter_entity_ids)");
+            } else {
+                ctx.append("where a.tenant_id = :tenantId and ea.tenant_id = :tenantId");
+                ctx.addUuidParameter("tenantId", tenantId.getId());
+                if (customerId != null && !customerId.isNullUid()) {
+                    ctx.append(" and a.customer_id = :customerId and ea.customer_id = :customerId");
+                    ctx.addUuidParameter("customerId", customerId.getId());
+                }
             }
         } else {
             ctx.append("select count(id) from alarm_info a ");
-            ctx.append("where a.tenant_id = :tenantId");
-            ctx.addUuidParameter("tenantId", tenantId.getId());
-            if (customerId != null && !customerId.isNullUid()) {
-                ctx.append(" and a.customer_id = :customerId");
-                ctx.addUuidParameter("customerId", customerId.getId());
-            }
             if (orderedEntityIds != null) {
+                if (orderedEntityIds.isEmpty()) {
+                    return 0;
+                }
                 ctx.addUuidListParameter("entity_filter_entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
-                ctx.append(" and a.originator_id in (:entity_filter_entity_ids)");
+                ctx.append("where a.originator_id in (:entity_filter_entity_ids)");
+            } else {
+                ctx.append("where a.tenant_id = :tenantId");
+                ctx.addUuidParameter("tenantId", tenantId.getId());
+                if (customerId != null && !customerId.isNullUid()) {
+                    ctx.append(" and a.customer_id = :customerId");
+                    ctx.addUuidParameter("customerId", customerId.getId());
+                }
             }
         }
 

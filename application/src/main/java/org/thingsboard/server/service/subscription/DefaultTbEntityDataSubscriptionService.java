@@ -424,8 +424,12 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             long start = System.currentTimeMillis();
             ctx.fetchData();
             long end = System.currentTimeMillis();
-            stats.getAlarmQueryInvocationCnt().incrementAndGet();
-            stats.getAlarmQueryTimeSpent().addAndGet(end - start);
+            stats.getRegularQueryInvocationCnt().incrementAndGet();
+            stats.getRegularQueryTimeSpent().addAndGet(end - start);
+            ctx.cancelTasks();
+            ctx.clearAlarmSubscriptions();
+            ctx.fetchAlarmCount();
+            ctx.createAlarmSubscriptions();
             TbAlarmCountSubCtx finalCtx = ctx;
             ScheduledFuture<?> task = scheduler.scheduleWithFixedDelay(
                     () -> refreshDynamicQuery(finalCtx),
@@ -549,7 +553,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     private TbAlarmCountSubCtx createSubCtx(WebSocketSessionRef sessionRef, AlarmCountCmd cmd) {
         Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new ConcurrentHashMap<>());
         TbAlarmCountSubCtx ctx = new TbAlarmCountSubCtx(serviceId, wsService, entityService, localSubscriptionService,
-                attributesService, stats, alarmService, sessionRef, cmd.getCmdId(), maxEntitiesPerAlarmSubscription);
+                attributesService, stats, alarmService, sessionRef, cmd.getCmdId(), maxEntitiesPerAlarmSubscription, maxAlarmQueriesPerRefreshInterval);
         if (cmd.getQuery() != null) {
             ctx.setAndResolveQuery(cmd.getQuery());
         }
