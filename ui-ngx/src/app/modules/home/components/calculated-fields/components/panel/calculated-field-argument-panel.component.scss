@@ -20,7 +20,7 @@
   min-width: 520px;
 
   @media #{constants.$mat-lt-sm} {
-    min-width: 320px;
+    min-width: 280px;
   }
 
   .fixed-title-width {
