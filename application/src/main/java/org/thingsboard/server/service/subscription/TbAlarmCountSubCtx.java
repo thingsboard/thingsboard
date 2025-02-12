@@ -48,6 +48,7 @@ public class TbAlarmCountSubCtx extends TbAbstractEntityQuerySubCtx<AlarmCountQu
 
     protected final Map<Integer, EntityId> subToEntityIdMap;
 
+    @Getter
     private LinkedHashSet<EntityId> entitiesIds;
 
     private final int maxEntitiesPerAlarmSubscription;
@@ -102,24 +103,28 @@ public class TbAlarmCountSubCtx extends TbAbstractEntityQuerySubCtx<AlarmCountQu
         fetchAlarmCount();
     }
 
+    @Override
+    public boolean isDynamic() {
+        return true;
+    }
+
     public void fetchAlarmCount() {
         alarmCountInvocationAttempts++;
         log.trace("[{}] Fetching alarms: {}", cmdId, alarmCountInvocationAttempts);
         if (alarmCountInvocationAttempts <= maxAlarmQueriesPerRefreshInterval) {
-            doFetchAlarmCount();
+            int newCount = (int) alarmService.countAlarmsByQuery(getTenantId(), getCustomerId(), query, entitiesIds);
+            if (newCount != result) {
+                result = newCount;
+                sendWsMsg(new AlarmCountUpdate(cmdId, result));
+            }
         } else {
             log.trace("[{}] Ignore alarm count fetch due to rate limit: [{}] of maximum [{}]", cmdId, alarmCountInvocationAttempts, maxAlarmQueriesPerRefreshInterval);
         }
     }
 
-    private void doFetchAlarmCount() {
+    public void doFetchAlarmCount() {
         result = (int) alarmService.countAlarmsByQuery(getTenantId(), getCustomerId(), query, entitiesIds);
         sendWsMsg(new AlarmCountUpdate(cmdId, result));
-    }
-
-    @Override
-    public boolean isDynamic() {
-        return true;
     }
 
     private EntityDataQuery buildEntityDataQuery() {

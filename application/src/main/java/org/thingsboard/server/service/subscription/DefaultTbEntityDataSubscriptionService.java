@@ -33,6 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
@@ -59,6 +60,7 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.AggHistoryCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AggKey;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AggTimeSeriesCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountCmd;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmCountUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmDataCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmDataUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.AlarmStatusCmd;
@@ -426,15 +428,21 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             long end = System.currentTimeMillis();
             stats.getRegularQueryInvocationCnt().incrementAndGet();
             stats.getRegularQueryTimeSpent().addAndGet(end - start);
+            Set<EntityId> entitiesIds = ctx.getEntitiesIds();
             ctx.cancelTasks();
             ctx.clearAlarmSubscriptions();
-            ctx.fetchAlarmCount();
-            ctx.createAlarmSubscriptions();
-            TbAlarmCountSubCtx finalCtx = ctx;
-            ScheduledFuture<?> task = scheduler.scheduleWithFixedDelay(
-                    () -> refreshDynamicQuery(finalCtx),
-                    dynamicPageLinkRefreshInterval, dynamicPageLinkRefreshInterval, TimeUnit.SECONDS);
-            finalCtx.setRefreshTask(task);
+            if (entitiesIds != null && entitiesIds.isEmpty()) {
+                AlarmCountUpdate update = new AlarmCountUpdate(cmd.getCmdId(), 0);
+                ctx.sendWsMsg(update);
+            } else {
+                ctx.doFetchAlarmCount();
+                ctx.createAlarmSubscriptions();
+                TbAlarmCountSubCtx finalCtx = ctx;
+                ScheduledFuture<?> task = scheduler.scheduleWithFixedDelay(
+                        () -> refreshDynamicQuery(finalCtx),
+                        dynamicPageLinkRefreshInterval, dynamicPageLinkRefreshInterval, TimeUnit.SECONDS);
+                finalCtx.setRefreshTask(task);
+            }
         } else {
             log.debug("[{}][{}] Received duplicate command: {}", session.getSessionId(), cmd.getCmdId(), cmd);
         }
