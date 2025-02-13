@@ -363,8 +363,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
           new EntityLinkTableColumn<Event>('entityId', 'event.entity-id', '100px',
             (entity) => `<span style="display: inline-block; width: 9ch">${entity.body.entityId.substring(0, 8)}…</span>`,
             (entity) => getEntityDetailsPageURL(entity.body.entityId, entity.body.entityType as EntityType),
-            () => ({padding: '0 12px 0 0'}),
             false,
+            () => ({padding: '0 12px 0 0'}),
             () => ({padding: '0 12px 0 0'}),
             (entity) => entity.body.entityId,
             {

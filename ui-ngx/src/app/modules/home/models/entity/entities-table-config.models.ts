@@ -121,8 +121,8 @@ export class EntityLinkTableColumn<T extends BaseData<HasId>> extends BaseEntity
               public width: string = '0px',
               public cellContentFunction: CellContentFunction<T> = (entity, property) => entity[property] ? entity[property] : '',
               public entityURL: (entity) => string,
-              public cellStyleFunction: CellStyleFunction<T> = () => ({}),
               public sortable: boolean = true,
+              public cellStyleFunction: CellStyleFunction<T> = () => ({}),
               public headerCellStyleFunction: HeaderCellStyleFunction<T> = () => ({}),
               public cellTooltipFunction: CellTooltipFunction<T> = () => undefined,
               public actionCell: CellActionDescriptor<T> = null) {
