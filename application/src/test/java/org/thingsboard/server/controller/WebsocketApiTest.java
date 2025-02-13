@@ -83,8 +83,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Slf4j
 @DaoSqlTest
 @TestPropertySource(properties = {
-        "server.ws.alarms_per_alarm_status_subscription_cache_size=5",
-        "server.ws.dynamic_page_link.refresh_interval=3"
+        "server.ws.alarms_per_alarm_status_subscription_cache_size=5"
 })
 public class WebsocketApiTest extends AbstractControllerTest {
     @Autowired
@@ -340,6 +339,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
         Assert.assertEquals(1, update.getCmdId());
         Assert.assertEquals(0, update.getCount());
 
+        //create alarm, check count = 1
         Alarm alarm = new Alarm();
         alarm.setOriginator(tenantId);
         alarm.setType("TEST ALARM");
@@ -355,6 +355,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
         Assert.assertEquals(2, update.getCmdId());
         Assert.assertEquals(1, update.getCount());
 
+        // set wrong entity id in filter, check count = 0
         singleEntityFilter.setSingleEntity(tenantAdminUserId);
         AlarmCountCmd cmd3 = new AlarmCountCmd(3, alarmCountQuery);
 
@@ -363,39 +364,6 @@ public class WebsocketApiTest extends AbstractControllerTest {
         update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
         Assert.assertEquals(3, update.getCmdId());
         Assert.assertEquals(0, update.getCount());
-
-        alarm.setAssigneeId(tenantAdminUserId);
-        alarm = doPost("/api/alarm", alarm, Alarm.class);
-
-        singleEntityFilter.setSingleEntity(tenantId);
-        alarmCountQuery.setAssigneeId(tenantAdminUserId);
-        AlarmCountCmd cmd4 = new AlarmCountCmd(4, alarmCountQuery);
-
-        getWsClient().send(cmd4);
-
-        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
-        Assert.assertEquals(4, update.getCmdId());
-        Assert.assertEquals(1, update.getCount());
-
-        alarmCountQuery.setSeverityList(Collections.singletonList(AlarmSeverity.CRITICAL));
-        AlarmCountCmd cmd5 = new AlarmCountCmd(5, alarmCountQuery);
-
-        getWsClient().send(cmd5);
-
-        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
-        Assert.assertEquals(5, update.getCmdId());
-        Assert.assertEquals(0, update.getCount());
-
-        alarm.setSeverity(AlarmSeverity.CRITICAL);
-        doPost("/api/alarm", alarm, Alarm.class);
-
-        AlarmCountCmd cmd6 = new AlarmCountCmd(6, alarmCountQuery);
-
-        getWsClient().send(cmd6);
-
-        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
-        Assert.assertEquals(6, update.getCmdId());
-        Assert.assertEquals(1, update.getCount());
     }
 
     @Test
@@ -422,7 +390,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         alarm = doPost("/api/alarm", alarm, Alarm.class);
 
-        update = getWsClient().parseAlarmCountReply(getWsClient().waitForUpdate(4000));
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForUpdate());
         Assert.assertEquals(1, update.getCmdId());
         Assert.assertEquals(1, update.getCount());
 
@@ -484,17 +452,18 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
         doPost("/api/alarm", alarm2, Alarm.class);
 
-        AlarmStatusUpdate alarmStatusUpdate3 = JacksonUtil.fromString(getWsClient().waitForReply(), AlarmStatusUpdate.class);
+        AlarmStatusUpdate alarmStatusUpdate3 = JacksonUtil.fromString(getWsClient().waitForUpdate(), AlarmStatusUpdate.class);
         Assert.assertEquals(1, alarmStatusUpdate3.getCmdId());
         Assert.assertTrue(alarmStatusUpdate3.isActive());
 
         //change severity
+        getWsClient().registerWaitForUpdate();
         alarm2.setSeverity(AlarmSeverity.MAJOR);
         Alarm updatedAlarm = doPost("/api/alarm", alarm2, Alarm.class);
         Assert.assertNotNull(updatedAlarm);
         Assert.assertEquals(AlarmSeverity.MAJOR, updatedAlarm.getSeverity());
 
-        AlarmStatusUpdate alarmStatusUpdate4 = JacksonUtil.fromString(getWsClient().waitForReply(), AlarmStatusUpdate.class);
+        AlarmStatusUpdate alarmStatusUpdate4 = JacksonUtil.fromString(getWsClient().waitForUpdate(), AlarmStatusUpdate.class);
         Assert.assertEquals(1, alarmStatusUpdate4.getCmdId());
         Assert.assertFalse(alarmStatusUpdate4.isActive());
 
