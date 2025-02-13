@@ -17,17 +17,21 @@ package org.thingsboard.server.dao.model.sql;
 
 import io.hypersistence.utils.hibernate.type.array.StringArrayType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.Type;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.widget.BaseWidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.util.mapping.WidgetBundleEntityInfosConverter;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -58,6 +62,10 @@ public class WidgetTypeInfoEntity extends AbstractWidgetTypeEntity<WidgetTypeInf
     @Column(name = ModelConstants.WIDGET_TYPE_WIDGET_TYPE_PROPERTY)
     private String widgetType;
 
+    @Convert(converter = WidgetBundleEntityInfosConverter.class)
+    @Column(name = ModelConstants.WIDGET_BUNDLES_PROPERTY)
+    private List<EntityInfo> bundles;
+
     public WidgetTypeInfoEntity() {
         super();
     }
@@ -70,6 +78,7 @@ public class WidgetTypeInfoEntity extends AbstractWidgetTypeEntity<WidgetTypeInf
         widgetTypeInfo.setDescription(description);
         widgetTypeInfo.setTags(tags);
         widgetTypeInfo.setWidgetType(widgetType);
+        widgetTypeInfo.setBundles(bundles);
         return widgetTypeInfo;
     }
 

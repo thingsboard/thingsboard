@@ -16,12 +16,21 @@
 package org.thingsboard.server.common.data.widget;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.Data;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+
 @Data
 public class WidgetTypeInfo extends BaseWidgetType {
+
+    @Serial
+    private static final long serialVersionUID = 1343617007959780969L;
 
     @Schema(description = "Base64 encoded widget thumbnail", accessMode = Schema.AccessMode.READ_ONLY)
     private String image;
@@ -34,6 +43,9 @@ public class WidgetTypeInfo extends BaseWidgetType {
     @NoXss
     @Schema(description = "Type of the widget (timeseries, latest, control, alarm or static)", accessMode = Schema.AccessMode.READ_ONLY)
     private String widgetType;
+    @Valid
+    @Schema(description = "Bundles", accessMode = Schema.AccessMode.READ_ONLY)
+    private List<EntityInfo> bundles;
 
     public WidgetTypeInfo() {
         super();
@@ -53,6 +65,16 @@ public class WidgetTypeInfo extends BaseWidgetType {
         this.description = widgetTypeInfo.getDescription();
         this.tags = widgetTypeInfo.getTags();
         this.widgetType = widgetTypeInfo.getWidgetType();
+        this.bundles = Collections.emptyList();
+    }
+
+    public WidgetTypeInfo(WidgetTypeInfo widgetTypeInfo, List<EntityInfo> bundles) {
+        super(widgetTypeInfo);
+        this.image = widgetTypeInfo.getImage();
+        this.description = widgetTypeInfo.getDescription();
+        this.tags = widgetTypeInfo.getTags();
+        this.widgetType = widgetTypeInfo.getWidgetType();
+        this.bundles = bundles;
     }
 
     public WidgetTypeInfo(WidgetTypeDetails widgetTypeDetails) {
@@ -65,5 +87,7 @@ public class WidgetTypeInfo extends BaseWidgetType {
         } else {
             this.widgetType = "";
         }
+        this.bundles = Collections.emptyList();
     }
+
 }
