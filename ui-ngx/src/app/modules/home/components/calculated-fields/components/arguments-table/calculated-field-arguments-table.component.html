@@ -18,19 +18,19 @@
 <div class="flex flex-col gap-3">
     <div class="tb-form-table">
         <div class="tb-form-table-header">
-            <div class="tb-form-table-header-cell w-1/6 lt-sm:!w-1/3 lt-md:w-1/4" tbTruncateWithTooltip>{{ 'calculated-fields.argument-name' | translate }}</div>
-            <div class="tb-form-table-header-cell w-1/3 lt-sm:hidden">{{ 'calculated-fields.datasource' | translate }}</div>
+            <div class="argument-name-field tb-form-table-header-cell w-1/6 xs:w-1/3 sm:w-1/4" tbTruncateWithTooltip>{{ 'calculated-fields.argument-name' | translate }}</div>
+            <div class="tb-form-table-header-cell w-1/3 xs:hidden">{{ 'calculated-fields.datasource' | translate }}</div>
             <div class="tb-form-table-header-cell w-1/6 lt-md:hidden">{{ 'common.type' | translate }}</div>
-            <div class="tb-form-table-header-cell w-1/6 lt-sm:w-1/3">{{ 'entity.key' | translate }}</div>
-            <div class="tb-form-table-header-cell w-16 min-w-16"></div>
+            <div class="tb-form-table-header-cell w-1/6 xs:w-1/3">{{ 'entity.key' | translate }}</div>
+            <div class="tb-form-table-header-cell w-20 min-w-20"></div>
         </div>
         <div class="tb-form-table-body">
             @for (group of argumentsFormArray.controls; track group) {
                 <div [formGroup]="group" class="tb-form-table-row">
-                    <mat-form-field appearance="outline" class="tb-inline-field w-1/6 lt-sm:!w-1/3 lt-md:w-1/4" subscriptSizing="dynamic">
+                    <mat-form-field appearance="outline" class="argument-name-field tb-inline-field w-1/6 xs:w-1/3 sm:w-1/4" subscriptSizing="dynamic">
                         <input matInput formControlName="argumentName" placeholder="{{ 'action.set' | translate }}">
                     </mat-form-field>
-                    <section class="flex w-1/3 gap-2 lt-sm:hidden">
+                    <section class="datasource-field flex w-1/3 gap-2 xs:hidden">
                         @if (group.get('refEntityId')?.get('id')?.value) {
                             <ng-container [formGroup]="group.get('refEntityId')">
                                 <mat-form-field appearance="outline" class="tb-inline-field flex-1" subscriptSizing="dynamic">
@@ -72,7 +72,7 @@
                                 </mat-select>
                             }
                         </mat-form-field>
-                        <mat-chip-listbox formControlName="key" class="tb-inline-field w-1/6 lt-sm:w-1/3">
+                        <mat-chip-listbox formControlName="key" class="tb-inline-field w-1/6 xs:w-1/3">
                             <mat-chip>
                                 <div tbTruncateWithTooltip>
                                     {{ group.get('refEntityKey').get('key').value }}
@@ -80,7 +80,7 @@
                             </mat-chip>
                         </mat-chip-listbox>
                     </ng-container>
-                    <div class="tb-form-table-row-cell-buttons flex w-16 min-w-16">
+                    <div class="tb-form-table-row-cell-buttons flex w-20 min-w-20">
                         <button type="button"
                                 mat-icon-button
                                 #button

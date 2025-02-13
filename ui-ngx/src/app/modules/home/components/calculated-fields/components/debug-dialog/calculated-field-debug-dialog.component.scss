@@ -15,7 +15,8 @@
  */
 :host {
   .debug-dialog-container {
-    width: 80vw;
+    width: 1080px;
+    max-width: 100%;
 
     .debug-dialog-content {
       height: 65vh;
