@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2024 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,6 @@ public @interface AfterStartUp {
 
     int CF_READ_PROFILE_ENTITIES_SERVICE = 10;
     int CF_READ_CF_SERVICE = 11;
-    int CF_STATE_RESTORE_SERVICE = 12;
 
     int BEFORE_TRANSPORT_SERVICE = Integer.MAX_VALUE - 1001;
     int TRANSPORT_SERVICE = Integer.MAX_VALUE - 1000;

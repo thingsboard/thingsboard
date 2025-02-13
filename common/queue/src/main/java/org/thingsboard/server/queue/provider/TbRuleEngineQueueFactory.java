@@ -17,7 +17,7 @@ package org.thingsboard.server.queue.provider;
 
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -126,8 +126,8 @@ public interface TbRuleEngineQueueFactory extends TbUsageStatsClientQueueFactory
 
     TbQueueConsumer<TbProtoQueueMsg<ToCalculatedFieldNotificationMsg>> createToCalculatedFieldNotificationsMsgConsumer();
 
-    TbQueueConsumer<TbProtoQueueMsg<CalculatedFieldStateProto>> createCalculatedFieldStateConsumer();
+    TbQueueConsumer<TbProtoQueueMsg<CalculatedFieldStateMsgProto>> createCalculatedFieldStateConsumer();
 
-    TbQueueProducer<TbProtoQueueMsg<CalculatedFieldStateProto>> createCalculatedFieldStateProducer();
+    TbQueueProducer<TbProtoQueueMsg<CalculatedFieldStateMsgProto>> createCalculatedFieldStateProducer();
 
 }

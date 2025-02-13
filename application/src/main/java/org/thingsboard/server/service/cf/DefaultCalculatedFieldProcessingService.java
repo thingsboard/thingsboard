@@ -70,6 +70,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNot
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
@@ -91,7 +92,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
-import static org.thingsboard.server.queue.discovery.HashPartitionService.CALCULATED_FIELD_QUEUE_KEY;
 
 @TbRuleEngineComponent
 @Service
@@ -188,7 +188,7 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
             if (broadcast) {
                 broadcasts.add(link);
             } else {
-                TopicPartitionInfo tpi = partitionService.resolve(CALCULATED_FIELD_QUEUE_KEY, link.entityId());
+                TopicPartitionInfo tpi = partitionService.resolve(QueueKey.CF, link.entityId());
                 unicasts.computeIfAbsent(tpi, k -> new ArrayList<>()).add(link);
             }
         }
