@@ -31,7 +31,7 @@ public class KafkaTbQueueMsg implements TbQueueMsg {
     private final byte[] data;
 
     public KafkaTbQueueMsg(ConsumerRecord<String, byte[]> record) {
-        if (record.key().length() == UUID_LENGTH) {
+        if (record.key().length() <= UUID_LENGTH) {
             this.key = UUID.fromString(record.key());
         } else {
             this.key = UUID.randomUUID();

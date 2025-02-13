@@ -106,7 +106,6 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
             if (twoFactorAuthService.isTwoFaEnabled(securityUser.getTenantId(), securityUser.getId())) {
                 return new MfaAuthenticationToken(securityUser);
             } else {
-
                 systemSecurityService.logLoginAction(securityUser, authentication.getDetails(), ActionType.LOGIN, null);
             }
         } else {
