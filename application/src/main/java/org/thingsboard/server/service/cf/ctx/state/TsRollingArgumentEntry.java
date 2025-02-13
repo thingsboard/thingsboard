@@ -25,6 +25,7 @@ import org.thingsboard.script.api.tbel.TbelCfTsDoubleVal;
 import org.thingsboard.script.api.tbel.TbelCfTsRollingArg;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.exception.CalculatedFieldStateException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,7 +86,7 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
     }
 
     @Override
-    public boolean updateEntry(ArgumentEntry entry) {
+    public boolean updateEntry(ArgumentEntry entry) throws CalculatedFieldStateException {
         if (entry instanceof TsRollingArgumentEntry tsRollingEntry) {
             updateTsRollingEntry(tsRollingEntry);
         } else if (entry instanceof SingleValueArgumentEntry singleValueEntry) {
@@ -107,15 +108,18 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
     }
 
     private void addTsRecord(Long ts, KvEntry value) {
-        switch (value.getDataType()) {
-            case LONG -> value.getLongValue().ifPresent(aLong -> tsRecords.put(ts, aLong.doubleValue()));
-            case DOUBLE -> value.getDoubleValue().ifPresent(aDouble -> tsRecords.put(ts, aDouble));
-            case BOOLEAN -> value.getBooleanValue().ifPresent(aBoolean -> tsRecords.put(ts, aBoolean ? 1.0 : 0.0));
-            case STRING -> value.getStrValue().ifPresent(aString -> tsRecords.put(ts, Double.parseDouble(aString)));
-            case JSON -> value.getJsonValue().ifPresent(aString -> tsRecords.put(ts, Double.parseDouble(aString)));
-            //TODO: try catch
+        try {
+            switch (value.getDataType()) {
+                case LONG -> value.getLongValue().ifPresent(aLong -> tsRecords.put(ts, aLong.doubleValue()));
+                case DOUBLE -> value.getDoubleValue().ifPresent(aDouble -> tsRecords.put(ts, aDouble));
+                case BOOLEAN -> value.getBooleanValue().ifPresent(aBoolean -> tsRecords.put(ts, aBoolean ? 1.0 : 0.0));
+                case STRING -> value.getStrValue().ifPresent(aString -> tsRecords.put(ts, Double.parseDouble(aString)));
+                case JSON -> value.getJsonValue().ifPresent(aString -> tsRecords.put(ts, Double.parseDouble(aString)));
+            }
+            cleanupExpiredRecords();
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Time series rolling arguments supports only numeric values.");
         }
-        cleanupExpiredRecords();
     }
 
     private void addTsRecord(Long ts, double value) {

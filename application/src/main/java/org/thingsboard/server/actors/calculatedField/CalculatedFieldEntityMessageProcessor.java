@@ -197,12 +197,18 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             state = getOrInitState(ctx);
             justRestored = true;
         }
-        if (state.updateState(newArgValues) || justRestored) {
-            cfIdList = new ArrayList<>(cfIdList);
-            cfIdList.add(ctx.getCfId());
-            processStateIfReady(ctx, cfIdList, state, tbMsgId, tbMsgType, callback);
-        } else {
-            callback.onSuccess(CALLBACKS_PER_CF);
+        try {
+            if (state.updateState(newArgValues) || justRestored) {
+                cfIdList = new ArrayList<>(cfIdList);
+                cfIdList.add(ctx.getCfId());
+                processStateIfReady(ctx, cfIdList, state, tbMsgId, tbMsgType, callback);
+            } else {
+                callback.onSuccess(CALLBACKS_PER_CF);
+            }
+        } catch (Exception e) {
+            if (DebugModeUtil.isDebugFailuresAvailable(ctx.getCalculatedField())) {
+                systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, null, e);
+            }
         }
     }
 
@@ -212,37 +218,38 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         if (state != null) {
             return state;
         } else {
-            ListenableFuture<CalculatedFieldState> stateFuture = systemContext.getCalculatedFieldProcessingService().fetchStateFromDb(ctx, entityId);
-            // Ugly but necessary. We do not expect to often fetch data from DB. Only once per <Entity, CalculatedField> pair lifetime.
-            // This call happens while processing the CF pack from the queue consumer. So the timeout should be relatively low.
-            // Alternatively, we can fetch the state outside the actor system and push separate command to create this actor,
-            // but this will significantly complicate the code.
-            state = stateFuture.get(1, TimeUnit.MINUTES);
-            states.put(ctx.getCfId(), state);
+            try {
+                ListenableFuture<CalculatedFieldState> stateFuture = systemContext.getCalculatedFieldProcessingService().fetchStateFromDb(ctx, entityId);
+                // Ugly but necessary. We do not expect to often fetch data from DB. Only once per <Entity, CalculatedField> pair lifetime.
+                // This call happens while processing the CF pack from the queue consumer. So the timeout should be relatively low.
+                // Alternatively, we can fetch the state outside the actor system and push separate command to create this actor,
+                // but this will significantly complicate the code.
+                state = stateFuture.get(1, TimeUnit.MINUTES);
+                states.put(ctx.getCfId(), state);
+            } catch (Exception e) {
+                if (DebugModeUtil.isDebugFailuresAvailable(ctx.getCalculatedField())) {
+                    systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, null, null, null, null, e);
+                }
+                throw new RuntimeException(e);
+            }
         }
         return state;
     }
 
     @SneakyThrows
     private void processStateIfReady(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, CalculatedFieldState state, UUID tbMsgId, TbMsgType tbMsgType, TbCallback callback) {
-        CalculatedFieldEntityCtxId ctxId = new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId);
-        if (state.isReady() && ctx.isInitialized()) {
-            try {
+        try {
+            CalculatedFieldEntityCtxId ctxId = new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId);
+            if (state.isReady() && ctx.isInitialized()) {
                 CalculatedFieldResult calculationResult = state.performCalculation(ctx).get(5, TimeUnit.SECONDS);
                 state.checkStateSize(ctxId, ctx.getMaxStateSizeInKBytes());
                 cfService.pushMsgToRuleEngine(tenantId, entityId, calculationResult, cfIdList, callback);
                 if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
                     systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, JacksonUtil.writeValueAsString(calculationResult.getResultMap()), null);
                 }
-            } catch (Exception e) {
-                if (DebugModeUtil.isDebugFailuresAvailable(ctx.getCalculatedField())) {
-                    systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, null, e);
-                }
+            } else {
+                callback.onSuccess(); // State was updated but no calculation performed;
             }
-        } else {
-            callback.onSuccess(); // State was updated but no calculation performed;
-        }
-        try {
             cfStateService.persistState(ctxId, state, callback);
         } catch (Exception e) {
             if (DebugModeUtil.isDebugFailuresAvailable(ctx.getCalculatedField())) {
