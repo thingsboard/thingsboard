@@ -33,6 +33,13 @@ public class CalculatedFieldDebugEventFilter extends DebugEventFilter {
     protected String msgId;
     @Schema(description = "String value representing the message type", example = "POST_TELEMETRY_REQUEST")
     protected String msgType;
+    @Schema(description = "String value representing the arguments that were used in the calculation performed",
+            example = "{\"x\":{\"ts\":1739432016629,\"value\":20},\"y\":{\"ts\":1739429717656,\"value\":12}}")
+    protected String arguments;
+    @Schema(description = "String value representing the result of a calculation",
+            example = "{\"x + y\":54}")
+    protected String result;
+
 
     @Override
     public EventType getEventType() {
@@ -41,7 +48,9 @@ public class CalculatedFieldDebugEventFilter extends DebugEventFilter {
 
     @Override
     public boolean isNotEmpty() {
-        return super.isNotEmpty() || !StringUtils.isEmpty(entityId) || !StringUtils.isEmpty(entityType) || !StringUtils.isEmpty(msgId) || !StringUtils.isEmpty(msgType);
+        return super.isNotEmpty() || !StringUtils.isEmpty(entityId) || !StringUtils.isEmpty(entityType)
+                || !StringUtils.isEmpty(msgId) || !StringUtils.isEmpty(msgType)
+                || !StringUtils.isEmpty(arguments) || !StringUtils.isEmpty(result);
     }
 
 }

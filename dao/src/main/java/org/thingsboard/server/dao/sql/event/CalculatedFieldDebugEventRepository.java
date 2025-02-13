@@ -59,6 +59,8 @@ public interface CalculatedFieldDebugEventRepository extends EventRepository<Cal
                     "AND (:eventEntityType IS NULL OR e.e_entity_type ILIKE concat('%', :eventEntityType, '%')) " +
                     "AND (:msgId IS NULL OR e.e_msg_id = uuid(:msgId)) " +
                     "AND (:msgType IS NULL OR e.e_msg_type ILIKE concat('%', :msgType, '%')) " +
+                    "AND (:eventArguments IS NULL OR e.e_args ILIKE concat('%', :eventArguments, '%')) " +
+                    "AND (:eventResult IS NULL OR e.e_result ILIKE concat('%', :eventResult, '%')) " +
                     "AND ((:isError = FALSE) OR e.e_error IS NOT NULL) " +
                     "AND (:error IS NULL OR e.e_error ILIKE concat('%', :error, '%'))"
             ,
@@ -73,6 +75,8 @@ public interface CalculatedFieldDebugEventRepository extends EventRepository<Cal
                     "AND (:eventEntityType IS NULL OR e.e_entity_type ILIKE concat('%', :eventEntityType, '%')) " +
                     "AND (:msgId IS NULL OR e.e_msg_id = uuid(:msgId)) " +
                     "AND (:msgType IS NULL OR e.e_msg_type ILIKE concat('%', :msgType, '%')) " +
+                    "AND (:eventArguments IS NULL OR e.e_args ILIKE concat('%', :eventArguments, '%')) " +
+                    "AND (:eventResult IS NULL OR e.e_result ILIKE concat('%', :eventResult, '%')) " +
                     "AND ((:isError = FALSE) OR e.e_error IS NOT NULL) " +
                     "AND (:error IS NULL OR e.e_error ILIKE concat('%', :error, '%'))"
     )
@@ -86,6 +90,8 @@ public interface CalculatedFieldDebugEventRepository extends EventRepository<Cal
                                                      @Param("eventEntityType") String eventEntityType,
                                                      @Param("msgId") String eventMsgId,
                                                      @Param("msgType") String eventMsgType,
+                                                     @Param("eventArguments") String eventArguments,
+                                                     @Param("eventResult") String eventResult,
                                                      @Param("isError") boolean isError,
                                                      @Param("error") String error,
                                                      Pageable pageable);
@@ -117,6 +123,8 @@ public interface CalculatedFieldDebugEventRepository extends EventRepository<Cal
                     "AND (:eventEntityType IS NULL OR e.e_entity_type ILIKE concat('%', :eventEntityType, '%')) " +
                     "AND (:msgId IS NULL OR e.e_msg_id = uuid(:msgId)) " +
                     "AND (:msgType IS NULL OR e.e_msg_type ILIKE concat('%', :msgType, '%')) " +
+                    "AND (:eventArguments IS NULL OR e.e_args ILIKE concat('%', :eventArguments, '%')) " +
+                    "AND (:eventResult IS NULL OR e.e_result ILIKE concat('%', :eventResult, '%')) " +
                     "AND ((:isError = FALSE) OR e.e_error IS NOT NULL) " +
                     "AND (:error IS NULL OR e.e_error ILIKE concat('%', :error, '%'))")
     void removeEvents(@Param("tenantId") UUID tenantId,
@@ -129,6 +137,8 @@ public interface CalculatedFieldDebugEventRepository extends EventRepository<Cal
                       @Param("eventEntityType") String eventEntityType,
                       @Param("msgId") String eventMsgId,
                       @Param("msgType") String eventMsgType,
+                      @Param("eventArguments") String eventArguments,
+                      @Param("eventResult") String eventResult,
                       @Param("isError") boolean isError,
                       @Param("error") String error);
 

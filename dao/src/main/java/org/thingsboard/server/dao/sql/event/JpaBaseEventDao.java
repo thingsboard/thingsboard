@@ -308,6 +308,8 @@ public class JpaBaseEventDao implements EventDao {
                         eventFilter.getEntityType(),
                         eventFilter.getMsgId(),
                         eventFilter.getMsgType(),
+                        eventFilter.getArguments(),
+                        eventFilter.getResult(),
                         eventFilter.isError(),
                         eventFilter.getErrorStr(),
                         DaoUtil.toPageable(pageLink, EventEntity.eventColumnMap)));
@@ -401,6 +403,8 @@ public class JpaBaseEventDao implements EventDao {
                 eventFilter.getEntityType(),
                 eventFilter.getMsgId(),
                 eventFilter.getMsgType(),
+                eventFilter.getArguments(),
+                eventFilter.getResult(),
                 eventFilter.isError(),
                 eventFilter.getErrorStr());
     }
