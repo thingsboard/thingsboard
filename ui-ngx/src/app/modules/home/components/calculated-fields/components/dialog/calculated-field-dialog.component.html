@@ -100,12 +100,22 @@
               [disableUndefinedCheck]="true"
               [scriptLanguage]="ScriptLanguage.TBEL"
               helpId="calculated-field/expression_fn"
-            />
+            >
+              <button toolbarSuffixButton
+                      mat-icon-button
+                      matTooltip="{{ 'common.test-function' | translate }}"
+                      matTooltipPosition="above"
+                      class="tb-mat-32"
+                      [disabled]="configFormGroup.get('expressionSCRIPT').invalid || configFormGroup.get('arguments').invalid"
+                      (click)="onTestScript()">
+                <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
+              </button>
+            </tb-js-func>
             <div>
               <button mat-button mat-raised-button color="primary"
                       type="button"
                       (click)="onTestScript()"
-                      [disabled]="configFormGroup.get('expressionSCRIPT').invalid || configFormGroup.get('arguments').invalid ">
+                      [disabled]="configFormGroup.get('expressionSCRIPT').invalid || configFormGroup.get('arguments').invalid">
                 {{ 'common.test-function' | translate }}
               </button>
             </div>
@@ -122,18 +132,16 @@
                 }
               </mat-select>
             </mat-form-field>
-            @if (outputFormGroup.get('type').value === OutputType.Attribute) {
+            @if (outputFormGroup.get('type').value === OutputType.Attribute && data.entityId.entityType === EntityType.DEVICE) {
               <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
                 <mat-label>{{ 'calculated-fields.attribute-scope' | translate }}</mat-label>
                 <mat-select formControlName="scope" class="w-full">
                   <mat-option [value]="AttributeScope.SERVER_SCOPE">
                     {{ 'calculated-fields.server-attributes' | translate }}
                   </mat-option>
-                  @if (data.entityId.entityType === EntityType.DEVICE) {
-                    <mat-option [value]="AttributeScope.SHARED_SCOPE">
-                      {{ 'calculated-fields.shared-attributes' | translate }}
-                    </mat-option>
-                  }
+                  <mat-option [value]="AttributeScope.SHARED_SCOPE">
+                    {{ 'calculated-fields.shared-attributes' | translate }}
+                  </mat-option>
                 </mat-select>
               </mat-form-field>
             }

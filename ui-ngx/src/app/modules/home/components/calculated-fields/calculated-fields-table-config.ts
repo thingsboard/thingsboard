@@ -280,7 +280,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         filter(Boolean),
         tap(expression => {
           if (openCalculatedFieldEdit) {
-            this.editCalculatedField({...calculatedField, configuration: {...calculatedField.configuration, expression } }, true)
+            this.editCalculatedField({ entityId: this.entityId, ...calculatedField, configuration: {...calculatedField.configuration, expression } }, true)
           }
         }),
       );
