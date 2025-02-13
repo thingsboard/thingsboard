@@ -540,6 +540,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
           {key: 'entityId', title: 'event.entity-id'},
           {key: 'messageId', title: 'event.message-id'},
           {key: 'messageType', title: 'event.message-type'},
+          {key: 'arguments', title: 'event.arguments'},
+          {key: 'result', title: 'event.result'},
           {key: 'isError', title: 'event.error'},
           {key: 'errorStr', title: 'event.error'}
         );
