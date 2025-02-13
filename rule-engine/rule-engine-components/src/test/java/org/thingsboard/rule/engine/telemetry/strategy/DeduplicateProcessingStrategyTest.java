@@ -28,27 +28,27 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class DeduplicatePersistenceStrategyTest {
+class DeduplicateProcessingStrategyTest {
 
     final int deduplicationIntervalSecs = 10;
 
-    DeduplicatePersistenceStrategy strategy;
+    DeduplicateProcessingStrategy strategy;
 
     @BeforeEach
     void setup() {
-        strategy = new DeduplicatePersistenceStrategy(deduplicationIntervalSecs);
+        strategy = new DeduplicateProcessingStrategy(deduplicationIntervalSecs);
     }
 
     @Test
     void shouldThrowWhenDeduplicationIntervalIsLessThanOneSecond() {
-        assertThatThrownBy(() -> new DeduplicatePersistenceStrategy(0))
+        assertThatThrownBy(() -> new DeduplicateProcessingStrategy(0))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Deduplication interval must be at least 1 second(s) and at most 86400 second(s), was 0 second(s)");
     }
 
     @Test
     void shouldThrowWhenDeduplicationIntervalIsMoreThan24Hours() {
-        assertThatThrownBy(() -> new DeduplicatePersistenceStrategy(86401))
+        assertThatThrownBy(() -> new DeduplicateProcessingStrategy(86401))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Deduplication interval must be at least 1 second(s) and at most 86400 second(s), was 86401 second(s)");
     }
@@ -59,7 +59,7 @@ class DeduplicatePersistenceStrategyTest {
         int deduplicationIntervalSecs = 1; // min deduplication interval duration
 
         // WHEN
-        strategy = new DeduplicatePersistenceStrategy(deduplicationIntervalSecs);
+        strategy = new DeduplicateProcessingStrategy(deduplicationIntervalSecs);
 
         // THEN
         var deduplicationCache = (LoadingCache<Long, Set<UUID>>) ReflectionTestUtils.getField(strategy, "deduplicationCache");
@@ -76,7 +76,7 @@ class DeduplicatePersistenceStrategyTest {
         int deduplicationIntervalSecs = (int) Duration.ofHours(1L).toSeconds(); // max deduplication interval duration
 
         // WHEN
-        strategy = new DeduplicatePersistenceStrategy(deduplicationIntervalSecs);
+        strategy = new DeduplicateProcessingStrategy(deduplicationIntervalSecs);
 
         // THEN
         var deduplicationCache = (LoadingCache<Long, Set<UUID>>) ReflectionTestUtils.getField(strategy, "deduplicationCache");
@@ -93,7 +93,7 @@ class DeduplicatePersistenceStrategyTest {
         int deduplicationIntervalSecs = (int) Duration.ofDays(1L).toSeconds(); // max deduplication interval duration
 
         // WHEN
-        strategy = new DeduplicatePersistenceStrategy(deduplicationIntervalSecs);
+        strategy = new DeduplicateProcessingStrategy(deduplicationIntervalSecs);
 
         // THEN
         var deduplicationCache = (LoadingCache<Long, Set<UUID>>) ReflectionTestUtils.getField(strategy, "deduplicationCache");
@@ -110,7 +110,7 @@ class DeduplicatePersistenceStrategyTest {
         int deduplicationIntervalSecs = 1; // min deduplication interval duration
 
         // WHEN
-        strategy = new DeduplicatePersistenceStrategy(deduplicationIntervalSecs);
+        strategy = new DeduplicateProcessingStrategy(deduplicationIntervalSecs);
 
         // THEN
         var deduplicationCache = (LoadingCache<Long, Set<UUID>>) ReflectionTestUtils.getField(strategy, "deduplicationCache");
@@ -127,7 +127,7 @@ class DeduplicatePersistenceStrategyTest {
         int deduplicationIntervalSecs = (int) Duration.ofHours(1L).toSeconds();
 
         // WHEN
-        strategy = new DeduplicatePersistenceStrategy(deduplicationIntervalSecs);
+        strategy = new DeduplicateProcessingStrategy(deduplicationIntervalSecs);
 
         // THEN
         var deduplicationCache = (LoadingCache<Long, Set<UUID>>) ReflectionTestUtils.getField(strategy, "deduplicationCache");
@@ -144,7 +144,7 @@ class DeduplicatePersistenceStrategyTest {
         int deduplicationIntervalSecs = (int) Duration.ofDays(1L).toSeconds(); // max deduplication interval duration
 
         // WHEN
-        strategy = new DeduplicatePersistenceStrategy(deduplicationIntervalSecs);
+        strategy = new DeduplicateProcessingStrategy(deduplicationIntervalSecs);
 
         // THEN
         var deduplicationCache = (LoadingCache<Long, Set<UUID>>) ReflectionTestUtils.getField(strategy, "deduplicationCache");
@@ -160,7 +160,7 @@ class DeduplicatePersistenceStrategyTest {
         long ts = 1_000_000L;
         UUID originator = UUID.randomUUID();
 
-        assertThat(strategy.shouldPersist(ts, originator)).isTrue();
+        assertThat(strategy.shouldProcess(ts, originator)).isTrue();
     }
 
     @Test
@@ -169,11 +169,11 @@ class DeduplicatePersistenceStrategyTest {
         UUID originator = UUID.randomUUID();
 
         // Initial call should return true
-        assertThat(strategy.shouldPersist(baseTs, originator)).isTrue();
+        assertThat(strategy.shouldProcess(baseTs, originator)).isTrue();
 
         // Subsequent call within the same interval should return false for the same originator
         long withinSameIntervalTs = baseTs + 1000L;
-        assertThat(strategy.shouldPersist(withinSameIntervalTs, originator)).isFalse();
+        assertThat(strategy.shouldProcess(withinSameIntervalTs, originator)).isFalse();
     }
 
     @Test
@@ -183,12 +183,12 @@ class DeduplicatePersistenceStrategyTest {
         UUID originator2 = UUID.randomUUID();
 
         // First call for different originators in the same interval should return true independently
-        assertThat(strategy.shouldPersist(baseTs, originator1)).isTrue();
-        assertThat(strategy.shouldPersist(baseTs, originator2)).isTrue();
+        assertThat(strategy.shouldProcess(baseTs, originator1)).isTrue();
+        assertThat(strategy.shouldProcess(baseTs, originator2)).isTrue();
 
         // Subsequent calls for the same originators within the same interval should return false
-        assertThat(strategy.shouldPersist(baseTs + 500L, originator1)).isFalse();
-        assertThat(strategy.shouldPersist(baseTs + 500L, originator2)).isFalse();
+        assertThat(strategy.shouldProcess(baseTs + 500L, originator1)).isFalse();
+        assertThat(strategy.shouldProcess(baseTs + 500L, originator2)).isFalse();
     }
 
     @Test
@@ -197,11 +197,11 @@ class DeduplicatePersistenceStrategyTest {
         long maxTs = Long.MAX_VALUE;
         UUID originator = UUID.randomUUID();
 
-        assertThat(strategy.shouldPersist(minTs, originator)).isTrue();
-        assertThat(strategy.shouldPersist(minTs + 1L, originator)).isFalse();
+        assertThat(strategy.shouldProcess(minTs, originator)).isTrue();
+        assertThat(strategy.shouldProcess(minTs + 1L, originator)).isFalse();
 
-        assertThat(strategy.shouldPersist(maxTs, originator)).isTrue();
-        assertThat(strategy.shouldPersist(maxTs - 1L, originator)).isFalse();
+        assertThat(strategy.shouldProcess(maxTs, originator)).isTrue();
+        assertThat(strategy.shouldProcess(maxTs - 1L, originator)).isFalse();
     }
 
     @Test
@@ -213,22 +213,22 @@ class DeduplicatePersistenceStrategyTest {
         long firstIntervalEnd = firstIntervalStart + Duration.ofSeconds(deduplicationIntervalSecs).toMillis() - 1L;
         long firstIntervalMiddle = calculateMiddle(firstIntervalStart, firstIntervalEnd);
 
-        assertThat(strategy.shouldPersist(firstIntervalStart, originator)).isTrue();
-        assertThat(strategy.shouldPersist(firstIntervalStart + 1, originator)).isFalse();
-        assertThat(strategy.shouldPersist(firstIntervalMiddle, originator)).isFalse();
-        assertThat(strategy.shouldPersist(firstIntervalEnd - 1, originator)).isFalse();
-        assertThat(strategy.shouldPersist(firstIntervalEnd, originator)).isFalse();
+        assertThat(strategy.shouldProcess(firstIntervalStart, originator)).isTrue();
+        assertThat(strategy.shouldProcess(firstIntervalStart + 1, originator)).isFalse();
+        assertThat(strategy.shouldProcess(firstIntervalMiddle, originator)).isFalse();
+        assertThat(strategy.shouldProcess(firstIntervalEnd - 1, originator)).isFalse();
+        assertThat(strategy.shouldProcess(firstIntervalEnd, originator)).isFalse();
 
         // check 2nd interval
         long secondIntervalStart = firstIntervalEnd + 1L;
         long secondIntervalEnd = secondIntervalStart + Duration.ofSeconds(deduplicationIntervalSecs).toMillis() - 1L;
         long secondIntervalMiddle = calculateMiddle(secondIntervalStart, secondIntervalEnd);
 
-        assertThat(strategy.shouldPersist(secondIntervalStart, originator)).isTrue();
-        assertThat(strategy.shouldPersist(secondIntervalStart + 1, originator)).isFalse();
-        assertThat(strategy.shouldPersist(secondIntervalMiddle, originator)).isFalse();
-        assertThat(strategy.shouldPersist(secondIntervalEnd - 1, originator)).isFalse();
-        assertThat(strategy.shouldPersist(secondIntervalEnd, originator)).isFalse();
+        assertThat(strategy.shouldProcess(secondIntervalStart, originator)).isTrue();
+        assertThat(strategy.shouldProcess(secondIntervalStart + 1, originator)).isFalse();
+        assertThat(strategy.shouldProcess(secondIntervalMiddle, originator)).isFalse();
+        assertThat(strategy.shouldProcess(secondIntervalEnd - 1, originator)).isFalse();
+        assertThat(strategy.shouldProcess(secondIntervalEnd, originator)).isFalse();
     }
 
     @Test
@@ -238,19 +238,19 @@ class DeduplicatePersistenceStrategyTest {
         long baseTs = 0L;
 
         // First interval for both originators
-        assertThat(strategy.shouldPersist(baseTs, originator1)).isTrue();
-        assertThat(strategy.shouldPersist(baseTs, originator2)).isTrue();
+        assertThat(strategy.shouldProcess(baseTs, originator1)).isTrue();
+        assertThat(strategy.shouldProcess(baseTs, originator2)).isTrue();
 
         // Move to the next interval
         long nextIntervalTs = baseTs + Duration.ofSeconds(10).toMillis();
 
         // Each originator should be allowed again in the new interval
-        assertThat(strategy.shouldPersist(nextIntervalTs, originator1)).isTrue();
-        assertThat(strategy.shouldPersist(nextIntervalTs, originator2)).isTrue();
+        assertThat(strategy.shouldProcess(nextIntervalTs, originator1)).isTrue();
+        assertThat(strategy.shouldProcess(nextIntervalTs, originator2)).isTrue();
 
         // Subsequent calls in the same new interval should return false
-        assertThat(strategy.shouldPersist(nextIntervalTs + 500L, originator1)).isFalse();
-        assertThat(strategy.shouldPersist(nextIntervalTs + 500L, originator2)).isFalse();
+        assertThat(strategy.shouldProcess(nextIntervalTs + 500L, originator1)).isFalse();
+        assertThat(strategy.shouldProcess(nextIntervalTs + 500L, originator2)).isFalse();
     }
 
     private static long calculateMiddle(long start, long end) {

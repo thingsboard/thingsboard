@@ -24,11 +24,11 @@ import {
   Validator
 } from '@angular/forms';
 import {
-  AdvancedPersistenceConfig,
-  defaultAdvancedPersistenceConfig,
+  AdvancedProcessingConfig,
+  defaultAdvancedProcessingConfig,
   maxDeduplicateTimeSecs,
-  PersistenceType,
-  PersistenceTypeTranslationMap
+  ProcessingType,
+  ProcessingTypeTranslationMap
 } from '@home/components/rule-node/action/timeseries-config.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -52,13 +52,13 @@ export class AdvancedPersistenceSettingRowComponent implements ControlValueAcces
   title: string;
 
   persistenceSettingRowForm = this.fb.group({
-    type: [defaultAdvancedPersistenceConfig.type],
+    type: [defaultAdvancedProcessingConfig.type],
     deduplicationIntervalSecs: [{value: 60, disabled: true}]
   });
 
-  PersistenceType = PersistenceType;
-  persistenceStrategies = [PersistenceType.ON_EVERY_MESSAGE, PersistenceType.DEDUPLICATE, PersistenceType.SKIP];
-  PersistenceTypeTranslationMap = PersistenceTypeTranslationMap;
+  PersistenceType = ProcessingType;
+  persistenceStrategies = [ProcessingType.ON_EVERY_MESSAGE, ProcessingType.DEDUPLICATE, ProcessingType.SKIP];
+  PersistenceTypeTranslationMap = ProcessingTypeTranslationMap;
 
   maxDeduplicateTime = maxDeduplicateTimeSecs;
 
@@ -96,16 +96,16 @@ export class AdvancedPersistenceSettingRowComponent implements ControlValueAcces
     };
   }
 
-  writeValue(value: AdvancedPersistenceConfig) {
+  writeValue(value: AdvancedProcessingConfig) {
     if (isDefinedAndNotNull(value)) {
       this.persistenceSettingRowForm.patchValue(value, {emitEvent: false});
     } else {
-      this.persistenceSettingRowForm.patchValue(defaultAdvancedPersistenceConfig);
+      this.persistenceSettingRowForm.patchValue(defaultAdvancedProcessingConfig);
     }
   }
 
   private updatedValidation() {
-    if (this.persistenceSettingRowForm.get('type').value === PersistenceType.DEDUPLICATE) {
+    if (this.persistenceSettingRowForm.get('type').value === ProcessingType.DEDUPLICATE) {
       this.persistenceSettingRowForm.get('deduplicationIntervalSecs').enable({emitEvent: false});
     } else {
       this.persistenceSettingRowForm.get('deduplicationIntervalSecs').disable({emitEvent: false})

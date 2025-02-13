@@ -5134,8 +5134,9 @@
         "basic-mode": "Basic",
         "advanced-mode": "Advanced",
         "save-time-series": {
-            "persistence-settings": "Persistence settings",
-            "persistence-settings-hint": "Define how and when time series data is saved. In Basic mode, apply a single persistence strategy to all actions or enable only WebSockets updates. Advanced mode allows you to configure individual persistence strategies for each action.",
+            "processing-settings": "Processing settings",
+            "processing-settings-hint": "Define how incoming messages are processed. In Basic mode, select a preconfigured processing strategy or enable only WebSocket updates. Advanced mode allows you to select individual processing strategies for each action.",
+            "advanced-settings-hint": "Be cautious when configuring processing strategies. Certain combinations can lead to unexpected behavior.",
             "strategy": "Strategy",
             "deduplication-interval": "Deduplication interval",
             "deduplication-interval-required": "Deduplication interval is required",
@@ -5147,7 +5148,7 @@
                 "web-sockets-only": "WebSockets only"
             },
             "time-series": "Time series",
-            "latest": "Latest",
+            "latest": "Latest values",
             "web-sockets": "WebSockets"
         },
         "key-val": {

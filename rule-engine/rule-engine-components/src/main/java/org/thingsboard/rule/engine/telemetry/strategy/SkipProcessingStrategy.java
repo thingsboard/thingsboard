@@ -19,20 +19,20 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.util.UUID;
 
-final class OnEveryMessagePersistenceStrategy implements PersistenceStrategy {
+final class SkipProcessingStrategy implements ProcessingStrategy {
 
-    private static final OnEveryMessagePersistenceStrategy INSTANCE = new OnEveryMessagePersistenceStrategy();
+    private static final SkipProcessingStrategy INSTANCE = new SkipProcessingStrategy();
 
-    private OnEveryMessagePersistenceStrategy() {}
+    private SkipProcessingStrategy() {}
 
     @JsonCreator
-    public static OnEveryMessagePersistenceStrategy getInstance() {
+    public static SkipProcessingStrategy getInstance() {
         return INSTANCE;
     }
 
     @Override
-    public boolean shouldPersist(long ts, UUID originatorUuid) {
-        return true;
+    public boolean shouldProcess(long ts, UUID originatorUuid) {
+        return false;
     }
 
 }
