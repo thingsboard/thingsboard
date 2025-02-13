@@ -19,6 +19,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.script.api.tbel.TbelCfArg;
+import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
@@ -72,6 +74,11 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     @JsonIgnore
     public Object getValue() {
         return isEmpty() ? null : kvEntryValue.getValue();
+    }
+
+    @Override
+    public TbelCfArg toTbelCfArg() {
+        return new TbelCfSingleValueArg(ts, kvEntryValue.getValue());
     }
 
     @Override

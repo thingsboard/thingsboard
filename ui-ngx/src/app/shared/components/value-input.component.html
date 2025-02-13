@@ -32,7 +32,7 @@
       </mat-select>
     </mat-form-field>
     <mat-form-field *ngIf="valueType === valueTypeEnum.STRING" appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute flex flex-1">
-      <input [disabled]="disabled" matInput required name="value" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"
+      <input [disabled]="disabled" matInput [required]="required" name="value" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"
              placeholder="{{ 'value.string-value' | translate }}*"/>
       <mat-icon matSuffix
                 matTooltipPosition="above"
@@ -44,7 +44,7 @@
       </mat-icon>
     </mat-form-field>
     <mat-form-field *ngIf="valueType === valueTypeEnum.INTEGER" appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute number flex flex-1">
-      <input [disabled]="disabled" matInput required name="value" type="number" step="1" pattern="^-?[0-9]+$" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"
+      <input [disabled]="disabled" matInput [required]="required" name="value" type="number" step="1" pattern="^-?[0-9]+$" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"
              placeholder="{{ 'value.integer-value' | translate }}*"/>
       <mat-icon matSuffix
                 matTooltipPosition="above"
@@ -57,7 +57,7 @@
       </mat-icon>
     </mat-form-field>
     <mat-form-field *ngIf="valueType === valueTypeEnum.DOUBLE" appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute number flex flex-1">
-      <input [disabled]="disabled" matInput required name="value" type="number" step="any" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"
+      <input [disabled]="disabled" matInput [required]="required" name="value" type="number" step="any" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()"
              placeholder="{{ 'value.double-value' | translate }}*"/>
       <mat-icon matSuffix
                 matTooltipPosition="above"
@@ -80,7 +80,7 @@
     </ng-container>
     <div *ngIf="valueType === valueTypeEnum.JSON" class="flex flex-1 flex-row items-center justify-start gap-2">
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute flex flex-1">
-        <input [disabled]="disabled" matInput tb-json-to-string required name="value" #value="ngModel"
+        <input [disabled]="disabled" matInput tb-json-to-string [required]="required" name="value" #value="ngModel"
                [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()" placeholder="{{ 'value.json-value' | translate }}*"/>
         <mat-icon matSuffix
                   matTooltipPosition="above"

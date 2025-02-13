@@ -357,10 +357,10 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         break;
       case DebugEventType.DEBUG_CALCULATED_FIELD:
         this.columns[0].width = '80px';
-        this.columns[1].width = '20%';
+        this.columns[1].width = '100px';
         this.columns.push(
           new EntityTableColumn<Event>('entityId', 'event.entity-id', '85px',
-            (entity) => `<span style="display: inline-block; width: 7ch">${entity.body.entityId.substring(0, 6)}…</span>`,
+            (entity) => `<span style="display: inline-block; width: 9ch">${entity.body.entityId.substring(0, 8)}…</span>`,
             () => ({padding: '0 12px 0 0'}),
             false,
             () => ({padding: '0 12px 0 0'}),
@@ -380,7 +380,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             }
           ),
           new EntityTableColumn<Event>('messageId', 'event.message-id', '85px',
-            (entity) => `<span style="display: inline-block; width: 7ch">${entity.body.msgId?.substring(0, 6)}…</span>`,
+            (entity) => `<span style="display: inline-block; width: 9ch">${entity.body.msgId?.substring(0, 8)}…</span>`,
             () => ({padding: '0 12px 0 0'}),
             false,
             () => ({padding: '0 12px 0 0'}),
@@ -456,6 +456,14 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             }
           });
         }
+        break;
+      case DebugEventType.DEBUG_CALCULATED_FIELD:
+        this.cellActionDescriptors.push({
+          name: this.translate.instant('common.test-with-this-message', {test: this.translate.instant(this.testButtonLabel)}),
+          icon: 'bug_report',
+          isEnabled: () => true,
+          onAction: (_, entity) => this.debugEventSelected.next(entity.body)
+        });
         break;
     }
     this.getTable()?.cellActionDescriptorsUpdated();

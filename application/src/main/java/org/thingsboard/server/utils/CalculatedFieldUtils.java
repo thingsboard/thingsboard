@@ -26,8 +26,8 @@ import org.thingsboard.server.common.util.KvProtoUtil;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SingleValueArgumentProto;
-import org.thingsboard.server.gen.transport.TransportProtos.TsRollingArgumentEntryProto;
-import org.thingsboard.server.gen.transport.TransportProtos.TsValueListProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TsDoubleValProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TsRollingArgumentProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsValueProto;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
@@ -90,17 +90,15 @@ public class CalculatedFieldUtils {
         return builder.build();
     }
 
-    public static TsRollingArgumentEntryProto toRollingArgumentProto(String argName, TsRollingArgumentEntry entry) {
-        TsValueListProto.Builder tsRecordsBuilder = TsValueListProto.newBuilder()
-                .setKey(argName);
-
-        entry.getTsRecords().forEach((ts, value) -> tsRecordsBuilder.addTsValue(KvProtoUtil.toTsValueProto(ts, value)));
-
-        return TsRollingArgumentEntryProto.newBuilder()
+    public static TsRollingArgumentProto toRollingArgumentProto(String argName, TsRollingArgumentEntry entry) {
+        TsRollingArgumentProto.Builder builder = TsRollingArgumentProto.newBuilder()
+                .setKey(argName)
                 .setLimit(entry.getLimit())
-                .setTimeWindow(entry.getTimeWindow())
-                .setRecords(tsRecordsBuilder.build())
-                .build();
+                .setTimeWindow(entry.getTimeWindow());
+
+        entry.getTsRecords().forEach((ts, value) -> builder.addTsValue(TsDoubleValProto.newBuilder().setTs(ts).setValue(value).build()));
+
+        return builder.build();
     }
 
     public static CalculatedFieldState fromProto(CalculatedFieldStateProto proto) {
@@ -120,27 +118,27 @@ public class CalculatedFieldUtils {
 
         if (CalculatedFieldType.SCRIPT.equals(type)) {
             proto.getRollingValueArgumentsList().forEach(argProto ->
-                    state.getArguments().put(argProto.getRecords().getKey(), fromRollingArgumentProto(argProto)));
+                    state.getArguments().put(argProto.getKey(), fromRollingArgumentProto(argProto)));
         }
 
         return state;
     }
 
     public static SingleValueArgumentEntry fromSingleValueArgumentProto(SingleValueArgumentProto proto) {
+        if (!proto.hasValue()) {
+            return new SingleValueArgumentEntry();
+        }
         TsValueProto tsValueProto = proto.getValue();
-        long ts = tsValueProto.getTs();
-        BasicKvEntry kvEntry = (BasicKvEntry) KvProtoUtil.fromTsValueProto(proto.getArgName(), tsValueProto);
-        return new SingleValueArgumentEntry(ts, kvEntry, proto.getVersion());
+        return new SingleValueArgumentEntry(
+                tsValueProto.getTs(),
+                (BasicKvEntry) KvProtoUtil.fromTsValueProto(proto.getArgName(), tsValueProto),
+                proto.getVersion()
+        );
     }
 
-    public static TsRollingArgumentEntry fromRollingArgumentProto(TsRollingArgumentEntryProto proto) {
-        TsValueListProto records = proto.getRecords();
-        String key = records.getKey();
-        TreeMap<Long, BasicKvEntry> tsRecords = new TreeMap<>();
-        records.getTsValueList().forEach(tsValueProto -> {
-            BasicKvEntry kvEntry = (BasicKvEntry) KvProtoUtil.fromTsValueProto(key, tsValueProto);
-            tsRecords.put(tsValueProto.getTs(), kvEntry);
-        });
+    public static TsRollingArgumentEntry fromRollingArgumentProto(TsRollingArgumentProto proto) {
+        TreeMap<Long, Double> tsRecords = new TreeMap<>();
+        proto.getTsValueList().forEach(tsValueProto -> tsRecords.put(tsValueProto.getTs(), tsValueProto.getValue()));
         return new TsRollingArgumentEntry(tsRecords, proto.getLimit(), proto.getTimeWindow());
     }
 

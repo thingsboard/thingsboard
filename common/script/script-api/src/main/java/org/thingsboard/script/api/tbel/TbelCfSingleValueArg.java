@@ -13,9 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  .debug-dialog-content {
-    height: 65vh;
-    border-radius: 0;
-  }
+package org.thingsboard.script.api.tbel;
+
+import lombok.Data;
+
+@Data
+public class TbelCfSingleValueArg implements TbelCfArg {
+
+    private final long ts;
+    private final Object value;
+
+    @Override
+    public long memorySize() {
+        return 8L; // TODO;
+    }
+
 }

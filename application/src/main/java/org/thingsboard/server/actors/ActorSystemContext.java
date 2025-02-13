@@ -829,8 +829,7 @@ public class ActorSystemContext {
             if (arguments != null) {
                 eventBuilder.arguments(JacksonUtil.toString(
                         arguments.entrySet().stream()
-                                .filter(entry -> !entry.getValue().isEmpty())
-                                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getValue()))
+                                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toTbelCfArg()))
                 ));
             }
             if (result != null) {

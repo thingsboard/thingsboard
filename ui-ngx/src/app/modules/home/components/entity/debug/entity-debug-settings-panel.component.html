@@ -54,7 +54,7 @@
         <button mat-button
                 color="primary"
                 type="button"
-                (click)="additionalActionConfig.action()">
+                (click)="onCancel(); additionalActionConfig.action()">
           {{ additionalActionConfig.title | translate }}
         </button>
       }

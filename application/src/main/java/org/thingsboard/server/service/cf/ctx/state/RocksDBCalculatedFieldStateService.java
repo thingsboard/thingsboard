@@ -59,7 +59,6 @@ public class RocksDBCalculatedFieldStateService implements CalculatedFieldStateS
         if (state.isStateTooLarge()) {
             throw new CalculatedFieldStateException("State size exceeds the maximum allowed limit. The state will not be persisted to RocksDB.");
         }
-
         rocksDBService.put(toProto(stateId), toProto(stateId, state));
         callback.onSuccess();
     }

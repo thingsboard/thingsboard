@@ -22,6 +22,8 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.script.api.tbel.TbelCfArg;
+import org.thingsboard.script.api.tbel.TbelCfObject;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 
@@ -256,6 +258,8 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
         for (Object arg : args) {
             if (arg instanceof CharSequence) {
                 totalArgsSize += ((CharSequence) arg).length();
+            } else if (arg instanceof TbelCfObject tbelCfObj) {
+                totalArgsSize += tbelCfObj.memorySize();
             } else {
                 var str = JacksonUtil.toString(arg);
                 if (str != null) {

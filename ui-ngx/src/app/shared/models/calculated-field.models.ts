@@ -26,6 +26,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType } from '@shared/models/alias.models';
+import { Observable } from 'rxjs';
 
 export interface CalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasTenantId, ExportableEntity<CalculatedFieldId> {
   debugSettings?: EntityDebugSettings;
@@ -126,6 +127,8 @@ export interface CalculatedFieldArgumentValue extends CalculatedFieldArgument {
   argumentName: string;
 }
 
+export type CalculatedFieldTestScriptFn = (calculatedField: CalculatedField, argumentsObj?: Record<string, unknown>, closeAllOnSave?: boolean) => Observable<string>;
+
 export interface CalculatedFieldDialogData {
   value?: CalculatedField;
   buttonTitle: string;
@@ -133,13 +136,24 @@ export interface CalculatedFieldDialogData {
   debugLimitsConfiguration: string;
   tenantId: string;
   entityName?: string;
-  additionalDebugActionConfig: AdditionalDebugActionConfig;
+  additionalDebugActionConfig: AdditionalDebugActionConfig<(calculatedField: CalculatedField) => void>;
+  getTestScriptDialogFn: CalculatedFieldTestScriptFn;
+  isDirty?: boolean;
 }
 
 export interface CalculatedFieldDebugDialogData {
-  id?: CalculatedFieldId;
-  entityId: EntityId;
   tenantId: string;
+  value: CalculatedField;
+  getTestScriptDialogFn: CalculatedFieldTestScriptFn;
+}
+
+export interface CalculatedFieldTestScriptInputParams {
+  arguments: Record<string, unknown>,
+  expression: string;
+}
+
+export interface CalculatedFieldTestScriptDialogData extends CalculatedFieldTestScriptInputParams {
+  openCalculatedFieldEdit?: boolean;
 }
 
 export interface ArgumentEntityTypeParams {

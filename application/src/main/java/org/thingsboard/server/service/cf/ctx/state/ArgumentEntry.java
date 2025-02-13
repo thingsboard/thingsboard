@@ -18,6 +18,7 @@ package org.thingsboard.server.service.cf.ctx.state;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 
@@ -50,5 +51,7 @@ public interface ArgumentEntry {
     static ArgumentEntry createTsRollingArgument(List<TsKvEntry> kvEntries, int limit, long timeWindow) {
         return new TsRollingArgumentEntry(kvEntries, limit, timeWindow);
     }
+
+    TbelCfArg toTbelCfArg();
 
 }

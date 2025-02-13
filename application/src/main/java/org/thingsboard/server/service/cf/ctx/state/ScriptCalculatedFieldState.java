@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
@@ -49,14 +50,19 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
         Object[] args = ctx.getArgNames().stream()
-                .map(key -> arguments.get(key).getValue())
+                .map(this::toTbelArgument)
                 .toArray();
+
         ListenableFuture<Map<String, Object>> resultFuture = ctx.getCalculatedFieldScriptEngine().executeToMapAsync(args);
         Output output = ctx.getOutput();
         return Futures.transform(resultFuture,
                 result -> new CalculatedFieldResult(output.getType(), output.getScope(), result),
                 MoreExecutors.directExecutor()
         );
+    }
+
+    private TbelCfArg toTbelArgument(String key) {
+        return arguments.get(key).toTbelCfArg();
     }
 
 }
