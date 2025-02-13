@@ -40,6 +40,7 @@ import { ScriptLanguage } from '@shared/models/rule-node.models';
 @Component({
   selector: 'tb-calculated-field-dialog',
   templateUrl: './calculated-field-dialog.component.html',
+  styleUrls: ['./calculated-field-dialog.component.scss'],
 })
 export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFieldDialogComponent, CalculatedField> implements AfterViewInit {
 

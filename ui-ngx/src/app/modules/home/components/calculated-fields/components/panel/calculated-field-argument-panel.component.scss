@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  .debug-dialog-container {
-    width: 1080px;
-    max-width: 100%;
+@use '../../../../../../../scss/constants' as constants;
 
-    .debug-dialog-content {
-      height: 65vh;
-      border-radius: 0;
+:host {
+  display: flex;
+  width: 520px;
+  max-width: 100%;
+
+  .fixed-title-width {
+    @media #{constants.$mat-lt-sm} {
+      min-width: 120px;
     }
   }
 }

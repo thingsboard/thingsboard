@@ -359,7 +359,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         this.columns[0].width = '80px';
         this.columns[1].width = '100px';
         this.columns.push(
-          new EntityTableColumn<Event>('entityId', 'event.entity-id', '85px',
+          new EntityTableColumn<Event>('entityId', 'event.entity-id', '100px',
             (entity) => `<span style="display: inline-block; width: 9ch">${entity.body.entityId.substring(0, 8)}…</span>`,
             () => ({padding: '0 12px 0 0'}),
             false,
@@ -379,8 +379,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               type: CellActionDescriptorType.COPY_BUTTON
             }
           ),
-          new EntityTableColumn<Event>('messageId', 'event.message-id', '85px',
-            (entity) => `<span style="display: inline-block; width: 9ch">${entity.body.msgId?.substring(0, 8)}…</span>`,
+          new EntityTableColumn<Event>('messageId', 'event.message-id', '100px',
+            (entity) => entity.body.msgId ? `<span style="display: inline-block; width: 9ch">${entity.body.msgId?.substring(0, 8)}…</span>` : '-',
             () => ({padding: '0 12px 0 0'}),
             false,
             () => ({padding: '0 12px 0 0'}),
@@ -394,13 +394,13 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
                 'font-size': '16px',
                 color: 'rgba(0,0,0,.87)'
               },
-              isEnabled: () => true,
-              onAction: ($event, entity) => entity.body.msgId,
+              isEnabled: (entity) => !!entity.body.msgId,
+              onAction: (_, entity) => entity.body.msgId,
               type: CellActionDescriptorType.COPY_BUTTON
             }
           ),
           new EntityTableColumn<Event>('messageType', 'event.message-type', '100px',
-            (entity) => entity.body.msgType,
+            (entity) => entity.body.msgType ?? '-',
             () => ({padding: '0 12px 0 0'}),
             false
           ),
@@ -540,6 +540,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
           {key: 'entityId', title: 'event.entity-id'},
           {key: 'messageId', title: 'event.message-id'},
           {key: 'messageType', title: 'event.message-type'},
+          {key: 'arguments', title: 'event.arguments'},
+          {key: 'result', title: 'event.result'},
           {key: 'isError', title: 'event.error'},
           {key: 'errorStr', title: 'event.error'}
         );
