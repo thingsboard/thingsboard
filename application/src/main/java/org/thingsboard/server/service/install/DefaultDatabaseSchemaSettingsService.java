@@ -17,8 +17,6 @@ package org.thingsboard.server.service.install;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -36,24 +34,16 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
     private static final String CURRENT_PRODUCT = "CE";
     // This list should include all versions which are compatible for the upgrade.
     // The compatibility cycle usually breaks when we have some scripts written in Java that may not work after new release.
-    private static final List<String> SUPPORTED_VERSIONS_FOR_UPGRADE = List.of("3.8.0", "3.8.1");
+    private static final List<String> SUPPORTED_VERSIONS_FOR_UPGRADE = List.of("3.9.0");
 
     private final BuildProperties buildProperties;
     private final JdbcTemplate jdbcTemplate;
-
-    @Value("${install.upgrade.from_version:}")
-    private String upgradeFromVersion;
 
     private String packageSchemaVersion;
     private String schemaVersionFromDb;
 
     @Override
     public void validateSchemaSettings() {
-        //TODO: remove after release (3.9.0)
-        createProductIfNotExists();
-
-        String dbSchemaVersion = getDbSchemaVersion();
-
         if (DefaultDataUpdateService.getEnv("SKIP_SCHEMA_VERSION_CHECK", false)) {
             log.info("Skipped DB schema version check due to SKIP_SCHEMA_VERSION_CHECK set to 'true'.");
             return;
@@ -64,6 +54,7 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
             onSchemaSettingsError(String.format("Upgrade failed: can't upgrade ThingsBoard %s database using ThingsBoard %s.", product, CURRENT_PRODUCT));
         }
 
+        String dbSchemaVersion = getDbSchemaVersion();
         if (dbSchemaVersion.equals(getPackageSchemaVersion())) {
             onSchemaSettingsError("Upgrade failed: database already upgraded to current version. You can set SKIP_SCHEMA_VERSION_CHECK to 'true' if force re-upgrade needed.");
         }
@@ -73,14 +64,6 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
                     dbSchemaVersion, SUPPORTED_VERSIONS_FOR_UPGRADE
             ));
         }
-    }
-
-    @Deprecated(forRemoval = true, since = "3.9.0")
-    private void createProductIfNotExists() {
-        boolean isCommunityEdition = jdbcTemplate.queryForList(
-                "SELECT 1 FROM information_schema.tables WHERE table_name = 'integration'", Integer.class).isEmpty();
-        String product = isCommunityEdition ? "CE" : "PE";
-        jdbcTemplate.execute("ALTER TABLE tb_schema_settings ADD COLUMN IF NOT EXISTS product varchar(2) DEFAULT '" + product + "'");
     }
 
     @Override
@@ -107,15 +90,6 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
     @Override
     public String getDbSchemaVersion() {
         if (schemaVersionFromDb == null) {
-            if (StringUtils.isNotBlank(upgradeFromVersion)) {
-                /*
-                * TODO - Remove after the release of 3.9.0:
-                *  This a temporary workaround due to the issue that schema version in the
-                *  tb_schema_settings was set as 3.6.4 during the install of 3.8.1.
-                * */
-                schemaVersionFromDb = upgradeFromVersion;
-                return schemaVersionFromDb;
-            }
             Long version = getSchemaVersionFromDb();
             if (version == null) {
                 onSchemaSettingsError("Upgrade failed: the database schema version is missing.");
