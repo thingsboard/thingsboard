@@ -13,14 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  .debug-dialog-container {
-    width: 1080px;
-    max-width: 100%;
+package org.thingsboard.script.api.tbel;
 
-    .debug-dialog-content {
-      height: 65vh;
-      border-radius: 0;
-    }
-  }
+public interface TbelCfObject {
+
+    long memorySize();
+
 }

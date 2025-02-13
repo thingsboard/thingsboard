@@ -13,10 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api.tbel;
+@use '../../../../../../../scss/constants' as constants;
 
-public interface TbCfArg {
+:host {
+  display: flex;
+  width: 520px;
+  max-width: 100%;
 
-    long memorySize();
-
+  .fixed-title-width {
+    @media #{constants.$mat-lt-sm} {
+      min-width: 120px;
+    }
+  }
 }

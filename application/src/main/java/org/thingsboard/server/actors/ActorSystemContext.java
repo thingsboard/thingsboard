@@ -810,7 +810,8 @@ public class ActorSystemContext {
         Futures.addCallback(future, RULE_CHAIN_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
     }
 
-    public void persistCalculatedFieldDebugEvent(TenantId tenantId, CalculatedFieldId calculatedFieldId, EntityId entityId, Map<String, ArgumentEntry> arguments, UUID tbMsgId, TbMsgType tbMsgType, String result, Throwable error) {
+    public void persistCalculatedFieldDebugEvent(TenantId tenantId, CalculatedFieldId calculatedFieldId, EntityId entityId, Map<String, ArgumentEntry> arguments,
+                                                 UUID tbMsgId, TbMsgType tbMsgType, String result, Throwable error) {
         if (cfDebugPerTenantEnabled) {
             TbRateLimits rateLimits = cfDebugPerTenantLimits.computeIfAbsent(tenantId, id -> new TbRateLimits(cfDebugPerTenantLimitsConfiguration));
 
@@ -831,7 +832,7 @@ public class ActorSystemContext {
                     if (arguments != null) {
                         eventBuilder.arguments(JacksonUtil.toString(
                                 arguments.entrySet().stream()
-                                        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getValue()))
+                                        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toTbelCfArg()))
                         ));
                     }
                     if (result != null) {

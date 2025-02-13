@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api.tbel;
+@use '../../../../../../../scss/constants' as constants;
 
-import lombok.Data;
-
-@Data
-public class TbCfSingleValueArg implements TbCfArg {
-
-    private final long ts;
-    private final Object value;
-
-    @Override
-    public long memorySize() {
-        return 8L; // TODO;
+:host::ng-deep {
+  .tb-form-table-row {
+    .argument-value {
+      .tb-value-type.row {
+        @media #{constants.$mat-lt-sm} {
+          width: 100px;
+          min-width: 100px;
+        }
+      }
     }
+  }
 }

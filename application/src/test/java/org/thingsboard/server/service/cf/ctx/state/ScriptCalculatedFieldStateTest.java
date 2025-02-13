@@ -134,10 +134,10 @@ public class ScriptCalculatedFieldStateTest {
     void testPerformCalculationWhenOldTelemetry() throws ExecutionException, InterruptedException {
         TsRollingArgumentEntry argumentEntry = new TsRollingArgumentEntry();
 
-        TreeMap<Long, BasicKvEntry> values = new TreeMap<>();
-        values.put(ts - 40000, new LongDataEntry("deviceTemperature", 4L));// will not be used for calculation
-        values.put(ts - 45000, new LongDataEntry("deviceTemperature", 2L));// will not be used for calculation
-        values.put(ts - 20, new LongDataEntry("deviceTemperature", 0L));
+        TreeMap<Long, Double> values = new TreeMap<>();
+        values.put(ts - 40000, 4.0);// will not be used for calculation
+        values.put(ts - 45000, 2.0);// will not be used for calculation
+        values.put(ts - 20, 0.0);
 
         argumentEntry.setTsRecords(values);
 
@@ -155,13 +155,13 @@ public class ScriptCalculatedFieldStateTest {
     @Test
     void testPerformCalculationWhenArgumentsMoreThanLimit() throws ExecutionException, InterruptedException {
         TsRollingArgumentEntry argumentEntry = new TsRollingArgumentEntry();
-        TreeMap<Long, BasicKvEntry> values = new TreeMap<>();
-        values.put(ts - 20, new LongDataEntry("deviceTemperature", 1000L));// will not be used
-        values.put(ts - 18, new LongDataEntry("deviceTemperature", 0L));
-        values.put(ts - 16, new LongDataEntry("deviceTemperature", 0L));
-        values.put(ts - 14, new LongDataEntry("deviceTemperature", 0L));
-        values.put(ts - 12, new LongDataEntry("deviceTemperature", 0L));
-        values.put(ts - 10, new LongDataEntry("deviceTemperature", 0L));
+        TreeMap<Long, Double> values = new TreeMap<>();
+        values.put(ts - 20, 1000.0);// will not be used
+        values.put(ts - 18, 0.0);
+        values.put(ts - 16, 0.0);
+        values.put(ts - 14, 0.0);
+        values.put(ts - 12, 0.0);
+        values.put(ts - 10, 0.0);
         argumentEntry.setTsRecords(values);
 
         state.arguments = new HashMap<>(Map.of("deviceTemperature", argumentEntry, "assetHumidity", assetHumidityArgEntry));
@@ -198,10 +198,10 @@ public class ScriptCalculatedFieldStateTest {
         TsRollingArgumentEntry argumentEntry = new TsRollingArgumentEntry();
         long ts = System.currentTimeMillis();
 
-        TreeMap<Long, BasicKvEntry> values = new TreeMap<>();
-        values.put(ts - 40, new LongDataEntry("deviceTemperature", 10L));
-        values.put(ts - 30, new LongDataEntry("deviceTemperature", 12L));
-        values.put(ts - 20, new LongDataEntry("deviceTemperature", 17L));
+        TreeMap<Long, Double> values = new TreeMap<>();
+        values.put(ts - 40, 10.0);
+        values.put(ts - 30, 12.0);
+        values.put(ts - 20, 17.0);
 
         argumentEntry.setTsRecords(values);
         return argumentEntry;

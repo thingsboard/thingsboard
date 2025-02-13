@@ -819,10 +819,20 @@ message CalculatedFieldStateMsgProto {
   CalculatedFieldStateProto state = 2;
 }
 
+message TsDoubleValProto {
+  int64  ts    = 1;
+  double value = 2;
+}
+
+message TsRollingArgumentProto {
+  string key = 1;
+  repeated TsDoubleValProto tsValue = 2;
+}
+
 message CalculatedFieldStateProto {
   string type = 1;
   repeated SingleValueArgumentProto singleValueArguments = 2;
-  repeated TsValueListProto rollingValueArguments = 3;
+  repeated TsRollingArgumentProto rollingValueArguments = 3;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.

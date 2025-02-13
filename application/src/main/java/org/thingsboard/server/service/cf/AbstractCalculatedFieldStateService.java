@@ -31,6 +31,8 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TsDoubleValProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TsRollingArgumentProto;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
@@ -107,25 +109,30 @@ public abstract class AbstractCalculatedFieldStateService implements CalculatedF
                 .build();
     }
 
-    protected TransportProtos.SingleValueArgumentProto toSingleValueArgumentProto(String argName, SingleValueArgumentEntry entry) {
+    private TransportProtos.SingleValueArgumentProto toSingleValueArgumentProto(String argName, SingleValueArgumentEntry entry) {
         TransportProtos.SingleValueArgumentProto.Builder builder = TransportProtos.SingleValueArgumentProto.newBuilder()
                 .setArgName(argName);
+
         if (entry != SingleValueArgumentEntry.EMPTY) {
             builder.setValue(KvProtoUtil.toTsValueProto(entry.getTs(), entry.getKvEntryValue()));
         }
+
         Optional.ofNullable(entry.getVersion()).ifPresent(builder::setVersion);
+
         return builder.build();
     }
 
-    protected TransportProtos.TsValueListProto toRollingArgumentProto(String argName, TsRollingArgumentEntry entry) {
-        TransportProtos.TsValueListProto.Builder builder = TransportProtos.TsValueListProto.newBuilder().setKey(argName);
+    private TsRollingArgumentProto toRollingArgumentProto(String argName, TsRollingArgumentEntry entry) {
+        TsRollingArgumentProto.Builder builder = TsRollingArgumentProto.newBuilder().setKey(argName);
+
         if (entry != TsRollingArgumentEntry.EMPTY) {
-            entry.getTsRecords().forEach((ts, value) -> builder.addTsValue(KvProtoUtil.toTsValueProto(ts, value)));
+            entry.getTsRecords().forEach((ts, value) -> builder.addTsValue(TsDoubleValProto.newBuilder().setTs(ts).setValue(value).build()));
         }
+
         return builder.build();
     }
 
-    protected CalculatedFieldState fromProto(CalculatedFieldStateProto proto) {
+    private CalculatedFieldState fromProto(CalculatedFieldStateProto proto) {
         if (StringUtils.isEmpty(proto.getType())) {
             return null;
         }
@@ -148,7 +155,7 @@ public abstract class AbstractCalculatedFieldStateService implements CalculatedF
         return state;
     }
 
-    protected SingleValueArgumentEntry fromSingleValueArgumentProto(TransportProtos.SingleValueArgumentProto proto) {
+    private SingleValueArgumentEntry fromSingleValueArgumentProto(TransportProtos.SingleValueArgumentProto proto) {
         if (!proto.hasValue()) {
             return (SingleValueArgumentEntry) SingleValueArgumentEntry.EMPTY;
         }
@@ -158,15 +165,12 @@ public abstract class AbstractCalculatedFieldStateService implements CalculatedF
         return new SingleValueArgumentEntry(ts, kvEntry, proto.getVersion());
     }
 
-    protected TsRollingArgumentEntry fromRollingArgumentProto(TransportProtos.TsValueListProto proto) {
+    private TsRollingArgumentEntry fromRollingArgumentProto(TsRollingArgumentProto proto) {
         if (proto.getTsValueCount() <= 0) {
             return (TsRollingArgumentEntry) TsRollingArgumentEntry.EMPTY;
         }
-        TreeMap<Long, BasicKvEntry> tsRecords = new TreeMap<>();
-        proto.getTsValueList().forEach(tsValueProto -> {
-            BasicKvEntry kvEntry = (BasicKvEntry) KvProtoUtil.fromTsValueProto(proto.getKey(), tsValueProto);
-            tsRecords.put(tsValueProto.getTs(), kvEntry);
-        });
+        TreeMap<Long, Double> tsRecords = new TreeMap<>();
+        proto.getTsValueList().forEach(tsValueProto -> tsRecords.put(tsValueProto.getTs(), tsValueProto.getValue()));
         return new TsRollingArgumentEntry(tsRecords);
     }
 

@@ -21,15 +21,13 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
-import org.mvel2.execution.ExecutionArrayList;
-import org.thingsboard.script.api.tbel.TbCfArg;
-import org.thingsboard.script.api.tbel.TbCfSingleValueArg;
-import org.thingsboard.script.api.tbel.TbCfTsRollingArg;
+import org.thingsboard.script.api.tbel.TbelCfArg;
+import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
+import org.thingsboard.script.api.tbel.TbelCfTsDoubleVal;
+import org.thingsboard.script.api.tbel.TbelCfTsRollingArg;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.Output;
-import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.ArrayList;
@@ -60,7 +58,7 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
         arguments.forEach((key, argumentEntry) -> {
             if (argumentEntry instanceof TsRollingArgumentEntry tsRollingEntry) {
                 Argument argument = ctx.getArguments().get(key);
-                TreeMap<Long, BasicKvEntry> tsRecords = tsRollingEntry.getTsRecords();
+                TreeMap<Long, Double> tsRecords = tsRollingEntry.getTsRecords();
                 if (tsRecords.size() > argument.getLimit()) {
                     tsRecords.pollFirstEntry();
                 }
@@ -79,20 +77,8 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
         );
     }
 
-    private TbCfArg toTbelArgument(String key) {
-        ArgumentEntry argEntry = arguments.get(key);
-        if (argEntry instanceof SingleValueArgumentEntry svArg) {
-            return new TbCfSingleValueArg(svArg.getTs(), argEntry.getValue());
-        } else if (argEntry instanceof TsRollingArgumentEntry rollingArg) {
-            var tsRecords = rollingArg.getTsRecords();
-            List<TbCfSingleValueArg> values = new ArrayList<>(tsRecords.size());
-            for(var e : tsRecords.entrySet()){
-                values.add(new TbCfSingleValueArg(e.getKey(), e.getValue().getValue()));
-            }
-            return new TbCfTsRollingArg(values);
-        } else {
-            throw new RuntimeException("Argument is not supported for TBEL execution!");
-        }
+    private TbelCfArg toTbelArgument(String key) {
+        return arguments.get(key).toTbelCfArg();
     }
 
 }
