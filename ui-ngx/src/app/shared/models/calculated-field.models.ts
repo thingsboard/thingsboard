@@ -130,8 +130,6 @@ export interface CalculatedFieldArgumentValue extends CalculatedFieldArgument {
 
 export type CalculatedFieldTestScriptFn = (calculatedField: CalculatedField, argumentsObj?: Record<string, unknown>, closeAllOnSave?: boolean) => Observable<string>;
 
-export type CalculatedFieldArgumentsEditorCompleterFn = (argumentsObj: Record<string, CalculatedFieldArgument>) => TbEditorCompleter;
-
 export interface CalculatedFieldDialogData {
   value?: CalculatedField;
   buttonTitle: string;
@@ -142,7 +140,6 @@ export interface CalculatedFieldDialogData {
   additionalDebugActionConfig: AdditionalDebugActionConfig<(calculatedField: CalculatedField) => void>;
   getTestScriptDialogFn: CalculatedFieldTestScriptFn;
   isDirty?: boolean;
-  getArgumentsEditorCompleterFn: CalculatedFieldArgumentsEditorCompleterFn;
 }
 
 export interface CalculatedFieldDebugDialogData {
@@ -283,3 +280,20 @@ export const CalculatedFieldRollingValueArgumentAutocomplete = {
     }
   },
 };
+
+export const getCalculatedFieldArgumentsEditorCompleter = (argumentsObj: Record<string, CalculatedFieldArgument>): TbEditorCompleter => {
+  return new TbEditorCompleter(Object.keys(argumentsObj).reduce((acc, key) => {
+    switch (argumentsObj[key].refEntityKey.type) {
+      case ArgumentType.Attribute:
+        acc[key] = CalculatedFieldAttributeValueArgumentAutocomplete;
+        break;
+      case ArgumentType.LatestTelemetry:
+        acc[key] = CalculatedFieldLatestTelemetryArgumentAutocomplete;
+        break;
+      case ArgumentType.Rolling:
+        acc[key] = CalculatedFieldRollingValueArgumentAutocomplete;
+        break;
+    }
+    return acc;
+  }, {}))
+}

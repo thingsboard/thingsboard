@@ -36,16 +36,12 @@ import { EntityDebugSettingsPanelComponent } from '@home/components/entity/debug
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import {
-  ArgumentType,
   CalculatedField,
-  CalculatedFieldArgument,
   CalculatedFieldEventArguments,
   CalculatedFieldDebugDialogData,
   CalculatedFieldDialogData,
-  CalculatedFieldRollingValueArgumentAutocomplete,
   CalculatedFieldTestScriptDialogData,
-  CalculatedFieldAttributeValueArgumentAutocomplete,
-  CalculatedFieldLatestTelemetryArgumentAutocomplete,
+  getCalculatedFieldArgumentsEditorCompleter,
 } from '@shared/models/calculated-field.models';
 import {
   CalculatedFieldDebugDialogComponent,
@@ -219,7 +215,6 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         additionalDebugActionConfig: this.additionalDebugActionConfig,
         getTestScriptDialogFn: this.getTestScriptDialog.bind(this),
         isDirty,
-        getArgumentsEditorCompleterFn: this.getArgumentsEditorCompleter,
       },
       enterAnimationDuration: isDirty ? 0 : null,
     })
@@ -287,7 +282,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         data: {
           arguments: resultArguments,
           expression: calculatedField.configuration.expression,
-          argumentsEditorCompleter: this.getArgumentsEditorCompleter(calculatedField.configuration.arguments),
+          argumentsEditorCompleter: getCalculatedFieldArgumentsEditorCompleter(calculatedField.configuration.arguments),
           openCalculatedFieldEdit
         }
       }).afterClosed()
@@ -299,22 +294,5 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
           }
         }),
       );
-  }
-
-  private getArgumentsEditorCompleter(argumentsObj: Record<string, CalculatedFieldArgument>): TbEditorCompleter {
-    return new TbEditorCompleter(Object.keys(argumentsObj).reduce((acc, key) => {
-      switch (argumentsObj[key].refEntityKey.type) {
-        case ArgumentType.Attribute:
-          acc[key] = CalculatedFieldAttributeValueArgumentAutocomplete;
-          break;
-        case ArgumentType.LatestTelemetry:
-          acc[key] = CalculatedFieldLatestTelemetryArgumentAutocomplete;
-          break;
-        case ArgumentType.Rolling:
-          acc[key] = CalculatedFieldRollingValueArgumentAutocomplete;
-          break;
-      }
-      return acc;
-    }, {}))
   }
 }
