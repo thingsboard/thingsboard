@@ -70,13 +70,21 @@ public class TbQueueConsumerTask<M extends TbQueueMsg> {
     }
 
     public void awaitCompletion() {
+        awaitCompletion(30);
+    }
+
+    public void awaitCompletion(long timeoutSec) {
         log.trace("[{}] Awaiting finish", key);
         if (isRunning()) {
             try {
-                task.get(30, TimeUnit.SECONDS);
+                if (timeoutSec > 0) {
+                    task.get(timeoutSec, TimeUnit.SECONDS);
+                } else {
+                    task.get();
+                }
                 log.trace("[{}] Awaited finish", key);
             } catch (Exception e) {
-                log.warn("[{}] Failed to await for consumer to stop", key, e);
+                log.warn("[{}] Failed to await for consumer to stop (timeout {} sec)", key, timeoutSec, e);
             }
             task = null;
         }

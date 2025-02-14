@@ -97,9 +97,12 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
 
     @Override
     public void send(TopicPartitionInfo tpi, T msg, TbQueueCallback callback) {
+        send(tpi, msg.getKey().toString(), msg, callback);
+    }
+
+    public void send(TopicPartitionInfo tpi, String key, T msg, TbQueueCallback callback) {
         try {
             createTopicIfNotExist(tpi);
-            String key = msg.getKey().toString();
             byte[] data = msg.getData();
             ProducerRecord<String, byte[]> record;
             List<Header> headers = msg.getHeaders().getData().entrySet().stream().map(e -> new RecordHeader(e.getKey(), e.getValue())).collect(Collectors.toList());
@@ -116,7 +119,7 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
                     if (callback != null) {
                         callback.onFailure(exception);
                     } else {
-                        log.warn("Producer template failure: {}", exception.getMessage(), exception);
+                        log.warn("Producer template failure", exception);
                     }
                 }
             });

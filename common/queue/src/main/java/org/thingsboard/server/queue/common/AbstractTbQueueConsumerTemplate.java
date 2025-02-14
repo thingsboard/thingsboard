@@ -120,9 +120,9 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
                 if (record != null) {
                     result.add(decode(record));
                 }
-            } catch (IOException e) {
-                log.error("Failed decode record: [{}]", record);
-                throw new RuntimeException("Failed to decode record: ", e);
+            } catch (Exception e) {
+                log.error("Failed to decode record {}", record, e);
+                throw new RuntimeException("Failed to decode record " + record, e);
             }
         });
         return result;

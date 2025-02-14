@@ -45,6 +45,8 @@ public interface PartitionService {
 
     List<Integer> getMyPartitions(QueueKey queueKey);
 
+    String getTopic(QueueKey queueKey);
+
     /**
      * Received from the Discovery service when network topology is changed.
      * @param currentService - current service information {@link org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo}

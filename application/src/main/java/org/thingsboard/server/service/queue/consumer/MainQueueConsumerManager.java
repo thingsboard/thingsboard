@@ -182,7 +182,7 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
         }
     }
 
-    private void doUpdate(Set<TopicPartitionInfo> partitions) {
+    public void doUpdate(Set<TopicPartitionInfo> partitions) {
         this.partitions = partitions;
         consumerWrapper.updatePartitions(partitions);
     }
@@ -226,7 +226,9 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
     }
 
     protected void processMsgs(List<M> msgs, TbQueueConsumer<M> consumer, C config) throws Exception {
+        log.trace("Processing {} messages", msgs.size());
         msgPackProcessor.process(msgs, consumer, config);
+        log.trace("Processed {} messages", msgs.size());
     }
 
     public void stop() {
@@ -236,8 +238,12 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
     }
 
     public void awaitStop() {
+        awaitStop(30);
+    }
+
+    public void awaitStop(long timeoutSec) {
         log.debug("[{}] Waiting for consumers to stop", queueKey);
-        consumerWrapper.getConsumers().forEach(TbQueueConsumerTask::awaitCompletion);
+        consumerWrapper.getConsumers().forEach(consumerTask -> consumerTask.awaitCompletion(timeoutSec));
         log.debug("[{}] Unsubscribed and stopped consumers", queueKey);
     }
 

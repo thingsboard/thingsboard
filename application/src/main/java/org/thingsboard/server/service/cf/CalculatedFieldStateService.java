@@ -16,14 +16,19 @@
 package org.thingsboard.server.service.cf;
 
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
+
+import java.util.Set;
 
 public interface CalculatedFieldStateService {
 
     void persistState(CalculatedFieldCtx ctx, CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback);
 
     void removeState(CalculatedFieldEntityCtxId stateId, TbCallback callback);
+
+    void restore(Set<TopicPartitionInfo> partitions);
 
 }

@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateMsgProto;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
@@ -159,12 +160,12 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.CalculatedFieldStateProto>> createCalculatedFieldStateConsumer() {
+    public TbQueueConsumer<TbProtoQueueMsg<CalculatedFieldStateMsgProto>> createCalculatedFieldStateConsumer() {
         return new InMemoryTbQueueConsumer<>(storage, topicService.buildTopicName(calculatedFieldSettings.getStateTopic()));
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.CalculatedFieldStateProto>> createCalculatedFieldStateProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<CalculatedFieldStateMsgProto>> createCalculatedFieldStateProducer() {
         return new InMemoryTbQueueProducer<>(storage, topicService.buildTopicName(calculatedFieldSettings.getStateTopic()));
     }
 
