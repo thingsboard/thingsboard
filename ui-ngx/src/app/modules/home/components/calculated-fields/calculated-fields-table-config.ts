@@ -119,6 +119,12 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         onAction: (event$, entity) => this.exportCalculatedField(event$, entity),
       },
       {
+        name: this.translate.instant('entity-view.events'),
+        icon: 'history',
+        isEnabled: () => true,
+        onAction: (_, entity) => this.openDebugDialog(entity),
+      },
+      {
         name: '',
         nameFunction: entity => this.getDebugConfigLabel(entity?.debugSettings),
         icon: 'mdi:bug',
