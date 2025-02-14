@@ -125,7 +125,7 @@ public class JwtTokenFactoryTest {
     public void testCreateAndParsePreVerificationJwtToken() {
         SecurityUser securityUser = createSecurityUser();
         int tokenLifetime = (int) TimeUnit.MINUTES.toSeconds(30);
-        JwtToken preVerificationToken = tokenFactory.createPreVerificationToken(securityUser, tokenLifetime);
+        JwtToken preVerificationToken = tokenFactory.createMfaToken(securityUser, Authority.PRE_VERIFICATION_TOKEN, tokenLifetime);
         checkExpirationTime(preVerificationToken, tokenLifetime);
 
         SecurityUser parsedSecurityUser = tokenFactory.parseAccessJwtToken(preVerificationToken.getToken());
