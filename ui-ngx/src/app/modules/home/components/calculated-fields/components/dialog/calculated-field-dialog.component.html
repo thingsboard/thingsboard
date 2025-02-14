@@ -99,6 +99,7 @@
               [functionArgs]="functionArgs$ | async"
               [disableUndefinedCheck]="true"
               [scriptLanguage]="ScriptLanguage.TBEL"
+              [editorCompleter]="argumentsEditorCompleter$ | async"
               helpId="calculated-field/expression_fn"
             >
               <button toolbarSuffixButton

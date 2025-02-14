@@ -66,6 +66,12 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
       map(argumentsObj => Object.keys(argumentsObj))
     );
 
+  argumentsEditorCompleter$ = this.configFormGroup.get('arguments').valueChanges
+    .pipe(
+      startWith(this.data.value?.configuration?.arguments ?? {}),
+      map(argumentsObj => this.data.getArgumentsEditorCompleterFn(argumentsObj))
+    );
+
   additionalDebugActionConfig = this.data.value?.id ? {
     ...this.data.additionalDebugActionConfig,
     action: () => this.data.additionalDebugActionConfig.action({ id: this.data.value.id, ...this.fromGroupValue }),

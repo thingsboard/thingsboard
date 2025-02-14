@@ -27,6 +27,7 @@ import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType } from '@shared/models/alias.models';
 import { Observable } from 'rxjs';
+import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 
 export interface CalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasTenantId, ExportableEntity<CalculatedFieldId> {
   debugSettings?: EntityDebugSettings;
@@ -129,6 +130,8 @@ export interface CalculatedFieldArgumentValue extends CalculatedFieldArgument {
 
 export type CalculatedFieldTestScriptFn = (calculatedField: CalculatedField, argumentsObj?: Record<string, unknown>, closeAllOnSave?: boolean) => Observable<string>;
 
+export type CalculatedFieldArgumentsEditorCompleterFn = (argumentsObj: Record<string, CalculatedFieldArgument>) => TbEditorCompleter;
+
 export interface CalculatedFieldDialogData {
   value?: CalculatedField;
   buttonTitle: string;
@@ -139,6 +142,7 @@ export interface CalculatedFieldDialogData {
   additionalDebugActionConfig: AdditionalDebugActionConfig<(calculatedField: CalculatedField) => void>;
   getTestScriptDialogFn: CalculatedFieldTestScriptFn;
   isDirty?: boolean;
+  getArgumentsEditorCompleterFn: CalculatedFieldArgumentsEditorCompleterFn;
 }
 
 export interface CalculatedFieldDebugDialogData {
@@ -153,6 +157,7 @@ export interface CalculatedFieldTestScriptInputParams {
 }
 
 export interface CalculatedFieldTestScriptDialogData extends CalculatedFieldTestScriptInputParams {
+  argumentsEditorCompleter: TbEditorCompleter
   openCalculatedFieldEdit?: boolean;
 }
 
@@ -186,3 +191,77 @@ export const getCalculatedFieldCurrentEntityFilter = (entityName: string, entity
       };
   }
 }
+
+export interface CalculatedFieldAttributeArgumentValue<ValueType = unknown> {
+  ts: number;
+  value: ValueType;
+}
+
+export interface CalculatedFieldLatestTelemetryArgumentValue<ValueType = unknown> {
+  ts: number;
+  value: ValueType;
+}
+
+export interface CalculatedFieldRollingTelemetryArgumentValue<ValueType = unknown> {
+  timewindow: { startTs: number; endTs: number; limit: number };
+  values: CalculatedFieldSingleArgumentValue<ValueType>[];
+}
+
+export type CalculatedFieldSingleArgumentValue<ValueType = unknown> = CalculatedFieldAttributeArgumentValue<ValueType> & CalculatedFieldLatestTelemetryArgumentValue<ValueType>;
+
+export type CalculatedFieldArgumentEventValue<ValueType = unknown> = CalculatedFieldAttributeArgumentValue<ValueType> | CalculatedFieldLatestTelemetryArgumentValue<ValueType> | CalculatedFieldRollingTelemetryArgumentValue<ValueType>;
+
+export type CalculatedFieldEventArguments<ValueType = unknown> = Record<string, CalculatedFieldArgumentEventValue<ValueType>>;
+
+export const CalculatedFieldSingleValueArgumentAutocomplete = {
+  meta: 'object',
+  type: '{ ts: number; value: any; }',
+  description: 'Calculated field single value argument.',
+  children: {
+    ts: {
+      meta: 'number',
+      type: 'number',
+      description: 'Time stamp',
+    },
+    value: {
+      meta: 'any',
+      type: 'any',
+      description: 'Value',
+    }
+  },
+};
+
+export const CalculatedFieldRollingValueArgumentAutocomplete = {
+  meta: 'object',
+  type: '{ values: { ts: number; value: any; }[]; timewindow: { startTs: number; endTs: number; limit: number } }; }',
+  description: 'Calculated field rolling value argument.',
+  children: {
+    values: {
+      meta: 'array',
+      type: '{ ts: number; value: any; }[]',
+      description: 'Values array',
+    },
+    timewindow: {
+      meta: 'object',
+      type: '{ startTs: number; endTs: number; limit: number }',
+      description: 'Time window configuration',
+      children: {
+        startTs: {
+          meta: 'number',
+          type: 'number',
+          description: 'Start time stamp',
+        },
+        endTs: {
+          meta: 'number',
+          type: 'number',
+          description: 'End time stamp',
+        },
+        limit: {
+          meta: 'number',
+          type: 'number',
+          description: 'Limit',
+        }
+      }
+    }
+  },
+};
