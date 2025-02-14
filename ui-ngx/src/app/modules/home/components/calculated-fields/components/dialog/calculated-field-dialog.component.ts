@@ -27,6 +27,7 @@ import {
   CalculatedFieldDialogData,
   CalculatedFieldType,
   CalculatedFieldTypeTranslations,
+  getCalculatedFieldArgumentsEditorCompleter,
   OutputType,
   OutputTypeTranslations
 } from '@shared/models/calculated-field.models';
@@ -64,6 +65,12 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
     .pipe(
       startWith(this.data.value?.configuration?.arguments ?? {}),
       map(argumentsObj => Object.keys(argumentsObj))
+    );
+
+  argumentsEditorCompleter$ = this.configFormGroup.get('arguments').valueChanges
+    .pipe(
+      startWith(this.data.value?.configuration?.arguments ?? {}),
+      map(argumentsObj => getCalculatedFieldArgumentsEditorCompleter(argumentsObj))
     );
 
   additionalDebugActionConfig = this.data.value?.id ? {
