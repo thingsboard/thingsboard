@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.util.mapping;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
@@ -27,6 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+@Converter
 public abstract class AbstractEntityInfosConverter implements AttributeConverter<List<EntityInfo>, String> {
 
     protected abstract EntityType getEntityType();
@@ -55,7 +57,7 @@ public abstract class AbstractEntityInfosConverter implements AttributeConverter
                         name = nameNode.asText();
                     }
                     if (id != null && name != null) {
-                        entities.add(new EntityInfo(id, EntityType.WIDGETS_BUNDLE.name(), name));
+                        entities.add(new EntityInfo(id, getEntityType().name(), name));
                     }
                 }
                 return entities;
