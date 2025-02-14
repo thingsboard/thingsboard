@@ -821,7 +821,9 @@ message TsDoubleValProto {
 
 message TsRollingArgumentProto {
   string key = 1;
-  repeated TsDoubleValProto tsValue = 2;
+  int32 limit = 2;
+  int64 timeWindow = 3;
+  repeated TsDoubleValProto tsValue = 4;
 }
 
 message CalculatedFieldStateProto {

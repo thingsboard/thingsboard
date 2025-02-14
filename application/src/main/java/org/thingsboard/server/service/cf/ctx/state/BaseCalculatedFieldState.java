@@ -17,6 +17,8 @@ package org.thingsboard.server.service.cf.ctx.state;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
+import org.thingsboard.server.utils.CalculatedFieldUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,6 +31,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
     protected List<String> requiredArguments;
     protected Map<String, ArgumentEntry> arguments;
+    protected boolean stateTooLarge;
 
     public BaseCalculatedFieldState(List<String> requiredArguments) {
         this.requiredArguments = requiredArguments;
@@ -36,7 +39,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     }
 
     public BaseCalculatedFieldState() {
-        this(new ArrayList<>(), new HashMap<>());
+        this(new ArrayList<>(), new HashMap<>(), false);
     }
 
     @Override
@@ -52,7 +55,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
             ArgumentEntry newEntry = entry.getValue();
             ArgumentEntry existingEntry = arguments.get(key);
 
-            if (existingEntry == null || existingEntry == SingleValueArgumentEntry.EMPTY || existingEntry == TsRollingArgumentEntry.EMPTY) {
+            if (existingEntry == null) {
                 validateNewEntry(newEntry);
                 arguments.put(key, newEntry);
                 stateUpdated = true;
@@ -67,8 +70,14 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     @Override
     public boolean isReady() {
         return arguments.keySet().containsAll(requiredArguments) &&
-                !arguments.containsValue(SingleValueArgumentEntry.EMPTY) &&
-                !arguments.containsValue(TsRollingArgumentEntry.EMPTY);
+                arguments.values().stream().noneMatch(ArgumentEntry::isEmpty);
+    }
+
+    @Override
+    public void checkStateSize(CalculatedFieldEntityCtxId ctxId, long maxStateSize) {
+        if (maxStateSize > 0 && CalculatedFieldUtils.toProto(ctxId, this).getSerializedSize() > maxStateSize) {
+            setStateTooLarge(true);
+        }
     }
 
     protected abstract void validateNewEntry(ArgumentEntry newEntry);

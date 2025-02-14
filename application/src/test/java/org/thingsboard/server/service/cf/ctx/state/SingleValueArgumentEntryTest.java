@@ -40,7 +40,7 @@ public class SingleValueArgumentEntryTest {
 
     @Test
     void testUpdateEntryWhenRollingEntryPassed() {
-        assertThatThrownBy(() -> entry.updateEntry(TsRollingArgumentEntry.EMPTY))
+        assertThatThrownBy(() -> entry.updateEntry(new TsRollingArgumentEntry(5, 30000L)))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Unsupported argument entry type for single value argument entry: " + ArgumentEntryType.TS_ROLLING);
     }

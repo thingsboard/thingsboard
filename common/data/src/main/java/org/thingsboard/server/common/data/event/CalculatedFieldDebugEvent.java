@@ -91,5 +91,4 @@ public class CalculatedFieldDebugEvent extends Event {
         return eventInfo;
     }
 
-
 }

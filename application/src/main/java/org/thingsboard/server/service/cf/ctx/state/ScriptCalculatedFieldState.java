@@ -22,18 +22,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.script.api.tbel.TbelCfArg;
-import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
-import org.thingsboard.script.api.tbel.TbelCfTsDoubleVal;
-import org.thingsboard.script.api.tbel.TbelCfTsRollingArg;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
-import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 @Data
 @Slf4j
@@ -55,16 +49,6 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
 
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
-        arguments.forEach((key, argumentEntry) -> {
-            if (argumentEntry instanceof TsRollingArgumentEntry tsRollingEntry) {
-                Argument argument = ctx.getArguments().get(key);
-                TreeMap<Long, Double> tsRecords = tsRollingEntry.getTsRecords();
-                if (tsRecords.size() > argument.getLimit()) {
-                    tsRecords.pollFirstEntry();
-                }
-                tsRecords.entrySet().removeIf(tsRecord -> tsRecord.getKey() < System.currentTimeMillis() - argument.getTimeWindow());
-            }
-        });
         Object[] args = ctx.getArgNames().stream()
                 .map(this::toTbelArgument)
                 .toArray();

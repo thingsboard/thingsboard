@@ -140,6 +140,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxDataPointsPerRollingArg;
     private long maxStateSizeInKBytes;
     private long maxSingleValueArgumentSizeInKBytes;
+    private String calculatedFieldDebugEventsRateLimit;
 
     @Override
     public long getProfileThreshold(ApiUsageRecordKey key) {

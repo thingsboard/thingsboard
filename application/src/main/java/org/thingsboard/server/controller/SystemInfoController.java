@@ -35,8 +35,8 @@ import org.thingsboard.server.common.data.SystemParams;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.mobile.qrCodeSettings.QrCodeSettings;
 import org.thingsboard.server.common.data.mobile.qrCodeSettings.QRCodeConfig;
+import org.thingsboard.server.common.data.mobile.qrCodeSettings.QrCodeSettings;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.settings.UserSettingsType;
@@ -79,6 +79,12 @@ public class SystemInfoController extends BaseController {
 
     @Value("${actors.rule.chain.debug_mode_rate_limits_per_tenant.configuration:50000:3600}")
     private String ruleChainDebugPerTenantLimitsConfiguration;
+
+    @Value("${actors.calculated_fields.debug_mode_rate_limits_per_tenant.enabled:true}")
+    private boolean calculatedFieldDebugPerTenantLimitsEnabled;
+
+    @Value("${actors.calculated_fields.debug_mode_rate_limits_per_tenant.configuration:50000:3600}")
+    private String calculatedFieldDebugPerTenantLimitsConfiguration;
 
     @Autowired(required = false)
     private BuildProperties buildProperties;
@@ -154,6 +160,9 @@ public class SystemInfoController extends BaseController {
             systemParams.setMaxDebugModeDurationMinutes(DebugModeUtil.getMaxDebugAllDuration(tenantProfileConfiguration.getMaxDebugModeDurationMinutes(), defaultDebugDurationMinutes));
             if (ruleChainDebugPerTenantLimitsEnabled) {
                 systemParams.setRuleChainDebugPerTenantLimitsConfiguration(ruleChainDebugPerTenantLimitsConfiguration);
+            }
+            if (calculatedFieldDebugPerTenantLimitsEnabled) {
+                systemParams.setCalculatedFieldDebugPerTenantLimitsConfiguration(calculatedFieldDebugPerTenantLimitsConfiguration);
             }
         }
         systemParams.setMobileQrEnabled(Optional.ofNullable(qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID))
