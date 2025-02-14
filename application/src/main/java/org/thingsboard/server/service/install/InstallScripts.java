@@ -17,8 +17,6 @@ package org.thingsboard.server.service.install;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,11 +118,6 @@ public class InstallScripts {
 
     @Autowired
     private ResourcesUpdater resourcesUpdater;
-    @Getter @Setter
-    private boolean updateImages = false;
-
-    @Getter @Setter
-    private boolean updateResourcesUsage = false;
 
     @Autowired
     private ImageService imageService;
@@ -395,14 +388,6 @@ public class InstallScripts {
         }
     }
 
-    public void updateImages() {
-        resourcesUpdater.updateWidgetsBundlesImages();
-        resourcesUpdater.updateWidgetTypesImages();
-        resourcesUpdater.updateDashboardsImages();
-        resourcesUpdater.updateDeviceProfilesImages();
-        resourcesUpdater.updateAssetProfilesImages();
-    }
-
     public void loadSystemImagesAndResources() {
         log.info("Loading system images and resources...");
         Stream<Path> dashboardsFiles = Stream.concat(listDir(Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, DASHBOARDS_DIR)),
@@ -510,11 +495,6 @@ public class InstallScripts {
             log.error("Unable to load resources lwm2m object model from file: [{}]", resourceLwm2mPath);
             throw new RuntimeException("resource lwm2m object model from file", e);
         }
-    }
-
-    public void updateResourcesUsage() {
-        resourcesUpdater.updateDashboardsResources();
-        resourcesUpdater.updateWidgetsResources();
     }
 
     private void loadSystemResources(Path dir, ResourceType resourceType, ResourceSubType resourceSubType) {

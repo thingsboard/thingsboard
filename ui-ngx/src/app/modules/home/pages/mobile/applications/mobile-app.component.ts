@@ -101,7 +101,7 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
     form.get('status').valueChanges.pipe(
       takeUntilDestroyed()
     ).subscribe((value: MobileAppStatus) => {
-      if (value !== MobileAppStatus.DRAFT) {
+      if (value === MobileAppStatus.PUBLISHED) {
         form.get('storeInfo.storeLink').addValidators(Validators.required);
         form.get('storeInfo.sha256CertFingerprints')
           .addValidators(Validators.required);

@@ -13,25 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile.app;
+package org.thingsboard.server.transport.mqtt;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.validation.NoXss;
+public interface HashMapObserverMBean {
+    int getSize();
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class StoreInfo {
+    long getGatewayCount(String unused);
 
-    @NoXss
-    private String appId;
-    @NoXss
-    private String sha256CertFingerprints;
-    @NoXss
-    private String storeLink;
+    long getNonGatewayCount(String unused);
 
+    String getSessionByUUID(String key);
+
+    String getAllSessions(String key);
+
+    String getSubscribedSessions(String unused);
+
+    String getNonActiveSessions(String unused);
+
+    String getActiveSessions(String unused);
+
+    String getGatewayDeviceSessionContextConnectedSessions(String unused);
+
+    String getDeviceAwareSessionContextNotConnectedSessions(String unused);
 }
