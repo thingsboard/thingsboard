@@ -43,8 +43,9 @@ import {
   CalculatedFieldDebugDialogData,
   CalculatedFieldDialogData,
   CalculatedFieldRollingValueArgumentAutocomplete,
-  CalculatedFieldSingleValueArgumentAutocomplete,
   CalculatedFieldTestScriptDialogData,
+  CalculatedFieldAttributeValueArgumentAutocomplete,
+  CalculatedFieldLatestTelemetryArgumentAutocomplete,
 } from '@shared/models/calculated-field.models';
 import {
   CalculatedFieldDebugDialogComponent,
@@ -302,9 +303,17 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
 
   private getArgumentsEditorCompleter(argumentsObj: Record<string, CalculatedFieldArgument>): TbEditorCompleter {
     return new TbEditorCompleter(Object.keys(argumentsObj).reduce((acc, key) => {
-      acc[key] = argumentsObj[key].refEntityKey.type === ArgumentType.Rolling
-        ? CalculatedFieldRollingValueArgumentAutocomplete
-        : CalculatedFieldSingleValueArgumentAutocomplete;
+      switch (argumentsObj[key].refEntityKey.type) {
+        case ArgumentType.Attribute:
+          acc[key] = CalculatedFieldAttributeValueArgumentAutocomplete;
+          break;
+        case ArgumentType.LatestTelemetry:
+          acc[key] = CalculatedFieldLatestTelemetryArgumentAutocomplete;
+          break;
+        case ArgumentType.Rolling:
+          acc[key] = CalculatedFieldRollingValueArgumentAutocomplete;
+          break;
+      }
       return acc;
     }, {}))
   }

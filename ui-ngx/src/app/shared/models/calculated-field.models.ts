@@ -213,10 +213,28 @@ export type CalculatedFieldArgumentEventValue<ValueType = unknown> = CalculatedF
 
 export type CalculatedFieldEventArguments<ValueType = unknown> = Record<string, CalculatedFieldArgumentEventValue<ValueType>>;
 
-export const CalculatedFieldSingleValueArgumentAutocomplete = {
+export const CalculatedFieldLatestTelemetryArgumentAutocomplete = {
   meta: 'object',
   type: '{ ts: number; value: any; }',
-  description: 'Calculated field single value argument.',
+  description: 'Calculated field latest telemetry value argument.',
+  children: {
+    ts: {
+      meta: 'number',
+      type: 'number',
+      description: 'Time stamp',
+    },
+    value: {
+      meta: 'any',
+      type: 'any',
+      description: 'Value',
+    }
+  },
+};
+
+export const CalculatedFieldAttributeValueArgumentAutocomplete = {
+  meta: 'object',
+  type: '{ ts: number; value: any; }',
+  description: 'Calculated field attribute value argument.',
   children: {
     ts: {
       meta: 'number',

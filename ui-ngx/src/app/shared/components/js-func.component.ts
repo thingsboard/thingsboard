@@ -184,6 +184,9 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
       this.updateFunctionArgsString();
       this.updateFunctionLabel();
     }
+    if (changes.editorCompleter) {
+      this.updateCompleters();
+    }
   }
 
   ngOnInit(): void {
