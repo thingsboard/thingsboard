@@ -50,7 +50,6 @@ import {
 } from './components/public-api';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { isObject } from '@core/utils';
-import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 
 export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField, PageLink> {
 
