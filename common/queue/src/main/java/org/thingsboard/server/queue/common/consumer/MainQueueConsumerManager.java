@@ -39,6 +39,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -53,6 +54,7 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
     protected final ExecutorService consumerExecutor;
     protected final ScheduledExecutorService scheduler;
     protected final ExecutorService taskExecutor;
+    protected final Consumer<Throwable> uncaughtErrorHandler;
 
     private final java.util.Queue<TbQueueConsumerManagerTask> tasks = new ConcurrentLinkedQueue<>();
     private final ReentrantLock lock = new ReentrantLock();
@@ -68,7 +70,8 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
                                     BiFunction<C, Integer, TbQueueConsumer<M>> consumerCreator,
                                     ExecutorService consumerExecutor,
                                     ScheduledExecutorService scheduler,
-                                    ExecutorService taskExecutor) {
+                                    ExecutorService taskExecutor,
+                                    Consumer<Throwable> uncaughtErrorHandler) {
         this.queueKey = queueKey;
         this.config = config;
         this.msgPackProcessor = msgPackProcessor;
@@ -76,6 +79,7 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
         this.consumerExecutor = consumerExecutor;
         this.scheduler = scheduler;
         this.taskExecutor = taskExecutor;
+        this.uncaughtErrorHandler = uncaughtErrorHandler;
         if (config != null) {
             init(config);
         }
@@ -189,36 +193,40 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
         log.info("[{}] Launching consumer", consumerTask.getKey());
         Future<?> consumerLoop = consumerExecutor.submit(() -> {
             ThingsBoardThreadFactory.updateCurrentThreadName(consumerTask.getKey().toString());
-            try {
-                consumerLoop(consumerTask.getConsumer());
-            } catch (Throwable e) {
-                log.error("Failure in consumer loop", e);
-            }
+            consumerLoop(consumerTask.getConsumer());
             log.info("[{}] Consumer stopped", consumerTask.getKey());
         });
         consumerTask.setTask(consumerLoop);
     }
 
     private void consumerLoop(TbQueueConsumer<M> consumer) {
-        while (!stopped && !consumer.isStopped()) {
-            try {
-                List<M> msgs = consumer.poll(config.getPollInterval());
-                if (msgs.isEmpty()) {
-                    continue;
-                }
-                processMsgs(msgs, consumer, config);
-            } catch (Exception e) {
-                if (!consumer.isStopped()) {
-                    log.warn("Failed to process messages from queue", e);
-                    try {
-                        Thread.sleep(config.getPollInterval());
-                    } catch (InterruptedException e2) {
-                        log.trace("Failed to wait until the server has capacity to handle new requests", e2);
+        try {
+            while (!stopped && !consumer.isStopped()) {
+                try {
+                    List<M> msgs = consumer.poll(config.getPollInterval());
+                    if (msgs.isEmpty()) {
+                        continue;
+                    }
+                    processMsgs(msgs, consumer, config);
+                } catch (Exception e) {
+                    if (!consumer.isStopped()) {
+                        log.warn("Failed to process messages from queue", e);
+                        try {
+                            Thread.sleep(config.getPollInterval());
+                        } catch (InterruptedException e2) {
+                            log.trace("Failed to wait until the server has capacity to handle new requests", e2);
+                        }
                     }
                 }
             }
-        }
-        if (consumer.isStopped()) {
+            if (consumer.isStopped()) {
+                consumer.unsubscribe();
+            }
+        } catch (Throwable t) {
+            log.error("Failure in consumer loop", t);
+            if (uncaughtErrorHandler != null) {
+                uncaughtErrorHandler.accept(t);
+            }
             consumer.unsubscribe();
         }
     }

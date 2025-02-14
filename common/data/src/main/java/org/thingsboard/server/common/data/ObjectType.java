@@ -15,9 +15,8 @@
  */
 package org.thingsboard.server.common.data;
 
-import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public enum ObjectType {
@@ -68,12 +67,13 @@ public enum ObjectType {
             TENANT, TENANT_PROFILE, CUSTOMER, DEVICE_PROFILE, DEVICE, ASSET_PROFILE, ASSET, EDGE, ENTITY_VIEW, USER, DASHBOARD,
             RULE_CHAIN, WIDGET_TYPE, WIDGETS_BUNDLE, API_USAGE_STATE, QUEUE_STATS
     );
-    public static final Set<ObjectType> edqsTypes = new HashSet<>(edqsTenantTypes);
+    public static final Set<ObjectType> edqsTypes =  EnumSet.copyOf(edqsTenantTypes);
     public static final Set<ObjectType> edqsSystemTypes = EnumSet.of(TENANT, TENANT_PROFILE, USER, DASHBOARD,
             API_USAGE_STATE, ATTRIBUTE_KV, LATEST_TS_KV);
+    public static final Set<ObjectType> unversionedTypes = EnumSet.of(QUEUE_STATS);
 
     static {
-        edqsTypes.addAll(Arrays.asList(RELATION, ATTRIBUTE_KV, LATEST_TS_KV));
+        edqsTypes.addAll(List.of(RELATION, ATTRIBUTE_KV, LATEST_TS_KV));
     }
 
     public EntityType toEntityType() {

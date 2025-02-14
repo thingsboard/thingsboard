@@ -52,9 +52,9 @@ public class EdqsStatsService {
         log.info("EDQS Stats: {}", values);
     }
 
-    public void reportTenantEdqsObject(TenantId tenantId, ObjectType objectType, EdqsEventType eventType) {
+    public void reportEvent(TenantId tenantId, ObjectType objectType, EdqsEventType eventType) {
         statsMap.computeIfAbsent(tenantId, id -> new EdqsStats(tenantId, statsFactory))
-                .reportEdqsObject(objectType, eventType);
+                .reportEvent(objectType, eventType);
     }
 
     @Getter
@@ -78,7 +78,7 @@ public class EdqsStatsService {
                     .collect(Collectors.joining(", "));
         }
 
-        public void reportEdqsObject(ObjectType objectType, EdqsEventType eventType) {
+        public void reportEvent(ObjectType objectType, EdqsEventType eventType) {
             AtomicInteger objectCounter = getOrCreateObjectCounter(objectType);
             if (eventType == EdqsEventType.UPDATED){
                 objectCounter.incrementAndGet();

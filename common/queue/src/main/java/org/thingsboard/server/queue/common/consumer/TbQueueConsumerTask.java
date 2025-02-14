@@ -84,7 +84,7 @@ public class TbQueueConsumerTask<M extends TbQueueMsg> {
                 }
                 log.trace("[{}] Awaited finish", key);
             } catch (Exception e) {
-                log.warn("[{}] Failed to await for consumer to stop", key, e);
+                log.warn("[{}] Failed to await for consumer to stop (timeout {} sec)", key, timeoutSec, e);
             }
             task = null;
         }

@@ -28,7 +28,6 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.edqs.util.EdqsRocksDb;
 
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiPredicate;
 
 import static org.awaitility.Awaitility.await;
 
@@ -45,7 +44,7 @@ public class EdqsEntityQueryControllerTest extends EntityQueryControllerTest {
     @Autowired
     private EdqsService edqsService;
 
-    @MockBean
+    @MockBean // so that we don't do backup for tests
     private EdqsRocksDb edqsRocksDb;
 
     @Before

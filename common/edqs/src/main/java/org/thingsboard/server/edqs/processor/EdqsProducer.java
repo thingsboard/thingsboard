@@ -53,7 +53,7 @@ public class EdqsProducer {
         TbQueueCallback callback = new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {
-                log.debug("[{}][{}][{}] Published msg to {}: {}", tenantId, type, key, topic, msg); // fixme log levels
+                log.trace("[{}][{}][{}] Published msg to {}: {}", tenantId, type, key, topic, msg); // fixme log levels
             }
 
             @Override
