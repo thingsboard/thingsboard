@@ -34,8 +34,15 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { FormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { DataKey, DatasourceType, datasourceTypeTranslationMap, widgetType } from '@shared/models/widget.models';
+import { FormBuilder, FormGroup, UntypedFormGroup, Validators } from '@angular/forms';
+import {
+  DataKey,
+  DatasourceType,
+  datasourceTypeTranslationMap,
+  WidgetActionType,
+  widgetActionTypeTranslationMap,
+  widgetType
+} from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -69,6 +76,8 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
   widgetType = widgetType;
 
   MarkerType = MarkerType;
+
+  WidgetActionType = WidgetActionType;
 
   datasourceTypes: Array<DatasourceType> = [];
   datasourceTypesTranslations = datasourceTypeTranslationMap;
@@ -122,6 +131,13 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
       edit: this.fb.group({
         enabledActions: [this.settings.edit?.enabledActions, []],
         snappable: [this.settings.edit?.snappable, []]
+      }),
+      createEntity: this.fb.group({
+        enable: [this.settings.createEntity?.enable, []],
+        label: [this.settings.createEntity?.label ?? '', []],
+        icon: [this.settings.createEntity?.icon, []],
+        color: [this.settings.createEntity?.color, []],
+        action: [this.settings.createEntity?.action]
       })
     });
 
@@ -161,6 +177,8 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
           this.dataLayerEditTitle = 'widgets.maps.data-layer.marker.edit';
           const polygonsDataLayer = this.settings as PolygonsDataLayerSettings;
           this.dataLayerFormGroup.addControl('polygonKey', this.fb.control(polygonsDataLayer.polygonKey, Validators.required));
+          (this.dataLayerFormGroup.get('createEntity') as FormGroup)
+            .addControl('polygonType', this.fb.control(this.settings.createEntity?.polygonType ?? 'polygon'))
         } else {
           this.dialogTitle = 'widgets.maps.data-layer.circle.circle-configuration';
           this.dataLayerEditTitle = 'widgets.maps.data-layer.circle.edit';
@@ -318,4 +336,7 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
     const settings: MapDataLayerSettings = this.dataLayerFormGroup.getRawValue();
     this.dialogRef.close(settings);
   }
+
+  protected readonly widgetActionType = WidgetActionType;
+  protected readonly widgetActionTypeTranslations = widgetActionTypeTranslationMap;
 }

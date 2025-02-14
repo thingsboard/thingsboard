@@ -41,7 +41,7 @@ import {
   UnplacedMapDataItem,
 } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { FormattedData, WidgetAction, WidgetActionDescriptor, widgetType } from '@shared/models/widget.models';
+import { FormattedData, WidgetAction, WidgetActionType, widgetType } from '@shared/models/widget.models';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { TbMarkersDataLayer } from '@home/components/widget/lib/maps/data-layer/markers-data-layer';
@@ -300,20 +300,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
            }
          });
          this.addMarkerButton.setDisabled(true);
-         createColorMarkerShapeURI(this.getCtx().$injector.get(MatIconRegistry), this.getCtx().$injector.get(DomSanitizer), MarkerShape.markerShape1, tinycolor('rgba(255,255,255,0.75)')).subscribe(
-           ((iconUrl) => {
-             const icon = L.icon({
-               iconUrl,
-               iconSize: [40, 40],
-               iconAnchor: [20, 40]
-             });
-             this.map.pm.setGlobalOptions({
-               markerStyle: {
-                 icon
-               }
-             });
-           })
-         );
+         this.setPlaceMarkerStyle();
        }
        this.addPolygonDataLayers = addSupportedDataLayers.filter(dl => dl.dataLayerType() === MapDataLayerType.polygon);
        if (this.addPolygonDataLayers.length) {
@@ -351,86 +338,32 @@ export abstract class TbMap<S extends BaseMapSettings> {
      }
   }
 
-  private setupCustomActions() {
-    this.customActionsToolbar = L.TB.topToolbar({
-      mapElement: $(this.mapElement)
-    });
-
-    /*const customButton = this.customActionsToolbar.toolbarButton({
-      title: 'Super button',
-      icon: 'add'
-    });
-    this.customActionsToolbar.toolbarButton({
-      title: 'Super button 2',
-      icon: 'add'
-    });
-    customButton.onClick(e => {
-      console.log("Called!");
-    });*/
-  }
-
   private placeMarker(e: MouseEvent, button: L.TB.ToolbarButton): void {
-    this.placeItem(e, button, this.addMarkerDataLayers,
-      (entity) => {
-        this.map.pm.setLang('en', {
-          tooltips: {
-            placeMarker: this.ctx.translate.instant('widgets.maps.data-layer.marker.place-marker-hint', {entityName: entity.entity.entityDisplayName})
-          }
-        }, 'en');
-        this.map.pm.enableDraw('Marker');
-        // @ts-ignore
-        L.DomUtil.addClass(this.map.pm.Draw.Marker._hintMarker.getTooltip()._container, 'tb-place-item-label');
-      }
-    );
+    this.placeItem(e, button, this.addMarkerDataLayers, (entity) => this.prepareDrawMode('Marker', {
+      placeMarker: this.ctx.translate.instant('widgets.maps.data-layer.marker.place-marker-hint-with-entity', {entityName: entity.entity.entityDisplayName})
+    }));
   }
 
   private drawRectangle(e: MouseEvent, button: L.TB.ToolbarButton): void {
-    this.placeItem(e, button, this.addPolygonDataLayers,
-      (entity) => {
-        this.map.pm.setLang('en', {
-          tooltips: {
-            firstVertex: this.ctx.translate.instant('widgets.maps.data-layer.polygon.rectangle-place-first-point-hint', {entityName: entity.entity.entityDisplayName}),
-            finishRect: this.ctx.translate.instant('widgets.maps.data-layer.polygon.finish-rectangle-hint', {entityName: entity.entity.entityDisplayName})
-          }
-        }, 'en');
-        this.map.pm.enableDraw('Rectangle');
-        // @ts-ignore
-        L.DomUtil.addClass(this.map.pm.Draw.Rectangle._hintMarker.getTooltip()._container, 'tb-place-item-label');
-      }
-    );
+    this.placeItem(e, button, this.addPolygonDataLayers, (entity) => this.prepareDrawMode('Rectangle', {
+      firstVertex: this.ctx.translate.instant('widgets.maps.data-layer.polygon.rectangle-place-first-point-hint-with-entity', {entityName: entity.entity.entityDisplayName}),
+      finishRect: this.ctx.translate.instant('widgets.maps.data-layer.polygon.finish-rectangle-hint-with-entity', {entityName: entity.entity.entityDisplayName})
+    }));
   }
 
   private drawPolygon(e: MouseEvent, button: L.TB.ToolbarButton): void {
-    this.placeItem(e, button, this.addPolygonDataLayers,
-      (entity) => {
-        this.map.pm.setLang('en', {
-          tooltips: {
-            firstVertex: this.ctx.translate.instant('widgets.maps.data-layer.polygon.polygon-place-first-point-hint', {entityName: entity.entity.entityDisplayName}),
-            continueLine: this.ctx.translate.instant('widgets.maps.data-layer.polygon.continue-polygon-hint', {entityName: entity.entity.entityDisplayName}),
-            finishPoly: this.ctx.translate.instant('widgets.maps.data-layer.polygon.finish-polygon-hint', {entityName: entity.entity.entityDisplayName})
-          }
-        }, 'en');
-        this.map.pm.enableDraw('Polygon');
-        // @ts-ignore
-        L.DomUtil.addClass(this.map.pm.Draw.Polygon._hintMarker.getTooltip()._container, 'tb-place-item-label');
-      }
-    );
+    this.placeItem(e, button, this.addPolygonDataLayers, (entity) => this.prepareDrawMode('Polygon', {
+      firstVertex: this.ctx.translate.instant('widgets.maps.data-layer.polygon.polygon-place-first-point-hint-with-entity', {entityName: entity.entity.entityDisplayName}),
+      continueLine: this.ctx.translate.instant('widgets.maps.data-layer.polygon.continue-polygon-hint-with-entity', {entityName: entity.entity.entityDisplayName}),
+      finishPoly: this.ctx.translate.instant('widgets.maps.data-layer.polygon.finish-polygon-hint-with-entity', {entityName: entity.entity.entityDisplayName})
+    }));
   }
 
   private drawCircle(e: MouseEvent, button: L.TB.ToolbarButton): void {
-    this.placeItem(e, button, this.addCircleDataLayers,
-      (entity) => {
-        this.map.pm.setLang('en', {
-          tooltips: {
-            startCircle: this.ctx.translate.instant('widgets.maps.data-layer.circle.place-circle-center-hint', {entityName: entity.entity.entityDisplayName}),
-            finishCircle: this.ctx.translate.instant('widgets.maps.data-layer.circle.finish-circle-hint', {entityName: entity.entity.entityDisplayName}),
-          }
-        }, 'en');
-        this.map.pm.enableDraw('Circle');
-        // @ts-ignore
-        L.DomUtil.addClass(this.map.pm.Draw.Circle._hintMarker.getTooltip()._container, 'tb-place-item-label');
-      }
-    );
+    this.placeItem(e, button, this.addCircleDataLayers, (entity) => this.prepareDrawMode('Circle', {
+      startCircle: this.ctx.translate.instant('widgets.maps.data-layer.circle.place-circle-center-hint-with-entity', {entityName: entity.entity.entityDisplayName}),
+      finishCircle: this.ctx.translate.instant('widgets.maps.data-layer.circle.finish-circle-hint-with-entity', {entityName: entity.entity.entityDisplayName}),
+    }));
   }
 
   private placeItem(e: MouseEvent, button: L.TB.ToolbarButton, dataLayers: TbMapDataLayer[],
@@ -444,21 +377,12 @@ export abstract class TbMap<S extends BaseMapSettings> {
     });
     this.selectEntityToPlace(e, items).subscribe((entity) => {
       if (entity) {
-
-        const finishAdd = () => {
-          this.map.off('pm:create');
-          this.map.pm.disableDraw();
-          this.dataLayers.forEach(dl => dl.enableEditMode());
-          this.updatePlaceItemState();
-          this.editToolbar.close();
-        };
-
         this.map.once('pm:create', (e) => {
           entity.dataLayer.placeItem(entity, e.layer);
           // @ts-ignore
           e.layer._pmTempLayer = true;
           e.layer.remove();
-          finishAdd();
+          this.finishAdd();
         });
 
         prepareDrawMode(entity);
@@ -471,7 +395,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
             iconClass: 'tb-close',
             title: this.ctx.translate.instant('action.cancel'),
             showText: true,
-            click: finishAdd
+            click: this.finishAdd
           }
         ], false);
       } else {
@@ -505,6 +429,126 @@ export abstract class TbMap<S extends BaseMapSettings> {
         })
       );
     }
+  }
+
+  private setupCustomActions() {
+    this.customActionsToolbar = L.TB.topToolbar({
+      mapElement: $(this.mapElement),
+      iconRegistry: this.ctx.$injector.get(MatIconRegistry)
+    });
+
+    const customActionDataLayers = this.dataLayers.filter(dl => dl.isCreateAction());
+
+    if (customActionDataLayers.length) {
+      if (customActionDataLayers.some(dataLayer => dataLayer.dataLayerType() === MapDataLayerType.marker)) {
+        this.setPlaceMarkerStyle();
+      }
+
+      customActionDataLayers.forEach(dataLayer => {
+        const actionButtonConfig = dataLayer.getCreateAction();
+        const actionButton = this.customActionsToolbar.toolbarButton(actionButtonConfig);
+        if (actionButtonConfig.action.type === WidgetActionType.doNothing) {
+          return;
+        }
+        switch (dataLayer.dataLayerType()) {
+          case MapDataLayerType.marker:
+            actionButton.onClick((e, button) => this.createMarker(e, button, dataLayer));
+            break;
+          case MapDataLayerType.polygon:
+            if (actionButtonConfig.polygonType === 'rectangle') {
+              actionButton.onClick((e, button) => this.createRectangle(e, button, dataLayer));
+            } else {
+              actionButton.onClick((e, button) => this.createPolygon(e, button, dataLayer));
+            }
+            break;
+          case MapDataLayerType.circle:
+            actionButton.onClick((e, button) => this.createCircle(e, button, dataLayer));
+            break;
+        }
+
+      });
+    }
+  }
+
+  private createMarker(e: MouseEvent, button: L.TB.TopToolbarButton, dataLayer: TbMapDataLayer) {
+    this.createItem(e, button, dataLayer, () => this.prepareDrawMode('Marker', {
+      placeMarker: this.ctx.translate.instant('widgets.maps.data-layer.marker.place-marker-hint')
+    }));
+  }
+
+  private createRectangle(e: MouseEvent, button: L.TB.TopToolbarButton, dataLayer: TbMapDataLayer): void {
+    this.createItem(e, button, dataLayer, () => this.prepareDrawMode('Rectangle', {
+      firstVertex: this.ctx.translate.instant('widgets.maps.data-layer.polygon.rectangle-place-first-point-hint'),
+      finishRect: this.ctx.translate.instant('widgets.maps.data-layer.polygon.finish-rectangle-hint')
+    }));
+  }
+
+  private createPolygon(e: MouseEvent, button: L.TB.TopToolbarButton, dataLayer: TbMapDataLayer): void {
+    this.createItem(e, button, dataLayer, () => this.prepareDrawMode('Polygon', {
+      firstVertex: this.ctx.translate.instant('widgets.maps.data-layer.polygon.polygon-place-first-point-hint'),
+      continueLine: this.ctx.translate.instant('widgets.maps.data-layer.polygon.continue-polygon-hint'),
+      finishPoly: this.ctx.translate.instant('widgets.maps.data-layer.polygon.finish-polygon-hint')
+    }));
+  }
+
+  private createCircle(e: MouseEvent, button: L.TB.TopToolbarButton, dataLayer: TbMapDataLayer): void {
+    this.createItem(e, button, dataLayer, () => this.prepareDrawMode('Circle', {
+      startCircle: this.ctx.translate.instant('widgets.maps.data-layer.circle.circle-center-hint'),
+      finishCircle: this.ctx.translate.instant('widgets.maps.data-layer.circle.finish-circle-hint')
+    }));
+  }
+
+  private createItem(e: MouseEvent, button: L.TB.TopToolbarButton, dataLayer: TbMapDataLayer, prepareDrawMode: () => void) {
+    if (this.isPlacingItem) {
+      return;
+    }
+    this.updatePlaceItemState(button);
+
+    this.map.once('pm:create', (e) => {
+      // @ts-ignore
+      const dataKeys = dataLayer.convertLayerToDataKeys(e.layer);
+
+      this.ctx.actionsApi.handleWidgetAction(e as any, dataLayer.getCreateAction().action, null, null, {
+        dataKeys,
+        entityAliasId: dataLayer.getDatasource().entityAliasId,
+        deviceId: dataLayer.getDatasource().deviceId
+      });
+
+      // entity.dataLayer.placeItem(entity, e.layer);
+      // @ts-ignore
+      e.layer._pmTempLayer = true;
+      e.layer.remove();
+      this.finishAdd();
+    });
+
+    prepareDrawMode();
+
+    this.dataLayers.forEach(dl => dl.disableEditMode());
+
+    this.editToolbar.open([
+      {
+        id: 'cancel',
+        iconClass: 'tb-close',
+        title: this.ctx.translate.instant('action.cancel'),
+        showText: true,
+        click: this.finishAdd
+      }
+    ], false);
+  }
+
+  private finishAdd = () => {
+    this.map.off('pm:create');
+    this.map.pm.disableDraw();
+    this.dataLayers.forEach(dl => dl.enableEditMode());
+    this.updatePlaceItemState();
+    this.editToolbar.close();
+  }
+
+  private prepareDrawMode(shape: 'Marker' | 'Rectangle' | 'Polygon' | 'Circle', tooltipsTranslation: Record<string, string>) {
+    this.map.pm.setLang('en', { tooltips: tooltipsTranslation }, 'en');
+    this.map.pm.enableDraw(shape);
+    // @ts-ignore
+    L.DomUtil.addClass(this.map.pm.Draw[shape]._hintMarker.getTooltip()._container, 'tb-place-item-label');
   }
 
   private updatePlaceItemState(addButton?: L.TB.ToolbarButton): void {
@@ -624,6 +668,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
       if (this.addCircleButton && this.addCircleButton !== this.currentAddButton) {
         this.addCircleButton.setDisabled(true);
       }
+      this.customActionsToolbar.setDisabled(true);
     } else {
       if (this.addMarkerButton) {
         this.addMarkerButton.setDisabled(!this.addMarkerDataLayers.some(dl => dl.isEnabled() && dl.hasUnplacedItems()));
@@ -637,7 +682,25 @@ export abstract class TbMap<S extends BaseMapSettings> {
       if (this.addCircleButton) {
         this.addCircleButton.setDisabled(!this.addCircleDataLayers.some(dl => dl.isEnabled() && dl.hasUnplacedItems()));
       }
+      this.customActionsToolbar.setDisabled(false);
     }
+  }
+
+  private setPlaceMarkerStyle() {
+    createColorMarkerShapeURI(this.getCtx().$injector.get(MatIconRegistry), this.getCtx().$injector.get(DomSanitizer), MarkerShape.markerShape1, tinycolor('rgba(255,255,255,0.75)')).subscribe(
+      ((iconUrl) => {
+        const icon = L.icon({
+          iconUrl,
+          iconSize: [40, 40],
+          iconAnchor: [20, 40]
+        });
+        this.map.pm.setGlobalOptions({
+          markerStyle: {
+            icon
+          }
+        });
+      })
+    );
   }
 
   protected abstract defaultSettings(): S;

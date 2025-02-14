@@ -37,18 +37,19 @@
         border: 1px solid rgba(0,0,0,0.38);
         border-radius: 15px;
         box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.32);
-        background: #fff;
+        background-color: #fff;
         position: relative;
         a {
           color: rgba(0, 0, 0, 0.54);
           border-bottom: none;
           position: relative;
-          background: transparent;
+          background-color: transparent;
           &.leaflet-disabled {
             pointer-events: none;
             color: rgba(0, 0, 0, 0.18);
             > div {
-              background: rgba(0, 0, 0, 0.18);
+              background-color: rgba(0, 0, 0, 0.18);
+              fill: rgba(0, 0, 0, 0.18);
             }
           }
           &:not(.leaflet-disabled) {
@@ -93,11 +94,13 @@
                   border-radius: 15px;
                 }
                 > div:not(.tb-control-text):not(.tb-close) {
-                  background: $tb-primary-color; // primary color
+                  background-color: $tb-primary-color; // primary color
+                  fill: $tb-primary-color; // primary color
                 }
               }
               > div {
-                background: rgba(0, 0, 0, 0.54);
+                background-color: rgba(0, 0, 0, 0.54);
+                fill: rgba(0, 0, 0, 0.54);
               }
             }
             > div {
@@ -141,7 +144,7 @@
           }
         }
       }
-      .tb-map-bottom-toolbar, .tb-map-top-toolbar {
+      .tb-map-bottom-toolbar {
         left: 0;
         right: 0;
         display: flex;
@@ -150,6 +153,25 @@
         .leaflet-bar {
           display: flex;
           flex-direction: row;
+        }
+      }
+
+      .tb-map-top-toolbar {
+        left: 52px;
+        right: 52px;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+        .leaflet-control {
+          margin-top: 0;
+        }
+        a.tb-control-button {
+          .tb-control-button-icon {
+            background-clip: text;
+          }
         }
       }
     }

@@ -7747,6 +7747,8 @@
                 "action-remove": "Remove",
                 "edit-instruments": "Instruments",
                 "enable-snapping": "Enable snapping to other vertices for precision drawing",
+                "create-action": "Create action",
+                "create-action-hint": "Action invoked after the user places an item on the mapю",
                 "marker": {
                     "latitude-key": "Latitude key",
                     "longitude-key": "Longitude key",
@@ -7796,7 +7798,8 @@
                     "edit": "Edit marker",
                     "remove-marker-for": "Remove marker for '{{entityName}}'",
                     "place-marker": "Place marker",
-                    "place-marker-hint": "Click to place '{{entityName}}' entity"
+                    "place-marker-hint": "Click to place marker",
+                    "place-marker-hint-with-entity": "Click to place '{{entityName}}' entity"
                 },
                 "polygon": {
                     "polygon-key": "Polygon key",
@@ -7814,11 +7817,16 @@
                     "polygon-place-first-point-cut-hint": "Click to place first point",
                     "continue-polygon-cut-hint": "Click to continue drawing",
                     "finish-polygon-cut-hint": "Click first marker to finish and save",
-                    "polygon-place-first-point-hint": "Polygon for '{{entityName}}': click to place first point",
-                    "continue-polygon-hint": "Polygon for '{{entityName}}': click to continue drawing",
-                    "finish-polygon-hint": "Polygon for '{{entityName}}': click first marker to finish and save",
-                    "rectangle-place-first-point-hint": "Rectangle for '{{entityName}}': click to place first point",
-                    "finish-rectangle-hint": "Rectangle for '{{entityName}}': click to finish and save"
+                    "polygon-place-first-point-hint": "Polygon: click to place first point",
+                    "polygon-place-first-point-hint-with-entity": "Polygon for '{{entityName}}': click to place first point",
+                    "continue-polygon-hint": "Polygon: click to continue drawing",
+                    "continue-polygon-hint-with-entity": "Polygon for '{{entityName}}': click to continue drawing",
+                    "finish-polygon-hint": "Polygon: click first marker to finish drawing",
+                    "finish-polygon-hint-with-entity": "Polygon for '{{entityName}}': click first marker to finish and save",
+                    "rectangle-place-first-point-hint": "Rectangle: click to place first point",
+                    "rectangle-place-first-point-hint-with-entity": "Rectangle for '{{entityName}}': click to place first point",
+                    "finish-rectangle-hint": "Rectangle: click to finish drawing",
+                    "finish-rectangle-hint-with-entity": "Rectangle for '{{entityName}}': click to finish and save"
                 },
                 "circle": {
                     "circle-key": "Circle key",
@@ -7830,8 +7838,10 @@
                     "edit": "Edit circle",
                     "remove-circle-for": "Remove circle for '{{entityName}}'",
                     "draw-circle": "Draw circle",
-                    "place-circle-center-hint": "Circle for '{{entityName}}': click to place circle center",
-                    "finish-circle-hint": "Circle for '{{entityName}}': click to finish and save circle"
+                    "place-circle-center-hint-with-entity": "Circle for '{{entityName}}': click to place circle center",
+                    "place-circle-center-hint": "Circle: click to place circle center",
+                    "finish-circle-hint-with-entity": "Circle for '{{entityName}}': click to finish and save circle",
+                    "finish-circle-hint": "Circle: click to finish drawing"
                 },
                 "select-entity": "Select entity",
                 "select-entity-hint": "Hint: after selection click at the map to set position"

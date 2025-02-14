@@ -15,6 +15,7 @@
 ///
 
 import {
+  DataKeyValuePair,
   DataLayerColorSettings,
   DataLayerColorType,
   DataLayerEditAction,
@@ -29,7 +30,7 @@ import {
   TbMapDatasource
 } from '@home/components/widget/lib/maps/models/map.models';
 import { TbMap } from '@home/components/widget/lib/maps/map';
-import { FormattedData, WidgetActionType } from '@shared/models/widget.models';
+import { DatasourceType, FormattedData, WidgetAction, WidgetActionType } from '@shared/models/widget.models';
 import { forkJoin, Observable, of } from 'rxjs';
 import {
   createLabelFromPattern,
@@ -386,6 +387,8 @@ export interface UnplacedMapDataItem {
   dataLayer: TbMapDataLayer;
 }
 
+type CreateAction = L.TB.TopToolbarButtonOptions & {action: WidgetAction; polygonType?: 'polygon'|'rectangle'};
+
 export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLayerSettings, D extends TbMapDataLayer<S,D> = any, L extends L.Layer = L.Layer> implements L.TB.DataLayer {
 
   protected settings: S;
@@ -419,6 +422,8 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
   public dataLayerLabelProcessor: DataLayerPatternProcessor;
   public dataLayerTooltipProcessor: DataLayerPatternProcessor;
 
+  protected createAction: CreateAction = null;
+
   protected constructor(protected map: TbMap<any>,
                         inputSettings: S) {
     this.settings = mergeDeepIgnoreArray({} as S, this.defaultBaseSettings(map) as S, inputSettings);
@@ -438,6 +443,17 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
       this.selectable = this.removeEnabled || this.editEnabled;
       this.hoverable = this.selectable || this.dragEnabled;
       this.snappable = this.settings.edit.snappable;
+    }
+
+    if (this.settings.createEntity?.enable && this.settings.dsType === DatasourceType.entity) {
+      this.createAction = {
+        title: this.settings.createEntity.label,
+        icon: this.settings.createEntity.icon || 'add',
+        action: this.settings.createEntity.action
+      };
+      if(this.dataLayerType() === MapDataLayerType.polygon) {
+        this.createAction.polygonType = this.settings.createEntity.polygonType
+      }
     }
 
     this.dataLayerContainer = this.createDataLayerContainer();
@@ -510,6 +526,14 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
 
   public isSnappable(): boolean {
     return this.snappable;
+  }
+
+  public isCreateAction(): boolean {
+    return !!this.createAction;
+  }
+
+  public getCreateAction(): CreateAction {
+    return this.createAction;
   }
 
   public getGroups(): string[] {
@@ -638,6 +662,10 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
 
   protected mapType(): MapType {
     return this.map.type();
+  }
+
+  protected convertLayerToDataKeys(layer: L.Layer): DataKeyValuePair[] {
+    return [];
   }
 
   public enableEditMode() {

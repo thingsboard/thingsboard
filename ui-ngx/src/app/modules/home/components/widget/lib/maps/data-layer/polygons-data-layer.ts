@@ -15,10 +15,15 @@
 ///
 
 import {
+  DataKeyValuePair,
   defaultBasePolygonsDataLayerSettings,
-  isCutPolygon, isJSON,
+  isCutPolygon,
+  isJSON,
   PolygonsDataLayerSettings,
-  TbMapDatasource, TbPolyData, TbPolygonCoordinates, TbPolygonRawCoordinates
+  TbMapDatasource,
+  TbPolyData,
+  TbPolygonCoordinates,
+  TbPolygonRawCoordinates
 } from '@home/components/widget/lib/maps/models/map.models';
 import L from 'leaflet';
 import { FormattedData } from '@shared/models/widget.models';
@@ -368,17 +373,8 @@ export class TbPolygonsDataLayer extends TbShapesDataLayer<PolygonsDataLayerSett
   }
 
   public placeItem(item: UnplacedMapDataItem, layer: L.Layer): void {
-    if (layer instanceof L.Polygon) {
-      let coordinates: TbPolygonCoordinates;
-      if (layer instanceof L.Rectangle) {
-        const bounds = layer.getBounds();
-        coordinates = [bounds.getNorthWest(), bounds.getSouthEast()];
-      } else {
-        coordinates = layer.getLatLngs();
-        if (coordinates.length === 1) {
-          coordinates = coordinates[0] as TbPolygonCoordinates;
-        }
-      }
+    const coordinates = this.extractLayerPolygonCoordinates(layer);
+    if (coordinates) {
       this.savePolygonCoordinates(item.entity, coordinates).subscribe(
         (converted) => {
           item.entity[this.settings.polygonKey.label] = JSON.stringify(converted);
@@ -388,6 +384,14 @@ export class TbPolygonsDataLayer extends TbShapesDataLayer<PolygonsDataLayerSett
     } else {
       console.warn('Unable to place item, layer is not a polygon.');
     }
+  }
+
+  public convertLayerToDataKeys(layer: L.Layer): DataKeyValuePair[] {
+    const coordinates = this.extractLayerPolygonCoordinates(layer);
+    if (coordinates) {
+      return this.convertItemToDataKeys(coordinates).dataKeys;
+    }
+    return [];
   }
 
   protected setupDatasource(datasource: TbMapDatasource): TbMapDatasource {
@@ -421,15 +425,42 @@ export class TbPolygonsDataLayer extends TbShapesDataLayer<PolygonsDataLayerSett
   }
 
   public savePolygonCoordinates(data: FormattedData<TbMapDatasource>, coordinates: TbPolygonCoordinates): Observable<TbPolygonRawCoordinates> {
-    const converted = coordinates ? this.map.coordinatesToPolygonData(coordinates) : null;
-    const polygonData = [
-      {
-        dataKey: this.settings.polygonKey,
-        value: converted
-      }
-    ];
-    return this.map.saveItemData(data.$datasource, polygonData).pipe(
-      map(() => converted)
+    const polygonData = this.convertItemToDataKeys(coordinates);
+    return this.map.saveItemData(data.$datasource, polygonData.dataKeys).pipe(
+      map(() => polygonData.convert)
     );
+  }
+
+  private convertItemToDataKeys(coordinates: TbPolygonCoordinates): {
+    convert: TbPolygonRawCoordinates
+    dataKeys: DataKeyValuePair[]
+  } {
+    const converted = coordinates ? this.map.coordinatesToPolygonData(coordinates) : null;
+    return {
+      convert: converted,
+      dataKeys: [
+        {
+          dataKey: this.settings.polygonKey,
+          value: converted
+        }
+      ]
+    }
+  }
+
+  private extractLayerPolygonCoordinates(layer: L.Layer): TbPolygonCoordinates {
+    if (layer instanceof L.Polygon) {
+      let coordinates: TbPolygonCoordinates;
+      if (layer instanceof L.Rectangle) {
+        const bounds = layer.getBounds();
+        coordinates = [bounds.getNorthWest(), bounds.getSouthEast()];
+      } else {
+        coordinates = layer.getLatLngs();
+        if (coordinates.length === 1) {
+          coordinates = coordinates[0] as TbPolygonCoordinates;
+        }
+      }
+      return coordinates;
+    }
+    return null;
   }
 }

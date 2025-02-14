@@ -97,7 +97,9 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
   @Input()
   actionNames: string[];
 
-  widgetActionTypes = widgetActionTypes;
+  @Input()
+  enableActionTypes: WidgetActionType[];
+
   widgetActionTypeTranslations = widgetActionTypeTranslationMap;
   widgetActionType = WidgetActionType;
 
@@ -117,6 +119,8 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
   widgetActionFormGroup: UntypedFormGroup;
   actionTypeFormGroup: UntypedFormGroup;
   stateDisplayTypeFormGroup: UntypedFormGroup;
+
+  private widgetActionTypes = widgetActionTypes;
 
   private propagateChange = (_val: any) => {};
   private actionTypeFormGroupSubscriptions: Subscription[] = [];
@@ -221,6 +225,10 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
     } else {
       return '';
     }
+  }
+
+  get allowActionTypes(): WidgetActionType[] {
+    return this.enableActionTypes || this.widgetActionTypes
   }
 
   private updateActionTypeFormGroup(type?: WidgetActionType, action?: WidgetAction) {

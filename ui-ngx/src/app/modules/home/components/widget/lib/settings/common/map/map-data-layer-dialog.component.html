@@ -292,6 +292,47 @@
         </mat-slide-toggle>
       </div>
     </div>
+    <div class="tb-form-panel" formGroupName="createEntity">
+      <mat-slide-toggle class="mat-slide" formControlName="enable">
+        Add entity to map and create
+      </mat-slide-toggle>
+      @if (dataLayerFormGroup.get('createEntity.enable').value) {
+        <div class="tb-form-row space-between">
+          <div class="fixed-title-width-180">Button</div>
+          <section class="flex flex-1 gap-2">
+            <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+              <input matInput placeholder="{{ 'widget-config.set' | translate }}" formControlName="label">
+            </mat-form-field>
+            <tb-material-icon-select asBoxInput
+                                     iconClearButton
+                                     [color]="dataLayerFormGroup.get('createEntity.color').value"
+                                     formControlName="icon">
+            </tb-material-icon-select>
+            <tb-color-input asBoxInput formControlName="color">
+            </tb-color-input>
+          </section>
+        </div>
+        <div class="tb-form-row space-between column-lt-md" *ngIf="dataLayerType === 'polygons'">
+          <div class="fixed-title-width-180">Polygon type</div>
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="polygonType">
+              <mat-option value="polygon">Polygon</mat-option>
+              <mat-option value="rectangle">Rectangle</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row">
+          <div class="fixed-title-width-180" tb-hint-tooltip-icon="{{'widgets.maps.data-layer.create-action-hint' | translate}}" translate>widgets.maps.data-layer.create-action</div>
+          <tb-widget-action-settings class="flex-1"
+                                     panelTitle="{{ 'widgets.maps.data-layer.create-action' | translate }}"
+                                     [callbacks]="context.callbacks"
+                                     [widgetType]="widgetType.latest"
+                                     [enableActionTypes]="[WidgetActionType.doNothing, WidgetActionType.custom, WidgetActionType.customPretty]"
+                                     formControlName="action">
+          </tb-widget-action-settings>
+        </div>
+      }
+    </div>
     <tb-marker-clustering-settings
       *ngIf="dataLayerType === 'markers'"
       formControlName="markerClustering">

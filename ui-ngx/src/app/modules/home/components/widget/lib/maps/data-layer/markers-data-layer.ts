@@ -17,6 +17,7 @@
 import {
   BaseMarkerShapeSettings,
   ClusterMarkerColorFunction,
+  DataKeyValuePair,
   DataLayerColorType,
   defaultBaseMarkersDataLayerSettings,
   isValidLatLng,
@@ -61,7 +62,8 @@ import { DomSanitizer } from '@angular/platform-browser';
 import {
   MapDataLayerType,
   TbDataLayerItem,
-  TbMapDataLayer, UnplacedMapDataItem
+  TbMapDataLayer,
+  UnplacedMapDataItem
 } from '@home/components/widget/lib/maps/data-layer/map-data-layer';
 import { TbImageMap } from '@home/components/widget/lib/maps/image-map';
 
@@ -463,6 +465,14 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
     }
   }
 
+  public convertLayerToDataKeys(layer: L.Layer): DataKeyValuePair[] {
+    if (layer instanceof L.Marker) {
+      const position = layer.getLatLng();
+      return this.convertItemToDataKeys(position).dataKeys
+    }
+    return [];
+  }
+
   protected createDataLayerContainer(): FeatureGroup {
     if (this.settings.markerClustering?.enable) {
       return this.createMarkersClusterContainer();
@@ -656,20 +666,30 @@ export class TbMarkersDataLayer extends TbMapDataLayer<MarkersDataLayerSettings,
     }
   }
 
-  public saveMarkerLocation(data: FormattedData<TbMapDatasource>, position: L.LatLng): Observable<{x: number; y: number}> {
+  private convertItemToDataKeys(position: L.LatLng): {
+    convert: { x: number; y: number }
+    dataKeys: DataKeyValuePair[]
+  } {
     const converted = this.map.latLngToLocationData(position);
-    const locationData = [
-      {
-        dataKey: this.settings.xKey,
-        value: converted.x
-      },
-      {
-        dataKey: this.settings.yKey,
-        value: converted.y
-      }
-    ];
-    return this.map.saveItemData(data.$datasource, locationData).pipe(
-      map(() => converted)
+    return {
+      convert: converted,
+      dataKeys: [
+        {
+          dataKey: this.settings.xKey,
+          value: converted.x
+        },
+        {
+          dataKey: this.settings.yKey,
+          value: converted.y
+        }
+      ]
+    }
+  }
+
+  public saveMarkerLocation(data: FormattedData<TbMapDatasource>, position: L.LatLng): Observable<{x: number; y: number}> {
+    const locationData = this.convertItemToDataKeys(position);
+    return this.map.saveItemData(data.$datasource, locationData.dataKeys).pipe(
+      map(() => locationData.convert)
     );
   }
 

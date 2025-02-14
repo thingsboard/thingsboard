@@ -121,6 +121,15 @@ export interface DataLayerEditSettings {
   snappable: boolean;
 }
 
+export interface DataLayerCreateActionSettings {
+  enable: boolean;
+  label: string;
+  icon: string;
+  color?: string;
+  polygonType?: 'polygon' | 'rectangle';
+  action: WidgetAction;
+}
+
 export interface MapDataLayerSettings extends MapDataSourceSettings {
   additionalDataKeys?: DataKey[];
   label: DataLayerPatternSettings;
@@ -128,6 +137,7 @@ export interface MapDataLayerSettings extends MapDataSourceSettings {
   click: WidgetAction;
   groups?: string[];
   edit:  DataLayerEditSettings;
+  createEntity?: DataLayerCreateActionSettings;
 }
 
 export const defaultBaseDataLayerSettings = (mapType: MapType): Partial<MapDataLayerSettings> => ({
@@ -153,6 +163,14 @@ export const defaultBaseDataLayerSettings = (mapType: MapType): Partial<MapDataL
   edit: {
     enabledActions: [],
     snappable: false
+  },
+  createEntity: {
+    enable: false,
+    label: '',
+    icon: '',
+    action: {
+      type: WidgetActionType.doNothing
+    }
   }
 })
 
