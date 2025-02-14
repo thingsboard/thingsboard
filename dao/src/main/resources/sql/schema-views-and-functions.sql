@@ -288,8 +288,15 @@ $$;
 
 DROP VIEW IF EXISTS widget_type_info_view CASCADE;
 CREATE OR REPLACE VIEW widget_type_info_view AS
-SELECT t.*
-     , COALESCE((t.descriptor::json->>'type')::text, '') as widget_type
+SELECT t.*,
+       COALESCE((t.descriptor::json->>'type')::text, '') as widget_type,
+       array_to_json(ARRAY(
+           SELECT json_build_object('id', wb.widgets_bundle_id, 'name', b.title)
+           FROM widgets_bundle_widget wb
+           JOIN widgets_bundle b ON wb.widgets_bundle_id = b.id
+           WHERE wb.widget_type_id = t.id
+           ORDER BY b.title
+       )) AS bundles
 FROM widget_type t;
 
 CREATE OR REPLACE PROCEDURE cleanup_timeseries_by_ttl(IN null_uuid uuid,

@@ -88,6 +88,13 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
     }
 
     @Override
+    public WidgetTypeInfo findWidgetTypeInfoById(TenantId tenantId, WidgetTypeId widgetTypeId) {
+        log.trace("Executing findWidgetTypeInfoById [{}]", widgetTypeId);
+        Validator.validateId(widgetTypeId, id -> "Incorrect widgetTypeId " + id);
+        return widgetTypeDao.findWidgetTypeInfoById(tenantId, widgetTypeId.getId());
+    }
+
+    @Override
     public boolean widgetTypeExistsByTenantIdAndWidgetTypeId(TenantId tenantId, WidgetTypeId widgetTypeId) {
         log.trace("Executing widgetTypeExistsByTenantIdAndWidgetTypeId, tenantId [{}],  widgetTypeId [{}]", tenantId, widgetTypeId);
         Validator.validateId(widgetTypeId, id -> "Incorrect widgetTypeId " + id);

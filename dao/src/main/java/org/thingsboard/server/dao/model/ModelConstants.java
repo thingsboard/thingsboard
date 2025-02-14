@@ -312,6 +312,7 @@ public class ModelConstants {
     public static final String WIDGETS_BUNDLE_SCADA_PROPERTY = "scada";
     public static final String WIDGETS_BUNDLE_DESCRIPTION = "description";
     public static final String WIDGETS_BUNDLE_ORDER = "widgets_bundle_order";
+    public static final String WIDGET_BUNDLES_PROPERTY = "bundles";
 
     /**
      * Widget_type constants.

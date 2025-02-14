@@ -56,6 +56,8 @@ public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityD
 
     boolean existsByTenantIdAndId(TenantId tenantId, UUID widgetTypeId);
 
+    WidgetTypeInfo findWidgetTypeInfoById(TenantId tenantId, UUID widgetTypeId);
+
     PageData<WidgetTypeInfo> findSystemWidgetTypes(WidgetTypeFilter widgetTypeFilter, PageLink pageLink);
 
     PageData<WidgetTypeInfo> findAllTenantWidgetTypesByTenantId(WidgetTypeFilter widgetTypeFilter, PageLink pageLink);
