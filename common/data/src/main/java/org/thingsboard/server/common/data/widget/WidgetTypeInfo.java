@@ -90,4 +90,17 @@ public class WidgetTypeInfo extends BaseWidgetType {
         this.bundles = Collections.emptyList();
     }
 
+    public WidgetTypeInfo(WidgetTypeDetails widgetTypeDetails, List<EntityInfo> bundles) {
+        super(widgetTypeDetails);
+        this.image = widgetTypeDetails.getImage();
+        this.description = widgetTypeDetails.getDescription();
+        this.tags = widgetTypeDetails.getTags();
+        if (widgetTypeDetails.getDescriptor() != null && widgetTypeDetails.getDescriptor().has("type")) {
+            this.widgetType = widgetTypeDetails.getDescriptor().get("type").asText();
+        } else {
+            this.widgetType = "";
+        }
+        this.bundles = bundles;
+    }
+
 }
