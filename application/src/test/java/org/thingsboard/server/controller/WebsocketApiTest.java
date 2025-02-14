@@ -340,29 +340,26 @@ public class WebsocketApiTest extends AbstractControllerTest {
         Assert.assertEquals(0, update.getCount());
 
         //create alarm, check count = 1
+        getWsClient().registerWaitForUpdate();
+
         Alarm alarm = new Alarm();
         alarm.setOriginator(tenantId);
         alarm.setType("TEST ALARM");
         alarm.setSeverity(AlarmSeverity.WARNING);
-
         alarm = doPost("/api/alarm", alarm, Alarm.class);
 
-        AlarmCountCmd cmd2 = new AlarmCountCmd(2, alarmCountQuery);
-
-        getWsClient().send(cmd2);
-
-        update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
-        Assert.assertEquals(2, update.getCmdId());
+        update = getWsClient().parseAlarmCountReply(getWsClient().waitForUpdate());
+        Assert.assertEquals(1, update.getCmdId());
         Assert.assertEquals(1, update.getCount());
 
         // set wrong entity id in filter, check count = 0
         singleEntityFilter.setSingleEntity(tenantAdminUserId);
-        AlarmCountCmd cmd3 = new AlarmCountCmd(3, alarmCountQuery);
+        AlarmCountCmd cmd3 = new AlarmCountCmd(2, alarmCountQuery);
 
         getWsClient().send(cmd3);
 
         update = getWsClient().parseAlarmCountReply(getWsClient().waitForReply());
-        Assert.assertEquals(3, update.getCmdId());
+        Assert.assertEquals(2, update.getCmdId());
         Assert.assertEquals(0, update.getCount());
     }
 
