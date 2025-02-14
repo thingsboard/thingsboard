@@ -265,12 +265,15 @@ export class ResourcesService {
     );
   }
 
-  public extractComponentsFromModule<T>(module: any, isCamelCaseSelector = false): ComponentsSelectorMap<T> {
+  public extractComponentsFromModule<T>(module: any, instanceFilter?: any, isCamelCaseSelector = false): ComponentsSelectorMap<T> {
     const modulesWithComponents = this.extractModulesWithComponents(module);
     const componentMap: ComponentsSelectorMap<T> = {};
 
     const processComponents = (components: Array<ɵComponentDef<T>>) => {
       components.forEach(item => {
+        if (instanceFilter && !(item.type.prototype instanceof instanceFilter)) {
+          return;
+        }
         let selector = extractSelectorFromComponent(item);
         if (isCamelCaseSelector) {
           selector = camelCase(selector);

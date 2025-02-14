@@ -13,19 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  .space-between {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
+package org.thingsboard.server.transport.mqtt;
 
-    .see-example {
-      display: flex;
-      flex-shrink: 0;
-    }
-  }
+public interface HashMapObserverMBean {
+    int getSize();
 
-  .hint-text {
-    width: 100%;
-  }
+    long getGatewayCount(String unused);
+
+    long getNonGatewayCount(String unused);
+
+    String getSessionByUUID(String key);
+
+    String getAllSessions(String key);
+
+    String getSubscribedSessions(String unused);
+
+    String getNonActiveSessions(String unused);
+
+    String getActiveSessions(String unused);
+
+    String getGatewayDeviceSessionContextConnectedSessions(String unused);
+
+    String getDeviceAwareSessionContextNotConnectedSessions(String unused);
 }
