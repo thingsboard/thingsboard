@@ -28,6 +28,7 @@
     <logger name="org.thingsboard.server" level="INFO"/>
     <logger name="org.apache.kafka.common.utils.AppInfoParser" level="WARN"/>
     <logger name="org.apache.kafka.clients" level="WARN"/>
+    <logger name="org.thingsboard.server.actors" level="WARN"/>
     <!-- To enable the logging of scanned rule engine components-->
     <!--    <logger name="org.thingsboard.server.service.component.AnnotationComponentDiscoveryService" level="DEBUG" />-->
     <!-- To enable the debug logging of rule node upgrade -->

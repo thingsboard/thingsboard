@@ -145,19 +145,19 @@ public class DefaultTbQueueRequestTemplateTest {
 
     @Test
     public void givenMessages_whenSend_thenOK() {
-        willDoNothing().given(inst).sendToRequestTemplate(any(), any(), any(), any());
+        willDoNothing().given(inst).sendToRequestTemplate(any(), any(), any(), any(), any());
         inst.init();
         final int msgCount = 10;
         for (int i = 0; i < msgCount; i++) {
             inst.send(getRequestMsgMock());
         }
         assertThat(inst.pendingRequests.mappingCount(), equalTo((long) msgCount));
-        verify(inst, times(msgCount)).sendToRequestTemplate(any(), any(), any(), any());
+        verify(inst, times(msgCount)).sendToRequestTemplate(any(), any(), any(), any(), any());
     }
 
     @Test
     public void givenMessagesOverMaxPendingRequests_whenSend_thenImmediateFailedFutureForTheOfRequests() {
-        willDoNothing().given(inst).sendToRequestTemplate(any(), any(), any(), any());
+        willDoNothing().given(inst).sendToRequestTemplate(any(), any(), any(), any(), any());
         inst.init();
         int msgOverflowCount = 10;
         for (int i = 0; i < inst.maxPendingRequests; i++) {
@@ -167,7 +167,7 @@ public class DefaultTbQueueRequestTemplateTest {
             assertThat("max pending requests overflow", inst.send(getRequestMsgMock()).isDone(), is(true)); //overflow, immediate failed future
         }
         assertThat(inst.pendingRequests.mappingCount(), equalTo(inst.maxPendingRequests));
-        verify(inst, times((int) inst.maxPendingRequests)).sendToRequestTemplate(any(), any(), any(), any());
+        verify(inst, times((int) inst.maxPendingRequests)).sendToRequestTemplate(any(), any(), any(), any(), any());
     }
 
     @SuppressWarnings("unchecked")

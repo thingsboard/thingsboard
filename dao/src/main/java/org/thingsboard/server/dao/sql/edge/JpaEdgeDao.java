@@ -18,12 +18,15 @@ package org.thingsboard.server.dao.sql.edge;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
+import org.thingsboard.server.common.data.edqs.fields.EdgeFields;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -220,8 +223,23 @@ public class JpaEdgeDao extends JpaAbstractDao<EdgeEntity, Edge> implements Edge
     }
 
     @Override
+    public PageData<Edge> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return findEdgesByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
+    public List<EdgeFields> findNextBatch(UUID id, int batchSize) {
+        return edgeRepository.findNextBatch(id, Limit.of(batchSize));
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.EDGE;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.EDGE;
     }
 
 }

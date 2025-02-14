@@ -172,7 +172,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             var saved = dashboardDao.save(tenantId, dashboard);
             publishEvictEvent(new DashboardTitleEvictEvent(saved.getId()));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
-                    .entityId(saved.getId()).created(dashboard.getId() == null).build());
+                    .entityId(saved.getId()).entity(saved).created(dashboard.getId() == null).build());
             if (dashboard.getId() == null) {
                 countService.publishCountEntityEvictEvent(tenantId, EntityType.DASHBOARD);
             }

@@ -77,7 +77,6 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertNotNull;
 
-
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = AbstractServiceTest.class, loader = AnnotationConfigContextLoader.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -131,7 +130,7 @@ public abstract class AbstractServiceTest {
     }
 
     public JsonNode readFromResource(String resourceName) throws IOException {
-        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(resourceName)){
+        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(resourceName)) {
             return JacksonUtil.fromBytes(Objects.requireNonNull(is).readAllBytes());
         }
     }

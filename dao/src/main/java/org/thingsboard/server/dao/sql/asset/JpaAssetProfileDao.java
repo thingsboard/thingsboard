@@ -16,18 +16,22 @@
 package org.thingsboard.server.dao.sql.asset;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.asset.AssetProfileInfo;
+import org.thingsboard.server.common.data.edqs.fields.AssetProfileFields;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.asset.AssetProfileDao;
 import org.thingsboard.server.dao.model.sql.AssetProfileEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
@@ -37,7 +41,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
-public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, AssetProfile> implements AssetProfileDao {
+public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, AssetProfile> implements AssetProfileDao, TenantEntityDao<AssetProfile> {
 
     @Autowired
     private AssetProfileRepository assetProfileRepository;
@@ -139,8 +143,23 @@ public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, Asset
     }
 
     @Override
+    public PageData<AssetProfile> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return findByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
+    public List<AssetProfileFields> findNextBatch(UUID id, int batchSize) {
+        return assetProfileRepository.findNextBatch(id, Limit.of(batchSize));
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.ASSET_PROFILE;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.ASSET_PROFILE;
     }
 
 }

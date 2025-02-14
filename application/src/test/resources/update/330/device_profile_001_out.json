@@ -64,7 +64,8 @@
                   "dynamicValue": {
                     "sourceType": null,
                     "sourceAttribute": null,
-                    "inherit": false
+                    "inherit": false,
+                    "resolvedValue" : null
                   }
                 }
               }
@@ -103,7 +104,8 @@
                 "dynamicValue": {
                   "sourceType": null,
                   "sourceAttribute": null,
-                  "inherit": false
+                  "inherit": false,
+                  "resolvedValue" : null
                 }
               }
             }
