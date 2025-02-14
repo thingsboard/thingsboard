@@ -40,7 +40,8 @@ public abstract class BaseApiUsageState {
     private final Map<ApiUsageRecordKey, Long> gaugesReportCycles = new HashMap<>();
 
     @Getter
-    private final ApiUsageState apiUsageState;
+    @Setter
+    private ApiUsageState apiUsageState;
     @Getter
     private volatile long currentCycleTs;
     @Getter

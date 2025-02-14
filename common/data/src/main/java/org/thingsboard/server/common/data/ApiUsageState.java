@@ -86,11 +86,11 @@ public class ApiUsageState extends BaseData<ApiUsageStateId> implements HasTenan
         return !ApiUsageStateValue.DISABLED.equals(tbelExecState);
     }
 
-    public boolean isEmailSendEnabled(){
+    public boolean isEmailSendEnabled() {
         return !ApiUsageStateValue.DISABLED.equals(emailExecState);
     }
 
-    public boolean isSmsSendEnabled(){
+    public boolean isSmsSendEnabled() {
         return !ApiUsageStateValue.DISABLED.equals(smsExecState);
     }
 
