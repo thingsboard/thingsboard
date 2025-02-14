@@ -281,7 +281,8 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
 
         assertEquals(TenantId.SYS_TENANT_ID, savedResource.getTenantId());
 
-//        tbResourceService.delete(savedResource, null);
+        TbResource foundResource = resourceService.findResourceById(tenantId, savedResource.getId());
+        tbResourceService.delete(foundResource, null);
     }
 
     @Test
