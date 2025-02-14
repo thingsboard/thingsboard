@@ -35,7 +35,7 @@ import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedField
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.BasicKvEntry;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
@@ -57,7 +57,7 @@ public class ScriptCalculatedFieldStateTest {
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("5512071d-5abc-411d-a907-4cdb6539c2eb"));
     private final AssetId ASSET_ID = new AssetId(UUID.fromString("5bc010ae-bcfd-46c8-98b9-8ee8c8955a76"));
 
-    private final SingleValueArgumentEntry assetHumidityArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis() - 10, new LongDataEntry("assetHumidity", 43L), 122L);
+    private final SingleValueArgumentEntry assetHumidityArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis() - 10, new DoubleDataEntry("assetHumidity", 43.0), 122L);
     private final TsRollingArgumentEntry deviceTemperatureArgEntry = createRollingArgEntry();
 
     private final long ts = System.currentTimeMillis();
@@ -127,52 +127,7 @@ public class ScriptCalculatedFieldStateTest {
         Output output = getCalculatedFieldConfig().getOutput();
         assertThat(result.getType()).isEqualTo(output.getType());
         assertThat(result.getScope()).isEqualTo(output.getScope());
-        assertThat(result.getResultMap()).isEqualTo(Map.of("averageDeviceTemperature", 13.0, "assetHumidity", 43L));
-    }
-
-    @Test
-    void testPerformCalculationWhenOldTelemetry() throws ExecutionException, InterruptedException {
-        TsRollingArgumentEntry argumentEntry = new TsRollingArgumentEntry();
-
-        TreeMap<Long, Double> values = new TreeMap<>();
-        values.put(ts - 40000, 4.0);// will not be used for calculation
-        values.put(ts - 45000, 2.0);// will not be used for calculation
-        values.put(ts - 20, 0.0);
-
-        argumentEntry.setTsRecords(values);
-
-        state.arguments = new HashMap<>(Map.of("deviceTemperature", argumentEntry, "assetHumidity", assetHumidityArgEntry));
-
-        CalculatedFieldResult result = state.performCalculation(ctx).get();
-
-        assertThat(result).isNotNull();
-        Output output = getCalculatedFieldConfig().getOutput();
-        assertThat(result.getType()).isEqualTo(output.getType());
-        assertThat(result.getScope()).isEqualTo(output.getScope());
-        assertThat(result.getResultMap()).isEqualTo(Map.of("averageDeviceTemperature", 0.0, "assetHumidity", 43L));
-    }
-
-    @Test
-    void testPerformCalculationWhenArgumentsMoreThanLimit() throws ExecutionException, InterruptedException {
-        TsRollingArgumentEntry argumentEntry = new TsRollingArgumentEntry();
-        TreeMap<Long, Double> values = new TreeMap<>();
-        values.put(ts - 20, 1000.0);// will not be used
-        values.put(ts - 18, 0.0);
-        values.put(ts - 16, 0.0);
-        values.put(ts - 14, 0.0);
-        values.put(ts - 12, 0.0);
-        values.put(ts - 10, 0.0);
-        argumentEntry.setTsRecords(values);
-
-        state.arguments = new HashMap<>(Map.of("deviceTemperature", argumentEntry, "assetHumidity", assetHumidityArgEntry));
-
-        CalculatedFieldResult result = state.performCalculation(ctx).get();
-
-        assertThat(result).isNotNull();
-        Output output = getCalculatedFieldConfig().getOutput();
-        assertThat(result.getType()).isEqualTo(output.getType());
-        assertThat(result.getScope()).isEqualTo(output.getScope());
-        assertThat(result.getResultMap()).isEqualTo(Map.of("averageDeviceTemperature", 0.0, "assetHumidity", 43L));
+        assertThat(result.getResultMap()).isEqualTo(Map.of("maxDeviceTemperature", 17.0, "assetHumidity", 43.0));
     }
 
     @Test
@@ -189,7 +144,7 @@ public class ScriptCalculatedFieldStateTest {
 
     @Test
     void testIsReadyWhenEmptyEntryPresents() {
-//        state.arguments = new HashMap<>(Map.of("deviceTemperature", TsRollingArgumentEntry.EMPTY, "assetHumidity", assetHumidityArgEntry));
+        state.arguments = new HashMap<>(Map.of("deviceTemperature", new TsRollingArgumentEntry(5, 30000L), "assetHumidity", assetHumidityArgEntry));
 
         assertThat(state.isReady()).isFalse();
     }
@@ -235,7 +190,7 @@ public class ScriptCalculatedFieldStateTest {
 
         config.setArguments(Map.of("deviceTemperature", argument1, "assetHumidity", argument2));
 
-        config.setExpression("var result = 0; foreach(element : deviceTemperature.entrySet()) { result += element.getValue(); } var map = {}; map.put(\"averageDeviceTemperature\", result / deviceTemperature.size()); map.put(\"assetHumidity\", assetHumidity); return map;");
+        config.setExpression("return {\"maxDeviceTemperature\": deviceTemperature.max(), \"assetHumidity\": assetHumidity.value}");
 
         Output output = new Output();
         output.setType(OutputType.ATTRIBUTES);

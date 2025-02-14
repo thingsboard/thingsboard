@@ -43,7 +43,6 @@ import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.event.CalculatedFieldDebugEvent;
 import org.thingsboard.server.common.data.event.ErrorEvent;
 import org.thingsboard.server.common.data.event.LifecycleEvent;
@@ -624,6 +623,14 @@ public class ActorSystemContext {
     @Getter
     private String debugPerTenantLimitsConfiguration;
 
+    @Value("${actors.calculated_fields.debug_mode_rate_limits_per_tenant.enabled:true}")
+    @Getter
+    private boolean calculatedFieldsDebugPerTenantEnabled;
+
+    @Value("${actors.calculated_fields.debug_mode_rate_limits_per_tenant.configuration:50000:3600}")
+    @Getter
+    private String calculatedFieldsDebugPerTenantLimitsConfiguration;
+
     @Value("${actors.rpc.submit_strategy:BURST}")
     @Getter
     private String rpcSubmitStrategy;
@@ -810,39 +817,42 @@ public class ActorSystemContext {
     }
 
     public void persistCalculatedFieldDebugEvent(TenantId tenantId, CalculatedFieldId calculatedFieldId, EntityId entityId, Map<String, ArgumentEntry> arguments, UUID tbMsgId, TbMsgType tbMsgType, String result, Throwable error) {
-        if (!rateLimitService.checkRateLimit(LimitedApi.CALCULATED_FIELD_DEBUG_EVENTS, tenantId)) {
-            throw new TbRateLimitsException(EntityType.TENANT);
-        }
-        try {
-            CalculatedFieldDebugEvent.CalculatedFieldDebugEventBuilder eventBuilder = CalculatedFieldDebugEvent.builder()
-                    .tenantId(tenantId)
-                    .entityId(calculatedFieldId.getId())
-                    .serviceId(getServiceId())
-                    .calculatedFieldId(calculatedFieldId)
-                    .eventEntity(entityId);
-            if (tbMsgId != null) {
-                eventBuilder.msgId(tbMsgId);
+        if (calculatedFieldsDebugPerTenantEnabled) {
+            if (!rateLimitService.checkRateLimit(LimitedApi.CALCULATED_FIELD_DEBUG_EVENTS, (Object) tenantId, calculatedFieldsDebugPerTenantLimitsConfiguration)) {
+                log.trace("[{}] Calculated field debug event limits exceeded!", tenantId);
+                throw new TbRateLimitsException("Failed to persist calculated field debug event due to rate limits!");
             }
-            if (tbMsgType != null) {
-                eventBuilder.msgType(tbMsgType.name());
-            }
-            if (arguments != null) {
-                eventBuilder.arguments(JacksonUtil.toString(
-                        arguments.entrySet().stream()
-                                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toTbelCfArg()))
-                ));
-            }
-            if (result != null) {
-                eventBuilder.result(result);
-            }
-            if (error != null) {
-                eventBuilder.error(toString(error));
-            }
+            try {
+                CalculatedFieldDebugEvent.CalculatedFieldDebugEventBuilder eventBuilder = CalculatedFieldDebugEvent.builder()
+                        .tenantId(tenantId)
+                        .entityId(calculatedFieldId.getId())
+                        .serviceId(getServiceId())
+                        .calculatedFieldId(calculatedFieldId)
+                        .eventEntity(entityId);
+                if (tbMsgId != null) {
+                    eventBuilder.msgId(tbMsgId);
+                }
+                if (tbMsgType != null) {
+                    eventBuilder.msgType(tbMsgType.name());
+                }
+                if (arguments != null) {
+                    eventBuilder.arguments(JacksonUtil.toString(
+                            arguments.entrySet().stream()
+                                    .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toTbelCfArg()))
+                    ));
+                }
+                if (result != null) {
+                    eventBuilder.result(result);
+                }
+                if (error != null) {
+                    eventBuilder.error(error.getMessage());
+                }
 
-            ListenableFuture<Void> future = eventService.saveAsync(eventBuilder.build());
-            Futures.addCallback(future, CALCULATED_FIELD_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
-        } catch (IllegalArgumentException ex) {
-            log.warn("Failed to persist calculated field debug message", ex);
+                ListenableFuture<Void> future = eventService.saveAsync(eventBuilder.build());
+                Futures.addCallback(future, CALCULATED_FIELD_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
+            } catch (IllegalArgumentException ex) {
+                log.warn("Failed to persist calculated field debug message", ex);
+            }
         }
     }
 

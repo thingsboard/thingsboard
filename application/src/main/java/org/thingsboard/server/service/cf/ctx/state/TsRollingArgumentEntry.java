@@ -43,9 +43,9 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
     private TreeMap<Long, Double> tsRecords = new TreeMap<>();
 
     public TsRollingArgumentEntry(List<TsKvEntry> kvEntries, int limit, long timeWindow) {
-        kvEntries.forEach(tsKvEntry -> addTsRecord(tsKvEntry.getTs(), tsKvEntry));
         this.limit = limit;
         this.timeWindow = timeWindow;
+        kvEntries.forEach(tsKvEntry -> addTsRecord(tsKvEntry.getTs(), tsKvEntry));
     }
 
     public TsRollingArgumentEntry(TreeMap<Long, Double> tsRecords, int limit, long timeWindow) {

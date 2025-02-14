@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class SingleValueArgumentEntryTest {
 
@@ -39,9 +40,9 @@ public class SingleValueArgumentEntryTest {
 
     @Test
     void testUpdateEntryWhenRollingEntryPassed() {
-//        assertThatThrownBy(() -> entry.updateEntry(TsRollingArgumentEntry.EMPTY))
-//                .isInstanceOf(IllegalArgumentException.class)
-//                .hasMessage("Unsupported argument entry type for single value argument entry: " + ArgumentEntryType.TS_ROLLING);
+        assertThatThrownBy(() -> entry.updateEntry(new TsRollingArgumentEntry(5, 30000L)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Unsupported argument entry type for single value argument entry: " + ArgumentEntryType.TS_ROLLING);
     }
 
     @Test
