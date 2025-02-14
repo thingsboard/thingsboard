@@ -48,6 +48,7 @@
         <module>transport</module>
         <module>js-executor</module>
         <module>monitoring</module>
+        <module>edqs</module>
     </modules>
 
     <profiles>
