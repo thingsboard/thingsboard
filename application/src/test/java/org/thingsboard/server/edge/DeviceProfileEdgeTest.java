@@ -127,6 +127,45 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
     }
 
     @Test
+    public void testDeleteDeviceProfilesWhenEdgeIsOffline() throws Exception {
+        RuleChainId thermostatsRuleChainId = createEdgeRuleChainAndAssignToEdge("Thermostats Rule Chain");
+
+        // create device profile
+        DeviceProfile deviceProfile = this.createDeviceProfile("ONE_MORE_DEVICE_PROFILE", null);
+        deviceProfile.setDefaultEdgeRuleChainId(thermostatsRuleChainId);
+        extendDeviceProfileData(deviceProfile);
+        edgeImitator.expectMessageAmount(1);
+        deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof DeviceProfileUpdateMsg);
+        DeviceProfileUpdateMsg deviceProfileUpdateMsg = (DeviceProfileUpdateMsg) latestMessage;
+        DeviceProfile deviceProfileMsg = JacksonUtil.fromString(deviceProfileUpdateMsg.getEntity(), DeviceProfile.class, true);
+        Assert.assertNotNull(deviceProfileMsg);
+        Assert.assertEquals(deviceProfile, deviceProfileMsg);
+        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, deviceProfileUpdateMsg.getMsgType());
+
+        // delete profile when edge is offline
+        edgeImitator.disconnect();
+        doDelete("/api/deviceProfile/" + deviceProfile.getUuidId())
+                .andExpect(status().isOk());
+        edgeImitator.connect();
+        // 27 sync message
+        // + 1 delete message
+        edgeImitator.expectMessageAmount(28);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof DeviceProfileUpdateMsg);
+        deviceProfileUpdateMsg = (DeviceProfileUpdateMsg) latestMessage;
+        Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, deviceProfileUpdateMsg.getMsgType());
+        Assert.assertEquals(deviceProfile.getUuidId().getMostSignificantBits(), deviceProfileUpdateMsg.getIdMSB());
+        Assert.assertEquals(deviceProfile.getUuidId().getLeastSignificantBits(), deviceProfileUpdateMsg.getIdLSB());
+
+        unAssignFromEdgeAndDeleteRuleChain(thermostatsRuleChainId);
+    }
+
+    @Test
     public void testDeviceProfiles_snmp() throws Exception {
         DeviceProfile deviceProfile = createDeviceProfileAndDoBasicAssert("SNMP", createSnmpDeviceProfileTransportConfiguration());
 
@@ -449,4 +488,5 @@ public class DeviceProfileEdgeTest extends AbstractEdgeTest {
         deviceProfile.setProfileData(createProfileData());
         return deviceProfile;
     }
+
 }

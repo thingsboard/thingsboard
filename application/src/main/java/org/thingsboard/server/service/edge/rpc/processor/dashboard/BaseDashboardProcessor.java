@@ -41,7 +41,10 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
         if (dashboard == null) {
             throw new RuntimeException("[{" + tenantId + "}] dashboardUpdateMsg {" + dashboardUpdateMsg + "} cannot be converted to dashboard");
         }
-        Set<ShortCustomerInfo> newAssignedCustomers = new HashSet<>(dashboard.getAssignedCustomers());
+        Set<ShortCustomerInfo> newAssignedCustomers = new HashSet<>();
+        if (dashboard.getAssignedCustomers() != null && !dashboard.getAssignedCustomers().isEmpty()) {
+            newAssignedCustomers.addAll(dashboard.getAssignedCustomers());
+        }
         Dashboard dashboardById = edgeCtx.getDashboardService().findDashboardById(tenantId, dashboardId);
         if (dashboardById == null) {
             created = true;
