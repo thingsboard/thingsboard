@@ -34,4 +34,5 @@ public interface ApiUsageStateService extends EntityDaoService {
     void deleteApiUsageStateByEntityId(EntityId entityId);
 
     ApiUsageState findApiUsageStateById(TenantId tenantId, ApiUsageStateId id);
+
 }
