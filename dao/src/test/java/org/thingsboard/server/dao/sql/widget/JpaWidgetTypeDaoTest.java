@@ -50,7 +50,9 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
 
@@ -115,7 +117,7 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
         var descriptor = JacksonUtil.newObjectNode();
         descriptor.put("type", number % 2 == 0 ? "latest" : "static");
         widgetType.setDescriptor(descriptor);
-        String[] tags = new String[]{"Tag1_"+number, "Tag2_"+number, "TEST_"+number};
+        String[] tags = new String[]{"Tag1_" + number, "Tag2_" + number, "TEST_" + number};
         widgetType.setTags(tags);
         WidgetTypeDetails saved = widgetTypeDao.save(TenantId.SYS_TENANT_ID, widgetType);
         List<EntityInfo> bundles = new ArrayList<>();
@@ -189,10 +191,10 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
 
         PageData<WidgetTypeInfo> widgetTypesFirstPage = widgetTypeDao.findSystemWidgetTypes(
                 WidgetTypeFilter.builder()
-                    .tenantId(TenantId.SYS_TENANT_ID)
-                    .fullSearch(true)
-                    .deprecatedFilter(DeprecatedFilter.ALL)
-                    .widgetTypes(Collections.singletonList("static")).build(),
+                        .tenantId(TenantId.SYS_TENANT_ID)
+                        .fullSearch(true)
+                        .deprecatedFilter(DeprecatedFilter.ALL)
+                        .widgetTypes(Collections.singletonList("static")).build(),
                 new PageLink(10, 0, null, new SortOrder("name")));
         assertEquals(10, widgetTypesFirstPage.getData().size());
         assertThat(widgetTypesFirstPage.getData()).containsExactlyElementsOf(expected.subList(0, 10));
@@ -217,10 +219,10 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
 
             PageData<WidgetTypeInfo> widgetTypes = widgetTypeDao.findSystemWidgetTypes(
                     WidgetTypeFilter.builder()
-                        .tenantId(TenantId.SYS_TENANT_ID)
-                        .fullSearch(true)
-                        .deprecatedFilter(DeprecatedFilter.ALL)
-                        .widgetTypes(null).build(),
+                            .tenantId(TenantId.SYS_TENANT_ID)
+                            .fullSearch(true)
+                            .deprecatedFilter(DeprecatedFilter.ALL)
+                            .widgetTypes(null).build(),
                     new PageLink(10, 0, searchText)
             );
 
@@ -361,7 +363,7 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindByWidgetTypeInfosByBundleId() {
-        PageData<WidgetTypeInfo> widgetTypes = widgetTypeDao.findWidgetTypesInfosByWidgetsBundleId(TenantId.SYS_TENANT_ID.getId(), widgetsBundle.getUuidId(),true, DeprecatedFilter.ALL, Collections.singletonList("latest"),
+        PageData<WidgetTypeInfo> widgetTypes = widgetTypeDao.findWidgetTypesInfosByWidgetsBundleId(TenantId.SYS_TENANT_ID.getId(), widgetsBundle.getUuidId(), true, DeprecatedFilter.ALL, Collections.singletonList("latest"),
                 new PageLink(1024, 0, "TYPE_DESCRIPTION", new SortOrder("createdTime")));
         assertEquals(2, widgetTypes.getData().size());
         assertEquals(widgetTypeList.get(0), widgetTypes.getData().get(0));
@@ -427,7 +429,7 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindByImageLink() {
-        TenantId tenantId = new TenantId(UUID.randomUUID());
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
         WidgetTypeDetails details = createAndSaveWidgetType(tenantId, 0, new String[]{"a"});
         details.setDescriptor(JacksonUtil.newObjectNode().put("bg", "/image/tenant/widget.png"));
         widgetTypeDao.save(tenantId, details);
@@ -438,14 +440,82 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
         widgetTypeDao.removeById(tenantId, details.getUuidId());
     }
 
+    @Test
+    public void testFindWidgetTypesWithBundles() {
+        PageData<WidgetTypeInfo> widgetTypes = widgetTypeDao.findWidgetTypesInfosByWidgetsBundleId(
+                TenantId.SYS_TENANT_ID.getId(),
+                widgetsBundle.getUuidId(),
+                true,
+                DeprecatedFilter.ALL,
+                Collections.singletonList("latest"),
+                new PageLink(1024, 0, "TYPE_DESCRIPTION", new SortOrder("createdTime"))
+        );
+
+        assertEquals(2, widgetTypes.getData().size());
+        for (var widgetType : widgetTypes.getData()) {
+            assertFalse("Bundles should not be empty", widgetType.getBundles().isEmpty());
+            assertEquals(BUNDLE_ALIAS, widgetType.getBundles().get(0).getName());
+        }
+    }
+
+    @Test
+    public void testAddWidgetTypeToNewBundleAndVerifyBundles() {
+        String newBundleTitle = "New Bundle Title";
+        WidgetsBundle newWidgetsBundle = new WidgetsBundle();
+        newWidgetsBundle.setAlias("NewBundle");
+        newWidgetsBundle.setTitle(newBundleTitle);
+        newWidgetsBundle.setId(new WidgetsBundleId(UUID.randomUUID()));
+        newWidgetsBundle.setTenantId(TenantId.SYS_TENANT_ID);
+        newWidgetsBundle = widgetsBundleDao.save(TenantId.SYS_TENANT_ID, newWidgetsBundle);
+
+        for (int i = 0; i < widgetTypeList.size(); i++) {
+            WidgetTypeInfo widgetType = widgetTypeList.get(i);
+            widgetTypeDao.saveWidgetsBundleWidget(new WidgetsBundleWidget(newWidgetsBundle.getId(), widgetType.getId(), i));
+        }
+
+        PageData<WidgetTypeInfo> widgetTypes = widgetTypeDao.findWidgetTypesInfosByWidgetsBundleId(
+                TenantId.SYS_TENANT_ID.getId(),
+                newWidgetsBundle.getUuidId(),
+                true,
+                DeprecatedFilter.ALL,
+                Collections.singletonList("latest"),
+                new PageLink(1024, 0, "TYPE_DESCRIPTION", new SortOrder("createdTime"))
+        );
+
+        assertEquals(2, widgetTypes.getData().size());
+        WidgetTypeInfo widgetTypeInfo1 = widgetTypes.getData().get(0);
+        WidgetTypeInfo widgetTypeInfo2 = widgetTypes.getData().get(1);
+
+        assertEquals(2, widgetTypeInfo1.getBundles().size());
+        assertTrue("Bundles should contain 'BUNDLE_ALIAS'", widgetTypeInfo1.getBundles().stream().anyMatch(bundle -> BUNDLE_ALIAS.equals(bundle.getName())));
+        assertTrue("Bundles should contain 'New Bundle Title'", widgetTypeInfo1.getBundles().stream().anyMatch(bundle -> newBundleTitle.equals(bundle.getName())));
+
+        assertEquals(2, widgetTypeInfo2.getBundles().size());
+        assertTrue("Bundles should contain 'BUNDLE_ALIAS'", widgetTypeInfo2.getBundles().stream().anyMatch(bundle -> "BUNDLE_ALIAS".equals(bundle.getName())));
+        assertTrue("Bundles should contain 'New Bundle Title'", widgetTypeInfo2.getBundles().stream().anyMatch(bundle -> newBundleTitle.equals(bundle.getName())));
+
+        // cleanup and verify
+        widgetsBundleDao.removeById(newWidgetsBundle.getTenantId(), newWidgetsBundle.getUuidId());
+        widgetTypes = widgetTypeDao.findWidgetTypesInfosByWidgetsBundleId(
+                TenantId.SYS_TENANT_ID.getId(),
+                newWidgetsBundle.getUuidId(),
+                true,
+                DeprecatedFilter.ALL,
+                Collections.singletonList("latest"),
+                new PageLink(1024, 0, "TYPE_DESCRIPTION", new SortOrder("createdTime"))
+        );
+        widgetTypes.getData().forEach(widgetTypeInfo -> assertEquals(1, widgetTypeInfo.getBundles().size()));
+    }
+
     private WidgetTypeDetails saveWidgetType(TenantId tenantId, String name) {
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setTenantId(tenantId);
         widgetType.setDescription("WIDGET_TYPE_DESCRIPTION" + StringUtils.randomAlphabetic(7));
         widgetType.setName(name);
         var descriptor = JacksonUtil.newObjectNode();
-        descriptor.put("type","static");
+        descriptor.put("type", "static");
         widgetType.setDescriptor(descriptor);
         return widgetTypeDao.save(TenantId.SYS_TENANT_ID, widgetType);
     }
+
 }
