@@ -122,12 +122,13 @@ export class CalculatedFieldTestArgumentsComponent extends PageComponent impleme
   openEditJSONDialog(group: FormGroup): void {
     this.dialog.open<JsonObjectEditDialogComponent, JsonObjectEditDialogData, CalculatedFieldArgumentEventValue>(JsonObjectEditDialogComponent, {
       disableClose: true,
-      height: '65vh',
+      height: '760px',
       minWidth: 'min(700px, 100%)',
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         jsonValue: group.value,
-        required: true
+        required: true,
+        fillHeight: true
       }
     }).afterClosed()
       .pipe(filter(Boolean))
