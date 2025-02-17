@@ -16,13 +16,12 @@
 package org.thingsboard.server.service.apiusage;
 
 import com.google.common.util.concurrent.Futures;
-import org.junit.jupiter.api.AfterEach;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -33,6 +32,8 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -46,8 +47,11 @@ import java.util.UUID;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -57,9 +61,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class DefaultTbApiUsageStateServiceTest {
-
-    @Mock
-    TenantApiUsageState tenantUsageStateMock;
 
     @Mock
     private NotificationRuleProcessor notificationRuleProcessor;
@@ -74,20 +75,26 @@ public class DefaultTbApiUsageStateServiceTest {
     private InternalTelemetryService tsWsService;
 
     @Mock
+    private MailExecutorService mailExecutor;
+
+    @Mock
     private PartitionService partitionService;
 
     @Mock
-    private MailExecutorService mailExecutor;
+    private TbTenantProfileCache tbTenantProfileCache;
 
     @Spy
     @InjectMocks
     DefaultTbApiUsageStateService service;
 
-    private ApiUsageState dummyUsageState;
     private TenantApiUsageState tenantApiUsageState;
     private Tenant dummyTenant;
 
     private static final int MAX_ENABLE_VALUE = 5000;
+    private static final long VALUE_WARNING = 4500L;
+    private static final long VALUE_DISABLE = 5500L;
+    private static final int NEW_MAX_ENABLE_VALUE = 4000;
+    private static final double NEW_WARN_THRESHOLD_VALUE = 0.9;
     private static final double WARN_THRESHOLD_VALUE = 0.8;
 
     @BeforeEach
@@ -117,11 +124,20 @@ public class DefaultTbApiUsageStateServiceTest {
         TenantProfileData profileData = new TenantProfileData();
         profileData.setConfiguration(config);
 
-        TenantProfile tenantProfile = new TenantProfile();
-        tenantProfile.setId(new TenantProfileId(UUID.randomUUID()));
-        tenantProfile.setProfileData(profileData);
+        TenantProfile dummyTenantProfile = new TenantProfile();
+        dummyTenantProfile.setId(new TenantProfileId(UUID.randomUUID()));
+        dummyTenantProfile.setProfileData(profileData);
 
-        dummyUsageState = new ApiUsageState();
+        ApiUsageState dummyUsageState = getApiUsageState(tenantId);
+
+        tenantApiUsageState = new TenantApiUsageState(dummyTenantProfile, dummyUsageState);
+
+        service.myUsageStates.put(tenantId, tenantApiUsageState);
+    }
+
+    @NotNull
+    private static ApiUsageState getApiUsageState(TenantId tenantId) {
+        ApiUsageState dummyUsageState = new ApiUsageState();
         dummyUsageState.setTransportState(ApiUsageStateValue.ENABLED);
         dummyUsageState.setDbStorageState(ApiUsageStateValue.ENABLED);
         dummyUsageState.setReExecState(ApiUsageStateValue.ENABLED);
@@ -133,23 +149,61 @@ public class DefaultTbApiUsageStateServiceTest {
         dummyUsageState.setTenantId(tenantId);
         dummyUsageState.setEntityId(tenantId);
         dummyUsageState.setVersion(1L);
-
-        tenantApiUsageState = new TenantApiUsageState(tenantProfile, dummyUsageState);
-
-        service.myUsageStates.put(tenantId, tenantApiUsageState);
-    }
-
-    @AfterEach
-    public void tearDown() {
-
+        return dummyUsageState;
     }
 
     @Test
     public void givenTenantIdFromEntityStatesMap_whenGetApiUsageState() {
-        service.myUsageStates.put(dummyTenant.getTenantId(), tenantUsageStateMock);
         ApiUsageState tenantUsageState = service.getApiUsageState(dummyTenant.getTenantId());
-        assertThat(tenantUsageState, is(tenantUsageStateMock.getApiUsageState()));
+        assertThat(tenantUsageState, is(tenantApiUsageState.getApiUsageState()));
         verify(service, never()).getOrFetchState(dummyTenant.getTenantId(), dummyTenant.getTenantId());
+    }
+
+    @Test
+    public void testGetApiUsageState_fromOtherUsageStates() {
+        TenantId tenantId = dummyTenant.getTenantId();
+        service.myUsageStates.remove(tenantId);
+        ApiUsageState otherState = new ApiUsageState();
+        otherState.setTenantId(tenantId);
+        service.otherUsageStates.put(tenantId, otherState);
+        ApiUsageState result = service.getApiUsageState(tenantId);
+        assertThat(result, is(otherState));
+    }
+
+    @Test
+    public void testGetApiUsageState_whenMyPartition() {
+        TenantId tenantId = dummyTenant.getTenantId();
+        service.myUsageStates.remove(tenantId);
+        service.otherUsageStates.remove(tenantId);
+
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+        when(tpi.isMyPartition()).thenReturn(true);
+        when(partitionService.resolve(any(), eq(dummyTenant.getId()), eq(dummyTenant.getId()))).thenReturn(tpi);
+
+        TenantApiUsageState fetchedState = tenantApiUsageState;
+        doReturn(fetchedState).when(service).getOrFetchState(tenantId, tenantId);
+        ApiUsageState result = service.getApiUsageState(tenantId);
+        assertThat(result, is(fetchedState.getApiUsageState()));
+    }
+
+    @Test
+    public void testGetApiUsageState_whenNotMyPartition() {
+        TenantId tenantId = dummyTenant.getTenantId();
+        service.myUsageStates.remove(tenantId);
+        service.otherUsageStates.remove(tenantId);
+
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+        when(tpi.isMyPartition()).thenReturn(false);
+        when(partitionService.resolve(any(), eq(tenantId), eq(tenantId))).thenReturn(tpi);
+
+        ApiUsageState foundState = new ApiUsageState();
+        foundState.setTenantId(tenantId);
+        when(apiUsageStateService.findTenantApiUsageState(tenantId)).thenReturn(foundState);
+
+        ApiUsageState result = service.getApiUsageState(tenantId);
+        assertThat(result, is(foundState));
+
+        assertThat(service.otherUsageStates.get(tenantId), is(foundState));
     }
 
     @Test
@@ -165,7 +219,7 @@ public class DefaultTbApiUsageStateServiceTest {
             if (key.getApiFeature() != null) {
                 msgBuilder.addValues(TransportProtos.UsageStatsKVProto.newBuilder()
                         .setKey(key.name())
-                        .setValue(4500L)
+                        .setValue(VALUE_WARNING)
                         .build());
             }
         }
@@ -195,7 +249,6 @@ public class DefaultTbApiUsageStateServiceTest {
 
         assertEquals(ApiUsageStateValue.WARNING, tenantApiUsageState.getFeatureValue(ApiFeature.JS));
 
-
         verify(notificationRuleProcessor, atLeastOnce()).process(any());
         verify(mailExecutor, atLeastOnce()).submit((Runnable) any());
     }
@@ -213,7 +266,7 @@ public class DefaultTbApiUsageStateServiceTest {
             if (key.getApiFeature() != null) {
                 msgBuilder.addValues(TransportProtos.UsageStatsKVProto.newBuilder()
                         .setKey(key.name())
-                        .setValue(5500L)
+                        .setValue(VALUE_DISABLE)
                         .build());
             }
         }
@@ -239,6 +292,73 @@ public class DefaultTbApiUsageStateServiceTest {
         }
         verify(notificationRuleProcessor, atLeastOnce()).process(any());
         verify(mailExecutor, atLeastOnce()).submit((Runnable) any());
+    }
+
+    @Test
+    public void testOnTenantProfileUpdate_updatesStateForMatchingTenant() {
+        TenantProfileId currentProfileId = tenantApiUsageState.getTenantProfileId();
+
+        TenantProfileData newProfileData = new TenantProfileData();
+        DefaultTenantProfileConfiguration newConfig = DefaultTenantProfileConfiguration.builder()
+                .maxJSExecutions(NEW_MAX_ENABLE_VALUE)
+                .maxTransportMessages(MAX_ENABLE_VALUE)
+                .maxRuleChains(MAX_ENABLE_VALUE)
+                .maxTbelExecutions(MAX_ENABLE_VALUE)
+                .maxDPStorageDays(NEW_MAX_ENABLE_VALUE)
+                .maxREExecutions(MAX_ENABLE_VALUE)
+                .maxEmails(NEW_MAX_ENABLE_VALUE)
+                .maxSms(MAX_ENABLE_VALUE)
+                .maxCreatedAlarms(MAX_ENABLE_VALUE)
+                .warnThreshold(NEW_WARN_THRESHOLD_VALUE)
+                .build();
+
+        newProfileData.setConfiguration(newConfig);
+
+        TenantProfile newProfile = new TenantProfile();
+        newProfile.setId(currentProfileId);
+        newProfile.setProfileData(newProfileData);
+
+        when(tbTenantProfileCache.get(currentProfileId)).thenReturn(newProfile);
+
+        service.onTenantProfileUpdate(currentProfileId);
+
+        assertEquals(currentProfileId, tenantApiUsageState.getTenantProfileId());
+        assertEquals(newProfileData, tenantApiUsageState.getTenantProfileData());
+    }
+
+    @Test
+    public void testOnTenantUpdate_updatesStateWhenProfileChanged() {
+        TenantProfileId oldProfileId = tenantApiUsageState.getTenantProfileId();
+
+        TenantProfileId newProfileId = new TenantProfileId(UUID.randomUUID());
+        TenantProfileData newProfileData = new TenantProfileData();
+        DefaultTenantProfileConfiguration newConfig = DefaultTenantProfileConfiguration.builder()
+                .maxJSExecutions(NEW_MAX_ENABLE_VALUE)
+                .maxTransportMessages(MAX_ENABLE_VALUE)
+                .maxRuleChains(MAX_ENABLE_VALUE)
+                .maxTbelExecutions(NEW_MAX_ENABLE_VALUE)
+                .maxDPStorageDays(MAX_ENABLE_VALUE)
+                .maxREExecutions(NEW_MAX_ENABLE_VALUE)
+                .maxEmails(MAX_ENABLE_VALUE)
+                .maxSms(MAX_ENABLE_VALUE)
+                .maxCreatedAlarms(MAX_ENABLE_VALUE)
+                .warnThreshold(NEW_WARN_THRESHOLD_VALUE)
+                .build();
+
+        newProfileData.setConfiguration(newConfig);
+
+        TenantProfile newProfile = new TenantProfile();
+        newProfile.setId(newProfileId);
+        newProfile.setProfileData(newProfileData);
+
+        when(tbTenantProfileCache.get(dummyTenant.getTenantId())).thenReturn(newProfile);
+
+        assertNotEquals(oldProfileId, newProfileId);
+
+        service.onTenantUpdate(dummyTenant.getTenantId());
+
+        assertEquals(newProfileId, tenantApiUsageState.getTenantProfileId());
+        assertEquals(newProfileData, tenantApiUsageState.getTenantProfileData());
     }
 
     private boolean containsFeature(ApiFeature feature) {
