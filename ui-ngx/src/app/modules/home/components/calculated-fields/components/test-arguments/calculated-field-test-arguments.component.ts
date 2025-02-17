@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef } from '@angular/core';
+import { AfterViewInit, Component, forwardRef } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -60,7 +60,7 @@ import { MatDialog } from '@angular/material/dialog';
     }
   ]
 })
-export class CalculatedFieldTestArgumentsComponent extends PageComponent implements ControlValueAccessor, Validator {
+export class CalculatedFieldTestArgumentsComponent extends PageComponent implements ControlValueAccessor, Validator, AfterViewInit {
 
   argumentsFormArray = this.fb.array<FormGroup>([]);
 
@@ -78,6 +78,10 @@ export class CalculatedFieldTestArgumentsComponent extends PageComponent impleme
       .subscribe(() => this.propagateChange(this.getValue()));
   }
 
+  ngAfterViewInit(): void {
+    this.argumentsFormArray.updateValueAndValidity();
+  }
+
   registerOnChange(propagateChange: (value: CalculatedFieldEventArguments) => void): void {
     this.propagateChange = propagateChange;
   }
@@ -91,31 +95,13 @@ export class CalculatedFieldTestArgumentsComponent extends PageComponent impleme
       const value = { ...argumentsObj[key], argumentName: key } as CalculatedFieldArgumentEventValue;
       this.argumentsFormArray.push((value).type === ArgumentType.Rolling
         ? this.getRollingArgumentFormGroup(value as CalculatedFieldRollingTelemetryArgumentValue)
-        : this.getSimpleArgumentFormGroup(value as CalculatedFieldSingleArgumentValue),
-        {emitEvent: false});
+        : this.getSimpleArgumentFormGroup(value as CalculatedFieldSingleArgumentValue)
+      );
     });
   }
 
   validate(): ValidationErrors | null {
     return this.argumentsFormArray.valid ? null : { arguments: { valid: false } };
-  }
-
-  private getSimpleArgumentFormGroup({ argumentName, type, ts, value }: CalculatedFieldSingleArgumentValue): FormGroup {
-    return this.fb.group({
-      argumentName: [{ value: argumentName, disabled: true}],
-      type: [{ value: type , disabled: true }],
-      ts: [ts],
-      value: [value]
-    }) as FormGroup;
-  }
-
-  private getRollingArgumentFormGroup({ argumentName, type, timewindow, values }: CalculatedFieldRollingTelemetryArgumentValue): FormGroup {
-    return this.fb.group({
-      ...timewindow ?? {},
-      argumentName: [{ value: argumentName, disabled: true }],
-      type: [{ value: type , disabled: true }],
-      values: [values]
-    }) as FormGroup;
   }
 
   openEditJSONDialog(group: FormGroup): void {
@@ -136,10 +122,28 @@ export class CalculatedFieldTestArgumentsComponent extends PageComponent impleme
         : group.patchValue({ ts: (result as CalculatedFieldSingleArgumentValue).ts, value: (result as CalculatedFieldSingleArgumentValue).value }) );
   }
 
+  private getSimpleArgumentFormGroup({ argumentName, type, ts, value }: CalculatedFieldSingleArgumentValue): FormGroup {
+    return this.fb.group({
+      argumentName: [{ value: argumentName, disabled: true}],
+      type: [{ value: type , disabled: true }],
+      ts: [ts],
+      value: [value]
+    }) as FormGroup;
+  }
+
+  private getRollingArgumentFormGroup({ argumentName, type, timewindow, values }: CalculatedFieldRollingTelemetryArgumentValue): FormGroup {
+    return this.fb.group({
+      ...timewindow ?? {},
+      argumentName: [{ value: argumentName, disabled: true }],
+      type: [{ value: type , disabled: true }],
+      values: [values]
+    }) as FormGroup;
+  }
+
   private getValue(): CalculatedFieldEventArguments {
     return this.argumentsFormArray.getRawValue().reduce((acc, rowItem) => {
       const { argumentName, type, ...value } = rowItem;
-      acc[argumentName] = { ...value };
+      acc[argumentName] = value;
       return acc;
     }, {});
   }

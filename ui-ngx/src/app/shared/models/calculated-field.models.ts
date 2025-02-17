@@ -149,7 +149,7 @@ export interface CalculatedFieldDebugDialogData {
 }
 
 export interface CalculatedFieldTestScriptInputParams {
-  arguments: Record<string, unknown>,
+  arguments: CalculatedFieldEventArguments,
   expression: string;
 }
 

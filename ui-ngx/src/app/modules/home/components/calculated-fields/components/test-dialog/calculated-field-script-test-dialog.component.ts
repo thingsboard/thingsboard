@@ -81,7 +81,7 @@ export class CalculatedFieldScriptTestDialogComponent extends DialogComponent<Ca
     beautifyJs(this.data.expression, {indent_size: 4}).pipe(filter(Boolean), takeUntilDestroyed()).subscribe(
       (res) => this.calculatedFieldScriptTestFormGroup.get('expression').patchValue(res, {emitEvent: false})
     );
-    this.calculatedFieldScriptTestFormGroup.get('arguments').patchValue(this.data.arguments, {emitEvent: false});
+    this.calculatedFieldScriptTestFormGroup.get('arguments').patchValue(this.data.arguments);
   }
 
   ngAfterViewInit(): void {
