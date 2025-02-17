@@ -154,7 +154,7 @@ export interface CalculatedFieldTestScriptInputParams {
 }
 
 export interface CalculatedFieldTestScriptDialogData extends CalculatedFieldTestScriptInputParams {
-  argumentsEditorCompleter: TbEditorCompleter
+  argumentsEditorCompleter: TbEditorCompleter;
   openCalculatedFieldEdit?: boolean;
 }
 
@@ -189,17 +189,22 @@ export const getCalculatedFieldCurrentEntityFilter = (entityName: string, entity
   }
 }
 
-export interface CalculatedFieldAttributeArgumentValue<ValueType = unknown> {
+export interface CalculatedFieldArgumentValueBase {
+  argumentName: string;
+  type: ArgumentType;
+}
+
+export interface CalculatedFieldAttributeArgumentValue<ValueType = unknown> extends CalculatedFieldArgumentValueBase {
   ts: number;
   value: ValueType;
 }
 
-export interface CalculatedFieldLatestTelemetryArgumentValue<ValueType = unknown> {
+export interface CalculatedFieldLatestTelemetryArgumentValue<ValueType = unknown> extends CalculatedFieldArgumentValueBase {
   ts: number;
   value: ValueType;
 }
 
-export interface CalculatedFieldRollingTelemetryArgumentValue<ValueType = unknown> {
+export interface CalculatedFieldRollingTelemetryArgumentValue<ValueType = unknown> extends CalculatedFieldArgumentValueBase {
   timewindow: { startTs: number; endTs: number; limit: number };
   values: CalculatedFieldSingleArgumentValue<ValueType>[];
 }

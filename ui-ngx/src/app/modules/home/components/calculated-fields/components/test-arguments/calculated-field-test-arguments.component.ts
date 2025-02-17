@@ -26,6 +26,22 @@ import {
 } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { entityTypeTranslations } from '@shared/models/entity-type.models';
+import {
+  ArgumentType,
+  ArgumentTypeTranslations,
+  CalculatedFieldArgumentEventValue,
+  CalculatedFieldRollingTelemetryArgumentValue,
+  CalculatedFieldSingleArgumentValue,
+  CalculatedFieldEventArguments,
+  CalculatedFieldType
+} from '@shared/models/calculated-field.models';
+import {
+  JsonObjectEditDialogComponent,
+  JsonObjectEditDialogData
+} from '@shared/components/dialog/json-object-edit-dialog.component';
+import { filter } from 'rxjs/operators';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'tb-calculated-field-test-arguments',
@@ -49,29 +65,35 @@ export class CalculatedFieldTestArgumentsComponent extends PageComponent impleme
 
   argumentsFormArray = this.fb.array<FormGroup>([]);
 
-  private propagateChange: (value: { argumentName: string; value: unknown }) => void;
+  readonly entityTypeTranslations = entityTypeTranslations;
+  readonly ArgumentTypeTranslations = ArgumentTypeTranslations;
+  readonly ArgumentType = ArgumentType;
+  readonly CalculatedFieldType = CalculatedFieldType;
 
-  constructor(private fb: FormBuilder) {
+  private propagateChange: (value: CalculatedFieldEventArguments) => void;
+
+  constructor(private fb: FormBuilder, private dialog: MatDialog) {
     super();
     this.argumentsFormArray.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.propagateChange(this.getValue()));
   }
 
-  registerOnChange(propagateChange: (value: { argumentName: string; value: unknown }) => void): void {
+  registerOnChange(propagateChange: (value: CalculatedFieldEventArguments) => void): void {
     this.propagateChange = propagateChange;
   }
 
   registerOnTouched(_): void {
   }
 
-  writeValue(argumentsObj: Record<string, unknown>): void {
+  writeValue(argumentsObj: CalculatedFieldEventArguments): void {
     this.argumentsFormArray.clear();
     Object.keys(argumentsObj).forEach(key => {
-      this.argumentsFormArray.push(this.fb.group({
-        argumentName: [{ value: key, disabled: true}],
-        value: [argumentsObj[key]]
-      }) as FormGroup, {emitEvent: false});
+      const value = { ...argumentsObj[key], argumentName: key } as CalculatedFieldArgumentEventValue;
+      this.argumentsFormArray.push((value).type === ArgumentType.Rolling
+        ? this.getRollingArgumentFormGroup(value as CalculatedFieldRollingTelemetryArgumentValue)
+        : this.getSimpleArgumentFormGroup(value as CalculatedFieldSingleArgumentValue),
+        {emitEvent: false});
     });
   }
 
@@ -79,11 +101,44 @@ export class CalculatedFieldTestArgumentsComponent extends PageComponent impleme
     return this.argumentsFormArray.valid ? null : { arguments: { valid: false } };
   }
 
-  private getValue(): { argumentName: string; value: unknown } {
+  private getSimpleArgumentFormGroup({ argumentName, type, ts, value }: CalculatedFieldSingleArgumentValue): FormGroup {
+    return this.fb.group({
+      argumentName: [{ value: argumentName, disabled: true}],
+      type: [{ value: type , disabled: true }],
+      ts: [ts],
+      value: [value]
+    }) as FormGroup;
+  }
+
+  private getRollingArgumentFormGroup({ argumentName, type, timewindow, values }: CalculatedFieldRollingTelemetryArgumentValue): FormGroup {
+    return this.fb.group({
+      ...timewindow ?? {},
+      argumentName: [{ value: argumentName, disabled: true }],
+      type: [{ value: type , disabled: true }],
+      values: [values]
+    }) as FormGroup;
+  }
+
+  openEditJSONDialog(group: FormGroup): void {
+    this.dialog.open<JsonObjectEditDialogComponent, JsonObjectEditDialogData, CalculatedFieldArgumentEventValue>(JsonObjectEditDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-dialog-min-w-700', 'tb-dialog-h-fill'],
+      data: {
+        jsonValue: group.value,
+        required: true
+      }
+    }).afterClosed()
+      .pipe(filter(Boolean))
+      .subscribe(result => group.get('type').value === ArgumentType.Rolling
+        ? group.patchValue({ timewindow: (result as CalculatedFieldRollingTelemetryArgumentValue).timewindow, values: (result as CalculatedFieldRollingTelemetryArgumentValue).values })
+        : group.patchValue({ ts: (result as CalculatedFieldSingleArgumentValue).ts, value: (result as CalculatedFieldSingleArgumentValue).value }) );
+  }
+
+  private getValue(): CalculatedFieldEventArguments {
     return this.argumentsFormArray.getRawValue().reduce((acc, rowItem) => {
-      const { argumentName, value } = rowItem;
-      acc[argumentName] = value;
+      const { argumentName, type, ...value } = rowItem;
+      acc[argumentName] = { ...value };
       return acc;
-    }, {}) as { argumentName: string; value: unknown };
+    }, {});
   }
 }

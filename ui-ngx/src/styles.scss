@@ -1058,6 +1058,19 @@ pre.tb-highlight {
         display: block;
       }
     }
+
+    @for $i from 1 through 10 {
+      &-min-w-#{$i * 100} {
+
+        @media screen and (min-width: #{$i * 100}px) {
+          --mat-dialog-container-min-width: #{$i * 100}px;
+        }
+      }
+    }
+
+    &-h-fill {
+      height: 65vh;
+    }
   }
 
   .tb-fullscreen-dialog-gt-xs {

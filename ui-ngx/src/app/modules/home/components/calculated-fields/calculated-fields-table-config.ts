@@ -36,6 +36,7 @@ import { EntityDebugSettingsPanelComponent } from '@home/components/entity/debug
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import {
+  ArgumentType,
   CalculatedField,
   CalculatedFieldEventArguments,
   CalculatedFieldDebugDialogData,
@@ -122,7 +123,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       },
       {
         name: this.translate.instant('entity-view.events'),
-        icon: 'history',
+        icon: 'mdi:clipboard-text-clock',
         isEnabled: () => true,
         onAction: (_, entity) => this.openDebugEventsDialog(entity),
       },
@@ -260,7 +261,10 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
 
   private getTestScriptDialog(calculatedField: CalculatedField, argumentsObj?: CalculatedFieldEventArguments, openCalculatedFieldEdit = true): Observable<string> {
     const resultArguments = Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => {
-      acc[key] = isObject(argumentsObj) && argumentsObj.hasOwnProperty(key) ? argumentsObj[key] : '';
+      const type = calculatedField.configuration.arguments[key].refEntityKey.type;
+      acc[key] = isObject(argumentsObj) && argumentsObj.hasOwnProperty(key)
+        ? { ...argumentsObj[key], type }
+        : type === ArgumentType.Rolling ? { values: [], type } : { value: '', type, ts: new Date().getTime() };
       return acc;
     }, {});
     return this.dialog.open<CalculatedFieldScriptTestDialogComponent, CalculatedFieldTestScriptDialogData, string>(CalculatedFieldScriptTestDialogComponent,

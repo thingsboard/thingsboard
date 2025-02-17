@@ -1100,6 +1100,7 @@
         "general": "General",
         "username": "Username",
         "password": "Password",
+        "data": "Data",
         "enter-username": "Enter username",
         "enter-password": "Enter password",
         "enter-search": "Enter search",
