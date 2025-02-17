@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, DestroyRef, Inject } from '@angular/core';
+import { Component, DestroyRef, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -44,7 +44,7 @@ import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
   templateUrl: './calculated-field-dialog.component.html',
   styleUrls: ['./calculated-field-dialog.component.scss'],
 })
-export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFieldDialogComponent, CalculatedField> implements AfterViewInit {
+export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFieldDialogComponent, CalculatedField> {
 
   fieldFormGroup = this.fb.group({
     name: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex), Validators.maxLength(255)]],
@@ -116,12 +116,6 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
     return { configuration: { ...restConfig, type, expression: configuration['expression'+type] }, ...rest, type } as CalculatedField;
   }
 
-  ngAfterViewInit(): void {
-    if (this.data.isDirty) {
-      this.fieldFormGroup.markAsDirty();
-    }
-  }
-
   cancel(): void {
     this.dialogRef.close(null);
   }
@@ -184,6 +178,9 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
         this.fieldFormGroup.enable({emitEvent: false});
         this.toggleScopeByOutputType(this.outputFormGroup.get('type').value);
         this.toggleKeyByCalculatedFieldType(this.fieldFormGroup.get('type').value);
+        if (this.data.isDirty) {
+          this.fieldFormGroup.markAsDirty();
+        }
       }
     });
   }
