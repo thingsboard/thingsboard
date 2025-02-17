@@ -134,7 +134,7 @@ public class ProtoUtils {
             builder.setName(msg.getName());
         }
         if (msg.getOldName() != null) {
-            builder.setName(msg.getOldName());
+            builder.setOldName(msg.getOldName());
         }
         return builder.build();
     }
@@ -149,8 +149,8 @@ public class ProtoUtils {
                 .tenantId(TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())))
                 .entityId(entityId)
                 .event(ComponentLifecycleEvent.values()[proto.getEventValue()])
-                .name(proto.getName())
-                .oldName(proto.getOldName());
+                .name(proto.hasName() ? proto.getName() : null)
+                .oldName(proto.hasOldName() ? proto.getOldName() : null);
         if (proto.getProfileIdMSB() != 0 || proto.getProfileIdLSB() != 0) {
             var profileType = EntityType.DEVICE.equals(entityId.getEntityType()) ? EntityType.DEVICE_PROFILE : EntityType.ASSET_PROFILE;
             builder.profileId(EntityIdFactory.getByTypeAndUuid(profileType, new UUID(proto.getProfileIdMSB(), proto.getProfileIdLSB())));
@@ -165,7 +165,6 @@ public class ProtoUtils {
     public static EntityType fromProto(TransportProtos.EntityTypeProto entityType) {
         return entityTypeByProtoNumber[entityType.getNumber()];
     }
-
 
     public static TransportProtos.ToEdgeSyncRequestMsgProto toProto(ToEdgeSyncRequest request) {
         return TransportProtos.ToEdgeSyncRequestMsgProto.newBuilder()

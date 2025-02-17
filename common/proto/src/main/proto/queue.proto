@@ -1188,8 +1188,8 @@ message ComponentLifecycleMsgProto {
   int64 entityIdLSB = 5;
   ComponentLifecycleEvent event = 6;
   //Since 4.0. To replace the
-  string oldName = 7;
-  string name = 8;
+  optional string oldName = 7;
+  optional string name = 8;
   int64 oldProfileIdMSB = 9;
   int64 oldProfileIdLSB = 10;
   int64 profileIdMSB = 11;
