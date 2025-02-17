@@ -64,7 +64,7 @@ export class MobileBundleDialogComponent extends DialogComponent<MobileBundleDia
   platformType = PlatformType;
 
   bundlesForms = this.fb.group({
-    title: ['', Validators.required],
+    title: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(255)]],
     androidAppId: [null],
     iosAppId: [null],
     description: [''],
