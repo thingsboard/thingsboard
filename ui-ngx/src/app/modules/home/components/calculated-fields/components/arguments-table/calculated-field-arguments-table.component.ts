@@ -48,7 +48,7 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 
 @Component({
@@ -144,7 +144,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
         usedArgumentNames: this.argumentsFormArray.getRawValue().map(({ argumentName }) => argumentName).filter(name => name !== argumentObj.argumentName),
       };
       this.popoverComponent = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, CalculatedFieldArgumentPanelComponent, index ? 'left' : 'right', false, null,
+        this.viewContainerRef, CalculatedFieldArgumentPanelComponent, isDefined(index) ? 'left' : 'right', false, null,
         ctx,
         {},
         {}, {}, true);
