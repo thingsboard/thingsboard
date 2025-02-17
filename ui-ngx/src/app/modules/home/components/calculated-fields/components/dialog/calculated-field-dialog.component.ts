@@ -97,6 +97,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
               private destroyRef: DestroyRef,
               private fb: FormBuilder) {
     super(store, router, dialogRef);
+    this.observeIsLoading();
     this.applyDialogData();
     this.observeTypeChanges();
   }
@@ -173,5 +174,17 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
       this.configFormGroup.get('expressionSIMPLE').disable({emitEvent: false});
       this.configFormGroup.get('expressionSCRIPT').enable({emitEvent: false});
     }
+  }
+
+  private observeIsLoading(): void {
+    this.isLoading$.pipe(takeUntilDestroyed()).subscribe(loading => {
+      if (loading) {
+        this.fieldFormGroup.disable({emitEvent: false});
+      } else {
+        this.fieldFormGroup.enable({emitEvent: false});
+        this.toggleScopeByOutputType(this.outputFormGroup.get('type').value);
+        this.toggleKeyByCalculatedFieldType(this.fieldFormGroup.get('type').value);
+      }
+    });
   }
 }
