@@ -183,7 +183,7 @@
     </button>
     <button mat-raised-button color="primary"
             (click)="add()"
-            [disabled]="fieldFormGroup.invalid || !fieldFormGroup.dirty">
+            [disabled]="(isLoading$ | async) || fieldFormGroup.invalid || !fieldFormGroup.dirty">
       {{ data.buttonTitle | translate }}
     </button>
   </div>
