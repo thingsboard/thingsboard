@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -27,7 +28,6 @@ import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.List;
-import java.util.Map;
 
 @Data
 @Slf4j
@@ -53,7 +53,7 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
                 .map(this::toTbelArgument)
                 .toArray();
 
-        ListenableFuture<Map<String, Object>> resultFuture = ctx.getCalculatedFieldScriptEngine().executeToMapAsync(args);
+        ListenableFuture<JsonNode> resultFuture = ctx.getCalculatedFieldScriptEngine().executeJsonAsync(args);
         Output output = ctx.getOutput();
         return Futures.transform(resultFuture,
                 result -> new CalculatedFieldResult(output.getType(), output.getScope(), result),

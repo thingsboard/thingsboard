@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -137,7 +138,7 @@ public class SimpleCalculatedFieldStateTest {
         Output output = getCalculatedFieldConfig().getOutput();
         assertThat(result.getType()).isEqualTo(output.getType());
         assertThat(result.getScope()).isEqualTo(output.getScope());
-        assertThat(result.getResultMap()).isEqualTo(Map.of("output", 49.0));
+        assertThat(result.getResult()).isEqualTo(JacksonUtil.valueToTree(Map.of("output", 49.0)));
     }
 
     @Test

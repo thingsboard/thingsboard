@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.service.cf;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -155,8 +153,7 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
             OutputType type = calculatedFieldResult.getType();
             TbMsgType msgType = OutputType.ATTRIBUTES.equals(type) ? TbMsgType.POST_ATTRIBUTES_REQUEST : TbMsgType.POST_TELEMETRY_REQUEST;
             TbMsgMetaData md = OutputType.ATTRIBUTES.equals(type) ? new TbMsgMetaData(Map.of(SCOPE, calculatedFieldResult.getScope().name())) : TbMsgMetaData.EMPTY;
-            ObjectNode payload = createJsonPayload(calculatedFieldResult);
-            TbMsg msg = TbMsg.newMsg().type(msgType).originator(entityId).previousCalculatedFieldIds(cfIds).metaData(md).data(JacksonUtil.writeValueAsString(payload)).build();
+            TbMsg msg = TbMsg.newMsg().type(msgType).originator(entityId).previousCalculatedFieldIds(cfIds).metaData(md).data(JacksonUtil.writeValueAsString(calculatedFieldResult.getResult())).build();
             clusterService.pushMsgToRuleEngine(tenantId, entityId, msg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
@@ -281,13 +278,6 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
             return new BooleanDataEntry(key, Boolean.parseBoolean(defaultValue));
         }
         return new StringDataEntry(key, defaultValue);
-    }
-
-    private ObjectNode createJsonPayload(CalculatedFieldResult calculatedFieldResult) {
-        ObjectNode payload = JacksonUtil.newObjectNode();
-        Map<String, Object> resultMap = calculatedFieldResult.getResultMap();
-        resultMap.forEach((k, v) -> payload.set(k, JacksonUtil.convertValue(v, JsonNode.class)));
-        return payload;
     }
 
     private CalculatedFieldState createStateByType(CalculatedFieldCtx ctx) {

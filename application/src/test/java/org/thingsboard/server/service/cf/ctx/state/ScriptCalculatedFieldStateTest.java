@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.DefaultTbelInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -127,7 +128,7 @@ public class ScriptCalculatedFieldStateTest {
         Output output = getCalculatedFieldConfig().getOutput();
         assertThat(result.getType()).isEqualTo(output.getType());
         assertThat(result.getScope()).isEqualTo(output.getScope());
-        assertThat(result.getResultMap()).isEqualTo(Map.of("maxDeviceTemperature", 17.0, "assetHumidity", 43.0));
+        assertThat(result.getResult()).isEqualTo(JacksonUtil.valueToTree(Map.of("maxDeviceTemperature", 17.0, "assetHumidity", 43.0)));
     }
 
     @Test

@@ -245,7 +245,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 state.checkStateSize(ctxId, ctx.getMaxStateSizeInKBytes());
                 cfService.pushMsgToRuleEngine(tenantId, entityId, calculationResult, cfIdList, callback);
                 if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
-                    systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, JacksonUtil.writeValueAsString(calculationResult.getResultMap()), null);
+                    systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, JacksonUtil.writeValueAsString(calculationResult.getResult()), null);
                 }
             } else {
                 callback.onSuccess(); // State was updated but no calculation performed;
