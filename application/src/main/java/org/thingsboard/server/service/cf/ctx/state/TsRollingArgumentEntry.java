@@ -119,7 +119,8 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
             }
             cleanupExpiredRecords();
         } catch (Exception e) {
-            throw new IllegalArgumentException("Time series rolling arguments supports only numeric values.");
+            log.warn("Time series rolling arguments supports only numeric values.");
+//            throw new IllegalArgumentException("Time series rolling arguments supports only numeric values.");
         }
     }
 

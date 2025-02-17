@@ -60,7 +60,6 @@ import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
-import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
@@ -817,11 +816,7 @@ public class ActorSystemContext {
     }
 
     public void persistCalculatedFieldDebugEvent(TenantId tenantId, CalculatedFieldId calculatedFieldId, EntityId entityId, Map<String, ArgumentEntry> arguments, UUID tbMsgId, TbMsgType tbMsgType, String result, Throwable error) {
-        if (calculatedFieldsDebugPerTenantEnabled) {
-            if (!rateLimitService.checkRateLimit(LimitedApi.CALCULATED_FIELD_DEBUG_EVENTS, (Object) tenantId, calculatedFieldsDebugPerTenantLimitsConfiguration)) {
-                log.trace("[{}] Calculated field debug event limits exceeded!", tenantId);
-                throw new TbRateLimitsException("Failed to persist calculated field debug event due to rate limits!");
-            }
+        if (checkLimits(tenantId)) {
             try {
                 CalculatedFieldDebugEvent.CalculatedFieldDebugEventBuilder eventBuilder = CalculatedFieldDebugEvent.builder()
                         .tenantId(tenantId)
@@ -854,6 +849,15 @@ public class ActorSystemContext {
                 log.warn("Failed to persist calculated field debug message", ex);
             }
         }
+    }
+
+    private boolean checkLimits(TenantId tenantId) {
+        if (calculatedFieldsDebugPerTenantEnabled &&
+                !rateLimitService.checkRateLimit(LimitedApi.CALCULATED_FIELD_DEBUG_EVENTS, (Object) tenantId, calculatedFieldsDebugPerTenantLimitsConfiguration)) {
+            log.trace("[{}] Calculated field debug event limits exceeded!", tenantId);
+            return false;
+        }
+        return true;
     }
 
     public static Exception toException(Throwable error) {
