@@ -42,10 +42,10 @@
                 <input matInput tb-json-to-string name="values" formControlName="values" placeholder="{{ 'value.json-value' | translate }}*"/>
               </mat-form-field>
             } @else {
-              <mat-form-field appearance="outline" class="tb-inline-field" subscriptSizing="dynamic">
+              <mat-form-field appearance="outline" class="tb-inline-field w-1/3" subscriptSizing="dynamic">
                 <input matInput formControlName="ts" type="number" placeholder="{{ 'action.set' | translate }}">
               </mat-form-field>
-              <tb-value-input class="argument-value min-w-72 flex-1" [required]="false" [hideJsonEdit]="true" [shortBooleanField]="true" formControlName="value"/>
+              <tb-value-input class="argument-value min-w-60 flex-1" [required]="false" [hideJsonEdit]="true" [shortBooleanField]="true" formControlName="value"/>
             }
             <button mat-icon-button class="tb-mat-32" (click)="openEditJSONDialog(group)">
               <mat-icon class="tb-mat-20">open_in_new</mat-icon>
