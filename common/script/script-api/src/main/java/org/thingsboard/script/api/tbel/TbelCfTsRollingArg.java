@@ -28,9 +28,15 @@ import static org.thingsboard.script.api.tbel.TbelCfTsDoubleVal.OBJ_SIZE;
 public class TbelCfTsRollingArg implements TbelCfArg, Iterable<TbelCfTsDoubleVal> {
 
     @Getter
+    private final long startTs;
+    @Getter
+    private final long endTs;
+    @Getter
     private final List<TbelCfTsDoubleVal> values;
 
-    public TbelCfTsRollingArg(List<TbelCfTsDoubleVal> values) {
+    public TbelCfTsRollingArg(long startTs, long endTs, List<TbelCfTsDoubleVal> values) {
+        this.startTs = startTs;
+        this.endTs = endTs;
         this.values = Collections.unmodifiableList(values);
     }
 
