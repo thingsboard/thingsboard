@@ -27,6 +27,7 @@ import {
   CalculatedFieldDialogData,
   CalculatedFieldType,
   CalculatedFieldTypeTranslations,
+  getCalculatedFieldArgumentsEditorCompleter,
   OutputType,
   OutputTypeTranslations
 } from '@shared/models/calculated-field.models';
@@ -40,6 +41,7 @@ import { ScriptLanguage } from '@shared/models/rule-node.models';
 @Component({
   selector: 'tb-calculated-field-dialog',
   templateUrl: './calculated-field-dialog.component.html',
+  styleUrls: ['./calculated-field-dialog.component.scss'],
 })
 export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFieldDialogComponent, CalculatedField> implements AfterViewInit {
 
@@ -63,6 +65,12 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
     .pipe(
       startWith(this.data.value?.configuration?.arguments ?? {}),
       map(argumentsObj => Object.keys(argumentsObj))
+    );
+
+  argumentsEditorCompleter$ = this.configFormGroup.get('arguments').valueChanges
+    .pipe(
+      startWith(this.data.value?.configuration?.arguments ?? {}),
+      map(argumentsObj => getCalculatedFieldArgumentsEditorCompleter(argumentsObj))
     );
 
   additionalDebugActionConfig = this.data.value?.id ? {

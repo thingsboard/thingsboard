@@ -37,9 +37,11 @@ import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import {
   CalculatedField,
+  CalculatedFieldEventArguments,
   CalculatedFieldDebugDialogData,
   CalculatedFieldDialogData,
   CalculatedFieldTestScriptDialogData,
+  getCalculatedFieldArgumentsEditorCompleter,
 } from '@shared/models/calculated-field.models';
 import {
   CalculatedFieldDebugDialogComponent,
@@ -58,7 +60,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   readonly tenantId = getCurrentAuthUser(this.store).tenantId;
   additionalDebugActionConfig = {
     title: this.translate.instant('calculated-fields.see-debug-events'),
-    action: (calculatedField: CalculatedField) => this.openDebugDialog.call(this, calculatedField),
+    action: (calculatedField: CalculatedField) => this.openDebugEventsDialog.call(this, calculatedField),
   };
 
   constructor(private calculatedFieldsService: CalculatedFieldsService,
@@ -119,6 +121,12 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         onAction: (event$, entity) => this.exportCalculatedField(event$, entity),
       },
       {
+        name: this.translate.instant('entity-view.events'),
+        icon: 'history',
+        isEnabled: () => true,
+        onAction: (_, entity) => this.openDebugEventsDialog(entity),
+      },
+      {
         name: '',
         nameFunction: entity => this.getDebugConfigLabel(entity?.debugSettings),
         icon: 'mdi:bug',
@@ -143,7 +151,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     const { debugSettings = {}, id } = calculatedField;
     const additionalActionConfig = {
       ...this.additionalDebugActionConfig,
-      action: () => this.openDebugDialog(calculatedField)
+      action: () => this.openDebugEventsDialog(calculatedField)
     };
     const { viewContainerRef } = this.getTable();
     if ($event) {
@@ -205,14 +213,14 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         entityName: this.entityName,
         additionalDebugActionConfig: this.additionalDebugActionConfig,
         getTestScriptDialogFn: this.getTestScriptDialog.bind(this),
-        isDirty
+        isDirty,
       },
       enterAnimationDuration: isDirty ? 0 : null,
     })
       .afterClosed();
   }
 
-  private openDebugDialog(calculatedField: CalculatedField): void {
+  private openDebugEventsDialog(calculatedField: CalculatedField): void {
     this.dialog.open<CalculatedFieldDebugDialogComponent, CalculatedFieldDebugDialogData, null>(CalculatedFieldDebugDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
@@ -261,7 +269,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     ).subscribe(() => this.updateData());
   }
 
-  private getTestScriptDialog(calculatedField: CalculatedField, argumentsObj?: Record<string, unknown>, openCalculatedFieldEdit = true): Observable<string> {
+  private getTestScriptDialog(calculatedField: CalculatedField, argumentsObj?: CalculatedFieldEventArguments, openCalculatedFieldEdit = true): Observable<string> {
     const resultArguments = Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => {
       acc[key] = isObject(argumentsObj) && argumentsObj.hasOwnProperty(key) ? argumentsObj[key] : '';
       return acc;
@@ -273,6 +281,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         data: {
           arguments: resultArguments,
           expression: calculatedField.configuration.expression,
+          argumentsEditorCompleter: getCalculatedFieldArgumentsEditorCompleter(calculatedField.configuration.arguments),
           openCalculatedFieldEdit
         }
       }).afterClosed()
@@ -280,7 +289,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         filter(Boolean),
         tap(expression => {
           if (openCalculatedFieldEdit) {
-            this.editCalculatedField({...calculatedField, configuration: {...calculatedField.configuration, expression } }, true)
+            this.editCalculatedField({ entityId: this.entityId, ...calculatedField, configuration: {...calculatedField.configuration, expression } }, true)
           }
         }),
       );

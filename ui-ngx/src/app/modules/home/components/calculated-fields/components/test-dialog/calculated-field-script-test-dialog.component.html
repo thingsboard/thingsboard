@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form class="test-dialog-container size-full" [formGroup]="calculatedFieldScriptTestFormGroup">
+<form #testScriptContainer class="test-dialog-container size-full" [formGroup]="calculatedFieldScriptTestFormGroup">
   <mat-toolbar class="flex justify-between" color="primary">
     <h2>{{ 'calculated-fields.test-script-function' | translate }} ({{ 'api-usage.tbel' | translate }})</h2>
     <button mat-icon-button
@@ -26,7 +26,7 @@
   </mat-toolbar>
   <div mat-dialog-content class="relative">
     <div class="tb-absolute-fill">
-      <div class="tb-fullscreen-panel flex size-full flex-row">
+      <div class="tb-fullscreen-panel flex size-full flex-row lt-md:flex-col">
         <div #leftPanel class="test-block-content overflow-hidden">
           <div class="relative size-full min-w-64">
             <div class="block-label-container left">
@@ -40,6 +40,7 @@
               [disableUndefinedCheck]="true"
               [fillHeight]="true"
               [scriptLanguage]="ScriptLanguage.TBEL"
+              [editorCompleter]="data.argumentsEditorCompleter"
               resultType="object"
               helpId="calculated-field/test-expression_fn"
             />
@@ -47,7 +48,7 @@
         </div>
         <div #rightPanel>
           <div #topRightPanel class="test-block-content">
-            <div class="relative flex size-full min-w-96 gap-2">
+            <div class="relative flex size-full min-w-80 gap-2">
               <div class="block-label-container right-top">
                 <span class="block-label">{{ 'calculated-fields.arguments' | translate }}</span>
               </div>

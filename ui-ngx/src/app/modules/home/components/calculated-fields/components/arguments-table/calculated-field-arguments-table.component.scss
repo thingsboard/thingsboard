@@ -13,11 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@use '../../../../../../../scss/constants' as constants;
+
 :host {
   .tb-form-table-row-cell-buttons {
     --mat-badge-legacy-small-size-container-size: 8px;
     --mat-badge-small-size-container-overlap-offset: -5px;
     --mat-badge-small-size-text-size: 0;
+  }
+
+  .argument-name-field {
+    @media #{constants.$mat-sm} {
+      min-width: 25%;
+      max-width: 25%;
+    }
+    @media #{constants.$mat-xs} {
+      min-width: 33%;
+      max-width: 33%;
+    }
+  }
+
+  .datasource-field {
+    min-width: 33%;
+    max-width: 33%;
   }
 }
 
@@ -25,6 +43,12 @@
   .tb-inline-field {
     a {
       font-size: 14px;
+    }
+  }
+
+  .mat-mdc-standard-chip {
+    .mdc-evolution-chip__cell--primary, .mdc-evolution-chip__action--primary, .mdc-evolution-chip__text-label {
+      overflow: hidden;
     }
   }
 }
