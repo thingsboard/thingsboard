@@ -83,7 +83,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     this.entityTranslations = entityTypeTranslations.get(EntityType.CALCULATED_FIELD);
 
     this.entitiesFetchFunction = (pageLink: PageLink) => this.fetchCalculatedFields(pageLink);
-    this.addEntity = this.addCalculatedField.bind(this);
+    this.addEntity = this.getCalculatedFieldDialog.bind(this);
     this.deleteEntityTitle = (field: CalculatedField) => this.translate.instant('calculated-fields.delete-title', {title: field.name});
     this.deleteEntityContent = () => this.translate.instant('calculated-fields.delete-text');
     this.deleteEntitiesTitle = count => this.translate.instant('calculated-fields.delete-multiple-title', {count});
@@ -179,20 +179,8 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     }
   }
 
-  private addCalculatedField(): Observable<CalculatedField> {
-    return this.getCalculatedFieldDialog()
-      .pipe(
-        filter(Boolean),
-        switchMap(calculatedField => this.calculatedFieldsService.saveCalculatedField({ entityId: this.entityId, ...calculatedField })),
-      )
-  }
-
   private editCalculatedField(calculatedField: CalculatedField, isDirty = false): void {
     this.getCalculatedFieldDialog(calculatedField, 'action.apply', isDirty)
-      .pipe(
-        filter(Boolean),
-        switchMap((updatedCalculatedField) => this.calculatedFieldsService.saveCalculatedField({ ...calculatedField, ...updatedCalculatedField })),
-      )
       .subscribe((res) => {
         if (res) {
           this.updateData();
@@ -217,7 +205,8 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       },
       enterAnimationDuration: isDirty ? 0 : null,
     })
-      .afterClosed();
+      .afterClosed()
+      .pipe(filter(Boolean));
   }
 
   private openDebugEventsDialog(calculatedField: CalculatedField): void {

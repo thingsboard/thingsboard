@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, Inject } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -37,6 +37,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { map, startWith } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
+import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 
 @Component({
   selector: 'tb-calculated-field-dialog',
@@ -92,6 +93,8 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: CalculatedFieldDialogData,
               protected dialogRef: MatDialogRef<CalculatedFieldDialogComponent, CalculatedField>,
+              private calculatedFieldsService: CalculatedFieldsService,
+              private destroyRef: DestroyRef,
               private fb: FormBuilder) {
     super(store, router, dialogRef);
     this.applyDialogData();
@@ -124,7 +127,9 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
 
   add(): void {
     if (this.fieldFormGroup.valid) {
-      this.dialogRef.close(this.fromGroupValue);
+      this.calculatedFieldsService.saveCalculatedField({ entityId: this.data.entityId, id: this.data.value?.id,  ...this.fromGroupValue})
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(calculatedField => this.dialogRef.close(calculatedField));
     }
   }
 
