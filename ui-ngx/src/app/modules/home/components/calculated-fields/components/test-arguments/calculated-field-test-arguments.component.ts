@@ -62,7 +62,6 @@ import { MatDialog } from '@angular/material/dialog';
 })
 export class CalculatedFieldTestArgumentsComponent extends PageComponent implements ControlValueAccessor, Validator {
 
-
   argumentsFormArray = this.fb.array<FormGroup>([]);
 
   readonly entityTypeTranslations = entityTypeTranslations;
@@ -70,7 +69,7 @@ export class CalculatedFieldTestArgumentsComponent extends PageComponent impleme
   readonly ArgumentType = ArgumentType;
   readonly CalculatedFieldType = CalculatedFieldType;
 
-  private propagateChange: (value: CalculatedFieldEventArguments) => void;
+  private propagateChange: (value: CalculatedFieldEventArguments) => void = () => {};
 
   constructor(private fb: FormBuilder, private dialog: MatDialog) {
     super();
