@@ -96,8 +96,13 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     public void process(CalculatedFieldStateRestoreMsg msg) {
-        log.info("[{}] [{}] Processing CF state restore msg.", msg.getId().entityId(), msg.getId().cfId());
-        states.put(msg.getId().cfId(), msg.getState());
+        CalculatedFieldId cfId = msg.getId().cfId();
+        log.info("[{}] [{}] Processing CF state restore msg.", msg.getId().entityId(), cfId);
+        if (msg.getState() != null) {
+            states.put(cfId, msg.getState());
+        } else {
+            states.remove(cfId);
+        }
     }
 
     public void process(EntityInitCalculatedFieldMsg msg) {

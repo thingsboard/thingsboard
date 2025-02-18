@@ -13,40 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.utils;
+package org.thingsboard.server.service.cf;
 
 import jakarta.annotation.PreDestroy;
 import org.rocksdb.Options;
-import org.rocksdb.RocksDB;
-import org.rocksdb.RocksDBException;
+import org.rocksdb.WriteOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.utils.TbRocksDb;
 
 @Component
-public class RocksDBConfig {
+public class CfRocksDb extends TbRocksDb {
 
-    @Value("${rocksdb.db_path:${java.io.tmpdir}/rocksdb}")
-    private String dbPath;
-    private RocksDB db;
-
-    static {
-        RocksDB.loadLibrary();
-    }
-
-    public RocksDB getDb() throws RocksDBException {
-        if (db == null) {
-            Options options = new Options().setCreateIfMissing(true);
-            db = RocksDB.open(options, dbPath);
-        }
-        return db;
+    public CfRocksDb(@Value("${queue.calculated_fields.rocks_db_path:${user.home}/.rocksdb/cf_states}") String path) throws Exception {
+        super(path, new Options().setCreateIfMissing(true), new WriteOptions().setSync(true));
     }
 
     @PreDestroy
+    @Override
     public void close() {
-        if (db != null) {
-            db.close();
-            db = null;
-        }
+        super.close();
     }
 
 }

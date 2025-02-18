@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -87,6 +87,7 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
     private final TbQueueAdmin edgeAdmin;
     private final TbQueueAdmin edgeEventAdmin;
     private final TbQueueAdmin cfAdmin;
+    private final TbQueueAdmin cfStateAdmin;
     private final AtomicLong consumerCount = new AtomicLong();
 
     public KafkaTbRuleEngineQueueFactory(TopicService topicService, TbKafkaSettings kafkaSettings,
@@ -119,6 +120,7 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
         this.edgeAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdgeConfigs());
         this.edgeEventAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdgeEventConfigs());
         this.cfAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getCalculatedFieldConfigs());
+        this.cfStateAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getCalculatedFieldStateConfigs());
     }
 
     @Override
@@ -338,26 +340,28 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<CalculatedFieldStateProto>> createCalculatedFieldStateConsumer() {
-        TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<CalculatedFieldStateProto>> consumerBuilder = TbKafkaConsumerTemplate.builder();
-        consumerBuilder.settings(kafkaSettings);
-        consumerBuilder.topic(topicService.buildTopicName(calculatedFieldSettings.getStateTopic()));
-        consumerBuilder.clientId("tb-rule-engine-calculated-field-state-consumer-" + serviceInfoProvider.getServiceId() + "-" + consumerCount.incrementAndGet());
-        consumerBuilder.groupId(topicService.buildTopicName("tb-rule-engine-calculated-field-state-consumer"));
-        consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), CalculatedFieldStateProto.parseFrom(msg.getData()), msg.getHeaders()));
-        consumerBuilder.admin(cfAdmin);
-        consumerBuilder.statsService(consumerStatsService);
-        return consumerBuilder.build();
+    public TbQueueConsumer<TbProtoQueueMsg<CalculatedFieldStateMsgProto>> createCalculatedFieldStateConsumer() {
+        return TbKafkaConsumerTemplate.<TbProtoQueueMsg<CalculatedFieldStateMsgProto>>builder()
+                .settings(kafkaSettings)
+                .topic(topicService.buildTopicName(calculatedFieldSettings.getStateTopic()))
+                .readFromBeginning(true)
+                .stopWhenRead(true)
+                .clientId("tb-rule-engine-calculated-field-state-consumer-" + serviceInfoProvider.getServiceId() + "-" + consumerCount.incrementAndGet())
+                .groupId(topicService.buildTopicName("tb-rule-engine-calculated-field-state-consumer"))
+                .decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), CalculatedFieldStateMsgProto.parseFrom(msg.getData()), msg.getHeaders()))
+                .admin(cfStateAdmin)
+                .statsService(consumerStatsService)
+                .build();
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<CalculatedFieldStateProto>> createCalculatedFieldStateProducer() {
-        TbKafkaProducerTemplate.TbKafkaProducerTemplateBuilder<TbProtoQueueMsg<CalculatedFieldStateProto>> requestBuilder = TbKafkaProducerTemplate.builder();
-        requestBuilder.settings(kafkaSettings);
-        requestBuilder.clientId("tb-rule-engine-to-calculated-field-state-" + serviceInfoProvider.getServiceId());
-        requestBuilder.defaultTopic(topicService.buildTopicName(calculatedFieldSettings.getEventTopic()));
-        requestBuilder.admin(cfAdmin);
-        return requestBuilder.build();
+    public TbQueueProducer<TbProtoQueueMsg<CalculatedFieldStateMsgProto>> createCalculatedFieldStateProducer() {
+        return TbKafkaProducerTemplate.<TbProtoQueueMsg<CalculatedFieldStateMsgProto>>builder()
+                .settings(kafkaSettings)
+                .clientId("tb-rule-engine-to-calculated-field-state-" + serviceInfoProvider.getServiceId())
+                .defaultTopic(topicService.buildTopicName(calculatedFieldSettings.getEventTopic()))
+                .admin(cfStateAdmin)
+                .build();
     }
 
     @PreDestroy
