@@ -28,6 +28,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType } from '@shared/models/alias.models';
 import { Observable } from 'rxjs';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
+import { AceHighlightRules } from '@shared/models/ace/ace.models';
 
 export interface CalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasTenantId, ExportableEntity<CalculatedFieldId> {
   debugSettings?: EntityDebugSettings;
@@ -84,6 +85,19 @@ export enum ArgumentType {
   LatestTelemetry = 'TS_LATEST',
   Rolling = 'TS_ROLLING',
 }
+
+export enum TestArgumentType {
+  Single = 'SINGLE_VALUE',
+  Rolling = 'TS_ROLLING',
+}
+
+export const TestArgumentTypeMap = new Map<ArgumentType, TestArgumentType>(
+  [
+    [ArgumentType.Attribute, TestArgumentType.Single],
+    [ArgumentType.LatestTelemetry, TestArgumentType.Single],
+    [ArgumentType.Rolling, TestArgumentType.Rolling],
+  ]
+)
 
 export enum OutputType {
   Attribute = 'ATTRIBUTES',
@@ -149,12 +163,13 @@ export interface CalculatedFieldDebugDialogData {
 }
 
 export interface CalculatedFieldTestScriptInputParams {
-  arguments: Record<string, unknown>,
+  arguments: CalculatedFieldEventArguments;
   expression: string;
 }
 
 export interface CalculatedFieldTestScriptDialogData extends CalculatedFieldTestScriptInputParams {
-  argumentsEditorCompleter: TbEditorCompleter
+  argumentsEditorCompleter: TbEditorCompleter;
+  argumentsHighlightRules: AceHighlightRules;
   openCalculatedFieldEdit?: boolean;
 }
 
@@ -189,18 +204,23 @@ export const getCalculatedFieldCurrentEntityFilter = (entityName: string, entity
   }
 }
 
-export interface CalculatedFieldAttributeArgumentValue<ValueType = unknown> {
+export interface CalculatedFieldArgumentValueBase {
+  argumentName: string;
+  type: ArgumentType;
+}
+
+export interface CalculatedFieldAttributeArgumentValue<ValueType = unknown> extends CalculatedFieldArgumentValueBase {
   ts: number;
   value: ValueType;
 }
 
-export interface CalculatedFieldLatestTelemetryArgumentValue<ValueType = unknown> {
+export interface CalculatedFieldLatestTelemetryArgumentValue<ValueType = unknown> extends CalculatedFieldArgumentValueBase {
   ts: number;
   value: ValueType;
 }
 
-export interface CalculatedFieldRollingTelemetryArgumentValue<ValueType = unknown> {
-  timewindow: { startTs: number; endTs: number; limit: number };
+export interface CalculatedFieldRollingTelemetryArgumentValue<ValueType = unknown> extends CalculatedFieldArgumentValueBase {
+  timeWindow: { startTs: number; endTs: number; limit: number };
   values: CalculatedFieldSingleArgumentValue<ValueType>[];
 }
 
@@ -248,7 +268,7 @@ export const CalculatedFieldAttributeValueArgumentAutocomplete = {
 
 export const CalculatedFieldRollingValueArgumentAutocomplete = {
   meta: 'object',
-  type: '{ values: { ts: number; value: any; }[]; timewindow: { startTs: number; endTs: number; limit: number } }; }',
+  type: '{ values: { ts: number; value: any; }[]; timeWindow: { startTs: number; endTs: number; limit: number } }; }',
   description: 'Calculated field rolling value argument.',
   children: {
     values: {
@@ -256,7 +276,7 @@ export const CalculatedFieldRollingValueArgumentAutocomplete = {
       type: '{ ts: number; value: any; }[]',
       description: 'Values array',
     },
-    timewindow: {
+    timeWindow: {
       meta: 'object',
       type: '{ startTs: number; endTs: number; limit: number }',
       description: 'Time window configuration',
@@ -295,5 +315,72 @@ export const getCalculatedFieldArgumentsEditorCompleter = (argumentsObj: Record<
         break;
     }
     return acc;
-  }, {}))
+  }, {}));
+}
+
+export const getCalculatedFieldArgumentsHighlights = (
+  argumentsObj: Record<string, CalculatedFieldArgument>
+): AceHighlightRules => {
+  return {
+    start: Object.keys(argumentsObj).map(key => ({
+      token: 'tb.calculated-field-key',
+      regex: `\\b${key}\\b`,
+      next: argumentsObj[key].refEntityKey.type === ArgumentType.Rolling
+        ? 'calculatedFieldRollingArgumentValue'
+        : 'calculatedFieldSingleArgumentValue'
+    })),
+    ...calculatedFieldSingleArgumentValueHighlightRules,
+    ...calculatedFieldRollingArgumentValueHighlightRules,
+    ...calculatedFieldTimeWindowArgumentValueHighlightRules
+  };
+};
+
+const calculatedFieldSingleArgumentValueHighlightRules: AceHighlightRules = {
+  calculatedFieldSingleArgumentValue: [
+    {
+      token: 'tb.calculated-field-value',
+      regex: /value/,
+      next: 'no_regex'
+    },
+    {
+      token: 'tb.calculated-field-ts',
+      regex: /ts/,
+      next: 'no_regex'
+    }
+  ],
+}
+
+const calculatedFieldRollingArgumentValueHighlightRules: AceHighlightRules = {
+  calculatedFieldRollingArgumentValue: [
+    {
+      token: 'tb.calculated-field-values',
+      regex: /values/,
+      next: 'no_regex'
+    },
+    {
+      token: 'tb.calculated-field-time-window',
+      regex: /timeWindow/,
+      next: 'calculatedFieldRollingArgumentTimeWindow'
+    }
+  ],
+}
+
+const calculatedFieldTimeWindowArgumentValueHighlightRules: AceHighlightRules = {
+  calculatedFieldRollingArgumentTimeWindow: [
+    {
+      token: 'tb.calculated-field-start-ts',
+      regex: /startTs/,
+      next: 'no_regex'
+    },
+    {
+      token: 'tb.calculated-field-end-ts',
+      regex: /endTs/,
+      next: 'no_regex'
+    },
+    {
+      token: 'tb.calculated-field-limit',
+      regex: /limit/,
+      next: 'no_regex'
+    }
+  ]
 }

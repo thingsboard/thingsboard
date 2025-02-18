@@ -93,7 +93,7 @@
           warning
         </mat-icon>
       </mat-form-field>
-      <button mat-icon-button class="tb-mat-32" (click)="openEditJSONDialog($event)">
+      <button *ngIf="!hideJsonEdit" mat-icon-button class="tb-mat-32" (click)="openEditJSONDialog($event)">
         <mat-icon class="tb-mat-20">open_in_new</mat-icon>
       </button>
     </div>

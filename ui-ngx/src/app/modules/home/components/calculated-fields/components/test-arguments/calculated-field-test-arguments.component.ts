@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef } from '@angular/core';
+import { Component, forwardRef, Input } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -26,6 +26,22 @@ import {
 } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { entityTypeTranslations } from '@shared/models/entity-type.models';
+import {
+  ArgumentType,
+  ArgumentTypeTranslations,
+  CalculatedFieldArgumentEventValue,
+  CalculatedFieldRollingTelemetryArgumentValue,
+  CalculatedFieldSingleArgumentValue,
+  CalculatedFieldEventArguments,
+  CalculatedFieldType
+} from '@shared/models/calculated-field.models';
+import {
+  JsonObjectEditDialogComponent,
+  JsonObjectEditDialogData
+} from '@shared/components/dialog/json-object-edit-dialog.component';
+import { filter } from 'rxjs/operators';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'tb-calculated-field-test-arguments',
@@ -46,32 +62,39 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 })
 export class CalculatedFieldTestArgumentsComponent extends PageComponent implements ControlValueAccessor, Validator {
 
+  @Input() argumentsTypeMap: Map<string, ArgumentType>;
 
   argumentsFormArray = this.fb.array<FormGroup>([]);
 
-  private propagateChange: (value: { argumentName: string; value: unknown }) => void;
+  readonly entityTypeTranslations = entityTypeTranslations;
+  readonly ArgumentTypeTranslations = ArgumentTypeTranslations;
+  readonly ArgumentType = ArgumentType;
+  readonly CalculatedFieldType = CalculatedFieldType;
 
-  constructor(private fb: FormBuilder) {
+  private propagateChange: (value: CalculatedFieldEventArguments) => void = () => {};
+
+  constructor(private fb: FormBuilder, private dialog: MatDialog) {
     super();
     this.argumentsFormArray.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.propagateChange(this.getValue()));
   }
 
-  registerOnChange(propagateChange: (value: { argumentName: string; value: unknown }) => void): void {
+  registerOnChange(propagateChange: (value: CalculatedFieldEventArguments) => void): void {
     this.propagateChange = propagateChange;
   }
 
   registerOnTouched(_): void {
   }
 
-  writeValue(argumentsObj: Record<string, unknown>): void {
+  writeValue(argumentsObj: CalculatedFieldEventArguments): void {
     this.argumentsFormArray.clear();
     Object.keys(argumentsObj).forEach(key => {
-      this.argumentsFormArray.push(this.fb.group({
-        argumentName: [{ value: key, disabled: true}],
-        value: [argumentsObj[key]]
-      }) as FormGroup, {emitEvent: false});
+      const value = { ...argumentsObj[key], argumentName: key } as CalculatedFieldArgumentEventValue;
+      this.argumentsFormArray.push(this.argumentsTypeMap.get(key) === ArgumentType.Rolling
+        ? this.getRollingArgumentFormGroup(value as CalculatedFieldRollingTelemetryArgumentValue)
+        : this.getSimpleArgumentFormGroup(value as CalculatedFieldSingleArgumentValue)
+      );
     });
   }
 
@@ -79,11 +102,46 @@ export class CalculatedFieldTestArgumentsComponent extends PageComponent impleme
     return this.argumentsFormArray.valid ? null : { arguments: { valid: false } };
   }
 
-  private getValue(): { argumentName: string; value: unknown } {
+  openEditJSONDialog(group: FormGroup): void {
+    this.dialog.open<JsonObjectEditDialogComponent, JsonObjectEditDialogData, CalculatedFieldArgumentEventValue>(JsonObjectEditDialogComponent, {
+      disableClose: true,
+      height: '760px',
+      maxHeight: '70vh',
+      minWidth: 'min(700px, 100%)',
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        jsonValue: group.value,
+        required: true,
+        fillHeight: true
+      }
+    }).afterClosed()
+      .pipe(filter(Boolean))
+      .subscribe(result => this.argumentsTypeMap.get(group.get('argumentName').value) === ArgumentType.Rolling
+        ? group.patchValue({ timeWindow: (result as CalculatedFieldRollingTelemetryArgumentValue).timeWindow, values: (result as CalculatedFieldRollingTelemetryArgumentValue).values })
+        : group.patchValue({ ts: (result as CalculatedFieldSingleArgumentValue).ts, value: (result as CalculatedFieldSingleArgumentValue).value }) );
+  }
+
+  private getSimpleArgumentFormGroup({ argumentName, ts, value }: CalculatedFieldSingleArgumentValue): FormGroup {
+    return this.fb.group({
+      argumentName: [{ value: argumentName, disabled: true}],
+      ts: [ts],
+      value: [value]
+    }) as FormGroup;
+  }
+
+  private getRollingArgumentFormGroup({ argumentName, timeWindow, values }: CalculatedFieldRollingTelemetryArgumentValue): FormGroup {
+    return this.fb.group({
+      timeWindow: [timeWindow ?? {}],
+      argumentName: [{ value: argumentName, disabled: true }],
+      values: [values]
+    }) as FormGroup;
+  }
+
+  private getValue(): CalculatedFieldEventArguments {
     return this.argumentsFormArray.getRawValue().reduce((acc, rowItem) => {
-      const { argumentName, value } = rowItem;
+      const { argumentName, ...value } = rowItem;
       acc[argumentName] = value;
       return acc;
-    }, {}) as { argumentName: string; value: unknown };
+    }, {});
   }
 }

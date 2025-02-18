@@ -86,6 +86,10 @@ export class ValueInputComponent implements OnInit, OnDestroy, OnChanges, Contro
   required = true;
 
   @Input()
+  @coerceBoolean()
+  hideJsonEdit = false;
+
+  @Input()
   layout: ValueInputLayout | Layout = 'row';
 
   @ViewChild('inputForm', {static: true}) inputForm: NgForm;
