@@ -34,7 +34,7 @@ public abstract class AbstractCalculatedFieldStateService implements CalculatedF
 
     @Override
     public final void persistState(CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback) {
-        if (state.isStateTooLarge()) {
+        if (state.isSizeExceedsLimit()) {
             throw new CalculatedFieldStateException("State size exceeds the maximum allowed limit. The state will not be persisted to RocksDB.");
         }
         doPersist(stateId, toProto(stateId, state), callback);
