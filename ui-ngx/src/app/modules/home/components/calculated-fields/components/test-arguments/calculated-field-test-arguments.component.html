@@ -20,7 +20,7 @@
   <div class="tb-form-table">
     <div class="tb-form-table-header">
       <div class="tb-form-table-header-cell w-1/6">{{ 'common.name' | translate }}</div>
-      <div class="tb-form-table-header-cell w-1/5 lt-sm:hidden">{{ 'common.type' | translate }}</div>
+      <div class="tb-form-table-header-cell w-1/5 xs:hidden">{{ 'common.type' | translate }}</div>
       <div class="tb-form-table-header-cell flex-1">{{ 'common.data' | translate }}</div>
     </div>
     <div class="tb-form-table-body">
@@ -29,7 +29,7 @@
           <mat-form-field appearance="outline" class="tb-inline-field w-1/6" subscriptSizing="dynamic">
             <input matInput formControlName="argumentName" placeholder="{{ 'action.set' | translate }}">
           </mat-form-field>
-          <mat-form-field appearance="outline" class="tb-inline-field w-1/5 lt-sm:hidden" subscriptSizing="dynamic">
+          <mat-form-field appearance="outline" class="tb-inline-field w-1/5 xs:hidden" subscriptSizing="dynamic">
             <mat-select [value]="argumentsTypeMap.get(group.get('argumentName').value)" [disabled]="true">
               <mat-option [value]="argumentsTypeMap.get(group.get('argumentName').value)">
                 {{ ArgumentTypeTranslations.get(argumentsTypeMap.get(group.get('argumentName').value)) | translate }}
