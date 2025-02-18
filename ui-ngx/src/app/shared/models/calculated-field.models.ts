@@ -266,7 +266,7 @@ export const CalculatedFieldAttributeValueArgumentAutocomplete = {
 
 export const CalculatedFieldRollingValueArgumentAutocomplete = {
   meta: 'object',
-  type: '{ values: { ts: number; value: any; }[]; timewindow: { startTs: number; endTs: number; limit: number } }; }',
+  type: '{ values: { ts: number; value: any; }[]; timeWindow: { startTs: number; endTs: number; limit: number } }; }',
   description: 'Calculated field rolling value argument.',
   children: {
     values: {
@@ -274,7 +274,7 @@ export const CalculatedFieldRollingValueArgumentAutocomplete = {
       type: '{ ts: number; value: any; }[]',
       description: 'Values array',
     },
-    timewindow: {
+    timeWindow: {
       meta: 'object',
       type: '{ startTs: number; endTs: number; limit: number }',
       description: 'Time window configuration',
