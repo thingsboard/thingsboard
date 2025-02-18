@@ -91,7 +91,7 @@ export class CalculatedFieldTestArgumentsComponent extends PageComponent impleme
     this.argumentsFormArray.clear();
     Object.keys(argumentsObj).forEach(key => {
       const value = { ...argumentsObj[key], argumentName: key } as CalculatedFieldArgumentEventValue;
-      this.argumentsFormArray.push((value).type === ArgumentType.Rolling
+      this.argumentsFormArray.push(this.argumentsTypeMap.get(key) === ArgumentType.Rolling
         ? this.getRollingArgumentFormGroup(value as CalculatedFieldRollingTelemetryArgumentValue)
         : this.getSimpleArgumentFormGroup(value as CalculatedFieldSingleArgumentValue)
       );
@@ -115,7 +115,7 @@ export class CalculatedFieldTestArgumentsComponent extends PageComponent impleme
       }
     }).afterClosed()
       .pipe(filter(Boolean))
-      .subscribe(result => group.get('type').value === ArgumentType.Rolling
+      .subscribe(result => this.argumentsTypeMap.get(group.get('argumentName').value) === ArgumentType.Rolling
         ? group.patchValue({ timewindow: (result as CalculatedFieldRollingTelemetryArgumentValue).timewindow, values: (result as CalculatedFieldRollingTelemetryArgumentValue).values })
         : group.patchValue({ ts: (result as CalculatedFieldSingleArgumentValue).ts, value: (result as CalculatedFieldSingleArgumentValue).value }) );
   }
