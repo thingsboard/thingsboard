@@ -52,9 +52,11 @@ public abstract class AbstractCalculatedFieldStateService implements CalculatedF
     protected void processRestoredState(CalculatedFieldStateProto stateMsg) {
         var id = fromProto(stateMsg.getId());
         var state = fromProto(stateMsg);
-        actorSystemContext.tell(new CalculatedFieldStateRestoreMsg(id, state));
+        processRestoredState(id, state);
     }
 
-
+    protected void processRestoredState(CalculatedFieldEntityCtxId id, CalculatedFieldState state) {
+        actorSystemContext.tell(new CalculatedFieldStateRestoreMsg(id, state));
+    }
 
 }
