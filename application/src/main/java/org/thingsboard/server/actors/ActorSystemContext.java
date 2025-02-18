@@ -41,6 +41,7 @@ import org.thingsboard.script.api.js.JsInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
+import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.event.CalculatedFieldDebugEvent;
 import org.thingsboard.server.common.data.event.ErrorEvent;
@@ -50,6 +51,7 @@ import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbActorMsg;
@@ -107,8 +109,8 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
-import org.thingsboard.server.service.cf.cache.CalculatedFieldEntityProfileCache;
 import org.thingsboard.server.service.cf.CalculatedFieldStateService;
+import org.thingsboard.server.service.cf.cache.CalculatedFieldEntityProfileCache;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
@@ -130,6 +132,7 @@ import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.transport.TbCoreToTransportService;
+import org.thingsboard.server.utils.DebugModeRateLimitsConfig;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -181,8 +184,6 @@ public class ActorSystemContext {
     };
 
     private final ConcurrentMap<TenantId, DebugTbRateLimits> debugPerTenantLimits = new ConcurrentHashMap<>();
-
-    private final ConcurrentMap<TenantId, TbRateLimits> cfDebugPerTenantLimits = new ConcurrentHashMap<>();
 
     public ConcurrentMap<TenantId, DebugTbRateLimits> getDebugPerTenantLimits() {
         return debugPerTenantLimits;
@@ -452,6 +453,16 @@ public class ActorSystemContext {
     @Getter
     private ApiLimitService apiLimitService;
 
+    @Lazy
+    @Autowired(required = false)
+    @Getter
+    private RateLimitService rateLimitService;
+
+    @Lazy
+    @Autowired(required = false)
+    @Getter
+    private DebugModeRateLimitsConfig debugModeRateLimitsConfig;
+
     /**
      * The following Service will be null if we operate in tb-core mode
      */
@@ -609,14 +620,6 @@ public class ActorSystemContext {
     @Getter
     private long sessionReportTimeout;
 
-    @Value("${actors.rule.chain.debug_mode_rate_limits_per_tenant.enabled:true}")
-    @Getter
-    private boolean debugPerTenantEnabled;
-
-    @Value("${actors.rule.chain.debug_mode_rate_limits_per_tenant.configuration:50000:3600}")
-    @Getter
-    private String debugPerTenantLimitsConfiguration;
-
     @Value("${actors.rpc.submit_strategy:BURST}")
     @Getter
     private String rpcSubmitStrategy;
@@ -640,14 +643,6 @@ public class ActorSystemContext {
     @Value("${state.rule.node.deviceState.rateLimit:1:1,30:60,60:3600}")
     @Getter
     private String deviceStateNodeRateLimitConfig;
-
-    @Value("${actors.calculated_fields.debug_mode_rate_limits_per_tenant.enabled:true}")
-    @Getter
-    private boolean cfDebugPerTenantEnabled;
-
-    @Value("${actors.calculated_fields.debug_mode_rate_limits_per_tenant.configuration:50000:3600}")
-    @Getter
-    private String cfDebugPerTenantLimitsConfiguration;
 
     @Getter
     @Setter
@@ -778,9 +773,9 @@ public class ActorSystemContext {
     }
 
     private boolean checkLimits(TenantId tenantId, TbMsg tbMsg, Throwable error) {
-        if (debugPerTenantEnabled) {
+        if (debugModeRateLimitsConfig.isRuleChainDebugPerTenantLimitsEnabled()) {
             DebugTbRateLimits debugTbRateLimits = debugPerTenantLimits.computeIfAbsent(tenantId, id ->
-                    new DebugTbRateLimits(new TbRateLimits(debugPerTenantLimitsConfiguration), false));
+                    new DebugTbRateLimits(new TbRateLimits(debugModeRateLimitsConfig.getRuleChainDebugPerTenantLimitsConfiguration()), false));
 
             if (!debugTbRateLimits.getTbRateLimits().tryConsume()) {
                 if (!debugTbRateLimits.isRuleChainEventSaved()) {
@@ -810,48 +805,49 @@ public class ActorSystemContext {
         Futures.addCallback(future, RULE_CHAIN_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
     }
 
-    public void persistCalculatedFieldDebugEvent(TenantId tenantId, CalculatedFieldId calculatedFieldId, EntityId entityId, Map<String, ArgumentEntry> arguments,
-                                                 UUID tbMsgId, TbMsgType tbMsgType, String result, Throwable error) {
-        if (cfDebugPerTenantEnabled) {
-            TbRateLimits rateLimits = cfDebugPerTenantLimits.computeIfAbsent(tenantId, id -> new TbRateLimits(cfDebugPerTenantLimitsConfiguration));
-
-            if (rateLimits.tryConsume()) {
-                try {
-                    CalculatedFieldDebugEvent.CalculatedFieldDebugEventBuilder eventBuilder = CalculatedFieldDebugEvent.builder()
-                            .tenantId(tenantId)
-                            .entityId(calculatedFieldId.getId())
-                            .serviceId(getServiceId())
-                            .calculatedFieldId(calculatedFieldId)
-                            .eventEntity(entityId);
-                    if (tbMsgId != null) {
-                        eventBuilder.msgId(tbMsgId);
-                    }
-                    if (tbMsgType != null) {
-                        eventBuilder.msgType(tbMsgType.name());
-                    }
-                    if (arguments != null) {
-                        eventBuilder.arguments(JacksonUtil.toString(
-                                arguments.entrySet().stream()
-                                        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toTbelCfArg()))
-                        ));
-                    }
-                    if (result != null) {
-                        eventBuilder.result(result);
-                    }
-                    if (error != null) {
-                        eventBuilder.error(toString(error));
-                    }
-
-                    ListenableFuture<Void> future = eventService.saveAsync(eventBuilder.build());
-                    Futures.addCallback(future, CALCULATED_FIELD_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
-                } catch (IllegalArgumentException ex) {
-                    log.warn("Failed to persist calculated field debug message", ex);
+    public void persistCalculatedFieldDebugEvent(TenantId tenantId, CalculatedFieldId calculatedFieldId, EntityId entityId, Map<String, ArgumentEntry> arguments, UUID tbMsgId, TbMsgType tbMsgType, String result, Throwable error) {
+        if (checkLimits(tenantId)) {
+            try {
+                CalculatedFieldDebugEvent.CalculatedFieldDebugEventBuilder eventBuilder = CalculatedFieldDebugEvent.builder()
+                        .tenantId(tenantId)
+                        .entityId(calculatedFieldId.getId())
+                        .serviceId(getServiceId())
+                        .calculatedFieldId(calculatedFieldId)
+                        .eventEntity(entityId);
+                if (tbMsgId != null) {
+                    eventBuilder.msgId(tbMsgId);
                 }
-                if (log.isTraceEnabled()) {
-                    log.trace("[{}] Tenant level debug mode rate limit detected: {}", tenantId, calculatedFieldId);
+                if (tbMsgType != null) {
+                    eventBuilder.msgType(tbMsgType.name());
                 }
+                if (arguments != null) {
+                    eventBuilder.arguments(JacksonUtil.toString(
+                            arguments.entrySet().stream()
+                                    .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toTbelCfArg()))
+                    ));
+                }
+                if (result != null) {
+                    eventBuilder.result(result);
+                }
+                if (error != null) {
+                    eventBuilder.error(error.getMessage());
+                }
+
+                ListenableFuture<Void> future = eventService.saveAsync(eventBuilder.build());
+                Futures.addCallback(future, CALCULATED_FIELD_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
+            } catch (IllegalArgumentException ex) {
+                log.warn("Failed to persist calculated field debug message", ex);
             }
         }
+    }
+
+    private boolean checkLimits(TenantId tenantId) {
+        if (debugModeRateLimitsConfig.isCalculatedFieldDebugPerTenantLimitsEnabled() &&
+                !rateLimitService.checkRateLimit(LimitedApi.CALCULATED_FIELD_DEBUG_EVENTS, (Object) tenantId, debugModeRateLimitsConfig.getCalculatedFieldDebugPerTenantLimitsConfiguration())) {
+            log.trace("[{}] Calculated field debug event limits exceeded!", tenantId);
+            return false;
+        }
+        return true;
     }
 
     public static Exception toException(Throwable error) {

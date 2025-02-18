@@ -41,9 +41,9 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
+import org.thingsboard.server.service.cf.CalculatedFieldStateService;
 import org.thingsboard.server.service.cf.cache.CalculatedFieldEntityProfileCache;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
-import org.thingsboard.server.service.cf.CalculatedFieldStateService;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
@@ -53,7 +53,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -263,6 +262,13 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 callback.onSuccess();
             } else {
                 var newCfCtx = new CalculatedFieldCtx(newCf, systemContext.getTbelInvokeService(), systemContext.getApiLimitService());
+                try {
+                    newCfCtx.init();
+                } catch (Exception e) {
+                    if (DebugModeUtil.isDebugAllAvailable(newCf)) {
+                        systemContext.persistCalculatedFieldDebugEvent(newCf.getTenantId(), newCf.getId(), newCf.getEntityId(), null, null, null, null, e);
+                    }
+                }
                 calculatedFields.put(newCf.getId(), newCfCtx);
                 List<CalculatedFieldCtx> oldCfList = entityIdCalculatedFields.get(newCf.getEntityId());
                 List<CalculatedFieldCtx> newCfList = new ArrayList<>(oldCfList.size());
@@ -287,13 +293,6 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
                 var stateChanges = newCfCtx.hasStateChanges(oldCfCtx);
                 if (stateChanges || newCfCtx.hasOtherSignificantChanges(oldCfCtx)) {
-                    try {
-                        newCfCtx.init();
-                    } catch (Exception e) {
-                        if (DebugModeUtil.isDebugAllAvailable(newCf)) {
-                            systemContext.persistCalculatedFieldDebugEvent(newCf.getTenantId(), newCf.getId(), newCf.getEntityId(), null, null, null, null, e);
-                        }
-                    }
                     initCf(newCfCtx, callback, stateChanges);
                 } else {
                     callback.onSuccess();

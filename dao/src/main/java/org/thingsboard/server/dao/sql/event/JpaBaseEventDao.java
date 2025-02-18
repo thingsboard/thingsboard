@@ -294,7 +294,6 @@ public class JpaBaseEventDao implements EventDao {
     }
 
     private PageData<? extends Event> findEventByFilter(UUID tenantId, UUID entityId, CalculatedFieldDebugEventFilter eventFilter, TimePageLink pageLink) {
-        parseUUID(eventFilter.getCalculatedFieldId(), "Calculated Field Id");
         parseUUID(eventFilter.getEntityId(), "Entity Id");
         parseUUID(eventFilter.getMsgId(), "Message Id");
         return DaoUtil.toPageData(
@@ -304,11 +303,13 @@ public class JpaBaseEventDao implements EventDao {
                         pageLink.getStartTime(),
                         pageLink.getEndTime(),
                         eventFilter.getServer(),
-                        UUID.fromString(eventFilter.getCalculatedFieldId()),
+                        entityId,
                         eventFilter.getEntityId(),
                         eventFilter.getEntityType(),
                         eventFilter.getMsgId(),
                         eventFilter.getMsgType(),
+                        eventFilter.getArguments(),
+                        eventFilter.getResult(),
                         eventFilter.isError(),
                         eventFilter.getErrorStr(),
                         DaoUtil.toPageable(pageLink, EventEntity.eventColumnMap)));
@@ -389,7 +390,6 @@ public class JpaBaseEventDao implements EventDao {
     }
 
     private void removeEventsByFilter(UUID tenantId, UUID entityId, CalculatedFieldDebugEventFilter eventFilter, Long startTime, Long endTime) {
-        parseUUID(eventFilter.getCalculatedFieldId(), "Calculated Field Id");
         parseUUID(eventFilter.getEntityId(), "Entity Id");
         parseUUID(eventFilter.getMsgId(), "Message Id");
         calculatedFieldDebugEventRepository.removeEvents(
@@ -398,11 +398,13 @@ public class JpaBaseEventDao implements EventDao {
                 startTime,
                 endTime,
                 eventFilter.getServer(),
-                UUID.fromString(eventFilter.getCalculatedFieldId()),
+                entityId,
                 eventFilter.getEntityId(),
                 eventFilter.getEntityType(),
                 eventFilter.getMsgId(),
                 eventFilter.getMsgType(),
+                eventFilter.getArguments(),
+                eventFilter.getResult(),
                 eventFilter.isError(),
                 eventFilter.getErrorStr());
     }

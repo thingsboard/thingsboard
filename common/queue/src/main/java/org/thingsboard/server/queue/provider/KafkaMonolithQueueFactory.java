@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateMsgProto;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -548,23 +548,23 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<CalculatedFieldStateMsgProto>> createCalculatedFieldStateConsumer() {
-        return TbKafkaConsumerTemplate.<TbProtoQueueMsg<CalculatedFieldStateMsgProto>>builder()
+    public TbQueueConsumer<TbProtoQueueMsg<CalculatedFieldStateProto>> createCalculatedFieldStateConsumer() {
+        return TbKafkaConsumerTemplate.<TbProtoQueueMsg<CalculatedFieldStateProto>>builder()
                 .settings(kafkaSettings)
                 .topic(topicService.buildTopicName(calculatedFieldSettings.getStateTopic()))
                 .readFromBeginning(true)
                 .stopWhenRead(true)
                 .clientId("monolith-calculated-field-state-consumer-" + serviceInfoProvider.getServiceId() + "-" + consumerCount.incrementAndGet())
                 .groupId(topicService.buildTopicName("monolith-calculated-field-state-consumer"))
-                .decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), CalculatedFieldStateMsgProto.parseFrom(msg.getData()), msg.getHeaders()))
+                .decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), CalculatedFieldStateProto.parseFrom(msg.getData()), msg.getHeaders()))
                 .admin(cfStateAdmin)
                 .statsService(consumerStatsService)
                 .build();
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<CalculatedFieldStateMsgProto>> createCalculatedFieldStateProducer() {
-        return TbKafkaProducerTemplate.<TbProtoQueueMsg<CalculatedFieldStateMsgProto>>builder()
+    public TbQueueProducer<TbProtoQueueMsg<CalculatedFieldStateProto>> createCalculatedFieldStateProducer() {
+        return TbKafkaProducerTemplate.<TbProtoQueueMsg<CalculatedFieldStateProto>>builder()
                 .settings(kafkaSettings)
                 .clientId("monolith-calculated-field-state-" + serviceInfoProvider.getServiceId())
                 .defaultTopic(topicService.buildTopicName(calculatedFieldSettings.getEventTopic()))

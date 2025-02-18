@@ -26,7 +26,7 @@ import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateMsgProto;
+import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -60,8 +60,8 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
     @Value("${queue.calculated_fields.consumer_per_partition:true}")
     private boolean consumerPerPartition;
 
-    private MainQueueConsumerManager<TbProtoQueueMsg<CalculatedFieldStateMsgProto>, CalculatedFieldQueueConfig> stateConsumer;
-    private TbKafkaProducerTemplate<TbProtoQueueMsg<CalculatedFieldStateMsgProto>> stateProducer;
+    private MainQueueConsumerManager<TbProtoQueueMsg<CalculatedFieldStateProto>, CalculatedFieldQueueConfig> stateConsumer;
+    private TbKafkaProducerTemplate<TbProtoQueueMsg<CalculatedFieldStateProto>> stateProducer;
 
     protected ExecutorService consumersExecutor;
     protected ExecutorService mgmtExecutor;
@@ -75,11 +75,11 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
         this.mgmtExecutor = ThingsBoardExecutors.newWorkStealingPool(Math.max(Runtime.getRuntime().availableProcessors(), 4), "cf-state-mgmt");
         this.scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("cf-state-consumer-scheduler");
 
-        this.stateConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<CalculatedFieldStateMsgProto>, CalculatedFieldQueueConfig>builder()
+        this.stateConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<CalculatedFieldStateProto>, CalculatedFieldQueueConfig>builder()
                 .queueKey(QueueKey.CF_STATES)
                 .config(CalculatedFieldQueueConfig.of(consumerPerPartition, (int) pollInterval))
                 .msgPackProcessor((msgs, consumer, config) -> {
-                    for (TbProtoQueueMsg<CalculatedFieldStateMsgProto> msg : msgs) {
+                    for (TbProtoQueueMsg<CalculatedFieldStateProto> msg : msgs) {
                         try {
                             processRestoredState(msg.getValue());
                         } catch (Throwable t) {
@@ -97,11 +97,11 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
                 .scheduler(scheduler)
                 .taskExecutor(mgmtExecutor)
                 .build();
-        this.stateProducer = (TbKafkaProducerTemplate<TbProtoQueueMsg<CalculatedFieldStateMsgProto>>) queueFactory.createCalculatedFieldStateProducer();
+        this.stateProducer = (TbKafkaProducerTemplate<TbProtoQueueMsg<CalculatedFieldStateProto>>) queueFactory.createCalculatedFieldStateProducer();
     }
 
     @Override
-    protected void doPersist(CalculatedFieldEntityCtxId stateId, CalculatedFieldStateMsgProto stateMsgProto, TbCallback callback) {
+    protected void doPersist(CalculatedFieldEntityCtxId stateId, CalculatedFieldStateProto stateMsgProto, TbCallback callback) {
         TopicPartitionInfo tpi = partitionService.resolve(QueueKey.CF_STATES, stateId.entityId());
         stateProducer.send(tpi, stateId.toKey(), new TbProtoQueueMsg<>(stateId.entityId().getId(), stateMsgProto), new TbQueueCallback() {
             @Override
@@ -122,9 +122,7 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
 
     @Override
     protected void doRemove(CalculatedFieldEntityCtxId stateId, TbCallback callback) {
-        doPersist(stateId, CalculatedFieldStateMsgProto.newBuilder()
-                .setId(toProto(stateId))
-                .build(), callback);
+        //TODO: vklimov
     }
 
     @Override

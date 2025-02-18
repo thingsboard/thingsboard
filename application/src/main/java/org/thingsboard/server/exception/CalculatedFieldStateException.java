@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf;
+package org.thingsboard.server.exception;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import lombok.Data;
-import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.cf.configuration.OutputType;
+public class CalculatedFieldStateException extends RuntimeException {
 
-@Data
-public final class CalculatedFieldResult {
-
-    private final OutputType type;
-    private final AttributeScope scope;
-    private final JsonNode result;
+    public CalculatedFieldStateException(String message) {
+        super(message);
+    }
 
 }

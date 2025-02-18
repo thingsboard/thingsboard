@@ -20,21 +20,17 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.script.api.tbel.TbelCfTsDoubleVal;
 import org.thingsboard.script.api.tbel.TbelCfTsRollingArg;
-import org.thingsboard.server.common.data.kv.BasicKvEntry;
-import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.util.ProtoUtils;
+import org.thingsboard.server.exception.CalculatedFieldStateException;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
@@ -42,26 +38,36 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TsRollingArgumentEntry implements ArgumentEntry {
 
-    public static final ArgumentEntry EMPTY = new TsRollingArgumentEntry(0);
-
-    private static final int MAX_ROLLING_ARGUMENT_ENTRY_SIZE = 1000;
-
+    private Integer limit;
+    private Long timeWindow;
     private TreeMap<Long, Double> tsRecords = new TreeMap<>();
 
-    public TsRollingArgumentEntry(List<TsKvEntry> kvEntries) {
+    public TsRollingArgumentEntry(List<TsKvEntry> kvEntries, int limit, long timeWindow) {
+        this.limit = limit;
+        this.timeWindow = timeWindow;
         kvEntries.forEach(tsKvEntry -> addTsRecord(tsKvEntry.getTs(), tsKvEntry));
     }
 
-    /**
-     * Internal constructor to create immutable TsRollingArgumentEntry.EMPTY
-     */
-    private TsRollingArgumentEntry(int ignored) {
+    public TsRollingArgumentEntry(TreeMap<Long, Double> tsRecords, int limit, long timeWindow) {
+        this.tsRecords = tsRecords;
+        this.limit = limit;
+        this.timeWindow = timeWindow;
+    }
+
+    public TsRollingArgumentEntry(int limit, long timeWindow) {
         this.tsRecords = new TreeMap<>();
+        this.limit = limit;
+        this.timeWindow = timeWindow;
     }
 
     @Override
     public ArgumentEntryType getType() {
         return ArgumentEntryType.TS_ROLLING;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return tsRecords.isEmpty();
     }
 
     @JsonIgnore
@@ -71,21 +77,16 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
     }
 
     @Override
-    public ArgumentEntry copy() {
-        return new TsRollingArgumentEntry(new TreeMap<>(tsRecords));
-    }
-
-    @Override
     public TbelCfArg toTbelCfArg() {
         List<TbelCfTsDoubleVal> values = new ArrayList<>(tsRecords.size());
         for (var e : tsRecords.entrySet()) {
             values.add(new TbelCfTsDoubleVal(e.getKey(), e.getValue()));
         }
-        return new TbelCfTsRollingArg(values);
+        return new TbelCfTsRollingArg(limit, timeWindow, values);
     }
 
     @Override
-    public boolean updateEntry(ArgumentEntry entry) {
+    public boolean updateEntry(ArgumentEntry entry) throws CalculatedFieldStateException {
         if (entry instanceof TsRollingArgumentEntry tsRollingEntry) {
             updateTsRollingEntry(tsRollingEntry);
         } else if (entry instanceof SingleValueArgumentEntry singleValueEntry) {
@@ -107,26 +108,31 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
     }
 
     private void addTsRecord(Long ts, KvEntry value) {
-        switch (value.getDataType()) {
-            case LONG -> value.getLongValue().ifPresent(aLong -> tsRecords.put(ts, aLong.doubleValue()));
-            case DOUBLE -> value.getDoubleValue().ifPresent(aDouble -> tsRecords.put(ts, aDouble));
-            case BOOLEAN -> value.getBooleanValue().ifPresent(aBoolean -> tsRecords.put(ts, aBoolean ? 1.0 : 0.0));
-            case STRING -> value.getStrValue().ifPresent(aString -> tsRecords.put(ts, Double.parseDouble(aString)));
-            case JSON -> value.getJsonValue().ifPresent(aString -> tsRecords.put(ts, Double.parseDouble(aString)));
-            //TODO: try catch
+        try {
+            switch (value.getDataType()) {
+                case LONG -> value.getLongValue().ifPresent(aLong -> tsRecords.put(ts, aLong.doubleValue()));
+                case DOUBLE -> value.getDoubleValue().ifPresent(aDouble -> tsRecords.put(ts, aDouble));
+                case BOOLEAN -> value.getBooleanValue().ifPresent(aBoolean -> tsRecords.put(ts, aBoolean ? 1.0 : 0.0));
+                case STRING -> value.getStrValue().ifPresent(aString -> tsRecords.put(ts, Double.parseDouble(aString)));
+                case JSON -> value.getJsonValue().ifPresent(aString -> tsRecords.put(ts, Double.parseDouble(aString)));
+            }
+            cleanupExpiredRecords();
+        } catch (Exception e) {
+            log.warn("Time series rolling arguments supports only numeric values.");
+//            throw new IllegalArgumentException("Time series rolling arguments supports only numeric values.");
         }
-        pollFirstEntryIfNeeded();
     }
 
     private void addTsRecord(Long ts, double value) {
         tsRecords.put(ts, value);
-        pollFirstEntryIfNeeded();
+        cleanupExpiredRecords();
     }
 
-    private void pollFirstEntryIfNeeded() {
-        if (tsRecords.size() > MAX_ROLLING_ARGUMENT_ENTRY_SIZE) {
+    private void cleanupExpiredRecords() {
+        if (tsRecords.size() > limit) {
             tsRecords.pollFirstEntry();
         }
+        tsRecords.entrySet().removeIf(tsRecord -> tsRecord.getKey() < System.currentTimeMillis() - timeWindow);
     }
 
 }

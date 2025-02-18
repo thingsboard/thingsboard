@@ -15,7 +15,9 @@
  */
 package org.thingsboard.script.api.tbel;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
 import java.util.Collections;
@@ -28,9 +30,22 @@ import static org.thingsboard.script.api.tbel.TbelCfTsDoubleVal.OBJ_SIZE;
 public class TbelCfTsRollingArg implements TbelCfArg, Iterable<TbelCfTsDoubleVal> {
 
     @Getter
+    private final TbTimeWindow timeWindow;
+    @Getter
     private final List<TbelCfTsDoubleVal> values;
 
-    public TbelCfTsRollingArg(List<TbelCfTsDoubleVal> values) {
+    @JsonCreator
+    public TbelCfTsRollingArg(
+            @JsonProperty("timeWindow") TbTimeWindow timeWindow,
+            @JsonProperty("values") List<TbelCfTsDoubleVal> values
+    ) {
+        this.timeWindow = timeWindow;
+        this.values = Collections.unmodifiableList(values);
+    }
+
+    public TbelCfTsRollingArg(int limit, long timeWindow, List<TbelCfTsDoubleVal> values) {
+        long ts = System.currentTimeMillis();
+        this.timeWindow = new TbTimeWindow(ts - timeWindow, ts, limit);
         this.values = Collections.unmodifiableList(values);
     }
 
@@ -68,6 +83,11 @@ public class TbelCfTsRollingArg implements TbelCfArg, Iterable<TbelCfTsDoubleVal
     @Override
     public void forEach(Consumer<? super TbelCfTsDoubleVal> action) {
         values.forEach(action);
+    }
+
+    @Override
+    public String getType() {
+        return "TS_ROLLING";
     }
 
 }
