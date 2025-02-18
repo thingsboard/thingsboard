@@ -122,7 +122,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
 
   add(): void {
     if (this.fieldFormGroup.valid) {
-      this.calculatedFieldsService.saveCalculatedField({ entityId: this.data.entityId, id: this.data.value?.id,  ...this.fromGroupValue})
+      this.calculatedFieldsService.saveCalculatedField({ entityId: this.data.entityId, ...(this.data.value ?? {}),  ...this.fromGroupValue})
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(calculatedField => this.dialogRef.close(calculatedField));
     }
