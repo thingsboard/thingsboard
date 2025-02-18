@@ -37,11 +37,14 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+import java.io.Serial;
+
 @Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class CalculatedField extends BaseData<CalculatedFieldId> implements HasName, HasTenantId, HasVersion, ExportableEntity<CalculatedFieldId>, HasDebugSettings {
 
+    @Serial
     private static final long serialVersionUID = 4491966747773381420L;
 
     private TenantId tenantId;
@@ -76,6 +79,20 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
 
     public CalculatedField(CalculatedFieldId id) {
         super(id);
+    }
+
+    public CalculatedField(CalculatedField other) {
+        super(other);
+        this.tenantId = other.tenantId;
+        this.entityId = other.entityId;
+        this.type = other.type;
+        this.name = other.name;
+        this.configurationVersion = other.configurationVersion;
+        this.configuration = other.configuration;
+        this.version = other.version;
+        this.externalId = other.externalId;
+        this.debugMode = other.debugMode;
+        this.debugSettings = other.debugSettings;
     }
 
     public CalculatedField(TenantId tenantId, EntityId entityId, CalculatedFieldType type, String name, int configurationVersion, CalculatedFieldConfiguration configuration, Long version, CalculatedFieldId externalId) {
