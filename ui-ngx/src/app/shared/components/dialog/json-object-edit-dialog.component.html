@@ -29,15 +29,13 @@
   </mat-progress-bar>
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content class="flex-1">
-    <fieldset [disabled]="isLoading$ | async" class="h-full">
-      <tb-json-object-edit
-        formControlName="json"
-        class="block h-full"
-        label="{{ 'value.json-value' | translate }}"
-        [jsonRequired]="required"
-        [fillHeight]="data.fillHeight">
-      </tb-json-object-edit>
-    </fieldset>
+    <tb-json-object-edit
+      formControlName="json"
+      class="block h-full"
+      label="{{ 'value.json-value' | translate }}"
+      [jsonRequired]="required"
+      [fillHeight]="data.fillHeight">
+    </tb-json-object-edit>
   </div>
   <div mat-dialog-actions class="flex flex-row items-center justify-end">
     <span class="flex-1"></span>
