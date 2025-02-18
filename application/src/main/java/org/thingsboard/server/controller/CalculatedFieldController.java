@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -84,9 +85,15 @@ public class CalculatedFieldController extends BaseController {
     private static final String TEST_SCRIPT_EXPRESSION = "Execute the Script expression and return the result. The format of request: \n\n"
             + MARKDOWN_CODE_BLOCK_START
             + "{\n" +
-            "  \"expression\": \"var temp = 0; foreach(element: temperature.values) {temp += element.value;} var avgTemperature = temp / temperature.values.size(); var adjustedTemperature = avgTemperature + 0.1 * humidity.value; return {\"adjustedTemperature\": adjustedTemperature};\",\n" +
+            "  \"expression\": \"var temp = 0; foreach(element: temperature.values) {temp += element.value;} var avgTemperature = temp / temperature.values.size(); var adjustedTemperature = avgTemperature + 0.1 * humidity.value; return {\\\"adjustedTemperature\\\": adjustedTemperature};\",\n" +
             "  \"arguments\": {\n" +
             "    \"temperature\": {\n" +
+            "      \"type\": \"TS_ROLLING\",\n" +
+            "      \"timeWindow\": {\n" +
+            "        \"startTs\": 1739775630002,\n" +
+            "        \"endTs\": 65432211,\n" +
+            "        \"limit\": 5\n" +
+            "      },\n" +
             "      \"values\": [\n" +
             "        { \"ts\": 1739775639851, \"value\": 23 },\n" +
             "        { \"ts\": 1739775664561, \"value\": 43 },\n" +
@@ -95,7 +102,7 @@ public class CalculatedFieldController extends BaseController {
             "        { \"ts\": 1739776228452, \"value\": 22 }\n" +
             "      ]\n" +
             "    },\n" +
-            "    \"humidity\": { \"ts\": 1739776478057, \"value\": 23 }\n" +
+            "    \"humidity\": { \"type\": \"SINGLE_VALUE\", \"ts\": 1739776478057, \"value\": 23 }\n" +
             "  }\n" +
             "}"
             + MARKDOWN_CODE_BLOCK_END
@@ -176,8 +183,8 @@ public class CalculatedFieldController extends BaseController {
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Test calculated field TBEL expression.")
             @RequestBody JsonNode inputParams) {
         String expression = inputParams.get("expression").asText();
-        Map<String, Object> arguments = Objects.requireNonNullElse(
-                JacksonUtil.convertValue(inputParams.get("arguments"), new TypeReference<Map<String, Object>>() {
+        Map<String, TbelCfArg> arguments = Objects.requireNonNullElse(
+                JacksonUtil.convertValue(inputParams.get("arguments"), new TypeReference<Map<String, TbelCfArg>>() {
                 }),
                 Collections.emptyMap()
         );

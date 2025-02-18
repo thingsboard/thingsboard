@@ -132,6 +132,7 @@ import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.transport.TbCoreToTransportService;
+import org.thingsboard.server.utils.DebugModeRateLimitsConfig;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -453,9 +454,14 @@ public class ActorSystemContext {
     private ApiLimitService apiLimitService;
 
     @Lazy
-    @Autowired()
+    @Autowired(required = false)
     @Getter
     private RateLimitService rateLimitService;
+
+    @Lazy
+    @Autowired(required = false)
+    @Getter
+    private DebugModeRateLimitsConfig debugModeRateLimitsConfig;
 
     /**
      * The following Service will be null if we operate in tb-core mode
@@ -614,22 +620,6 @@ public class ActorSystemContext {
     @Getter
     private long sessionReportTimeout;
 
-    @Value("${actors.rule.chain.debug_mode_rate_limits_per_tenant.enabled:true}")
-    @Getter
-    private boolean debugPerTenantEnabled;
-
-    @Value("${actors.rule.chain.debug_mode_rate_limits_per_tenant.configuration:50000:3600}")
-    @Getter
-    private String debugPerTenantLimitsConfiguration;
-
-    @Value("${actors.calculated_fields.debug_mode_rate_limits_per_tenant.enabled:true}")
-    @Getter
-    private boolean calculatedFieldsDebugPerTenantEnabled;
-
-    @Value("${actors.calculated_fields.debug_mode_rate_limits_per_tenant.configuration:50000:3600}")
-    @Getter
-    private String calculatedFieldsDebugPerTenantLimitsConfiguration;
-
     @Value("${actors.rpc.submit_strategy:BURST}")
     @Getter
     private String rpcSubmitStrategy;
@@ -783,9 +773,9 @@ public class ActorSystemContext {
     }
 
     private boolean checkLimits(TenantId tenantId, TbMsg tbMsg, Throwable error) {
-        if (debugPerTenantEnabled) {
+        if (debugModeRateLimitsConfig.isRuleChainDebugPerTenantLimitsEnabled()) {
             DebugTbRateLimits debugTbRateLimits = debugPerTenantLimits.computeIfAbsent(tenantId, id ->
-                    new DebugTbRateLimits(new TbRateLimits(debugPerTenantLimitsConfiguration), false));
+                    new DebugTbRateLimits(new TbRateLimits(debugModeRateLimitsConfig.getRuleChainDebugPerTenantLimitsConfiguration()), false));
 
             if (!debugTbRateLimits.getTbRateLimits().tryConsume()) {
                 if (!debugTbRateLimits.isRuleChainEventSaved()) {
@@ -852,8 +842,8 @@ public class ActorSystemContext {
     }
 
     private boolean checkLimits(TenantId tenantId) {
-        if (calculatedFieldsDebugPerTenantEnabled &&
-                !rateLimitService.checkRateLimit(LimitedApi.CALCULATED_FIELD_DEBUG_EVENTS, (Object) tenantId, calculatedFieldsDebugPerTenantLimitsConfiguration)) {
+        if (debugModeRateLimitsConfig.isCalculatedFieldDebugPerTenantLimitsEnabled() &&
+                !rateLimitService.checkRateLimit(LimitedApi.CALCULATED_FIELD_DEBUG_EVENTS, (Object) tenantId, debugModeRateLimitsConfig.getCalculatedFieldDebugPerTenantLimitsConfiguration())) {
             log.trace("[{}] Calculated field debug event limits exceeded!", tenantId);
             return false;
         }

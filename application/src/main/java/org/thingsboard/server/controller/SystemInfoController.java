@@ -46,6 +46,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
+import org.thingsboard.server.utils.DebugModeRateLimitsConfig;
 
 import java.util.Collections;
 import java.util.List;
@@ -74,18 +75,6 @@ public class SystemInfoController extends BaseController {
     @Value("${debug.settings.default_duration:15}")
     private int defaultDebugDurationMinutes;
 
-    @Value("${actors.rule.chain.debug_mode_rate_limits_per_tenant.enabled:true}")
-    private boolean ruleChainDebugPerTenantLimitsEnabled;
-
-    @Value("${actors.rule.chain.debug_mode_rate_limits_per_tenant.configuration:50000:3600}")
-    private String ruleChainDebugPerTenantLimitsConfiguration;
-
-    @Value("${actors.calculated_fields.debug_mode_rate_limits_per_tenant.enabled:true}")
-    private boolean calculatedFieldDebugPerTenantLimitsEnabled;
-
-    @Value("${actors.calculated_fields.debug_mode_rate_limits_per_tenant.configuration:50000:3600}")
-    private String calculatedFieldDebugPerTenantLimitsConfiguration;
-
     @Autowired(required = false)
     private BuildProperties buildProperties;
 
@@ -94,6 +83,9 @@ public class SystemInfoController extends BaseController {
 
     @Autowired
     private QrCodeSettingService qrCodeSettingService;
+
+    @Autowired
+    private DebugModeRateLimitsConfig debugModeRateLimitsConfig;
 
     @PostConstruct
     public void init() {
@@ -158,11 +150,11 @@ public class SystemInfoController extends BaseController {
             DefaultTenantProfileConfiguration tenantProfileConfiguration = tenantProfileCache.get(tenantId).getDefaultProfileConfiguration();
             systemParams.setMaxResourceSize(tenantProfileConfiguration.getMaxResourceSize());
             systemParams.setMaxDebugModeDurationMinutes(DebugModeUtil.getMaxDebugAllDuration(tenantProfileConfiguration.getMaxDebugModeDurationMinutes(), defaultDebugDurationMinutes));
-            if (ruleChainDebugPerTenantLimitsEnabled) {
-                systemParams.setRuleChainDebugPerTenantLimitsConfiguration(ruleChainDebugPerTenantLimitsConfiguration);
+            if (debugModeRateLimitsConfig.isRuleChainDebugPerTenantLimitsEnabled()) {
+                systemParams.setRuleChainDebugPerTenantLimitsConfiguration(debugModeRateLimitsConfig.getRuleChainDebugPerTenantLimitsConfiguration());
             }
-            if (calculatedFieldDebugPerTenantLimitsEnabled) {
-                systemParams.setCalculatedFieldDebugPerTenantLimitsConfiguration(calculatedFieldDebugPerTenantLimitsConfiguration);
+            if (debugModeRateLimitsConfig.isCalculatedFieldDebugPerTenantLimitsEnabled()) {
+                systemParams.setCalculatedFieldDebugPerTenantLimitsConfiguration(debugModeRateLimitsConfig.getCalculatedFieldDebugPerTenantLimitsConfiguration());
             }
         }
         systemParams.setMobileQrEnabled(Optional.ofNullable(qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID))

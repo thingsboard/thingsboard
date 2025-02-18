@@ -15,20 +15,22 @@
  */
 package org.thingsboard.script.api.tbel;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
-        property = "type"
-)
-@JsonSubTypes({
-        @JsonSubTypes.Type(value = TbelCfSingleValueArg.class, name = "SINGLE_VALUE"),
-        @JsonSubTypes.Type(value = TbelCfTsRollingArg.class, name = "TS_ROLLING")
-})
-public interface TbelCfArg extends TbelCfObject {
+@Data
+@AllArgsConstructor
+public class TbTimeWindow implements TbelCfObject {
 
-    String getType();
+    public static final long OBJ_SIZE = 32L;
+
+    private long startTs;
+    private long endTs;
+    private int limit;
+
+    @Override
+    public long memorySize() {
+        return OBJ_SIZE;
+    }
 
 }
