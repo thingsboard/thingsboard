@@ -28,6 +28,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType } from '@shared/models/alias.models';
 import { Observable } from 'rxjs';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
+import { AceHighlightRules } from '@shared/models/ace/ace.models';
 
 export interface CalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasTenantId, ExportableEntity<CalculatedFieldId> {
   debugSettings?: EntityDebugSettings;
@@ -168,6 +169,7 @@ export interface CalculatedFieldTestScriptInputParams {
 
 export interface CalculatedFieldTestScriptDialogData extends CalculatedFieldTestScriptInputParams {
   argumentsEditorCompleter: TbEditorCompleter;
+  argumentsHighlightRules: AceHighlightRules;
   openCalculatedFieldEdit?: boolean;
 }
 
@@ -313,5 +315,72 @@ export const getCalculatedFieldArgumentsEditorCompleter = (argumentsObj: Record<
         break;
     }
     return acc;
-  }, {}))
+  }, {}));
+}
+
+export const getCalculatedFieldArgumentsHighlights = (
+  argumentsObj: Record<string, CalculatedFieldArgument>
+): AceHighlightRules => {
+  return {
+    start: Object.keys(argumentsObj).map(key => ({
+      token: 'tb.calculated-field-key',
+      regex: `\\b${key}\\b`,
+      next: argumentsObj[key].refEntityKey.type === ArgumentType.Rolling
+        ? 'calculatedFieldRollingArgumentValue'
+        : 'calculatedFieldSingleArgumentValue'
+    })),
+    ...calculatedFieldSingleArgumentValueHighlightRules,
+    ...calculatedFieldRollingArgumentValueHighlightRules,
+    ...calculatedFieldTimeWindowArgumentValueHighlightRules
+  };
+};
+
+const calculatedFieldSingleArgumentValueHighlightRules: AceHighlightRules = {
+  calculatedFieldSingleArgumentValue: [
+    {
+      token: 'tb.calculated-field-value',
+      regex: /value/,
+      next: 'no_regex'
+    },
+    {
+      token: 'tb.calculated-field-ts',
+      regex: /ts/,
+      next: 'no_regex'
+    }
+  ],
+}
+
+const calculatedFieldRollingArgumentValueHighlightRules: AceHighlightRules = {
+  calculatedFieldRollingArgumentValue: [
+    {
+      token: 'tb.calculated-field-values',
+      regex: /values/,
+      next: 'no_regex'
+    },
+    {
+      token: 'tb.calculated-field-time-window',
+      regex: /timeWindow/,
+      next: 'calculatedFieldRollingArgumentTimeWindow'
+    }
+  ],
+}
+
+const calculatedFieldTimeWindowArgumentValueHighlightRules: AceHighlightRules = {
+  calculatedFieldRollingArgumentTimeWindow: [
+    {
+      token: 'tb.calculated-field-start-ts',
+      regex: /startTs/,
+      next: 'no_regex'
+    },
+    {
+      token: 'tb.calculated-field-end-ts',
+      regex: /endTs/,
+      next: 'no_regex'
+    },
+    {
+      token: 'tb.calculated-field-limit',
+      regex: /limit/,
+      next: 'no_regex'
+    }
+  ]
 }

@@ -36,9 +36,11 @@
               #expressionContent
               formControlName="expression"
               functionName="calculate"
+              class="expression-edit"
               [functionArgs]="functionArgs"
               [disableUndefinedCheck]="true"
               [fillHeight]="true"
+              [highlightRules]="data.argumentsHighlightRules"
               [scriptLanguage]="ScriptLanguage.TBEL"
               [editorCompleter]="data.argumentsEditorCompleter"
               resultType="object"

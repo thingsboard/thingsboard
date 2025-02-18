@@ -187,6 +187,9 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
     if (changes.editorCompleter?.previousValue) {
       this.updateCompleters();
     }
+    if (changes.highlightRules?.previousValue) {
+      this.updateHighlightRules();
+    }
   }
 
   ngOnInit(): void {
@@ -247,21 +250,7 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
             }
           });
         }
-        // @ts-ignore
-        if (!!this.highlightRules && !!this.jsEditor.session.$mode) {
-          // @ts-ignore
-          const newMode = new this.jsEditor.session.$mode.constructor();
-          newMode.$highlightRules = new newMode.HighlightRules();
-          for(const group in this.highlightRules) {
-            if(!!newMode.$highlightRules.$rules[group]) {
-              newMode.$highlightRules.$rules[group].unshift(...this.highlightRules[group]);
-            } else {
-              newMode.$highlightRules.$rules[group] = this.highlightRules[group];
-            }
-          }
-          // @ts-ignore
-          this.jsEditor.session.$onChangeMode(newMode);
-        }
+        this.updateHighlightRules();
         this.updateJsWorkerGlobals();
         this.initialCompleters = this.jsEditor.completers || [];
         this.updateCompleters();
@@ -279,6 +268,24 @@ export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlVal
     }
     if (this.jsEditor) {
       this.jsEditor.destroy();
+    }
+  }
+
+  private updateHighlightRules(): void {
+    // @ts-ignore
+    if (!!this.highlightRules && !!this.jsEditor.session.$mode) {
+      // @ts-ignore
+      const newMode = new this.jsEditor.session.$mode.constructor();
+      newMode.$highlightRules = new newMode.HighlightRules();
+      for(const group in this.highlightRules) {
+        if(!!newMode.$highlightRules.$rules[group]) {
+          newMode.$highlightRules.$rules[group].unshift(...this.highlightRules[group]);
+        } else {
+          newMode.$highlightRules.$rules[group] = this.highlightRules[group];
+        }
+      }
+      // @ts-ignore
+      this.jsEditor.session.$onChangeMode(newMode);
     }
   }
 

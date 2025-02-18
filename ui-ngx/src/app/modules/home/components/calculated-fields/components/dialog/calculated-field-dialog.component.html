@@ -96,9 +96,11 @@
               required
               formControlName="expressionSCRIPT"
               functionName="calculate"
+              class="expression-edit"
               [functionArgs]="functionArgs$ | async"
               [disableUndefinedCheck]="true"
               [scriptLanguage]="ScriptLanguage.TBEL"
+              [highlightRules]="argumentsHighlightRules$ | async"
               [editorCompleter]="argumentsEditorCompleter$ | async"
               helpId="calculated-field/expression_fn"
             >

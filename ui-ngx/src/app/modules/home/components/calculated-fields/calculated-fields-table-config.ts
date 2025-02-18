@@ -43,6 +43,7 @@ import {
   CalculatedFieldDialogData,
   CalculatedFieldTestScriptDialogData,
   getCalculatedFieldArgumentsEditorCompleter,
+  getCalculatedFieldArgumentsHighlights,
 } from '@shared/models/calculated-field.models';
 import {
   CalculatedFieldDebugDialogComponent,
@@ -275,6 +276,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
           arguments: resultArguments,
           expression: calculatedField.configuration.expression,
           argumentsEditorCompleter: getCalculatedFieldArgumentsEditorCompleter(calculatedField.configuration.arguments),
+          argumentsHighlightRules: getCalculatedFieldArgumentsHighlights(calculatedField.configuration.arguments),
           openCalculatedFieldEdit
         }
       }).afterClosed()
