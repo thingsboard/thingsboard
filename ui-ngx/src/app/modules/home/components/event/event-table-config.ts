@@ -55,6 +55,7 @@ import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
+import { TestArgumentMessageType, TestArgumentMessageTypeTranslationMap } from '@shared/models/calculated-field.models';
 
 export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
@@ -401,7 +402,9 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
             }
           ),
           new EntityTableColumn<Event>('messageType', 'event.message-type', '100px',
-            (entity) => entity.body.msgType ?? '-',
+            (entity) => entity.body.msgType
+              ? this.translate.instant(TestArgumentMessageTypeTranslationMap.get(entity.body.msgType as TestArgumentMessageType))
+              : '-',
             () => ({padding: '0 12px 0 0'}),
             false
           ),

@@ -1017,6 +1017,8 @@
         "arguments": "Arguments",
         "debugging": "Calculated field debugging",
         "argument-name": "Argument name",
+        "post-telemetry": "Post telemetry",
+        "post-attributes": "Post attribute",
         "datasource": "Datasource",
         "add-argument": "Add argument",
         "test-script-function": "Test script function",
