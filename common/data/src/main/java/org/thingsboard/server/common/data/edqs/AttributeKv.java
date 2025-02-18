@@ -35,8 +35,10 @@ public class AttributeKv implements EdqsObject {
     private String key;
     private Long version;
 
-    private Long lastUpdateTs; // optional (on deletion)
-    private KvEntry value; // optional (on deletion)
+    private DataPoint dataPoint; // optional (on deletion)
+
+    private Long lastUpdateTs; // only for serialization
+    private KvEntry value; // only for serialization
 
     public AttributeKv(EntityId entityId, AttributeScope scope, AttributeKvEntry attributeKvEntry, long version) {
         this.entityId = entityId;

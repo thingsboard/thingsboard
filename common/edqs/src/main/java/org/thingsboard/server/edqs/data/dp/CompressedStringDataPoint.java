@@ -18,30 +18,18 @@ package org.thingsboard.server.edqs.data.dp;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.thingsboard.server.common.data.kv.DataType;
-import org.thingsboard.server.edqs.repo.TbBytePool;
 import org.xerial.snappy.Snappy;
-
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class CompressedStringDataPoint extends AbstractDataPoint {
 
     public static final int MIN_STR_SIZE_TO_COMPRESS = 512;
     @Getter
-    private final byte[] value;
-
-    public static final AtomicInteger cnt = new AtomicInteger();
-    public static final AtomicLong uncompressedLength = new AtomicLong();
-    public static final AtomicLong compressedLength = new AtomicLong();
+    private final byte[] compressedValue;
 
     @SneakyThrows
-    public CompressedStringDataPoint(long ts, String value) {
+    public CompressedStringDataPoint(long ts, byte[] compressedValue) {
         super(ts);
-        cnt.incrementAndGet();
-        uncompressedLength.addAndGet(value.getBytes(StandardCharsets.UTF_8).length);
-        this.value = TbBytePool.intern(Snappy.compress(value));
-        compressedLength.addAndGet(this.value.length);
+        this.compressedValue = compressedValue;
     }
 
     @Override
@@ -52,13 +40,12 @@ public class CompressedStringDataPoint extends AbstractDataPoint {
     @SneakyThrows
     @Override
     public String getStr() {
-        return Snappy.uncompressString(value);
+        return Snappy.uncompressString(compressedValue);
     }
 
-    @SneakyThrows
     @Override
     public String valueToString() {
-        return Snappy.uncompressString(value);
+        return getStr();
     }
 
 }

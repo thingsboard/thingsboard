@@ -19,8 +19,8 @@ import org.thingsboard.server.common.data.kv.DataType;
 
 public class CompressedJsonDataPoint extends CompressedStringDataPoint {
 
-    public CompressedJsonDataPoint(long ts, String value) {
-        super(ts, value);
+    public CompressedJsonDataPoint(long ts, byte[] compressedValue) {
+        super(ts, compressedValue);
     }
 
     @Override

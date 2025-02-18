@@ -17,6 +17,7 @@ package org.thingsboard.server.edqs.processor;
 
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.common.errors.RecordTooLargeException;
 import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -58,6 +59,12 @@ public class EdqsProducer {
 
             @Override
             public void onFailure(Throwable t) {
+                if (t instanceof RecordTooLargeException) {
+                    if (!log.isDebugEnabled()) {
+                        log.warn("[{}][{}][{}] Failed to publish msg to {}", tenantId, type, key, topic, t); // not logging the whole message
+                        return;
+                    }
+                }
                 log.warn("[{}][{}][{}] Failed to publish msg to {}: {}", tenantId, type, key, topic, msg, t);
             }
         };

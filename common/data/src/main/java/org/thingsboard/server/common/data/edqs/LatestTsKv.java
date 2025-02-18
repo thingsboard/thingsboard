@@ -33,8 +33,10 @@ public class LatestTsKv implements EdqsObject {
     private String key;
     private Long version;
 
-    private Long ts; // optional (on deletion)
-    private KvEntry value; // optional (on deletion)
+    private DataPoint dataPoint; // optional (on deletion)
+
+    private Long ts; // only for serialization
+    private KvEntry value; // only for serialization
 
     public LatestTsKv(EntityId entityId, TsKvEntry tsKvEntry, Long version) {
         this.entityId = entityId;
