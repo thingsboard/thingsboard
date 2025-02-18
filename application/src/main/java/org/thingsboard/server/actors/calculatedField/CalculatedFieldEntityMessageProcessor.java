@@ -105,7 +105,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         }
     }
 
-    public void process(EntityInitCalculatedFieldMsg msg) {
+    public void process(EntityInitCalculatedFieldMsg msg) throws CalculatedFieldException {
         log.info("[{}] Processing entity init CF msg.", msg.getCtx().getCfId());
         var cfCtx = msg.getCtx();
         if (msg.isForceReinit()) {
@@ -116,11 +116,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             var cfState = getOrInitState(cfCtx);
             processStateIfReady(cfCtx, Collections.singletonList(cfCtx.getCfId()), cfState, null, null, msg.getCallback());
         } catch (Exception e) {
-
-            if (DebugModeUtil.isDebugFailuresAvailable(cfCtx.getCalculatedField())) {
-                systemContext.persistCalculatedFieldDebugEvent(tenantId, cfCtx.getCfId(), entityId, null, null, null, null, e);
-            }
-            msg.getCallback().onFailure(e);
+            throw CalculatedFieldException.builder().ctx(cfCtx).eventEntity(entityId).cause(e).build();
         }
     }
 
@@ -139,7 +135,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         }
     }
 
-    public void process(EntityCalculatedFieldTelemetryMsg msg) {
+    public void process(EntityCalculatedFieldTelemetryMsg msg) throws CalculatedFieldException {
         log.info("[{}] Processing CF telemetry msg.", msg.getEntityId());
         var proto = msg.getProto();
         var numberOfCallbacks = CALLBACKS_PER_CF * (msg.getEntityIdFields().size() + msg.getProfileIdFields().size());
@@ -154,7 +150,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         }
     }
 
-    public void process(EntityCalculatedFieldLinkedTelemetryMsg msg) {
+    public void process(EntityCalculatedFieldLinkedTelemetryMsg msg) throws CalculatedFieldException {
         log.info("[{}] Processing CF link telemetry msg.", msg.getEntityId());
         var proto = msg.getProto();
         var ctx = msg.getCtx();
@@ -173,14 +169,11 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 }
             }
         } catch (Exception e) {
-            if (DebugModeUtil.isDebugFailuresAvailable(ctx.getCalculatedField())) {
-                systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, null, null, null, null, e);
-            }
-            callback.onFailure(e);
+            throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
         }
     }
 
-    private void process(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, Collection<CalculatedFieldId> cfIds, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) {
+    private void process(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, Collection<CalculatedFieldId> cfIds, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) throws CalculatedFieldException {
         try {
             if (cfIds.contains(ctx.getCfId())) {
                 callback.onSuccess(CALLBACKS_PER_CF);
@@ -194,10 +187,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 }
             }
         } catch (Exception e) {
-            if (DebugModeUtil.isDebugFailuresAvailable(ctx.getCalculatedField())) {
-                systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, null, null, null, null, e);
-            }
-            callback.onFailure(e);
+            throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
         }
     }
 
@@ -245,6 +235,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             // Alternatively, we can fetch the state outside the actor system and push separate command to create this actor,
             // but this will significantly complicate the code.
             state = stateFuture.get(1, TimeUnit.MINUTES);
+            state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSizeInKBytes());
             states.put(ctx.getCfId(), state);
         }
         return state;
@@ -261,6 +252,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, JacksonUtil.writeValueAsString(calculationResult.getResult()), null);
             }
         } else {
+            state.checkStateSize(ctxId, ctx.getMaxStateSizeInKBytes());
             callback.onSuccess(); // State was updated but no calculation performed;
         }
         cfStateService.persistState(ctxId, state, callback);

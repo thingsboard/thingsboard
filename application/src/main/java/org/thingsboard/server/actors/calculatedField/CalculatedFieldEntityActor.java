@@ -19,19 +19,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorException;
-import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
 
 @Slf4j
-public class CalculatedFieldEntityActor extends ContextAwareActor {
+public class CalculatedFieldEntityActor extends AbstractCalculatedFieldActor {
 
     private final CalculatedFieldEntityMessageProcessor processor;
 
     CalculatedFieldEntityActor(ActorSystemContext systemContext, TenantId tenantId, EntityId entityId) {
-        super(systemContext);
+        super(systemContext, tenantId);
         this.processor = new CalculatedFieldEntityMessageProcessor(systemContext, tenantId, entityId);
     }
 
@@ -49,7 +48,7 @@ public class CalculatedFieldEntityActor extends ContextAwareActor {
     }
 
     @Override
-    protected boolean doProcess(TbActorMsg msg) {
+    protected boolean doProcessCfMsg(ToCalculatedFieldSystemMsg msg) throws CalculatedFieldException {
         switch (msg.getMsgType()) {
             case CF_PARTITIONS_CHANGE_MSG:
                 processor.process((CalculatedFieldPartitionChangeMsg) msg);
@@ -75,4 +74,8 @@ public class CalculatedFieldEntityActor extends ContextAwareActor {
         return true;
     }
 
+    @Override
+    void logProcessingException(Exception e) {
+        log.warn("[{}][{}] Processing failure", tenantId, processor.entityId, e);
+    }
 }

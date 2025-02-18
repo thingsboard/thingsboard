@@ -103,7 +103,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         } catch (Exception e) {
             log.debug("[{}] Failed to initialize CF context.", cf.getId(), e);
             if (DebugModeUtil.isDebugAllAvailable(cf)) {
-                systemContext.persistCalculatedFieldDebugEvent(cf.getTenantId(), cf.getId(), cf.getEntityId(), null, null, null, null, e);
+                systemContext.persistCalculatedFieldDebugEvent(cf.getTenantId(), cf.getId(), cf.getEntityId(), null, null, null, null, e.getMessage());
             }
         }
         calculatedFields.put(cf.getId(), cfCtx);
@@ -237,7 +237,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 } catch (Exception e) {
                     log.debug("[{}] Failed to initialize CF context.", cf.getId(), e);
                     if (DebugModeUtil.isDebugAllAvailable(cf)) {
-                        systemContext.persistCalculatedFieldDebugEvent(cf.getTenantId(), cf.getId(), cf.getEntityId(), null, null, null, null, e);
+                        systemContext.persistCalculatedFieldDebugEvent(cf.getTenantId(), cf.getId(), cf.getEntityId(), null, null, null, null, e.getMessage());
                     }
                 }
                 calculatedFields.put(cf.getId(), cfCtx);
@@ -266,7 +266,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                     newCfCtx.init();
                 } catch (Exception e) {
                     if (DebugModeUtil.isDebugAllAvailable(newCf)) {
-                        systemContext.persistCalculatedFieldDebugEvent(newCf.getTenantId(), newCf.getId(), newCf.getEntityId(), null, null, null, null, e);
+                        systemContext.persistCalculatedFieldDebugEvent(newCf.getTenantId(), newCf.getId(), newCf.getEntityId(), null, null, null, null, e.getMessage());
                     }
                 }
                 calculatedFields.put(newCf.getId(), newCfCtx);

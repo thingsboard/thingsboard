@@ -75,7 +75,8 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
     @Override
     public void checkStateSize(CalculatedFieldEntityCtxId ctxId, long maxStateSize) {
-        if (maxStateSize > 0 && CalculatedFieldUtils.toProto(ctxId, this).getSerializedSize() > maxStateSize) {
+        if (!stateTooLarge && maxStateSize > 0 && CalculatedFieldUtils.toProto(ctxId, this).getSerializedSize() > maxStateSize) {
+            arguments.clear();
             setStateTooLarge(true);
         }
     }

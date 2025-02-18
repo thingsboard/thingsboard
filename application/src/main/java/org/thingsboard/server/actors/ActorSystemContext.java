@@ -805,7 +805,7 @@ public class ActorSystemContext {
         Futures.addCallback(future, RULE_CHAIN_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
     }
 
-    public void persistCalculatedFieldDebugEvent(TenantId tenantId, CalculatedFieldId calculatedFieldId, EntityId entityId, Map<String, ArgumentEntry> arguments, UUID tbMsgId, TbMsgType tbMsgType, String result, Throwable error) {
+    public void persistCalculatedFieldDebugEvent(TenantId tenantId, CalculatedFieldId calculatedFieldId, EntityId entityId, Map<String, ArgumentEntry> arguments, UUID tbMsgId, TbMsgType tbMsgType, String result, String errorMessage) {
         if (checkLimits(tenantId)) {
             try {
                 CalculatedFieldDebugEvent.CalculatedFieldDebugEventBuilder eventBuilder = CalculatedFieldDebugEvent.builder()
@@ -829,8 +829,8 @@ public class ActorSystemContext {
                 if (result != null) {
                     eventBuilder.result(result);
                 }
-                if (error != null) {
-                    eventBuilder.error(error.getMessage());
+                if (errorMessage != null) {
+                    eventBuilder.error(errorMessage);
                 }
 
                 ListenableFuture<Void> future = eventService.saveAsync(eventBuilder.build());
