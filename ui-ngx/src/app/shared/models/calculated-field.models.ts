@@ -28,7 +28,6 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType } from '@shared/models/alias.models';
 import { Observable } from 'rxjs';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
-import { MessageType } from '@shared/models/rule-node.models';
 
 export interface CalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasTenantId, ExportableEntity<CalculatedFieldId> {
   debugSettings?: EntityDebugSettings;
@@ -90,18 +89,6 @@ export enum TestArgumentType {
   Single = 'SINGLE_VALUE',
   Rolling = 'TS_ROLLING',
 }
-
-export enum TestArgumentMessageType {
-  POST_ATTRIBUTES_REQUEST = 'POST_ATTRIBUTES_REQUEST',
-  POST_TELEMETRY_REQUEST = 'POST_TELEMETRY_REQUEST',
-}
-
-export const TestArgumentMessageTypeTranslationMap = new Map<TestArgumentMessageType, string>(
-  [
-    [TestArgumentMessageType.POST_ATTRIBUTES_REQUEST, 'calculated-fields.post-attributes'],
-    [TestArgumentMessageType.POST_TELEMETRY_REQUEST, 'calculated-fields.post-telemetry'],
-  ]
-);
 
 export const TestArgumentTypeMap = new Map<ArgumentType, TestArgumentType>(
   [
