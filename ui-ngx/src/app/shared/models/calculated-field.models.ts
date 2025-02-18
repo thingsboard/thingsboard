@@ -218,7 +218,7 @@ export interface CalculatedFieldLatestTelemetryArgumentValue<ValueType = unknown
 }
 
 export interface CalculatedFieldRollingTelemetryArgumentValue<ValueType = unknown> extends CalculatedFieldArgumentValueBase {
-  timewindow: { startTs: number; endTs: number; limit: number };
+  timeWindow: { startTs: number; endTs: number; limit: number };
   values: CalculatedFieldSingleArgumentValue<ValueType>[];
 }
 

@@ -39,7 +39,8 @@ import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs/operators';
 import {
-  ArgumentType, CalculatedFieldEventArguments,
+  ArgumentType,
+  CalculatedFieldEventArguments,
   CalculatedFieldTestScriptDialogData,
   TestArgumentTypeMap
 } from '@shared/models/calculated-field.models';

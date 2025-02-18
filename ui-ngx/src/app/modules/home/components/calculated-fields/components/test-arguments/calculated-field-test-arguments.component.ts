@@ -116,7 +116,7 @@ export class CalculatedFieldTestArgumentsComponent extends PageComponent impleme
     }).afterClosed()
       .pipe(filter(Boolean))
       .subscribe(result => this.argumentsTypeMap.get(group.get('argumentName').value) === ArgumentType.Rolling
-        ? group.patchValue({ timewindow: (result as CalculatedFieldRollingTelemetryArgumentValue).timewindow, values: (result as CalculatedFieldRollingTelemetryArgumentValue).values })
+        ? group.patchValue({ timeWindow: (result as CalculatedFieldRollingTelemetryArgumentValue).timeWindow, values: (result as CalculatedFieldRollingTelemetryArgumentValue).values })
         : group.patchValue({ ts: (result as CalculatedFieldSingleArgumentValue).ts, value: (result as CalculatedFieldSingleArgumentValue).value }) );
   }
 
@@ -128,9 +128,9 @@ export class CalculatedFieldTestArgumentsComponent extends PageComponent impleme
     }) as FormGroup;
   }
 
-  private getRollingArgumentFormGroup({ argumentName, timewindow, values }: CalculatedFieldRollingTelemetryArgumentValue): FormGroup {
+  private getRollingArgumentFormGroup({ argumentName, timeWindow, values }: CalculatedFieldRollingTelemetryArgumentValue): FormGroup {
     return this.fb.group({
-      ...timewindow ?? {},
+      timeWindow: [timeWindow ?? {}],
       argumentName: [{ value: argumentName, disabled: true }],
       values: [values]
     }) as FormGroup;
