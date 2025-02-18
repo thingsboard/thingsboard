@@ -6403,7 +6403,15 @@
           "take-screenshot": "Take screenshot"
         },
         "custom-action-function": "Custom action function",
-        "custom-pretty-function": "Custom action (with HTML template) function"
+        "custom-pretty-function": "Custom action (with HTML template) function",
+        "overlay": {
+            "marker": "Marker",
+            "polygon": "Polygon",
+            "rectangle": "Rectangle",
+            "circle": "Circle",
+            "type": "Overlay type"
+        },
+        "place-overlay": "Place overlay"
     },
     "widgets-bundle": {
         "current": "Current bundle",
@@ -7747,8 +7755,6 @@
                 "action-remove": "Remove",
                 "edit-instruments": "Instruments",
                 "enable-snapping": "Enable snapping to other vertices for precision drawing",
-                "create-action": "Create action",
-                "create-action-hint": "Action invoked after the user places an item on the mapю",
                 "marker": {
                     "latitude-key": "Latitude key",
                     "longitude-key": "Longitude key",
@@ -8864,7 +8870,8 @@
             "row-double-click": "On row double click",
             "cell-double-click": "On cell double click",
             "card-click": "On card click",
-            "click": "On click"
+            "click": "On click",
+            "map-button": "Map button"
         }
     },
     "paginator" : {

@@ -29,17 +29,11 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { TranslateService } from '@ngx-translate/core';
-import {
-  WidgetAction,
-  WidgetActionType,
-  widgetActionTypeTranslationMap,
-  widgetType
-} from '@shared/models/widget.models';
+import { WidgetAction, widgetActionTypeTranslationMap, widgetType } from '@shared/models/widget.models';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 import {
   WidgetActionSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/action/widget-action-settings-panel.component';
-import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-widget-action-settings',
@@ -70,9 +64,6 @@ export class WidgetActionSettingsComponent implements OnInit, ControlValueAccess
 
   @Input()
   disabled = false;
-
-  @Input()
-  enableActionTypes: WidgetActionType[];
 
   modelValue: WidgetAction;
 
@@ -119,8 +110,7 @@ export class WidgetActionSettingsComponent implements OnInit, ControlValueAccess
         widgetAction: this.modelValue,
         panelTitle: this.panelTitle,
         widgetType: this.widgetType,
-        callbacks: this.callbacks,
-        enableActionTypes: this.enableActionTypes
+        callbacks: this.callbacks
       };
       const widgetActionSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, WidgetActionSettingsPanelComponent,

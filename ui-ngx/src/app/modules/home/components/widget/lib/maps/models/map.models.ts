@@ -121,15 +121,6 @@ export interface DataLayerEditSettings {
   snappable: boolean;
 }
 
-export interface DataLayerCreateActionSettings {
-  enable: boolean;
-  label: string;
-  icon: string;
-  color?: string;
-  polygonType?: 'polygon' | 'rectangle';
-  action: WidgetAction;
-}
-
 export interface MapDataLayerSettings extends MapDataSourceSettings {
   additionalDataKeys?: DataKey[];
   label: DataLayerPatternSettings;
@@ -137,7 +128,6 @@ export interface MapDataLayerSettings extends MapDataSourceSettings {
   click: WidgetAction;
   groups?: string[];
   edit:  DataLayerEditSettings;
-  createEntity?: DataLayerCreateActionSettings;
 }
 
 export const defaultBaseDataLayerSettings = (mapType: MapType): Partial<MapDataLayerSettings> => ({
@@ -163,14 +153,6 @@ export const defaultBaseDataLayerSettings = (mapType: MapType): Partial<MapDataL
   edit: {
     enabledActions: [],
     snappable: false
-  },
-  createEntity: {
-    enable: false,
-    label: '',
-    icon: '',
-    action: {
-      type: WidgetActionType.doNothing
-    }
   }
 })
 
@@ -1174,4 +1156,21 @@ export function checkLngLat(point: L.LatLng, southWest: L.LatLng, northEast: L.L
     point.lat = minLatMap;
   }
   return point;
+}
+
+export const extractLayerPolygonCoordinates = (layer: L.Layer): TbPolygonCoordinates => {
+  if (layer instanceof L.Polygon) {
+    let coordinates: TbPolygonCoordinates;
+    if (layer instanceof L.Rectangle) {
+      const bounds = layer.getBounds();
+      coordinates = [bounds.getNorthWest(), bounds.getSouthEast()];
+    } else {
+      coordinates = layer.getLatLngs();
+      if (coordinates.length === 1) {
+        coordinates = coordinates[0] as TbPolygonCoordinates;
+      }
+    }
+    return coordinates;
+  }
+  return null;
 }

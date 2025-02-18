@@ -92,7 +92,7 @@ declare module 'leaflet' {
 
     interface TopToolbarButtonOptions {
       icon: string;
-      iconColor?: string;
+      color?: string;
       title: string;
     }
 

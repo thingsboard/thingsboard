@@ -15,17 +15,21 @@
 ///
 
 import {
-  ControlValueAccessor, FormControl,
+  ControlValueAccessor,
+  FormControl,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
-  Validator, ValidatorFn,
+  Validator,
+  ValidatorFn,
   Validators
 } from '@angular/forms';
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import {
+  OverlayType,
+  overlayTypeTranslationMap,
   WidgetAction,
   WidgetActionType,
   widgetActionTypes,
@@ -98,10 +102,23 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
   actionNames: string[];
 
   @Input()
-  enableActionTypes: WidgetActionType[];
+  set addedWidgetActinTypes(value: WidgetActionType[]) {
+    if (this.widgetActionFormGroup && !widgetActionTypes.includes(this.widgetActionFormGroup.get('type').value)) {
+      this.widgetActionFormGroup.get('type').setValue(WidgetActionType.doNothing);
+    }
+    if (value?.length) {
+      this.widgetActionTypes = widgetActionTypes.concat(value);
+    } else {
+      this.widgetActionTypes = widgetActionTypes;
+    }
+  }
 
+  widgetActionTypes = widgetActionTypes;
   widgetActionTypeTranslations = widgetActionTypeTranslationMap;
   widgetActionType = WidgetActionType;
+
+  overlayTypes = Object.values(OverlayType) as OverlayType[];
+  overlayTypeTranslationMap = overlayTypeTranslationMap;
 
   allStateDisplayTypes = stateDisplayTypes;
   allPopoverPlacements = PopoverPlacements;
@@ -119,8 +136,6 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
   widgetActionFormGroup: UntypedFormGroup;
   actionTypeFormGroup: UntypedFormGroup;
   stateDisplayTypeFormGroup: UntypedFormGroup;
-
-  private widgetActionTypes = widgetActionTypes;
 
   private propagateChange = (_val: any) => {};
   private actionTypeFormGroupSubscriptions: Subscription[] = [];
@@ -175,6 +190,9 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
     ).subscribe(() => {
       this.widgetActionUpdated();
     });
+    if (this.addedWidgetActinTypes) {
+      this.widgetActionTypes = this.widgetActionTypes.concat(this.addedWidgetActinTypes);
+    }
   }
 
   writeValue(widgetAction?: WidgetAction): void {
@@ -225,10 +243,6 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
     } else {
       return '';
     }
-  }
-
-  get allowActionTypes(): WidgetActionType[] {
-    return this.enableActionTypes || this.widgetActionTypes
   }
 
   private updateActionTypeFormGroup(type?: WidgetActionType, action?: WidgetAction) {
@@ -313,6 +327,16 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
           this.actionTypeFormGroup.addControl(
             'url',
             this.fb.control(action ? action.url : null, [Validators.required])
+          );
+          break;
+        case WidgetActionType.placeOverlay:
+          this.actionTypeFormGroup.addControl(
+            'overlayType',
+            this.fb.control(action?.overlayType ?? OverlayType.marker, [Validators.required])
+          );
+          this.actionTypeFormGroup.addControl(
+            'customAction',
+            this.fb.control(toCustomAction(action), [Validators.required])
           );
           break;
       }
@@ -505,6 +529,12 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
     let result: WidgetAction;
     if (type === WidgetActionType.customPretty) {
       result = {...this.widgetActionFormGroup.value, ...this.actionTypeFormGroup.get('customAction').value};
+    } else if (type === WidgetActionType.placeOverlay) {
+      result = {
+        ...this.widgetActionFormGroup.value,
+        ...this.actionTypeFormGroup.get('customAction').value,
+        overlayType: this.actionTypeFormGroup.get('overlayType').value
+      };
     } else {
       result = {...this.widgetActionFormGroup.value, ...this.actionTypeFormGroup.value};
     }

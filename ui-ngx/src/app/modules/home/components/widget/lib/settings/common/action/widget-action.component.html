@@ -37,7 +37,7 @@
     <div translate>widget-config.action</div>
     <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-select required formControlName="type" placeholder="{{ 'widget-config.set' | translate }}">
-        <mat-option *ngFor="let actionType of allowActionTypes" [value]="actionType">
+        <mat-option *ngFor="let actionType of widgetActionTypes" [value]="actionType">
           {{ widgetActionTypeTranslations.get(widgetActionType[actionType]) | translate }}
         </mat-option>
       </mat-select>
@@ -258,7 +258,21 @@
           helpId="widget/action/custom_action_fn"
       ></tb-js-func>
     </ng-template>
-    <ng-template [ngSwitchCase]="widgetActionType.customPretty">
+    <ng-template [ngSwitchCase]="widgetActionType.placeOverlay">
+      <div class="tb-form-row">
+        <div class="fixed-title-width">{{ 'widget-action.overlay.type' | translate }}</div>
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <mat-select placeholder="{{ 'widget-config.set' | translate }}" formControlName="overlayType">
+            @for(type of overlayTypes; track type) {
+              <mat-option [value]="type">{{ overlayTypeTranslationMap.get(type) | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </ng-template>
+    <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.customPretty
+                                  || widgetActionFormGroup.get('type').value === widgetActionType.placeOverlay
+                                  ? widgetActionFormGroup.get('type').value : ''">
       <tb-custom-action-pretty-editor
           formControlName="customAction">
       </tb-custom-action-pretty-editor>

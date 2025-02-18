@@ -17,6 +17,7 @@
 import {
   DataKeyValuePair,
   defaultBasePolygonsDataLayerSettings,
+  extractLayerPolygonCoordinates,
   isCutPolygon,
   isJSON,
   PolygonsDataLayerSettings,
@@ -373,7 +374,7 @@ export class TbPolygonsDataLayer extends TbShapesDataLayer<PolygonsDataLayerSett
   }
 
   public placeItem(item: UnplacedMapDataItem, layer: L.Layer): void {
-    const coordinates = this.extractLayerPolygonCoordinates(layer);
+    const coordinates = extractLayerPolygonCoordinates(layer);
     if (coordinates) {
       this.savePolygonCoordinates(item.entity, coordinates).subscribe(
         (converted) => {
@@ -387,7 +388,7 @@ export class TbPolygonsDataLayer extends TbShapesDataLayer<PolygonsDataLayerSett
   }
 
   public convertLayerToDataKeys(layer: L.Layer): DataKeyValuePair[] {
-    const coordinates = this.extractLayerPolygonCoordinates(layer);
+    const coordinates = extractLayerPolygonCoordinates(layer);
     if (coordinates) {
       return this.convertItemToDataKeys(coordinates).dataKeys;
     }
@@ -445,22 +446,5 @@ export class TbPolygonsDataLayer extends TbShapesDataLayer<PolygonsDataLayerSett
         }
       ]
     }
-  }
-
-  private extractLayerPolygonCoordinates(layer: L.Layer): TbPolygonCoordinates {
-    if (layer instanceof L.Polygon) {
-      let coordinates: TbPolygonCoordinates;
-      if (layer instanceof L.Rectangle) {
-        const bounds = layer.getBounds();
-        coordinates = [bounds.getNorthWest(), bounds.getSouthEast()];
-      } else {
-        coordinates = layer.getLatLngs();
-        if (coordinates.length === 1) {
-          coordinates = coordinates[0] as TbPolygonCoordinates;
-        }
-      }
-      return coordinates;
-    }
-    return null;
   }
 }

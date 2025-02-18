@@ -15,7 +15,7 @@
 ///
 
 import L, { TB } from 'leaflet';
-import {  guid } from '@core/utils';
+import { guid, isNotEmptyStr } from '@core/utils';
 import 'leaflet-providers';
 import '@geoman-io/leaflet-geoman-free';
 import 'leaflet.markercluster';
@@ -289,13 +289,29 @@ class TopToolbarButton {
   constructor(private readonly options: TB.TopToolbarButtonOptions,
               private readonly iconRegistry: MatIconRegistry) {
     const iconElement = $('<div class="tb-control-button-icon"></div>');
+    const setIcon = isNotEmptyStr(this.options.icon);
+    const setTitle = isNotEmptyStr(this.options.title);
     this.button = $("<a>")
     .attr('class', 'tb-control-button tb-control-text-button')
     .attr('href', '#')
     .attr('role', 'button');
-    this.button.append(iconElement);
-    this.button.append(`<div class="tb-control-text">${this.options.title}</div>`);
-    this.loadIcon(iconElement);
+    if (setIcon) {
+      this.button.append(iconElement);
+      this.loadIcon(iconElement);
+    }
+    if (setTitle) {
+      this.button.append(`<div class="tb-control-text">${this.options.title}</div>`);
+    }
+    this.button.css('--tb-map-control-color', this.options.color);
+    this.button.css('--tb-map-control-active-color', this.options.color);
+    this.button.css('--tb-map-control-hover-background-color', this.options.color);
+    if (setIcon && !setTitle) {
+      this.button.css('padding', 0);
+    } else if (!setIcon && setTitle) {
+      this.button.css('padding-left', '14px');
+    } else if (!setIcon && !setTitle) {
+      this.button.css('padding', '0 15px');
+    }
     this.button.on('click', (e) => {
       e.stopPropagation();
       e.preventDefault();
@@ -330,6 +346,8 @@ class TopToolbarButton {
       .subscribe({
         next: (svg) => {
           iconElement.append(svg);
+          svg.style.height = '24px';
+          svg.style.width = '24px';
         }
       });
   }
