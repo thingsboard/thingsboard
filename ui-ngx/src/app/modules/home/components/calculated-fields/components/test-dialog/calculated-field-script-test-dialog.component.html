@@ -52,7 +52,7 @@
               <div class="block-label-container right-top">
                 <span class="block-label">{{ 'calculated-fields.arguments' | translate }}</span>
               </div>
-              <tb-calculated-field-test-arguments class="size-full" formControlName="arguments"/>
+              <tb-calculated-field-test-arguments class="size-full" formControlName="arguments" [argumentsTypeMap]="argumentsTypeMap"/>
             </div>
           </div>
           <div #bottomRightPanel class="test-block-content">

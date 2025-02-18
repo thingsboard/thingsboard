@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, forwardRef } from '@angular/core';
+import { Component, forwardRef, Input } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -60,7 +60,9 @@ import { MatDialog } from '@angular/material/dialog';
     }
   ]
 })
-export class CalculatedFieldTestArgumentsComponent extends PageComponent implements ControlValueAccessor, Validator, AfterViewInit {
+export class CalculatedFieldTestArgumentsComponent extends PageComponent implements ControlValueAccessor, Validator {
+
+  @Input() argumentsTypeMap: Map<string, ArgumentType>;
 
   argumentsFormArray = this.fb.array<FormGroup>([]);
 
@@ -76,10 +78,6 @@ export class CalculatedFieldTestArgumentsComponent extends PageComponent impleme
     this.argumentsFormArray.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.propagateChange(this.getValue()));
-  }
-
-  ngAfterViewInit(): void {
-    this.argumentsFormArray.updateValueAndValidity();
   }
 
   registerOnChange(propagateChange: (value: CalculatedFieldEventArguments) => void): void {
@@ -122,27 +120,25 @@ export class CalculatedFieldTestArgumentsComponent extends PageComponent impleme
         : group.patchValue({ ts: (result as CalculatedFieldSingleArgumentValue).ts, value: (result as CalculatedFieldSingleArgumentValue).value }) );
   }
 
-  private getSimpleArgumentFormGroup({ argumentName, type, ts, value }: CalculatedFieldSingleArgumentValue): FormGroup {
+  private getSimpleArgumentFormGroup({ argumentName, ts, value }: CalculatedFieldSingleArgumentValue): FormGroup {
     return this.fb.group({
       argumentName: [{ value: argumentName, disabled: true}],
-      type: [{ value: type , disabled: true }],
       ts: [ts],
       value: [value]
     }) as FormGroup;
   }
 
-  private getRollingArgumentFormGroup({ argumentName, type, timewindow, values }: CalculatedFieldRollingTelemetryArgumentValue): FormGroup {
+  private getRollingArgumentFormGroup({ argumentName, timewindow, values }: CalculatedFieldRollingTelemetryArgumentValue): FormGroup {
     return this.fb.group({
       ...timewindow ?? {},
       argumentName: [{ value: argumentName, disabled: true }],
-      type: [{ value: type , disabled: true }],
       values: [values]
     }) as FormGroup;
   }
 
   private getValue(): CalculatedFieldEventArguments {
     return this.argumentsFormArray.getRawValue().reduce((acc, rowItem) => {
-      const { argumentName, type, ...value } = rowItem;
+      const { argumentName, ...value } = rowItem;
       acc[argumentName] = value;
       return acc;
     }, {});

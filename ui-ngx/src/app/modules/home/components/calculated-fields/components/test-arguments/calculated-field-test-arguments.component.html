@@ -30,14 +30,14 @@
             <input matInput formControlName="argumentName" placeholder="{{ 'action.set' | translate }}">
           </mat-form-field>
           <mat-form-field appearance="outline" class="tb-inline-field w-1/5 lt-sm:hidden" subscriptSizing="dynamic">
-            <mat-select [value]="group.get('type').value" formControlName="type">
-              <mat-option [value]="group.get('type').value">
-                {{ ArgumentTypeTranslations.get(group.get('type').value) | translate }}
+            <mat-select [value]="argumentsTypeMap.get(group.get('argumentName').value)" [disabled]="true">
+              <mat-option [value]="argumentsTypeMap.get(group.get('argumentName').value)">
+                {{ ArgumentTypeTranslations.get(argumentsTypeMap.get(group.get('argumentName').value)) | translate }}
               </mat-option>
             </mat-select>
           </mat-form-field>
           <div class="flex flex-1 items-center gap-2">
-            @if (group.get('type').value === ArgumentType.Rolling) {
+            @if (argumentsTypeMap.get(group.get('argumentName').value) === ArgumentType.Rolling) {
               <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field flex-1">
                 <input matInput tb-json-to-string name="values" formControlName="values" placeholder="{{ 'value.json-value' | translate }}*"/>
               </mat-form-field>

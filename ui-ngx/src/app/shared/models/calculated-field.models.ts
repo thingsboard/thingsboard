@@ -85,6 +85,19 @@ export enum ArgumentType {
   Rolling = 'TS_ROLLING',
 }
 
+export enum TestArgumentType {
+  Single = 'SINGLE_VALUE',
+  Rolling = 'TS_ROLLING',
+}
+
+export const TestArgumentTypeMap = new Map<ArgumentType, TestArgumentType>(
+  [
+    [ArgumentType.Attribute, TestArgumentType.Single],
+    [ArgumentType.LatestTelemetry, TestArgumentType.Single],
+    [ArgumentType.Rolling, TestArgumentType.Rolling],
+  ]
+)
+
 export enum OutputType {
   Attribute = 'ATTRIBUTES',
   Timeseries = 'TIME_SERIES',
