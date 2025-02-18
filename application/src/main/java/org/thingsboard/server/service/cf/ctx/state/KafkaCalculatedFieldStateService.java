@@ -24,10 +24,15 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.queue.TbQueueMsgHeaders;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -45,6 +50,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.bytesToString;
+import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.bytesToUuid;
+import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.stringToBytes;
+import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.uuidToBytes;
 
 @Service
 @RequiredArgsConstructor
@@ -81,7 +91,11 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
                 .msgPackProcessor((msgs, consumer, config) -> {
                     for (TbProtoQueueMsg<CalculatedFieldStateProto> msg : msgs) {
                         try {
-                            processRestoredState(msg.getValue());
+                            if (msg.getValue() != null) {
+                                processRestoredState(msg.getValue());
+                            } else {
+                                processRestoredState(getStateId(msg.getHeaders()), null);
+                            }
                         } catch (Throwable t) {
                             log.error("Failed to process state message: {}", msg, t);
                         }
@@ -103,7 +117,11 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
     @Override
     protected void doPersist(CalculatedFieldEntityCtxId stateId, CalculatedFieldStateProto stateMsgProto, TbCallback callback) {
         TopicPartitionInfo tpi = partitionService.resolve(QueueKey.CF_STATES, stateId.entityId());
-        stateProducer.send(tpi, stateId.toKey(), new TbProtoQueueMsg<>(stateId.entityId().getId(), stateMsgProto), new TbQueueCallback() {
+        TbProtoQueueMsg<CalculatedFieldStateProto> msg = new TbProtoQueueMsg<>(stateId.entityId().getId(), stateMsgProto);
+        if (stateMsgProto == null) {
+            putStateId(msg.getHeaders(), stateId);
+        }
+        stateProducer.send(tpi, stateId.toKey(), msg, new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {
                 if (callback != null) {
@@ -122,7 +140,7 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
 
     @Override
     protected void doRemove(CalculatedFieldEntityCtxId stateId, TbCallback callback) {
-        //TODO: vklimov
+        doPersist(stateId, null, callback);
     }
 
     @Override
@@ -136,6 +154,20 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
         stateConsumer.awaitStop(0);// consumers should stop on their own because stopWhenRead is true, we just need to wait
 
         log.info("Restored {} calculated field states in {} ms", counter.get(), System.currentTimeMillis() - startTs);
+    }
+
+    private void putStateId(TbQueueMsgHeaders headers, CalculatedFieldEntityCtxId stateId) {
+        headers.put("tenantId", uuidToBytes(stateId.tenantId().getId()));
+        headers.put("cfId", uuidToBytes(stateId.cfId().getId()));
+        headers.put("entityId", uuidToBytes(stateId.entityId().getId()));
+        headers.put("entityType", stringToBytes(stateId.entityId().getEntityType().name()));
+    }
+
+    private CalculatedFieldEntityCtxId getStateId(TbQueueMsgHeaders headers) {
+        TenantId tenantId = TenantId.fromUUID(bytesToUuid(headers.get("tenantId")));
+        CalculatedFieldId cfId = new CalculatedFieldId(bytesToUuid(headers.get("cfId")));
+        EntityId entityId = EntityIdFactory.getByTypeAndUuid(bytesToString(headers.get("entityType")), bytesToUuid(headers.get("entityId")));
+        return new CalculatedFieldEntityCtxId(tenantId, cfId, entityId);
     }
 
     @PreDestroy
