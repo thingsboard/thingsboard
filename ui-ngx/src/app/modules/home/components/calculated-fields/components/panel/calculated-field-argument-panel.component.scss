@@ -15,14 +15,37 @@
  */
 @use '../../../../../../../scss/constants' as constants;
 
+$panel-width: 520px;
+
 :host {
   display: flex;
-  width: 520px;
+  width: $panel-width;
   max-width: 100%;
+  max-height: 100vh;
 
   .fixed-title-width {
-    @media #{constants.$mat-lt-sm} {
+    @media #{constants.$mat-xs} {
       min-width: 120px;
+    }
+  }
+}
+
+:host ::ng-deep {
+  .limit-field-row {
+    @media screen and (max-width: $panel-width) {
+      display: flex;
+      flex-direction: column;
+
+      .fixed-title-width {
+        align-self: flex-start;
+        padding-top: 8px;
+      }
+    }
+  }
+
+  .time-interval-field {
+    .advanced-input {
+      flex-direction: column;
     }
   }
 }

@@ -403,7 +403,9 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
           new EntityTableColumn<Event>('messageType', 'event.message-type', '100px',
             (entity) => entity.body.msgType ?? '-',
             () => ({padding: '0 12px 0 0'}),
-            false
+            false,
+            () => ({padding: '0 12px 0 0'}),
+            (entity) => entity.body.msgType,
           ),
           new EntityActionTableColumn<Event>('arguments', 'event.arguments',
             {
