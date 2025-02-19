@@ -166,7 +166,7 @@ public abstract class EdqsSyncService {
                 if (entityIdInfo != null) {
                     process(entityIdInfo.tenantId(), RELATION, relation.toData());
                 } else {
-                    log.info("Relation from entity not found: " + relation.getFromId());
+                    log.info("Relation from id not found: {} ", relation);
                 }
             }
         }

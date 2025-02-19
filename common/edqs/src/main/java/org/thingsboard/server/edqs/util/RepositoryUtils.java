@@ -207,11 +207,13 @@ public class RepositoryUtils {
                     default -> throw new IllegalStateException();
                 };
             }
-            DataPoint dp = entity.getDataPoint(keyFilter.key(), null);
+            DataKey dataKey = keyFilter.key();
+            DataPoint dp = entity.getDataPoint(dataKey, null);
             boolean checkResult = switch (valueType) {
                 case STRING -> {
                     String str = dp != null ? dp.valueToString() : null;
-                    yield str != null && checkKeyFilter(str, keyFilter.predicate());
+                    yield (dataKey.type() == EntityKeyType.ENTITY_FIELD) ? (str == null || checkKeyFilter(str, keyFilter.predicate())) :
+                            (str != null && checkKeyFilter(str, keyFilter.predicate()));
                 }
                 case BOOLEAN -> {
                     Boolean booleanValue = dp != null ? dp.getBool() : null;
