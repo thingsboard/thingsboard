@@ -21,6 +21,9 @@ import org.thingsboard.server.actors.calculatedField.CalculatedFieldStateRestore
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.exception.CalculatedFieldStateException;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 
@@ -31,6 +34,13 @@ public abstract class AbstractCalculatedFieldStateService implements CalculatedF
 
     @Autowired
     private ActorSystemContext actorSystemContext;
+
+    protected PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer;
+
+    @Override
+    public void init(PartitionedQueueConsumerManager<TbProtoQueueMsg<ToCalculatedFieldMsg>> eventConsumer) {
+        this.eventConsumer = eventConsumer;
+    }
 
     @Override
     public final void persistState(CalculatedFieldEntityCtxId stateId, CalculatedFieldState state, TbCallback callback) {

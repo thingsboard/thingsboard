@@ -50,11 +50,6 @@ public class PartitionedQueueConsumerManager<M extends TbQueueMsg> extends MainQ
     }
 
     @Override
-    public void update(Set<TopicPartitionInfo> partitions) {
-        throw new UnsupportedOperationException("Use manual addPartitions and removePartitions");
-    }
-
-    @Override
     protected void processTask(TbQueueConsumerManagerTask task) {
         if (task instanceof AddPartitionsTask addPartitionsTask) {
             log.info("[{}] Added partitions: {}", queueKey, partitionsToString(addPartitionsTask.partitions()));

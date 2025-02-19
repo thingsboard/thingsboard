@@ -53,8 +53,11 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
     protected C config;
     protected final MsgPackProcessor<M, C> msgPackProcessor;
     protected final BiFunction<C, Integer, TbQueueConsumer<M>> consumerCreator;
+    @Getter
     protected final ExecutorService consumerExecutor;
+    @Getter
     protected final ScheduledExecutorService scheduler;
+    @Getter
     protected final ExecutorService taskExecutor;
 
     private final java.util.Queue<TbQueueConsumerManagerTask> tasks = new ConcurrentLinkedQueue<>();
