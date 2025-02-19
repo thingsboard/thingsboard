@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -66,10 +67,10 @@ import static org.thingsboard.server.common.data.query.ComplexFilterPredicate.Co
 @Slf4j
 public class RepositoryUtils {
 
-    public static final Comparator<SortableEntityData> SORT_ASC = Comparator.comparing(SortableEntityData::getSortValue)
+    public static final Comparator<SortableEntityData> SORT_ASC = Comparator.comparing((SortableEntityData sed) -> Optional.ofNullable(sed.getSortValue()).orElse(""))
             .thenComparing(sp -> sp.getId().toString());
 
-    public static final Comparator<SortableEntityData> SORT_DESC = Comparator.comparing(SortableEntityData::getSortValue)
+    public static final Comparator<SortableEntityData> SORT_DESC = Comparator.comparing((SortableEntityData sed) -> Optional.ofNullable(sed.getSortValue()).orElse(""))
             .thenComparing(sp -> sp.getId().toString()).reversed();
 
     public static EntityType resolveEntityType(EntityFilter entityFilter) {
@@ -210,7 +211,7 @@ public class RepositoryUtils {
             boolean checkResult = switch (valueType) {
                 case STRING -> {
                     String str = dp != null ? dp.valueToString() : null;
-                    yield StringUtils.isEmpty(str) || checkKeyFilter(str, keyFilter.predicate());
+                    yield str != null && checkKeyFilter(str, keyFilter.predicate());
                 }
                 case BOOLEAN -> {
                     Boolean booleanValue = dp != null ? dp.getBool() : null;
