@@ -1757,8 +1757,6 @@ queue:
     partitions: "${TB_QUEUE_CF_PARTITIONS:10}"
     # Timeout for processing a message pack by CF microservices
     pack_processing_timeout: "${TB_QUEUE_CF_PACK_PROCESSING_TIMEOUT_MS:60000}"
-    # Enable/disable a separate consumer per partition for CF queue
-    consumer_per_partition: "${TB_QUEUE_CF_CONSUMER_PER_PARTITION:true}"
     # Thread pool size for processing of the incoming messages
     pool_size: "${TB_QUEUE_CF_POOL_SIZE:8}"
     # RocksDB path for storing CF states
