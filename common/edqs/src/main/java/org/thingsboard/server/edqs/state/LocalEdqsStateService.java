@@ -17,8 +17,6 @@ package org.thingsboard.server.edqs.state;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.EdqsEventType;
@@ -38,29 +36,26 @@ import java.util.Set;
 @Slf4j
 public class LocalEdqsStateService implements EdqsStateService {
 
-    @Autowired @Lazy
-    private EdqsProcessor processor;
-    @Autowired
-    private EdqsRocksDb db;
+    private final EdqsProcessor processor;
+    private final EdqsRocksDb db;
 
-    private boolean restoreDone;
+    private Set<TopicPartitionInfo> partitions;
 
     @Override
-    public void restore(Set<TopicPartitionInfo> partitions) {
-        if (restoreDone) {
-            return;
+    public void process(Set<TopicPartitionInfo> partitions) {
+        if (this.partitions != null) {
+            db.forEach((key, value) -> {
+                try {
+                    ToEdqsMsg edqsMsg = ToEdqsMsg.parseFrom(value);
+                    log.trace("[{}] Restored msg from RocksDB: {}", key, edqsMsg);
+                    processor.process(edqsMsg, EdqsQueue.STATE);
+                } catch (Exception e) {
+                    log.error("[{}] Failed to restore value", key, e);
+                }
+            });
         }
-
-        db.forEach((key, value) -> {
-            try {
-                ToEdqsMsg edqsMsg = ToEdqsMsg.parseFrom(value);
-                log.trace("[{}] Restored msg from RocksDB: {}", key, edqsMsg);
-                processor.process(edqsMsg, EdqsQueue.STATE);
-            } catch (Exception e) {
-                log.error("[{}] Failed to restore value", key, e);
-            }
-        });
-        restoreDone = true;
+        processor.getEventsConsumer().update(partitions);
+        this.partitions = partitions;
     }
 
     @Override
@@ -79,7 +74,7 @@ public class LocalEdqsStateService implements EdqsStateService {
 
     @Override
     public boolean isReady() {
-        return restoreDone;
+        return partitions != null;
     }
 
 }

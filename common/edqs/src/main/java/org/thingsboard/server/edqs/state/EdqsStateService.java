@@ -25,7 +25,7 @@ import java.util.Set;
 
 public interface EdqsStateService {
 
-    void restore(Set<TopicPartitionInfo> partitions);
+    void process(Set<TopicPartitionInfo> partitions);
 
     void save(TenantId tenantId, ObjectType type, String key, EdqsEventType eventType, ToEdqsMsg msg);
 
