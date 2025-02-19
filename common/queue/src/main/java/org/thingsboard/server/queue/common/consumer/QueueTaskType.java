@@ -17,8 +17,9 @@ package org.thingsboard.server.queue.common.consumer;
 
 import java.io.Serializable;
 
-public enum QueueEvent implements Serializable {
+public enum QueueTaskType implements Serializable {
 
-    PARTITION_CHANGE, CONFIG_UPDATE, DELETE
+    UPDATE_PARTITIONS, UPDATE_CONFIG, DELETE,
+    ADD_PARTITIONS, REMOVE_PARTITIONS
 
 }

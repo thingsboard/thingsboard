@@ -148,6 +148,9 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
     @Override
     public void commit() {
         if (consumerLock.isLocked()) {
+            if (stopped) {
+                return;
+            }
             log.error("commit. consumerLock is locked. will wait with no timeout. it looks like a race conditions or deadlock topic " + topic, new RuntimeException("stacktrace"));
         }
         consumerLock.lock();

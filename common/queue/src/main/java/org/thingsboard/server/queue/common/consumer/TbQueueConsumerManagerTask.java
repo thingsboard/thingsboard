@@ -15,34 +15,49 @@
  */
 package org.thingsboard.server.queue.common.consumer;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.ToString;
 import org.thingsboard.server.common.data.queue.QueueConfig;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
 import java.util.Set;
+import java.util.function.Consumer;
 
-@Getter
-@ToString
-@AllArgsConstructor
-public class TbQueueConsumerManagerTask {
+public interface TbQueueConsumerManagerTask {
 
-    private final QueueEvent event;
-    private QueueConfig config;
-    private Set<TopicPartitionInfo> partitions;
-    private boolean drainQueue;
+    QueueTaskType getType();
 
-    public static TbQueueConsumerManagerTask delete(boolean drainQueue) {
-        return new TbQueueConsumerManagerTask(QueueEvent.DELETE, null, null, drainQueue);
+    record DeleteQueueTask(boolean drainQueue) implements TbQueueConsumerManagerTask {
+        @Override
+        public QueueTaskType getType() {
+            return QueueTaskType.DELETE;
+        }
     }
 
-    public static TbQueueConsumerManagerTask configUpdate(QueueConfig config) {
-        return new TbQueueConsumerManagerTask(QueueEvent.CONFIG_UPDATE, config, null, false);
+    record UpdateConfigTask(QueueConfig config) implements TbQueueConsumerManagerTask {
+        @Override
+        public QueueTaskType getType() {
+            return QueueTaskType.UPDATE_CONFIG;
+        }
     }
 
-    public static TbQueueConsumerManagerTask partitionChange(Set<TopicPartitionInfo> partitions) {
-        return new TbQueueConsumerManagerTask(QueueEvent.PARTITION_CHANGE, null, partitions, false);
+    record UpdatePartitionsTask(Set<TopicPartitionInfo> partitions) implements TbQueueConsumerManagerTask {
+        @Override
+        public QueueTaskType getType() {
+            return QueueTaskType.UPDATE_PARTITIONS;
+        }
+    }
+
+    record AddPartitionsTask(Set<TopicPartitionInfo> partitions, Consumer<TopicPartitionInfo> onStop) implements TbQueueConsumerManagerTask {
+        @Override
+        public QueueTaskType getType() {
+            return QueueTaskType.ADD_PARTITIONS;
+        }
+    }
+
+    record RemovePartitionsTask(Set<TopicPartitionInfo> partitions) implements TbQueueConsumerManagerTask {
+        @Override
+        public QueueTaskType getType() {
+            return QueueTaskType.REMOVE_PARTITIONS;
+        }
     }
 
 }
