@@ -40,9 +40,13 @@
 }
 
 :host ::ng-deep {
-  .tb-inline-field {
+  .entity-field {
     a {
       font-size: 14px;
+      white-space: nowrap;
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 
