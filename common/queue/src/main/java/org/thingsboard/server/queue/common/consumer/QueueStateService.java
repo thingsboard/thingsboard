@@ -43,6 +43,7 @@ public class QueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> {
     public void update(Set<TopicPartitionInfo> newPartitions) {
         newPartitions = withTopic(newPartitions, stateConsumer.getTopic());
         var writeLock = partitionsLock.writeLock();
+        writeLock.lock();
         Set<TopicPartitionInfo> oldPartitions = this.partitions != null ? this.partitions : Collections.emptySet();
         Set<TopicPartitionInfo> addedPartitions;
         Set<TopicPartitionInfo> removedPartitions;
@@ -64,6 +65,7 @@ public class QueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> {
         if (!addedPartitions.isEmpty()) {
             stateConsumer.addPartitions(addedPartitions, partition -> {
                 var readLock = partitionsLock.readLock();
+                readLock.lock();
                 try {
                     if (this.partitions.contains(partition)) {
                         eventConsumer.addPartitions(Set.of(partition.newByTopic(eventConsumer.getTopic())));
