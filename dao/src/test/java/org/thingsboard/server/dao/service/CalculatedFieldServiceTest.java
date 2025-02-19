@@ -78,13 +78,14 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         assertThat(savedCalculatedField.getType()).isEqualTo(calculatedField.getType());
         assertThat(savedCalculatedField.getName()).isEqualTo(calculatedField.getName());
         assertThat(savedCalculatedField.getConfiguration()).isEqualTo(calculatedField.getConfiguration());
-        assertThat(savedCalculatedField.getVersion()).isEqualTo(calculatedField.getVersion());
+        assertThat(savedCalculatedField.getVersion()).isEqualTo(1L);
 
         savedCalculatedField.setName("Test CF");
 
         CalculatedField updatedCalculatedField = calculatedFieldService.save(savedCalculatedField);
 
-        assertThat(updatedCalculatedField).isEqualTo(savedCalculatedField);
+        assertThat(updatedCalculatedField.getName()).isEqualTo(savedCalculatedField.getName());
+        assertThat(updatedCalculatedField.getVersion()).isEqualTo(savedCalculatedField.getVersion() + 1);
 
         calculatedFieldService.deleteCalculatedField(tenantId, savedCalculatedField.getId());
     }
@@ -147,7 +148,6 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         calculatedField.setName("Test Calculated Field");
         calculatedField.setConfigurationVersion(1);
         calculatedField.setConfiguration(getCalculatedFieldConfig(referencedEntityId));
-        calculatedField.setVersion(1L);
         return calculatedField;
     }
 

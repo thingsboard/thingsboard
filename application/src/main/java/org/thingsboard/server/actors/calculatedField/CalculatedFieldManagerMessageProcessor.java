@@ -308,6 +308,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             log.warn("[{}] CF was already deleted [{}]", tenantId, cfId);
             callback.onSuccess();
         } else {
+            entityIdCalculatedFields.get(cfCtx.getEntityId()).remove(cfCtx);
             deleteLinks(cfCtx);
 
             EntityId entityId = cfCtx.getEntityId();

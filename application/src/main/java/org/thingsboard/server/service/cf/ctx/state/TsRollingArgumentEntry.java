@@ -86,7 +86,7 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
     }
 
     @Override
-    public boolean updateEntry(ArgumentEntry entry) throws CalculatedFieldStateException {
+    public boolean updateEntry(ArgumentEntry entry) {
         if (entry instanceof TsRollingArgumentEntry tsRollingEntry) {
             updateTsRollingEntry(tsRollingEntry);
         } else if (entry instanceof SingleValueArgumentEntry singleValueEntry) {
@@ -118,8 +118,8 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
             }
             cleanupExpiredRecords();
         } catch (Exception e) {
-            log.warn("Time series rolling arguments supports only numeric values.");
-//            throw new IllegalArgumentException("Time series rolling arguments supports only numeric values.");
+            tsRecords.put(ts, Double.NaN);
+            log.warn("Invalid value '{}' for time series rolling arguments. Only numeric values are supported.", value.getValue());
         }
     }
 

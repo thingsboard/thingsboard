@@ -151,7 +151,7 @@ public class ScriptCalculatedFieldStateTest {
     }
 
     private TsRollingArgumentEntry createRollingArgEntry() {
-        TsRollingArgumentEntry argumentEntry = new TsRollingArgumentEntry();
+        TsRollingArgumentEntry argumentEntry = new TsRollingArgumentEntry(5, 30000L);
         long ts = System.currentTimeMillis();
 
         TreeMap<Long, Double> values = new TreeMap<>();
