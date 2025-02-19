@@ -18,7 +18,9 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
+  inject,
   NgZone,
   OnDestroy,
   OnInit,
@@ -28,7 +30,7 @@ import {
 } from '@angular/core';
 import { BasicActionWidgetComponent, ValueSetter } from '@home/components/widget/lib/action/action-widget.models';
 import { backgroundStyle, ComponentStyle, overlayStyle, textStyle } from '@shared/models/widget-settings.models';
-import { BehaviorSubject, combineLatest, Observable, Subject } from 'rxjs';
+import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ValueType } from '@shared/models/constants';
@@ -46,7 +48,7 @@ import {
   ValueStepperWidgetSettings
 } from '@home/components/widget/lib/rpc/value-stepper-widget.models';
 import { UtilsService } from '@core/services/utils.service';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-value-stepper-widget',
@@ -57,19 +59,19 @@ import { takeUntil } from 'rxjs/operators';
 export class ValueStepperWidgetComponent extends
   BasicActionWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
 
-  @ViewChild('leftButton', {static: false})
+  @ViewChild('leftButton', {static: true})
   leftButton: ElementRef<HTMLElement>;
 
-  @ViewChild('rightButton', {static: false})
+  @ViewChild('rightButton', {static: true})
   rightButton: ElementRef<HTMLElement>;
 
-  @ViewChild('stepperContent', {static: false})
+  @ViewChild('stepperContent', {static: true})
   stepperContent: ElementRef<HTMLElement>;
 
-  @ViewChild('valueBoxContainer', {static: false})
+  @ViewChild('valueBoxContainer', {static: true})
   valueBox: ElementRef<HTMLElement>;
 
-  @ViewChild('value', {static: false})
+  @ViewChild('value', {static: true})
   valueElement: ElementRef<HTMLElement>;
 
   settings: ValueStepperWidgetSettings;
@@ -79,6 +81,8 @@ export class ValueStepperWidgetComponent extends
   padding: string;
 
   valueStyle: ComponentStyle = {};
+  valueStyleColor = '';
+  disabledColor = 'rgba(0, 0, 0, 0.38)';
   value: number = null;
 
   autoScale = false;
@@ -108,7 +112,8 @@ export class ValueStepperWidgetComponent extends
 
   private leftDisabledState$ = new BehaviorSubject(false);
   private rightDisabledState$ = new BehaviorSubject(false);
-  private readonly destroy$ = new Subject<void>();
+
+  protected destroyRef = inject(DestroyRef);
 
   constructor(protected imagePipe: ImagePipe,
               protected sanitizer: DomSanitizer,
@@ -135,7 +140,7 @@ export class ValueStepperWidgetComponent extends
     this.showLeftButton = this.settings.buttonAppearance.leftButton.showButton;
     this.showRightButton = this.settings.buttonAppearance.rightButton.showButton;
     this.valueStyle = textStyle(this.settings.appearance.valueFont);
-    this.valueStyle.color = this.settings.appearance.valueColor;
+    this.valueStyleColor = this.settings.appearance.valueColor;
 
     if (this.showValueBox) {
       const valueBoxCss = `.tb-value-stepper-value-box {\n`+
@@ -171,7 +176,7 @@ export class ValueStepperWidgetComponent extends
       this.disabledState$.asObservable(),
       this.leftDisabledState$.asObservable()
     ]).pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(value => {
       const state = value.includes(true);
       this.updateLeftDisabledState(state)
@@ -182,7 +187,7 @@ export class ValueStepperWidgetComponent extends
       this.disabledState$.asObservable(),
       this.rightDisabledState$.asObservable()
     ]).pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(value => {
       const state = value.includes(true);
       this.updateRightDisabledState(state)
@@ -200,8 +205,6 @@ export class ValueStepperWidgetComponent extends
     if (this.shapeResize$) {
       this.shapeResize$.disconnect();
     }
-    this.destroy$.next();
-    this.destroy$.complete();
     super.ngOnDestroy();
   }
 
@@ -220,12 +223,12 @@ export class ValueStepperWidgetComponent extends
   private onValue(value: number): void {
     this.value = value;
     this.prevValue = value;
-    if ((this.value + this.settings.appearance.valueStep) >= this.settings.appearance.maxValueRange) {
+    if ((this.value + this.settings.appearance.valueStep) > this.settings.appearance.maxValueRange) {
       this.rightDisabledState$.next(true);
     } else {
       this.rightDisabledState$.next(false);
     }
-    if ((this.value - this.settings.appearance.valueStep) <= this.settings.appearance.minValueRange) {
+    if ((this.value - this.settings.appearance.valueStep) < this.settings.appearance.minValueRange) {
       this.leftDisabledState$.next(true);
     } else {
       this.leftDisabledState$.next(false);

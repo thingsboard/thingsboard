@@ -30,7 +30,7 @@
          [class.tb-value-stepper-value-box-disabled]="(disabledState$ | async) === true">
       <div #value
            class="tb-value-stepper-value"
-           [class.tb-value-stepper-value-disabled]="(disabledState$ | async) === true"
+           [style.color]="(disabledState$ | async) === true ? disabledColor : valueStyleColor"
            [style]="valueStyle">{{ valueText }}</div>
     </div>
     <div [class.!hidden]="!showRightButton"

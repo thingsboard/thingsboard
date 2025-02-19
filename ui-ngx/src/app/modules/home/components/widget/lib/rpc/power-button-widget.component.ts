@@ -18,7 +18,8 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
-  ElementRef, NgZone,
+  ElementRef,
+  NgZone,
   OnDestroy,
   OnInit,
   Renderer2,
@@ -33,7 +34,8 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { ValueType } from '@shared/models/constants';
 import {
   powerButtonDefaultSettings,
-  PowerButtonShape, powerButtonShapeSize,
+  PowerButtonShape,
+  powerButtonShapeSize,
   PowerButtonWidgetSettings
 } from '@home/components/widget/lib/rpc/power-button-widget.models';
 import { SVG, Svg } from '@svgdotjs/svg.js';
