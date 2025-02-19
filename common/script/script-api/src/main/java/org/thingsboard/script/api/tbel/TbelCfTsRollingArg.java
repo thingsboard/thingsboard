@@ -63,6 +63,9 @@ public class TbelCfTsRollingArg implements TbelCfArg, Iterable<TbelCfTsDoubleVal
         double max = Double.MIN_VALUE;
         for (TbelCfTsDoubleVal value : values) {
             double val = value.getValue();
+            if (Double.isNaN(val)) {
+                return val;
+            }
             if (max < val) {
                 max = val;
             }
