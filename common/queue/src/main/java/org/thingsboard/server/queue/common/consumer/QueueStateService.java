@@ -22,8 +22,8 @@ import org.thingsboard.server.queue.TbQueueMsg;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 public class QueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> {
@@ -33,7 +33,7 @@ public class QueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> {
 
     @Getter
     private Set<TopicPartitionInfo> partitions;
-    private final Lock lock = new ReentrantLock();
+    private final ReadWriteLock partitionsLock = new ReentrantReadWriteLock();
 
     public void init(PartitionedQueueConsumerManager<S> stateConsumer, PartitionedQueueConsumerManager<E> eventConsumer) {
         this.stateConsumer = stateConsumer;
@@ -42,7 +42,7 @@ public class QueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> {
 
     public void update(Set<TopicPartitionInfo> newPartitions) {
         newPartitions = withTopic(newPartitions, stateConsumer.getTopic());
-        lock.lock();
+        var writeLock = partitionsLock.writeLock();
         Set<TopicPartitionInfo> oldPartitions = this.partitions != null ? this.partitions : Collections.emptySet();
         Set<TopicPartitionInfo> addedPartitions;
         Set<TopicPartitionInfo> removedPartitions;
@@ -53,7 +53,7 @@ public class QueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> {
             removedPartitions.removeAll(newPartitions);
             this.partitions = newPartitions;
         } finally {
-            lock.unlock();
+            writeLock.unlock();
         }
 
         if (!removedPartitions.isEmpty()) {
@@ -63,13 +63,13 @@ public class QueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> {
 
         if (!addedPartitions.isEmpty()) {
             stateConsumer.addPartitions(addedPartitions, partition -> {
-                lock.lock();
+                var readLock = partitionsLock.readLock();
                 try {
                     if (this.partitions.contains(partition)) {
                         eventConsumer.addPartitions(Set.of(partition.newByTopic(eventConsumer.getTopic())));
                     }
                 } finally {
-                    lock.unlock();
+                    readLock.unlock();
                 }
             });
         }
