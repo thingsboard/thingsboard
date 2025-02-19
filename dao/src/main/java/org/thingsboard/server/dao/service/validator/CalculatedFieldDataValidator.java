@@ -17,8 +17,8 @@ package org.thingsboard.server.dao.service.validator;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.cf.CalculatedFieldDao;
@@ -37,7 +37,7 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
 
     @Override
     protected void validateCreate(TenantId tenantId, CalculatedField calculatedField) {
-        validateNumberOfEntitiesPerTenant(tenantId, EntityType.CALCULATED_FIELD);
+        validateNumberOfCFsPerEntity(tenantId, calculatedField.getEntityId());
         validateNumberOfArgumentsPerCF(tenantId, calculatedField);
     }
 
@@ -49,6 +49,16 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
         }
         validateNumberOfArgumentsPerCF(tenantId, calculatedField);
         return old;
+    }
+
+    private void validateNumberOfCFsPerEntity(TenantId tenantId, EntityId entityId) {
+        long maxCFsPerEntity = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxCalculatedFieldsPerEntity);
+        if (maxCFsPerEntity <= 0) {
+            return;
+        }
+        if (calculatedFieldDao.countCFByEntityId(tenantId, entityId) >= maxCFsPerEntity) {
+            throw new DataValidationException("Calculated fields per entity limit reached!");
+        }
     }
 
     private void validateNumberOfArgumentsPerCF(TenantId tenantId, CalculatedField calculatedField) {
