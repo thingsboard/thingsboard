@@ -116,6 +116,9 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             var cfState = getOrInitState(cfCtx);
             processStateIfReady(cfCtx, Collections.singletonList(cfCtx.getCfId()), cfState, null, null, msg.getCallback());
         } catch (Exception e) {
+            if (e instanceof CalculatedFieldException cfe) {
+                throw cfe;
+            }
             throw CalculatedFieldException.builder().ctx(cfCtx).eventEntity(entityId).cause(e).build();
         }
     }

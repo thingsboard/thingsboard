@@ -30,7 +30,6 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldInitMsg;
@@ -39,7 +38,6 @@ import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
-import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.CalculatedFieldStateService;
 import org.thingsboard.server.service.cf.cache.CalculatedFieldEntityProfileCache;
@@ -53,10 +51,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import static org.thingsboard.server.utils.CalculatedFieldUtils.fromProto;
 
 
 /**
@@ -358,7 +357,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         var proto = msg.getProto();
         var linksList = proto.getLinksList();
         for (var linkProto : linksList) {
-            var link = toCalculatedFieldEntityCtxId(linkProto);
+            var link = fromProto(linkProto);
             var targetEntityId = link.entityId();
             var targetEntityType = targetEntityId.getEntityType();
             var cf = calculatedFields.get(link.cfId());
@@ -381,12 +380,6 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 getOrCreateActor(targetEntityId).tell(newMsg);
             }
         }
-    }
-
-    private CalculatedFieldEntityCtxId toCalculatedFieldEntityCtxId(CalculatedFieldEntityCtxIdProto ctxIdProto) {
-        EntityId entityId = EntityIdFactory.getByTypeAndUuid(ctxIdProto.getEntityType(), new UUID(ctxIdProto.getEntityIdMSB(), ctxIdProto.getEntityIdLSB()));
-        CalculatedFieldId calculatedFieldId = new CalculatedFieldId(new UUID(ctxIdProto.getCalculatedFieldIdMSB(), ctxIdProto.getCalculatedFieldIdLSB()));
-        return new CalculatedFieldEntityCtxId(tenantId, calculatedFieldId, entityId);
     }
 
     private List<CalculatedFieldEntityCtxId> filterCalculatedFieldLinks(CalculatedFieldTelemetryMsg msg) {
