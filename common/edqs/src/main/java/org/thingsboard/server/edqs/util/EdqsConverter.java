@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.edqs.processor;
+package org.thingsboard.server.edqs.util;
 
+import com.google.protobuf.ByteString;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.AttributeKv;
+import org.thingsboard.server.common.data.edqs.DataPoint;
 import org.thingsboard.server.common.data.edqs.EdqsObject;
 import org.thingsboard.server.common.data.edqs.Entity;
 import org.thingsboard.server.common.data.edqs.LatestTsKv;
@@ -31,15 +34,25 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.util.KvProtoUtil;
 import org.thingsboard.server.common.util.ProtoUtils;
+import org.thingsboard.server.edqs.data.dp.BoolDataPoint;
+import org.thingsboard.server.edqs.data.dp.CompressedJsonDataPoint;
+import org.thingsboard.server.edqs.data.dp.CompressedStringDataPoint;
+import org.thingsboard.server.edqs.data.dp.DoubleDataPoint;
+import org.thingsboard.server.edqs.data.dp.JsonDataPoint;
+import org.thingsboard.server.edqs.data.dp.LongDataPoint;
+import org.thingsboard.server.edqs.data.dp.StringDataPoint;
+import org.thingsboard.server.edqs.repo.TbBytePool;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.DataPointProto;
+import org.xerial.snappy.Snappy;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class EdqsConverter {
 
     private final Map<ObjectType, Converter<? extends EdqsObject>> converters = new HashMap<>();
@@ -50,7 +63,6 @@ public class EdqsConverter {
         converters.put(ObjectType.ATTRIBUTE_KV, new Converter<AttributeKv>() {
             @Override
             public byte[] serialize(ObjectType type, AttributeKv attributeKv) {
-                // TODO: some attributes may not fit into kafka
                 var proto = TransportProtos.AttributeKvProto.newBuilder()
                         .setEntityIdMSB(attributeKv.getEntityId().getId().getMostSignificantBits())
                         .setEntityIdLSB(attributeKv.getEntityId().getId().getLeastSignificantBits())
@@ -58,11 +70,8 @@ public class EdqsConverter {
                         .setScope(TransportProtos.AttributeScopeProto.forNumber(attributeKv.getScope().ordinal()))
                         .setKey(attributeKv.getKey())
                         .setVersion(attributeKv.getVersion());
-                if (attributeKv.getLastUpdateTs() != null) {
-                    proto.setLastUpdateTs(attributeKv.getLastUpdateTs());
-                }
-                if (attributeKv.getValue() != null) {
-                    proto.setValue(KvProtoUtil.toKeyValueTypeProto(attributeKv.getValue()));
+                if (attributeKv.getLastUpdateTs() != null && attributeKv.getValue() != null) {
+                    proto.setDataPoint(toDataPointProto(attributeKv.getLastUpdateTs(), attributeKv.getValue()));
                 }
                 return proto.build().toByteArray();
             }
@@ -73,14 +82,13 @@ public class EdqsConverter {
                 EntityId entityId = EntityIdFactory.getByTypeAndUuid(ProtoUtils.fromProto(proto.getEntityType()),
                         new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
                 AttributeScope scope = AttributeScope.values()[proto.getScope().getNumber()];
-                KvEntry value = proto.hasValue() ? KvProtoUtil.fromTsKvProto(proto.getValue()) : null;
+                DataPoint dataPoint = proto.hasDataPoint() ? fromDataPointProto(proto.getDataPoint()) : null;
                 return AttributeKv.builder()
                         .entityId(entityId)
                         .scope(scope)
                         .key(proto.getKey())
                         .version(proto.getVersion())
-                        .lastUpdateTs(proto.getLastUpdateTs())
-                        .value(value)
+                        .dataPoint(dataPoint)
                         .build();
             }
         });
@@ -93,11 +101,8 @@ public class EdqsConverter {
                         .setEntityType(ProtoUtils.toProto(latestTsKv.getEntityId().getEntityType()))
                         .setKey(latestTsKv.getKey())
                         .setVersion(latestTsKv.getVersion());
-                if (latestTsKv.getTs() != null) {
-                    proto.setTs(latestTsKv.getTs());
-                }
-                if (latestTsKv.getValue() != null) {
-                    proto.setValue(KvProtoUtil.toKeyValueTypeProto(latestTsKv.getValue()));
+                if (latestTsKv.getTs() != null && latestTsKv.getValue() != null) {
+                    proto.setDataPoint(toDataPointProto(latestTsKv.getTs(), latestTsKv.getValue()));
                 }
                 return proto.build().toByteArray();
             }
@@ -107,16 +112,71 @@ public class EdqsConverter {
                 TransportProtos.LatestTsKvProto proto = TransportProtos.LatestTsKvProto.parseFrom(bytes);
                 EntityId entityId = EntityIdFactory.getByTypeAndUuid(ProtoUtils.fromProto(proto.getEntityType()),
                         new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
-                KvEntry value = proto.hasValue() ? KvProtoUtil.fromTsKvProto(proto.getValue()) : null;
+                DataPoint dataPoint = proto.hasDataPoint() ? fromDataPointProto(proto.getDataPoint()) : null;
                 return LatestTsKv.builder()
                         .entityId(entityId)
                         .key(proto.getKey())
-                        .ts(proto.getTs())
                         .version(proto.getVersion())
-                        .value(value)
+                        .dataPoint(dataPoint)
                         .build();
             }
         });
+    }
+
+    public static DataPointProto toDataPointProto(long ts, KvEntry kvEntry) {
+        DataPointProto.Builder proto = DataPointProto.newBuilder();
+        proto.setTs(ts);
+        switch (kvEntry.getDataType()) {
+            case BOOLEAN -> proto.setBoolV(kvEntry.getBooleanValue().get());
+            case LONG -> proto.setLongV(kvEntry.getLongValue().get());
+            case DOUBLE -> proto.setDoubleV(kvEntry.getDoubleValue().get());
+            case STRING -> {
+                String strValue = kvEntry.getStrValue().get();
+                if (strValue.length() < CompressedStringDataPoint.MIN_STR_SIZE_TO_COMPRESS) {
+                    proto.setStringV(strValue);
+                } else {
+                    proto.setCompressedStringV(ByteString.copyFrom(compress(strValue)));
+                }
+            }
+            case JSON -> {
+                String jsonValue = kvEntry.getJsonValue().get();
+                if (jsonValue.length() < CompressedStringDataPoint.MIN_STR_SIZE_TO_COMPRESS) {
+                    proto.setJsonV(jsonValue);
+                } else {
+                    proto.setCompressedJsonV(ByteString.copyFrom(compress(jsonValue)));
+                }
+            }
+        }
+        return proto.build();
+    }
+
+    public static DataPoint fromDataPointProto(DataPointProto proto) {
+        long ts = proto.getTs();
+        if (proto.hasBoolV()) {
+            return new BoolDataPoint(ts, proto.getBoolV());
+        } else if (proto.hasLongV()) {
+            return new LongDataPoint(ts, proto.getLongV());
+        } else if (proto.hasDoubleV()) {
+            return new DoubleDataPoint(ts, proto.getDoubleV());
+        } else if (proto.hasStringV()) {
+            return new StringDataPoint(ts, proto.getStringV());
+        } else if (proto.hasCompressedStringV()) {
+            return new CompressedStringDataPoint(ts, TbBytePool.intern(proto.getCompressedStringV().toByteArray()));
+        } else if (proto.hasJsonV()) {
+            return new JsonDataPoint(ts, proto.getJsonV());
+        } else if (proto.hasCompressedJsonV()) {
+            return new CompressedJsonDataPoint(ts, TbBytePool.intern(proto.getCompressedJsonV().toByteArray()));
+        } else {
+            throw new IllegalArgumentException("Unsupported data point proto: " + proto);
+        }
+    }
+
+    @SneakyThrows
+    private static byte[] compress(String value) {
+        byte[] compressed = Snappy.compress(value);
+        // TODO: limit the size
+        log.debug("Compressed {} bytes to {} bytes", value.length(), compressed.length);
+        return compressed;
     }
 
     public static Entity toEntity(EntityType entityType, Object entity) {

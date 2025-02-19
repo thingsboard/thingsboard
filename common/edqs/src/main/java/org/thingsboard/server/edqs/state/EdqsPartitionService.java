@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.edqs.util;
+package org.thingsboard.server.edqs.state;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

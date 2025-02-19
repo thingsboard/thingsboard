@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.fields.EntityFields;
 import org.thingsboard.server.common.data.edqs.fields.EntityIdFields;
 
@@ -57,6 +58,11 @@ public class Entity implements EdqsObject {
     @Override
     public Long version() {
         return fields.getVersion();
+    }
+
+    @Override
+    public ObjectType type() {
+        return ObjectType.fromEntityType(type);
     }
 
 }

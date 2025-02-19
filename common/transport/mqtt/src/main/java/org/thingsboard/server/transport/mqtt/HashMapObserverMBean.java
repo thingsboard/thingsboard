@@ -13,28 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.edqs.data.dp;
+package org.thingsboard.server.transport.mqtt;
 
-import org.thingsboard.server.common.data.kv.DataType;
+public interface HashMapObserverMBean {
+    int getSize();
 
-public interface DataPoint {
+    long getGatewayCount(String unused);
 
-    String NOT_SUPPORTED = "Not supported!";
+    long getNonGatewayCount(String unused);
 
-    long getTs();
+    String getSessionByUUID(String key);
 
-    DataType getType();
+    String getAllSessions(String key);
 
-    String getStr();
+    String getSubscribedSessions(String unused);
 
-    long getLong();
+    String getNonActiveSessions(String unused);
 
-    double getDouble();
+    String getActiveSessions(String unused);
 
-    boolean getBool();
+    String getGatewayDeviceSessionContextConnectedSessions(String unused);
 
-    String getJson();
-
-    String valueToString();
-
+    String getDeviceAwareSessionContextNotConnectedSessions(String unused);
 }

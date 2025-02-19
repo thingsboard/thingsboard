@@ -56,7 +56,7 @@ import { EntityService } from '@core/http/entity.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'liquid-level-card-widget-settings',
+  selector: 'tb-liquid-level-card-widget-settings',
   templateUrl: './liquid-level-card-widget-settings.component.html',
   styleUrls: []
 })

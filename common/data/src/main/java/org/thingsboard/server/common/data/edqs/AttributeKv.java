@@ -20,6 +20,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
@@ -35,8 +36,10 @@ public class AttributeKv implements EdqsObject {
     private String key;
     private Long version;
 
-    private Long lastUpdateTs; // optional (on deletion)
-    private KvEntry value; // optional (on deletion)
+    private DataPoint dataPoint; // optional (on deletion)
+
+    private Long lastUpdateTs; // only for serialization
+    private KvEntry value; // only for serialization
 
     public AttributeKv(EntityId entityId, AttributeScope scope, AttributeKvEntry attributeKvEntry, long version) {
         this.entityId = entityId;
@@ -62,6 +65,11 @@ public class AttributeKv implements EdqsObject {
     @Override
     public Long version() {
         return version;
+    }
+
+    @Override
+    public ObjectType type() {
+        return ObjectType.ATTRIBUTE_KV;
     }
 
 }

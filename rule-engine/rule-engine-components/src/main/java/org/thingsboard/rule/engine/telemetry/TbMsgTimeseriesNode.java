@@ -15,8 +15,11 @@
  */
 package org.thingsboard.rule.engine.telemetry;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -24,6 +27,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.telemetry.strategy.ProcessingStrategy;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -32,13 +36,20 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.ProcessingSettings;
+import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Advanced;
+import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.ProcessingSettings.Deduplicate;
+import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.ProcessingSettings.OnEveryMessage;
+import static org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNodeConfiguration.ProcessingSettings.WebSocketsOnly;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @Slf4j
@@ -46,20 +57,52 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_RE
         type = ComponentType.ACTION,
         name = "save time series",
         configClazz = TbMsgTimeseriesNodeConfiguration.class,
-        nodeDescription = "Saves time series data",
-        nodeDetails = "Saves time series telemetry data based on configurable TTL parameter. Expects messages with 'POST_TELEMETRY_REQUEST' message type. " +
-                "Timestamp in milliseconds will be taken from metadata.ts, otherwise 'now' message timestamp will be applied. " +
-                "Allows stopping updating values for incoming keys in the latest ts_kv table if 'skipLatestPersistence' is set to true.\n " +
-                "<br/>" +
-                "Enable 'useServerTs' param to use the timestamp of the message processing instead of the timestamp from the message. " +
-                "Useful for all sorts of sequential processing if you merge messages from multiple sources (devices, assets, etc).\n" +
-                "<br/>" +
-                "In the case of sequential processing, the platform guarantees that the messages are processed in the order of their submission to the queue. " +
-                "However, the timestamp of the messages originated by multiple devices/servers may be unsynchronized long before they are pushed to the queue. " +
-                "The DB layer has certain optimizations to ignore the updates of the \"attributes\" and \"latest values\" tables if the new record has a timestamp that is older than the previous record. " +
-                "So, to make sure that all the messages will be processed correctly, one should enable this parameter for sequential message processing scenarios.",
+        nodeDescription = """
+                Saves time series data with a configurable TTL and according to configured processing strategies.
+                """,
+        nodeDetails = """
+                Node performs three <strong>actions:</strong>
+                <ul>
+                  <li><strong>Time series:</strong> save time series data to a <code>ts_kv</code> table in a DB.</li>
+                  <li><strong>Latest values:</strong> save time series data to a <code>ts_kv_latest</code> table in a DB.</li>
+                  <li><strong>WebSockets:</strong> notify WebSockets subscriptions about time series data updates.</li>
+                </ul>
+                
+                For each <em>action</em>, three <strong>processing strategies</strong> are available:
+                <ul>
+                  <li><strong>On every message:</strong> perform the action for every message.</li>
+                  <li><strong>Deduplicate:</strong> perform the action only for the first message from a particular originator within a configurable interval.</li>
+                  <li><strong>Skip:</strong> never perform the action.</li>
+                </ul>
+                
+                <strong>Processing strategies</strong> are configured using <em>processing settings</em>, which support two modes:
+                <ul>
+                  <li><strong>Basic</strong>
+                    <ul>
+                      <li><strong>On every message:</strong> applies the "On every message" strategy to all actions.</li>
+                      <li><strong>Deduplicate:</strong> applies the "Deduplicate" strategy (with a specified interval) to all actions.</li>
+                      <li><strong>WebSockets only:</strong> applies the "Skip" strategy to Time series and Latest values, and the "On every message" strategy to WebSockets.</li>
+                    </ul>
+                  </li>
+                  <li><strong>Advanced:</strong> configure each action’s strategy independently.</li>
+                </ul>
+                
+                By default, the timestamp is taken from <code>metadata.ts</code>. You can enable
+                <em>Use server timestamp</em> to always use the current server time instead. This is particularly
+                useful in sequential processing scenarios where messages may arrive with out-of-order timestamps from
+                multiple sources. Note that the DB layer may ignore older records for attributes and latest values,
+                so enabling <em>Use server timestamp</em> can ensure correct ordering.
+                <br><br>
+                The TTL is taken first from <code>metadata.TTL</code>. If absent, the node configuration’s default
+                TTL is used. If neither is set, the tenant profile default applies.
+                <br><br>
+                This node expects messages of type <code>POST_TELEMETRY_REQUEST</code>.
+                <br><br>
+                Output connections: <code>Success</code>, <code>Failure</code>.
+                """,
         configDirective = "tbActionNodeTimeseriesConfig",
-        icon = "file_upload"
+        icon = "file_upload",
+        version = 1
 )
 public class TbMsgTimeseriesNode implements TbNode {
 
@@ -67,15 +110,18 @@ public class TbMsgTimeseriesNode implements TbNode {
     private TbContext ctx;
     private long tenantProfileDefaultStorageTtl;
 
+    private ProcessingSettings processingSettings;
+
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgTimeseriesNodeConfiguration.class);
         this.ctx = ctx;
         ctx.addTenantProfileListener(this::onTenantProfileUpdate);
         onTenantProfileUpdate(ctx.getTenantProfile());
+        processingSettings = config.getProcessingSettings();
     }
 
-    void onTenantProfileUpdate(TenantProfile tenantProfile) {
+    private void onTenantProfileUpdate(TenantProfile tenantProfile) {
         DefaultTenantProfileConfiguration configuration = (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
         tenantProfileDefaultStorageTtl = TimeUnit.DAYS.toSeconds(configuration.getDefaultStorageTtlDays());
     }
@@ -87,6 +133,15 @@ public class TbMsgTimeseriesNode implements TbNode {
             return;
         }
         long ts = computeTs(msg, config.isUseServerTs());
+
+        TimeseriesSaveRequest.Strategy strategy = determineSaveStrategy(ts, msg.getOriginator().getId());
+
+        // short-circuit
+        if (!strategy.saveTimeseries() && !strategy.saveLatest() && !strategy.sendWsUpdate()) {
+            ctx.tellSuccess(msg);
+            return;
+        }
+
         String src = msg.getData();
         Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(JsonParser.parseString(src), ts);
         if (tsKvMap.isEmpty()) {
@@ -110,7 +165,7 @@ public class TbMsgTimeseriesNode implements TbNode {
                 .entityId(msg.getOriginator())
                 .entries(tsKvEntryList)
                 .ttl(ttl)
-                .saveLatest(!config.isSkipLatestPersistence())
+                .strategy(strategy)
                 .callback(new TelemetryNodeCallback(ctx, msg))
                 .build());
     }
@@ -119,9 +174,56 @@ public class TbMsgTimeseriesNode implements TbNode {
         return ignoreMetadataTs ? System.currentTimeMillis() : msg.getMetaDataTs();
     }
 
+    private TimeseriesSaveRequest.Strategy determineSaveStrategy(long ts, UUID originatorUuid) {
+        if (processingSettings instanceof OnEveryMessage) {
+            return TimeseriesSaveRequest.Strategy.SAVE_ALL;
+        }
+        if (processingSettings instanceof WebSocketsOnly) {
+            return TimeseriesSaveRequest.Strategy.WS_ONLY;
+        }
+        if (processingSettings instanceof Deduplicate deduplicate) {
+            boolean isFirstMsgInInterval = deduplicate.getProcessingStrategy().shouldProcess(ts, originatorUuid);
+            return isFirstMsgInInterval ? TimeseriesSaveRequest.Strategy.SAVE_ALL : TimeseriesSaveRequest.Strategy.SKIP_ALL;
+        }
+        if (processingSettings instanceof Advanced advanced) {
+            return new TimeseriesSaveRequest.Strategy(
+                    advanced.timeseries().shouldProcess(ts, originatorUuid),
+                    advanced.latest().shouldProcess(ts, originatorUuid),
+                    advanced.webSockets().shouldProcess(ts, originatorUuid)
+            );
+        }
+        // should not happen
+        throw new IllegalArgumentException("Unknown processing settings type: " + processingSettings.getClass().getSimpleName());
+    }
+
     @Override
     public void destroy() {
         ctx.removeListeners();
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                hasChanges = true;
+                JsonNode skipLatestPersistence = oldConfiguration.get("skipLatestPersistence");
+                if (skipLatestPersistence != null && "true".equals(skipLatestPersistence.asText())) {
+                    var skipLatestProcessingSettings = new Advanced(
+                            ProcessingStrategy.onEveryMessage(),
+                            ProcessingStrategy.skip(),
+                            ProcessingStrategy.onEveryMessage()
+                    );
+                    ((ObjectNode) oldConfiguration).set("processingSettings", JacksonUtil.valueToTree(skipLatestProcessingSettings));
+                } else {
+                    ((ObjectNode) oldConfiguration).set("processingSettings", JacksonUtil.valueToTree(new OnEveryMessage()));
+                }
+                ((ObjectNode) oldConfiguration).remove("skipLatestPersistence");
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
 }

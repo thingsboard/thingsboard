@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.permission.QueryContext;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.edqs.data.dp.BoolDataPoint;
-import org.thingsboard.server.edqs.data.dp.DataPoint;
+import org.thingsboard.server.common.data.edqs.DataPoint;
 import org.thingsboard.server.edqs.data.dp.LongDataPoint;
 import org.thingsboard.server.edqs.data.dp.StringDataPoint;
 import org.thingsboard.server.edqs.query.DataKey;

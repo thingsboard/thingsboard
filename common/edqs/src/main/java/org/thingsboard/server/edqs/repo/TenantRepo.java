@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.AttributeKv;
+import org.thingsboard.server.common.data.edqs.DataPoint;
 import org.thingsboard.server.common.data.edqs.EdqsEvent;
 import org.thingsboard.server.common.data.edqs.EdqsEventType;
 import org.thingsboard.server.common.data.edqs.EdqsObject;
@@ -30,7 +31,6 @@ import org.thingsboard.server.common.data.edqs.query.QueryResult;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.permission.QueryContext;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
@@ -50,14 +50,6 @@ import org.thingsboard.server.edqs.data.EntityProfileData;
 import org.thingsboard.server.edqs.data.GenericData;
 import org.thingsboard.server.edqs.data.RelationsRepo;
 import org.thingsboard.server.edqs.data.TenantData;
-import org.thingsboard.server.edqs.data.dp.BoolDataPoint;
-import org.thingsboard.server.edqs.data.dp.CompressedJsonDataPoint;
-import org.thingsboard.server.edqs.data.dp.CompressedStringDataPoint;
-import org.thingsboard.server.edqs.data.dp.DataPoint;
-import org.thingsboard.server.edqs.data.dp.DoubleDataPoint;
-import org.thingsboard.server.edqs.data.dp.JsonDataPoint;
-import org.thingsboard.server.edqs.data.dp.LongDataPoint;
-import org.thingsboard.server.edqs.data.dp.StringDataPoint;
 import org.thingsboard.server.edqs.query.EdqsDataQuery;
 import org.thingsboard.server.edqs.query.EdqsQuery;
 import org.thingsboard.server.edqs.query.SortableEntityData;
@@ -240,9 +232,8 @@ public class TenantRepo {
     public void addOrUpdateAttribute(AttributeKv attributeKv) {
         var entityData = getOrCreate(attributeKv.getEntityId());
         if (entityData != null) {
-            KvEntry value = attributeKv.getValue();
             Integer keyId = KeyDictionary.get(attributeKv.getKey());
-            boolean added = entityData.putAttr(keyId, attributeKv.getScope(), toDataPoint(attributeKv.getLastUpdateTs(), value));
+            boolean added = entityData.putAttr(keyId, attributeKv.getScope(), attributeKv.getDataPoint());
             if (added) {
                 edqsStatsService.ifPresent(statService -> statService.reportEvent(tenantId, ObjectType.ATTRIBUTE_KV, EdqsEventType.UPDATED));
             }
@@ -262,9 +253,8 @@ public class TenantRepo {
     public void addOrUpdateLatestKv(LatestTsKv latestTsKv) {
         var entityData = getOrCreate(latestTsKv.getEntityId());
         if (entityData != null) {
-            KvEntry value = latestTsKv.getValue();
             Integer keyId = KeyDictionary.get(latestTsKv.getKey());
-            boolean added = entityData.putTs(keyId, toDataPoint(latestTsKv.getTs(), value));
+            boolean added = entityData.putTs(keyId, latestTsKv.getDataPoint());
             if (added) {
                 edqsStatsService.ifPresent(statService -> statService.reportEvent(tenantId, ObjectType.LATEST_TS_KV, EdqsEventType.UPDATED));
             }
@@ -281,40 +271,10 @@ public class TenantRepo {
         }
     }
 
-    private DataPoint toDataPoint(long ts, KvEntry kvEntry) {
-        return switch (kvEntry.getDataType()) {
-            case BOOLEAN -> new BoolDataPoint(ts, kvEntry.getBooleanValue().get());
-            case STRING -> getStrDataPoint(ts, kvEntry.getStrValue().get());
-            case LONG -> new LongDataPoint(ts, kvEntry.getLongValue().get());
-            case DOUBLE -> new DoubleDataPoint(ts, kvEntry.getDoubleValue().get());
-            case JSON -> getJsonDataPoint(ts, kvEntry.getJsonValue().get());
-        };
-    }
-
     public void processFields(EntityFields fields) {
         if (fields instanceof AssetFields assetFields) {
             assetFields.setType(TbStringPool.intern(assetFields.getType()));
         }
-    }
-
-    private static DataPoint getStrDataPoint(long ts, String strV) {
-        DataPoint dp;
-        if (strV.length() < CompressedStringDataPoint.MIN_STR_SIZE_TO_COMPRESS) {
-            dp = new StringDataPoint(ts, strV);
-        } else {
-            dp = new CompressedStringDataPoint(ts, strV);
-        }
-        return dp;
-    }
-
-    private static DataPoint getJsonDataPoint(long ts, String strV) {
-        DataPoint dp;
-        if (strV.length() < CompressedStringDataPoint.MIN_STR_SIZE_TO_COMPRESS) {
-            dp = new JsonDataPoint(ts, strV);
-        } else {
-            dp = new CompressedJsonDataPoint(ts, strV);
-        }
-        return dp;
     }
 
     public ConcurrentMap<UUID, EntityData<?>> getEntityMap(EntityType entityType) {

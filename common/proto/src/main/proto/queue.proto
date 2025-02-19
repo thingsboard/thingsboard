@@ -178,8 +178,7 @@ message AttributeKvProto {
   AttributeScopeProto scope = 4;
   string key = 5;
   int64 version = 6;
-  int64 lastUpdateTs = 7;
-  KeyValueProto value = 8;
+  DataPointProto dataPoint = 7;
 }
 
 message TsKvProto {
@@ -193,14 +192,24 @@ message LatestTsKvProto {
   int64 entityIdLSB = 2;
   EntityTypeProto entityType = 3;
   string key = 4;
-  int64 ts = 5;
-  int64 version = 6;
-  KeyValueProto value = 7;
+  int64 version = 5;
+  DataPointProto dataPoint = 6;
 }
 
 message TsKvListProto {
   int64 ts = 1;
   repeated KeyValueProto kv = 2;
+}
+
+message DataPointProto {
+  int64 ts = 1;
+  optional bool boolV = 2;
+  optional int64 longV = 3;
+  optional double doubleV = 4;
+  optional string stringV = 5;
+  optional bytes compressedStringV = 6;
+  optional string jsonV = 7;
+  optional bytes compressedJsonV = 8;
 }
 
 message DeviceInfoProto {

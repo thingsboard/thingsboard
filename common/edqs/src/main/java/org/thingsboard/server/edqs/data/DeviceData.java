@@ -20,7 +20,7 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edqs.fields.DeviceFields;
 import org.thingsboard.server.common.data.query.EntityKeyType;
-import org.thingsboard.server.edqs.data.dp.DataPoint;
+import org.thingsboard.server.common.data.edqs.DataPoint;
 
 import java.util.Map;
 import java.util.UUID;

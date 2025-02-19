@@ -20,7 +20,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edqs.fields.EntityFields;
 import org.thingsboard.server.common.data.permission.QueryContext;
 import org.thingsboard.server.common.data.query.EntityKeyType;
-import org.thingsboard.server.edqs.data.dp.DataPoint;
+import org.thingsboard.server.common.data.edqs.DataPoint;
 import org.thingsboard.server.edqs.query.DataKey;
 import org.thingsboard.server.edqs.repo.TenantRepo;
 

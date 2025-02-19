@@ -13,19 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  .space-between {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
+package org.thingsboard.server.common.data.edqs;
 
-    .see-example {
-      display: flex;
-      flex-shrink: 0;
-    }
-  }
+import org.thingsboard.server.common.data.kv.DataType;
 
-  .hint-text {
-    width: 100%;
-  }
+public interface DataPoint {
+
+    String NOT_SUPPORTED = "Not supported!";
+
+    long getTs();
+
+    DataType getType();
+
+    String getStr();
+
+    long getLong();
+
+    double getDouble();
+
+    boolean getBool();
+
+    String getJson();
+
+    String valueToString();
+
 }

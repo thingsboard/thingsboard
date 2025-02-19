@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -33,8 +34,10 @@ public class LatestTsKv implements EdqsObject {
     private String key;
     private Long version;
 
-    private Long ts; // optional (on deletion)
-    private KvEntry value; // optional (on deletion)
+    private DataPoint dataPoint; // optional (on deletion)
+
+    private Long ts; // only for serialization
+    private KvEntry value; // only for serialization
 
     public LatestTsKv(EntityId entityId, TsKvEntry tsKvEntry, Long version) {
         this.entityId = entityId;
@@ -57,6 +60,11 @@ public class LatestTsKv implements EdqsObject {
     @Override
     public Long version() {
         return version;
+    }
+
+    @Override
+    public ObjectType type() {
+        return ObjectType.LATEST_TS_KV;
     }
 
 }

@@ -17,6 +17,7 @@ package org.thingsboard.server.edqs.data.dp;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.thingsboard.server.common.data.edqs.DataPoint;
 
 @RequiredArgsConstructor
 public abstract class AbstractDataPoint implements DataPoint {
