@@ -41,7 +41,7 @@ import { isNotEmptyStr, mergeDeepIgnoreArray } from '@core/utils';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import { ComponentStyle, Font, TimewindowStyle } from '@shared/models/widget-settings.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { HasTenantId, HasVersion } from '@shared/models/entity.models';
+import { EntityInfoData, HasTenantId, HasVersion } from '@shared/models/entity.models';
 import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 import { TbFunction } from '@shared/models/js-function.models';
@@ -270,6 +270,7 @@ export interface WidgetTypeInfo extends BaseWidgetType {
   description: string;
   tags: string[];
   widgetType: widgetType;
+  bundles?: EntityInfoData[];
 }
 
 export interface WidgetTypeDetails extends WidgetType, ExportableEntity<WidgetTypeId> {
