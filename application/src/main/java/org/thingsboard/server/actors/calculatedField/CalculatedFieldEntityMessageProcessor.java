@@ -114,7 +114,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         }
         try {
             var state = getOrInitState(ctx);
-            if (!state.isSizeExceedsLimit()) {
+            if (state.isSizeOk()) {
                 processStateIfReady(ctx, Collections.singletonList(ctx.getCfId()), state, null, null, msg.getCallback());
             } else {
                 throw new RuntimeException(ctx.getSizeExceedsLimitMessage());
@@ -273,8 +273,23 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         if (stateSizeOk) {
             cfStateService.persistState(ctxId, state, callback);
         } else {
-            throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build();
+            removeStateAndRaiseSizeException(ctxId, CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build(), callback);
         }
+    }
+
+    private void removeStateAndRaiseSizeException(CalculatedFieldEntityCtxId ctxId, CalculatedFieldException ex, TbCallback callback) {
+        // We remove the state, but remember that it is over-sized in a local map.
+        cfStateService.removeState(ctxId, new TbCallback() {
+            @Override
+            public void onSuccess() {
+                callback.onFailure(ex);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                callback.onFailure(ex);
+            }
+        });
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, List<TsKvProto> data) {
