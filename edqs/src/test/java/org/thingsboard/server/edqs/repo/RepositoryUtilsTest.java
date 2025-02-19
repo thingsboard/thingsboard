@@ -54,7 +54,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RepositoryUtilsTest {
 
     private static Stream<Arguments> deviceNameFilters() {
-        return Stream.of(Arguments.of(null, getNameFilter(StringOperation.STARTS_WITH, "lora"), true),
+        return Stream.of(Arguments.of(null, getNameFilter(StringOperation.STARTS_WITH, "lora"), false),
                 Arguments.of("loranet device 123", getNameFilter(StringOperation.STARTS_WITH, "lora"), true),
                 Arguments.of("loranet 123", getNameFilter(StringOperation.STARTS_WITH, "ra"), false),
                 Arguments.of("loranet 123", getNameFilter(StringOperation.ENDS_WITH, "123"), true),
@@ -132,7 +132,7 @@ public class RepositoryUtilsTest {
     }
 
     private static Stream<Arguments> deviceNameComplexFilters() {
-        return Stream.of(Arguments.of(null, List.of(getComplexComplexDeviceNameFilter(StringOperation.STARTS_WITH, "lo", ComplexOperation.AND, StringOperation.ENDS_WITH, "123")), true),
+        return Stream.of(Arguments.of(null, List.of(getComplexComplexDeviceNameFilter(StringOperation.STARTS_WITH, "lo", ComplexOperation.AND, StringOperation.ENDS_WITH, "123")), false),
                 Arguments.of("loranet 123", List.of(getComplexComplexDeviceNameFilter(StringOperation.STARTS_WITH, "lo", ComplexOperation.AND, StringOperation.ENDS_WITH, "123")), true),
                 Arguments.of("loranet 123", List.of(getComplexComplexDeviceNameFilter(StringOperation.STARTS_WITH, "lo", ComplexOperation.AND, StringOperation.ENDS_WITH, "124")), false),
                 Arguments.of("loranet 123", List.of(getComplexComplexDeviceNameFilter(StringOperation.STARTS_WITH, "lo", ComplexOperation.OR, StringOperation.STARTS_WITH, "net")), true),
