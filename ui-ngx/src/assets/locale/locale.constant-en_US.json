@@ -3640,6 +3640,8 @@
         "add-bundle": "Add bundle",
         "title": "Title",
         "title-required": "Title is required",
+        "title-cannot-contain-only-spaces": "Title cannot contain only spaces",
+        "title-max-length": "Title should be less than 256",
         "oauth-clients": "OAuth 2.0 clients",
         "android-app": "Android App",
         "android-application": "Android Application",
@@ -3671,6 +3673,7 @@
         "page-name": "Page name",
         "page-name-required": "Page name is required.",
         "page-name-cannot-contain-only-spaces": "Page name cannot contain only spaces.",
+        "page-name-max-length": "Page name should be less than 256",
         "page-type": "Page type",
         "pages-types": {
             "dashboard": "Dashboard",
