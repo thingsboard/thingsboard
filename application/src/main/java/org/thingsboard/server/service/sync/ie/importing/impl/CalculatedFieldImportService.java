@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
@@ -45,6 +46,12 @@ public class CalculatedFieldImportService extends BaseEntityImportService<Calcul
     @Override
     protected CalculatedField prepare(EntitiesImportCtx ctx, CalculatedField calculatedField, CalculatedField oldEntity, EntityExportData<CalculatedField> exportData, IdProvider idProvider) {
         calculatedField.setEntityId(idProvider.getInternalId(calculatedField.getEntityId()));
+        calculatedField.getConfiguration().getArguments().values().forEach(argument -> {
+            if (argument.getRefEntityId() != null) {
+                EntityId internalEntityId = idProvider.getInternalId(argument.getRefEntityId());
+                argument.setRefEntityId(internalEntityId);
+            }
+        });
         return calculatedField;
     }
 

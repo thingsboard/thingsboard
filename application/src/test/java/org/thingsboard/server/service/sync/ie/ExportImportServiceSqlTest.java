@@ -204,7 +204,7 @@ public class ExportImportServiceSqlTest extends AbstractControllerTest {
         Asset asset = createAsset(tenantId1, null, assetProfile.getId(), "Asset 1");
         DeviceProfile deviceProfile = createDeviceProfile(tenantId1, ruleChain.getId(), dashboard.getId(), "Device profile 1");
         Device device = createDevice(tenantId1, null, deviceProfile.getId(), "Device 1");
-        CalculatedField calculatedField = createCalculatedField(tenantId1, device.getId(), device.getId());
+        CalculatedField calculatedField = createCalculatedField(tenantId1, device.getId(), asset.getId());
 
         Map<EntityType, EntityExportData> entitiesExportData = Stream.of(customer.getId(), asset.getId(), device.getId(),
                         ruleChain.getId(), dashboard.getId(), assetProfile.getId(), deviceProfile.getId(), calculatedField.getId())
@@ -364,6 +364,7 @@ public class ExportImportServiceSqlTest extends AbstractControllerTest {
         CalculatedField exportedCalculatedField = (CalculatedField) exportEntity(tenantAdmin2, (CalculatedFieldId) ids.get(calculatedField.getId())).getEntity();
         assertThat(exportedCalculatedField.getName()).isEqualTo(calculatedField.getName());
         assertThat(exportedCalculatedField.getEntityId()).isEqualTo(device.getId());
+        assertThat(exportedCalculatedField.getConfiguration().getReferencedEntities()).isEqualTo(calculatedField.getConfiguration().getReferencedEntities());
 
         deviceProfile.setDefaultDashboardId(null);
         deviceProfileService.saveDeviceProfile(deviceProfile);

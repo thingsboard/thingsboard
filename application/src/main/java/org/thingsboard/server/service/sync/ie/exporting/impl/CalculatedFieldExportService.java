@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesExportCtx;
@@ -32,6 +33,12 @@ public class CalculatedFieldExportService extends BaseEntityExportService<Calcul
     @Override
     protected void setRelatedEntities(EntitiesExportCtx<?> ctx, CalculatedField calculatedField, EntityExportData<CalculatedField> exportData) {
         calculatedField.setEntityId(getExternalIdOrElseInternal(ctx, calculatedField.getEntityId()));
+        calculatedField.getConfiguration().getArguments().values().forEach(argument -> {
+            if (argument.getRefEntityId() != null) {
+                EntityId internalEntityId = getExternalIdOrElseInternal(ctx, argument.getRefEntityId());
+                argument.setRefEntityId(internalEntityId);
+            }
+        });
     }
 
     @Override
