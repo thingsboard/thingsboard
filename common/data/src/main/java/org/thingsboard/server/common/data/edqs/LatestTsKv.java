@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -59,6 +60,11 @@ public class LatestTsKv implements EdqsObject {
     @Override
     public Long version() {
         return version;
+    }
+
+    @Override
+    public ObjectType type() {
+        return ObjectType.LATEST_TS_KV;
     }
 
 }

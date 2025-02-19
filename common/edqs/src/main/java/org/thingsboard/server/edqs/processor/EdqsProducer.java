@@ -21,7 +21,7 @@ import org.apache.kafka.common.errors.RecordTooLargeException;
 import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.edqs.util.EdqsPartitionService;
+import org.thingsboard.server.edqs.state.EdqsPartitionService;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;

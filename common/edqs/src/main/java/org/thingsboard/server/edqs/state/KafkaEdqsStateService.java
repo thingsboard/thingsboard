@@ -30,7 +30,6 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.edqs.processor.EdqsProcessor;
 import org.thingsboard.server.edqs.processor.EdqsProducer;
-import org.thingsboard.server.edqs.util.EdqsPartitionService;
 import org.thingsboard.server.edqs.util.VersionsStore;
 import org.thingsboard.server.gen.transport.TransportProtos.EdqsEventMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsMsg;
