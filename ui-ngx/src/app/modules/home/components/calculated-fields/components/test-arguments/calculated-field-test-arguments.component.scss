@@ -15,14 +15,18 @@
  */
 @use '../../../../../../../scss/constants' as constants;
 
+:host {
+  .tb-form-table {
+    min-width: 700px;
+  }
+}
+
 :host::ng-deep {
   .tb-form-table-row {
     .argument-value {
       .tb-value-type.row {
-        @media #{constants.$mat-lt-sm} {
-          width: 100px;
-          min-width: 100px;
-        }
+        width: 120px;
+        min-width: 120px;
       }
     }
   }

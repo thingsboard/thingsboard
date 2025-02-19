@@ -108,7 +108,14 @@
           @if (refEntityKeyFormGroup.get('type').value !== ArgumentType.Attribute) {
             <div class="tb-form-row">
               <div class="fixed-title-width tb-required">{{ 'calculated-fields.timeseries-key' | translate }}</div>
-              <tb-entity-key-autocomplete class="flex-1" formControlName="key" [dataKeyType]="DataKeyType.timeseries" [entityFilter]="entityFilter"/>
+              @if (refEntityKeyFormGroup.get('type').value === ArgumentType.LatestTelemetry) {
+                <ng-container [ngTemplateOutlet]="timeseriesKeyAutocomplete"/>
+              } @else {
+                <ng-container [ngTemplateOutlet]="timeseriesKeyAutocomplete"/>
+              }
+              <ng-template #timeseriesKeyAutocomplete>
+                <tb-entity-key-autocomplete class="flex-1" formControlName="key" [dataKeyType]="DataKeyType.timeseries" [entityFilter]="entityFilter"/>
+              </ng-template>
             </div>
           } @else {
             @if (enableAttributeScopeSelection) {

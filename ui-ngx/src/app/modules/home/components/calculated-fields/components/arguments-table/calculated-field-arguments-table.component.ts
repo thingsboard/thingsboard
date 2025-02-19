@@ -33,7 +33,6 @@ import {
   NG_VALUE_ACCESSOR,
   ValidationErrors,
   Validator,
-  Validators
 } from '@angular/forms';
 import {
   ArgumentEntityType,
@@ -49,8 +48,7 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
-import { isDefinedAndNotNull } from '@core/utils';
-import { charsWithNumRegex } from '@shared/models/regex.constants';
+import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 
 @Component({
@@ -143,10 +141,10 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
         buttonTitle: this.argumentsFormArray.at(index)?.value ? 'action.apply' : 'action.add',
         tenantId: this.tenantId,
         entityName: this.entityName,
-        usedArgumentNames: this.argumentsFormArray.value.map(({ argumentName }) => argumentName).filter(name => name !== argumentObj.argumentName),
+        usedArgumentNames: this.argumentsFormArray.getRawValue().map(({ argumentName }) => argumentName).filter(name => name !== argumentObj.argumentName),
       };
       this.popoverComponent = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, CalculatedFieldArgumentPanelComponent, 'left', false, null,
+        this.viewContainerRef, CalculatedFieldArgumentPanelComponent, isDefined(index) ? 'left' : 'right', false, null,
         ctx,
         {},
         {}, {}, true);
@@ -201,7 +199,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
   private getArgumentFormGroup(value: CalculatedFieldArgumentValue): FormGroup {
     return this.fb.group({
       ...value,
-      argumentName: [value.argumentName, [Validators.required, Validators.maxLength(255), Validators.pattern(charsWithNumRegex)]],
+      argumentName: [{ value: value.argumentName, disabled: true }],
       ...(value.refEntityId ? {
         refEntityId: this.fb.group({
           entityType: [{ value: value.refEntityId.entityType, disabled: true }],

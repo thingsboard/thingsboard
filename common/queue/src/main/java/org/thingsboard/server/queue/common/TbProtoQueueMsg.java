@@ -50,6 +50,7 @@ public class TbProtoQueueMsg<T extends com.google.protobuf.GeneratedMessageV3> i
 
     @Override
     public byte[] getData() {
-        return value.toByteArray();
+        return value != null ? value.toByteArray() : null;
     }
+
 }

@@ -20,3 +20,21 @@
     max-width: 100%;
   }
 }
+
+:host ::ng-deep {
+  .expression-edit {
+    .ace_tb {
+      &.ace_calculated-field {
+        &-key {
+          color: #C52F00;
+        }
+        &-ts, &-time-window, &-values, &-value {
+          color: #7214D0;
+        }
+        &-start-ts, &-end-ts, &-limit {
+          color: #185F2A;
+        }
+      }
+    }
+  }
+}

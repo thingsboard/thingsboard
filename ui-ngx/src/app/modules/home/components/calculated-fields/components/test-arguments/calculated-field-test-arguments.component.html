@@ -19,16 +19,38 @@
   <div>{{ 'calculated-fields.arguments' | translate }}</div>
   <div class="tb-form-table">
     <div class="tb-form-table-header">
-      <div class="tb-form-table-header-cell w-1/4" tbTruncateWithTooltip>{{ 'calculated-fields.argument-name' | translate }}</div>
-      <div class="tb-form-table-header-cell flex-1">{{ 'common.value' | translate }}</div>
+      <div class="tb-form-table-header-cell w-1/6">{{ 'common.name' | translate }}</div>
+      <div class="tb-form-table-header-cell w-1/5 xs:hidden">{{ 'common.type' | translate }}</div>
+      <div class="tb-form-table-header-cell flex-1">{{ 'common.data' | translate }}</div>
     </div>
     <div class="tb-form-table-body">
       @for (group of argumentsFormArray.controls; track group) {
         <div [formGroup]="group" class="tb-form-table-row">
-          <mat-form-field appearance="outline" class="tb-inline-field w-1/4" subscriptSizing="dynamic">
+          <mat-form-field appearance="outline" class="tb-inline-field w-1/6" subscriptSizing="dynamic">
             <input matInput formControlName="argumentName" placeholder="{{ 'action.set' | translate }}">
           </mat-form-field>
-          <tb-value-input class="argument-value flex-1" [required]="false" [shortBooleanField]="true" formControlName="value"/>
+          <mat-form-field appearance="outline" class="tb-inline-field w-1/5 xs:hidden" subscriptSizing="dynamic">
+            <mat-select [value]="argumentsTypeMap.get(group.get('argumentName').value)" [disabled]="true">
+              <mat-option [value]="argumentsTypeMap.get(group.get('argumentName').value)">
+                {{ ArgumentTypeTranslations.get(argumentsTypeMap.get(group.get('argumentName').value)) | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <div class="flex flex-1 items-center gap-2">
+            @if (argumentsTypeMap.get(group.get('argumentName').value) === ArgumentType.Rolling) {
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field flex-1">
+                <input matInput tb-json-to-string name="values" formControlName="values" placeholder="{{ 'value.json-value' | translate }}*"/>
+              </mat-form-field>
+            } @else {
+              <mat-form-field appearance="outline" class="tb-inline-field w-1/3" subscriptSizing="dynamic">
+                <input matInput formControlName="ts" type="number" placeholder="{{ 'action.set' | translate }}">
+              </mat-form-field>
+              <tb-value-input class="argument-value min-w-60 flex-1" [required]="false" [hideJsonEdit]="true" [shortBooleanField]="true" formControlName="value"/>
+            }
+            <button mat-icon-button class="tb-mat-32" (click)="openEditJSONDialog(group)">
+              <mat-icon class="tb-mat-20">open_in_new</mat-icon>
+            </button>
+          </div>
         </div>
       }
     </div>

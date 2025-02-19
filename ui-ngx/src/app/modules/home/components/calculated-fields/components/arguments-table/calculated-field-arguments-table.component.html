@@ -33,7 +33,7 @@
                     <section class="datasource-field flex w-1/3 gap-2 xs:hidden">
                         @if (group.get('refEntityId')?.get('id')?.value) {
                             <ng-container [formGroup]="group.get('refEntityId')">
-                                <mat-form-field appearance="outline" class="tb-inline-field flex-1" subscriptSizing="dynamic">
+                                <mat-form-field appearance="outline" class="tb-inline-field w-1/2" subscriptSizing="dynamic">
                                     <mat-select [value]="group.get('refEntityId').get('entityType').value" formControlName="entityType">
                                         <mat-option [value]="group.get('refEntityId').get('entityType').value">
                                             {{ entityTypeTranslations.get(group.get('refEntityId').get('entityType').value)?.type | translate }}
@@ -41,12 +41,13 @@
                                     </mat-select>
                                 </mat-form-field>
                                 <tb-entity-autocomplete
-                                        class="flex-1"
+                                        class="entity-field w-1/2"
                                         formControlName="id"
                                         [inlineField]="true"
                                         [hideLabel]="true"
                                         [placeholder]="'action.set' | translate"
-                                        [entityType]="group.get('refEntityId').get('entityType').value"/>
+                                        [entityType]="group.get('refEntityId').get('entityType').value"
+                                />
                             </ng-container>
                         } @else {
                             <mat-form-field appearance="outline" class="tb-inline-field flex-1" subscriptSizing="dynamic">

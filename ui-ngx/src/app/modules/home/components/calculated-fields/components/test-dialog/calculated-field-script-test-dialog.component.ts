@@ -38,7 +38,12 @@ import { beautifyJs } from '@shared/models/beautify.models';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs/operators';
-import { CalculatedFieldTestScriptDialogData } from '@shared/models/calculated-field.models';
+import {
+  ArgumentType,
+  CalculatedFieldEventArguments,
+  CalculatedFieldTestScriptDialogData,
+  TestArgumentTypeMap
+} from '@shared/models/calculated-field.models';
 
 @Component({
   selector: 'tb-calculated-field-script-test-dialog',
@@ -61,6 +66,7 @@ export class CalculatedFieldScriptTestDialogComponent extends DialogComponent<Ca
     arguments: [],
     output: []
   });
+  argumentsTypeMap = new Map<string, ArgumentType>();
 
   readonly ContentType = ContentType;
   readonly ScriptLanguage = ScriptLanguage;
@@ -81,7 +87,7 @@ export class CalculatedFieldScriptTestDialogComponent extends DialogComponent<Ca
     beautifyJs(this.data.expression, {indent_size: 4}).pipe(filter(Boolean), takeUntilDestroyed()).subscribe(
       (res) => this.calculatedFieldScriptTestFormGroup.get('expression').patchValue(res, {emitEvent: false})
     );
-    this.calculatedFieldScriptTestFormGroup.get('arguments').patchValue(this.data.arguments, {emitEvent: false});
+    this.calculatedFieldScriptTestFormGroup.get('arguments').patchValue(this.getArgumentsValue());
   }
 
   ngAfterViewInit(): void {
@@ -117,7 +123,7 @@ export class CalculatedFieldScriptTestDialogComponent extends DialogComponent<Ca
     if (this.checkInputParamErrors()) {
       return this.calculatedFieldService.testScript({
         expression: this.calculatedFieldScriptTestFormGroup.get('expression').value,
-        arguments: this.calculatedFieldScriptTestFormGroup.get('arguments').value
+        arguments: this.getTestArguments()
       }).pipe(
         switchMap(result => {
           if (result.error) {
@@ -155,6 +161,26 @@ export class CalculatedFieldScriptTestDialogComponent extends DialogComponent<Ca
 
   private updateSizes(): void {
     this.initSplitLayout(this.testScriptContainer.nativeElement.clientWidth <= 960);
+  }
+
+  private getTestArguments(): CalculatedFieldEventArguments {
+    const argumentsValue = this.calculatedFieldScriptTestFormGroup.get('arguments').value;
+    return Object.keys(argumentsValue)
+      .reduce((acc, key) => {
+        acc[key] = argumentsValue[key];
+        acc[key].type = TestArgumentTypeMap.get(this.argumentsTypeMap.get(key));
+        return acc;
+      }, {});
+  }
+
+  private getArgumentsValue(): CalculatedFieldEventArguments {
+    return Object.keys(this.data.arguments)
+      .reduce((acc, key) => {
+        const { type, ...argumentObj } = this.data.arguments[key];
+        this.argumentsTypeMap.set(key, type);
+        acc[key] = argumentObj;
+        return acc;
+      }, {});
   }
 
   private initSplitLayout(smallMode = false): void {
