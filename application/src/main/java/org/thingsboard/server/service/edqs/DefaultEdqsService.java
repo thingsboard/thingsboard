@@ -125,7 +125,6 @@ public class DefaultEdqsService implements EdqsService {
         executor.submit(() -> {
             try {
                 EdqsSyncState syncState = getSyncState();
-                // FIXME: Slavik smart events check
                 if (edqsSyncService.isSyncNeeded() || syncState == null || syncState.getStatus() != EdqsSyncStatus.FINISHED) {
                     if (hashPartitionService.isSystemPartitionMine(ServiceType.TB_CORE)) {
                         processSystemRequest(ToCoreEdqsRequest.builder()

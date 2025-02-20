@@ -38,7 +38,7 @@ public class EdqsConfig {
     private long pollInterval;
     @Value("${queue.edqs.max_pending_requests:10000}")
     private int maxPendingRequests;
-    @Value("${queue.edqs.max_request_timeout:10000}")
+    @Value("${queue.edqs.max_request_timeout:20000}")
     private int maxRequestTimeout;
 
     public String getLabel() {

@@ -33,7 +33,7 @@ public class EdqsRocksDb extends TbRocksDb {
     @Getter
     private boolean isNew;
 
-    public EdqsRocksDb(@Value("${queue.edqs.local.rocksdb_path:${java.io.tmpdir}/edqs-backup}") String path) {
+    public EdqsRocksDb(@Value("${queue.edqs.local.rocksdb_path:${user.home}/.rocksdb/edqs}") String path) {
         super(path, new Options().setCreateIfMissing(true));
     }
 

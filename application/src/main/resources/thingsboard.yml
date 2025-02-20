@@ -1696,22 +1696,35 @@ queue:
         print-interval-ms: "${TB_HOUSEKEEPER_STATS_PRINT_INTERVAL_MS:60000}"
   edqs:
     sync:
-      enabled: "${TB_EDQS_SYNC_ENABLED:true}" # Enable/disable EDQS synchronization with postgres db FIXME: disable by default before release
-      entity_batch_size: "${TB_EDQS_SYNC_ENTITY_BATCH_SIZE:10000}" # batch size of entities being synced with EDQS
-      ts_batch_size: "${TB_EDQS_SYNC_TS_BATCH_SIZE:10000}" # batch size of timeseries data being synced with EDQS
-    api_enabled: "${TB_EDQS_API_ENABLED:true}" # FIXME: disable by default before release
-    mode: "${TB_EDQS_MODE:local}" # local or remote
+      # Enable/disable EDQS synchronization FIXME: disable by default before release
+      enabled: "${TB_EDQS_SYNC_ENABLED:true}"
+      # Batch size of entities being synced with EDQS
+      entity_batch_size: "${TB_EDQS_SYNC_ENTITY_BATCH_SIZE:10000}"
+      # Batch size of timeseries data being synced with EDQS
+      ts_batch_size: "${TB_EDQS_SYNC_TS_BATCH_SIZE:10000}"
+    # Whether to forward entity data query requests to EDQS (otherwise use PostgreSQL implementation) FIXME: disable by default before release
+    api_enabled: "${TB_EDQS_API_ENABLED:true}"
+    # Mode of EDQS: local (for monolith) or remote (with separate EDQS microservices)
+    mode: "${TB_EDQS_MODE:local}"
     local:
-      rocksdb_path: "${TB_EDQS_ROCKSDB_PATH:/tmp/edqs-backup}"
+      # Path to RocksDB for EDQS backup when running in local mode
+      rocksdb_path: "${TB_EDQS_ROCKSDB_PATH:${user.home}/.rocksdb/edqs}"
+    # Number of partitions for EDQS topics
     partitions: "${TB_EDQS_PARTITIONS:12}"
-    partitioning_strategy: "${TB_EDQS_PARTITIONING_STRATEGY:tenant}" # tenant or none. For 'none', each instance handles all partitions and duplicates all the data
+    # EDQS partitioning strategy: tenant (partition is resolved by tenant id) or none (no specific strategy, resolving by message key)
+    partitioning_strategy: "${TB_EDQS_PARTITIONING_STRATEGY:tenant}"
+    # EDQS requests topic
     requests_topic: "${TB_EDQS_REQUESTS_TOPIC:edqs.requests}"
+    # EDQS responses topic
     responses_topic: "${TB_EDQS_RESPONSES_TOPIC:edqs.responses}"
+    # Poll interval for EDQS topics
     poll_interval: "${TB_EDQS_POLL_INTERVAL_MS:125}"
+    # Maximum amount of pending requests to EDQS
     max_pending_requests: "${TB_EDQS_MAX_PENDING_REQUESTS:10000}"
-    max_request_timeout: "${TB_EDQS_MAX_REQUEST_TIMEOUT:10000}"
+    # Maximum timeout for requests to EDQS
+    max_request_timeout: "${TB_EDQS_MAX_REQUEST_TIMEOUT:20000}"
     stats:
-      # Enable/disable statistics for EDQS service
+      # Enable/disable statistics for EDQS
       enabled: "${TB_EDQS_STATS_ENABLED:true}"
       # Statistics printing interval for EDQS
       print-interval-ms: "${TB_EDQS_STATS_PRINT_INTERVAL_MS:60000}"

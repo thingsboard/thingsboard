@@ -47,19 +47,27 @@ spring:
 queue:
   type: "${TB_QUEUE_TYPE:kafka}" # kafka (Apache Kafka)
   prefix: "${TB_QUEUE_PREFIX:}" # Global queue prefix. If specified, prefix is added before default topic name: 'prefix.default_topic_name'. Prefix is applied to all topics (and consumer groups for kafka).
-  in_memory:
-    stats:
-      # For debug level
-      print-interval-ms: "${TB_QUEUE_IN_MEMORY_STATS_PRINT_INTERVAL_MS:60000}"
   edqs:
-    mode: "${TB_EDQS_MODE:local}"
+    # Number of partitions for EDQS topics
     partitions: "${TB_EDQS_PARTITIONS:12}"
-    partitioning_strategy: "${TB_EDQS_PARTITIONING_STRATEGY:tenant}" # tenant or none. For 'none', each instance handles all partitions and duplicates all the data
+    # EDQS partitioning strategy: tenant (partitions are resolved and distributed by tenant id) or none (partitions are resolved by message key; each instance has all the partitions)
+    partitioning_strategy: "${TB_EDQS_PARTITIONING_STRATEGY:tenant}"
+    # EDQS requests topic
     requests_topic: "${TB_EDQS_REQUESTS_TOPIC:edqs.requests}"
+    # EDQS responses topic
     responses_topic: "${TB_EDQS_RESPONSES_TOPIC:edqs.responses}"
+    # Poll interval for EDQS topics
     poll_interval: "${TB_EDQS_POLL_INTERVAL_MS:125}"
+    # Maximum amount of pending requests to EDQS
     max_pending_requests: "${TB_EDQS_MAX_PENDING_REQUESTS:10000}"
-    max_request_timeout: "${TB_EDQS_MAX_REQUEST_TIMEOUT:10000}"
+    # Maximum timeout for requests to EDQS
+    max_request_timeout: "${TB_EDQS_MAX_REQUEST_TIMEOUT:20000}"
+    stats:
+      # Enable/disable statistics for EDQS
+      enabled: "${TB_EDQS_STATS_ENABLED:true}"
+      # Statistics printing interval for EDQS
+      print-interval-ms: "${TB_EDQS_STATS_PRINT_INTERVAL_MS:60000}"
+
   kafka:
     # Kafka Bootstrap nodes in "host:port" format
     bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"

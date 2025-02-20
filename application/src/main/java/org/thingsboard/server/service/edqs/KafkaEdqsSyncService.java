@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edqs;
 
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
@@ -30,18 +29,16 @@ import java.util.Collections;
 @ConditionalOnExpression("'${queue.edqs.sync.enabled:true}' == 'true' && '${queue.type:null}' == 'kafka'")
 public class KafkaEdqsSyncService extends EdqsSyncService {
 
-    private final TbKafkaSettings kafkaSettings;
-    private TbKafkaAdmin kafkaAdmin;
+    private final boolean syncNeeded;
 
-    @PostConstruct
-    private void init() {
-        kafkaAdmin = new TbKafkaAdmin(kafkaSettings, Collections.emptyMap());
+    public KafkaEdqsSyncService(TbKafkaSettings kafkaSettings) {
+        TbKafkaAdmin kafkaAdmin = new TbKafkaAdmin(kafkaSettings, Collections.emptyMap());
+        this.syncNeeded = kafkaAdmin.isTopicEmpty(EdqsQueue.EVENTS.getTopic());
     }
 
     @Override
     public boolean isSyncNeeded() {
-        return kafkaAdmin.isTopicEmpty(EdqsQueue.EVENTS.getTopic());
+        return syncNeeded;
     }
-
 
 }

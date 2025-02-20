@@ -33,8 +33,8 @@ import static org.awaitility.Awaitility.await;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
-        "queue.type=kafka", // uncomment to use Kafka
-        "queue.kafka.bootstrap.servers=192.168.0.105:9092",
+//        "queue.type=kafka", // uncomment to use Kafka
+//        "queue.kafka.bootstrap.servers=192.168.0.105:9092",
         "queue.edqs.sync.enabled=true",
         "queue.edqs.api_enabled=true",
         "queue.edqs.mode=local"
