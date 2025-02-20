@@ -19,7 +19,7 @@ version: '3.0'
 services:
   postgres:
     restart: always
-    image: "postgres:16"
+    image: "postgres:15"
     ports:
     - "5432"
     environment:
@@ -32,17 +32,7 @@ services:
       - tb-node.postgres.env
     depends_on:
       - postgres
-  tb-core2:
-    env_file:
-      - tb-node.postgres.env
-    depends_on:
-      - postgres
   tb-rule-engine1:
-    env_file:
-      - tb-node.postgres.env
-    depends_on:
-      - postgres
-  tb-rule-engine2:
     env_file:
       - tb-node.postgres.env
     depends_on:

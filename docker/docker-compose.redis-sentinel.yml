@@ -18,9 +18,8 @@ version: '3.0'
 
 services:
   # Redis sentinel
-  # The latest version of Redis compatible with ThingsBoard is 7.2
   redis-master:
-    image: 'bitnami/redis:7.2'
+    image: 'bitnami/redis:7.0'
     volumes:
       - ./tb-node/redis-sentinel-data-master:/bitnami/redis/data
     environment:
@@ -28,7 +27,7 @@ services:
       - 'REDIS_PASSWORD=thingsboard'
 
   redis-slave:
-    image: 'bitnami/redis:7.2'
+    image: 'bitnami/redis:7.0'
     volumes:
       - ./tb-node/redis-sentinel-data-slave:/bitnami/redis/data
     environment:
@@ -40,7 +39,7 @@ services:
       - redis-master
 
   redis-sentinel:
-    image: 'bitnami/redis-sentinel:7.2'
+    image: 'bitnami/redis-sentinel:7.0'
     volumes:
       - ./tb-node/redis-sentinel-data-sentinel:/bitnami/redis/data
     environment:
@@ -58,17 +57,7 @@ services:
       - cache-redis-sentinel.env
     depends_on:
       - redis-sentinel
-  tb-core2:
-    env_file:
-      - cache-redis-sentinel.env
-    depends_on:
-      - redis-sentinel
   tb-rule-engine1:
-    env_file:
-      - cache-redis-sentinel.env
-    depends_on:
-      - redis-sentinel
-  tb-rule-engine2:
     env_file:
       - cache-redis-sentinel.env
     depends_on:
@@ -78,17 +67,7 @@ services:
       - cache-redis-sentinel.env
     depends_on:
       - redis-sentinel
-  tb-mqtt-transport2:
-    env_file:
-      - cache-redis-sentinel.env
-    depends_on:
-      - redis-sentinel
   tb-http-transport1:
-    env_file:
-      - cache-redis-sentinel.env
-    depends_on:
-      - redis-sentinel
-  tb-http-transport2:
     env_file:
       - cache-redis-sentinel.env
     depends_on:
@@ -109,11 +88,6 @@ services:
     depends_on:
       - redis-sentinel
   tb-vc-executor1:
-    env_file:
-      - cache-redis-sentinel.env
-    depends_on:
-      - redis-sentinel
-  tb-vc-executor2:
     env_file:
       - cache-redis-sentinel.env
     depends_on:

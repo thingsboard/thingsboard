@@ -199,7 +199,8 @@ function checkFolders() {
     else
       if [ "$1" = "--create" ]; then
         echo "Create and chown: user ${USR} group ${GRP} dir ${DIR}"
-        mkdir -p "$DIR" && sudo chown -R "$USR":"$GRP" "$DIR"
+        #mkdir -p "$DIR" && sudo chown -R "$USR":"$GRP" "$DIR"
+        mkdir -p "$DIR" && sudo -S chown -R "$USR":"$GRP" "$DIR" <<< ""
       else
         echo "$MESSAGE FAILED"
         EXIT_CODE=1

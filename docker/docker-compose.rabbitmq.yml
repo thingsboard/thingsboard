@@ -23,25 +23,13 @@ services:
   tb-core1:
     env_file:
       - queue-rabbitmq.env
-  tb-core2:
-    env_file:
-      - queue-rabbitmq.env
   tb-rule-engine1:
-    env_file:
-      - queue-rabbitmq.env
-  tb-rule-engine2:
     env_file:
       - queue-rabbitmq.env
   tb-mqtt-transport1:
     env_file:
       - queue-rabbitmq.env
-  tb-mqtt-transport2:
-    env_file:
-      - queue-rabbitmq.env
   tb-http-transport1:
-    env_file:
-      - queue-rabbitmq.env
-  tb-http-transport2:
     env_file:
       - queue-rabbitmq.env
   tb-coap-transport:
@@ -54,8 +42,5 @@ services:
     env_file:
       - queue-rabbitmq.env
   tb-vc-executor1:
-    env_file:
-      - queue-rabbitmq.env
-  tb-vc-executor2:
     env_file:
       - queue-rabbitmq.env
