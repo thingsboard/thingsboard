@@ -71,29 +71,67 @@
             </mat-icon>
           </mat-form-field>
         </div>
-        <div class="tb-form-row">
-          <div class="fixed-title-width">{{'widget-config.action-name' | translate}}*</div>
-          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-            <input required matInput formControlName="name" placeholder="{{ 'widget-config.set' | translate }}">
-            <mat-icon matSuffix
-                      matTooltipPosition="above"
-                      matTooltipClass="tb-error-tooltip"
-                      [matTooltip]="(widgetActionFormGroup.get('name').hasError('required')
-                                     ? 'widget-config.action-name-required'
-                                     : 'widget-config.action-name-not-unique') | translate"
-                      *ngIf="widgetActionFormGroup.get('name').invalid
-                       && (widgetActionFormGroup.get('name').touched || widgetActionFormGroup.get('name').hasError('actionNameNotUnique'))"
-                      class="tb-error">
-              warning
-            </mat-icon>
-          </mat-form-field>
-        </div>
-        <div class="tb-form-row space-between">
-          <div>{{'widget-config.icon' | translate}}</div>
-          <tb-material-icon-select asBoxInput
-                                   formControlName="icon">
-          </tb-material-icon-select>
-        </div>
+        @if (!isButton) {
+          <div class="tb-form-row">
+            <div class="fixed-title-width">{{'widget-config.action-name' | translate}}*</div>
+            <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+              <input required matInput formControlName="name" placeholder="{{ 'widget-config.set' | translate }}">
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="(widgetActionFormGroup.get('name').hasError('required')
+                                       ? 'widget-config.action-name-required'
+                                       : 'widget-config.action-name-not-unique') | translate"
+                        *ngIf="widgetActionFormGroup.get('name').invalid
+                         && (widgetActionFormGroup.get('name').touched || widgetActionFormGroup.get('name').hasError('actionNameNotUnique'))"
+                        class="tb-error">
+                warning
+              </mat-icon>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row space-between">
+            <div>{{'widget-config.icon' | translate}}</div>
+            <tb-material-icon-select asBoxInput
+                                     formControlName="icon">
+            </tb-material-icon-select>
+          </div>
+        } @else {
+          <div class="tb-form-row space-between">
+            <div class="fixed-title-width">Button</div>
+            <section class="flex flex-1 gap-2">
+              <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+                <input matInput placeholder="{{ 'widget-config.set' | translate }}" formControlName="name">
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="(widgetActionFormGroup.get('name').hasError('required')
+                                       ? 'widget-config.action-name-required'
+                                       : 'widget-config.action-name-not-unique') | translate"
+                          *ngIf="widgetActionFormGroup.get('name').invalid
+                         && (widgetActionFormGroup.get('name').touched || widgetActionFormGroup.get('name').hasError('actionNameNotUnique'))"
+                          class="tb-error">
+                  warning
+                </mat-icon>
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="'Not set button name or icon'"
+                          *ngIf="widgetActionFormGroup.hasError('notSetButtonContent')
+                         && (widgetActionFormGroup.get('name').touched || widgetActionFormGroup.get('icon').touched)"
+                          class="tb-error">
+                  warning
+                </mat-icon>
+              </mat-form-field>
+              <tb-material-icon-select asBoxInput
+                                       iconClearButton
+                                       [color]="widgetActionFormGroup.get('color').value"
+                                       formControlName="icon">
+              </tb-material-icon-select>
+              <tb-color-input asBoxInput formControlName="color">
+              </tb-color-input>
+            </section>
+          </div>
+        }
         <div class="tb-form-panel stroked tb-slide-toggle" *ngIf="displayShowWidgetActionForm()">
           <mat-expansion-panel class="tb-settings" [expanded]="widgetActionFormGroup.get('useShowWidgetActionFunction').value"
                                [disabled]="!widgetActionFormGroup.get('useShowWidgetActionFunction').value">
@@ -121,7 +159,8 @@
         <tb-widget-action
             formControlName="widgetAction"
             [callbacks]="data.callbacks"
-            [widgetType]="data.widgetType">
+            [widgetType]="data.widgetType"
+            [addedWidgetActinTypes]="addedWidgetActionType">
         </tb-widget-action>
       </div>
     </fieldset>

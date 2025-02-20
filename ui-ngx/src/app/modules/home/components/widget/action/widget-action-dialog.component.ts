@@ -43,6 +43,7 @@ import {
   CellClickColumnInfo,
   defaultWidgetAction,
   WidgetActionSource,
+  WidgetActionType,
   widgetType
 } from '@shared/models/widget.models';
 import { takeUntil } from 'rxjs/operators';
@@ -85,8 +86,12 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
   configuredColumns: Array<CellClickColumnInfo> = [];
   usedCellClickColumns: Array<number> = [];
 
+  isButton = false;
+
   @ViewChild('columnIndexSelect') columnIndexSelect: MatSelect;
   columnIndexPlaceholderText = this.translate.instant('widget-config.select-column-index');
+
+  addedWidgetActionType: WidgetActionType[] = null;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -108,10 +113,14 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       };
     } else {
       this.action = this.data.action;
+      this.isButton = !!this.data.actionsData.actionSources[this.action.actionSourceId]?.isButton;
     }
     this.functionScopeVariables = this.widgetService.getWidgetScopeVariables();
     if (this.action.actionSourceId === 'cellClick') {
       this.getCellClickColumnsInfo();
+    }
+    if (this.action.actionSourceId === 'mapButton') {
+      this.addedWidgetActionType = [WidgetActionType.placeOverlay];
     }
   }
 
@@ -121,6 +130,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       columnIndex: [{value: this.checkColumnIndex(this.action.columnIndex), disabled: true}, Validators.required],
       name: [this.action.name, [this.validateActionName(), Validators.required]],
       icon: [this.action.icon, Validators.required],
+      color: [{value: this.action.color ?? '#0000008a', disabled: true}],
       useShowWidgetActionFunction: [this.action.useShowWidgetActionFunction],
       showWidgetActionFunction: [this.action.showWidgetActionFunction || 'return true;'],
       widgetAction: [actionDescriptorToAction(toWidgetActionDescriptor(this.action)), Validators.required]
@@ -130,12 +140,18 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       takeUntil(this.destroy$)
     ).subscribe((value) => {
       this.widgetActionFormGroup.get('name').updateValueAndValidity();
+      this.isButton = !!this.data.actionsData.actionSources[value]?.isButton;
       this.updateShowWidgetActionForm();
       if (value === 'cellClick') {
         this.widgetActionFormGroup.get('columnIndex').enable();
         this.getCellClickColumnsInfo();
       } else {
         this.widgetActionFormGroup.get('columnIndex').disable();
+      }
+      if (value === 'mapButton') {
+        this.addedWidgetActionType = [WidgetActionType.placeOverlay];
+      } else {
+        this.addedWidgetActionType = null;
       }
     });
     this.widgetActionFormGroup.get('useShowWidgetActionFunction').valueChanges.pipe(
@@ -183,6 +199,29 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       this.widgetActionFormGroup.get('showWidgetActionFunction').clearValidators();
     }
     this.widgetActionFormGroup.get('showWidgetActionFunction').updateValueAndValidity();
+    let updateNameValidators = false;
+    if (this.isButton) {
+      if (this.widgetActionFormGroup.get('name').hasValidator(Validators.required)) {
+        this.widgetActionFormGroup.get('name').removeValidators(Validators.required);
+        this.widgetActionFormGroup.get('icon').removeValidators(Validators.required);
+        this.widgetActionFormGroup.get('color').enable({emitEvent: false});
+        this.widgetActionFormGroup.setValidators(this.validateSetNameOrIcon());
+        updateNameValidators = true;
+      }
+    } else {
+      if (!this.widgetActionFormGroup.get('name').hasValidator(Validators.required)) {
+        this.widgetActionFormGroup.get('name').setValidators(Validators.required);
+        this.widgetActionFormGroup.get('icon').setValidators(Validators.required);
+        this.widgetActionFormGroup.get('color').disable({emitEvent: false});
+        this.widgetActionFormGroup.removeValidators(this.validateSetNameOrIcon())
+        updateNameValidators = true;
+      }
+    }
+    if (updateNameValidators) {
+      this.widgetActionFormGroup.get('name').updateValueAndValidity();
+      this.widgetActionFormGroup.get('icon').updateValueAndValidity();
+      this.widgetActionFormGroup.updateValueAndValidity();
+    }
   }
 
   private checkColumnIndex(columnIndex: number): number | null {
@@ -223,6 +262,15 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       }
     }
     return actionNameIsUnique;
+  }
+
+  private validateSetNameOrIcon(): ValidatorFn {
+    return (c: FormGroup) => {
+      const formValue = c.value;
+      return !formValue.icon && !isNotEmptyStr(formValue.name) ? {
+        notSetButtonContent: true
+      } : null;
+    };
   }
 
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {

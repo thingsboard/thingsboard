@@ -34,7 +34,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { FormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DataKey, DatasourceType, datasourceTypeTranslationMap, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -77,7 +77,7 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
   dataLayerEditActions: Array<DataLayerEditAction> = [];
   dataLayerEditActionTranslationMap = dataLayerEditActionTranslationMap;
 
-  dataLayerFormGroup: UntypedFormGroup;
+  dataLayerFormGroup: FormGroup;
 
   settings = this.data.settings;
   mapType = this.data.mapType;

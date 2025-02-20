@@ -15,6 +15,7 @@
 ///
 
 import {
+  DataKeyValuePair,
   DataLayerColorSettings,
   DataLayerColorType,
   DataLayerEditAction,
@@ -638,6 +639,10 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
 
   protected mapType(): MapType {
     return this.map.type();
+  }
+
+  public convertLayerToDataKeys(_layer: L.Layer): DataKeyValuePair[] {
+    return [];
   }
 
   public enableEditMode() {

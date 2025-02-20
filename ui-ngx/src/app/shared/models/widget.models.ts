@@ -136,6 +136,7 @@ export interface WidgetActionSource {
   name: string;
   value: string;
   multiple: boolean;
+  isButton?: boolean;
   hasShowCondition?: boolean;
 }
 
@@ -575,7 +576,8 @@ export enum WidgetActionType {
   custom = 'custom',
   customPretty = 'customPretty',
   mobileAction = 'mobileAction',
-  openURL = 'openURL'
+  openURL = 'openURL',
+  placeOverlay = 'placeOverlay'
 }
 
 export enum WidgetMobileActionType {
@@ -589,7 +591,15 @@ export enum WidgetMobileActionType {
   takeScreenshot = 'takeScreenshot'
 }
 
-export const widgetActionTypes = Object.keys(WidgetActionType) as WidgetActionType[];
+export enum OverlayType {
+  marker = 'marker',
+  polygon = 'polygon',
+  rectangle = 'rectangle',
+  circle = 'circle'
+}
+
+export const widgetActionTypes = Object.keys(WidgetActionType)
+  .filter(value => value !== WidgetActionType.placeOverlay) as WidgetActionType[];
 
 export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
   [
@@ -600,7 +610,8 @@ export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
     [ WidgetActionType.custom, 'widget-action.custom' ],
     [ WidgetActionType.customPretty, 'widget-action.custom-pretty' ],
     [ WidgetActionType.mobileAction, 'widget-action.mobile-action' ],
-    [ WidgetActionType.openURL, 'widget-action.open-URL' ]
+    [ WidgetActionType.openURL, 'widget-action.open-URL' ],
+    [ WidgetActionType.placeOverlay, 'widget-action.place-overlay' ],
   ]
 );
 
@@ -616,6 +627,15 @@ export const widgetMobileActionTypeTranslationMap = new Map<WidgetMobileActionTy
     [ WidgetMobileActionType.takeScreenshot, 'widget-action.mobile.take-screenshot' ]
   ]
 );
+
+export const overlayTypeTranslationMap = new Map<OverlayType, string>(
+  [
+    [ OverlayType.marker, 'widget-action.overlay.marker' ],
+    [ OverlayType.polygon, 'widget-action.overlay.polygon' ],
+    [ OverlayType.rectangle, 'widget-action.overlay.rectangle' ],
+    [ OverlayType.circle, 'widget-action.overlay.circle' ],
+  ]
+)
 
 export interface MobileLaunchResult {
   launched: boolean;
@@ -714,6 +734,7 @@ export interface WidgetAction extends CustomActionDescriptor {
   stateEntityParamName?: string;
   mobileAction?: WidgetMobileActionDescriptor;
   url?: string;
+  overlayType?: string;
 }
 
 export interface WidgetActionDescriptor extends WidgetAction {
@@ -724,6 +745,7 @@ export interface WidgetActionDescriptor extends WidgetAction {
   useShowWidgetActionFunction?: boolean;
   showWidgetActionFunction?: TbFunction;
   columnIndex?: number;
+  color?: string;
 }
 
 export const actionDescriptorToAction = (descriptor: WidgetActionDescriptor): WidgetAction => {

@@ -1157,3 +1157,20 @@ export function checkLngLat(point: L.LatLng, southWest: L.LatLng, northEast: L.L
   }
   return point;
 }
+
+export const extractLayerPolygonCoordinates = (layer: L.Layer): TbPolygonCoordinates => {
+  if (layer instanceof L.Polygon) {
+    let coordinates: TbPolygonCoordinates;
+    if (layer instanceof L.Rectangle) {
+      const bounds = layer.getBounds();
+      coordinates = [bounds.getNorthWest(), bounds.getSouthEast()];
+    } else {
+      coordinates = layer.getLatLngs();
+      if (coordinates.length === 1) {
+        coordinates = coordinates[0] as TbPolygonCoordinates;
+      }
+    }
+    return coordinates;
+  }
+  return null;
+}
