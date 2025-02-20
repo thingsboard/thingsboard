@@ -107,16 +107,20 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
     public void process(EntityInitCalculatedFieldMsg msg) throws CalculatedFieldException {
         log.info("[{}] Processing entity init CF msg.", msg.getCtx().getCfId());
-        var cfCtx = msg.getCtx();
+        var ctx = msg.getCtx();
         if (msg.isForceReinit()) {
-            log.info("Force reinitialization of CF: [{}].", cfCtx.getCfId());
-            states.remove(cfCtx.getCfId());
+            log.info("Force reinitialization of CF: [{}].", ctx.getCfId());
+            states.remove(ctx.getCfId());
         }
         try {
-            var cfState = getOrInitState(cfCtx);
-            processStateIfReady(cfCtx, Collections.singletonList(cfCtx.getCfId()), cfState, null, null, msg.getCallback());
+            var state = getOrInitState(ctx);
+            if (state.isSizeOk()) {
+                processStateIfReady(ctx, Collections.singletonList(ctx.getCfId()), state, null, null, msg.getCallback());
+            } else {
+                throw new RuntimeException(ctx.getSizeExceedsLimitMessage());
+            }
         } catch (Exception e) {
-            throw CalculatedFieldException.builder().ctx(cfCtx).eventEntity(entityId).cause(e).build();
+            throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
         }
     }
 
@@ -214,12 +218,16 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             state = getOrInitState(ctx);
             justRestored = true;
         }
-        if (state.updateState(newArgValues) || justRestored) {
-            cfIdList = new ArrayList<>(cfIdList);
-            cfIdList.add(ctx.getCfId());
-            processStateIfReady(ctx, cfIdList, state, tbMsgId, tbMsgType, callback);
+        if (state.isSizeOk()) {
+            if (state.updateState(newArgValues) || justRestored) {
+                cfIdList = new ArrayList<>(cfIdList);
+                cfIdList.add(ctx.getCfId());
+                processStateIfReady(ctx, cfIdList, state, tbMsgId, tbMsgType, callback);
+            } else {
+                callback.onSuccess(CALLBACKS_PER_CF);
+            }
         } else {
-            callback.onSuccess(CALLBACKS_PER_CF);
+            throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build();
         }
     }
 
@@ -235,7 +243,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             // Alternatively, we can fetch the state outside the actor system and push separate command to create this actor,
             // but this will significantly complicate the code.
             state = stateFuture.get(1, TimeUnit.MINUTES);
-            state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSizeInKBytes());
+            state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSize());
             states.put(ctx.getCfId(), state);
         }
         return state;
@@ -244,18 +252,44 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     @SneakyThrows
     private void processStateIfReady(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, CalculatedFieldState state, UUID tbMsgId, TbMsgType tbMsgType, TbCallback callback) {
         CalculatedFieldEntityCtxId ctxId = new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId);
-        if (state.isReady() && ctx.isInitialized()) {
+        boolean stateSizeOk;
+        if (ctx.isInitialized() && state.isReady()) {
             CalculatedFieldResult calculationResult = state.performCalculation(ctx).get(5, TimeUnit.SECONDS);
-            state.checkStateSize(ctxId, ctx.getMaxStateSizeInKBytes());
-            cfService.pushMsgToRuleEngine(tenantId, entityId, calculationResult, cfIdList, callback);
-            if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
-                systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, JacksonUtil.writeValueAsString(calculationResult.getResult()), null);
+            state.checkStateSize(ctxId, ctx.getMaxStateSize());
+            stateSizeOk = state.isSizeOk();
+            if (stateSizeOk) {
+                cfService.pushMsgToRuleEngine(tenantId, entityId, calculationResult, cfIdList, callback);
+                if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
+                    systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, JacksonUtil.writeValueAsString(calculationResult.getResult()), null);
+                }
             }
         } else {
-            state.checkStateSize(ctxId, ctx.getMaxStateSizeInKBytes());
-            callback.onSuccess(); // State was updated but no calculation performed;
+            state.checkStateSize(ctxId, ctx.getMaxStateSize());
+            stateSizeOk = state.isSizeOk();
+            if (stateSizeOk) {
+                callback.onSuccess(); // State was updated but no calculation performed;
+            }
         }
-        cfStateService.persistState(ctxId, state, callback);
+        if (stateSizeOk) {
+            cfStateService.persistState(ctxId, state, callback);
+        } else {
+            removeStateAndRaiseSizeException(ctxId, CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build(), callback);
+        }
+    }
+
+    private void removeStateAndRaiseSizeException(CalculatedFieldEntityCtxId ctxId, CalculatedFieldException ex, TbCallback callback) {
+        // We remove the state, but remember that it is over-sized in a local map.
+        cfStateService.removeState(ctxId, new TbCallback() {
+            @Override
+            public void onSuccess() {
+                callback.onFailure(ex);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                callback.onFailure(ex);
+            }
+        });
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, List<TsKvProto> data) {

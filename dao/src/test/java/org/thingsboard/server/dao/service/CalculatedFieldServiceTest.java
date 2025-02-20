@@ -84,6 +84,7 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
         CalculatedField updatedCalculatedField = calculatedFieldService.save(savedCalculatedField);
 
+        savedCalculatedField.setVersion(savedCalculatedField.getVersion() + 1);
         assertThat(updatedCalculatedField).isEqualTo(savedCalculatedField);
 
         calculatedFieldService.deleteCalculatedField(tenantId, savedCalculatedField.getId());

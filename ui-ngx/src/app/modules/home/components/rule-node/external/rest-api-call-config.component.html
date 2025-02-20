@@ -1,0 +1,130 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="restApiCallConfigForm" class="flex flex-col">
+  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+    <mat-label translate>rule-node-config.endpoint-url-pattern</mat-label>
+    <input required matInput formControlName="restEndpointUrlPattern">
+    <mat-error *ngIf="restApiCallConfigForm.get('restEndpointUrlPattern').hasError('required')">
+      {{ 'rule-node-config.endpoint-url-pattern-required' | translate }}
+    </mat-error>
+    <mat-hint translate>rule-node-config.general-pattern-hint</mat-hint>
+  </mat-form-field>
+  <mat-form-field class="mat-block">
+    <mat-label translate>rule-node-config.request-method</mat-label>
+    <mat-select formControlName="requestMethod">
+      <mat-option *ngFor="let requestType of httpRequestTypes" [value]="requestType">
+        {{ requestType }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-checkbox formControlName="enableProxy">
+    {{ 'rule-node-config.enable-proxy' | translate }}
+  </mat-checkbox>
+  <mat-checkbox *ngIf="!restApiCallConfigForm.get('enableProxy').value" formControlName="useSimpleClientHttpFactory">
+    {{ 'rule-node-config.use-simple-client-http-factory' | translate }}
+  </mat-checkbox>
+  <mat-checkbox formControlName="parseToPlainText">
+    {{ 'rule-node-config.parse-to-plain-text' | translate }}
+  </mat-checkbox>
+  <div class="tb-hint" style="padding-bottom: 5px;" translate>rule-node-config.parse-to-plain-text-hint</div>
+  <mat-checkbox formControlName="ignoreRequestBody">
+    {{ 'rule-node-config.ignore-request-body' | translate }}
+  </mat-checkbox>
+  <div *ngIf="restApiCallConfigForm.get('enableProxy').value">
+    <mat-checkbox formControlName="useSystemProxyProperties">
+      {{ 'rule-node-config.use-system-proxy-properties' | translate }}
+    </mat-checkbox>
+    <div *ngIf="!restApiCallConfigForm.get('useSystemProxyProperties').value">
+      <div class="gt-sm:flex gt-sm:flex-row gt-sm:gap-2">
+        <mat-form-field class="mat-block gt-sm:max-w-10% gt-sm:flex-full">
+          <mat-label translate>rule-node-config.proxy-scheme</mat-label>
+          <mat-select formControlName="proxyScheme">
+            <mat-option *ngFor="let proxyScheme of proxySchemes" [value]="proxyScheme">
+              {{ proxyScheme }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field class="md-block gt-sm:max-w-50% gt-sm:flex-full">
+          <mat-label translate>rule-node-config.proxy-host</mat-label>
+          <input matInput required formControlName="proxyHost">
+          <mat-error *ngIf="restApiCallConfigForm.get('proxyHost').hasError('required')">
+            {{ 'rule-node-config.proxy-host-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="mat-block gt-sm:max-w-40% gt-sm:flex-full">
+          <mat-label translate>rule-node-config.proxy-port</mat-label>
+          <input matInput required formControlName="proxyPort" type="number" step="1">
+          <mat-error *ngIf="restApiCallConfigForm.get('proxyPort').hasError('required')">
+            {{ 'rule-node-config.proxy-port-required' | translate }}
+          </mat-error>
+          <mat-error
+            *ngIf="restApiCallConfigForm.get('proxyPort').hasError('min') || restApiCallConfigForm.get('proxyPort').hasError('max')">
+            {{ 'rule-node-config.proxy-port-range' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+      <mat-form-field class="mat-block">
+        <mat-label translate>rule-node-config.proxy-user</mat-label>
+        <input matInput formControlName="proxyUser">
+      </mat-form-field>
+      <mat-form-field class="mat-block">
+        <mat-label translate>rule-node-config.proxy-password</mat-label>
+        <input matInput formControlName="proxyPassword">
+      </mat-form-field>
+    </div>
+  </div>
+  <mat-form-field *ngIf="!restApiCallConfigForm.get('useSimpleClientHttpFactory').value || restApiCallConfigForm.get('enableProxy').value" class="mat-block"
+                  subscriptSizing="dynamic">
+    <mat-label translate>rule-node-config.read-timeout</mat-label>
+    <input type="text" min="0" [max]="IntLimit" inputmode="numeric" pattern="[0-9]*" matInput formControlName="readTimeoutMs">
+    <mat-hint translate>rule-node-config.read-timeout-hint</mat-hint>
+    <mat-error
+      *ngIf="restApiCallConfigForm.get('readTimeoutMs').hasError('max')">
+      {{ 'rule-node-config.int-range' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+    <mat-label translate>rule-node-config.max-parallel-requests-count</mat-label>
+    <input type="text" min="0" [max]="IntLimit" inputmode="numeric" pattern="[0-9]*" matInput formControlName="maxParallelRequestsCount">
+    <mat-hint translate>rule-node-config.max-parallel-requests-count-hint</mat-hint>
+    <mat-error
+      *ngIf="restApiCallConfigForm.get('maxParallelRequestsCount').hasError('max')">
+      {{ 'rule-node-config.int-range' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+    <mat-label translate>rule-node-config.max-response-size</mat-label>
+    <input type="text" min="1" [max]="MemoryBufferSizeInKbLimit" inputmode="numeric" pattern="[0-9]*" matInput formControlName="maxInMemoryBufferSizeInKb">
+    <mat-hint translate>rule-node-config.max-response-size-hint</mat-hint>
+    <mat-error
+      *ngIf="restApiCallConfigForm.get('maxInMemoryBufferSizeInKb').hasError('min') || restApiCallConfigForm.get('maxInMemoryBufferSizeInKb').hasError('max')">
+      {{ 'rule-node-config.memory-buffer-size-range' | translate: { max: MemoryBufferSizeInKbLimit } }}
+    </mat-error>
+  </mat-form-field>
+  <label translate class="tb-title">rule-node-config.headers</label>
+  <div class="tb-hint" [innerHTML]="'rule-node-config.headers-hint' | translate | safe: 'html'">  </div>
+  <tb-kv-map-config-old
+    required="false"
+    formControlName="headers"
+    keyText="rule-node-config.header"
+    keyRequiredText="rule-node-config.header-required"
+    valText="rule-node-config.value"
+    valRequiredText="rule-node-config.value-required">
+  </tb-kv-map-config-old>
+  <tb-credentials-config formControlName="credentials" [disableCertPemCredentials]="restApiCallConfigForm.get('useSimpleClientHttpFactory').value"></tb-credentials-config>
+</section>

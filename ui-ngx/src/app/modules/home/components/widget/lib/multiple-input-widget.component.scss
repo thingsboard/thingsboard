@@ -75,7 +75,7 @@
 
 :host ::ng-deep {
   .tb-multiple-input {
-    .mat-mdc-slide-toggle, .mat-mdc-checkbox {
+    .mat-mdc-slide-toggle, .mat-mdc-checkbox, .mat-mdc-radio-button {
       .mdc-form-field {
         width: 100%;
         & > label {

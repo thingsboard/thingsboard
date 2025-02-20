@@ -40,7 +40,6 @@ import java.util.Map;
         nodeDetails = "By default, the rule node checks that all specified fields are present. " +
                 "Uncheck the 'Check that all selected fields are present' if the presence of at least one field is sufficient.<br><br>" +
                 "Output connections: <code>True</code>, <code>False</code>, <code>Failure</code>",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFilterNodeCheckMessageConfig")
 public class TbCheckMessageNode implements TbNode {
 

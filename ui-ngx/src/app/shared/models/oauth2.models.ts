@@ -80,11 +80,7 @@ export interface Domain extends BaseData<DomainId>, HasTenantId {
   propagateToEdge: boolean;
 }
 
-export interface HasOauth2Clients {
-  oauth2ClientInfos?: Array<OAuth2ClientInfo> | Array<string>;
-}
-
-export interface DomainInfo extends Domain, HasOauth2Clients {
+export interface DomainInfo extends Domain {
   oauth2ClientInfos?: Array<OAuth2ClientInfo> | Array<string>;
 }
 
