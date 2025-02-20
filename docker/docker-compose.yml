@@ -31,7 +31,7 @@ services:
     restart: always
     image: "${DOCKER_REPO}/${JS_EXECUTOR_DOCKER_NAME}:${TB_VERSION}"
     deploy:
-      replicas: 10
+      replicas: 2
     env_file:
       - tb-js-executor.env
   tb-core1:
@@ -50,42 +50,19 @@ services:
       TB_SERVICE_TYPE: tb-core
       EDGES_ENABLED: "true"
       JAVA_OPTS: "${JAVA_OPTS}"
+      #JAVA_OPTS: "${JAVA_OPTS} -javaagent:/opt/codelogic/java/java-instrumentation.jar=rmiRegistryHost=192.168.0.30 -Xbootclasspath/a:/opt/codelogic/java/java-instrumentation.jar"
+      #JAVA_OPTS: "${JAVA_OPTS} -javaagent:/opt/codelogic/java/java-dynamic-mono-agent-1.0.0-SNAPSHOT-jar-with-dependencies.jar -Xbootclasspath/a:/opt/codelogic/java/java-dynamic-mono-agent-1.0.0-SNAPSHOT-jar-with-dependencies.jar -Dcodelogic.url=http://192.168.0.13/codelogic/server -Dcodelogic.username=5cf85e6f-df74-4c06-a970-651c1b61ac6b -Dcodelogic.password=IYB7yAoi3Hxpc5Q3 -Dcodelogic.namespaces=org.thingsboard"
     env_file:
       - tb-node.env
     volumes:
       - ./tb-node/conf:/config
       - ./tb-node/log:/var/log/thingsboard
+      - /opt/codelogic/java:/opt/codelogic/java
+      - /opt/codelogic/sql:/opt/codelogic/sql
     depends_on:
       - zookeeper
       - tb-js-executor
       - tb-rule-engine1
-      - tb-rule-engine2
-  tb-core2:
-    restart: always
-    image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
-    ports:
-      - "8080"
-      - "7070"
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "200m"
-        max-file: "30"
-    environment:
-      TB_SERVICE_ID: tb-core2
-      TB_SERVICE_TYPE: tb-core
-      EDGES_ENABLED: "true"
-      JAVA_OPTS: "${JAVA_OPTS}"
-    env_file:
-      - tb-node.env
-    volumes:
-      - ./tb-node/conf:/config
-      - ./tb-node/log:/var/log/thingsboard
-    depends_on:
-      - zookeeper
-      - tb-js-executor
-      - tb-rule-engine1
-      - tb-rule-engine2
   tb-rule-engine1:
     restart: always
     image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
@@ -99,34 +76,16 @@ services:
     environment:
       TB_SERVICE_ID: tb-rule-engine1
       TB_SERVICE_TYPE: tb-rule-engine
+      #JAVA_OPTS: "${JAVA_OPTS} -javaagent:/opt/codelogic/java/java-instrumentation.jar=rmiRegistryHost=192.168.0.30 -Xbootclasspath/a:/opt/codelogic/java/java-instrumentation.jar"
       JAVA_OPTS: "${JAVA_OPTS}"
+      #JAVA_OPTS: "${JAVA_OPTS} -javaagent:/opt/codelogic/java/java-dynamic-mono-agent-1.0.0-SNAPSHOT-jar-with-dependencies.jar -Xbootclasspath/a:/opt/codelogic/java/java-dynamic-mono-agent-1.0.0-SNAPSHOT-jar-with-dependencies.jar -Dcodelogic.url=http://192.168.0.13/codelogic/server -Dcodelogic.username=6fca0368-aed3-4bbb-b348-09b719c3f413 -Dcodelogic.password=6JgByudeFc72YM5N -Dcodelogic.namespaces=org.thingsboard"
     env_file:
       - tb-node.env
     volumes:
       - ./tb-node/conf:/config
       - ./tb-node/log:/var/log/thingsboard
-    depends_on:
-      - zookeeper
-      - tb-js-executor
-  tb-rule-engine2:
-    restart: always
-    image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
-    ports:
-      - "8080"
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "200m"
-        max-file: "30"
-    environment:
-      TB_SERVICE_ID: tb-rule-engine2
-      TB_SERVICE_TYPE: tb-rule-engine
-      JAVA_OPTS: "${JAVA_OPTS}"
-    env_file:
-      - tb-node.env
-    volumes:
-      - ./tb-node/conf:/config
-      - ./tb-node/log:/var/log/thingsboard
+      - /opt/codelogic/java:/opt/codelogic/java
+      - /opt/codelogic/sql:/opt/codelogic/sql   
     depends_on:
       - zookeeper
       - tb-js-executor
@@ -138,32 +97,18 @@ services:
     environment:
       TB_SERVICE_ID: tb-mqtt-transport1
       JAVA_OPTS: "${JAVA_OPTS}"
+      #JAVA_OPTS: "${JAVA_OPTS} -javaagent:/opt/codelogic/java/java-instrumentation.jar=rmiRegistryHost=192.168.0.30 -Xbootclasspath/a:/opt/codelogic/java/java-instrumentation.jar"
+      #JAVA_OPTS: "${JAVA_OPTS} -javaagent:/opt/codelogic/java/java-dynamic-mono-agent-1.0.0-SNAPSHOT-jar-with-dependencies.jar -Xbootclasspath/a:/opt/codelogic/java/java-dynamic-mono-agent-1.0.0-SNAPSHOT-jar-with-dependencies.jar -Dcodelogic.url=http://192.168.0.13/codelogic/server -Dcodelogic.username=b63009e2-33d6-41fc-a1b3-aa0eefc3dcd5 -Dcodelogic.password=3LCvFlSd0PmI0k3b -Dcodelogic.namespaces=org.thingsboard" #SCAN did not finalize
     env_file:
       - tb-mqtt-transport.env
     volumes:
       - ./tb-transports/mqtt/conf:/config
       - ./tb-transports/mqtt/log:/var/log/tb-mqtt-transport
+      - /opt/codelogic/java:/opt/codelogic/java
+      - /opt/codelogic/sql:/opt/codelogic/sql   
     depends_on:
       - zookeeper
       - tb-core1
-      - tb-core2
-  tb-mqtt-transport2:
-    restart: always
-    image: "${DOCKER_REPO}/${MQTT_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
-    ports:
-      - "1883"
-    environment:
-      TB_SERVICE_ID: tb-mqtt-transport2
-      JAVA_OPTS: "${JAVA_OPTS}"
-    env_file:
-      - tb-mqtt-transport.env
-    volumes:
-      - ./tb-transports/mqtt/conf:/config
-      - ./tb-transports/mqtt/log:/var/log/tb-mqtt-transport
-    depends_on:
-      - zookeeper
-      - tb-core1
-      - tb-core2
   tb-http-transport1:
     restart: always
     image: "${DOCKER_REPO}/${HTTP_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
@@ -172,32 +117,18 @@ services:
     environment:
       TB_SERVICE_ID: tb-http-transport1
       JAVA_OPTS: "${JAVA_OPTS}"
+      #JAVA_OPTS: "${JAVA_OPTS} -javaagent:/opt/codelogic/java/java-instrumentation.jar=rmiRegistryHost=192.168.0.30 -Xbootclasspath/a:/opt/codelogic/java/java-instrumentation.jar"
+      #JAVA_OPTS: "${JAVA_OPTS} -javaagent:/opt/codelogic/java/java-dynamic-mono-agent-1.0.0-SNAPSHOT-jar-with-dependencies.jar -Xbootclasspath/a:/opt/codelogic/java/java-dynamic-mono-agent-1.0.0-SNAPSHOT-jar-with-dependencies.jar -Dcodelogic.url=http://192.168.0.13/codelogic/server -Dcodelogic.username=3ad3e0d8-bb5e-4633-a0d9-57b35b06d986 -Dcodelogic.password=6uRQUgVYJh86ta3w -Dcodelogic.namespaces=org.thingsboard" #SCAN did not finalize
     env_file:
       - tb-http-transport.env
     volumes:
       - ./tb-transports/http/conf:/config
       - ./tb-transports/http/log:/var/log/tb-http-transport
+      - /opt/codelogic/java:/opt/codelogic/java
+      - /opt/codelogic/sql:/opt/codelogic/sql   
     depends_on:
       - zookeeper
       - tb-core1
-      - tb-core2
-  tb-http-transport2:
-    restart: always
-    image: "${DOCKER_REPO}/${HTTP_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
-    ports:
-      - "8081"
-    environment:
-      TB_SERVICE_ID: tb-http-transport2
-      JAVA_OPTS: "${JAVA_OPTS}"
-    env_file:
-      - tb-http-transport.env
-    volumes:
-      - ./tb-transports/http/conf:/config
-      - ./tb-transports/http/log:/var/log/tb-http-transport
-    depends_on:
-      - zookeeper
-      - tb-core1
-      - tb-core2
   tb-coap-transport:
     restart: always
     image: "${DOCKER_REPO}/${COAP_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
@@ -206,33 +137,36 @@ services:
     environment:
       TB_SERVICE_ID: tb-coap-transport
       JAVA_OPTS: "${JAVA_OPTS}"
+      #JAVA_OPTS: "${JAVA_OPTS} -javaagent:/opt/codelogic/java/java-dynamic-mono-agent-1.0.0-SNAPSHOT-jar-with-dependencies.jar -Xbootclasspath/a:/opt/codelogic/java/java-dynamic-mono-agent-1.0.0-SNAPSHOT-jar-with-dependencies.jar -Dcodelogic.url=http://192.168.0.13/codelogic/server -Dcodelogic.username=cd037a9c-ccc5-4b92-aa08-6da7b0febe21 -Dcodelogic.password=r6HT0NU40baBqdIp -Dcodelogic.namespaces=org.thingsboard" #SCAN did not finalize 
     env_file:
       - tb-coap-transport.env
     volumes:
       - ./tb-transports/coap/conf:/config
       - ./tb-transports/coap/log:/var/log/tb-coap-transport
+      - /opt/codelogic/java:/opt/codelogic/java
+      - /opt/codelogic/sql:/opt/codelogic/sql   
     depends_on:
       - zookeeper
       - tb-core1
-      - tb-core2
   tb-lwm2m-transport:
     restart: always
     image: "${DOCKER_REPO}/${LWM2M_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "5685:5685/udp"
-      - "5686:5686/udp"
     environment:
       TB_SERVICE_ID: tb-lwm2m-transport
       JAVA_OPTS: "${JAVA_OPTS}"
+      #JAVA_OPTS: "${JAVA_OPTS} -javaagent:/opt/codelogic/java/java-dynamic-mono-agent-1.0.0-SNAPSHOT-jar-with-dependencies.jar -Xbootclasspath/a:/opt/codelogic/java/java-dynamic-mono-agent-1.0.0-SNAPSHOT-jar-with-dependencies.jar -Dcodelogic.url=http://192.168.0.13/codelogic/server -Dcodelogic.username=881cb4d2-0926-4395-8e2f-72218a41cf14 -Dcodelogic.password=jTAI327Gaou5GDbn -Dcodelogic.namespaces=org.thingsboard" #SCAN did not finalize
     env_file:
       - tb-lwm2m-transport.env
     volumes:
       - ./tb-transports/lwm2m/conf:/config
       - ./tb-transports/lwm2m/log:/var/log/tb-lwm2m-transport
+      - /opt/codelogic/java:/opt/codelogic/java
+      - /opt/codelogic/sql:/opt/codelogic/sql   
     depends_on:
       - zookeeper
       - tb-core1
-      - tb-core2
   tb-snmp-transport:
     restart: always
     image: "${DOCKER_REPO}/${SNMP_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
@@ -241,15 +175,17 @@ services:
     environment:
       TB_SERVICE_ID: tb-snmp-transport
       JAVA_OPTS: "${JAVA_OPTS}"
+      #JAVA_OPTS: "${JAVA_OPTS} -javaagent:/opt/codelogic/java/java-dynamic-mono-agent-1.0.0-SNAPSHOT-jar-with-dependencies.jar -Xbootclasspath/a:/opt/codelogic/java/java-dynamic-mono-agent-1.0.0-SNAPSHOT-jar-with-dependencies.jar -Dcodelogic.url=http://192.168.0.13/codelogic/server -Dcodelogic.username=400b16b6-0c47-47c5-bccf-b3ed40ffbda1 -Dcodelogic.password=uRPHyg51U6LuavK1 -Dcodelogic.namespaces=org.thingsboard" #SCAN did not finalize
     env_file:
       - tb-snmp-transport.env
     volumes:
       - ./tb-transports/snmp/conf:/config
       - ./tb-transports/snmp/log:/var/log/tb-snmp-transport
+      - /opt/codelogic/java:/opt/codelogic/java
+      - /opt/codelogic/sql:/opt/codelogic/sql   
     depends_on:
       - zookeeper
       - tb-core1
-      - tb-core2
   tb-web-ui1:
     restart: always
     image: "${DOCKER_REPO}/${WEB_UI_DOCKER_NAME}:${TB_VERSION}"
@@ -272,40 +208,27 @@ services:
     environment:
       TB_SERVICE_ID: tb-vc-executor1
       JAVA_OPTS: "${JAVA_OPTS}"
+      #JAVA_OPTS: "${JAVA_OPTS} -javaagent:/opt/codelogic/java/java-dynamic-mono-agent-1.0.0-SNAPSHOT-jar-with-dependencies.jar -Xbootclasspath/a:/opt/codelogic/java/java-dynamic-mono-agent-1.0.0-SNAPSHOT-jar-with-dependencies.jar -Dcodelogic.url=http://192.168.0.13/codelogic/server -Dcodelogic.username=1f6937ea-5c13-4947-9053-02304d9c55af -Dcodelogic.password=F6np6s7oIgg0PKCL -Dcodelogic.namespaces=org.thingsboard"
     env_file:
       - tb-vc-executor.env
     volumes:
       - ./tb-vc-executor/conf:/config
       - ./tb-vc-executor/log:/var/log/tb-vc-executor
+      - /opt/codelogic/java:/opt/codelogic/java
+      - /opt/codelogic/sql:/opt/codelogic/sql   
     depends_on:
       - zookeeper
       - tb-core1
-      - tb-core2
-  tb-vc-executor2:
-    restart: always
-    image: "${DOCKER_REPO}/${TB_VC_EXECUTOR_DOCKER_NAME}:${TB_VERSION}"
-    ports:
-      - "8081"
-    environment:
-      TB_SERVICE_ID: tb-vc-executor2
-      JAVA_OPTS: "${JAVA_OPTS}"
-    env_file:
-      - tb-vc-executor.env
-    volumes:
-      - ./tb-vc-executor/conf:/config
-      - ./tb-vc-executor/log:/var/log/tb-vc-executor
-    depends_on:
-      - zookeeper
-      - tb-core1
-      - tb-core2
   haproxy:
     restart: always
     container_name: "${LOAD_BALANCER_NAME}"
-    image: thingsboard/haproxy-certbot:2.2.33-alpine
+    image: thingsboard/haproxy-certbot:2.2.31-alpine3.18
     volumes:
      - ./haproxy/config:/config
      - ./haproxy/letsencrypt:/etc/letsencrypt
      - ./haproxy/certs.d:/usr/local/etc/haproxy/certs.d
+     - /opt/codelogic/java:/opt/codelogic/java
+     - /opt/codelogic/sql:/opt/codelogic/sql   
     ports:
      - "80:80"
      - "443:443"
@@ -322,10 +245,6 @@ services:
       FORCE_HTTPS_REDIRECT: "false"
     links:
         - tb-core1
-        - tb-core2
         - tb-web-ui1
-        - tb-web-ui2
         - tb-mqtt-transport1
-        - tb-mqtt-transport2
         - tb-http-transport1
-        - tb-http-transport2
