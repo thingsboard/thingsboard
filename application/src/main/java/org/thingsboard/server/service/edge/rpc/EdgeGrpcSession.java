@@ -448,7 +448,11 @@ public abstract class EdgeGrpcSession implements Closeable {
     private void scheduleDownlinkMsgsPackSend(int attempt) {
         Runnable sendDownlinkMsgsTask = () -> {
             try {
-                if (isConnected() && !sessionState.getPendingMsgsMap().values().isEmpty()) {
+                if (!isConnected()) {
+                    stopCurrentSendDownlinkMsgsTask(true);
+                    return;
+                }
+                if (!sessionState.getPendingMsgsMap().values().isEmpty()) {
                     List<DownlinkMsg> copy = new ArrayList<>(sessionState.getPendingMsgsMap().values());
                     if (attempt > 1) {
                         String error = "Failed to deliver the batch";
@@ -529,6 +533,11 @@ public abstract class EdgeGrpcSession implements Closeable {
                 log.debug("[{}][{}][{}] Msg has been processed successfully! Msg Id: [{}], Msg: {}", tenantId, edge.getId(), sessionId, msg.getDownlinkMsgId(), msg);
             } else {
                 log.error("[{}][{}][{}] Msg processing failed! Msg Id: [{}], Error msg: {}", tenantId, edge.getId(), sessionId, msg.getDownlinkMsgId(), msg.getErrorMsg());
+                DownlinkMsg downlinkMsg = sessionState.getPendingMsgsMap().get(msg.getDownlinkMsgId());
+                // if NOT timeseries or attributes failures - ack failed downlink
+                if (downlinkMsg.getEntityDataCount() == 0) {
+                    sessionState.getPendingMsgsMap().remove(msg.getDownlinkMsgId());
+                }
             }
             if (sessionState.getPendingMsgsMap().isEmpty()) {
                 log.debug("[{}][{}][{}] Pending msgs map is empty. Stopping current iteration", tenantId, edge.getId(), sessionId);
