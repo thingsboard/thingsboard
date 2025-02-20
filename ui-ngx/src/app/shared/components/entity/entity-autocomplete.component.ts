@@ -28,11 +28,10 @@ import {
 } from '@angular/core';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { merge, Observable, of, Subject } from 'rxjs';
+import { firstValueFrom, merge, Observable, of, Subject } from 'rxjs';
 import { catchError, debounceTime, map, share, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
-import { TranslateService } from '@ngx-translate/core';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
 import { BaseData } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -52,22 +51,22 @@ import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
     multi: true
   }]
 })
-export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit {
+export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit {
 
   selectEntityFormGroup: UntypedFormGroup;
 
-  modelValue: string | EntityId | null;
+  private modelValue: string | EntityId | null;
 
-  entityTypeValue: EntityType | AliasEntityType;
+  private entityTypeValue: EntityType | AliasEntityType;
 
-  entitySubtypeValue: string;
+  private entitySubtypeValue: string;
 
-  entityText: string;
+  private entityText: string;
 
   noEntitiesMatchingText: string;
   notFoundEntities = 'entity.no-entities-text';
 
-  entityRequiredText: string;
+  private entityRequiredText: string;
 
   filteredEntities: Observable<Array<BaseData<EntityId>>>;
 
@@ -79,7 +78,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   private refresh$ = new Subject<Array<BaseData<EntityId>>>();
 
-  private propagateChange = (v: any) => { };
+  private propagateChange: (value: any) => void = () => { };
 
   @Input()
   set entityType(entityType: EntityType) {
@@ -173,7 +172,6 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
 
   constructor(private store: Store<AppState>,
-              public translate: TranslateService,
               private entityService: EntityService,
               private fb: UntypedFormBuilder) {
     this.selectEntityFormGroup = this.fb.group({
@@ -185,7 +183,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   ngOnInit() {
@@ -195,7 +193,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
         .pipe(
           debounceTime(150),
           tap(value => {
-            let modelValue;
+            let modelValue: string | EntityId;
             if (typeof value === 'string' || !value) {
               modelValue = null;
             } else {
@@ -214,9 +212,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     );
   }
 
-  ngAfterViewInit(): void {}
-
-  load(): void {
+  private load(): void {
     if (this.entityTypeValue) {
       switch (this.entityTypeValue) {
         case EntityType.ASSET:
@@ -334,7 +330,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     }
   }
 
-  getCurrentEntity(): BaseData<EntityId> | null {
+  private getCurrentEntity(): BaseData<EntityId> | null {
     const currentEntity = this.selectEntityFormGroup.get('entity').value;
     if (currentEntity && typeof currentEntity !== 'string') {
       return currentEntity as BaseData<EntityId>;
@@ -366,16 +362,17 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       }
       let entity: BaseData<EntityId> = null;
       try {
-        entity = await this.entityService.getEntity(targetEntityType, id, {ignoreLoading: true, ignoreErrors: true}).toPromise();
+        entity = await firstValueFrom(this.entityService.getEntity(targetEntityType, id, {ignoreLoading: true, ignoreErrors: true}));
       } catch (e) {
         this.propagateChange(null);
       }
       this.modelValue = entity !== null ? (this.useFullEntityId ? entity.id : entity.id.id) : null;
-      this.entityURL = getEntityDetailsPageURL(this.modelValue as string, targetEntityType);
+      this.entityURL = !entity ? '' : getEntityDetailsPageURL(entity.id.id, targetEntityType);
       this.selectEntityFormGroup.get('entity').patchValue(entity !== null ? entity : '', {emitEvent: false});
       this.entityChanged.emit(entity);
     } else {
       this.modelValue = null;
+      this.entityURL = '';
       this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
     }
     this.dirty = true;
@@ -388,13 +385,14 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     }
   }
 
-  reset() {
+  private reset() {
     this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
   }
 
-  updateView(value: string | null, entity: BaseData<EntityId> | null) {
+  private updateView(value: string | EntityId | null, entity: BaseData<EntityId> | null) {
     if (!isEqual(this.modelValue, value)) {
       this.modelValue = value;
+      this.entityURL = !entity ? '' : getEntityDetailsPageURL(entity.id.id, entity.id.entityType as EntityType);
       this.propagateChange(this.modelValue);
       this.entityChanged.emit(entity);
     }
@@ -404,7 +402,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     return entity ? entity.name : undefined;
   }
 
-  fetchEntities(searchText?: string): Observable<Array<BaseData<EntityId>>> {
+  private fetchEntities(searchText?: string): Observable<Array<BaseData<EntityId>>> {
     this.searchText = searchText;
     const targetEntityType = this.checkEntityType(this.entityTypeValue);
     return this.entityService.getEntitiesByNameFilter(targetEntityType, searchText,
@@ -439,7 +437,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     }, 0);
   }
 
-  checkEntityType(entityType: EntityType | AliasEntityType): EntityType {
+  private checkEntityType(entityType: EntityType | AliasEntityType): EntityType {
     if (entityType === AliasEntityType.CURRENT_CUSTOMER) {
       return EntityType.CUSTOMER;
     } else if (entityType === AliasEntityType.CURRENT_TENANT) {
@@ -460,5 +458,9 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   createNewEntity($event: Event) {
     $event.stopPropagation();
     this.createNew.emit();
+  }
+
+  get showEntityLink(): boolean {
+    return this.selectEntityFormGroup.get('entity').value && this.disabled && this.entityURL !== '';
   }
 }

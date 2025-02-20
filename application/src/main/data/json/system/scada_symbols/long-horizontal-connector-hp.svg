@@ -1,7 +1,7 @@
 <svg width="400" height="200" fill="none" version="1.1" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg">
  <tb:metadata><![CDATA[{
   "title": "HP Long horizontal connector",
-  "description": "Long horizontal connector",
+  "description": "Long horizontal connector with an optional directional arrow to visually indicate flow.",
   "widgetSizeX": 2,
   "widgetSizeY": 1,
   "tags": [

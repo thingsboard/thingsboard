@@ -31,7 +31,9 @@
          [required]="required"
          [matAutocomplete]="dashboardAutocomplete"
          [class.!hidden]="useDashboardLink && disabled && selectDashboardFormGroup.get('dashboard').value">
-  <a *ngIf="useDashboardLink && selectDashboardFormGroup.get('dashboard').value && disabled" aria-label="Open device profile" [routerLink]=dashboardURL>
+  <a *ngIf="useDashboardLink && selectDashboardFormGroup.get('dashboard').value && disabled"
+     [attr.aria-label]="'dashboard.open-dashboard' | translate"
+     [routerLink]=dashboardURL>
     {{ displayDashboardFn(selectDashboardFormGroup.get('dashboard').value) | customTranslate }}
   </a>
   <button *ngIf="selectDashboardFormGroup.get('dashboard').value && !disabled"

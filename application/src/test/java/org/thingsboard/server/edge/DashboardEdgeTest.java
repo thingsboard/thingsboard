@@ -16,6 +16,7 @@
 package org.thingsboard.server.edge;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.Sets;
 import com.google.protobuf.AbstractMessage;
 import org.junit.Assert;
 import org.junit.Test;
@@ -47,12 +48,14 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
     private static final int MOBILE_ORDER = 5;
     private static final String IMAGE = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4Ij48cGF0aCBkPSJNMTMuMjMgMTAuNTZWMTBjLTEuOTQgMC0zLjk5LjM5LTMuOTkgMi42NyAwIDEuMTYuNjEgMS45NSAxLjYzIDEuOTUuNzYgMCAxLjQzLS40NyAxLjg2LTEuMjIuNTItLjkzLjUtMS44LjUtMi44NG0yLjcgNi41M2MtLjE4LjE2LS40My4xNy0uNjMuMDYtLjg5LS43NC0xLjA1LTEuMDgtMS41NC0xLjc5LTEuNDcgMS41LTIuNTEgMS45NS00LjQyIDEuOTUtMi4yNSAwLTQuMDEtMS4zOS00LjAxLTQuMTcgMC0yLjE4IDEuMTctMy42NCAyLjg2LTQuMzggMS40Ni0uNjQgMy40OS0uNzYgNS4wNC0uOTNWNy41YzAtLjY2LjA1LTEuNDEtLjMzLTEuOTYtLjMyLS40OS0uOTUtLjctMS41LS43LTEuMDIgMC0xLjkzLjUzLTIuMTUgMS42MS0uMDUuMjQtLjI1LjQ4LS40Ny40OWwtMi42LS4yOGMtLjIyLS4wNS0uNDYtLjIyLS40LS41Ni42LTMuMTUgMy40NS00LjEgNi00LjEgMS4zIDAgMyAuMzUgNC4wMyAxLjMzQzE3LjExIDQuNTUgMTcgNi4xOCAxNyA3Ljk1djQuMTdjMCAxLjI1LjUgMS44MSAxIDIuNDguMTcuMjUuMjEuNTQgMCAuNzFsLTIuMDYgMS43OGgtLjAxIj48L3BhdGg+PHBhdGggZD0iTTIwLjE2IDE5LjU0QzE4IDIxLjE0IDE0LjgyIDIyIDEyLjEgMjJjLTMuODEgMC03LjI1LTEuNDEtOS44NS0zLjc2LS4yLS4xOC0uMDItLjQzLjI1LS4yOSAyLjc4IDEuNjMgNi4yNSAyLjYxIDkuODMgMi42MSAyLjQxIDAgNS4wNy0uNSA3LjUxLTEuNTMuMzctLjE2LjY2LjI0LjMyLjUxIj48L3BhdGg+PHBhdGggZD0iTTIxLjA3IDE4LjVjLS4yOC0uMzYtMS44NS0uMTctMi41Ny0uMDgtLjE5LjAyLS4yMi0uMTYtLjAzLS4zIDEuMjQtLjg4IDMuMjktLjYyIDMuNTMtLjMzLjI0LjMtLjA3IDIuMzUtMS4yNCAzLjMyLS4xOC4xNi0uMzUuMDctLjI2LS4xMS4yNi0uNjcuODUtMi4xNC41Ny0yLjV6Ij48L3BhdGg+PC9zdmc+";
 
+    private static final String DASHBOARD_TITLE = "Edge Test Dashboard";
+
     @Test
     public void testDashboards() throws Exception {
         // create dashboard and assign to edge
         edgeImitator.expectMessageAmount(2);
         Dashboard dashboard = new Dashboard();
-        dashboard.setTitle("Edge Test Dashboard");
+        dashboard.setTitle(DASHBOARD_TITLE);
         dashboard.setMobileHide(true);
         dashboard.setImage(IMAGE);
         dashboard.setMobileOrder(MOBILE_ORDER);
@@ -175,7 +178,11 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testSendDashboardToCloud() throws Exception {
-        Dashboard dashboard = buildDashboardForUplinkMsg();
+        Customer customer = new Customer();
+        customer.setTitle("Edge Customer");
+        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+
+        Dashboard dashboard = buildDashboardForUplinkMsg(savedCustomer);
 
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
         DashboardUpdateMsg.Builder dashboardUpdateMsgBuilder = DashboardUpdateMsg.newBuilder();
@@ -195,7 +202,27 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
 
         Dashboard foundDashboard = doGet("/api/dashboard/" + dashboard.getUuidId(), Dashboard.class);
         Assert.assertNotNull(foundDashboard);
-        Assert.assertEquals("Edge Test Dashboard", foundDashboard.getName());
+        Assert.assertEquals(DASHBOARD_TITLE, foundDashboard.getName());
+
+        PageData<DashboardInfo> pageData = doGetTypedWithPageLink("/api/customer/" + savedCustomer.getId().toString() + "/dashboards?",
+                new TypeReference<>() {}, new PageLink(100));
+        Assert.assertEquals(1, pageData.getData().size());
+        Assert.assertEquals(DASHBOARD_TITLE, pageData.getData().get(0).getTitle());
+
+        dashboard.setTitle(DASHBOARD_TITLE + " Updated");
+        dashboard.setAssignedCustomers(null);
+        dashboardUpdateMsgBuilder.setEntity(JacksonUtil.toString(dashboard));
+        dashboardUpdateMsgBuilder.setMsgType(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE);
+        uplinkMsgBuilder = UplinkMsg.newBuilder();
+        uplinkMsgBuilder.addDashboardUpdateMsg(dashboardUpdateMsgBuilder.build());
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
+
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        foundDashboard = doGet("/api/dashboard/" + dashboard.getUuidId(), Dashboard.class);
+        Assert.assertEquals(DASHBOARD_TITLE + " Updated", foundDashboard.getName());
     }
 
     @Test
@@ -242,11 +269,12 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
         return savedDashboard;
     }
 
-    private Dashboard buildDashboardForUplinkMsg() {
+    private Dashboard buildDashboardForUplinkMsg(Customer savedCustomer) {
         Dashboard dashboard = new Dashboard();
         dashboard.setId(new DashboardId(UUID.randomUUID()));
         dashboard.setTenantId(tenantId);
-        dashboard.setTitle("Edge Test Dashboard");
+        dashboard.setTitle(DASHBOARD_TITLE);
+        dashboard.setAssignedCustomers(Sets.newHashSet(new ShortCustomerInfo(savedCustomer.getId(), savedCustomer.getTitle(), savedCustomer.isPublic())));
         return dashboard;
     }
 

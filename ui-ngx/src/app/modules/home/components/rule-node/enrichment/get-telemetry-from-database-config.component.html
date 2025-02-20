@@ -1,0 +1,182 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="getTelemetryFromDatabaseConfigForm" class="tb-form-panel no-padding no-border">
+  <tb-string-items-list class="mat-block" editable [placeholder]="'rule-node-config.add-timeseries-key' | translate"
+                        subscriptSizing="dynamic" required
+                        [requiredText]="'rule-node-config.timeseries-keys-required' | translate"
+                        [label]="'rule-node-config.timeseries-keys' | translate" formControlName="latestTsKeyNames"
+                        [hint]="'rule-node-config.general-pattern-hint' | translate">
+    <div matHintEnd class="see-example" tb-help-popup="{{'rulenode/originator_telemetry_node_fields_templatization'}}"
+         hintMode
+         tb-help-popup-placement="right"
+         trigger-style="letter-spacing:0.25px; font-size:12px"
+         [tb-help-popup-style]="{maxWidth: '820px'}"
+         trigger-text="{{ 'rule-node-config.key-val.see-examples' | translate }}"></div>
+    <mat-icon matSuffix class="help-icon margin-8 cursor-pointer" aria-hidden="false" aria-label="help-icon" color="primary"
+              matTooltip="{{ 'rule-node-config.chip-help' | translate: { inputName: 'rule-node-config.timeseries-key' | translate } }}">help
+    </mat-icon>
+  </tb-string-items-list>
+  <div class="tb-form-panel stroked">
+    <div class="tb-form-panel-title" translate>rule-node-config.fetch-interval</div>
+    <div tb-hint-tooltip-icon="{{ 'rule-node-config.use-metadata-dynamic-interval-tooltip' | translate }}"
+         class="tb-form-row no-border no-padding">
+      <mat-slide-toggle class="mat-slide" formControlName="useMetadataIntervalPatterns">
+        {{ 'rule-node-config.use-metadata-dynamic-interval' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <div formGroupName="interval" class="flex flex-col"
+         *ngIf="getTelemetryFromDatabaseConfigForm.get('useMetadataIntervalPatterns').value === false; else intervalPattern">
+      <div class="flex flex-col gap-0 gt-sm:flex-row gt-sm:gap-4">
+        <mat-form-field class="mat-block gt-sm:max-w-50% gt-sm:flex-full">
+          <mat-label>{{ 'rule-node-config.interval-start' | translate }}</mat-label>
+          <input type="number" step="1" min="1" max="2147483647" matInput formControlName="startInterval" required>
+          <mat-error *ngIf="getTelemetryFromDatabaseConfigForm.get('interval.startInterval').hasError('required')">
+            {{ 'rule-node-config.start-interval-value-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="getTelemetryFromDatabaseConfigForm.get('interval.startInterval').hasError('min')">
+            {{ 'rule-node-config.time-value-range' | translate }}
+          </mat-error>
+          <mat-error *ngIf="getTelemetryFromDatabaseConfigForm.get('interval.startInterval').hasError('max')">
+            {{ 'rule-node-config.time-value-range' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="mat-block gt-sm:max-w-50% gt-sm:flex-full" hideRequiredMarker>
+          <mat-label>{{ 'rule-node-config.time-unit' | translate }}</mat-label>
+          <mat-select formControlName="startIntervalTimeUnit" required>
+            <mat-option *ngFor="let timeUnit of timeUnits" [value]="timeUnit">
+              {{ timeUnitsTranslationMap.get(timeUnit) | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="flex flex-col gap-0 gt-sm:flex-row gt-sm:gap-4">
+        <mat-form-field class="mat-block gt-sm:max-w-50% gt-sm:flex-full">
+          <mat-label>{{ 'rule-node-config.interval-end' | translate }}</mat-label>
+          <input type="number" step="1" min="1" max="2147483647" matInput formControlName="endInterval" required>
+          <mat-error *ngIf="getTelemetryFromDatabaseConfigForm.get('interval.endInterval').hasError('required')">
+            {{ 'rule-node-config.end-interval-value-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="getTelemetryFromDatabaseConfigForm.get('interval.endInterval').hasError('min')">
+            {{ 'rule-node-config.time-value-range' | translate }}
+          </mat-error>
+          <mat-error *ngIf="getTelemetryFromDatabaseConfigForm.get('interval.endInterval').hasError('max')">
+            {{ 'rule-node-config.time-value-range' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="mat-block gt-sm:max-w-50% gt-sm:flex-full" hideRequiredMarker>
+          <mat-label>{{ 'rule-node-config.time-unit' | translate }}</mat-label>
+          <mat-select formControlName="endIntervalTimeUnit" required>
+            <mat-option *ngFor="let timeUnit of timeUnits" [value]="timeUnit">
+              {{ timeUnitsTranslationMap.get(timeUnit) | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="description-block tb-primary-fill" [class.error]="getTelemetryFromDatabaseConfigForm.get('interval').invalid">
+        <mat-icon class="description-icon">error_outline</mat-icon>
+        <div class="description-text">
+          <ng-container *ngIf="getTelemetryFromDatabaseConfigForm.get('interval').valid; else invalidText">
+            {{ 'rule-node-config.fetch-timeseries-from-to' | translate:
+            {
+              startInterval: getTelemetryFromDatabaseConfigForm.get('interval.startInterval').value,
+              endInterval: getTelemetryFromDatabaseConfigForm.get('interval.endInterval').value,
+              startIntervalTimeUnit: getTelemetryFromDatabaseConfigForm.get('interval.startIntervalTimeUnit').value.toLowerCase(),
+              endIntervalTimeUnit: getTelemetryFromDatabaseConfigForm.get('interval.endIntervalTimeUnit').value.toLowerCase()
+            } }}
+          </ng-container>
+          <ng-template #invalidText>
+            {{ "rule-node-config.fetch-timeseries-from-to-invalid" | translate }}
+          </ng-template>
+        </div>
+      </div>
+    </div>
+    <ng-template #intervalPattern>
+      <div class="input-block flex flex-col">
+        <mat-form-field class="mat-block flex-1">
+          <mat-label>{{ 'rule-node-config.start-interval' | translate }}</mat-label>
+          <input matInput formControlName="startIntervalPattern" required>
+          <mat-error *ngIf="getTelemetryFromDatabaseConfigForm.get('startIntervalPattern').hasError('required') ||
+            getTelemetryFromDatabaseConfigForm.get('startIntervalPattern').hasError('pattern')">
+            {{ 'rule-node-config.start-interval-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="mat-block flex-1">
+          <mat-label>{{ 'rule-node-config.end-interval' | translate }}</mat-label>
+          <input matInput formControlName="endIntervalPattern" required>
+          <mat-error *ngIf="getTelemetryFromDatabaseConfigForm.get('endIntervalPattern').hasError('required') ||
+          getTelemetryFromDatabaseConfigForm.get('endIntervalPattern').hasError('pattern')">
+            {{ 'rule-node-config.end-interval-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <tb-example-hint [hintText]="'rule-node-config.metadata-dynamic-interval-hint'"
+                         popupHelpLink="rulenode/originator_telemetry_node_fields_templatization">
+        </tb-example-hint>
+      </div>
+    </ng-template>
+  </div>
+  <div class="tb-form-panel stroked">
+    <div class="tb-form-panel-title" translate>rule-node-config.fetch-strategy</div>
+    <div class="tb-form-panel no-border no-padding item-center">
+      <div class="fetch-mod-toggle">
+        <tb-toggle-select formControlName="fetchMode" appearance="fill">
+          <tb-toggle-option *ngFor="let data of headerOptions" [value]="data.value">
+            {{ data.name }}
+          </tb-toggle-option>
+        </tb-toggle-select>
+      </div>
+      <div class="tb-form-hint tb-primary-fill hint-container">
+        {{ deduplicationStrategiesHintTranslations.get(getTelemetryFromDatabaseConfigForm.get('fetchMode').value) | translate }}
+      </div>
+    </div>
+    <div *ngIf="getTelemetryFromDatabaseConfigForm.get('fetchMode').value === fetchMode.ALL">
+      <mat-form-field class="mat-block" hideRequiredMarker
+                      [subscriptSizing]="defaultPaddingEnable() ? 'fixed' : 'dynamic'">
+        <mat-label>{{ 'aggregation.function' | translate }}</mat-label>
+        <mat-select formControlName="aggregation" required>
+          <mat-option *ngFor="let aggregation of aggregations" [value]="aggregation">
+            {{ aggregationTypesTranslations.get(aggregationTypes[aggregation]) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <div *ngIf="getTelemetryFromDatabaseConfigForm.get('aggregation').value === aggregationTypes.NONE">
+        <mat-form-field class="mat-block" hideRequiredMarker>
+          <mat-label> {{ "rule-node-config.order-by-timestamp" | translate }} </mat-label>
+          <mat-select formControlName="orderBy" required>
+            <mat-option *ngFor="let order of samplingOrders" [value]="order">
+              {{ samplingOrdersTranslate.get(order) | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field class="mat-block">
+          <mat-label>{{ "rule-node-config.limit" | translate }}</mat-label>
+          <input type="number" min="2" max="1000" step="1" matInput formControlName="limit" required>
+          <mat-hint>{{ "rule-node-config.limit-hint" | translate }}</mat-hint>
+          <mat-error *ngIf="getTelemetryFromDatabaseConfigForm.get('limit').hasError('required')">
+            {{ 'rule-node-config.limit-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="getTelemetryFromDatabaseConfigForm.get('limit').hasError('min')">
+            {{ 'rule-node-config.limit-range' | translate }}
+          </mat-error>
+          <mat-error *ngIf="getTelemetryFromDatabaseConfigForm.get('limit').hasError('max')">
+            {{ 'rule-node-config.limit-range' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+  </div>
+</section>
