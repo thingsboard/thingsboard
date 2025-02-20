@@ -58,7 +58,7 @@ public class TopicPartitionInfo {
     }
 
     public TopicPartitionInfo newByTopic(String topic) {
-        return new TopicPartitionInfo(topic, this.tenantId, this.partition, this.myPartition);
+        return new TopicPartitionInfo(topic, this.tenantId, this.partition, this.useInternalPartition, this.myPartition);
     }
 
     public String getTopic() {

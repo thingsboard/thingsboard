@@ -92,12 +92,11 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
     @Autowired @Lazy
     private EdqsStateService stateService;
 
-    @Getter
-    private PartitionedQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> eventsConsumer;
+    private PartitionedQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> eventConsumer;
     private TbQueueResponseTemplate<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<FromEdqsMsg>> responseTemplate;
 
     private ExecutorService consumersExecutor;
-    private ExecutorService mgmtExecutor;
+    private ExecutorService taskExecutor;
     private ScheduledExecutorService scheduler;
     private ListeningExecutorService requestExecutor;
     private ExecutorService repartitionExecutor;
@@ -112,7 +111,7 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
     @PostConstruct
     private void init() {
         consumersExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("edqs-consumer"));
-        mgmtExecutor = ThingsBoardExecutors.newWorkStealingPool(4, "edqs-consumer-mgmt");
+        taskExecutor = ThingsBoardExecutors.newWorkStealingPool(4, "edqs-consumer-task-executor");
         scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("edqs-scheduler");
         requestExecutor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(12, "edqs-requests"));
         repartitionExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("edqs-repartition"));
@@ -125,7 +124,7 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
             }
         };
 
-        eventsConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<ToEdqsMsg>>create()
+        eventConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<ToEdqsMsg>>create()
                 .queueKey(new QueueKey(ServiceType.EDQS, EdqsQueue.EVENTS.getTopic()))
                 .topic(EdqsQueue.EVENTS.getTopic())
                 .pollInterval(config.getPollInterval())
@@ -146,10 +145,12 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
                 })
                 .consumerCreator((config, partitionId) -> queueFactory.createEdqsMsgConsumer(EdqsQueue.EVENTS))
                 .consumerExecutor(consumersExecutor)
-                .taskExecutor(mgmtExecutor)
+                .taskExecutor(taskExecutor)
                 .scheduler(scheduler)
                 .uncaughtErrorHandler(errorHandler)
                 .build();
+        stateService.init(eventConsumer);
+
         responseTemplate = queueFactory.createEdqsResponseTemplate();
     }
 
@@ -171,7 +172,7 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
 
             stateService.process(withTopic(partitions, EdqsQueue.STATE.getTopic()));
             // eventsConsumer's partitions are updated by stateService
-            responseTemplate.subscribe(withTopic(partitions, config.getRequestsTopic()));
+            responseTemplate.subscribe(withTopic(partitions, config.getRequestsTopic())); // FIXME: we subscribe to partitions before we are ready. implement consumer-per-partition version for request template
 
             Set<TopicPartitionInfo> oldPartitions = event.getOldPartitions().get(new QueueKey(ServiceType.EDQS));
             if (CollectionsUtil.isNotEmpty(oldPartitions)) {
@@ -280,12 +281,13 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
 
     @PreDestroy
     public void destroy() throws InterruptedException {
-        eventsConsumer.stop();
-        eventsConsumer.awaitStop();
+        eventConsumer.stop();
+        eventConsumer.awaitStop();
         responseTemplate.stop();
+        stateService.stop();
 
         consumersExecutor.shutdownNow();
-        mgmtExecutor.shutdownNow();
+        taskExecutor.shutdownNow();
         scheduler.shutdownNow();
         requestExecutor.shutdownNow();
         repartitionExecutor.shutdownNow();
