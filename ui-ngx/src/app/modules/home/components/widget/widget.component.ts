@@ -1205,6 +1205,9 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
       case WidgetMobileActionType.takeScreenshot:
         argsObservable = of([]);
         break;
+      case WidgetMobileActionType.provisioningDevice:
+        argsObservable = of([mobileAction.provisionType]);
+        break;
       case WidgetMobileActionType.mapDirection:
       case WidgetMobileActionType.mapLocation:
         argsObservable = compileTbFunction(this.http, mobileAction.getLocationFunction, '$event', 'widgetContext', 'entityId',
@@ -1281,6 +1284,26 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
                             next: (compiled) => {
                               try {
                                 compiled.execute(imageUrl, $event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
+                              } catch (e) {
+                                console.error(e);
+                              }
+                            },
+                            error: (err) => {
+                              console.error(err);
+                            }
+                          }
+                        );
+                      }
+                      break;
+                    case WidgetMobileActionType.provisioningDevice:
+                      const deviceName = actionResult.device.name;
+                      if (isNotEmptyTbFunction(mobileAction.handleProvisionSuccessFunction)) {
+                        compileTbFunction(this.http, mobileAction.handleProvisionSuccessFunction, 'deviceName', '$event', 'widgetContext', 'entityId',
+                          'entityName', 'additionalParams', 'entityLabel').subscribe(
+                          {
+                            next: (compiled) => {
+                              try {
+                                compiled.execute(deviceName, $event, this.widgetContext, entityId, entityName, additionalParams, entityLabel);
                               } catch (e) {
                                 console.error(e);
                               }
