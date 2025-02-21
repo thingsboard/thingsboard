@@ -220,7 +220,8 @@ public class ThingsBoardDbInstaller {
             dockerCompose.withCommand("up -d postgres" + additionalServices);
             dockerCompose.invokeCompose();
 
-            dockerCompose.withCommand("run --no-deps --rm -e INSTALL_TB=true -e LOAD_DEMO=true tb-core1");
+            dockerCompose.withCommand("run --no-deps --rm -e INSTALL_TB=true -e LOAD_DEMO=true -e TB_EDQS_SYNC_ENABLED=false " +
+                    "tb-core1");
             dockerCompose.invokeCompose();
 
         } finally {

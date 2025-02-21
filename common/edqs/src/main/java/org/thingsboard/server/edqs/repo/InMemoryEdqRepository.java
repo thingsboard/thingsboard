@@ -61,14 +61,7 @@ public class InMemoryEdqRepository implements EdqRepository {
     @Override
     public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query, boolean ignorePermissionCheck) {
         long startNs = System.nanoTime();
-        long result = 0;
-        if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
-            for (TenantRepo repo : repos.values()) {
-                result += repo.countEntitiesByQuery(customerId, query, ignorePermissionCheck);
-            }
-        } else {
-            result = get(tenantId).countEntitiesByQuery(customerId, query, ignorePermissionCheck);
-        }
+        long result = get(tenantId).countEntitiesByQuery(customerId, query, ignorePermissionCheck);
         double timingMs = (double) (System.nanoTime() - startNs) / 1000_000;
         log.info("countEntitiesByQuery: {} ms", timingMs);
         return result;

@@ -60,6 +60,11 @@ queue:
     poll_interval: "${TB_EDQS_POLL_INTERVAL_MS:125}"
     max_pending_requests: "${TB_EDQS_MAX_PENDING_REQUESTS:10000}"
     max_request_timeout: "${TB_EDQS_MAX_REQUEST_TIMEOUT:10000}"
+    stats:
+      # Enable/disable statistics for EDQS service
+      enabled: "${TB_EDQS_STATS_ENABLED:true}"
+      # Statistics printing interval for EDQS
+      print-interval-ms: "${TB_EDQS_STATS_PRINT_INTERVAL_MS:60000}"
   kafka:
     # Kafka Bootstrap nodes in "host:port" format
     bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"

@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.query;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ObjectType;
