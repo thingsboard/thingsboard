@@ -21,6 +21,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class TopicPartitionInfo {
 
@@ -73,6 +75,10 @@ public class TopicPartitionInfo {
 
     public TopicPartitionInfo withTopic(String topic) {
         return new TopicPartitionInfo(topic, this.tenantId, this.partition, this.useInternalPartition, this.myPartition);
+    }
+
+    public static Set<TopicPartitionInfo> withTopic(Set<TopicPartitionInfo> partitions, String topic) {
+        return partitions.stream().map(tpi -> tpi.withTopic(topic)).collect(Collectors.toSet());
     }
 
     public TopicPartitionInfo withUseInternalPartition(boolean useInternalPartition) {

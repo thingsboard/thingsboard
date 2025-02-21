@@ -17,7 +17,8 @@ package org.thingsboard.server.queue.edqs;
 
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.ThingsBoardExecutors;
-import org.thingsboard.server.common.stats.DummyMessagesStats;
+import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.common.stats.StatsType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.FromEdqsMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsMsg;
@@ -49,12 +50,14 @@ public class KafkaEdqsQueueFactory implements EdqsQueueFactory {
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbKafkaConsumerStatsService consumerStatsService;
     private final TopicService topicService;
+    private final StatsFactory statsFactory;
 
     private final AtomicInteger consumerCounter = new AtomicInteger();
 
     public KafkaEdqsQueueFactory(TbKafkaSettings kafkaSettings, TbKafkaTopicConfigs topicConfigs,
                                  EdqsConfig edqsConfig, TbServiceInfoProvider serviceInfoProvider,
-                                 TbKafkaConsumerStatsService consumerStatsService, TopicService topicService) {
+                                 TbKafkaConsumerStatsService consumerStatsService, TopicService topicService,
+                                 StatsFactory statsFactory) {
         this.edqsEventsAdmin = new TbKafkaAdmin(kafkaSettings, topicConfigs.getEdqsEventsConfigs());
         this.edqsRequestsAdmin = new TbKafkaAdmin(kafkaSettings, topicConfigs.getEdqsRequestsConfigs());
         this.edqsStateAdmin = new TbKafkaAdmin(kafkaSettings, topicConfigs.getEdqsStateConfigs());
@@ -63,6 +66,7 @@ public class KafkaEdqsQueueFactory implements EdqsQueueFactory {
         this.serviceInfoProvider = serviceInfoProvider;
         this.consumerStatsService = consumerStatsService;
         this.topicService = topicService;
+        this.statsFactory = statsFactory;
     }
 
     @Override
@@ -117,7 +121,7 @@ public class KafkaEdqsQueueFactory implements EdqsQueueFactory {
                 .maxPendingRequests(edqsConfig.getMaxPendingRequests())
                 .requestTimeout(edqsConfig.getMaxRequestTimeout())
                 .pollInterval(edqsConfig.getPollInterval())
-                .stats(new DummyMessagesStats()) // FIXME
+                .stats(statsFactory.createMessagesStats(StatsType.EDQS.getName()))
                 .executor(ThingsBoardExecutors.newWorkStealingPool(5, "edqs"))
                 .build();
     }

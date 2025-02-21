@@ -18,7 +18,8 @@ package org.thingsboard.server.queue.edqs;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.ThingsBoardExecutors;
-import org.thingsboard.server.common.stats.DummyMessagesStats;
+import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.common.stats.StatsType;
 import org.thingsboard.server.gen.transport.TransportProtos.FromEdqsMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
@@ -37,6 +38,7 @@ public class InMemoryEdqsQueueFactory implements EdqsQueueFactory {
 
     private final InMemoryStorage storage;
     private final EdqsConfig edqsConfig;
+    private final StatsFactory statsFactory;
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToEdqsMsg>> createEdqsMsgConsumer(EdqsQueue queue) {
@@ -69,7 +71,7 @@ public class InMemoryEdqsQueueFactory implements EdqsQueueFactory {
                 .maxPendingRequests(edqsConfig.getMaxPendingRequests())
                 .requestTimeout(edqsConfig.getMaxRequestTimeout())
                 .pollInterval(edqsConfig.getPollInterval())
-                .stats(new DummyMessagesStats()) // FIXME
+                .stats(statsFactory.createMessagesStats(StatsType.EDQS.getName()))
                 .executor(ThingsBoardExecutors.newWorkStealingPool(5, "edqs"))
                 .build();
     }
