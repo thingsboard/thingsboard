@@ -27,7 +27,9 @@ import {
   ResourceInfo,
   ResourceSubType,
   ResourceSubTypeTranslationMap,
-  ResourceType
+  ResourceType,
+  ResourceInfoWithReferences,
+  toResourceDeleteResult
 } from '@shared/models/resource.models';
 import { EntityType, entityTypeResources } from '@shared/models/entity-type.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
@@ -42,8 +44,18 @@ import { PageLink } from '@shared/models/page/page-link';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { JsLibraryTableHeaderComponent } from '@home/pages/admin/resource/js-library-table-header.component';
 import { JsResourceComponent } from '@home/pages/admin/resource/js-resource.component';
-import { switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { ResourceTabsComponent } from '@home/pages/admin/resource/resource-tabs.component';
+import { forkJoin, of } from "rxjs";
+import { parseHttpErrorMessage } from "@core/utils";
+import { ActionNotificationShow } from "@core/notification/notification.actions";
+import { MatDialog } from "@angular/material/dialog";
+import { DialogService } from "@core/services/dialog.service";
+import {
+  ResourcesInUseDialogComponent,
+  ResourcesInUseDialogData
+} from "@shared/components/resource/resources-in-use-dialog.component";
+import { ResourcesDatasource } from "@home/pages/admin/resource/resources-datasource";
 
 @Injectable()
 export class JsLibraryTableConfigResolver  {
@@ -53,6 +65,8 @@ export class JsLibraryTableConfigResolver  {
   constructor(private store: Store<AppState>,
               private resourceService: ResourceService,
               private translate: TranslateService,
+              private dialog: MatDialog,
+              private dialogService: DialogService,
               private router: Router,
               private datePipe: DatePipe) {
 
@@ -87,14 +101,23 @@ export class JsLibraryTableConfigResolver  {
         icon: 'file_download',
         isEnabled: () => true,
         onAction: ($event, entity) => this.downloadResource($event, entity)
-      }
+      },
+      {
+        name: this.translate.instant('javascript.delete'),
+        icon: 'delete',
+        isEnabled: () => true,
+        onAction: ($event, entity) => this.deleteResource($event, entity)
+      },
     );
 
-    this.config.deleteEntityTitle = resource => this.translate.instant('javascript.delete-javascript-resource-title',
-      { resourceTitle: resource.title });
-    this.config.deleteEntityContent = () => this.translate.instant('javascript.delete-javascript-resource-text');
-    this.config.deleteEntitiesTitle = count => this.translate.instant('javascript.delete-javascript-resources-title', {count});
-    this.config.deleteEntitiesContent = () => this.translate.instant('javascript.delete-javascript-resources-text');
+    this.config.groupActionDescriptors = [{
+      name: this.translate.instant('action.delete'),
+      icon: 'delete',
+      isEnabled: true,
+      onAction: ($event, entities) => this.deleteResources($event, entities)
+    }];
+
+    this.config.entitiesDeleteEnabled = false;
 
     this.config.entitiesFetchFunction = pageLink => this.resourceService.getResources(pageLink, ResourceType.JS_MODULE, this.config.componentsData.resourceSubType);
     this.config.loadEntity = id => {
@@ -115,7 +138,6 @@ export class JsLibraryTableConfigResolver  {
       }
       return saveObservable;
     };
-    this.config.deleteEntity = id => this.resourceService.deleteResource(id.id);
 
     this.config.onEntityAction = action => this.onResourceAction(action);
   }
@@ -168,6 +190,134 @@ export class JsLibraryTableConfigResolver  {
       return resource && resource.tenantId && resource.tenantId.id !== NULL_UUID;
     } else {
       return authority === Authority.SYS_ADMIN;
+    }
+  }
+
+  private deleteResource($event: Event, resource: ResourceInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialogService.confirm(
+      this.translate.instant('javascript.delete-javascript-resource-title', { resourceTitle: resource.title }),
+      this.translate.instant('javascript.delete-javascript-resource-text'),
+      this.translate.instant('action.no'),
+      this.translate.instant('action.yes'),
+      true
+    ).subscribe((result) => {
+      if (result) {
+        this.resourceService.deleteResource(resource.id.id, false, {ignoreErrors: true}).pipe(
+          map(() => toResourceDeleteResult(resource)),
+          catchError((err) => of(toResourceDeleteResult(resource, err)))
+        ).subscribe(
+          (deleteResult) => {
+            if (deleteResult.success) {
+              this.config.updateData();
+            } else if (deleteResult.resourceIsReferencedError) {
+              const resources: ResourceInfoWithReferences[] = [{...resource, ...{references: deleteResult.references}}];
+              const data = {
+                multiple: false,
+                resources,
+                configuration: {
+                  title: 'javascript.javascript-resource-is-in-use',
+                  message: this.translate.instant('javascript.javascript-resource-is-in-use-text', {title: resources[0].title}),
+                  deleteText: 'javascript.delete-javascript-resource-in-use-text',
+                  selectedText: 'javascript.selected-javascript-resources',
+                  columns: ['select', 'title', 'references']
+                }
+              };
+              this.dialog.open<ResourcesInUseDialogComponent, ResourcesInUseDialogData,
+                ResourceInfo[]>(ResourcesInUseDialogComponent, {
+                 disableClose: true,
+                  panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+                  data
+              }).afterClosed().subscribe((resources) => {
+                if (resources) {
+                  this.resourceService.deleteResource(resource.id.id, true).subscribe(
+                    () => {
+                      this.config.updateData();
+                    }
+                  );
+                }
+              });
+            } else {
+              const errorMessageWithTimeout = parseHttpErrorMessage(deleteResult.error, this.translate);
+              setTimeout(() => {
+                this.store.dispatch(new ActionNotificationShow({message: errorMessageWithTimeout.message, type: 'error'}));
+              }, errorMessageWithTimeout.timeout);
+            }
+          }
+        );
+      }
+    });
+  }
+
+  private deleteResources($event: Event, resources: ResourceInfo[]) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    if (resources && resources.length) {
+      const title = this.translate.instant('javascript.delete-javascript-resources-title', {count: resources.length});
+      const content = this.translate.instant('javascript.delete-javascript-resources-text');
+      this.dialogService.confirm(title, content,
+        this.translate.instant('action.no'),
+        this.translate.instant('action.yes')).subscribe((result) => {
+        if (result) {
+          const tasks = resources.map((resource) =>
+            this.resourceService.deleteResource(resource.id.id, false, {ignoreErrors: true}).pipe(
+              map(() => toResourceDeleteResult(resource)),
+              catchError((err) => of(toResourceDeleteResult(resource, err)))
+            )
+          );
+          forkJoin(tasks).subscribe(
+            (deleteResults) => {
+              const anySuccess = deleteResults.some(res => res.success);
+              const referenceErrors = deleteResults.filter(res => res.resourceIsReferencedError);
+              const otherError = deleteResults.find(res => !res.success);
+              if (anySuccess) {
+                this.config.updateData();
+              }
+              if (referenceErrors?.length) {
+                const resourcesWithReferences: ResourceInfoWithReferences[] =
+                  referenceErrors.map(ref => ({...ref.resource, ...{references: ref.references}}));
+                const data = {
+                  multiple: true,
+                  resources: resourcesWithReferences,
+                  configuration: {
+                    title: 'javascript.javascript-resources-are-in-use',
+                    message: this.translate.instant('javascript.javascript-resources-are-in-use-text'),
+                    deleteText: 'javascript.delete-javascript-resource-in-use-text',
+                    selectedText: 'javascript.selected-javascript-resources',
+                    datasource: new ResourcesDatasource(this.resourceService, resourcesWithReferences, entity => true),
+                    columns: ['select', 'title', 'references']
+                  }
+                };
+                this.dialog.open<ResourcesInUseDialogComponent, ResourcesInUseDialogData,
+                  ResourceInfo[]>(ResourcesInUseDialogComponent, {
+                    disableClose: true,
+                    panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+                    data
+                }).afterClosed().subscribe((forceDeleteResources) => {
+                  if (forceDeleteResources && forceDeleteResources.length) {
+                    const forceDeleteTasks = forceDeleteResources.map((resource) =>
+                      this.resourceService.deleteResource(resource.id.id, true)
+                    );
+                    forkJoin(forceDeleteTasks).subscribe(
+                      () => {
+                        this.config.updateData();
+                      }
+                    );
+                  }
+                });
+              } else if (otherError) {
+                const errorMessageWithTimeout = parseHttpErrorMessage(otherError.error, this.translate);
+                setTimeout(() => {
+                  this.store.dispatch(new ActionNotificationShow({message: errorMessageWithTimeout.message, type: 'error'}));
+                }, errorMessageWithTimeout.timeout);
+              }
+            }
+          );
+        }
+      });
     }
   }
 }
