@@ -193,7 +193,7 @@
                   </ng-template>
                   <ng-template [ngSwitchCase]="'entityChips'">
                     <tb-entity-chips [entity]="entity" [key]="column.key"
-                                     [detailsPagePrefixUrl]="column.entityURL(entity)"></tb-entity-chips>
+                                     [detailsPagePrefixUrl]="column.entityURL ? column.entityURL(entity) : ''"></tb-entity-chips>
                   </ng-template>
                   <ng-template #defaultContent ngSwitchDefault>
                     <span [innerHTML]="cellContent(entity, column, row)"></span>
