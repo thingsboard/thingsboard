@@ -20,7 +20,6 @@ import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edqs.fields.UserFields;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -155,11 +154,6 @@ public class JpaUserDao extends JpaAbstractDao<UserEntity, User> implements User
     @Override
     public EntityType getEntityType() {
         return EntityType.USER;
-    }
-
-    @Override
-    public ObjectType getType() {
-        return ObjectType.USER;
     }
 
 }

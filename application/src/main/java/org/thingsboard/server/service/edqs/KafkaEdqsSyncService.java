@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edqs;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.queue.edqs.EdqsQueue;
@@ -25,7 +24,6 @@ import org.thingsboard.server.queue.kafka.TbKafkaSettings;
 import java.util.Collections;
 
 @Service
-@RequiredArgsConstructor
 @ConditionalOnExpression("'${queue.edqs.sync.enabled:true}' == 'true' && '${queue.type:null}' == 'kafka'")
 public class KafkaEdqsSyncService extends EdqsSyncService {
 

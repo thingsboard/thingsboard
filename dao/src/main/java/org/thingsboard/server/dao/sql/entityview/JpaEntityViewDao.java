@@ -25,7 +25,6 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
-import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.fields.EntityViewFields;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -234,11 +233,6 @@ public class JpaEntityViewDao extends JpaAbstractDao<EntityViewEntity, EntityVie
     @Override
     public EntityType getEntityType() {
         return EntityType.ENTITY_VIEW;
-    }
-
-    @Override
-    public ObjectType getType() {
-        return ObjectType.ENTITY_VIEW;
     }
 
 }

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao;
 
-import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -27,10 +26,6 @@ public interface TenantEntityDao<T> {
     }
 
     default PageData<T> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
-        throw new UnsupportedOperationException();
-    }
-
-    default ObjectType getType() {
         throw new UnsupportedOperationException();
     }
 

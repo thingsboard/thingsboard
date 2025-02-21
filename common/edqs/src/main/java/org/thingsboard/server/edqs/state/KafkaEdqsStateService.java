@@ -33,6 +33,7 @@ import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerMana
 import org.thingsboard.server.queue.common.consumer.QueueConsumerManager;
 import org.thingsboard.server.queue.common.consumer.QueueStateService;
 import org.thingsboard.server.queue.discovery.QueueKey;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.edqs.EdqsConfig;
 import org.thingsboard.server.queue.edqs.EdqsQueue;
 import org.thingsboard.server.queue.edqs.EdqsQueueFactory;
@@ -52,6 +53,7 @@ public class KafkaEdqsStateService implements EdqsStateService {
     private final EdqsPartitionService partitionService;
     private final EdqsQueueFactory queueFactory;
     private final EdqsProcessor edqsProcessor;
+    private final TopicService topicService;
 
     private PartitionedQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> stateConsumer;
     private QueueStateService<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<ToEdqsMsg>> queueStateService;
@@ -75,7 +77,6 @@ public class KafkaEdqsStateService implements EdqsStateService {
                         }
                         try {
                             ToEdqsMsg msg = queueMsg.getValue();
-                            log.trace("Processing message: {}", msg);
                             edqsProcessor.process(msg, EdqsQueue.STATE);
                             if (stateReadCount.incrementAndGet() % 100000 == 0) {
                                 log.info("[state] Processed {} msgs", stateReadCount.get());
@@ -140,6 +141,7 @@ public class KafkaEdqsStateService implements EdqsStateService {
         stateProducer = EdqsProducer.builder()
                 .queue(EdqsQueue.STATE)
                 .partitionService(partitionService)
+                .topicService(topicService)
                 .producer(queueFactory.createEdqsMsgProducer(EdqsQueue.STATE))
                 .build();
     }

@@ -13,15 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.alarm;
+package org.thingsboard.server.edqs.util;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.springframework.util.ConcurrentReferenceHashMap;
 
-@Data
-public class AlarmType {
+import java.util.concurrent.ConcurrentMap;
 
-    private TenantId tenantId;
-    private String type;
+public class TbStringPool {
+
+    private static final ConcurrentMap<String, String> pool = new ConcurrentReferenceHashMap<>();
+
+    public static String intern(String data) {
+        if (data == null) {
+            return null;
+        }
+        return pool.computeIfAbsent(data, str -> str);
+    }
+
+    public static int size(){
+        return pool.size();
+    }
 
 }

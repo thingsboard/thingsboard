@@ -57,6 +57,7 @@ import org.thingsboard.server.edqs.query.processor.EntityQueryProcessor;
 import org.thingsboard.server.edqs.query.processor.EntityQueryProcessorFactory;
 import org.thingsboard.server.edqs.stats.EdqsStatsService;
 import org.thingsboard.server.edqs.util.RepositoryUtils;
+import org.thingsboard.server.edqs.util.TbStringPool;
 
 import java.util.ArrayList;
 import java.util.Collections;

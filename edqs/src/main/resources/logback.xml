@@ -28,7 +28,6 @@
     <logger name="org.thingsboard.server" level="INFO"/>
     <logger name="org.apache.kafka.common.utils.AppInfoParser" level="WARN"/>
     <logger name="org.apache.kafka.clients" level="WARN"/>
-    <!--    <logger name="org.thingsboard.server.service.queue" level="TRACE" />-->
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>

@@ -471,7 +471,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
         var responseConsumer = TbKafkaConsumerTemplate.<TbProtoQueueMsg<FromEdqsMsg>>builder()
                 .settings(kafkaSettings)
                 .topic(topicService.buildTopicName(edqsConfig.getResponsesTopic() + "." + serviceInfoProvider.getServiceId()))
-                .clientId(topicService.buildTopicName("tb-core-edqs-response-consumer-" + serviceInfoProvider.getServiceId()))
+                .clientId("tb-core-edqs-response-consumer-" + serviceInfoProvider.getServiceId())
                 .groupId(topicService.buildTopicName("tb-core-edqs-response-consumer-" + serviceInfoProvider.getServiceId()))
                 .decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), FromEdqsMsg.parseFrom(msg.getData()), msg.getHeaders()))
                 .admin(edqsRequestsAdmin)

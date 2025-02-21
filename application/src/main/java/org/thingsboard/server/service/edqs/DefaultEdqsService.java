@@ -68,6 +68,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsMsg;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.HashPartitionService;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.edqs.EdqsQueue;
 import org.thingsboard.server.queue.environment.DistributedLock;
 import org.thingsboard.server.queue.environment.DistributedLockService;
@@ -90,6 +91,7 @@ public class DefaultEdqsService implements EdqsService {
     private final DistributedLockService distributedLockService;
     private final AttributesService attributesService;
     private final EdqsPartitionService edqsPartitionService;
+    private final TopicService topicService;
     @Autowired @Lazy
     private TbClusterService clusterService;
     @Autowired @Lazy
@@ -109,6 +111,7 @@ public class DefaultEdqsService implements EdqsService {
         eventsProducer = EdqsProducer.builder()
                 .queue(EdqsQueue.EVENTS)
                 .partitionService(edqsPartitionService)
+                .topicService(topicService)
                 .producer(queueFactory.createEdqsMsgProducer(EdqsQueue.EVENTS))
                 .build();
         if (apiEnabled) {

@@ -42,7 +42,6 @@ import org.thingsboard.server.edqs.data.dp.DoubleDataPoint;
 import org.thingsboard.server.edqs.data.dp.JsonDataPoint;
 import org.thingsboard.server.edqs.data.dp.LongDataPoint;
 import org.thingsboard.server.edqs.data.dp.StringDataPoint;
-import org.thingsboard.server.edqs.repo.TbBytePool;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DataPointProto;
 import org.xerial.snappy.Snappy;
@@ -161,11 +160,11 @@ public class EdqsConverter {
         } else if (proto.hasStringV()) {
             return new StringDataPoint(ts, proto.getStringV());
         } else if (proto.hasCompressedStringV()) {
-            return new CompressedStringDataPoint(ts, TbBytePool.intern(proto.getCompressedStringV().toByteArray()));
+            return new CompressedStringDataPoint(ts, proto.getCompressedStringV().toByteArray());
         } else if (proto.hasJsonV()) {
             return new JsonDataPoint(ts, proto.getJsonV());
         } else if (proto.hasCompressedJsonV()) {
-            return new CompressedJsonDataPoint(ts, TbBytePool.intern(proto.getCompressedJsonV().toByteArray()));
+            return new CompressedJsonDataPoint(ts, proto.getCompressedJsonV().toByteArray());
         } else {
             throw new IllegalArgumentException("Unsupported data point proto: " + proto);
         }

@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
@@ -145,11 +144,6 @@ public class JpaTbResourceDao extends JpaAbstractDao<TbResourceEntity, TbResourc
     @Override
     public EntityType getEntityType() {
         return EntityType.TB_RESOURCE;
-    }
-
-    @Override
-    public ObjectType getType() {
-        return ObjectType.RESOURCE;
     }
 
 }

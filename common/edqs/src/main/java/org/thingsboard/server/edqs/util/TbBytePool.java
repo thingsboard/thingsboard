@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.edqs.repo;
+package org.thingsboard.server.edqs.util;
 
 import com.google.common.hash.Hashing;
 import org.springframework.util.ConcurrentReferenceHashMap;

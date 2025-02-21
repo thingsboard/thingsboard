@@ -20,7 +20,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.fields.ApiUsageStateFields;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -91,11 +90,6 @@ public class JpaApiUsageStateDao extends JpaAbstractDao<ApiUsageStateEntity, Api
     @Override
     public EntityType getEntityType() {
         return EntityType.API_USAGE_STATE;
-    }
-
-    @Override
-    public ObjectType getType() {
-        return ObjectType.API_USAGE_STATE;
     }
 
 }

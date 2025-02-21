@@ -39,7 +39,7 @@ import java.util.function.Predicate;
 @AllArgsConstructor
 @Service
 @Slf4j
-public class InMemoryEdqRepository implements EdqRepository {
+public class DefaultEdqsRepository implements EdqsRepository {
 
     private final static ConcurrentMap<TenantId, TenantRepo> repos = new ConcurrentHashMap<>();
     private final Optional<EdqsStatsService> statsService;
@@ -51,7 +51,7 @@ public class InMemoryEdqRepository implements EdqRepository {
     @Override
     public void processEvent(EdqsEvent event) {
         if (event.getEventType() == EdqsEventType.DELETED && event.getObjectType() == ObjectType.TENANT) {
-            log.info("Deleting tenant repo: {}", event);
+            log.info("Tenant {} deleted", event.getTenantId());
             repos.remove(event.getTenantId());
         } else {
             get(event.getTenantId()).processEvent(event);
@@ -62,25 +62,25 @@ public class InMemoryEdqRepository implements EdqRepository {
     public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query, boolean ignorePermissionCheck) {
         long startNs = System.nanoTime();
         long result = 0;
-        if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
+        if (!tenantId.isSysTenantId()) {
+            result = get(tenantId).countEntitiesByQuery(customerId, query, ignorePermissionCheck);
+        } else {
             for (TenantRepo repo : repos.values()) {
                 result += repo.countEntitiesByQuery(customerId, query, ignorePermissionCheck);
             }
-        } else {
-            result = get(tenantId).countEntitiesByQuery(customerId, query, ignorePermissionCheck);
         }
         double timingMs = (double) (System.nanoTime() - startNs) / 1000_000;
-        log.info("countEntitiesByQuery: {} ms", timingMs);
+        log.info("countEntitiesByQuery done in {} ms", timingMs);
         return result;
     }
 
     @Override
     public PageData<QueryResult> findEntityDataByQuery(TenantId tenantId, CustomerId customerId,
-                                                        EntityDataQuery query, boolean ignorePermissionCheck) {
+                                                       EntityDataQuery query, boolean ignorePermissionCheck) {
         long startNs = System.nanoTime();
         var result = get(tenantId).findEntityDataByQuery(customerId, query, ignorePermissionCheck);
         double timingMs = (double) (System.nanoTime() - startNs) / 1000_000;
-        log.info("findEntityDataByQuery: {} ms", timingMs);
+        log.info("findEntityDataByQuery done in {} ms", timingMs);
         return result;
     }
 

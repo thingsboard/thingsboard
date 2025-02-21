@@ -18,9 +18,7 @@ package org.thingsboard.server.dao.entity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.TenantEntityDao;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -31,18 +29,12 @@ import java.util.Map;
 @SuppressWarnings({"unchecked"})
 public class EntityDaoRegistry {
 
-    private final Map<ObjectType, TenantEntityDao<?>> tenantEntityDaos = new EnumMap<>(ObjectType.class);
     private final Map<EntityType, Dao<?>> entityDaos = new EnumMap<>(EntityType.class);
 
-    private EntityDaoRegistry(List<Dao<?>> entityDaos, List<TenantEntityDao<?>> tenantEntityDaos) {
+    private EntityDaoRegistry(List<Dao<?>> entityDaos) {
         entityDaos.forEach(dao -> {
             if (dao.getEntityType() != null) {
                 this.entityDaos.put(dao.getEntityType(), dao);
-            }
-        });
-        tenantEntityDaos.forEach(dao -> {
-            if (dao.getType() != null) {
-                this.tenantEntityDaos.put(dao.getType(), dao);
             }
         });
     }
@@ -53,14 +45,6 @@ public class EntityDaoRegistry {
             throw new IllegalArgumentException("Missing dao for entity type " + entityType);
         }
         return dao;
-    }
-
-    public <T> TenantEntityDao<T> getTenantEntityDao(ObjectType objectType) {
-        TenantEntityDao<?> dao = tenantEntityDaos.get(objectType);
-        if (dao == null) {
-            throw new IllegalArgumentException("Missing tenant entity dao for entity type " + objectType);
-        }
-        return (TenantEntityDao<T>) dao;
     }
 
 }

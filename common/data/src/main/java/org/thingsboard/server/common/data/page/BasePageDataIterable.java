@@ -23,7 +23,6 @@ import java.util.NoSuchElementException;
 public abstract class BasePageDataIterable<T> implements Iterable<T>, Iterator<T> {
 
     private final int fetchSize;
-    private SortOrder sortOrder;
 
     private List<T> currentItems;
     private int currentIdx;
@@ -36,12 +35,6 @@ public abstract class BasePageDataIterable<T> implements Iterable<T>, Iterator<T
         this.fetchSize = fetchSize;
     }
 
-    public BasePageDataIterable(int fetchSize, SortOrder sortOrder) {
-        super();
-        this.fetchSize = fetchSize;
-        this.sortOrder = sortOrder;
-    }
-
     @Override
     public Iterator<T> iterator() {
         return this;
@@ -50,7 +43,7 @@ public abstract class BasePageDataIterable<T> implements Iterable<T>, Iterator<T
     @Override
     public boolean hasNext() {
         if (!initialized) {
-            fetch(new PageLink(fetchSize, 0, null, sortOrder));
+            fetch(new PageLink(fetchSize));
             initialized = true;
         }
         if (currentIdx == currentItems.size()) {
