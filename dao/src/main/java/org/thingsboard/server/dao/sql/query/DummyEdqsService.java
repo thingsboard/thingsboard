@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.sql.query;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.EdqsObject;
@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.edqs.EdqsService;
 
 @Service
-@ConditionalOnProperty(value = "queue.edqs.sync.enabled", havingValue = "false", matchIfMissing = true)
+@ConditionalOnMissingBean(value = EdqsService.class, ignored = DummyEdqsService.class)
 public class DummyEdqsService implements EdqsService {
 
     @Override

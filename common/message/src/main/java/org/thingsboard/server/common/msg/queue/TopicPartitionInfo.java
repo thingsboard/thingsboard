@@ -17,13 +17,11 @@ package org.thingsboard.server.common.msg.queue;
 
 import lombok.Builder;
 import lombok.Getter;
-import lombok.ToString;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Objects;
 import java.util.Optional;
 
-@ToString
 public class TopicPartitionInfo {
 
     private final String topic;
@@ -95,6 +93,15 @@ public class TopicPartitionInfo {
     @Override
     public int hashCode() {
         return Objects.hash(fullTopicName, partition);
+    }
+
+    @Override
+    public String toString() {
+        String str = fullTopicName;
+        if (useInternalPartition) {
+            str += "[" + partition + "]";
+        }
+        return str;
     }
 
 }

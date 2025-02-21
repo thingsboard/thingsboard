@@ -1696,14 +1696,14 @@ queue:
         print-interval-ms: "${TB_HOUSEKEEPER_STATS_PRINT_INTERVAL_MS:60000}"
   edqs:
     sync:
-      # Enable/disable EDQS synchronization FIXME: disable by default before release
-      enabled: "${TB_EDQS_SYNC_ENABLED:true}"
+      # Enable/disable EDQS synchronization
+      enabled: "${TB_EDQS_SYNC_ENABLED:false}"
       # Batch size of entities being synced with EDQS
       entity_batch_size: "${TB_EDQS_SYNC_ENTITY_BATCH_SIZE:10000}"
       # Batch size of timeseries data being synced with EDQS
       ts_batch_size: "${TB_EDQS_SYNC_TS_BATCH_SIZE:10000}"
-    # Whether to forward entity data query requests to EDQS (otherwise use PostgreSQL implementation) FIXME: disable by default before release
-    api_enabled: "${TB_EDQS_API_ENABLED:true}"
+    # Whether to forward entity data query requests to EDQS (otherwise use PostgreSQL implementation)
+    api_enabled: "${TB_EDQS_API_ENABLED:false}"
     # Mode of EDQS: local (for monolith) or remote (with separate EDQS microservices)
     mode: "${TB_EDQS_MODE:local}"
     local:
@@ -1727,7 +1727,7 @@ queue:
       # Enable/disable statistics for EDQS
       enabled: "${TB_EDQS_STATS_ENABLED:true}"
       # Statistics printing interval for EDQS
-      print-interval-ms: "${TB_EDQS_STATS_PRINT_INTERVAL_MS:60000}"
+      print-interval-ms: "${TB_EDQS_STATS_PRINT_INTERVAL_MS:300000}"
 
   vc:
     # Default topic name

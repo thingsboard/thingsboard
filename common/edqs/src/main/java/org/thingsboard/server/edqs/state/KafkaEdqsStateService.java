@@ -17,6 +17,8 @@ package org.thingsboard.server.edqs.state;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.EdqsEventType;
@@ -52,8 +54,9 @@ public class KafkaEdqsStateService implements EdqsStateService {
     private final EdqsConfig config;
     private final EdqsPartitionService partitionService;
     private final EdqsQueueFactory queueFactory;
-    private final EdqsProcessor edqsProcessor;
     private final TopicService topicService;
+    @Autowired @Lazy
+    private EdqsProcessor edqsProcessor;
 
     private PartitionedQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> stateConsumer;
     private QueueStateService<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<ToEdqsMsg>> queueStateService;
@@ -63,6 +66,7 @@ public class KafkaEdqsStateService implements EdqsStateService {
     private final VersionsStore versionsStore = new VersionsStore();
     private final AtomicInteger stateReadCount = new AtomicInteger();
     private final AtomicInteger eventsReadCount = new AtomicInteger();
+    private Boolean ready;
 
     @Override
     public void init(PartitionedQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> eventConsumer) {
@@ -72,9 +76,6 @@ public class KafkaEdqsStateService implements EdqsStateService {
                 .pollInterval(config.getPollInterval())
                 .msgPackProcessor((msgs, consumer, config) -> {
                     for (TbProtoQueueMsg<ToEdqsMsg> queueMsg : msgs) {
-                        if (consumer.isStopped()) {
-                            return;
-                        }
                         try {
                             ToEdqsMsg msg = queueMsg.getValue();
                             edqsProcessor.process(msg, EdqsQueue.STATE);
@@ -124,7 +125,7 @@ public class KafkaEdqsStateService implements EdqsStateService {
                                 TenantId tenantId = getTenantId(msg);
                                 ObjectType objectType = ObjectType.valueOf(eventMsg.getObjectType());
                                 EdqsEventType eventType = EdqsEventType.valueOf(eventMsg.getEventType());
-                                log.debug("[{}] Saving to backup [{}] [{}] [{}]", tenantId, objectType, eventType, key);
+                                log.trace("[{}] Saving to backup [{}] [{}] [{}]", tenantId, objectType, eventType, key);
                                 stateProducer.send(tenantId, objectType, key, msg);
                             }
                         } catch (Throwable t) {
@@ -158,6 +159,18 @@ public class KafkaEdqsStateService implements EdqsStateService {
     @Override
     public void save(TenantId tenantId, ObjectType type, String key, EdqsEventType eventType, ToEdqsMsg msg) {
         // do nothing here, backup is done by events consumer
+    }
+
+    @Override
+    public boolean isReady() {
+        if (ready == null) {
+            Set<TopicPartitionInfo> partitionsInProgress = queueStateService.getPartitionsInProgress();
+            if (partitionsInProgress != null && partitionsInProgress.isEmpty()) {
+                ready = true; // once true - always true, not to change readiness status on each repartitioning
+            }
+        }
+        log.error("ready: {}", ready);
+        return ready != null && ready;
     }
 
     private TenantId getTenantId(ToEdqsMsg edqsMsg) {

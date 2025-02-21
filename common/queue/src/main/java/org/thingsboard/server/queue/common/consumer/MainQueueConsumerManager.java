@@ -43,7 +43,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfig> {
@@ -270,12 +269,6 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
         log.debug("[{}] Unsubscribed and stopped consumers", queueKey);
     }
 
-    static String partitionsToString(Collection<TopicPartitionInfo> partitions) {
-        return partitions.stream().map(tpi -> tpi.getFullTopicName() + (tpi.isUseInternalPartition() ?
-                        "[" + tpi.getPartition().orElse(-1) + "]" : ""))
-                .collect(Collectors.joining(", ", "[", "]"));
-    }
-
     public interface MsgPackProcessor<M extends TbQueueMsg, C extends QueueConfig> {
         void process(List<M> msgs, TbQueueConsumer<M> consumer, C config) throws Exception;
     }
@@ -299,7 +292,7 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
             Set<TopicPartitionInfo> removedPartitions = new HashSet<>(consumers.keySet());
             removedPartitions.removeAll(partitions);
 
-            log.info("[{}] Added partitions: {}, removed partitions: {}", queueKey, partitionsToString(addedPartitions), partitionsToString(removedPartitions));
+            log.info("[{}] Added partitions: {}, removed partitions: {}", queueKey, addedPartitions, removedPartitions);
             removePartitions(removedPartitions);
             addPartitions(addedPartitions, null);
         }
@@ -333,7 +326,7 @@ public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfi
 
         @Override
         public void updatePartitions(Set<TopicPartitionInfo> partitions) {
-            log.info("[{}] New partitions: {}", queueKey, partitionsToString(partitions));
+            log.info("[{}] New partitions: {}", queueKey, partitions);
             if (partitions.isEmpty()) {
                 if (consumer != null && consumer.isRunning()) {
                     consumer.initiateStop();

@@ -26,6 +26,7 @@
     </appender>
 
     <logger name="org.thingsboard.server" level="INFO"/>
+    <logger name="org.thingsboard.server.edqs" level="DEBUG"/>
     <logger name="org.apache.kafka.common.utils.AppInfoParser" level="WARN"/>
     <logger name="org.apache.kafka.clients" level="WARN"/>
 

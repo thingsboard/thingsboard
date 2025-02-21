@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.msg.edqs.EdqsService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.edqs.state.EdqsStateService;
 import org.thingsboard.server.edqs.util.EdqsRocksDb;
 
 import java.util.concurrent.TimeUnit;
@@ -34,7 +35,7 @@ import static org.awaitility.Awaitility.await;
 @DaoSqlTest
 @TestPropertySource(properties = {
 //        "queue.type=kafka", // uncomment to use Kafka
-//        "queue.kafka.bootstrap.servers=192.168.0.105:9092",
+//        "queue.kafka.bootstrap.servers=10.7.1.254:9092",
         "queue.edqs.sync.enabled=true",
         "queue.edqs.api_enabled=true",
         "queue.edqs.mode=local"
@@ -44,12 +45,15 @@ public class EdqsEntityQueryControllerTest extends EntityQueryControllerTest {
     @Autowired
     private EdqsService edqsService;
 
+    @Autowired(required = false)
+    private EdqsStateService edqsStateService;
+
     @MockBean // so that we don't do backup for tests
     private EdqsRocksDb edqsRocksDb;
 
     @Before
     public void before() {
-        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> edqsService.isApiEnabled());
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> edqsService.isApiEnabled() && edqsStateService.isReady());
     }
 
     @Override

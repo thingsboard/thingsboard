@@ -52,10 +52,10 @@ public class PartitionedQueueConsumerManager<M extends TbQueueMsg> extends MainQ
     @Override
     protected void processTask(TbQueueConsumerManagerTask task) {
         if (task instanceof AddPartitionsTask addPartitionsTask) {
-            log.info("[{}] Added partitions: {}", queueKey, partitionsToString(addPartitionsTask.partitions()));
+            log.info("[{}] Added partitions: {}", queueKey, addPartitionsTask.partitions());
             consumerWrapper.addPartitions(addPartitionsTask.partitions(), addPartitionsTask.onStop());
         } else if (task instanceof RemovePartitionsTask removePartitionsTask) {
-            log.info("[{}] Removed partitions: {}", queueKey, partitionsToString(removePartitionsTask.partitions()));
+            log.info("[{}] Removed partitions: {}", queueKey, removePartitionsTask.partitions());
             consumerWrapper.removePartitions(removePartitionsTask.partitions());
         }
     }

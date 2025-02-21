@@ -54,6 +54,7 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
 
     private final boolean readFromBeginning; // reset offset to beginning
     private final boolean stopWhenRead; // stop consuming when reached an empty msg pack
+    private int readCount;
     private Map<Integer, Long> endOffsets; // needed if stopWhenRead is true
 
     private boolean partitionsAssigned = false;
@@ -152,6 +153,7 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
             records.forEach(record -> {
                 recordList.add(record);
                 if (stopWhenRead) {
+                    readCount++;
                     int partition = record.partition();
                     Long endOffset = endOffsets.get(partition);
                     if (endOffset == null) {
@@ -166,7 +168,7 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
             });
         }
         if (stopWhenRead && endOffsets.isEmpty()) {
-            log.info("Reached end offset for {}, stopping consumer", consumer.assignment());
+            log.info("Finished reading {}, processed {} messages", partitions, readCount);
             stop();
         }
         return recordList;

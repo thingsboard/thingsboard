@@ -59,7 +59,7 @@ import static org.thingsboard.server.common.data.DataConstants.MAIN_QUEUE_NAME;
 @Slf4j
 public class HashPartitionService implements PartitionService {
 
-    @Value("${queue.core.topic}")
+    @Value("${queue.core.topic:tb_core}")
     private String coreTopic;
     @Value("${queue.core.partitions:10}")
     private Integer corePartitions;

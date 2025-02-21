@@ -142,12 +142,12 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     private EdqsResponse processEdqsRequest(TenantId tenantId, CustomerId customerId, EdqsRequest request) {
         EdqsResponse response;
         try {
-            log.info("Sending request to EDQS: {}", request);
+            log.debug("[{}] Sending request to EDQS: {}", tenantId, request);
             response = edqsService.processRequest(tenantId, customerId, request).get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
-        log.info("Received response from EDQS: {}", response);
+        log.debug("[{}] Received response from EDQS: {}", tenantId, response);
         if (response.getError() != null) {
             throw new RuntimeException(response.getError());
         }

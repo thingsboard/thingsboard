@@ -14,6 +14,12 @@
 # limitations under the License.
 #
 
+server:
+  # Server bind-address
+  address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
+  # Server bind port
+  port: "${HTTP_BIND_PORT:8080}"
+
 # Application info parameters
 app:
   # Application version
@@ -38,10 +44,9 @@ zk:
   # The delay is recommended because the initialization of rule chain actors is time-consuming. Avoiding unnecessary recalculations during a restart can enhance system performance and stability.
   recalculate_delay: "${ZOOKEEPER_RECALCULATE_DELAY_MS:0}"
 
-# SQL DAO Configuration parameters
 spring:
   main:
-    web-application-type: "none"
+    allow-circular-references: "true" # Spring Boot configuration property that controls whether circular dependencies between beans are allowed.
 
 # Queue configuration parameters
 queue:
@@ -66,7 +71,7 @@ queue:
       # Enable/disable statistics for EDQS
       enabled: "${TB_EDQS_STATS_ENABLED:true}"
       # Statistics printing interval for EDQS
-      print-interval-ms: "${TB_EDQS_STATS_PRINT_INTERVAL_MS:60000}"
+      print-interval-ms: "${TB_EDQS_STATS_PRINT_INTERVAL_MS:300000}"
 
   kafka:
     # Kafka Bootstrap nodes in "host:port" format
@@ -137,9 +142,9 @@ queue:
         - key: max.poll.interval.ms
           # Example of specific consumer properties value per topic for VC
           value: "${TB_QUEUE_KAFKA_VC_MAX_POLL_INTERVAL_MS:600000}"
-    #      tb_rule_engine.sq:
-    #        - key: max.poll.records
-    #          value: "${TB_QUEUE_KAFKA_SQ_MAX_POLL_RECORDS:1024}"
+      #      tb_rule_engine.sq:
+      #        - key: max.poll.records
+      #          value: "${TB_QUEUE_KAFKA_SQ_MAX_POLL_RECORDS:1024}"
       tb_housekeeper:
         # Consumer properties for Housekeeper tasks topic
         - key: max.poll.records
@@ -209,133 +214,6 @@ queue:
     request_poll_interval: "${TB_QUEUE_TRANSPORT_REQUEST_POLL_INTERVAL_MS:25}"
     # Interval in milliseconds to poll api response from transport microservices
     response_poll_interval: "${TB_QUEUE_TRANSPORT_RESPONSE_POLL_INTERVAL_MS:25}"
-  core:
-    # Default topic name of Kafka, RabbitMQ, etc. queue
-    topic: "${TB_QUEUE_CORE_TOPIC:tb_core}"
-    # Interval in milliseconds to poll messages by Core microservices
-    poll-interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
-    # Amount of partitions used by Core microservices
-    partitions: "${TB_QUEUE_CORE_PARTITIONS:10}"
-    # Timeout for processing a message pack by Core microservices
-    pack-processing-timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:2000}"
-    # Enable/disable a separate consumer per partition for Core queue
-    consumer-per-partition: "${TB_QUEUE_CORE_CONSUMER_PER_PARTITION:true}"
-    ota:
-      # Default topic name for OTA updates
-      topic: "${TB_QUEUE_CORE_OTA_TOPIC:tb_ota_package}"
-      # The interval of processing the OTA updates for devices. Used to avoid any harm to the network due to many parallel OTA updates
-      pack-interval-ms: "${TB_QUEUE_CORE_OTA_PACK_INTERVAL_MS:60000}"
-      # The size of OTA updates notifications fetched from the queue. The queue stores pairs of firmware and device ids
-      pack-size: "${TB_QUEUE_CORE_OTA_PACK_SIZE:100}"
-    # Stats topic name for queue Kafka, RabbitMQ, etc.
-    usage-stats-topic: "${TB_QUEUE_US_TOPIC:tb_usage_stats}"
-    stats:
-      # Enable/disable statistics for Core microservices
-      enabled: "${TB_QUEUE_CORE_STATS_ENABLED:true}"
-      # Statistics printing interval for Core microservices
-      print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:60000}"
-    housekeeper:
-      # Topic name for Housekeeper tasks
-      topic: "${TB_HOUSEKEEPER_TOPIC:tb_housekeeper}"
-      # Topic name for Housekeeper tasks to be reprocessed
-      reprocessing-topic: "${TB_HOUSEKEEPER_REPROCESSING_TOPIC:tb_housekeeper.reprocessing}"
-      # Poll interval for topics related to Housekeeper
-      poll-interval-ms: "${TB_HOUSEKEEPER_POLL_INTERVAL_MS:500}"
-      # Timeout in milliseconds for task processing. Tasks that fail to finish on time will be submitted for reprocessing
-      task-processing-timeout-ms: "${TB_HOUSEKEEPER_TASK_PROCESSING_TIMEOUT_MS:120000}"
-      # Comma-separated list of task types that shouldn't be processed. Available task types:
-      # DELETE_ATTRIBUTES, DELETE_TELEMETRY (both DELETE_LATEST_TS and DELETE_TS_HISTORY will be disabled),
-      # DELETE_LATEST_TS, DELETE_TS_HISTORY, DELETE_EVENTS, DELETE_ALARMS, UNASSIGN_ALARMS
-      disabled-task-types: "${TB_HOUSEKEEPER_DISABLED_TASK_TYPES:}"
-      # Delay in milliseconds between tasks reprocessing
-      task-reprocessing-delay-ms: "${TB_HOUSEKEEPER_TASK_REPROCESSING_DELAY_MS:3000}"
-      # Maximum amount of task reprocessing attempts. After exceeding, the task will be dropped
-      max-reprocessing-attempts: "${TB_HOUSEKEEPER_MAX_REPROCESSING_ATTEMPTS:10}"
-      stats:
-        # Enable/disable statistics for Housekeeper
-        enabled: "${TB_HOUSEKEEPER_STATS_ENABLED:true}"
-        # Statistics printing interval for Housekeeper
-        print-interval-ms: "${TB_HOUSEKEEPER_STATS_PRINT_INTERVAL_MS:60000}"
-
-  vc:
-    # Default topic name for Kafka, RabbitMQ, etc.
-    topic: "${TB_QUEUE_VC_TOPIC:tb_version_control}"
-    # Number of partitions to associate with this queue. Used for scaling the number of messages that can be processed in parallel
-    partitions: "${TB_QUEUE_VC_PARTITIONS:10}"
-    # Interval in milliseconds between polling of the messages if no new messages arrive
-    poll-interval: "${TB_QUEUE_VC_INTERVAL_MS:25}"
-    # Timeout before retrying all failed and timed-out messages from the processing pack
-    pack-processing-timeout: "${TB_QUEUE_VC_PACK_PROCESSING_TIMEOUT_MS:180000}"
-    # Timeout for a request to VC-executor (for a request for the version of the entity, for a commit charge, etc.)
-    request-timeout: "${TB_QUEUE_VC_REQUEST_TIMEOUT:180000}"
-    # Queue settings for Kafka, RabbitMQ, etc. Limit for single message size
-    msg-chunk-size: "${TB_QUEUE_VC_MSG_CHUNK_SIZE:250000}"
-  js:
-    # JS Eval request topic
-    request_topic: "${REMOTE_JS_EVAL_REQUEST_TOPIC:js_eval.requests}"
-    # JS Eval responses topic prefix that is combined with node id
-    response_topic_prefix: "${REMOTE_JS_EVAL_RESPONSE_TOPIC:js_eval.responses}"
-    # JS Eval max pending requests
-    max_pending_requests: "${REMOTE_JS_MAX_PENDING_REQUESTS:10000}"
-    # JS Eval max request timeout
-    max_eval_requests_timeout: "${REMOTE_JS_MAX_EVAL_REQUEST_TIMEOUT:60000}"
-    # JS max request timeout
-    max_requests_timeout: "${REMOTE_JS_MAX_REQUEST_TIMEOUT:10000}"
-    # JS execution max request timeout
-    max_exec_requests_timeout: "${REMOTE_JS_MAX_EXEC_REQUEST_TIMEOUT:2000}"
-    # JS response poll interval
-    response_poll_interval: "${REMOTE_JS_RESPONSE_POLL_INTERVAL_MS:25}"
-  rule-engine:
-    # Deprecated. It will be removed in the nearest releases
-    topic: "${TB_QUEUE_RULE_ENGINE_TOPIC:tb_rule_engine}"
-    # Interval in milliseconds to poll messages by Rule Engine
-    poll-interval: "${TB_QUEUE_RULE_ENGINE_POLL_INTERVAL_MS:25}"
-    # Timeout for processing a message pack of Rule Engine
-    pack-processing-timeout: "${TB_QUEUE_RULE_ENGINE_PACK_PROCESSING_TIMEOUT_MS:2000}"
-    stats:
-      # Enable/disable statistics for Rule Engine
-      enabled: "${TB_QUEUE_RULE_ENGINE_STATS_ENABLED:true}"
-      # Statistics printing interval for Rule Engine
-      print-interval-ms: "${TB_QUEUE_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:60000}"
-      # Max length of the error message that is printed by statistics
-      max-error-message-length: "${TB_QUEUE_RULE_ENGINE_MAX_ERROR_MESSAGE_LENGTH:4096}"
-    # After a queue is deleted (or the profile's isolation option was disabled), Rule Engine will continue reading related topics during this period before deleting the actual topics
-    topic-deletion-delay: "${TB_QUEUE_RULE_ENGINE_TOPIC_DELETION_DELAY_SEC:15}"
-    # Size of the thread pool that handles such operations as partition changes, config updates, queue deletion
-    management-thread-pool-size: "${TB_QUEUE_RULE_ENGINE_MGMT_THREAD_POOL_SIZE:12}"
-  transport:
-    # For high-priority notifications that require minimum latency and processing time
-    notifications_topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb_transport.notifications}"
-    # Interval in milliseconds to poll messages
-    poll_interval: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_POLL_INTERVAL_MS:25}"
-  integration:
-    # Name of hash function used for consistent hash ring in Cluster Mode. See architecture docs for more details. Valid values - murmur3_32, murmur3_128 or sha256
-    partitions: "${TB_QUEUE_INTEGRATION_PARTITIONS:3}"
-    # Default notification topic name used by queue
-    notifications_topic: "${TB_QUEUE_INTEGRATION_NOTIFICATIONS_TOPIC:tb_ie.notifications}"
-    # Default downlink topic name used by queue
-    downlink_topic: "${TB_QUEUE_INTEGRATION_DOWNLINK_TOPIC:tb_ie.downlink}"
-    # Default uplink topic name used by queue
-    uplink_topic: "${TB_QUEUE_INTEGRATION_UPLINK_TOPIC:tb_ie.uplink}"
-    # Interval in milliseconds to poll messages by integrations
-    poll_interval: "${TB_QUEUE_INTEGRATION_POLL_INTERVAL_MS:25}"
-    # Timeout for processing a message pack by integrations
-    pack-processing-timeout: "${TB_QUEUE_INTEGRATION_PACK_PROCESSING_TIMEOUT_MS:10000}"
-  integration_api:
-    # Default Integration Api request topic name used by queue
-    requests_topic: "${TB_QUEUE_INTEGRATION_EXECUTOR_API_REQUEST_TOPIC:tb_ie.api.requests}"
-    # Default Integration Api response topic name used by queue
-    responses_topic: "${TB_QUEUE_INTEGRATION_EXECUTOR_API_RESPONSE_TOPIC:tb_ie.api.responses}"
-    # Maximum pending api requests from integration executor to be handled by server<
-    max_pending_requests: "${TB_QUEUE_INTEGRATION_EXECUTOR_MAX_PENDING_REQUESTS:10000}"
-    # Maximum timeout in milliseconds to handle api request from integration executor microservice by server
-    max_requests_timeout: "${TB_QUEUE_INTEGRATION_EXECUTOR_MAX_REQUEST_TIMEOUT:10000}"
-    # Amount of threads used to invoke callbacks
-    max_callback_threads: "${TB_QUEUE_INTEGRATION_EXECUTOR_MAX_CALLBACK_THREADS:10}"
-    # Interval in milliseconds to poll api requests from integration executor microservices
-    request_poll_interval: "${TB_QUEUE_INTEGRATION_EXECUTOR_REQUEST_POLL_INTERVAL_MS:25}"
-    # Interval in milliseconds to poll api response from integration executor microservices
-    response_poll_interval: "${TB_QUEUE_INTEGRATION_EXECUTOR_RESPONSE_POLL_INTERVAL_MS:25}"
 
 # General service parameters
 service:
@@ -343,7 +221,8 @@ service:
   # Unique id for this service (autogenerated if empty)
   id: "${TB_SERVICE_ID:}"
   edqs:
-    label: "${TB_EDQS_LABEL:}" # services with the same label will share the list of partitions
+    # EDQS instances with the same label will share the same list of partitions
+    label: "${TB_EDQS_LABEL:}"
 
 # Metrics parameters
 metrics:

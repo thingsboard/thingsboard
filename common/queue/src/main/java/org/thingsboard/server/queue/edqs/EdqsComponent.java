@@ -21,7 +21,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
-// TODO: tb-core ?
 @ConditionalOnExpression("'${queue.edqs.sync.enabled:true}'=='true' && ('${service.type:null}'=='edqs' || " +
         "(('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core') && " +
         "'${queue.edqs.mode:null}'=='local'))")

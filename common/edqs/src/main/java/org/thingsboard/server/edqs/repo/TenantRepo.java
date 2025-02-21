@@ -105,7 +105,7 @@ public class TenantRepo {
 
     public void processEvent(EdqsEvent event) {
         EdqsObject edqsObject = event.getObject();
-        log.debug("[{}] Processing event: {}", tenantId, event);
+        log.trace("[{}] Processing event: {}", tenantId, event);
         if (event.getEventType() == EdqsEventType.UPDATED) {
             addOrUpdate(edqsObject);
         } else if (event.getEventType() == EdqsEventType.DELETED) {
