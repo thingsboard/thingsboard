@@ -94,8 +94,6 @@ public class ThingsboardInstallService {
     public void performInstall() {
         try {
             if (isUpgrade) {
-                log.info("Starting ThingsBoard Upgrade from version {} ...", upgradeFromVersion);
-
                 if ("cassandra-latest-to-postgres".equals(upgradeFromVersion)) {
                     log.info("Migrating ThingsBoard latest timeseries data from cassandra to SQL database ...");
                     latestMigrateService.migrate();
@@ -116,17 +114,16 @@ public class ThingsboardInstallService {
                     entityDatabaseSchemaService.createOrUpdateDeviceInfoView(persistToTelemetry);
                     // Creates missing indexes.
                     entityDatabaseSchemaService.createDatabaseIndexes();
-                    // Runs upgrade scripts that are not possible in plain SQL.
+
                     // TODO: cleanup update code after each release
+
+                    // Runs upgrade scripts that are not possible in plain SQL.
                     dataUpdateService.updateData();
                     log.info("Updating system data...");
                     dataUpdateService.upgradeRuleNodes();
                     systemDataLoaderService.loadSystemWidgets();
                     installScripts.loadSystemLwm2mResources();
                     installScripts.loadSystemImagesAndResources();
-                    if (installScripts.isUpdateImages()) {
-                        installScripts.updateImages();
-                    }
                     databaseSchemaVersionService.updateSchemaVersion();
                 }
                 log.info("Upgrade finished successfully!");

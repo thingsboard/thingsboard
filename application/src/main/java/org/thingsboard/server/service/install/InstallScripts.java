@@ -17,8 +17,6 @@ package org.thingsboard.server.service.install;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,8 +118,6 @@ public class InstallScripts {
 
     @Autowired
     private ResourcesUpdater resourcesUpdater;
-    @Getter @Setter
-    private boolean updateImages = false;
 
     @Autowired
     private ImageService imageService;
@@ -392,14 +388,6 @@ public class InstallScripts {
         }
     }
 
-    public void updateImages() {
-        resourcesUpdater.updateWidgetsBundlesImages();
-        resourcesUpdater.updateWidgetTypesImages();
-        resourcesUpdater.updateDashboardsImages();
-        resourcesUpdater.updateDeviceProfilesImages();
-        resourcesUpdater.updateAssetProfilesImages();
-    }
-
     public void loadSystemImagesAndResources() {
         log.info("Loading system images and resources...");
         Stream<Path> dashboardsFiles = Stream.concat(listDir(Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, DASHBOARDS_DIR)),
@@ -416,9 +404,9 @@ public class InstallScripts {
         }
 
         Path resourcesDir = Path.of(getDataDir(), RESOURCES_DIR);
-        loadSystemResources(resourcesDir.resolve("images"), ResourceType.IMAGE);
-        loadSystemResources(resourcesDir.resolve("js_modules"), ResourceType.JS_MODULE);
-        loadSystemResources(resourcesDir.resolve("dashboards"), ResourceType.DASHBOARD);
+        loadSystemResources(resourcesDir.resolve("images"), ResourceType.IMAGE, null);
+        loadSystemResources(resourcesDir.resolve("js_modules"), ResourceType.JS_MODULE, ResourceSubType.EXTENSION);
+        loadSystemResources(resourcesDir.resolve("dashboards"), ResourceType.DASHBOARD, null);
     }
 
     public void loadDashboards(TenantId tenantId, CustomerId customerId) {
@@ -509,12 +497,7 @@ public class InstallScripts {
         }
     }
 
-    public void updateResourcesUsage() {
-        resourcesUpdater.updateDashboardsResources();
-        resourcesUpdater.updateWidgetsResources();
-    }
-
-    private void loadSystemResources(Path dir, ResourceType resourceType) {
+    private void loadSystemResources(Path dir, ResourceType resourceType, ResourceSubType resourceSubType) {
         listDir(dir).forEach(resourceFile -> {
             String resourceKey = resourceFile.getFileName().toString();
             try {
@@ -522,7 +505,7 @@ public class InstallScripts {
                 if (resourceType == ResourceType.IMAGE) {
                     imageService.createOrUpdateSystemImage(resourceKey, data);
                 } else {
-                    resourceService.createOrUpdateSystemResource(resourceType, resourceKey, data);
+                    resourceService.createOrUpdateSystemResource(resourceType, resourceSubType, resourceKey, data);
                 }
             } catch (Exception e) {
                 throw new RuntimeException("Unable to load system resource " + resourceFile, e);

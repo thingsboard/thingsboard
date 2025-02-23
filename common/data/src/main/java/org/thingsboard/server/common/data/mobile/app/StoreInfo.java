@@ -15,12 +15,16 @@
  */
 package org.thingsboard.server.common.data.mobile.app;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class StoreInfo {
 
     @NoXss
