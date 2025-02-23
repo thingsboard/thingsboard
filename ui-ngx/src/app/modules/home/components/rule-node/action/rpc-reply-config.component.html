@@ -1,0 +1,36 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="rpcReplyConfigForm" class="tb-form-panel stroked no-padding-bottom">
+  <div class="tb-form-panel-title" translate>rule-node-config.reply-routing-configuration</div>
+  <tb-example-hint [hintText]="'rule-node-config.rpc-reply-routing-configuration-hint'">
+  </tb-example-hint>
+  <div class="tb-form-row no-border no-padding tb-standard-fields column-xs">
+    <mat-form-field class="flex">
+      <mat-label translate>rule-node-config.service-id-metadata-attribute</mat-label>
+      <input matInput formControlName="serviceIdMetaDataAttribute">
+    </mat-form-field>
+    <mat-form-field class="flex">
+      <mat-label translate>rule-node-config.session-id-metadata-attribute</mat-label>
+      <input matInput formControlName="sessionIdMetaDataAttribute">
+    </mat-form-field>
+    <mat-form-field class="flex">
+      <mat-label translate>rule-node-config.request-id-metadata-attribute</mat-label>
+      <input matInput formControlName="requestIdMetaDataAttribute">
+    </mat-form-field>
+  </div>
+</section>

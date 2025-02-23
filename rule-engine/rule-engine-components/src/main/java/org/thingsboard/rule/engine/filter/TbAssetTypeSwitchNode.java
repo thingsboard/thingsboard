@@ -36,7 +36,6 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
         nodeDescription = "Route incoming messages based on the name of the asset profile",
         nodeDetails = "Route incoming messages based on the name of the asset profile. The asset profile name is case-sensitive.<br><br>" +
                 "Output connections: <i>Asset profile name</i> or <code>Failure</code>",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig")
 public class TbAssetTypeSwitchNode extends TbAbstractTypeSwitchNode {
 

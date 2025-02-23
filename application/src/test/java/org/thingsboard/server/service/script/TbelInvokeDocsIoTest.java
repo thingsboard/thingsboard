@@ -18,7 +18,6 @@ package org.thingsboard.server.service.script;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbDate;
-import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -34,7 +33,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@DaoSqlTest
 class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
 
     private String decoderStr;
@@ -1469,6 +1467,26 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         assertEquals(expected, actual);
     }
 
+    // hexToBytes List or Array
+    @Test
+    public void hexToBytes_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """
+                    var validInputList = "0x01752B0367FA000500010488FFFFFFFFFFFFFFFF33";
+                    var validInputArray = "AABBCCDDEE";
+                    return {
+                        "hexToBytes": hexToBytes(validInputList),
+                        "hexToBytesArray": hexToBytesArray(validInputArray),
+                    }
+                """;
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("hexToBytes", bytesToList(new byte[]{1, 117, 43, 3, 103, -6, 0, 5, 0, 1, 4, -120, -1, -1, -1, -1, -1, -1, -1, -1, 51}));
+        // [-86, -69, -52, -35, -18] == new byte[]{(byte) 0xAA, (byte) 0xBB, (byte) 0xCC, (byte) 0xDD, (byte) 0xEE}
+        expected.put("hexToBytesArray", bytesToList(new byte[]{(byte) 0xAA, (byte) 0xBB, (byte) 0xCC, (byte) 0xDD, (byte) 0xEE}));
+        assertEquals( expected, actual);
+    }
+
     // parseBinaryArray
     @Test
     public void parseBinaryArray_Test() throws ExecutionException, InterruptedException {
@@ -1697,6 +1715,62 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         assertEquals(4.2d, actual);
     }
 
+    // Bitwise Operations
+    @Test
+    public void bitwiseOperationsBoolean_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """     
+                    var x = true;
+                    var y = false;               
+                    return {
+                        "andResult": x & y,
+                        "orResult": x | y,
+                        "xorResult": x ^ y,                    
+                        "leftShift": x << y,                    
+                        "rightShift": x >> y,                    
+                        "rightUnShift": x >>> y                    
+                    }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("andResult", 0);
+        expected.put("orResult", 1);
+        expected.put("xorResult", 1);
+        expected.put("leftShift", 1);
+        expected.put("rightShift", 1);
+        expected.put("rightUnShift", 1);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+    @Test
+    public void bitwiseOperationsMix_Test() throws ExecutionException, InterruptedException {
+        msgStr = "{}";
+        decoderStr = """     
+                    var x = true;
+                    var y = false;
+                    var i = 10;
+                    var b = -14;
+                    var l = 9223372036854775807;            
+                    return {
+                        "andResult": x & b,
+                        "orResult": i | y,
+                        "xorResult": i ^ l,                
+                        "leftShift": l << i,                   
+                        "rightShift": l >> b,                    
+                        "rightUnShift": i >>> x                    
+                    }
+                """;
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("andResult", 0);
+        expected.put("orResult", 10);
+        expected.put("xorResult", 9223372036854775797L);
+        expected.put("leftShift", -1024L);
+        expected.put("rightShift", 8191L);
+        expected.put("rightUnShift", 5);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected, actual);
+    }
+
+
     // base64
     @Test
     public void base64_Test() throws ExecutionException, InterruptedException {
@@ -1705,13 +1779,15 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                     return {
                         "base64ToHex": base64ToHex("Kkk="),
                         "bytesToBase64": bytesToBase64([42, 73]),
-                        "base64ToBytes": base64ToBytes("Kkk=")                    
+                        "base64ToBytes": base64ToBytes("Kkk="),                   
+                        "base64ToBytesList": base64ToBytesList("AQIDBAU=")                    
                     }
                 """;
         LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
         expected.put("base64ToHex", "2A49");
         expected.put("bytesToBase64", "Kkk=");
         expected.put("base64ToBytes", bytesToList(new byte[]{42, 73}));
+        expected.put("base64ToBytesList", bytesToList(new byte[]{1, 2, 3, 4, 5}));
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
     }

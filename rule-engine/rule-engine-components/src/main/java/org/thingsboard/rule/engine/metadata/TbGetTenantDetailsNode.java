@@ -39,7 +39,6 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDetails = "Useful when we need to retrieve contact information from your tenant " +
                 "such as email, phone, address, etc., for notifications via email, SMS, and other notification providers.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeEntityDetailsConfig")
 public class TbGetTenantDetailsNode extends TbAbstractGetEntityDetailsNode<TbGetTenantDetailsNodeConfiguration, TenantId> {
 
