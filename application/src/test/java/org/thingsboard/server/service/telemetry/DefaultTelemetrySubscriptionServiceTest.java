@@ -78,7 +78,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
@@ -136,7 +135,7 @@ class DefaultTelemetrySubscriptionServiceTest {
 
     @BeforeEach
     void setup() {
-        telemetryService = new DefaultTelemetrySubscriptionService(attrService, tsService, tbEntityViewService, apiUsageClient, apiUsageStateService,calculatedFieldQueueService);
+        telemetryService = new DefaultTelemetrySubscriptionService(attrService, tsService, tbEntityViewService, apiUsageClient, apiUsageStateService, calculatedFieldQueueService);
         ReflectionTestUtils.setField(telemetryService, "clusterService", clusterService);
         ReflectionTestUtils.setField(telemetryService, "partitionService", partitionService);
         ReflectionTestUtils.setField(telemetryService, "subscriptionManagerService", Optional.of(subscriptionManagerService));
@@ -160,7 +159,8 @@ class DefaultTelemetrySubscriptionServiceTest {
         // mock no entity views
         lenient().when(tbEntityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId)).thenReturn(immediateFuture(Collections.emptyList()));
 
-        doAnswer(inv -> {
+        // mock that calls to CF queue service are always successful
+        lenient().doAnswer(inv -> {
             FutureCallback<Void> callback = inv.getArgument(2);
             callback.onSuccess(null);
             return null;
