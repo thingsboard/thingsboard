@@ -16,7 +16,7 @@
 
 import {
   AdditionalDebugActionConfig,
-  EntityDebugSettings, HasEntityDebugSettings,
+  HasEntityDebugSettings,
   HasTenantId,
   HasVersion
 } from '@shared/models/entity.models';
