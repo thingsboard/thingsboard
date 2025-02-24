@@ -95,7 +95,7 @@ public class WidgetsBundleControllerTest extends AbstractControllerTest {
         Assert.assertEquals(widgetsBundle.getTitle(), savedWidgetsBundle.getTitle());
 
         savedWidgetsBundle.setTitle("My new widgets bundle");
-        doPost("/api/widgetsBundle", savedWidgetsBundle, WidgetsBundle.class);
+        savedWidgetsBundle = doPost("/api/widgetsBundle", savedWidgetsBundle, WidgetsBundle.class);
 
         WidgetsBundle foundWidgetsBundle = doGet("/api/widgetsBundle/" + savedWidgetsBundle.getId().getId().toString(), WidgetsBundle.class);
         Assert.assertEquals(foundWidgetsBundle.getTitle(), savedWidgetsBundle.getTitle());
