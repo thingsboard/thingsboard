@@ -21,7 +21,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
@@ -30,6 +29,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.widget.BaseWidgetType;
 import org.thingsboard.server.common.data.widget.DeprecatedFilter;
+import org.thingsboard.server.common.data.widget.WidgetBundleInfo;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetTypeFilter;
@@ -120,8 +120,8 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
         String[] tags = new String[]{"Tag1_" + number, "Tag2_" + number, "TEST_" + number};
         widgetType.setTags(tags);
         WidgetTypeDetails saved = widgetTypeDao.save(TenantId.SYS_TENANT_ID, widgetType);
-        List<EntityInfo> bundles = new ArrayList<>();
-        bundles.add(new EntityInfo(widgetsBundle.getId(), widgetsBundle.getName()));
+        List<WidgetBundleInfo> bundles = new ArrayList<>();
+        bundles.add(new WidgetBundleInfo(widgetsBundle.getUuidId(), widgetsBundle.getName()));
         return new WidgetTypeInfo(saved, bundles);
     }
 
