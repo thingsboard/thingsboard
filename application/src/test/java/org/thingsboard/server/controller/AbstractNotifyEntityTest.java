@@ -629,8 +629,11 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
 
     private String entityClassToEntityTypeName(HasName entity) {
         String entityType = entityClassToString(entity);
-        return "SAVE_OTA_PACKAGE_INFO_REQUEST".equals(entityType) || "OTA_PACKAGE_INFO".equals(entityType) ?
-                EntityType.OTA_PACKAGE.name().toUpperCase(Locale.ENGLISH) : entityType;
+        return switch (entityType) {
+            case "SAVE_OTA_PACKAGE_INFO_REQUEST", "OTA_PACKAGE_INFO" -> "OTA_PACKAGE";
+            case "TB_RESOURCE_INFO" -> "TB_RESOURCE";
+            default -> entityType;
+        };
     }
 
     private String entityClassToString(HasName entity) {
