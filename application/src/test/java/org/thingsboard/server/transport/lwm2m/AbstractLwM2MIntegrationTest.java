@@ -147,8 +147,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                     "    \"telemetry\": [],\n" +
                     "    \"attributeLwm2m\": {}\n" +
                     "  }";
-    public static  String OBSERVE_ATTRIBUTES_WITH_PARAMS =
-
+    public static  String TELEMETRY_WITHOUT_OBSERVE =
             "    {\n" +
                     "    \"keyName\": {\n" +
                     "      \"/3_1.2/0/9\": \"batteryLevel\"\n" +
@@ -161,6 +160,39 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                     "    ],\n" +
                     "    \"attributeLwm2m\": {}\n" +
                     "  }";
+    public static  String TELEMETRY_WITH_ONE_OBSERVE =
+            "    {\n" +
+                    "    \"keyName\": {\n" +
+                    "      \"/3_1.2/0/9\": \"batteryLevel\"\n" +
+                    "    },\n" +
+                    "    \"observe\": [\n" +
+                    "      \"/3_1.2/0/9\"\n" +
+                    "    ],\n" +
+                    "    \"attribute\": [\n" +
+                    "    ],\n" +
+                    "    \"telemetry\": [\n" +
+                    "      \"/3_1.2/0/9\"\n" +
+                    "    ],\n" +
+                    "    \"attributeLwm2m\": {}\n" +
+                    "  }";
+
+    public static  String TELEMETRY_WITH_MANY_OBSERVE =
+               "    {\n" +
+                       "    \"keyName\": {\n" +
+                       "      \"/3_1.2/0/9\": \"batteryLevel\",\n" +
+                       "      \"/3_1.2/0/20\": \"batteryStatus\"\n" +
+                       "    },\n" +
+                       "    \"observe\": [\n" +
+                       "      \"/3_1.2/0/9\",\n" +
+                       "      \"/3_1.2/0/20\"\n" +
+                       "    ],\n" +
+                       "    \"attribute\": [],\n" +
+                       "    \"telemetry\": [\n" +
+                       "      \"/3_1.2/0/9\",\n" +
+                       "      \"/3_1.2/0/20\"\n" +
+                       "    ],\n" +
+                       "    \"attributeLwm2m\": {}\n" +
+                       "  }";
 
     public static final String CLIENT_LWM2M_SETTINGS =
             "     {\n" +
@@ -217,7 +249,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                                                     LwM2MDeviceCredentials deviceCredentials,
                                                     String endpoint,
                                                     boolean queueMode) throws Exception {
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITH_PARAMS, getBootstrapServerCredentialsNoSec(NONE));
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(TELEMETRY_WITHOUT_OBSERVE, getBootstrapServerCredentialsNoSec(NONE));
         DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + endpoint, transportConfiguration);
         Device device = createLwm2mDevice(deviceCredentials, endpoint, deviceProfile.getId());
 

@@ -48,7 +48,6 @@ import java.util.UUID;
         configClazz = TbSendRpcReplyNodeConfiguration.class,
         nodeDescription = "Sends reply to RPC call from device",
         nodeDetails = "Expects messages with any message type. Will forward message body to the device.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeRpcReplyConfig",
         icon = "call_merge"
 )

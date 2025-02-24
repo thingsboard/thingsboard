@@ -35,7 +35,6 @@ import java.util.UUID;
         configClazz = TbSendRestApiCallReplyNodeConfiguration.class,
         nodeDescription = "Sends reply to REST API call to rule engine",
         nodeDetails = "Expects messages with any message type. Forwards incoming message as a reply to REST API call sent to rule engine.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeSendRestApiCallReplyConfig",
         icon = "call_merge"
 )

@@ -185,11 +185,7 @@ export class MobileBundleTableConfigResolver {
           iosApp: data.iosApp
         }
       }).afterClosed()
-        .subscribe(() => {
-          if (afterAdd) {
-            this.config.updateData();
-          }
-        });
+        .subscribe();
     })
   }
 }

@@ -116,6 +116,38 @@
         </tb-color-input>
       </div>
     </div>
+    <div class="tb-form-row column-xs" formGroupName="onButtonIcon">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showIcon">
+        {{ 'widgets.power-button.button-icon-on' | translate }}
+      </mat-slide-toggle>
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+          <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-css-unit-select class="flex-1" formControlName="iconSizeUnit"></tb-css-unit-select>
+        <tb-material-icon-select asBoxInput
+                                 iconClearButton
+                                 [color]="powerButtonWidgetConfigForm.get('mainColorOn').value"
+                                 formControlName="icon">
+        </tb-material-icon-select>
+      </div>
+    </div>
+    <div class="tb-form-row column-xs" formGroupName="offButtonIcon">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showIcon">
+        {{ 'widgets.power-button.button-icon-off' | translate }}
+      </mat-slide-toggle>
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+          <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-css-unit-select class="flex-1" formControlName="iconSizeUnit"></tb-css-unit-select>
+        <tb-material-icon-select asBoxInput
+                                 iconClearButton
+                                 [color]="powerButtonWidgetConfigForm.get('mainColorOff').value"
+                                 formControlName="icon">
+        </tb-material-icon-select>
+      </div>
+    </div>
     <div class="tb-form-row space-between column-xs">
       <div>{{ 'widgets.power-button.power-on-colors' | translate }}</div>
       <div class="flex flex-row items-center justify-start gap-3">

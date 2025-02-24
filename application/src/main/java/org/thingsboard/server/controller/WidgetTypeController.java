@@ -118,7 +118,7 @@ public class WidgetTypeController extends AutoCommitController {
             @PathVariable("widgetTypeId") String strWidgetTypeId) throws ThingsboardException {
         checkParameter("widgetTypeId", strWidgetTypeId);
         WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
-        return new WidgetTypeInfo(checkWidgetTypeId(widgetTypeId, Operation.READ));
+        return checkWidgetTypeInfoId(widgetTypeId, Operation.READ);
     }
 
     @ApiOperation(value = "Create Or Update Widget Type (saveWidgetType)",

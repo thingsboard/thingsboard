@@ -14,24 +14,25 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Input, NgZone, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, NgZone, OnDestroy } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Notification, NotificationRequest } from '@shared/models/notification.models';
 import { NotificationWebsocketService } from '@core/ws/notification-websocket.service';
-import { BehaviorSubject, Observable, ReplaySubject, Subscription } from 'rxjs';
-import { map, share, skip, tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, shareReplay } from 'rxjs';
+import { filter, skip, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { NotificationSubscriber } from '@shared/models/telemetry/telemetry.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-show-notification-popover',
   templateUrl: './show-notification-popover.component.html',
   styleUrls: ['show-notification-popover.component.scss']
 })
-export class ShowNotificationPopoverComponent extends PageComponent implements OnDestroy, OnInit {
+export class ShowNotificationPopoverComponent extends PageComponent implements OnDestroy {
 
   @Input()
   onClose: () => void;
@@ -42,11 +43,13 @@ export class ShowNotificationPopoverComponent extends PageComponent implements O
   @Input()
   popoverComponent: TbPopoverComponent;
 
-  private notificationSubscriber: NotificationSubscriber;
-  private notificationCountSubscriber: Subscription;
+  private notificationSubscriber = NotificationSubscriber.createNotificationsSubscription(this.notificationWsService, this.zone, 6);
 
-  notifications$: Observable<Notification[]>;
-  loadNotification = false;
+  notifications$: Observable<Notification[]> = this.notificationSubscriber.notifications$.pipe(
+    filter(value => Array.isArray(value)),
+    shareReplay(1),
+    tap(() => setTimeout(() => this.cd.markForCheck()))
+  );
 
   constructor(protected store: Store<AppState>,
               private notificationWsService: NotificationWebsocketService,
@@ -54,32 +57,15 @@ export class ShowNotificationPopoverComponent extends PageComponent implements O
               private cd: ChangeDetectorRef,
               private router: Router) {
     super(store);
-  }
-
-  ngOnInit() {
-    this.notificationSubscriber = NotificationSubscriber.createNotificationsSubscription(this.notificationWsService, this.zone, 6);
-    this.notifications$ = this.notificationSubscriber.notifications$.pipe(
-      map(value => {
-        if (Array.isArray(value)) {
-          this.loadNotification = true;
-          return value;
-        }
-        return [];
-      }),
-      share({
-        connector: () => new ReplaySubject(1)
-      }),
-      tap(() => setTimeout(() => this.cd.markForCheck()))
-    );
-    this.notificationCountSubscriber = this.notificationSubscriber.notificationCount$.pipe(
+    this.notificationSubscriber.notificationCount$.pipe(
       skip(1),
+      takeUntilDestroyed()
     ).subscribe(value => this.counter.next(value));
     this.notificationSubscriber.subscribe();
   }
 
   ngOnDestroy() {
     super.ngOnDestroy();
-    this.notificationCountSubscriber.unsubscribe();
     this.notificationSubscriber.unsubscribe();
     this.onClose();
   }

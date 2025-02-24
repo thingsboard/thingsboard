@@ -44,6 +44,12 @@
           <mat-error *ngIf="bundlesForms.get('title').hasError('required')">
             {{ 'mobile.title-required' | translate }}
           </mat-error>
+          <mat-error *ngIf="bundlesForms.get('title').hasError('pattern')">
+            {{ 'mobile.title-cannot-contain-only-spaces' | translate }}
+          </mat-error>
+          <mat-error *ngIf="bundlesForms.get('title').hasError('maxlength')">
+            {{ 'mobile.title-max-length' | translate }}
+          </mat-error>
         </mat-form-field>
         <tb-entity-autocomplete
           allowCreateNew

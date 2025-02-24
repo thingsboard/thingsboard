@@ -398,6 +398,9 @@
             border-color: rgba(0, 0, 0, 0.12);
           }
         }
+        .mdc-notched-outline__notch {
+          border-left: none;
+        }
         .mdc-floating-label {
           top: 20px;
           font-weight: 400;

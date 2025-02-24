@@ -21,20 +21,20 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
   CircleSettings,
-  CommonMapSettings,
   defaultCircleSettings,
-  defaultCommonMapSettings,
   defaultMapProviderSettings,
-  defaultMarkersSettings,
   defaultPolygonSettings,
+  defaultTripAnimationCommonSettings,
+  defaultTripAnimationMarkersSettings,
   defaultTripAnimationPathSettings,
   defaultTripAnimationPointSettings,
   defaultTripAnimationSettings,
   MapProviderSettings,
-  MarkersSettings,
   PointsSettings,
   PolygonSettings,
-  PolylineSettings
+  PolylineSettings,
+  TripAnimationCommonSettings,
+  TripAnimationMarkerSettings
 } from 'src/app/modules/home/components/widget/lib/maps/map-models';
 import { extractType } from '@core/utils';
 
@@ -76,8 +76,8 @@ export class TripAnimationWidgetSettingsComponent extends WidgetSettingsComponen
 
   protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
     const mapProviderSettings = extractType<MapProviderSettings>(settings, Object.keys(defaultMapProviderSettings) as (keyof MapProviderSettings)[]);
-    const commonMapSettings = extractType<CommonMapSettings>(settings, Object.keys(defaultCommonMapSettings) as (keyof CommonMapSettings)[]);
-    const markersSettings = extractType<MarkersSettings>(settings, Object.keys(defaultMarkersSettings) as (keyof MarkersSettings)[]);
+    const commonMapSettings = extractType<TripAnimationCommonSettings>(settings, Object.keys(defaultTripAnimationCommonSettings) as (keyof TripAnimationCommonSettings)[]);
+    const markersSettings = extractType<TripAnimationMarkerSettings>(settings, Object.keys(defaultTripAnimationMarkersSettings) as (keyof TripAnimationMarkerSettings)[]);
     const pathSettings = extractType<PolylineSettings>(settings, Object.keys(defaultTripAnimationPathSettings) as (keyof PolylineSettings)[]);
     const pointSettings = extractType<PointsSettings>(settings, Object.keys(defaultTripAnimationPointSettings) as (keyof PointsSettings)[]);
     const polygonSettings = extractType<PolygonSettings>(settings, Object.keys(defaultPolygonSettings) as (keyof PolygonSettings)[]);

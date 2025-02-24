@@ -24,8 +24,8 @@
          (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="entityAutocomplete"
-         [class.!hidden]="disabled && selectEntityFormGroup.get('entity').value">
-  <a *ngIf="selectEntityFormGroup.get('entity').value && disabled" aria-label="Open device profile" [routerLink]=entityURL>
+         [class.!hidden]="showEntityLink">
+  <a *ngIf="showEntityLink" aria-label="Open entity details page" [routerLink]=entityURL>
     {{ displayEntityFn(selectEntityFormGroup.get('entity').value) }}
   </a>
   <button *ngIf="selectEntityFormGroup.get('entity').value && !disabled"
@@ -53,7 +53,7 @@
         </div>
         <ng-template #searchNotEmpty>
           <span>
-              {{ translate.get(noEntitiesMatchingText, {entity: searchText}) | async }}
+              {{ noEntitiesMatchingText | translate: {entity: searchText} }}
           </span>
         </ng-template>
       </div>
