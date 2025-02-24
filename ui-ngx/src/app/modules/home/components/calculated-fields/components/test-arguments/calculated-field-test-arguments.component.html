@@ -39,11 +39,11 @@
           <div class="flex flex-1 items-center gap-2">
             @if (argumentsTypeMap.get(group.get('argumentName').value) === ArgumentType.Rolling) {
               <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field flex-1">
-                <input matInput tb-json-to-string name="values" formControlName="values" placeholder="{{ 'value.json-value' | translate }}*"/>
+                <input matInput tb-json-to-string name="rollingJson" formControlName="rollingJson" placeholder="{{ 'value.json-value' | translate }}"/>
               </mat-form-field>
             } @else {
               <mat-form-field appearance="outline" class="tb-inline-field w-1/3" subscriptSizing="dynamic">
-                <input matInput formControlName="ts" type="number" placeholder="{{ 'action.set' | translate }}">
+                <input matInput formControlName="ts" type="number" placeholder="{{ 'common.timestamp' | translate }}">
               </mat-form-field>
               <tb-value-input class="argument-value min-w-60 flex-1" [required]="false" [hideJsonEdit]="true" [shortBooleanField]="true" formControlName="value"/>
             }

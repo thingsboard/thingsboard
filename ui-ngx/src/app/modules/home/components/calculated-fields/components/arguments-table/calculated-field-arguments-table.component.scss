@@ -16,6 +16,10 @@
 @use '../../../../../../../scss/constants' as constants;
 
 :host {
+  .entity-key-field {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  }
+
   .tb-form-table-row-cell-buttons {
     --mat-badge-legacy-small-size-container-size: 8px;
     --mat-badge-small-size-container-overlap-offset: -5px;

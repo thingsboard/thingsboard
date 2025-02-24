@@ -28,7 +28,7 @@ import {
   CalculatedFieldType,
   getCalculatedFieldCurrentEntityFilter
 } from '@shared/models/calculated-field.models';
-import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
+import { debounceTime, delay, distinctUntilChanged, filter } from 'rxjs/operators';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { DatasourceType } from '@shared/models/widget.models';
@@ -38,6 +38,7 @@ import { EntityFilter } from '@shared/models/query/query.models';
 import { AliasFilterType } from '@shared/models/alias.models';
 import { merge } from 'rxjs';
 import { MINUTE } from '@shared/models/time/time.models';
+import { TimeService } from '@core/services/time.service';
 
 @Component({
   selector: 'tb-calculated-field-argument-panel',
@@ -57,6 +58,8 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
 
   argumentsDataApplied = output<{ value: CalculatedFieldArgumentValue, index: number }>();
 
+  readonly defaultLimit = Math.max(this.timeService.getMinDatapointsLimit(), Math.floor(this.timeService.getMaxDatapointsLimit() / 10));
+
   argumentFormGroup = this.fb.group({
     argumentName: ['', [Validators.required, this.uniqNameRequired(), Validators.pattern(charsWithNumRegex), Validators.maxLength(255)]],
     refEntityId: this.fb.group({
@@ -69,7 +72,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
       scope: [{ value: AttributeScope.SERVER_SCOPE, disabled: true }, [Validators.required]],
     }),
     defaultValue: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
-    limit: [1000],
+    limit: [this.defaultLimit],
     timeWindow: [MINUTE * 15],
   });
 
@@ -92,11 +95,13 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private cd: ChangeDetectorRef,
-    private popover: TbPopoverComponent<CalculatedFieldArgumentPanelComponent>
+    private popover: TbPopoverComponent<CalculatedFieldArgumentPanelComponent>,
+    private timeService: TimeService
   ) {
     this.observeEntityFilterChanges();
     this.observeEntityTypeChanges()
     this.observeEntityKeyChanges();
+    this.observeUpdatePosition();
   }
 
   get entityType(): ArgumentEntityType {
@@ -223,5 +228,16 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit {
       typeControl.setValue(null);
       typeControl.markAsTouched();
     }
+  }
+
+  private observeUpdatePosition(): void {
+    merge(
+      this.refEntityIdFormGroup.get('entityType').valueChanges,
+      this.refEntityKeyFormGroup.get('type').valueChanges,
+      this.argumentFormGroup.get('timeWindow').valueChanges,
+      this.refEntityIdFormGroup.get('id').valueChanges.pipe(filter(Boolean)),
+    )
+      .pipe(delay(50), takeUntilDestroyed())
+      .subscribe(() => this.popover.updatePosition());
   }
 }

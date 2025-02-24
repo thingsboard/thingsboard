@@ -403,7 +403,9 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
           new EntityTableColumn<Event>('messageType', 'event.message-type', '100px',
             (entity) => entity.body.msgType ?? '-',
             () => ({padding: '0 12px 0 0'}),
-            false
+            false,
+            () => ({padding: '0 12px 0 0'}),
+            (entity) => entity.body.msgType,
           ),
           new EntityActionTableColumn<Event>('arguments', 'event.arguments',
             {
@@ -539,8 +541,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
       case DebugEventType.DEBUG_CALCULATED_FIELD:
         this.filterColumns.push(
           {key: 'entityId', title: 'event.entity-id'},
-          {key: 'messageId', title: 'event.message-id'},
-          {key: 'messageType', title: 'event.message-type'},
+          {key: 'msgId', title: 'event.message-id'},
+          {key: 'msgType', title: 'event.message-type'},
           {key: 'arguments', title: 'event.arguments'},
           {key: 'result', title: 'event.result'},
           {key: 'isError', title: 'event.error'},
