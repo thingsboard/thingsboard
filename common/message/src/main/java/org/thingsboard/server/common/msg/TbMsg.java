@@ -143,11 +143,7 @@ public final class TbMsg implements Serializable {
         this.callback = Objects.requireNonNullElse(callback, TbMsgCallback.EMPTY);
     }
 
-    public static ByteString toByteString(TbMsg msg) {
-        return ByteString.copyFrom(toByteArray(msg));
-    }
-
-    public static byte[] toByteArray(TbMsg msg) {
+    public static MsgProtos.TbMsgProto toProto(TbMsg msg) {
         MsgProtos.TbMsgProto.Builder builder = MsgProtos.TbMsgProto.newBuilder();
         builder.setId(msg.getId().toString());
         builder.setTs(msg.getTs());
@@ -187,47 +183,55 @@ public final class TbMsg implements Serializable {
         }
 
         builder.setCtx(msg.ctx.toProto());
-        return builder.build().toByteArray();
+        return builder.build();
     }
 
-    public static TbMsg fromBytes(String queueName, byte[] data, TbMsgCallback callback) {
+    //TODO: added for processing old messages from queue, should be removed after release
+    @Deprecated(forRemoval = true)
+    public static TbMsg fromProto(String queueName, MsgProtos.TbMsgProto proto, ByteString data, TbMsgCallback callback) {
         try {
-            MsgProtos.TbMsgProto proto = MsgProtos.TbMsgProto.parseFrom(data);
-            TbMsgMetaData metaData = new TbMsgMetaData(proto.getMetaData().getDataMap());
-            EntityId entityId = EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
-            CustomerId customerId = null;
-            RuleChainId ruleChainId = null;
-            RuleNodeId ruleNodeId = null;
-            UUID correlationId = null;
-            Integer partition = null;
-            if (proto.getCustomerIdMSB() != 0L && proto.getCustomerIdLSB() != 0L) {
-                customerId = new CustomerId(new UUID(proto.getCustomerIdMSB(), proto.getCustomerIdLSB()));
+            if (!data.isEmpty()) {
+                proto = MsgProtos.TbMsgProto.parseFrom(data);
             }
-            if (proto.getRuleChainIdMSB() != 0L && proto.getRuleChainIdLSB() != 0L) {
-                ruleChainId = new RuleChainId(new UUID(proto.getRuleChainIdMSB(), proto.getRuleChainIdLSB()));
-            }
-            if (proto.getRuleNodeIdMSB() != 0L && proto.getRuleNodeIdLSB() != 0L) {
-                ruleNodeId = new RuleNodeId(new UUID(proto.getRuleNodeIdMSB(), proto.getRuleNodeIdLSB()));
-            }
-            if (proto.getCorrelationIdMSB() != 0L && proto.getCorrelationIdLSB() != 0L) {
-                correlationId = new UUID(proto.getCorrelationIdMSB(), proto.getCorrelationIdLSB());
-                partition = proto.getPartition();
-            }
-
-            TbMsgProcessingCtx ctx;
-            if (proto.hasCtx()) {
-                ctx = TbMsgProcessingCtx.fromProto(proto.getCtx());
-            } else {
-                // Backward compatibility with unprocessed messages fetched from queue after update.
-                ctx = new TbMsgProcessingCtx(proto.getRuleNodeExecCounter());
-            }
-
-            TbMsgDataType dataType = TbMsgDataType.values()[proto.getDataType()];
-            return new TbMsg(queueName, UUID.fromString(proto.getId()), proto.getTs(), null, proto.getType(), entityId, customerId,
-                    metaData, dataType, proto.getData(), ruleChainId, ruleNodeId, correlationId, partition, ctx, callback);
         } catch (InvalidProtocolBufferException e) {
             throw new IllegalStateException("Could not parse protobuf for TbMsg", e);
         }
+        return fromProto(queueName, proto, callback);
+    }
+
+    public static TbMsg fromProto(String queueName, MsgProtos.TbMsgProto proto, TbMsgCallback callback) {
+        TbMsgMetaData metaData = new TbMsgMetaData(proto.getMetaData().getDataMap());
+        EntityId entityId = EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
+        CustomerId customerId = null;
+        RuleChainId ruleChainId = null;
+        RuleNodeId ruleNodeId = null;
+        UUID correlationId = null;
+        Integer partition = null;
+        if (proto.getCustomerIdMSB() != 0L && proto.getCustomerIdLSB() != 0L) {
+            customerId = new CustomerId(new UUID(proto.getCustomerIdMSB(), proto.getCustomerIdLSB()));
+        }
+        if (proto.getRuleChainIdMSB() != 0L && proto.getRuleChainIdLSB() != 0L) {
+            ruleChainId = new RuleChainId(new UUID(proto.getRuleChainIdMSB(), proto.getRuleChainIdLSB()));
+        }
+        if (proto.getRuleNodeIdMSB() != 0L && proto.getRuleNodeIdLSB() != 0L) {
+            ruleNodeId = new RuleNodeId(new UUID(proto.getRuleNodeIdMSB(), proto.getRuleNodeIdLSB()));
+        }
+        if (proto.getCorrelationIdMSB() != 0L && proto.getCorrelationIdLSB() != 0L) {
+            correlationId = new UUID(proto.getCorrelationIdMSB(), proto.getCorrelationIdLSB());
+            partition = proto.getPartition();
+        }
+
+        TbMsgProcessingCtx ctx;
+        if (proto.hasCtx()) {
+            ctx = TbMsgProcessingCtx.fromProto(proto.getCtx());
+        } else {
+            // Backward compatibility with unprocessed messages fetched from queue after update.
+            ctx = new TbMsgProcessingCtx(proto.getRuleNodeExecCounter());
+        }
+
+        TbMsgDataType dataType = TbMsgDataType.values()[proto.getDataType()];
+        return new TbMsg(queueName, UUID.fromString(proto.getId()), proto.getTs(), null, proto.getType(), entityId, customerId,
+                metaData, dataType, proto.getData(), ruleChainId, ruleNodeId, correlationId, partition, ctx, callback);
     }
 
     public int getAndIncrementRuleNodeCounter() {

@@ -644,11 +644,11 @@ class DefaultTbContextTest {
 
         ToRuleEngineMsg actualToRuleEngineMsg = toRuleEngineMsgCaptor.getValue();
         assertThat(actualToRuleEngineMsg).usingRecursiveComparison()
-                .ignoringFields("tbMsg_")
+                .ignoringFields("tbMsgProto_")
                 .isEqualTo(ToRuleEngineMsg.newBuilder()
                         .setTenantIdMSB(TENANT_ID.getId().getMostSignificantBits())
                         .setTenantIdLSB(TENANT_ID.getId().getLeastSignificantBits())
-                        .setTbMsg(TbMsg.toByteString(expectedTbMsg))
+                        .setTbMsgProto(TbMsg.toProto(expectedTbMsg))
                         .addAllRelationTypes(List.of(connectionType)).build());
 
         var simpleTbQueueCallback = simpleTbQueueCallbackCaptor.getValue();
@@ -701,11 +701,11 @@ class DefaultTbContextTest {
 
         ToRuleEngineMsg actualToRuleEngineMsg = toRuleEngineMsgCaptor.getValue();
         assertThat(actualToRuleEngineMsg).usingRecursiveComparison()
-                .ignoringFields("tbMsg_")
+                .ignoringFields("tbMsgProto_")
                 .isEqualTo(ToRuleEngineMsg.newBuilder()
                         .setTenantIdMSB(TENANT_ID.getId().getMostSignificantBits())
                         .setTenantIdLSB(TENANT_ID.getId().getLeastSignificantBits())
-                        .setTbMsg(TbMsg.toByteString(expectedTbMsg))
+                        .setTbMsgProto(TbMsg.toProto(expectedTbMsg))
                         .build());
 
         var simpleTbQueueCallback = simpleTbQueueCallbackCaptor.getValue();
@@ -883,11 +883,11 @@ class DefaultTbContextTest {
 
         ToRuleEngineMsg actualToRuleEngineMsg = toRuleEngineMsgCaptor.getValue();
         assertThat(actualToRuleEngineMsg).usingRecursiveComparison()
-                .ignoringFields("tbMsg_")
+                .ignoringFields("tbMsgProto_.id_")
                 .isEqualTo(ToRuleEngineMsg.newBuilder()
                         .setTenantIdMSB(TENANT_ID.getId().getMostSignificantBits())
                         .setTenantIdLSB(TENANT_ID.getId().getLeastSignificantBits())
-                        .setTbMsg(TbMsg.toByteString(expectedTbMsg))
+                        .setTbMsgProto(TbMsg.toProto(expectedTbMsg))
                         .setFailureMessage(EXCEPTION_MSG)
                         .addAllRelationTypes(List.of(TbNodeConnectionType.FAILURE)).build());
 
