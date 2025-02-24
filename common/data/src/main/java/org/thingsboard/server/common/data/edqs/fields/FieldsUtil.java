@@ -240,7 +240,7 @@ public class FieldsUtil {
                 .build();
     }
 
-    private static AssetProfileFields toFields(DeviceProfile entity) {
+    private static AssetProfileFields toFields(AssetProfile entity) {
         return AssetProfileFields.builder()
                 .id(entity.getUuidId())
                 .createdTime(entity.getCreatedTime())
@@ -250,7 +250,7 @@ public class FieldsUtil {
                 .build();
     }
 
-    private static DeviceProfileFields toFields(AssetProfile entity) {
+    private static DeviceProfileFields toFields(DeviceProfile entity) {
         return DeviceProfileFields.builder()
                 .id(entity.getUuidId())
                 .createdTime(entity.getCreatedTime())

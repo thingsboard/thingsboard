@@ -128,6 +128,18 @@ function additionalStartupServices() {
     echo $ADDITIONAL_STARTUP_SERVICES
 }
 
+function additionalComposeEdqsArgs() {
+    source .env
+
+    if [ "$EDQS_ENABLED" = true ]
+    then
+      ADDITIONAL_COMPOSE_EDQS_ARGS="-f docker-compose.edqs.yml"
+      echo ADDITIONAL_COMPOSE_EDQS_ARGS
+    else
+      echo ""
+    fi
+}
+
 function permissionList() {
     PERMISSION_LIST="
       799  799  tb-node/log
