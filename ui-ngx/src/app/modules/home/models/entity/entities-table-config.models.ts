@@ -144,7 +144,8 @@ export class DateEntityTableColumn<T extends BaseData<HasId>> extends EntityTabl
 export class EntityChipsEntityTableColumn<T extends BaseData<HasId>> extends BaseEntityTableColumn<T> {
   constructor(public key: string,
               public title: string,
-              public width: string = '0px') {
+              public width: string = '0px',
+              public entityURL?: (entity) => string) {
     super('entityChips', key, title, width, false);
   }
 }

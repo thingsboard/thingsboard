@@ -39,7 +39,7 @@ public class RelatedEdgesCacheKey implements Serializable {
 
     @Override
     public String toString() {
-        return tenantId + "_" + entityId;
+        return "{" + tenantId + "}" + entityId;
     }
 
 }

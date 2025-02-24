@@ -28,6 +28,12 @@
     "hp_left_tee_connector",
     "hp_top_tee_connector",
     "hp_drawwork",
-    "hp_crane"
+    "hp_crane",
+    "hp_hook",
+    "hp_consumers",
+    "hp_house",
+    "hp_apartments",
+    "hp_manufacture",
+    "hp_electrical_engine"
   ]
 }

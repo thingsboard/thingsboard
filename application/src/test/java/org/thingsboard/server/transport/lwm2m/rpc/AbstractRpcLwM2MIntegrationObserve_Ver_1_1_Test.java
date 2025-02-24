@@ -16,18 +16,13 @@
 package org.thingsboard.server.transport.lwm2m.rpc;
 
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import static org.junit.Assert.assertTrue;
 
 @DaoSqlTest
-public abstract class AbstractRpcLwM2MIntegrationObserveTest extends AbstractRpcLwM2MIntegrationTest{
-    private final String[] RESOURCES_RPC_MULTIPLE_19 = new String[]{"0.xml", "1.xml", "2.xml", "3.xml", "5.xml", "6.xml", "9.xml", "19.xml", "3303.xml"};
+public abstract class AbstractRpcLwM2MIntegrationObserve_Ver_1_1_Test extends AbstractRpcLwM2MIntegrationTest{
 
-    public AbstractRpcLwM2MIntegrationObserveTest() {
-        setResources(this.RESOURCES_RPC_MULTIPLE_19);
-    }
-
-    protected void sendRpcObserveWithContainsLwM2mSingleResource(String params) throws Exception {
-        String rpcActualResult = sendRpcObserveOkWithResultValue("Observe", params);
-        assertTrue(rpcActualResult.contains("LwM2mSingleResource") || rpcActualResult.contains("LwM2mMultipleResource"));
+    public AbstractRpcLwM2MIntegrationObserve_Ver_1_1_Test() {
+        String[] RESOURCES_RPC_VER_1_1 = new String[]{"3-1_1.xml", "5.xml", "6.xml", "9.xml", "19.xml"};
+        setResources(RESOURCES_RPC_VER_1_1);
     }
 }
+

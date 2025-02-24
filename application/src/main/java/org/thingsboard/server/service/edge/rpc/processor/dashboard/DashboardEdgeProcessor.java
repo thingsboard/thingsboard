@@ -126,9 +126,9 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor implements Da
     }
 
     @Override
-    protected Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, Set<ShortCustomerInfo> assignedCustomers) {
-        // do nothing on cloud
-        return assignedCustomers;
+    protected Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, Set<ShortCustomerInfo> currentAssignedCustomers, Set<ShortCustomerInfo> newAssignedCustomers) {
+        newAssignedCustomers.addAll(currentAssignedCustomers);
+        return newAssignedCustomers;
     }
 
     @Override

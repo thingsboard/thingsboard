@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  .space-between {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
+package org.thingsboard.server.transport.lwm2m.rpc;
 
-    .see-example {
-      display: flex;
-      flex-shrink: 0;
+import org.thingsboard.server.dao.service.DaoSqlTest;
+
+@DaoSqlTest
+public abstract class AbstractRpcLwM2MIntegrationObserve_Ver_1_0_Test extends AbstractRpcLwM2MIntegrationTest{
+
+    public AbstractRpcLwM2MIntegrationObserve_Ver_1_0_Test() {
+        String[] RESOURCES_RPC_VER_1_1 = new String[]{"3-1_0.xml", "5.xml", "6.xml", "9.xml", "19.xml"};
+        setResources(RESOURCES_RPC_VER_1_1);
     }
-  }
-
-  .hint-text {
-    width: 100%;
-  }
 }
+
