@@ -204,13 +204,20 @@ public interface WidgetTypeInfoRepository extends JpaRepository<WidgetTypeInfoEn
     @Query(nativeQuery = true,
             value = "SELECT * FROM widget_type_info_view wti WHERE wti.id IN " +
                     "(select id from widget_type where tenant_id = :tenantId " +
-                    "and (image = :imageLink or descriptor ILIKE CONCAT('%\"', :imageLink, '\"%')) limit :lmt)"
+                    "and (image = :imageLink or descriptor ILIKE CONCAT('%\"', :imageLink, '\"%')) limit :limit)"
     )
-    List<WidgetTypeInfoEntity> findByTenantAndImageUrl(@Param("tenantId") UUID tenantId, @Param("imageLink") String imageLink, @Param("lmt") int lmt);
+    List<WidgetTypeInfoEntity> findByTenantAndImageUrl(@Param("tenantId") UUID tenantId, @Param("imageLink") String imageLink, @Param("limit") int limit);
 
     @Query(nativeQuery = true,
             value = "SELECT * FROM widget_type_info_view wti WHERE wti.id IN " +
-                    "(select id from widget_type where image = :imageLink or descriptor ILIKE CONCAT('%', :imageLink, '%') limit :lmt)"
+                    "(select id from widget_type where image = :imageLink or descriptor ILIKE CONCAT('%', :imageLink, '%') limit :limit)"
     )
-    List<WidgetTypeInfoEntity> findByImageUrl(@Param("imageLink") String imageLink, @Param("lmt") int lmt);
+    List<WidgetTypeInfoEntity> findByImageUrl(@Param("imageLink") String imageLink, @Param("limit") int limit);
+
+    @Query(value = "SELECT * FROM widget_type_info_view w WHERE w.tenant_id = :tenantId AND w.descriptor ILIKE CONCAT('%', :link, '%') LIMIT :limit ", nativeQuery = true)
+    List<WidgetTypeInfoEntity> findWidgetTypeInfosByTenantIdAndResourceLink(@Param("tenantId") UUID tenantId, @Param("link") String link, @Param("limit") int limit);
+
+    @Query(value = "SELECT * FROM widget_type_info_view w WHERE w.descriptor ILIKE CONCAT('%', :link, '%') LIMIT :limit ", nativeQuery = true)
+    List<WidgetTypeInfoEntity> findWidgetTypeInfosByResourceLink(@Param("link") String link, @Param("limit") int limit);
+
 }

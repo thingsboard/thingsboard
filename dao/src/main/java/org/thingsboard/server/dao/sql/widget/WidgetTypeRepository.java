@@ -69,12 +69,6 @@ public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEnt
 
     WidgetTypeDetailsEntity findByTenantIdAndFqn(UUID tenantId, String fqn);
 
-    @Query(value = "SELECT name FROM widget_type wt " +
-            "WHERE wt.tenant_id = :tenantId AND cast(wt.descriptor as json) ->> 'resources' LIKE concat('%', :resourceLink, '%')",
-            nativeQuery = true)
-    List<String> findNamesByTenantIdAndResourceLink(@Param("tenantId") UUID tenantId,
-                                                    @Param("resourceLink") String resourceLink);
-
     @Query("SELECT externalId FROM WidgetTypeDetailsEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
 

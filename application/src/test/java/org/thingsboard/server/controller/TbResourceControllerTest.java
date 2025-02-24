@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -27,7 +28,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
@@ -40,13 +44,16 @@ import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -203,7 +210,6 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         resource.setTitle("My first resource");
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setEncodedData(TEST_DATA);
-
         TbResource savedResource = save(resource);
 
         Mockito.reset(tbClusterService, auditLogService);
@@ -222,28 +228,191 @@ public class TbResourceControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testShoudNotDeleteTbResourceIfAssignedToWidgetType() throws Exception {
+    public void testUnForcedDeleteTbResourceIfAssignedToWidgetType() throws Exception {
         TbResource resource = new TbResource();
-        resource.setResourceType(ResourceType.JKS);
+        resource.setResourceType(ResourceType.JS_MODULE);
         resource.setTitle("My first resource");
-        resource.setFileName(DEFAULT_FILE_NAME);
+        resource.setFileName(JS_TEST_FILE_NAME);
+        resource.setTenantId(savedTenant.getId());
         resource.setEncodedData(TEST_DATA);
-
+        resource.setResourceKey(JS_TEST_FILE_NAME);
         TbResource savedResource = save(resource);
 
-        Mockito.reset(tbClusterService, auditLogService);
-        String resourceIdStr = savedResource.getId().getId().toString();
-
-        //create widget type
+        var link = resource.getLink();
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(JacksonUtil.fromString(String.format("{ \"resources\": [{\"url\":\"tb-resource;/api/resource/jks/tenant/%s\",\"isModule\":true}]}", savedResource.getResourceKey()), JsonNode.class));
+        widgetType.setTenantId(savedTenant.getId());
+        widgetType.setDescriptor(JacksonUtil.newObjectNode()
+                .put("controllerScript", "self.onInit = function() {\n    self.ctx.$scope.actionWidget.onInit();\n}\n\nself.typeParameters = function() {\n    return {\n        previewWidth: '300px',\n        previewHeight: '320px',\n        embedTitlePanel: true,\n        targetDeviceOptional: true,\n        displayRpcMessageToast: false\n    };\n};\n\nself.onDestroy = function() {\n}")
+                .put("settingsSchema", "")
+                .put("dataKeySettingsSchema", "{}\n")
+                .put("settingsDirective", "tb-scada-symbol-widget-settings")
+                .put("hasBasicMode", true)
+                .put("basicModeDirective", "tb-scada-symbol-basic-config")
+                .put("resource", link));
+        WidgetType savedWidgetType= doPost("/api/widgetType", widgetType, WidgetTypeDetails.class);
+
+        var deleteResponse = doDelete("/api/resource/" + savedResource.getUuidId() + "?force=false")
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Assert.assertNotNull(deleteResponse);
+
+        boolean isSuccess = JacksonUtil.toJsonNode(deleteResponse).get("success").asBoolean();
+        Assert.assertFalse(isSuccess);
+
+        var referenceValues = JacksonUtil.toJsonNode(deleteResponse).get("references");
+        Assert.assertNotNull(referenceValues);
+
+        var widgetTypeInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<WidgetTypeInfo>>>(){});
+        Assert.assertNotNull(widgetTypeInfos);
+        Assert.assertFalse(widgetTypeInfos.isEmpty());
+        Assert.assertEquals(1, widgetTypeInfos.size());
+
+        var dashboardInfo = widgetTypeInfos.get(EntityType.WIDGET_TYPE.name()).get(0);
+        Assert.assertNotNull(dashboardInfo);
+
+        WidgetTypeInfo foundedWidgetType = doGet("/api/widgetTypeInfo/" + savedWidgetType.getId().getId().toString(), WidgetTypeInfo.class);
+        Assert.assertNotNull(foundedWidgetType);
+        Assert.assertEquals(foundedWidgetType, dashboardInfo);
+    }
+
+    @Test
+    public void testForcedDeleteTbResourceIfAssignedToWidgetType() throws Exception {
+        TbResource resource = new TbResource();
+        resource.setResourceType(ResourceType.JS_MODULE);
+        resource.setTitle("My first resource");
+        resource.setFileName(JS_TEST_FILE_NAME);
+        resource.setTenantId(savedTenant.getId());
+        resource.setEncodedData(TEST_DATA);
+        resource.setResourceKey(JS_TEST_FILE_NAME);
+        TbResource savedResource = save(resource);
+
+        var link = resource.getLink();
+        WidgetTypeDetails widgetType = new WidgetTypeDetails();
+        widgetType.setName("Widget Type");
+        widgetType.setTenantId(savedTenant.getId());
+        widgetType.setDescriptor(JacksonUtil.newObjectNode()
+                .put("controllerScript", "self.onInit = function() {\n    self.ctx.$scope.actionWidget.onInit();\n}\n\nself.typeParameters = function() {\n    return {\n        previewWidth: '300px',\n        previewHeight: '320px',\n        embedTitlePanel: true,\n        targetDeviceOptional: true,\n        displayRpcMessageToast: false\n    };\n};\n\nself.onDestroy = function() {\n}")
+                .put("settingsSchema", "")
+                .put("dataKeySettingsSchema", "{}\n")
+                .put("settingsDirective", "tb-scada-symbol-widget-settings")
+                .put("hasBasicMode", true)
+                .put("basicModeDirective", "tb-scada-symbol-basic-config")
+                .put("resource", link));
         doPost("/api/widgetType", widgetType, WidgetTypeDetails.class);
 
-        doDelete("/api/resource/" + resourceIdStr)
+        var deleteResponse = doDelete("/api/resource/" + savedResource.getUuidId() + "?force=true")
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Assert.assertNotNull(deleteResponse);
+
+        boolean isSuccess = JacksonUtil.toJsonNode(deleteResponse).get("success").asBoolean();
+        Assert.assertTrue(isSuccess);
+
+        var referenceValues = JacksonUtil.toJsonNode(deleteResponse).get("references");
+        var widgetTypeInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<WidgetTypeInfo>>>(){});
+        Assert.assertNull(widgetTypeInfos);
+    }
+
+    @Test
+    public void testUnForcedDeleteTbResourceIfAssignedToDashboard() throws Exception {
+        TbResource resource = new TbResource();
+        resource.setResourceType(ResourceType.JS_MODULE);
+        resource.setTitle("My first resource");
+        resource.setFileName(JS_TEST_FILE_NAME);
+        resource.setTenantId(savedTenant.getId());
+        resource.setEncodedData(TEST_DATA);
+        resource.setResourceKey(JS_TEST_FILE_NAME);
+        TbResource savedResource = save(resource);
+
+        var link = resource.getLink();
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle("My dashboard");
+        dashboard.setTenantId(savedTenant.getId());
+        dashboard.setConfiguration(JacksonUtil.newObjectNode()
+                .<ObjectNode>set("widgets", JacksonUtil.toJsonNode("""
+                        {"xxx":
+                        {"config":{"actions":{"elementClick":[
+                        {"customResources":[{"url":{"entityType":"TB_RESOURCE","id":
+                        "tb-resource;/api/resource/js_module/tenant/gateway-management-extension.js"},"isModule":true},
+                        {"url":"tb-resource;/api/resource/js_module/tenant/gateway-management-extension.js","isModule":true}]}]}}}}
+                        """))
+                .put("resource", link));
+        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
+
+        var deleteResponse = doDelete("/api/resource/" + savedResource.getUuidId() + "?force=false")
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Following widget types use this resource: "
-                        + widgetType.getName())));
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Assert.assertNotNull(deleteResponse);
+
+        boolean isSuccess = JacksonUtil.toJsonNode(deleteResponse).get("success").asBoolean();
+        Assert.assertFalse(isSuccess);
+
+        var referenceValues = JacksonUtil.toJsonNode(deleteResponse).get("references");
+        Assert.assertNotNull(referenceValues);
+
+        var dashboardInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<DashboardInfo>>>(){});
+        Assert.assertNotNull(dashboardInfos);
+        Assert.assertFalse(dashboardInfos.isEmpty());
+        Assert.assertEquals(1, dashboardInfos.size());
+
+        var dashboardInfo = dashboardInfos.get(EntityType.DASHBOARD.name()).get(0);
+        Assert.assertNotNull(dashboardInfo);
+
+        DashboardInfo foundDashboard = doGet("/api/dashboard/info/" + savedDashboard.getId().getId().toString(), DashboardInfo.class);
+        Assert.assertNotNull(foundDashboard);
+        Assert.assertEquals(foundDashboard, dashboardInfo);
+    }
+
+    @Test
+    public void testForcedDeleteTbResourceIfAssignedToDashboard() throws Exception {
+        TbResource resource = new TbResource();
+        resource.setResourceType(ResourceType.JS_MODULE);
+        resource.setTitle("My first resource");
+        resource.setFileName(JS_TEST_FILE_NAME);
+        resource.setTenantId(savedTenant.getId());
+        resource.setEncodedData(TEST_DATA);
+        resource.setResourceKey(JS_TEST_FILE_NAME);
+        TbResource savedResource = save(resource);
+
+        var link = resource.getLink();
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle("My dashboard");
+        dashboard.setTenantId(savedTenant.getId());
+        dashboard.setConfiguration(JacksonUtil.newObjectNode()
+                .<ObjectNode>set("widgets", JacksonUtil.toJsonNode("""
+                        {"xxx":
+                        {"config":{"actions":{"elementClick":[
+                        {"customResources":[{"url":{"entityType":"TB_RESOURCE","id":
+                        "tb-resource;/api/resource/js_module/tenant/gateway-management-extension.js"},"isModule":true},
+                        {"url":"tb-resource;/api/resource/js_module/tenant/gateway-management-extension.js","isModule":true}]}]}}}}
+                        """))
+                .put("resource", link));
+        doPost("/api/dashboard", dashboard, Dashboard.class);
+
+        var deleteResponse = doDelete("/api/resource/" + savedResource.getUuidId() + "?force=true")
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Assert.assertNotNull(deleteResponse);
+
+        boolean isSuccess = JacksonUtil.toJsonNode(deleteResponse).get("success").asBoolean();
+        Assert.assertTrue(isSuccess);
+
+        var referenceValues = JacksonUtil.toJsonNode(deleteResponse).get("references");
+        var dashboardInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<DashboardInfo>>>(){});
+        Assert.assertNull(dashboardInfos);
     }
 
     @Test
