@@ -365,5 +365,16 @@ export interface AceHighlightRule {
   next?: string;
 }
 
+export const dotOperatorHighlightRule: AceHighlightRule = {
+  token: 'punctuation.operator',
+  regex: /[.](?![.])/,
+};
+
+export const endGroupHighlightRule: AceHighlightRule = {
+  regex: '',
+  token: 'empty',
+  next: 'no_regex'
+};
+
 
 

@@ -183,6 +183,7 @@
                         [class.lt-lg:!hidden]="column.mobileHide"
                         *matCellDef="let entity; let row = index"
                         [matTooltip]="cellTooltip(entity, column, row)"
+                        #cellMatTooltip="matTooltip"
                         matTooltipPosition="above"
                         [style]="cellStyle(entity, column, row)">
                 <ng-container [ngSwitch]="column.type">
@@ -208,6 +209,8 @@
                         [copyText]="column.actionCell.onAction(null, entity)"
                         tooltipText="{{ column.actionCell.nameFunction ? column.actionCell.nameFunction(entity) : column.actionCell.name }}"
                         tooltipPosition="above"
+                        (mouseover)="cellMatTooltip.hide()"
+                        (mouseleave)="cellMatTooltip.show()"
                         [icon]="column.actionCell.icon"
                         [style]="column.actionCell.style">
                       </tb-copy-button>

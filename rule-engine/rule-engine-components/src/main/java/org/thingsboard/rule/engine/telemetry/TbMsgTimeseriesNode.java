@@ -166,6 +166,9 @@ public class TbMsgTimeseriesNode implements TbNode {
                 .entries(tsKvEntryList)
                 .ttl(ttl)
                 .strategy(strategy)
+                .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
+                .tbMsgId(msg.getId())
+                .tbMsgType(msg.getInternalType())
                 .callback(new TelemetryNodeCallback(ctx, msg))
                 .build());
     }

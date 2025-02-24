@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.queue.ruleengine;
+package org.thingsboard.server.common.data.cf.configuration;
 
-import java.io.Serializable;
+import lombok.Data;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 
-public enum QueueEvent implements Serializable {
+@Data
+public class ScriptCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
 
-    PARTITION_CHANGE, CONFIG_UPDATE, DELETE
-
+    @Override
+    public CalculatedFieldType getType() {
+        return CalculatedFieldType.SCRIPT;
+    }
 }

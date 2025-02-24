@@ -57,4 +57,14 @@ public final class DebugModeUtil {
             return debugSettings != null && nodeConnections != null && debugSettings.isFailuresEnabled() && nodeConnections.contains(TbNodeConnectionType.FAILURE);
         }
     }
+
+    public static boolean isDebugFailuresAvailable(HasDebugSettings debugSettingsAware) {
+        if (isDebugAllAvailable(debugSettingsAware)) {
+            return true;
+        } else {
+            var debugSettings = debugSettingsAware.getDebugSettings();
+            return debugSettings != null && debugSettings.isFailuresEnabled();
+        }
+    }
+
 }

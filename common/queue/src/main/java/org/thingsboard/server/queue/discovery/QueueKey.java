@@ -23,6 +23,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 
+import static org.thingsboard.server.common.data.DataConstants.CF_QUEUE_NAME;
+import static org.thingsboard.server.common.data.DataConstants.CF_STATES_QUEUE_NAME;
+
 @Data
 @AllArgsConstructor
 public class QueueKey {
@@ -31,6 +34,9 @@ public class QueueKey {
     @With
     private final String queueName;
     private final TenantId tenantId;
+
+    public static final QueueKey CF = new QueueKey(ServiceType.TB_RULE_ENGINE).withQueueName(CF_QUEUE_NAME);
+    public static final QueueKey CF_STATES = new QueueKey(ServiceType.TB_RULE_ENGINE).withQueueName(CF_STATES_QUEUE_NAME);
 
     public QueueKey(ServiceType type, Queue queue) {
         this.type = type;

@@ -20,9 +20,11 @@ import {
   ElementRef,
   forwardRef,
   Input,
+  OnChanges,
   OnDestroy,
   OnInit,
   Renderer2,
+  SimpleChanges,
   ViewChild,
   ViewContainerRef,
   ViewEncapsulation
@@ -67,7 +69,7 @@ import { catchError } from 'rxjs/operators';
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
+export class JsFuncComponent implements OnInit, OnChanges, OnDestroy, ControlValueAccessor, Validator {
 
   @ViewChild('javascriptEditor', {static: true})
   javascriptEditorElmRef: ElementRef;
@@ -177,28 +179,25 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
               private http: HttpClient) {
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes.functionArgs) {
+      this.updateFunctionArgsString();
+      this.updateFunctionLabel();
+    }
+    if (changes.editorCompleter?.previousValue) {
+      this.updateCompleters();
+    }
+    if (changes.highlightRules?.previousValue) {
+      this.updateHighlightRules();
+    }
+  }
+
   ngOnInit(): void {
     if (this.functionTitle || this.label) {
       this.hideBrackets = true;
     }
     if (!this.resultType || this.resultType.length === 0) {
       this.resultType = 'nocheck';
-    }
-    if (this.functionArgs) {
-      this.functionArgs.forEach((functionArg) => {
-        if (this.functionArgsString.length > 0) {
-          this.functionArgsString += ', ';
-        }
-        this.functionArgsString += functionArg;
-      });
-    }
-    if (this.functionTitle) {
-      this.functionLabel = `${this.functionTitle}: f(${this.functionArgsString})`;
-    } else if (this.label) {
-      this.functionLabel = this.label;
-    } else {
-      this.functionLabel =
-        `function ${this.functionName ? this.functionName : ''}(${this.functionArgsString})${this.hideBrackets ? '' : ' {'}`;
     }
     const editorElement = this.javascriptEditorElmRef.nativeElement;
     let editorOptions: Partial<Ace.EditorOptions> = {
@@ -251,21 +250,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
             }
           });
         }
-        // @ts-ignore
-        if (!!this.highlightRules && !!this.jsEditor.session.$mode) {
-          // @ts-ignore
-          const newMode = new this.jsEditor.session.$mode.constructor();
-          newMode.$highlightRules = new newMode.HighlightRules();
-          for(const group in this.highlightRules) {
-            if(!!newMode.$highlightRules.$rules[group]) {
-              newMode.$highlightRules.$rules[group].unshift(...this.highlightRules[group]);
-            } else {
-              newMode.$highlightRules.$rules[group] = this.highlightRules[group];
-            }
-          }
-          // @ts-ignore
-          this.jsEditor.session.$onChangeMode(newMode);
-        }
+        this.updateHighlightRules();
         this.updateJsWorkerGlobals();
         this.initialCompleters = this.jsEditor.completers || [];
         this.updateCompleters();
@@ -283,6 +268,24 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
     }
     if (this.jsEditor) {
       this.jsEditor.destroy();
+    }
+  }
+
+  private updateHighlightRules(): void {
+    // @ts-ignore
+    if (!!this.highlightRules && !!this.jsEditor.session.$mode) {
+      // @ts-ignore
+      const newMode = new this.jsEditor.session.$mode.constructor();
+      newMode.$highlightRules = new newMode.HighlightRules();
+      for(const group in this.highlightRules) {
+        if(!!newMode.$highlightRules.$rules[group]) {
+          newMode.$highlightRules.$rules[group].unshift(...this.highlightRules[group]);
+        } else {
+          newMode.$highlightRules.$rules[group] = this.highlightRules[group];
+        }
+      }
+      // @ts-ignore
+      this.jsEditor.session.$onChangeMode(newMode);
     }
   }
 
@@ -327,6 +330,25 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
         this.updateView();
       }
     );
+  }
+
+  private updateFunctionArgsString(): void {
+    this.functionArgsString = '';
+    if (this.functionArgs) {
+      this.functionArgsString = this.functionArgs.join(', ');
+    }
+  }
+
+  private updateFunctionLabel(): void {
+    if (this.functionTitle) {
+      this.functionLabel = `${this.functionTitle}: f(${this.functionArgsString})`;
+    } else if (this.label) {
+      this.functionLabel = this.label;
+    } else {
+      this.functionLabel =
+        `function ${this.functionName ? this.functionName : ''}(${this.functionArgsString})${this.hideBrackets ? '' : ' {'}`;
+    }
+    this.cd.markForCheck();
   }
 
   validateOnSubmit(): Observable<void> {

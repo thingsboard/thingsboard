@@ -20,14 +20,17 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -39,6 +42,9 @@ public class TimeseriesSaveRequest {
     private final List<TsKvEntry> entries;
     private final long ttl;
     private final Strategy strategy;
+    private final List<CalculatedFieldId> previousCalculatedFieldIds;
+    private final UUID tbMsgId;
+    private final TbMsgType tbMsgType;
     private final FutureCallback<Void> callback;
 
     public record Strategy(boolean saveTimeseries, boolean saveLatest, boolean sendWsUpdate) {
@@ -62,6 +68,9 @@ public class TimeseriesSaveRequest {
         private List<TsKvEntry> entries;
         private long ttl;
         private Strategy strategy = Strategy.SAVE_ALL;
+        private List<CalculatedFieldId> previousCalculatedFieldIds;
+        private UUID tbMsgId;
+        private TbMsgType tbMsgType;
         private FutureCallback<Void> callback;
 
         Builder() {}
@@ -104,6 +113,21 @@ public class TimeseriesSaveRequest {
             return this;
         }
 
+        public Builder previousCalculatedFieldIds(List<CalculatedFieldId> previousCalculatedFieldIds) {
+            this.previousCalculatedFieldIds = previousCalculatedFieldIds;
+            return this;
+        }
+
+        public Builder tbMsgId(UUID tbMsgId) {
+            this.tbMsgId = tbMsgId;
+            return this;
+        }
+
+        public Builder tbMsgType(TbMsgType tbMsgType) {
+            this.tbMsgType = tbMsgType;
+            return this;
+        }
+
         public Builder callback(FutureCallback<Void> callback) {
             this.callback = callback;
             return this;
@@ -124,7 +148,7 @@ public class TimeseriesSaveRequest {
         }
 
         public TimeseriesSaveRequest build() {
-            return new TimeseriesSaveRequest(tenantId, customerId, entityId, entries, ttl, strategy, callback);
+            return new TimeseriesSaveRequest(tenantId, customerId, entityId, entries, ttl, strategy, previousCalculatedFieldIds, tbMsgId, tbMsgType, callback);
         }
 
     }

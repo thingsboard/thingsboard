@@ -426,6 +426,9 @@ public class HashPartitionServiceTest {
                 topicService);
         ReflectionTestUtils.setField(partitionService, "coreTopic", "tb.core");
         ReflectionTestUtils.setField(partitionService, "corePartitions", 10);
+        ReflectionTestUtils.setField(partitionService, "cfEventTopic", "tb_cf_event");
+        ReflectionTestUtils.setField(partitionService, "cfStateTopic", "tb_cf_state");
+        ReflectionTestUtils.setField(partitionService, "cfPartitions", 10);
         ReflectionTestUtils.setField(partitionService, "vcTopic", "tb.vc");
         ReflectionTestUtils.setField(partitionService, "vcPartitions", 10);
         ReflectionTestUtils.setField(partitionService, "hashFunctionName", hashFunctionName);
