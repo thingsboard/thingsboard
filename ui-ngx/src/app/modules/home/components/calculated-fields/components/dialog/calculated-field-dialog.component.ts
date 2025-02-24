@@ -143,10 +143,10 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
   }
 
   private applyDialogData(): void {
-    const { configuration = {}, type = CalculatedFieldType.SIMPLE, ...value } = this.data.value ?? {};
+    const { configuration = {}, type = CalculatedFieldType.SIMPLE, debugSettings = { failuresEnabled: true, allEnabled: true }, ...value } = this.data.value ?? {};
     const { expression, ...restConfig } = configuration as CalculatedFieldConfiguration;
     const updatedConfig = { ...restConfig , ['expression'+type]: expression };
-    this.fieldFormGroup.patchValue({ configuration: updatedConfig, type, ...value }, {emitEvent: false});
+    this.fieldFormGroup.patchValue({ configuration: updatedConfig, type, debugSettings, ...value }, {emitEvent: false});
   }
 
   private observeTypeChanges(): void {
