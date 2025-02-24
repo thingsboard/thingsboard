@@ -15,20 +15,22 @@
 ///
 
 import {
+  AfterViewInit,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   forwardRef,
   Input,
   OnChanges,
   Renderer2,
   SimpleChanges,
+  ViewChild,
   ViewContainerRef,
 } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
   FormBuilder,
-  FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
@@ -48,8 +50,13 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
-import { isDefined, isDefinedAndNotNull } from '@core/utils';
+import { getEntityDetailsPageURL, isDefined, isDefinedAndNotNull } from '@core/utils';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { TbTableDatasource } from '@shared/components/table/table-datasource.abstract';
+import { EntityService } from '@core/http/entity.service';
+import { PageLink } from '@shared/models/page/page-link';
+import { Direction, SortOrder } from '@shared/models/page/sort-order';
+import { MatSort } from '@angular/material/sort';
 
 @Component({
   selector: 'tb-calculated-field-arguments-table',
@@ -68,19 +75,23 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
     }
   ],
 })
-export class CalculatedFieldArgumentsTableComponent implements ControlValueAccessor, Validator, OnChanges {
+export class CalculatedFieldArgumentsTableComponent implements ControlValueAccessor, Validator, OnChanges, AfterViewInit {
 
   @Input() entityId: EntityId;
   @Input() tenantId: string;
   @Input() entityName: string;
   @Input() calculatedFieldType: CalculatedFieldType;
 
+  @ViewChild(MatSort) sort: MatSort;
+
   errorText = '';
   argumentsFormArray = this.fb.array<AbstractControl>([]);
+  entityNameMap = new Map<string, string>();
+  pageLink = new PageLink(100, 0, null, { direction: Direction.ASC } as SortOrder);
+  dataSource = new CalculatedFieldArgumentDatasource();
 
   readonly entityTypeTranslations = entityTypeTranslations;
   readonly ArgumentTypeTranslations = ArgumentTypeTranslations;
-  readonly EntityType = EntityType;
   readonly ArgumentEntityType = ArgumentEntityType;
   readonly ArgumentType = ArgumentType;
   readonly CalculatedFieldType = CalculatedFieldType;
@@ -93,9 +104,13 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
     private popoverService: TbPopoverService,
     private viewContainerRef: ViewContainerRef,
     private cd: ChangeDetectorRef,
-    private renderer: Renderer2
+    private renderer: Renderer2,
+    private entityService: EntityService,
+    private destroyRef: DestroyRef,
   ) {
     this.argumentsFormArray.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.updateEntityNameMap();
+      this.updateDataSource();
       this.propagateChange(this.getArgumentsObject());
     });
   }
@@ -105,6 +120,14 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
       && changes.calculatedFieldType.currentValue !== changes.calculatedFieldType.previousValue) {
       this.argumentsFormArray.updateValueAndValidity();
     }
+  }
+
+  ngAfterViewInit(): void {
+    this.sort.sortChange.asObservable().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.pageLink.sortOrder.property = this.sort.active;
+      this.pageLink.sortOrder.direction = this.sort.direction as Direction;
+      this.updateDataSource();
+    });
   }
 
   registerOnChange(fn: (argumentsObj: Record<string, CalculatedFieldArgument>) => void): void {
@@ -118,7 +141,8 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
     return this.errorText ? { argumentsFormArray: false } : null;
   }
 
-  onDelete(index: number): void {
+  onDelete($event: Event, index: number): void {
+    $event.stopPropagation();
     this.argumentsFormArray.removeAt(index);
     this.argumentsFormArray.markAsDirty();
   }
@@ -150,7 +174,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
         {}, {}, true);
       this.popoverComponent.tbComponentRef.instance.argumentsDataApplied.subscribe(({ value, index }) => {
         this.popoverComponent.hide();
-        const formGroup = this.getArgumentFormGroup(value);
+        const formGroup = this.fb.group(value);
         if (isDefinedAndNotNull(index)) {
           this.argumentsFormArray.setControl(index, formGroup);
         } else {
@@ -162,9 +186,15 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
     }
   }
 
+  private updateDataSource(): void {
+    const value = this.argumentsFormArray.value;
+    const sortedValue = this.sortData(value, this.pageLink.sortOrder);
+    this.dataSource.loadData(sortedValue);
+  }
+
   private updateErrorText(): void {
     if (this.calculatedFieldType === CalculatedFieldType.SIMPLE
-      && this.argumentsFormArray.controls.some(control => control.get('refEntityKey').get('type').value === ArgumentType.Rolling)) {
+      && this.argumentsFormArray.controls.some(control => control.value.refEntityKey.type === ArgumentType.Rolling)) {
       this.errorText = 'calculated-fields.hint.arguments-simple-with-rolling';
     } else if (!this.argumentsFormArray.controls.length) {
       this.errorText = 'calculated-fields.hint.arguments-empty';
@@ -186,31 +216,62 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
     this.populateArgumentsFormArray(argumentsObj)
   }
 
+  getEntityDetailsPageURL(id: string, type: EntityType): string {
+    return getEntityDetailsPageURL(id, type);
+  }
+
   private populateArgumentsFormArray(argumentsObj: Record<string, CalculatedFieldArgument>): void {
     Object.keys(argumentsObj).forEach(key => {
       const value: CalculatedFieldArgumentValue = {
         ...argumentsObj[key],
         argumentName: key
       };
-      this.argumentsFormArray.push(this.getArgumentFormGroup(value), {emitEvent: false});
+      this.argumentsFormArray.push(this.fb.group(value));
     });
   }
 
-  private getArgumentFormGroup(value: CalculatedFieldArgumentValue): FormGroup {
-    return this.fb.group({
-      ...value,
-      argumentName: [{ value: value.argumentName, disabled: true }],
-      ...(value.refEntityId ? {
-        refEntityId: this.fb.group({
-          entityType: [{ value: value.refEntityId.entityType, disabled: true }],
-          id: [{ value: value.refEntityId.id , disabled: true }],
-        }),
-      } : {}),
-      refEntityKey: this.fb.group({
-        ...value.refEntityKey,
-        type: [{ value: value.refEntityKey.type, disabled: true }],
-        key: [{ value: value.refEntityKey.key, disabled: true }],
-      }),
-    })
+  private updateEntityNameMap(): void {
+    this.argumentsFormArray.value.forEach(({ refEntityId = {}}) => {
+      if (refEntityId.id && !this.entityNameMap.has(refEntityId.id)) {
+        const { id, entityType } = refEntityId as EntityId;
+        this.entityNameMap.set(id, null);
+        this.entityService.getEntity(entityType as EntityType, id, {ignoreLoading: true, ignoreErrors: true })
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe(entity => this.entityNameMap.set(id, entity.name));
+      }
+    });
+  }
+
+  private getSortValue(argument: CalculatedFieldArgumentValue, column: string): string {
+    switch (column) {
+      case 'entityType':
+        if (argument.refEntityId?.entityType === ArgumentEntityType.Tenant) {
+          return 'calculated-fields.argument-current-tenant';
+        } else if (argument.refEntityId?.id) {
+          return entityTypeTranslations.get((argument.refEntityId)?.entityType as unknown as EntityType).type;
+        } else {
+          return 'calculated-fields.argument-current';
+        }
+      case 'type':
+        return ArgumentTypeTranslations.get(argument.refEntityKey.type);
+      case 'key':
+        return argument.refEntityKey.key;
+      default:
+        return argument.argumentName;
+    }
+  }
+
+  private sortData(data: CalculatedFieldArgumentValue[], sortOrder: SortOrder): CalculatedFieldArgumentValue[] {
+    return data.sort((a, b) => {
+      const valA = this.getSortValue(a, sortOrder.property) || '';
+      const valB = this.getSortValue(b, sortOrder.property) || '';
+      return (sortOrder.direction === Direction.ASC.toLowerCase() ? 1 : -1) * valA.localeCompare(valB);
+    });
+  }
+}
+
+class CalculatedFieldArgumentDatasource extends TbTableDatasource<CalculatedFieldArgumentValue> {
+  constructor() {
+    super();
   }
 }
