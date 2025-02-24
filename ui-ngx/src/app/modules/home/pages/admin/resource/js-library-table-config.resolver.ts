@@ -95,21 +95,6 @@ export class JsLibraryTableConfigResolver  {
         entity => checkBoxCell(entity.tenantId.id === NULL_UUID)),
     );
 
-    this.config.cellActionDescriptors.push(
-      {
-        name: this.translate.instant('javascript.download'),
-        icon: 'file_download',
-        isEnabled: () => true,
-        onAction: ($event, entity) => this.downloadResource($event, entity)
-      },
-      {
-        name: this.translate.instant('javascript.delete'),
-        icon: 'delete',
-        isEnabled: () => true,
-        onAction: ($event, entity) => this.deleteResource($event, entity)
-      },
-    );
-
     this.config.groupActionDescriptors = [{
       name: this.translate.instant('action.delete'),
       icon: 'delete',
@@ -148,9 +133,22 @@ export class JsLibraryTableConfigResolver  {
       resourceSubType: ''
     };
     const authUser = getCurrentAuthUser(this.store);
-    this.config.deleteEnabled = (resource) => this.isResourceEditable(resource, authUser.authority);
     this.config.entitySelectionEnabled = (resource) => this.isResourceEditable(resource, authUser.authority);
     this.config.detailsReadonly = (resource) => this.detailsReadonly(resource, authUser.authority);
+    this.config.cellActionDescriptors.push(
+      {
+        name: this.translate.instant('javascript.download'),
+        icon: 'file_download',
+        isEnabled: () => true,
+        onAction: ($event, entity) => this.downloadResource($event, entity)
+      },
+      {
+        name: this.translate.instant('javascript.delete'),
+        icon: 'delete',
+        isEnabled: (resource) => this.isResourceEditable(resource, authUser.authority),
+        onAction: ($event, entity) => this.deleteResource($event, entity)
+      },
+    );
     return this.config;
   }
 
