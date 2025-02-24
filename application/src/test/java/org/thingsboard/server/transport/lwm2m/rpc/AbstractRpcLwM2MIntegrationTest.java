@@ -63,7 +63,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3_14;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3_9;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.TEMPERATURE_SENSOR;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resources;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.lwm2mClientResources;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fromVersionedIdToObjectId;
 
 @Slf4j
@@ -102,7 +102,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
     protected LwM2mTransportServerHelper lwM2mTransportServerHelperTest;
 
     public AbstractRpcLwM2MIntegrationTest() {
-        setResources(resources);
+        setResources(lwm2mClientResources);
     }
 
     @Before
@@ -110,7 +110,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
         if (this.getClass().getSimpleName().equals("RpcLwm2mIntegrationWriteCborTest")) {
             supportFormatOnly_SenMLJSON_SenMLCBOR = true;
         }
-        if (this.getClass().getSimpleName().equals("RpcLwm2mIntegrationObserveTest")) {
+        if (this.getClass().getSimpleName().contains("RpcLwm2mIntegrationObserve")) {
             initRpc(0);
         } else if (this.getClass().getSimpleName().equals("RpcLwm2mIntegrationReadCollectedValueTest")) {
             initRpc(3303);

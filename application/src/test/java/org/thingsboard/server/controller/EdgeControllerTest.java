@@ -897,7 +897,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         edgeImitator.ignoreType(OAuth2ClientUpdateMsg.class);
         edgeImitator.ignoreType(OAuth2DomainUpdateMsg.class);
 
-        edgeImitator.expectMessageAmount(26);
+        edgeImitator.expectMessageAmount(27);
         edgeImitator.connect();
         waitForMessages(edgeImitator);
 
@@ -1002,6 +1002,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "mail"));
         Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "connectivity"));
         Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "jwt"));
+        Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));

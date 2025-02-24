@@ -88,6 +88,7 @@ import {
 import { EllipsisChipListDirective } from '@shared/directives/ellipsis-chip-list.directive';
 import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/scada-symbol-widget.component';
 import { TwoSegmentButtonWidgetComponent } from '@home/components/widget/lib/button/two-segment-button-widget.component';
+import { ValueStepperWidgetComponent } from '@home/components/widget/lib/rpc/value-stepper-widget.component';
 
 @NgModule({
   declarations: [
@@ -128,6 +129,7 @@ import { TwoSegmentButtonWidgetComponent } from '@home/components/widget/lib/but
     TwoSegmentButtonWidgetComponent,
     CommandButtonWidgetComponent,
     PowerButtonWidgetComponent,
+    ValueStepperWidgetComponent,
     SliderWidgetComponent,
     ToggleButtonWidgetComponent,
     TimeSeriesChartWidgetComponent,
@@ -190,6 +192,7 @@ import { TwoSegmentButtonWidgetComponent } from '@home/components/widget/lib/but
     TwoSegmentButtonWidgetComponent,
     CommandButtonWidgetComponent,
     PowerButtonWidgetComponent,
+    ValueStepperWidgetComponent,
     SliderWidgetComponent,
     ToggleButtonWidgetComponent,
     TimeSeriesChartWidgetComponent,

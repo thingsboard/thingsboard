@@ -37,6 +37,8 @@ import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
 import java.util.UUID;
 
+import static org.thingsboard.server.dao.model.ModelConstants.MOBILE_APP_STORE_INFO_EMPTY_OBJECT;
+import static org.thingsboard.server.dao.model.ModelConstants.MOBILE_APP_VERSION_INFO_EMPTY_OBJECT;
 import static org.thingsboard.server.dao.model.ModelConstants.TENANT_ID_COLUMN;
 
 @Data
@@ -99,8 +101,8 @@ public class MobileAppEntity extends BaseSqlEntity<MobileApp> {
         mobile.setAppSecret(appSecret);
         mobile.setPlatformType(platformType);
         mobile.setStatus(status);
-        mobile.setVersionInfo(fromJson(versionInfo, MobileAppVersionInfo.class));
-        mobile.setStoreInfo(fromJson(storeInfo, StoreInfo.class));
+        mobile.setVersionInfo(versionInfo != null ? fromJson(versionInfo, MobileAppVersionInfo.class) : MOBILE_APP_VERSION_INFO_EMPTY_OBJECT);
+        mobile.setStoreInfo(storeInfo != null ? fromJson(storeInfo, StoreInfo.class) : MOBILE_APP_STORE_INFO_EMPTY_OBJECT);
         return mobile;
     }
 }

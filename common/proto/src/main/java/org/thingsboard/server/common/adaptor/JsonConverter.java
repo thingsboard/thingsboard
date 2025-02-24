@@ -540,7 +540,7 @@ public class JsonConverter {
 
     public static Set<AttributeKvEntry> convertToAttributes(JsonElement element) {
         long ts = System.currentTimeMillis();
-        return new HashSet<>(parseValues(element.getAsJsonObject()).stream().map(kv -> new BaseAttributeKvEntry(kv, ts)).toList());
+        return convertToAttributes(element, ts);
     }
 
     public static Set<AttributeKvEntry> convertToAttributes(JsonElement element, long ts) {

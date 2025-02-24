@@ -24,6 +24,9 @@ import org.eclipse.leshan.core.LwM2m;
 import org.eclipse.leshan.core.LwM2m.Version;
 import org.eclipse.leshan.core.link.Link;
 import org.eclipse.leshan.core.link.attributes.Attribute;
+import org.eclipse.leshan.core.link.lwm2m.MixedLwM2mLink;
+import org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttribute;
+import org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
@@ -453,22 +456,33 @@ public class LwM2mClient {
     }
 
     private void setSupportedClientObjects(){
-        this.supportedClientObjects = new ConcurrentHashMap<>();
-        for (Link link: this.registration.getSortedObjectLinks()) {
-            LwM2mPath lwM2mPath = new LwM2mPath(link.getUriReference());
-            if (lwM2mPath.isObject()) {
-                LwM2m.Version ver;
-                if (link.getAttributes().get("ver")!= null) {
-                    ver = new LwM2m.Version(link.getAttributes().get("ver").getValue().toString());
-                } else {
-                    ver = getDefaultObjectIDVer();
+        if (this.registration.getSupportedObject() != null && this.registration.getSupportedObject().size() > 0) {
+            this.supportedClientObjects = this.registration.getSupportedObject();
+        } else {
+            this.supportedClientObjects = new ConcurrentHashMap<>();
+            for (Link link :  this.registration.getSortedObjectLinks()) {
+                if (link instanceof MixedLwM2mLink) {
+                    LwM2mPath path = ((MixedLwM2mLink) link).getPath();
+                    // add supported objects
+                    if (path.isObject() || path.isObjectInstance()) {
+                        int objectId = path.getObjectId();
+                        LwM2mAttribute<Version> versionParamValue = link.getAttributes().get(LwM2mAttributes.OBJECT_VERSION);
+                        if (versionParamValue != null) {
+                            // if there is a version attribute then use it as version for this object
+                            this.supportedClientObjects.put(objectId, versionParamValue.getValue());
+                        } else {
+                            // there is no version attribute attached.
+                            // In this case we use the DEFAULT_VERSION only if this object stored as supported object.
+                            Version currentVersion = this.supportedClientObjects.get(objectId);
+                            if (currentVersion == null) {
+                                this.supportedClientObjects.put(objectId, getDefaultObjectIDVer());
+                            }
+                        }
+                    }
                 }
-                this.supportedClientObjects.put(lwM2mPath.getObjectId(), ver);
-            } else if (lwM2mPath.getObjectId() != null && this.supportedClientObjects.get(lwM2mPath.getObjectId()) == null){
-                this.supportedClientObjects.put(lwM2mPath.getObjectId(), getDefaultObjectIDVer());
             }
         }
     }
-
 }
+
 

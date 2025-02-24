@@ -73,7 +73,7 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
-import org.thingsboard.server.service.edge.rpc.constructor.telemetry.EntityDataMsgConstructor;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
@@ -88,9 +88,6 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
-
-    @Autowired
-    private EntityDataMsgConstructor entityDataMsgConstructor;
 
     @Autowired
     private PartitionService partitionService;
@@ -428,8 +425,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
             }
         }
         String bodyJackson = JacksonUtil.toString(body);
-        return bodyJackson == null ? null :
-                entityDataMsgConstructor.constructEntityDataMsg(tenantId, entityId, actionType, JsonParser.parseString(bodyJackson));
+        return bodyJackson == null ? null : EdgeMsgConstructorUtils.constructEntityDataMsg(tenantId, entityId, actionType, JsonParser.parseString(bodyJackson));
     }
 
     private ListenableFuture<List<AttributeKvEntry>> filterAttributesByTs(TenantId tenantId, EntityId entityId, AttributeScope scope,

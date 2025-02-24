@@ -46,6 +46,14 @@
                 class="tb-error">
         warning
       </mat-icon>
+      <mat-icon matSuffix
+                matTooltipPosition="above"
+                matTooltipClass="tb-error-tooltip"
+                matTooltip="{{ 'mobile.page-name-max-length' | translate }}"
+                *ngIf="customMobilePageForm.get('label').hasError('maxlength') && customMobilePageForm.get('label').touched"
+                class="tb-error">
+        warning
+      </mat-icon>
     </mat-form-field>
   </div>
   <mat-form-field appearance="outline" subscriptSizing="dynamic">

@@ -126,7 +126,7 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
             return savedImage;
         } catch (Exception e) {
             image.setData(null);
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE), image, actionType, user, e);
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE), new TbResourceInfo(image), actionType, user, e);
             throw e;
         }
     }

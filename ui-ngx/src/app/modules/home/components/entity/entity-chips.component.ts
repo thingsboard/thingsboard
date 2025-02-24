@@ -18,7 +18,7 @@ import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { BaseData } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { baseDetailsPageByEntityType, EntityType } from '@app/shared/public-api';
-import { isEqual, isObject } from '@core/utils';
+import { isEqual, isNotEmptyStr, isObject } from '@core/utils';
 
 @Component({
   selector: 'tb-entity-chips',
@@ -32,6 +32,9 @@ export class EntityChipsComponent implements OnChanges {
 
   @Input()
   key: string;
+
+  @Input()
+  detailsPagePrefixUrl: string;
 
   entityDetailsPrefixUrl: string;
 
@@ -52,7 +55,9 @@ export class EntityChipsComponent implements OnChanges {
       if (isObject(entitiesList) && !Array.isArray(entitiesList)) {
         entitiesList = [entitiesList];
       }
-      if (Array.isArray(entitiesList)) {
+      if (isNotEmptyStr(this.detailsPagePrefixUrl)) {
+        this.entityDetailsPrefixUrl = this.detailsPagePrefixUrl;
+      } else if (Array.isArray(entitiesList)) {
         if (entitiesList.length) {
           this.entityDetailsPrefixUrl = baseDetailsPageByEntityType.get(entitiesList[0].id.entityType as EntityType);
         }

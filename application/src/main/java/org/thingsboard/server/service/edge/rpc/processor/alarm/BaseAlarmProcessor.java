@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor.alarm;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -24,15 +25,23 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageDataIterableByTenantIdEntityId;
 import org.thingsboard.server.dao.alarm.AlarmCommentDao;
 import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+
+import static org.thingsboard.server.dao.edge.BaseRelatedEdgesService.RELATED_EDGES_CACHE_ITEMS;
 
 @Slf4j
 public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
@@ -43,8 +52,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
     public ListenableFuture<Void> processAlarmMsg(TenantId tenantId, AlarmUpdateMsg alarmUpdateMsg) {
         log.trace("[{}] processAlarmMsg [{}]", tenantId, alarmUpdateMsg);
         AlarmId alarmId = new AlarmId(new UUID(alarmUpdateMsg.getIdMSB(), alarmUpdateMsg.getIdLSB()));
-        EntityId originatorId = getAlarmOriginatorFromMsg(tenantId, alarmUpdateMsg);
-        Alarm alarm = constructAlarmFromUpdateMsg(tenantId, alarmId, originatorId, alarmUpdateMsg);
+        Alarm alarm = JacksonUtil.fromString(alarmUpdateMsg.getEntity(), Alarm.class, true);
         if (alarm == null) {
             throw new RuntimeException("[{" + tenantId + "}] alarmUpdateMsg {" + alarmUpdateMsg + "} cannot be converted to alarm");
         }
@@ -124,9 +132,18 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
         return Futures.immediateFuture(null);
     }
 
-
-    protected abstract EntityId getAlarmOriginatorFromMsg(TenantId tenantId, AlarmUpdateMsg alarmUpdateMsg);
-
-    protected abstract Alarm constructAlarmFromUpdateMsg(TenantId tenantId, AlarmId alarmId, EntityId originatorId, AlarmUpdateMsg alarmUpdateMsg);
+    protected List<ListenableFuture<Void>> pushEventToAllRelatedEdges(TenantId tenantId, EntityId originatorId, AlarmId alarmId,
+                                                                      EdgeEventActionType actionType, JsonNode body, EdgeId sourceEdgeId,
+                                                                      EdgeEventType edgeEventType) {
+        List<ListenableFuture<Void>> futures = new ArrayList<>();
+        PageDataIterableByTenantIdEntityId<EdgeId> edgeIds =
+                new PageDataIterableByTenantIdEntityId<>(edgeCtx.getEdgeService()::findRelatedEdgeIdsByEntityId, tenantId, originatorId, RELATED_EDGES_CACHE_ITEMS);
+        for (EdgeId relatedEdgeId : edgeIds) {
+            if (!relatedEdgeId.equals(sourceEdgeId)) {
+                futures.add(saveEdgeEvent(tenantId, relatedEdgeId, edgeEventType, actionType, alarmId, body));
+            }
+        }
+        return futures;
+    }
 
 }

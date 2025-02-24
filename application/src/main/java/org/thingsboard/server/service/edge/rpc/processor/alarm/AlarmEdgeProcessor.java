@@ -15,47 +15,33 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor.alarm;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageDataIterableByTenantIdEntityId;
-import org.thingsboard.server.dao.entity.EntityService;
-import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
-import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.service.edge.rpc.constructor.alarm.AlarmMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.alarm.AlarmMsgConstructorFactory;
+import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.edge.BaseRelatedEdgesService.RELATED_EDGES_CACHE_ITEMS;
-
 @Slf4j
-public abstract class AlarmEdgeProcessor extends BaseAlarmProcessor implements AlarmProcessor {
-
-    @Autowired
-    private AlarmMsgConstructorFactory alarmMsgConstructorFactory;
-
-    @Autowired
-    private EntityService entityService;
+@Component
+@TbCoreComponent
+public class AlarmEdgeProcessor extends BaseAlarmProcessor implements AlarmProcessor {
 
     @Override
     public ListenableFuture<Void> processAlarmMsgFromEdge(TenantId tenantId, EdgeId edgeId, AlarmUpdateMsg alarmUpdateMsg) {
@@ -69,9 +55,8 @@ public abstract class AlarmEdgeProcessor extends BaseAlarmProcessor implements A
     }
 
     @Override
-    public DownlinkMsg convertAlarmEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
-        AlarmUpdateMsg alarmUpdateMsg = convertAlarmEventToAlarmMsg(edgeEvent.getTenantId(), edgeEvent.getEntityId(),
-                edgeEvent.getAction(), edgeEvent.getBody(), edgeVersion);
+    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent) {
+        AlarmUpdateMsg alarmUpdateMsg = convertAlarmEventToAlarmMsg(edgeEvent);
         if (alarmUpdateMsg != null) {
             return DownlinkMsg.newBuilder()
                     .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
@@ -82,37 +67,7 @@ public abstract class AlarmEdgeProcessor extends BaseAlarmProcessor implements A
     }
 
     @Override
-    public ListenableFuture<Void> processAlarmCommentMsgFromEdge(TenantId tenantId, EdgeId edgeId, AlarmCommentUpdateMsg alarmCommentUpdateMsg) {
-        log.trace("[{}] processAlarmCommentMsgFromEdge [{}]", tenantId, alarmCommentUpdateMsg);
-        try {
-            edgeSynchronizationManager.getEdgeId().set(edgeId);
-            return processAlarmCommentMsg(tenantId, alarmCommentUpdateMsg);
-        } finally {
-            edgeSynchronizationManager.getEdgeId().remove();
-        }
-    }
-
-    @Override
-    public DownlinkMsg convertAlarmCommentEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
-        UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-        var msgConstructor = (AlarmMsgConstructor) alarmMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion);
-        switch (edgeEvent.getAction()) {
-            case ADDED_COMMENT:
-            case UPDATED_COMMENT:
-            case DELETED_COMMENT:
-                AlarmComment alarmComment = JacksonUtil.convertValue(edgeEvent.getBody(), AlarmComment.class);
-                if (alarmComment != null) {
-                    return DownlinkMsg.newBuilder()
-                            .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addAlarmCommentUpdateMsg(msgConstructor.constructAlarmCommentUpdatedMsg(msgType, alarmComment))
-                            .build();
-                }
-            default:
-                return null;
-        }
-    }
-
-    public ListenableFuture<Void> processAlarmNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
+    public ListenableFuture<Void> processEntityNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
         EdgeEventActionType actionType = EdgeEventActionType.valueOf(edgeNotificationMsg.getAction());
         AlarmId alarmId = new AlarmId(new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
         EdgeId originatorEdgeId = safeGetEdgeId(edgeNotificationMsg.getOriginatorEdgeIdMSB(), edgeNotificationMsg.getOriginatorEdgeIdLSB());
@@ -140,55 +95,29 @@ public abstract class AlarmEdgeProcessor extends BaseAlarmProcessor implements A
         }, dbCallbackExecutorService);
     }
 
-    public ListenableFuture<Void> processAlarmCommentNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        EdgeEventActionType actionType = EdgeEventActionType.valueOf(edgeNotificationMsg.getAction());
-        AlarmId alarmId = new AlarmId(new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
-        EdgeId originatorEdgeId = safeGetEdgeId(edgeNotificationMsg.getOriginatorEdgeIdMSB(), edgeNotificationMsg.getOriginatorEdgeIdLSB());
-        AlarmComment alarmComment = JacksonUtil.fromString(edgeNotificationMsg.getBody(), AlarmComment.class);
-        if (alarmComment == null) {
-            return Futures.immediateFuture(null);
-        }
-        Alarm alarmById = edgeCtx.getAlarmService().findAlarmById(tenantId, new AlarmId(alarmComment.getAlarmId().getId()));
-        List<ListenableFuture<Void>> delFutures = pushEventToAllRelatedEdges(tenantId, alarmById.getOriginator(),
-                alarmId, actionType, JacksonUtil.valueToTree(alarmComment), originatorEdgeId, EdgeEventType.ALARM_COMMENT);
-        return Futures.transform(Futures.allAsList(delFutures), voids -> null, dbCallbackExecutorService);
-    }
-
-    private List<ListenableFuture<Void>> pushEventToAllRelatedEdges(TenantId tenantId, EntityId originatorId, AlarmId alarmId,
-                                                                    EdgeEventActionType actionType, JsonNode body, EdgeId sourceEdgeId,
-                                                                    EdgeEventType edgeEventType) {
-        List<ListenableFuture<Void>> futures = new ArrayList<>();
-        PageDataIterableByTenantIdEntityId<EdgeId> edgeIds =
-                new PageDataIterableByTenantIdEntityId<>(edgeCtx.getEdgeService()::findRelatedEdgeIdsByEntityId, tenantId, originatorId, RELATED_EDGES_CACHE_ITEMS);
-        for (EdgeId relatedEdgeId : edgeIds) {
-            if (!relatedEdgeId.equals(sourceEdgeId)) {
-                futures.add(saveEdgeEvent(tenantId, relatedEdgeId, edgeEventType, actionType, alarmId, body));
-            }
-        }
-        return futures;
-    }
-
-    private AlarmUpdateMsg convertAlarmEventToAlarmMsg(TenantId tenantId, UUID entityId, EdgeEventActionType actionType, JsonNode body, EdgeVersion edgeVersion) {
-        AlarmId alarmId = new AlarmId(entityId);
-        UpdateMsgType msgType = getUpdateMsgType(actionType);
-        var msgConstructor = (AlarmMsgConstructor) alarmMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion);
-        switch (actionType) {
+    private AlarmUpdateMsg convertAlarmEventToAlarmMsg(EdgeEvent edgeEvent) {
+        AlarmId alarmId = new AlarmId(edgeEvent.getEntityId());
+        UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
+        switch (edgeEvent.getAction()) {
             case ADDED, UPDATED, ALARM_ACK, ALARM_CLEAR -> {
-                Alarm alarm = edgeCtx.getAlarmService().findAlarmById(tenantId, alarmId);
+                Alarm alarm = edgeCtx.getAlarmService().findAlarmById(edgeEvent.getTenantId(), alarmId);
                 if (alarm != null) {
-                    return msgConstructor.constructAlarmUpdatedMsg(msgType, alarm,
-                            entityService.fetchEntityName(tenantId, alarm.getOriginator()).orElse(null));
+                    return EdgeMsgConstructorUtils.constructAlarmUpdatedMsg(msgType, alarm);
                 }
             }
             case ALARM_DELETE, DELETED -> {
-                Alarm deletedAlarm = JacksonUtil.convertValue(body, Alarm.class);
+                Alarm deletedAlarm = JacksonUtil.convertValue(edgeEvent.getBody(), Alarm.class);
                 if (deletedAlarm != null) {
-                    return msgConstructor.constructAlarmUpdatedMsg(msgType, deletedAlarm,
-                            entityService.fetchEntityName(tenantId, deletedAlarm.getOriginator()).orElse(null));
+                    return EdgeMsgConstructorUtils.constructAlarmUpdatedMsg(msgType, deletedAlarm);
                 }
             }
         }
         return null;
+    }
+
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.ALARM;
     }
 
 }
