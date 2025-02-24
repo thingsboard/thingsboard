@@ -18,7 +18,6 @@ package org.thingsboard.server.common.data.widget;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.Data;
-import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.validation.NoXss;
 
@@ -45,7 +44,7 @@ public class WidgetTypeInfo extends BaseWidgetType {
     private String widgetType;
     @Valid
     @Schema(description = "Bundles", accessMode = Schema.AccessMode.READ_ONLY)
-    private List<EntityInfo> bundles;
+    private List<WidgetBundleInfo> bundles;
 
     public WidgetTypeInfo() {
         super();
@@ -60,15 +59,10 @@ public class WidgetTypeInfo extends BaseWidgetType {
     }
 
     public WidgetTypeInfo(WidgetTypeInfo widgetTypeInfo) {
-        super(widgetTypeInfo);
-        this.image = widgetTypeInfo.getImage();
-        this.description = widgetTypeInfo.getDescription();
-        this.tags = widgetTypeInfo.getTags();
-        this.widgetType = widgetTypeInfo.getWidgetType();
-        this.bundles = Collections.emptyList();
+        this(widgetTypeInfo, Collections.emptyList());
     }
 
-    public WidgetTypeInfo(WidgetTypeInfo widgetTypeInfo, List<EntityInfo> bundles) {
+    public WidgetTypeInfo(WidgetTypeInfo widgetTypeInfo, List<WidgetBundleInfo> bundles) {
         super(widgetTypeInfo);
         this.image = widgetTypeInfo.getImage();
         this.description = widgetTypeInfo.getDescription();
@@ -78,19 +72,10 @@ public class WidgetTypeInfo extends BaseWidgetType {
     }
 
     public WidgetTypeInfo(WidgetTypeDetails widgetTypeDetails) {
-        super(widgetTypeDetails);
-        this.image = widgetTypeDetails.getImage();
-        this.description = widgetTypeDetails.getDescription();
-        this.tags = widgetTypeDetails.getTags();
-        if (widgetTypeDetails.getDescriptor() != null && widgetTypeDetails.getDescriptor().has("type")) {
-            this.widgetType = widgetTypeDetails.getDescriptor().get("type").asText();
-        } else {
-            this.widgetType = "";
-        }
-        this.bundles = Collections.emptyList();
+        this(widgetTypeDetails, Collections.emptyList());
     }
 
-    public WidgetTypeInfo(WidgetTypeDetails widgetTypeDetails, List<EntityInfo> bundles) {
+    public WidgetTypeInfo(WidgetTypeDetails widgetTypeDetails, List<WidgetBundleInfo> bundles) {
         super(widgetTypeDetails);
         this.image = widgetTypeDetails.getImage();
         this.description = widgetTypeDetails.getDescription();
