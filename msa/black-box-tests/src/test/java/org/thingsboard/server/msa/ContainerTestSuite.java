@@ -164,10 +164,8 @@ public class ContainerTestSuite {
             }
 
             // to trigger edqs synchronization
-            if (true) {
-                addToFile(targetDir, "tb-node.env",
-                        Map.of("TB_EDQS_SYNC_ENABLED", "true"));
-            }
+            addToFile(targetDir, "tb-node.env",
+                    Map.of("TB_EDQS_SYNC_ENABLED", "true"));
 
             testContainer = new DockerComposeContainerImpl<>(composeFiles)
                     .withPull(false)

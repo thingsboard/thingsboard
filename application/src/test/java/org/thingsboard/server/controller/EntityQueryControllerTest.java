@@ -713,7 +713,8 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         // all devices with ownerName = TEST TENANT
         EntityCountQuery query = new EntityCountQuery(filter, List.of(activeAlarmTimeFilter, tenantOwnerNameFilter));
-        countByQueryAndCheck(query, numOfDevices);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> countByQuery(query),
+                result -> result == numOfDevices);
 
         // all devices with ownerName = TEST TENANT
         EntityCountQuery activeAlarmTimeToLongQuery = new EntityCountQuery(filter, List.of(activeAlarmTimeToLongFilter, tenantOwnerNameFilter));

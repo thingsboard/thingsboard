@@ -114,28 +114,6 @@ public class TestRestClient {
         requestSpec.header(JWT_TOKEN_HEADER_PARAM, "Bearer " + token);
     }
 
-    public JsonNode getActivateRequest(String password) {
-        ObjectNode response = given().spec(requestSpec).get("/api/noauth/activate?activateToken={activateToken}", token)
-                .then()
-                .statusCode(HTTP_OK)
-                .extract()
-                .as(ObjectNode.class);
-        return JacksonUtil.newObjectNode()
-                .put("activateToken", this.token)
-                .put("password", password);
-    }
-
-    public void activateAndLoginAsUser(JsonNode activateRequest) {
-        ObjectNode tokenInfo = given().spec(requestSpec).body(activateRequest)
-                .post("/api/noauth/activate")
-                .then()
-                .extract()
-                .as(ObjectNode.class);
-        token = tokenInfo.get("token").asText();
-        refreshToken = tokenInfo.get("refreshToken").asText();
-        requestSpec.header(JWT_TOKEN_HEADER_PARAM, "Bearer " + token);
-    }
-
     public Tenant postTenant(Tenant tenant) {
         return given().spec(requestSpec).body(tenant)
                 .post("/api/tenant")
