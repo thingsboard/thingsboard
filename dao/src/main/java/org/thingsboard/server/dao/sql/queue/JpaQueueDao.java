@@ -22,7 +22,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -97,11 +96,6 @@ public class JpaQueueDao extends JpaAbstractDao<QueueEntity, Queue> implements Q
     @Override
     public EntityType getEntityType() {
         return EntityType.QUEUE;
-    }
-
-    @Override
-    public ObjectType getType() {
-        return ObjectType.QUEUE;
     }
 
 }

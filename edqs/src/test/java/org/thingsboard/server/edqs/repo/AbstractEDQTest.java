@@ -69,14 +69,14 @@ import java.util.UUID;
 @Configuration
 @ComponentScan({"org.thingsboard.server.edqs.repo", "org.thingsboard.server.edqs.util"})
 @EntityScan("org.thingsboard.server.edqs")
-@TestPropertySource(locations = {"classpath:edq-test.properties"})
+@TestPropertySource(locations = {"classpath:edqs-test.properties"})
 @TestExecutionListeners({
         DependencyInjectionTestExecutionListener.class,
         DirtiesContextTestExecutionListener.class})
 public abstract class AbstractEDQTest {
 
     @Autowired
-    protected InMemoryEdqRepository repository;
+    protected DefaultEdqsRepository repository;
     @Autowired
     protected EdqsConverter edqsConverter;
 

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="200" height="200" fill="none" version="1.1" viewBox="0 0 200 200"><tb:metadata xmlns=""><![CDATA[{
   "title": "Right analog water level meter",
-  "description": "Right analog water level meter",
+  "description": "Right analog water level meter with real-time display of fluid levels.",
   "searchTags": [
     "water meter"
   ],

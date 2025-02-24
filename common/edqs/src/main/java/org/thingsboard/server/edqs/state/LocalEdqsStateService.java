@@ -27,10 +27,14 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.edqs.processor.EdqsProcessor;
 import org.thingsboard.server.edqs.util.EdqsRocksDb;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsMsg;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
 import org.thingsboard.server.queue.edqs.EdqsQueue;
 import org.thingsboard.server.queue.edqs.InMemoryEdqsComponent;
 
 import java.util.Set;
+
+import static org.thingsboard.server.common.msg.queue.TopicPartitionInfo.withTopic;
 
 @Service
 @RequiredArgsConstructor
@@ -38,29 +42,34 @@ import java.util.Set;
 @Slf4j
 public class LocalEdqsStateService implements EdqsStateService {
 
+    private final EdqsRocksDb db;
     @Autowired @Lazy
     private EdqsProcessor processor;
-    @Autowired
-    private EdqsRocksDb db;
 
-    private boolean restoreDone;
+    private PartitionedQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> eventConsumer;
+    private Set<TopicPartitionInfo> partitions;
 
     @Override
-    public void restore(Set<TopicPartitionInfo> partitions) {
-        if (restoreDone) {
-            return;
-        }
+    public void init(PartitionedQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> eventConsumer) {
+        this.eventConsumer = eventConsumer;
+    }
 
-        db.forEach((key, value) -> {
-            try {
-                ToEdqsMsg edqsMsg = ToEdqsMsg.parseFrom(value);
-                log.trace("[{}] Restored msg from RocksDB: {}", key, edqsMsg);
-                processor.process(edqsMsg, EdqsQueue.STATE);
-            } catch (Exception e) {
-                log.error("[{}] Failed to restore value", key, e);
-            }
-        });
-        restoreDone = true;
+    @Override
+    public void process(Set<TopicPartitionInfo> partitions) {
+        if (this.partitions == null) {
+            db.forEach((key, value) -> {
+                try {
+                    ToEdqsMsg edqsMsg = ToEdqsMsg.parseFrom(value);
+                    log.trace("[{}] Restored msg from RocksDB: {}", key, edqsMsg);
+                    processor.process(edqsMsg, EdqsQueue.STATE);
+                } catch (Exception e) {
+                    log.error("[{}] Failed to restore value", key, e);
+                }
+            });
+            log.info("Restore completed");
+        }
+        eventConsumer.update(withTopic(partitions, EdqsQueue.EVENTS.getTopic()));
+        this.partitions = partitions;
     }
 
     @Override
@@ -79,7 +88,11 @@ public class LocalEdqsStateService implements EdqsStateService {
 
     @Override
     public boolean isReady() {
-        return restoreDone;
+        return partitions != null;
+    }
+
+    @Override
+    public void stop() {
     }
 
 }

@@ -35,14 +35,17 @@ public class TbQueueConsumerTask<M extends TbQueueMsg> {
     private final Object key;
     private volatile TbQueueConsumer<M> consumer;
     private volatile Supplier<TbQueueConsumer<M>> consumerSupplier;
+    @Getter
+    private final Runnable callback;
 
     @Setter
     private Future<?> task;
 
-    public TbQueueConsumerTask(Object key, Supplier<TbQueueConsumer<M>> consumerSupplier) {
+    public TbQueueConsumerTask(Object key, Supplier<TbQueueConsumer<M>> consumerSupplier, Runnable callback) {
         this.key = key;
         this.consumer = null;
         this.consumerSupplier = consumerSupplier;
+        this.callback = callback;
     }
 
     public TbQueueConsumer<M> getConsumer() {

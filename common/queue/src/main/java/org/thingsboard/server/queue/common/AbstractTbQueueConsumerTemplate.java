@@ -31,7 +31,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
 
@@ -95,7 +94,7 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
                 partitions = subscribeQueue.poll();
             }
             if (!subscribed) {
-                log.info("Subscribing to topics {}", getFullTopicNames());
+                log.info("Subscribing to {}", partitions);
                 doSubscribe(partitions);
                 subscribed = true;
             }
@@ -148,6 +147,9 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
     @Override
     public void commit() {
         if (consumerLock.isLocked()) {
+            if (stopped) {
+                return;
+            }
             log.error("commit. consumerLock is locked. will wait with no timeout. it looks like a race conditions or deadlock topic " + topic, new RuntimeException("stacktrace"));
         }
         consumerLock.lock();
@@ -165,7 +167,7 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
 
     @Override
     public void unsubscribe() {
-        log.info("Unsubscribing and stopping consumer for topics {}", getFullTopicNames());
+        log.info("Unsubscribing and stopping consumer for {}", partitions);
         stopped = true;
         consumerLock.lock();
         try {
@@ -198,9 +200,8 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
             return Collections.emptyList();
         }
         return partitions.stream()
-                .map(tpi -> tpi.getFullTopicName() + (tpi.isUseInternalPartition() ?
-                        "[" + tpi.getPartition().orElse(-1) + "]" : ""))
-                .collect(Collectors.toList());
+                .map(TopicPartitionInfo::getFullTopicName)
+                .toList();
     }
 
     protected boolean isLongPollingSupported() {

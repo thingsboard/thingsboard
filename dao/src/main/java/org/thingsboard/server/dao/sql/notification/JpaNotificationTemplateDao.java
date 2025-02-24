@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationType;
@@ -98,11 +97,6 @@ public class JpaNotificationTemplateDao extends JpaAbstractDao<NotificationTempl
     @Override
     public EntityType getEntityType() {
         return EntityType.NOTIFICATION_TEMPLATE;
-    }
-
-    @Override
-    public ObjectType getType() {
-        return ObjectType.NOTIFICATION_TEMPLATE;
     }
 
 }

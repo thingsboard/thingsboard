@@ -43,9 +43,12 @@ public class EdqsStatsService {
     private final ConcurrentHashMap<TenantId, EdqsStats> statsMap = new ConcurrentHashMap<>();
     private final StatsFactory statsFactory;
 
-    @Scheduled(initialDelayString = "${queue.edqs.stats.print-interval-ms:60000}",
-            fixedDelayString = "${queue.edqs.stats.print-interval-ms:60000}")
+    @Scheduled(initialDelayString = "${queue.edqs.stats.print-interval-ms:300000}",
+            fixedDelayString = "${queue.edqs.stats.print-interval-ms:300000}")
     private void reportStats() {
+        if (statsMap.isEmpty()) {
+            return;
+        }
         String values = statsMap.entrySet().stream()
                 .map(kv -> "TenantId [" + kv.getKey() + "] stats [" + kv.getValue() + "]")
                 .collect(Collectors.joining(System.lineSeparator()));

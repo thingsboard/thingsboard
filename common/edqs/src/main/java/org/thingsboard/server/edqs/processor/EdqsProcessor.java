@@ -24,12 +24,10 @@ import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ExceptionUtil;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -43,14 +41,13 @@ import org.thingsboard.server.common.data.edqs.query.QueryResult;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.queue.QueueConfig;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.edqs.repo.EdqRepository;
+import org.thingsboard.server.edqs.repo.EdqsRepository;
+import org.thingsboard.server.edqs.state.EdqsPartitionService;
 import org.thingsboard.server.edqs.state.EdqsStateService;
 import org.thingsboard.server.edqs.util.EdqsConverter;
-import org.thingsboard.server.edqs.state.EdqsPartitionService;
 import org.thingsboard.server.edqs.util.VersionsStore;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.EdqsEventMsg;
@@ -59,7 +56,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsMsg;
 import org.thingsboard.server.queue.TbQueueHandler;
 import org.thingsboard.server.queue.TbQueueResponseTemplate;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.common.consumer.MainQueueConsumerManager;
+import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.edqs.EdqsComponent;
@@ -69,6 +66,7 @@ import org.thingsboard.server.queue.edqs.EdqsQueue;
 import org.thingsboard.server.queue.edqs.EdqsQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -78,6 +76,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.msg.queue.TopicPartitionInfo.withTopic;
+
 @EdqsComponent
 @Service
 @RequiredArgsConstructor
@@ -86,25 +86,23 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
 
     private final EdqsQueueFactory queueFactory;
     private final EdqsConverter converter;
-    private final EdqRepository repository;
+    private final EdqsRepository repository;
     private final EdqsConfig config;
     private final EdqsPartitionService partitionService;
     private final ConfigurableApplicationContext applicationContext;
-    @Autowired @Lazy
-    private EdqsStateService stateService;
+    private final EdqsStateService stateService;
 
-    private MainQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>, QueueConfig> eventsConsumer;
+    private PartitionedQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> eventConsumer;
     private TbQueueResponseTemplate<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<FromEdqsMsg>> responseTemplate;
 
     private ExecutorService consumersExecutor;
-    private ExecutorService mgmtExecutor;
+    private ExecutorService taskExecutor;
     private ScheduledExecutorService scheduler;
     private ListeningExecutorService requestExecutor;
-    private ExecutorService repartitionExecutor;
 
     private final VersionsStore versionsStore = new VersionsStore();
 
-    private final AtomicInteger counter = new AtomicInteger(); // FIXME: TMP
+    private final AtomicInteger counter = new AtomicInteger();
 
     @Getter
     private Consumer<Throwable> errorHandler;
@@ -112,10 +110,9 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
     @PostConstruct
     private void init() {
         consumersExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("edqs-consumer"));
-        mgmtExecutor = ThingsBoardExecutors.newWorkStealingPool(4, "edqs-consumer-mgmt");
+        taskExecutor = ThingsBoardExecutors.newWorkStealingPool(4, "edqs-consumer-task-executor");
         scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("edqs-scheduler");
         requestExecutor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(12, "edqs-requests"));
-        repartitionExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("edqs-repartition"));
         errorHandler = error -> {
             if (error instanceof OutOfMemoryError) {
                 log.error("OOM detected, shutting down");
@@ -125,14 +122,17 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
             }
         };
 
-        eventsConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<ToEdqsMsg>, QueueConfig>builder()
+        eventConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<ToEdqsMsg>>create()
                 .queueKey(new QueueKey(ServiceType.EDQS, EdqsQueue.EVENTS.getTopic()))
-                .config(QueueConfig.of(true, config.getPollInterval()))
+                .topic(EdqsQueue.EVENTS.getTopic())
+                .pollInterval(config.getPollInterval())
                 .msgPackProcessor((msgs, consumer, config) -> {
                     for (TbProtoQueueMsg<ToEdqsMsg> queueMsg : msgs) {
+                        if (consumer.isStopped()) {
+                            return;
+                        }
                         try {
                             ToEdqsMsg msg = queueMsg.getValue();
-                            log.trace("Processing message: {}", msg);
                             process(msg, EdqsQueue.EVENTS);
                         } catch (Exception t) {
                             log.error("Failed to process message: {}", queueMsg, t);
@@ -142,10 +142,12 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
                 })
                 .consumerCreator((config, partitionId) -> queueFactory.createEdqsMsgConsumer(EdqsQueue.EVENTS))
                 .consumerExecutor(consumersExecutor)
-                .taskExecutor(mgmtExecutor)
+                .taskExecutor(taskExecutor)
                 .scheduler(scheduler)
                 .uncaughtErrorHandler(errorHandler)
                 .build();
+        stateService.init(eventConsumer);
+
         responseTemplate = queueFactory.createEdqsResponseTemplate();
     }
 
@@ -159,64 +161,50 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
         if (event.getServiceType() != ServiceType.EDQS) {
             return;
         }
-        repartitionExecutor.submit(() -> { // todo: maybe cancel the task if new event comes
-            try {
-                Set<TopicPartitionInfo> newPartitions = event.getNewPartitions().get(new QueueKey(ServiceType.EDQS));
-                Set<TopicPartitionInfo> partitions = newPartitions.stream()
-                        .map(tpi -> tpi.withUseInternalPartition(true))
-                        .collect(Collectors.toSet());
+        try {
+            Set<TopicPartitionInfo> newPartitions = event.getNewPartitions().get(new QueueKey(ServiceType.EDQS));
+            Set<TopicPartitionInfo> partitions = newPartitions.stream()
+                    .map(tpi -> tpi.withUseInternalPartition(true))
+                    .collect(Collectors.toSet());
 
-                try {
-                    stateService.restore(withTopic(partitions, EdqsQueue.STATE.getTopic())); // blocks until restored
-                } catch (Exception e) {
-                    log.error("Failed to process restore for partitions {}", partitions, e);
-                }
-                eventsConsumer.update(withTopic(partitions, EdqsQueue.EVENTS.getTopic()));
-                responseTemplate.subscribe(withTopic(partitions, config.getRequestsTopic()));
+            stateService.process(withTopic(partitions, EdqsQueue.STATE.getTopic()));
+            // eventsConsumer's partitions are updated by stateService
+            responseTemplate.subscribe(withTopic(partitions, config.getRequestsTopic())); // FIXME: we subscribe to partitions before we are ready. implement consumer-per-partition version for request template
 
-                Set<TopicPartitionInfo> oldPartitions = event.getOldPartitions().get(new QueueKey(ServiceType.EDQS));
-                if (CollectionsUtil.isNotEmpty(oldPartitions)) {
-                    Set<Integer> removedPartitions = Sets.difference(oldPartitions, newPartitions).stream()
-                            .map(tpi -> tpi.getPartition().orElse(-1)).collect(Collectors.toSet());
-                    if (config.getPartitioningStrategy() != EdqsPartitioningStrategy.TENANT && !removedPartitions.isEmpty()) {
-                        log.warn("Partitions {} were removed but shouldn't be (due to NONE partitioning strategy)", removedPartitions);
-                    }
-                    repository.clearIf(tenantId -> {
-                        Integer partition = partitionService.resolvePartition(tenantId);
-                        return partition != null && removedPartitions.contains(partition);
-                    });
+            Set<TopicPartitionInfo> oldPartitions = event.getOldPartitions().get(new QueueKey(ServiceType.EDQS));
+            if (CollectionsUtil.isNotEmpty(oldPartitions)) {
+                Set<Integer> removedPartitions = Sets.difference(oldPartitions, newPartitions).stream()
+                        .map(tpi -> tpi.getPartition().orElse(-1)).collect(Collectors.toSet());
+                if (config.getPartitioningStrategy() != EdqsPartitioningStrategy.TENANT && !removedPartitions.isEmpty()) {
+                    log.warn("Partitions {} were removed but shouldn't be (due to NONE partitioning strategy)", removedPartitions);
                 }
-            } catch (Throwable t) {
-                log.error("Failed to handle partition change event {}", event, t);
+                repository.clearIf(tenantId -> {
+                    Integer partition = partitionService.resolvePartition(tenantId);
+                    return partition != null && removedPartitions.contains(partition);
+                });
             }
-        });
+        } catch (Throwable t) {
+            log.error("Failed to handle partition change event {}", event, t);
+        }
     }
 
     @Override
     public ListenableFuture<TbProtoQueueMsg<FromEdqsMsg>> handle(TbProtoQueueMsg<ToEdqsMsg> queueMsg) {
         ToEdqsMsg toEdqsMsg = queueMsg.getValue();
         return requestExecutor.submit(() -> {
-            EdqsResponse response = new EdqsResponse();
+            EdqsRequest request;
+            TenantId tenantId;
+            CustomerId customerId;
             try {
-                EdqsRequest request = JacksonUtil.fromString(toEdqsMsg.getRequestMsg().getValue(), EdqsRequest.class);
-                TenantId tenantId = getTenantId(toEdqsMsg);
-                CustomerId customerId = getCustomerId(toEdqsMsg);
-                log.info("[{}] Handling request: {}", tenantId, request);
-
-                if (request.getEntityDataQuery() != null) {
-                    PageData<QueryResult> result = repository.findEntityDataByQuery(tenantId, customerId,
-                            request.getEntityDataQuery(), false);
-                    response.setEntityDataQueryResult(result.mapData(QueryResult::toOldEntityData));
-                } else if (request.getEntityCountQuery() != null) {
-                    long result = repository.countEntitiesByQuery(tenantId, customerId, request.getEntityCountQuery(), tenantId.isSysTenantId());
-                    response.setEntityCountQueryResult(result);
-                }
-
-                log.info("Answering with response: {}", response);
-            } catch (Throwable e) {
-                response.setError(ExceptionUtils.getStackTrace(e)); // TODO: return only the message
-                log.info("Answering with error", e);
+                request = Objects.requireNonNull(JacksonUtil.fromString(toEdqsMsg.getRequestMsg().getValue(), EdqsRequest.class));
+                tenantId = getTenantId(toEdqsMsg);
+                customerId = getCustomerId(toEdqsMsg);
+            } catch (Exception e) {
+                log.error("Failed to parse request msg: {}", toEdqsMsg, e);
+                throw e;
             }
+
+            EdqsResponse response = processRequest(tenantId, customerId, request);
             return new TbProtoQueueMsg<>(queueMsg.getKey(), FromEdqsMsg.newBuilder()
                     .setResponseMsg(TransportProtos.EdqsResponseMsg.newBuilder()
                             .setValue(JacksonUtil.toString(response))
@@ -225,7 +213,27 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
         });
     }
 
+    private EdqsResponse processRequest(TenantId tenantId, CustomerId customerId, EdqsRequest request) {
+        EdqsResponse response = new EdqsResponse();
+        try {
+            if (request.getEntityDataQuery() != null) {
+                PageData<QueryResult> result = repository.findEntityDataByQuery(tenantId, customerId,
+                        request.getEntityDataQuery(), false);
+                response.setEntityDataQueryResult(result.mapData(QueryResult::toOldEntityData));
+            } else if (request.getEntityCountQuery() != null) {
+                long result = repository.countEntitiesByQuery(tenantId, customerId, request.getEntityCountQuery(), tenantId.isSysTenantId());
+                response.setEntityCountQueryResult(result);
+            }
+            log.trace("[{}] Request: {}, response: {}", tenantId, request, response);
+        } catch (Throwable e) {
+            log.error("[{}] Failed to process request: {}", tenantId, request, e);
+            response.setError(ExceptionUtil.getMessage(e));
+        }
+        return response;
+    }
+
     public void process(ToEdqsMsg edqsMsg, EdqsQueue queue) {
+        log.trace("Processing message: {}", edqsMsg);
         if (edqsMsg.hasEventMsg()) {
             EdqsEventMsg eventMsg = edqsMsg.getEventMsg();
             TenantId tenantId = getTenantId(edqsMsg);
@@ -274,23 +282,17 @@ public class EdqsProcessor implements TbQueueHandler<TbProtoQueueMsg<ToEdqsMsg>,
         }
     }
 
-    private Set<TopicPartitionInfo> withTopic(Set<TopicPartitionInfo> partitions, String topic) {
-        return partitions.stream()
-                .map(tpi -> tpi.withTopic(topic))
-                .collect(Collectors.toSet());
-    }
-
     @PreDestroy
     public void destroy() throws InterruptedException {
-        eventsConsumer.stop();
-        eventsConsumer.awaitStop();
+        eventConsumer.stop();
+        eventConsumer.awaitStop();
         responseTemplate.stop();
+        stateService.stop();
 
         consumersExecutor.shutdownNow();
-        mgmtExecutor.shutdownNow();
+        taskExecutor.shutdownNow();
         scheduler.shutdownNow();
         requestExecutor.shutdownNow();
-        repartitionExecutor.shutdownNow();
     }
 
 }

@@ -17,13 +17,13 @@ package org.thingsboard.server.common.msg.queue;
 
 import lombok.Builder;
 import lombok.Getter;
-import lombok.ToString;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-@ToString
 public class TopicPartitionInfo {
 
     private final String topic;
@@ -58,7 +58,7 @@ public class TopicPartitionInfo {
     }
 
     public TopicPartitionInfo newByTopic(String topic) {
-        return new TopicPartitionInfo(topic, this.tenantId, this.partition, this.myPartition);
+        return new TopicPartitionInfo(topic, this.tenantId, this.partition, this.useInternalPartition, this.myPartition);
     }
 
     public String getTopic() {
@@ -75,6 +75,10 @@ public class TopicPartitionInfo {
 
     public TopicPartitionInfo withTopic(String topic) {
         return new TopicPartitionInfo(topic, this.tenantId, this.partition, this.useInternalPartition, this.myPartition);
+    }
+
+    public static Set<TopicPartitionInfo> withTopic(Set<TopicPartitionInfo> partitions, String topic) {
+        return partitions.stream().map(tpi -> tpi.withTopic(topic)).collect(Collectors.toSet());
     }
 
     public TopicPartitionInfo withUseInternalPartition(boolean useInternalPartition) {
@@ -95,6 +99,15 @@ public class TopicPartitionInfo {
     @Override
     public int hashCode() {
         return Objects.hash(fullTopicName, partition);
+    }
+
+    @Override
+    public String toString() {
+        String str = fullTopicName;
+        if (useInternalPartition) {
+            str += "[" + partition + "]";
+        }
+        return str;
     }
 
 }

@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.sql.alarm;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.alarm.EntityAlarm;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -36,11 +35,6 @@ public class JpaEntityAlarmDao implements TenantEntityDao<EntityAlarm> {
     @Override
     public PageData<EntityAlarm> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(entityAlarmRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink, "entityId", "alarmId")));
-    }
-
-    @Override
-    public ObjectType getType() {
-        return ObjectType.ENTITY_ALARM;
     }
 
 }

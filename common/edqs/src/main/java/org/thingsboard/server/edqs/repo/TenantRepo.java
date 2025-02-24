@@ -57,6 +57,7 @@ import org.thingsboard.server.edqs.query.processor.EntityQueryProcessor;
 import org.thingsboard.server.edqs.query.processor.EntityQueryProcessorFactory;
 import org.thingsboard.server.edqs.stats.EdqsStatsService;
 import org.thingsboard.server.edqs.util.RepositoryUtils;
+import org.thingsboard.server.edqs.util.TbStringPool;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -104,7 +105,7 @@ public class TenantRepo {
 
     public void processEvent(EdqsEvent event) {
         EdqsObject edqsObject = event.getObject();
-        log.debug("[{}] Processing event: {}", tenantId, event);
+        log.trace("[{}] Processing event: {}", tenantId, event);
         if (event.getEventType() == EdqsEventType.UPDATED) {
             addOrUpdate(edqsObject);
         } else if (event.getEventType() == EdqsEventType.DELETED) {

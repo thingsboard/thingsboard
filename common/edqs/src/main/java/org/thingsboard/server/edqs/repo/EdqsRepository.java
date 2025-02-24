@@ -25,12 +25,9 @@ import org.thingsboard.server.common.data.query.EntityDataQuery;
 
 import java.util.function.Predicate;
 
-public interface EdqRepository {
+public interface EdqsRepository {
 
     void processEvent(EdqsEvent event);
-
-    @Deprecated
-    default void addOrUpdate(TenantId tenantId, Object object) {}
 
     long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query, boolean ignorePermissionCheck);
 

@@ -64,4 +64,14 @@ public class ExceptionUtil {
             }
         }
     }
+
+    public static String getMessage(Throwable t) {
+        String message = t.getMessage();
+        if (StringUtils.isNotEmpty(message)) {
+            return message;
+        } else {
+            return t.getClass().getSimpleName();
+        }
+    }
+
 }

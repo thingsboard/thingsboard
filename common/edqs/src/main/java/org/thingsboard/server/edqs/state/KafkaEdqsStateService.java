@@ -15,17 +15,14 @@
  */
 package org.thingsboard.server.edqs.state;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.ThingsBoardExecutors;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.EdqsEventType;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.queue.QueueConfig;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.edqs.processor.EdqsProcessor;
@@ -34,9 +31,11 @@ import org.thingsboard.server.edqs.util.VersionsStore;
 import org.thingsboard.server.gen.transport.TransportProtos.EdqsEventMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdqsMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.common.consumer.MainQueueConsumerManager;
+import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
 import org.thingsboard.server.queue.common.consumer.QueueConsumerManager;
+import org.thingsboard.server.queue.common.consumer.QueueStateService;
 import org.thingsboard.server.queue.discovery.QueueKey;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.edqs.EdqsConfig;
 import org.thingsboard.server.queue.edqs.EdqsQueue;
 import org.thingsboard.server.queue.edqs.EdqsQueueFactory;
@@ -44,10 +43,6 @@ import org.thingsboard.server.queue.edqs.KafkaEdqsComponent;
 
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -59,121 +54,106 @@ public class KafkaEdqsStateService implements EdqsStateService {
     private final EdqsConfig config;
     private final EdqsPartitionService partitionService;
     private final EdqsQueueFactory queueFactory;
-    private final EdqsProcessor edqsProcessor;
+    private final TopicService topicService;
+    @Autowired @Lazy
+    private EdqsProcessor edqsProcessor;
 
-    private MainQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>, QueueConfig> stateConsumer;
-    private QueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> eventsConsumer;
+    private PartitionedQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> stateConsumer;
+    private QueueStateService<TbProtoQueueMsg<ToEdqsMsg>, TbProtoQueueMsg<ToEdqsMsg>> queueStateService;
+    private QueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> eventsToBackupConsumer;
     private EdqsProducer stateProducer;
-
-    private boolean initialRestoreDone;
-
-    private ExecutorService consumersExecutor;
-    private ExecutorService mgmtExecutor;
-    private ScheduledExecutorService scheduler;
 
     private final VersionsStore versionsStore = new VersionsStore();
     private final AtomicInteger stateReadCount = new AtomicInteger();
     private final AtomicInteger eventsReadCount = new AtomicInteger();
+    private Boolean ready;
 
-    @PostConstruct
-    private void init() {
-        consumersExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("edqs-consumer"));
-        mgmtExecutor = ThingsBoardExecutors.newWorkStealingPool(4, "edqs-backup-consumer-mgmt");
-        scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("edqs-backup-scheduler");
-
-        stateConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<ToEdqsMsg>, QueueConfig>builder() // FIXME Slavik: if topic is empty
+    @Override
+    public void init(PartitionedQueueConsumerManager<TbProtoQueueMsg<ToEdqsMsg>> eventConsumer) {
+        stateConsumer = PartitionedQueueConsumerManager.<TbProtoQueueMsg<ToEdqsMsg>>create()
                 .queueKey(new QueueKey(ServiceType.EDQS, EdqsQueue.STATE.getTopic()))
-                .config(QueueConfig.of(true, config.getPollInterval()))
+                .topic(EdqsQueue.STATE.getTopic())
+                .pollInterval(config.getPollInterval())
                 .msgPackProcessor((msgs, consumer, config) -> {
                     for (TbProtoQueueMsg<ToEdqsMsg> queueMsg : msgs) {
                         try {
                             ToEdqsMsg msg = queueMsg.getValue();
-                            log.trace("Processing message: {}", msg);
                             edqsProcessor.process(msg, EdqsQueue.STATE);
                             if (stateReadCount.incrementAndGet() % 100000 == 0) {
                                 log.info("[state] Processed {} msgs", stateReadCount.get());
                             }
                         } catch (Exception e) {
-                            log.error("Failed to process message: {}", queueMsg, e); // TODO: do something about the error - e.g. reprocess
+                            log.error("Failed to process message: {}", queueMsg, e);
                         }
                     }
                     consumer.commit();
                 })
                 .consumerCreator((config, partitionId) -> queueFactory.createEdqsMsgConsumer(EdqsQueue.STATE))
-                .consumerExecutor(consumersExecutor)
-                .taskExecutor(mgmtExecutor)
-                .scheduler(scheduler)
+                .consumerExecutor(eventConsumer.getConsumerExecutor())
+                .taskExecutor(eventConsumer.getTaskExecutor())
+                .scheduler(eventConsumer.getScheduler())
                 .uncaughtErrorHandler(edqsProcessor.getErrorHandler())
                 .build();
+        queueStateService = new QueueStateService<>();
+        queueStateService.init(stateConsumer, eventConsumer);
 
-        ExecutorService backupExecutor = ThingsBoardExecutors.newLimitedTasksExecutor(12, 1000, "events-to-backup-executor");
-        eventsConsumer = QueueConsumerManager.<TbProtoQueueMsg<ToEdqsMsg>>builder() // FIXME Slavik writes to the state while we read it, slows down the start. maybe start backup consumer after restore is finished
+        eventsToBackupConsumer = QueueConsumerManager.<TbProtoQueueMsg<ToEdqsMsg>>builder()
                 .name("edqs-events-to-backup-consumer")
                 .pollInterval(config.getPollInterval())
                 .msgPackProcessor((msgs, consumer) -> {
-                    CountDownLatch resultLatch = new CountDownLatch(msgs.size());
                     for (TbProtoQueueMsg<ToEdqsMsg> queueMsg : msgs) {
-                        backupExecutor.submit(() -> {
-                            try {
-                                ToEdqsMsg msg = queueMsg.getValue();
-                                log.trace("Processing message: {}", msg);
+                        if (consumer.isStopped()) {
+                            return;
+                        }
+                        try {
+                            ToEdqsMsg msg = queueMsg.getValue();
+                            log.trace("Processing message: {}", msg);
 
-                                if (msg.hasEventMsg()) {
-                                    EdqsEventMsg eventMsg = msg.getEventMsg();
-                                    String key = eventMsg.getKey();
-                                    int count = eventsReadCount.incrementAndGet();
-                                    if (count % 100000 == 0) {
-                                        log.info("[events-to-backup] Processed {} msgs", count);
-                                    }
-                                    if (eventMsg.hasVersion()) {
-                                        if (!versionsStore.isNew(key, eventMsg.getVersion())) {
-                                            return;
-                                        }
-                                    }
-
-                                    TenantId tenantId = getTenantId(msg);
-                                    ObjectType objectType = ObjectType.valueOf(eventMsg.getObjectType());
-                                    EdqsEventType eventType = EdqsEventType.valueOf(eventMsg.getEventType());
-                                    log.debug("[{}] Saving to backup [{}] [{}] [{}]", tenantId, objectType, eventType, key);
-                                    stateProducer.send(tenantId, objectType, key, msg);
+                            if (msg.hasEventMsg()) {
+                                EdqsEventMsg eventMsg = msg.getEventMsg();
+                                String key = eventMsg.getKey();
+                                int count = eventsReadCount.incrementAndGet();
+                                if (count % 100000 == 0) {
+                                    log.info("[events-to-backup] Processed {} msgs", count);
                                 }
-                            } catch (Throwable t) {
-                                log.error("Failed to process message: {}", queueMsg, t);
-                            } finally {
-                                resultLatch.countDown();
+                                if (eventMsg.hasVersion()) {
+                                    if (!versionsStore.isNew(key, eventMsg.getVersion())) {
+                                        continue;
+                                    }
+                                }
+
+                                TenantId tenantId = getTenantId(msg);
+                                ObjectType objectType = ObjectType.valueOf(eventMsg.getObjectType());
+                                EdqsEventType eventType = EdqsEventType.valueOf(eventMsg.getEventType());
+                                log.trace("[{}] Saving to backup [{}] [{}] [{}]", tenantId, objectType, eventType, key);
+                                stateProducer.send(tenantId, objectType, key, msg);
                             }
-                        });
+                        } catch (Throwable t) {
+                            log.error("Failed to process message: {}", queueMsg, t);
+                        }
                     }
-                    resultLatch.await();
                     consumer.commit();
                 })
                 .consumerCreator(() -> queueFactory.createEdqsMsgConsumer(EdqsQueue.EVENTS, "events-to-backup-consumer-group")) // shared by all instances consumer group
-                .consumerExecutor(consumersExecutor)
+                .consumerExecutor(eventConsumer.getConsumerExecutor())
                 .threadPrefix("edqs-events-to-backup")
                 .build();
 
         stateProducer = EdqsProducer.builder()
                 .queue(EdqsQueue.STATE)
                 .partitionService(partitionService)
+                .topicService(topicService)
                 .producer(queueFactory.createEdqsMsgProducer(EdqsQueue.STATE))
                 .build();
     }
 
     @Override
-    public void restore(Set<TopicPartitionInfo> partitions) {
-        stateReadCount.set(0); //TODO Slavik: do not support remote mode in monolith setup
-        long startTs = System.currentTimeMillis();
-        log.info("Restore started for partitions {}", partitions.stream().map(tpi -> tpi.getPartition().orElse(-1)).sorted().toList());
-        stateConsumer.doUpdate(partitions); // calling blocking doUpdate instead of update
-        stateConsumer.awaitStop(0); // consumers should stop on their own because EdqsQueue.STATE.stopWhenRead is true, we just need to wait
-        log.info("Restore finished in {} ms. Processed {} msgs", (System.currentTimeMillis() - startTs), stateReadCount.get());
-
-        if (!initialRestoreDone) {
-            initialRestoreDone = true;
-
-            eventsConsumer.subscribe();
-            eventsConsumer.launch();
+    public void process(Set<TopicPartitionInfo> partitions) {
+        if (queueStateService.getPartitions() == null) {
+            eventsToBackupConsumer.subscribe();
+            eventsToBackupConsumer.launch();
         }
+        queueStateService.update(partitions);
     }
 
     @Override
@@ -183,23 +163,26 @@ public class KafkaEdqsStateService implements EdqsStateService {
 
     @Override
     public boolean isReady() {
-        return initialRestoreDone;
+        if (ready == null) {
+            Set<TopicPartitionInfo> partitionsInProgress = queueStateService.getPartitionsInProgress();
+            if (partitionsInProgress != null && partitionsInProgress.isEmpty()) {
+                ready = true; // once true - always true, not to change readiness status on each repartitioning
+            }
+        }
+        log.error("ready: {}", ready);
+        return ready != null && ready;
     }
 
     private TenantId getTenantId(ToEdqsMsg edqsMsg) {
         return TenantId.fromUUID(new UUID(edqsMsg.getTenantIdMSB(), edqsMsg.getTenantIdLSB()));
     }
 
-    @PreDestroy
-    private void preDestroy() {
+    @Override
+    public void stop() {
         stateConsumer.stop();
         stateConsumer.awaitStop();
-        eventsConsumer.stop();
+        eventsToBackupConsumer.stop();
         stateProducer.stop();
-
-        consumersExecutor.shutdownNow();
-        mgmtExecutor.shutdownNow();
-        scheduler.shutdownNow();
     }
 
 }
