@@ -61,7 +61,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Slf4j
 @TestPropertySource(properties = {
-        "coap.enabled=true",
+        "coap.server.enabled=true",
         "coap.dtls.enabled=true",
         "coap.dtls.credentials.pem.cert_file=coap/credentials/server/cert.pem",
         "device.connectivity.coaps.enabled=true",
