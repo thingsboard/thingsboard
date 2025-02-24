@@ -45,6 +45,9 @@ import static org.thingsboard.common.util.JacksonUtil.newArrayNode;
 @Slf4j
 public class SparkplugMetricUtil {
 
+    public static final String SPARKPLUG_SEQUENCE_NUMBER_KEY = "seq";
+    public static final String SPARKPLUG_BD_SEQUENCE_NUMBER_KEY = "bdSeq";
+
     public static Optional<TransportProtos.KeyValueProto> fromSparkplugBMetricToKeyValueProto(String key, SparkplugBProto.Payload.Metric protoMetric) throws ThingsboardException {
         // Check if the null flag has been set indicating that the value is null
         if (protoMetric.getIsNull()) {
@@ -187,6 +190,12 @@ public class SparkplugMetricUtil {
                 throw new ThingsboardException("Invalid value for MetricDataType " + metricDataType.name(), ThingsboardErrorCode.INVALID_ARGUMENTS);
         }
         return metric;
+    }
+
+    public static TransportProtos.TsKvProto getTsKvProtoFromJsonNode(JsonNode kvProto, long ts) throws ThingsboardException {
+        String kvProtoKey = kvProto.fieldNames().next();
+        String kvProtoValue = kvProto.get(kvProtoKey).asText();
+        return getTsKvProto(kvProtoKey, kvProtoValue, ts);
     }
 
     public static TransportProtos.TsKvProto getTsKvProto(String key, Object value, long ts) throws ThingsboardException {
