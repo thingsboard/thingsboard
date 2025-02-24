@@ -281,8 +281,6 @@ public class ModelConstants {
     public static final String ALARM_COMMENT_TYPE = "type";
     public static final String ALARM_COMMENT_COMMENT = "comment";
 
-    public static final String ALARM_TYPES_TABLE_NAME = "alarm_types";
-
     /**
      * Entity relation constants.
      */

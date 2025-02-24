@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.queue.environment;
 
-public interface DistributedLock<I> {
+public interface DistributedLock {
 
     void lock();
 

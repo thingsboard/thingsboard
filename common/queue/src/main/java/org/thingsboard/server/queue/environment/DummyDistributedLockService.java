@@ -27,12 +27,12 @@ import java.util.concurrent.locks.ReentrantLock;
 public class DummyDistributedLockService implements DistributedLockService {
 
     @Override
-    public <I> DistributedLock<I> getLock(String key) {
-        return new DummyDistributedLock<>();
+    public DistributedLock getLock(String key) {
+        return new DummyDistributedLock();
     }
 
     @RequiredArgsConstructor
-    private static class DummyDistributedLock<I> implements DistributedLock<I> {
+    private static class DummyDistributedLock implements DistributedLock {
 
         private final ReentrantLock lock = new ReentrantLock();
 

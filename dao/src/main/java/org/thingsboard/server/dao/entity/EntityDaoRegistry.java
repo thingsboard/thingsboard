@@ -29,18 +29,19 @@ import java.util.Map;
 @SuppressWarnings({"unchecked"})
 public class EntityDaoRegistry {
 
-    private final Map<EntityType, Dao<?>> entityDaos = new EnumMap<>(EntityType.class);
+    private final Map<EntityType, Dao<?>> daos = new EnumMap<>(EntityType.class);
 
-    private EntityDaoRegistry(List<Dao<?>> entityDaos) {
-        entityDaos.forEach(dao -> {
-            if (dao.getEntityType() != null) {
-                this.entityDaos.put(dao.getEntityType(), dao);
+    private EntityDaoRegistry(List<Dao<?>> daos) {
+        daos.forEach(dao -> {
+            EntityType entityType = dao.getEntityType();
+            if (entityType != null) {
+                this.daos.put(entityType, dao);
             }
         });
     }
 
     public <T> Dao<T> getDao(EntityType entityType) {
-        Dao<T> dao = (Dao<T>) entityDaos.get(entityType);
+        Dao<T> dao = (Dao<T>) daos.get(entityType);
         if (dao == null) {
             throw new IllegalArgumentException("Missing dao for entity type " + entityType);
         }

@@ -15,11 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.widget;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleWidgetCompositeKey;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleWidgetEntity;
 
@@ -29,8 +25,5 @@ import java.util.UUID;
 public interface WidgetsBundleWidgetRepository extends JpaRepository<WidgetsBundleWidgetEntity, WidgetsBundleWidgetCompositeKey> {
 
     List<WidgetsBundleWidgetEntity> findAllByWidgetsBundleId(UUID widgetsBundleId);
-
-    @Query("SELECT w FROM WidgetsBundleWidgetEntity w WHERE w.widgetsBundleId IN (SELECT b.id FROM WidgetsBundleEntity b WHERE b.tenantId = :tenantId)")
-    Page<WidgetsBundleWidgetEntity> findByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
 
 }

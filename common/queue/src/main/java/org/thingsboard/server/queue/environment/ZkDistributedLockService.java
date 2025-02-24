@@ -33,12 +33,12 @@ public class ZkDistributedLockService implements DistributedLockService {
     private final ZkDiscoveryService zkDiscoveryService;
 
     @Override
-    public <I> DistributedLock<I> getLock(String key) {
-        return new ZkDistributedLock<>(key);
+    public DistributedLock getLock(String key) {
+        return new ZkDistributedLock(key);
     }
 
     @RequiredArgsConstructor
-    private class ZkDistributedLock<I> implements DistributedLock<I> {
+    private class ZkDistributedLock implements DistributedLock {
 
         private final InterProcessLock interProcessLock;
 

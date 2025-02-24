@@ -17,6 +17,6 @@ package org.thingsboard.server.queue.environment;
 
 public interface DistributedLockService {
 
-    <I> DistributedLock<I> getLock(String key);
+    DistributedLock getLock(String key);
 
 }

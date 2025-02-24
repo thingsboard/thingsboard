@@ -15,12 +15,9 @@
  */
 package org.thingsboard.server.dao.sqlts.latest;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 
@@ -43,10 +40,6 @@ public interface TsKvLatestRepository extends JpaRepository<TsKvLatestEntity, Ts
             "INNER JOIN key_dictionary ON ts_kv_latest.key = key_dictionary.key_id " +
             "WHERE ts_kv_latest.entity_id IN :entityIds ORDER BY key_dictionary.key", nativeQuery = true)
     List<String> findAllKeysByEntityIds(@Param("entityIds") List<UUID> entityIds);
-
-    @Query("SELECT e FROM TsKvLatestEntity e ORDER BY e.entityId ASC, e.key ASC")
-    Page<TsKvLatestEntity> findAll(Pageable pageable);
-
 
     @Query(value = "SELECT entity_id, key, ts, bool_v, str_v, long_v, dbl_v, json_v, version FROM ts_kv_latest WHERE (entity_id, key) > " +
             "(:entityId, :key) ORDER BY entity_id, key LIMIT :batchSize", nativeQuery = true)

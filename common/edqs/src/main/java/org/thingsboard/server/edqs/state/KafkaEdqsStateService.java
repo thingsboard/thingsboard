@@ -169,7 +169,6 @@ public class KafkaEdqsStateService implements EdqsStateService {
                 ready = true; // once true - always true, not to change readiness status on each repartitioning
             }
         }
-        log.error("ready: {}", ready);
         return ready != null && ready;
     }
 

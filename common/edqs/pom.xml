@@ -27,7 +27,7 @@
     <artifactId>edqs</artifactId>
     <packaging>jar</packaging>
 
-    <name>Thingsboard Server EDQS API</name>
+    <name>ThingsBoard EDQS API</name>
     <url>https://thingsboard.io</url>
 
     <properties>
@@ -71,10 +71,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-clients</artifactId>
         </dependency>
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>

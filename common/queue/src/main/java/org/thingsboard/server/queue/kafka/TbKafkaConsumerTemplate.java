@@ -53,7 +53,7 @@ public class TbKafkaConsumerTemplate<T extends TbQueueMsg> extends AbstractTbQue
     private final String groupId;
 
     private final boolean readFromBeginning; // reset offset to beginning
-    private final boolean stopWhenRead; // stop consuming when reached an empty msg pack
+    private final boolean stopWhenRead; // stop consuming when reached end offset remembered on start
     private int readCount;
     private Map<Integer, Long> endOffsets; // needed if stopWhenRead is true
 
