@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<h2 mat-dialog-title translate>{{data.configuration.title}}</h2>
-<div mat-dialog-content class="tb-images-in-use-content" [class]="{multiple: data.multiple}">
+<h2 mat-dialog-title translate>{{configuration.title}}</h2>
+<div mat-dialog-content class="tb-resources-in-use-content" [class]="{multiple: data.multiple}">
   <div [innerHTML]="configuration.message | safe: 'html'"></div>
   <ng-container *ngIf="data.multiple; else singleResourceReferences">
     <div class="table-container">
