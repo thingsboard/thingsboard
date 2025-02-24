@@ -139,7 +139,7 @@ export class CalculatedFieldTestArgumentsComponent extends PageComponent impleme
   private getValue(): CalculatedFieldEventArguments {
     return this.argumentsFormArray.getRawValue().reduce((acc, rowItem) => {
       const { argumentName, rollingJson = {}, ...value } = rowItem;
-      acc[argumentName] = { ...rollingJson, ...value};
+      acc[argumentName] = { ...rollingJson, ...value };
       return acc;
     }, {});
   }
