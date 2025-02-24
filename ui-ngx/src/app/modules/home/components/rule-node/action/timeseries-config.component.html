@@ -31,13 +31,13 @@
       <mat-form-field>
         <mat-label translate>rule-node-config.save-time-series.strategy</mat-label>
         <mat-select formControlName="type">
-          @for (strategy of persistenceStrategies; track strategy) {
-            <mat-option [value]="strategy">{{ PersistenceTypeTranslationMap.get(strategy) | translate }}</mat-option>
+          @for (strategy of processingStrategies; track strategy) {
+            <mat-option [value]="strategy">{{ ProcessingTypeTranslationMap.get(strategy) | translate }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
 
-      @if(timeseriesConfigForm.get('processingSettings.type').value === PersistenceType.DEDUPLICATE) {
+      @if(timeseriesConfigForm.get('processingSettings.type').value === ProcessingType.DEDUPLICATE) {
         <tb-time-unit-input
           required
           labelText="{{ 'rule-node-config.save-time-series.deduplication-interval' | translate }}"
@@ -50,10 +50,10 @@
         </tb-time-unit-input>
       }
     } @else {
-      <tb-advanced-persistence-settings
+      <tb-advanced-processing-settings
         class="mb-4"
         formControlName="advanced"
-      ></tb-advanced-persistence-settings>
+      ></tb-advanced-processing-settings>
     }
   </div>
   <section class="tb-form-panel stroked">

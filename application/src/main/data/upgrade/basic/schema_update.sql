@@ -31,9 +31,10 @@ DO $$
                     || jsonb_build_object(
                         'processingSettings', jsonb_build_object(
                                 'type',       'ADVANCED',
-                                'timeseries', jsonb_build_object('type', 'ON_EVERY_MESSAGE'),
-                                'latest',     jsonb_build_object('type', 'SKIP'),
-                                'webSockets', jsonb_build_object('type', 'ON_EVERY_MESSAGE')
+                                'timeseries',       jsonb_build_object('type', 'ON_EVERY_MESSAGE'),
+                                'latest',           jsonb_build_object('type', 'SKIP'),
+                                'webSockets',       jsonb_build_object('type', 'ON_EVERY_MESSAGE'),
+                                'calculatedFields', jsonb_build_object('type', 'ON_EVERY_MESSAGE')
                                                )
                        )
                 )::text,

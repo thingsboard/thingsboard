@@ -5250,7 +5250,8 @@
             },
             "time-series": "Time series",
             "latest": "Latest values",
-            "web-sockets": "WebSockets"
+            "web-sockets": "WebSockets",
+            "calculated-fields": "Calculated fields"
         },
         "key-val": {
             "key": "Key",
